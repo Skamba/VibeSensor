@@ -91,8 +91,8 @@ function testTranslation(key: string, vars?: Record<string, unknown>): string {
 }
 
 function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string): RunDetail {
-  if (!state.runDetailsById[runId]) {
-    state.runDetailsById[runId] = {
+  if (!state.history.runDetailsById[runId]) {
+    state.history.runDetailsById[runId] = {
       preview: null,
       previewLoading: false,
       previewError: "",
@@ -103,7 +103,7 @@ function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string
       pdfError: "",
     };
   }
-  return state.runDetailsById[runId];
+  return state.history.runDetailsById[runId];
 }
 
 test.beforeEach(() => {
@@ -126,7 +126,7 @@ test("history list module refreshes runs and renders table state", async () => {
   }) as typeof fetch;
 
   const module = createHistoryListModule({
-    state,
+    history: state.history,
     els,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
@@ -135,7 +135,7 @@ test("history list module refreshes runs and renders table state", async () => {
     formatInt: (value) => String(value),
     ensureRunDetail: (runId) => ensureRunDetail(state, runId),
     collapseExpandedRun: () => {
-      state.expandedRunId = null;
+      state.history.expandedRunId = null;
     },
   });
 
@@ -145,7 +145,7 @@ test("history list module refreshes runs and renders table state", async () => {
     globalThis.fetch = originalFetch;
   }
 
-  expect(state.runs).toHaveLength(1);
+  expect(state.history.runs).toHaveLength(1);
   expect(historySummary.textContent).toContain("history.available_count");
   expect(historyTableBody.innerHTML).toContain("run-001");
   expect(deleteAllRunsBtn.disabled).toBe(false);
@@ -153,7 +153,7 @@ test("history list module refreshes runs and renders table state", async () => {
 
 test("history detail module loads preview and reloads expanded run on language change", async () => {
   const state = createAppState();
-  state.expandedRunId = null;
+  state.history.expandedRunId = null;
   const { els } = createHistoryElements();
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
@@ -171,16 +171,17 @@ test("history detail module loads preview and reloads expanded run on language c
 
   let renderCalls = 0;
   const module = createHistoryDetailModule({
-    state,
+    history: state.history,
+    getLanguage: () => state.shell.lang,
     els,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     ensureRunDetail: (runId) => ensureRunDetail(state, runId),
     collapseExpandedRun: () => {
-      const previous = state.expandedRunId;
-      state.expandedRunId = null;
+      const previous = state.history.expandedRunId;
+      state.history.expandedRunId = null;
       if (previous) {
-        delete state.runDetailsById[previous];
+        delete state.history.runDetailsById[previous];
       }
     },
     renderHistoryTable: () => {
@@ -190,14 +191,14 @@ test("history detail module loads preview and reloads expanded run on language c
 
   try {
     module.toggleRunDetails("run-001");
-    await expect.poll(() => state.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(1);
+    await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(1);
     await module.loadRunInsights("run-001", true);
-    expect(state.runDetailsById["run-001"]?.insights?.sensor_count_used).toBe(1);
+    expect(state.history.runDetailsById["run-001"]?.insights?.sensor_count_used).toBe(1);
 
-    state.lang = "nl";
+    state.shell.lang = "nl";
     module.reloadExpandedRunOnLanguageChange();
-    await expect.poll(() => state.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
-    await expect.poll(() => state.runDetailsById["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
+    await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
+    await expect.poll(() => state.history.runDetailsById["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -227,13 +228,14 @@ test("history detail module treats analyzing insights responses as not-yet-avail
 
   let renderCalls = 0;
   const module = createHistoryDetailModule({
-    state,
+    history: state.history,
+    getLanguage: () => state.shell.lang,
     els,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     ensureRunDetail: (runId) => ensureRunDetail(state, runId),
     collapseExpandedRun: () => {
-      state.expandedRunId = null;
+      state.history.expandedRunId = null;
     },
     renderHistoryTable: () => {
       renderCalls += 1;
@@ -247,10 +249,10 @@ test("history detail module treats analyzing insights responses as not-yet-avail
     globalThis.fetch = originalFetch;
   }
 
-  expect(state.runDetailsById["run-001"]?.preview).toBeNull();
-  expect(state.runDetailsById["run-001"]?.previewError).toBe("");
-  expect(state.runDetailsById["run-001"]?.insights).toBeNull();
-  expect(state.runDetailsById["run-001"]?.insightsError).toBe("");
+  expect(state.history.runDetailsById["run-001"]?.preview).toBeNull();
+  expect(state.history.runDetailsById["run-001"]?.previewError).toBe("");
+  expect(state.history.runDetailsById["run-001"]?.insights).toBeNull();
+  expect(state.history.runDetailsById["run-001"]?.insightsError).toBe("");
   expect(renderCalls).toBeGreaterThanOrEqual(4);
   expect(requests).toEqual([
     "/api/history/run-001/insights?lang=en",
@@ -334,11 +336,11 @@ test("downloadBlobFile downloads with decoded filename and revokes the blob URL"
 
 test("history download/delete module reports partial delete failures without detail-loading deps", async () => {
   const state = createAppState();
-  state.runs = [
+  state.history.runs = [
     { run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 },
     { run_id: "run-002", start_time_utc: "2026-01-01T00:10:00Z", sample_count: 84 },
   ];
-  state.expandedRunId = "run-001";
+  state.history.expandedRunId = "run-001";
   ensureRunDetail(state, "run-001");
   ensureRunDetail(state, "run-002");
 
@@ -368,14 +370,15 @@ test("history download/delete module reports partial delete failures without det
   let renderCalls = 0;
   let refreshCalls = 0;
   const module = createHistoryDownloadDeleteModule({
-    state,
+    history: state.history,
+    getLanguage: () => state.shell.lang,
     t: testTranslation,
     ensureRunDetail: (runId) => ensureRunDetail(state, runId),
     collapseExpandedRun: () => {
-      const previous = state.expandedRunId;
-      state.expandedRunId = null;
+      const previous = state.history.expandedRunId;
+      state.history.expandedRunId = null;
       if (previous) {
-        delete state.runDetailsById[previous];
+        delete state.history.runDetailsById[previous];
       }
     },
     renderHistoryTable: () => {
@@ -398,8 +401,8 @@ test("history download/delete module reports partial delete failures without det
   }
 
   expect(deleteRequests).toEqual(["/api/history/run-001", "/api/history/run-002"]);
-  expect(state.deleteAllRunsInFlight).toBe(false);
-  expect(state.expandedRunId).toBeNull();
+  expect(state.history.deleteAllRunsInFlight).toBe(false);
+  expect(state.history.expandedRunId).toBeNull();
   expect(renderCalls).toBe(1);
   expect(refreshCalls).toBe(1);
   expect(alerts).toHaveLength(1);

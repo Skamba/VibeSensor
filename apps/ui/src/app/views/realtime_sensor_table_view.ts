@@ -1,5 +1,6 @@
 import type { LocationOption } from "../../api/types";
 import type { AdaptedClient } from "../../server_payload";
+import { renderTableEmptyRow } from "./dom_helpers";
 
 export interface RealtimeSensorTableViewParams {
   clients: AdaptedClient[];
@@ -39,7 +40,10 @@ export function renderRealtimeSensorTable(
 ): void {
   const { clients, locationOptions, locationCodeForClient, t, escapeHtml } = params;
   if (!clients.length) {
-    container.innerHTML = `<tr><td colspan="5">${escapeHtml(t("settings.sensors.no_sensors"))}</td></tr>`;
+    container.innerHTML = renderTableEmptyRow(
+      escapeHtml(t("settings.sensors.no_sensors")),
+      5,
+    );
     return;
   }
 

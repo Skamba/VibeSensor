@@ -1,4 +1,5 @@
 import type { CarRecord } from "../../api/types";
+import { renderTableEmptyRow } from "./dom_helpers";
 
 export interface SettingsCarListViewParams {
   cars: CarRecord[];
@@ -19,7 +20,10 @@ export function renderSettingsCarList(
 ): void {
   const { cars, activeCarId, t, escapeHtml, fmt } = params;
   if (!cars.length) {
-    container.innerHTML = `<tr><td colspan="7">${escapeHtml(t("settings.car.no_cars"))}</td></tr>`;
+    container.innerHTML = renderTableEmptyRow(
+      escapeHtml(t("settings.car.no_cars")),
+      7,
+    );
     return;
   }
 

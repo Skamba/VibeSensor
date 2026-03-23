@@ -1,7 +1,7 @@
 import { EXPECTED_SCHEMA_VERSION } from "../contracts/ws_payload_types";
 
 type DemoDeps = {
-  state: { wsState: string; hasReceivedPayload: boolean };
+  state: { transport: { wsState: string; hasReceivedPayload: boolean } };
   renderWsState: () => void;
   applyPayload: (payload: unknown) => void;
 };
@@ -15,7 +15,7 @@ declare global {
 export function runDemoMode(deps: DemoDeps): void {
   const { state, renderWsState, applyPayload } = deps;
 
-  state.wsState = "connected";
+  state.transport.wsState = "connected";
   renderWsState();
 
   const demoClients = [
@@ -135,11 +135,13 @@ export function runDemoMode(deps: DemoDeps): void {
     schema_version: EXPECTED_SCHEMA_VERSION,
     server_time: new Date().toISOString(),
     clients: demoClients,
+    selected_client_id: demoClients[0]?.id ?? null,
     speed_mps: 22.2,
+    rotational_speeds: null,
     spectra: { clients: demoSpectra },
   };
 
-  state.hasReceivedPayload = true;
+  state.transport.hasReceivedPayload = true;
   applyPayload(demoPayload);
 
   window.__vibesensorDemoCleanup = undefined;

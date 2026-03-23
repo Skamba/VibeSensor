@@ -1,7 +1,7 @@
 import type { SpeedSourceStatusPayload } from "../../api/types";
 import { getSpeedSourceStatus } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { AppState } from "../ui_app_state";
+import type { SettingsState } from "../ui_app_state";
 
 const GPS_POLL_FAST = 2_000;
 const GPS_POLL_SLOW = 10_000;
@@ -13,7 +13,8 @@ const CONNECTION_STATE_I18N: Record<string, string> = {
 };
 
 export interface SettingsGpsStatusModuleDeps extends FeatureDepsBase {
-  state: AppState;
+  settings: SettingsState;
+  getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
   renderSpeedReadout: () => void;
 }
@@ -24,7 +25,7 @@ export interface SettingsGpsStatusModule {
 }
 
 export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps): SettingsGpsStatusModule {
-  const { state, els, t, fmt } = ctx;
+  const { settings, els, t, fmt } = ctx;
   let gpsPollTimer: ReturnType<typeof setTimeout> | null = null;
 
   function connectionStateLabel(connectionState: string): string {
@@ -34,11 +35,11 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
 
   function speedKmhInSelectedUnit(speedKmh: number | null): number | null {
     if (speedKmh === null || !Number.isFinite(speedKmh)) return null;
-    return state.speedUnit === "mps" ? speedKmh / 3.6 : speedKmh;
+    return ctx.getSpeedUnit() === "mps" ? speedKmh / 3.6 : speedKmh;
   }
 
   function selectedSpeedUnitLabel(): string {
-    return state.speedUnit === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh");
+    return ctx.getSpeedUnit() === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh");
   }
 
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
@@ -89,11 +90,11 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
   async function pollGpsStatus(): Promise<void> {
     try {
       const status = await getSpeedSourceStatus();
-      state.gpsFallbackActive = status.fallback_active
+      settings.gpsFallbackActive = status.fallback_active
         || (
-          state.speedSource !== "manual"
-          && typeof state.manualSpeedKph === "number"
-          && state.manualSpeedKph > 0
+          settings.speedSource !== "manual"
+          && typeof settings.manualSpeedKph === "number"
+          && settings.manualSpeedKph > 0
           && status.connection_state !== "connected"
         );
       renderGpsStatus(status);
