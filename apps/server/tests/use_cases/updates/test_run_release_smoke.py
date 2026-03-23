@@ -80,3 +80,47 @@ def test_run_release_smoke_can_reuse_existing_wheel_and_skip_ui_build(
         command for command in commands if command[0][-1] == str(existing_wheel.resolve())
     )
     assert pip_install_command[0][-1] == str(existing_wheel.resolve())
+
+
+def test_build_server_wheel_uses_builder_venv(monkeypatch, tmp_path: Path) -> None:
+    module, _repo_root = _load_release_smoke_runner()
+    repo_root = tmp_path / "repo"
+    dist_dir = repo_root / "apps" / "server" / "dist"
+    dist_dir.mkdir(parents=True)
+    built_wheel = dist_dir / "vibesensor-2025.6.15-py3-none-any.whl"
+    commands: list[tuple[list[str], Path, dict[str, str] | None]] = []
+    builder_venv = tmp_path / "builder-venv"
+
+    class _FakeTempDir:
+        def __init__(self, *_args, **_kwargs) -> None:
+            pass
+
+        def __enter__(self) -> str:
+            return str(builder_venv)
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+    def _fake_run(cmd: list[str], *, cwd: Path, env=None) -> None:
+        commands.append((list(cmd), cwd, env))
+        if cmd[1:4] == ["-m", "build", "--wheel"]:
+            built_wheel.parent.mkdir(parents=True, exist_ok=True)
+            built_wheel.write_text("wheel", encoding="utf-8")
+
+    monkeypatch.setattr(module.tempfile, "TemporaryDirectory", _FakeTempDir)
+    monkeypatch.setattr(module.venv.EnvBuilder, "create", lambda self, path: None)
+    monkeypatch.setattr(module, "_venv_python", lambda path: Path(path) / "bin" / "python")
+    monkeypatch.setattr(module, "_run", _fake_run)
+
+    wheel_path = module._build_server_wheel(repo_root)
+
+    assert wheel_path == built_wheel
+    expected_python = str(builder_venv / "bin" / "python")
+    assert commands == [
+        (
+            [expected_python, "-m", "pip", "install", "--upgrade", "pip", "build"],
+            repo_root,
+            None,
+        ),
+        ([expected_python, "-m", "build", "--wheel", "apps/server/"], repo_root, None),
+    ]

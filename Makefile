@@ -1,17 +1,24 @@
-.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
+.DEFAULT_GOAL := help
+.PHONY: help doctor setup format lint typecheck-backend typecheck ui-typecheck test test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
 
 LINT_TARGETS := apps/server/vibesensor apps/server/tests tools
 CI_LITE_JOBS := --job backend-quality --job backend-typecheck --job frontend-typecheck --job ui-smoke --job release-smoke --job backend-tests
 
-setup:
+help: ## Show the available make targets and what each one does
+	@awk 'BEGIN {FS = ":.*## "; printf "Available targets:\n"} /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+doctor: ## Check pinned tool versions and local workflow availability
+	python3 tools/dev/check_prerequisites.py
+
+setup: ## Install backend dev dependencies and UI node_modules
 	python3 -m pip install --upgrade pip
 	python3 -m pip install -e "./apps/server[dev]"
 	cd apps/ui && npm ci
 
-format:
+format: ## Run Ruff formatter over backend and tooling files
 	ruff format $(LINT_TARGETS)
 
-lint:
+lint: ## Run repo hygiene, static guards, docs lint, and contract drift checks
 	ruff check $(LINT_TARGETS)
 	ruff format --check $(LINT_TARGETS)
 	python3 tools/dev/check_hygiene.py
@@ -23,43 +30,45 @@ lint:
 	python3 -m vibesensor.cli.ws_schema_export --check
 	python3 -m vibesensor.cli.http_api_schema_export --check
 
-typecheck-backend:
+typecheck-backend: ## Run backend mypy checks
 	PYTHON=$(CURDIR)/.venv/bin/python; \
 	if [ ! -x "$$PYTHON" ]; then PYTHON=python3; fi; \
 	cd apps/server && "$$PYTHON" -m mypy --config-file pyproject.toml
 
+typecheck: ## Run backend and UI type checks
 typecheck: typecheck-backend ui-typecheck
 
-test:
+test: ## Run the fast backend pytest suite
 	python3 -m pytest -q apps/server/tests
 
-test-ci-lite:
+test-ci-lite: ## Run the non-Docker blocking CI subset locally
 	python3 tools/tests/run_ci_parallel.py $(CI_LITE_JOBS)
 
-test-all:
+test-all: ## Run the broader local CI runner, including Docker jobs when available
 	python3 tools/tests/run_ci_parallel.py
 
-test-full-suite:
+test-full-suite: ## Run the full Docker-backed end-to-end suite locally
 	python3 tools/tests/run_e2e_parallel.py --shards 1
 
-sync-contracts:
+sync-contracts: ## Regenerate shared frontend HTTP/WS/contracts artifacts
 	cd apps/ui && npm run sync:contracts
 
+regen-contracts: ## Sync contracts and rebuild the contract reference doc
 regen-contracts: sync-contracts
 	python3 tools/config/generate_contract_reference_doc.py
 
-coverage:  ## COV_OPTS="--cov-report=html:../../artifacts/coverage/html" or "--cov-fail-under=80"
+coverage: ## Run backend coverage with optional COV_OPTS overrides
 	cd apps/server && python3 -m pytest -q --cov=vibesensor --cov-report=term-missing:skip-covered $(COV_OPTS) tests
 
-smoke:
+smoke: ## Run simulator and websocket smoke checks against a local server
 	vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
 	vibesensor-ws-smoke --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
 
-loc:
+loc: ## Run the repo lines-of-code budget check
 	python3 tools/dev/loc_check.py
 
-docs-lint:
+docs-lint: ## Run docs lint without the broader lint suite
 	python3 tools/dev/docs_lint.py
 
-ui-typecheck:
+ui-typecheck: ## Run UI contract freshness checks and TypeScript type checking
 	cd apps/ui && npm run check:contracts && npm run typecheck
