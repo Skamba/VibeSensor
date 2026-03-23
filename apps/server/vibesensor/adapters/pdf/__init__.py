@@ -23,6 +23,7 @@ Module topology
 
 Dependency rule: pages → primitives → data; diagrams → primitives → data.
 Modules must not import from ``vibesensor.use_cases.diagnostics`` sub-modules.
-``mapping.py`` must not import from ``vibesensor.use_cases`` —
-``report_context.py`` handles that bridge.
+``mapping.py`` may consume the prepared report-input contract from
+``vibesensor.use_cases.history.report_preparation`` but must not call back into
+history-layer interpretation or diagnostics helpers directly.
 """
