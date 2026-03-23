@@ -129,6 +129,53 @@ def test_registry_sequence_gap(tmp_path: Path) -> None:
     assert row["mac_address"] == "aa:bb:cc:dd:ee:ff"
 
 
+def test_registry_rejects_far_behind_duplicate_without_clearing_dedup(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
+    client_id = bytes.fromhex("aabbccddeeff")
+
+    hello = HelloMessage(
+        client_id=client_id,
+        control_port=9010,
+        sample_rate_hz=800,
+        name="node-1",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
+
+    samples = np.zeros((200, 3), dtype=np.int16)
+    registry.update_from_data(
+        DataMessage(client_id=client_id, seq=1, t0_us=1_000_000, sample_count=200, samples=samples),
+        ("10.4.0.2", 50000),
+        now=2.0,
+    )
+    registry.update_from_data(
+        DataMessage(
+            client_id=client_id,
+            seq=10,
+            t0_us=1_250_000,
+            sample_count=200,
+            samples=samples,
+        ),
+        ("10.4.0.2", 50000),
+        now=3.0,
+    )
+
+    result = registry.update_from_data(
+        DataMessage(client_id=client_id, seq=1, t0_us=1_000_000, sample_count=200, samples=samples),
+        ("10.4.0.2", 50000),
+        now=4.0,
+    )
+
+    record = registry.get(client_id.hex())
+    assert record is not None
+    assert result.is_duplicate is True
+    assert result.reset_detected is False
+    assert record.frames_total == 2
+    assert record.duplicates_received == 1
+    assert record.last_t0_us == 1_250_000
+
+
 def test_registry_rename_persist(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)

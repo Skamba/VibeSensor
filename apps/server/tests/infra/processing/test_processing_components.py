@@ -74,3 +74,26 @@ def test_metrics_computer_operates_on_snapshot_without_shared_state() -> None:
     assert result.ingest_generation == 7
     assert result.metrics["x"]["rms"] > 0
     assert any(abs(float(peak["hz"]) - 20.0) < 1.0 for peak in result.metrics["combined"]["peaks"])
+
+
+def test_buffer_store_does_not_regress_last_t0_us_for_older_frame() -> None:
+    store = SignalBufferStore(_config())
+    client_id = "client-1"
+
+    store.ingest(
+        client_id,
+        np.ones((4, 3), dtype=np.float32),
+        sample_rate_hz=200,
+        t0_us=1_000_000,
+    )
+    store.ingest(
+        client_id,
+        np.ones((2, 3), dtype=np.float32),
+        sample_rate_hz=200,
+        t0_us=900_000,
+    )
+
+    with store.lock:
+        buf = store.buffers[client_id]
+        assert buf.last_t0_us == 1_000_000
+        assert buf.samples_since_t0 == 6

@@ -154,8 +154,8 @@ class SettingsStore(CarSettingsMixin):
             return
         ss = self.speed_source()
         raw = self.get_speed_source()
-        self._gps_monitor.set_manual_source_selected(ss.is_manual)
         self._gps_monitor.set_speed_override_kmh(ss.effective_speed_kmh)
+        self._gps_monitor.set_manual_source_selected(ss.is_manual)
         self._gps_monitor.set_fallback_settings(
             stale_timeout_s=raw.get("staleTimeoutS"),
         )
