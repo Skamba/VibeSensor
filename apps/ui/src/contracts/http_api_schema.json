@@ -3702,6 +3702,10 @@
             "title": "Run Id",
             "type": "string"
           },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -3709,7 +3713,8 @@
         },
         "required": [
           "run_id",
-          "status"
+          "status",
+          "sample_count"
         ],
         "title": "HistoryRunResponse",
         "type": "object"

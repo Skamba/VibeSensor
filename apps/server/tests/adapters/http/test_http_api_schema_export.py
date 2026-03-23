@@ -127,6 +127,7 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
         {"type": "null"},
     ]
     assert history_run["additionalProperties"] is False
+    assert history_run["properties"]["sample_count"]["type"] == "integer"
     assert analysis_summary["additionalProperties"] is False
     assert finding_payload["additionalProperties"] is False
     assert analysis_summary["properties"]["case_id"]["anyOf"] == [

@@ -53,6 +53,7 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
     payload: JsonObject = {
         "run_id": run.run_id,
         "status": run.status.value,
+        "sample_count": run.sample_count,
         "metadata": run.metadata.to_dict(),
     }
     if run.analysis is not None:
