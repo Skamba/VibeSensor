@@ -9,14 +9,14 @@ import json
 import logging
 from collections.abc import Callable
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
+from vibesensor._data_files import resolve_static_data_file
 from vibesensor.domain import VibrationSource
 from vibesensor.shared.constants import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 
-_DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "report_i18n.json"
+_DATA_FILE = resolve_static_data_file("report_i18n.json")
 
 
 @lru_cache(maxsize=1)

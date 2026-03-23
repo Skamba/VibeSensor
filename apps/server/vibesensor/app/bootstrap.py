@@ -27,7 +27,7 @@ from vibesensor.app.runtime_state import AppRuntime
 from vibesensor.app.settings import load_config
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
 
-__all__ = ["create_app", "main"]
+__all__ = ["create_app", "create_app_from_env", "main"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +44,7 @@ _BIND_ERROR_NUMBERS: frozenset[int] = frozenset({errno.EACCES, errno.EADDRINUSE,
 
 _LOG_MAX_BYTES = 5 * 1024 * 1024  # 5 MB per file
 _LOG_BACKUP_COUNT = 3
+_CONFIG_PATH_ENV = "VIBESENSOR_CONFIG_PATH"
 
 
 def _setup_file_logging(log_path: Path | None) -> None:
@@ -134,6 +135,13 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     return app
 
 
+def create_app_from_env() -> FastAPI:
+    """Create the app using the config path exported for reload mode."""
+    config_path_text = os.getenv(_CONFIG_PATH_ENV)
+    config_path = Path(config_path_text).expanduser() if config_path_text else None
+    return create_app(config_path=config_path)
+
+
 app: FastAPI | None = (
     create_app()
     if __name__ != "__main__" and os.getenv("VIBESENSOR_DISABLE_AUTO_APP", "0") != "1"
@@ -141,22 +149,41 @@ app: FastAPI | None = (
 )
 
 
-def main() -> None:
-    """Entry point for the ``vibesensor-server`` CLI command."""
-    parser = argparse.ArgumentParser(description="Run VibeSensor server")
-    parser.add_argument("--config", type=Path, default=None, help="Path to config YAML")
-    args = parser.parse_args()
+def _run_server(
+    app_target: FastAPI | str,
+    *,
+    host: str,
+    port: int,
+    reload: bool = False,
+    factory: bool = False,
+) -> None:
+    """Run uvicorn for the given app target with the common server settings."""
+    uvicorn.run(
+        app_target,
+        host=host,
+        port=port,
+        log_level="info",
+        reload=reload,
+        factory=factory,
+    )
 
-    runtime_app = create_app(config_path=args.config)
-    runtime: AppRuntime = runtime_app.state.runtime
-    host = runtime.config.server.host
-    port = runtime.config.server.port
+
+def _run_server_with_port_fallback(
+    app_target: FastAPI | str,
+    *,
+    host: str,
+    port: int,
+    reload: bool = False,
+    factory: bool = False,
+) -> None:
+    """Run uvicorn on the configured port, retrying the backup port on bind errors."""
     try:
-        uvicorn.run(
-            runtime_app,
+        _run_server(
+            app_target,
             host=host,
             port=port,
-            log_level="info",
+            reload=reload,
+            factory=factory,
         )
     except OSError as exc:
         if port != 80:
@@ -171,11 +198,12 @@ def main() -> None:
             exc_info=True,
         )
         try:
-            uvicorn.run(
-                runtime_app,
+            _run_server(
+                app_target,
                 host=host,
                 port=BACKUP_SERVER_PORT,
-                log_level="info",
+                reload=reload,
+                factory=factory,
             )
         except OSError:
             LOGGER.error(
@@ -184,6 +212,44 @@ def main() -> None:
                 exc_info=True,
             )
             raise
+
+
+def main() -> None:
+    """Entry point for the ``vibesensor-server`` CLI command."""
+    os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
+    parser = argparse.ArgumentParser(description="Run VibeSensor server")
+    parser.add_argument("--config", type=Path, default=None, help="Path to config YAML")
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Enable uvicorn auto-reload for local development.",
+    )
+    args = parser.parse_args()
+
+    if args.reload:
+        config = load_config(args.config)
+        host = config.server.host
+        port = config.server.port
+        if args.config is None:
+            os.environ.pop(_CONFIG_PATH_ENV, None)
+        else:
+            os.environ[_CONFIG_PATH_ENV] = str(args.config.resolve())
+        _run_server_with_port_fallback(
+            "vibesensor.app.bootstrap:create_app_from_env",
+            host=host,
+            port=port,
+            reload=True,
+            factory=True,
+        )
+        return
+
+    runtime_app = create_app(config_path=args.config)
+    runtime: AppRuntime = runtime_app.state.runtime
+    _run_server_with_port_fallback(
+        runtime_app,
+        host=runtime.config.server.host,
+        port=runtime.config.server.port,
+    )
 
 
 if __name__ == "__main__":
