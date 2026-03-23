@@ -9,6 +9,7 @@ names, while endpoint-specific HTTP wrappers remain local to
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any, Literal, Required, TypeAlias
 
 from pydantic import ConfigDict
@@ -23,6 +24,7 @@ from vibesensor.shared.types.analysis_views import (
     PlotDataResult,
     SpeedBreakdownRow,
 )
+from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 __all__ = [
     "AmplitudeMetric",
@@ -38,6 +40,9 @@ __all__ = [
     "OutlierSummaryResponse",
     "PayloadObject",
     "PayloadValue",
+    "payload_object_from_json",
+    "payload_objects_from_json",
+    "payload_value_from_json",
     "PhaseInfoResponse",
     "PhaseIntensityStatsResponse",
     "PhaseSegmentSummaryResponse",
@@ -52,6 +57,23 @@ __all__ = [
 
 PayloadObject: TypeAlias = dict[str, object]
 PayloadValue: TypeAlias = None | bool | int | float | str | list[object] | PayloadObject
+
+
+def payload_value_from_json(value: JsonValue | None) -> PayloadValue:
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, list):
+        return [payload_value_from_json(item) for item in value]
+    return payload_object_from_json(value)
+
+
+def payload_object_from_json(value: JsonObject) -> PayloadObject:
+    return {key: payload_value_from_json(item) for key, item in value.items()}
+
+
+def payload_objects_from_json(values: Sequence[JsonObject]) -> list[PayloadObject]:
+    return [payload_object_from_json(value) for value in values]
+
 
 _FORBID_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
 _IGNORE_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="ignore")

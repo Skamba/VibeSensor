@@ -12,7 +12,7 @@ from vibesensor.shared.boundaries.analysis_summary import (
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_summary,
 )
-from vibesensor.shared.types.history_analysis_contracts import PayloadObject
+from vibesensor.shared.types.history_analysis_contracts import payload_object_from_json
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -48,7 +48,7 @@ def build_post_analysis_summary(
         "total_sample_count": total_sample_count,
         "sampling_method": "full" if stride == 1 else f"stride_{stride}",
     }
-    summary_payload["analysis_metadata"] = cast(PayloadObject, analysis_metadata)
+    summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
 
     if stride > 1:
         stride_check = SuitabilityCheck(
