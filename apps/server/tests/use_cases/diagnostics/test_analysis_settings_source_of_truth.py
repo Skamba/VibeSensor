@@ -8,12 +8,12 @@ from test_support import response_payload
 
 from tests.conftest import FakeState
 from vibesensor.adapters.http import create_router
-from vibesensor.infra.config.settings_store import SettingsStore
-from vibesensor.shared.types.api_models import (
+from vibesensor.adapters.http.models import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
     CarUpsertRequest,
 )
+from vibesensor.infra.config.settings_store import SettingsStore
 
 
 def _route(router, path: str, method: str = "GET"):

@@ -15,7 +15,7 @@ from typing import Any, Literal
 from pydantic import ConfigDict, TypeAdapter, ValidationError
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
-from vibesensor._data_files import resolve_static_data_file
+from vibesensor.shared._data_files import resolve_static_data_file
 
 LOGGER = logging.getLogger(__name__)
 

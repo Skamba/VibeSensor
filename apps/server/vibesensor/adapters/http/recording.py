@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-from vibesensor.shared.types.api_models import RecordingStatusResponse
+from vibesensor.adapters.http.models import RecordingStatusResponse
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.run import RunRecorder
