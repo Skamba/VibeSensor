@@ -143,6 +143,9 @@ def test_car_library_models_response_accepts_actual_data() -> None:
         assert m.type == "Sedan"
         assert isinstance(m.model, str)
         assert len(m.gearboxes) > 0
+        for gearbox in m.gearboxes:
+            if gearbox.gear_ratios is not None:
+                assert len(gearbox.gear_ratios) > 0
         assert len(m.tire_options) > 0
         assert m.tire_width_mm > 0
         assert m.tire_aspect_pct > 0

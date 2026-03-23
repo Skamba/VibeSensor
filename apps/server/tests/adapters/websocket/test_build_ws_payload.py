@@ -259,7 +259,14 @@ def test_build_ws_payload_returns_required_keys() -> None:
     payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
 
     # Always-present keys
-    for key in ("server_time", "speed_mps", "clients", "selected_client_id", "rotational_speeds"):
+    for key in (
+        "schema_version",
+        "server_time",
+        "speed_mps",
+        "clients",
+        "selected_client_id",
+        "rotational_speeds",
+    ):
         assert key in payload, f"missing key: {key}"
 
     # Heavy-tick keys
@@ -271,11 +278,12 @@ def test_build_ws_payload_returns_required_keys() -> None:
     _assert_rotational(payload["rotational_speeds"], rpm_positive=True)
 
 
-def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
+def test_build_ws_payload_light_tick_omits_only_spectra() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
     payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
 
     assert "spectra" not in payload
+    assert payload["selected_client_id"] == "aaaaaaaaaaaa"
 
 
 def test_build_ws_payload_auto_selects_first_client() -> None:

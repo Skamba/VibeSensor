@@ -50,11 +50,15 @@ def _project_history_analysis(
 
 def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
     """Project persisted analysis fields in a history run for API responses."""
-    payload = run.to_json_object()
-    if run.analysis is None:
-        return payload
-    projected, _ = _project_history_analysis(run.analysis.to_json_object(), strip_internal=True)
-    payload["analysis"] = projected
+    payload: JsonObject = {
+        "run_id": run.run_id,
+        "status": run.status.value,
+        "sample_count": run.sample_count,
+        "metadata": run.metadata.to_dict(),
+    }
+    if run.analysis is not None:
+        projected, _ = _project_history_analysis(run.analysis.to_json_object(), strip_internal=True)
+        payload["analysis"] = projected
     return payload
 
 

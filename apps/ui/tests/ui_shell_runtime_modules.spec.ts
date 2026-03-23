@@ -268,7 +268,7 @@ test.describe("createUiShellPreferencesModule", () => {
         return jsonResponse({ language: "nl" });
       }
       if (url.endsWith("/api/settings/speed-unit")) {
-        return jsonResponse({ speedUnit: "mps" });
+        return jsonResponse({ speed_unit: "mps" });
       }
       throw new Error(`Unexpected request: ${url}`);
     }) as typeof fetch;
@@ -314,7 +314,7 @@ test.describe("createUiShellPreferencesModule", () => {
         method: init?.method ?? "GET",
         body: String(init?.body ?? ""),
       });
-      return jsonResponse({ speedUnit: "mps" });
+      return jsonResponse({ speed_unit: "mps" });
     }) as typeof fetch;
 
     let renderSpeedReadoutCalls = 0;
@@ -342,7 +342,7 @@ test.describe("createUiShellPreferencesModule", () => {
       {
         url: "/api/settings/speed-unit",
         method: "POST",
-        body: JSON.stringify({ speedUnit: "mps" }),
+        body: JSON.stringify({ speed_unit: "mps" }),
       },
     ]);
     expect(state.speedUnit).toBe("mps");

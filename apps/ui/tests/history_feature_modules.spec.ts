@@ -69,12 +69,20 @@ function jsonResponse(body: unknown, init?: ResponseInit): Response {
 function historyInsightsPayload(runId: string, sensorCountUsed: number) {
   return {
     run_id: runId,
+    status: "complete" as const,
     start_time_utc: "2026-01-01T00:00:00Z",
     duration_s: 12.3,
     sensor_count_used: sensorCountUsed,
     findings: [],
     warnings: [],
     sensor_intensity_by_location: [],
+  };
+}
+
+function historyInsightsAnalyzingPayload(runId: string) {
+  return {
+    run_id: runId,
+    status: "analyzing" as const,
   };
 }
 
@@ -200,6 +208,53 @@ test("history detail module loads preview and reloads expanded run on language c
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=nl",
     "/api/history/run-001/insights?lang=nl",
+  ]);
+});
+
+test("history detail module treats analyzing insights responses as not-yet-available", async () => {
+  const state = createAppState();
+  const { els } = createHistoryElements();
+  const originalFetch = globalThis.fetch;
+  const requests: string[] = [];
+  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
+    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
+    requests.push(url);
+    if (url === "/api/history/run-001/insights?lang=en") {
+      return jsonResponse(historyInsightsAnalyzingPayload("run-001"), { status: 202 });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  }) as typeof fetch;
+
+  let renderCalls = 0;
+  const module = createHistoryDetailModule({
+    state,
+    els,
+    t: testTranslation,
+    escapeHtml: (value) => String(value ?? ""),
+    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
+    collapseExpandedRun: () => {
+      state.expandedRunId = null;
+    },
+    renderHistoryTable: () => {
+      renderCalls += 1;
+    },
+  });
+
+  try {
+    await module.loadRunPreview("run-001");
+    await module.loadRunInsights("run-001", true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  expect(state.runDetailsById["run-001"]?.preview).toBeNull();
+  expect(state.runDetailsById["run-001"]?.previewError).toBe("");
+  expect(state.runDetailsById["run-001"]?.insights).toBeNull();
+  expect(state.runDetailsById["run-001"]?.insightsError).toBe("");
+  expect(renderCalls).toBeGreaterThanOrEqual(4);
+  expect(requests).toEqual([
+    "/api/history/run-001/insights?lang=en",
+    "/api/history/run-001/insights?lang=en",
   ]);
 });
 

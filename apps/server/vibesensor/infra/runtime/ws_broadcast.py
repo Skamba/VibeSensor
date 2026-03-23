@@ -95,6 +95,8 @@ class WsBroadcastService:
             "server_time": utc_now_iso(),
             "speed_mps": speed_mps,
             "clients": clients,
+            "selected_client_id": None,
+            "rotational_speeds": None,
         }
         analysis_settings_snapshot = self._settings_store.analysis_settings_snapshot()
         speed_source = self._settings_store.get_speed_source()

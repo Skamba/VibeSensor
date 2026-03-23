@@ -16,17 +16,17 @@ export interface components {
     /** LiveWsPayload */
     LiveWsPayload: {
       /** Clients */
-      clients?: components["schemas"]["ClientApiRow"][];
-      rotational_speeds?: components["schemas"]["RotationalSpeedsPayload"] | null;
+      clients: components["schemas"]["ClientApiRow"][];
+      rotational_speeds: components["schemas"]["RotationalSpeedsPayload"] | null;
       /** Schema Version */
-      schema_version?: string;
+      schema_version: string;
       /** Selected Client Id */
-      selected_client_id?: string | null;
+      selected_client_id: string | null;
       /** Server Time */
-      server_time?: string;
+      server_time: string;
       spectra?: components["schemas"]["SpectraPayload"];
       /** Speed Mps */
-      speed_mps?: number | null;
+      speed_mps: number | null;
     };
     /** AlignmentInfoPayload */
     AlignmentInfoPayload: {
