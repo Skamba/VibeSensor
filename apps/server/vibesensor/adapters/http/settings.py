@@ -177,6 +177,13 @@ def create_settings_routes(
         result = await asyncio.to_thread(settings_store.add_car, payload)
         return _cars_response(result)
 
+    @router.put("/api/settings/cars/active", response_model=CarsResponse)
+    async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
+        car_id = req.car_id
+        with domain_errors_to_http(catch_value_error=404):
+            result = await asyncio.to_thread(settings_store.set_active_car, car_id)
+        return _cars_response(result)
+
     @router.put("/api/settings/cars/{car_id}", response_model=CarsResponse)
     async def update_car(car_id: str, req: CarUpsertRequest) -> CarsResponse:
         payload = _car_upsert_payload(req)
@@ -199,13 +206,6 @@ def create_settings_routes(
             result = await asyncio.to_thread(settings_store.delete_car, car_id)
         return _cars_response(result)
 
-    @router.post("/api/settings/cars/active", response_model=CarsResponse)
-    async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
-        car_id = req.car_id
-        with domain_errors_to_http(catch_value_error=404):
-            result = await asyncio.to_thread(settings_store.set_active_car, car_id)
-        return _cars_response(result)
-
     # -- speed source ----------------------------------------------------------
 
     async def _apply_speed_source_update(req: SpeedSourceRequest) -> SpeedSourceResponse:
@@ -220,7 +220,7 @@ def create_settings_routes(
     async def get_speed_source() -> SpeedSourceResponse:
         return _speed_source_response(settings_store.get_speed_source())
 
-    @router.post("/api/settings/speed-source", response_model=SpeedSourceResponse)
+    @router.put("/api/settings/speed-source", response_model=SpeedSourceResponse)
     async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
         return await _apply_speed_source_update(req)
 
@@ -264,7 +264,7 @@ def create_settings_routes(
     async def get_language() -> LanguageResponse:
         return LanguageResponse(language=settings_store.language)
 
-    @router.post("/api/settings/language", response_model=LanguageResponse)
+    @router.put("/api/settings/language", response_model=LanguageResponse)
     async def set_language(req: LanguageRequest) -> LanguageResponse:
         with domain_errors_to_http(catch_value_error=400):
             language = await asyncio.to_thread(settings_store.set_language, req.language)
@@ -274,7 +274,7 @@ def create_settings_routes(
     async def get_speed_unit() -> SpeedUnitResponse:
         return SpeedUnitResponse(speed_unit=settings_store.speed_unit)
 
-    @router.post("/api/settings/speed-unit", response_model=SpeedUnitResponse)
+    @router.put("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def set_speed_unit(req: SpeedUnitRequest) -> SpeedUnitResponse:
         with domain_errors_to_http(catch_value_error=400):
             unit = await asyncio.to_thread(settings_store.set_speed_unit, req.speed_unit)
@@ -286,7 +286,7 @@ def create_settings_routes(
     async def get_analysis_settings() -> AnalysisSettingsResponse:
         return _analysis_settings_response()
 
-    @router.post("/api/settings/analysis", response_model=AnalysisSettingsResponse)
+    @router.put("/api/settings/analysis", response_model=AnalysisSettingsResponse)
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> AnalysisSettingsResponse:
         changes = _analysis_settings_payload(req)
         if changes:

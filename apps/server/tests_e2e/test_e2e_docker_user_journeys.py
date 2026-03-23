@@ -136,7 +136,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             api_json(
                 base_url,
                 "/api/settings/cars/active",
-                method="POST",
+                method="PUT",
                 body={"car_id": created_car_id},
             )
             cars_active = api_json(base_url, "/api/settings/cars")
@@ -189,7 +189,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             api_json(
                 base_url,
                 "/api/settings/speed-source",
-                method="POST",
+                method="PUT",
                 body={"speed_source": "manual", "manual_speed_kph": 80},
             )
             speed_now = api_json(base_url, "/api/settings/speed-source")
@@ -233,7 +233,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
 
         if journey_group == "language_pdf":
             # E2E-8: Language differences in insights and PDF report.
-            api_json(base_url, "/api/settings/language", method="POST", body={"language": "nl"})
+            api_json(base_url, "/api/settings/language", method="PUT", body={"language": "nl"})
             start_3 = api_json(base_url, "/api/recording/start", method="POST")
             run_id_3 = str(start_3["run_id"])
             run_simulator(
@@ -291,7 +291,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
         api_json(
             base_url,
             "/api/settings/speed-source",
-            method="POST",
+            method="PUT",
             body={
                 "speed_source": speed_source_before["speed_source"],
                 "manual_speed_kph": speed_source_before["manual_speed_kph"],
@@ -300,7 +300,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
         api_json(
             base_url,
             "/api/settings/language",
-            method="POST",
+            method="PUT",
             body={"language": language_before},
         )
         if created_car_id is not None:
@@ -308,7 +308,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 api_json(
                     base_url,
                     "/api/settings/cars/active",
-                    method="POST",
+                    method="PUT",
                     body={"car_id": original_active_car_id},
                 )
             api_json(

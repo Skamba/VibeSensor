@@ -36,19 +36,19 @@ def check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
 def set_server_speed_override_kmh(
     host: str, port: int, speed_kmh: float, timeout_s: float
 ) -> float | None:
-    payload = json.dumps({"speedSource": "manual", "manualSpeedKph": float(speed_kmh)}).encode(
+    payload = json.dumps({"speed_source": "manual", "manual_speed_kph": float(speed_kmh)}).encode(
         "utf-8"
     )
     req = Request(
         _speed_source_url(host, port),
         data=payload,
-        method="POST",
+        method="PUT",
         headers={"Content-Type": "application/json"},
     )
     with urlopen(req, timeout=timeout_s) as resp:
         body = resp.read()
     parsed = json.loads(body.decode("utf-8")) if body else {}
-    value = parsed.get("manualSpeedKph")
+    value = parsed.get("manual_speed_kph")
     return float(value) if isinstance(value, (int, float)) else None
 
 

@@ -51,9 +51,9 @@ async def test_analysis_settings_endpoint_updates_active_car_aspects(_wiring) ->
     state, router = _wiring
     settings_store = state.settings_store
 
-    set_analysis = _route(router, "/api/settings/analysis", "POST")
+    set_analysis = _route(router, "/api/settings/analysis", "PUT")
     get_cars = _route(router, "/api/settings/cars", "GET")
-    set_active = _route(router, "/api/settings/cars/active", "POST")
+    set_active = _route(router, "/api/settings/cars/active", "PUT")
     add_car = _route(router, "/api/settings/cars", "POST")
 
     await set_analysis(AnalysisSettingsRequest(tire_width_mm=255.0))

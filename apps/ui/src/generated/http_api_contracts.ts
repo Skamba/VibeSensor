@@ -129,7 +129,7 @@ export interface paths {
     /** Get Analysis Settings */
     get: operations["get_analysis_settings_api_settings_analysis_get"];
     /** Set Analysis Settings */
-    post: operations["set_analysis_settings_api_settings_analysis_post"];
+    put: operations["set_analysis_settings_api_settings_analysis_put"];
   };
   "/api/settings/cars": {
     /** Get Cars */
@@ -139,7 +139,7 @@ export interface paths {
   };
   "/api/settings/cars/active": {
     /** Set Active Car */
-    post: operations["set_active_car_api_settings_cars_active_post"];
+    put: operations["set_active_car_api_settings_cars_active_put"];
   };
   "/api/settings/cars/{car_id}": {
     /** Update Car */
@@ -151,7 +151,7 @@ export interface paths {
     /** Get Language */
     get: operations["get_language_api_settings_language_get"];
     /** Set Language */
-    post: operations["set_language_api_settings_language_post"];
+    put: operations["set_language_api_settings_language_put"];
   };
   "/api/settings/sensors": {
     /** Get Sensors */
@@ -167,7 +167,7 @@ export interface paths {
     /** Get Speed Source */
     get: operations["get_speed_source_api_settings_speed_source_get"];
     /** Update Speed Source */
-    post: operations["update_speed_source_api_settings_speed_source_post"];
+    put: operations["update_speed_source_api_settings_speed_source_put"];
   };
   "/api/settings/speed-source/status": {
     /** Get Speed Source Status */
@@ -177,7 +177,7 @@ export interface paths {
     /** Get Speed Unit */
     get: operations["get_speed_unit_api_settings_speed_unit_get"];
     /** Set Speed Unit */
-    post: operations["set_speed_unit_api_settings_speed_unit_post"];
+    put: operations["set_speed_unit_api_settings_speed_unit_put"];
   };
   "/api/update/cancel": {
     /** Cancel Update */
@@ -2735,7 +2735,7 @@ export interface operations {
     };
   };
   /** Set Analysis Settings */
-  set_analysis_settings_api_settings_analysis_post: {
+  set_analysis_settings_api_settings_analysis_put: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["AnalysisSettingsRequest"];
@@ -2790,7 +2790,7 @@ export interface operations {
     };
   };
   /** Set Active Car */
-  set_active_car_api_settings_cars_active_post: {
+  set_active_car_api_settings_cars_active_put: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["ActiveCarRequest"];
@@ -2872,7 +2872,7 @@ export interface operations {
     };
   };
   /** Set Language */
-  set_language_api_settings_language_post: {
+  set_language_api_settings_language_put: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["LanguageRequest"];
@@ -2965,7 +2965,7 @@ export interface operations {
     };
   };
   /** Update Speed Source */
-  update_speed_source_api_settings_speed_source_post: {
+  update_speed_source_api_settings_speed_source_put: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["SpeedSourceRequest"];
@@ -3009,7 +3009,7 @@ export interface operations {
     };
   };
   /** Set Speed Unit */
-  set_speed_unit_api_settings_speed_unit_post: {
+  set_speed_unit_api_settings_speed_unit_put: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["SpeedUnitRequest"];

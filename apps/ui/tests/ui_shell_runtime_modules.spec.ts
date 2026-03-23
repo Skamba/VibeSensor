@@ -348,7 +348,7 @@ test.describe("createUiShellPreferencesModule", () => {
     expect(requests).toEqual([
       {
         url: "/api/settings/speed-unit",
-        method: "POST",
+        method: "PUT",
         body: JSON.stringify({ speed_unit: "mps" }),
       },
     ]);
