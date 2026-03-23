@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import Any, Literal
+
+from pydantic import ConfigDict
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
@@ -133,7 +136,7 @@ class DebugSpectrumErrorPayload(TypedDict):
     fft_n: int
 
 
-class DebugSpectrumPayload(TypedDict, total=False):
+class DebugSpectrumPayload(TypedDict):
     client_id: str
     sample_rate_hz: int
     fft_n: int
@@ -148,8 +151,6 @@ class DebugSpectrumPayload(TypedDict, total=False):
     vibration_strength_db: float
     top_bins_by_amplitude: list[DebugSpectrumTopBinPayload]
     strength_peaks: list[StrengthPeak]
-    error: str
-    count: int
 
 
 class RawSamplesErrorPayload(TypedDict):
@@ -164,6 +165,24 @@ class RawSamplesPayload(TypedDict):
     x: list[float]
     y: list[float]
     z: list[float]
+
+
+WsErrorCode = Literal["payload_build_failed"]
+
+
+class WsErrorPayload(TypedDict):
+    error: WsErrorCode
+
+
+class WsClientSelectionPayload(TypedDict, total=False):
+    client_id: str | None
+
+
+def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:
+    typed_dict.__pydantic_config__ = config
+
+
+_configure_pydantic_schema(WsClientSelectionPayload, ConfigDict(extra="ignore"))
 
 
 class TimeAlignmentSensorPayload(TypedDict):

@@ -706,48 +706,35 @@ export interface components {
       /** Stddev Kmh */
       stddev_kmh: number | null;
     };
-    /** DebugSpectrumErrorPayload */
-    DebugSpectrumErrorPayload: {
-      /** Count */
-      count: number;
-      /** Error */
-      error: string;
-      /** Fft N */
-      fft_n: number;
-    };
     /** DebugSpectrumPayload */
     DebugSpectrumPayload: {
       /** Client Id */
-      client_id?: string;
-      /** Count */
-      count?: number;
+      client_id: string;
       /** Detrended Std G */
-      detrended_std_g?: number[];
-      /** Error */
-      error?: string;
+      detrended_std_g: number[];
       /** Fft N */
-      fft_n?: number;
+      fft_n: number;
       /** Fft Scale */
-      fft_scale?: number;
+      fft_scale: number;
       /** Freq Bins */
-      freq_bins?: number;
+      freq_bins: number;
       /** Freq Resolution Hz */
-      freq_resolution_hz?: number;
-      raw_stats?: components["schemas"]["DebugSpectrumStatsPayload"];
+      freq_resolution_hz: number;
+      raw_stats: components["schemas"]["DebugSpectrumStatsPayload"];
       /** Sample Rate Hz */
-      sample_rate_hz?: number;
+      sample_rate_hz: number;
       /** Spectrum Max Hz */
-      spectrum_max_hz?: number;
+      spectrum_max_hz: number;
       /** Spectrum Min Hz */
-      spectrum_min_hz?: number;
+      spectrum_min_hz: number;
       /** Strength Peaks */
-      strength_peaks?: components["schemas"]["StrengthPeak"][];
+      strength_peaks: components["schemas"]["StrengthPeak"][];
       /** Top Bins By Amplitude */
-      top_bins_by_amplitude?: components["schemas"]["DebugSpectrumTopBinPayload"][];
+      top_bins_by_amplitude: components["schemas"]["DebugSpectrumTopBinPayload"][];
       /** Vibration Strength Db */
-      vibration_strength_db?: number;
+      vibration_strength_db: number;
       /** Window */
-      window?: string;
+      window: string;
     };
     /** DebugSpectrumStatsPayload */
     DebugSpectrumStatsPayload: {
@@ -965,7 +952,6 @@ export interface components {
       total_samples?: number | null;
       /** Vibration Strength Db */
       vibration_strength_db?: number | null;
-      [key: string]: unknown;
     };
     /**
      * FindingPayload
@@ -1448,7 +1434,6 @@ export interface components {
       top_location?: string | null;
       /** Weak Spatial Separation */
       weak_spatial_separation?: boolean | null;
-      [key: string]: unknown;
     };
     /**
      * LocationIntensitySummaryResponse
@@ -1524,7 +1509,6 @@ export interface components {
       speed_kmh?: number | null;
       /** T S */
       t_s?: number | null;
-      [key: string]: unknown;
     };
     /**
      * OutlierSummaryResponse
@@ -1581,7 +1565,6 @@ export interface components {
       suspected_source: string;
       /** Typical Speed Band */
       typical_speed_band: string;
-      [key: string]: unknown;
     };
     /**
      * PhaseBoundary
@@ -1604,7 +1587,6 @@ export interface components {
       cruise_fraction?: number | null;
       /** Phases Detected */
       phases_detected?: string[];
-      [key: string]: unknown;
     };
     /**
      * PhaseInfoResponse
@@ -1749,14 +1731,6 @@ export interface components {
       } | null;
       /** Vib Magnitude */
       vib_magnitude: [number, number, string][];
-      [key: string]: unknown;
-    };
-    /** RawSamplesErrorPayload */
-    RawSamplesErrorPayload: {
-      /** Count */
-      count: number;
-      /** Error */
-      error: string;
     };
     /** RawSamplesPayload */
     RawSamplesPayload: {
@@ -1900,7 +1874,6 @@ export interface components {
       y_bin_width?: number | null;
       /** Y Bins */
       y_bins: number[];
-      [key: string]: unknown;
     };
     /**
      * SpeedBreakdownRow
@@ -2451,7 +2424,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["RawSamplesPayload"] | components["schemas"]["RawSamplesErrorPayload"];
+          "application/json": components["schemas"]["RawSamplesPayload"];
         };
       };
       /** @description Validation Error */
@@ -2476,7 +2449,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["DebugSpectrumPayload"] | components["schemas"]["DebugSpectrumErrorPayload"];
+          "application/json": components["schemas"]["DebugSpectrumPayload"];
         };
       };
       /** @description Validation Error */

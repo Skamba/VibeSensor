@@ -157,11 +157,14 @@ def _make_bad_data_file(tmp_path: Path, kind: str) -> Path:
     if kind == "missing":
         return tmp_path / "nonexistent.json"
     bad_file = tmp_path / "bad.json"
+    if kind == "schema_drift":
+        bad_file.write_text('[{"brand":"BMW","type":"Sedan","model":"Broken"}]')
+        return bad_file
     bad_file.write_text("not valid json {{{")
     return bad_file
 
 
-@pytest.mark.parametrize("kind", ["missing", "invalid_json"])
+@pytest.mark.parametrize("kind", ["missing", "invalid_json", "schema_drift"])
 def test_load_library_handles_bad_data(tmp_path: Path, kind: str) -> None:
     """_load_library gracefully returns [] when the data file is missing or malformed."""
     from unittest.mock import patch

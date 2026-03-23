@@ -1648,38 +1648,11 @@
         "title": "DataQualitySpeedCoverageResponse",
         "type": "object"
       },
-      "DebugSpectrumErrorPayload": {
-        "properties": {
-          "count": {
-            "title": "Count",
-            "type": "integer"
-          },
-          "error": {
-            "title": "Error",
-            "type": "string"
-          },
-          "fft_n": {
-            "title": "Fft N",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "error",
-          "count",
-          "fft_n"
-        ],
-        "title": "DebugSpectrumErrorPayload",
-        "type": "object"
-      },
       "DebugSpectrumPayload": {
         "properties": {
           "client_id": {
             "title": "Client Id",
             "type": "string"
-          },
-          "count": {
-            "title": "Count",
-            "type": "integer"
           },
           "detrended_std_g": {
             "items": {
@@ -1687,10 +1660,6 @@
             },
             "title": "Detrended Std G",
             "type": "array"
-          },
-          "error": {
-            "title": "Error",
-            "type": "string"
           },
           "fft_n": {
             "title": "Fft N",
@@ -1746,6 +1715,22 @@
             "type": "string"
           }
         },
+        "required": [
+          "client_id",
+          "sample_rate_hz",
+          "fft_n",
+          "fft_scale",
+          "window",
+          "spectrum_min_hz",
+          "spectrum_max_hz",
+          "freq_bins",
+          "freq_resolution_hz",
+          "raw_stats",
+          "detrended_std_g",
+          "vibration_strength_db",
+          "top_bins_by_amplitude",
+          "strength_peaks"
+        ],
         "title": "DebugSpectrumPayload",
         "type": "object"
       },
@@ -2195,7 +2180,6 @@
         "type": "object"
       },
       "FindingEvidenceMetrics": {
-        "additionalProperties": true,
         "description": "HTTP contract for serialized evidence metrics attached to a finding.",
         "properties": {
           "burstiness": {
@@ -3807,7 +3791,6 @@
         "type": "object"
       },
       "LocationHotspotPayload": {
-        "additionalProperties": true,
         "description": "HTTP contract for serialized location-hotspot evidence.",
         "properties": {
           "ambiguous_location": {
@@ -4074,7 +4057,6 @@
         "type": "object"
       },
       "MatchedPoint": {
-        "additionalProperties": true,
         "description": "HTTP contract for one serialized finding matched-point observation.",
         "properties": {
           "amp": {
@@ -4218,7 +4200,6 @@
         "type": "object"
       },
       "PeakTableRow": {
-        "additionalProperties": true,
         "description": "Typed HTTP contract for one ranked peak table row.",
         "properties": {
           "burstiness": {
@@ -4393,7 +4374,6 @@
         "type": "object"
       },
       "PhaseEvidence": {
-        "additionalProperties": true,
         "description": "HTTP contract for optional driving-phase evidence attached to a finding.",
         "properties": {
           "cruise_fraction": {
@@ -4766,7 +4746,6 @@
         "type": "object"
       },
       "PlotDataResult": {
-        "additionalProperties": true,
         "description": "Typed HTTP contract for serialized plot data attached to a run summary.",
         "properties": {
           "amp_vs_phase": {
@@ -4937,24 +4916,6 @@
           "phase_boundaries"
         ],
         "title": "PlotDataResult",
-        "type": "object"
-      },
-      "RawSamplesErrorPayload": {
-        "properties": {
-          "count": {
-            "title": "Count",
-            "type": "integer"
-          },
-          "error": {
-            "title": "Error",
-            "type": "string"
-          }
-        },
-        "required": [
-          "error",
-          "count"
-        ],
-        "title": "RawSamplesErrorPayload",
         "type": "object"
       },
       "RawSamplesPayload": {
@@ -5265,7 +5226,6 @@
         "type": "object"
       },
       "SpectrogramResult": {
-        "additionalProperties": true,
         "description": "Typed HTTP contract for a serialized spectrogram grid.",
         "properties": {
           "cells": {
@@ -6763,15 +6723,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/RawSamplesPayload"
-                    },
-                    {
-                      "$ref": "#/components/schemas/RawSamplesErrorPayload"
-                    }
-                  ],
-                  "title": "Response Debug Raw Samples Api Debug Raw Samples  Client Id  Get"
+                  "$ref": "#/components/schemas/RawSamplesPayload"
                 }
               }
             },
@@ -6811,15 +6763,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/DebugSpectrumPayload"
-                    },
-                    {
-                      "$ref": "#/components/schemas/DebugSpectrumErrorPayload"
-                    }
-                  ],
-                  "title": "Response Debug Spectrum Api Debug Spectrum  Client Id  Get"
+                  "$ref": "#/components/schemas/DebugSpectrumPayload"
                 }
               }
             },
