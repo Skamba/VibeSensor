@@ -122,9 +122,9 @@ class TestConfidenceNanGuard:
 
 _VALIDATION_REJECT_CASES = [
     pytest.param(CarUpsertRequest, {"name": "x" * 65}, id="car_name_too_long"),
-    pytest.param(SpeedSourceRequest, {"manualSpeedKph": -10}, id="speed_negative"),
-    pytest.param(SpeedSourceRequest, {"manualSpeedKph": 501}, id="speed_too_high"),
-    pytest.param(SpeedSourceRequest, {"staleTimeoutS": 301}, id="stale_timeout_too_high"),
+    pytest.param(SpeedSourceRequest, {"manual_speed_kph": -10}, id="speed_negative"),
+    pytest.param(SpeedSourceRequest, {"manual_speed_kph": 501}, id="speed_too_high"),
+    pytest.param(SpeedSourceRequest, {"stale_timeout_s": 301}, id="stale_timeout_too_high"),
     pytest.param(SensorRequest, {"name": "x" * 65}, id="sensor_name_too_long"),
     pytest.param(SensorRequest, {"location_code": "x" * 65}, id="sensor_location_too_long"),
 ]
@@ -143,8 +143,8 @@ class TestApiModelValidationBounds:
         assert req.name == "x" * 64
 
     def test_speed_source_valid_speed_ok(self) -> None:
-        req = SpeedSourceRequest(manualSpeedKph=120)
-        assert req.manualSpeedKph == 120
+        req = SpeedSourceRequest(manual_speed_kph=120)
+        assert req.manual_speed_kph == 120
 
     def test_sensor_request_valid_ok(self) -> None:
         req = SensorRequest(name="MySensor", location_code="front_left")

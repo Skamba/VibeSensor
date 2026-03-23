@@ -4,14 +4,14 @@
       "ActiveCarRequest": {
         "description": "Request body for selecting the active car profile.",
         "properties": {
-          "carId": {
+          "car_id": {
             "minLength": 1,
-            "title": "Carid",
+            "title": "Car Id",
             "type": "string"
           }
         },
         "required": [
-          "carId"
+          "car_id"
         ],
         "title": "ActiveCarRequest",
         "type": "object"
@@ -65,7 +65,7 @@
         "type": "object"
       },
       "AmplitudeMetric": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "HTTP contract for finding amplitude/strength metadata.",
         "properties": {
           "definition": {
@@ -406,7 +406,7 @@
         "type": "object"
       },
       "AnalysisSummaryResponse": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "Typed HTTP contract for the persisted analysis summary on one history run.",
         "properties": {
           "accel_scale_g_per_lsb": {
@@ -425,6 +425,17 @@
             "title": "Analysis Metadata",
             "type": "object"
           },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
           "data_quality": {
             "$ref": "#/components/schemas/DataQualityResponse"
           },
@@ -435,24 +446,7 @@
           "end_time_utc": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -474,24 +468,7 @@
           "fft_window_size_samples": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
                 "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -502,24 +479,7 @@
           "fft_window_type": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -541,24 +501,7 @@
           "firmware_version": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -585,24 +528,7 @@
           "peak_picker_method": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -662,24 +588,7 @@
           "report_date": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -749,24 +658,7 @@
           "sensor_model": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -806,24 +698,7 @@
           "start_time_utc": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -951,13 +826,28 @@
         "type": "object"
       },
       "CarLibraryGearboxEntry": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "A gearbox option from the car library (gear ratios).",
         "properties": {
           "final_drive_ratio": {
             "exclusiveMinimum": 0.0,
             "title": "Final Drive Ratio",
             "type": "number"
+          },
+          "gear_ratios": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gear Ratios"
           },
           "name": {
             "minLength": 1,
@@ -979,7 +869,7 @@
         "type": "object"
       },
       "CarLibraryModelEntry": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "A full car library entry with brand, model, tire options, and variants.",
         "properties": {
           "brand": {
@@ -1064,7 +954,7 @@
         "type": "object"
       },
       "CarLibraryTireOptionEntry": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "A tire size option from the car library.",
         "properties": {
           "name": {
@@ -1115,7 +1005,7 @@
         "type": "object"
       },
       "CarLibraryVariantEntry": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "A specific variant/trim of a car library model entry.",
         "properties": {
           "drivetrain": {
@@ -1321,7 +1211,7 @@
       "CarsResponse": {
         "description": "Response body for the list of all car profiles with the active car ID.",
         "properties": {
-          "activeCarId": {
+          "active_car_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -1330,7 +1220,7 @@
                 "type": "null"
               }
             ],
-            "title": "Activecarid"
+            "title": "Active Car Id"
           },
           "cars": {
             "items": {
@@ -1342,7 +1232,7 @@
         },
         "required": [
           "cars",
-          "activeCarId"
+          "active_car_id"
         ],
         "title": "CarsResponse",
         "type": "object"
@@ -2580,7 +2470,7 @@
         "type": "object"
       },
       "FindingPayload": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "HTTP contract for one serialized finding in analysis history payloads.\n\nThis schema mirrors ``shared.boundaries.analysis_payload.FindingPayload``.\nIt intentionally includes a few presentation-oriented projections\n(``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,\nand the confidence label fields) alongside the domain-owned finding data.",
         "properties": {
           "amplitude_metric": {
@@ -3332,8 +3222,28 @@
         "title": "HistoryInsightWarningResponse",
         "type": "object"
       },
+      "HistoryInsightsAnalyzingResponse": {
+        "description": "Response body for a history run whose analysis is still in progress.",
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "analyzing",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "status"
+        ],
+        "title": "HistoryInsightsAnalyzingResponse",
+        "type": "object"
+      },
       "HistoryInsightsResponse": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "Response body for the localized history insights endpoint payload.",
         "properties": {
           "accel_scale_g_per_lsb": {
@@ -3352,6 +3262,17 @@
             "title": "Analysis Metadata",
             "type": "object"
           },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
           "data_quality": {
             "$ref": "#/components/schemas/DataQualityResponse"
           },
@@ -3362,24 +3283,7 @@
           "end_time_utc": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -3401,24 +3305,7 @@
           "fft_window_size_samples": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
                 "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -3429,24 +3316,7 @@
           "fft_window_type": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -3468,24 +3338,7 @@
           "firmware_version": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -3512,24 +3365,7 @@
           "peak_picker_method": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -3589,24 +3425,7 @@
           "report_date": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -3676,24 +3495,7 @@
           "sensor_model": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -3733,24 +3535,7 @@
           "start_time_utc": {
             "anyOf": [
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
                 "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
               },
               {
                 "type": "null"
@@ -3759,15 +3544,10 @@
             "title": "Start Time Utc"
           },
           "status": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Status"
+            "const": "complete",
+            "default": "complete",
+            "title": "Status",
+            "type": "string"
           },
           "test_plan": {
             "items": {
@@ -3900,7 +3680,7 @@
         "type": "object"
       },
       "HistoryRunResponse": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "Response body for a single history run with metadata and optional analysis.",
         "properties": {
           "analysis": {
@@ -3911,8 +3691,7 @@
               {
                 "type": "null"
               }
-            ],
-            "title": "Analysis"
+            ]
           },
           "metadata": {
             "additionalProperties": true,
@@ -3923,6 +3702,10 @@
             "title": "Run Id",
             "type": "string"
           },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -3930,7 +3713,8 @@
         },
         "required": [
           "run_id",
-          "status"
+          "status",
+          "sample_count"
         ],
         "title": "HistoryRunResponse",
         "type": "object"
@@ -5299,7 +5083,7 @@
         "type": "object"
       },
       "RunSuitabilityCheck": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "Typed HTTP contract for one run-suitability diagnostic check.",
         "properties": {
           "check": {
@@ -5405,16 +5189,16 @@
       "SensorsResponse": {
         "description": "Response body mapping MAC addresses to sensor config responses.",
         "properties": {
-          "sensorsByMac": {
+          "sensors_by_mac": {
             "additionalProperties": {
               "$ref": "#/components/schemas/SensorConfigResponse"
             },
-            "title": "Sensorsbymac",
+            "title": "Sensors By Mac",
             "type": "object"
           }
         },
         "required": [
-          "sensorsByMac"
+          "sensors_by_mac"
         ],
         "title": "SensorsResponse",
         "type": "object"
@@ -5594,7 +5378,7 @@
       "SpeedSourceRequest": {
         "description": "Request body for configuring the speed source (GPS, manual, OBD2, etc.).",
         "properties": {
-          "manualSpeedKph": {
+          "manual_speed_kph": {
             "anyOf": [
               {
                 "maximum": 500.0,
@@ -5605,9 +5389,9 @@
                 "type": "null"
               }
             ],
-            "title": "Manualspeedkph"
+            "title": "Manual Speed Kph"
           },
-          "speedSource": {
+          "speed_source": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/SpeedSourceKind"
@@ -5617,7 +5401,7 @@
               }
             ]
           },
-          "staleTimeoutS": {
+          "stale_timeout_s": {
             "anyOf": [
               {
                 "maximum": 120.0,
@@ -5628,7 +5412,7 @@
                 "type": "null"
               }
             ],
-            "title": "Staletimeouts"
+            "title": "Stale Timeout S"
           }
         },
         "title": "SpeedSourceRequest",
@@ -5637,7 +5421,7 @@
       "SpeedSourceResponse": {
         "description": "Response body for the current speed-source configuration.",
         "properties": {
-          "manualSpeedKph": {
+          "manual_speed_kph": {
             "anyOf": [
               {
                 "type": "number"
@@ -5646,20 +5430,20 @@
                 "type": "null"
               }
             ],
-            "title": "Manualspeedkph"
+            "title": "Manual Speed Kph"
           },
-          "speedSource": {
+          "speed_source": {
             "$ref": "#/components/schemas/SpeedSourceKind"
           },
-          "staleTimeoutS": {
-            "title": "Staletimeouts",
+          "stale_timeout_s": {
+            "title": "Stale Timeout S",
             "type": "number"
           }
         },
         "required": [
-          "speedSource",
-          "manualSpeedKph",
-          "staleTimeoutS"
+          "speed_source",
+          "manual_speed_kph",
+          "stale_timeout_s"
         ],
         "title": "SpeedSourceResponse",
         "type": "object"
@@ -5926,17 +5710,17 @@
       "SpeedUnitRequest": {
         "description": "Request body for changing the displayed speed unit.",
         "properties": {
-          "speedUnit": {
+          "speed_unit": {
             "enum": [
               "kmh",
               "mps"
             ],
-            "title": "Speedunit",
+            "title": "Speed Unit",
             "type": "string"
           }
         },
         "required": [
-          "speedUnit"
+          "speed_unit"
         ],
         "title": "SpeedUnitRequest",
         "type": "object"
@@ -5944,13 +5728,17 @@
       "SpeedUnitResponse": {
         "description": "Response body confirming the active speed unit.",
         "properties": {
-          "speedUnit": {
-            "title": "Speedunit",
+          "speed_unit": {
+            "enum": [
+              "kmh",
+              "mps"
+            ],
+            "title": "Speed Unit",
             "type": "string"
           }
         },
         "required": [
-          "speedUnit"
+          "speed_unit"
         ],
         "title": "SpeedUnitResponse",
         "type": "object"
@@ -6128,7 +5916,7 @@
         "type": "object"
       },
       "SuspectedVibrationOriginPayload": {
-        "additionalProperties": true,
+        "additionalProperties": false,
         "description": "Typed HTTP contract for the serialized likely-origin payload.",
         "properties": {
           "alternative_locations": {
@@ -7370,6 +7158,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryInsightsAnalyzingResponse"
+                }
+              }
+            },
+            "description": "Accepted"
           },
           "422": {
             "content": {

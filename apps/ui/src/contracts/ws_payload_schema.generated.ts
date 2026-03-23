@@ -529,6 +529,14 @@ export const wsPayloadSchema = {
       "title": "Speed Mps"
     }
   },
+  "required": [
+    "schema_version",
+    "server_time",
+    "speed_mps",
+    "clients",
+    "selected_client_id",
+    "rotational_speeds"
+  ],
   "title": "LiveWsPayload",
   "type": "object"
 } as const;

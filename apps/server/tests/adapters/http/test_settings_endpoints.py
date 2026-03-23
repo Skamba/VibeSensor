@@ -167,7 +167,7 @@ class TestSetActiveCarEndpoint:
         from vibesensor.shared.types.api_models import ActiveCarRequest
 
         with pytest.raises(HTTPException) as exc_info:
-            await endpoint(req=ActiveCarRequest(carId="no-such-car"))
+            await endpoint(req=ActiveCarRequest(car_id="no-such-car"))
         assert exc_info.value.status_code == 404
 
 
@@ -180,7 +180,7 @@ class TestCarsEndpoint:
 
         result = response_payload(await endpoint())
 
-        assert result["activeCarId"] == "car-1"
+        assert result["active_car_id"] == "car-1"
         assert result["cars"][0]["type"] == "sedan"
         assert result["cars"][0]["aspects"]["tire_width_mm"] == 225.0
 
@@ -216,7 +216,7 @@ class TestSpeedSourceEndpoint:
             "staleTimeoutS": 15.0,
         }
 
-        await endpoint(req=SpeedSourceRequest(speedSource="manual", manualSpeedKph=42.0))
+        await endpoint(req=SpeedSourceRequest(speed_source="manual", manual_speed_kph=42.0))
 
         state.settings_store.update_speed_source.assert_called_once_with(
             {"speedSource": "manual", "manualSpeedKph": 42.0}

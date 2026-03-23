@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .base import _ExtraAllowBase
+from .base import _StrictBase
 
 
 class CarLibraryBrandsResponse(BaseModel):
@@ -21,15 +21,16 @@ class CarLibraryTypesResponse(BaseModel):
     types: list[str]
 
 
-class CarLibraryGearboxEntry(_ExtraAllowBase):
+class CarLibraryGearboxEntry(_StrictBase):
     """A gearbox option from the car library (gear ratios)."""
 
     name: str = Field(min_length=1)
     final_drive_ratio: float = Field(gt=0)
     top_gear_ratio: float = Field(gt=0)
+    gear_ratios: list[float] | None = Field(default=None, min_length=1)
 
 
-class CarLibraryTireOptionEntry(_ExtraAllowBase):
+class CarLibraryTireOptionEntry(_StrictBase):
     """A tire size option from the car library."""
 
     name: str = Field(min_length=1)
@@ -38,7 +39,7 @@ class CarLibraryTireOptionEntry(_ExtraAllowBase):
     rim_in: float = Field(gt=0)
 
 
-class CarLibraryVariantEntry(_ExtraAllowBase):
+class CarLibraryVariantEntry(_StrictBase):
     """A specific variant/trim of a car library model entry."""
 
     name: str = Field(min_length=1)
@@ -51,7 +52,7 @@ class CarLibraryVariantEntry(_ExtraAllowBase):
     rim_in: float | None = Field(default=None, gt=0)
 
 
-class CarLibraryModelEntry(_ExtraAllowBase):
+class CarLibraryModelEntry(_StrictBase):
     """A full car library entry with brand, model, tire options, and variants."""
 
     brand: str

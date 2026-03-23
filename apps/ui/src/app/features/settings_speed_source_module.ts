@@ -40,9 +40,9 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
   }
 
   function applySpeedSourcePayload(payload: SpeedSourcePayload): void {
-    state.speedSource = payload.speedSource;
-    state.manualSpeedKph = payload.manualSpeedKph;
-    if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.staleTimeoutS);
+    state.speedSource = payload.speed_source;
+    state.manualSpeedKph = payload.manual_speed_kph;
+    if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.stale_timeout_s);
     syncSpeedSourceInputs();
     ctx.renderSpeedReadout();
   }
@@ -71,22 +71,22 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     });
     const manual = Number(els.manualSpeedInput?.value);
     const payload: SpeedSourceRequest = {
-      speedSource: src,
-      manualSpeedKph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
+      speed_source: src,
+      manual_speed_kph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
     };
     const staleVal = Number(els.staleTimeoutInput?.value);
-    if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
+    if (staleVal >= 3 && staleVal <= 120) payload.stale_timeout_s = staleVal;
     void syncSpeedSourceToServer(payload);
   }
 
   function saveHeaderManualSpeedFromInput(): void {
     const manual = Number(els.headerManualSpeedInput?.value);
     const payload: SpeedSourceRequest = {
-      speedSource: "manual",
-      manualSpeedKph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
+      speed_source: "manual",
+      manual_speed_kph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
     };
     const staleVal = Number(els.staleTimeoutInput?.value);
-    if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
+    if (staleVal >= 3 && staleVal <= 120) payload.stale_timeout_s = staleVal;
     void syncSpeedSourceToServer(payload);
   }
 

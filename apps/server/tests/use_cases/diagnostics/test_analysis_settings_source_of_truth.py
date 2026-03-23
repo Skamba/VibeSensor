@@ -64,7 +64,7 @@ async def test_analysis_settings_endpoint_updates_active_car_aspects(_wiring) ->
         await add_car(CarUpsertRequest(name="Second", aspects={"tire_width_mm": 225.0})),
     )
     second_id = cars["cars"][1]["id"]
-    await set_active(ActiveCarRequest(carId=second_id))
+    await set_active(ActiveCarRequest(car_id=second_id))
     assert settings_store.analysis_settings_snapshot().tire_width_mm == 225.0
     current = response_payload(await get_cars())
-    assert current["activeCarId"] == second_id
+    assert current["active_car_id"] == second_id

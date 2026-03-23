@@ -45,7 +45,7 @@ class LanguageRequest(_FrozenBase):
 class SpeedUnitRequest(_FrozenBase):
     """Request body for changing the displayed speed unit."""
 
-    speedUnit: SpeedUnitCode
+    speed_unit: SpeedUnitCode
 
 
 class CarUpsertRequest(_FrozenBase):
@@ -60,15 +60,15 @@ class CarUpsertRequest(_FrozenBase):
 class ActiveCarRequest(_FrozenBase):
     """Request body for selecting the active car profile."""
 
-    carId: str = Field(min_length=1)
+    car_id: str = Field(min_length=1)
 
 
 class SpeedSourceRequest(_FrozenBase):
     """Request body for configuring the speed source (GPS, manual, OBD2, etc.)."""
 
-    speedSource: SpeedSourceKind | None = None
-    manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
-    staleTimeoutS: float | None = Field(default=None, ge=3, le=120)
+    speed_source: SpeedSourceKind | None = None
+    manual_speed_kph: float | None = Field(default=None, ge=0, le=500)
+    stale_timeout_s: float | None = Field(default=None, ge=3, le=120)
 
 
 class SensorRequest(_FrozenBase):
@@ -92,15 +92,15 @@ class CarsResponse(BaseModel):
     """Response body for the list of all car profiles with the active car ID."""
 
     cars: list[CarResponse]
-    activeCarId: str | None
+    active_car_id: str | None
 
 
 class SpeedSourceResponse(BaseModel):
     """Response body for the current speed-source configuration."""
 
-    speedSource: SpeedSourceKind
-    manualSpeedKph: float | None
-    staleTimeoutS: float
+    speed_source: SpeedSourceKind
+    manual_speed_kph: float | None
+    stale_timeout_s: float
 
 
 class SpeedSourceStatusResponse(BaseModel):
@@ -135,7 +135,7 @@ class SensorConfigResponse(BaseModel):
 class SensorsResponse(BaseModel):
     """Response body mapping MAC addresses to sensor config responses."""
 
-    sensorsByMac: dict[str, SensorConfigResponse]
+    sensors_by_mac: dict[str, SensorConfigResponse]
 
 
 class LanguageResponse(BaseModel):
@@ -147,7 +147,7 @@ class LanguageResponse(BaseModel):
 class SpeedUnitResponse(BaseModel):
     """Response body confirming the active speed unit."""
 
-    speedUnit: str
+    speed_unit: SpeedUnitCode
 
 
 class AnalysisSettingsResponse(BaseModel):

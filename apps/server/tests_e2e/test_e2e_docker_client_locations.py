@@ -111,7 +111,7 @@ def test_location_reassignment_releases_previous_slot(e2e_env: dict[str, str]) -
         )
         assert moved["location_code"] == "front_left_wheel"
 
-        sensors = api_json(base, "/api/settings/sensors")["sensorsByMac"]
+        sensors = api_json(base, "/api/settings/sensors")["sensors_by_mac"]
         assert sensors[mac_1.replace(":", "")]["location_code"] == "rear_left_wheel"
         assert sensors[mac_2.replace(":", "")]["location_code"] == "front_left_wheel"
     finally:

@@ -6,7 +6,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], activeCarId: "car-1" });
+        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
         return;
       }
       await fulfillJson(route, {});
@@ -21,7 +21,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
     },
   });
   await page.route("**/api/history/**/insights**", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", duration_s: 12.3, sensor_count_used: 1, sensor_intensity_by_location: [{ location: "Front Left Wheel", p50_intensity_db: 10, p95_intensity_db: 20, max_intensity_db: 30, dropped_frames_delta: 0, queue_overflow_drops_delta: 0, sample_count: 15 }] }) });
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ run_id: "run-001", status: "complete", start_time_utc: "2026-01-01T00:00:00Z", duration_s: 12.3, sensor_count_used: 1, sensor_intensity_by_location: [{ location: "Front Left Wheel", p50_intensity_db: 10, p95_intensity_db: 20, max_intensity_db: 30, dropped_frames_delta: 0, queue_overflow_drops_delta: 0, sample_count: 15 }] }) });
   });
   await installFakeWebSocket(page);
   await page.goto("/");
