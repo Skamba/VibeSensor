@@ -106,6 +106,26 @@ async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) ->
 
 
 @pytest.mark.asyncio
+async def test_snapshot_for_rollback_keeps_latest_previous_wheel_as_secondary_fallback(
+    tmp_path: Path,
+) -> None:
+    installer, _commands, _tracker = _make_installer(tmp_path)
+    rollback_dir = tmp_path / "rollback"
+    rollback_dir.mkdir()
+    _build_fake_wheel(rollback_dir / "vibesensor-2025.6.12-py3-none-any.whl", version="2025.6.12")
+    _build_fake_wheel(rollback_dir / "vibesensor-2025.6.13-py3-none-any.whl", version="2025.6.13")
+
+    with patch("vibesensor.__version__", "2025.6.14"):
+        assert await installer.snapshot_for_rollback() is True
+
+    wheels = sorted(path.name for path in rollback_dir.glob("vibesensor-*.whl"))
+    assert wheels == [
+        "vibesensor-2025.6.13-py3-none-any.whl",
+        "vibesensor-2025.6.14-py3-none-any.whl",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_snapshot_for_rollback_fails_when_metadata_write_fails(tmp_path: Path) -> None:
     installer, _commands, tracker = _make_installer(tmp_path)
     rollback_dir = tmp_path / "rollback"
@@ -180,6 +200,61 @@ async def test_rollback_without_metadata_uses_valid_newest_wheel(tmp_path: Path)
     assert any(
         "Rollback metadata missing; falling back to newest rollback wheel without checksum pin"
         in line
+        for line in tracker.status.log_tail
+    )
+
+
+@pytest.mark.asyncio
+async def test_rollback_missing_primary_wheel_uses_secondary_fallback(tmp_path: Path) -> None:
+    installer, commands, tracker = _make_installer(tmp_path)
+    rollback_dir = tmp_path / "rollback"
+    rollback_dir.mkdir()
+    older_wheel = rollback_dir / "vibesensor-2025.6.13-py3-none-any.whl"
+    _build_fake_wheel(older_wheel, version="2025.6.13")
+    (rollback_dir / "rollback_snapshot.json").write_text(
+        json.dumps(
+            {
+                "version": "2025.6.14",
+                "wheel_name": "vibesensor-2025.6.14-py3-none-any.whl",
+                "sha256": "1" * 64,
+            },
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commands.set_response("from vibesensor import __version__", 0, "2025.6.13\n", "")
+
+    assert await installer.rollback() is True
+    assert any(str(older_wheel) in " ".join(call[0]) for call in commands.calls)
+    assert any("Using fallback rollback wheel" in line for line in tracker.status.log_tail)
+
+
+@pytest.mark.asyncio
+async def test_rollback_invalid_primary_wheel_uses_secondary_fallback(tmp_path: Path) -> None:
+    installer, commands, tracker = _make_installer(tmp_path)
+    rollback_dir = tmp_path / "rollback"
+    rollback_dir.mkdir()
+    newer_wheel = rollback_dir / "vibesensor-2025.6.14-py3-none-any.whl"
+    older_wheel = rollback_dir / "vibesensor-2025.6.13-py3-none-any.whl"
+    _build_fake_wheel(newer_wheel, version="2025.6.14")
+    _build_fake_wheel(older_wheel, version="2025.6.13")
+    (rollback_dir / "rollback_snapshot.json").write_text(
+        json.dumps(
+            {
+                "version": "2025.6.14",
+                "wheel_name": newer_wheel.name,
+                "sha256": "0" * 64,
+            },
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commands.set_response("from vibesensor import __version__", 0, "2025.6.13\n", "")
+
+    assert await installer.rollback() is True
+    assert any(str(older_wheel) in " ".join(call[0]) for call in commands.calls)
+    assert any(
+        "Primary rollback snapshot could not be used; trying older rollback wheel" in line
         for line in tracker.status.log_tail
     )
 
