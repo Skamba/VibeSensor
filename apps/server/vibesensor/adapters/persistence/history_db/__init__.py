@@ -7,7 +7,10 @@ sample-I/O, and query helpers live in focused sibling modules.
 from __future__ import annotations
 
 import logging
+import os
+import shutil
 import sqlite3
+import tempfile
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -24,6 +27,7 @@ from vibesensor.shared.boundaries.settings_snapshot_codec import settings_snapsh
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import is_json_object
+from vibesensor.shared.types.persisted_analysis import PERSISTED_ANALYSIS_SCHEMA_VERSION
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 
 # Re-export for public API.
@@ -32,6 +36,8 @@ __all__ = ["HistoryDB"]
 LOGGER = logging.getLogger(__name__)
 
 _CASE_ID_MIGRATION_SOURCE_VERSION = 8
+_SETTINGS_SNAPSHOT_MIGRATION_SOURCE_VERSION = 9
+_PERSISTED_ANALYSIS_SCHEMA_MIGRATION_SOURCE_VERSION = 10
 
 
 class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDBQueryMixin):
@@ -163,9 +169,7 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
         with self._cursor() as cur:
             cur.executescript(SCHEMA_SQL)
 
-        with self._cursor(commit=False) as cur:
-            cur.execute("PRAGMA user_version")
-            version = cur.fetchone()[0]
+        version = self._schema_version()
 
         if version == 0:
             # Check for legacy schema_meta table (pre-v5 databases).
@@ -191,18 +195,109 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
                 f"History DB schema version {version} is newer than "
                 f"supported {SCHEMA_VERSION}. Cannot downgrade.",
             )
-        if version == _CASE_ID_MIGRATION_SOURCE_VERSION:
-            self._migrate_v8_to_v9_case_id()
-            version = 9
-        if version == 9:
-            self._migrate_v9_to_v10_settings_table()
-            return
-        msg = (
-            f"Database schema v{version} is incompatible with "
-            f"current v{SCHEMA_VERSION}. "
-            f"Delete the database file at {self.db_path} to recreate it."
+        while version < SCHEMA_VERSION:
+            migration = self._migration_step(version)
+            if migration is None:
+                msg = (
+                    f"Database schema v{version} is incompatible with "
+                    f"current v{SCHEMA_VERSION}. "
+                    f"Delete the database file at {self.db_path} to recreate it."
+                )
+                raise RuntimeError(msg)
+            next_version, handler = migration
+            backup_path = self._create_migration_backup(version)
+            try:
+                handler()
+                actual_version = self._schema_version()
+                if actual_version != next_version:
+                    raise RuntimeError(
+                        "History DB migration "
+                        f"v{version}→v{next_version} completed without updating "
+                        f"PRAGMA user_version (found v{actual_version})"
+                    )
+            except BaseException as exc:
+                self._restore_migration_backup(backup_path)
+                raise RuntimeError(
+                    "History DB migration "
+                    f"v{version}→v{next_version} failed; restored backup from {backup_path}"
+                ) from exc
+            version = next_version
+
+    def _schema_version(self) -> int:
+        with self._cursor(commit=False) as cur:
+            cur.execute("PRAGMA user_version")
+            row = cur.fetchone()
+        return int(row[0]) if row is not None else 0
+
+    def _migration_step(self, version: int) -> tuple[int, Callable[[], None]] | None:
+        steps: tuple[tuple[int, int, Callable[[], None]], ...] = (
+            (
+                _CASE_ID_MIGRATION_SOURCE_VERSION,
+                _SETTINGS_SNAPSHOT_MIGRATION_SOURCE_VERSION,
+                self._migrate_v8_to_v9_case_id,
+            ),
+            (
+                _SETTINGS_SNAPSHOT_MIGRATION_SOURCE_VERSION,
+                _PERSISTED_ANALYSIS_SCHEMA_MIGRATION_SOURCE_VERSION,
+                self._migrate_v9_to_v10_settings_table,
+            ),
+            (
+                _PERSISTED_ANALYSIS_SCHEMA_MIGRATION_SOURCE_VERSION,
+                SCHEMA_VERSION,
+                self._migrate_v10_to_v11_persisted_analysis_version,
+            ),
         )
-        raise RuntimeError(msg)
+        for from_version, to_version, handler in steps:
+            if from_version == version:
+                return to_version, handler
+        return None
+
+    def _migration_backup_path(self, version: int) -> Path:
+        return self.db_path.with_suffix(f".bak-v{version}")
+
+    def _create_migration_backup(self, version: int) -> Path:
+        if self._conn is None:
+            raise RuntimeError("HistoryDB is closed")
+        if str(self.db_path) == ":memory:":
+            raise RuntimeError("Cannot create migration backup for in-memory HistoryDB")
+        backup_path = self._migration_backup_path(version)
+        fd, temp_path_text = tempfile.mkstemp(
+            prefix=f"{backup_path.name}.",
+            suffix=".tmp",
+            dir=backup_path.parent,
+        )
+        os.close(fd)
+        temp_path = Path(temp_path_text)
+        backup_conn = sqlite3.connect(temp_path)
+        try:
+            backup_conn.execute("PRAGMA journal_mode=DELETE")
+            self._conn.backup(backup_conn)
+        finally:
+            backup_conn.close()
+            Path(temp_path_text).chmod(0o600)
+        temp_path.replace(backup_path)
+        LOGGER.warning(
+            "Created pre-migration backup for %s at %s",
+            self.db_path,
+            backup_path,
+        )
+        return backup_path
+
+    def _restore_migration_backup(self, backup_path: Path) -> None:
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
+        if self._read_conn is not None:
+            self._read_conn.close()
+            self._read_conn = None
+        Path(f"{self.db_path}-wal").unlink(missing_ok=True)
+        Path(f"{self.db_path}-shm").unlink(missing_ok=True)
+        shutil.copy2(backup_path, self.db_path)
+        LOGGER.error(
+            "Restored History DB backup after migration failure: %s -> %s",
+            backup_path,
+            self.db_path,
+        )
 
     @staticmethod
     def _has_runs_column(cur: sqlite3.Cursor, column_name: str) -> bool:
@@ -254,6 +349,31 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
                 "WHERE key = 'settings_snapshot'"
             )
             cur.execute("DROP TABLE IF EXISTS settings_kv")
+            cur.execute(
+                f"PRAGMA user_version = {_PERSISTED_ANALYSIS_SCHEMA_MIGRATION_SOURCE_VERSION}"
+            )
+
+    def _migrate_v10_to_v11_persisted_analysis_version(self) -> None:
+        LOGGER.info("Migrating history DB at %s from schema v10 to v11", self.db_path)
+        with self._cursor() as cur:
+            cur.execute("SELECT run_id, analysis_json FROM runs WHERE analysis_json IS NOT NULL")
+            updates: list[tuple[str, str]] = []
+            for run_id, analysis_json in cur.fetchall():
+                parsed_analysis = safe_json_loads(
+                    analysis_json,
+                    context=f"run {run_id} analysis during schema migration",
+                )
+                if not is_json_object(parsed_analysis):
+                    continue
+                if parsed_analysis.get("_schema_version") == PERSISTED_ANALYSIS_SCHEMA_VERSION:
+                    continue
+                parsed_analysis["_schema_version"] = PERSISTED_ANALYSIS_SCHEMA_VERSION
+                updates.append((safe_json_dumps(parsed_analysis), str(run_id)))
+            if updates:
+                cur.executemany(
+                    "UPDATE runs SET analysis_json = ? WHERE run_id = ?",
+                    updates,
+                )
             cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
     def _run_startup_quick_check(self) -> None:

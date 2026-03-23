@@ -153,10 +153,29 @@ def test_store_analysis_persists_summary_directly(
     raw = row[0]
     # No envelope — summary stored directly
     assert '"summary"' not in raw
+    assert '"_schema_version": 1' in raw
     assert '"lang"' in raw
     run = db.get_run("r1")
     assert run is not None
     assert run.analysis == {"lang": "en", "findings": []}
+    db.close()
+
+
+def test_get_run_marks_unknown_analysis_storage_version_corrupt(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
+    db.finalize_run("r1", "2026-01-01T00:01:00Z")
+
+    with db._cursor() as cur:
+        cur.execute(
+            "UPDATE runs SET analysis_json = ? WHERE run_id = ?",
+            ('{"_schema_version": 99, "findings": []}', "r1"),
+        )
+
+    run = db.get_run("r1")
+    assert run is not None
+    assert run.analysis is None
+    assert run.analysis_corrupt is True
     db.close()
 
 

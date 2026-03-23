@@ -121,7 +121,15 @@ class _HistoryDBQueryMixin:
         if analysis_json:
             parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if is_json_object(parsed_analysis):
-                analysis = PersistedAnalysis.from_json_object(parsed_analysis)
+                try:
+                    analysis = PersistedAnalysis.from_storage_json_object(parsed_analysis)
+                except ValueError:
+                    LOGGER.warning(
+                        "get_run: analysis for run %s used an unsupported storage schema version",
+                        run_id,
+                        exc_info=True,
+                    )
+                    analysis_corrupt = True
             else:
                 analysis_corrupt = True
         return StoredHistoryRun(
