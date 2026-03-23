@@ -148,6 +148,21 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 [python_cmd, "tools/tests/run_release_smoke.py", "--skip-npm-ci"],
             ),
         ],
+        "firmware-native-tests": [
+            Step(
+                "firmware protocol fixture check",
+                [
+                    python_cmd,
+                    "tools/firmware/generate_protocol_contract_fixtures.py",
+                    "--check",
+                ],
+            ),
+            Step(
+                "firmware native tests",
+                ["pio", "test", "-e", "native"],
+                cwd=ROOT / "firmware" / "esp",
+            ),
+        ],
         "backend-tests": [
             Step(
                 "backend tests",
@@ -211,6 +226,7 @@ def main() -> int:
             "frontend-typecheck",
             "ui-smoke",
             "release-smoke",
+            "firmware-native-tests",
             "backend-tests",
             "e2e",
         ],
@@ -251,6 +267,7 @@ def main() -> int:
             "frontend-typecheck",
             "ui-smoke",
             "release-smoke",
+            "firmware-native-tests",
             "backend-tests",
             "e2e",
         ]

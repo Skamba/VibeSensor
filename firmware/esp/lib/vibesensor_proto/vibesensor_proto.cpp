@@ -1,5 +1,6 @@
 #include "vibesensor_proto.h"
 
+#include <cstdio>
 #include <cstring>
 
 namespace vibesensor {
