@@ -34,6 +34,7 @@ RunSuitability
     Whether a run is trustworthy enough for diagnosis.
 """
 
+from ._numeric import coerce_float, coerce_int
 from .analysis_settings import AnalysisSettingsSnapshot
 from .car import Car, CarSnapshot
 from .confidence_assessment import ConfidenceAssessment
@@ -125,6 +126,8 @@ __all__ = [
     "TestPlan",
     # Functions
     "RUN_TRANSITIONS",
+    "coerce_float",
+    "coerce_int",
     "is_run_deletable",
     "normalize_sensor_id",
     "plan_test_actions",

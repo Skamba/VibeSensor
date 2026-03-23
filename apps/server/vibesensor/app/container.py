@@ -28,7 +28,7 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingL
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
+from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.history.report_preparation import PreparedReportInput

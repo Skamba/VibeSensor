@@ -21,11 +21,11 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
+from vibesensor.adapters.http.models import CarUpsertRequest, SensorRequest, SpeedSourceRequest
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.json_utils import sanitize_for_json
-from vibesensor.shared.types.api_models import CarUpsertRequest, SensorRequest, SpeedSourceRequest
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs
 
 # ------------------------------------------------------------------

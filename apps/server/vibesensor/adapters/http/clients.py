@@ -8,10 +8,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, HTTPException
 
 from vibesensor.adapters.http._helpers import normalize_client_id_or_400
-from vibesensor.adapters.udp.protocol import client_id_mac
-from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
-from vibesensor.shared.locations import all_locations, label_for_code
-from vibesensor.shared.types.api_models import (
+from vibesensor.adapters.http.models import (
     ClientLocationsResponse,
     ClientsResponse,
     IdentifyRequest,
@@ -21,6 +18,9 @@ from vibesensor.shared.types.api_models import (
     SetClientLocationResponse,
     SetLocationRequest,
 )
+from vibesensor.adapters.udp.protocol import client_id_mac
+from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
+from vibesensor.shared.locations import all_locations, label_for_code
 
 if TYPE_CHECKING:
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane

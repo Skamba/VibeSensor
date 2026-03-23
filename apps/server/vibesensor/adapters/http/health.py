@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
+from vibesensor.adapters.http.models import HealthResponse
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
-from vibesensor.shared.types.api_models import HealthResponse
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor

@@ -1,4 +1,4 @@
-"""Shared base classes and aliases for HTTP API Pydantic models."""
+"""Base classes and aliases for HTTP API Pydantic models."""
 
 from __future__ import annotations
 

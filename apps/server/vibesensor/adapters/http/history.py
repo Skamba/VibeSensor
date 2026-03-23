@@ -8,7 +8,7 @@ from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from vibesensor.adapters.http._helpers import domain_errors_to_http
-from vibesensor.shared.types.api_models import (
+from vibesensor.adapters.http.models import (
     DeleteHistoryRunResponse,
     HistoryInsightsAnalyzingResponse,
     HistoryInsightsResponse,

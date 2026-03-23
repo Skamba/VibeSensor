@@ -51,7 +51,7 @@ class TestUpdateApiEndpoints:
         assert "/api/update/cancel" in paths
 
     def test_start_request_model_validation(self) -> None:
-        from vibesensor.shared.types.api_models import UpdateStartRequest
+        from vibesensor.adapters.http.models import UpdateStartRequest
 
         req = UpdateStartRequest(ssid="TestNet", password="pass123")
         assert req.ssid == "TestNet"

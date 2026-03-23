@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
+from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 
 
 def test_adxl345_scale_constant() -> None:

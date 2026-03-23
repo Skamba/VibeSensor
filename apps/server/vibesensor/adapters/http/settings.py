@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, HTTPException
 
 from vibesensor.adapters.http._helpers import domain_errors_to_http, normalize_mac_or_400
-from vibesensor.shared.types.api_models import (
+from vibesensor.adapters.http.models import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
     AnalysisSettingsResponse,

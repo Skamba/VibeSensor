@@ -488,7 +488,7 @@ def test_esp_flash_start_request_requires_port_when_not_auto_detect() -> None:
     """EspFlashStartRequest must reject auto_detect=False with no port."""
     from pydantic import ValidationError
 
-    from vibesensor.shared.types.api_models import EspFlashStartRequest
+    from vibesensor.adapters.http.models import EspFlashStartRequest
 
     with pytest.raises(ValidationError):
         EspFlashStartRequest(port=None, auto_detect=False)

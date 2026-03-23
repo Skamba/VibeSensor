@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import replace
 
-from vibesensor.coerce import coerce_int
-from vibesensor.domain import Car, Finding, LocationHotspot, VibrationOrigin
+from vibesensor.domain import Car, Finding, LocationHotspot, VibrationOrigin, coerce_int
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment

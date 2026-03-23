@@ -314,7 +314,7 @@ def test_resolve_variant_unknown_name_returns_base() -> None:
 
 def test_car_library_models_response_accepts_variants() -> None:
     """CarLibraryModelsResponse validates entries with variants."""
-    from vibesensor.shared.types.api_models import CarLibraryModelsResponse
+    from vibesensor.adapters.http.models import CarLibraryModelsResponse
 
     models = get_models_for_brand_type("BMW", "Sedan")
     resp = CarLibraryModelsResponse(models=models)
@@ -329,7 +329,7 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
     """CarLibraryVariantEntry requires drivetrain field."""
     from pydantic import ValidationError
 
-    from vibesensor.shared.types.api_models import CarLibraryVariantEntry
+    from vibesensor.adapters.http.models import CarLibraryVariantEntry
 
     # Valid
     v = CarLibraryVariantEntry(name="320i", drivetrain="RWD")
