@@ -72,9 +72,7 @@ class TestFindingEvidenceParity:
         "phase_confidences": "per_phase_confidence",
     }
     # Domain fields with no payload counterpart (intentional)
-    DOMAIN_ONLY: set[str] = {
-        "snr_db",  # not serialised to payload
-    }
+    DOMAIN_ONLY: set[str] = set()
     # Payload keys with no domain counterpart (pipeline-produced metrics)
     PAYLOAD_ONLY: set[str] = {
         "median_intensity_db",

@@ -2394,6 +2394,17 @@
             ],
             "title": "Sample Count"
           },
+          "snr_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snr Db"
+          },
           "spatial_concentration": {
             "anyOf": [
               {

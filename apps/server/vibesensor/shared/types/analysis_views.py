@@ -96,6 +96,7 @@ class FindingEvidenceMetrics(TypedDict, total=False):
     focused_speed_band: str | None
     mean_relative_error: float | None
     mean_noise_floor_db: float | None
+    snr_db: float | None
     vibration_strength_db: float | None
     possible_samples: int | None
     matched_samples: int | None

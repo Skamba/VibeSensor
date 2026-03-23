@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Mapping, Sequence
-from dataclasses import asdict, dataclass
-from typing import cast
+from dataclasses import dataclass
 
 from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
 from vibesensor.domain import (
@@ -19,8 +18,10 @@ from vibesensor.shared.boundaries.analysis_payload import (
     LocationIntensitySummaryPayload,
     OutlierSummaryPayload,
     PhaseInfoPayload,
+    PhaseIntensityStatsPayload,
     PhaseTimelineEntryPayload,
     SpeedStatsPayload,
+    StrengthBucketDistributionPayload,
     TestPlanStepPayload,
 )
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
@@ -31,9 +32,15 @@ from vibesensor.shared.boundaries.vibration_origin import (
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
-from vibesensor.shared.statistics_utils import _json_outlier_summary, _percent_missing
+from vibesensor.shared.statistics_utils import _outlier_summary, _percent_missing
 from vibesensor.shared.time_utils import format_duration_mm_ss
-from vibesensor.shared.types.history_analysis_contracts import PayloadObject, PayloadValue
+from vibesensor.shared.types.history_analysis_contracts import (
+    PayloadObject,
+    PayloadValue,
+    payload_object_from_json,
+    payload_objects_from_json,
+    payload_value_from_json,
+)
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.vibration_strength import compute_db
 
@@ -98,7 +105,7 @@ def _int_value(stats: AccelStatisticsLike, key: str) -> int | None:
 
 
 def _json_object(value: JsonObject) -> PayloadObject:
-    return cast(PayloadObject, value)
+    return payload_object_from_json(value)
 
 
 def _json_object_or_none(value: JsonObject | None) -> PayloadObject | None:
@@ -106,11 +113,11 @@ def _json_object_or_none(value: JsonObject | None) -> PayloadObject | None:
 
 
 def _json_objects(values: Sequence[JsonObject]) -> list[PayloadObject]:
-    return cast(list[PayloadObject], list(values))
+    return payload_objects_from_json(values)
 
 
 def _json_value(value: JsonValue | None) -> PayloadValue:
-    return cast(PayloadValue, value)
+    return payload_value_from_json(value)
 
 
 def _json_str(value: JsonValue | None) -> str | None:
@@ -130,6 +137,83 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
         MEMS_NOISE_FLOOR_G,
     )
     return result
+
+
+def _outlier_summary_payload(values: list[float]) -> OutlierSummaryPayload:
+    summary = _outlier_summary(values)
+    return {
+        "count": summary["count"],
+        "outlier_count": summary["outlier_count"],
+        "outlier_pct": summary["outlier_pct"],
+        "lower_bound": summary["lower_bound"],
+        "upper_bound": summary["upper_bound"],
+    }
+
+
+def _speed_stats_payload(speed_stats: SpeedProfileSummary) -> SpeedStatsPayload:
+    return {
+        "min_kmh": speed_stats.min_kmh,
+        "max_kmh": speed_stats.max_kmh,
+        "mean_kmh": speed_stats.mean_kmh,
+        "stddev_kmh": speed_stats.stddev_kmh,
+        "range_kmh": speed_stats.range_kmh,
+        "steady_speed": speed_stats.steady_speed,
+        "sample_count": speed_stats.sample_count,
+    }
+
+
+def _phase_info_payload(phase_info: DrivingPhaseSummary) -> PhaseInfoPayload:
+    return {
+        "phase_counts": dict(phase_info.phase_counts),
+        "phase_pcts": dict(phase_info.phase_pcts),
+        "total_samples": phase_info.total_samples,
+        "segment_count": phase_info.segment_count,
+        "has_cruise": phase_info.has_cruise,
+        "has_acceleration": phase_info.has_acceleration,
+        "cruise_pct": phase_info.cruise_pct,
+        "idle_pct": phase_info.idle_pct,
+        "speed_unknown_pct": phase_info.speed_unknown_pct,
+    }
+
+
+def _location_intensity_summary_payload(
+    row: LocationIntensitySummary,
+) -> LocationIntensitySummaryPayload:
+    bucket_distribution: StrengthBucketDistributionPayload = {
+        "total": row.strength_bucket_distribution.total,
+        "counts": dict(row.strength_bucket_distribution.counts),
+        "percent_time_l0": row.strength_bucket_distribution.percent_time_l0,
+        "percent_time_l1": row.strength_bucket_distribution.percent_time_l1,
+        "percent_time_l2": row.strength_bucket_distribution.percent_time_l2,
+        "percent_time_l3": row.strength_bucket_distribution.percent_time_l3,
+        "percent_time_l4": row.strength_bucket_distribution.percent_time_l4,
+        "percent_time_l5": row.strength_bucket_distribution.percent_time_l5,
+    }
+    phase_intensity: dict[str, PhaseIntensityStatsPayload] | None = None
+    if row.phase_intensity:
+        phase_intensity = {
+            phase: {
+                "count": stats.count,
+                "mean_intensity_db": stats.mean_intensity_db,
+                "max_intensity_db": stats.max_intensity_db,
+            }
+            for phase, stats in row.phase_intensity.items()
+        }
+    return {
+        "location": row.location,
+        "partial_coverage": row.partial_coverage,
+        "sample_count": row.sample_count,
+        "sample_coverage_ratio": row.sample_coverage_ratio,
+        "sample_coverage_warning": row.sample_coverage_warning,
+        "mean_intensity_db": row.mean_intensity_db,
+        "p50_intensity_db": row.p50_intensity_db,
+        "p95_intensity_db": row.p95_intensity_db,
+        "max_intensity_db": row.max_intensity_db,
+        "dropped_frames_delta": row.dropped_frames_delta,
+        "queue_overflow_drops_delta": row.queue_overflow_drops_delta,
+        "strength_bucket_distribution": bucket_distribution,
+        "phase_intensity": phase_intensity,
+    }
 
 
 def build_data_quality_dict(
@@ -169,14 +253,8 @@ def build_data_quality_dict(
             "saturation_count": _int_value(accel_stats, "sat_count"),
         },
         "outliers": {
-            "accel_magnitude": cast(
-                OutlierSummaryPayload,
-                _json_outlier_summary(_float_list(accel_stats, "accel_mag_vals")),
-            ),
-            "amplitude_metric": cast(
-                OutlierSummaryPayload,
-                _json_outlier_summary(amp_metric_values),
-            ),
+            "accel_magnitude": _outlier_summary_payload(_float_list(accel_stats, "accel_mag_vals")),
+            "amplitude_metric": _outlier_summary_payload(amp_metric_values),
         },
     }
 
@@ -272,18 +350,16 @@ def build_summary_payload(context: AnalysisSummaryBuildContext) -> AnalysisSumma
         "most_likely_origin": serialize_origin_summary(context.most_likely_origin),
         "test_plan": context.test_plan,
         "phase_timeline": phase_timeline_payload,
-        "speed_stats": cast(SpeedStatsPayload, context.speed_stats.to_dict()),
+        "speed_stats": _speed_stats_payload(context.speed_stats),
         "speed_stats_by_phase": {
-            key: cast(SpeedStatsPayload, value.to_dict())
-            for key, value in context.speed_stats_by_phase.items()
+            key: _speed_stats_payload(value) for key, value in context.speed_stats_by_phase.items()
         },
-        "phase_info": cast(PhaseInfoPayload, context.phase_info.to_dict()),
+        "phase_info": _phase_info_payload(context.phase_info),
         "sensor_locations": context.sensor_locations,
         "sensor_locations_connected_throughout": sorted(context.connected_locations),
         "sensor_count_used": len(context.sensor_locations),
         "sensor_intensity_by_location": [
-            cast(LocationIntensitySummaryPayload, asdict(row))
-            for row in context.sensor_intensity_by_location
+            _location_intensity_summary_payload(row) for row in context.sensor_intensity_by_location
         ],
         "run_suitability": run_suitability_payload(context.run_suitability),
         "samples": _json_objects(context.samples),
