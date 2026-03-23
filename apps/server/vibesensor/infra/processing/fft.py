@@ -140,7 +140,8 @@ def float_list(values: FloatArray | list[float]) -> list[float]:
             posinf=0.0,
             neginf=0.0,
         )
-        return sanitized.ravel().tolist()
+        result: list[float] = sanitized.ravel().tolist()
+        return result
     return [float(v) if _isfinite(v) else 0.0 for v in values]
 
 
