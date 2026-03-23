@@ -1,14 +1,14 @@
 """Boundary serialization types for analysis payloads.
 
-These TypedDicts define the wire/persistence shapes for analysis data
-that crosses the domain-adapter boundary. Stable exact history/view shapes
-shared with the HTTP layer live in ``shared.types.analysis_views``; this
-module keeps the boundary-specific wrappers and composite payload owners.
+These aliases define the wire/persistence shapes for analysis data that
+crosses the domain-adapter boundary. Stable exact history/view shapes shared
+with the HTTP layer live in ``shared.types.analysis_views``; shared
+analysis/history wrapper and composite owners live in
+``shared.types.history_analysis_contracts`` and are re-exported here under
+boundary-friendly payload names.
 """
 
 from __future__ import annotations
-
-from typing import TYPE_CHECKING, Literal, NotRequired, Required, TypedDict
 
 from vibesensor.shared.types.analysis_views import (
     AmpVsPhaseRow,
@@ -26,293 +26,92 @@ from vibesensor.shared.types.analysis_views import (
     SpectrogramResult,
     SpeedBreakdownRow,
 )
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
-
-if TYPE_CHECKING:
-    from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
+from vibesensor.shared.types.history_analysis_contracts import (
+    AmplitudeMetric,
+    FindingPayload,
+    RunSuitabilityCheck,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    AnalysisSummaryResponse as AnalysisSummary,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityAccelSanityResponse as DataQualityAccelSanityPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityOutliersResponse as DataQualityOutliersPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityRequiredMissingPctResponse as DataQualityRequiredMissingPctPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityResponse as DataQualityPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualitySpeedCoverageResponse as DataQualitySpeedCoveragePayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    LocationIntensitySummaryResponse as LocationIntensitySummaryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    OutlierSummaryResponse as OutlierSummaryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseInfoResponse as PhaseInfoPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseIntensityStatsResponse as PhaseIntensityStatsPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseSegmentSummaryResponse as PhaseSegmentSummaryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseTimelineEntryResponse as PhaseTimelineEntryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    SpeedStatsResponse as SpeedStatsPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    StrengthBucketDistributionResponse as StrengthBucketDistributionPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    SummaryWarningResponse as SummaryWarningPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    TestPlanStepResponse as TestPlanStepPayload,
+)
 
 __all__ = [
     "AmpVsPhaseRow",
     "AmplitudeMetric",
     "AnalysisSummary",
+    "DataQualityAccelSanityPayload",
+    "DataQualityOutliersPayload",
+    "DataQualityPayload",
+    "DataQualityRequiredMissingPctPayload",
+    "DataQualitySpeedCoveragePayload",
     "FindingEvidenceMetrics",
     "FindingPayload",
     "FreqVsSpeedByFindingSeries",
     "LocationHotspotPayload",
+    "LocationIntensitySummaryPayload",
     "MatchedAmpVsSpeedSeries",
     "MatchedPoint",
+    "OutlierSummaryPayload",
     "PeakTableRow",
     "PhaseBoundary",
     "PhaseEvidence",
+    "PhaseInfoPayload",
+    "PhaseIntensityStatsPayload",
     "PhaseSegmentOut",
+    "PhaseSegmentSummaryPayload",
     "PhaseSpeedBreakdownRow",
+    "PhaseTimelineEntryPayload",
     "PlotDataResult",
     "RunSuitabilityCheck",
     "SpectrogramResult",
     "SpeedBreakdownRow",
+    "SpeedStatsPayload",
+    "StrengthBucketDistributionPayload",
+    "SummaryWarningPayload",
+    "TestPlanStepPayload",
 ]
-
-
-class AmplitudeMetric(TypedDict):
-    """Presentation-only vibration-strength summary attached to a finding payload."""
-
-    name: str
-    value: float | None
-    units: str
-    definition: JsonValue
-
-
-class RunSuitabilityCheck(TypedDict):
-    check: str
-    check_key: str
-    state: str
-    explanation: JsonValue
-
-
-class SummaryWarningPayload(TypedDict):
-    code: str
-    severity: Literal["warn", "error"]
-    applies_to: str
-    title: JsonValue
-    detail: JsonValue
-
-
-class TestPlanStepPayload(TypedDict):
-    action_id: str
-    what: str
-    why: str | None
-    confirm: str | None
-    falsify: str | None
-    eta: str | None
-
-
-class PhaseTimelineEntryPayload(TypedDict):
-    phase: str
-    start_t_s: float | None
-    end_t_s: float | None
-    speed_min_kmh: float | None
-    speed_max_kmh: float | None
-    has_fault_evidence: bool
-
-
-class PhaseSegmentSummaryPayload(TypedDict):
-    phase: str
-    start_idx: int
-    end_idx: int
-    start_t_s: float | None
-    end_t_s: float | None
-    speed_min_kmh: float | None
-    speed_max_kmh: float | None
-    sample_count: int
-
-
-class SpeedStatsPayload(TypedDict):
-    min_kmh: float | None
-    max_kmh: float | None
-    mean_kmh: float | None
-    stddev_kmh: float | None
-    range_kmh: float | None
-    steady_speed: bool
-    sample_count: int
-
-
-class PhaseInfoPayload(TypedDict):
-    phase_counts: dict[str, int]
-    phase_pcts: dict[str, float]
-    total_samples: int
-    segment_count: int
-    has_cruise: bool
-    has_acceleration: bool
-    cruise_pct: float
-    idle_pct: float
-    speed_unknown_pct: float
-
-
-class OutlierSummaryPayload(TypedDict):
-    count: int
-    outlier_count: int
-    outlier_pct: float
-    lower_bound: float | None
-    upper_bound: float | None
-
-
-class DataQualityRequiredMissingPctPayload(TypedDict):
-    t_s: float
-    speed_kmh: float
-    accel_x: float
-    accel_y: float
-    accel_z: float
-
-
-class DataQualitySpeedCoveragePayload(TypedDict):
-    non_null_pct: float
-    min_kmh: float | None
-    max_kmh: float | None
-    mean_kmh: float | None
-    stddev_kmh: float | None
-    count_non_null: int
-
-
-class DataQualityAccelSanityPayload(TypedDict):
-    x_mean: float | None
-    x_variance: float | None
-    y_mean: float | None
-    y_variance: float | None
-    z_mean: float | None
-    z_variance: float | None
-    sensor_limit: float | None
-    saturation_count: int | None
-
-
-class DataQualityOutliersPayload(TypedDict):
-    accel_magnitude: OutlierSummaryPayload
-    amplitude_metric: OutlierSummaryPayload
-
-
-class DataQualityPayload(TypedDict):
-    required_missing_pct: DataQualityRequiredMissingPctPayload
-    speed_coverage: DataQualitySpeedCoveragePayload
-    accel_sanity: DataQualityAccelSanityPayload
-    outliers: DataQualityOutliersPayload
-
-
-class StrengthBucketDistributionPayload(TypedDict):
-    total: int
-    counts: dict[str, int]
-    percent_time_l0: float
-    percent_time_l1: float
-    percent_time_l2: float
-    percent_time_l3: float
-    percent_time_l4: float
-    percent_time_l5: float
-
-
-class PhaseIntensityStatsPayload(TypedDict):
-    count: int
-    mean_intensity_db: float | None
-    max_intensity_db: float | None
-
-
-class LocationIntensitySummaryPayload(TypedDict):
-    location: str
-    partial_coverage: bool
-    sample_count: int
-    sample_coverage_ratio: float
-    sample_coverage_warning: bool
-    mean_intensity_db: float | None
-    p50_intensity_db: float | None
-    p95_intensity_db: float | None
-    max_intensity_db: float | None
-    dropped_frames_delta: float | None
-    queue_overflow_drops_delta: float | None
-    strength_bucket_distribution: StrengthBucketDistributionPayload
-    phase_intensity: dict[str, PhaseIntensityStatsPayload] | None
-
-
-# ---------------------------------------------------------------------------
-# Composite payload shapes
-# ---------------------------------------------------------------------------
-
-
-class FindingPayload(TypedDict, total=False):
-    """Serialized finding payload used at transport and persistence boundaries.
-
-    This payload intentionally remains a superset of the domain
-    :class:`~vibesensor.domain.Finding`:
-
-    * direct domain fields are copied across unchanged,
-    * ``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,
-      and the confidence label fields are presentation-oriented projections
-      computed during ``finding_payload_from_domain()``,
-    * ``matched_points``, ``phase_evidence``, ``evidence_metrics``,
-      ``location_hotspot``, and ``signatures_observed`` are boundary mirrors
-      of richer domain sub-objects.
-    """
-
-    # Direct domain-owned finding state.
-    finding_id: Required[str]
-    finding_key: str
-    suspected_source: Required[str]
-    confidence: Required[float | None]
-    finding_kind: str
-    severity: str
-    strongest_location: str | None
-    strongest_speed_band: str | None
-    dominant_phase: str | None
-    dominance_ratio: float | None
-    weak_spatial_separation: bool
-    diffuse_excitation: bool
-    ranking_score: float
-    peak_classification: str
-    order: str
-
-    # Presentation-only projections computed from domain-owned data.
-    evidence_summary: Required[JsonValue]
-    frequency_hz_or_order: Required[JsonValue]
-    amplitude_metric: Required[AmplitudeMetric]
-    confidence_label_key: str
-    confidence_tone: str
-    confidence_pct: str
-
-    # Boundary mirrors of richer nested domain objects.
-    matched_points: list[MatchedPoint]
-    location_hotspot: LocationHotspotPayload | None
-    phase_evidence: PhaseEvidence | None
-    evidence_metrics: FindingEvidenceMetrics
-    signatures_observed: list[str]
-
-
-class AnalysisSummary(TypedDict):
-    """Full analysis summary payload.
-
-    Required fields are always set by :func:`build_summary_payload`.
-    Optional fields are set later in the pipeline or may be removed:
-
-    * ``samples`` – present unless ``include_samples=False`` removes it.
-    * ``plots`` – set by :func:`_plot_data` after initial assembly.
-    * ``analysis_metadata`` – set by post-analysis workers.
-    """
-
-    file_name: str
-    run_id: str
-    rows: int
-    duration_s: float
-    record_length: str
-    lang: str
-    report_date: JsonValue
-    start_time_utc: JsonValue
-    end_time_utc: JsonValue
-    sensor_model: JsonValue
-    firmware_version: JsonValue
-    raw_sample_rate_hz: float | None
-    feature_interval_s: float | None
-    fft_window_size_samples: JsonValue
-    fft_window_type: JsonValue
-    peak_picker_method: JsonValue
-    accel_scale_g_per_lsb: float | None
-    incomplete_for_order_analysis: bool
-    metadata: JsonObject
-    case_id: NotRequired[str]
-    warnings: list[SummaryWarningPayload]
-    speed_breakdown: list[SpeedBreakdownRow]
-    phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
-    phase_segments: list[PhaseSegmentSummaryPayload]
-    run_noise_baseline_db: float | None
-    speed_breakdown_skipped_reason: JsonObject | None
-    findings: list[FindingPayload]
-    top_causes: list[FindingPayload]
-    most_likely_origin: SuspectedVibrationOrigin
-    test_plan: list[TestPlanStepPayload]
-    phase_timeline: list[PhaseTimelineEntryPayload]
-    speed_stats: SpeedStatsPayload
-    speed_stats_by_phase: dict[str, SpeedStatsPayload]
-    phase_info: PhaseInfoPayload
-    sensor_locations: list[str]
-    sensor_locations_connected_throughout: list[str]
-    sensor_count_used: int
-    sensor_intensity_by_location: list[LocationIntensitySummaryPayload]
-    run_suitability: list[RunSuitabilityCheck]
-    data_quality: DataQualityPayload
-    samples: NotRequired[list[JsonObject]]
-    plots: NotRequired[PlotDataResult]
-    analysis_metadata: NotRequired[JsonObject]

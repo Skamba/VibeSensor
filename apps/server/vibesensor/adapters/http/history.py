@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response, StreamingResponse
+from pydantic import TypeAdapter
 
 from vibesensor.adapters.http._helpers import domain_errors_to_http
 from vibesensor.shared.types.api_models import (
@@ -22,6 +23,8 @@ if TYPE_CHECKING:
         HistoryReportServiceProtocol,
         HistoryRunServiceProtocol,
     )
+
+_HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 
 
 def create_history_routes(
@@ -65,7 +68,11 @@ def create_history_routes(
                 status_code=202,
                 content=analyzing_response.model_dump(),
             )
-        return HistoryInsightsResponse.model_validate(result)
+        validated = _HISTORY_INSIGHTS_ADAPTER.validate_python(result)
+        return cast(
+            HistoryInsightsResponse,
+            _HISTORY_INSIGHTS_ADAPTER.dump_python(validated, mode="json"),
+        )
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:

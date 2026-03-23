@@ -33,7 +33,8 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.statistics_utils import _json_outlier_summary, _percent_missing
 from vibesensor.shared.time_utils import format_duration_mm_ss
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.history_analysis_contracts import PayloadObject, PayloadValue
+from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.vibration_strength import compute_db
 
 from ._contracts import (
@@ -60,6 +61,30 @@ def _float_list(stats: AccelStatisticsLike, key: str) -> list[float]:
 def _int_value(stats: AccelStatisticsLike, key: str) -> int | None:
     value = stats.get(key)
     return int(value) if isinstance(value, (int, float)) else None
+
+
+def _json_object(value: JsonObject) -> PayloadObject:
+    return cast(PayloadObject, value)
+
+
+def _json_object_or_none(value: JsonObject | None) -> PayloadObject | None:
+    return None if value is None else _json_object(value)
+
+
+def _json_objects(values: Sequence[JsonObject]) -> list[PayloadObject]:
+    return cast(list[PayloadObject], list(values))
+
+
+def _json_value(value: JsonValue | None) -> PayloadValue:
+    return cast(PayloadValue, value)
+
+
+def _json_str(value: JsonValue | None) -> str | None:
+    return value if isinstance(value, str) else None
+
+
+def _json_int(value: JsonValue | None) -> int | None:
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
 
 
 def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
@@ -133,7 +158,7 @@ def serialize_origin_summary(
             "suspected_source": "unknown",
             "dominance_ratio": None,
             "weak_spatial_separation": True,
-            "explanation": i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
+            "explanation": _json_value(i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE")),
         }
 
     location = origin.summary_location
@@ -151,13 +176,15 @@ def serialize_origin_summary(
         "weak_spatial_separation": weak,
         "speed_band": speed_band or None,
         "dominant_phase": dominant_phase or None,
-        "explanation": build_origin_explanation(
-            source=source,
-            speed_band=speed_band,
-            location=location,
-            dominance=dominance,
-            weak=weak,
-            dominant_phase=dominant_phase,
+        "explanation": _json_value(
+            build_origin_explanation(
+                source=source,
+                speed_band=speed_band,
+                location=location,
+                dominance=dominance,
+                weak=weak,
+                dominant_phase=dominant_phase,
+            ),
         ),
     }
 
@@ -212,25 +239,26 @@ def build_summary_payload(
         "duration_s": duration_s,
         "record_length": format_duration_mm_ss(duration_s),
         "lang": language,
-        "report_date": metadata.get("end_time_utc") or metadata.get("report_date"),
-        "start_time_utc": metadata.get("start_time_utc"),
-        "end_time_utc": metadata.get("end_time_utc"),
-        "sensor_model": metadata.get("sensor_model"),
-        "firmware_version": metadata.get("firmware_version"),
+        "report_date": _json_str(metadata.get("end_time_utc"))
+        or _json_str(metadata.get("report_date")),
+        "start_time_utc": _json_str(metadata.get("start_time_utc")),
+        "end_time_utc": _json_str(metadata.get("end_time_utc")),
+        "sensor_model": _json_str(metadata.get("sensor_model")),
+        "firmware_version": _json_str(metadata.get("firmware_version")),
         "raw_sample_rate_hz": raw_sample_rate_hz,
         "feature_interval_s": _as_float(metadata.get("feature_interval_s")),
-        "fft_window_size_samples": metadata.get("fft_window_size_samples"),
-        "fft_window_type": metadata.get("fft_window_type"),
-        "peak_picker_method": metadata.get("peak_picker_method"),
+        "fft_window_size_samples": _json_int(metadata.get("fft_window_size_samples")),
+        "fft_window_type": _json_str(metadata.get("fft_window_type")),
+        "peak_picker_method": _json_str(metadata.get("peak_picker_method")),
         "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
         "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
-        "metadata": metadata,
+        "metadata": _json_object(metadata),
         "warnings": [],
         "speed_breakdown": serialize_speed_breakdown(speed_breakdown),
         "phase_speed_breakdown": serialize_phase_speed_breakdown(phase_speed_breakdown),
         "phase_segments": serialize_phase_segments(phase_segments),
         "run_noise_baseline_db": noise_baseline_db(run_noise_baseline_g),
-        "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
+        "speed_breakdown_skipped_reason": _json_object_or_none(speed_breakdown_skipped_reason),
         "findings": serialize_findings(findings),
         "top_causes": serialize_findings(top_causes),
         "most_likely_origin": serialize_origin_summary(most_likely_origin),
@@ -249,7 +277,7 @@ def build_summary_payload(
             for row in sensor_intensity_by_location
         ],
         "run_suitability": run_suitability_payload(run_suitability),
-        "samples": samples,
+        "samples": _json_objects(samples),
         "data_quality": build_data_quality_dict(
             samples,
             speed_values,

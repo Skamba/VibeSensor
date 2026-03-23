@@ -123,7 +123,8 @@ def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
             reference_complete=result.reference_complete,
         )
     )
-    summary["report_date"] = result.metadata.get("end_time_utc") or utc_now_iso()
+    report_date = result.metadata.get("end_time_utc")
+    summary["report_date"] = report_date if isinstance(report_date, str) else utc_now_iso()
     summary["plots"] = serialize_plot_data(result.plot_data)
     cast(dict[str, object], summary)["_summary_version"] = 2
     if not result.include_samples:
