@@ -164,7 +164,7 @@ class TestSetActiveCarEndpoint:
 
         state.settings_store.set_active_car.side_effect = ValueError("Car not found")
 
-        from vibesensor.shared.types.api_models import ActiveCarRequest
+        from vibesensor.adapters.http.models import ActiveCarRequest
 
         with pytest.raises(HTTPException) as exc_info:
             await endpoint(req=ActiveCarRequest(car_id="no-such-car"))
@@ -190,7 +190,7 @@ class TestCarsEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/cars", "POST")
         assert endpoint is not None
 
-        from vibesensor.shared.types.api_models import CarUpsertRequest
+        from vibesensor.adapters.http.models import CarUpsertRequest
 
         state.settings_store.add_car.return_value = _make_cars_snapshot(
             cars=[_make_car_payload(), _make_car_payload(car_id="car-2", name="Second")],
@@ -208,7 +208,7 @@ class TestSpeedSourceEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/speed-source", "POST")
         assert endpoint is not None
 
-        from vibesensor.shared.types.api_models import SpeedSourceRequest
+        from vibesensor.adapters.http.models import SpeedSourceRequest
 
         state.settings_store.update_speed_source.return_value = {
             "speedSource": "manual",
@@ -246,7 +246,7 @@ class TestSensorEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/sensors/{mac}", "POST")
         assert endpoint is not None
 
-        from vibesensor.shared.types.api_models import SensorRequest
+        from vibesensor.adapters.http.models import SensorRequest
 
         normalized_mac = "aabbccddeeff"
         state.settings_store.get_sensors.return_value = {
@@ -272,7 +272,7 @@ class TestSetAnalysisSettingsEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/analysis", "POST")
         assert endpoint is not None
 
-        from vibesensor.shared.types.api_models import AnalysisSettingsRequest
+        from vibesensor.adapters.http.models import AnalysisSettingsRequest
 
         result = response_payload(await endpoint(req=AnalysisSettingsRequest()))
 
@@ -285,7 +285,7 @@ class TestSetAnalysisSettingsEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/analysis", "POST")
         assert endpoint is not None
 
-        from vibesensor.shared.types.api_models import AnalysisSettingsRequest
+        from vibesensor.adapters.http.models import AnalysisSettingsRequest
 
         await endpoint(req=AnalysisSettingsRequest(tire_width_mm=265.0))
 

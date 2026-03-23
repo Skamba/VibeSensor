@@ -23,13 +23,14 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `firmware/esp/`: ESP32 firmware. `src/main.cpp` owns setup/loop orchestration, while `src/runtime_*.{h,cpp}` owns queue, sampling, transport, Wi-Fi, LED, config, and status logic.
 - `cli/`: CLI entry points — `server.py` (main server), `report.py` (report generation), `preflight.py` (config preflight), `hotspot_config.py` (hotspot config export for shell scripts), `http_api_schema_export.py`, `ws_schema_export.py`.
 - `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic. Hot-path functions accept numpy arrays; scalar functions remain pure Python.
+- `vibesensor/report_i18n.py`: canonical report-string/i18n helpers shared by boundary shaping and PDF rendering.
 - `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline. `build.sh` is the thin entrypoint for `BUILD_MODE=app|image|all`; `lib/` owns focused host-side helpers (prereqs, mirror selection, app artifacts, pi-gen repo prep, stage assembly, artifact selection, validation helpers); `templates/` owns tracked stage/config source files copied into `.cache/pi-gen/`; and `validate-image.sh` reruns the post-build mount/chroot/QEMU validator against an existing artifact.
 - `docs/`: human-facing docs plus AI repo maps and runbooks.
 
 ## Backend package layout
 
 - `app/`: startup, dependency wiring, runtime state, and config loading.
-- `adapters/http/`: API route groups and grouped route dependencies.
+- `adapters/http/`: API route groups, grouped route dependencies, and HTTP-specific Pydantic request/response models under `adapters/http/models/`.
 - `adapters/websocket/hub.py`: live WebSocket fan-out and payload delivery.
 - `adapters/persistence/`: SQLite history storage and static car-library loading.
 - `adapters/pdf/`: report mapping and PDF rendering. See `docs/report_pipeline.md` for the report flow.
@@ -43,7 +44,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `infra/runtime/health_snapshot.py`: application-level runtime health snapshot assembly for the `/api/health` route.
 - `use_cases/run/`: recording pipeline orchestration. `logger.py` is the `RunRecorder` entrypoint, and the `post_analysis*.py` modules split queueing, loading, execution, and summary shaping.
 - `use_cases/updates/`: wheel-based updater workflow, firmware handling, Wi-Fi, rollback, and status coordination.
-- `shared/`: cross-cutting ports, model/payload types, JSON helpers, and boundary codecs. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, `shared/types/history_analysis_contracts.py`, `shared/types/run_schema.py`, `shared/types/car_config.py`, `shared/types/speed_source_config.py`, and the codec/projection modules under `shared/boundaries/`.
+- `shared/`: cross-cutting ports, model/payload types, JSON helpers, boundary codecs, and small package-level helpers such as `shared/_data_files.py` and `shared/sensor_units.py`. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, `shared/types/history_analysis_contracts.py`, `shared/types/run_schema.py`, `shared/types/car_config.py`, `shared/types/speed_source_config.py`, and the codec/projection modules under `shared/boundaries/`.
 - `domain/`: domain model package for classification, ranking, lifecycle, and query logic. See `docs/domain-model.md` for the domain object graph.
 - `apps/ui/src/app/runtime/`: UI composition root and runtime controllers.
 - `apps/ui/src/app/features/`: UI feature workflows for settings, realtime, history, updates, cars, and ESP flash.

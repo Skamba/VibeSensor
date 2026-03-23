@@ -11,7 +11,7 @@ import logging
 import math
 from typing import cast
 
-from vibesensor.coerce import coerce_float
+from vibesensor.domain import coerce_float
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 
 __all__ = [

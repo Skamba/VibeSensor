@@ -11,8 +11,8 @@ from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
 
-from vibesensor._data_files import resolve_static_data_file
 from vibesensor.domain import VibrationSource
+from vibesensor.shared._data_files import resolve_static_data_file
 from vibesensor.shared.constants import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 

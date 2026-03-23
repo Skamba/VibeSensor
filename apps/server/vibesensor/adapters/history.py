@@ -11,13 +11,13 @@ from typing import TYPE_CHECKING, cast
 
 from pydantic import TypeAdapter
 
-from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
-from vibesensor.shared.types.api_models import (
+from vibesensor.adapters.http.models import (
     DeleteHistoryRunResponse,
     HistoryInsightsResponse,
     HistoryListEntryResponse,
     HistoryRunResponse,
 )
+from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.history.exports import (

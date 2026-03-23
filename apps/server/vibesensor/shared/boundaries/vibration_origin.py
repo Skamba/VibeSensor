@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.coerce import coerce_float, coerce_int
-from vibesensor.domain import Finding, VibrationSource
+from vibesensor.domain import Finding, VibrationSource, coerce_float, coerce_int
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.constants import PHASE_I18N_KEYS
