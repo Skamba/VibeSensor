@@ -117,8 +117,12 @@ class SignalBufferStore:
             buf.write_idx = end % capacity
             buf.count = min(capacity, buf.count + n)
             if t0_us is not None and t0_us > 0:
-                buf.last_t0_us = int(t0_us)
-                buf.samples_since_t0 = n
+                next_t0_us = int(t0_us)
+                if next_t0_us > buf.last_t0_us:
+                    buf.last_t0_us = next_t0_us
+                    buf.samples_since_t0 = n
+                else:
+                    buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
             else:
                 buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
             buf.ingest_generation += 1

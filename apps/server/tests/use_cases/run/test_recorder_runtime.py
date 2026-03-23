@@ -68,3 +68,42 @@ async def test_idle_runtime_tick_preserves_non_tick_write_error(
         await _recorder_runtime.run_loop(logger, logger=logging.getLogger(__name__))
 
     assert logger.status().write_error == "history append_samples failed: disk full"
+
+
+@pytest.mark.asyncio
+async def test_runtime_auto_stop_uses_to_thread(
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logger = make_logger()
+    logger.start_recording()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+
+    monkeypatch.setattr(logger._sample_flush, "build_sample_records", lambda **_: [])
+    monkeypatch.setattr(logger._sample_flush, "append_records", lambda *args, **kwargs: True)
+
+    stop_calls: list[str] = []
+
+    def fake_stop_recording(*, _only_if_run_id: str | None = None):
+        assert _only_if_run_id is not None
+        stop_calls.append(_only_if_run_id)
+        logger._lifecycle.stop()
+        return logger.status()
+
+    monkeypatch.setattr(logger, "stop_recording", fake_stop_recording)
+
+    to_thread_calls: list[object] = []
+
+    async def fake_to_thread(func, /, *args, **kwargs):
+        to_thread_calls.append(func)
+        return func(*args, **kwargs)
+
+    monkeypatch.setattr(_recorder_runtime.asyncio, "to_thread", fake_to_thread)
+    monkeypatch.setattr(_recorder_runtime.asyncio, "sleep", _raise_stop_loop)
+
+    with pytest.raises(_StopLoop):
+        await _recorder_runtime.run_loop(logger, logger=logging.getLogger(__name__))
+
+    assert stop_calls == [snapshot.run_id]
+    assert fake_stop_recording in to_thread_calls

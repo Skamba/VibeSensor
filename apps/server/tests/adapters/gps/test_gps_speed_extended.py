@@ -137,3 +137,25 @@ async def test_run_cancellation_waits_writer_close_once(
     await asyncio.gather(task, return_exceptions=True)
     assert fake_writer.wait_closed_calls == 1
     assert monitor.speed_mps is None
+
+
+def test_speed_mps_setter_replaces_timestamp_without_preserving_stale_value(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+    monitor._speed_snapshot = (10.0, 5.0)
+
+    monkeypatch.setattr("vibesensor.adapters.gps.gps_transport.time.monotonic", lambda: 42.0)
+
+    monitor.speed_mps = 7.5
+
+    assert monitor._speed_snapshot == (7.5, 42.0)
+
+
+def test_speed_mps_setter_clears_timestamp_when_speed_clears() -> None:
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+    monitor._speed_snapshot = (10.0, 5.0)
+
+    monitor.speed_mps = None
+
+    assert monitor._speed_snapshot == (None, None)

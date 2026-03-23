@@ -102,7 +102,13 @@ async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
                     snapshot.run_id,
                     recorder._lifecycle.no_data_timeout_s,
                 )
-                recorder.stop_recording(_only_if_run_id=snapshot.run_id)
+                await asyncio.wait_for(
+                    asyncio.to_thread(
+                        recorder.stop_recording,
+                        _only_if_run_id=snapshot.run_id,
+                    ),
+                    timeout=_DB_THREAD_TIMEOUT_S,
+                )
             if _is_tick_error_message(recorder._persistence.last_write_error):
                 recorder._persistence.clear_last_write_error()
         except TimeoutError:

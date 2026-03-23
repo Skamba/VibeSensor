@@ -149,7 +149,8 @@ class RunRecorder:
         return _recorder_runtime.analysis_settings_snapshot(self._settings_store)
 
     def _session_snapshot(self) -> ActiveRunSnapshot | None:
-        return self._lifecycle.snapshot()
+        with self._lock:
+            return self._lifecycle.snapshot()
 
     def _start_new_run_locked(self) -> ActiveRunSnapshot:
         snapshot = self._lifecycle.start_new_run(
@@ -181,7 +182,6 @@ class RunRecorder:
 
     def start_recording(self) -> RunRecorderStatusSnapshot:
         completed_run_id: str | None = None
-        flush_snapshot: ActiveRunSnapshot | None = None
         with self._lock:
             if self._lifecycle.shutdown_requested:
                 LOGGER.info(
@@ -190,13 +190,12 @@ class RunRecorder:
                 return self.status()
             if self.enabled and self._run_id:
                 flush_snapshot = self._sample_flush.pending_flush_snapshot()
-        if flush_snapshot is not None:
-            self._sample_flush.append_records(
-                flush_snapshot.run_id,
-                flush_snapshot.start_time_utc,
-                flush_snapshot.start_mono_s,
-            )
-        with self._lock:
+                if flush_snapshot is not None:
+                    self._sample_flush.append_records(
+                        flush_snapshot.run_id,
+                        flush_snapshot.start_time_utc,
+                        flush_snapshot.start_mono_s,
+                    )
             if self.enabled and self._run_id:
                 run_id = self._run_id
                 completed_run_id = self._persistence.ready_for_analysis(run_id)
@@ -224,18 +223,16 @@ class RunRecorder:
         *,
         _only_if_run_id: str | None = None,
     ) -> RunRecorderStatusSnapshot:
-        flush_snapshot: ActiveRunSnapshot | None = None
         with self._lock:
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()
             flush_snapshot = self._sample_flush.pending_flush_snapshot()
-        if flush_snapshot is not None:
-            self._sample_flush.append_records(
-                flush_snapshot.run_id,
-                flush_snapshot.start_time_utc,
-                flush_snapshot.start_mono_s,
-            )
-        with self._lock:
+            if flush_snapshot is not None:
+                self._sample_flush.append_records(
+                    flush_snapshot.run_id,
+                    flush_snapshot.start_time_utc,
+                    flush_snapshot.start_mono_s,
+                )
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()
             run_id = self._run_id
