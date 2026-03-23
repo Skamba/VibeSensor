@@ -156,6 +156,9 @@ class _FakeProcessor:
     def latest_sample_rate_hz(self, client_id: str):
         return 800
 
+    def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> ClientMetrics:
+        return self.latest_metrics(client_id)
+
     def latest_metrics(self, client_id: str) -> ClientMetrics:
         if self._registry is None:
             return {}
