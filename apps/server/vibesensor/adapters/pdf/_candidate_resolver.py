@@ -7,12 +7,12 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf.presentation import strength_label, strength_text
-from vibesensor.domain import ConfidenceAssessment, Finding, LocationIntensitySummary
+from vibesensor.domain import ConfidenceAssessment, Finding
 from vibesensor.report_i18n import human_source
-from vibesensor.use_cases.history.report_interpretation import resolve_primary_report_facts
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_context import ReportMappingContext
+    from vibesensor.use_cases.history.report_interpretation import PrimaryReportFacts
 
 __all__ = [
     "PrimaryCandidateContext",
@@ -46,18 +46,12 @@ class PrimaryCandidateContext:
 def resolve_primary_report_candidate(
     *,
     context: ReportMappingContext,
-    sensor_intensity: list[LocationIntensitySummary],
+    facts: PrimaryReportFacts,
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:
     """Resolve the primary candidate and all derived certainty fields."""
-    primary_candidate = context.top_report_candidate()
-    facts = resolve_primary_report_facts(
-        aggregate=context.domain_aggregate,
-        origin_location=context.origin_location,
-        sensor_locations_active=context.sensor_locations_active,
-        sensor_intensity=sensor_intensity,
-    )
+    primary_candidate = facts.domain_primary or context.top_report_candidate()
     primary_system = (
         human_source(facts.primary_source, tr=tr) if facts.primary_source else tr("UNKNOWN")
     )

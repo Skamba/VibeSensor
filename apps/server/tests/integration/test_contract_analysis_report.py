@@ -20,7 +20,6 @@ from vibesensor.adapters.analysis_summary import (
     summarize_run_data,
 )
 from vibesensor.adapters.pdf.mapping import (
-    filter_active_sensor_intensity,
     map_summary,
     prepare_report_input,
     prepare_report_mapping_context,
@@ -125,25 +124,27 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
     result = analysis.summarize()
     summary = analysis_result_to_summary(result)
 
-    assert analysis.test_run is not None
-    assert analysis.test_run.speed_profile is not None
+    prepared = prepare_report_input(summary)
+    assert prepared.domain_test_run is not None
+    assert prepared.report_facts is not None
+    assert prepared.domain_test_run.speed_profile is not None
 
-    context = prepare_report_mapping_context(summary, test_run=analysis.test_run)
-
-    sensor_intensity = filter_active_sensor_intensity(
-        summary["sensor_intensity_by_location"],
-        context.sensor_locations_active,
+    context = prepare_report_mapping_context(
+        prepared.analysis_summary,
+        report_facts=prepared.report_facts,
+        test_run=prepared.domain_test_run,
     )
+
     primary = resolve_primary_report_candidate(
         context=context,
-        sensor_intensity=sensor_intensity,
+        facts=prepared.report_facts.primary_candidate_facts,
         tr=lambda key, **_kw: key,
         lang="en",
     )
 
     # Reason must come from ConfidenceAssessment, not from the deleted certainty_label()
-    effective = analysis.test_run.effective_top_causes()
-    domain_primary = effective[0] if effective else analysis.test_run.primary_finding
+    effective = prepared.domain_test_run.effective_top_causes()
+    domain_primary = effective[0] if effective else prepared.domain_test_run.primary_finding
     assert domain_primary is not None
     assert domain_primary.confidence_assessment is not None
     assert primary.certainty_reason == domain_primary.confidence_assessment.reason

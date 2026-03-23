@@ -17,8 +17,8 @@ from vibesensor.adapters.pdf.presentation import (
     strength_text,
 )
 from vibesensor.adapters.pdf.report_sections import (
-    build_data_trust_from_summary,
-    build_next_steps_from_summary,
+    build_data_trust,
+    build_next_steps,
 )
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 
@@ -81,8 +81,8 @@ def test_extracted_pdf_builders_are_importable() -> None:
     assert callable(build_peak_rows_from_plots)
     assert callable(build_peak_row)
     assert callable(peak_row_system_label)
-    assert callable(build_next_steps_from_summary)
-    assert callable(build_data_trust_from_summary)
+    assert callable(build_next_steps)
+    assert callable(build_data_trust)
 
 
 @pytest.mark.parametrize(

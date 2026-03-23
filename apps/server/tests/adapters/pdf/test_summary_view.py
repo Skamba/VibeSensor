@@ -262,8 +262,10 @@ class TestSummaryHelpers:
     def test_sensor_locations_active_prefers_connected(self) -> None:
         prepared = prepare_report_input(_minimal_summary())
         assert prepared.domain_test_run is not None
+        assert prepared.report_facts is not None
         ctx = prepare_report_mapping_context(
             prepared.analysis_summary,
+            report_facts=prepared.report_facts,
             test_run=prepared.domain_test_run,
         )
         assert ctx.sensor_locations_active == ["front_left"]
@@ -271,8 +273,10 @@ class TestSummaryHelpers:
     def test_sensor_locations_active_fallback(self) -> None:
         prepared = prepare_report_input(_minimal_summary(sensor_locations_connected_throughout=[]))
         assert prepared.domain_test_run is not None
+        assert prepared.report_facts is not None
         ctx = prepare_report_mapping_context(
             prepared.analysis_summary,
+            report_facts=prepared.report_facts,
             test_run=prepared.domain_test_run,
         )
         assert "front_left" in ctx.sensor_locations_active
