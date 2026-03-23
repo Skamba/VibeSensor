@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Coverage-gap audit (round 2).
 
 Findings addressed
@@ -17,6 +14,7 @@ Findings addressed
 10. API export: _safe_filename sanitization
 """
 
+from __future__ import annotations
 
 import asyncio
 import json

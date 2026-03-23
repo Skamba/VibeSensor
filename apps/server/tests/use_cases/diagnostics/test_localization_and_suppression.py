@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Tests for source-aware localization, diffuse excitation detection,
 no-fault suppression, and confidence calibration.
 

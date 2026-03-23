@@ -1,0 +1,98 @@
+from __future__ import annotations
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from vibesensor.adapters.http.recording import create_recording_routes
+from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
+
+
+def _make_recording_status_snapshot(
+    *,
+    enabled: bool,
+    run_id: str | None,
+    samples_written: int,
+    samples_dropped: int = 0,
+    write_error: str | None = None,
+    analysis_in_progress: bool = False,
+    last_completed_run_id: str | None = None,
+    last_completed_run_error: str | None = None,
+) -> RunRecorderStatusSnapshot:
+    return RunRecorderStatusSnapshot(
+        enabled=enabled,
+        run_id=run_id,
+        write_error=write_error,
+        analysis_in_progress=analysis_in_progress,
+        samples_written=samples_written,
+        samples_dropped=samples_dropped,
+        last_completed_run_id=last_completed_run_id,
+        last_completed_run_error=last_completed_run_error,
+    )
+
+
+@pytest.fixture
+def recording_client(fake_state):
+    app = FastAPI()
+    app.include_router(create_recording_routes(fake_state.run_recorder))
+    with TestClient(app) as client:
+        yield client, fake_state
+
+
+def test_recording_status_route_returns_serialized_snapshot(recording_client) -> None:
+    client, state = recording_client
+    state.run_recorder.status.return_value = _make_recording_status_snapshot(
+        enabled=True,
+        run_id="run-123",
+        samples_written=84,
+        samples_dropped=3,
+        analysis_in_progress=True,
+        last_completed_run_id="run-122",
+    )
+
+    response = client.get("/api/recording/status")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "enabled": True,
+        "run_id": "run-123",
+        "write_error": None,
+        "analysis_in_progress": True,
+        "samples_written": 84,
+        "samples_dropped": 3,
+        "last_completed_run_id": "run-122",
+        "last_completed_run_error": None,
+    }
+
+
+def test_recording_start_route_uses_real_http_routing(recording_client) -> None:
+    client, state = recording_client
+    state.run_recorder.start_recording.return_value = _make_recording_status_snapshot(
+        enabled=True,
+        run_id="run-abc",
+        samples_written=42,
+    )
+
+    response = client.post("/api/recording/start")
+
+    assert response.status_code == 200
+    assert response.json()["enabled"] is True
+    assert response.json()["run_id"] == "run-abc"
+    state.run_recorder.start_recording.assert_called_once_with()
+
+
+def test_recording_stop_route_uses_real_http_routing(recording_client) -> None:
+    client, state = recording_client
+    state.run_recorder.stop_recording.return_value = _make_recording_status_snapshot(
+        enabled=False,
+        run_id=None,
+        samples_written=84,
+        last_completed_run_id="run-abc",
+    )
+
+    response = client.post("/api/recording/stop")
+
+    assert response.status_code == 200
+    assert response.json()["enabled"] is False
+    assert response.json()["last_completed_run_id"] == "run-abc"
+    state.run_recorder.stop_recording.assert_called_once_with()

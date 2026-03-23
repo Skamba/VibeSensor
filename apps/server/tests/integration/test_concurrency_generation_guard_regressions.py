@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Concurrency and generation-guard regressions.
 
 Tests covering:
@@ -10,6 +7,7 @@ Tests covering:
 4. stop_recording / start_recording _finalize_run_locked return-value gating
 """
 
+from __future__ import annotations
 
 import sqlite3
 from pathlib import Path

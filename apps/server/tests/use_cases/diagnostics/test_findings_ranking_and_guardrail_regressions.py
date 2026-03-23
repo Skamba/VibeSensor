@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Findings ranking and analysis guardrail regressions:
 - ranking_score synced after engine alias suppression
 - negligible confidence cap aligned with ConfidenceAssessment tier thresholds
@@ -8,6 +5,7 @@ from __future__ import annotations
 - _suppress_engine_aliases cap raised to 5
 """
 
+from __future__ import annotations
 
 import pytest
 from test_support.findings import make_finding

@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Strength bucketing and combined-spectrum runtime regressions:
 - order tolerance scales with path_compliance
 - _noise_floor no double bin removal
@@ -8,6 +5,7 @@ from __future__ import annotations
 - dead db_value variable removed from _top_strength_values
 """
 
+from __future__ import annotations
 
 import numpy as np
 import pytest

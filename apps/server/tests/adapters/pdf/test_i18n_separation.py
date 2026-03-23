@@ -1,5 +1,6 @@
-# ruff: noqa: E501
-"""Tests enforcing the multilingual architecture: language-neutral analysis + render-time translation.
+"""Tests enforcing the multilingual architecture.
+
+Language-neutral analysis plus render-time translation.
 
 These tests verify:
 1. Analysis output contains no localized text — only codes, i18n refs, and parameters.
