@@ -1,10 +1,10 @@
-"""Behavioral tests for build_health_snapshot() branch coverage."""
+"""Behavioral tests for build_system_health_snapshot() branch coverage."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from vibesensor.adapters.http.health_snapshot import build_health_snapshot
+from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingHealth, ProcessingLoopState
 from vibesensor.shared.types.payload_types import IntakeStatsPayload, WorkerPoolStats
@@ -78,14 +78,14 @@ def _make_processor(*, intake_stats: IntakeStatsPayload | None = None) -> MagicM
     return proc
 
 
-class TestBuildHealthSnapshotOk:
+class TestBuildSystemHealthSnapshotOk:
     def test_all_healthy_returns_ok_status(self) -> None:
         loop_state = ProcessingLoopState()
         health_state = RuntimeHealthState()
         health_state.mark_ready()
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -98,7 +98,7 @@ class TestBuildHealthSnapshotOk:
         health_state.mark_ready()
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -125,7 +125,7 @@ class TestBuildHealthSnapshotOk:
             "worker_pool": _worker_pool_stats(),
         }
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state,
             health_state,
             _make_processor(intake_stats=intake_stats),
@@ -136,19 +136,18 @@ class TestBuildHealthSnapshotOk:
         assert result["intake_stats"]["worker_pool"]["total_tasks"] == 7
 
 
-class TestBuildHealthSnapshotDegraded:
+class TestBuildSystemHealthSnapshotDegraded:
     def test_startup_not_ready_is_degraded(self) -> None:
         loop_state = ProcessingLoopState()
         health_state = RuntimeHealthState()
-        # startup_state defaults to "starting" (not "ready")
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
         assert result["status"] == "degraded"
-        assert any("startup_state" in r for r in result["degradation_reasons"])
+        assert any("startup_state" in reason for reason in result["degradation_reasons"])
 
     def test_startup_error_is_degraded(self) -> None:
         loop_state = ProcessingLoopState()
@@ -157,7 +156,7 @@ class TestBuildHealthSnapshotDegraded:
         health_state.mark_failed("init", "something blew up")
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -171,7 +170,7 @@ class TestBuildHealthSnapshotDegraded:
         health_state.record_task_failure("pump_task", "connection reset")
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -184,12 +183,12 @@ class TestBuildHealthSnapshotDegraded:
         health_state.mark_ready()
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
         assert result["status"] == "degraded"
-        assert any("processing_state" in r for r in result["degradation_reasons"])
+        assert any("processing_state" in reason for reason in result["degradation_reasons"])
 
     def test_persistence_write_error_is_degraded(self) -> None:
         loop_state = ProcessingLoopState()
@@ -199,7 +198,7 @@ class TestBuildHealthSnapshotDegraded:
             persistence={**_clean_persistence(), "write_error": True}
         )
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -213,7 +212,7 @@ class TestBuildHealthSnapshotDegraded:
         health_state.mark_db_corrupted("row 7 missing from index")
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -222,7 +221,7 @@ class TestBuildHealthSnapshotDegraded:
         assert "db_corruption_detected" in result["degradation_reasons"]
 
 
-class TestBuildHealthSnapshotWarn:
+class TestBuildSystemHealthSnapshotWarn:
     def test_startup_warnings_only_is_warn(self) -> None:
         loop_state = ProcessingLoopState()
         health_state = RuntimeHealthState()
@@ -230,7 +229,7 @@ class TestBuildHealthSnapshotWarn:
         health_state.startup_warnings = ["low disk space"]
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -243,7 +242,7 @@ class TestBuildHealthSnapshotWarn:
         health_state.mark_ready()
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -256,7 +255,7 @@ class TestBuildHealthSnapshotWarn:
         health_state.mark_ready()
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -269,7 +268,7 @@ class TestBuildHealthSnapshotWarn:
         health_state.mark_ready()
         registry, run_recorder = _make_deps(data_loss={**_clean_data_loss(), "frames_dropped": 5})
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -282,7 +281,7 @@ class TestBuildHealthSnapshotWarn:
         health_state.mark_ready()
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -295,7 +294,7 @@ class TestBuildHealthSnapshotWarn:
         health_state.mark_ready()
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -310,7 +309,7 @@ class TestBuildHealthSnapshotWarn:
             persistence={**_clean_persistence(), "samples_dropped": 10}
         )
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -325,7 +324,7 @@ class TestBuildHealthSnapshotWarn:
             persistence={**_clean_persistence(), "analyzing_run_count": 2}
         )
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -340,7 +339,7 @@ class TestBuildHealthSnapshotWarn:
             persistence={**_clean_persistence(), "last_completed_run_error": True}
         )
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
@@ -348,7 +347,7 @@ class TestBuildHealthSnapshotWarn:
         assert "last_analysis_failed" in result["degradation_reasons"]
 
 
-class TestBuildHealthSnapshotMultipleReasons:
+class TestBuildSystemHealthSnapshotMultipleReasons:
     def test_two_error_conditions_both_in_reasons(self) -> None:
         loop_state = ProcessingLoopState(processing_state=ProcessingHealth.FATAL)
         health_state = RuntimeHealthState()
@@ -356,12 +355,12 @@ class TestBuildHealthSnapshotMultipleReasons:
         health_state.record_task_failure("pump_task", "err")
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 
         assert result["status"] == "degraded"
-        assert any("processing_state" in r for r in result["degradation_reasons"])
+        assert any("processing_state" in reason for reason in result["degradation_reasons"])
         assert "background_task_failures" in result["degradation_reasons"]
 
     def test_warn_plus_error_escalates_to_degraded(self) -> None:
@@ -369,11 +368,10 @@ class TestBuildHealthSnapshotMultipleReasons:
         health_state = RuntimeHealthState()
         health_state.mark_ready()
         health_state.startup_warnings = ["disk low"]
-        # Add a true error condition too
         health_state.record_task_failure("a_task", "crash")
         registry, run_recorder = _make_deps()
 
-        result = build_health_snapshot(
+        result = build_system_health_snapshot(
             loop_state, health_state, _make_processor(), registry, run_recorder
         )
 

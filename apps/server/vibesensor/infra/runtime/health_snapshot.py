@@ -1,28 +1,49 @@
-"""Health snapshot payload builder for the HTTP health endpoint."""
+"""Runtime health snapshot assembly for the HTTP health endpoint."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import Literal, Protocol
 
-from vibesensor.infra.runtime.processing_loop import ProcessingHealth
-from vibesensor.shared.types.health_snapshot import HealthSnapshotData
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.infra.runtime.processing_loop import ProcessingHealth, ProcessingLoopState
+from vibesensor.shared.types.health_snapshot import HealthSnapshotData, RunRecorderHealthSnapshot
+from vibesensor.shared.types.payload_types import IntakeStatsPayload
 
-if TYPE_CHECKING:
-    from vibesensor.infra.processing import SignalProcessor
-    from vibesensor.infra.runtime.health_state import RuntimeHealthState
-    from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
-    from vibesensor.infra.runtime.registry import ClientRegistry
-    from vibesensor.use_cases.run import RunRecorder
+__all__ = ["build_system_health_snapshot"]
 
 
-def build_health_snapshot(
+class IntakeStatsProvider(Protocol):
+    """Collaborator that exposes runtime intake statistics."""
+
+    def intake_stats(self) -> IntakeStatsPayload: ...
+
+
+class DataLossSnapshotProvider(Protocol):
+    """Collaborator that exposes data-loss counters."""
+
+    def data_loss_snapshot(self) -> dict[str, int]: ...
+
+
+class RecorderHealthProvider(Protocol):
+    """Collaborator that exposes recorder health data and timing stats."""
+
+    @property
+    def last_write_duration_s(self) -> float | None: ...
+
+    @property
+    def max_write_duration_s(self) -> float | None: ...
+
+    def health_snapshot(self) -> RunRecorderHealthSnapshot: ...
+
+
+def build_system_health_snapshot(
     loop_state: ProcessingLoopState,
     health_state: RuntimeHealthState,
-    processor: SignalProcessor,
-    registry: ClientRegistry,
-    run_recorder: RunRecorder,
+    processor: IntakeStatsProvider,
+    registry: DataLossSnapshotProvider,
+    run_recorder: RecorderHealthProvider,
 ) -> HealthSnapshotData:
-    """Build the health snapshot dict."""
+    """Build the app-level health snapshot from runtime collaborators."""
 
     def _coerce_duration(value: float | None) -> float:
         return value if value is not None else 0.0
