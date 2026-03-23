@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 __all__ = ["DataUpdateResult", "apply_data_message_update"]
 
 _DEDUP_WINDOW = 128
-_DEDUP_RESTART_GAP = 4
 _RESTART_SEQ_GAP = 1000
 _JITTER_EMA_ALPHA = 0.2
 _SEQ_MASK = 0xFFFFFFFF
@@ -24,6 +23,23 @@ class DataUpdateResult:
 
     reset_detected: bool = False
     is_duplicate: bool = False
+
+
+def _is_short_session_restart(
+    record: ClientRecord,
+    *,
+    seq: int,
+    t0_us: int,
+) -> bool:
+    last_seq = record.last_seq
+    last_t0_us = record.last_t0_us
+    return (
+        last_seq is not None
+        and last_t0_us is not None
+        and seq <= last_seq
+        and t0_us > last_t0_us
+        and (last_seq - seq) < _RESTART_SEQ_GAP
+    )
 
 
 def apply_data_message_update(
@@ -42,20 +58,17 @@ def apply_data_message_update(
     record.last_seen_mono = mono
     record.data_addr = (addr[0], addr[1])
 
-    if record.has_seq(seq):
-        backward = (
-            (record.last_seq - seq) if record.last_seq is not None and record.last_seq > seq else 0
-        )
-        short_session_restart = (
-            seq == 0
-            and record.last_seq is not None
-            and _DEDUP_RESTART_GAP < backward < _RESTART_SEQ_GAP
-        )
-        if not short_session_restart:
-            record.duplicates_received += 1
-            return DataUpdateResult(is_duplicate=True)
-
+    if _is_short_session_restart(record, seq=seq, t0_us=t0_us):
+        # A restarted short-lived sender can reuse low sequence numbers with a
+        # strictly newer t0_us before the large-gap reset heuristic fires.
         record.clear_dedup()
+        record.last_seq = None
+        record.last_t0_us = None
+        record.timing_jitter_us_ema = 0.0
+        record.timing_drift_us_total = 0.0
+    elif record.has_seq(seq):
+        record.duplicates_received += 1
+        return DataUpdateResult(is_duplicate=True)
 
     record.record_seq(seq)
     record.prune_seqs(_DEDUP_WINDOW)
