@@ -129,6 +129,10 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     assert history_run["additionalProperties"] is False
     assert analysis_summary["additionalProperties"] is False
     assert finding_payload["additionalProperties"] is False
+    assert analysis_summary["properties"]["case_id"]["anyOf"] == [
+        {"type": "string"},
+        {"type": "null"},
+    ]
     assert analysis_summary["properties"]["report_date"]["anyOf"] == [
         {"type": "string"},
         {"type": "null"},

@@ -320,6 +320,8 @@ export interface components {
       analysis_metadata?: {
         [key: string]: unknown;
       };
+      /** Case Id */
+      case_id?: string | null;
       data_quality: components["schemas"]["DataQualityResponse"];
       /** Duration S */
       duration_s: number;
@@ -1241,6 +1243,8 @@ export interface components {
       analysis_metadata?: {
         [key: string]: unknown;
       };
+      /** Case Id */
+      case_id?: string | null;
       data_quality: components["schemas"]["DataQualityResponse"];
       /** Duration S */
       duration_s: number;

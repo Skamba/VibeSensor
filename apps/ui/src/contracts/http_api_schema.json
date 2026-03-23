@@ -425,6 +425,17 @@
             "title": "Analysis Metadata",
             "type": "object"
           },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
           "data_quality": {
             "$ref": "#/components/schemas/DataQualityResponse"
           },
@@ -3250,6 +3261,17 @@
             "additionalProperties": true,
             "title": "Analysis Metadata",
             "type": "object"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
           },
           "data_quality": {
             "$ref": "#/components/schemas/DataQualityResponse"

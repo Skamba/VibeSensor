@@ -328,6 +328,7 @@ class _AnalysisSummaryCoreResponse(_StrictBase):
 
     file_name: str
     run_id: str
+    case_id: str | None = None
     rows: int
     duration_s: float
     record_length: str
