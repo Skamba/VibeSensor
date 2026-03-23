@@ -177,8 +177,10 @@ After `RunAnalysis.summarize()` returns, `PostAnalysisWorker`:
 
 History readers unwrap the envelope back to the summary shape.
 Report endpoints rebuild `ReportTemplateData` from that summary on demand
-via `use_cases/history/report_preparation.py:prepare_report_input()` and
-`adapters/pdf/mapping.py:map_summary()`.
+via `use_cases/history/report_preparation.py:prepare_report_input()`, which
+reconstructs the domain aggregate and precomputes semantic report facts, and
+`adapters/pdf/mapping.py:map_summary()`, which stays focused on adapter-local
+mapping and rendering data assembly.
 
 Persisted post-stop analysis strength/intensity outputs are dB-only.
 Raw ingest/sample acceleration fields may still be expressed in g.
@@ -191,6 +193,8 @@ Raw ingest/sample acceleration fields may still be expressed in g.
    pipeline.
 3. If the new output is needed by the renderer, add any report-facing shaping
    in `use_cases/history/report_preparation.py`, then update
-   `adapters/pdf/mapping.py:map_summary()` and `ReportTemplateData`.
+   `adapters/pdf/mapping.py:map_summary()` and `ReportTemplateData`. Keep
+   semantic interpretation on the history/preparation side rather than in
+   `adapters/pdf/*`.
 4. Export any new public symbol from `use_cases/diagnostics/__init__.py`.
 5. Run `pytest apps/server/tests/` to verify tests still pass.

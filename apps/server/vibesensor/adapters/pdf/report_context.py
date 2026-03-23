@@ -1,8 +1,8 @@
 """Report context assembly for the PDF mapper.
 
 Owns :class:`ReportMappingContext` plus
-:func:`prepare_report_mapping_context`, which bridge persisted analysis
-summaries into normalized context consumed by ``mapping.py``.
+:func:`prepare_report_mapping_context`, which bridge prepared report facts
+into normalized context consumed by ``mapping.py``.
 """
 
 from __future__ import annotations
@@ -20,14 +20,10 @@ from vibesensor.domain import (
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.use_cases.history.report_interpretation import (
-    normalize_origin_location,
-    resolve_report_origin,
-    tire_spec_text,
-)
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
+    from vibesensor.use_cases.history.report_preparation import PreparedReportFacts
 
 __all__ = [
     "ReportMappingContext",
@@ -112,13 +108,14 @@ class ReportMappingContext:
 def prepare_report_mapping_context(
     summary: AnalysisSummary,
     *,
+    report_facts: PreparedReportFacts,
     test_run: TestRun,
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping.
 
-    Consumes the prepared domain ``TestRun`` aggregate supplied by the
-    report-preparation seam so downstream business decisions stay
-    domain-first without reconstructing from summary payloads again.
+    Consumes the prepared domain ``TestRun`` aggregate and history-prepared
+    semantic report facts so downstream business decisions stay domain-first
+    without calling back into history-layer interpretation helpers.
     """
     meta = summary["metadata"]
     car_name = str(meta.get("car_name") or "").strip() or None
@@ -126,34 +123,20 @@ def prepare_report_mapping_context(
     report_date = str(summary["report_date"] or "") or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
-    connected = summary["sensor_locations_connected_throughout"]
-    sensor_locations_active = [loc for loc in connected if loc.strip()]
-    if not sensor_locations_active:
-        sensor_locations_active = [loc for loc in summary["sensor_locations"] if loc.strip()]
-
-    domain_aggregate = test_run
-
-    origin = resolve_report_origin(domain_aggregate)
-
-    origin_location = normalize_origin_location(origin)
-
-    config_snap = domain_aggregate.capture.setup.configuration_snapshot
-    rate = config_snap.raw_sample_rate_hz
-
     return ReportMappingContext(
         car_name=car_name,
         car_type=car_type,
         date_str=date_str,
-        origin=origin,
-        origin_location=origin_location,
-        sensor_locations_active=sensor_locations_active,
-        duration_text=summary["record_length"] or None,
-        start_time_utc=str(summary["start_time_utc"] or "").strip() or None,
-        end_time_utc=str(summary["end_time_utc"] or "").strip() or None,
-        sample_rate_hz=f"{rate:g}" if rate is not None else None,
-        tire_spec_text=tire_spec_text(meta),
-        sample_count=domain_aggregate.capture.sample_count,
-        sensor_model=config_snap.sensor_model,
-        firmware_version=config_snap.firmware_version,
-        domain_aggregate=domain_aggregate,
+        origin=report_facts.origin,
+        origin_location=report_facts.origin_location,
+        sensor_locations_active=list(report_facts.sensor_locations_active),
+        duration_text=report_facts.duration_text,
+        start_time_utc=report_facts.start_time_utc,
+        end_time_utc=report_facts.end_time_utc,
+        sample_rate_hz=report_facts.sample_rate_hz,
+        tire_spec_text=report_facts.tire_spec_text,
+        sample_count=report_facts.sample_count,
+        sensor_model=report_facts.sensor_model,
+        firmware_version=report_facts.firmware_version,
+        domain_aggregate=test_run,
     )

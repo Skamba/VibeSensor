@@ -11,10 +11,11 @@ The report generation pipeline has two distinct phases:
 2. **History-side report preparation + rendering** (`vibesensor.use_cases.history`
    → `vibesensor.adapters.pdf`) — loads the persisted analysis object, shapes
    runtime warnings and cache metadata, prepares one explicit
-   `PreparedReportInput` with an authoritative reconstructed domain aggregate,
-   maps that prepared input to `ReportTemplateData`, and renders a PDF. This
-   phase performs **zero analysis** — it only shapes persisted report data and
-   formats pre-computed results.
+   `PreparedReportInput` with an authoritative reconstructed domain aggregate
+   plus precomputed semantic report facts, maps that prepared input to
+   `ReportTemplateData`, and renders a PDF. This phase performs **zero
+   analysis** — it only shapes persisted report data and formats pre-computed
+   results.
 
 ```text
 Recording stops
@@ -25,7 +26,7 @@ Recording stops
       → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_summary]
       → findings.py + _reference_findings.py + _context_decode.py/_context_projection.py + _sample_metrics.py + _analysis_models.py + orders/{pipeline,matching,scoring,finding_builder,statistics,heuristics,settings}.py + peaks/{findings,accumulation,classification,scoring,finding_builder,statistics,settings,table}.py + signal_aggregation.py + top_cause_selection.py + plots.py
     → map_summary() [vibesensor.adapters.pdf.mapping]
-      → report_context.py (context assembly, card decisions) + mapping.py (thin template mapper) + peak_table.py + report_sections.py
+      → report_context.py (adapter-local context over prepared facts) + mapping.py (thin template mapper) + peak_table.py + report_sections.py
     → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
@@ -58,7 +59,7 @@ The `vibesensor.adapters.pdf` package contains **only** rendering code:
 | `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
 | `pdf_diagram_render.py` | Diagram planning, drawing, and location normalization |
 | `report_data.py` | Dataclass definitions (pure data) |
-| `report_context.py` | Context assembly and card decisions over a prepared summary + prebuilt domain aggregate |
+| `report_context.py` | Thin adapter-local context wrapper over prepared report facts + prebuilt domain aggregate |
 | `mapping.py` | Thin mapper: `PreparedReportInput` → `ReportTemplateData` |
 | `presentation.py` | Rendering-only label helpers (strength/order/classification text) |
 | `peak_table.py` | Peak-row builders for the report evidence table |
@@ -71,12 +72,15 @@ enforces this.
 
 History-side report preparation now lives in
 `vibesensor.use_cases.history.report_preparation`, which owns the explicit
-`PreparedReportInput` seam passed into the PDF adapter and reconstructs the
-authoritative domain aggregate exactly once. Pure report-domain interpretation
-that reads domain findings/test runs but does not perform i18n or PDF
-dataclass assembly still lives in
-`vibesensor.use_cases.history.report_interpretation`, which the PDF adapter
-consumes without reloading or reprojecting persisted summaries.
+`PreparedReportInput` seam passed into the PDF adapter, reconstructs the
+authoritative domain aggregate exactly once, and precomputes the semantic
+report facts the adapter needs (origin, active sensor intensity, hotspot rows,
+primary-candidate facts, next-step inputs, and data-trust inputs). Pure
+report-domain interpretation that reads domain findings/test runs but does not
+perform i18n or PDF dataclass assembly still lives in
+`vibesensor.use_cases.history.report_interpretation`, but it is now consumed by
+history-side preparation rather than imported directly by `adapters.pdf`
+modules.
 
 ### ReportTemplateData schema
 
@@ -118,4 +122,5 @@ needs:
    `vibesensor.use_cases.history.report_preparation`, then populate the final
    renderer field in `map_summary()` in `vibesensor.adapters.pdf.mapping`.
 4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.adapters.pdf`.
-5. Never add analysis logic to the renderer package — always pre-compute.
+5. Never add history/report semantic interpretation logic to the renderer
+   package — always pre-compute it in `report_preparation.py`.

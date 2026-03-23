@@ -5,7 +5,6 @@ from vibesensor.adapters.pdf.mapping import (
     prepare_report_mapping_context,
     resolve_primary_report_candidate,
 )
-from vibesensor.domain import LocationIntensitySummary
 
 
 def test_prepare_report_mapping_context_prefers_connected_sensor_locations() -> None:
@@ -27,8 +26,10 @@ def test_prepare_report_mapping_context_prefers_connected_sensor_locations() -> 
         },
     )
     assert prepared.domain_test_run is not None
+    assert prepared.report_facts is not None
     context = prepare_report_mapping_context(
         prepared.analysis_summary,
+        report_facts=prepared.report_facts,
         test_run=prepared.domain_test_run,
     )
 
@@ -36,7 +37,6 @@ def test_prepare_report_mapping_context_prefers_connected_sensor_locations() -> 
 
 
 def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> None:
-    sensor_intensity = [LocationIntensitySummary(location="", p95_intensity_db=21.0)]
     prepared = prepare_report_input(
         {
             "sensor_count_used": 0,
@@ -74,8 +74,10 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
         },
     )
     assert prepared.domain_test_run is not None
+    assert prepared.report_facts is not None
     context = prepare_report_mapping_context(
         prepared.analysis_summary,
+        report_facts=prepared.report_facts,
         test_run=prepared.domain_test_run,
     )
 
@@ -84,7 +86,7 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
 
     primary = resolve_primary_report_candidate(
         context=context,
-        sensor_intensity=sensor_intensity,
+        facts=prepared.report_facts.primary_candidate_facts,
         tr=tr,
         lang="en",
     )
