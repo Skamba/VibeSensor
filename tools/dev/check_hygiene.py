@@ -7,6 +7,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tomllib
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -94,11 +95,21 @@ _MIRRORED_BACKEND_INSTALL_JOBS = (
     "e2e",
 )
 _FIRMWARE_INSTALL_JOB = "firmware-native-tests"
+_LOCAL_BACKEND_SETUP_ACTION = "./.github/actions/setup-backend"
+_DOCKER_NODE_RE = re.compile(r"^FROM node:(\S+) AS ui-build$", re.MULTILINE)
+_DOCKER_PYTHON_RE = re.compile(r"^FROM python:(\S+)$", re.MULTILINE)
+_ACTION_INPUT_EQ_RE = re.compile(
+    r"^\${{\s*inputs\.([A-Za-z0-9_-]+)\s*==\s*'([^']+)'\s*}}$"
+)
+
+
+def _load_yaml_mapping(path: Path) -> dict[str, object]:
+    loaded = yaml.safe_load(path.read_text())
+    return loaded if isinstance(loaded, dict) else {}
 
 
 def _load_ci_workflow() -> dict[str, object]:
-    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text())
-    return workflow if isinstance(workflow, dict) else {}
+    return _load_yaml_mapping(ROOT / ".github" / "workflows" / "ci.yml")
 
 
 def _load_ci_parallel_module():
@@ -110,6 +121,48 @@ def _load_ci_parallel_module():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _read_required_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8").strip()
+
+
+def _load_server_pyproject() -> dict[str, object]:
+    return tomllib.loads((ROOT / "apps" / "server" / "pyproject.toml").read_text())
+
+
+def _docker_base_tag(pattern: re.Pattern[str], dockerfile_text: str) -> str | None:
+    match = pattern.search(dockerfile_text)
+    return match.group(1) if match else None
+
+
+def _version_core(image_tag: str) -> str:
+    return image_tag.split("-", 1)[0]
+
+
+def _project_dependency_spec(requirement_name: str) -> str | None:
+    pyproject = _load_server_pyproject()
+    project = pyproject.get("project")
+    if not isinstance(project, Mapping):
+        return None
+    dependencies = project.get("dependencies")
+    if not isinstance(dependencies, list):
+        return None
+    prefix = f"{requirement_name}>="
+    for dependency in dependencies:
+        if isinstance(dependency, str) and dependency.startswith(prefix):
+            return dependency
+    return None
+
+
+def _lower_bound_major(requirement_spec: str) -> int | None:
+    match = re.search(r">=?\s*([0-9]+)", requirement_spec)
+    return int(match.group(1)) if match else None
+
+
+def _upper_bound_major(requirement_spec: str) -> int | None:
+    match = re.search(r"<\s*([0-9]+)", requirement_spec)
+    return int(match.group(1)) if match else None
 
 
 def _normalize_python_token(token: str) -> str:
@@ -175,6 +228,83 @@ def _normalize_ci_step_commands(step: Mapping[str, object]) -> list[str]:
     return commands
 
 
+def _local_action_file(action_ref: str) -> Path | None:
+    if not action_ref.startswith("./"):
+        return None
+    action_file = ROOT / action_ref.removeprefix("./") / "action.yml"
+    return action_file if action_file.exists() else None
+
+
+def _resolved_action_inputs(
+    action: Mapping[str, object], raw_with: Mapping[str, object] | None
+) -> dict[str, str]:
+    resolved: dict[str, str] = {}
+    raw_inputs = action.get("inputs")
+    if isinstance(raw_inputs, Mapping):
+        for input_name, input_spec in raw_inputs.items():
+            if not isinstance(input_name, str):
+                continue
+            default = ""
+            if isinstance(input_spec, Mapping):
+                raw_default = input_spec.get("default")
+                if raw_default is not None:
+                    default = str(raw_default)
+            resolved[input_name] = default
+    if raw_with is not None:
+        for input_name, value in raw_with.items():
+            if isinstance(input_name, str) and value is not None:
+                resolved[input_name] = str(value)
+    return resolved
+
+
+def _action_step_enabled(step: Mapping[str, object], inputs: Mapping[str, str]) -> bool:
+    raw_if = step.get("if")
+    if not isinstance(raw_if, str):
+        return True
+    match = _ACTION_INPUT_EQ_RE.fullmatch(raw_if.strip())
+    if match is None:
+        return True
+    input_name, expected_value = match.groups()
+    return inputs.get(input_name, "") == expected_value
+
+
+def _normalized_ci_steps(raw_step: Mapping[str, object]) -> list[dict[str, object]]:
+    run = raw_step.get("run")
+    if isinstance(run, str):
+        return [
+            {
+                "name": raw_step.get("name", ""),
+                "commands": _normalize_ci_step_commands(raw_step),
+            }
+        ]
+
+    uses = raw_step.get("uses")
+    if not isinstance(uses, str):
+        return []
+    action_file = _local_action_file(uses)
+    if action_file is None:
+        return []
+    action = _load_yaml_mapping(action_file)
+    runs = action.get("runs")
+    if not isinstance(runs, Mapping):
+        return []
+    raw_steps = runs.get("steps")
+    if not isinstance(raw_steps, list):
+        return []
+    raw_with = raw_step.get("with")
+    action_inputs = _resolved_action_inputs(
+        action, raw_with if isinstance(raw_with, Mapping) else None
+    )
+    normalized_steps: list[dict[str, object]] = []
+    for action_step in raw_steps:
+        if not isinstance(action_step, Mapping):
+            continue
+        if not _action_step_enabled(action_step, action_inputs):
+            continue
+        normalized_steps.extend(_normalized_ci_steps(action_step))
+    return normalized_steps
+
+
 def _ci_run_steps_by_job() -> dict[str, list[dict[str, object]]]:
     workflow = _load_ci_workflow()
     jobs = workflow.get("jobs")
@@ -192,15 +322,7 @@ def _ci_run_steps_by_job() -> dict[str, list[dict[str, object]]]:
         for raw_step in raw_steps:
             if not isinstance(raw_step, Mapping):
                 continue
-            run = raw_step.get("run")
-            if not isinstance(run, str):
-                continue
-            normalized_steps.append(
-                {
-                    "name": raw_step.get("name", ""),
-                    "commands": _normalize_ci_step_commands(raw_step),
-                }
-            )
+            normalized_steps.extend(_normalized_ci_steps(raw_step))
         result[job_name] = normalized_steps
     return result
 
@@ -264,13 +386,15 @@ def _pip_install_markers(commands: list[str]) -> set[str]:
     return markers
 
 
-def _ci_step_named(steps: list[dict[str, object]], name: str) -> list[str]:
+def _ci_commands_named(steps: list[dict[str, object]], names: set[str]) -> list[str]:
+    collected: list[str] = []
     for step in steps:
-        if step.get("name") == name:
-            commands = step.get("commands")
-            if isinstance(commands, list):
-                return [str(command) for command in commands]
-    return []
+        if step.get("name") not in names:
+            continue
+        commands = step.get("commands")
+        if isinstance(commands, list):
+            collected.extend(str(command) for command in commands)
+    return collected
 
 
 def check_ci_job_sync() -> list[str]:
@@ -301,8 +425,8 @@ def check_ci_command_sync() -> list[str]:
 
     common_backend_markers = _pip_install_markers(common_bootstrap[:2])
     for job_name in _MIRRORED_BACKEND_INSTALL_JOBS:
-        install_commands = _ci_step_named(
-            ci_steps.get(job_name, []), "Install dependencies"
+        install_commands = _ci_commands_named(
+            ci_steps.get(job_name, []), {"Install dependencies"}
         )
         if _pip_install_markers(install_commands) != common_backend_markers:
             errors.append(
@@ -312,8 +436,8 @@ def check_ci_command_sync() -> list[str]:
 
     ui_bootstrap_commands = common_bootstrap[2:]
     for job_name in _MIRRORED_UI_INSTALL_JOBS:
-        install_commands = _ci_step_named(
-            ci_steps.get(job_name, []), "Install UI dependencies"
+        install_commands = _ci_commands_named(
+            ci_steps.get(job_name, []), {"Install UI dependencies"}
         )
         if install_commands != ui_bootstrap_commands:
             errors.append(
@@ -321,9 +445,9 @@ def check_ci_command_sync() -> list[str]:
                 f"ci={install_commands!r} local={ui_bootstrap_commands!r}"
             )
 
-    firmware_install_commands = _ci_step_named(
+    firmware_install_commands = _ci_commands_named(
         ci_steps.get(_FIRMWARE_INSTALL_JOB, []),
-        "Install dependencies",
+        {"Install dependencies", "Install PlatformIO dependencies"},
     )
     if _pip_install_markers(firmware_install_commands) != _pip_install_markers(
         firmware_bootstrap[:3]
@@ -333,7 +457,11 @@ def check_ci_command_sync() -> list[str]:
             f"ci={firmware_install_commands!r} local={firmware_bootstrap[:3]!r}"
         )
 
-    install_step_names = {"Install dependencies", "Install UI dependencies"}
+    install_step_names = {
+        "Install dependencies",
+        "Install PlatformIO dependencies",
+        "Install UI dependencies",
+    }
     for job_name, steps in ci_steps.items():
         expected_commands: list[str] = []
         for step in steps:
@@ -347,6 +475,145 @@ def check_ci_command_sync() -> list[str]:
             errors.append(
                 f"{job_name} run commands drifted from run_ci_parallel.py: "
                 f"ci={expected_commands!r} local={local_commands!r}"
+            )
+
+    return errors
+
+
+def check_docker_ci_dependency_hygiene() -> list[str]:
+    errors: list[str] = []
+
+    dockerfile_text = (ROOT / "apps" / "server" / "Dockerfile").read_text(
+        encoding="utf-8"
+    )
+    expected_python = _read_required_text(ROOT / ".python-version")
+    expected_node = _read_required_text(ROOT / ".nvmrc")
+
+    docker_python = _docker_base_tag(_DOCKER_PYTHON_RE, dockerfile_text)
+    if docker_python is None:
+        errors.append("Dockerfile is missing the runtime python base image line.")
+    elif _version_core(docker_python) != expected_python:
+        errors.append(
+            f"Dockerfile runtime python tag {docker_python!r} does not match .python-version {expected_python!r}."
+        )
+
+    docker_node = _docker_base_tag(_DOCKER_NODE_RE, dockerfile_text)
+    if docker_node is None:
+        errors.append("Dockerfile is missing the UI node base image line.")
+    elif _version_core(docker_node) != expected_node:
+        errors.append(
+            f"Dockerfile UI node tag {docker_node!r} does not match .nvmrc {expected_node!r}."
+        )
+
+    if '.get("optional-dependencies", {}).get("esp"' in dockerfile_text:
+        errors.append(
+            "Production Dockerfile must not install the optional esp dependency group."
+        )
+    if "tomllib" in dockerfile_text or "subprocess.check_call" in dockerfile_text:
+        errors.append(
+            "Dockerfile must not parse pyproject.toml inline; let pip resolve /app/apps/server directly."
+        )
+    if "--no-deps /app/apps/server" in dockerfile_text:
+        errors.append("Dockerfile must not install /app/apps/server with --no-deps.")
+    if "python -m pip install --no-cache-dir /app/apps/server" not in dockerfile_text:
+        errors.append("Dockerfile must install /app/apps/server directly with pip.")
+
+    workflow = _load_ci_workflow()
+    jobs = workflow.get("jobs")
+    if not isinstance(jobs, Mapping):
+        errors.append("CI workflow is missing its jobs mapping.")
+        return errors
+
+    action_file = ROOT / ".github" / "actions" / "setup-backend" / "action.yml"
+    if not action_file.exists():
+        errors.append(
+            "Missing shared backend setup composite action at .github/actions/setup-backend/action.yml."
+        )
+
+    for job_name in (*_MIRRORED_BACKEND_INSTALL_JOBS, _FIRMWARE_INSTALL_JOB):
+        raw_job = jobs.get(job_name)
+        if not isinstance(raw_job, Mapping):
+            continue
+        raw_steps = raw_job.get("steps")
+        if not isinstance(raw_steps, list):
+            continue
+        setup_step = next(
+            (
+                step
+                for step in raw_steps
+                if isinstance(step, Mapping)
+                and step.get("uses") == _LOCAL_BACKEND_SETUP_ACTION
+            ),
+            None,
+        )
+        if setup_step is None:
+            errors.append(
+                f"{job_name} must use {_LOCAL_BACKEND_SETUP_ACTION} for shared backend setup."
+            )
+            continue
+        if any(
+            isinstance(step, Mapping) and step.get("uses") == "actions/setup-python@v5"
+            for step in raw_steps
+        ):
+            errors.append(
+                f"{job_name} should rely on {_LOCAL_BACKEND_SETUP_ACTION} instead of duplicating actions/setup-python."
+            )
+        if job_name == _FIRMWARE_INSTALL_JOB:
+            raw_with = setup_step.get("with")
+            include_platformio = ""
+            if isinstance(raw_with, Mapping):
+                raw_value = raw_with.get("include-platformio")
+                if raw_value is not None:
+                    include_platformio = str(raw_value)
+            if include_platformio != "true":
+                errors.append(
+                    "firmware-native-tests must enable include-platformio on the shared backend setup action."
+                )
+
+    ui_smoke = jobs.get("ui-smoke") if isinstance(jobs, Mapping) else None
+    steps = ui_smoke.get("steps") if isinstance(ui_smoke, Mapping) else None
+    playwright_cache_ok = False
+    if isinstance(steps, list):
+        for step in steps:
+            if not isinstance(step, Mapping):
+                continue
+            uses = step.get("uses")
+            if not isinstance(uses, str) or not uses.startswith("actions/cache@"):
+                continue
+            with_data = step.get("with")
+            if not isinstance(with_data, Mapping):
+                continue
+            path = with_data.get("path")
+            key = with_data.get("key")
+            if (
+                isinstance(path, str)
+                and path.strip() == "~/.cache/ms-playwright"
+                and isinstance(key, str)
+                and "ms-playwright" in key
+                and "package-lock.json" in key
+            ):
+                playwright_cache_ok = True
+                break
+    if not playwright_cache_ok:
+        errors.append(
+            "ui-smoke must cache ~/.cache/ms-playwright with a package-lock-based actions/cache key."
+        )
+
+    numpy_spec = _project_dependency_spec("numpy")
+    if numpy_spec is None:
+        errors.append(
+            "apps/server/pyproject.toml is missing the numpy runtime dependency."
+        )
+    else:
+        lower_major = _lower_bound_major(numpy_spec)
+        upper_major = _upper_bound_major(numpy_spec)
+        if lower_major is None or upper_major is None:
+            errors.append(
+                f"NumPy dependency must declare explicit lower and upper bounds; found {numpy_spec!r}."
+            )
+        elif upper_major != lower_major + 1:
+            errors.append(
+                f"NumPy dependency must stay within one major-version window; found {numpy_spec!r}."
             )
 
     return errors
@@ -395,6 +662,15 @@ def main() -> int:
         failures += 1
     else:
         print("CI commands in sync between ci.yml and run_ci_parallel.py.")
+
+    docker_ci_hygiene_errors = check_docker_ci_dependency_hygiene()
+    if docker_ci_hygiene_errors:
+        print("Docker/CI dependency hygiene drift detected:")
+        for item in docker_ci_hygiene_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Docker/CI dependency hygiene checks passed.")
 
     return 1 if failures else 0
 
