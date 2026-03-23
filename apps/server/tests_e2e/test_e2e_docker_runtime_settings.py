@@ -79,7 +79,7 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
         api_json(
             base,
             "/api/settings/speed-source",
-            method="POST",
+            method="PUT",
             body={
                 "speed_source": before["speed_source"],
                 "manual_speed_kph": before["manual_speed_kph"],
