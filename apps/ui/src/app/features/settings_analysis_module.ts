@@ -1,7 +1,7 @@
 import type { AnalysisSettingsRequest, AnalysisSettingsPayload } from "../../api/types";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { AppState } from "../ui_app_state";
+import type { SettingsState } from "../ui_app_state";
 
 const ANALYSIS_SETTING_KEYS = [
   "tire_width_mm",
@@ -22,7 +22,7 @@ const ANALYSIS_SETTING_KEYS = [
 ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
 
 export interface SettingsAnalysisModuleDeps extends FeatureDepsBase {
-  state: AppState;
+  settings: SettingsState;
   renderSpectrum: () => void;
   hasValidActiveCar: () => boolean;
   onMissingActiveCar: () => void;
@@ -37,24 +37,24 @@ export interface SettingsAnalysisModule {
 }
 
 export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): SettingsAnalysisModule {
-  const { state, els, t } = ctx;
+  const { settings, els, t } = ctx;
 
   function syncSettingsInputs(): void {
-    if (els.wheelBandwidthInput) els.wheelBandwidthInput.value = String(state.vehicleSettings.wheel_bandwidth_pct);
-    if (els.driveshaftBandwidthInput) els.driveshaftBandwidthInput.value = String(state.vehicleSettings.driveshaft_bandwidth_pct);
-    if (els.engineBandwidthInput) els.engineBandwidthInput.value = String(state.vehicleSettings.engine_bandwidth_pct);
-    if (els.speedUncertaintyInput) els.speedUncertaintyInput.value = String(state.vehicleSettings.speed_uncertainty_pct);
-    if (els.tireDiameterUncertaintyInput) els.tireDiameterUncertaintyInput.value = String(state.vehicleSettings.tire_diameter_uncertainty_pct);
-    if (els.finalDriveUncertaintyInput) els.finalDriveUncertaintyInput.value = String(state.vehicleSettings.final_drive_uncertainty_pct);
-    if (els.gearUncertaintyInput) els.gearUncertaintyInput.value = String(state.vehicleSettings.gear_uncertainty_pct);
-    if (els.minAbsBandHzInput) els.minAbsBandHzInput.value = String(state.vehicleSettings.min_abs_band_hz);
-    if (els.maxBandHalfWidthInput) els.maxBandHalfWidthInput.value = String(state.vehicleSettings.max_band_half_width_pct);
+    if (els.wheelBandwidthInput) els.wheelBandwidthInput.value = String(settings.vehicleSettings.wheel_bandwidth_pct);
+    if (els.driveshaftBandwidthInput) els.driveshaftBandwidthInput.value = String(settings.vehicleSettings.driveshaft_bandwidth_pct);
+    if (els.engineBandwidthInput) els.engineBandwidthInput.value = String(settings.vehicleSettings.engine_bandwidth_pct);
+    if (els.speedUncertaintyInput) els.speedUncertaintyInput.value = String(settings.vehicleSettings.speed_uncertainty_pct);
+    if (els.tireDiameterUncertaintyInput) els.tireDiameterUncertaintyInput.value = String(settings.vehicleSettings.tire_diameter_uncertainty_pct);
+    if (els.finalDriveUncertaintyInput) els.finalDriveUncertaintyInput.value = String(settings.vehicleSettings.final_drive_uncertainty_pct);
+    if (els.gearUncertaintyInput) els.gearUncertaintyInput.value = String(settings.vehicleSettings.gear_uncertainty_pct);
+    if (els.minAbsBandHzInput) els.minAbsBandHzInput.value = String(settings.vehicleSettings.min_abs_band_hz);
+    if (els.maxBandHalfWidthInput) els.maxBandHalfWidthInput.value = String(settings.vehicleSettings.max_band_half_width_pct);
   }
 
   function applyAnalysisSettingsPayload(serverSettings: AnalysisSettingsPayload): void {
     for (const key of ANALYSIS_SETTING_KEYS) {
       const value = serverSettings[key];
-      if (typeof value === "number") state.vehicleSettings[key] = value;
+      if (typeof value === "number") settings.vehicleSettings[key] = value;
     }
     syncSettingsInputs();
     ctx.renderSpectrum();
@@ -113,7 +113,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     };
     for (const key of ANALYSIS_SETTING_KEYS) {
       if (!(key in payload)) {
-        payload[key] = state.vehicleSettings[key];
+        payload[key] = settings.vehicleSettings[key];
       }
     }
     void syncAnalysisSettingsToServer(payload);

@@ -1,5 +1,5 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { AppState, RunDetail } from "../ui_app_state";
+import type { HistoryState, RunDetail } from "../ui_app_state";
 import {
   getHistoryTableAction,
   getHistoryTableRowRunId,
@@ -18,7 +18,8 @@ import {
 } from "./history_list_module";
 
 export interface HistoryFeatureDeps extends FeatureDepsBase {
-  state: AppState;
+  history: HistoryState;
+  getLanguage: () => string;
   fmt: (n: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
   formatInt: (value: number) => string;
@@ -35,12 +36,12 @@ export interface HistoryFeature {
 }
 
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
-  const { state, els } = ctx;
+  const { history, els } = ctx;
   let handlersBound = false;
 
   function ensureRunDetail(runId: string): RunDetail {
-    if (!state.runDetailsById[runId]) {
-      state.runDetailsById[runId] = {
+    if (!history.runDetailsById[runId]) {
+      history.runDetailsById[runId] = {
         preview: null,
         previewLoading: false,
         previewError: "",
@@ -51,30 +52,33 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         pdfError: "",
       };
     }
-    return state.runDetailsById[runId];
+    return history.runDetailsById[runId];
   }
 
   function collapseExpandedRun(): void {
-    const previous = state.expandedRunId;
-    state.expandedRunId = null;
+    const previous = history.expandedRunId;
+    history.expandedRunId = null;
     if (previous) {
-      delete state.runDetailsById[previous];
+      delete history.runDetailsById[previous];
     }
   }
 
   const listModule: HistoryListModule = createHistoryListModule({
     ...ctx,
+    history,
     ensureRunDetail,
     collapseExpandedRun,
   });
   const detailModule: HistoryDetailModule = createHistoryDetailModule({
     ...ctx,
+    history,
     ensureRunDetail,
     collapseExpandedRun,
     renderHistoryTable: () => listModule.renderHistoryTable(),
   });
   const downloadDeleteModule: HistoryDownloadDeleteModule = createHistoryDownloadDeleteModule({
-    state,
+    history,
+    getLanguage: ctx.getLanguage,
     t: ctx.t,
     ensureRunDetail,
     collapseExpandedRun,
@@ -99,7 +103,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         event.stopPropagation();
         void downloadDeleteModule.onHistoryTableAction(
           action.action,
-          action.runId ?? state.expandedRunId ?? "",
+          action.runId ?? history.expandedRunId ?? "",
         );
         return;
       }

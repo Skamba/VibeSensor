@@ -1,13 +1,13 @@
 import { getHistory, historyExportUrl } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { AppState, RunDetail } from "../ui_app_state";
+import type { HistoryState, RunDetail } from "../ui_app_state";
 import {
   renderHistoryEmptyState,
   renderHistoryTable as renderHistoryTableView,
 } from "../views/history_table_view";
 
 export interface HistoryListModuleDeps extends FeatureDepsBase {
-  state: AppState;
+  history: HistoryState;
   fmt: (n: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
   formatInt: (value: number) => string;
@@ -21,13 +21,13 @@ export interface HistoryListModule {
 }
 
 export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryListModule {
-  const { state, els, t, escapeHtml, fmt, fmtTs, formatInt } = ctx;
+  const { history, els, t, escapeHtml, fmt, fmtTs, formatInt } = ctx;
 
   function renderHistoryTable(): void {
     if (els.deleteAllRunsBtn) {
-      els.deleteAllRunsBtn.disabled = state.deleteAllRunsInFlight || state.runs.length === 0;
+      els.deleteAllRunsBtn.disabled = history.deleteAllRunsInFlight || history.runs.length === 0;
     }
-    if (!state.runs.length) {
+    if (!history.runs.length) {
       if (els.historySummary) {
         els.historySummary.textContent = t("history.none");
       }
@@ -37,20 +37,20 @@ export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryList
       ctx.collapseExpandedRun();
       return;
     }
-    if (state.expandedRunId && !state.runs.some((row) => row.run_id === state.expandedRunId)) {
+    if (history.expandedRunId && !history.runs.some((row) => row.run_id === history.expandedRunId)) {
       ctx.collapseExpandedRun();
     }
     if (els.historySummary) {
-      els.historySummary.textContent = t("history.available_count", { count: state.runs.length });
+      els.historySummary.textContent = t("history.available_count", { count: history.runs.length });
     }
-    for (const run of state.runs) {
+    for (const run of history.runs) {
       ctx.ensureRunDetail(run.run_id);
     }
     if (els.historyTableBody) {
       renderHistoryTableView(els.historyTableBody, {
-        runs: state.runs,
-        expandedRunId: state.expandedRunId,
-        runDetailsById: state.runDetailsById,
+        runs: history.runs,
+        expandedRunId: history.expandedRunId,
+        runDetailsById: history.runDetailsById,
         t,
         escapeHtml,
         fmt,
@@ -64,7 +64,7 @@ export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryList
   async function refreshHistory(): Promise<void> {
     try {
       const payload = await getHistory();
-      state.runs = payload.runs ?? [];
+      history.runs = payload.runs ?? [];
       renderHistoryTable();
     } catch (_err) {
       renderHistoryTable();

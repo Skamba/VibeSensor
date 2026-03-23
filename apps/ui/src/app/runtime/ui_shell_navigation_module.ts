@@ -1,10 +1,10 @@
 import type { UiDomElements } from "../ui_dom_registry";
-import type { AppState } from "../ui_app_state";
+import type { ShellState } from "../ui_app_state";
 
 export const DEFAULT_SHELL_VIEW_ID = "dashboardView";
 
 export interface UiShellNavigationModuleDeps {
-  state: AppState;
+  shell: ShellState;
   els: UiDomElements;
   onDashboardViewActivated?: () => void;
 }
@@ -17,23 +17,23 @@ export interface UiShellNavigationModule {
 export function createUiShellNavigationModule(
   ctx: UiShellNavigationModuleDeps,
 ): UiShellNavigationModule {
-  const { state, els } = ctx;
+  const { shell, els } = ctx;
 
   function setActiveView(viewId: string): void {
     const valid = els.views.some((view) => view.id === viewId);
-    state.activeViewId = valid ? viewId : DEFAULT_SHELL_VIEW_ID;
+    shell.activeViewId = valid ? viewId : DEFAULT_SHELL_VIEW_ID;
     for (const view of els.views) {
-      const isActive = view.id === state.activeViewId;
+      const isActive = view.id === shell.activeViewId;
       view.classList.toggle("active", isActive);
       view.hidden = !isActive;
     }
     for (const button of els.menuButtons) {
-      const isActive = button.dataset.view === state.activeViewId;
+      const isActive = button.dataset.view === shell.activeViewId;
       button.classList.toggle("active", isActive);
       button.setAttribute("aria-selected", isActive ? "true" : "false");
       button.tabIndex = isActive ? 0 : -1;
     }
-    if (state.activeViewId === DEFAULT_SHELL_VIEW_ID) {
+    if (shell.activeViewId === DEFAULT_SHELL_VIEW_ID) {
       ctx.onDashboardViewActivated?.();
     }
   }

@@ -1,5 +1,6 @@
 import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
 import type { UiDomElements } from "../ui_dom_registry";
+import { renderStatusGridRow } from "./dom_helpers";
 
 const STATE_VARIANT: Readonly<Record<string, string>> = {
   idle: "muted",
@@ -58,6 +59,152 @@ function formatHealthReason(
   return key ? t(key) : reason;
 }
 
+function renderStateHeaderRow(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  const { t, escapeHtml } = deps;
+  const pill = `<span class="pill pill--${STATE_VARIANT[status.state] || "muted"}">${escapeHtml(t(`settings.update.state.${status.state}`))}</span>`;
+  const phase = status.state === "idle"
+    ? ""
+    : ` <span class="subtle">${escapeHtml(t(`settings.update.phase.${status.phase}`))}</span>`;
+  return renderStatusGridRow(
+    escapeHtml(t("settings.update.status")),
+    `${pill}${phase}`,
+  );
+}
+
+function renderLifecycleRows(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  const { t, escapeHtml } = deps;
+  const rows: string[] = [];
+  if (status.ssid) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.ssid_label")), escapeHtml(status.ssid)));
+  if (status.started_at) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.started_at")), escapeHtml(formatTimestamp(status.started_at))));
+  if (status.phase_started_at && status.state !== "idle") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_started_at")), escapeHtml(formatTimestamp(status.phase_started_at))));
+  if (status.state !== "idle" && status.phase_elapsed_s != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_elapsed")), escapeHtml(formatDuration(status.phase_elapsed_s))));
+  if (status.finished_at) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.finished_at")), escapeHtml(formatTimestamp(status.finished_at))));
+  if (status.last_success_at) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.last_success")), escapeHtml(formatTimestamp(status.last_success_at))));
+  return rows.join("");
+}
+
+function renderRuntimeRows(
+  status: UpdateStatusPayload,
+  showRuntimeAssetsCheck: boolean,
+  deps: UpdateStatusViewDeps,
+): string {
+  const { t, escapeHtml } = deps;
+  const rows: string[] = [];
+  if (status.runtime?.version && status.runtime.version !== "unknown") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.runtime_version")), escapeHtml(status.runtime.version)));
+  if (status.runtime?.commit) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.runtime_commit")), escapeHtml(status.runtime.commit.slice(0, 12))));
+  if (!status.runtime?.static_assets_hash) return rows.join("");
+  rows.push(renderStatusGridRow(escapeHtml(t("settings.update.runtime_assets")), escapeHtml(status.runtime.static_assets_hash.slice(0, 12))));
+  if (showRuntimeAssetsCheck) {
+    rows.push(renderStatusGridRow(
+      escapeHtml(t("settings.update.runtime_assets_check")),
+      escapeHtml(t(status.runtime.assets_verified ? "settings.update.runtime_assets_ok" : "settings.update.runtime_assets_bad")),
+    ));
+  }
+  return rows.join("");
+}
+
+function renderStateGrid(
+  status: UpdateStatusPayload,
+  showRuntimeAssetsCheck: boolean,
+  deps: UpdateStatusViewDeps,
+): string {
+  return `<div class="update-status-grid">${renderStateHeaderRow(status, deps)}${renderLifecycleRows(status, deps)}${renderRuntimeRows(status, showRuntimeAssetsCheck, deps)}</div>`;
+}
+
+function renderHealthSummaryRows(
+  health: HealthStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  const { t, escapeHtml } = deps;
+  const pill = `<span class="pill pill--${HEALTH_VARIANT[health.status]}${health.persistence.write_error ? " pill--bad" : ""}">${escapeHtml(t(`settings.update.health.state.${health.status}`))}</span>`;
+  const rows = [
+    renderStatusGridRow(escapeHtml(t("settings.update.health.label")), pill),
+    renderStatusGridRow(escapeHtml(t("settings.update.health.processing_state")), escapeHtml(health.processing_state)),
+  ];
+  if (health.processing_failures > 0) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.processing_failures")), escapeHtml(health.processing_failures)));
+  if (health.degradation_reasons.length) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.reasons")), escapeHtml(health.degradation_reasons.map((reason) => formatHealthReason(reason, t)).join(", "))));
+  return rows.join("");
+}
+
+function renderHealthDataLossRows(
+  health: HealthStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  if (health.data_loss.affected_clients <= 0) return "";
+  const { t, escapeHtml } = deps;
+  return [
+    renderStatusGridRow(escapeHtml(t("settings.update.health.affected_clients")), escapeHtml(`${health.data_loss.affected_clients}/${health.data_loss.tracked_clients}`)),
+    renderStatusGridRow(
+      escapeHtml(t("settings.update.health.data_loss")),
+      escapeHtml([
+        `frames=${health.data_loss.frames_dropped}`,
+        `queue=${health.data_loss.queue_overflow_drops}`,
+        `server=${health.data_loss.server_queue_drops}`,
+        `parse=${health.data_loss.parse_errors}`,
+      ].join(", ")),
+    ),
+  ].join("");
+}
+
+function renderHealthPersistenceRows(
+  health: HealthStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  const analysisQueueDepth = health.persistence.analysis_queue_depth ?? 0;
+  if (!health.persistence.analysis_in_progress && !health.persistence.write_error && analysisQueueDepth <= 0) return "";
+  const { t, escapeHtml } = deps;
+  const rows = [
+    renderStatusGridRow(
+      escapeHtml(t("settings.update.health.persistence")),
+      escapeHtml(health.persistence.write_error || t("settings.update.health.persistence_ok")),
+    ),
+  ];
+  if (health.persistence.analysis_in_progress) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis")), escapeHtml(t("settings.update.health.analysis_in_progress"))));
+  if (health.persistence.analysis_active_run_id) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_run")), escapeHtml(health.persistence.analysis_active_run_id)));
+  if (health.persistence.analysis_started_at) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_started_at")), escapeHtml(formatTimestamp(health.persistence.analysis_started_at))));
+  if (health.persistence.analysis_elapsed_s != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_elapsed")), escapeHtml(formatDuration(health.persistence.analysis_elapsed_s))));
+  if (analysisQueueDepth > 0) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_queue_depth")), escapeHtml(String(analysisQueueDepth))));
+  return rows.join("");
+}
+
+function renderHealthGrid(
+  health: HealthStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  return `<div class="update-status-grid" style="margin-top:1rem;">${renderHealthSummaryRows(health, deps)}${renderHealthDataLossRows(health, deps)}${renderHealthPersistenceRows(health, deps)}</div>`;
+}
+
+function renderIssuesList(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  if (!status.issues.length) return "";
+  const { t, escapeHtml } = deps;
+  const items = status.issues.map((issue) => {
+    const detail = issue.detail
+      ? `<div class="issue-detail subtle">${escapeHtml(issue.detail)}</div>`
+      : "";
+    return `<li class="issue-item"><span class="issue-phase">[${escapeHtml(issue.phase)}]</span> <span class="issue-message">${escapeHtml(issue.message)}</span>${detail}</li>`;
+  }).join("");
+  return `<div class="update-issues" style="margin-top:1rem;"><strong>${escapeHtml(t("settings.update.issues"))}</strong><ul class="issue-list">${items}</ul></div>`;
+}
+
+function renderLogTail(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  if (!status.log_tail.length) return "";
+  const { t, escapeHtml } = deps;
+  const logBody = status.log_tail.map((line) => `${escapeHtml(line)}\n`).join("");
+  return `<details class="update-log" style="margin-top:1rem;"><summary>${escapeHtml(t("settings.update.log"))}</summary><pre class="log-pre" style="max-height:15rem;overflow:auto;font-size:0.75rem;background:var(--bg-secondary,#1a1a2e);padding:0.5rem;border-radius:0.25rem;">${logBody}</pre></details>`;
+}
+
 export function syncUpdateControls(
   els: Pick<UiDomElements, "updateStartBtn" | "updateCancelBtn" | "updateSsidInput" | "updatePasswordInput">,
   status: UpdateStatusPayload,
@@ -80,201 +227,18 @@ export function renderUpdateStatusPanel(
   health: HealthStatusPayload,
   deps: UpdateStatusViewDeps,
 ): void {
-  const { t, escapeHtml } = deps;
-  const isRunning = status.state === "running";
-  const isIdle = status.state === "idle";
-  const analysisQueueDepth = health.persistence.analysis_queue_depth ?? 0;
   const hasAssetRelatedIssue = status.issues.some((issue) =>
     ASSET_ISSUE_RE.test(`${issue.message} ${issue.detail}`),
   );
   const showRuntimeAssetsCheck = status.state !== "failed" || hasAssetRelatedIssue;
-
-  if (isIdle && !status.last_success_at && !status.issues.length && health.status === "ok") {
+  if (status.state === "idle" && !status.last_success_at && !status.issues.length && health.status === "ok") {
     panel.innerHTML = "";
     return;
   }
-
-  const stateKey = `settings.update.state.${status.state}`;
-  const phaseKey = `settings.update.phase.${status.phase}`;
-
-  let html = `<div class="update-status-grid">`;
-  html += `<div class="update-status-row">`;
-  html += `<span class="update-label">${escapeHtml(t("settings.update.status"))}</span>`;
-  html += `<span class="pill pill--${STATE_VARIANT[status.state] || "muted"}">${escapeHtml(t(stateKey))}</span>`;
-  if (!isIdle) {
-    html += ` <span class="subtle">${escapeHtml(t(phaseKey))}</span>`;
-  }
-  html += `</div>`;
-
-  if (status.ssid) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.ssid_label"))}</span>`;
-    html += `<span>${escapeHtml(status.ssid)}</span>`;
-    html += `</div>`;
-  }
-  if (status.started_at) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.started_at"))}</span>`;
-    html += `<span>${escapeHtml(formatTimestamp(status.started_at))}</span>`;
-    html += `</div>`;
-  }
-  if (status.phase_started_at && !isIdle) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.phase_started_at"))}</span>`;
-    html += `<span>${escapeHtml(formatTimestamp(status.phase_started_at))}</span>`;
-    html += `</div>`;
-  }
-  if (!isIdle && status.phase_elapsed_s !== null && status.phase_elapsed_s !== undefined) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.phase_elapsed"))}</span>`;
-    html += `<span>${escapeHtml(formatDuration(status.phase_elapsed_s))}</span>`;
-    html += `</div>`;
-  }
-  if (status.finished_at) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.finished_at"))}</span>`;
-    html += `<span>${escapeHtml(formatTimestamp(status.finished_at))}</span>`;
-    html += `</div>`;
-  }
-  if (status.last_success_at) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.last_success"))}</span>`;
-    html += `<span>${escapeHtml(formatTimestamp(status.last_success_at))}</span>`;
-    html += `</div>`;
-  }
-  if (status.runtime?.version && status.runtime.version !== "unknown") {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_version"))}</span>`;
-    html += `<span>${escapeHtml(status.runtime.version)}</span>`;
-    html += `</div>`;
-  }
-  if (status.runtime?.commit) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_commit"))}</span>`;
-    html += `<span>${escapeHtml(status.runtime.commit.slice(0, 12))}</span>`;
-    html += `</div>`;
-  }
-  if (status.runtime?.static_assets_hash) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_assets"))}</span>`;
-    html += `<span>${escapeHtml(status.runtime.static_assets_hash.slice(0, 12))}</span>`;
-    html += `</div>`;
-    if (showRuntimeAssetsCheck) {
-      html += `<div class="update-status-row">`;
-      html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_assets_check"))}</span>`;
-      html += `<span>${escapeHtml(t(status.runtime.assets_verified ? "settings.update.runtime_assets_ok" : "settings.update.runtime_assets_bad"))}</span>`;
-      html += `</div>`;
-    }
-  }
-  html += `</div>`;
-
-  html += `<div class="update-status-grid" style="margin-top:1rem;">`;
-  html += `<div class="update-status-row">`;
-  html += `<span class="update-label">${escapeHtml(t("settings.update.health.label"))}</span>`;
-  html += `<span class="pill pill--${HEALTH_VARIANT[health.status]}${health.persistence.write_error ? " pill--bad" : ""}">${escapeHtml(t(`settings.update.health.state.${health.status}`))}</span>`;
-  html += `</div>`;
-  html += `<div class="update-status-row">`;
-  html += `<span class="update-label">${escapeHtml(t("settings.update.health.processing_state"))}</span>`;
-  html += `<span>${escapeHtml(health.processing_state)}</span>`;
-  html += `</div>`;
-
-  if (health.processing_failures > 0) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.health.processing_failures"))}</span>`;
-    html += `<span>${escapeHtml(health.processing_failures)}</span>`;
-    html += `</div>`;
-  }
-
-  if (health.degradation_reasons.length) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.health.reasons"))}</span>`;
-    html += `<span>${escapeHtml(health.degradation_reasons.map((reason) => formatHealthReason(reason, t)).join(", "))}</span>`;
-    html += `</div>`;
-  }
-
-  if (health.data_loss.affected_clients > 0) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.health.affected_clients"))}</span>`;
-    html += `<span>${escapeHtml(`${health.data_loss.affected_clients}/${health.data_loss.tracked_clients}`)}</span>`;
-    html += `</div>`;
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.health.data_loss"))}</span>`;
-    html += `<span>${escapeHtml([
-      `frames=${health.data_loss.frames_dropped}`,
-      `queue=${health.data_loss.queue_overflow_drops}`,
-      `server=${health.data_loss.server_queue_drops}`,
-      `parse=${health.data_loss.parse_errors}`,
-    ].join(", "))}</span>`;
-    html += `</div>`;
-  }
-
-  if (health.persistence.analysis_in_progress || health.persistence.write_error || analysisQueueDepth > 0) {
-    html += `<div class="update-status-row">`;
-    html += `<span class="update-label">${escapeHtml(t("settings.update.health.persistence"))}</span>`;
-    html += `<span>${escapeHtml(
-      health.persistence.write_error
-        ? health.persistence.write_error
-        : t("settings.update.health.persistence_ok"),
-    )}</span>`;
-    html += `</div>`;
-    if (health.persistence.analysis_in_progress) {
-      html += `<div class="update-status-row">`;
-      html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis"))}</span>`;
-      html += `<span>${escapeHtml(t("settings.update.health.analysis_in_progress"))}</span>`;
-      html += `</div>`;
-      if (health.persistence.analysis_active_run_id) {
-        html += `<div class="update-status-row">`;
-        html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis_run"))}</span>`;
-        html += `<span>${escapeHtml(health.persistence.analysis_active_run_id)}</span>`;
-        html += `</div>`;
-      }
-      if (health.persistence.analysis_started_at) {
-        html += `<div class="update-status-row">`;
-        html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis_started_at"))}</span>`;
-        html += `<span>${escapeHtml(formatTimestamp(health.persistence.analysis_started_at))}</span>`;
-        html += `</div>`;
-      }
-      if (health.persistence.analysis_elapsed_s !== null && health.persistence.analysis_elapsed_s !== undefined) {
-        html += `<div class="update-status-row">`;
-        html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis_elapsed"))}</span>`;
-        html += `<span>${escapeHtml(formatDuration(health.persistence.analysis_elapsed_s))}</span>`;
-        html += `</div>`;
-      }
-    }
-    if (analysisQueueDepth > 0) {
-      html += `<div class="update-status-row">`;
-      html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis_queue_depth"))}</span>`;
-      html += `<span>${escapeHtml(String(analysisQueueDepth))}</span>`;
-      html += `</div>`;
-    }
-  }
-  html += `</div>`;
-
-  if (status.issues.length) {
-    html += `<div class="update-issues" style="margin-top:1rem;">`;
-    html += `<strong>${escapeHtml(t("settings.update.issues"))}</strong>`;
-    html += `<ul class="issue-list">`;
-    for (const issue of status.issues) {
-      html += `<li class="issue-item">`;
-      html += `<span class="issue-phase">[${escapeHtml(issue.phase)}]</span> `;
-      html += `<span class="issue-message">${escapeHtml(issue.message)}</span>`;
-      if (issue.detail) {
-        html += `<div class="issue-detail subtle">${escapeHtml(issue.detail)}</div>`;
-      }
-      html += `</li>`;
-    }
-    html += `</ul></div>`;
-  }
-
-  if (status.log_tail.length) {
-    html += `<details class="update-log" style="margin-top:1rem;">`;
-    html += `<summary>${escapeHtml(t("settings.update.log"))}</summary>`;
-    html += `<pre class="log-pre" style="max-height:15rem;overflow:auto;font-size:0.75rem;background:var(--bg-secondary,#1a1a2e);padding:0.5rem;border-radius:0.25rem;">`;
-    for (const line of status.log_tail) {
-      html += escapeHtml(line) + "\n";
-    }
-    html += `</pre></details>`;
-  }
-
-  panel.innerHTML = html;
+  panel.innerHTML = [
+    renderStateGrid(status, showRuntimeAssetsCheck, deps),
+    renderHealthGrid(health, deps),
+    renderIssuesList(status, deps),
+    renderLogTail(status, deps),
+  ].join("");
 }

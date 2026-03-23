@@ -214,7 +214,7 @@ test.describe("createUiShellNavigationModule", () => {
     const { els, dashboardView, historyView, dashboardButton, historyButton } = createShellDeps();
     let resizeCalls = 0;
     const module = createUiShellNavigationModule({
-      state,
+      shell: state.shell,
       els,
       onDashboardViewActivated: () => {
         resizeCalls += 1;
@@ -222,7 +222,7 @@ test.describe("createUiShellNavigationModule", () => {
     });
 
     module.setActiveView("historyView");
-    expect(state.activeViewId).toBe("historyView");
+    expect(state.shell.activeViewId).toBe("historyView");
     expect(historyView.hidden).toBe(false);
     expect(dashboardView.hidden).toBe(true);
     expect(historyButton.classList.contains("active")).toBe(true);
@@ -231,7 +231,7 @@ test.describe("createUiShellNavigationModule", () => {
     expect(resizeCalls).toBe(0);
 
     module.setActiveView("missingView");
-    expect(state.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(dashboardView.hidden).toBe(false);
     expect(dashboardButton.classList.contains("active")).toBe(true);
     expect(resizeCalls).toBe(1);
@@ -240,13 +240,13 @@ test.describe("createUiShellNavigationModule", () => {
   test("bindHandlers supports keyboard navigation", () => {
     const state = createAppState();
     const { els, historyButton } = createShellDeps();
-    const module = createUiShellNavigationModule({ state, els });
+    const module = createUiShellNavigationModule({ shell: state.shell, els });
 
     module.bindHandlers();
     const event = historyButton.triggerKeydown("ArrowLeft");
 
     expect(event.defaultPrevented).toBe(true);
-    expect(state.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
   });
 });
 
@@ -276,7 +276,7 @@ test.describe("createUiShellPreferencesModule", () => {
     const applyLanguageCalls: boolean[] = [];
     let renderSpeedReadoutCalls = 0;
     const module = createUiShellPreferencesModule({
-      state,
+      shell: state.shell,
       els,
       t: (key) => key,
       normalizeLanguage: (lang) => lang,
@@ -295,8 +295,8 @@ test.describe("createUiShellPreferencesModule", () => {
     }
 
     expect(requests).toEqual(["/api/settings/language", "/api/settings/speed-unit"]);
-    expect(state.lang).toBe("nl");
-    expect(state.speedUnit).toBe("mps");
+    expect(state.shell.lang).toBe("nl");
+    expect(state.shell.speedUnit).toBe("mps");
     expect(speedUnitSelect.value).toBe("mps");
     expect(applyLanguageCalls).toEqual([true]);
     expect(renderSpeedReadoutCalls).toBe(1);
@@ -319,7 +319,7 @@ test.describe("createUiShellPreferencesModule", () => {
 
     let renderSpeedReadoutCalls = 0;
     const module = createUiShellPreferencesModule({
-      state,
+      shell: state.shell,
       els,
       t: (key) => key,
       normalizeLanguage: (lang) => lang,
@@ -332,7 +332,7 @@ test.describe("createUiShellPreferencesModule", () => {
     try {
       module.bindHandlers();
       speedUnitSelect.triggerChange("mps");
-      await expect.poll(() => state.speedUnit).toBe("mps");
+      await expect.poll(() => state.shell.speedUnit).toBe("mps");
       await expect.poll(() => renderSpeedReadoutCalls).toBe(1);
     } finally {
       globalThis.fetch = originalFetch;
@@ -345,7 +345,7 @@ test.describe("createUiShellPreferencesModule", () => {
         body: JSON.stringify({ speed_unit: "mps" }),
       },
     ]);
-    expect(state.speedUnit).toBe("mps");
+    expect(state.shell.speedUnit).toBe("mps");
     expect(renderSpeedReadoutCalls).toBe(1);
   });
 });
@@ -353,10 +353,13 @@ test.describe("createUiShellPreferencesModule", () => {
 test.describe("createUiShellStatusModule", () => {
   test("renders websocket state without bootstrap wiring", () => {
     const state = createAppState();
-    state.wsState = "stale";
+    state.transport.wsState = "stale";
     const { els, linkState, connectionBanner, appShellWrap } = createShellDeps();
     const module = createUiShellStatusModule({
-      state,
+      shell: state.shell,
+      transport: state.transport,
+      realtime: state.realtime,
+      settings: state.settings,
       els,
       t: (key) => key,
       setPillState: (el, variant, text) => {
@@ -377,15 +380,18 @@ test.describe("createUiShellStatusModule", () => {
 
   test("renders speed override and car-selection warning", () => {
     const state = createAppState();
-    state.speedMps = 12;
-    state.speedSource = "manual";
-    state.manualSpeedKph = 43.2;
-    state.speedUnit = "kmh";
-    state.cars = [];
-    state.activeCarId = null;
+    state.realtime.speedMps = 12;
+    state.settings.speedSource = "manual";
+    state.settings.manualSpeedKph = 43.2;
+    state.shell.speedUnit = "kmh";
+    state.settings.cars = [];
+    state.settings.activeCarId = null;
     const { els, speed, carSelectionBanner } = createShellDeps();
     const module = createUiShellStatusModule({
-      state,
+      shell: state.shell,
+      transport: state.transport,
+      realtime: state.realtime,
+      settings: state.settings,
       els,
       t: testTranslation,
       setPillState: () => {},

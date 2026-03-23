@@ -42,8 +42,8 @@ export class UiLiveTransportController {
   }
 
   sendSelection(): void {
-    if (this.state.ws) {
-      this.state.ws.send({ client_id: this.state.selectedClientId });
+    if (this.state.transport.ws) {
+      this.state.transport.ws.send({ client_id: this.state.realtime.selectedClientId });
     }
   }
 
@@ -61,19 +61,19 @@ export class UiLiveTransportController {
   }
 
   private queueRender(): void {
-    if (this.state.renderQueued) return;
-    this.state.renderQueued = true;
+    if (this.state.transport.renderQueued) return;
+    this.state.transport.renderQueued = true;
     window.requestAnimationFrame(() => {
-      this.state.renderQueued = false;
+      this.state.transport.renderQueued = false;
       const now = Date.now();
-      if (now - this.state.lastRenderTsMs < this.state.minRenderIntervalMs) {
+      if (now - this.state.transport.lastRenderTsMs < this.state.transport.minRenderIntervalMs) {
         this.queueRender();
         return;
       }
-      const payload = this.state.pendingPayload;
+      const payload = this.state.transport.pendingPayload;
       if (!payload) return;
-      this.state.pendingPayload = null;
-      this.state.lastRenderTsMs = now;
+      this.state.transport.pendingPayload = null;
+      this.state.transport.lastRenderTsMs = now;
       this.applyPayload(payload);
     });
   }
@@ -84,33 +84,33 @@ export class UiLiveTransportController {
     try {
       adapted = adaptServerPayload(payload);
     } catch (error) {
-      this.state.payloadError = error instanceof Error ? error.message : this.payloadErrorMessage();
-      this.state.hasSpectrumData = false;
+      this.state.transport.payloadError = error instanceof Error ? error.message : this.payloadErrorMessage();
+      this.state.spectrum.hasSpectrumData = false;
       this.renderWsState();
       this.updateSpectrumOverlay();
       return;
     }
 
-    this.state.payloadError = null;
+    this.state.transport.payloadError = null;
     this.renderWsState();
 
-    const prevSelected = this.state.selectedClientId;
-    this.state.clients = adapted.clients;
+    const prevSelected = this.state.realtime.selectedClientId;
+    this.state.realtime.clients = adapted.clients;
     const spectrumTick = applySpectrumTick(
-      this.state.spectra,
-      this.state.hasSpectrumData,
+      this.state.spectrum.spectra,
+      this.state.spectrum.hasSpectrumData,
       adapted.spectra,
     );
-    this.state.spectra = spectrumTick.spectra;
+    this.state.spectrum.spectra = spectrumTick.spectra;
     features.realtime.updateClientSelection();
     features.realtime.maybeRenderSensorsSettingsList();
     features.realtime.renderLoggingStatus();
-    if (prevSelected !== this.state.selectedClientId) {
+    if (prevSelected !== this.state.realtime.selectedClientId) {
       this.sendSelection();
     }
-    this.state.speedMps = adapted.speed_mps;
-    this.state.rotationalSpeeds = adapted.rotational_speeds;
-    this.state.hasSpectrumData = spectrumTick.hasSpectrumData;
+    this.state.realtime.speedMps = adapted.speed_mps;
+    this.state.realtime.rotationalSpeeds = adapted.rotational_speeds;
+    this.state.spectrum.hasSpectrumData = spectrumTick.hasSpectrumData;
     this.renderSpeedReadout();
     if (spectrumTick.hasNewSpectrumFrame) {
       this.renderSpectrum();
@@ -118,21 +118,21 @@ export class UiLiveTransportController {
       this.updateSpectrumOverlay();
     }
     features.realtime.renderStatus(
-      this.state.clients.find((client) => client.id === this.state.selectedClientId),
+      this.state.realtime.clients.find((client) => client.id === this.state.realtime.selectedClientId),
     );
   }
 
   private connectWs(): void {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this.state.ws = new WsClient({
+    this.state.transport.ws = new WsClient({
       url: `${protocol}//${window.location.host}/ws`,
       onPayload: (payload) => {
-        this.state.hasReceivedPayload = true;
-        this.state.pendingPayload = payload;
+        this.state.transport.hasReceivedPayload = true;
+        this.state.transport.pendingPayload = payload;
         this.queueRender();
       },
       onStateChange: (nextState) => {
-        this.state.wsState = nextState;
+        this.state.transport.wsState = nextState;
         this.renderWsState();
         this.updateSpectrumOverlay();
         if (nextState === "connected" || nextState === "no_data") {
@@ -140,7 +140,7 @@ export class UiLiveTransportController {
         }
       },
     });
-    this.state.ws.connect();
+    this.state.transport.ws.connect();
   }
 
   private requireFeatures(): AppFeatureBundle {
