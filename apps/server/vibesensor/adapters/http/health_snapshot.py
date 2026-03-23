@@ -46,6 +46,9 @@ def build_health_snapshot(
         has_error = True
     if health_state.startup_warnings:
         degradation_reasons.append("startup_warnings")
+    if health_state.db_corruption_detected:
+        degradation_reasons.append("db_corruption_detected")
+        has_error = True
     if loop_state.processing_state != ProcessingHealth.OK:
         degradation_reasons.append(f"processing_state:{loop_state.processing_state}")
         has_error = True
@@ -84,6 +87,7 @@ def build_health_snapshot(
         "startup_error": health_state.startup_error,
         "startup_warnings": list(health_state.startup_warnings),
         "background_task_failures": dict(health_state.background_task_failures),
+        "db_corruption_detected": health_state.db_corruption_detected,
         "processing_state": loop_state.processing_state,
         "processing_failures": failures,
         "processing_failure_categories": failure_categories,

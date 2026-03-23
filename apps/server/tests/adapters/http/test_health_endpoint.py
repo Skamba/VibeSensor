@@ -45,6 +45,7 @@ async def test_health_endpoint_response_shape(_health_router):
     assert result["startup_phase"] == "ready"
     assert result["startup_error"] is None
     assert result["background_task_failures"] == {}
+    assert result["db_corruption_detected"] is False
     assert result["processing_state"] == "ok"
     assert result["processing_failures"] == 0
     assert result["processing_failure_categories"] == {}
@@ -125,6 +126,21 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
     assert result["persistence"]["analysis_queue_depth"] == 2
     assert result["persistence"]["analysis_queue_max_depth"] == 5
     assert result["persistence"]["analysis_active_run_id"] == "run-42"
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint_degrades_for_db_corruption(_health_router):
+    router, state = _health_router
+    endpoint = _find_endpoint(router, "/api/health")
+    assert endpoint is not None
+
+    state.health_state.mark_db_corrupted("row 7 missing from index")
+
+    result = response_payload(await endpoint())
+
+    assert result["status"] == "degraded"
+    assert result["db_corruption_detected"] is True
+    assert "db_corruption_detected" in result["degradation_reasons"]
 
 
 @pytest.mark.asyncio

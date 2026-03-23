@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
@@ -37,8 +37,14 @@ _CASE_ID_MIGRATION_SOURCE_VERSION = 8
 class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDBQueryMixin):
     """Thin wrapper around a SQLite database for run history."""
 
-    def __init__(self, db_path: Path) -> None:
+    def __init__(
+        self,
+        db_path: Path,
+        *,
+        corruption_reporter: Callable[[str], None] | None = None,
+    ) -> None:
         self.db_path = db_path
+        self._corruption_reporter = corruption_reporter
         self._lock = RLock()
         self._read_lock = RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -236,6 +242,8 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
             )
             raise
         if problems:
+            if self._corruption_reporter is not None:
+                self._corruption_reporter("; ".join(problems))
             LOGGER.critical(
                 "History DB quick_check reported corruption for %s: %s",
                 self.db_path,

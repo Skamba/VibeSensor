@@ -106,6 +106,7 @@ class TestBuildHealthSnapshotOk:
             "status",
             "startup_state",
             "startup_warnings",
+            "db_corruption_detected",
             "degradation_reasons",
             "data_loss",
             "persistence",
@@ -204,6 +205,21 @@ class TestBuildHealthSnapshotDegraded:
 
         assert result["status"] == "degraded"
         assert "persistence_write_error" in result["degradation_reasons"]
+
+    def test_db_corruption_is_degraded(self) -> None:
+        loop_state = ProcessingLoopState()
+        health_state = RuntimeHealthState()
+        health_state.mark_ready()
+        health_state.mark_db_corrupted("row 7 missing from index")
+        registry, run_recorder = _make_deps()
+
+        result = build_health_snapshot(
+            loop_state, health_state, _make_processor(), registry, run_recorder
+        )
+
+        assert result["status"] == "degraded"
+        assert result["db_corruption_detected"] is True
+        assert "db_corruption_detected" in result["degradation_reasons"]
 
 
 class TestBuildHealthSnapshotWarn:

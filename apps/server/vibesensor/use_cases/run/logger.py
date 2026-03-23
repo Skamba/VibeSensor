@@ -263,6 +263,9 @@ class RunRecorder:
     def wait_for_post_analysis(self, timeout_s: float = 30.0) -> bool:
         return self._post_analysis.wait(timeout_s)
 
+    def shutdown_post_analysis(self, timeout_s: float = 5.0) -> bool:
+        return self._post_analysis.shutdown(timeout_s)
+
     def shutdown_report(self, timeout_s: float = 30.0) -> _recorder_types.RecorderShutdownReport:
         return _recorder_types._shutdown_report(self, timeout_s)
 
