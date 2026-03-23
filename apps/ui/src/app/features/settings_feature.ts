@@ -1,5 +1,5 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { AppState } from "../ui_app_state";
+import type { SettingsState } from "../ui_app_state";
 import type { CarUpsertRequest, CarsPayload } from "../../api/types";
 import {
   addSettingsCar,
@@ -26,7 +26,8 @@ import {
 import { bindSettingsTabs } from "./settings_tabs_controller";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
-  state: AppState;
+  settings: SettingsState;
+  getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
   renderSpectrum: () => void;
   renderSpeedReadout: () => void;
@@ -50,7 +51,7 @@ export interface SettingsFeature {
 }
 
 export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature {
-  const { state, els, t, escapeHtml, fmt } = ctx;
+  const { settings, els, t, escapeHtml, fmt } = ctx;
   let handlersBound = false;
 
   function showSettingsSaveError(error: unknown): void {
@@ -58,7 +59,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function hasValidActiveCar(): boolean {
-    return Boolean(state.activeCarId && state.cars.some((car) => car.id === state.activeCarId));
+    return Boolean(settings.activeCarId && settings.cars.some((car) => car.id === settings.activeCarId));
   }
 
   function syncCarDependentUiState(): void {
@@ -76,7 +77,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     els,
     t,
     escapeHtml,
-    state,
+    settings,
     renderSpectrum: ctx.renderSpectrum,
     hasValidActiveCar,
     onMissingActiveCar: syncCarDependentUiState,
@@ -86,7 +87,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     els,
     t,
     escapeHtml,
-    state,
+    settings,
     renderSpeedReadout: ctx.renderSpeedReadout,
     onSaveError: showSettingsSaveError,
   });
@@ -94,18 +95,19 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     els,
     t,
     escapeHtml,
-    state,
+    settings,
+    getSpeedUnit: ctx.getSpeedUnit,
     fmt,
     renderSpeedReadout: ctx.renderSpeedReadout,
   });
 
   function applyCarsPayload(payload: CarsPayload): void {
-    state.cars = payload.cars;
+    settings.cars = payload.cars;
     const requestedActiveCarId = payload.active_car_id;
     const hasRequestedActive = requestedActiveCarId
-      ? state.cars.some((car) => car.id === requestedActiveCarId)
+      ? settings.cars.some((car) => car.id === requestedActiveCarId)
       : false;
-    state.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
+    settings.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
     syncCarDependentUiState();
   }
 
@@ -133,7 +135,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   async function handleDeleteCar(carId: string): Promise<void> {
     if (!carId) return;
-    const car = state.cars.find((entry) => entry.id === carId);
+    const car = settings.cars.find((entry) => entry.id === carId);
     const ok = window.confirm(t("settings.car.delete_confirm", { name: car?.name || "" }));
     if (!ok) return;
     try {
@@ -150,8 +152,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   function renderCarList(): void {
     if (!els.carListBody) return;
     renderSettingsCarList(els.carListBody, {
-      cars: state.cars,
-      activeCarId: state.activeCarId,
+      cars: settings.cars,
+      activeCarId: settings.activeCarId,
       t,
       escapeHtml,
       fmt,
@@ -159,14 +161,14 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function syncActiveCarToInputs(): void {
-    const car = state.cars.find((entry) => entry.id === state.activeCarId);
+    const car = settings.cars.find((entry) => entry.id === settings.activeCarId);
     if (!car) {
       syncCarDependentUiState();
       return;
     }
     if (car.aspects && typeof car.aspects === "object") {
       for (const key of Object.keys(car.aspects)) {
-        state.vehicleSettings[key] = car.aspects[key];
+        settings.vehicleSettings[key] = car.aspects[key];
       }
     }
     analysisModule.syncSettingsInputs();
@@ -206,13 +208,13 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     variant?: string,
   ): Promise<void> {
     try {
-      const fullAspects = { ...state.vehicleSettings, ...aspects };
+      const fullAspects = { ...settings.vehicleSettings, ...aspects };
       const payload: CarUpsertRequest = { name, type: carType, aspects: fullAspects };
       if (variant) payload.variant = variant;
       const result = await addSettingsCar(payload);
       if (Array.isArray(result.cars)) {
         applyCarsPayload(result);
-        const newCar = state.cars[state.cars.length - 1];
+        const newCar = settings.cars[settings.cars.length - 1];
         if (newCar) {
           const setResult = await setActiveSettingsCar(newCar.id);
           applyCarsPayload(setResult);

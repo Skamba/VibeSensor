@@ -5,10 +5,10 @@ import {
   setSettingsSpeedUnit,
 } from "../../api/settings";
 import type { UiDomElements } from "../ui_dom_registry";
-import type { AppState } from "../ui_app_state";
+import type { ShellState } from "../ui_app_state";
 
 export interface UiShellPreferencesModuleDeps {
-  state: AppState;
+  shell: ShellState;
   els: UiDomElements;
   t: (key: string, vars?: Record<string, unknown>) => string;
   normalizeLanguage: (lang: string) => string;
@@ -26,7 +26,7 @@ export interface UiShellPreferencesModule {
 export function createUiShellPreferencesModule(
   ctx: UiShellPreferencesModuleDeps,
 ): UiShellPreferencesModule {
-  const { state, els } = ctx;
+  const { shell, els } = ctx;
 
   function normalizeSpeedUnit(raw: string): string {
     return raw === "mps" ? "mps" : "kmh";
@@ -36,7 +36,7 @@ export function createUiShellPreferencesModule(
     try {
       const languageResponse = await getSettingsLanguage();
       if (languageResponse?.language) {
-        state.lang = ctx.normalizeLanguage(languageResponse.language);
+        shell.lang = ctx.normalizeLanguage(languageResponse.language);
         ctx.applyLanguage(true);
       }
     } catch (error) {
@@ -45,9 +45,9 @@ export function createUiShellPreferencesModule(
     try {
       const speedUnitResponse = await getSettingsSpeedUnit();
       if (speedUnitResponse?.speed_unit) {
-        state.speedUnit = normalizeSpeedUnit(speedUnitResponse.speed_unit);
+        shell.speedUnit = normalizeSpeedUnit(speedUnitResponse.speed_unit);
         if (els.speedUnitSelect) {
-          els.speedUnitSelect.value = state.speedUnit;
+          els.speedUnitSelect.value = shell.speedUnit;
         }
         ctx.renderSpeedReadout();
       }
@@ -57,13 +57,13 @@ export function createUiShellPreferencesModule(
   }
 
   async function saveLanguage(lang: string): Promise<void> {
-    const previousLang = state.lang;
+    const previousLang = shell.lang;
     const nextLang = ctx.normalizeLanguage(lang);
     try {
       const payload = await setSettingsLanguage(nextLang);
-      state.lang = ctx.normalizeLanguage(payload?.language || nextLang);
+      shell.lang = ctx.normalizeLanguage(payload?.language || nextLang);
       if (els.languageSelect) {
-        els.languageSelect.value = state.lang;
+        els.languageSelect.value = shell.lang;
       }
       ctx.applyLanguage(true);
     } catch (error) {
@@ -75,13 +75,13 @@ export function createUiShellPreferencesModule(
   }
 
   async function saveSpeedUnit(unit: string): Promise<void> {
-    const previousUnit = state.speedUnit;
+    const previousUnit = shell.speedUnit;
     const nextUnit = normalizeSpeedUnit(unit);
     try {
       const payload = await setSettingsSpeedUnit(nextUnit);
-      state.speedUnit = normalizeSpeedUnit(payload?.speed_unit || nextUnit);
+      shell.speedUnit = normalizeSpeedUnit(payload?.speed_unit || nextUnit);
       if (els.speedUnitSelect) {
-        els.speedUnitSelect.value = state.speedUnit;
+        els.speedUnitSelect.value = shell.speedUnit;
       }
       ctx.renderSpeedReadout();
     } catch (error) {
@@ -95,7 +95,7 @@ export function createUiShellPreferencesModule(
   function bindHandlers(): void {
     const languageSelect = els.languageSelect;
     if (languageSelect) {
-      languageSelect.value = state.lang;
+      languageSelect.value = shell.lang;
       languageSelect.addEventListener("change", () => {
         void saveLanguage(languageSelect.value);
       });
@@ -103,7 +103,7 @@ export function createUiShellPreferencesModule(
 
     const speedUnitSelect = els.speedUnitSelect;
     if (speedUnitSelect) {
-      speedUnitSelect.value = state.speedUnit;
+      speedUnitSelect.value = shell.speedUnit;
       speedUnitSelect.addEventListener("change", () => {
         void saveSpeedUnit(speedUnitSelect.value);
       });

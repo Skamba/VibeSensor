@@ -1,12 +1,12 @@
 import type { SpeedSourceKind, SpeedSourcePayload, SpeedSourceRequest } from "../../api/types";
 import { getSettingsSpeedSource, updateSettingsSpeedSource } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { AppState } from "../ui_app_state";
+import type { SettingsState } from "../ui_app_state";
 
 const SPEED_SOURCE_KINDS = ["gps", "manual", "obd2"] as const satisfies readonly SpeedSourceKind[];
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
-  state: AppState;
+  settings: SettingsState;
   renderSpeedReadout: () => void;
   onSaveError: (error: unknown) => void;
 }
@@ -20,7 +20,7 @@ export interface SettingsSpeedSourceModule {
 }
 
 export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDeps): SettingsSpeedSourceModule {
-  const { state, els } = ctx;
+  const { settings, els } = ctx;
 
   function isSpeedSourceKind(value: string): value is SpeedSourceKind {
     return SPEED_SOURCE_KINDS.some((kind) => kind === value);
@@ -28,20 +28,22 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
 
   function syncSpeedSourceInputs(): void {
     els.speedSourceRadios.forEach((radio) => {
-      radio.checked = radio.value === state.speedSource;
+      radio.checked = radio.value === settings.speedSource;
     });
-    if (els.manualSpeedInput) els.manualSpeedInput.value = state.manualSpeedKph != null ? String(state.manualSpeedKph) : "";
+    if (els.manualSpeedInput) {
+      els.manualSpeedInput.value = settings.manualSpeedKph != null ? String(settings.manualSpeedKph) : "";
+    }
     if (els.headerManualSpeedInput) {
-      els.headerManualSpeedInput.value = state.manualSpeedKph != null ? String(state.manualSpeedKph) : "";
+      els.headerManualSpeedInput.value = settings.manualSpeedKph != null ? String(settings.manualSpeedKph) : "";
     }
     if (els.headerManualOverrideGroup) {
-      els.headerManualOverrideGroup.hidden = state.speedSource !== "manual";
+      els.headerManualOverrideGroup.hidden = settings.speedSource !== "manual";
     }
   }
 
   function applySpeedSourcePayload(payload: SpeedSourcePayload): void {
-    state.speedSource = payload.speed_source;
-    state.manualSpeedKph = payload.manual_speed_kph;
+    settings.speedSource = payload.speed_source;
+    settings.manualSpeedKph = payload.manual_speed_kph;
     if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.stale_timeout_s);
     syncSpeedSourceInputs();
     ctx.renderSpeedReadout();

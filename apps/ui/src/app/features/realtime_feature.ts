@@ -1,5 +1,5 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { AppState } from "../ui_app_state";
+import type { RealtimeState } from "../ui_app_state";
 import type { LocationOption } from "../../api/types";
 import type { AdaptedClient } from "../../server_payload";
 import * as I18N from "../../i18n";
@@ -20,7 +20,8 @@ import {
 } from "../views/realtime_sensor_table_view";
 
 export interface RealtimeFeatureDeps extends FeatureDepsBase {
-  state: AppState;
+  realtime: RealtimeState;
+  getLanguage: () => string;
   formatInt: (value: number) => string;
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
   setStatValue: (container: HTMLElement | null, value: string | number) => void;
@@ -43,7 +44,7 @@ export interface RealtimeFeature {
 }
 
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
-  const { state, els, t, escapeHtml, formatInt, setPillState } = ctx;
+  const { realtime, els, t, escapeHtml, formatInt, setPillState } = ctx;
   let handlersBound = false;
 
   const SHORTHAND_LOCATION_MAP: Record<string, string> = {
@@ -59,7 +60,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function locationLabel(code: string): string {
-    return locationLabelForLang(state.lang, code);
+    return locationLabelForLang(ctx.getLanguage(), code);
   }
 
   function buildLocationOptions(codes: readonly string[]): LocationOption[] {
@@ -68,54 +69,56 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   function locationCodeForClient(client: AdaptedClient): string {
     const explicitCode = String(client.location_code || "").trim();
-    if (explicitCode && state.locationCodes.includes(explicitCode)) return explicitCode;
+    if (explicitCode && realtime.locationCodes.includes(explicitCode)) return explicitCode;
     const name = String(client.name || "").trim();
     if (!name) return "";
     const normalizedName = name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
     for (const [token, code] of Object.entries(SHORTHAND_LOCATION_MAP)) {
-      if (normalizedName.includes(token) && state.locationCodes.includes(code)) return code;
+      if (normalizedName.includes(token) && realtime.locationCodes.includes(code)) return code;
     }
-    for (const code of state.locationCodes) {
+    for (const code of realtime.locationCodes) {
       const labels = I18N.getForAllLangs(`location.${code}`);
       if (labels.some((label) => label === name)) return code;
     }
-    const match = state.locationOptions.find((loc) => loc.label === name);
+    const match = realtime.locationOptions.find((loc) => loc.label === name);
     return match ? match.code : "";
   }
 
   function sensorsSettingsSignature(): string {
-    const clientPart = state.clients
+    const clientPart = realtime.clients
       .map((client) => {
         const connected = client.connected ? "1" : "0";
         return `${client.id}|${client.name || ""}|${client.mac_address || ""}|${connected}|${client.location_code || ""}`;
       })
       .join("||");
-    const locationPart = state.locationOptions.map((loc) => `${loc.code}|${loc.label}`).join("||");
+    const locationPart = realtime.locationOptions.map((loc) => `${loc.code}|${loc.label}`).join("||");
     return `${clientPart}##${locationPart}`;
   }
 
   function maybeRenderSensorsSettingsList(force = false): void {
     const nextSig = sensorsSettingsSignature();
-    if (!force && nextSig === state.sensorsSettingsSignature) return;
-    state.sensorsSettingsSignature = nextSig;
+    if (!force && nextSig === realtime.sensorsSettingsSignature) return;
+    realtime.sensorsSettingsSignature = nextSig;
     renderSensorsSettingsList();
   }
 
   function updateClientSelection(): void {
-    const firstConnected = state.clients.find((c) => Boolean(c.connected));
-    if (!state.selectedClientId && state.clients.length > 0) {
-      state.selectedClientId = firstConnected ? firstConnected.id : state.clients[0].id;
+    const firstConnected = realtime.clients.find((c) => Boolean(c.connected));
+    if (!realtime.selectedClientId && realtime.clients.length > 0) {
+      realtime.selectedClientId = firstConnected ? firstConnected.id : realtime.clients[0].id;
     }
-    if (state.selectedClientId && !state.clients.some((c) => c.id === state.selectedClientId)) {
-      state.selectedClientId = firstConnected ? firstConnected.id : state.clients.length ? state.clients[0].id : null;
+    if (realtime.selectedClientId && !realtime.clients.some((c) => c.id === realtime.selectedClientId)) {
+      realtime.selectedClientId = firstConnected
+        ? firstConnected.id
+        : realtime.clients.length ? realtime.clients[0].id : null;
     }
   }
 
   function renderSensorsSettingsList(): void {
     if (!els.sensorsSettingsBody) return;
     renderRealtimeSensorTable(els.sensorsSettingsBody, {
-      clients: state.clients,
-      locationOptions: state.locationOptions,
+      clients: realtime.clients,
+      locationOptions: realtime.locationOptions,
       locationCodeForClient,
       t,
       escapeHtml,
@@ -137,9 +140,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function renderLoggingStatus(): void {
-    const status = state.loggingStatus;
+    const status = realtime.loggingStatus;
     const on = Boolean(status.enabled);
-    const hasActiveClients = state.clients.some((client) => Boolean(client?.connected));
+    const hasActiveClients = realtime.clients.some((client) => Boolean(client?.connected));
     if (status.write_error) {
       setPillState(els.loggingStatus, "bad", status.write_error);
     } else {
@@ -151,7 +154,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function refreshLoggingStatus(): Promise<void> {
     try {
-      state.loggingStatus = await getLoggingStatus();
+      realtime.loggingStatus = await getLoggingStatus();
       renderLoggingStatus();
     } catch (_err) {
       setPillState(els.loggingStatus, "bad", t("status.unavailable"));
@@ -160,7 +163,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function startLogging(): Promise<void> {
     try {
-      state.loggingStatus = await startLoggingRun();
+      realtime.loggingStatus = await startLoggingRun();
       renderLoggingStatus();
       await ctx.refreshHistory();
     } catch (err) {
@@ -171,7 +174,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function stopLogging(): Promise<void> {
     try {
-      state.loggingStatus = await stopLoggingRun();
+      realtime.loggingStatus = await stopLoggingRun();
       renderLoggingStatus();
       await ctx.refreshHistory();
     } catch (err) {
@@ -186,18 +189,18 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       const codes = Array.isArray(payload.locations)
         ? payload.locations.map((row) => row.code).filter((code): code is string => typeof code === "string")
         : [];
-      state.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
-      state.locationOptions = buildLocationOptions(state.locationCodes);
+      realtime.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
+      realtime.locationOptions = buildLocationOptions(realtime.locationCodes);
     } catch (_err) {
-      state.locationCodes = defaultLocationCodes.slice();
-      state.locationOptions = buildLocationOptions(state.locationCodes);
+      realtime.locationCodes = defaultLocationCodes.slice();
+      realtime.locationOptions = buildLocationOptions(realtime.locationCodes);
     }
     maybeRenderSensorsSettingsList(true);
   }
 
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
     if (!clientId) return;
-    const existing = state.clients.find((c) => c.id === clientId);
+    const existing = realtime.clients.find((c) => c.id === clientId);
     if (existing && locationCodeForClient(existing) === locationCode) return;
     try {
       await setClientLocationApi(clientId, locationCode);
@@ -205,7 +208,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       window.alert(err instanceof Error ? err.message : t("actions.set_location_failed"));
       return;
     }
-    const client = state.clients.find((c) => c.id === clientId);
+    const client = realtime.clients.find((c) => c.id === clientId);
     if (client) {
       client.location_code = locationCode;
       maybeRenderSensorsSettingsList();
@@ -227,13 +230,13 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       window.alert(err instanceof Error ? err.message : t("actions.remove_client_failed"));
       return;
     }
-    const prevSelected = state.selectedClientId;
-    state.clients = state.clients.filter((c) => c.id !== clientId);
-    if (state.selectedClientId === clientId) state.selectedClientId = null;
+    const prevSelected = realtime.selectedClientId;
+    realtime.clients = realtime.clients.filter((c) => c.id !== clientId);
+    if (realtime.selectedClientId === clientId) realtime.selectedClientId = null;
     updateClientSelection();
     maybeRenderSensorsSettingsList();
     renderLoggingStatus();
-    if (prevSelected !== state.selectedClientId) ctx.sendSelection();
+    if (prevSelected !== realtime.selectedClientId) ctx.sendSelection();
   }
 
   function bindHandlers(): void {

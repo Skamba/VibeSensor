@@ -1,9 +1,10 @@
 import { getHistoryInsights } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { AppState, RunDetail } from "../ui_app_state";
+import type { HistoryState, RunDetail } from "../ui_app_state";
 
 export interface HistoryDetailModuleDeps extends FeatureDepsBase {
-  state: AppState;
+  history: HistoryState;
+  getLanguage: () => string;
   ensureRunDetail: (runId: string) => RunDetail;
   collapseExpandedRun: () => void;
   renderHistoryTable: () => void;
@@ -17,7 +18,7 @@ export interface HistoryDetailModule {
 }
 
 export function createHistoryDetailModule(ctx: HistoryDetailModuleDeps): HistoryDetailModule {
-  const { state, t } = ctx;
+  const { history, t } = ctx;
 
   async function loadRunPreview(runId: string, force = false): Promise<void> {
     if (!runId) return;
@@ -27,7 +28,7 @@ export function createHistoryDetailModule(ctx: HistoryDetailModuleDeps): History
     detail.previewError = "";
     ctx.renderHistoryTable();
     try {
-      const response = await getHistoryInsights(runId, state.lang);
+      const response = await getHistoryInsights(runId, ctx.getLanguage());
       detail.preview = response.status === "complete" ? response : null;
     } catch (err) {
       detail.previewError = err instanceof Error ? err.message : t("report.unable_load_insights");
@@ -45,7 +46,7 @@ export function createHistoryDetailModule(ctx: HistoryDetailModuleDeps): History
     detail.insightsError = "";
     ctx.renderHistoryTable();
     try {
-      const response = await getHistoryInsights(runId, state.lang);
+      const response = await getHistoryInsights(runId, ctx.getLanguage());
       detail.insights = response.status === "complete" ? response : null;
     } catch (err) {
       detail.insightsError = err instanceof Error ? err.message : t("report.unable_load_insights");
@@ -57,23 +58,23 @@ export function createHistoryDetailModule(ctx: HistoryDetailModuleDeps): History
 
   function toggleRunDetails(runId: string): void {
     if (!runId) return;
-    if (state.expandedRunId === runId) {
+    if (history.expandedRunId === runId) {
       ctx.collapseExpandedRun();
       ctx.renderHistoryTable();
       return;
     }
     ctx.collapseExpandedRun();
-    state.expandedRunId = runId;
+    history.expandedRunId = runId;
     ctx.renderHistoryTable();
     void loadRunPreview(runId);
   }
 
   function reloadExpandedRunOnLanguageChange(): void {
-    if (!state.expandedRunId) return;
-    const runId = state.expandedRunId;
-    const detail = state.runDetailsById[runId];
+    if (!history.expandedRunId) return;
+    const runId = history.expandedRunId;
+    const detail = history.runDetailsById[runId];
     const shouldReloadInsights = Boolean(detail?.insights);
-    delete state.runDetailsById[runId];
+    delete history.runDetailsById[runId];
     void loadRunPreview(runId, true).then(() => {
       if (shouldReloadInsights) {
         void loadRunInsights(runId, true);

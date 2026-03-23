@@ -6,6 +6,7 @@ import type {
 } from "../../api/types";
 import type { RunDetail } from "../ui_app_state";
 import { heatColor, normalizeUnit } from "../features/heat_utils";
+import { renderTableEmptyRow } from "./dom_helpers";
 
 type LocationIntensityRow = HistoryInsightsPayload["sensor_intensity_by_location"][number];
 
@@ -273,7 +274,7 @@ export function renderHistoryEmptyState(
   container: HTMLElement,
   text: string,
 ): void {
-  container.innerHTML = `<tr><td colspan="4">${text}</td></tr>`;
+  container.innerHTML = renderTableEmptyRow(text, 4);
 }
 
 export function renderHistoryTable(
