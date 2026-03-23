@@ -50,6 +50,10 @@ backend-specific configuration and CLI details.
 
 The local development configs default the HTTP listener to port `8000`.
 
+For native backend iteration, run `vibesensor-server --reload --config
+apps/server/config.dev.yaml` from the repo root so Python changes hot-reload
+while the Vite dev server proxies browser traffic to `http://127.0.0.1:8000`.
+
 ## Configuration
 
 Configuration is YAML-based. Run `vibesensor-config-preflight --dump-defaults` to see all available keys with defaults. Use `apps/server/config.dev.yaml` or `apps/server/config.docker.yaml` for local overrides.

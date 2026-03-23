@@ -18,11 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version-file: ".python-version"
           cache: "pip"
           cache-dependency-path: apps/server/pyproject.toml
 
@@ -31,35 +31,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e "./apps/server[dev]"
 
-      - name: Ruff check
-        run: |
-          ruff check apps/server/vibesensor apps/server/tests tools
-
-      - name: Ruff format check
-        run: |
-          ruff format --check apps/server/vibesensor apps/server/tests tools
-
-      - name: Hygiene checks
-        run: |
-          python tools/dev/check_hygiene.py
-
-      - name: Config preflight
-        run: |
-          vibesensor-config-preflight apps/server/config.dev.yaml
-          vibesensor-config-preflight apps/server/config.docker.yaml
-          vibesensor-config-preflight apps/server/config.pi.yaml
-
-      - name: Docs lint
-        run: |
-          python tools/dev/docs_lint.py
-
-      - name: WS payload schema sync check
-        run: |
-          python -m vibesensor.cli.ws_schema_export --check
-
-      - name: HTTP API schema sync check
-        run: |
-          python -m vibesensor.cli.http_api_schema_export --check
+      - name: Backend quality checks
+        run: make lint
 
   backend-typecheck:
     name: Backend type check
@@ -69,11 +42,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version-file: ".python-version"
           cache: "pip"
           cache-dependency-path: apps/server/pyproject.toml
 
@@ -97,11 +70,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version-file: ".nvmrc"
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
@@ -127,11 +100,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version-file: ".nvmrc"
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
@@ -153,17 +126,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version-file: ".nvmrc"
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version-file: ".python-version"
           cache: "pip"
           cache-dependency-path: apps/server/pyproject.toml
 
@@ -179,11 +152,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version-file: ".python-version"
           cache: "pip"
           cache-dependency-path: apps/server/pyproject.toml
 
@@ -204,11 +177,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version-file: ".python-version"
           cache: "pip"
           cache-dependency-path: apps/server/pyproject.toml
 

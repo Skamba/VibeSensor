@@ -23,12 +23,26 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+COPY apps/server/pyproject.toml /app/apps/server/pyproject.toml
+COPY apps/server/README.md /app/apps/server/README.md
+RUN python - <<'PY'
+import subprocess
+import sys
+import tomllib
+from pathlib import Path
+
+pyproject = Path("/app/apps/server/pyproject.toml")
+data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+dependencies = list(data["project"]["dependencies"])
+dependencies.extend(data["project"].get("optional-dependencies", {}).get("esp", ()))
+subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", "--upgrade", "pip", *dependencies])
+PY
+
 COPY apps/server /app/apps/server
 RUN rm -rf /app/apps/server/vibesensor/static && mkdir -p /app/apps/server/vibesensor/static
 COPY --from=ui-build /app/apps/ui/dist/ /app/apps/server/vibesensor/static/
 
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e "/app/apps/server[esp]"
+RUN pip install --no-cache-dir --no-deps /app/apps/server
 
 EXPOSE 8000/tcp
 EXPOSE 9000/udp
