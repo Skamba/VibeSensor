@@ -110,7 +110,7 @@ async def test_runtime_auto_stop_uses_to_thread(
 
 
 @pytest.mark.asyncio
-async def test_runtime_tick_holds_lock_during_build_and_append(
+async def test_runtime_tick_releases_lock_before_build_and_append(
     make_logger,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -139,5 +139,5 @@ async def test_runtime_tick_holds_lock_during_build_and_append(
     with pytest.raises(_StopLoop):
         await _recorder_runtime.run_loop(logger, logger=logging.getLogger(__name__))
 
-    assert build_lock_owned == [True]
-    assert append_lock_owned == [True]
+    assert build_lock_owned == [False]
+    assert append_lock_owned == [False]
