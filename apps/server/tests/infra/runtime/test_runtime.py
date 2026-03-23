@@ -322,6 +322,8 @@ async def test_start_creates_tasks(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_start_records_background_task_failure(monkeypatch) -> None:
+    import vibesensor.infra.runtime.lifecycle as lifecycle_module
+
     async def _fake_udp(*args, **kwargs):
         return None, None
 
@@ -350,11 +352,110 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
     )
     lifecycle._start_udp_receiver = _fake_udp
 
+    monkeypatch.setattr(lifecycle_module, "_TASK_RESTART_MAX_ATTEMPTS", 0)
+
     await lifecycle.start()
     failed_task = next(task for task in lifecycle.tasks if task.get_name() == "ws-broadcast")
     await asyncio.gather(failed_task, return_exceptions=True)
 
     assert rt.health_state.background_task_failures["ws-broadcast"] == "ws boom"
+
+    await lifecycle.stop()
+
+
+@pytest.mark.asyncio
+async def test_start_restarts_supervised_task_after_failure(monkeypatch) -> None:
+    import vibesensor.infra.runtime.lifecycle as lifecycle_module
+
+    async def _fake_udp(*args, **kwargs):
+        return None, None
+
+    control_plane = MagicMock()
+    control_plane.start = AsyncMock()
+    restart_started = asyncio.Event()
+    ws_hub = MagicMock()
+    ws_run_calls = {"count": 0}
+    original_sleep = asyncio.sleep
+
+    async def _ws_run(*args, **kwargs):
+        ws_run_calls["count"] += 1
+        if ws_run_calls["count"] == 1:
+            raise RuntimeError("ws boom")
+        restart_started.set()
+        await asyncio.Future()
+
+    async def _fast_sleep(delay: float) -> None:
+        await original_sleep(0)
+
+    ws_hub.run = _ws_run
+    run_recorder = MagicMock()
+    run_recorder.run = AsyncMock(side_effect=asyncio.CancelledError)
+    gps_monitor = MagicMock()
+    gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
+    update_manager = MagicMock()
+    update_manager.startup_recover = AsyncMock()
+    update_manager.job_task = None
+
+    rt, lifecycle = _make_runtime(
+        control_plane=control_plane,
+        ws_hub=ws_hub,
+        run_recorder=run_recorder,
+        gps_monitor=gps_monitor,
+        update_manager=update_manager,
+    )
+    lifecycle._start_udp_receiver = _fake_udp
+
+    monkeypatch.setattr(lifecycle_module, "_TASK_RESTART_BASE_DELAY_S", 0.0)
+    monkeypatch.setattr(lifecycle_module, "_TASK_RESTART_MAX_DELAY_S", 0.0)
+    monkeypatch.setattr(lifecycle_module.asyncio, "sleep", _fast_sleep)
+
+    await lifecycle.start()
+    await asyncio.wait_for(restart_started.wait(), timeout=1.0)
+
+    assert ws_run_calls["count"] == 2
+    assert rt.health_state.background_task_failures == {}
+
+    await lifecycle.stop()
+
+
+@pytest.mark.asyncio
+async def test_start_monitors_udp_consumer_failure(monkeypatch) -> None:
+    consumer_started = asyncio.Event()
+
+    async def _consumer() -> None:
+        consumer_started.set()
+        raise RuntimeError("udp boom")
+
+    async def _fake_udp(*args, **kwargs):
+        return MagicMock(), asyncio.create_task(_consumer(), name="udp-data-consumer")
+
+    control_plane = MagicMock()
+    control_plane.start = AsyncMock()
+    ws_hub = MagicMock()
+    ws_hub.run = AsyncMock(side_effect=asyncio.CancelledError)
+    run_recorder = MagicMock()
+    run_recorder.run = AsyncMock(side_effect=asyncio.CancelledError)
+    gps_monitor = MagicMock()
+    gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
+    update_manager = MagicMock()
+    update_manager.startup_recover = AsyncMock()
+    update_manager.job_task = None
+
+    rt, lifecycle = _make_runtime(
+        control_plane=control_plane,
+        ws_hub=ws_hub,
+        run_recorder=run_recorder,
+        gps_monitor=gps_monitor,
+        update_manager=update_manager,
+    )
+    lifecycle._start_udp_receiver = _fake_udp
+
+    await lifecycle.start()
+    await asyncio.wait_for(consumer_started.wait(), timeout=1.0)
+    if lifecycle._data_consumer_task is not None:
+        await asyncio.gather(lifecycle._data_consumer_task, return_exceptions=True)
+
+    assert rt.health_state.background_task_failures["udp-data-consumer"] == "udp boom"
 
     await lifecycle.stop()
 

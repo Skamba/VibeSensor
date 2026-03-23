@@ -345,7 +345,18 @@ class UpdateManager:
             ):
                 tracker.transition(UpdatePhase.restoring_hotspot)
                 tracker.log("Restoring hotspot...")
-                await asyncio.shield(self._build_wifi_controller().restore_hotspot())
+                try:
+                    restored = await asyncio.shield(self._build_wifi_controller().restore_hotspot())
+                    if not restored:
+                        tracker.add_issue("cleanup", "Failed to restore hotspot during cleanup")
+                        tracker.log("Cleanup hotspot restore failed")
+                except Exception as exc:
+                    tracker.add_issue(
+                        "cleanup",
+                        "Hotspot restore error during cleanup",
+                        str(exc),
+                    )
+                    LOGGER.warning("Cleanup hotspot restore failed", exc_info=True)
             tracker.clear_secrets()
             try:
                 tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))

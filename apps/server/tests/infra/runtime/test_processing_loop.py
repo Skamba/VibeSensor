@@ -11,6 +11,7 @@ import pytest
 
 from vibesensor.infra.runtime.processing_loop import (
     MAX_CONSECUTIVE_FAILURES,
+    MAX_FATAL_BACKOFF_CYCLES,
     ProcessingHealth,
     ProcessingLoop,
     ProcessingLoopState,
@@ -164,7 +165,26 @@ class TestProcessingLoopFailureTracking:
         await _run_loop(loop, max_ticks=MAX_CONSECUTIVE_FAILURES + 2)
 
         assert state.processing_state == ProcessingHealth.OK
+        assert state.fatal_backoff_cycles == 0
         assert state.last_failure_category == "compute_all"
+
+    @pytest.mark.asyncio
+    async def test_persistent_failures_escalate_after_fatal_backoff_cycles(self) -> None:
+        processor = _StubProcessor(
+            fail_count=(MAX_CONSECUTIVE_FAILURES * MAX_FATAL_BACKOFF_CYCLES) + 5,
+        )
+        loop, state = _make_loop(processor=processor)
+        original_sleep = asyncio.sleep
+
+        async def _fast_sleep(delay: float) -> None:
+            await original_sleep(0)
+
+        with patch("asyncio.sleep", _fast_sleep):
+            with pytest.raises(RuntimeError, match="persistent processing failure"):
+                await loop.run()
+
+        assert state.processing_state == ProcessingHealth.FATAL
+        assert state.fatal_backoff_cycles == MAX_FATAL_BACKOFF_CYCLES
 
     @pytest.mark.asyncio
     async def test_uncategorized_exception_falls_into_unexpected(self) -> None:

@@ -16,7 +16,7 @@ import time
 from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
-from threading import RLock, Thread
+from threading import Event, RLock, Thread
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.run.post_analysis_executor import (
@@ -113,6 +113,7 @@ class PostAnalysisWorker:
         self._analysis_max_queue_depth: int = 0
         self._last_completed_run_id: str | None = None
         self._last_completed_error: str | None = None
+        self._shutdown_event = Event()
 
     # -- public API -----------------------------------------------------------
 
@@ -150,6 +151,9 @@ class PostAnalysisWorker:
         """Enqueue *run_id* for background analysis."""
         LOGGER.info("Analysis queued for run %s", run_id)
         with self._lock:
+            if self._shutdown_event.is_set():
+                LOGGER.info("Ignoring post-analysis schedule for %s during shutdown", run_id)
+                return
             if run_id in self._analysis_enqueued_run_ids or run_id == self._analysis_active_run_id:
                 return
             self._analysis_queue.append(_QueuedRun(run_id=run_id, enqueued_at=time.time()))
@@ -198,6 +202,14 @@ class PostAnalysisWorker:
             else:
                 time.sleep(min(0.05, remaining))
 
+    def shutdown(self, timeout_s: float = 5.0) -> bool:
+        """Cancel pending post-analysis work and wait briefly for the worker to exit."""
+        self._shutdown_event.set()
+        with self._lock:
+            self._analysis_queue.clear()
+            self._analysis_enqueued_run_ids.clear()
+        return self.wait(timeout_s)
+
     # -- internals ------------------------------------------------------------
 
     def _ensure_worker_running(self) -> None:
@@ -210,7 +222,7 @@ class PostAnalysisWorker:
             worker = Thread(
                 target=self._worker_loop,
                 name="metrics-post-analysis-worker",
-                daemon=False,
+                daemon=True,
             )
             self._analysis_thread = worker
             worker.start()
@@ -218,6 +230,11 @@ class PostAnalysisWorker:
     def _worker_loop(self) -> None:
         while True:
             with self._lock:
+                if self._shutdown_event.is_set():
+                    self._analysis_active_run_id = None
+                    self._analysis_active_started_at = None
+                    self._analysis_thread = None
+                    return
                 if not self._analysis_queue:
                     self._analysis_active_run_id = None
                     self._analysis_active_started_at = None
@@ -244,6 +261,8 @@ class PostAnalysisWorker:
             return
         retry_index = 0
         while True:
+            if self._shutdown_event.is_set():
+                return
             defer_retryable_error_storage = retry_index < len(_RETRY_DELAYS_S)
             result: PostAnalysisAttemptResult = execute_post_analysis(
                 run_id=run_id,
@@ -259,7 +278,8 @@ class PostAnalysisWorker:
                     delay_s=delay_s,
                 )
                 retry_index += 1
-                time.sleep(delay_s)
+                if self._shutdown_event.wait(delay_s):
+                    return
                 continue
             self._record_execution_result(result)
             return

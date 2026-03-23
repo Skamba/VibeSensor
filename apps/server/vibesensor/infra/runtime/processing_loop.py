@@ -29,6 +29,9 @@ MAX_CONSECUTIVE_FAILURES = 25
 FAILURE_BACKOFF_S = 5
 """Seconds to sleep on fatal failure threshold before resetting."""
 
+MAX_FATAL_BACKOFF_CYCLES = 3
+"""After this many fatal backoff cycles, escalate to a managed task failure."""
+
 STALE_DATA_AGE_S = 2.0
 """Clients without fresh UDP data within this window are excluded from spectrum output."""
 
@@ -70,6 +73,7 @@ class ProcessingLoopState:
     last_tick_duration_s: float = 0.0
     max_tick_duration_s: float = 0.0
     tick_count: int = 0
+    fatal_backoff_cycles: int = 0
 
 
 class ProcessingLoop:
@@ -119,6 +123,38 @@ class ProcessingLoop:
         state.processing_failure_categories[category] = (
             state.processing_failure_categories.get(category, 0) + 1
         )
+
+    async def _handle_fatal_backoff(self) -> int:
+        state = self.state
+        state.fatal_backoff_cycles += 1
+        if state.fatal_backoff_cycles >= MAX_FATAL_BACKOFF_CYCLES:
+            message = (
+                "persistent processing failure after "
+                f"{state.fatal_backoff_cycles} fatal backoff cycles"
+            )
+            LOGGER.error(
+                "Processing loop exceeded %d fatal backoff cycles; escalating to a "
+                "managed task failure.",
+                MAX_FATAL_BACKOFF_CYCLES,
+            )
+            raise RuntimeError(message)
+        LOGGER.error(
+            "Processing loop hit %d failures; backing off %d s (fatal cycle %d/%d)",
+            MAX_CONSECUTIVE_FAILURES,
+            FAILURE_BACKOFF_S,
+            state.fatal_backoff_cycles,
+            MAX_FATAL_BACKOFF_CYCLES,
+        )
+        await asyncio.sleep(FAILURE_BACKOFF_S)
+        state.processing_state = ProcessingHealth.DEGRADED
+        LOGGER.info(
+            "Processing loop resuming after fatal-backoff cycle %d/%d; "
+            "total failure count so far: %d",
+            state.fatal_backoff_cycles,
+            MAX_FATAL_BACKOFF_CYCLES,
+            state.processing_failure_count,
+        )
+        return 0
 
     async def _run_tick(self, *, sync_clock: bool) -> None:
         if sync_clock:
@@ -212,6 +248,7 @@ class ProcessingLoop:
                 self.state.tick_count += 1
                 consecutive_failures = 0
                 self.state.processing_state = ProcessingHealth.OK
+                self.state.fatal_backoff_cycles = 0
             except ProcessingLoopError as exc:
                 consecutive_failures += 1
                 self._record_failure(exc.category, exc.cause)
@@ -225,19 +262,7 @@ class ProcessingLoop:
                     exc_info=True,
                 )
                 if is_fatal:
-                    LOGGER.error(
-                        "Processing loop hit %d failures; backing off %d s then resetting",
-                        MAX_CONSECUTIVE_FAILURES,
-                        FAILURE_BACKOFF_S,
-                    )
-                    await asyncio.sleep(FAILURE_BACKOFF_S)
-                    consecutive_failures = 0
-                    self.state.processing_state = ProcessingHealth.DEGRADED
-                    LOGGER.info(
-                        "Processing loop resuming after fatal-backoff; "
-                        "total failure count so far: %d",
-                        self.state.processing_failure_count,
-                    )
+                    consecutive_failures = await self._handle_fatal_backoff()
             except Exception as exc:
                 consecutive_failures += 1
                 self._record_failure("unexpected", exc)
@@ -250,19 +275,7 @@ class ProcessingLoop:
                     exc_info=True,
                 )
                 if is_fatal:
-                    LOGGER.error(
-                        "Processing loop hit %d failures; backing off %d s then resetting",
-                        MAX_CONSECUTIVE_FAILURES,
-                        FAILURE_BACKOFF_S,
-                    )
-                    await asyncio.sleep(FAILURE_BACKOFF_S)
-                    consecutive_failures = 0
-                    self.state.processing_state = ProcessingHealth.DEGRADED
-                    LOGGER.info(
-                        "Processing loop resuming after fatal-backoff; "
-                        "total failure count so far: %d",
-                        self.state.processing_failure_count,
-                    )
+                    consecutive_failures = await self._handle_fatal_backoff()
             delay = (
                 interval
                 if consecutive_failures == 0

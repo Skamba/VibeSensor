@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -148,6 +149,37 @@ async def test_process_datagram_logs_client_id_on_error(fake_transport, drain_qu
 
     # Should not crash – the error is caught and logged
     assert processor.ingest.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_process_queue_survives_unexpected_exception_and_keeps_consuming(
+    fake_transport,
+) -> None:
+    registry = Mock()
+    registry.update_from_data.side_effect = [
+        RuntimeError("boom"),
+        DataUpdateResult(),
+    ]
+    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
+    processor = Mock()
+    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
+    proto.connection_made(fake_transport)
+
+    cid = bytes.fromhex("aabbccddeeff")
+    pkt = pack_data(cid, seq=1, t0_us=100, samples=np.zeros((4, 3), dtype=np.int16))
+
+    proto.datagram_received(pkt, ("127.0.0.1", 12345))
+    proto.datagram_received(pkt, ("127.0.0.1", 12345))
+
+    consumer = asyncio.create_task(proto.process_queue())
+    await asyncio.wait_for(proto._queue.join(), timeout=1.0)
+    await asyncio.sleep(0)
+
+    assert processor.ingest.call_count == 1
+    assert not consumer.done()
+
+    consumer.cancel()
+    await asyncio.gather(consumer, return_exceptions=True)
 
 
 def test_process_datagram_parse_error_marks_registry_and_skips_ack(fake_transport) -> None:

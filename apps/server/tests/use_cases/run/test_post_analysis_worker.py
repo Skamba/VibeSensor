@@ -170,6 +170,27 @@ class TestPostAnalysisWorkerWait:
         release.set()
         worker.wait(timeout_s=2.0)
 
+    def test_shutdown_clears_pending_queue_after_timeout(self, make_worker) -> None:
+        started = threading.Event()
+        release = threading.Event()
+        seen: list[str] = []
+
+        def _block(rid: str) -> None:
+            started.set()
+            release.wait(timeout=5.0)
+            seen.append(rid)
+
+        worker = make_worker(run_fn=_block)
+        worker.schedule("run-1")
+        started.wait(timeout=2.0)
+        worker.schedule("run-2")
+
+        assert worker.shutdown(timeout_s=0.01) is False
+
+        release.set()
+        assert worker.wait(timeout_s=2.0)
+        assert seen == ["run-1"]
+
 
 class TestPostAnalysisWorkerErrorHandling:
     def test_injected_analysis_runner_receives_loaded_run_inputs(self) -> None:
@@ -307,7 +328,7 @@ class TestPostAnalysisWorkerErrorHandling:
             return PostAnalysisExecutionSuccess(run_id=run_id)
 
         monkeypatch.setattr(post_analysis_module, "execute_post_analysis", _execute)
-        monkeypatch.setattr(post_analysis_module.time, "sleep", lambda _seconds: None)
+        monkeypatch.setattr(post_analysis_module, "_RETRY_DELAYS_S", (0.0, 0.0, 0.0))
 
         worker = PostAnalysisWorker(
             history_db=object(),
@@ -353,7 +374,7 @@ class TestPostAnalysisWorkerErrorHandling:
             )
 
         monkeypatch.setattr(post_analysis_module, "execute_post_analysis", _execute)
-        monkeypatch.setattr(post_analysis_module.time, "sleep", lambda _seconds: None)
+        monkeypatch.setattr(post_analysis_module, "_RETRY_DELAYS_S", (0.0, 0.0, 0.0))
 
         worker = PostAnalysisWorker(
             history_db=object(),
