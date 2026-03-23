@@ -17,13 +17,12 @@ from vibesensor.domain import (
     TestRun,
     VibrationOrigin,
 )
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-    from vibesensor.use_cases.history.report_preparation import PreparedReportFacts
+    from vibesensor.use_cases.history.report_preparation import PreparedReportInput
 
 __all__ = [
     "ReportMappingContext",
@@ -106,26 +105,27 @@ class ReportMappingContext:
 
 
 def prepare_report_mapping_context(
-    summary: AnalysisSummary,
-    *,
-    report_facts: PreparedReportFacts,
-    test_run: TestRun,
+    prepared: PreparedReportInput,
 ) -> ReportMappingContext:
-    """Extract structural summary context for report mapping.
+    """Extract structural prepared-report context for report mapping.
 
-    Consumes the prepared domain ``TestRun`` aggregate and history-prepared
-    semantic report facts so downstream business decisions stay domain-first
-    without calling back into history-layer interpretation helpers.
+    Consumes the prepared domain ``TestRun`` aggregate plus minimal
+    renderer-edge metadata so downstream business decisions stay domain-first
+    without depending on a raw summary payload.
     """
-    meta = summary["metadata"]
-    car_name = str(meta.get("car_name") or "").strip() or None
-    car_type = str(meta.get("car_type") or "").strip() or None
-    report_date = str(summary["report_date"] or "") or utc_now_iso()
+    report_facts = prepared.report_facts
+    test_run = prepared.domain_test_run
+    if report_facts is None:
+        raise ValueError("PreparedReportInput must include report_facts for report mapping")
+    if test_run is None:
+        raise ValueError("PreparedReportInput must include a domain_test_run for report mapping")
+    renderer_payload = prepared.renderer_payload
+    report_date = renderer_payload.report_date or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
     return ReportMappingContext(
-        car_name=car_name,
-        car_type=car_type,
+        car_name=renderer_payload.car_name,
+        car_type=renderer_payload.car_type,
         date_str=date_str,
         origin=report_facts.origin,
         origin_location=report_facts.origin_location,

@@ -193,7 +193,8 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
     assert [warning["code"] for warning in stored_analysis.analysis["warnings"]] == [
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
     ]
-    assert [warning["code"] for warning in prepared.analysis_summary["warnings"]] == [
+    assert prepared.report_facts is not None
+    assert [warning["code"] for warning in prepared.report_facts.warnings] == [
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
         WARNING_CODE_CAR_SETTINGS_CHANGED,
     ]

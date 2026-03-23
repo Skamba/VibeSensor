@@ -28,11 +28,7 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
     prepared = prepare_report_input(summary)
     assert prepared.domain_test_run is not None
     assert prepared.report_facts is not None
-    context = prepare_report_mapping_context(
-        prepared.analysis_summary,
-        report_facts=prepared.report_facts,
-        test_run=prepared.domain_test_run,
-    )
+    context = prepare_report_mapping_context(prepared)
     assert context.domain_aggregate is not None
     assert isinstance(context.domain_aggregate, TestRun)
     assert len(context.domain_aggregate.findings) == 1
@@ -180,11 +176,7 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     prepared = prepare_report_input(summary)
     assert prepared.domain_test_run is not None
     assert prepared.report_facts is not None
-    context = prepare_report_mapping_context(
-        prepared.analysis_summary,
-        report_facts=prepared.report_facts,
-        test_run=prepared.domain_test_run,
-    )
+    context = prepare_report_mapping_context(prepared)
     assert context.domain_aggregate is not None
     assert isinstance(context.domain_aggregate, TestRun)
 
@@ -199,6 +191,35 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     assert isinstance(primary.primary_source, VibrationSource), (
         "primary_source must be a VibrationSource enum when domain aggregate is present"
     )
+
+
+def test_prepared_report_input_no_longer_exposes_summary_payload() -> None:
+    """Prepared report inputs must expose explicit fields instead of a raw summary dict."""
+    from test_support.findings import make_finding_payload
+
+    from vibesensor.adapters.pdf.mapping import prepare_report_input
+
+    prepared = prepare_report_input(
+        {
+            "run_id": "guardrails",
+            "findings": [make_finding_payload(finding_id="F001")],
+            "top_causes": [make_finding_payload(finding_id="F001")],
+            "lang": "en",
+            "metadata": {},
+            "report_date": "",
+            "record_length": "",
+            "start_time_utc": "",
+            "end_time_utc": "",
+            "sensor_locations": [],
+            "sensor_locations_connected_throughout": [],
+            "most_likely_origin": {},
+            "run_suitability": [],
+            "plots": {},
+        }
+    )
+
+    assert not hasattr(prepared, "analysis_summary")
+    assert prepared.renderer_payload.run_id == "guardrails"
 
 
 def test_next_steps_consume_prepared_actions() -> None:

@@ -23,7 +23,7 @@ from vibesensor.adapters.pdf._card_builder import (
     humanize_signatures,
 )
 from vibesensor.adapters.pdf.pattern_parts import why_parts_listed
-from vibesensor.adapters.pdf.peak_table import build_peak_rows_from_plots
+from vibesensor.adapters.pdf.peak_table import build_peak_rows
 from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.adapters.pdf.report_context import (
     ReportMappingContext,
@@ -47,7 +47,6 @@ from vibesensor.domain import (
 )
 from vibesensor.report_i18n import human_source, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportFacts,
@@ -171,9 +170,17 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     reconstruction have already happened on the history side, so the PDF
     adapter can stay focused on mapping and rendering decisions.
     """
-    summary = prepared.analysis_summary
-    lang = str(normalize_lang(summary.get("lang")))
-    report = build_report_from_summary(summary)
+    lang = str(normalize_lang(prepared.language))
+    report = Report(
+        run_id=prepared.renderer_payload.run_id,
+        lang=lang,
+        car_name=prepared.renderer_payload.car_name,
+        car_type=prepared.renderer_payload.car_type,
+        report_date=prepared.renderer_payload.report_date,
+        duration_s=prepared.renderer_payload.duration_s,
+        sample_count=prepared.renderer_payload.sample_count,
+        sensor_count=prepared.renderer_payload.sensor_count,
+    )
     domain_test_run = prepared.domain_test_run
     report_facts = prepared.report_facts
     if domain_test_run is None:
@@ -185,7 +192,7 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
         return str(_tr(lang, key, **kw))
 
     return _build_report_template_data(
-        summary,
+        prepared,
         report=report,
         lang=lang,
         tr=tr,
@@ -208,7 +215,7 @@ def _finding_to_presentation(f: Finding) -> FindingPresentation:
 
 
 def _build_report_template_data(
-    summary: AnalysisSummary,
+    prepared: PreparedReportInput,
     *,
     report: Report,
     lang: str,
@@ -216,16 +223,12 @@ def _build_report_template_data(
     test_run: TestRun,
     report_facts: PreparedReportFacts,
 ) -> ReportTemplateData:
-    """Map a summary dict into the final report template data structure.
+    """Map a prepared report input into the final report template data structure.
 
-    The *report* domain object provides high-level metadata; rendering-
-    specific fields are resolved from the full *summary* dict.
+    The *report* metadata and renderer payload are prepared on the history side;
+    the PDF adapter only resolves final presentation details.
     """
-    context = prepare_report_mapping_context(
-        summary,
-        report_facts=report_facts,
-        test_run=test_run,
-    )
+    context = prepare_report_mapping_context(prepared)
     raw_sensor_intensity = list(report_facts.active_sensor_intensity)
     primary = resolve_primary_report_candidate(
         context=context,
@@ -259,7 +262,7 @@ def _build_report_template_data(
         lang,
         tr,
     )
-    peak_rows = build_peak_rows_from_plots(summary, lang=lang, tr=tr)
+    peak_rows = build_peak_rows(prepared.renderer_payload.peak_table_rows, lang=lang, tr=tr)
     version_marker = build_version_marker()
 
     hotspot_rows = list(report_facts.location_hotspot_rows)

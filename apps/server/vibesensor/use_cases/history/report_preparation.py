@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
+from vibesensor.coerce import coerce_float, coerce_int
 from vibesensor.domain import (
     LocationHotspotRow,
     LocationIntensitySummary,
@@ -15,12 +16,13 @@ from vibesensor.domain import (
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.analysis_payload import (
     AnalysisSummary,
+    PeakTableRow,
     RunSuitabilityCheck,
     SummaryWarningPayload,
 )
-from vibesensor.shared.boundaries.analysis_summary import analysis_summary_with_warnings
 from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
+from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.helpers import safe_filename
 from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey
@@ -38,15 +40,108 @@ if TYPE_CHECKING:
     from vibesensor.domain import TestRun
 
 
-def _has_projectable_analysis(analysis: AnalysisSummary) -> bool:
-    return isinstance(analysis.get("findings"), list) or isinstance(
-        analysis.get("top_causes"), list
-    )
+def _has_projectable_payload(payload: Mapping[str, object]) -> bool:
+    return isinstance(payload.get("findings"), list) or isinstance(payload.get("top_causes"), list)
 
 
-def _default_report_filename(summary: AnalysisSummary) -> str:
-    run_id = str(summary.get("run_id") or summary.get("file_name") or "report")
+def _default_report_filename(payload: Mapping[str, object]) -> str:
+    run_id = str(payload.get("run_id") or payload.get("file_name") or "report")
     return f"{safe_filename(run_id)}_report.pdf"
+
+
+def _summary_metadata(payload: Mapping[str, object]) -> Mapping[str, object]:
+    metadata = payload.get("metadata")
+    return metadata if isinstance(metadata, dict) else {}
+
+
+def _active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:
+    connected = payload.get("sensor_locations_connected_throughout")
+    locations = connected if isinstance(connected, list) else []
+    active = tuple(str(loc).strip() for loc in locations if str(loc).strip())
+    if active:
+        return active
+    fallback = payload.get("sensor_locations")
+    fallback_locations = fallback if isinstance(fallback, list) else []
+    return tuple(str(loc).strip() for loc in fallback_locations if str(loc).strip())
+
+
+def _summary_warnings(
+    payload: Mapping[str, object],
+    *,
+    warnings: object | None = None,
+) -> tuple[SummaryWarningPayload, ...]:
+    raw_warnings = warnings if warnings is not None else payload.get("warnings")
+    return tuple(summary_warning_payloads(raw_warnings))
+
+
+def _report_duration_s(payload: Mapping[str, object]) -> float | None:
+    duration_s_raw = payload.get("duration_s")
+    if duration_s_raw is None:
+        return None
+    try:
+        return coerce_float(duration_s_raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def _peak_table_rows(payload: Mapping[str, object]) -> tuple[PeakTableRow, ...]:
+    plots = payload.get("plots")
+    if not isinstance(plots, Mapping):
+        return ()
+    raw_peaks = plots.get("peaks_table")
+    if not isinstance(raw_peaks, list):
+        return ()
+    return tuple(cast(PeakTableRow, row) for row in raw_peaks if isinstance(row, Mapping))
+
+
+def _sensor_intensity_payload(payload: Mapping[str, object]) -> tuple[object, ...]:
+    raw_sensor_intensity = payload.get("sensor_intensity_by_location")
+    if not isinstance(raw_sensor_intensity, list):
+        return ()
+    return tuple(raw_sensor_intensity)
+
+
+def _coerce_count(value: object) -> int:
+    if value is None:
+        return 0
+    try:
+        return coerce_int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedReportRendererPayload:
+    """Minimal renderer-edge payload prepared from summary or persisted analysis."""
+
+    run_id: str
+    car_name: str | None
+    car_type: str | None
+    report_date: str | None
+    duration_s: float | None
+    sample_count: int
+    sensor_count: int
+    peak_table_rows: tuple[PeakTableRow, ...]
+
+
+def _build_renderer_payload(payload: Mapping[str, object]) -> PreparedReportRendererPayload:
+    metadata = _summary_metadata(payload)
+    rows = payload.get("rows")
+    sample_count = _coerce_count(rows)
+    sensor_count_raw = payload.get("sensor_count_used")
+    sensor_count = _coerce_count(sensor_count_raw)
+    report_date = payload.get("report_date")
+    report_date_str = str(report_date).strip() or None if isinstance(report_date, str) else None
+    return PreparedReportRendererPayload(
+        run_id=str(payload.get("run_id") or "unknown") or "unknown",
+        car_name=str(metadata.get("car_name") or "").strip() or None,
+        car_type=str(metadata.get("car_type") or "").strip() or None,
+        report_date=report_date_str,
+        duration_s=_report_duration_s(payload),
+        sample_count=sample_count,
+        sensor_count=sensor_count,
+        peak_table_rows=_peak_table_rows(payload),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,17 +172,17 @@ class PreparedReportInput:
     """Resolved report input ready for PDF mapping and rendering.
 
     Invariants:
-    - ``analysis_summary`` is a renderer-facing payload copy, not the
-      authoritative internal report representation.
     - ``domain_test_run`` is reconstructed at most once and shared across the
       downstream PDF mapping helpers as the authoritative report aggregate.
     - ``report_facts`` contains the semantic report facts that the PDF adapter
       needs so it does not have to call back into history-layer interpretation.
-    - ``language`` is canonicalized and copied back onto ``analysis_summary`` so
-      renderer helpers consume one consistent locale choice.
+    - ``renderer_payload`` contains only the minimal final-edge payload that the
+      PDF mapper still needs after domain/report preparation is complete.
+    - ``language`` is canonicalized once so the renderer consumes one
+      consistent locale choice.
     """
 
-    analysis_summary: AnalysisSummary
+    renderer_payload: PreparedReportRendererPayload
     language: str
     filename: str
     domain_test_run: TestRun | None
@@ -95,48 +190,26 @@ class PreparedReportInput:
     report_facts: PreparedReportFacts | None = None
 
 
-def _reconstruct_report_test_run(analysis_summary: AnalysisSummary) -> TestRun | None:
-    if not _has_projectable_analysis(analysis_summary):
+def _reconstruct_report_test_run(payload: Mapping[str, object]) -> TestRun | None:
+    if not _has_projectable_payload(payload):
         return None
-    return test_run_from_summary(analysis_summary)
-
-
-def _summary_metadata(summary: AnalysisSummary) -> Mapping[str, object]:
-    metadata = summary.get("metadata")
-    return metadata if isinstance(metadata, dict) else {}
-
-
-def _active_sensor_locations(summary: AnalysisSummary) -> tuple[str, ...]:
-    connected = summary.get("sensor_locations_connected_throughout")
-    locations = connected if isinstance(connected, list) else []
-    active = tuple(str(loc).strip() for loc in locations if str(loc).strip())
-    if active:
-        return active
-    fallback = summary.get("sensor_locations")
-    fallback_locations = fallback if isinstance(fallback, list) else []
-    return tuple(str(loc).strip() for loc in fallback_locations if str(loc).strip())
-
-
-def _summary_warnings(summary: AnalysisSummary) -> tuple[SummaryWarningPayload, ...]:
-    warnings = summary.get("warnings")
-    if not isinstance(warnings, list):
-        return ()
-    return tuple(warning for warning in warnings if isinstance(warning, dict))
+    return test_run_from_summary(payload)
 
 
 def _prepare_report_facts(
-    analysis_summary: AnalysisSummary,
+    payload: Mapping[str, object],
     *,
     test_run: TestRun,
+    warnings: object | None = None,
 ) -> PreparedReportFacts:
-    metadata = _summary_metadata(analysis_summary)
-    sensor_locations_active = _active_sensor_locations(analysis_summary)
+    metadata = _summary_metadata(payload)
+    sensor_locations_active = _active_sensor_locations(payload)
     origin = resolve_report_origin(test_run)
     origin_location = normalize_origin_location(origin)
     config_snap = test_run.capture.setup.configuration_snapshot
     active_sensor_intensity = tuple(
         filter_active_sensor_intensity(
-            analysis_summary.get("sensor_intensity_by_location") or [],
+            _sensor_intensity_payload(payload),
             sensor_locations_active,
         )
     )
@@ -150,9 +223,9 @@ def _prepare_report_facts(
         origin=origin,
         origin_location=origin_location,
         sensor_locations_active=sensor_locations_active,
-        duration_text=str(analysis_summary.get("record_length") or "").strip() or None,
-        start_time_utc=str(analysis_summary.get("start_time_utc") or "").strip() or None,
-        end_time_utc=str(analysis_summary.get("end_time_utc") or "").strip() or None,
+        duration_text=str(payload.get("record_length") or "").strip() or None,
+        start_time_utc=str(payload.get("start_time_utc") or "").strip() or None,
+        end_time_utc=str(payload.get("end_time_utc") or "").strip() or None,
         sample_rate_hz=(
             f"{config_snap.raw_sample_rate_hz:g}"
             if config_snap.raw_sample_rate_hz is not None
@@ -167,30 +240,29 @@ def _prepare_report_facts(
         primary_candidate_facts=primary_candidate_facts,
         recommended_actions=test_run.recommended_actions,
         suitability_checks=tuple(run_suitability_payload(test_run.suitability)),
-        warnings=_summary_warnings(analysis_summary),
+        warnings=_summary_warnings(payload, warnings=warnings),
     )
 
 
 def _build_prepared_report_input(
-    analysis_summary: AnalysisSummary,
+    payload: Mapping[str, object],
     *,
     filename: str | None,
     language: str | None,
     cache_key: ReportPdfCacheKey | None,
+    warnings: object | None = None,
 ) -> PreparedReportInput:
-    domain_test_run = _reconstruct_report_test_run(analysis_summary)
-    prepared_summary = cast(AnalysisSummary, dict(analysis_summary))
-    prepared_language = str(normalize_lang(language or prepared_summary.get("lang")))
-    prepared_summary["lang"] = prepared_language
+    domain_test_run = _reconstruct_report_test_run(payload)
+    prepared_language = str(normalize_lang(language or payload.get("lang")))
     report_facts = (
-        _prepare_report_facts(prepared_summary, test_run=domain_test_run)
+        _prepare_report_facts(payload, test_run=domain_test_run, warnings=warnings)
         if domain_test_run is not None
         else None
     )
     return PreparedReportInput(
-        analysis_summary=prepared_summary,
+        renderer_payload=_build_renderer_payload(payload),
         language=prepared_language,
-        filename=filename or _default_report_filename(prepared_summary),
+        filename=filename or _default_report_filename(payload),
         domain_test_run=domain_test_run,
         cache_key=cache_key,
         report_facts=report_facts,
@@ -206,7 +278,7 @@ def prepare_report_input(
 ) -> PreparedReportInput:
     """Prepare a direct summary payload for domain-first report mapping."""
     return _build_prepared_report_input(
-        cast(AnalysisSummary, dict(analysis_summary)),
+        analysis_summary,
         filename=filename,
         language=language,
         cache_key=cache_key,
@@ -222,12 +294,10 @@ def prepare_persisted_report_input(
     cache_key: ReportPdfCacheKey | None = None,
 ) -> PreparedReportInput:
     """Prepare a persisted history payload for domain-first report mapping."""
-    prepared_summary = cast(AnalysisSummary, analysis.to_json_object())
-    if warnings is not None:
-        prepared_summary = analysis_summary_with_warnings(prepared_summary, warnings)
     return _build_prepared_report_input(
-        prepared_summary,
+        analysis,
         filename=filename,
         language=language,
         cache_key=cache_key,
+        warnings=warnings,
     )

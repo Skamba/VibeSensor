@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import replace
 
+from vibesensor.coerce import coerce_int
 from vibesensor.domain import Car, Finding, LocationHotspot, VibrationOrigin
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
@@ -302,7 +303,10 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         configuration_snapshot=ConfigurationSnapshot.from_metadata(meta),
     )
     rows_raw = summary.get("rows")
-    row_count = int(rows_raw) if isinstance(rows_raw, (int, float, str)) else 0
+    try:
+        row_count = coerce_int(rows_raw) if rows_raw is not None else 0
+    except (TypeError, ValueError):
+        row_count = 0
     capture = RunCapture(
         run_id=str(summary.get("run_id") or "unknown"),
         setup=setup,
