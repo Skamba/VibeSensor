@@ -45,6 +45,7 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
     ) -> None:
         self.db_path = db_path
         self._corruption_reporter = corruption_reporter
+        self._corruption_details: str | None = None
         self._lock = RLock()
         self._read_lock = RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -101,12 +102,14 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
         with lock:
             if conn is None:
                 raise RuntimeError("HistoryDB is closed")
+            if commit:
+                self._assert_write_allowed()
             cur = conn.cursor()
             try:
                 yield cur
                 if commit:
                     conn.commit()
-            except sqlite3.Error:
+            except BaseException:
                 if conn.in_transaction:
                     conn.rollback()
                 raise
@@ -119,16 +122,40 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
         with self._lock:
             if self._conn is None:
                 raise RuntimeError("HistoryDB is closed")
+            self._assert_write_allowed()
             cur = self._conn.cursor()
             try:
                 cur.execute("BEGIN IMMEDIATE")
                 yield cur
                 self._conn.commit()
-            except sqlite3.Error:
-                self._conn.rollback()
+            except BaseException:
+                if self._conn.in_transaction:
+                    self._conn.rollback()
                 raise
             finally:
                 cur.close()
+
+    @property
+    def corruption_detected(self) -> bool:
+        return self._corruption_details is not None
+
+    @property
+    def corruption_details(self) -> str | None:
+        return self._corruption_details
+
+    def _assert_write_allowed(self) -> None:
+        if self._corruption_details is None:
+            return
+        raise sqlite3.DatabaseError(
+            "History DB quick_check reported corruption for "
+            f"{self.db_path}: {self._corruption_details}. Writes are disabled until "
+            "the database is repaired or replaced."
+        )
+
+    def _mark_corrupted(self, details: str) -> None:
+        self._corruption_details = details
+        if self._corruption_reporter is not None:
+            self._corruption_reporter(details)
 
     # -- schema ---------------------------------------------------------------
 
@@ -242,12 +269,12 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
             )
             raise
         if problems:
-            if self._corruption_reporter is not None:
-                self._corruption_reporter("; ".join(problems))
+            details = "; ".join(problems)
+            self._mark_corrupted(details)
             LOGGER.critical(
                 "History DB quick_check reported corruption for %s: %s",
                 self.db_path,
-                "; ".join(problems),
+                details,
             )
 
     # -- settings_snapshot persistence -----------------------------------------

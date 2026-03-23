@@ -73,6 +73,12 @@ def create_history_db(
         config.logging.history_db_path,
         corruption_reporter=corruption_reporter,
     )
+    if history_db.corruption_detected:
+        LOGGER.error(
+            "History DB corruption detected at startup; skipping stale-run recovery and "
+            "continuing with writes disabled until the DB is repaired.",
+        )
+        return history_db
     try:
         recovered_runs = history_db.recover_stale_recording_runs()
     except Exception:
