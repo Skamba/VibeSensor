@@ -10,6 +10,10 @@ from __future__ import annotations
 import copy
 import json
 import logging
+from typing import Any, Literal
+
+from pydantic import ConfigDict, TypeAdapter, ValidationError
+from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor._data_files import resolve_static_data_file
 
@@ -17,6 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "CAR_LIBRARY",
+    "CarLibraryEntry",
     "get_brands",
     "get_models_for_brand_type",
     "get_types_for_brand",
@@ -25,18 +30,76 @@ __all__ = [
 ]
 
 _DATA_FILE = resolve_static_data_file("car_library.json")
-_TIRE_OVERRIDE_KEYS = ("tire_width_mm", "tire_aspect_pct", "rim_in")
+_STRICT_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
 
 
-def _entry_matches_identity(entry: dict, *, brand: str, car_type: str, model: str) -> bool:
-    return (
-        entry.get("brand") == brand
-        and entry.get("type") == car_type
-        and entry.get("model") == model
-    )
+class CarLibraryGearbox(TypedDict):
+    name: str
+    final_drive_ratio: float
+    top_gear_ratio: float
+    gear_ratios: NotRequired[list[float]]
 
 
-def _load_library() -> list[dict]:
+class CarLibraryTireOption(TypedDict):
+    name: str
+    tire_width_mm: float
+    tire_aspect_pct: float
+    rim_in: float
+
+
+class CarLibraryVariant(TypedDict):
+    name: str
+    drivetrain: Literal["FWD", "RWD", "AWD"]
+    engine: NotRequired[str]
+    gearboxes: NotRequired[list[CarLibraryGearbox]]
+    tire_options: NotRequired[list[CarLibraryTireOption]]
+    tire_width_mm: NotRequired[float]
+    tire_aspect_pct: NotRequired[float]
+    rim_in: NotRequired[float]
+
+
+class CarLibraryEntry(TypedDict):
+    brand: str
+    type: str
+    model: str
+    gearboxes: list[CarLibraryGearbox]
+    tire_options: list[CarLibraryTireOption]
+    tire_width_mm: float
+    tire_aspect_pct: float
+    rim_in: float
+    variants: list[CarLibraryVariant]
+
+
+def _configure_pydantic_schema(typed_dict: Any) -> None:
+    typed_dict.__pydantic_config__ = _STRICT_TYPEDDICT_CONFIG
+
+
+for _typed_dict in (
+    CarLibraryGearbox,
+    CarLibraryTireOption,
+    CarLibraryVariant,
+    CarLibraryEntry,
+):
+    _configure_pydantic_schema(_typed_dict)
+
+_CAR_LIBRARY_ADAPTER = TypeAdapter(list[CarLibraryEntry])
+
+
+def _entry_matches_identity(
+    entry: CarLibraryEntry, *, brand: str, car_type: str, model: str
+) -> bool:
+    return entry["brand"] == brand and entry["type"] == car_type and entry["model"] == model
+
+
+def _deep_copy_entry(entry: CarLibraryEntry) -> CarLibraryEntry:
+    return copy.deepcopy(entry)
+
+
+def _deep_copy_variants(variants: list[CarLibraryVariant]) -> list[CarLibraryVariant]:
+    return copy.deepcopy(variants)
+
+
+def _load_library() -> list[CarLibraryEntry]:
     """Load and return the car library from the canonical JSON file.
 
     Unlike an ``@lru_cache`` approach, this retries on every call so a
@@ -45,9 +108,15 @@ def _load_library() -> list[dict]:
     """
     try:
         with _DATA_FILE.open(encoding="utf-8") as fh:
-            data: list[dict] = json.load(fh)
-        return data
-    except (FileNotFoundError, json.JSONDecodeError, PermissionError, OSError) as exc:
+            data = json.load(fh)
+        return _CAR_LIBRARY_ADAPTER.validate_python(data)
+    except (
+        FileNotFoundError,
+        json.JSONDecodeError,
+        PermissionError,
+        OSError,
+        ValidationError,
+    ) as exc:
         LOGGER.warning("Could not load car library from %s: %s", _DATA_FILE, exc)
         return []
 
@@ -58,46 +127,46 @@ def _load_library() -> list[dict]:
 
 # Module-level alias keeps
 # ``from vibesensor.adapters.persistence.car_library import CAR_LIBRARY`` working.
-CAR_LIBRARY: list[dict] = _load_library()
+CAR_LIBRARY: list[CarLibraryEntry] = _load_library()
 
 
 def get_brands() -> list[str]:
     """Return sorted list of unique brands in the library."""
-    return sorted({b for e in CAR_LIBRARY if (b := e.get("brand"))})
+    return sorted({entry["brand"] for entry in CAR_LIBRARY})
 
 
 def get_types_for_brand(brand: str) -> list[str]:
     """Return sorted body types available for *brand*."""
-    return sorted({t for e in CAR_LIBRARY if e.get("brand") == brand and (t := e.get("type"))})
+    return sorted({entry["type"] for entry in CAR_LIBRARY if entry["brand"] == brand})
 
 
-def get_models_for_brand_type(brand: str, car_type: str) -> list[dict]:
+def get_models_for_brand_type(brand: str, car_type: str) -> list[CarLibraryEntry]:
     """Return all library entries matching *brand* and *car_type*.
 
     Returns deep copies so callers cannot corrupt the cached library.
     """
     return [
-        copy.deepcopy(e)
-        for e in CAR_LIBRARY
-        if e.get("brand") == brand and e.get("type") == car_type
+        _deep_copy_entry(entry)
+        for entry in CAR_LIBRARY
+        if entry["brand"] == brand and entry["type"] == car_type
     ]
 
 
-def get_variants_for_model(brand: str, car_type: str, model: str) -> list[dict]:
+def get_variants_for_model(brand: str, car_type: str, model: str) -> list[CarLibraryVariant]:
     """Return the variants list for a specific model, or [] if none.
 
     Returns deep copies so callers cannot corrupt the cached library.
     """
-    for e in CAR_LIBRARY:
-        if _entry_matches_identity(e, brand=brand, car_type=car_type, model=model):
-            return copy.deepcopy(e.get("variants") or [])
+    for entry in CAR_LIBRARY:
+        if _entry_matches_identity(entry, brand=brand, car_type=car_type, model=model):
+            return _deep_copy_variants(entry["variants"])
     return []
 
 
 def resolve_variant(
-    base_entry: dict,
+    base_entry: CarLibraryEntry,
     variant_name: str | None,
-) -> dict:
+) -> CarLibraryEntry:
     """Merge a variant's overrides onto a base model entry.
 
     Returns a new dict with the effective gearboxes, tire_options, and
@@ -105,17 +174,20 @@ def resolve_variant(
     deep copy of the base entry so callers cannot corrupt the cached
     library data.
     """
-    result = copy.deepcopy(base_entry)
+    result = _deep_copy_entry(base_entry)
     if not variant_name:
         return result
-    for v in base_entry.get("variants") or []:
-        if v.get("name") == variant_name:
-            if v.get("gearboxes"):
-                result["gearboxes"] = v["gearboxes"]
-            if v.get("tire_options"):
-                result["tire_options"] = v["tire_options"]
-            for k in _TIRE_OVERRIDE_KEYS:
-                if v.get(k) is not None:
-                    result[k] = v[k]
+    for variant in base_entry["variants"]:
+        if variant["name"] == variant_name:
+            if variant.get("gearboxes"):
+                result["gearboxes"] = copy.deepcopy(variant["gearboxes"])
+            if variant.get("tire_options"):
+                result["tire_options"] = copy.deepcopy(variant["tire_options"])
+            if "tire_width_mm" in variant:
+                result["tire_width_mm"] = variant["tire_width_mm"]
+            if "tire_aspect_pct" in variant:
+                result["tire_aspect_pct"] = variant["tire_aspect_pct"]
+            if "rim_in" in variant:
+                result["rim_in"] = variant["rim_in"]
             break
     return result

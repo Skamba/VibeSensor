@@ -8,8 +8,10 @@ import logging
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import TypeAdapter, ValidationError
 
 from vibesensor.domain import normalize_sensor_id
+from vibesensor.shared.types.payload_types import WsClientSelectionPayload
 
 if TYPE_CHECKING:
     from vibesensor.adapters.websocket.hub import WebSocketHub
@@ -23,6 +25,8 @@ LOGGER = logging.getLogger(__name__)
 # closes it.  Normal dashboard sessions only send messages when changing the
 # selected sensor, so this is intentionally long.
 _RECEIVE_IDLE_TIMEOUT_S: float = 300.0
+
+_WS_CLIENT_SELECTION_ADAPTER = TypeAdapter(WsClientSelectionPayload)
 
 
 def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
@@ -65,20 +69,19 @@ def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
                         type(payload).__name__,
                     )
                     continue
-                if "client_id" in payload:
-                    value = payload["client_id"]
+                try:
+                    typed_payload = _WS_CLIENT_SELECTION_ADAPTER.validate_python(payload)
+                except ValidationError:
+                    LOGGER.debug("Ignoring invalid WS message payload: %r", payload)
+                    continue
+                if "client_id" in typed_payload:
+                    value = typed_payload["client_id"]
                     try:
                         if value is None:
                             await ws_hub.update_selected_client(ws, None)
-                        elif isinstance(value, str):
+                        else:
                             normalized = normalize_sensor_id(value)
                             await ws_hub.update_selected_client(ws, normalized)
-                        else:
-                            LOGGER.debug(
-                                "Ignoring unsupported client_id type %s in WS message: %r",
-                                type(value).__name__,
-                                value,
-                            )
                     except ValueError:
                         LOGGER.debug(
                             "Ignoring invalid client_id value in WS message: %r",

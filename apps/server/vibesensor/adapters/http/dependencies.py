@@ -10,7 +10,12 @@ from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.api_models import (
+    DeleteHistoryRunResponse,
+    HistoryInsightsResponse,
+    HistoryListEntryResponse,
+    HistoryRunResponse,
+)
 from vibesensor.use_cases.history.exports import HistoryExportDownload
 from vibesensor.use_cases.history.reports import HistoryReportPdf
 from vibesensor.use_cases.run import RunRecorder
@@ -24,17 +29,17 @@ if TYPE_CHECKING:
 
 
 class HistoryRunServiceProtocol(Protocol):
-    async def list_runs(self) -> list[JsonObject]: ...
+    async def list_runs(self) -> list[HistoryListEntryResponse]: ...
 
-    async def get_run(self, run_id: str) -> JsonObject: ...
+    async def get_run(self, run_id: str) -> HistoryRunResponse: ...
 
     async def get_insights(
         self,
         run_id: str,
         requested_lang: str | None = None,
-    ) -> JsonObject | None: ...
+    ) -> HistoryInsightsResponse | None: ...
 
-    async def delete_run(self, run_id: str) -> dict[str, str]: ...
+    async def delete_run(self, run_id: str) -> DeleteHistoryRunResponse: ...
 
 
 class HistoryReportServiceProtocol(Protocol):
