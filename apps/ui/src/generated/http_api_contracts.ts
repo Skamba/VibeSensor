@@ -1141,6 +1141,11 @@ export interface components {
       };
       data_loss: components["schemas"]["HealthDataLossResponse"];
       /**
+       * Db Corruption Detected
+       * @default false
+       */
+      db_corruption_detected?: boolean;
+      /**
        * Db Last Write Duration S
        * @default 0
        */
