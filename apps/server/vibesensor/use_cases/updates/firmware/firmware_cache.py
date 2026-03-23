@@ -24,15 +24,15 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from vibesensor.use_cases.updates.firmware_bundle import (
+from vibesensor.use_cases.updates.firmware.firmware_bundle import (
     dir_sha256,
     extract_bundle_archive,
     read_meta,
     validate_bundle,
     write_meta,
 )
-from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
-from vibesensor.use_cases.updates.firmware_types import (
+from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
+from vibesensor.use_cases.updates.firmware.firmware_types import (
     BundleMeta,
     FirmwareCacheConfig,
     FirmwareCacheInfoPayload,

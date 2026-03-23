@@ -21,9 +21,9 @@ from test_support.gps import set_gps_snapshot_age
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.cli.report import main as report_cli_main
-from vibesensor.use_cases.updates.firmware_cache import FirmwareCache
-from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
-from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
+from vibesensor.use_cases.updates.firmware.firmware_cache import FirmwareCache
+from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
+from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
 
 
 def _make_summary(report_date: str, **overrides: Any) -> dict[str, Any]:
@@ -105,7 +105,7 @@ class TestDownloadAssetFdLeakGuard:
 
         with (
             patch(
-                "vibesensor.use_cases.updates.firmware_release_fetcher.urlopen",
+                "vibesensor.use_cases.updates.firmware.firmware_release_fetcher.urlopen",
                 return_value=fake_resp,
             ),
             patch("os.fdopen", side_effect=OSError("mock fdopen failure")),

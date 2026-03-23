@@ -9,11 +9,11 @@ from _update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
-from vibesensor.use_cases.updates.wifi_config import (
+from vibesensor.use_cases.updates.wifi.wifi_config import (
     HOTSPOT_RESTORE_RETRIES,
     build_default_wifi_config,
 )
-from vibesensor.use_cases.updates.wifi_hotspot_recovery import UpdateHotspotRecovery
+from vibesensor.use_cases.updates.wifi.wifi_hotspot_recovery import UpdateHotspotRecovery
 
 
 def _build_recovery(
@@ -74,7 +74,10 @@ async def test_restore_hotspot_retries_then_succeeds(
 
     runner.run = flaky_restore
     sleep = AsyncMock(return_value=None)
-    monkeypatch.setattr("vibesensor.use_cases.updates.wifi_hotspot_recovery.asyncio.sleep", sleep)
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.wifi.wifi_hotspot_recovery.asyncio.sleep",
+        sleep,
+    )
 
     assert await recovery.restore_hotspot() is True
     assert restore_attempts["count"] == 3
@@ -95,7 +98,10 @@ async def test_restore_hotspot_exhausts_retries_and_records_issue(
     recovery, runner, tracker = _build_recovery(tmp_path)
     runner.set_response("connection up VibeSensor-AP", 10, "", "failed")
     sleep = AsyncMock(return_value=None)
-    monkeypatch.setattr("vibesensor.use_cases.updates.wifi_hotspot_recovery.asyncio.sleep", sleep)
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.wifi.wifi_hotspot_recovery.asyncio.sleep",
+        sleep,
+    )
 
     assert await recovery.restore_hotspot() is False
     assert sleep.await_count == HOTSPOT_RESTORE_RETRIES - 1

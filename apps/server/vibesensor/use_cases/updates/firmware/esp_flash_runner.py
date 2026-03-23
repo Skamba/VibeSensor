@@ -8,7 +8,7 @@ import logging
 import time
 from collections.abc import Callable
 
-from vibesensor.use_cases.updates.esp_flash_types import FlashCommandRunner
+from vibesensor.use_cases.updates.firmware.esp_flash_types import FlashCommandRunner
 
 LOGGER = logging.getLogger(__name__)
 

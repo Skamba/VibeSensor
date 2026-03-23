@@ -123,8 +123,10 @@ async def run_update(
 def patch_release_fetcher(current_version: str = "2025.6.15") -> Iterator[MagicMock]:
     with (
         patch("shutil.which", mock_which),
-        patch("vibesensor.use_cases.updates.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
-        patch("vibesensor.use_cases.updates.release_fetcher.ReleaseFetcherConfig"),
+        patch(
+            "vibesensor.use_cases.updates.releases.release_fetcher.ServerReleaseFetcher",
+        ) as mock_fetcher,
+        patch("vibesensor.use_cases.updates.releases.release_fetcher.ReleaseFetcherConfig"),
         patch("vibesensor._version.__version__", current_version),
     ):
         yield mock_fetcher

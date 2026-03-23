@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vibesensor.use_cases.updates.artifact_validation import sha256_file
-from vibesensor.use_cases.updates.release_fetcher import ReleaseInfo
+from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
@@ -24,7 +24,7 @@ async def check_for_update(
     current_version: str,
 ) -> UpdateReleaseCheck:
     """Check GitHub releases for an available update."""
-    from vibesensor.use_cases.updates.release_fetcher import (
+    from vibesensor.use_cases.updates.releases.release_fetcher import (
         ReleaseFetcherConfig,
         ServerReleaseFetcher,
     )
@@ -58,7 +58,7 @@ async def download_release(
     staging_dir: Path,
 ) -> Path | None:
     """Download a release wheel to *staging_dir*."""
-    from vibesensor.use_cases.updates.release_fetcher import (
+    from vibesensor.use_cases.updates.releases.release_fetcher import (
         ReleaseFetcherConfig,
         ServerReleaseFetcher,
     )

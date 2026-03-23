@@ -39,8 +39,8 @@ from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
-from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
-from vibesensor.use_cases.updates.esp_flash_types import EspFlashStatus
+from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
+from vibesensor.use_cases.updates.firmware.esp_flash_types import EspFlashStatus
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdateJobStatus
 

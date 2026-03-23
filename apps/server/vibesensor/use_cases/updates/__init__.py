@@ -6,31 +6,23 @@ modules own each concern:
 Module topology
 ---------------
 - **Facade**: ``manager.py`` — public ``UpdateManager`` API for routes and
-  runtime lifecycle.  Update workflow orchestration is inlined in
+  runtime lifecycle. Update workflow orchestration is inlined in
   ``_run_update_inner()``.
 - **Validation**: ``validation.py`` — runtime prerequisite checks for tools,
   privileges, rollback storage, and disk space before update orchestration.
 - **Services**: ``manager.py`` — backend restart scheduling and runtime update
   lifecycle orchestration.
+- **Firmware**: ``firmware/`` — ESP flash orchestration, firmware cache,
+  bundle validation, refresh, release fetcher, and flash-specific contracts.
+- **Wi-Fi**: ``wifi/`` — uplink setup, readiness policy, hotspot recovery,
+  diagnostics parsing, and the thin Wi-Fi workflow coordinator.
+- **Releases**: ``releases/`` — GitHub release discovery, validation, and
+  updater-facing download helpers.
 - **Operations**: ``installer.py`` (install/rollback orchestration),
   ``artifact_validation.py`` (wheel validation + checksums),
   ``rollback_snapshot.py`` (rollback metadata + stored wheels),
-  ``firmware_refresh.py`` (ESP firmware cache refresh),
-  ``venv_paths.py`` (reinstall venv discovery),
-  ``wifi.py`` (thin Wi-Fi workflow coordination), ``wifi_config.py`` (default
-  config/constants), ``wifi_uplink_setup.py`` (SSID scan + uplink provisioning),
-  ``wifi_readiness.py`` (uplink retry/readiness policy),
-  ``wifi_hotspot_recovery.py`` (hotspot stop/cleanup/restore), and
-  ``wifi_diagnostics.py`` (post-failure diagnostics parsing),
-  ``releases.py`` (GitHub release discovery), ``runner.py`` (process execution and
-  command helpers), ``firmware_release_fetcher.py`` (GitHub firmware HTTP
-  discovery/download), ``firmware_bundle.py`` (firmware bundle filesystem
-  validation/extraction/metadata), ``firmware_types.py`` (firmware cache
-  and release payload types), ``firmware_cache.py`` (thin public cache
-  facade plus CLI entry points), ``esp_flash_manager.py`` (ESP flash
-  orchestration), ``esp_flash_types.py`` (ESP flash contracts/state), and
-  ``esp_serial.py`` / ``esp_flash_runner.py`` (serial discovery and flash
-  process execution helpers).
+  ``runner.py`` (process execution and command helpers), and
+  ``venv_paths.py`` (reinstall venv discovery).
 - **State**: ``status.py`` (progress tracking, persistent state store,
   and runtime detail collection), ``models.py`` (data models).
 """

@@ -45,7 +45,7 @@ from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
-from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
+from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 LOGGER = logging.getLogger(__name__)

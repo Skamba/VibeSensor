@@ -29,7 +29,8 @@ from ._context_projection import (
     context_to_metadata_dict,
     context_to_symptom,
 )
-from ._types import AccelStatistics, PlotDataResultData
+from ._types import AccelStatistics
+from ._view_types import PlotDataResultData
 from .plots import _plot_data
 from .run_data_preparation import (
     PreparedRunData,
