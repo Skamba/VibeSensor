@@ -303,20 +303,14 @@ class SignalBufferStore:
             stale_ids = [
                 client_id for client_id in self.buffers if client_id not in keep_client_ids
             ]
-            stale_locks: list[RLock] = []
             for client_id in stale_ids:
-                client_lock = self._client_locks.get(client_id)
-                if client_lock is None:
-                    continue
-                client_lock.acquire()
-                stale_locks.append(client_lock)
-            try:
-                for client_id in stale_ids:
-                    self.buffers.pop(client_id, None)
-                    self._client_locks.pop(client_id, None)
-            finally:
-                for client_lock in reversed(stale_locks):
-                    client_lock.release()
+                # Detach stale client state under the store lock only. Threads
+                # already working with a stale client's buffer can finish
+                # against the detached objects, while new lookups will either
+                # see no buffer or create a fresh one without being blocked by
+                # eviction waiting on that stale client's lock.
+                self.buffers.pop(client_id, None)
+                self._client_locks.pop(client_id, None)
 
     def intake_stats(self) -> IntakeStatsPayload:
         with self.lock:
