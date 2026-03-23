@@ -57,55 +57,65 @@ def _is_tick_error_message(message: str | None) -> bool:
     )
 
 
+def _flush_active_run_tick(
+    recorder: RunRecorder,
+    *,
+    logger: logging.Logger,
+) -> tuple[str | None, bool]:
+    with recorder._lock:
+        snapshot = recorder._lifecycle.snapshot()
+        if snapshot is None:
+            return None, False
+        live_start_mono_s = recorder._live_start_mono_s
+        timestamp_utc = utc_now_iso()
+        live_rows = recorder._sample_flush.build_sample_records(
+            run_id=snapshot.run_id,
+            t_s=max(0.0, time.monotonic() - live_start_mono_s),
+            timestamp_utc=timestamp_utc,
+        )
+        if not isinstance(live_rows, list):
+            logger.warning(
+                "Metrics logger sample builder returned %s instead of list; dropping tick.",
+                type(live_rows).__name__,
+            )
+            live_rows = []
+        no_data_timeout = recorder._sample_flush.append_records(
+            snapshot.run_id,
+            snapshot.start_time_utc,
+            snapshot.start_mono_s,
+            prebuilt_rows=live_rows,
+        )
+        return snapshot.run_id, no_data_timeout
+
+
 async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
     """Drive the periodic live-sample flush loop for ``RunRecorder``."""
     interval = 1.0 / recorder.metrics_log_hz
     while True:
         try:
-            with recorder._lock:
-                live_start = recorder._live_start_mono_s
-                snapshot = recorder._session_snapshot()
-            if snapshot is None:
+            run_id, no_data_timeout = await asyncio.wait_for(
+                asyncio.to_thread(
+                    _flush_active_run_tick,
+                    recorder,
+                    logger=logger,
+                ),
+                timeout=_DB_THREAD_TIMEOUT_S,
+            )
+            if run_id is None:
                 if _is_tick_error_message(recorder._persistence.last_write_error):
                     recorder._persistence.clear_last_write_error()
                 await asyncio.sleep(interval)
                 continue
-            timestamp_utc = utc_now_iso()
-            live_rows = await asyncio.wait_for(
-                asyncio.to_thread(
-                    recorder._sample_flush.build_sample_records,
-                    run_id=snapshot.run_id,
-                    t_s=max(0.0, time.monotonic() - live_start),
-                    timestamp_utc=timestamp_utc,
-                ),
-                timeout=_DB_THREAD_TIMEOUT_S,
-            )
-            if not isinstance(live_rows, list):
-                logger.warning(
-                    "Metrics logger sample builder returned %s instead of list; dropping tick.",
-                    type(live_rows).__name__,
-                )
-                live_rows = []
-            no_data_timeout = await asyncio.wait_for(
-                asyncio.to_thread(
-                    recorder._sample_flush.append_records,
-                    snapshot.run_id,
-                    snapshot.start_time_utc,
-                    snapshot.start_mono_s,
-                    prebuilt_rows=live_rows,
-                ),
-                timeout=_DB_THREAD_TIMEOUT_S,
-            )
             if no_data_timeout:
                 logger.info(
                     "Auto-stopping run %s after %.1fs without new data",
-                    snapshot.run_id,
+                    run_id,
                     recorder._lifecycle.no_data_timeout_s,
                 )
                 await asyncio.wait_for(
                     asyncio.to_thread(
                         recorder.stop_recording,
-                        _only_if_run_id=snapshot.run_id,
+                        _only_if_run_id=run_id,
                     ),
                     timeout=_DB_THREAD_TIMEOUT_S,
                 )

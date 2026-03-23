@@ -55,6 +55,8 @@ class RunPersistence(Protocol):
         self,
         run_id: str,
         batch_size: int = 1000,
+        *,
+        stride: int = 1,
     ) -> Iterator[list[SensorFrame]]: ...
 
     def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
@@ -66,7 +68,7 @@ class RunPersistence(Protocol):
         metadata: RunMetadata,
     ) -> None: ...
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None: ...
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int: ...
 
     def finalize_run(
         self,
@@ -100,6 +102,8 @@ class SettingsSnapshotPersistence(Protocol):
 
 class SignalSource(Protocol):
     """Latest-sample and metrics access needed by recording flows."""
+
+    def flush_client_buffer(self, client_id: str, *, reason: str = "sensor reset") -> None: ...
 
     def clients_with_recent_data(
         self,

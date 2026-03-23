@@ -153,6 +153,11 @@ class RunRecorder:
             return self._lifecycle.snapshot()
 
     def _start_new_run_locked(self) -> ActiveRunSnapshot:
+        for client_id in self.registry.active_client_ids():
+            self.processor.flush_client_buffer(
+                client_id,
+                reason="recording run start",
+            )
         snapshot = self._lifecycle.start_new_run(
             run_id=uuid4().hex,
             analysis_settings_snapshot=self._analysis_settings_snapshot(),

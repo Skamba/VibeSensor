@@ -139,3 +139,28 @@ def test_stop_recording_holds_lock_during_flush_and_finalize(make_logger) -> Non
 
     assert flush_lock_owned == [True]
     assert finalize_lock_owned == [True]
+
+
+def test_start_recording_flushes_active_signal_buffers(
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logger = make_logger()
+    flush_calls: list[tuple[str, str]] = []
+
+    def fake_flush_client_buffer(
+        client_id: str,
+        *,
+        reason: str = "sensor reset",
+    ) -> None:
+        flush_calls.append((client_id, reason))
+
+    monkeypatch.setattr(logger.processor, "flush_client_buffer", fake_flush_client_buffer)
+
+    logger.start_recording()
+    logger.start_recording()
+
+    assert flush_calls == [
+        ("active", "recording run start"),
+        ("active", "recording run start"),
+    ]

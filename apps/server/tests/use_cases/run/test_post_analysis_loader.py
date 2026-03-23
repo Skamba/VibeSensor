@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pytest
 
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -9,6 +11,12 @@ from vibesensor.use_cases.run.post_analysis_loader import (
     MissingPostAnalysisMetadata,
     load_post_analysis_run,
 )
+
+
+@dataclass(slots=True)
+class _StoredRun:
+    metadata: RunMetadata
+    sample_count: int
 
 
 def _run_metadata(run_id: str, *, language: str | None = "en") -> RunMetadata:
@@ -27,12 +35,16 @@ def _run_metadata(run_id: str, *, language: str | None = "en") -> RunMetadata:
 
 def test_load_post_analysis_run_returns_loaded_run() -> None:
     class FakeDB:
-        def get_run_metadata(self, run_id):
-            return _run_metadata(run_id, language="nl")
+        def get_run(self, run_id):
+            return _StoredRun(
+                metadata=_run_metadata(run_id, language="nl"),
+                sample_count=2,
+            )
 
-        def iter_run_samples(self, run_id, batch_size=1024):
+        def iter_run_samples(self, run_id, batch_size=1024, *, stride=1):
             assert run_id == "run-ok"
             assert batch_size == 1024
+            assert stride == 1
             yield [
                 {"t_s": 1.0, "vibration_strength_db": 10.0},
                 {"t_s": 2.0, "vibration_strength_db": 11.0},
@@ -50,6 +62,9 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
 
 def test_load_post_analysis_run_handles_missing_metadata() -> None:
     class FakeDB:
+        def get_run(self, _run_id):
+            return None
+
         def get_run_metadata(self, _run_id):
             return None
 
@@ -62,10 +77,11 @@ def test_load_post_analysis_run_handles_missing_metadata() -> None:
 
 def test_load_post_analysis_run_handles_no_samples() -> None:
     class FakeDB:
-        def get_run_metadata(self, run_id):
-            return _run_metadata(run_id)
+        def get_run(self, run_id):
+            return _StoredRun(metadata=_run_metadata(run_id), sample_count=0)
 
-        def iter_run_samples(self, _run_id, batch_size=1024):
+        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+            assert stride == 1
             return iter([])
 
     result = load_post_analysis_run(run_id="run-empty", db=FakeDB())
@@ -75,24 +91,24 @@ def test_load_post_analysis_run_handles_no_samples() -> None:
     assert "samples" in result.error_message.lower()
 
 
-def test_load_post_analysis_run_applies_bounded_sampling(
+def test_load_post_analysis_run_applies_upfront_stride(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "vibesensor.use_cases.run.post_analysis_loader._MAX_POST_ANALYSIS_SAMPLES",
         2,
     )
+    iter_calls: list[tuple[int, int]] = []
 
     class FakeDB:
-        def get_run_metadata(self, run_id):
-            return _run_metadata(run_id)
+        def get_run(self, run_id):
+            return _StoredRun(metadata=_run_metadata(run_id), sample_count=4)
 
-        def iter_run_samples(self, _run_id, batch_size=1024):
+        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+            iter_calls.append((batch_size, stride))
             yield [
                 {"t_s": 1.0, "vibration_strength_db": 10.0},
-                {"t_s": 2.0, "vibration_strength_db": 11.0},
                 {"t_s": 3.0, "vibration_strength_db": 12.0},
-                {"t_s": 4.0, "vibration_strength_db": 13.0},
             ]
 
     result = load_post_analysis_run(run_id="run-capped", db=FakeDB())
@@ -101,14 +117,19 @@ def test_load_post_analysis_run_applies_bounded_sampling(
     assert len(result.samples) == 2
     assert result.total_sample_count == 4
     assert result.stride == 2
+    assert iter_calls == [(1024, 2)]
 
 
 def test_load_post_analysis_run_defaults_language_to_en() -> None:
     class FakeDB:
-        def get_run_metadata(self, run_id):
-            return _run_metadata(run_id, language=None)
+        def get_run(self, run_id):
+            return _StoredRun(
+                metadata=_run_metadata(run_id, language=None),
+                sample_count=1,
+            )
 
-        def iter_run_samples(self, _run_id, batch_size=1024):
+        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+            assert stride == 1
             yield [{"t_s": 1.0, "vibration_strength_db": 10.0}]
 
     result = load_post_analysis_run(run_id="run-lang", db=FakeDB())

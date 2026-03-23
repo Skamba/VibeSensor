@@ -140,6 +140,15 @@ class _FakeGPSMonitor:
 class _FakeProcessor:
     def __init__(self, registry: _FakeRegistry | None = None) -> None:
         self._registry = registry
+        self.flush_calls: list[tuple[str, str]] = []
+
+    def flush_client_buffer(
+        self,
+        client_id: str,
+        *,
+        reason: str = "sensor reset",
+    ) -> None:
+        self.flush_calls.append((client_id, reason))
 
     def latest_sample_xyz(self, client_id: str):
         return (0.01, 0.02, 0.03)
@@ -195,8 +204,9 @@ class _FakeHistoryDB:
     def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         self.create_calls.append((run_id, start_time_utc))
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         self.append_calls.append((run_id, len(samples)))
+        return len(samples)
 
     def finalize_run(
         self,
@@ -231,11 +241,11 @@ class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
 
         self._append_failures_remaining = _MAX_APPEND_RETRIES
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         if self._append_failures_remaining > 0:
             self._append_failures_remaining -= 1
             raise sqlite3.OperationalError("append boom")
-        super().append_samples(run_id, samples)
+        return super().append_samples(run_id, samples)
 
 
 # ---------------------------------------------------------------------------

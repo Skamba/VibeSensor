@@ -88,6 +88,14 @@ class _FakeProcessor:
     def __init__(self, registry: _FakeRegistry | None = None) -> None:
         self._registry = registry
 
+    def flush_client_buffer(
+        self,
+        client_id: str,
+        *,
+        reason: str = "sensor reset",
+    ) -> None:
+        return None
+
     def latest_sample_xyz(self, client_id: str):
         return (0.01, 0.02, 0.03)
 

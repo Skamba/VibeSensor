@@ -65,14 +65,23 @@ class _HistoryDBRunLifecycleMixin:
         self,
         run_id: str,
         samples: list[SensorFrame],
-    ) -> None:
+    ) -> int:
         if not samples:
-            return
+            return 0
         if not run_id or not run_id.strip():
             raise ValueError("append_samples: run_id must be a non-empty string")
 
         chunk_size = 256
         with self.write_transaction_cursor() as cur:
+            current_status = self._run_status(cur, run_id)
+            if current_status != RunStatus.RECORDING.value:
+                LOGGER.warning(
+                    "append_samples for run %s: rejected %d sample(s) because status is %s",
+                    run_id,
+                    len(samples),
+                    current_status or "missing",
+                )
+                return 0
             for start in range(0, len(samples), chunk_size):
                 batch = samples[start : start + chunk_size]
                 cur.executemany(
@@ -80,9 +89,15 @@ class _HistoryDBRunLifecycleMixin:
                     (sample_to_v2_row(run_id, sample) for sample in batch),
                 )
             cur.execute(
-                "UPDATE runs SET sample_count = sample_count + ? WHERE run_id = ?",
+                "UPDATE runs SET sample_count = sample_count + ? "
+                "WHERE run_id = ? AND status = 'recording'",
                 (len(samples), run_id),
             )
+            if int(cur.rowcount) <= 0:
+                raise sqlite3.IntegrityError(
+                    f"append_samples: run {run_id} left recording during append",
+                )
+            return len(samples)
 
     def finalize_run(
         self,

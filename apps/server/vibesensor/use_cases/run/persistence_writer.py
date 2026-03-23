@@ -272,17 +272,28 @@ class RunPersistenceWriter:
                 for attempt in range(_MAX_APPEND_RETRIES):
                     try:
                         write_start = self._monotonic()
-                        history_db.append_samples(run_id, rows)
+                        rows_written = history_db.append_samples(run_id, rows)
                         write_dur = self._monotonic() - write_start
                         with self._lock:
                             if not self._run_id_matches(run_id):
                                 return AppendRowsResult(history_created=True, rows_written=0)
-                            self._written_sample_count += len(rows)
                             self._last_write_duration_s = write_dur
                             if write_dur > self._max_write_duration_s:
                                 self._max_write_duration_s = write_dur
+                            if rows_written > 0:
+                                self._written_sample_count += rows_written
+                            else:
+                                self._dropped_sample_count += len(rows)
+                        if rows_written <= 0:
+                            self._logger_provider().warning(
+                                "History DB rejected %d sample(s) for run %s because the run "
+                                "is no longer recording",
+                                len(rows),
+                                run_id,
+                            )
+                            return AppendRowsResult(history_created=True, rows_written=0)
                         self.clear_last_write_error()
-                        return AppendRowsResult(history_created=True, rows_written=len(rows))
+                        return AppendRowsResult(history_created=True, rows_written=rows_written)
                     except (sqlite3.Error, OSError) as exc:
                         last_exc = exc
                         if attempt < _MAX_APPEND_RETRIES - 1:
