@@ -64,6 +64,16 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
             client_id = extract_client_id_hex(data)
             LOGGER.debug("Control parse error from %s (client=%s): %s", addr, client_id, exc)
             registry.note_parse_error(client_id)
+        except Exception:
+            client_id = extract_client_id_hex(data)
+            LOGGER.warning(
+                "Unexpected error processing control datagram from %s (client=%s); "
+                "dropping packet to keep listener alive.",
+                addr,
+                client_id,
+                exc_info=True,
+            )
+            registry.note_parse_error(client_id)
 
 
 class UDPControlPlane:
