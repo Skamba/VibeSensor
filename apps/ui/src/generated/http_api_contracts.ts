@@ -1375,6 +1375,8 @@ export interface components {
       };
       /** Run Id */
       run_id: string;
+      /** Sample Count */
+      sample_count: number;
       /** Status */
       status: string;
     };

@@ -187,6 +187,18 @@ async def test_history_endpoints_preserve_analysis_case_id() -> None:
 
 
 @pytest.mark.asyncio
+async def test_history_run_includes_sample_count() -> None:
+    metadata = make_metadata()
+    samples = [sample(i) for i in range(3)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+
+    payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
+
+    assert payload["sample_count"] == 3
+
+
+@pytest.mark.asyncio
 async def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
     metadata = make_metadata(
         active_car_snapshot={
@@ -262,7 +274,7 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
     endpoint = route_endpoint(router, "/api/history/{run_id}")
 
     result = response_payload(await endpoint("run-1"))
-    assert set(result.keys()) == {"run_id", "status", "metadata", "analysis"}
+    assert set(result.keys()) == {"run_id", "status", "sample_count", "metadata", "analysis"}
     analysis = result.get("analysis", {})
     assert "_internal_secret" not in analysis
     assert "_report_template_data" not in analysis
