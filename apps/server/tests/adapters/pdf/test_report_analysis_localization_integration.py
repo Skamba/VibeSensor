@@ -6,7 +6,7 @@ from test_support.report_helpers import max_non_ref_confidence, wheel_metadata
 
 from vibesensor.domain import LocationHotspot, OrderMatchObservation
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics.location_analysis import (
     LocationAnalysisResult,

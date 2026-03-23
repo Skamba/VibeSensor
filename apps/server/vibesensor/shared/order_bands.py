@@ -7,7 +7,7 @@ from math import isfinite, sqrt
 
 from vibesensor.domain import OrderReferenceSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.constants import (
+from vibesensor.shared.constants.analysis import (
     FREQUENCY_EPSILON_HZ,
     HARMONIC_2X,
     MIN_OVERLAP_TOLERANCE,

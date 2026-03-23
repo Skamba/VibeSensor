@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from vibesensor.domain import Finding, VibrationSource, coerce_float, coerce_int
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.constants import PHASE_I18N_KEYS
+from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.history_analysis_contracts import (

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.speed_source import SpeedSource
-from vibesensor.shared.constants import SECONDS_PER_MINUTE
+from vibesensor.shared.constants.units import SECONDS_PER_MINUTE
 from vibesensor.shared.order_bands import build_order_bands, vehicle_orders_hz
 from vibesensor.shared.types.payload_types import (
     RotationalSpeedsPayload,

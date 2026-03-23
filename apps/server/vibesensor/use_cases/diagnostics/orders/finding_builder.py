@@ -8,7 +8,7 @@ from vibesensor.domain import (
     FindingKind,
     VibrationOrigin,
 )
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.use_cases.diagnostics.orders.matching import OrderMatchAccumulator
 from vibesensor.use_cases.diagnostics.orders.physics import (

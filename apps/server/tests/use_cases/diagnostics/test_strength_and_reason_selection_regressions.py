@@ -13,7 +13,7 @@ import pytest
 
 from vibesensor.adapters.pdf.presentation import strength_label
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.use_cases.diagnostics._sample_metrics import _effective_baseline_floor
 from vibesensor.use_cases.diagnostics._validation import _validate_required_strength_metrics
 

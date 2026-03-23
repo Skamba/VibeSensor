@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.shared.constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF
+from vibesensor.shared.constants.analysis import ORDER_SUPPRESS_PERSISTENT_MIN_CONF
 
 from .._sample_metrics import _run_noise_baseline_g
 from .._types import PhaseLabels, Sample

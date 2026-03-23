@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from vibesensor.shared.constants import GITHUB_REPO
+from vibesensor.shared.constants.github import GITHUB_REPO
 from vibesensor.shared.types.json_types import JsonValue, is_json_array, is_json_object
 
 LOGGER = logging.getLogger(__name__)

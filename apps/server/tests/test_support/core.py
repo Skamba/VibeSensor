@@ -14,7 +14,7 @@ from typing import Any
 
 from vibesensor.domain import TireSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.constants.units import KMH_TO_MPS
 
 _DEFAULT_TIRE = TireSpec.from_aspects(
     AnalysisSettingsSnapshot.DEFAULTS,

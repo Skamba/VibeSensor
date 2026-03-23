@@ -18,7 +18,7 @@ from vibesensor.shared.boundaries.analysis_payload import (
     FindingPayload,
     MatchedPoint,
 )
-from vibesensor.shared.constants import (
+from vibesensor.shared.constants.analysis import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     NEGLIGIBLE_STRENGTH_MAX_DB,

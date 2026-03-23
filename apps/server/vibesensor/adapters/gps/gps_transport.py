@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 from typing import Any, cast
 
-from vibesensor.shared.constants import NUMERIC_TYPES
+from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 LOGGER = logging.getLogger(__name__)

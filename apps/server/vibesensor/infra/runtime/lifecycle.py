@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Protocol
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.shared.constants import UI_PUSH_HZ
+from vibesensor.shared.constants.ui import UI_PUSH_HZ
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 StartUdpReceiver = Callable[

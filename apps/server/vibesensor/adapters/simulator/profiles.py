@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from vibesensor.domain import TireSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.constants.units import KMH_TO_MPS
 
 DEFAULT_SPEED_KMH = 100.0
 DEFAULT_TIRE_WIDTH_MM = AnalysisSettingsSnapshot.DEFAULTS["tire_width_mm"]

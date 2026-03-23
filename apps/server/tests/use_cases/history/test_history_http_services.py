@@ -20,7 +20,7 @@ from vibesensor.adapters.history import (
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.exceptions import AnalysisNotReadyError
-from vibesensor.shared.run_context import (
+from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
 )

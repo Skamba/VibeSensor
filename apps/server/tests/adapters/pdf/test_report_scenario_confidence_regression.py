@@ -14,7 +14,7 @@ from test_support.sample_scenarios import (
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.domain import Finding
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 
 
 class TestConfidenceCalibration:

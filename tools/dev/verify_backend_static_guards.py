@@ -1084,6 +1084,99 @@ def _check_updates_package_subpackages() -> list[str]:
     return failures
 
 
+def _check_shared_constants_package_split() -> list[str]:
+    failures: list[str] = []
+    old_file = VIBESENSOR_DIR / "shared" / "constants.py"
+    if old_file.exists():
+        failures.append(
+            f"{old_file.relative_to(REPO_ROOT)} should not exist; split constants into shared/constants/"
+        )
+    constants_dir = VIBESENSOR_DIR / "shared" / "constants"
+    required_files = (
+        constants_dir / "__init__.py",
+        constants_dir / "analysis.py",
+        constants_dir / "dsp.py",
+        constants_dir / "github.py",
+        constants_dir / "phases.py",
+        constants_dir / "type_checks.py",
+        constants_dir / "ui.py",
+        constants_dir / "units.py",
+    )
+    for path in required_files:
+        if not path.exists():
+            failures.append(
+                f"Missing split constants module: {path.relative_to(REPO_ROOT)}"
+            )
+    for path in _python_files(VIBESENSOR_DIR):
+        source = _read_text(path)
+        if "from vibesensor.shared.constants import" in source:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} imports constants from the shared/constants root package"
+            )
+    return failures
+
+
+def _check_run_context_split_owners() -> list[str]:
+    failures: list[str] = []
+    old_file = VIBESENSOR_DIR / "shared" / "run_context.py"
+    if old_file.exists():
+        failures.append(
+            f"{old_file.relative_to(REPO_ROOT)} should not exist; split warning contracts from use_cases/run orchestration"
+        )
+    shared_warning = VIBESENSOR_DIR / "shared" / "run_context_warning.py"
+    use_case_helper = VIBESENSOR_DIR / "use_cases" / "run" / "run_context.py"
+    if not shared_warning.exists():
+        failures.append(
+            f"Missing shared warning contract module: {shared_warning.relative_to(REPO_ROOT)}"
+        )
+    if not use_case_helper.exists():
+        failures.append(
+            f"Missing run-context orchestration module: {use_case_helper.relative_to(REPO_ROOT)}"
+        )
+    for path in _python_files(VIBESENSOR_DIR):
+        source = _read_text(path)
+        if "from vibesensor.shared.run_context import" in source:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} imports removed shared/run_context.py"
+            )
+    return failures
+
+
+def _check_settings_snapshot_codec_name() -> list[str]:
+    failures: list[str] = []
+    old_file = VIBESENSOR_DIR / "shared" / "boundaries" / "settings_snapshot.py"
+    new_file = VIBESENSOR_DIR / "shared" / "boundaries" / "settings_snapshot_codec.py"
+    if old_file.exists():
+        failures.append(
+            f"{old_file.relative_to(REPO_ROOT)} should be renamed to settings_snapshot_codec.py"
+        )
+    if not new_file.exists():
+        failures.append(
+            f"Missing settings snapshot codec: {new_file.relative_to(REPO_ROOT)}"
+        )
+    for path in _python_files(VIBESENSOR_DIR):
+        tree = _parse_python(path)
+        if tree is None:
+            continue
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.ImportFrom)
+                and node.module == "vibesensor.shared.boundaries.settings_snapshot"
+            ):
+                failures.append(
+                    f"{path.relative_to(REPO_ROOT)} imports the old settings snapshot codec path"
+                )
+            if isinstance(node, ast.Import):
+                if any(
+                    alias.name == "vibesensor.shared.boundaries.settings_snapshot"
+                    for alias in node.names
+                ):
+                    failures.append(
+                        f"{path.relative_to(REPO_ROOT)} imports the old settings snapshot codec path"
+                    )
+    return failures
+
+
 def _check_domain_package_has_no_payload_type_imports() -> list[str]:
     forbidden = {"FindingPayload", "AnalysisSummary"}
     violations: list[str] = []
@@ -1315,6 +1408,8 @@ def _check_boundaries_do_not_import_analysis() -> list[str]:
             continue
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module and node.level < 1:
+                if node.module == "vibesensor.shared.constants.analysis":
+                    continue
                 if "analysis" in node.module.split("."):
                     violations.append(
                         f"{path.relative_to(REPO_ROOT)}:{node.lineno}: imports from {node.module}"
@@ -1673,6 +1768,18 @@ CHECKS: tuple[Check, ...] = (
     (
         "Updates package keeps focused subpackages",
         _check_updates_package_subpackages,
+    ),
+    (
+        "shared/constants stays split by concern",
+        _check_shared_constants_package_split,
+    ),
+    (
+        "Run-context helpers stay split between shared warnings and use_cases/run",
+        _check_run_context_split_owners,
+    ),
+    (
+        "Settings snapshot codec keeps a distinct filename",
+        _check_settings_snapshot_codec_name,
     ),
     (
         "Domain package avoids payload type imports",
