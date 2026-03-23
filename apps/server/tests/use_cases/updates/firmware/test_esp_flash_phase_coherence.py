@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
-from vibesensor.use_cases.updates.esp_flash_types import EspFlashState, EspFlashStatus
+from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
+from vibesensor.use_cases.updates.firmware.esp_flash_types import EspFlashState, EspFlashStatus
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.adapters.http.updates import create_update_routes
-from vibesensor.use_cases.updates.esp_flash_types import (
+from vibesensor.use_cases.updates.firmware.esp_flash_types import (
     EspFlashHistoryEntry,
     EspFlashState,
     EspFlashStatus,

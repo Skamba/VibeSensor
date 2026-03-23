@@ -17,7 +17,7 @@ from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource
 from vibesensor.use_cases.run import RunRecorder
-from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
+from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 if TYPE_CHECKING:

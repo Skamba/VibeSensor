@@ -5,7 +5,7 @@ import time
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.wifi_config import UpdateWifiConfig
+from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 
 class UpdateWifiReadiness:

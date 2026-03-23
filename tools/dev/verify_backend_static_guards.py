@@ -1013,6 +1013,77 @@ def _check_diagnostics_boundary_types() -> list[str]:
     return failures
 
 
+_DIAGNOSTICS_VIEW_TYPE_NAMES = frozenset(
+    {
+        "AmpVsPhaseRowData",
+        "FreqVsSpeedByFindingSeriesData",
+        "MatchedAmpVsSpeedSeriesData",
+        "PeakClassificationRowView",
+        "PeakTableRowData",
+        "PhaseBoundaryData",
+        "PhaseSegmentPlotData",
+        "PhaseSpeedBreakdownRowData",
+        "PlotDataResultData",
+        "PlotSeriesBundle",
+        "SpectrogramResultData",
+        "SpeedBreakdownRowData",
+    }
+)
+
+
+def _check_diagnostics_core_types_stay_core_only() -> list[str]:
+    path = VIBESENSOR_DIR / "use_cases" / "diagnostics" / "_types.py"
+    tree = _parse_python(path)
+    if tree is None:
+        return []
+    return [
+        f"{path.relative_to(REPO_ROOT)}:{node.lineno}: move {node.name} to diagnostics/_view_types.py"
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ClassDef) and node.name in _DIAGNOSTICS_VIEW_TYPE_NAMES
+    ]
+
+
+_UPDATES_ROOT_FORBIDDEN_MODULES = frozenset(
+    {
+        "esp_flash_manager.py",
+        "esp_flash_runner.py",
+        "esp_flash_types.py",
+        "esp_serial.py",
+        "firmware_bundle.py",
+        "firmware_cache.py",
+        "firmware_refresh.py",
+        "firmware_release_fetcher.py",
+        "firmware_types.py",
+        "wifi.py",
+        "wifi_config.py",
+        "wifi_diagnostics.py",
+        "wifi_hotspot_recovery.py",
+        "wifi_readiness.py",
+        "wifi_uplink_setup.py",
+        "release_fetcher.py",
+        "release_validation.py",
+        "releases.py",
+    }
+)
+
+
+def _check_updates_package_subpackages() -> list[str]:
+    updates_dir = VIBESENSOR_DIR / "use_cases" / "updates"
+    failures: list[str] = []
+    for module_name in sorted(_UPDATES_ROOT_FORBIDDEN_MODULES):
+        if (updates_dir / module_name).exists():
+            failures.append(
+                f"{(updates_dir / module_name).relative_to(REPO_ROOT)} should live under a focused updates subpackage"
+            )
+    for package_name in ("firmware", "wifi", "releases"):
+        init_path = updates_dir / package_name / "__init__.py"
+        if not init_path.exists():
+            failures.append(
+                f"Missing updates subpackage initializer: {init_path.relative_to(REPO_ROOT)}"
+            )
+    return failures
+
+
 def _check_domain_package_has_no_payload_type_imports() -> list[str]:
     forbidden = {"FindingPayload", "AnalysisSummary"}
     violations: list[str] = []
@@ -1594,6 +1665,14 @@ CHECKS: tuple[Check, ...] = (
     (
         "Diagnostics internals avoid boundary payload TypedDicts",
         _check_diagnostics_boundary_types,
+    ),
+    (
+        "Diagnostics core types stay sample-focused",
+        _check_diagnostics_core_types_stay_core_only,
+    ),
+    (
+        "Updates package keeps focused subpackages",
+        _check_updates_package_subpackages,
     ),
     (
         "Domain package avoids payload type imports",

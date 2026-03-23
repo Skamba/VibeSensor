@@ -10,8 +10,8 @@ import sys
 import time
 from pathlib import Path
 
-from vibesensor.use_cases.updates.esp_flash_runner import SubprocessFlashCommandRunner
-from vibesensor.use_cases.updates.esp_flash_types import (
+from vibesensor.use_cases.updates.firmware.esp_flash_runner import SubprocessFlashCommandRunner
+from vibesensor.use_cases.updates.firmware.esp_flash_types import (
     EspFlashHistoryEntry,
     EspFlashHistoryEntryDict,
     EspFlashState,
@@ -21,9 +21,12 @@ from vibesensor.use_cases.updates.esp_flash_types import (
     SerialPortInfoDict,
     SerialPortProvider,
 )
-from vibesensor.use_cases.updates.esp_serial import PyserialPortProvider, resolve_selected_port
-from vibesensor.use_cases.updates.firmware_bundle import validate_bundle
-from vibesensor.use_cases.updates.firmware_cache import FirmwareCache
+from vibesensor.use_cases.updates.firmware.esp_serial import (
+    PyserialPortProvider,
+    resolve_selected_port,
+)
+from vibesensor.use_cases.updates.firmware.firmware_bundle import validate_bundle
+from vibesensor.use_cases.updates.firmware.firmware_cache import FirmwareCache
 
 LOGGER = logging.getLogger(__name__)
 

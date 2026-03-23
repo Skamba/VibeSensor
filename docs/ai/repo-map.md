@@ -39,11 +39,11 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `infra/processing/`: signal-processing execution and payload building.
 - `infra/config/`: runtime settings storage and read-side access.
 - `infra/workers/`: worker-pool infrastructure.
-- `use_cases/diagnostics/`: post-stop diagnostics pipeline. See `docs/analysis_pipeline.md` for the module map and data flow.
+- `use_cases/diagnostics/`: post-stop diagnostics pipeline. Core sample/statistics types stay in `_types.py`, while plot/table/output DTOs live in `_view_types.py`. See `docs/analysis_pipeline.md` for the module map and data flow.
 - `use_cases/history/`: history queries, report loading/preparation/caching, and export orchestration. See `docs/report_pipeline.md` for report-specific flow.
 - `infra/runtime/health_snapshot.py`: application-level runtime health snapshot assembly for the `/api/health` route.
 - `use_cases/run/`: recording pipeline orchestration. `logger.py` is the `RunRecorder` entrypoint, and the `post_analysis*.py` modules split queueing, loading, execution, and summary shaping.
-- `use_cases/updates/`: wheel-based updater workflow, firmware handling, Wi-Fi, rollback, and status coordination.
+- `use_cases/updates/`: wheel-based updater workflow and public facade. Focused subpackages now group `updates/firmware/`, `updates/wifi/`, and `updates/releases/`, while the root package keeps installer/state/orchestration helpers.
 - `shared/`: cross-cutting ports, model/payload types, JSON helpers, boundary codecs, and small package-level helpers such as `shared/_data_files.py` and `shared/sensor_units.py`. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, `shared/types/history_analysis_contracts.py`, `shared/types/run_schema.py`, `shared/types/car_config.py`, `shared/types/speed_source_config.py`, and the codec/projection modules under `shared/boundaries/`.
 - `domain/`: domain model package for classification, ranking, lifecycle, and query logic. See `docs/domain-model.md` for the domain object graph.
 - `apps/ui/src/app/runtime/`: UI composition root and runtime controllers.

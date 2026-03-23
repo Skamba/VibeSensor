@@ -13,7 +13,8 @@ from vibesensor.use_cases.diagnostics._sample_metrics import (
     _effective_baseline_floor,
     _run_noise_baseline_g,
 )
-from vibesensor.use_cases.diagnostics._types import PeakTableRowData, Sample
+from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics._view_types import PeakTableRowData
 from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
 from vibesensor.use_cases.diagnostics.peaks.statistics import (
     compute_peak_distribution_stats,

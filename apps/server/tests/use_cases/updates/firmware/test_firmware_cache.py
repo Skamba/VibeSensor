@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.use_cases.updates.firmware_bundle import safe_extractall
-from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
-from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
+from vibesensor.use_cases.updates.firmware.firmware_bundle import safe_extractall
+from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
+from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
 
 
 def _make_fetcher(channel: str = "stable") -> GitHubReleaseFetcher:
