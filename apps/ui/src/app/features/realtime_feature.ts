@@ -205,7 +205,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     try {
       await setClientLocationApi(clientId, locationCode);
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : t("actions.set_location_failed"));
+      ctx.showError(err instanceof Error ? err.message : t("actions.set_location_failed"));
       return;
     }
     const client = realtime.clients.find((c) => c.id === clientId);
@@ -227,7 +227,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     try {
       await removeClientApi(clientId);
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : t("actions.remove_client_failed"));
+      ctx.showError(err instanceof Error ? err.message : t("actions.remove_client_failed"));
       return;
     }
     const prevSelected = realtime.selectedClientId;

@@ -145,7 +145,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       nextLogIndex = 0;
       restartPolling();
     } catch (err) {
-      window.alert(`${t("settings.esp_flash.start_failed")}\n${err instanceof Error ? err.message : String(err)}`);
+      ctx.showError(`${t("settings.esp_flash.start_failed")}\n${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

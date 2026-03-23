@@ -8,6 +8,10 @@ import {
   type UiShellNavigationModule,
 } from "./ui_shell_navigation_module";
 import {
+  createUiShellNotificationModule,
+  type UiShellNotificationModule,
+} from "./ui_shell_notification_module";
+import {
   createUiShellPreferencesModule,
   type UiShellPreferencesModule,
 } from "./ui_shell_preferences_module";
@@ -27,6 +31,8 @@ export class UiShellController {
   private readonly els: UiDomElements;
 
   private readonly navigation: UiShellNavigationModule;
+
+  private readonly notifications: UiShellNotificationModule;
 
   private readonly preferences: UiShellPreferencesModule;
 
@@ -48,6 +54,9 @@ export class UiShellController {
         this.state.spectrum.spectrumPlot?.resize();
       },
     });
+    this.notifications = createUiShellNotificationModule({
+      els: this.els,
+    });
     this.status = createUiShellStatusModule({
       shell: this.state.shell,
       transport: this.state.transport,
@@ -64,6 +73,7 @@ export class UiShellController {
       normalizeLanguage: (lang) => I18N.normalizeLang(lang),
       applyLanguage: (forceReloadInsights = false) => this.applyLanguage(forceReloadInsights),
       renderSpeedReadout: () => this.status.renderSpeedReadout(),
+      showError: (message) => this.showError(message),
     });
   }
 
@@ -102,6 +112,10 @@ export class UiShellController {
     if (!el) return;
     el.className = `pill pill--${variant}`;
     el.textContent = text;
+  }
+
+  showError(message: string): void {
+    this.notifications.showError(message);
   }
 
   renderSpeedReadout(): void {

@@ -346,9 +346,8 @@ test("history download/delete module reports partial delete failures without det
 
   const originalFetch = globalThis.fetch;
   const originalConfirm = window.confirm;
-  const originalAlert = window.alert;
   const deleteRequests: string[] = [];
-  const alerts: string[] = [];
+  const errors: string[] = [];
 
   globalThis.fetch = (async (input: string | URL | RequestInfo, init?: RequestInit) => {
     const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
@@ -363,9 +362,6 @@ test("history download/delete module reports partial delete failures without det
     throw new Error(`Unexpected request: ${url}`);
   }) as typeof fetch;
   window.confirm = (() => true) as typeof window.confirm;
-  window.alert = ((message?: string) => {
-    alerts.push(String(message ?? ""));
-  }) as typeof window.alert;
 
   let renderCalls = 0;
   let refreshCalls = 0;
@@ -373,6 +369,9 @@ test("history download/delete module reports partial delete failures without det
     history: state.history,
     getLanguage: () => state.shell.lang,
     t: testTranslation,
+    showError: (message) => {
+      errors.push(message);
+    },
     ensureRunDetail: (runId) => ensureRunDetail(state, runId),
     collapseExpandedRun: () => {
       const previous = state.history.expandedRunId;
@@ -397,7 +396,6 @@ test("history download/delete module reports partial delete failures without det
   } finally {
     globalThis.fetch = originalFetch;
     window.confirm = originalConfirm;
-    window.alert = originalAlert;
   }
 
   expect(deleteRequests).toEqual(["/api/history/run-001", "/api/history/run-002"]);
@@ -405,7 +403,7 @@ test("history download/delete module reports partial delete failures without det
   expect(state.history.expandedRunId).toBeNull();
   expect(renderCalls).toBe(1);
   expect(refreshCalls).toBe(1);
-  expect(alerts).toHaveLength(1);
-  expect(alerts[0]).toContain("history.delete_all_partial");
-  expect(alerts[0]).toContain("delete failed");
+  expect(errors).toHaveLength(1);
+  expect(errors[0]).toContain("history.delete_all_partial");
+  expect(errors[0]).toContain("delete failed");
 });
