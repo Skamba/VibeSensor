@@ -150,6 +150,20 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
         ],
         "firmware-native-tests": [
             Step(
+                "platformio core version",
+                [
+                    python_cmd,
+                    "-c",
+                    (
+                        "import re, subprocess, sys; "
+                        "proc = subprocess.run(['pio', '--version'], capture_output=True, text=True); "
+                        "output = (proc.stdout or '') + (proc.stderr or ''); "
+                        "sys.stdout.write(output); "
+                        "sys.exit(0 if proc.returncode == 0 and re.search(r'\\bversion\\s+6\\.', output) else 1)"
+                    ),
+                ],
+            ),
+            Step(
                 "firmware protocol fixture check",
                 [
                     python_cmd,
