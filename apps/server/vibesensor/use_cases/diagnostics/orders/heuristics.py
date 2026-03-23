@@ -6,7 +6,7 @@ from dataclasses import replace
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import OrderMatchObservation, VibrationSource
-from vibesensor.shared.constants import ORDER_MIN_CONFIDENCE, ORDER_MIN_MATCH_POINTS
+from vibesensor.shared.constants.analysis import ORDER_MIN_CONFIDENCE, ORDER_MIN_MATCH_POINTS
 from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.orders.settings import ORDER_HEURISTIC_SETTINGS
 

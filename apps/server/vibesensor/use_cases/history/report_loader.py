@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
-from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -18,6 +17,10 @@ from vibesensor.use_cases.history.helpers import (
     safe_filename,
 )
 from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey
+from vibesensor.use_cases.run.run_context import (
+    add_current_context_warnings,
+    current_car_snapshot_token,
+)
 
 
 @dataclass(frozen=True)

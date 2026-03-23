@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass, field
 from typing import TypedDict
 
-from vibesensor.shared.constants import GITHUB_REPO
+from vibesensor.shared.constants.github import GITHUB_REPO
 
 __all__ = [
     "BundleMeta",

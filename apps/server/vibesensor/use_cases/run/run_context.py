@@ -1,11 +1,10 @@
-"""Run-context snapshot and trust-warning helpers."""
+"""Run-context orchestration helpers for recording and history workflows."""
 
 from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
-from typing import Literal, cast
+from typing import cast
 
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
@@ -14,23 +13,12 @@ from vibesensor.domain import (
     RunContextSnapshot,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.json_utils import i18n_ref
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
-
-WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
-WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"
-WarningSeverity = Literal["warn", "error"]
-
-
-@dataclass(frozen=True, slots=True)
-class RunContextWarning:
-    """App-level warning model shared by diagnostics and history workflows."""
-
-    code: str
-    severity: WarningSeverity
-    applies_to: str
-    title: JsonValue
-    detail: JsonValue | None = None
+from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_CAR_SETTINGS_CHANGED,
+    RunContextWarning,
+    normalize_run_context_warnings,
+)
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 
 def build_run_context_snapshot(
@@ -83,26 +71,6 @@ def order_reference_context_complete(metadata: Mapping[str, object]) -> bool:
     )
 
 
-def build_summary_warnings(
-    metadata: Mapping[str, object],
-    *,
-    reference_complete: bool,
-) -> list[RunContextWarning]:
-    """Build language-neutral trust warnings stored with the analysis summary."""
-    warnings: list[RunContextWarning] = []
-    if not reference_complete or bool(metadata.get("incomplete_for_order_analysis")):
-        warnings.append(
-            RunContextWarning(
-                code=WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
-                severity="warn",
-                applies_to="order_analysis",
-                title=i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"),
-                detail=i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"),
-            )
-        )
-    return warnings
-
-
 def add_current_context_warnings(
     warnings: object,
     *,
@@ -139,62 +107,37 @@ def _build_car_settings_changed_warning(
 ) -> RunContextWarning | None:
     if not is_json_object(metadata) or current_active_car_snapshot is None:
         return None
-    recorded_snapshot = metadata.get("active_car_snapshot")
-    if not is_json_object(recorded_snapshot):
+    recorded_snapshot_payload = metadata.get("active_car_snapshot")
+    if not is_json_object(recorded_snapshot_payload):
         return None
-    current_dict = current_active_car_snapshot.to_dict()
-    if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_dict):
+    recorded_snapshot = CarSnapshot.from_dict(recorded_snapshot_payload)
+    if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_active_car_snapshot):
         return None
     return RunContextWarning(
         code=WARNING_CODE_CAR_SETTINGS_CHANGED,
         severity="warn",
         applies_to="order_analysis",
-        title=i18n_ref("RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE"),
-        detail=i18n_ref(
-            "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_DETAIL",
-            run_car=_car_label(recorded_snapshot),
-            current_car=_car_label(current_dict),
-        ),
+        title={"_i18n_key": "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE"},
+        detail={
+            "_i18n_key": "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_DETAIL",
+            "run_car": _car_label(recorded_snapshot),
+            "current_car": _car_label(current_active_car_snapshot),
+        },
     )
 
 
-def normalize_run_context_warnings(warnings: object) -> list[RunContextWarning]:
-    if not isinstance(warnings, list):
-        return []
-    normalized: list[RunContextWarning] = []
-    for warning in warnings:
-        if isinstance(warning, RunContextWarning):
-            normalized.append(warning)
-            continue
-        if not is_json_object(warning):
-            continue
-        normalized.append(
-            RunContextWarning(
-                code=str(warning.get("code") or ""),
-                severity=cast(WarningSeverity, str(warning.get("severity") or "warn")),
-                applies_to=str(warning.get("applies_to") or "order_analysis"),
-                title=warning.get("title"),
-                detail=warning.get("detail"),
-            )
-        )
-    return normalized
-
-
-def _normalized_aspects(snapshot: Mapping[str, object]) -> tuple[tuple[str, float], ...]:
-    aspects_raw = snapshot.get("aspects")
-    if not isinstance(aspects_raw, Mapping):
-        return ()
+def _normalized_aspects(snapshot: CarSnapshot) -> tuple[tuple[str, float], ...]:
     normalized = [
         (key, float(value))
-        for key, value in aspects_raw.items()
+        for key, value in snapshot.aspects.items()
         if isinstance(key, str) and _as_float(value) is not None
     ]
     return tuple(sorted(normalized))
 
 
-def _car_label(snapshot: Mapping[str, object]) -> str:
-    name = str(snapshot.get("name") or "").strip()
-    car_type = str(snapshot.get("type") or "").strip()
+def _car_label(snapshot: CarSnapshot) -> str:
+    name = str(snapshot.name or "").strip()
+    car_type = str(snapshot.car_type or "").strip()
     if name and car_type:
         return f"{name} ({car_type})"
     if name:

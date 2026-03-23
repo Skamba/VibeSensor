@@ -8,7 +8,8 @@ import time
 from dataclasses import dataclass, replace
 from typing import Any, NamedTuple, cast
 
-from vibesensor.shared.constants import KMH_TO_MPS, NUMERIC_TYPES
+from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
+from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
 
 LOGGER = logging.getLogger(__name__)

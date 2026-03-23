@@ -32,15 +32,14 @@ from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.history.report_preparation import PreparedReportInput
-from vibesensor.shared.constants import (
+from vibesensor.shared.constants.dsp import (
     FFT_N,
     FFT_UPDATE_HZ,
     SPECTRUM_MAX_HZ,
     SPECTRUM_MIN_HZ,
-    UI_HEAVY_PUSH_HZ,
-    UI_PUSH_HZ,
     WAVEFORM_DISPLAY_HZ,
 )
+from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService

@@ -13,7 +13,7 @@ from typing import Any
 
 from vibesensor.domain import VibrationSource
 from vibesensor.shared._data_files import resolve_static_data_file
-from vibesensor.shared.constants import PHASE_I18N_KEYS
+from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 
 _DATA_FILE = resolve_static_data_file("report_i18n.json")

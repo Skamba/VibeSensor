@@ -4,7 +4,7 @@ from vibesensor.shared.boundaries.summary_warning import (
     localize_warning_list,
     summary_warning_payloads,
 )
-from vibesensor.shared.run_context import RunContextWarning
+from vibesensor.shared.run_context_warning import RunContextWarning
 
 
 def test_summary_warning_payloads_keep_existing_wire_shape() -> None:

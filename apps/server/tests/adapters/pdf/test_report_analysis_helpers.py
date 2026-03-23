@@ -3,7 +3,8 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import speed_band_sort_key, speed_bin_label
-from vibesensor.shared.constants import KMH_TO_MPS, MIN_ANALYSIS_FREQ_HZ
+from vibesensor.shared.constants.analysis import MIN_ANALYSIS_FREQ_HZ
+from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.statistics_utils import (
     _mean_variance,

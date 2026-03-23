@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from test_support.core import _stable_hash
-from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._types import AnalysisSample
 

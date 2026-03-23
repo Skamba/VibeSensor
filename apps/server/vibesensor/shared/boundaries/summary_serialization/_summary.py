@@ -29,7 +29,7 @@ from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin,
     build_origin_explanation,
 )
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.statistics_utils import _outlier_summary, _percent_missing

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import speed_band_sort_key
-from vibesensor.shared.constants import ORDER_MIN_COVERAGE_POINTS, ORDER_MIN_MATCH_POINTS
+from vibesensor.shared.constants.analysis import ORDER_MIN_COVERAGE_POINTS, ORDER_MIN_MATCH_POINTS
 
 
 def _compute_effective_match_rate(

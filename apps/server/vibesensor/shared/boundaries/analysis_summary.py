@@ -28,7 +28,7 @@ from vibesensor.shared.boundaries.summary_serialization import (
     serialize_plot_data,
 )
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
-from vibesensor.shared.run_context import build_summary_warnings
+from vibesensor.shared.run_context_warning import build_summary_warnings
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject
 

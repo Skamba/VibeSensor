@@ -14,7 +14,7 @@ from math import floor
 from typing import Literal
 
 from vibesensor.domain import speed_bin_label
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,

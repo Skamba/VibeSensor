@@ -104,7 +104,7 @@ def test_strength_metrics_no_dead_aliases() -> None:
 
 def test_constants_used_for_speed_conversion() -> None:
     """Speed conversion must use constants, not hardcoded 3.6."""
-    from vibesensor.shared.constants import KMH_TO_MPS, MPS_TO_KMH
+    from vibesensor.shared.constants.units import KMH_TO_MPS, MPS_TO_KMH
 
     assert MPS_TO_KMH == 3.6
     assert abs(KMH_TO_MPS - 1.0 / 3.6) < 1e-15
@@ -113,7 +113,7 @@ def test_constants_used_for_speed_conversion() -> None:
 
 def test_constants_used_for_peak_detection() -> None:
     """Peak detection defaults must come from constants module."""
-    from vibesensor.shared.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
+    from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
     from vibesensor.vibration_strength import compute_vibration_strength_db
 
     assert PEAK_BANDWIDTH_HZ == 1.2
@@ -129,7 +129,7 @@ def test_constants_used_for_peak_detection() -> None:
 
 def test_silence_db_constant() -> None:
     """SILENCE_DB must be the canonical silence floor value."""
-    from vibesensor.shared.constants import SILENCE_DB
+    from vibesensor.shared.constants.analysis import SILENCE_DB
 
     assert SILENCE_DB == -120.0
 

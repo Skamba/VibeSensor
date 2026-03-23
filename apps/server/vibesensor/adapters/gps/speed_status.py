@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from typing import Literal
 
 from vibesensor.adapters.gps.speed_resolution import SpeedResolution
-from vibesensor.shared.constants import MPS_TO_KMH, NUMERIC_TYPES
+from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
+from vibesensor.shared.constants.units import MPS_TO_KMH
 from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
 
 _GPS_MAX_EPH_M: float = 40.0

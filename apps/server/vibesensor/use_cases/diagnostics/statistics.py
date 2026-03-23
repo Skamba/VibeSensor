@@ -13,10 +13,7 @@ from collections.abc import Sequence
 from datetime import datetime, timedelta
 
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.constants import (
-    SPEED_COVERAGE_MIN_PCT,
-    SPEED_MIN_POINTS,
-)
+from vibesensor.shared.constants.analysis import SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.shared.time_utils import parse_iso8601
 from vibesensor.strength_bands import bucket_for_strength

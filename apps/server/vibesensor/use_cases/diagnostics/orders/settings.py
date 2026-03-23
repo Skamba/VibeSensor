@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.shared.constants import CONFIDENCE_CEILING, CONFIDENCE_FLOOR
+from vibesensor.shared.constants.analysis import CONFIDENCE_CEILING, CONFIDENCE_FLOOR
 
 
 @dataclass(frozen=True, slots=True)
