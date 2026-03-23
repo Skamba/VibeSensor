@@ -153,15 +153,21 @@ class SignalProcessor:
         return result
 
     def spectrum_payload(self, client_id: str) -> SpectrumSeriesPayload:
-        with self._store.lock:
-            return self._spectrum_payload_unlocked(client_id)
+        with self._store.locked_client_buffer(client_id) as buf:
+            if buf is None:
+                return _empty_spectrum_payload()
+            return build_spectrum_payload(buf)
 
     def multi_spectrum_payload(self, client_ids: list[str]) -> SpectraPayload:
-        with self._store.lock:
+        with self._store.locked_client_buffers(client_ids) as buffers:
+
+            def _spectrum_payload(client_id: str) -> SpectrumSeriesPayload:
+                return self._spectrum_payload_from_buffers(buffers, client_id)
+
             return build_multi_spectrum_payload(
-                self._store.buffers,
+                buffers,
                 client_ids,
-                spectrum_fn=self._spectrum_payload_unlocked,
+                spectrum_fn=_spectrum_payload,
                 analysis_time_range_fn=self._analysis_time_range_unlocked,
             )
 
@@ -200,20 +206,20 @@ class SignalProcessor:
         worker_pool_stats = self._worker_pool.stats() if self._worker_pool is not None else None
         return build_intake_stats_payload(self._store.intake_stats(), worker_pool_stats)
 
-    def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float, bool] | None:
-        with self._store.lock:
-            return self._analysis_time_range_unlocked(buf)
-
     def time_alignment_info(self, client_ids: list[str]) -> TimeAlignmentPayload:
-        with self._store.lock:
+        with self._store.locked_client_buffers(client_ids) as buffers:
             return build_time_alignment_payload(
-                self._store.buffers,
+                buffers,
                 client_ids,
                 analysis_time_range_fn=self._analysis_time_range_unlocked,
             )
 
-    def _spectrum_payload_unlocked(self, client_id: str) -> SpectrumSeriesPayload:
-        buf = self._store.buffers.get(client_id)
+    def _spectrum_payload_from_buffers(
+        self,
+        buffers: dict[str, ClientBuffer],
+        client_id: str,
+    ) -> SpectrumSeriesPayload:
+        buf = buffers.get(client_id)
         if buf is None:
             return _empty_spectrum_payload()
         return build_spectrum_payload(buf)

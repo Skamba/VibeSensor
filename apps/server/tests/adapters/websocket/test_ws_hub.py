@@ -277,6 +277,28 @@ async def test_broadcast_serializes_plain_payload_without_recursive_sanitizing()
 
 
 @pytest.mark.asyncio
+async def test_broadcast_offloads_serialization_to_thread(monkeypatch: pytest.MonkeyPatch) -> None:
+    hub = WebSocketHub()
+    ws1 = _make_ws()
+    ws2 = _make_ws()
+    await hub.add(ws1, "same")
+    await hub.add(ws2, None)
+    seen_selected_ids: list[str | None] = []
+
+    async def fake_to_thread(func, /, *args, **kwargs):
+        seen_selected_ids.append(args[0])
+        return func(*args, **kwargs)
+
+    monkeypatch.setattr("vibesensor.adapters.websocket.hub.asyncio.to_thread", fake_to_thread)
+
+    await hub.broadcast(lambda selected: {"selected": selected})
+
+    assert seen_selected_ids == ["same", None]
+    assert _sent_json(ws1) == {"selected": "same"}
+    assert _sent_json(ws2) == {"selected": None}
+
+
+@pytest.mark.asyncio
 async def test_broadcast_falls_back_to_sanitizer_for_numpy_payload() -> None:
     hub = WebSocketHub()
     ws = _make_ws()

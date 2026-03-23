@@ -109,7 +109,7 @@ def test_clients_with_recent_data_filters_stale() -> None:
     assert result == ["c1"]
 
 
-def test_ingest_waits_while_processor_lock_is_held() -> None:
+def test_ingest_waits_while_same_client_buffer_lock_is_held() -> None:
     processor = SignalProcessor(
         sample_rate_hz=800,
         waveform_seconds=8,
@@ -124,13 +124,46 @@ def test_ingest_waits_while_processor_lock_is_held() -> None:
         processor.ingest("c-lock", samples, sample_rate_hz=800)
         done.set()
 
-    processor._store.lock.acquire()
+    processor.ingest("c-lock", samples, sample_rate_hz=800)
+    with processor._store.lock:
+        client_lock = processor._store._client_locks["c-lock"]
+    client_lock.acquire()
     worker = Thread(target=_ingest)
     worker.start()
     try:
         assert not done.wait(timeout=0.05)
     finally:
-        processor._store.lock.release()
+        client_lock.release()
+    worker.join(timeout=1.0)
+    assert done.is_set()
+
+
+def test_ingest_other_client_not_blocked_by_unrelated_client_lock() -> None:
+    processor = SignalProcessor(
+        sample_rate_hz=800,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=1024,
+        spectrum_max_hz=200,
+    )
+    samples = np.zeros((10, 3), dtype=np.float32)
+    done = Event()
+
+    processor.ingest("c-lock", samples, sample_rate_hz=800)
+    with processor._store.lock:
+        client_lock = processor._store._client_locks["c-lock"]
+    client_lock.acquire()
+
+    def _ingest() -> None:
+        processor.ingest("c-free", samples, sample_rate_hz=800)
+        done.set()
+
+    worker = Thread(target=_ingest)
+    worker.start()
+    try:
+        assert done.wait(timeout=0.2)
+    finally:
+        client_lock.release()
     worker.join(timeout=1.0)
     assert done.is_set()
 
