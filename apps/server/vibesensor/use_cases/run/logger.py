@@ -153,6 +153,11 @@ class RunRecorder:
             return self._lifecycle.snapshot()
 
     def _start_new_run_locked(self) -> ActiveRunSnapshot:
+        for client_id in self.registry.active_client_ids():
+            self.processor.flush_client_buffer(
+                client_id,
+                reason="recording run start",
+            )
         snapshot = self._lifecycle.start_new_run(
             run_id=uuid4().hex,
             analysis_settings_snapshot=self._analysis_settings_snapshot(),
@@ -195,6 +200,7 @@ class RunRecorder:
                         flush_snapshot.run_id,
                         flush_snapshot.start_time_utc,
                         flush_snapshot.start_mono_s,
+                        refresh_metrics=True,
                     )
             if self.enabled and self._run_id:
                 run_id = self._run_id
@@ -232,6 +238,7 @@ class RunRecorder:
                     flush_snapshot.run_id,
                     flush_snapshot.start_time_utc,
                     flush_snapshot.start_mono_s,
+                    refresh_metrics=True,
                 )
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()

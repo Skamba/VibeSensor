@@ -95,8 +95,13 @@ class SignalProcessor:
         self._metrics = SignalMetricsComputer(self._config)
         self._worker_pool = worker_pool
 
-    def flush_client_buffer(self, client_id: str) -> None:
-        self._store.flush_client_buffer(client_id)
+    def flush_client_buffer(
+        self,
+        client_id: str,
+        *,
+        reason: str = "sensor reset",
+    ) -> None:
+        self._store.flush_client_buffer(client_id, reason=reason)
 
     def ingest(
         self,

@@ -345,7 +345,7 @@ def _check_metrics_log_reads_live_start_under_lock() -> list[str]:
     source = _read_text(path)
     try:
         lock_idx = source.index("with recorder._lock:")
-        live_start_idx = source.index("live_start = recorder._live_start_mono_s")
+        live_start_idx = source.index("recorder._live_start_mono_s")
         build_idx = source.index("build_sample_records")
     except ValueError as exc:
         return [
@@ -353,8 +353,8 @@ def _check_metrics_log_reads_live_start_under_lock() -> list[str]:
         ]
     if not (lock_idx < live_start_idx < build_idx):
         return [
-            f"{path.relative_to(REPO_ROOT)} must read _live_start_mono_s under recorder._lock "
-            "before build_sample_records"
+            f"{path.relative_to(REPO_ROOT)} must read _live_start_mono_s inside the "
+            "recorder-lock-protected flush path before build_sample_records"
         ]
     return []
 

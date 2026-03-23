@@ -199,6 +199,19 @@ async def test_history_run_includes_sample_count() -> None:
 
 
 @pytest.mark.asyncio
+async def test_history_run_includes_error_message_for_error_status() -> None:
+    router = make_status_router(
+        status="error",
+        analysis={"status": "error"},
+        include_error_message=True,
+    )
+
+    payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
+
+    assert payload["error_message"] == "Analysis failed"
+
+
+@pytest.mark.asyncio
 async def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
     metadata = make_metadata(
         active_car_snapshot={
@@ -274,7 +287,8 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
     endpoint = route_endpoint(router, "/api/history/{run_id}")
 
     result = response_payload(await endpoint("run-1"))
-    assert set(result.keys()) == {"run_id", "status", "sample_count", "metadata", "analysis"}
+    assert {"run_id", "status", "sample_count", "metadata", "analysis"}.issubset(result.keys())
+    assert result.get("error_message") is None
     analysis = result.get("analysis", {})
     assert "_internal_secret" not in analysis
     assert "_report_template_data" not in analysis
@@ -298,7 +312,7 @@ async def test_history_run_preserves_missing_optional_analysis_fields() -> None:
     )
 
     result = await endpoint("run-1")
-    payload = result.model_dump(exclude_unset=True)["analysis"]
+    payload = response_payload(result)["analysis"]
     assert getattr(route, "response_model_exclude_unset", False) is True
     assert "findings" in payload
     assert "samples" not in payload

@@ -118,6 +118,7 @@ class HistoryRunResponse(_StrictBase):
     run_id: str
     status: str
     sample_count: int
+    error_message: str | None = None
     metadata: ApiPayloadObject = Field(default_factory=dict)
     analysis: AnalysisSummaryResponse | None = None
 

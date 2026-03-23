@@ -107,3 +107,37 @@ async def test_runtime_auto_stop_uses_to_thread(
 
     assert stop_calls == [snapshot.run_id]
     assert fake_stop_recording in to_thread_calls
+
+
+@pytest.mark.asyncio
+async def test_runtime_tick_holds_lock_during_build_and_append(
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logger = make_logger()
+    logger.start_recording()
+
+    build_lock_owned: list[bool] = []
+    append_lock_owned: list[bool] = []
+
+    def fake_build_sample_records(**_kwargs):
+        build_lock_owned.append(logger._lock._is_owned())
+        return []
+
+    def fake_append_records(*_args, **_kwargs) -> bool:
+        append_lock_owned.append(logger._lock._is_owned())
+        return False
+
+    async def fake_to_thread(func, /, *args, **kwargs):
+        return func(*args, **kwargs)
+
+    monkeypatch.setattr(logger._sample_flush, "build_sample_records", fake_build_sample_records)
+    monkeypatch.setattr(logger._sample_flush, "append_records", fake_append_records)
+    monkeypatch.setattr(_recorder_runtime.asyncio, "to_thread", fake_to_thread)
+    monkeypatch.setattr(_recorder_runtime.asyncio, "sleep", _raise_stop_loop)
+
+    with pytest.raises(_StopLoop):
+        await _recorder_runtime.run_loop(logger, logger=logging.getLogger(__name__))
+
+    assert build_lock_owned == [True]
+    assert append_lock_owned == [True]

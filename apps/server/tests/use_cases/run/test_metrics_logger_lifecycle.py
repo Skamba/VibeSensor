@@ -139,3 +139,87 @@ def test_stop_recording_holds_lock_during_flush_and_finalize(make_logger) -> Non
 
     assert flush_lock_owned == [True]
     assert finalize_lock_owned == [True]
+
+
+def test_start_recording_flushes_active_signal_buffers(
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logger = make_logger()
+    flush_calls: list[tuple[str, str]] = []
+
+    def fake_flush_client_buffer(
+        client_id: str,
+        *,
+        reason: str = "sensor reset",
+    ) -> None:
+        flush_calls.append((client_id, reason))
+
+    monkeypatch.setattr(logger.processor, "flush_client_buffer", fake_flush_client_buffer)
+
+    logger.start_recording()
+    logger.start_recording()
+
+    assert flush_calls == [
+        ("active", "recording run start"),
+        ("active", "recording run start"),
+    ]
+
+
+def test_stop_recording_refreshes_recent_metrics_before_final_flush(
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logger = make_logger()
+    logger.start_recording()
+    active = logger.registry.get("active")
+    assert active is not None
+    active.frames_total = 1
+    active.latest_metrics = {"combined": {"peaks": []}}
+
+    compute_calls: list[tuple[str, int | None]] = []
+    captured_rows = []
+    original_append_rows = logger._persistence.append_rows
+
+    refreshed_metrics = {
+        "combined": {
+            "peaks": [{"hz": 15.0, "amp": 0.12}],
+            "strength_metrics": {
+                "vibration_strength_db": 18.0,
+                "strength_bucket": "l2",
+                "peak_amp_g": 0.12,
+                "noise_floor_amp_g": 0.003,
+                "top_peaks": [
+                    {
+                        "hz": 15.0,
+                        "amp": 0.12,
+                        "vibration_strength_db": 18.0,
+                        "strength_bucket": "l2",
+                    },
+                ],
+            },
+        },
+    }
+
+    def fake_compute_metrics(client_id: str, sample_rate_hz: int | None = None):
+        compute_calls.append((client_id, sample_rate_hz))
+        active.latest_metrics = refreshed_metrics
+        return refreshed_metrics
+
+    def capture_append_rows(*, run_id: str, start_time_utc: str, rows):
+        captured_rows.extend(rows)
+        return original_append_rows(
+            run_id=run_id,
+            start_time_utc=start_time_utc,
+            rows=rows,
+        )
+
+    monkeypatch.setattr(logger.processor, "compute_metrics", fake_compute_metrics)
+    monkeypatch.setattr(logger._persistence, "append_rows", capture_append_rows)
+    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+
+    logger.stop_recording()
+
+    assert compute_calls == [("active", 800)]
+    assert captured_rows
+    assert captured_rows[-1].vibration_strength_db == 18.0

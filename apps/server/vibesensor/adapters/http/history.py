@@ -46,6 +46,7 @@ def create_history_routes(
         "/api/history/{run_id}",
         response_model=HistoryRunResponse,
         response_model_exclude_unset=True,
+        response_model_exclude_none=True,
     )
     async def get_history_run(run_id: str) -> HistoryRunResponse:
         with domain_errors_to_http():
