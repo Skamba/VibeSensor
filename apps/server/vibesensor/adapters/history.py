@@ -9,7 +9,15 @@ import zipfile
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, cast
 
+from pydantic import TypeAdapter
+
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
+from vibesensor.shared.types.api_models import (
+    DeleteHistoryRunResponse,
+    HistoryInsightsResponse,
+    HistoryListEntryResponse,
+    HistoryRunResponse,
+)
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.history.exports import (
@@ -25,6 +33,8 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
+
+_HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 
 
 def _has_projectable_analysis(analysis: Mapping[str, object]) -> bool:
@@ -97,24 +107,33 @@ class ProjectedHistoryRunService:
     def __init__(self, service: HistoryRunService) -> None:
         self._service = service
 
-    async def list_runs(self) -> list[JsonObject]:
-        return [entry.to_json_object() for entry in await self._service.list_runs()]
+    async def list_runs(self) -> list[HistoryListEntryResponse]:
+        return [
+            HistoryListEntryResponse.model_validate(entry.to_json_object())
+            for entry in await self._service.list_runs()
+        ]
 
-    async def get_run(self, run_id: str) -> JsonObject:
-        return project_history_run_record(await self._service.get_run(run_id))
+    async def get_run(self, run_id: str) -> HistoryRunResponse:
+        return HistoryRunResponse.model_validate(
+            project_history_run_record(await self._service.get_run(run_id))
+        )
 
     async def get_insights(
         self,
         run_id: str,
         requested_lang: str | None = None,
-    ) -> JsonObject | None:
+    ) -> HistoryInsightsResponse | None:
         result = await self._service.get_insights(run_id, requested_lang=requested_lang)
         if result is None:
             return None
-        return project_history_insights(result)
+        validated = _HISTORY_INSIGHTS_ADAPTER.validate_python(project_history_insights(result))
+        return cast(
+            HistoryInsightsResponse,
+            _HISTORY_INSIGHTS_ADAPTER.dump_python(validated, mode="json"),
+        )
 
-    async def delete_run(self, run_id: str) -> dict[str, str]:
-        return await self._service.delete_run(run_id)
+    async def delete_run(self, run_id: str) -> DeleteHistoryRunResponse:
+        return DeleteHistoryRunResponse.model_validate(await self._service.delete_run(run_id))
 
 
 class ProjectedHistoryExportService:

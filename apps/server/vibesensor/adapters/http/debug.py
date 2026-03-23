@@ -20,35 +20,53 @@ if TYPE_CHECKING:
 __all__ = ["create_debug_routes"]
 
 
+def _is_debug_spectrum_error_payload(
+    payload: DebugSpectrumPayload | DebugSpectrumErrorPayload,
+) -> TypeGuard[DebugSpectrumErrorPayload]:
+    return "error" in payload
+
+
+def _is_debug_spectrum_payload(
+    payload: DebugSpectrumPayload | DebugSpectrumErrorPayload,
+) -> TypeGuard[DebugSpectrumPayload]:
+    return "error" not in payload
+
+
 def _is_raw_samples_error_payload(
     payload: RawSamplesPayload | RawSamplesErrorPayload,
 ) -> TypeGuard[RawSamplesErrorPayload]:
     return "error" in payload
 
 
+def _is_raw_samples_payload(
+    payload: RawSamplesPayload | RawSamplesErrorPayload,
+) -> TypeGuard[RawSamplesPayload]:
+    return "error" not in payload
+
+
 def create_debug_routes(processor: SignalProcessor) -> APIRouter:
     """Create and return the internal debug API routes."""
     router = APIRouter()
 
-    @router.get("/api/debug/spectrum/{client_id}")
-    async def debug_spectrum(
-        client_id: str,
-    ) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:
+    @router.get("/api/debug/spectrum/{client_id}", response_model=DebugSpectrumPayload)
+    async def debug_spectrum(client_id: str) -> DebugSpectrumPayload:
         """Detailed spectrum debug info for independent verification."""
         normalized = normalize_client_id_or_400(client_id)
         result = processor.debug_spectrum(normalized)
-        if isinstance(result, dict) and "error" in result:
+        if _is_debug_spectrum_error_payload(result):
             raise HTTPException(
                 status_code=404,
                 detail=result["error"],
             )
-        return result
+        if _is_debug_spectrum_payload(result):
+            return result
+        raise AssertionError("Unreachable debug spectrum payload state")
 
-    @router.get("/api/debug/raw-samples/{client_id}")
+    @router.get("/api/debug/raw-samples/{client_id}", response_model=RawSamplesPayload)
     async def debug_raw_samples(
         client_id: str,
         n: int = Query(default=2048, ge=1, le=6400),
-    ) -> RawSamplesPayload | RawSamplesErrorPayload:
+    ) -> RawSamplesPayload:
         """Raw time-domain samples in g for offline analysis."""
         normalized = normalize_client_id_or_400(client_id)
         result = processor.raw_samples(normalized, n_samples=n)
@@ -57,6 +75,8 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
                 status_code=404,
                 detail=result["error"],
             )
-        return result
+        if _is_raw_samples_payload(result):
+            return result
+        raise AssertionError("Unreachable raw-samples payload state")
 
     return router

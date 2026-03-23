@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from fastapi import WebSocket
 
 from vibesensor.shared.json_utils import sanitize_for_json
-from vibesensor.shared.types.payload_types import LiveWsPayload
+from vibesensor.shared.types.payload_types import LiveWsPayload, WsErrorPayload
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,10 +37,8 @@ _SEND_TIMEOUT_S: float = 0.5
 _SEND_ERROR_LOG_INTERVAL_S: float = 10.0
 """Minimum interval between logged send-error warnings to avoid log spam."""
 
-_ERROR_PAYLOAD: str = json.dumps(
-    {"error": "payload_build_failed"},
-    separators=(",", ":"),
-)
+_ERROR_PAYLOAD_BODY: WsErrorPayload = {"error": "payload_build_failed"}
+_ERROR_PAYLOAD: str = json.dumps(_ERROR_PAYLOAD_BODY, separators=(",", ":"))
 """Pre-serialised error payload sent to clients when their payload build fails."""
 
 _MAX_CONSECUTIVE_FAILURES: int = 10

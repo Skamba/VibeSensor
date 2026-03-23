@@ -31,7 +31,6 @@ __all__ = [
 ]
 
 _IGNORE_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="ignore")
-_ALLOW_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="allow")
 
 
 class PeakTableRow(TypedDict):
@@ -215,13 +214,13 @@ def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:
     typed_dict.__pydantic_config__ = config
 
 
-_configure_pydantic_schema(PeakTableRow, _ALLOW_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(MatchedPoint, _ALLOW_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(PhaseEvidence, _ALLOW_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(LocationHotspotPayload, _ALLOW_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(FindingEvidenceMetrics, _ALLOW_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(SpectrogramResult, _ALLOW_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(PlotDataResult, _ALLOW_EXTRA_TYPEDDICT_CONFIG)
+_configure_pydantic_schema(PeakTableRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
+_configure_pydantic_schema(MatchedPoint, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
+_configure_pydantic_schema(PhaseEvidence, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
+_configure_pydantic_schema(LocationHotspotPayload, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
+_configure_pydantic_schema(FindingEvidenceMetrics, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
+_configure_pydantic_schema(SpectrogramResult, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
+_configure_pydantic_schema(PlotDataResult, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
 
 _configure_pydantic_schema(SpeedBreakdownRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
 _configure_pydantic_schema(PhaseSpeedBreakdownRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
