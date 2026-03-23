@@ -1,0 +1,38 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from vibesensor.cli.hotspot_config import main
+
+
+def _run_cli(
+    config_path: Path,
+    *,
+    monkeypatch,
+    capsys,
+) -> tuple[str, str]:
+    monkeypatch.setattr(sys, "argv", ["vibesensor-hotspot-config", str(config_path)])
+    main()
+    captured = capsys.readouterr()
+    return captured.out, captured.err
+
+
+def test_hotspot_config_cli_warns_and_falls_back_on_parse_error(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    missing_path = tmp_path / "missing.yaml"
+    defaults_out, defaults_err = _run_cli(missing_path, monkeypatch=monkeypatch, capsys=capsys)
+    assert defaults_err == ""
+
+    broken_path = tmp_path / "broken.yaml"
+    broken_path.write_text("ap: [unterminated\n", encoding="utf-8")
+
+    broken_out, broken_err = _run_cli(broken_path, monkeypatch=monkeypatch, capsys=capsys)
+
+    assert broken_out == defaults_out
+    assert "WARNING:" in broken_err
+    assert str(broken_path) in broken_err
+    assert "using defaults" in broken_err

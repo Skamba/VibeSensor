@@ -123,15 +123,7 @@ class RunRecorder:
         )
 
         with self._lock:
-            snapshot = self._lifecycle.start_new_run(
-                run_id=uuid4().hex,
-                analysis_settings_snapshot=self._analysis_settings_snapshot(),
-                start_time_utc=utc_now_iso(),
-                start_mono_s=time.monotonic(),
-                current_total=_recorder_runtime.active_frames_total(self.registry),
-            )
             self._persistence.reset()
-            self._live_start_mono_s = snapshot.start_mono_s
 
     @property
     def enabled(self) -> bool:
@@ -158,6 +150,18 @@ class RunRecorder:
 
     def _session_snapshot(self) -> ActiveRunSnapshot | None:
         return self._lifecycle.snapshot()
+
+    def _start_new_run_locked(self) -> ActiveRunSnapshot:
+        snapshot = self._lifecycle.start_new_run(
+            run_id=uuid4().hex,
+            analysis_settings_snapshot=self._analysis_settings_snapshot(),
+            start_time_utc=utc_now_iso(),
+            start_mono_s=time.monotonic(),
+            current_total=_recorder_runtime.active_frames_total(self.registry),
+        )
+        self._persistence.reset()
+        self._live_start_mono_s = snapshot.start_mono_s
+        return snapshot
 
     def status(self) -> RunRecorderStatusSnapshot:
         return build_run_recorder_status(
@@ -209,15 +213,7 @@ class RunRecorder:
                         "finalize_run failed for %s; scheduling analysis anyway",
                         run_id,
                     )
-            snapshot = self._lifecycle.start_new_run(
-                run_id=uuid4().hex,
-                analysis_settings_snapshot=self._analysis_settings_snapshot(),
-                start_time_utc=utc_now_iso(),
-                start_mono_s=time.monotonic(),
-                current_total=_recorder_runtime.active_frames_total(self.registry),
-            )
-            self._persistence.reset()
-            self._live_start_mono_s = snapshot.start_mono_s
+            self._start_new_run_locked()
             result = self.status()
         if completed_run_id and self._history_db is not None:
             self.schedule_post_analysis(completed_run_id)
