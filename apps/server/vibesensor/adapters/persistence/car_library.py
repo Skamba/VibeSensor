@@ -10,7 +10,8 @@ from __future__ import annotations
 import copy
 import json
 import logging
-from pathlib import Path
+
+from vibesensor._data_files import resolve_static_data_file
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ __all__ = [
     "resolve_variant",
 ]
 
-_DATA_FILE = Path(__file__).resolve().parents[3] / "data" / "car_library.json"
+_DATA_FILE = resolve_static_data_file("car_library.json")
 _TIRE_OVERRIDE_KEYS = ("tire_width_mm", "tire_aspect_pct", "rim_in")
 
 

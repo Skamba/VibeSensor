@@ -31,7 +31,10 @@ bootstrap commands.
 
 If you're iterating on the dashboard itself, use
 [apps/ui/README.md](apps/ui/README.md) for the frontend dev-server, build, and
-contract-sync workflow after that initial bootstrap.
+contract-sync workflow after that initial bootstrap. In the native setup, the
+recommended live-dev path is `vibesensor-server --reload --config
+apps/server/config.dev.yaml` plus `npm --prefix apps/ui run dev`, then open
+`http://127.0.0.1:5173`.
 
 ## Hooks and local safeguards
 
@@ -49,7 +52,9 @@ Current hook behavior:
 
 ## Validation workflow
 
-Two tiers: use `make test` during iteration, `make test-all` before pushing.
+Three tiers: use `make test` during iteration, `make test-ci-lite` for the
+non-Docker blocking-CI subset, and `make test-all` when you want the broader
+local runner (including Docker-backed jobs when Docker is available).
 
 For the recurring repo-wide commands (lint, type checks, docs lint, focused
 pytest, CI-parity runs, PR watching, and Docker bring-up), use the command
@@ -62,6 +67,8 @@ Additional local-only convenience commands:
 | Goal | Command |
 |---|---|
 | Fast backend tests | `make test` |
+| Non-Docker CI subset | `make test-ci-lite` |
+| Full local CI runner | `make test-all` |
 | Coverage view | `make coverage` |
 
 ## CI jobs and local reproduction

@@ -1,4 +1,7 @@
-.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
+.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
+
+LINT_TARGETS := apps/server/vibesensor apps/server/tests tools
+CI_LITE_JOBS := --job backend-quality --job backend-typecheck --job frontend-typecheck --job ui-smoke --job release-smoke --job backend-tests
 
 setup:
 	python3 -m pip install --upgrade pip
@@ -6,11 +9,11 @@ setup:
 	cd apps/ui && npm ci
 
 format:
-	ruff format apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
+	ruff format $(LINT_TARGETS)
 
 lint:
-	ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
-	ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
+	ruff check $(LINT_TARGETS)
+	ruff format --check $(LINT_TARGETS)
 	python3 tools/dev/check_hygiene.py
 	cd apps/server && python3 ../../tools/dev/verify_backend_static_guards.py
 	vibesensor-config-preflight apps/server/config.dev.yaml
@@ -29,6 +32,9 @@ typecheck: typecheck-backend ui-typecheck
 
 test:
 	python3 -m pytest -q apps/server/tests
+
+test-ci-lite:
+	python3 tools/tests/run_ci_parallel.py $(CI_LITE_JOBS)
 
 test-all:
 	python3 tools/tests/run_ci_parallel.py

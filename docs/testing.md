@@ -3,7 +3,8 @@
 ## Key locations
 
 - Server tests live under `apps/server/tests/`.
-- Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for CI-parity runs.
+- Use `make test-ci-lite` for the non-Docker blocking-CI subset.
+- Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner, including Docker-backed jobs when Docker is available.
 - The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`).
 - Python test configuration lives in `apps/server/pyproject.toml`.
 - Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py` and run via `make lint` (or directly with `cd apps/server && python3 ../../tools/dev/verify_backend_static_guards.py`).
@@ -85,13 +86,16 @@ These tests run in standard CI (no special markers). They use minimal synthetic 
 
 ## Running tests
 
-Three tiers: `make test` for fast iteration, `make test-all` for non-containerized CI-parity, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
+Four tiers: `make test` for fast iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
 
 ```bash
 # Fast iteration — backend unit tests
 make test
 
-# Non-containerized CI-parity — all blocking CI jobs in parallel
+# Non-Docker blocking-CI subset
+make test-ci-lite
+
+# Full local runner — includes Docker-backed jobs when Docker is available
 make test-all
 
 # Required pre-finalization gate — real GitHub workflow via act (requires Docker)

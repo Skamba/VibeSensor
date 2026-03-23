@@ -22,6 +22,11 @@ npm run build        # Production build to dist/
 npm run typecheck    # Type check without emitting
 ```
 
+The Vite dev server proxies `/api`, `/ws`, and `/static` to
+`http://127.0.0.1:8000` by default so you can use HMR without manually swapping
+backend URLs. Override that backend target with `VITE_BACKEND_ORIGIN` when your
+server is listening elsewhere.
+
 The built output in `dist/` is copied to `apps/server/vibesensor/static/` for serving by FastAPI.
 Use `python tools/build_ui_static.py` from the repo root to build and sync
 in one step.

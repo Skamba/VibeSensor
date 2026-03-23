@@ -107,19 +107,21 @@ Open http://localhost:8000.
 
 ```bash
 python3 -m pip install -e "./apps/server[dev]"
-cd apps/ui && npm ci
-vibesensor-server --config apps/server/config.dev.yaml
+npm --prefix apps/ui ci
+vibesensor-server --reload --config apps/server/config.dev.yaml
 ```
 
 In another terminal:
 
 ```bash
-cd apps/ui && npm run dev
+npm --prefix apps/ui run dev
 vibesensor-sim --count 5 --server-host 127.0.0.1 --no-auto-server
 ```
 
-Open http://localhost:8000. If you prefer a static UI build instead of the dev
-server, run `python tools/build_ui_static.py` and skip `npm run dev`.
+Open http://localhost:5173 for HMR-backed development. The Vite dev server now
+proxies `/api`, `/ws`, and `/static` to the backend on `:8000`. If you prefer a
+static UI build instead of the dev server, run `python tools/build_ui_static.py`
+and skip `npm --prefix apps/ui run dev`, then open http://localhost:8000.
 
 Use [CONTRIBUTING.md](CONTRIBUTING.md) for the full validation, CI reproduction,
 and workflow guidance.
