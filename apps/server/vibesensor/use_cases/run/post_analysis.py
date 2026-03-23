@@ -20,9 +20,11 @@ from threading import RLock, Thread
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisAttemptResult,
     PostAnalysisExecutionAnalysisFailure,
     PostAnalysisExecutionPersistenceFailure,
     PostAnalysisExecutionResult,
+    PostAnalysisExecutionRetryableFailure,
     PostAnalysisExecutionSuccess,
     PostAnalysisRunner,
     execute_post_analysis,
@@ -32,6 +34,7 @@ from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_s
 LOGGER = logging.getLogger(__name__)
 
 _WARN_QUEUE_DEPTH = 10
+_RETRY_DELAYS_S = (0.5, 1.0, 2.0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -239,12 +242,45 @@ class PostAnalysisWorker:
         db = self._history_db
         if db is None:
             return
-        result = execute_post_analysis(
-            run_id=run_id,
-            db=db,
-            analysis_runner=self._analysis_runner,
+        retry_index = 0
+        while True:
+            defer_retryable_error_storage = retry_index < len(_RETRY_DELAYS_S)
+            result: PostAnalysisAttemptResult = execute_post_analysis(
+                run_id=run_id,
+                db=db,
+                analysis_runner=self._analysis_runner,
+                defer_retryable_error_storage=defer_retryable_error_storage,
+            )
+            if isinstance(result, PostAnalysisExecutionRetryableFailure):
+                delay_s = _RETRY_DELAYS_S[retry_index]
+                self._record_retryable_failure(
+                    result,
+                    attempt=retry_index + 1,
+                    delay_s=delay_s,
+                )
+                retry_index += 1
+                time.sleep(delay_s)
+                continue
+            self._record_execution_result(result)
+            return
+
+    def _record_retryable_failure(
+        self,
+        result: PostAnalysisExecutionRetryableFailure,
+        *,
+        attempt: int,
+        delay_s: float,
+    ) -> None:
+        LOGGER.warning(
+            "Retrying post-analysis for run %s in %.1fs after transient failure (retry %d/%d): %s",
+            result.run_id,
+            delay_s,
+            attempt,
+            len(_RETRY_DELAYS_S),
+            result.error_message,
         )
-        self._record_execution_result(result)
+        for error_msg in result.callback_errors:
+            self._error_cb(error_msg)
 
     def _record_execution_result(
         self,

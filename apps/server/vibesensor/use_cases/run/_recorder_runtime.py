@@ -23,6 +23,8 @@ __all__ = [
 ]
 
 _DB_THREAD_TIMEOUT_S = 10.0
+_DB_TIMEOUT_ERROR = "metrics logger DB call timed out"
+_TICK_FAILURE_PREFIX = "metrics logger tick failed: "
 
 
 def normalize_accel_scale_g_per_lsb(value: object) -> float | None:
@@ -49,19 +51,30 @@ def active_frames_total(registry: ClientTracker) -> int:
     )
 
 
+def _is_tick_error_message(message: str | None) -> bool:
+    return message == _DB_TIMEOUT_ERROR or bool(
+        message and message.startswith(_TICK_FAILURE_PREFIX),
+    )
+
+
 async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
     """Drive the periodic live-sample flush loop for ``RunRecorder``."""
     interval = 1.0 / recorder.metrics_log_hz
     while True:
         try:
-            timestamp_utc = utc_now_iso()
             with recorder._lock:
                 live_start = recorder._live_start_mono_s
-                run_id_for_live = recorder._run_id or "live"
+                snapshot = recorder._session_snapshot()
+            if snapshot is None:
+                if _is_tick_error_message(recorder._persistence.last_write_error):
+                    recorder._persistence.clear_last_write_error()
+                await asyncio.sleep(interval)
+                continue
+            timestamp_utc = utc_now_iso()
             live_rows = await asyncio.wait_for(
                 asyncio.to_thread(
                     recorder._sample_flush.build_sample_records,
-                    run_id=run_id_for_live,
+                    run_id=snapshot.run_id,
                     t_s=max(0.0, time.monotonic() - live_start),
                     timestamp_utc=timestamp_utc,
                 ),
@@ -73,33 +86,33 @@ async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
                     type(live_rows).__name__,
                 )
                 live_rows = []
-            snapshot = recorder._session_snapshot()
-            if snapshot is not None:
-                no_data_timeout = await asyncio.wait_for(
-                    asyncio.to_thread(
-                        recorder._sample_flush.append_records,
-                        snapshot.run_id,
-                        snapshot.start_time_utc,
-                        snapshot.start_mono_s,
-                        prebuilt_rows=live_rows,
-                    ),
-                    timeout=_DB_THREAD_TIMEOUT_S,
+            no_data_timeout = await asyncio.wait_for(
+                asyncio.to_thread(
+                    recorder._sample_flush.append_records,
+                    snapshot.run_id,
+                    snapshot.start_time_utc,
+                    snapshot.start_mono_s,
+                    prebuilt_rows=live_rows,
+                ),
+                timeout=_DB_THREAD_TIMEOUT_S,
+            )
+            if no_data_timeout:
+                logger.info(
+                    "Auto-stopping run %s after %.1fs without new data",
+                    snapshot.run_id,
+                    recorder._lifecycle.no_data_timeout_s,
                 )
-                if no_data_timeout:
-                    logger.info(
-                        "Auto-stopping run %s after %.1fs without new data",
-                        snapshot.run_id,
-                        recorder._lifecycle.no_data_timeout_s,
-                    )
-                    recorder.stop_recording(_only_if_run_id=snapshot.run_id)
+                recorder.stop_recording(_only_if_run_id=snapshot.run_id)
+            if _is_tick_error_message(recorder._persistence.last_write_error):
+                recorder._persistence.clear_last_write_error()
         except TimeoutError:
-            recorder._persistence.set_last_write_error("metrics logger DB call timed out")
+            recorder._persistence.set_last_write_error(_DB_TIMEOUT_ERROR)
             logger.warning(
                 "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
                 _DB_THREAD_TIMEOUT_S,
             )
         except Exception as exc:
-            recorder._persistence.set_last_write_error(f"metrics logger tick failed: {exc}")
+            recorder._persistence.set_last_write_error(f"{_TICK_FAILURE_PREFIX}{exc}")
             logger.warning(
                 "Metrics logger tick failed; will retry next interval.",
                 exc_info=True,

@@ -10,6 +10,7 @@ from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisExecutionMissingMetadata,
     PostAnalysisExecutionNoSamples,
     PostAnalysisExecutionPersistenceFailure,
+    PostAnalysisExecutionRetryableFailure,
     PostAnalysisExecutionSuccess,
     execute_post_analysis,
 )
@@ -185,3 +186,57 @@ def test_execute_post_analysis_reports_persistence_failure() -> None:
         "post-analysis failed for run run-store-fail: db write failed",
     )
     assert stored_errors == [("run-store-fail", "db write failed")]
+
+
+def test_execute_post_analysis_defers_retryable_persistence_failure() -> None:
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise sqlite3.OperationalError("db locked")
+
+        def store_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    result = execute_post_analysis(
+        run_id="run-retry",
+        db=FakeDB(),
+        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+            run_id=run_id,
+            metadata=_run_metadata(run_id),
+            language="en",
+            samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
+            total_sample_count=1,
+            stride=1,
+        ),
+        analysis_runner=lambda **_kwargs: make_persisted_analysis({"run_suitability": []}),
+        defer_retryable_error_storage=True,
+    )
+
+    assert isinstance(result, PostAnalysisExecutionRetryableFailure)
+    assert result.error_message == "db locked"
+    assert result.callback_errors == ("post-analysis failed for run run-retry: db locked",)
+    assert stored_errors == []
+
+
+def test_execute_post_analysis_defers_retryable_load_failure() -> None:
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
+
+        def store_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    result = execute_post_analysis(
+        run_id="run-load-retry",
+        db=FakeDB(),
+        load_run=lambda *, run_id, db: (_ for _ in ()).throw(sqlite3.OperationalError("db busy")),
+        analysis_runner=lambda **_kwargs: make_persisted_analysis({}),
+        defer_retryable_error_storage=True,
+    )
+
+    assert isinstance(result, PostAnalysisExecutionRetryableFailure)
+    assert result.error_message == "db busy"
+    assert stored_errors == []
