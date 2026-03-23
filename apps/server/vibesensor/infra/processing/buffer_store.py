@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Iterator
+from contextlib import contextmanager
 from threading import RLock
 
 import numpy as np
@@ -32,18 +33,18 @@ _MAX_SAMPLES_SINCE_T0 = 2**28
 
 
 class SignalBufferStore:
-    """Own shared client buffer state, lifecycle, and lock-protected snapshots."""
+    """Own shared client buffer state, lifecycle, and per-client locked snapshots."""
 
     def __init__(self, config: ProcessorConfig) -> None:
         self.config = config
         self.buffers: dict[str, ClientBuffer] = {}
+        self._client_locks: dict[str, RLock] = {}
         self.lock = RLock()
         self.stats = ProcessorStats()
 
     def flush_client_buffer(self, client_id: str) -> None:
         """Reset the buffer for *client_id*, discarding all stored samples."""
-        with self.lock:
-            buf = self.buffers.get(client_id)
+        with self.locked_client_buffer(client_id) as buf:
             if buf is None:
                 return
             buf.data[:] = 0.0
@@ -71,8 +72,9 @@ class SignalBufferStore:
         if samples.size == 0:
             return
 
-        with self.lock:
-            buf = self._get_or_create_unlocked(client_id)
+        ingested_samples = 0
+        with self.locked_client_buffer(client_id, create=True) as buf:
+            assert buf is not None
             chunk: FloatArray = np.asarray(samples, dtype=np.float32)
             if self.config.accel_scale_g_per_lsb is not None:
                 chunk = chunk * np.float32(self.config.accel_scale_g_per_lsb)
@@ -127,7 +129,9 @@ class SignalBufferStore:
                 buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
             buf.ingest_generation += 1
             buf.invalidate_caches()
-            self.stats.total_ingested_samples += n
+            ingested_samples = n
+        with self.lock:
+            self.stats.total_ingested_samples += ingested_samples
             self.stats.last_ingest_duration_s = clock() - t_start
 
     def snapshot_for_compute(
@@ -137,8 +141,7 @@ class SignalBufferStore:
         sample_rate_hz: int | None = None,
     ) -> CachedMetricsHit | MetricsSnapshot | None:
         """Return a cached hit or an immutable compute snapshot for *client_id*."""
-        with self.lock:
-            buf = self.buffers.get(client_id)
+        with self.locked_client_buffer(client_id) as buf:
             if buf is None or buf.count == 0:
                 return None
             if sample_rate_hz is not None and sample_rate_hz > 0:
@@ -166,8 +169,7 @@ class SignalBufferStore:
 
     def store_metrics_result(self, result: MetricsComputationResult) -> ClientMetrics:
         """Commit a compute result back into shared state and update stats."""
-        with self.lock:
-            buf = self.buffers.get(result.client_id)
+        with self.locked_client_buffer(result.client_id) as buf:
             if buf is not None and result.ingest_generation >= buf.compute_generation:
                 buf.latest_metrics = result.metrics
                 buf.compute_generation = result.ingest_generation
@@ -180,6 +182,7 @@ class SignalBufferStore:
                     buf.latest_strength_metrics = empty_vibration_strength_metrics()
                 buf.spectrum_generation += 1
                 buf.invalidate_caches()
+        with self.lock:
             self.stats.last_compute_duration_s = result.duration_s
             self.stats.total_compute_calls += 1
         return result.metrics
@@ -189,8 +192,7 @@ class SignalBufferStore:
             self.stats.last_compute_all_duration_s = duration_s
 
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
-        with self.lock:
-            buf = self.buffers.get(client_id)
+        with self.locked_client_buffer(client_id) as buf:
             if buf is None or buf.count == 0:
                 return None
             idx = (buf.write_idx - 1) % buf.capacity
@@ -201,8 +203,7 @@ class SignalBufferStore:
             )
 
     def latest_sample_rate_hz(self, client_id: str) -> int | None:
-        with self.lock:
-            buf = self.buffers.get(client_id)
+        with self.locked_client_buffer(client_id) as buf:
             if buf is None:
                 return None
             rate = int(buf.sample_rate_hz or 0)
@@ -210,25 +211,23 @@ class SignalBufferStore:
 
     def latest_metrics(self, client_id: str) -> ClientMetrics:
         """Return the most recent computed metrics for *client_id*."""
-        with self.lock:
-            buf = self.buffers.get(client_id)
+        with self.locked_client_buffer(client_id) as buf:
             if buf is None:
                 return {}
             return buf.latest_metrics
 
     def all_latest_metrics(self, client_ids: list[str]) -> dict[str, ClientMetrics]:
-        """Return latest metrics for all requested clients (lock once)."""
-        with self.lock:
+        """Return latest metrics for all requested clients."""
+        with self.locked_client_buffers(client_ids) as buffers:
             result: dict[str, ClientMetrics] = {}
             for cid in client_ids:
-                buf = self.buffers.get(cid)
+                buf = buffers.get(cid)
                 if buf is not None and buf.latest_metrics:
                     result[cid] = buf.latest_metrics
             return result
 
     def debug_request(self, client_id: str) -> DebugSpectrumRequest:
-        with self.lock:
-            buf = self.buffers.get(client_id)
+        with self.locked_client_buffer(client_id) as buf:
             if buf is None:
                 return DebugSpectrumRequest(
                     client_id=client_id,
@@ -257,8 +256,7 @@ class SignalBufferStore:
         *,
         n_samples: int,
     ) -> RawSamplesPayload | RawSamplesErrorPayload:
-        with self.lock:
-            buf = self.buffers.get(client_id)
+        with self.locked_client_buffer(client_id) as buf:
             if buf is None or buf.count == 0:
                 return {"error": "no data", "count": 0}
             sr = buf.sample_rate_hz or self.config.sample_rate_hz
@@ -281,10 +279,10 @@ class SignalBufferStore:
     ) -> list[str]:
         """Return subset of *client_ids* that received data within *max_age_s*."""
         now = time.monotonic()
-        with self.lock:
+        with self.locked_client_buffers(client_ids) as buffers:
             result: list[str] = []
             for client_id in client_ids:
-                buf = self.buffers.get(client_id)
+                buf = buffers.get(client_id)
                 if buf is None or buf.last_ingest_mono_s <= 0:
                     continue
                 if (now - buf.last_ingest_mono_s) <= max_age_s:
@@ -296,8 +294,20 @@ class SignalBufferStore:
             stale_ids = [
                 client_id for client_id in self.buffers if client_id not in keep_client_ids
             ]
+            stale_locks: list[RLock] = []
             for client_id in stale_ids:
-                self.buffers.pop(client_id, None)
+                client_lock = self._client_locks.get(client_id)
+                if client_lock is None:
+                    continue
+                client_lock.acquire()
+                stale_locks.append(client_lock)
+            try:
+                for client_id in stale_ids:
+                    self.buffers.pop(client_id, None)
+                    self._client_locks.pop(client_id, None)
+            finally:
+                for client_lock in reversed(stale_locks):
+                    client_lock.release()
 
     def intake_stats(self) -> IntakeStatsPayload:
         with self.lock:
@@ -315,7 +325,63 @@ class SignalBufferStore:
             data: FloatArray = np.zeros((3, self.config.max_samples), dtype=np.float32)
             buf = ClientBuffer(data=data, capacity=self.config.max_samples)
             self.buffers[client_id] = buf
+            self._client_locks[client_id] = RLock()
         return buf
+
+    def _client_lock_unlocked(self, client_id: str) -> RLock:
+        client_lock = self._client_locks.get(client_id)
+        if client_lock is None:
+            client_lock = RLock()
+            self._client_locks[client_id] = client_lock
+        return client_lock
+
+    @contextmanager
+    def locked_client_buffer(
+        self,
+        client_id: str,
+        *,
+        create: bool = False,
+    ) -> Iterator[ClientBuffer | None]:
+        """Yield a single client buffer while holding only that client's lock.
+
+        Lock acquisition always follows ``self.lock`` → per-client lock so
+        callers that take multiple client locks share a consistent order.
+        """
+        client_lock: RLock | None = None
+        buf: ClientBuffer | None = None
+        with self.lock:
+            if create:
+                buf = self._get_or_create_unlocked(client_id)
+            else:
+                buf = self.buffers.get(client_id)
+            if buf is not None:
+                client_lock = self._client_lock_unlocked(client_id)
+                client_lock.acquire()
+        try:
+            yield buf
+        finally:
+            if client_lock is not None:
+                client_lock.release()
+
+    @contextmanager
+    def locked_client_buffers(self, client_ids: Iterable[str]) -> Iterator[dict[str, ClientBuffer]]:
+        """Yield the requested existing client buffers while holding their locks."""
+        locked_buffers: dict[str, ClientBuffer] = {}
+        acquired_locks: list[RLock] = []
+        with self.lock:
+            for client_id in dict.fromkeys(client_ids):
+                buf = self.buffers.get(client_id)
+                if buf is None:
+                    continue
+                client_lock = self._client_lock_unlocked(client_id)
+                client_lock.acquire()
+                acquired_locks.append(client_lock)
+                locked_buffers[client_id] = buf
+        try:
+            yield locked_buffers
+        finally:
+            for client_lock in reversed(acquired_locks):
+                client_lock.release()
 
     def _resize_buffer_unlocked(self, buf: ClientBuffer, new_capacity: int) -> None:
         new_capacity = max(1, int(new_capacity))

@@ -17,7 +17,7 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
 from vibesensor.vibration_strength import (
     compute_vibration_strength_db,
-    noise_floor_amp_p20_g,
+    percentile,
 )
 
 
@@ -84,7 +84,7 @@ class TestDoubleBinRemoval:
             dtype=np.float32,
         )
 
-        correct_floor = noise_floor_amp_p20_g(combined_spectrum_amp_g=[float(v) for v in amps])
+        correct_floor = percentile(sorted(float(v) for v in amps), 0.20)
         actual_floor = noise_floor(amps)
 
         # After fix: both should agree exactly

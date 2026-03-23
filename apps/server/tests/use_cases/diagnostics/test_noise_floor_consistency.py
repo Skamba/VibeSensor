@@ -1,8 +1,4 @@
-"""Regression tests: live processing and core lib noise floor must agree.
-
-Fixes GitHub issue #297 — duplicate noise floor computation using
-different algorithms (numpy percentile vs core-lib pure-Python percentile).
-"""
+"""Regression tests for the live processing noise-floor helper."""
 
 from __future__ import annotations
 
@@ -10,7 +6,7 @@ import numpy as np
 import pytest
 
 from vibesensor.infra.processing.fft import noise_floor
-from vibesensor.vibration_strength import noise_floor_amp_p20_g
+from vibesensor.vibration_strength import percentile
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -18,12 +14,11 @@ from vibesensor.vibration_strength import noise_floor_amp_p20_g
 
 
 def _core_noise_floor_from_array(arr: np.ndarray) -> float:
-    """Replicate the band/finite filtering that _noise_floor does, then call
-    the core lib — used as the expected-value oracle.
+    """Replicate the live analysis-band filtering and P20 computation.
 
-    For a single non-negative finite value, returns that value directly;
-    ``noise_floor_amp_p20_g`` would treat it as DC-only and return 0.0,
-    but ``fft.noise_floor`` returns the value itself (no minimum to strip).
+    ``fft.noise_floor`` operates on an already-selected analysis band, so it
+    computes the 20th percentile of the provided non-negative amplitudes
+    directly without stripping an assumed DC bin.
     """
     if arr.size == 0:
         return 0.0
@@ -34,12 +29,8 @@ def _core_noise_floor_from_array(arr: np.ndarray) -> float:
     if not non_neg:
         return 0.0
     if len(non_neg) == 1:
-        # fft.noise_floor returns the single element directly rather than
-        # delegating to noise_floor_amp_p20_g (which returns 0.0 for n=1).
         return non_neg[0]
-    return noise_floor_amp_p20_g(
-        combined_spectrum_amp_g=non_neg,
-    )
+    return percentile(non_neg, 0.20)
 
 
 # ---------------------------------------------------------------------------
@@ -51,9 +42,7 @@ _SIZES = [2, 3, 5, 10, 20, 50, 100, 256, 512, 1024]
 
 @pytest.mark.parametrize("n", _SIZES, ids=[f"n={n}" for n in _SIZES])
 def test_live_matches_core_random(n: int) -> None:
-    """noise_floor must return the same value as the core lib
-    noise_floor_amp_p20_g for random spectra of varying length.
-    """
+    """noise_floor must match the direct analysis-band P20 oracle."""
     rng = np.random.default_rng(seed=42 + n)
     amps = rng.random(n).astype(np.float32) * 0.05  # realistic g range
 
