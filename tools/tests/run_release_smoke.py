@@ -28,12 +28,20 @@ def _resolve_repo_path(repo_root: Path, raw_path: str) -> Path:
 def _build_server_wheel(repo_root: Path) -> Path:
     dist_dir = repo_root / "apps" / "server" / "dist"
     shutil.rmtree(dist_dir, ignore_errors=True)
-    python_cmd = sys.executable
-    _run(
-        [python_cmd, "-m", "pip", "install", "--upgrade", "pip", "build"],
-        cwd=repo_root,
-    )
-    _run([python_cmd, "-m", "build", "--wheel", "apps/server/"], cwd=repo_root)
+    with tempfile.TemporaryDirectory(
+        prefix="vibesensor-build-wheel-venv-"
+    ) as venv_text:
+        venv_dir = Path(venv_text)
+        venv.EnvBuilder(with_pip=True).create(venv_dir)
+        build_python = _venv_python(venv_dir)
+        _run(
+            [str(build_python), "-m", "pip", "install", "--upgrade", "pip", "build"],
+            cwd=repo_root,
+        )
+        _run(
+            [str(build_python), "-m", "build", "--wheel", "apps/server/"],
+            cwd=repo_root,
+        )
     wheels = sorted(dist_dir.glob("*.whl"))
     if not wheels:
         raise RuntimeError(f"No wheel produced in {dist_dir}")
