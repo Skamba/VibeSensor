@@ -28,7 +28,13 @@ from vibesensor.shared.types.payload_types import ClientMetrics
 
 LOGGER = logging.getLogger(__name__)
 
-__all__ = ["ClientRecord", "ClientRegistry", "ClientSnapshot", "DataUpdateResult"]
+__all__ = [
+    "ClientRecord",
+    "ClientRecordSnapshot",
+    "ClientRegistry",
+    "ClientSnapshot",
+    "DataUpdateResult",
+]
 
 
 def _resolve_now_wall(now: float | None) -> float:
@@ -95,6 +101,65 @@ class ClientRecord:
         if len(self._seen_seqs) > window_size:
             cutoff = self._seen_seqs_max - window_size + 1
             self._seen_seqs = {s for s in self._seen_seqs if s >= cutoff}
+
+
+@dataclass(frozen=True, slots=True)
+class ClientRecordSnapshot:
+    """Immutable point-in-time view returned by :meth:`ClientRegistry.get`."""
+
+    client_id: str
+    name: str
+    firmware_version: str = ""
+    sample_rate_hz: int = 0
+    frame_samples: int = 0
+    last_seen: float = 0.0
+    last_seen_mono: float = 0.0
+    location_code: str = ""
+    data_addr: tuple[str, int] | None = None
+    control_addr: tuple[str, int] | None = None
+    frames_total: int = 0
+    frames_dropped: int = 0
+    queue_overflow_drops: int = 0
+    server_queue_drops: int = 0
+    parse_errors: int = 0
+    last_seq: int | None = None
+    last_ack_cmd_seq: int | None = None
+    last_ack_status: int | None = None
+    reset_count: int = 0
+    last_reset_time: float | None = None
+    last_t0_us: int | None = None
+    timing_jitter_us_ema: float = 0.0
+    timing_drift_us_total: float = 0.0
+    duplicates_received: int = 0
+
+
+def _snapshot_record(record: ClientRecord) -> ClientRecordSnapshot:
+    return ClientRecordSnapshot(
+        client_id=record.client_id,
+        name=record.name,
+        firmware_version=record.firmware_version,
+        sample_rate_hz=record.sample_rate_hz,
+        frame_samples=record.frame_samples,
+        last_seen=record.last_seen,
+        last_seen_mono=record.last_seen_mono,
+        location_code=record.location_code,
+        data_addr=record.data_addr,
+        control_addr=record.control_addr,
+        frames_total=record.frames_total,
+        frames_dropped=record.frames_dropped,
+        queue_overflow_drops=record.queue_overflow_drops,
+        server_queue_drops=record.server_queue_drops,
+        parse_errors=record.parse_errors,
+        last_seq=record.last_seq,
+        last_ack_cmd_seq=record.last_ack_cmd_seq,
+        last_ack_status=record.last_ack_status,
+        reset_count=record.reset_count,
+        last_reset_time=record.last_reset_time,
+        last_t0_us=record.last_t0_us,
+        timing_jitter_us_ema=record.timing_jitter_us_ema,
+        timing_drift_us_total=record.timing_drift_us_total,
+        duplicates_received=record.duplicates_received,
+    )
 
 
 class ClientRegistry:
@@ -289,13 +354,17 @@ class ClientRegistry:
         had_name = self._metadata.discard_name(normalized)
         return had_client or had_name
 
-    def get(self, client_id: str) -> ClientRecord | None:
+    def get(self, client_id: str) -> ClientRecordSnapshot | None:
+        """Return an immutable point-in-time snapshot for *client_id*."""
         try:
             normalized = _normalize_client_id(client_id)
         except ValueError:
             return None
         with self._lock:
-            return self._clients.get(normalized)
+            record = self._clients.get(normalized)
+            if record is None:
+                return None
+            return _snapshot_record(record)
 
     def active_client_ids(
         self,
