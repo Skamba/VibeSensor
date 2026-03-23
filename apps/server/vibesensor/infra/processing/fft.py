@@ -23,7 +23,6 @@ from vibesensor.vibration_strength import (
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
     empty_vibration_strength_metrics,
-    percentile,
 )
 
 AXES: tuple[Axis, Axis, Axis] = ("x", "y", "z")
@@ -123,12 +122,7 @@ def noise_floor(amps: FloatArray) -> float:
     if finite.size == 0:
         return 0.0
     non_neg = finite[finite >= 0.0]
-    if non_neg.size == 0:
-        return 0.0
-    sorted_non_neg = np.sort(non_neg).tolist()
-    if len(sorted_non_neg) == 1:
-        return float(sorted_non_neg[0])
-    return float(percentile(sorted_non_neg, 0.20))
+    return float(np.quantile(non_neg, 0.20)) if non_neg.size else 0.0
 
 
 def float_list(values: FloatArray | list[float]) -> list[float]:

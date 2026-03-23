@@ -108,7 +108,7 @@ def test_compute_filters_short_fft_block_only_once(monkeypatch) -> None:
     result = metrics.compute(snapshot)
 
     assert result.has_fft_data is True
-    assert seen_shapes == [time_window.shape, fft_block.shape]
+    assert seen_shapes == [fft_block.shape]
     assert len(fft_calls) == 1
     np.testing.assert_array_equal(fft_calls[0][0], filtered_fft_block)
     assert fft_calls[0][1] is False

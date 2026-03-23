@@ -21,7 +21,7 @@ combined_spectrum_amp_g
 from __future__ import annotations
 
 from collections.abc import Sequence
-from math import isfinite, log10, sqrt
+from math import isfinite, log10
 from statistics import median as _stdlib_median
 from typing import Final, cast
 
@@ -100,6 +100,22 @@ def percentile(sorted_values: list[float], q: float) -> float:
     return float(np.quantile(sorted_values, max(0.0, min(1.0, float(q)))))
 
 
+def _aligned_float_arrays(
+    left: ArrayLike,
+    right: ArrayLike,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    left_arr = np.asarray(left, dtype=np.float64)
+    right_arr = np.asarray(right, dtype=np.float64)
+    n = min(left_arr.size, right_arr.size)
+    return left_arr[:n], right_arr[:n]
+
+
+def _quantile_or_zero(values: npt.NDArray[np.float64], q: float) -> float:
+    if values.size == 0:
+        return 0.0
+    return float(np.quantile(values, q))
+
+
 def combined_spectrum_amp_g(
     *,
     axis_spectra_amp_g: Sequence[ArrayLike] | npt.NDArray[np.floating],
@@ -159,18 +175,19 @@ def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: ArrayLike) -> float:
     noise floor would raise the floor by orders of magnitude and suppress all
     real vibration findings.
     """
-    if len(combined_spectrum_amp_g) <= 1:
+    band = np.asarray(combined_spectrum_amp_g, dtype=np.float64)
+    if band.size <= 1:
         # Empty spectrum or DC-only: no frequency content to estimate noise from.
         return 0.0
-    band = combined_spectrum_amp_g[1:]
-    finite = sorted(value for value in band if isfinite(value) and value >= 0.0)
-    return percentile(finite, 0.20)
+    finite = band[1:]
+    finite = finite[np.isfinite(finite) & (finite >= 0.0)]
+    return _quantile_or_zero(finite, 0.20)
 
 
 def strength_floor_amp_g(
     *,
-    freq_hz: list[float],
-    combined_spectrum_amp_g: list[float],
+    freq_hz: ArrayLike,
+    combined_spectrum_amp_g: ArrayLike,
     peak_indexes: list[int],
     exclusion_hz: float,
     min_hz: float,
@@ -181,64 +198,63 @@ def strength_floor_amp_g(
     Bins within *exclusion_hz* of any detected peak are excluded.
     Falls back to :func:`noise_floor_amp_p20_g` when all bins are excluded.
     """
-    if not freq_hz or not combined_spectrum_amp_g:
+    freq, amps = _aligned_float_arrays(freq_hz, combined_spectrum_amp_g)
+    if freq.size == 0:
         return 0.0
-    n = min(len(freq_hz), len(combined_spectrum_amp_g))
-    if n <= 0:
-        return 0.0
-    peak_hz = [float(freq_hz[idx]) for idx in peak_indexes if 0 <= idx < n]
-    # Precompute exclusion intervals to avoid repeated abs() per bin.
-    _excl = [(c - exclusion_hz, c + exclusion_hz) for c in peak_hz]
-    _isfinite = isfinite  # local-bind
-    selected: list[float] = []
-    for idx in range(n):
-        hz = float(freq_hz[idx])
-        if hz < min_hz or hz > max_hz:
-            continue
-        if any(lo <= hz <= hi for lo, hi in _excl):
-            continue
-        amp = float(combined_spectrum_amp_g[idx])
-        if amp >= 0.0 and _isfinite(amp):
-            selected.append(amp)
-    if not selected:
+    in_range = (freq >= min_hz) & (freq <= max_hz)
+    valid_amp = np.isfinite(amps) & (amps >= 0.0)
+    selected_mask = in_range & valid_amp
+    peak_idx = [idx for idx in peak_indexes if 0 <= idx < freq.size]
+    if peak_idx:
+        peak_hz = freq[np.asarray(peak_idx, dtype=np.intp)]
+        if peak_hz.size:
+            selected_mask &= ~np.any(
+                np.abs(freq[:, None] - peak_hz[None, :]) <= exclusion_hz,
+                axis=1,
+            )
+    selected = amps[selected_mask]
+    if selected.size == 0:
         # All bins were within peak exclusion zones.  Compute P20 of all
         # qualifying in-range bins instead of delegating to
         # noise_floor_amp_p20_g, which unconditionally skips index 0
         # (assuming DC content at 0 Hz) — an assumption that breaks when
         # the caller has already stripped the DC bin from the spectrum.
-        all_qualifying = sorted(
-            float(combined_spectrum_amp_g[i])
-            for i in range(n)
-            if min_hz <= float(freq_hz[i]) <= max_hz
-            and isfinite(float(combined_spectrum_amp_g[i]))
-            and float(combined_spectrum_amp_g[i]) >= 0.0
-        )
-        return percentile(all_qualifying, 0.20) if all_qualifying else 0.0
-    return median(selected)
+        return _quantile_or_zero(amps[in_range & valid_amp], 0.20)
+    return float(np.median(selected))
 
 
 def peak_band_rms_amp_g(
     *,
-    freq_hz: list[float],
-    combined_spectrum_amp_g: list[float],
+    freq_hz: ArrayLike,
+    combined_spectrum_amp_g: ArrayLike,
     center_idx: int,
     bandwidth_hz: float,
 ) -> float:
     """Return the RMS amplitude in g of bins within *bandwidth_hz* of *center_idx*."""
-    n = min(len(freq_hz), len(combined_spectrum_amp_g))
-    if not (0 <= center_idx < n):
+    freq, amps = _aligned_float_arrays(freq_hz, combined_spectrum_amp_g)
+    if not (0 <= center_idx < freq.size):
         return 0.0
-    center_hz = float(freq_hz[center_idx])
-    sq_sum = 0.0
-    count = 0
-    for idx in range(n):
-        if abs(float(freq_hz[idx]) - center_hz) <= bandwidth_hz:
-            amp = float(combined_spectrum_amp_g[idx])
-            sq_sum += amp * amp
-            count += 1
-    if count <= 0:
+    center_hz = float(freq[center_idx])
+    band = amps[np.abs(freq - center_hz) <= bandwidth_hz]
+    if band.size == 0:
         return 0.0
-    return sqrt(sq_sum / count)
+    return float(np.sqrt(np.mean(np.square(band, dtype=np.float64))))
+
+
+def _local_maxima_indexes(values: npt.NDArray[np.float64], threshold: float) -> list[int]:
+    maxima: list[int] = []
+    if values.size > 2:
+        interior = values[1:-1]
+        mask = (interior >= threshold) & (interior >= values[2:])
+        if interior.size > 1:
+            mask[1:] &= interior[1:] > values[1:-2]
+        maxima.extend((np.flatnonzero(mask) + 1).tolist())
+    if values.size > 1:
+        last_val = float(values[-1])
+        if last_val >= threshold and last_val > float(values[-2]):
+            maxima.append(values.size - 1)
+    maxima.sort(key=lambda idx: float(values[idx]), reverse=True)
+    return maxima
 
 
 def vibration_strength_db_scalar(
@@ -281,48 +297,30 @@ def compute_vibration_strength_db(
     Returns a dict with keys: ``vibration_strength_db``, ``peak_amp_g``,
     ``noise_floor_amp_g``, ``strength_bucket``, ``top_peaks``.
     """
-    n = min(len(freq_hz), len(combined_spectrum_amp_g_values))
+    freq_arr = np.asarray(freq_hz, dtype=np.float64)
+    combined_arr = np.asarray(combined_spectrum_amp_g_values, dtype=np.float64)
+    n = min(freq_arr.size, combined_arr.size)
     if n <= 0:
         return empty_vibration_strength_metrics()
 
-    freq = [float(v) for v in freq_hz[:n]]
-    combined = [
-        max(0.0, v) if isfinite(v := float(val)) else 0.0
-        for val in combined_spectrum_amp_g_values[:n]
-    ]
+    freq = freq_arr[:n]
+    combined = np.where(np.isfinite(combined_arr[:n]), np.maximum(combined_arr[:n], 0.0), 0.0)
     floor_p20 = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
     threshold = max(
         floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO,
         floor_p20 + STRENGTH_EPSILON_MIN_G,
     )
 
-    local_maxima: list[int] = []
-    for idx in range(1, n - 1):
-        value = combined[idx]
-        if value < threshold:
-            continue
-        # For the first non-DC bin (idx == 1), skip the left-neighbour check:
-        # combined[0] may be the DC gravitational component (~1 g on embedded
-        # hardware) which would prevent any legitimate low-frequency peak from
-        # qualifying via the normal strict-left-neighbour condition.
-        left_ok = (idx == 1) or (value > combined[idx - 1])
-        if left_ok and value >= combined[idx + 1]:
-            local_maxima.append(idx)
-    # Boundary check: last bin can be a peak if it exceeds its left neighbor.
-    if n > 1:
-        last_val = combined[n - 1]
-        if last_val >= threshold and last_val > combined[n - 2]:
-            local_maxima.append(n - 1)
-    local_maxima.sort(key=combined.__getitem__, reverse=True)
-    peak_indexes = local_maxima[: max(1, top_n)]
+    local_maxima = _local_maxima_indexes(combined, threshold)
+    peak_indexes = [int(idx) for idx in local_maxima[: max(1, top_n)]]
 
     floor_strength = strength_floor_amp_g(
         freq_hz=freq,
         combined_spectrum_amp_g=combined,
         peak_indexes=peak_indexes,
         exclusion_hz=peak_separation_hz,
-        min_hz=freq[0] if freq else 0.0,
-        max_hz=freq[-1] if freq else 0.0,
+        min_hz=float(freq[0]) if freq.size else 0.0,
+        max_hz=float(freq[-1]) if freq.size else 0.0,
     )
 
     candidates: list[StrengthPeak] = []
