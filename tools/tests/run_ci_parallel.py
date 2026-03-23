@@ -9,6 +9,7 @@ below to match.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import shlex
 import subprocess
@@ -20,6 +21,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "ci_local"
+UI_DIR = ROOT / "apps" / "ui"
+UI_NODE_MODULES = UI_DIR / "node_modules"
+UI_LOCK_FILE = UI_DIR / "package-lock.json"
+UI_LOCK_HASH_FILE = UI_DIR / ".npm-ci-lock.sha256"
 PRINT_LOCK = threading.Lock()
 RESULT_LOCK = threading.Lock()
 
@@ -49,6 +54,37 @@ def _emit(line: str) -> None:
 
 def _format_cmd(cmd: list[str]) -> str:
     return shlex.join(cmd)
+
+
+def _ui_lock_hash() -> str:
+    # Keep this hash rule aligned with tools/build_ui_static.py.
+    return hashlib.sha256(UI_LOCK_FILE.read_bytes()).hexdigest()
+
+
+def _ui_lock_hash_is_current() -> bool:
+    if not UI_LOCK_HASH_FILE.exists():
+        return False
+    return UI_LOCK_HASH_FILE.read_text(encoding="utf-8").strip() == _ui_lock_hash()
+
+
+def _mark_ui_lock_hash_current() -> None:
+    UI_LOCK_HASH_FILE.write_text(f"{_ui_lock_hash()}\n", encoding="utf-8")
+
+
+def _should_run_ui_npm_ci(skip_npm_ci: bool) -> bool:
+    return not skip_npm_ci and (
+        not UI_NODE_MODULES.exists() or not _ui_lock_hash_is_current()
+    )
+
+
+def _shared_ui_workspace_would_race(
+    selected_jobs: list[str], *, skip_bootstrap: bool, skip_npm_ci: bool
+) -> bool:
+    if not skip_bootstrap or "release-smoke" not in selected_jobs:
+        return False
+    if "frontend-typecheck" not in selected_jobs and "ui-smoke" not in selected_jobs:
+        return False
+    return _should_run_ui_npm_ci(skip_npm_ci)
 
 
 def _run_step(step: Step, log_file) -> int:
@@ -107,7 +143,12 @@ def _run_job(name: str, steps: list[Step], results: dict[str, JobResult]) -> Non
         )
 
 
-def _bootstrap_steps(python_cmd: str, run_npm_ci: bool) -> list[Step]:
+def _bootstrap_steps(
+    python_cmd: str,
+    run_npm_ci: bool,
+    *,
+    include_platformio: bool,
+) -> list[Step]:
     steps = [
         Step(
             "python deps: pip upgrade",
@@ -118,6 +159,13 @@ def _bootstrap_steps(python_cmd: str, run_npm_ci: bool) -> list[Step]:
             [python_cmd, "-m", "pip", "install", "-e", "./apps/server[dev]"],
         ),
     ]
+    if include_platformio:
+        steps.append(
+            Step(
+                "python deps: platformio",
+                [python_cmd, "-m", "pip", "install", "platformio>=6,<7"],
+            )
+        )
     if run_npm_ci:
         steps.append(Step("ui deps: npm ci", ["npm", "ci"], cwd=ROOT / "apps" / "ui"))
     return steps
@@ -126,45 +174,43 @@ def _bootstrap_steps(python_cmd: str, run_npm_ci: bool) -> list[Step]:
 def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
     return {
         "backend-quality": [
-            Step("lint + quality checks", ["make", "lint"]),
+            Step("Backend quality checks", ["make", "lint"]),
         ],
         "backend-typecheck": [
-            Step("mypy", ["make", "typecheck-backend"]),
+            Step(
+                "Mypy backend enforced coverage",
+                [python_cmd, "-m", "mypy", "--config-file", "pyproject.toml"],
+                cwd=ROOT / "apps" / "server",
+                env={"MYPYPATH": "."},
+            ),
         ],
         "frontend-typecheck": [
-            Step("ui contract sync + typecheck", ["make", "ui-typecheck"]),
+            Step(
+                "UI contract sync check",
+                ["npm", "run", "check:contracts"],
+                cwd=ROOT / "apps" / "ui",
+            ),
+            Step("UI typecheck", ["npm", "run", "typecheck"], cwd=ROOT / "apps" / "ui"),
         ],
         "ui-smoke": [
             Step(
-                "playwright install chromium",
+                "Install Playwright Chromium",
                 ["npx", "playwright", "install", "chromium"],
                 cwd=ROOT / "apps" / "ui",
             ),
-            Step("ui smoke", ["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui"),
+            Step(
+                "UI smoke tests", ["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui"
+            ),
         ],
         "release-smoke": [
             Step(
-                "release smoke",
-                [python_cmd, "tools/tests/run_release_smoke.py", "--skip-npm-ci"],
+                "Release smoke validation",
+                [python_cmd, "tools/tests/run_release_smoke.py"],
             ),
         ],
         "firmware-native-tests": [
             Step(
-                "platformio core version",
-                [
-                    python_cmd,
-                    "-c",
-                    (
-                        "import re, subprocess, sys; "
-                        "proc = subprocess.run(['pio', '--version'], capture_output=True, text=True); "
-                        "output = (proc.stdout or '') + (proc.stderr or ''); "
-                        "sys.stdout.write(output); "
-                        "sys.exit(0 if proc.returncode == 0 and re.search(r'\\bversion\\s+6\\.', output) else 1)"
-                    ),
-                ],
-            ),
-            Step(
-                "firmware protocol fixture check",
+                "Verify firmware protocol fixtures",
                 [
                     python_cmd,
                     "tools/firmware/generate_protocol_contract_fixtures.py",
@@ -172,14 +218,14 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 ],
             ),
             Step(
-                "firmware native tests",
+                "Firmware native tests",
                 ["pio", "test", "-e", "native"],
                 cwd=ROOT / "firmware" / "esp",
             ),
         ],
         "backend-tests": [
             Step(
-                "backend tests",
+                "Backend tests",
                 [
                     python_cmd,
                     "-m",
@@ -192,7 +238,7 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
         ],
         "e2e": [
             Step(
-                "docker-backed e2e suite",
+                "Docker-backed e2e suite (skip already-owned checks)",
                 [
                     python_cmd,
                     "tools/tests/run_e2e_parallel.py",
@@ -219,6 +265,8 @@ def _run_bootstrap(steps: list[Step]) -> int:
                     f"[bootstrap] fail at '{step.label}' (exit {rc}) after {elapsed:.1f}s; log: {bootstrap_log}"
                 )
                 return rc
+            if step.label == "ui deps: npm ci":
+                _mark_ui_lock_hash_current()
             _emit(f"[bootstrap] ok '{step.label}' in {elapsed:.1f}s")
     _emit("[bootstrap] success")
     return 0
@@ -261,16 +309,6 @@ def main() -> int:
     python_cmd = sys.executable
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
-    run_npm_ci = (
-        not args.skip_npm_ci and not (ROOT / "apps" / "ui" / "node_modules").exists()
-    )
-    bootstrap_steps = (
-        [] if args.skip_bootstrap else _bootstrap_steps(python_cmd, run_npm_ci)
-    )
-    bootstrap_rc = _run_bootstrap(bootstrap_steps)
-    if bootstrap_rc != 0:
-        return bootstrap_rc
-
     all_jobs = _job_steps(python_cmd)
     selected_jobs = (
         args.job
@@ -286,6 +324,33 @@ def main() -> int:
             "e2e",
         ]
     )
+
+    if _shared_ui_workspace_would_race(
+        selected_jobs,
+        skip_bootstrap=args.skip_bootstrap,
+        skip_npm_ci=args.skip_npm_ci,
+    ):
+        _emit(
+            "[ci-local] refusing to run shared UI jobs with --skip-bootstrap: "
+            "release-smoke would trigger npm ci inside apps/ui while other UI jobs "
+            "use the same workspace. Re-run without --skip-bootstrap, or refresh "
+            "apps/ui/.npm-ci-lock.sha256 before using --skip-bootstrap."
+        )
+        return 2
+
+    run_npm_ci = _should_run_ui_npm_ci(args.skip_npm_ci)
+    bootstrap_steps = (
+        []
+        if args.skip_bootstrap
+        else _bootstrap_steps(
+            python_cmd,
+            run_npm_ci,
+            include_platformio="firmware-native-tests" in selected_jobs,
+        )
+    )
+    bootstrap_rc = _run_bootstrap(bootstrap_steps)
+    if bootstrap_rc != 0:
+        return bootstrap_rc
 
     started = time.monotonic()
     results: dict[str, JobResult] = {}

@@ -84,9 +84,20 @@ Each component has its own README with setup instructions and details.
 
 See [docs/README.md](docs/README.md) for the complete documentation index.
 
+## Prerequisites
+
+- Python `3.11.x` for the native backend, local tooling, and simulator (`.python-version`)
+- Node `22.x` plus `npm` for the UI build and dev server (`.nvmrc`)
+- Docker plus Docker Compose for the Docker quick-start and Docker dev mode
+- PlatformIO `6.x` only when you are working on firmware
+
+Run `make doctor` after cloning to validate the pinned toolchain and see which
+workflow paths are available on your machine. Run bare `make` to list the
+supported repo commands.
+
 ## Quick Start
 
-### Docker (fastest)
+### Docker (quick product check)
 
 ```bash
 git clone https://github.com/Skamba/VibeSensor.git
@@ -103,7 +114,22 @@ vibesensor-sim --count 5 --server-host 127.0.0.1
 
 Open http://localhost:8000.
 
-### Native Python
+If you want source-mounted hot-reload instead of a production-style container
+build, use the Docker dev mode below.
+
+### Docker dev mode (source-mounted hot reload)
+
+```bash
+git clone https://github.com/Skamba/VibeSensor.git
+cd VibeSensor
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+Open http://127.0.0.1:5173 for the Vite dev server with HMR. The backend keeps
+running on http://127.0.0.1:8000 with `vibesensor-server --reload`, so Python
+changes hot-reload without rebuilding the image.
+
+### Native Python + Vite (recommended for backend or UI iteration)
 
 ```bash
 python3 -m pip install -e "./apps/server[dev]"
@@ -198,6 +224,9 @@ Full field layout: [docs/protocol.md](docs/protocol.md).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full validation workflow
 (lint, type checking, test suites, and CI job reproduction).
+
+Run bare `make` to see the repo command menu, and use `make doctor` before your
+first bootstrap if you want a quick prerequisite check.
 
 Tests are organized in feature-based subdirectories under `apps/server/tests/`
 mirroring source modules. See [docs/testing.md](docs/testing.md) for the full
