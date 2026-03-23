@@ -18,6 +18,8 @@ from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
+_MIN_POST_ANALYSIS_DURATION_S = 1.0
+
 
 def build_post_analysis_summary(
     *,
@@ -50,6 +52,22 @@ def build_post_analysis_summary(
     }
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
 
+    sample_rate_hz = _post_analysis_sample_rate_hz(metadata)
+    if sample_rate_hz is not None and total_sample_count < max(
+        1, int(sample_rate_hz * _MIN_POST_ANALYSIS_DURATION_S)
+    ):
+        short_run_check = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_RUN_DURATION",
+            state="warn",
+        )
+        explanation = tr(language, "SUITABILITY_RUN_DURATION_WARNING")
+        _append_run_suitability_warning(
+            summary_payload=summary_payload,
+            check_key=short_run_check.check_key,
+            state=short_run_check.state,
+            explanation=explanation,
+        )
+
     if stride > 1:
         stride_check = SuitabilityCheck(
             check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
@@ -61,16 +79,47 @@ def build_post_analysis_summary(
             "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
             stride=str(stride),
         )
-        run_suitability = summary_payload.get("run_suitability")
-        if not isinstance(run_suitability, list):
-            run_suitability = []
-            summary_payload["run_suitability"] = run_suitability
-        warning_payload: RunSuitabilityCheck = {
-            "check_key": stride_check.check_key,
-            "check": stride_check.check_key,
-            "state": stride_check.state,
-            "explanation": explanation,
-        }
-        run_suitability.append(warning_payload)
+        _append_run_suitability_warning(
+            summary_payload=summary_payload,
+            check_key=stride_check.check_key,
+            state=stride_check.state,
+            explanation=explanation,
+        )
 
     return persisted_analysis_from_summary(summary_payload)
+
+
+def _append_run_suitability_warning(
+    *,
+    summary_payload: object,
+    check_key: str,
+    state: str,
+    explanation: str,
+) -> None:
+    summary_payload_dict = cast(dict[str, object], summary_payload)
+    run_suitability = summary_payload_dict.get("run_suitability")
+    if not isinstance(run_suitability, list):
+        run_suitability_list: list[RunSuitabilityCheck] = []
+        summary_payload_dict["run_suitability"] = run_suitability_list
+        run_suitability = run_suitability_list
+    else:
+        run_suitability = cast(list[RunSuitabilityCheck], run_suitability)
+    warning_payload: RunSuitabilityCheck = {
+        "check_key": check_key,
+        "check": check_key,
+        "state": state,
+        "explanation": explanation,
+    }
+    run_suitability.append(warning_payload)
+
+
+def _post_analysis_sample_rate_hz(metadata: RunMetadata) -> int | None:
+    raw_sample_rate_hz = metadata.raw_sample_rate_hz
+    if raw_sample_rate_hz is not None and raw_sample_rate_hz > 0:
+        return raw_sample_rate_hz
+    extra_sample_rate_hz = metadata.extras.get("sample_rate_hz")
+    if isinstance(extra_sample_rate_hz, int) and extra_sample_rate_hz > 0:
+        return extra_sample_rate_hz
+    if isinstance(extra_sample_rate_hz, float) and extra_sample_rate_hz > 0:
+        return int(extra_sample_rate_hz)
+    return None
