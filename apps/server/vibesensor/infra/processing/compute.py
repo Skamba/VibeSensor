@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import math
 import time
+from collections import OrderedDict
 from threading import RLock
 
 import numpy as np
@@ -41,13 +42,14 @@ class SignalMetricsComputer:
         self._config = config
         self.fft_window: FloatArray = np.hanning(config.fft_n).astype(np.float32)
         self.fft_scale = float(2.0 / max(1.0, float(np.sum(self.fft_window))))
-        self.fft_cache: dict[int, tuple[FloatArray, IntIndexArray]] = {}
+        self.fft_cache: OrderedDict[int, tuple[FloatArray, IntIndexArray]] = OrderedDict()
         self.fft_cache_lock = RLock()
 
     def fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
         with self.fft_cache_lock:
             cached = self.fft_cache.get(sample_rate_hz)
             if cached is not None:
+                self.fft_cache.move_to_end(sample_rate_hz)
                 return cached
             if sample_rate_hz <= 0:
                 LOGGER.warning(
@@ -64,8 +66,7 @@ class SignalMetricsComputer:
             valid_idx = np.flatnonzero(valid)
             self.fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
             if len(self.fft_cache) > _FFT_CACHE_MAXSIZE:
-                oldest = next(iter(self.fft_cache))
-                del self.fft_cache[oldest]
+                self.fft_cache.popitem(last=False)
             return freq_slice, valid_idx
 
     def compute_fft_spectrum(
@@ -86,9 +87,24 @@ class SignalMetricsComputer:
             spike_filter_enabled=spike_filter_enabled,
         )
 
+    def _filtered_windows(self, snapshot: MetricsSnapshot) -> tuple[FloatArray, FloatArray | None]:
+        fft_block = snapshot.fft_block
+        if fft_block is None:
+            return medfilt3(snapshot.time_window), None
+
+        # The time window and FFT block are always overlapping suffixes from the
+        # same immutable snapshot. Filter the larger window once, then reuse the
+        # matching tail view for the smaller consumer.
+        if snapshot.time_window.shape[1] >= fft_block.shape[1]:
+            filtered_source = medfilt3(snapshot.time_window)
+            return filtered_source, filtered_source[:, -fft_block.shape[1] :]
+
+        filtered_source = medfilt3(fft_block)
+        return filtered_source[:, -snapshot.time_window.shape[1] :], filtered_source
+
     def compute(self, snapshot: MetricsSnapshot) -> MetricsComputationResult:
         t0 = time.monotonic()
-        time_window = medfilt3(snapshot.time_window)
+        time_window, fft_input = self._filtered_windows(snapshot)
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
         metrics: ClientMetrics = {}
@@ -120,13 +136,8 @@ class SignalMetricsComputer:
 
         spectrum_by_axis: SpectrumByAxis = {}
         strength_metrics_dict = empty_vibration_strength_metrics()
-        has_fft_data = snapshot.fft_block is not None
-        if has_fft_data and snapshot.fft_block is not None:
-            fft_input = (
-                time_window[:, -snapshot.fft_block.shape[1] :]
-                if time_window.shape[1] >= snapshot.fft_block.shape[1]
-                else medfilt3(snapshot.fft_block)
-            )
+        has_fft_data = fft_input is not None
+        if fft_input is not None:
             fft_result = self.compute_fft_spectrum(
                 fft_input,
                 snapshot.sample_rate_hz,
