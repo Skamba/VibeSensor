@@ -7273,8 +7273,8 @@
         },
         "summary": "Get Analysis Settings"
       },
-      "post": {
-        "operationId": "set_analysis_settings_api_settings_analysis_post",
+      "put": {
+        "operationId": "set_analysis_settings_api_settings_analysis_put",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7365,8 +7365,8 @@
       }
     },
     "/api/settings/cars/active": {
-      "post": {
-        "operationId": "set_active_car_api_settings_cars_active_post",
+      "put": {
+        "operationId": "set_active_car_api_settings_cars_active_put",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7505,8 +7505,8 @@
         },
         "summary": "Get Language"
       },
-      "post": {
-        "operationId": "set_language_api_settings_language_post",
+      "put": {
+        "operationId": "set_language_api_settings_language_put",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7663,8 +7663,8 @@
         },
         "summary": "Get Speed Source"
       },
-      "post": {
-        "operationId": "update_speed_source_api_settings_speed_source_post",
+      "put": {
+        "operationId": "update_speed_source_api_settings_speed_source_put",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7735,8 +7735,8 @@
         },
         "summary": "Get Speed Unit"
       },
-      "post": {
-        "operationId": "set_speed_unit_api_settings_speed_unit_post",
+      "put": {
+        "operationId": "set_speed_unit_api_settings_speed_unit_put",
         "requestBody": {
           "content": {
             "application/json": {

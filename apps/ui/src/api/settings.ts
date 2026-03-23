@@ -29,7 +29,7 @@ export async function getSettingsLanguage(): Promise<LanguagePayload> {
 
 export async function setSettingsLanguage(language: string): Promise<LanguagePayload> {
   return apiJson("/api/settings/language", {
-    method: "POST",
+    method: "PUT",
     headers: JSON_HEADERS,
     body: JSON.stringify({ language }),
   });
@@ -41,7 +41,7 @@ export async function getSettingsSpeedUnit(): Promise<SpeedUnitPayload> {
 
 export async function setSettingsSpeedUnit(speedUnit: string): Promise<SpeedUnitPayload> {
   return apiJson("/api/settings/speed-unit", {
-    method: "POST",
+    method: "PUT",
     headers: JSON_HEADERS,
     body: JSON.stringify({ speed_unit: speedUnit }),
   });
@@ -53,7 +53,7 @@ export async function getAnalysisSettings(): Promise<AnalysisSettingsPayload> {
 
 export async function setAnalysisSettings(payload: AnalysisSettingsRequest): Promise<AnalysisSettingsPayload> {
   return apiJson("/api/settings/analysis", {
-    method: "POST",
+    method: "PUT",
     headers: JSON_HEADERS,
     body: JSON.stringify(payload),
   });
@@ -87,7 +87,7 @@ export async function deleteSettingsCar(carId: string): Promise<CarsPayload> {
 
 export async function setActiveSettingsCar(carId: string): Promise<CarsPayload> {
   return apiJson("/api/settings/cars/active", {
-    method: "POST",
+    method: "PUT",
     headers: JSON_HEADERS,
     body: JSON.stringify({ car_id: carId }),
   });
@@ -99,7 +99,7 @@ export async function getSettingsSpeedSource(): Promise<SpeedSourcePayload> {
 
 export async function updateSettingsSpeedSource(data: SpeedSourceRequest): Promise<SpeedSourcePayload> {
   return apiJson("/api/settings/speed-source", {
-    method: "POST",
+    method: "PUT",
     headers: JSON_HEADERS,
     body: JSON.stringify(data),
   });

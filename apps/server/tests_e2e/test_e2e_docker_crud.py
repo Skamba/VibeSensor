@@ -74,13 +74,13 @@ def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
         api_json(
             base,
             "/api/settings/cars/active",
-            method="POST",
+            method="PUT",
             body={"car_id": "missing-car"},
             expected_status=404,
         )
 
         active_target = created_ids[0]
-        api_json(base, "/api/settings/cars/active", method="POST", body={"car_id": active_target})
+        api_json(base, "/api/settings/cars/active", method="PUT", body={"car_id": active_target})
         api_json(base, f"/api/settings/cars/{active_target}", method="DELETE")
         after_delete = api_json(base, "/api/settings/cars")
         assert after_delete["active_car_id"] != active_target
@@ -111,7 +111,7 @@ def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
             api_json(
                 base,
                 "/api/settings/cars/active",
-                method="POST",
+                method="PUT",
                 body={"car_id": original_active},
                 expected_status=(200, 404),
             )
