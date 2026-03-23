@@ -208,6 +208,49 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     }
 
 
+def test_export_schema_contains_debug_endpoint_response_shapes(
+    schema_dict: dict[str, Any],
+) -> None:
+    spectrum_route = schema_dict["paths"]["/api/debug/spectrum/{client_id}"]["get"]
+    raw_samples_route = schema_dict["paths"]["/api/debug/raw-samples/{client_id}"]["get"]
+    debug_spectrum = schema_dict["components"]["schemas"]["DebugSpectrumPayload"]
+    debug_stats = schema_dict["components"]["schemas"]["DebugSpectrumStatsPayload"]
+    debug_top_bin = schema_dict["components"]["schemas"]["DebugSpectrumTopBinPayload"]
+    raw_samples = schema_dict["components"]["schemas"]["RawSamplesPayload"]
+
+    assert spectrum_route["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/DebugSpectrumPayload",
+    }
+    assert raw_samples_route["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/RawSamplesPayload",
+    }
+    assert {
+        "client_id",
+        "sample_rate_hz",
+        "fft_n",
+        "fft_scale",
+        "window",
+        "raw_stats",
+        "detrended_std_g",
+        "vibration_strength_db",
+        "top_bins_by_amplitude",
+        "strength_peaks",
+    }.issubset(debug_spectrum["required"])
+    assert debug_spectrum["properties"]["raw_stats"] == {
+        "$ref": "#/components/schemas/DebugSpectrumStatsPayload",
+    }
+    assert debug_spectrum["properties"]["top_bins_by_amplitude"]["items"] == {
+        "$ref": "#/components/schemas/DebugSpectrumTopBinPayload",
+    }
+    assert {"mean_g", "std_g", "min_g", "max_g"} == set(debug_stats["required"])
+    assert {"bin", "freq_hz", "combined_amp_g", "x_amp_g", "y_amp_g", "z_amp_g"} == set(
+        debug_top_bin["required"],
+    )
+    assert {"client_id", "sample_rate_hz", "n_samples", "x", "y", "z"} == set(
+        raw_samples["required"],
+    )
+
+
 def test_export_schema_uses_snake_case_settings_contract_fields(
     schema_dict: dict[str, Any],
 ) -> None:

@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import pytest
+from test_support.analysis import run_analysis
 from test_support.persisted_analysis import make_persisted_analysis
+from test_support.report_helpers import report_sample
 
 from vibesensor.adapters.history import (
     ProjectedHistoryExportService,
@@ -94,6 +96,27 @@ def _stored_run(run: dict[str, Any]) -> StoredHistoryRun:
         analysis_started_at=cast(str | None, run.get("analysis_started_at")),
         analysis_completed_at=cast(str | None, run.get("analysis_completed_at")),
     )
+
+
+def _projectable_analysis(**overrides: object) -> dict[str, object]:
+    summary = run_analysis(
+        [
+            report_sample(
+                0,
+                speed_kmh=55.0,
+                dominant_freq_hz=15.0,
+                peak_amp_g=0.12,
+            ),
+            report_sample(
+                1,
+                speed_kmh=65.0,
+                dominant_freq_hz=15.0,
+                peak_amp_g=0.14,
+            ),
+        ],
+    )
+    summary.update(overrides)
+    return cast(dict[str, object], summary)
 
 
 def test_raise_delete_run_error_maps_unknown_reason_to_domain_error() -> None:
@@ -209,9 +232,9 @@ async def test_projected_run_service_projects_persisted_summary_through_domain()
                 run={
                     "run_id": "run-1",
                     "status": "complete",
-                    "analysis": {
-                        "lang": "en",
-                        "findings": [
+                    "analysis": _projectable_analysis(
+                        lang="en",
+                        findings=[
                             {
                                 "finding_id": "F001",
                                 "suspected_source": "wheel/tire",
@@ -221,12 +244,12 @@ async def test_projected_run_service_projects_persisted_summary_through_domain()
                                 "evidence_metrics": {"vibration_strength_db": 21.0},
                             },
                         ],
-                        "top_causes": [],
-                        "test_plan": [],
-                        "run_suitability": [],
-                        "most_likely_origin": {},
-                        "_internal": {"secret": True},
-                    },
+                        top_causes=[],
+                        test_plan=[],
+                        run_suitability=[],
+                        most_likely_origin={},
+                        _internal={"secret": True},
+                    ),
                 },
             ),
         )
@@ -234,7 +257,8 @@ async def test_projected_run_service_projects_persisted_summary_through_domain()
 
     run = await service.get_run("run-1")
 
-    analysis = run["analysis"]
+    analysis = run.analysis
+    assert analysis is not None
     assert analysis["top_causes"][0]["finding_id"] == "F001"
     assert analysis["most_likely_origin"]["suspected_source"] == "wheel/tire"
     assert "_internal" not in analysis
@@ -248,19 +272,19 @@ async def test_projected_run_service_drops_persisted_origin_without_primary_find
                 run={
                     "run_id": "run-1",
                     "status": "complete",
-                    "analysis": {
-                        "lang": "en",
-                        "findings": [],
-                        "top_causes": [],
-                        "test_plan": [],
-                        "run_suitability": [],
-                        "most_likely_origin": {
+                    "analysis": _projectable_analysis(
+                        lang="en",
+                        findings=[],
+                        top_causes=[],
+                        test_plan=[],
+                        run_suitability=[],
+                        most_likely_origin={
                             "location": "rear left",
                             "suspected_source": "wheel/tire",
                             "weak_spatial_separation": True,
                         },
-                        "_internal": {"secret": True},
-                    },
+                        _internal={"secret": True},
+                    ),
                 },
             ),
         )
@@ -268,7 +292,8 @@ async def test_projected_run_service_drops_persisted_origin_without_primary_find
 
     run = await service.get_run("run-1")
 
-    analysis = run["analysis"]
+    analysis = run.analysis
+    assert analysis is not None
     assert analysis["most_likely_origin"] == {}
     assert "_internal" not in analysis
 

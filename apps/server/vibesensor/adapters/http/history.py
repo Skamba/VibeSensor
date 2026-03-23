@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response, StreamingResponse
-from pydantic import TypeAdapter
 
 from vibesensor.adapters.http._helpers import domain_errors_to_http
 from vibesensor.shared.types.api_models import (
@@ -24,8 +23,6 @@ if TYPE_CHECKING:
         HistoryRunServiceProtocol,
     )
 
-_HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
-
 
 def create_history_routes(
     *,
@@ -40,7 +37,7 @@ def create_history_routes(
 
     @router.get("/api/history", response_model=HistoryListResponse)
     async def get_history() -> HistoryListResponse:
-        return HistoryListResponse.model_validate({"runs": await run_service.list_runs()})
+        return HistoryListResponse(runs=await run_service.list_runs())
 
     @router.get(
         "/api/history/{run_id}",
@@ -50,7 +47,7 @@ def create_history_routes(
     )
     async def get_history_run(run_id: str) -> HistoryRunResponse:
         with domain_errors_to_http():
-            return HistoryRunResponse.model_validate(await run_service.get_run(run_id))
+            return await run_service.get_run(run_id)
 
     @router.get(
         "/api/history/{run_id}/insights",
@@ -69,16 +66,12 @@ def create_history_routes(
                 status_code=202,
                 content=analyzing_response.model_dump(),
             )
-        validated = _HISTORY_INSIGHTS_ADAPTER.validate_python(result)
-        return cast(
-            HistoryInsightsResponse,
-            _HISTORY_INSIGHTS_ADAPTER.dump_python(validated, mode="json"),
-        )
+        return result
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
         with domain_errors_to_http():
-            return DeleteHistoryRunResponse.model_validate(await run_service.delete_run(run_id))
+            return await run_service.delete_run(run_id)
 
     # -- report PDF ------------------------------------------------------------
 
