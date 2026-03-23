@@ -56,7 +56,48 @@ def test_report_package_imports_without_analysis() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 2.  Report generation fails clearly when ReportData is missing
+# 2.  Runtime import guard — verify the report package does not pull in
+#     history-layer interpretation helpers at module import time.
+# ---------------------------------------------------------------------------
+
+
+def test_report_package_imports_without_history_interpretation() -> None:
+    """Importing ``vibesensor.adapters.pdf`` must not import report interpretation."""
+    import vibesensor.adapters.pdf as pdf_pkg
+
+    history_helper = "vibesensor.use_cases.history.report_interpretation"
+    pdf_module_names = [f"vibesensor.adapters.pdf.{mod_path.stem}" for mod_path in _REPORT_MODULES]
+    saved_attrs = {
+        mod_path.stem: getattr(pdf_pkg, mod_path.stem, None) for mod_path in _REPORT_MODULES
+    }
+    saved_modules = {name: sys.modules.get(name) for name in [history_helper, *pdf_module_names]}
+
+    try:
+        sys.modules.pop(history_helper, None)
+        for mod_name in pdf_module_names:
+            sys.modules.pop(mod_name, None)
+
+        for mod_name in pdf_module_names:
+            importlib.import_module(mod_name)
+
+        assert history_helper not in sys.modules
+    finally:
+        for name in pdf_module_names:
+            sys.modules.pop(name, None)
+        sys.modules.pop(history_helper, None)
+        for name, module in saved_modules.items():
+            if module is not None:
+                sys.modules[name] = module
+        for attr_name, module in saved_attrs.items():
+            if module is None:
+                if hasattr(pdf_pkg, attr_name):
+                    delattr(pdf_pkg, attr_name)
+            else:
+                setattr(pdf_pkg, attr_name, module)
+
+
+# ---------------------------------------------------------------------------
+# 3.  Report generation fails clearly when ReportData is missing
 # ---------------------------------------------------------------------------
 
 
@@ -72,7 +113,7 @@ def test_build_report_pdf_accepts_report_template_data() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 3.  Report output fidelity — rendered facts match ReportData
+# 4.  Report output fidelity — rendered facts match ReportData
 # ---------------------------------------------------------------------------
 
 

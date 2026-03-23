@@ -37,8 +37,8 @@ from vibesensor.adapters.pdf.report_data import (
     build_report_from_summary,
 )
 from vibesensor.adapters.pdf.report_sections import (
-    build_data_trust_from_summary,
-    build_next_steps_from_summary,
+    build_data_trust,
+    build_next_steps,
 )
 from vibesensor.domain import (
     Finding,
@@ -49,11 +49,8 @@ from vibesensor.report_i18n import human_source, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
-from vibesensor.use_cases.history.report_interpretation import (
-    compute_location_hotspot_rows,
-    filter_active_sensor_intensity,
-)
 from vibesensor.use_cases.history.report_preparation import (
+    PreparedReportFacts,
     PreparedReportInput,
     prepare_report_input,
 )
@@ -65,7 +62,6 @@ __all__ = [
     "ReportMappingContext",
     "build_report_from_summary",
     "build_system_cards",
-    "filter_active_sensor_intensity",
     "humanize_signatures",
     "map_summary",
     "prepare_report_input",
@@ -179,8 +175,11 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     lang = str(normalize_lang(summary.get("lang")))
     report = build_report_from_summary(summary)
     domain_test_run = prepared.domain_test_run
+    report_facts = prepared.report_facts
     if domain_test_run is None:
         raise ValueError("PreparedReportInput must include a domain_test_run for report mapping")
+    if report_facts is None:
+        raise ValueError("PreparedReportInput must include report_facts for report mapping")
 
     def tr(key: str, **kw: object) -> str:
         return str(_tr(lang, key, **kw))
@@ -191,6 +190,7 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
         lang=lang,
         tr=tr,
         test_run=domain_test_run,
+        report_facts=report_facts,
     )
 
 
@@ -214,20 +214,22 @@ def _build_report_template_data(
     lang: str,
     tr: Callable[..., str],
     test_run: TestRun,
+    report_facts: PreparedReportFacts,
 ) -> ReportTemplateData:
     """Map a summary dict into the final report template data structure.
 
     The *report* domain object provides high-level metadata; rendering-
     specific fields are resolved from the full *summary* dict.
     """
-    context = prepare_report_mapping_context(summary, test_run=test_run)
-    raw_sensor_intensity = filter_active_sensor_intensity(
-        summary["sensor_intensity_by_location"],
-        context.sensor_locations_active,
+    context = prepare_report_mapping_context(
+        summary,
+        report_facts=report_facts,
+        test_run=test_run,
     )
+    raw_sensor_intensity = list(report_facts.active_sensor_intensity)
     primary = resolve_primary_report_candidate(
         context=context,
-        sensor_intensity=raw_sensor_intensity,
+        facts=report_facts.primary_candidate_facts,
         tr=tr,
         lang=lang,
     )
@@ -238,17 +240,16 @@ def _build_report_template_data(
         lang,
         tr,
     )
-    next_steps = build_next_steps_from_summary(
-        summary,
-        aggregate=context.domain_aggregate,
+    next_steps = build_next_steps(
+        recommended_actions=report_facts.recommended_actions,
         tier=primary.tier,
         cert_reason=primary.certainty_reason,
         lang=lang,
         tr=tr,
     )
-    data_trust = build_data_trust_from_summary(
-        summary,
-        aggregate=context.domain_aggregate,
+    data_trust = build_data_trust(
+        suitability_checks=report_facts.suitability_checks,
+        warnings=report_facts.warnings,
         lang=lang,
         tr=tr,
     )
@@ -261,7 +262,7 @@ def _build_report_template_data(
     peak_rows = build_peak_rows_from_plots(summary, lang=lang, tr=tr)
     version_marker = build_version_marker()
 
-    hotspot_rows = compute_location_hotspot_rows(raw_sensor_intensity)
+    hotspot_rows = list(report_facts.location_hotspot_rows)
 
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),

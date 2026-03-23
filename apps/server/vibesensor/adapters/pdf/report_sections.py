@@ -2,30 +2,28 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from vibesensor.adapters.pdf.report_data import DataTrustItem, NextStep
-from vibesensor.domain import TestRun
+from vibesensor.domain import RecommendedAction
 from vibesensor.report_i18n import is_i18n_ref, resolve_i18n
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
+from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck, SummaryWarningPayload
 
 __all__ = [
-    "build_data_trust_from_summary",
-    "build_next_steps_from_summary",
+    "build_data_trust",
+    "build_next_steps",
 ]
 
 
-def build_next_steps_from_summary(
-    summary: AnalysisSummary,
+def build_next_steps(
     *,
-    aggregate: TestRun | None,
+    recommended_actions: Sequence[RecommendedAction],
     tier: str,
     cert_reason: str,
     lang: str,
     tr: Callable[..., str],
 ) -> list[NextStep]:
-    """Build next-step actions from a run summary dict."""
+    """Build next-step actions from prepared report facts."""
     if tier == "A":
         return [
             NextStep(action=action, why=cert_reason)
@@ -37,25 +35,24 @@ def build_next_steps_from_summary(
         ]
 
     next_steps: list[NextStep] = []
-    if aggregate is not None and aggregate.recommended_actions:
-        for action in aggregate.recommended_actions:
-            next_steps.append(
-                NextStep(
-                    action=_resolve_step_value(action.instruction, lang=lang, tr=tr),
-                    why=_resolve_optional_step_value(action.rationale, lang=lang, tr=tr),
-                    confirm=_resolve_optional_step_value(
-                        action.confirmation_signal,
-                        lang=lang,
-                        tr=tr,
-                    ),
-                    falsify=_resolve_optional_step_value(
-                        action.falsification_signal,
-                        lang=lang,
-                        tr=tr,
-                    ),
-                    eta=action.estimated_duration,
+    for action in recommended_actions:
+        next_steps.append(
+            NextStep(
+                action=_resolve_step_value(action.instruction, lang=lang, tr=tr),
+                why=_resolve_optional_step_value(action.rationale, lang=lang, tr=tr),
+                confirm=_resolve_optional_step_value(
+                    action.confirmation_signal,
+                    lang=lang,
+                    tr=tr,
                 ),
-            )
+                falsify=_resolve_optional_step_value(
+                    action.falsification_signal,
+                    lang=lang,
+                    tr=tr,
+                ),
+                eta=action.estimated_duration,
+            ),
+        )
     return next_steps
 
 
@@ -79,26 +76,24 @@ def _resolve_optional_step_value(
     return resolved or None
 
 
-def build_data_trust_from_summary(
-    summary: AnalysisSummary,
+def build_data_trust(
     *,
-    aggregate: TestRun | None,
+    suitability_checks: Sequence[RunSuitabilityCheck],
+    warnings: Sequence[SummaryWarningPayload],
     lang: str,
     tr: Callable[..., str],
 ) -> list[DataTrustItem]:
-    """Build the data-trust checklist from run-suitability items."""
+    """Build the data-trust checklist from prepared report facts."""
     data_trust: list[DataTrustItem] = []
-    if aggregate is not None and aggregate.suitability is not None:
-        projected = run_suitability_payload(aggregate.suitability)
-        for proj in projected:
-            data_trust.append(
-                DataTrustItem(
-                    check=_resolve_check_text(proj.get("check_key"), lang=lang, tr=tr),
-                    state=str(proj.get("state") or "warn"),
-                    detail=_resolve_detail_text(proj.get("explanation"), lang=lang, tr=tr),
-                ),
-            )
-    for warning in summary["warnings"]:
+    for proj in suitability_checks:
+        data_trust.append(
+            DataTrustItem(
+                check=_resolve_check_text(proj.get("check_key"), lang=lang, tr=tr),
+                state=str(proj.get("state") or "warn"),
+                detail=_resolve_detail_text(proj.get("explanation"), lang=lang, tr=tr),
+            ),
+        )
+    for warning in warnings:
         data_trust.append(
             DataTrustItem(
                 check=_resolve_detail_text(warning.get("title"), lang=lang, tr=tr) or "",
