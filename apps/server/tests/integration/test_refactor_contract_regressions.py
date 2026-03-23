@@ -1,12 +1,10 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Cross-module refactor-contract regressions.
 
 Validates that the refactored code preserves behaviour while being more
 maintainable than the originals.
 """
 
+from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import patch

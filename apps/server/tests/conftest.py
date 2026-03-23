@@ -9,10 +9,12 @@ sub-directory ``conftest.py`` files exist (which shadow this module in
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, create_autospec
 
 import pytest
 
+from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.adapters.history import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
@@ -24,14 +26,179 @@ from vibesensor.adapters.http.dependencies import (
     TelemetryDeps,
     UpdateDeps,
 )
+from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
+from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.infra.config.settings_store import SettingsStore
+from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
+from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.types.car_config import CarsSnapshot
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
+from vibesensor.use_cases.run import RunRecorder
+from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
+from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
+from vibesensor.use_cases.updates.esp_flash_types import EspFlashStatus
+from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.models import UpdateJobStatus
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
 # ---------------------------------------------------------------------------
+
+
+def _update_manager_mock() -> UpdateManager:
+    manager = create_autospec(UpdateManager, instance=True, spec_set=True)
+    manager.status = UpdateJobStatus()
+    manager.cancel.return_value = False
+    return manager
+
+
+def _esp_flash_manager_mock() -> EspFlashManager:
+    manager = create_autospec(EspFlashManager, instance=True, spec_set=True)
+    manager.status = EspFlashStatus()
+    manager.list_ports = AsyncMock(return_value=[])
+    manager.start.return_value = 1
+    manager.logs_since.return_value = {"from_index": 0, "next_index": 0, "lines": []}
+    manager.cancel.return_value = False
+    manager.history.return_value = []
+    return manager
+
+
+def _run_recorder_mock() -> RunRecorder:
+    recorder = create_autospec(RunRecorder, instance=True, spec_set=True)
+    idle_status = RunRecorderStatusSnapshot(
+        enabled=False,
+        run_id=None,
+        write_error=None,
+        analysis_in_progress=False,
+        samples_written=0,
+        samples_dropped=0,
+        last_completed_run_id=None,
+        last_completed_run_error=None,
+    )
+    recorder.status.return_value = idle_status
+    recorder.start_recording.return_value = idle_status
+    recorder.stop_recording.return_value = idle_status
+    return recorder
+
+
+def _processor_mock() -> SignalProcessor:
+    processor = create_autospec(SignalProcessor, instance=True, spec_set=True)
+    processor.intake_stats.return_value = {
+        "total_ingested_samples": 0,
+        "total_compute_calls": 0,
+        "last_compute_duration_s": 0.0,
+        "last_compute_all_duration_s": 0.0,
+        "last_ingest_duration_s": 0.0,
+    }
+    processor.all_latest_metrics.return_value = {}
+    processor.debug_spectrum.return_value = {
+        "error": "insufficient samples",
+        "count": 0,
+        "fft_n": 0,
+    }
+    processor.raw_samples.return_value = {"error": "no data", "count": 0}
+    return processor
+
+
+def _registry_mock() -> ClientRegistry:
+    registry = create_autospec(ClientRegistry, instance=True, spec_set=True)
+    registry.active_client_ids.return_value = []
+    registry.get.return_value = None
+    registry.remove_client.return_value = False
+    registry.data_loss_snapshot.return_value = {
+        "tracked_clients": 0,
+        "affected_clients": 0,
+        "frames_dropped": 0,
+        "queue_overflow_drops": 0,
+        "server_queue_drops": 0,
+        "parse_errors": 0,
+    }
+    return registry
+
+
+def _control_plane_mock() -> UDPControlPlane:
+    control_plane = create_autospec(UDPControlPlane, instance=True, spec_set=True)
+    control_plane.send_identify.return_value = (False, None)
+    return control_plane
+
+
+def _ws_hub_mock() -> WebSocketHub:
+    ws_hub = create_autospec(WebSocketHub, instance=True, spec_set=True)
+    ws_hub.add = AsyncMock(return_value=None)
+    ws_hub.update_selected_client = AsyncMock(return_value=None)
+    ws_hub.remove = AsyncMock(return_value=None)
+    return ws_hub
+
+
+def _gps_monitor_mock() -> GPSSpeedMonitor:
+    gps_monitor = create_autospec(GPSSpeedMonitor, instance=True, spec_set=True)
+    gps_monitor.status_snapshot.return_value = SpeedSourceStatusSnapshot(
+        gps_enabled=False,
+        connection_state="disconnected",
+        device=None,
+        fix_mode=0,
+        fix_dimension="none",
+        speed_confidence="none",
+        epx_m=None,
+        epy_m=None,
+        epv_m=None,
+        last_update_age_s=None,
+        raw_speed_kmh=None,
+        effective_speed_kmh=None,
+        last_error=None,
+        reconnect_delay_s=None,
+        fallback_active=False,
+        speed_source="manual",
+        stale_timeout_s=8.0,
+    )
+    return gps_monitor
+
+
+def _default_cars_snapshot() -> CarsSnapshot:
+    return CarsSnapshot(
+        cars=[
+            {
+                "id": "car-1",
+                "name": "Test Car",
+                "type": "sedan",
+                "aspects": {"tire_width_mm": 225.0},
+            }
+        ],
+        active_car_id="car-1",
+    )
+
+
+def _settings_store_mock() -> SettingsStore:
+    store = create_autospec(SettingsStore, instance=True, spec_set=True)
+    store.analysis_settings_snapshot.return_value = AnalysisSettingsSnapshot(
+        **AnalysisSettingsSnapshot.DEFAULTS
+    )
+    store.get_cars.return_value = _default_cars_snapshot()
+    store.get_speed_source.return_value = {
+        "speedSource": "manual",
+        "manualSpeedKph": 0.0,
+        "staleTimeoutS": 8.0,
+    }
+    store.get_sensors.return_value = {}
+    store.active_car_snapshot.return_value = None
+    store.add_car.return_value = _default_cars_snapshot()
+    store.update_car.return_value = _default_cars_snapshot()
+    store.delete_car.return_value = _default_cars_snapshot()
+    store.set_active_car.return_value = _default_cars_snapshot()
+    store.update_speed_source.return_value = {
+        "speedSource": "manual",
+        "manualSpeedKph": 0.0,
+        "staleTimeoutS": 8.0,
+    }
+    store.set_language.return_value = "en"
+    store.language = "en"
+    store.set_speed_unit.return_value = "kmh"
+    store.speed_unit = "kmh"
+    return store
 
 
 @dataclass
@@ -43,17 +210,17 @@ class FakeState:
     """
 
     config: object = field(default_factory=MagicMock)
-    registry: object = field(default_factory=MagicMock)
-    processor: object = field(default_factory=MagicMock)
-    control_plane: object = field(default_factory=MagicMock)
+    registry: ClientRegistry = field(default_factory=_registry_mock)
+    processor: SignalProcessor = field(default_factory=_processor_mock)
+    control_plane: UDPControlPlane = field(default_factory=_control_plane_mock)
     worker_pool: object = field(default_factory=MagicMock)
-    ws_hub: object = field(default_factory=MagicMock)
-    gps_monitor: object = field(default_factory=MagicMock)
-    run_recorder: object = field(default_factory=MagicMock)
-    settings_store: object = field(default_factory=MagicMock)
+    ws_hub: WebSocketHub = field(default_factory=_ws_hub_mock)
+    gps_monitor: GPSSpeedMonitor = field(default_factory=_gps_monitor_mock)
+    run_recorder: RunRecorder = field(default_factory=_run_recorder_mock)
+    settings_store: SettingsStore = field(default_factory=_settings_store_mock)
     history_db: object = field(default_factory=MagicMock)
-    update_manager: object = field(default_factory=MagicMock)
-    esp_flash_manager: object = field(default_factory=MagicMock)
+    update_manager: UpdateManager = field(default_factory=_update_manager_mock)
+    esp_flash_manager: EspFlashManager = field(default_factory=_esp_flash_manager_mock)
     processing_loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
     health_state: RuntimeHealthState = field(default_factory=RuntimeHealthState)
     processing_loop: object = field(default_factory=MagicMock)
@@ -132,21 +299,6 @@ class FakeState:
 def fake_state() -> FakeState:
     """Return a fresh ``FakeState`` for each test."""
     state = FakeState()
-    state.processor.intake_stats.return_value = {
-        "total_ingested_samples": 0,
-        "total_compute_calls": 0,
-        "last_compute_duration_s": 0.0,
-        "last_compute_all_duration_s": 0.0,
-        "last_ingest_duration_s": 0.0,
-    }
-    state.registry.data_loss_snapshot.return_value = {
-        "tracked_clients": 0,
-        "affected_clients": 0,
-        "frames_dropped": 0,
-        "queue_overflow_drops": 0,
-        "server_queue_drops": 0,
-        "parse_errors": 0,
-    }
     state.run_recorder.health_snapshot.return_value = {
         "write_error": None,
         "analysis_in_progress": False,

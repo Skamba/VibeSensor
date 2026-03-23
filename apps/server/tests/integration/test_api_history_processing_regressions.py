@@ -1,8 +1,6 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Runtime regressions spanning API, history, and processing boundaries."""
 
+from __future__ import annotations
 
 import re
 from pathlib import Path

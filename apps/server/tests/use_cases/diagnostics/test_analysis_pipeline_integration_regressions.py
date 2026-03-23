@@ -1,11 +1,9 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Analysis pipeline integration regressions.
 
 Each test is tagged with the fix number it validates.
 """
 
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any

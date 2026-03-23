@@ -1,12 +1,10 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Runtime NaN handling and update-manager guard regressions:
 NaN guards, correlation clamp, persist rollback,
 firmware cache streaming, CancelledError re-raise,
  _weighted_percentile direct import, _dir_sha256 separators, _corr_abs_clamped,
  canonical_location edge cases, PDF peak suffix i18n."""
 
+from __future__ import annotations
 
 import asyncio
 import sqlite3

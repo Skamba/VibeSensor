@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Analysis pipeline guard regressions.
 
 Covers:
@@ -11,6 +8,7 @@ Covers:
   5. update/status.py hash_tree survives file deletion mid-scan
 """
 
+from __future__ import annotations
 
 import math
 from pathlib import Path

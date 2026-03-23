@@ -1,8 +1,6 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Analysis pipeline audit – correctness and determinism regressions."""
 
+from __future__ import annotations
 
 from typing import Any
 

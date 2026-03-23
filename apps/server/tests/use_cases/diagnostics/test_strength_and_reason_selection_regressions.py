@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Strength labeling and confidence assessment regressions.
 
 Covers:
@@ -10,6 +7,7 @@ Covers:
   4. Tests for previously-untested helpers
 """
 
+from __future__ import annotations
 
 import pytest
 

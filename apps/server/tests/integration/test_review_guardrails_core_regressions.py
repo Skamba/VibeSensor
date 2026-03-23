@@ -1,11 +1,9 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Cross-cutting review guardrail regressions (core set).
 
 Each test group validates one of the hate-list items to prevent regression.
 """
 
+from __future__ import annotations
 
 import importlib
 import time

@@ -1,12 +1,10 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Cross-cutting multi-domain regressions.
 
 Each test verifies the specific bug fix by reproducing the original failure
 condition and asserting the corrected behavior.
 """
 
+from __future__ import annotations
 
 from datetime import UTC
 from unittest.mock import MagicMock

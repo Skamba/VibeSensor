@@ -1,12 +1,10 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Confidence and scoring regressions:
 - _suppress_engine_aliases filters before slicing (no lost valid findings)
 - Single-sensor confidence no longer triple-penalised
 - Persistent peak negligible cap aligned to 0.40 (matches order cap)
 """
 
+from __future__ import annotations
 
 import pytest
 from test_support.findings import make_finding

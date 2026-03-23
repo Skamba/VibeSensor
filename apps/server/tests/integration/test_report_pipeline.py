@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """End-to-end tests: simulator-style ingestion + PDF report validation.
 
 Test 1 – Realistic multi-sensor ingestion scenario
@@ -420,7 +419,10 @@ class TestPdfReportValidation:
         summary = deepcopy(self.summary)
         summary["test_plan"] = [
             {
-                "what": "Inspect front-left corner under load with road-force balancing and vibration capture.",
+                "what": (
+                    "Inspect front-left corner under load with road-force balancing "
+                    "and vibration capture."
+                ),
                 "why": (
                     "Correlate wheel-order persistence across speed bins and verify repeatability "
                     f"for critical action token STEPEND{i:02d}"
