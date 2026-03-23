@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from statistics import median as _median
-from typing import cast
 
 from vibesensor.domain import (
     Finding as DomainFinding,
@@ -15,7 +14,7 @@ from vibesensor.shared.types.json_types import is_json_object
 
 
 def serialize_findings(findings: tuple[DomainFinding, ...]) -> list[FindingPayload]:
-    return [cast(FindingPayload, finding_payload_from_domain(finding)) for finding in findings]
+    return [finding_payload_from_domain(finding) for finding in findings]
 
 
 def annotate_peaks_with_order_labels(summary: AnalysisSummary) -> None:
