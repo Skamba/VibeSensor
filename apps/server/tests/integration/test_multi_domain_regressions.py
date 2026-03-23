@@ -22,7 +22,7 @@ from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_w
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.statistics import compute_run_timing
-from vibesensor.use_cases.updates.release_fetcher import ReleaseInfo, ServerReleaseFetcher
+from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 
 
 def _make_release_info(version: str) -> ReleaseInfo:

@@ -21,9 +21,11 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
 )
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
+    ensure_analysis_samples,
+)
+from vibesensor.use_cases.diagnostics._view_types import (
     PhaseSpeedBreakdownRowData,
     SpeedBreakdownRowData,
-    ensure_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase

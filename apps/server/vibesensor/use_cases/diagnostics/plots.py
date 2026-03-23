@@ -16,8 +16,12 @@ from vibesensor.use_cases.diagnostics._sample_metrics import (
     _run_noise_baseline_g,
 )
 from vibesensor.use_cases.diagnostics._types import (
-    AmpVsPhaseRowData,
     AnalysisSampleInput,
+    Sample,
+    ensure_analysis_samples,
+)
+from vibesensor.use_cases.diagnostics._view_types import (
+    AmpVsPhaseRowData,
     FreqVsSpeedByFindingSeriesData,
     MatchedAmpVsSpeedSeriesData,
     PhaseBoundaryData,
@@ -25,9 +29,7 @@ from vibesensor.use_cases.diagnostics._types import (
     PhaseSpeedBreakdownRowData,
     PlotDataResultData,
     PlotSeriesBundle,
-    Sample,
     SpeedBreakdownRowData,
-    ensure_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics.peaks.table import (
     annotate_peak_rows_with_order_labels,

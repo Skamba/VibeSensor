@@ -19,7 +19,7 @@ from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.use_cases.history.exports import HistoryExportDownload
 from vibesensor.use_cases.history.reports import HistoryReportPdf
 from vibesensor.use_cases.run import RunRecorder
-from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
+from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 if TYPE_CHECKING:

@@ -37,7 +37,12 @@ class FirmwareRefresher:
         if pinned_tag:
             refresh_args.extend(["--tag", pinned_tag])
         refresh_cmd = (
-            [venv_python, "-m", "vibesensor.use_cases.updates.firmware_cache", *refresh_args]
+            [
+                venv_python,
+                "-m",
+                "vibesensor.use_cases.updates.firmware.firmware_cache",
+                *refresh_args,
+            ]
             if not Path(refresh_exe).is_file()
             else [refresh_exe, *refresh_args]
         )

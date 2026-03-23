@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.use_cases.updates.wifi_diagnostics import parse_wifi_diagnostics
+from vibesensor.use_cases.updates.wifi.wifi_diagnostics import parse_wifi_diagnostics
 
 
 class TestParseWifiDiagnostics:

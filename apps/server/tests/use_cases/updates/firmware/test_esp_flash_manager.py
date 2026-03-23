@@ -11,15 +11,15 @@ from fastapi import HTTPException
 from test_support import response_payload
 
 from vibesensor.adapters.http.updates import create_update_routes
-from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
-from vibesensor.use_cases.updates.esp_flash_types import (
+from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
+from vibesensor.use_cases.updates.firmware.esp_flash_types import (
     FlashCommandRunner,
     SerialPortInfo,
     SerialPortProvider,
 )
-from vibesensor.use_cases.updates.firmware_bundle import validate_bundle
-from vibesensor.use_cases.updates.firmware_cache import FirmwareCache
-from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
+from vibesensor.use_cases.updates.firmware.firmware_bundle import validate_bundle
+from vibesensor.use_cases.updates.firmware.firmware_cache import FirmwareCache
+from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
 
 # ── Constants ──
 

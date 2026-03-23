@@ -27,9 +27,9 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     Sample,
-    SpectrogramResultData,
     ensure_analysis_samples,
 )
+from vibesensor.use_cases.diagnostics._view_types import SpectrogramResultData
 from vibesensor.vibration_strength import percentile
 
 # ---------------------------------------------------------------------------

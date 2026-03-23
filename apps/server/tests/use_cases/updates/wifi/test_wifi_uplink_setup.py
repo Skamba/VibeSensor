@@ -7,8 +7,8 @@ from _update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
-from vibesensor.use_cases.updates.wifi_config import build_default_wifi_config
-from vibesensor.use_cases.updates.wifi_uplink_setup import (
+from vibesensor.use_cases.updates.wifi.wifi_config import build_default_wifi_config
+from vibesensor.use_cases.updates.wifi.wifi_uplink_setup import (
     UpdateUplinkProvisioner,
     ssid_security_modes,
 )

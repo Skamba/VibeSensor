@@ -9,8 +9,8 @@ from _update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
-from vibesensor.use_cases.updates.wifi_config import build_default_wifi_config
-from vibesensor.use_cases.updates.wifi_readiness import UpdateWifiReadiness
+from vibesensor.use_cases.updates.wifi.wifi_config import build_default_wifi_config
+from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
 
 
 def _build_readiness(
@@ -50,7 +50,7 @@ async def test_bring_uplink_up_retries_ssid_not_found_then_succeeds(
 
     runner.run = run_with_retry
     sleep = AsyncMock(return_value=None)
-    monkeypatch.setattr("vibesensor.use_cases.updates.wifi_readiness.asyncio.sleep", sleep)
+    monkeypatch.setattr("vibesensor.use_cases.updates.wifi.wifi_readiness.asyncio.sleep", sleep)
 
     assert await readiness.bring_uplink_up("TestNet")
     assert connect_calls["count"] == 2

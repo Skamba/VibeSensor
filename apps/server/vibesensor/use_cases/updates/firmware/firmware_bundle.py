@@ -10,7 +10,7 @@ import zipfile
 from pathlib import Path
 
 from vibesensor.shared.types.json_types import JsonObject, is_json_array, is_json_object
-from vibesensor.use_cases.updates.firmware_types import (
+from vibesensor.use_cases.updates.firmware.firmware_types import (
     BundleMeta,
     FlashManifest,
     ManifestEnvironment,
