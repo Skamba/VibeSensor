@@ -87,6 +87,8 @@ class SuitabilityCheck:
             if stride:
                 return _i18n_ref("SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING", stride=stride)
             return ""
+        if self.check_key == "SUITABILITY_CHECK_RUN_DURATION":
+            return _i18n_ref("SUITABILITY_RUN_DURATION_WARNING")
         return ""
 
 
