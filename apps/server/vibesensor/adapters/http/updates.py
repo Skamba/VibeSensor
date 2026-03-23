@@ -43,7 +43,7 @@ def create_update_routes(
 
     @router.post("/api/update/start", response_model=UpdateStartResponse)
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
-        with domain_errors_to_http(catch_value_error=400, catch_runtime_error=409):
+        with domain_errors_to_http():
             update_manager.start(req.ssid, req.password)
         return UpdateStartResponse(status="started", ssid=req.ssid)
 
@@ -60,7 +60,7 @@ def create_update_routes(
 
     @router.post("/api/esp-flash/start", response_model=EspFlashStartResponse)
     async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
-        with domain_errors_to_http(catch_value_error=400, catch_runtime_error=409):
+        with domain_errors_to_http():
             job_id = esp_flash_manager.start(port=req.port, auto_detect=req.auto_detect)
         return EspFlashStartResponse(status="started", job_id=job_id)
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
 
-from vibesensor.adapters.http._helpers import normalize_client_id_or_400
+from vibesensor.adapters.http._helpers import domain_errors_to_http, normalize_client_id_or_400
 from vibesensor.adapters.http.models import (
     ClientLocationsResponse,
     ClientsResponse,
@@ -83,10 +83,8 @@ def create_client_routes(
             if label is None:
                 raise HTTPException(status_code=400, detail="Unknown location_code")
 
-            try:
+            with domain_errors_to_http(catch_value_error=409):
                 registry.set_location(normalized_client_id, code)
-            except ValueError as exc:
-                raise HTTPException(status_code=409, detail=str(exc)) from exc
 
             registry.set_name(normalized_client_id, label)
         else:

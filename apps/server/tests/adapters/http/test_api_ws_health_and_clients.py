@@ -154,6 +154,30 @@ async def test_identify_client_normalizes_client_id_before_registry_and_control_
 
 
 @pytest.mark.asyncio
+async def test_set_client_location_maps_registry_conflict_to_409() -> None:
+    from vibesensor.adapters.http.clients import create_client_routes
+
+    class ConflictRegistry:
+        def get(self, _client_id: str) -> object:
+            return object()
+
+        def set_location(self, _client_id: str, _location: str) -> None:
+            raise ValueError("Location 'front_left_wheel' already assigned to other sensor")
+
+    registry = ConflictRegistry()
+    control_plane = MagicMock()
+    settings_store = MagicMock()
+    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
+    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
+
+    with pytest.raises(HTTPException) as exc_info:
+        request = type("Req", (), {"location_code": "front_left_wheel"})()
+        await endpoint("aa:bb:cc:dd:ee:ff", request)
+    assert exc_info.value.status_code == 409
+    assert "already assigned" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
 async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     tmp_path: Path,
     monkeypatch,

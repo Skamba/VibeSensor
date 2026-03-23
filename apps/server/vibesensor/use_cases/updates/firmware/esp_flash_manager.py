@@ -10,6 +10,7 @@ import sys
 import time
 from pathlib import Path
 
+from vibesensor.shared.exceptions import UpdateError
 from vibesensor.use_cases.updates.firmware.esp_flash_runner import SubprocessFlashCommandRunner
 from vibesensor.use_cases.updates.firmware.esp_flash_types import (
     EspFlashHistoryEntry,
@@ -86,7 +87,7 @@ class EspFlashManager:
 
     def start(self, *, port: str | None, auto_detect: bool) -> int:
         if self._task is not None and not self._task.done():
-            raise RuntimeError("Flash already in progress")
+            raise UpdateError("Flash already in progress", status="conflict")
         self._job_counter += 1
         self._logs = []
         self._cancel_event.clear()
