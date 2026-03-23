@@ -44,7 +44,7 @@ def test_e2e_docker_engine_order_fault() -> None:
         api_json(
             base_url,
             "/api/settings/speed-source",
-            method="POST",
+            method="PUT",
             body={"speed_source": "manual", "manual_speed_kph": 100.0},
         )
         start = api_json(base_url, "/api/recording/start", method="POST")
