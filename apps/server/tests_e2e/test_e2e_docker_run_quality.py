@@ -11,6 +11,7 @@ from tests_e2e._docker_edge_helpers import (
     _assert_no_placeholders,
     _cleanup_clients,
     _cleanup_run,
+    _run_status_context,
     _simulate,
     _wait_complete,
 )
@@ -69,7 +70,9 @@ def test_reduced_sensor_count_run_still_reports(e2e_env: dict[str, str]) -> None
         _simulate(e2e_env, duration=3.0, count=2, names="front-left,rear-left")
         api_json(base, "/api/recording/stop", method="POST")
         run = _wait_complete(base, run_id)
-        assert run["status"] == "complete", f"reduced-sensor run status: {run['status']}"
+        assert run["status"] == "complete", (
+            f"reduced-sensor run not complete: {_run_status_context(run)}"
+        )
 
         insights = api_json(base, f"/api/history/{run_id}/insights")
         assert insights.get("findings"), "reduced-sensor run produced no findings"
