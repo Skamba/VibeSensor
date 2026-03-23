@@ -127,14 +127,29 @@ class SignalSource(Protocol):
 class TrackedClient(Protocol):
     """Minimal active-client view consumed by recording helpers."""
 
-    client_id: str
-    name: str
-    firmware_version: str
-    sample_rate_hz: int
-    location_code: str
-    frames_total: int
-    frames_dropped: int
-    queue_overflow_drops: int
+    @property
+    def client_id(self) -> str: ...
+
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def firmware_version(self) -> str: ...
+
+    @property
+    def sample_rate_hz(self) -> int: ...
+
+    @property
+    def location_code(self) -> str: ...
+
+    @property
+    def frames_total(self) -> int: ...
+
+    @property
+    def frames_dropped(self) -> int: ...
+
+    @property
+    def queue_overflow_drops(self) -> int: ...
 
 
 class ClientTracker(Protocol):
