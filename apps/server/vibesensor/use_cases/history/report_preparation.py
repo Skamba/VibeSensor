@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.analysis_summary import analysis_summary_with_warnings
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.boundaries.analysis_summary import analysis_summary_with_warnings
 from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.helpers import safe_filename
@@ -88,6 +88,7 @@ def prepare_report_input(
         language=language,
         cache_key=cache_key,
     )
+
 
 def prepare_persisted_report_input(
     analysis: PersistedAnalysis,
