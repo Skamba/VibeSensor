@@ -130,6 +130,14 @@ class TestFloatList:
         result = float_list([1, 2, 3])
         assert result == [1.0, 2.0, 3.0]
 
+    def test_ndarray_non_finite_values_become_zero_without_mutating_input(self) -> None:
+        arr = np.array([1.0, np.nan, np.inf, -np.inf], dtype=np.float32)
+        result = float_list(arr)
+        assert result == [1.0, 0.0, 0.0, 0.0]
+        assert np.isnan(arr[1])
+        assert np.isposinf(arr[2])
+        assert np.isneginf(arr[3])
+
 
 class TestTopPeaks:
     """Tests for spectral peak detection."""

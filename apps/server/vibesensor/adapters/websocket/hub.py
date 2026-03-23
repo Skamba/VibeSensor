@@ -176,30 +176,44 @@ class WebSocketHub:
         _dumps = json.dumps  # local-bind for hot-path
         try:
             raw_payload = payload_builder(selected_client_id)
-            cleaned, had_non_finite = sanitize_for_json(raw_payload)
-            if had_non_finite:
-                LOGGER.warning(
-                    "WebSocket payload for client %r contained NaN/Inf values; replaced with null.",
-                    selected_client_id,
+            payload_for_debug: object = raw_payload
+            try:
+                text = _dumps(
+                    raw_payload,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                )
+                had_non_finite = False
+            except (TypeError, ValueError, OverflowError):
+                payload_for_debug, had_non_finite = sanitize_for_json(raw_payload)
+                if had_non_finite:
+                    LOGGER.warning(
+                        "WebSocket payload for client %r contained NaN/Inf values; "
+                        "replaced with null.",
+                        selected_client_id,
+                    )
+                text = _dumps(
+                    payload_for_debug,
+                    separators=(",", ":"),
+                    allow_nan=False,
                 )
             if debug_info is not None:
                 # Inspect the pre-serialised dict; avoids a redundant json.loads().
                 has_freq = False
                 try:
-                    spectra = cleaned.get("spectra") if isinstance(cleaned, dict) else None
+                    spectra = (
+                        payload_for_debug.get("spectra")
+                        if isinstance(payload_for_debug, dict)
+                        else None
+                    )
                     if isinstance(spectra, dict):
                         for _cid, cs in (spectra.get("clients") or {}).items():
                             if isinstance(cs, dict) and cs.get("freq"):
                                 has_freq = True
                                 break
-                except (AttributeError, TypeError, KeyError):
+                except (AttributeError, TypeError, ValueError, KeyError):
                     LOGGER.debug("Debug freq-inspection failed", exc_info=True)
                 debug_info[selected_client_id] = has_freq
-            text = _dumps(
-                cleaned,
-                separators=(",", ":"),
-                allow_nan=False,
-            )
         # TypeError/ValueError/OverflowError: json.dumps serialization failures
         # KeyError/AttributeError: payload dict construction missing keys/attrs
         # RuntimeError: callback/builder failures propagated from user code

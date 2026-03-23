@@ -106,20 +106,25 @@ def test_close_uses_lock_and_clears_connection(tmp_path: Path) -> None:
     events: list[str] = []
 
     class RecordingLock:
+        def __init__(self, label: str) -> None:
+            self._label = label
+
         def __enter__(self) -> None:
-            events.append("enter")
+            events.append(f"{self._label}-enter")
             return None
 
         def __exit__(self, exc_type, exc, tb) -> bool:
-            events.append("exit")
+            events.append(f"{self._label}-exit")
             return False
 
-    db._lock = RecordingLock()  # type: ignore[assignment]
+    db._lock = RecordingLock("write")  # type: ignore[assignment]
+    db._read_lock = RecordingLock("read")  # type: ignore[assignment]
 
     db.close()
 
-    assert events == ["enter", "exit"]
+    assert events == ["write-enter", "write-exit", "read-enter", "read-exit"]
     assert db._conn is None
+    assert db._read_conn is None
 
 
 def test_schema_version_ancient_no_migration_fails_fast(tmp_path: Path) -> None:

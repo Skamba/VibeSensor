@@ -114,7 +114,17 @@ def float_list(values: FloatArray | list[float]) -> list[float]:
     """
     _isfinite = math.isfinite
     if isinstance(values, np.ndarray):
-        return [float(v) if _isfinite(v) else 0.0 for v in values.ravel().tolist()]
+        return (
+            np.nan_to_num(
+                values,
+                copy=True,
+                nan=0.0,
+                posinf=0.0,
+                neginf=0.0,
+            )
+            .ravel()
+            .tolist()
+        )
     return [float(v) if _isfinite(v) else 0.0 for v in values]
 
 
