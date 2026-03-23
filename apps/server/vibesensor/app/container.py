@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
@@ -63,9 +64,16 @@ def resolve_accel_scale_g_per_lsb(config: AppConfig) -> float:
     return config.processing.accel_scale_g_per_lsb or ADXL345_SCALE_G_PER_LSB
 
 
-def create_history_db(config: AppConfig) -> HistoryDB:
+def create_history_db(
+    config: AppConfig,
+    *,
+    corruption_reporter: Callable[[str], None] | None = None,
+) -> HistoryDB:
     """Create and initialise the HistoryDB, recovering any stale runs."""
-    history_db = HistoryDB(config.logging.history_db_path)
+    history_db = HistoryDB(
+        config.logging.history_db_path,
+        corruption_reporter=corruption_reporter,
+    )
     try:
         recovered_runs = history_db.recover_stale_recording_runs()
     except Exception:
@@ -80,9 +88,13 @@ def create_history_db(config: AppConfig) -> HistoryDB:
 def build_runtime(config: AppConfig) -> AppRuntime:
     """Construct all services and return the app runtime bundle."""
     accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
+    health_state = RuntimeHealthState()
 
     # DB + settings
-    history_db = create_history_db(config)
+    history_db = create_history_db(
+        config,
+        corruption_reporter=health_state.mark_db_corrupted,
+    )
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
     settings_store = SettingsStore(
         db=history_db,
@@ -130,7 +142,6 @@ def build_runtime(config: AppConfig) -> AppRuntime:
 
     # processing loop
     processing_loop_state = ProcessingLoopState()
-    health_state = RuntimeHealthState()
     processing_loop = ProcessingLoop(
         state=processing_loop_state,
         fft_update_hz=FFT_UPDATE_HZ,

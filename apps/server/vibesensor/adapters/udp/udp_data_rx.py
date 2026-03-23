@@ -92,7 +92,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             data, addr = await self._queue.get()
             try:
                 self._process_datagram(data, addr)
-            except (ValueError, KeyError, OSError):
+            except Exception:
                 LOGGER.warning(
                     "Unexpected error processing UDP datagram from %s; "
                     "dropping packet to keep consumer alive.",

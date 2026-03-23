@@ -274,6 +274,33 @@ def test_startup_quick_check_logs_corruption(
     db.close()
 
 
+def test_startup_quick_check_reports_corruption_via_callback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reported: list[str] = []
+    db = HistoryDB(
+        tmp_path / "history.db",
+        corruption_reporter=reported.append,
+    )
+
+    class _FakeCursor:
+        def execute(self, sql: str) -> None:
+            assert sql == "PRAGMA quick_check"
+
+        def fetchall(self) -> list[tuple[str]]:
+            return [("row 7 missing from index",)]
+
+    @contextmanager
+    def _fake_cursor(*, commit: bool = True):
+        yield _FakeCursor()
+
+    monkeypatch.setattr(db, "_cursor", _fake_cursor)
+    db._run_startup_quick_check()
+    assert reported == ["row 7 missing from index"]
+    db.close()
+
+
 def test_delete_run_cascades_samples(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-del", "2026-01-01T00:00:00Z", _metadata("run-del"))

@@ -12,6 +12,8 @@ class RuntimeHealthState:
     startup_error: str | None = None
     background_task_failures: dict[str, str] = field(default_factory=dict)
     startup_warnings: list[str] = field(default_factory=list)
+    db_corruption_detected: bool = False
+    db_corruption_details: str | None = None
 
     def set_phase(self, phase: str) -> None:
         self.startup_phase = phase
@@ -31,3 +33,10 @@ class RuntimeHealthState:
 
     def record_task_failure(self, task_name: str, error: str) -> None:
         self.background_task_failures[task_name] = error
+
+    def clear_task_failure(self, task_name: str) -> None:
+        self.background_task_failures.pop(task_name, None)
+
+    def mark_db_corrupted(self, details: str) -> None:
+        self.db_corruption_detected = True
+        self.db_corruption_details = details
