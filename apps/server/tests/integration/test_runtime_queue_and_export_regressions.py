@@ -1,8 +1,6 @@
-# ruff: noqa: E402, E501
-from __future__ import annotations
-
 """Runtime queue/history tracking and export-filter regressions."""
 
+from __future__ import annotations
 
 from pathlib import Path
 

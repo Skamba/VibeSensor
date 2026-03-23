@@ -1,8 +1,6 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Report pipeline audit – rendering and data consistency regressions."""
 
+from __future__ import annotations
 
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.presentation import (

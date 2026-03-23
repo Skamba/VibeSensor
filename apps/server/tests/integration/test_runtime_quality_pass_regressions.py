@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Runtime quality-pass regressions (issues 20–24).
 
 Covers:
@@ -11,6 +8,7 @@ Covers:
   24 – schema v2→v3 migration (history_db)
 """
 
+from __future__ import annotations
 
 import sqlite3
 from math import pi

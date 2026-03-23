@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """I/O cleanup, time-source, and report-cli guard regressions.
 
 Covers:
@@ -11,6 +8,8 @@ Covers:
   5. report_cli.main() – PDF generation errors return 1 instead of traceback
   6. report_mapping_pipeline date_str – includes UTC suffix
 """
+
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any

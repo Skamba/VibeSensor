@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Order analysis and numeric input guard regressions.
 
 Covers:
@@ -11,6 +8,7 @@ Covers:
   5. domain_models._as_float_or_none — NaN handling
 """
 
+from __future__ import annotations
 
 import pytest
 

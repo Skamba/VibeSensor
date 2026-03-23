@@ -1,8 +1,6 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Coverage gap audit – untested critical code paths."""
 
+from __future__ import annotations
 
 import math
 from typing import Any

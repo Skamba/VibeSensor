@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Tests for analysis persistence, versioned schema, and reuse by summary/report endpoints."""
 
 from __future__ import annotations

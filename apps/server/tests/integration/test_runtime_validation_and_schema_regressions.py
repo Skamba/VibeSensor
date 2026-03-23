@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Runtime validation and schema-recovery regressions.
 
 Covers:
@@ -14,6 +11,7 @@ Covers:
   8. json_utils.py — depth limit prevents infinite recursion
 """
 
+from __future__ import annotations
 
 import contextlib
 import math

@@ -1,11 +1,9 @@
-# ruff: noqa: E402, E501
-from __future__ import annotations
-
 """Report/export resilience regressions: EspFlashManager CancelledError, PDF diagram
 dead fallback removal, PDF diagram ValueError, dead _owns_pool removal,
 report_cli error handling, WebSocketHub circuit breaker,
 """
 
+from __future__ import annotations
 
 import asyncio
 import contextlib

@@ -1,12 +1,10 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Runtime fallback and error-guard regressions.
 
 Covers strength_floor_amp_g fallback, wheel_focus_from_location,
 store_analysis_error guard, and i18n formatting.
 """
 
+from __future__ import annotations
 
 import json
 import math
