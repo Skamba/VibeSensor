@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 import math
 import time
-from dataclasses import dataclass
-from typing import NamedTuple
+from dataclasses import dataclass, replace
+from typing import Any, NamedTuple, cast
 
 from vibesensor.shared.constants import KMH_TO_MPS, NUMERIC_TYPES
 from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
@@ -28,13 +28,114 @@ class SpeedResolution(NamedTuple):
     source: ResolvedSpeedSource
 
 
-@dataclass
-class SpeedResolutionPolicy:
-    """Encapsulates override priority, stale fallback, and source selection."""
+@dataclass(frozen=True, slots=True)
+class SpeedResolutionPolicySnapshot:
+    """Immutable policy snapshot captured by concurrent GPS readers."""
 
     override_speed_mps: float | None = None
     manual_source_selected: bool = True
     stale_timeout_s: float = DEFAULT_STALE_TIMEOUT_S
+
+
+class SpeedResolutionPolicy:
+    """Owns the immutable policy snapshot swapped atomically by writers."""
+
+    def __init__(
+        self,
+        override_speed_mps: float | None = None,
+        manual_source_selected: bool = True,
+        stale_timeout_s: float = DEFAULT_STALE_TIMEOUT_S,
+    ) -> None:
+        self._snapshot = SpeedResolutionPolicySnapshot(
+            override_speed_mps=self._normalized_override_speed_mps(override_speed_mps),
+            manual_source_selected=bool(manual_source_selected),
+            stale_timeout_s=self._normalized_stale_timeout(stale_timeout_s),
+        )
+
+    def snapshot(self) -> SpeedResolutionPolicySnapshot:
+        return self._snapshot
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, SpeedResolutionPolicy) and self._snapshot == other._snapshot
+
+    def _replace_snapshot(self, **changes: object) -> None:
+        self._snapshot = replace(self._snapshot, **cast(dict[str, Any], changes))
+
+    @property
+    def override_speed_mps(self) -> float | None:
+        return self._snapshot.override_speed_mps
+
+    @override_speed_mps.setter
+    def override_speed_mps(self, value: float | None) -> None:
+        self._replace_snapshot(override_speed_mps=self._normalized_override_speed_mps(value))
+
+    @property
+    def manual_source_selected(self) -> bool:
+        return self._snapshot.manual_source_selected
+
+    @manual_source_selected.setter
+    def manual_source_selected(self, value: bool) -> None:
+        self._replace_snapshot(manual_source_selected=bool(value))
+
+    @property
+    def stale_timeout_s(self) -> float:
+        return self._snapshot.stale_timeout_s
+
+    @stale_timeout_s.setter
+    def stale_timeout_s(self, value: float) -> None:
+        self._replace_snapshot(stale_timeout_s=self._normalized_stale_timeout(value))
+
+    @staticmethod
+    def _normalized_override_speed_mps(value: float | None) -> float | None:
+        if value is None or isinstance(value, bool) or not isinstance(value, NUMERIC_TYPES):
+            return None
+        speed_val = float(value)
+        return speed_val if math.isfinite(speed_val) else None
+
+    @staticmethod
+    def _normalized_stale_timeout(value: float) -> float:
+        return max(MIN_STALE_TIMEOUT_S, min(MAX_STALE_TIMEOUT_S, float(value)))
+
+    @staticmethod
+    def _normalized_override_speed_kmh(
+        speed_kmh: float | None,
+    ) -> tuple[float | None, float | None]:
+        if speed_kmh is None:
+            return None, None
+        speed_val = float(speed_kmh)
+        if speed_val < 0 or not math.isfinite(speed_val):
+            return None, None
+        if speed_val > MAX_MANUAL_SPEED_KMH:
+            LOGGER.warning(
+                "Manual speed override %.1f km/h exceeds cap %.1f km/h; clamping.",
+                speed_val,
+                MAX_MANUAL_SPEED_KMH,
+            )
+            speed_val = MAX_MANUAL_SPEED_KMH
+        return speed_val * KMH_TO_MPS, speed_val
+
+    def apply_speed_source_settings(
+        self,
+        *,
+        effective_speed_kmh: float | None,
+        manual_source_selected: bool,
+        stale_timeout_s: float | None = None,
+    ) -> float | None:
+        override_speed_mps, applied_speed_kmh = self._normalized_override_speed_kmh(
+            effective_speed_kmh
+        )
+        snapshot = self._snapshot
+        resolved_timeout = (
+            snapshot.stale_timeout_s
+            if stale_timeout_s is None
+            else self._normalized_stale_timeout(stale_timeout_s)
+        )
+        self._snapshot = SpeedResolutionPolicySnapshot(
+            override_speed_mps=override_speed_mps,
+            manual_source_selected=bool(manual_source_selected),
+            stale_timeout_s=resolved_timeout,
+        )
+        return applied_speed_kmh
 
     def resolve(
         self,
@@ -42,16 +143,18 @@ class SpeedResolutionPolicy:
         gps_enabled: bool,
         connection_state: str,
         speed_snapshot: tuple[float | None, float | None],
+        snapshot: SpeedResolutionPolicySnapshot | None = None,
     ) -> SpeedResolution:
-        if self.manual_source_selected and isinstance(self.override_speed_mps, NUMERIC_TYPES):
-            override_speed = self.override_speed_mps
+        policy = self._snapshot if snapshot is None else snapshot
+        if policy.manual_source_selected and isinstance(policy.override_speed_mps, NUMERIC_TYPES):
+            override_speed = policy.override_speed_mps
             if override_speed is not None and not isinstance(override_speed, bool):
                 return SpeedResolution(float(override_speed), False, "manual")
 
         gps_speed, _ = speed_snapshot
         if isinstance(gps_speed, NUMERIC_TYPES) and not isinstance(gps_speed, bool):
-            if self.is_gps_stale(speed_snapshot):
-                fallback_speed = self.fallback_speed_value()
+            if self.is_gps_stale(speed_snapshot, snapshot=policy):
+                fallback_speed = self.fallback_speed_value(snapshot=policy)
                 return SpeedResolution(
                     fallback_speed,
                     True,
@@ -63,9 +166,10 @@ class SpeedResolutionPolicy:
             gps_enabled=gps_enabled,
             actual_connection_state=connection_state,
             speed_snapshot=speed_snapshot,
+            snapshot=policy,
         )
         if gps_enabled and effective_connection in ("disconnected", "stale"):
-            fallback_speed = self.fallback_speed_value()
+            fallback_speed = self.fallback_speed_value(snapshot=policy)
             return SpeedResolution(
                 fallback_speed,
                 True,
@@ -80,51 +184,51 @@ class SpeedResolutionPolicy:
         gps_enabled: bool,
         actual_connection_state: str,
         speed_snapshot: tuple[float | None, float | None],
+        snapshot: SpeedResolutionPolicySnapshot | None = None,
     ) -> str:
+        policy = self._snapshot if snapshot is None else snapshot
         if (
             gps_enabled
             and actual_connection_state == "connected"
-            and self.is_gps_stale(speed_snapshot)
+            and self.is_gps_stale(speed_snapshot, snapshot=policy)
         ):
             return "stale"
         return actual_connection_state
 
-    def is_gps_stale(self, speed_snapshot: tuple[float | None, float | None]) -> bool:
+    def is_gps_stale(
+        self,
+        speed_snapshot: tuple[float | None, float | None],
+        *,
+        snapshot: SpeedResolutionPolicySnapshot | None = None,
+    ) -> bool:
+        policy = self._snapshot if snapshot is None else snapshot
         _, timestamp = speed_snapshot
         if timestamp is None:
             return True
         age = time.monotonic() - timestamp
-        return age > self.stale_timeout_s
+        return age > policy.stale_timeout_s
 
-    def fallback_speed_value(self) -> float | None:
-        if isinstance(self.override_speed_mps, NUMERIC_TYPES) and not isinstance(
-            self.override_speed_mps, bool
+    def fallback_speed_value(
+        self,
+        *,
+        snapshot: SpeedResolutionPolicySnapshot | None = None,
+    ) -> float | None:
+        policy = self._snapshot if snapshot is None else snapshot
+        if isinstance(policy.override_speed_mps, NUMERIC_TYPES) and not isinstance(
+            policy.override_speed_mps, bool
         ):
-            override_speed = self.override_speed_mps
+            override_speed = policy.override_speed_mps
             if override_speed is not None:
                 return float(override_speed)
         return None
 
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
-        if speed_kmh is None:
-            self.override_speed_mps = None
-            return None
-        speed_val = float(speed_kmh)
-        if speed_val < 0 or not math.isfinite(speed_val):
-            self.override_speed_mps = None
-            return None
-        if speed_val > MAX_MANUAL_SPEED_KMH:
-            LOGGER.warning(
-                "Manual speed override %.1f km/h exceeds cap %.1f km/h; clamping.",
-                speed_val,
-                MAX_MANUAL_SPEED_KMH,
-            )
-            speed_val = MAX_MANUAL_SPEED_KMH
-        self.override_speed_mps = speed_val * KMH_TO_MPS
-        return speed_val
+        override_speed_mps, applied_speed_kmh = self._normalized_override_speed_kmh(speed_kmh)
+        self._replace_snapshot(override_speed_mps=override_speed_mps)
+        return applied_speed_kmh
 
     def set_manual_source_selected(self, selected: bool) -> None:
-        self.manual_source_selected = bool(selected)
+        self._replace_snapshot(manual_source_selected=bool(selected))
 
     def set_fallback_settings(
         self,
@@ -132,7 +236,4 @@ class SpeedResolutionPolicy:
         **_kwargs: object,
     ) -> None:
         if stale_timeout_s is not None:
-            self.stale_timeout_s = max(
-                MIN_STALE_TIMEOUT_S,
-                min(MAX_STALE_TIMEOUT_S, float(stale_timeout_s)),
-            )
+            self._replace_snapshot(stale_timeout_s=self._normalized_stale_timeout(stale_timeout_s))
