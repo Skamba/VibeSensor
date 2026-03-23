@@ -6,6 +6,7 @@ import {
   DEFAULT_SHELL_VIEW_ID,
   createUiShellNavigationModule,
 } from "../src/app/runtime/ui_shell_navigation_module";
+import { createUiShellNotificationModule } from "../src/app/runtime/ui_shell_notification_module";
 import { createUiShellPreferencesModule } from "../src/app/runtime/ui_shell_preferences_module";
 import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_module";
 
@@ -153,6 +154,7 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
   speed: HTMLElement;
   linkState: HTMLElement;
   connectionBanner: HTMLElement;
+  appErrorBanner: HTMLElement;
   carSelectionBanner: HTMLElement;
   appShellWrap: HTMLElement;
 } {
@@ -165,6 +167,7 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
   const speed = createTextElement();
   const linkState = createTextElement();
   const connectionBanner = createTextElement();
+  const appErrorBanner = createTextElement();
   const carSelectionBanner = createTextElement();
   const appShellWrap = createTextElement();
 
@@ -176,6 +179,7 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
     speed,
     linkState,
     connectionBanner,
+    appErrorBanner,
     carSelectionBanner,
     appShellWrap,
     ...overrides,
@@ -192,6 +196,7 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
     speed,
     linkState,
     connectionBanner,
+    appErrorBanner,
     carSelectionBanner,
     appShellWrap,
   };
@@ -286,6 +291,7 @@ test.describe("createUiShellPreferencesModule", () => {
       renderSpeedReadout: () => {
         renderSpeedReadoutCalls += 1;
       },
+      showError: () => {},
     });
 
     try {
@@ -327,6 +333,7 @@ test.describe("createUiShellPreferencesModule", () => {
       renderSpeedReadout: () => {
         renderSpeedReadoutCalls += 1;
       },
+      showError: () => {},
     });
 
     try {
@@ -347,6 +354,58 @@ test.describe("createUiShellPreferencesModule", () => {
     ]);
     expect(state.shell.speedUnit).toBe("mps");
     expect(renderSpeedReadoutCalls).toBe(1);
+  });
+
+  test("save failure restores the previous value and reports via showError", async () => {
+    const state = createAppState();
+    const { els, speedUnitSelect } = createShellDeps();
+    const originalFetch = globalThis.fetch;
+    const errors: string[] = [];
+    globalThis.fetch = (async () => {
+      throw new Error("save failed");
+    }) as typeof fetch;
+
+    const module = createUiShellPreferencesModule({
+      shell: state.shell,
+      els,
+      t: (key) => key,
+      normalizeLanguage: (lang) => lang,
+      applyLanguage: () => {},
+      renderSpeedReadout: () => {},
+      showError: (message) => {
+        errors.push(message);
+      },
+    });
+
+    try {
+      module.bindHandlers();
+      speedUnitSelect.triggerChange("mps");
+      await expect.poll(() => errors).toEqual(["save failed"]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    expect(state.shell.speedUnit).toBe("kmh");
+    expect(speedUnitSelect.value).toBe("kmh");
+  });
+});
+
+test.describe("createUiShellNotificationModule", () => {
+  test("shows and clears the shared error banner", () => {
+    const { els, appErrorBanner } = createShellDeps();
+    const module = createUiShellNotificationModule({ els });
+
+    module.showError("save failed");
+
+    expect(appErrorBanner.hidden).toBe(false);
+    expect(appErrorBanner.textContent).toBe("save failed");
+    expect(appErrorBanner.className).toBe("connection-banner connection-banner--bad app-error-banner");
+
+    module.clearError();
+
+    expect(appErrorBanner.hidden).toBe(true);
+    expect(appErrorBanner.textContent).toBe("");
+    expect(appErrorBanner.className).toBe("connection-banner app-error-banner");
   });
 });
 

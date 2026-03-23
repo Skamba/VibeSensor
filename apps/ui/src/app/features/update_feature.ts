@@ -80,9 +80,9 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("409")) {
-        window.alert(t("settings.update.already_running"));
+        ctx.showError(t("settings.update.already_running"));
       } else {
-        window.alert(`${t("settings.update.start_failed")}\n${msg}`);
+        ctx.showError(`${t("settings.update.start_failed")}\n${msg}`);
       }
     }
   }

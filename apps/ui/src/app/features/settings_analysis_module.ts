@@ -97,7 +97,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     const validUncertainty = speedUncertainty >= 0 && speedUncertainty <= 20 && tireDiameterUncertainty >= 0 && tireDiameterUncertainty <= 20 && finalDriveUncertainty >= 0 && finalDriveUncertainty <= 10 && gearUncertainty >= 0 && gearUncertainty <= 20;
     const validBandLimits = minAbsBandHz >= 0 && minAbsBandHz <= 10 && maxBandHalfWidth > 0 && maxBandHalfWidth <= 25;
     if (!validBandwidths || !validUncertainty || !validBandLimits) {
-      window.alert(t("settings.validation_error"));
+      ctx.showError(t("settings.validation_error"));
       return;
     }
     const payload: AnalysisSettingsRequest = {

@@ -22,6 +22,7 @@ export interface AppFeatureBundleDeps {
   els: UiDomElements;
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
+  showError: (message: string) => void;
   fmt: (n: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
   formatInt: (value: number) => string;
@@ -43,6 +44,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     els,
     t,
     escapeHtml,
+    showError: deps.showError,
     fmt,
     fmtTs,
     formatInt,
@@ -54,6 +56,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     els,
     t,
     escapeHtml,
+    showError: deps.showError,
     formatInt,
     setPillState: deps.setPillState,
     setStatValue: deps.setStatValue,
@@ -67,6 +70,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     els,
     t,
     escapeHtml,
+    showError: deps.showError,
     fmt,
     renderSpectrum: deps.renderSpectrum,
     renderSpeedReadout: deps.renderSpeedReadout,
@@ -77,12 +81,13 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     els,
     t,
     escapeHtml,
+    showError: deps.showError,
     fmt,
     addCarFromWizard: settings.addCarFromWizard,
   });
 
-  const update = createUpdateFeature({ els, t, escapeHtml });
-  const espFlash = createEspFlashFeature({ els, t, escapeHtml });
+  const update = createUpdateFeature({ els, t, escapeHtml, showError: deps.showError });
+  const espFlash = createEspFlashFeature({ els, t, escapeHtml, showError: deps.showError });
 
   return {
     history,

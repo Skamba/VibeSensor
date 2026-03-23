@@ -14,6 +14,7 @@ export interface UiShellPreferencesModuleDeps {
   normalizeLanguage: (lang: string) => string;
   applyLanguage: (forceReloadInsights?: boolean) => void;
   renderSpeedReadout: () => void;
+  showError: (message: string) => void;
 }
 
 export interface UiShellPreferencesModule {
@@ -70,7 +71,7 @@ export function createUiShellPreferencesModule(
       if (els.languageSelect) {
         els.languageSelect.value = previousLang;
       }
-      window.alert(error instanceof Error ? error.message : ctx.t("settings.save_failed"));
+      ctx.showError(error instanceof Error ? error.message : ctx.t("settings.save_failed"));
     }
   }
 
@@ -88,7 +89,7 @@ export function createUiShellPreferencesModule(
       if (els.speedUnitSelect) {
         els.speedUnitSelect.value = previousUnit;
       }
-      window.alert(error instanceof Error ? error.message : ctx.t("settings.save_failed"));
+      ctx.showError(error instanceof Error ? error.message : ctx.t("settings.save_failed"));
     }
   }
 
