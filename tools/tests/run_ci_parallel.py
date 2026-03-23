@@ -148,6 +148,35 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 [python_cmd, "tools/tests/run_release_smoke.py", "--skip-npm-ci"],
             ),
         ],
+        "firmware-native-tests": [
+            Step(
+                "platformio core version",
+                [
+                    python_cmd,
+                    "-c",
+                    (
+                        "import re, subprocess, sys; "
+                        "proc = subprocess.run(['pio', '--version'], capture_output=True, text=True); "
+                        "output = (proc.stdout or '') + (proc.stderr or ''); "
+                        "sys.stdout.write(output); "
+                        "sys.exit(0 if proc.returncode == 0 and re.search(r'\\bversion\\s+6\\.', output) else 1)"
+                    ),
+                ],
+            ),
+            Step(
+                "firmware protocol fixture check",
+                [
+                    python_cmd,
+                    "tools/firmware/generate_protocol_contract_fixtures.py",
+                    "--check",
+                ],
+            ),
+            Step(
+                "firmware native tests",
+                ["pio", "test", "-e", "native"],
+                cwd=ROOT / "firmware" / "esp",
+            ),
+        ],
         "backend-tests": [
             Step(
                 "backend tests",
@@ -211,6 +240,7 @@ def main() -> int:
             "frontend-typecheck",
             "ui-smoke",
             "release-smoke",
+            "firmware-native-tests",
             "backend-tests",
             "e2e",
         ],
@@ -251,6 +281,7 @@ def main() -> int:
             "frontend-typecheck",
             "ui-smoke",
             "release-smoke",
+            "firmware-native-tests",
             "backend-tests",
             "e2e",
         ]

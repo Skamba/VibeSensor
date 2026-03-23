@@ -20,6 +20,9 @@ reduced to startup wiring and cooperative loop orchestration.
   - transmit packing/send failures and parser failures are now counted
 - Added command guardrail:
   - identify blink duration is capped to `10s` to prevent long/accidental lockouts
+- Added runtime watchdog and reboot diagnostics:
+  - startup now logs `esp_reset_reason()` so crash/reset causes are visible over serial
+  - the cooperative Arduino loop is now enrolled in the ESP task watchdog with a 15s timeout
 - Fixed sampling missed-sample double-count:
   - when `sample_once()` returns false (sensor unavailable), the code now advances
     `g_next_sample_due_us` before breaking so the post-loop lag detector does not
@@ -59,12 +62,23 @@ reduced to startup wiring and cooperative loop orchestration.
 - Removed dead code in `parse_mac()`:
   - the `values[i] > 0xFF` guard in the MAC-parsing loop was unreachable because
     `%2x` in `sscanf` reads at most two hex digits (0–255); removed to save flash
+- Added native firmware contract/queue coverage:
+  - the native PlatformIO suite now exercises the firmware UDP protocol codec against
+    fixtures generated from the backend Python codec and covers queue frame building,
+    overflow/drop accounting, and ACK-driven eviction behavior
+- Pinned the firmware PlatformIO platform:
+  - `platform = espressif32@6.13.0` so local and CI firmware builds stop drifting with
+    upstream default updates
+- Added PR-time firmware native CI coverage:
+  - CI now verifies the generated protocol fixtures are in sync and runs
+    `pio test -e native` automatically on pull requests
 
 
 ## Build and test
 
 ```bash
 cd firmware/esp
+python3 ../../tools/firmware/generate_protocol_contract_fixtures.py --check
 pio run -e m5stack_atom
 pio test -e native
 ```
