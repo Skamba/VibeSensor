@@ -168,6 +168,41 @@ def test_ingest_other_client_not_blocked_by_unrelated_client_lock() -> None:
     assert done.is_set()
 
 
+def test_evict_clients_does_not_wait_on_stale_client_lock() -> None:
+    processor = SignalProcessor(
+        sample_rate_hz=800,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=1024,
+        spectrum_max_hz=200,
+    )
+    samples = np.zeros((10, 3), dtype=np.float32)
+    evicted = Event()
+
+    processor.ingest("keep", samples, sample_rate_hz=800)
+    processor.ingest("stale", samples, sample_rate_hz=800)
+    with processor._store.lock:
+        stale_lock = processor._store._client_locks["stale"]
+    stale_lock.acquire()
+
+    def _evict() -> None:
+        processor.evict_clients({"keep"})
+        evicted.set()
+
+    worker = Thread(target=_evict)
+    worker.start()
+    try:
+        assert evicted.wait(timeout=0.2)
+    finally:
+        stale_lock.release()
+
+    worker.join(timeout=1.0)
+    assert evicted.is_set()
+    assert "keep" in processor._store.buffers
+    assert "stale" not in processor._store.buffers
+    assert "stale" not in processor._store._client_locks
+
+
 def test_ingest_not_blocked_during_compute() -> None:
     """Regression: ingest must stay responsive while compute_metrics runs in a thread.
 

@@ -237,6 +237,35 @@ class TestProcessingLoopMismatchDetection:
         assert control_plane.broadcast_calls == 1
 
     @pytest.mark.asyncio
+    async def test_sync_clock_offloads_broadcast_to_thread(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        processor = _StubProcessor()
+        control_plane = _StubControlPlane()
+        loop, _state = _make_loop(processor=processor, control_plane=control_plane)
+        to_thread_calls: list[tuple[object | None, str]] = []
+
+        async def fake_to_thread(func, /, *args, **kwargs):
+            to_thread_calls.append(
+                (
+                    getattr(func, "__self__", None),
+                    getattr(func, "__name__", type(func).__name__),
+                ),
+            )
+            return func(*args, **kwargs)
+
+        monkeypatch.setattr(
+            "vibesensor.infra.runtime.processing_loop.asyncio.to_thread",
+            fake_to_thread,
+        )
+
+        await loop._run_tick(sync_clock=True)
+
+        assert to_thread_calls[0] == (control_plane, "broadcast_sync_clock")
+        assert control_plane.broadcast_calls == 1
+
+    @pytest.mark.asyncio
     async def test_sample_rate_mismatch_logged_once(self) -> None:
         """Sample-rate mismatch for a client is recorded in state exactly once."""
         mismatched = _StubRecord(sample_rate_hz=400, frame_samples=1024)
