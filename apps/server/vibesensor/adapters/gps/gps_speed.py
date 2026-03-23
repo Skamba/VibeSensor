@@ -6,8 +6,12 @@ from typing import Literal
 
 from vibesensor.adapters.gps import gps_transport as _gps_transport
 from vibesensor.adapters.gps import speed_resolution as _speed_resolution
-from vibesensor.adapters.gps.gps_transport import GPSTransportState
-from vibesensor.adapters.gps.speed_resolution import SpeedResolution, SpeedResolutionPolicy
+from vibesensor.adapters.gps.gps_transport import GPSTransportSnapshot, GPSTransportState
+from vibesensor.adapters.gps.speed_resolution import (
+    SpeedResolution,
+    SpeedResolutionPolicy,
+    SpeedResolutionPolicySnapshot,
+)
 from vibesensor.adapters.gps.speed_status import (
     GPSSpeedStatusState,
     SpeedSourceStatusSnapshot,
@@ -30,7 +34,12 @@ __all__ = ["GPSSpeedMonitor", "SpeedResolution"]
 
 
 class GPSSpeedMonitor:
-    """Runtime-facing GPS monitor composed from transport, policy, and presenter helpers."""
+    """Runtime-facing GPS monitor over captured transport/policy snapshots.
+
+    Writers replace immutable transport/policy snapshots atomically; readers
+    capture those snapshots once per resolution/status read so concurrent async
+    ingest and threaded settings updates cannot expose half-applied state.
+    """
 
     def __init__(self, gps_enabled: bool):
         self._transport = GPSTransportState(gps_enabled=gps_enabled)
@@ -42,13 +51,7 @@ class GPSSpeedMonitor:
 
     @gps_enabled.setter
     def gps_enabled(self, value: bool) -> None:
-        enabled = bool(value)
-        self._transport.gps_enabled = enabled
-        if not enabled:
-            self._transport.connection_state = "disabled"
-            self._transport.speed_mps = None
-        elif self._transport.connection_state == "disabled":
-            self._transport.connection_state = "disconnected"
+        self._transport.set_enabled(bool(value))
 
     @property
     def override_speed_mps(self) -> float | None:
@@ -175,24 +178,33 @@ class GPSSpeedMonitor:
         return self._transport.last_update_ts
 
     def resolve_speed(self) -> SpeedResolution:
+        transport_snapshot, policy_snapshot = self._captured_snapshots()
         return self._policy.resolve(
-            gps_enabled=self.gps_enabled,
-            connection_state=self.connection_state,
-            speed_snapshot=self._speed_snapshot,
+            gps_enabled=transport_snapshot.gps_enabled,
+            connection_state=transport_snapshot.connection_state,
+            speed_snapshot=transport_snapshot.speed_snapshot,
+            snapshot=policy_snapshot,
         )
 
     def _effective_connection_state(self) -> str:
+        transport_snapshot, policy_snapshot = self._captured_snapshots()
         return self._policy.effective_connection_state(
-            gps_enabled=self.gps_enabled,
-            actual_connection_state=self.connection_state,
-            speed_snapshot=self._speed_snapshot,
+            gps_enabled=transport_snapshot.gps_enabled,
+            actual_connection_state=transport_snapshot.connection_state,
+            speed_snapshot=transport_snapshot.speed_snapshot,
+            snapshot=policy_snapshot,
         )
 
     def _is_gps_stale(self) -> bool:
-        return self._policy.is_gps_stale(self._speed_snapshot)
+        transport_snapshot, policy_snapshot = self._captured_snapshots()
+        return self._policy.is_gps_stale(
+            transport_snapshot.speed_snapshot,
+            snapshot=policy_snapshot,
+        )
 
     def _fallback_speed_value(self) -> float | None:
-        return self._policy.fallback_speed_value()
+        _, policy_snapshot = self._captured_snapshots()
+        return self._policy.fallback_speed_value(snapshot=policy_snapshot)
 
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
         return self._policy.set_speed_override_kmh(speed_kmh)
@@ -206,6 +218,20 @@ class GPSSpeedMonitor:
         **kwargs: object,
     ) -> None:
         self._policy.set_fallback_settings(stale_timeout_s=stale_timeout_s, **kwargs)
+
+    def apply_speed_source_settings(
+        self,
+        *,
+        effective_speed_kmh: float | None,
+        manual_source_selected: bool,
+        stale_timeout_s: float | None = None,
+    ) -> float | None:
+        """Apply the full speed-source config atomically for concurrent readers."""
+        return self._policy.apply_speed_source_settings(
+            effective_speed_kmh=effective_speed_kmh,
+            manual_source_selected=manual_source_selected,
+            stale_timeout_s=stale_timeout_s,
+        )
 
     @staticmethod
     def _read_non_negative_metric(payload: JsonObject, field: str) -> float | None:
@@ -224,34 +250,42 @@ class GPSSpeedMonitor:
     def _reset_fix_metadata(self) -> None:
         self._transport._reset_fix_metadata()
 
+    def _captured_snapshots(
+        self,
+    ) -> tuple[GPSTransportSnapshot, SpeedResolutionPolicySnapshot]:
+        return self._transport.snapshot(), self._policy.snapshot()
+
     def status_snapshot(self) -> SpeedSourceStatusSnapshot:
-        speed_snapshot = self._speed_snapshot
+        transport_snapshot, policy_snapshot = self._captured_snapshots()
+        speed_snapshot = transport_snapshot.speed_snapshot
         resolution = self._policy.resolve(
-            gps_enabled=self.gps_enabled,
-            connection_state=self.connection_state,
+            gps_enabled=transport_snapshot.gps_enabled,
+            connection_state=transport_snapshot.connection_state,
             speed_snapshot=speed_snapshot,
+            snapshot=policy_snapshot,
         )
         status_state = GPSSpeedStatusState(
-            gps_enabled=self.gps_enabled,
-            connection_state=self.connection_state,
-            device_info=self.device_info,
-            last_fix_mode=self.last_fix_mode,
-            last_epx_m=self.last_epx_m,
-            last_epy_m=self.last_epy_m,
-            last_epv_m=self.last_epv_m,
+            gps_enabled=transport_snapshot.gps_enabled,
+            connection_state=transport_snapshot.connection_state,
+            device_info=transport_snapshot.device_info,
+            last_fix_mode=transport_snapshot.last_fix_mode,
+            last_epx_m=transport_snapshot.last_epx_m,
+            last_epy_m=transport_snapshot.last_epy_m,
+            last_epv_m=transport_snapshot.last_epv_m,
             raw_speed_mps=speed_snapshot[0],
             last_update_ts=speed_snapshot[1],
-            last_error=self.last_error,
-            current_reconnect_delay=self.current_reconnect_delay,
-            stale_timeout_s=self.stale_timeout_s,
+            last_error=transport_snapshot.last_error,
+            current_reconnect_delay=transport_snapshot.current_reconnect_delay,
+            stale_timeout_s=policy_snapshot.stale_timeout_s,
         )
         return build_status_snapshot(
             status_state,
             resolution=resolution,
             effective_connection_state=self._policy.effective_connection_state(
-                gps_enabled=self.gps_enabled,
-                actual_connection_state=self.connection_state,
+                gps_enabled=transport_snapshot.gps_enabled,
+                actual_connection_state=transport_snapshot.connection_state,
                 speed_snapshot=speed_snapshot,
+                snapshot=policy_snapshot,
             ),
         )
 

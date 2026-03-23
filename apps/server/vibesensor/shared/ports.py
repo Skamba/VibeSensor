@@ -200,6 +200,14 @@ class SpeedProvider(Protocol):
 class SpeedSourceSync(Protocol):
     """Minimal speed-source sync surface needed by SettingsStore."""
 
+    def apply_speed_source_settings(
+        self,
+        *,
+        effective_speed_kmh: float | None,
+        manual_source_selected: bool,
+        stale_timeout_s: float | None = None,
+    ) -> float | None: ...
+
     def set_manual_source_selected(self, selected: bool) -> None: ...
 
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None: ...
