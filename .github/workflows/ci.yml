@@ -144,6 +144,36 @@ jobs:
         run: |
           python3 tools/tests/run_release_smoke.py
 
+  firmware-native-tests:
+    name: Firmware native tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+          cache: "pip"
+          cache-dependency-path: apps/server/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./apps/server[dev]" "platformio>=6,<7"
+
+      - name: Verify firmware protocol fixtures
+        run: |
+          python tools/firmware/generate_protocol_contract_fixtures.py --check
+
+      - name: Firmware native tests
+        run: |
+          cd firmware/esp
+          pio test -e native
+
   backend-tests:
     name: Backend tests
     runs-on: ubuntu-latest

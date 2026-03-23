@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <esp_system.h>
+#include <esp_task_wdt.h>
 #include <esp_timer.h>
 
 #include "runtime_config.h"
@@ -11,6 +13,8 @@
 
 namespace {
 
+constexpr uint32_t kLoopWatchdogTimeoutSeconds = 15;
+
 struct RuntimeApp {
   vibesensor::runtime::RuntimeStatus status;
   vibesensor::runtime::FrameQueueState queue;
@@ -22,12 +26,53 @@ struct RuntimeApp {
 
 RuntimeApp g_runtime;
 
+const char* reset_reason_name(esp_reset_reason_t reason) {
+  switch (reason) {
+    case ESP_RST_UNKNOWN:
+      return "unknown";
+    case ESP_RST_POWERON:
+      return "power_on";
+    case ESP_RST_EXT:
+      return "external";
+    case ESP_RST_SW:
+      return "software";
+    case ESP_RST_PANIC:
+      return "panic";
+    case ESP_RST_INT_WDT:
+      return "interrupt_wdt";
+    case ESP_RST_TASK_WDT:
+      return "task_wdt";
+    case ESP_RST_WDT:
+      return "other_wdt";
+    case ESP_RST_DEEPSLEEP:
+      return "deep_sleep";
+    case ESP_RST_BROWNOUT:
+      return "brownout";
+    case ESP_RST_SDIO:
+      return "sdio";
+    default:
+      return "other";
+  }
+}
+
+void enable_runtime_watchdog() {
+  const esp_err_t err = esp_task_wdt_init(kLoopWatchdogTimeoutSeconds, true);
+  if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+    Serial.printf("WARN: failed to init task watchdog (%d)\n", static_cast<int>(err));
+    return;
+  }
+  enableLoopWDT();
+}
+
 }  // namespace
 
 void setup() {
   using namespace vibesensor::runtime;
 
   Serial.begin(115200);
+  const esp_reset_reason_t reason = esp_reset_reason();
+  Serial.printf(
+      "reset reason: %s (%d)\n", reset_reason_name(reason), static_cast<int>(reason));
   if (kSampleRateHz != kConfiguredSampleRateHz) {
     Serial.printf("clamped sample rate from %u to %u\n",
                   static_cast<unsigned>(kConfiguredSampleRateHz),
@@ -55,6 +100,7 @@ void setup() {
   reset_sampling_schedule(g_runtime.sampling, esp_timer_get_time());
   send_hello(g_runtime.transport, g_runtime.status);
   g_runtime.transport.last_hello_ms = millis();
+  enable_runtime_watchdog();
 }
 
 void loop() {
