@@ -9,7 +9,7 @@ import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.persistence.history_db._schema import SCHEMA_VERSION
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 
 # -- helpers -----------------------------------------------------------------
 

@@ -13,8 +13,8 @@ from vibesensor.shared.boundaries.persisted_analysis_codec import (
 )
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)

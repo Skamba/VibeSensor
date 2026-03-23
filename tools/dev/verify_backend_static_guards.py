@@ -560,32 +560,49 @@ def _check_new_domain_modules_keep_import_isolation() -> list[str]:
     return violations
 
 
-def _check_shared_types_do_not_import_from_infra() -> list[str]:
+def _shared_type_module_files() -> list[Path]:
+    return [
+        path
+        for path in _python_files(VIBESENSOR_DIR / "shared" / "types")
+        if path.name != "__init__.py"
+    ]
+
+
+def _check_backend_types_module_removed() -> list[str]:
     path = VIBESENSOR_DIR / "shared" / "types" / "backend_types.py"
+    if path.exists():
+        return [
+            f"{path.relative_to(REPO_ROOT)} must not be reintroduced; use focused shared type owners instead"
+        ]
+    return []
+
+
+def _check_shared_types_do_not_import_from_infra() -> list[str]:
     violations: list[str] = []
-    for lineno, module, _names, _level in _scan_imports(path):
-        if module.startswith("vibesensor.infra"):
-            violations.append(
-                f"{path.relative_to(REPO_ROOT)}:{lineno}: from {module} import ..."
-            )
+    for path in _shared_type_module_files():
+        for lineno, module, _names, _level in _scan_imports(path):
+            if module.startswith("vibesensor.infra"):
+                violations.append(
+                    f"{path.relative_to(REPO_ROOT)}:{lineno}: from {module} import ..."
+                )
     return violations
 
 
-def _check_boundary_types_no_domain_factory_methods() -> list[str]:
-    path = VIBESENSOR_DIR / "shared" / "types" / "backend_types.py"
-    tree = _parse_python(path)
-    if tree is None:
-        return []
+def _check_shared_types_no_domain_factory_methods() -> list[str]:
     factory_methods: list[str] = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name in {
-            "to_car",
-            "to_sensor",
-            "to_car_snapshot",
-        }:
-            factory_methods.append(
-                f"{path.relative_to(REPO_ROOT)}:{node.lineno}: {node.name}()"
-            )
+    for path in _shared_type_module_files():
+        tree = _parse_python(path)
+        if tree is None:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name in {
+                "to_car",
+                "to_sensor",
+                "to_car_snapshot",
+            }:
+                factory_methods.append(
+                    f"{path.relative_to(REPO_ROOT)}:{node.lineno}: {node.name}()"
+                )
     return factory_methods
 
 
@@ -1300,12 +1317,16 @@ CHECKS: tuple[Check, ...] = (
         _check_new_domain_modules_keep_import_isolation,
     ),
     (
+        "backend_types catch-all module stays removed",
+        _check_backend_types_module_removed,
+    ),
+    (
         "Shared backend types avoid infra imports",
         _check_shared_types_do_not_import_from_infra,
     ),
     (
-        "Boundary types avoid domain factory methods",
-        _check_boundary_types_no_domain_factory_methods,
+        "Shared types avoid domain factory methods",
+        _check_shared_types_no_domain_factory_methods,
     ),
     ("Layer boundaries stay acyclic and clean", _check_layer_boundaries),
     (

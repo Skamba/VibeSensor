@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.post_analysis_loader import (
     EmptyPostAnalysisSamples,

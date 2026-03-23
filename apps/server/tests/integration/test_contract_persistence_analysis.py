@@ -19,7 +19,7 @@ from test_support import (
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 

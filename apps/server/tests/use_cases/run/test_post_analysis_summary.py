@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
 

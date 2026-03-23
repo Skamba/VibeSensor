@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from vibesensor.shared.types.backend_types import _parse_manual_speed
+from vibesensor.shared.types.speed_source_config import _parse_manual_speed
 
 
 @pytest.mark.parametrize(

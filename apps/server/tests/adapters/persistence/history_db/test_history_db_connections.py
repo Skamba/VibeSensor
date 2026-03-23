@@ -7,7 +7,7 @@ from threading import Event, Thread
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 
 
 def _metadata(run_id: str) -> RunMetadata:

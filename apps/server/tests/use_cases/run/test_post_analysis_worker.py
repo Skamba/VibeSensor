@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run import post_analysis as post_analysis_module
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.post_analysis_executor import (

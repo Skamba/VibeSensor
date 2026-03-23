@@ -1,6 +1,4 @@
-"""Tests for domain_models module: Car persistence, SensorConfig, SpeedSourceConfig,
-RunMetadata, and SensorFrame parsing/serialization.
-"""
+"""Tests for shared type helpers around cars, sensors, speed sources, and run metadata."""
 
 from __future__ import annotations
 
@@ -10,13 +8,11 @@ import pytest
 
 from vibesensor.domain import Car, StrengthPeak
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.shared.types.backend_types import (
-    RunMetadata,
-    SensorConfig,
-    SpeedSourceConfig,
-    car_to_persistence_dict,
-)
+from vibesensor.shared.types.car_config import car_to_persistence_dict
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.sensor_config import SensorConfig
 from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
 
 # ---------------------------------------------------------------------------
 # Helper parsers

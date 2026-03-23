@@ -17,7 +17,7 @@ import pytest
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 
 # ── HistoryDB — sqlite3.Error caught, bugs propagate ─────────────────────
 

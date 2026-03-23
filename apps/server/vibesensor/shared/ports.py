@@ -6,11 +6,6 @@ from collections.abc import Iterator
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
-from vibesensor.shared.types.backend_types import (
-    ResolvedSpeedSource,
-    RunMetadata,
-    SettingsSnapshotPayload,
-)
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
@@ -18,7 +13,10 @@ from vibesensor.shared.types.history_records import (
 )
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
+from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
 
 __all__ = [
     "ClockSyncBroadcaster",

@@ -19,9 +19,9 @@ from vibesensor.shared.run_context import (
     apply_run_context_snapshot,
     order_reference_context_complete,
 )
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.payload_types import ClientMetrics
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
 

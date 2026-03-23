@@ -35,17 +35,17 @@ def test_finding_projector_in_finding_boundary_module() -> None:
     assert callable(finding_payload_from_domain)
 
 
-def test_history_backend_types_do_not_export_history_run_payload() -> None:
-    """History record typing must live in the dedicated shared history-record module."""
+def test_shared_type_modules_use_focused_history_and_settings_owners() -> None:
+    """Run/history and settings contracts must stay in focused shared type modules."""
     from tests._paths import SERVER_ROOT
 
-    backend_types_source = (
-        SERVER_ROOT / "vibesensor" / "shared" / "types" / "backend_types.py"
-    ).read_text()
-    history_records_source = (
-        SERVER_ROOT / "vibesensor" / "shared" / "types" / "history_records.py"
-    ).read_text()
-    assert "HistoryRunPayload" not in backend_types_source
-    assert "class HistoryRecord" not in backend_types_source
+    shared_types_dir = SERVER_ROOT / "vibesensor" / "shared" / "types"
+    run_schema_source = (shared_types_dir / "run_schema.py").read_text()
+    history_records_source = (shared_types_dir / "history_records.py").read_text()
+    settings_snapshot_source = (shared_types_dir / "settings_snapshot.py").read_text()
+
+    assert not (shared_types_dir / "backend_types.py").exists()
+    assert "class RunMetadata" in run_schema_source
     assert "class HistoryRunListEntry" in history_records_source
     assert "class StoredHistoryRun" in history_records_source
+    assert "class SettingsSnapshotPayload" in settings_snapshot_source

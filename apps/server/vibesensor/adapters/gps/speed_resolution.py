@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import NamedTuple
 
 from vibesensor.shared.constants import KMH_TO_MPS, NUMERIC_TYPES
-from vibesensor.shared.types.backend_types import ResolvedSpeedSource
+from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
 
 LOGGER = logging.getLogger(__name__)
 

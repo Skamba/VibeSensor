@@ -25,9 +25,9 @@ from vibesensor.adapters.http.dependencies import (
 from vibesensor.domain import RunStatus
 from vibesensor.infra.runtime import RuntimeHealthState
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn

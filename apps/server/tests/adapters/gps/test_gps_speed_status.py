@@ -11,7 +11,7 @@ from vibesensor.adapters.gps.gps_speed import (
     MIN_STALE_TIMEOUT_S,
     GPSSpeedMonitor,
 )
-from vibesensor.shared.types.backend_types import SpeedSourceConfig
+from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
 
 # ---------------------------------------------------------------------------
 # status_snapshot()

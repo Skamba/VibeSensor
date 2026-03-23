@@ -55,17 +55,18 @@ from vibesensor.shared.boundaries.settings_snapshot import (
 )
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.ports import SettingsSnapshotPersistence, SpeedSourceSync
-from vibesensor.shared.types.backend_types import (
-    LanguageCode,
+from vibesensor.shared.types.car_config import car_to_persistence_dict
+from vibesensor.shared.types.sensor_config import (
     SensorConfig,
     SensorConfigUpdatePayload,
     SensorsByMacPayload,
-    SettingsSnapshotPayload,
+)
+from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
+from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
+from vibesensor.shared.types.speed_source_config import (
     SpeedSourceConfig,
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,
-    SpeedUnitCode,
-    car_to_persistence_dict,
 )
 
 LOGGER = logging.getLogger(__name__)

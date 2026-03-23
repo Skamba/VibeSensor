@@ -52,7 +52,7 @@ apps/server/tests/
 | `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
 | `vibesensor/shared/order_bands.py` | `apps/server/tests/use_cases/diagnostics/` |
-| `vibesensor/domain/*`, `vibesensor/boundaries/*`, `backend_types.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
+| `vibesensor/domain/*`, `vibesensor/boundaries/*`, `vibesensor/shared/types/{run_schema,car_config,sensor_config,speed_source_config,settings_snapshot,settings_types}.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
 | `vibesensor/shared/boundaries/*`, `vibesensor/shared/types/sensor_frame.py` | `apps/server/tests/shared/` |
 | `vibesensor/gps_speed.py` | `apps/server/tests/gps/` |
 | `vibesensor/protocol.py`, `udp_*.py` | `apps/server/tests/protocol/` |

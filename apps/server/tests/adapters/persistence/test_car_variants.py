@@ -13,7 +13,7 @@ from vibesensor.adapters.persistence.car_library import (
     resolve_variant,
 )
 from vibesensor.domain import Car
-from vibesensor.shared.types.backend_types import car_to_persistence_dict
+from vibesensor.shared.types.car_config import car_to_persistence_dict
 
 
 def _variant_label(entry: dict, variant: dict) -> str:

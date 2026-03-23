@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
     "AnalyzingRunHealth",

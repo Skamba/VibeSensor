@@ -19,7 +19,7 @@ from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.run_log import normalize_sample_record
 from vibesensor.shared.sampling import bounded_sample
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
