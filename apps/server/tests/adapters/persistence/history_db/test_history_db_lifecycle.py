@@ -223,6 +223,51 @@ def test_recover_stale_recording_logs_warning(
     assert run is not None and run.status.value == "error"
 
 
+def test_history_db_runs_startup_quick_check(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[Path] = []
+    original = HistoryDB._run_startup_quick_check
+
+    def _tracking(self: HistoryDB) -> None:
+        calls.append(self.db_path)
+        original(self)
+
+    monkeypatch.setattr(HistoryDB, "_run_startup_quick_check", _tracking)
+    db = HistoryDB(tmp_path / "history.db")
+    try:
+        assert calls == [tmp_path / "history.db"]
+    finally:
+        db.close()
+
+
+def test_startup_quick_check_logs_corruption(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+
+    class _FakeCursor:
+        def execute(self, sql: str) -> None:
+            assert sql == "PRAGMA quick_check"
+
+        def fetchall(self) -> list[tuple[str]]:
+            return [("row 7 missing from index",)]
+
+    @contextmanager
+    def _fake_cursor(*, commit: bool = True):
+        yield _FakeCursor()
+
+    monkeypatch.setattr(db, "_cursor", _fake_cursor)
+    with caplog.at_level(logging.CRITICAL):
+        db._run_startup_quick_check()
+    assert "quick_check reported corruption" in caplog.text
+    assert "row 7 missing from index" in caplog.text
+    db.close()
+
+
 def test_delete_run_cascades_samples(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-del", "2026-01-01T00:00:00Z", _metadata("run-del"))

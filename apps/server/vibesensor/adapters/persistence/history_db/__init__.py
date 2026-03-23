@@ -48,6 +48,7 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
             self._conn.execute("PRAGMA foreign_keys=ON")
             self._conn.execute("PRAGMA busy_timeout=5000")
             self._ensure_schema()
+            self._run_startup_quick_check()
         except sqlite3.Error:
             self._conn.close()
             raise
@@ -191,6 +192,25 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
             )
             cur.execute("DROP TABLE IF EXISTS settings_kv")
             cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+
+    def _run_startup_quick_check(self) -> None:
+        try:
+            with self._cursor(commit=False) as cur:
+                cur.execute("PRAGMA quick_check")
+                problems = [str(row[0]) for row in cur.fetchall() if str(row[0]) != "ok"]
+        except sqlite3.Error:
+            LOGGER.critical(
+                "History DB quick_check failed during startup for %s",
+                self.db_path,
+                exc_info=True,
+            )
+            raise
+        if problems:
+            LOGGER.critical(
+                "History DB quick_check reported corruption for %s: %s",
+                self.db_path,
+                "; ".join(problems),
+            )
 
     # -- settings_snapshot persistence -----------------------------------------
 

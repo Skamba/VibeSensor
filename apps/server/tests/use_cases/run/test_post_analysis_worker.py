@@ -12,7 +12,13 @@ import time
 import pytest
 
 from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.use_cases.run import post_analysis as post_analysis_module
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
+from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionPersistenceFailure,
+    PostAnalysisExecutionRetryableFailure,
+    PostAnalysisExecutionSuccess,
+)
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -274,6 +280,95 @@ class TestPostAnalysisWorkerErrorHandling:
         worker.schedule("run-ok")
         assert worker.wait(timeout_s=3.0)
         assert seen == ["run-ok"]
+
+    def test_worker_retries_retryable_failure_until_success(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        attempts: list[bool] = []
+        errors: list[str] = []
+        cleared: list[str] = []
+
+        def _execute(
+            *,
+            run_id: str,
+            db,
+            analysis_runner,
+            load_run=None,
+            defer_retryable_error_storage: bool = False,
+        ):
+            attempts.append(defer_retryable_error_storage)
+            if len(attempts) == 1:
+                return PostAnalysisExecutionRetryableFailure(
+                    run_id=run_id,
+                    error_message="db locked",
+                    callback_errors=(f"post-analysis failed for run {run_id}: db locked",),
+                )
+            return PostAnalysisExecutionSuccess(run_id=run_id)
+
+        monkeypatch.setattr(post_analysis_module, "execute_post_analysis", _execute)
+        monkeypatch.setattr(post_analysis_module.time, "sleep", lambda _seconds: None)
+
+        worker = PostAnalysisWorker(
+            history_db=object(),
+            error_callback=errors.append,
+            clear_error_callback=lambda: cleared.append("cleared"),
+        )
+        worker.schedule("run-retry")
+
+        assert worker.wait(timeout_s=3.0)
+        assert attempts == [True, True]
+        assert errors == ["post-analysis failed for run run-retry: db locked"]
+        assert cleared == ["cleared"]
+        snapshot = worker.snapshot()
+        assert snapshot.last_completed_run_id == "run-retry"
+        assert snapshot.last_completed_error is None
+
+    def test_worker_retries_until_budget_exhausted(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        attempts: list[bool] = []
+        errors: list[str] = []
+
+        def _execute(
+            *,
+            run_id: str,
+            db,
+            analysis_runner,
+            load_run=None,
+            defer_retryable_error_storage: bool = False,
+        ):
+            attempts.append(defer_retryable_error_storage)
+            if defer_retryable_error_storage:
+                return PostAnalysisExecutionRetryableFailure(
+                    run_id=run_id,
+                    error_message="db locked",
+                    callback_errors=(f"post-analysis failed for run {run_id}: db locked",),
+                )
+            return PostAnalysisExecutionPersistenceFailure(
+                run_id=run_id,
+                completed_error="db locked",
+                callback_errors=(f"post-analysis failed for run {run_id}: db locked",),
+            )
+
+        monkeypatch.setattr(post_analysis_module, "execute_post_analysis", _execute)
+        monkeypatch.setattr(post_analysis_module.time, "sleep", lambda _seconds: None)
+
+        worker = PostAnalysisWorker(
+            history_db=object(),
+            error_callback=errors.append,
+        )
+        worker.schedule("run-exhausted")
+
+        assert worker.wait(timeout_s=3.0)
+        assert attempts == [True] * len(post_analysis_module._RETRY_DELAYS_S) + [False]
+        assert errors == [
+            "post-analysis failed for run run-exhausted: db locked",
+        ] * (len(post_analysis_module._RETRY_DELAYS_S) + 1)
+        snapshot = worker.snapshot()
+        assert snapshot.last_completed_run_id == "run-exhausted"
+        assert snapshot.last_completed_error == "db locked"
 
 
 class TestPostAnalysisWorkerThreadClearing:
