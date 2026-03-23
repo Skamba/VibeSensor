@@ -13,6 +13,7 @@ from vibesensor.use_cases.updates.status import UpdateStatusTracker
 __all__ = ["RollbackSnapshotMetadata", "RollbackSnapshotStore"]
 
 _ROLLBACK_METADATA_FILE = "rollback_snapshot.json"
+_ROLLBACK_WHEEL_KEEP_LIMIT = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,8 +72,16 @@ class RollbackSnapshotStore:
         )
 
     def prune_wheels(self, *, keep_name: str) -> None:
-        for old_wheel in self.rollback_wheels():
-            if old_wheel.name != keep_name:
+        wheels = self.rollback_wheels()
+        keep_names = {keep_name}
+        for old_wheel in wheels:
+            if old_wheel.name == keep_name:
+                continue
+            if len(keep_names) >= _ROLLBACK_WHEEL_KEEP_LIMIT:
+                break
+            keep_names.add(old_wheel.name)
+        for old_wheel in wheels:
+            if old_wheel.name not in keep_names:
                 old_wheel.unlink(missing_ok=True)
 
     def load_metadata(self) -> RollbackSnapshotMetadata | None:

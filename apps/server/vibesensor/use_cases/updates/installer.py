@@ -164,36 +164,56 @@ class UpdateInstaller:
             self._tracker.add_issue("installing", "No rollback wheel available")
             return False
 
-        wheel: Path
+        wheel: Path | None = None
         expected_version = ""
-        expected_sha256: str | None = None
+        candidates: list[tuple[Path, str, str | None]] = []
         if metadata is not None:
-            wheel = self._config.rollback_dir / metadata.wheel_name
-            expected_version = metadata.version
-            expected_sha256 = metadata.sha256
-            if not wheel.is_file():
-                self._tracker.add_issue(
-                    "installing",
-                    "Rollback snapshot wheel is missing",
-                    f"metadata expected {wheel}",
-                )
-                return False
+            primary_wheel = self._config.rollback_dir / metadata.wheel_name
+            candidates.append((primary_wheel, metadata.version, metadata.sha256))
+            for fallback_wheel in rollback_wheels:
+                if fallback_wheel.name == metadata.wheel_name:
+                    continue
+                wheel_parts = fallback_wheel.stem.split("-")
+                fallback_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
+                candidates.append((fallback_wheel, fallback_version, None))
         else:
-            wheel = rollback_wheels[0]
-            wheel_parts = wheel.stem.split("-")
-            expected_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
             self._tracker.log(
                 "Rollback metadata missing; falling back to newest "
                 "rollback wheel without checksum pin",
             )
+            for fallback_wheel in rollback_wheels:
+                wheel_parts = fallback_wheel.stem.split("-")
+                fallback_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
+                candidates.append((fallback_wheel, fallback_version, None))
 
-        if not self._wheel_validator.validate_wheel(
-            wheel,
-            phase="installing",
-            context="Rollback wheel",
-            fatal=False,
-            expected_sha256=expected_sha256,
-        ):
+        for idx, (candidate_wheel, candidate_version, candidate_sha256) in enumerate(candidates):
+            if not candidate_wheel.is_file():
+                if idx == 0 and metadata is not None:
+                    self._tracker.add_issue(
+                        "installing",
+                        "Rollback snapshot wheel is missing",
+                        f"metadata expected {candidate_wheel}",
+                    )
+                continue
+            context = "Rollback wheel" if idx == 0 else "Fallback rollback wheel"
+            if not self._wheel_validator.validate_wheel(
+                candidate_wheel,
+                phase="installing",
+                context=context,
+                fatal=False,
+                expected_sha256=candidate_sha256,
+            ):
+                if idx == 0 and len(candidates) > 1:
+                    self._tracker.log(
+                        "Primary rollback snapshot could not be used; trying older rollback wheel"
+                    )
+                continue
+            if idx > 0:
+                self._tracker.log(f"Using fallback rollback wheel {candidate_wheel.name}")
+            wheel = candidate_wheel
+            expected_version = candidate_version
+            break
+        if wheel is None:
             return False
 
         venv_python = reinstall_python_executable(self._config.repo)

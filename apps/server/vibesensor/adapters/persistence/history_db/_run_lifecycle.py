@@ -196,7 +196,7 @@ class _HistoryDBRunLifecycleMixin:
                 "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
                 "WHERE run_id = ?",
                 (
-                    safe_json_dumps(summary_payload),
+                    safe_json_dumps(analysis.to_storage_json_object()),
                     now,
                     now,
                     run_id,

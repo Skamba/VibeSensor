@@ -232,6 +232,104 @@ CREATE TABLE client_names (
     conn.close()
 
 
+def _create_v10_database(
+    db_path: Path,
+    *,
+    analysis_json: str | None = None,
+) -> None:
+    conn = sqlite3.connect(str(db_path))
+    conn.executescript(
+        """\
+PRAGMA user_version = 10;
+
+CREATE TABLE runs (
+    run_id                  TEXT PRIMARY KEY,
+    case_id                 TEXT,
+    status                  TEXT NOT NULL DEFAULT 'recording'
+                            CHECK (status IN ('recording', 'analyzing', 'complete', 'error')),
+    start_time_utc          TEXT NOT NULL,
+    end_time_utc            TEXT,
+    metadata_json           TEXT NOT NULL,
+    analysis_json           TEXT,
+    error_message           TEXT,
+    sample_count            INTEGER NOT NULL DEFAULT 0,
+    created_at              TEXT NOT NULL,
+    analysis_started_at     TEXT,
+    analysis_completed_at   TEXT
+);
+
+CREATE TABLE samples_v2 (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id                TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+    timestamp_utc         TEXT,
+    t_s                   REAL,
+    client_id             TEXT,
+    client_name           TEXT,
+    location              TEXT,
+    sample_rate_hz        INTEGER,
+    speed_kmh             REAL,
+    gps_speed_kmh         REAL,
+    speed_source          TEXT,
+    engine_rpm            REAL,
+    engine_rpm_source     TEXT,
+    gear                  REAL,
+    final_drive_ratio     REAL,
+    accel_x_g             REAL,
+    accel_y_g             REAL,
+    accel_z_g             REAL,
+    dominant_freq_hz      REAL,
+    dominant_axis         TEXT,
+    vibration_strength_db REAL,
+    strength_bucket       TEXT,
+    strength_peak_amp_g   REAL,
+    strength_floor_amp_g  REAL,
+    frames_dropped_total  INTEGER DEFAULT 0,
+    queue_overflow_drops  INTEGER DEFAULT 0,
+    top_peaks             TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
+CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
+
+CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
+CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);
+
+CREATE TABLE settings_snapshot (
+    id          INTEGER PRIMARY KEY CHECK(id = 1),
+    value_json  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE client_names (
+    client_id   TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+"""
+    )
+    if analysis_json is not None:
+        conn.execute(
+            "INSERT INTO runs ("
+            "run_id, case_id, status, start_time_utc, end_time_utc, metadata_json, "
+            "analysis_json, created_at, analysis_started_at, analysis_completed_at"
+            ") "
+            "VALUES (?, ?, 'complete', ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "legacy-run",
+                "case-1",
+                "2026-01-01T00:00:00Z",
+                "2026-01-01T00:05:00Z",
+                '{"source":"legacy"}',
+                analysis_json,
+                "2026-01-01T00:00:00Z",
+                "2026-01-01T00:05:01Z",
+                "2026-01-01T00:05:02Z",
+            ),
+        )
+    conn.commit()
+    conn.close()
+
+
 # -- HistoryDB integration tests ---------------------------------------------
 
 
@@ -395,7 +493,7 @@ def test_historydb_migrates_v9_empty_settings_kv(tmp_path: Path) -> None:
 
 
 def test_historydb_v8_migrates_through_v9_to_v10(tmp_path: Path) -> None:
-    """v8 databases chain-migrate through v9 (case_id) to v10 (settings_snapshot)."""
+    """v8 databases chain-migrate through v9/v10 to current schema."""
     db_path = tmp_path / "history.db"
     _create_v8_database(db_path, analysis_json='{"findings": [], "top_causes": [], "warnings": []}')
 
@@ -415,6 +513,93 @@ def test_historydb_v8_migrates_through_v9_to_v10(tmp_path: Path) -> None:
     assert "settings_snapshot" in tables
     assert "settings_kv" not in tables
     db.close()
+
+
+def test_historydb_v8_chain_migration_creates_step_backups(tmp_path: Path) -> None:
+    db_path = tmp_path / "history.db"
+    _create_v8_database(db_path, analysis_json='{"findings": [], "top_causes": [], "warnings": []}')
+
+    db = HistoryDB(db_path)
+    db.close()
+
+    backup_versions = {
+        8: tmp_path / "history.bak-v8",
+        9: tmp_path / "history.bak-v9",
+        10: tmp_path / "history.bak-v10",
+    }
+    for version, backup_path in backup_versions.items():
+        assert backup_path.exists()
+        conn = sqlite3.connect(str(backup_path))
+        try:
+            assert conn.execute("PRAGMA user_version").fetchone()[0] == version
+        finally:
+            conn.close()
+
+
+def test_historydb_migrates_v10_analysis_json_to_versioned_storage(tmp_path: Path) -> None:
+    db_path = tmp_path / "history.db"
+    _create_v10_database(
+        db_path,
+        analysis_json='{"findings": [], "top_causes": [], "warnings": []}',
+    )
+
+    db = HistoryDB(db_path)
+    try:
+        run = db.get_run("legacy-run")
+        assert run is not None
+        assert run.analysis == {"findings": [], "top_causes": [], "warnings": []}
+    finally:
+        db.close()
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+        analysis_json = conn.execute(
+            "SELECT analysis_json FROM runs WHERE run_id = ?",
+            ("legacy-run",),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+    backup = tmp_path / "history.bak-v10"
+    assert version == SCHEMA_VERSION
+    assert '"_schema_version": 1' in analysis_json
+    assert backup.exists()
+
+
+def test_historydb_restores_backup_when_v10_migration_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db_path = tmp_path / "history.db"
+    _create_v10_database(
+        db_path,
+        analysis_json='{"findings": [], "top_causes": [], "warnings": []}',
+    )
+
+    def _broken(self: HistoryDB) -> None:
+        with self._cursor() as cur:
+            cur.execute("UPDATE runs SET analysis_json = NULL WHERE run_id = ?", ("legacy-run",))
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(HistoryDB, "_migrate_v10_to_v11_persisted_analysis_version", _broken)
+
+    with pytest.raises(RuntimeError, match="restored backup"):
+        HistoryDB(db_path)
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+        analysis_json = conn.execute(
+            "SELECT analysis_json FROM runs WHERE run_id = ?",
+            ("legacy-run",),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+    assert version == 10
+    assert analysis_json == '{"findings": [], "top_causes": [], "warnings": []}'
+    assert (tmp_path / "history.bak-v10").exists()
 
 
 def test_historydb_newer_version_raises(tmp_path: Path) -> None:
