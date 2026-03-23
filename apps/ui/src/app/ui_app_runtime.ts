@@ -54,6 +54,7 @@ export class UiAppRuntime {
       els: this.els,
       t: (key, vars) => this.shell.t(key, vars),
       escapeHtml,
+      showError: (message) => this.shell.showError(message),
       fmt,
       fmtTs,
       formatInt: (value) => this.shell.localFormatInt(value),

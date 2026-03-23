@@ -313,6 +313,12 @@ input:focus-visible,
   border-bottom-color: var(--border);
 }
 
+.app-error-banner {
+  white-space: pre-line;
+  justify-content: flex-start;
+  text-align: left;
+}
+
 .connection-banner::before {
   content: '⚠';
   font-size: 1rem;

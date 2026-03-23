@@ -80,6 +80,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     history,
     getLanguage: ctx.getLanguage,
     t: ctx.t,
+    showError: ctx.showError,
     ensureRunDetail,
     collapseExpandedRun,
     renderHistoryTable: () => listModule.renderHistoryTable(),

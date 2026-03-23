@@ -55,7 +55,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   let handlersBound = false;
 
   function showSettingsSaveError(error: unknown): void {
-    window.alert(error instanceof Error ? error.message : t("settings.save_failed"));
+    ctx.showError(error instanceof Error ? error.message : t("settings.save_failed"));
   }
 
   function hasValidActiveCar(): boolean {
@@ -77,6 +77,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     els,
     t,
     escapeHtml,
+    showError: ctx.showError,
     settings,
     renderSpectrum: ctx.renderSpectrum,
     hasValidActiveCar,
@@ -87,6 +88,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     els,
     t,
     escapeHtml,
+    showError: ctx.showError,
     settings,
     renderSpeedReadout: ctx.renderSpeedReadout,
     onSaveError: showSettingsSaveError,
@@ -95,6 +97,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     els,
     t,
     escapeHtml,
+    showError: ctx.showError,
     settings,
     getSpeedUnit: ctx.getSpeedUnit,
     fmt,
@@ -129,7 +132,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       renderCarList();
       ctx.renderSpectrum();
     } catch (_err) {
-      window.alert(t("settings.car.activate_failed"));
+      ctx.showError(t("settings.car.activate_failed"));
     }
   }
 
@@ -145,7 +148,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       renderCarList();
       ctx.renderSpectrum();
     } catch (_err) {
-      window.alert(t("settings.car.delete_failed"));
+      ctx.showError(t("settings.car.delete_failed"));
     }
   }
 

@@ -49,6 +49,7 @@ export interface HistoryDownloadDeleteModuleDeps {
   history: HistoryState;
   getLanguage: () => string;
   t: (key: string, vars?: Record<string, unknown>) => string;
+  showError: (message: string) => void;
   ensureRunDetail: (runId: string) => RunDetail;
   collapseExpandedRun: () => void;
   renderHistoryTable: () => void;
@@ -75,7 +76,7 @@ export function createHistoryDownloadDeleteModule(
     try {
       await deleteHistoryRunApi(runId);
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : t("history.delete_failed"));
+      ctx.showError(err instanceof Error ? err.message : t("history.delete_failed"));
       return;
     }
     if (history.expandedRunId === runId) {
@@ -114,7 +115,7 @@ export function createHistoryDownloadDeleteModule(
     await ctx.refreshHistory();
     if (failed > 0) {
       const summary = t("history.delete_all_partial", { deleted, total: names.length, failed });
-      window.alert(firstError ? `${summary}\n${firstError}` : summary);
+      ctx.showError(firstError ? `${summary}\n${firstError}` : summary);
     }
   }
 

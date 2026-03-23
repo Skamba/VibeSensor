@@ -11,4 +11,5 @@ export interface FeatureDepsBase {
   els: UiDomElements;
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
+  showError: (message: string) => void;
 }
