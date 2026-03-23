@@ -42,20 +42,23 @@ export class UiShellController {
     this.state = deps.state;
     this.els = deps.els;
     this.navigation = createUiShellNavigationModule({
-      state: this.state,
+      shell: this.state.shell,
       els: this.els,
       onDashboardViewActivated: () => {
-        this.state.spectrumPlot?.resize();
+        this.state.spectrum.spectrumPlot?.resize();
       },
     });
     this.status = createUiShellStatusModule({
-      state: this.state,
+      shell: this.state.shell,
+      transport: this.state.transport,
+      realtime: this.state.realtime,
+      settings: this.state.settings,
       els: this.els,
       t: (key, vars) => this.t(key, vars),
       setPillState: (el, variant, text) => this.setPillState(el, variant, text),
     });
     this.preferences = createUiShellPreferencesModule({
-      state: this.state,
+      shell: this.state.shell,
       els: this.els,
       t: (key, vars) => this.t(key, vars),
       normalizeLanguage: (lang) => I18N.normalizeLang(lang),
@@ -77,11 +80,11 @@ export class UiShellController {
   }
 
   t(key: string, vars?: Record<string, unknown>): string {
-    return I18N.get(this.state.lang, key, vars);
+    return I18N.get(this.state.shell.lang, key, vars);
   }
 
   localFormatInt(value: number): string {
-    return formatIntLocale(value, this.state.lang);
+    return formatIntLocale(value, this.state.shell.lang);
   }
 
   setStatValue(container: HTMLElement | null, value: string | number): void {
@@ -119,24 +122,24 @@ export class UiShellController {
 
   applyLanguage(forceReloadInsights = false): void {
     const features = this.requireFeatures();
-    document.documentElement.lang = this.state.lang;
+    document.documentElement.lang = this.state.shell.lang;
     document.querySelectorAll("[data-i18n]").forEach((element) => {
       const key = element.getAttribute("data-i18n");
       if (key) element.textContent = this.t(key);
     });
-    if (this.els.languageSelect) this.els.languageSelect.value = this.state.lang;
-    if (this.els.speedUnitSelect) this.els.speedUnitSelect.value = this.state.speedUnit;
-    this.state.locationOptions = features.realtime.buildLocationOptions(this.state.locationCodes);
-    this.state.sensorsSettingsSignature = "";
+    if (this.els.languageSelect) this.els.languageSelect.value = this.state.shell.lang;
+    if (this.els.speedUnitSelect) this.els.speedUnitSelect.value = this.state.shell.speedUnit;
+    this.state.realtime.locationOptions = features.realtime.buildLocationOptions(this.state.realtime.locationCodes);
+    this.state.realtime.sensorsSettingsSignature = "";
     features.realtime.maybeRenderSensorsSettingsList(true);
     this.renderSpeedReadout();
     features.realtime.renderLoggingStatus();
     features.history.renderHistoryTable();
     this.renderWsState();
     this.renderCarSelectionWarning();
-    if (this.state.spectrumPlot) {
-      this.state.spectrumPlot.destroy();
-      this.state.spectrumPlot = null;
+    if (this.state.spectrum.spectrumPlot) {
+      this.state.spectrum.spectrumPlot.destroy();
+      this.state.spectrum.spectrumPlot = null;
       this.renderSpectrumChart?.();
     }
     if (forceReloadInsights) {

@@ -111,27 +111,27 @@ export class UiSpectrumController {
 
   updateSpectrumOverlay(): void {
     if (!this.els.spectrumOverlay) return;
-    if (this.state.payloadError) {
+    if (this.state.transport.payloadError) {
       this.els.spectrumOverlay.hidden = false;
-      this.els.spectrumOverlay.textContent = this.state.payloadError;
+      this.els.spectrumOverlay.textContent = this.state.transport.payloadError;
       return;
     }
-    if (!this.state.hasReceivedPayload && this.state.wsState === "connecting") {
+    if (!this.state.transport.hasReceivedPayload && this.state.transport.wsState === "connecting") {
       this.els.spectrumOverlay.hidden = false;
       this.els.spectrumOverlay.textContent = this.t("spectrum.loading");
       return;
     }
-    if (this.state.wsState === "connecting" || this.state.wsState === "reconnecting") {
+    if (this.state.transport.wsState === "connecting" || this.state.transport.wsState === "reconnecting") {
       this.els.spectrumOverlay.hidden = false;
       this.els.spectrumOverlay.textContent = this.t("ws.connecting");
       return;
     }
-    if (this.state.wsState === "stale") {
+    if (this.state.transport.wsState === "stale") {
       this.els.spectrumOverlay.hidden = false;
       this.els.spectrumOverlay.textContent = this.t("spectrum.stale");
       return;
     }
-    if (!this.state.hasSpectrumData) {
+    if (!this.state.spectrum.hasSpectrumData) {
       this.els.spectrumOverlay.hidden = false;
       this.els.spectrumOverlay.textContent = this.t("spectrum.empty");
       return;
@@ -145,9 +145,9 @@ export class UiSpectrumController {
     const entries: SpectrumSeriesEntry[] = [];
     let targetFreq: number[] = [];
 
-    for (const [index, client] of this.state.clients.entries()) {
+    for (const [index, client] of this.state.realtime.clients.entries()) {
       if (!client?.connected) continue;
-      const spectrum = this.state.spectra.clients?.[client.id];
+      const spectrum = this.state.spectrum.spectra.clients?.[client.id];
       if (!spectrum || !Array.isArray(spectrum.combined)) continue;
       const clientFreq = Array.isArray(spectrum.freq) && spectrum.freq.length
         ? spectrum.freq
@@ -191,10 +191,10 @@ export class UiSpectrumController {
       });
     }
 
-    if (!this.state.spectrumPlot || this.state.spectrumPlot.getSeriesCount() !== entries.length + 1) {
+    if (!this.state.spectrum.spectrumPlot || this.state.spectrum.spectrumPlot.getSeriesCount() !== entries.length + 1) {
       this.recreateSpectrumPlot(entries);
     } else {
-      this.state.spectrumPlot.ensurePlot(
+      this.state.spectrum.spectrumPlot.ensurePlot(
         entries,
         {
           title: this.t("chart.spectrum_title"),
@@ -204,11 +204,11 @@ export class UiSpectrumController {
         [this.bandPlugin()],
       );
     }
-    this.state.spectrumPlot!.renderLegend(this.els.legend!, entries);
-    this.state.chartBands = this.calculateBands();
+    this.state.spectrum.spectrumPlot!.renderLegend(this.els.legend!, entries);
+    this.state.spectrum.chartBands = this.calculateBands();
     if (this.els.bandLegend) {
       this.els.bandLegend.innerHTML = "";
-      for (const band of this.state.chartBands) {
+      for (const band of this.state.spectrum.chartBands) {
         const row = document.createElement("div");
         row.className = "legend-item";
         row.innerHTML = `<span class="swatch" style="--swatch-color:${escapeHtml(band.color)}"></span><span>${escapeHtml(band.label)}</span>`;
@@ -219,13 +219,13 @@ export class UiSpectrumController {
     if (!targetFreq.length || !entries.length) {
       this.stopSpectrumTween();
       this.spectrumLastFrame = null;
-      this.state.hasSpectrumData = false;
-      this.state.spectrumPlot!.setData([[], ...entries.map(() => [] as number[])]);
+      this.state.spectrum.hasSpectrumData = false;
+      this.state.spectrum.spectrumPlot!.setData([[], ...entries.map(() => [] as number[])]);
       this.updateSpectrumOverlay();
       return;
     }
 
-    this.state.hasSpectrumData = true;
+    this.state.spectrum.hasSpectrumData = true;
     const minLen = Math.min(targetFreq.length, ...entries.map((entry) => entry.values.length));
     // Build frame without redundant copies — entries already own their arrays.
     const nextFrame: SpectrumHeavyFrame = {
@@ -235,7 +235,7 @@ export class UiSpectrumController {
         entry.values.length === minLen ? entry.values : entry.values.slice(0, minLen),
       ),
     };
-    const canTween = this.state.wsState === "connected"
+    const canTween = this.state.transport.wsState === "connected"
       && areHeavyFramesCompatible(this.spectrumLastFrame, nextFrame);
     this.stopSpectrumTween();
     if (!canTween || !this.spectrumLastFrame) {
@@ -273,15 +273,15 @@ export class UiSpectrumController {
   }
 
   private setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
-    if (!this.state.spectrumPlot) return;
-    this.state.spectrumPlot.setData([frame.freq, ...frame.values]);
+    if (!this.state.spectrum.spectrumPlot) return;
+    this.state.spectrum.spectrumPlot.setData([frame.freq, ...frame.values]);
     // Store a shallow snapshot for tween comparison.
     // The frame's arrays are not mutated after construction, so no deep clone needed.
     this.spectrumLastFrame = frame;
   }
 
   private calculateBandsFromBackend(): ChartBand[] | null {
-    const bands = this.state.rotationalSpeeds?.order_bands;
+    const bands = this.state.realtime.rotationalSpeeds?.order_bands;
     if (!Array.isArray(bands) || !bands.length) return null;
     const out: ChartBand[] = [];
     for (const band of bands) {
@@ -309,10 +309,10 @@ export class UiSpectrumController {
       hooks: {
         draw: [
           (plot: uPlot) => {
-            if (!this.state.chartBands.length) return;
+            if (!this.state.spectrum.chartBands.length) return;
             const top = plot.bbox.top;
             const height = plot.bbox.height;
-            for (const band of this.state.chartBands) {
+            for (const band of this.state.spectrum.chartBands) {
               if (!(band.max_hz > band.min_hz)) continue;
               const x1 = plot.valToPos(band.min_hz, "x", true);
               const x2 = plot.valToPos(band.max_hz, "x", true);
@@ -328,17 +328,17 @@ export class UiSpectrumController {
   private recreateSpectrumPlot(seriesMeta: SpectrumSeriesEntry[]): void {
     this.stopSpectrumTween();
     this.spectrumLastFrame = null;
-    if (this.state.spectrumPlot) {
-      this.state.spectrumPlot.destroy();
-      this.state.spectrumPlot = null;
+    if (this.state.spectrum.spectrumPlot) {
+      this.state.spectrum.spectrumPlot.destroy();
+      this.state.spectrum.spectrumPlot = null;
     }
-    this.state.spectrumPlot = new SpectrumChart(
+    this.state.spectrum.spectrumPlot = new SpectrumChart(
       this.els.specChart!,
       this.els.spectrumOverlay,
       360,
       this.els.specChartWrap,
     );
-    this.state.spectrumPlot.ensurePlot(
+    this.state.spectrum.spectrumPlot.ensurePlot(
       seriesMeta,
       {
         title: this.t("chart.spectrum_title"),

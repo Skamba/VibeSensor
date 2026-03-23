@@ -38,7 +38,8 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   const { state, els, t, escapeHtml, fmt, fmtTs, formatInt } = deps;
 
   const history = createHistoryFeature({
-    state,
+    history: state.history,
+    getLanguage: () => state.shell.lang,
     els,
     t,
     escapeHtml,
@@ -48,7 +49,8 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   });
 
   const realtime = createRealtimeFeature({
-    state,
+    realtime: state.realtime,
+    getLanguage: () => state.shell.lang,
     els,
     t,
     escapeHtml,
@@ -60,7 +62,8 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   });
 
   const settings = createSettingsFeature({
-    state,
+    settings: state.settings,
+    getSpeedUnit: () => state.shell.speedUnit,
     els,
     t,
     escapeHtml,

@@ -83,97 +83,133 @@ export function applySpectrumTick(
   };
 }
 
-export interface AppState {
-  ws: WsClient | null;
-  wsState: string;
+export interface ShellState {
   lang: string;
   speedUnit: string;
+  activeViewId: string;
+}
+
+export interface TransportState {
+  ws: WsClient | null;
+  wsState: string;
+  pendingPayload: unknown | null;
+  renderQueued: boolean;
+  lastRenderTsMs: number;
+  minRenderIntervalMs: number;
+  hasReceivedPayload: boolean;
+  payloadError: string | null;
+}
+
+export interface RealtimeState {
   clients: AdaptedClient[];
   selectedClientId: string | null;
-  spectrumPlot: SpectrumChart | null;
-  spectra: { clients: Record<string, SpectrumClientData> };
   speedMps: number | null;
   rotationalSpeeds: RotationalSpeeds | null;
-  activeViewId: string;
+  loggingStatus: LoggingStatusPayload;
+  locationOptions: LocationOption[];
+  locationCodes: string[];
+  sensorsSettingsSignature: string;
+}
+
+export interface HistoryState {
   runs: HistoryEntry[];
   deleteAllRunsInFlight: boolean;
   expandedRunId: string | null;
   runDetailsById: Record<string, RunDetail>;
-  loggingStatus: LoggingStatusPayload;
-  locationOptions: LocationOption[];
+}
+
+export interface SettingsState {
   vehicleSettings: VehicleSettings;
   cars: CarRecord[];
   activeCarId: string | null;
   speedSource: SpeedSourceKind;
   manualSpeedKph: number | null;
   gpsFallbackActive: boolean;
+}
+
+export interface SpectrumState {
+  spectrumPlot: SpectrumChart | null;
+  spectra: { clients: Record<string, SpectrumClientData> };
   chartBands: ChartBand[];
-  pendingPayload: unknown | null;
-  renderQueued: boolean;
-  lastRenderTsMs: number;
-  minRenderIntervalMs: number;
-  sensorsSettingsSignature: string;
-  locationCodes: string[];
   hasSpectrumData: boolean;
-  hasReceivedPayload: boolean;
-  payloadError: string | null;
+}
+
+export interface AppState {
+  shell: ShellState;
+  transport: TransportState;
+  realtime: RealtimeState;
+  history: HistoryState;
+  settings: SettingsState;
+  spectrum: SpectrumState;
 }
 
 export function createAppState(): AppState {
   return {
-    ws: null,
-    wsState: "connecting",
-    lang: "en",
-    speedUnit: "kmh",
-    clients: [],
-    selectedClientId: null,
-    spectrumPlot: null,
-    spectra: { clients: {} },
-    speedMps: null,
-    rotationalSpeeds: null,
-    activeViewId: "dashboardView",
-    runs: [],
-    deleteAllRunsInFlight: false,
-    expandedRunId: null,
-    runDetailsById: {},
-    loggingStatus: {
-      enabled: false,
-      run_id: null,
-      write_error: null,
-      analysis_in_progress: false,
+    shell: {
+      lang: "en",
+      speedUnit: "kmh",
+      activeViewId: "dashboardView",
     },
-    locationOptions: [],
-    vehicleSettings: {
-      tire_width_mm: 285.0,
-      tire_aspect_pct: 30.0,
-      rim_in: 21.0,
-      final_drive_ratio: 3.08,
-      current_gear_ratio: 0.64,
-      wheel_bandwidth_pct: 5.0,
-      driveshaft_bandwidth_pct: 4.5,
-      engine_bandwidth_pct: 5.2,
-      speed_uncertainty_pct: 1.0,
-      tire_diameter_uncertainty_pct: 1.0,
-      final_drive_uncertainty_pct: 0.1,
-      gear_uncertainty_pct: 0.2,
-      min_abs_band_hz: 0.2,
-      max_band_half_width_pct: 6.0,
-      tire_deflection_factor: 0.97,
+    transport: {
+      ws: null,
+      wsState: "connecting",
+      pendingPayload: null,
+      renderQueued: false,
+      lastRenderTsMs: 0,
+      minRenderIntervalMs: 100,
+      hasReceivedPayload: false,
+      payloadError: null,
     },
-    cars: [],
-    activeCarId: null,
-    speedSource: "gps",
-    manualSpeedKph: null,
-    gpsFallbackActive: false,
-    chartBands: [],
-    pendingPayload: null,
-    renderQueued: false,
-    lastRenderTsMs: 0,
-    minRenderIntervalMs: 100,
-    sensorsSettingsSignature: "",
-    locationCodes: defaultLocationCodes.slice(),
-    hasSpectrumData: false,
-    hasReceivedPayload: false,
-    payloadError: null,
+    realtime: {
+      clients: [],
+      selectedClientId: null,
+      speedMps: null,
+      rotationalSpeeds: null,
+      loggingStatus: {
+        enabled: false,
+        run_id: null,
+        write_error: null,
+        analysis_in_progress: false,
+      },
+      locationOptions: [],
+      locationCodes: defaultLocationCodes.slice(),
+      sensorsSettingsSignature: "",
+    },
+    history: {
+      runs: [],
+      deleteAllRunsInFlight: false,
+      expandedRunId: null,
+      runDetailsById: {},
+    },
+    settings: {
+      vehicleSettings: {
+        tire_width_mm: 285.0,
+        tire_aspect_pct: 30.0,
+        rim_in: 21.0,
+        final_drive_ratio: 3.08,
+        current_gear_ratio: 0.64,
+        wheel_bandwidth_pct: 5.0,
+        driveshaft_bandwidth_pct: 4.5,
+        engine_bandwidth_pct: 5.2,
+        speed_uncertainty_pct: 1.0,
+        tire_diameter_uncertainty_pct: 1.0,
+        final_drive_uncertainty_pct: 0.1,
+        gear_uncertainty_pct: 0.2,
+        min_abs_band_hz: 0.2,
+        max_band_half_width_pct: 6.0,
+        tire_deflection_factor: 0.97,
+      },
+      cars: [],
+      activeCarId: null,
+      speedSource: "gps",
+      manualSpeedKph: null,
+      gpsFallbackActive: false,
+    },
+    spectrum: {
+      spectrumPlot: null,
+      spectra: { clients: {} },
+      chartBands: [],
+      hasSpectrumData: false,
+    },
   };
 }
