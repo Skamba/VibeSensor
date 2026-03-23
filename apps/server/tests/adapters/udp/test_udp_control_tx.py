@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.adapters.udp.protocol import HelloMessage, parse_cmd
-from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
+from vibesensor.adapters.udp.protocol import HelloMessage, pack_ack, parse_cmd
+from vibesensor.adapters.udp.udp_control_tx import ControlDatagramProtocol, UDPControlPlane
 from vibesensor.infra.runtime.registry import ClientRegistry
 
 
@@ -49,3 +50,27 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
 
     cmd = parse_cmd(payload)
     assert cmd.client_id.hex() == client_hex
+
+
+def test_control_datagram_unexpected_exception_is_logged_and_counted(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client_hex = "aabbccddeeff"
+    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    protocol = ControlDatagramProtocol(registry)
+    packet = pack_ack(bytes.fromhex(client_hex), cmd_seq=7, status=0)
+
+    def boom(_: bytes) -> object:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("vibesensor.adapters.udp.udp_control_tx.parse_ack", boom)
+
+    with caplog.at_level(logging.WARNING):
+        protocol.datagram_received(packet, ("127.0.0.1", 9001))
+
+    record = registry.get(client_hex)
+    assert record is not None
+    assert record.parse_errors == 1
+    assert "Unexpected error processing control datagram" in caplog.text
