@@ -15,16 +15,18 @@ from vibesensor.shared.constants import (
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.use_cases.diagnostics._sample_metrics import (
+    _estimate_strength_floor_amp_g,
+)
+from vibesensor.use_cases.diagnostics._sensor_locations import (
+    _location_label,
+)
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     PhaseLabels,
     ensure_analysis_sample,
 )
-from vibesensor.use_cases.diagnostics.helpers import (
-    _estimate_strength_floor_amp_g,
-    _location_label,
-)
-from vibesensor.use_cases.diagnostics.rotational_physics import OrderHypothesis
+from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
 
 

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-import vibesensor.use_cases.diagnostics.order_scoring as order_scoring_module
+import vibesensor.use_cases.diagnostics.orders.scoring as order_scoring_module
 from vibesensor.domain import OrderMatchObservation, VibrationSource
-from vibesensor.use_cases.diagnostics.order_matching import OrderMatchAccumulator
-from vibesensor.use_cases.diagnostics.order_scoring import (
+from vibesensor.use_cases.diagnostics.orders.matching import OrderMatchAccumulator
+from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
+from vibesensor.use_cases.diagnostics.orders.scoring import (
     OrderFindingBuildContext,
     score_order_finding,
 )
-from vibesensor.use_cases.diagnostics.rotational_physics import OrderHypothesis
 
 
 def _make_accumulator(

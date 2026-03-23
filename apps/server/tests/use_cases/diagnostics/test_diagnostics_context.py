@@ -4,7 +4,8 @@ from dataclasses import replace
 
 from test_support.sample_scenarios import make_analysis_sample
 
-from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._context_projection import context_to_metadata_dict
 
 
 def _context_metadata() -> dict[str, object]:
@@ -44,7 +45,7 @@ def _context_metadata() -> dict[str, object]:
 
 
 def test_diagnostics_context_decodes_typed_reference_data() -> None:
-    context = DiagnosticsContext.from_metadata(_context_metadata(), file_name="ctx")
+    context = build_diagnostics_context(_context_metadata(), file_name="ctx")
 
     assert context.run_id == "ctx-run"
     assert context.raw_sample_rate_hz == 200.0
@@ -57,7 +58,7 @@ def test_diagnostics_context_decodes_typed_reference_data() -> None:
 
 
 def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None:
-    context = DiagnosticsContext.from_metadata(_context_metadata(), file_name="ctx")
+    context = build_diagnostics_context(_context_metadata(), file_name="ctx")
     sample = replace(
         make_analysis_sample(
             t_s=0.0,
@@ -77,9 +78,9 @@ def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None
 
 
 def test_diagnostics_context_rehydrates_boundary_metadata_with_known_and_unknown_fields() -> None:
-    context = DiagnosticsContext.from_metadata(_context_metadata(), file_name="ctx")
+    context = build_diagnostics_context(_context_metadata(), file_name="ctx")
 
-    metadata = context.to_metadata_dict()
+    metadata = context_to_metadata_dict(context)
 
     assert metadata["run_id"] == "ctx-run"
     assert metadata["custom_note"] == "preserve-me"

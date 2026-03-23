@@ -3,16 +3,22 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from math import log1p, sqrt
+from math import log1p
 
 from vibesensor.shared.constants import NEGLIGIBLE_STRENGTH_MAX_DB, SNR_LOG_DIVISOR
-from vibesensor.vibration_strength import percentile
 from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
-from .helpers import _effective_baseline_floor
-from .peak_classification import classify_peak_type
+from .._sample_metrics import _effective_baseline_floor
+from .classification import classify_peak_type
+from .settings import PEAK_CONFIDENCE_SETTINGS
+from .statistics import (
+    compute_peak_distribution_stats,
+    compute_peak_persistence_score,
+    compute_peak_spatial_uniformity,
+    compute_peak_speed_uniformity,
+)
 
 
 def _presence_ratio_with_location_rescue(
@@ -24,39 +30,14 @@ def _presence_ratio_with_location_rescue(
     loc_counts_for_bin: Mapping[str, int],
 ) -> float:
     presence = count / max(1, n_samples)
+    settings = PEAK_CONFIDENCE_SETTINGS
     if total_location_sample_counts and loc_counts_for_bin:
         for loc in total_locations:
             loc_hits = loc_counts_for_bin.get(loc, 0)
             loc_total = total_location_sample_counts.get(loc, 0)
-            if loc_total >= 3:
+            if loc_total >= settings.location_rescue_min_samples:
                 presence = max(presence, loc_hits / loc_total)
     return presence
-
-
-def _compute_speed_uniformity(
-    *,
-    speed_bin_counts_for_bin: Mapping[str, int],
-    total_speed_bin_counts: Mapping[str, int],
-) -> float | None:
-    if len(total_speed_bin_counts) < 2:
-        return None
-    hit_rate_sum = 0.0
-    hit_rate_sq_sum = 0.0
-    hit_rate_count = 0
-    for speed_bin, total_count in total_speed_bin_counts.items():
-        if total_count <= 0:
-            continue
-        rate = speed_bin_counts_for_bin.get(speed_bin, 0) / total_count
-        hit_rate_sum += rate
-        hit_rate_sq_sum += rate * rate
-        hit_rate_count += 1
-    if hit_rate_count > 1:
-        hit_rate_mean = hit_rate_sum / hit_rate_count
-        variance = max(0.0, (hit_rate_sq_sum / hit_rate_count) - hit_rate_mean * hit_rate_mean)
-        return sqrt(variance)
-    if hit_rate_count == 1:
-        return 0.0
-    return None
 
 
 def _compute_peak_confidence(
@@ -69,29 +50,52 @@ def _compute_peak_confidence(
     has_location_counts: bool,
     peak_strength_db: float,
 ) -> float:
+    settings = PEAK_CONFIDENCE_SETTINGS
     snr_score = min(1.0, log1p(raw_snr) / SNR_LOG_DIVISOR)
-    spatial_penalty = (0.35 + 0.65 * spatial_concentration) if has_location_counts else 1.0
+    spatial_penalty = (
+        (settings.spatial_penalty_base + settings.spatial_penalty_range * spatial_concentration)
+        if has_location_counts
+        else 1.0
+    )
 
     if peak_type == "baseline_noise":
-        return max(0.02, min(0.12, 0.02 + 0.05 * presence_ratio))
+        return max(
+            settings.baseline_noise_confidence_min,
+            min(
+                settings.baseline_noise_confidence_max,
+                settings.baseline_noise_confidence_base
+                + settings.baseline_noise_presence_weight * presence_ratio,
+            ),
+        )
     if peak_type == "transient":
-        return max(0.05, min(0.22, 0.05 + 0.10 * presence_ratio + 0.07 * snr_score))
+        return max(
+            settings.transient_confidence_min,
+            min(
+                settings.transient_confidence_max,
+                settings.transient_confidence_base
+                + settings.transient_presence_weight * presence_ratio
+                + settings.transient_snr_weight * snr_score,
+            ),
+        )
 
     base_confidence = max(
-        0.10,
+        settings.confidence_min,
         min(
-            0.75,
-            0.10
-            + 0.35 * presence_ratio
-            + 0.15 * snr_score
-            + 0.15 * min(1.0, 1.0 - burstiness / 10.0),
+            settings.confidence_max,
+            settings.confidence_base
+            + settings.presence_weight * presence_ratio
+            + settings.snr_weight * snr_score
+            + settings.burstiness_weight * min(1.0, 1.0 - burstiness / 10.0),
         ),
     )
     confidence = base_confidence * spatial_penalty
-    if has_location_counts and spatial_concentration <= 0.35:
-        confidence = min(confidence, 0.35)
+    if (
+        has_location_counts
+        and spatial_concentration <= settings.low_spatial_concentration_threshold
+    ):
+        confidence = min(confidence, settings.low_spatial_concentration_cap)
     if peak_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
-        confidence = min(confidence, 0.40)
+        confidence = min(confidence, settings.negligible_strength_cap)
     return confidence
 
 
@@ -130,12 +134,8 @@ class PeakBin:
         total_speed_bin_counts: Mapping[str, int],
         run_noise_baseline_g: float | None,
     ) -> None:
-        sorted_amps = sorted(amps)
-        count = len(sorted_amps)
-        median_amp = percentile(sorted_amps, 0.50) if count >= 2 else sorted_amps[0]
-        p95_amp = percentile(sorted_amps, 0.95) if count >= 2 else sorted_amps[-1]
-        max_amp = sorted_amps[-1]
-        burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
+        stats = compute_peak_distribution_stats(amps, floor_vals)
+        count = stats.sample_count
         presence_ratio = _presence_ratio_with_location_rescue(
             count=count,
             n_samples=n_samples,
@@ -143,17 +143,17 @@ class PeakBin:
             total_location_sample_counts=total_location_sample_counts,
             loc_counts_for_bin=loc_counts_for_bin,
         )
-        mean_floor = sum(floor_vals) / len(floor_vals) if floor_vals else 0.0
         effective_floor = _effective_baseline_floor(
             run_noise_baseline_g,
-            extra_fallback=mean_floor,
+            extra_fallback=stats.mean_floor_amp,
         )
-        raw_snr = p95_amp / effective_floor
+        raw_snr = stats.p95_amp / effective_floor
         total_location_count = len(total_locations)
-        spatial_uniformity = (
-            len(loc_counts_for_bin) / total_location_count if total_location_count >= 2 else None
+        spatial_uniformity = compute_peak_spatial_uniformity(
+            matching_locations=len(loc_counts_for_bin),
+            total_locations=total_location_count,
         )
-        speed_uniformity = _compute_speed_uniformity(
+        speed_uniformity = compute_peak_speed_uniformity(
             speed_bin_counts_for_bin=speed_bin_counts_for_bin,
             total_speed_bin_counts=total_speed_bin_counts,
         )
@@ -162,23 +162,26 @@ class PeakBin:
         )
         peak_type = classify_peak_type(
             presence_ratio,
-            burstiness,
+            stats.burstiness,
             snr=raw_snr,
             spatial_uniformity=spatial_uniformity,
             speed_uniformity=speed_uniformity,
         )
         peak_strength_db = canonical_vibration_db(
-            peak_band_rms_amp_g=p95_amp,
+            peak_band_rms_amp_g=stats.p95_amp,
             floor_amp_g=effective_floor,
         )
 
         self._bin_center = bin_center
-        self._burstiness = burstiness
+        self._burstiness = stats.burstiness
         self._peak_strength_db = peak_strength_db
         self._peak_type = peak_type
         self._phases_for_bin = dict(phases_for_bin)
         self._presence_ratio = presence_ratio
-        self._ranking_score = (presence_ratio**2) * p95_amp
+        self._ranking_score = compute_peak_persistence_score(
+            presence_ratio=presence_ratio,
+            p95_amp=stats.p95_amp,
+        )
         self._raw_snr = raw_snr
         self._spatial_concentration = spatial_concentration
         self._spatial_uniformity = spatial_uniformity
@@ -188,7 +191,7 @@ class PeakBin:
             peak_type=peak_type,
             presence_ratio=presence_ratio,
             raw_snr=raw_snr,
-            burstiness=burstiness,
+            burstiness=stats.burstiness,
             spatial_concentration=spatial_concentration,
             has_location_counts=bool(loc_counts_for_bin),
             peak_strength_db=peak_strength_db,

@@ -15,6 +15,7 @@ from test_support.report_helpers import (
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases
 
@@ -151,19 +152,22 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
         return segment_run_phases(sequence)
 
     with patch(
-        "vibesensor.use_cases.diagnostics._peak_findings.segment_run_phases",
+        "vibesensor.use_cases.diagnostics.peaks.findings.segment_run_phases",
         side_effect=_patched_segment_run_phases,
     ):
         _findings_build_findings(
-            context=diagnostics_context({"units": {"accel_x_g": "g"}}),
-            samples=samples,
-            speed_sufficient=True,
-            steady_speed=False,
-            speed_stddev_kmh=None,
-            speed_non_null_pct=100.0,
-            raw_sample_rate_hz=200.0,
-            lang="en",
-            per_sample_phases=pre_computed_phases,
+            FindingsBuildRequest(
+                context=diagnostics_context({"units": {"accel_x_g": "g"}}),
+                samples=samples,
+                speed_sufficient=True,
+                steady_speed=False,
+                speed_stddev_kmh=None,
+                speed_non_null_pct=100.0,
+                raw_sample_rate_hz=200.0,
+                lang="en",
+                per_sample_phases=pre_computed_phases,
+                run_noise_baseline_g=None,
+            ),
         )
 
     assert recompute_calls == []
@@ -189,7 +193,7 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
         recompute_calls.append(1)
         return segment_run_phases(sequence)
 
-    patch_target = "vibesensor.use_cases.diagnostics._peak_findings.segment_run_phases"
+    patch_target = "vibesensor.use_cases.diagnostics.peaks.findings.segment_run_phases"
     with patch(patch_target, side_effect=_patched_srp):
         summary = summarize_run_data(metadata, samples, include_samples=False)
 

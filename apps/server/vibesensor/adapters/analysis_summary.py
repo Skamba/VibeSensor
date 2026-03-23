@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 from typing import cast
 
-from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.analysis_summary import (
     AnalysisResultLike,
@@ -14,8 +13,9 @@ from vibesensor.shared.boundaries.analysis_summary import (
 )
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics import RunAnalysis
+from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuilder
+from vibesensor.use_cases.diagnostics._run_loader import _load_run
 from vibesensor.use_cases.diagnostics._types import AnalysisSampleInput
-from vibesensor.use_cases.diagnostics.helpers import _load_run
 
 
 def summarize_run_data(
@@ -24,7 +24,7 @@ def summarize_run_data(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+    findings_builder: FindingsBuilder | None = None,
 ) -> AnalysisSummary:
     """Analyze pre-loaded run data and serialize the boundary summary payload."""
     result = RunAnalysis(
@@ -42,7 +42,7 @@ def summarize_log(
     log_path: Path,
     lang: str | None = None,
     include_samples: bool = True,
-    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+    findings_builder: FindingsBuilder | None = None,
 ) -> AnalysisSummary:
     """Read a JSONL run file, analyse it, and serialize the boundary summary."""
     metadata, samples, _warnings = _load_run(log_path)

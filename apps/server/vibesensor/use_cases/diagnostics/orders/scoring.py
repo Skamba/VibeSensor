@@ -11,17 +11,17 @@ from vibesensor.use_cases.diagnostics.location_analysis import (
     LocationAnalysisResult,
     summarize_order_match_locations,
 )
-from vibesensor.use_cases.diagnostics.order_heuristics import (
+from vibesensor.use_cases.diagnostics.orders.heuristics import (
     apply_localization_override,
     detect_diffuse_excitation,
 )
-from vibesensor.use_cases.diagnostics.order_matching import OrderMatchAccumulator
-from vibesensor.use_cases.diagnostics.order_statistics import (
+from vibesensor.use_cases.diagnostics.orders.matching import OrderMatchAccumulator
+from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
+from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_amplitude_and_error_stats,
     compute_order_confidence,
     compute_phase_stats,
 )
-from vibesensor.use_cases.diagnostics.rotational_physics import OrderHypothesis
 from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )

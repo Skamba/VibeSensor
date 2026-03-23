@@ -21,15 +21,15 @@ from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.shared.time_utils import parse_iso8601
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.use_cases.diagnostics._counters import counter_delta
+from vibesensor.use_cases.diagnostics._sample_metrics import (
+    _primary_vibration_strength_db,
+    _sensor_limit_g,
+)
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSampleInput,
     ensure_analysis_samples,
-)
-from vibesensor.use_cases.diagnostics.helpers import (
-    _primary_vibration_strength_db,
-    _sensor_limit_g,
-    counter_delta,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,

@@ -29,6 +29,13 @@ __all__ = [
 _LOGGER = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True, slots=True)
+class PeakClassificationView:
+    """Minimal view of a finding's peak-specific classification fields."""
+
+    classification: str = ""
+
+
 def speed_bin_label(kmh: float, bin_width: int = 10) -> str:
     """Return a human-readable speed-bin label like ``'80-90 km/h'``."""
     if not math.isfinite(kmh) or kmh < 0:
@@ -274,6 +281,11 @@ class Finding:
     def is_stronger_than(self, other: Finding) -> bool:
         """Whether this finding ranks higher than *other*."""
         return self.phase_adjusted_score > other.phase_adjusted_score
+
+    @property
+    def peaks(self) -> PeakClassificationView:
+        """Return the current peak-classification view used by report serializers."""
+        return PeakClassificationView(classification=self.peak_classification)
 
     def with_confidence_assessment(
         self,

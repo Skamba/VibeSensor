@@ -11,52 +11,14 @@ from dataclasses import dataclass
 
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.constants import (
-    CONFIDENCE_CEILING,
-    CONFIDENCE_FLOOR,
     LIGHT_STRENGTH_MAX_DB,
     NEGLIGIBLE_STRENGTH_MAX_DB,
     ORDER_MIN_MATCH_POINTS,
 )
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
+from vibesensor.use_cases.diagnostics.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_profile_from_points
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Scoring constants
-# ═══════════════════════════════════════════════════════════════════════════
-
-_CONF_FLOOR: float = CONFIDENCE_FLOOR
-_CONF_CEIL: float = CONFIDENCE_CEILING
-
-_SINGLE_SENSOR_CONFIDENCE_SCALE = 0.85
-_DUAL_SENSOR_CONFIDENCE_SCALE = 0.92
-_CONF_BASE = 0.10
-_MATCH_BASE_WEIGHT = 0.35
-_ERROR_WEIGHT = 0.20
-_CORR_BASE_WEIGHT = 0.10
-_SNR_WEIGHT = 0.20
-_CORR_MAX_SHIFT = 0.05
-_CORR_COMPLIANCE_FACTOR = 0.10
-_NEGLIGIBLE_STRENGTH_CONF_CAP = 0.40
-_LIGHT_STRENGTH_PENALTY = 0.80
-_LOCALIZATION_BASE = 0.70
-_LOCALIZATION_SPREAD = 0.30
-_WEAK_SEP_DOMINANCE_THRESHOLD = 1.5
-_WEAK_SEP_STRONG_PENALTY = 0.90
-_WEAK_SEP_UNIFORM_DOMINANCE = 1.05
-_WEAK_SEP_UNIFORM_PENALTY = 0.70
-_WEAK_SEP_MILD_PENALTY = 0.80
-_NO_WHEEL_SENSOR_PENALTY = 0.75
-_CONSTANT_SPEED_PENALTY = 0.75
-_STEADY_SPEED_PENALTY = 0.82
-_SAMPLE_SATURATION_COUNT = 20
-_SAMPLE_WEIGHT_BASE = 0.70
-_SAMPLE_WEIGHT_RANGE = 0.30
-_CORROBORATING_3_BONUS = 1.08
-_CORROBORATING_2_BONUS = 1.04
-_PHASES_3_BONUS = 1.06
-_PHASES_2_BONUS = 1.03
-_LOCALIZATION_MIN_SCALE_THRESHOLD = 0.30
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Statistical evidence functions
@@ -85,61 +47,78 @@ def compute_order_confidence(
     path_compliance: float = 1.0,
 ) -> float:
     """Compute calibrated confidence for an order-tracking finding."""
+    settings = ORDER_CONFIDENCE_SETTINGS
     corr_shift = max(
         0.0,
-        min(_CORR_MAX_SHIFT, _CORR_COMPLIANCE_FACTOR * (path_compliance - 1.0)),
+        min(
+            settings.correlation_max_shift,
+            settings.correlation_compliance_factor * (path_compliance - 1.0),
+        ),
     )
-    match_weight = _MATCH_BASE_WEIGHT + corr_shift
-    corr_weight = _CORR_BASE_WEIGHT - corr_shift
+    match_weight = settings.match_weight + corr_shift
+    corr_weight = settings.correlation_weight - corr_shift
     confidence = (
-        _CONF_BASE
+        settings.confidence_base
         + (match_weight * effective_match_rate)
-        + (_ERROR_WEIGHT * error_score)
+        + (settings.error_weight * error_score)
         + (corr_weight * corr_val)
-        + (_SNR_WEIGHT * snr_score)
+        + (settings.snr_weight * snr_score)
     )
     if absolute_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
-        confidence = min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP)
+        confidence = min(confidence, settings.negligible_strength_confidence_cap)
     elif absolute_strength_db < LIGHT_STRENGTH_MAX_DB:
-        confidence *= _LIGHT_STRENGTH_PENALTY
-    confidence *= _LOCALIZATION_BASE + (
-        _LOCALIZATION_SPREAD * max(0.0, min(1.0, localization_confidence))
+        confidence *= settings.light_strength_penalty
+    confidence *= settings.localization_base + (
+        settings.localization_spread * max(0.0, min(1.0, localization_confidence))
     )
     if weak_spatial_separation:
         if (
             no_wheel_sensors
             and dominance_ratio is not None
-            and dominance_ratio >= _WEAK_SEP_DOMINANCE_THRESHOLD
+            and dominance_ratio >= settings.weak_separation_dominance_threshold
         ):
-            confidence *= _WEAK_SEP_STRONG_PENALTY
+            confidence *= settings.weak_separation_strong_penalty
         else:
-            uniform = dominance_ratio is not None and dominance_ratio < _WEAK_SEP_UNIFORM_DOMINANCE
-            confidence *= _WEAK_SEP_UNIFORM_PENALTY if uniform else _WEAK_SEP_MILD_PENALTY
+            uniform = (
+                dominance_ratio is not None
+                and dominance_ratio < settings.weak_separation_uniform_dominance
+            )
+            confidence *= (
+                settings.weak_separation_uniform_penalty
+                if uniform
+                else settings.weak_separation_mild_penalty
+            )
     if no_wheel_sensors and not weak_spatial_separation:
-        confidence *= _NO_WHEEL_SENSOR_PENALTY
+        confidence *= settings.no_wheel_sensor_penalty
     if constant_speed:
-        confidence *= _CONSTANT_SPEED_PENALTY
+        confidence *= settings.constant_speed_penalty
     elif steady_speed:
-        confidence *= _STEADY_SPEED_PENALTY
-    sample_factor = min(1.0, matched / _SAMPLE_SATURATION_COUNT)
-    confidence = confidence * (_SAMPLE_WEIGHT_BASE + _SAMPLE_WEIGHT_RANGE * sample_factor)
+        confidence *= settings.steady_speed_penalty
+    sample_factor = min(1.0, matched / settings.sample_saturation_count)
+    confidence = confidence * (
+        settings.sample_weight_base + settings.sample_weight_range * sample_factor
+    )
     if corroborating_locations >= 3:
-        confidence *= _CORROBORATING_3_BONUS
+        confidence *= settings.corroborating_three_bonus
     elif corroborating_locations >= 2:
-        confidence *= _CORROBORATING_2_BONUS
+        confidence *= settings.corroborating_two_bonus
     if phases_with_evidence >= 3:
-        confidence *= _PHASES_3_BONUS
+        confidence *= settings.phases_three_bonus
     elif phases_with_evidence >= 2:
-        confidence *= _PHASES_2_BONUS
+        confidence *= settings.phases_two_bonus
     if is_diffuse_excitation:
         confidence *= diffuse_penalty
-    if n_connected_locations <= 1 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD:
-        confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
-    elif (
-        n_connected_locations == 2 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD
+    if (
+        n_connected_locations <= 1
+        and localization_confidence >= settings.localization_min_scale_threshold
     ):
-        confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
-    return max(_CONF_FLOOR, min(_CONF_CEIL, confidence))
+        confidence *= settings.single_sensor_confidence_scale
+    elif (
+        n_connected_locations == 2
+        and localization_confidence >= settings.localization_min_scale_threshold
+    ):
+        confidence *= settings.dual_sensor_confidence_scale
+    return max(settings.confidence_floor, min(settings.confidence_ceiling, confidence))
 
 
 # ═══════════════════════════════════════════════════════════════════════════

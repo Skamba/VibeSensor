@@ -14,7 +14,7 @@ from test_support.report_helpers import (
 
 from vibesensor.shared.boundaries.summary_serialization import annotate_peaks_with_order_labels
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
-from vibesensor.use_cases.diagnostics.peak_table import (
+from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
@@ -23,8 +23,8 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 class TestBuildPersistentPeakFindings:
     def test_persistent_peak_classified_correctly(self) -> None:
         findings = build_findings(uniform_samples(20, 40.0, 0.06))
-        persistent = [f for f in findings if f.peak_classification == "patterned"]
-        transient = [f for f in findings if f.peak_classification == "transient"]
+        persistent = [f for f in findings if f.peaks.classification == "patterned"]
+        transient = [f for f in findings if f.peaks.classification == "transient"]
         assert len(persistent) >= 1
         assert len(transient) == 0
 
@@ -38,7 +38,7 @@ class TestBuildPersistentPeakFindings:
         target = next(
             f
             for f in findings
-            if f.peak_classification == "patterned" and findings_at_freq([f], "41.0", "40.0")
+            if f.peaks.classification == "patterned" and findings_at_freq([f], "41.0", "40.0")
         )
         assert target.effective_confidence >= 0.50
 
@@ -60,7 +60,7 @@ class TestBuildPersistentPeakFindings:
         candidates = [
             f
             for f in findings_at_freq(findings, "41.0", "40.0")
-            if f.peak_classification in {"patterned", "persistent"}
+            if f.peaks.classification in {"patterned", "persistent"}
         ]
         assert max(f.effective_confidence for f in candidates) <= 0.40
 
@@ -74,7 +74,7 @@ class TestBuildPersistentPeakFindings:
 
         findings = build_findings(samples)
         thud_findings = findings_at_freq(findings, "99")
-        assert thud_findings[0].peak_classification == "transient"
+        assert thud_findings[0].peaks.classification == "transient"
         assert str(thud_findings[0].suspected_source) == "transient_impact"
 
     def test_transient_confidence_capped_low(self) -> None:
@@ -85,7 +85,7 @@ class TestBuildPersistentPeakFindings:
                 peaks.append({"hz": 55.0, "amp": 2.0})
             samples.append(sample(float(i) * 0.5, 80.0, peaks))
 
-        transient = [f for f in build_findings(samples) if f.peak_classification == "transient"]
+        transient = [f for f in build_findings(samples) if f.peaks.classification == "transient"]
         for finding in transient:
             assert finding.effective_confidence <= 0.25
 
@@ -105,7 +105,7 @@ class TestBuildPersistentPeakFindings:
         impact_findings = [
             f
             for f in build_findings(samples)
-            if f.peak_classification != "transient" and (f.frequency_hz or 0.0) >= 50.0
+            if f.peaks.classification != "transient" and (f.frequency_hz or 0.0) >= 50.0
         ]
         assert len(impact_findings) == 0
 
@@ -146,7 +146,7 @@ class TestBuildPersistentPeakFindings:
 
         findings = build_findings(samples)
         target = findings_at_freq(findings, "25")
-        assert target[0].peak_classification == "baseline_noise"
+        assert target[0].peaks.classification == "baseline_noise"
 
         rows = _top_peaks_table_rows(samples, top_n=12, freq_bin_hz=1.0)
         row_25 = next(
@@ -154,7 +154,7 @@ class TestBuildPersistentPeakFindings:
             None,
         )
         assert row_25 is not None
-        assert row_25.peak_classification == "baseline_noise"
+        assert row_25.peaks.classification == "baseline_noise"
 
     def test_localized_moderate_presence_peak_remains_persistent(self) -> None:
         locations = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
@@ -173,7 +173,7 @@ class TestBuildPersistentPeakFindings:
 
         findings = build_findings(samples)
         target = findings_at_freq(findings, "25")
-        assert target[0].peak_classification == "persistent"
+        assert target[0].peaks.classification == "persistent"
 
     def test_strongest_speed_band_uses_amplitude_weighted_window(self) -> None:
         samples = []

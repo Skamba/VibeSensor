@@ -19,7 +19,7 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.domain import speed_bin_label
-from vibesensor.use_cases.diagnostics.order_match_rate import _compute_effective_match_rate
+from vibesensor.use_cases.diagnostics.orders.match_rate import _compute_effective_match_rate
 from vibesensor.use_cases.updates.status import hash_tree
 
 # ------------------------------------------------------------------

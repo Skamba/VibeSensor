@@ -19,7 +19,7 @@ from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
-from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
@@ -46,7 +46,7 @@ class TestBug01ComputeRunTimingTimedelta:
     def test_end_ts_from_samples_uses_timedelta(self) -> None:
         meta = {"start_time_utc": "2024-01-01T12:00:00Z"}
         samples = [{"t_s": 0.0}, {"t_s": 300.0}]
-        context = DiagnosticsContext.from_metadata(meta, file_name="test")
+        context = build_diagnostics_context(meta, file_name="test")
         _, start, end, duration = compute_run_timing(context, samples)
         assert start is not None
         assert end is not None

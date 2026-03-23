@@ -698,7 +698,7 @@ def _check_summary_builder_does_not_define_normalize_lang() -> list[str]:
 _INTERNAL_DIAGNOSTICS_MODULES = (
     "signal_aggregation.py",
     "run_data_preparation.py",
-    "peak_table.py",
+    "peaks/table.py",
     "spectrogram.py",
     "plots.py",
     "summary_builder.py",

@@ -285,6 +285,18 @@ class PeakTableRowData:
     peak_classification: str
     typical_speed_band: str
 
+    @property
+    def peaks(self) -> PeakClassificationRowView:
+        """Return the peak-classification view expected by serializers and reports."""
+        return PeakClassificationRowView(classification=self.peak_classification)
+
+
+@dataclass(frozen=True, slots=True)
+class PeakClassificationRowView:
+    """Minimal nested view of peak classification for report payload builders."""
+
+    classification: str
+
 
 @dataclass(frozen=True, slots=True)
 class SpectrogramResultData:

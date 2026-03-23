@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from collections.abc import Collection, Sequence
+from dataclasses import dataclass, replace
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import VibrationSource
@@ -12,26 +13,26 @@ from vibesensor.shared.constants import (
     ORDER_MIN_CONFIDENCE,
 )
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
-from vibesensor.use_cases.diagnostics._types import PhaseLabels, Sample
-from vibesensor.use_cases.diagnostics.helpers import (
+from vibesensor.use_cases.diagnostics._reference_resolution import (
     _order_reference_spec_from_context,
-    _sample_top_peaks,
 )
-from vibesensor.use_cases.diagnostics.order_finding_builder import (
+from vibesensor.use_cases.diagnostics._sample_metrics import _sample_top_peaks
+from vibesensor.use_cases.diagnostics._types import PhaseLabels, Sample
+from vibesensor.use_cases.diagnostics.orders.finding_builder import (
     assemble_order_finding,
 )
-from vibesensor.use_cases.diagnostics.order_heuristics import suppress_engine_aliases
-from vibesensor.use_cases.diagnostics.order_match_rate import (
+from vibesensor.use_cases.diagnostics.orders.heuristics import suppress_engine_aliases
+from vibesensor.use_cases.diagnostics.orders.match_rate import (
     _compute_effective_match_rate,
 )
-from vibesensor.use_cases.diagnostics.order_matching import (
+from vibesensor.use_cases.diagnostics.orders.matching import (
     match_samples_for_hypothesis,
 )
-from vibesensor.use_cases.diagnostics.order_scoring import (
+from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis, _order_hypotheses
+from vibesensor.use_cases.diagnostics.orders.scoring import (
     OrderFindingBuildContext,
     score_order_finding,
 )
-from vibesensor.use_cases.diagnostics.rotational_physics import OrderHypothesis, _order_hypotheses
 
 # Maximum dominance ratio for splitting a finding into per-location findings.
 # A ratio of 2.0 means the secondary location must be at least 50% as strong.
@@ -39,6 +40,23 @@ _MULTI_LOCATION_SPLIT_DOMINANCE = 2.0
 # Floor for dominance ratio when computing the secondary-location confidence
 # scale factor. Prevents division by values at or below 1.0.
 _MIN_DOMINANCE_FOR_SCALE = 1.01
+
+
+@dataclass(frozen=True, slots=True)
+class OrderAnalysisRequest:
+    """Typed inputs for one order-analysis pass across a prepared sample set."""
+
+    context: DiagnosticsContext
+    samples: Sequence[Sample]
+    speed_sufficient: bool
+    steady_speed: bool
+    speed_stddev_kmh: float | None
+    tire_circumference_m: float | None
+    engine_ref_sufficient: bool
+    raw_sample_rate_hz: float | None
+    connected_locations: Collection[str]
+    lang: str
+    per_sample_phases: PhaseLabels | None = None
 
 
 def _split_multi_location_findings(
@@ -104,35 +122,21 @@ class OrderAnalysisSession:
         "_order_reference_spec",
     )
 
-    def __init__(
-        self,
-        *,
-        context: DiagnosticsContext,
-        samples: list[Sample],
-        speed_sufficient: bool,
-        steady_speed: bool,
-        speed_stddev_kmh: float | None,
-        tire_circumference_m: float | None,
-        engine_ref_sufficient: bool,
-        raw_sample_rate_hz: float | None,
-        connected_locations: set[str],
-        lang: str,
-        per_sample_phases: PhaseLabels | None = None,
-    ) -> None:
-        self._context = context
-        self._samples = samples
-        self._speed_sufficient = speed_sufficient
-        self._steady_speed = steady_speed
-        self._speed_stddev_kmh = speed_stddev_kmh
-        self._tire_circumference_m = tire_circumference_m
-        self._engine_ref_sufficient = engine_ref_sufficient
-        self._raw_sample_rate_hz = raw_sample_rate_hz
-        self._connected_locations = connected_locations
-        self._lang = lang
-        self._per_sample_phases = per_sample_phases
-        self._order_reference_spec = _order_reference_spec_from_context(context)
+    def __init__(self, request: OrderAnalysisRequest) -> None:
+        self._context = request.context
+        self._samples = list(request.samples)
+        self._speed_sufficient = request.speed_sufficient
+        self._steady_speed = request.steady_speed
+        self._speed_stddev_kmh = request.speed_stddev_kmh
+        self._tire_circumference_m = request.tire_circumference_m
+        self._engine_ref_sufficient = request.engine_ref_sufficient
+        self._raw_sample_rate_hz = request.raw_sample_rate_hz
+        self._connected_locations = set(request.connected_locations)
+        self._lang = request.lang
+        self._per_sample_phases = request.per_sample_phases
+        self._order_reference_spec = _order_reference_spec_from_context(request.context)
         self._cached_peaks: list[list[tuple[float, float]]] = [
-            _sample_top_peaks(sample) for sample in samples
+            _sample_top_peaks(sample) for sample in self._samples
         ]
 
     def analyze(self) -> list[DomainFinding]:
@@ -229,32 +233,7 @@ class OrderAnalysisSession:
         )
 
 
-def _build_order_findings(
-    *,
-    context: DiagnosticsContext,
-    samples: list[Sample],
-    speed_sufficient: bool,
-    steady_speed: bool,
-    speed_stddev_kmh: float | None,
-    tire_circumference_m: float | None,
-    engine_ref_sufficient: bool,
-    raw_sample_rate_hz: float | None,
-    connected_locations: set[str],
-    lang: str,
-    per_sample_phases: PhaseLabels | None = None,
-) -> list[DomainFinding]:
+def _build_order_findings(request: OrderAnalysisRequest) -> list[DomainFinding]:
     """Build order-tracking findings by testing all hypotheses."""
-    session = OrderAnalysisSession(
-        context=context,
-        samples=samples,
-        speed_sufficient=speed_sufficient,
-        steady_speed=steady_speed,
-        speed_stddev_kmh=speed_stddev_kmh,
-        tire_circumference_m=tire_circumference_m,
-        engine_ref_sufficient=engine_ref_sufficient,
-        raw_sample_rate_hz=raw_sample_rate_hz,
-        connected_locations=connected_locations,
-        lang=lang,
-        per_sample_phases=per_sample_phases,
-    )
+    session = OrderAnalysisSession(request)
     return session.analyze()

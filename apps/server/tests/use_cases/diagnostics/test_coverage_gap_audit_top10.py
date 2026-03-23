@@ -19,13 +19,13 @@ from vibesensor.domain import (
     RunSuitability,
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.use_cases.diagnostics.order_heuristics import (
+from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
-from vibesensor.use_cases.diagnostics.order_heuristics import (
+from vibesensor.use_cases.diagnostics.orders.heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.use_cases.diagnostics.order_statistics import (
+from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase

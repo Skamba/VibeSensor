@@ -11,14 +11,14 @@ from dataclasses import dataclass
 from vibesensor.domain import OrderReferenceSpec, VibrationSource
 from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.use_cases.diagnostics._reference_resolution import (
+    _effective_engine_rpm,
+    _order_reference_spec_from_context,
+)
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     Sample,
     ensure_analysis_sample,
-)
-from vibesensor.use_cases.diagnostics.helpers import (
-    _effective_engine_rpm,
-    _order_reference_spec_from_context,
 )
 
 # ═══════════════════════════════════════════════════════════════════════════

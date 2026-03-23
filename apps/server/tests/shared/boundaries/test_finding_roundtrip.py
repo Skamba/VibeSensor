@@ -70,7 +70,7 @@ class TestFindingRoundtrip:
         assert restored.severity == original.severity
         assert restored.strongest_location == original.strongest_location
         assert restored.strongest_speed_band == original.strongest_speed_band
-        assert restored.peak_classification == original.peak_classification
+        assert restored.peaks.classification == original.peaks.classification
         assert restored.ranking_score == pytest.approx(original.ranking_score)
         assert restored.dominance_ratio == pytest.approx(original.dominance_ratio)
         assert restored.diffuse_excitation is True

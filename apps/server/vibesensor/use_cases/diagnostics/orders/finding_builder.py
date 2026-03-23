@@ -10,17 +10,17 @@ from vibesensor.domain import (
 )
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import i18n_ref
-from vibesensor.use_cases.diagnostics.order_matching import OrderMatchAccumulator
-from vibesensor.use_cases.diagnostics.order_scoring import (
+from vibesensor.use_cases.diagnostics.orders.matching import OrderMatchAccumulator
+from vibesensor.use_cases.diagnostics.orders.physics import (
+    OrderHypothesis,
+    _order_label,
+)
+from vibesensor.use_cases.diagnostics.orders.scoring import (
     OrderFindingBuildContext,
     OrderFindingScore,
 )
-from vibesensor.use_cases.diagnostics.order_statistics import (
+from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_matched_speed_phase_evidence,
-)
-from vibesensor.use_cases.diagnostics.rotational_physics import (
-    OrderHypothesis,
-    _order_label,
 )
 from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,

@@ -9,16 +9,20 @@ from typing import Any
 import pytest
 
 from vibesensor.domain import LocationHotspot
-from vibesensor.use_cases.diagnostics import (
-    order_pipeline as order_findings_module,
-)
-from vibesensor.use_cases.diagnostics import order_scoring as _order_scoring_module
-from vibesensor.use_cases.diagnostics import (
-    order_statistics as _order_statistics_module,
-)
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
-from vibesensor.use_cases.diagnostics.order_pipeline import (
+from vibesensor.use_cases.diagnostics.orders import (
+    pipeline as order_findings_module,
+)
+from vibesensor.use_cases.diagnostics.orders import scoring as _order_scoring_module
+from vibesensor.use_cases.diagnostics.orders import (
+    statistics as _order_statistics_module,
+)
+from vibesensor.use_cases.diagnostics.orders.pipeline import (
+    OrderAnalysisRequest,
+)
+from vibesensor.use_cases.diagnostics.orders.pipeline import (
     _build_order_findings as _findings_build_order_findings,
 )
 from vibesensor.use_cases.run.sample_builder import create_run_metadata
@@ -201,7 +205,7 @@ def diagnostics_context(
     """Return a typed diagnostics context for tests."""
     raw_metadata: dict[str, object] = dict(metadata or {})
     raw_metadata.update(overrides)
-    return DiagnosticsContext.from_metadata(raw_metadata, file_name="test")
+    return build_diagnostics_context(raw_metadata, file_name="test")
 
 
 def analysis_sample(
@@ -362,7 +366,7 @@ def call_build_order_findings(
     if per_sample_phases is not None:
         kwargs["per_sample_phases"] = per_sample_phases
     kwargs.update(overrides)
-    return _findings_build_order_findings(**kwargs)
+    return _findings_build_order_findings(OrderAnalysisRequest(**kwargs))
 
 
 def max_non_ref_confidence(findings: tuple | list) -> float:

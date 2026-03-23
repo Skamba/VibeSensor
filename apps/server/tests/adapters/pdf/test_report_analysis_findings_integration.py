@@ -14,9 +14,10 @@ from vibesensor.domain import Finding, LocationHotspot
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics import findings as findings_builder_module
+from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
-from vibesensor.use_cases.diagnostics.peak_table import (
+from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
 from vibesensor.use_cases.diagnostics.signal_aggregation import _speed_breakdown
@@ -65,7 +66,7 @@ def test_build_findings_nl_language() -> None:
 def test_build_findings_orders_informational_transients_after_diagnostics(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def _fake_order_findings(**_kwargs) -> list[Finding]:
+    def _fake_order_findings(_request: object) -> list[Finding]:
         return [
             Finding(
                 finding_id="F_PEAK",
@@ -94,14 +95,18 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
     )
 
     findings = _findings_build_findings(
-        context=diagnostics_context({"units": {"accel_x_g": "g"}}),
-        samples=[],
-        speed_sufficient=True,
-        steady_speed=False,
-        speed_stddev_kmh=None,
-        speed_non_null_pct=100.0,
-        raw_sample_rate_hz=200.0,
-        lang="en",
+        FindingsBuildRequest(
+            context=diagnostics_context({"units": {"accel_x_g": "g"}}),
+            samples=[],
+            speed_sufficient=True,
+            steady_speed=False,
+            speed_stddev_kmh=None,
+            speed_non_null_pct=100.0,
+            raw_sample_rate_hz=200.0,
+            lang="en",
+            per_sample_phases=None,
+            run_noise_baseline_g=None,
+        ),
     )
     non_ref_findings = [
         finding for finding in findings if not finding.finding_id.startswith("REF_")
@@ -330,7 +335,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
             ),
         )
 
-    from vibesensor.use_cases.diagnostics import order_scoring as _order_scoring_module
+    from vibesensor.use_cases.diagnostics.orders import scoring as _order_scoring_module
 
     monkeypatch.setattr(
         _order_scoring_module,

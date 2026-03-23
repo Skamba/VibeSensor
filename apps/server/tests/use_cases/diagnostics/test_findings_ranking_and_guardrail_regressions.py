@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding
 
-from vibesensor.use_cases.diagnostics.order_heuristics import (
+from vibesensor.use_cases.diagnostics.orders.heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
