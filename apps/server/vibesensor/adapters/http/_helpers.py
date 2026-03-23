@@ -10,9 +10,12 @@ from fastapi import HTTPException
 from vibesensor.domain import normalize_sensor_id
 from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
+    ConfigurationError,
     DataCorruptError,
     ProcessingError,
+    ProtocolError,
     RunNotFoundError,
+    UpdateError,
     VibeSensorError,
 )
 from vibesensor.use_cases.history.helpers import async_require_run, safe_filename
@@ -50,6 +53,13 @@ def domain_errors_to_http(
             status_code=status_map.get(exc.status, 409),
             detail=str(exc),
         ) from exc
+    except ConfigurationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ProtocolError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except UpdateError as exc:
+        status_code = 409 if exc.status == "conflict" else 500
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
     except DataCorruptError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except ProcessingError as exc:

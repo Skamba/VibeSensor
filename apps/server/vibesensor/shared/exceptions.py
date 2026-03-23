@@ -59,6 +59,10 @@ class ProtocolError(VibeSensorError):
 class UpdateError(VibeSensorError):
     """OTA update system failure."""
 
+    def __init__(self, message: str, *, status: str = "error") -> None:
+        super().__init__(message)
+        self.status = status
+
 
 class RunNotFoundError(VibeSensorError):
     """Requested run does not exist in the history database."""

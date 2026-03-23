@@ -11,6 +11,7 @@ from fastapi import HTTPException
 from test_support import response_payload
 
 from vibesensor.adapters.http.updates import create_update_routes
+from vibesensor.shared.exceptions import ConfigurationError, UpdateError
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.firmware.esp_flash_types import (
     FlashCommandRunner,
@@ -340,7 +341,7 @@ async def test_single_job_lock_and_cancel(tmp_path: Path) -> None:
     mgr, _ = _build_manager(cache_dir, runner=_FakeRunner(hang=True))
 
     mgr.start(port=None, auto_detect=True)
-    with pytest.raises(RuntimeError, match="already in progress"):
+    with pytest.raises(UpdateError, match="already in progress"):
         mgr.start(port="/dev/ttyUSB0", auto_detect=False)
     assert mgr.cancel() is True
     assert mgr._task is not None
@@ -506,8 +507,8 @@ def test_esp_flash_start_request_requires_port_when_not_auto_detect() -> None:
 
 
 @pytest.mark.asyncio
-async def test_esp_flash_start_returns_400_on_value_error() -> None:
-    """start_esp_flash must map ValueError from esp_flash_manager.start → 400."""
+async def test_esp_flash_start_returns_400_on_configuration_error() -> None:
+    """start_esp_flash must map ConfigurationError from esp_flash_manager.start → 400."""
     from unittest.mock import MagicMock
 
     from vibesensor.adapters.http.updates import create_update_routes
@@ -517,7 +518,7 @@ async def test_esp_flash_start_returns_400_on_value_error() -> None:
             return []
 
         def start(self, **_):
-            raise ValueError("port is required when auto_detect is False")
+            raise ConfigurationError("port is required when auto_detect is False")
 
         def cancel(self):
             return False

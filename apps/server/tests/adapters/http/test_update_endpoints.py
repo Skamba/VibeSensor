@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.adapters.http.updates import create_update_routes
+from vibesensor.shared.exceptions import ConfigurationError, UpdateError
 from vibesensor.use_cases.updates.firmware.esp_flash_types import (
     EspFlashHistoryEntry,
     EspFlashState,
@@ -87,9 +88,9 @@ def test_start_update_returns_started_response(update_client) -> None:
     state.update_manager.start.assert_called_once_with("GarageNet", "secret123")
 
 
-def test_start_update_maps_value_error_to_400(update_client) -> None:
+def test_start_update_maps_configuration_error_to_400(update_client) -> None:
     client, state = update_client
-    state.update_manager.start.side_effect = ValueError("SSID must be 1-64 characters")
+    state.update_manager.start.side_effect = ConfigurationError("SSID must be 1-64 characters")
 
     response = client.post("/api/update/start", json={"ssid": "x", "password": ""})
 
@@ -97,9 +98,12 @@ def test_start_update_maps_value_error_to_400(update_client) -> None:
     assert response.json()["detail"] == "SSID must be 1-64 characters"
 
 
-def test_start_update_maps_runtime_error_to_409(update_client) -> None:
+def test_start_update_maps_update_conflict_to_409(update_client) -> None:
     client, state = update_client
-    state.update_manager.start.side_effect = RuntimeError("Update already in progress")
+    state.update_manager.start.side_effect = UpdateError(
+        "Update already in progress",
+        status="conflict",
+    )
 
     response = client.post("/api/update/start", json={"ssid": "GarageNet", "password": ""})
 
@@ -169,9 +173,9 @@ def test_start_esp_flash_rejects_missing_port_when_auto_detect_disabled(update_c
     assert "port is required when auto_detect is False" in str(response.json())
 
 
-def test_start_esp_flash_maps_value_error_to_400(update_client) -> None:
+def test_start_esp_flash_maps_configuration_error_to_400(update_client) -> None:
     client, state = update_client
-    state.esp_flash_manager.start.side_effect = ValueError(
+    state.esp_flash_manager.start.side_effect = ConfigurationError(
         "port is required when auto_detect is False"
     )
 
@@ -181,9 +185,12 @@ def test_start_esp_flash_maps_value_error_to_400(update_client) -> None:
     assert response.json()["detail"] == "port is required when auto_detect is False"
 
 
-def test_start_esp_flash_maps_runtime_error_to_409(update_client) -> None:
+def test_start_esp_flash_maps_update_conflict_to_409(update_client) -> None:
     client, state = update_client
-    state.esp_flash_manager.start.side_effect = RuntimeError("Flash already in progress")
+    state.esp_flash_manager.start.side_effect = UpdateError(
+        "Flash already in progress",
+        status="conflict",
+    )
 
     response = client.post("/api/esp-flash/start", json={"port": None, "auto_detect": True})
 
