@@ -168,6 +168,7 @@ function createDeps() {
     espFlashCancelBtn,
     t: (key: string) => key,
     escapeHtml: (value: unknown) => String(value ?? ""),
+    showError: () => {},
   };
 }
 
@@ -268,6 +269,7 @@ function createUpdateDeps() {
     updateCancelBtn,
     t: (key: string) => key,
     escapeHtml: (value: unknown) => String(value ?? ""),
+    showError: () => {},
   };
 }
 
@@ -275,7 +277,6 @@ test.describe("createEspFlashFeature polling", () => {
   test.beforeEach(() => {
     (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
       typeof globalThis;
-    window.alert = (() => {}) as typeof window.alert;
   });
 
   test("start replaces the previous poll timeout instead of creating a second chain", async () => {
@@ -387,7 +388,6 @@ test.describe("createUpdateFeature polling", () => {
   test.beforeEach(() => {
     (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
       typeof globalThis;
-    window.alert = (() => {}) as typeof window.alert;
   });
 
   test("start replaces the previous update poll timeout instead of creating a second chain", async () => {
