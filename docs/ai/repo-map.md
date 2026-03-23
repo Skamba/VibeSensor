@@ -42,7 +42,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `use_cases/history/`: history queries, report loading/preparation/caching, and export orchestration. See `docs/report_pipeline.md` for report-specific flow.
 - `use_cases/run/`: recording pipeline orchestration. `logger.py` is the `RunRecorder` entrypoint, and the `post_analysis*.py` modules split queueing, loading, execution, and summary shaping.
 - `use_cases/updates/`: wheel-based updater workflow, firmware handling, Wi-Fi, rollback, and status coordination.
-- `shared/`: cross-cutting ports, model/payload types, JSON helpers, and boundary codecs. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, and the codec/projection modules under `shared/boundaries/`.
+- `shared/`: cross-cutting ports, model/payload types, JSON helpers, and boundary codecs. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, `shared/types/history_analysis_contracts.py`, and the codec/projection modules under `shared/boundaries/`.
 - `domain/`: domain model package for classification, ranking, lifecycle, and query logic. See `docs/domain-model.md` for the domain object graph.
 - `apps/ui/src/app/runtime/`: UI composition root and runtime controllers.
 - `apps/ui/src/app/features/`: UI feature workflows for settings, realtime, history, updates, cars, and ESP flash.

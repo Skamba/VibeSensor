@@ -7,6 +7,7 @@ from typing import cast
 
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck
+from vibesensor.shared.types.history_analysis_contracts import PayloadValue
 from vibesensor.shared.types.json_types import JsonValue
 
 
@@ -28,7 +29,7 @@ def _payload_for_check(check: SuitabilityCheck) -> RunSuitabilityCheck:
         "check": check.check_key,
         "check_key": check.check_key,
         "state": check.state,
-        "explanation": cast(JsonValue, check.explanation_i18n_ref()),
+        "explanation": cast(PayloadValue, cast(JsonValue, check.explanation_i18n_ref())),
     }
 
 

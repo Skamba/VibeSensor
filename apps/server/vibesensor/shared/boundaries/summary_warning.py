@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from functools import partial
+from typing import cast
 
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.analysis_payload import SummaryWarningPayload
 from vibesensor.shared.run_context import RunContextWarning, normalize_run_context_warnings
+from vibesensor.shared.types.history_analysis_contracts import PayloadValue
 from vibesensor.shared.types.json_types import JsonObject
 
 
@@ -16,8 +18,8 @@ def summary_warning_payload(warning: RunContextWarning) -> SummaryWarningPayload
         "code": warning.code,
         "severity": warning.severity,
         "applies_to": warning.applies_to,
-        "title": warning.title,
-        "detail": warning.detail,
+        "title": cast(PayloadValue, warning.title),
+        "detail": cast(PayloadValue, warning.detail),
     }
     return payload
 

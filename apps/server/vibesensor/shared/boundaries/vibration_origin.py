@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypedDict
 
 from vibesensor.coerce import coerce_float, coerce_int
 from vibesensor.domain import Finding, VibrationSource
@@ -12,6 +11,9 @@ from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.constants import PHASE_I18N_KEYS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
+from vibesensor.shared.types.history_analysis_contracts import (
+    SuspectedVibrationOriginPayload as SuspectedVibrationOrigin,
+)
 from vibesensor.shared.types.json_types import JsonValue
 
 
@@ -67,25 +69,6 @@ __all__ = [
     "origin_payload_from_finding",
     "vibration_origin_from_payload",
 ]
-
-
-class SuspectedVibrationOrigin(TypedDict, total=False):
-    """Boundary-only JSON payload shape for origin data.
-
-    This TypedDict is the serialization format for
-    ``AnalysisSummary.most_likely_origin`` and persisted run payloads.
-    Domain code must use :class:`~vibesensor.domain.VibrationOrigin`
-    instead.  This type exists solely at ingress/egress boundaries.
-    """
-
-    location: str
-    alternative_locations: list[str]
-    suspected_source: str
-    dominance_ratio: float | None
-    weak_spatial_separation: bool
-    speed_band: str | None
-    dominant_phase: str | None
-    explanation: JsonValue
 
 
 def _source_from_payload(
