@@ -73,7 +73,7 @@ class _FailingAppendDB:
     def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         pass
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         raise sqlite3.OperationalError("disk full")
 
 
@@ -87,11 +87,12 @@ class _FailNAppendThenSucceedDB:
     def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         pass
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         if self._remaining > 0:
             self._remaining -= 1
             raise sqlite3.OperationalError("db locked")
         self.appended.append((run_id, len(samples)))
+        return len(samples)
 
 
 class _SucceedingDB:
@@ -104,8 +105,9 @@ class _SucceedingDB:
     def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         self.created.append(run_id)
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         self.appended.append((run_id, len(samples)))
+        return len(samples)
 
 
 class _FailNThenSucceedDB:
@@ -121,8 +123,8 @@ class _FailNThenSucceedDB:
             raise sqlite3.OperationalError("transient error")
         self.created.append(run_id)
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
-        pass
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
+        return len(samples)
 
 
 # ---------------------------------------------------------------------------

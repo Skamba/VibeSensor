@@ -12,6 +12,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
+from vibesensor.use_cases.run import _recorder_runtime
 from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
 from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
 
@@ -709,7 +710,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
 
 
 @pytest.mark.asyncio
-async def test_run_offloads_append_records_with_to_thread(
+async def test_run_offloads_flush_cycle_with_to_thread(
     make_logger,
     fake_history_db,
     monkeypatch: pytest.MonkeyPatch,
@@ -740,4 +741,5 @@ async def test_run_offloads_append_records_with_to_thread(
     with pytest.raises(asyncio.CancelledError):
         await logger.run()
 
-    assert captured.get("func") == logger._sample_flush.append_records
+    assert captured.get("func") == _recorder_runtime._flush_active_run_tick
+    assert captured.get("args") == (logger,)
