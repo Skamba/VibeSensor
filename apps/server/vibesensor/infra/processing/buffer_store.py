@@ -299,24 +299,21 @@ class SignalBufferStore:
             return result
 
     def evict_clients(self, keep_client_ids: set[str]) -> None:
+        stale_locks: list[RLock] = []
         with self.lock:
             stale_ids = [
                 client_id for client_id in self.buffers if client_id not in keep_client_ids
             ]
-            stale_locks: list[RLock] = []
             for client_id in stale_ids:
-                client_lock = self._client_locks.get(client_id)
-                if client_lock is None:
-                    continue
-                client_lock.acquire()
-                stale_locks.append(client_lock)
-            try:
-                for client_id in stale_ids:
-                    self.buffers.pop(client_id, None)
-                    self._client_locks.pop(client_id, None)
-            finally:
-                for client_lock in reversed(stale_locks):
-                    client_lock.release()
+                self.buffers.pop(client_id, None)
+                client_lock = self._client_locks.pop(client_id, None)
+                if client_lock is not None:
+                    stale_locks.append(client_lock)
+        # Wait out any in-flight users on the orphaned per-client locks without
+        # keeping the global store lock held across those waits.
+        for client_lock in stale_locks:
+            client_lock.acquire()
+            client_lock.release()
 
     def intake_stats(self) -> IntakeStatsPayload:
         with self.lock:

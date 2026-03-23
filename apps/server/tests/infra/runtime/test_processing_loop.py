@@ -232,9 +232,21 @@ class TestProcessingLoopMismatchDetection:
         control_plane = _StubControlPlane()
         loop, _state = _make_loop(processor=processor, control_plane=control_plane)
 
-        await loop._run_tick(sync_clock=True)
+        to_thread_calls: list[object] = []
+
+        async def fake_to_thread(func: object, /, *args: object, **kwargs: object) -> object:
+            to_thread_calls.append(func)
+            return func(*args, **kwargs)
+
+        with patch("asyncio.to_thread", fake_to_thread):
+            await loop._run_tick(sync_clock=True)
 
         assert control_plane.broadcast_calls == 1
+        assert len(to_thread_calls) == 2
+        assert getattr(to_thread_calls[0], "__self__", None) is control_plane
+        assert getattr(getattr(to_thread_calls[0], "__func__", None), "__name__", "") == (
+            "broadcast_sync_clock"
+        )
 
     @pytest.mark.asyncio
     async def test_sample_rate_mismatch_logged_once(self) -> None:

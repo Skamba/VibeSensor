@@ -160,7 +160,7 @@ class ProcessingLoop:
         if sync_clock:
             try:
                 if self._control_plane is not None:
-                    self._control_plane.broadcast_sync_clock()
+                    await asyncio.to_thread(self._control_plane.broadcast_sync_clock)
             except Exception as exc:
                 raise ProcessingLoopError("sync_clock", exc) from exc
 

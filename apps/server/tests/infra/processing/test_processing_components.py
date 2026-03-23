@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+
 import numpy as np
 
 from vibesensor.infra.processing.buffer_store import SignalBufferStore
@@ -117,6 +119,45 @@ def test_buffer_store_does_not_regress_last_t0_us_for_older_frame() -> None:
         buf = store.buffers[client_id]
         assert buf.last_t0_us == 1_000_000
         assert buf.samples_since_t0 == 6
+
+
+def test_buffer_store_evict_clients_does_not_hold_global_lock_while_waiting_on_client_lock() -> (
+    None
+):
+    store = SignalBufferStore(_config())
+    samples = np.ones((4, 3), dtype=np.float32)
+    store.ingest("keep", samples, sample_rate_hz=200)
+    store.ingest("evict", samples, sample_rate_hz=200)
+
+    with store.lock:
+        evict_lock = store._client_locks["evict"]
+        evict_lock.acquire()
+
+    finished = threading.Event()
+
+    def _run_evict() -> None:
+        store.evict_clients({"keep"})
+        finished.set()
+
+    thread = threading.Thread(target=_run_evict)
+    thread.start()
+    try:
+        for _ in range(50):
+            if store.lock.acquire(blocking=False):
+                store.lock.release()
+                break
+            threading.Event().wait(0.01)
+        else:
+            raise AssertionError(
+                "global store lock stayed held while eviction waited on client lock"
+            )
+    finally:
+        evict_lock.release()
+
+    thread.join(timeout=1.0)
+    assert finished.is_set()
+    assert "keep" in store.buffers
+    assert "evict" not in store.buffers
 
 
 def test_fft_params_uses_lru_eviction(monkeypatch) -> None:
