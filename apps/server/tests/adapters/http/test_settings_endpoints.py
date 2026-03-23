@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 from test_support import response_payload
 
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
@@ -159,7 +160,7 @@ class TestSetActiveCarEndpoint:
     @pytest.mark.asyncio
     async def test_unknown_car_id_raises_404(self, _settings_router) -> None:
         router, state = _settings_router
-        endpoint = _find_endpoint(router, "/api/settings/cars/active", "POST")
+        endpoint = _find_endpoint(router, "/api/settings/cars/active", "PUT")
         assert endpoint is not None
 
         state.settings_store.set_active_car.side_effect = ValueError("Car not found")
@@ -169,6 +170,22 @@ class TestSetActiveCarEndpoint:
         with pytest.raises(HTTPException) as exc_info:
             await endpoint(req=ActiveCarRequest(car_id="no-such-car"))
         assert exc_info.value.status_code == 404
+
+    def test_static_put_route_wins_over_dynamic_car_id_route(self, _settings_router) -> None:
+        router, state = _settings_router
+        app = FastAPI()
+        app.include_router(router)
+
+        state.settings_store.set_active_car.return_value = _make_cars_snapshot(
+            active_car_id="car-1"
+        )
+
+        with TestClient(app) as client:
+            response = client.put("/api/settings/cars/active", json={"car_id": "car-1"})
+
+        assert response.status_code == 200
+        state.settings_store.set_active_car.assert_called_once_with("car-1")
+        state.settings_store.update_car.assert_not_called()
 
 
 class TestCarsEndpoint:
@@ -205,7 +222,7 @@ class TestSpeedSourceEndpoint:
     @pytest.mark.asyncio
     async def test_update_speed_source_passes_only_non_null_fields(self, _settings_router) -> None:
         router, state = _settings_router
-        endpoint = _find_endpoint(router, "/api/settings/speed-source", "POST")
+        endpoint = _find_endpoint(router, "/api/settings/speed-source", "PUT")
         assert endpoint is not None
 
         from vibesensor.adapters.http.models import SpeedSourceRequest
@@ -267,9 +284,9 @@ class TestSensorEndpoint:
 class TestSetAnalysisSettingsEndpoint:
     @pytest.mark.asyncio
     async def test_empty_changes_is_noop(self, _settings_router) -> None:
-        """POST /api/settings/analysis with all-None body skips update_active_car_aspects."""
+        """PUT /api/settings/analysis with all-None body skips update_active_car_aspects."""
         router, state = _settings_router
-        endpoint = _find_endpoint(router, "/api/settings/analysis", "POST")
+        endpoint = _find_endpoint(router, "/api/settings/analysis", "PUT")
         assert endpoint is not None
 
         from vibesensor.adapters.http.models import AnalysisSettingsRequest
@@ -282,7 +299,7 @@ class TestSetAnalysisSettingsEndpoint:
     @pytest.mark.asyncio
     async def test_valid_changes_calls_update(self, _settings_router) -> None:
         router, state = _settings_router
-        endpoint = _find_endpoint(router, "/api/settings/analysis", "POST")
+        endpoint = _find_endpoint(router, "/api/settings/analysis", "PUT")
         assert endpoint is not None
 
         from vibesensor.adapters.http.models import AnalysisSettingsRequest

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
 
 test("shows header warning and blocks car-dependent analysis save when no car is selected", async ({ page }) => {
-  let analysisPostCalls = 0;
+  let analysisPutCalls = 0;
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       const path = requestPath(route);
@@ -15,8 +15,8 @@ test("shows header warning and blocks car-dependent analysis save when no car is
     },
   });
   await page.route("**/api/settings/analysis", async (route) => {
-    if (route.request().method() === "POST") {
-      analysisPostCalls += 1;
+    if (route.request().method() === "PUT") {
+      analysisPutCalls += 1;
     }
     await fulfillJson(route, {});
   });
@@ -28,7 +28,7 @@ test("shows header warning and blocks car-dependent analysis save when no car is
   await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
   await page.waitForTimeout(150);
-  await expect.poll(() => analysisPostCalls).toBe(0);
+  await expect.poll(() => analysisPutCalls).toBe(0);
 });
 
 test("hides header warning when a valid selected car exists", async ({ page }) => {
@@ -61,7 +61,7 @@ test("shows warning for invalid persisted selection and after deleting selected 
         await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], active_car_id: "car-2" });
         return;
       }
-      if (path === "/api/settings/cars/active" && method === "POST") {
+      if (path === "/api/settings/cars/active" && method === "PUT") {
         await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], active_car_id: "car-2" });
         return;
       }

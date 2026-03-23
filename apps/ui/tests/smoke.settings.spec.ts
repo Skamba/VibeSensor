@@ -22,7 +22,7 @@ test("gps status polling does not override websocket speed readout", async ({ pa
 });
 
 test("spectrum title updates when switching language", async ({ page }) => {
-  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/language": { language: "en" }, "POST /api/settings/language": { language: "nl" }, "/api/settings/speed-unit": { speed_unit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({ raw_speed_kmh: 72, effective_speed_kmh: 72 }) }) });
+  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/language": { language: "en" }, "PUT /api/settings/language": { language: "nl" }, "/api/settings/speed-unit": { speed_unit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({ raw_speed_kmh: 72, effective_speed_kmh: 72 }) }) });
   await installFakeWebSocket(page, {
     payload: {
       server_time: new Date().toISOString(),
@@ -51,9 +51,9 @@ test("spectrum title updates when switching language", async ({ page }) => {
 });
 
 test("manual speed save uses settings endpoint only (no speed-override call)", async ({ page }) => {
-  let speedSourcePostCalls = 0;
+  let speedSourcePutCalls = 0;
   let speedOverrideCalls = 0;
-  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/speed-source": { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 5 }, "POST /api/settings/speed-source": async (route) => { speedSourcePostCalls += 1; return route.request().postDataJSON(); } }) });
+  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/speed-source": { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 5 }, "PUT /api/settings/speed-source": async (route) => { speedSourcePutCalls += 1; return route.request().postDataJSON(); } }) });
   await page.route("**/api/speed-override", async (route) => {
     speedOverrideCalls += 1;
     await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ detail: "missing" }) });
@@ -65,18 +65,18 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
   await page.locator('input[name="speedSourceRadio"][value="manual"]').check();
   await page.locator("#manualSpeedInput").fill("45");
   await page.locator("#saveSpeedSourceBtn").click();
-  await expect.poll(() => speedSourcePostCalls).toBe(1);
+  await expect.poll(() => speedSourcePutCalls).toBe(1);
   await expect.poll(() => speedOverrideCalls).toBe(0);
 });
 
 test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {
   let persistedAnalysisSettings: Record<string, number> = {};
-  let analysisPostCalls = 0;
+  let analysisPutCalls = 0;
   await installCommonRoutes(page, { settingsHandler: async (route) => { if (requestPath(route).startsWith("/api/settings/cars")) { await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" }); return; } await fulfillJson(route, {}); } });
   await page.route("**/api/settings/analysis", async (route) => {
     const method = route.request().method();
-    if (method === "POST") {
-      analysisPostCalls += 1;
+    if (method === "PUT") {
+      analysisPutCalls += 1;
       persistedAnalysisSettings = route.request().postDataJSON() as Record<string, number>;
       await fulfillJson(route, persistedAnalysisSettings);
       return;
@@ -97,7 +97,7 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   await page.locator("#minAbsBandHzInput").fill("0.7");
   await page.locator("#maxBandHalfWidthInput").fill("12");
   await page.locator("#saveAnalysisBtn").click();
-  await expect.poll(() => analysisPostCalls).toBe(1);
+  await expect.poll(() => analysisPutCalls).toBe(1);
   await page.reload();
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
@@ -155,7 +155,7 @@ test("failed speed-source save reverts the UI and shows an error", async ({ page
       "GET /api/settings/language": { language: "en" },
       "GET /api/settings/speed-unit": { speed_unit: "kmh" },
       "GET /api/settings/speed-source": { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 5 },
-      "POST /api/settings/speed-source": async (route) => {
+      "PUT /api/settings/speed-source": async (route) => {
         await route.fulfill({
           status: 500,
           contentType: "application/json",
@@ -184,7 +184,7 @@ test("failed language save reverts the selector and shows an error", async ({ pa
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
       "GET /api/settings/language": { language: "en" },
-      "POST /api/settings/language": async (route) => {
+      "PUT /api/settings/language": async (route) => {
         await route.fulfill({
           status: 500,
           contentType: "application/json",
