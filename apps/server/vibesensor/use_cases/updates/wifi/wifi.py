@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.wifi_config import UpdateWifiConfig
-from vibesensor.use_cases.updates.wifi_hotspot_recovery import UpdateHotspotRecovery
-from vibesensor.use_cases.updates.wifi_readiness import UpdateWifiReadiness
-from vibesensor.use_cases.updates.wifi_uplink_setup import UpdateUplinkProvisioner
+from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
+from vibesensor.use_cases.updates.wifi.wifi_hotspot_recovery import UpdateHotspotRecovery
+from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
+from vibesensor.use_cases.updates.wifi.wifi_uplink_setup import UpdateUplinkProvisioner
 
 
 class UpdateWifiController:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from vibesensor.use_cases.updates.esp_flash_types import SerialPortInfo, SerialPortProvider
+from vibesensor.use_cases.updates.firmware.esp_flash_types import SerialPortInfo, SerialPortProvider
 
 LOGGER = logging.getLogger(__name__)
 

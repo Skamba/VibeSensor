@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator
-from vibesensor.use_cases.updates.firmware_refresh import FirmwareRefresher
+from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
@@ -218,7 +218,7 @@ async def test_firmware_refresher_uses_module_fallback_without_installer(tmp_pat
         == [
             str(installer._config.repo / "apps" / "server" / ".venv" / "bin" / "python3"),
             "-m",
-            "vibesensor.use_cases.updates.firmware_cache",
+            "vibesensor.use_cases.updates.firmware.firmware_cache",
         ]
         and call[0][-2:] == ["--tag", "server-v2025.6.15"]
         for call in commands.calls

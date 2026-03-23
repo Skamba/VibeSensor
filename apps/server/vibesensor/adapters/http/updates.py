@@ -22,7 +22,7 @@ from vibesensor.adapters.http.models import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
+    from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
     from vibesensor.use_cases.updates.manager import UpdateManager
 
 __all__ = ["create_update_routes"]

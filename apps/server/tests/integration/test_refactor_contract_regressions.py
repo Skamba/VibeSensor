@@ -23,9 +23,9 @@ from vibesensor.infra.runtime.client_snapshot import (
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.registry_updates import _JITTER_EMA_ALPHA, _RESTART_SEQ_GAP
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
-from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
-from vibesensor.use_cases.updates.release_fetcher import (
+from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
+from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
+from vibesensor.use_cases.updates.releases.release_fetcher import (
     GitHubAPIClient,
     ReleaseFetcherConfig,
     ReleaseInfo,
@@ -318,7 +318,7 @@ class TestVersionComparisonWarning:
 
         with (
             patch.object(fetcher, "find_latest_release", return_value=fake_release),
-            patch("vibesensor.use_cases.updates.release_fetcher.LOGGER") as mock_logger,
+            patch("vibesensor.use_cases.updates.releases.release_fetcher.LOGGER") as mock_logger,
         ):
             result = fetcher.check_update_available("1.0.0")
 

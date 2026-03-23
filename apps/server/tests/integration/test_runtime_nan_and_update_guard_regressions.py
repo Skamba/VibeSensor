@@ -17,9 +17,9 @@ from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.report_i18n import tr
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
-from vibesensor.use_cases.updates.firmware_bundle import dir_sha256
-from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
-from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
+from vibesensor.use_cases.updates.firmware.firmware_bundle import dir_sha256
+from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
+from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
 from vibesensor.use_cases.updates.manager import UpdateManager, UpdateState
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
@@ -146,7 +146,7 @@ class TestFirmwareCacheStreamingDownload:
         mock_resp.__exit__ = lambda s, *a: None
 
         with patch(
-            "vibesensor.use_cases.updates.firmware_release_fetcher.urlopen",
+            "vibesensor.use_cases.updates.firmware.firmware_release_fetcher.urlopen",
             return_value=mock_resp,
         ):
             fetcher._download_asset("https://example.com/fw.bin", dest)

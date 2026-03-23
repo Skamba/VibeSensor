@@ -10,12 +10,12 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 from vibesensor.shared.types.json_types import JsonObject, is_json_array, is_json_object
-from vibesensor.use_cases.updates.firmware_types import (
+from vibesensor.use_cases.updates.firmware.firmware_types import (
     FirmwareCacheConfig,
     GitHubReleaseAssetPayload,
     GitHubReleasePayload,
 )
-from vibesensor.use_cases.updates.release_fetcher import (
+from vibesensor.use_cases.updates.releases.release_fetcher import (
     DOWNLOAD_CHUNK_BYTES,
     GitHubAPIClient,
     validate_https_url,
