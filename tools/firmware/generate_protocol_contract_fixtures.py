@@ -17,8 +17,6 @@ OUTPUT = (
     / "generated_protocol_contract_fixtures.h"
 )
 
-sys.path.insert(0, str(ROOT / "apps" / "server"))
-
 from vibesensor.adapters.udp.protocol import (  # noqa: E402
     pack_ack,
     pack_cmd_identify,
