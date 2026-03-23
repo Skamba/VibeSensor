@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Literal, TypeAlias
 from typing_extensions import TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.domain.speed_source import SpeedSourceKind
-from vibesensor.shared.constants import NUMERIC_TYPES
+from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 
 if TYPE_CHECKING:
     from vibesensor.domain import SpeedSource

@@ -8,7 +8,7 @@ from math import floor
 from statistics import median as _median
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _effective_baseline_floor,
     _run_noise_baseline_g,

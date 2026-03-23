@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import OrderReferenceSpec
-from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
+from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
 
 from ._context import DiagnosticsContext
 from ._types import AnalysisSampleInput, Sample, ensure_analysis_sample

@@ -10,7 +10,7 @@ from collections import Counter
 from dataclasses import dataclass
 
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.shared.constants import (
+from vibesensor.shared.constants.analysis import (
     LIGHT_STRENGTH_MAX_DB,
     NEGLIGIBLE_STRENGTH_MAX_DB,
     ORDER_MIN_MATCH_POINTS,

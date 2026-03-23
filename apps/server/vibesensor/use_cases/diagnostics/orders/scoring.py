@@ -6,7 +6,7 @@ from dataclasses import dataclass, replace
 from math import log1p
 
 from vibesensor.domain import LocationHotspot, VibrationSource
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SNR_LOG_DIVISOR
+from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G, SNR_LOG_DIVISOR
 from vibesensor.use_cases.diagnostics.location_analysis import (
     LocationAnalysisResult,
     summarize_order_match_locations,

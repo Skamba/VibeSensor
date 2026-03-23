@@ -24,7 +24,7 @@ from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import PartSuggestion, SystemFindingCard
-from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.constants.units import KMH_TO_MPS
 
 
 def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:

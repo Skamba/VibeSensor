@@ -9,7 +9,6 @@ from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
-from vibesensor.shared.run_context import add_current_context_warnings
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.use_cases.history.helpers import (
@@ -18,6 +17,7 @@ from vibesensor.use_cases.history.helpers import (
     resolve_run_language,
     strip_internal_fields,
 )
+from vibesensor.use_cases.run.run_context import add_current_context_warnings
 
 
 class HistoryRunService:

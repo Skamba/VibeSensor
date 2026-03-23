@@ -12,7 +12,7 @@ from vibesensor.domain import (
     VibrationSource,
     speed_bin_label,
 )
-from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
+from vibesensor.shared.constants.analysis import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.locations import has_any_wheel_location, is_wheel_location
