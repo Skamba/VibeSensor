@@ -67,25 +67,25 @@ def _flush_active_run_tick(
         if snapshot is None:
             return None, False
         live_start_mono_s = recorder._live_start_mono_s
-        timestamp_utc = utc_now_iso()
-        live_rows = recorder._sample_flush.build_sample_records(
-            run_id=snapshot.run_id,
-            t_s=max(0.0, time.monotonic() - live_start_mono_s),
-            timestamp_utc=timestamp_utc,
+    timestamp_utc = utc_now_iso()
+    live_rows = recorder._sample_flush.build_sample_records(
+        run_id=snapshot.run_id,
+        t_s=max(0.0, time.monotonic() - live_start_mono_s),
+        timestamp_utc=timestamp_utc,
+    )
+    if not isinstance(live_rows, list):
+        logger.warning(
+            "Metrics logger sample builder returned %s instead of list; dropping tick.",
+            type(live_rows).__name__,
         )
-        if not isinstance(live_rows, list):
-            logger.warning(
-                "Metrics logger sample builder returned %s instead of list; dropping tick.",
-                type(live_rows).__name__,
-            )
-            live_rows = []
-        no_data_timeout = recorder._sample_flush.append_records(
-            snapshot.run_id,
-            snapshot.start_time_utc,
-            snapshot.start_mono_s,
-            prebuilt_rows=live_rows,
-        )
-        return snapshot.run_id, no_data_timeout
+        live_rows = []
+    no_data_timeout = recorder._sample_flush.append_records(
+        snapshot.run_id,
+        snapshot.start_time_utc,
+        live_start_mono_s,
+        prebuilt_rows=live_rows,
+    )
+    return snapshot.run_id, no_data_timeout
 
 
 async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:

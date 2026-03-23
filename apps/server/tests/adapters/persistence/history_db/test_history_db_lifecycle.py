@@ -289,6 +289,8 @@ def test_startup_quick_check_logs_corruption(
         db._run_startup_quick_check()
     assert "quick_check reported corruption" in caplog.text
     assert "row 7 missing from index" in caplog.text
+    assert db.corruption_detected is True
+    assert db.corruption_details == "row 7 missing from index"
     db.close()
 
 
@@ -316,6 +318,43 @@ def test_startup_quick_check_reports_corruption_via_callback(
     monkeypatch.setattr(db, "_cursor", _fake_cursor)
     db._run_startup_quick_check()
     assert reported == ["row 7 missing from index"]
+    assert db.corruption_detected is True
+    db.close()
+
+
+def test_startup_quick_check_blocks_future_writes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-corrupt", "2026-01-01T00:00:00Z", _metadata("run-corrupt"))
+
+    class _FakeCursor:
+        def execute(self, sql: str) -> None:
+            assert sql == "PRAGMA quick_check"
+
+        def fetchall(self) -> list[tuple[str]]:
+            return [("row 7 missing from index",)]
+
+    original_cursor = db._cursor
+
+    @contextmanager
+    def _fake_cursor(*, commit: bool = True):
+        yield _FakeCursor()
+
+    monkeypatch.setattr(db, "_cursor", _fake_cursor)
+    db._run_startup_quick_check()
+    monkeypatch.setattr(db, "_cursor", original_cursor)
+
+    with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
+        db.append_samples("run-corrupt", [SensorFrame.from_dict({"i": 1})])
+    with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
+        db.finalize_run("run-corrupt", "2026-01-01T00:10:00Z")
+
+    run = db.get_run("run-corrupt")
+    assert run is not None
+    assert run.sample_count == 0
+    assert run.status.value == "recording"
     db.close()
 
 

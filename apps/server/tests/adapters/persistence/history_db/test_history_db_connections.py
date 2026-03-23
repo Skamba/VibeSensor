@@ -10,6 +10,10 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.types.run_schema import RunMetadata
 
 
+class _AbortTxn(BaseException):
+    pass
+
+
 def _metadata(run_id: str) -> RunMetadata:
     return RunMetadata.from_dict(
         {
@@ -43,6 +47,59 @@ def test_history_db_read_errors_clear_read_transaction(tmp_path: Path) -> None:
             with db._cursor(commit=False) as cur:
                 cur.execute("SELECT * FROM missing_table")
         assert not db._read_conn.in_transaction
+    finally:
+        db.close()
+
+
+def test_history_db_read_base_exception_clears_read_transaction(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    try:
+        db.create_run("run-read-abort", "2026-01-01T00:00:00Z", _metadata("run-read-abort"))
+        assert db._read_conn is not None
+        with pytest.raises(_AbortTxn):
+            with db._cursor(commit=False) as cur:
+                cur.execute("SELECT * FROM runs WHERE run_id = ?", ("run-read-abort",))
+                raise _AbortTxn
+        assert not db._read_conn.in_transaction
+        assert [run.run_id for run in db.list_runs()] == ["run-read-abort"]
+    finally:
+        db.close()
+
+
+def test_history_db_write_cursor_base_exception_rolls_back(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    try:
+        db.create_run("run-write-cursor", "2026-01-01T00:00:00Z", _metadata("run-write-cursor"))
+        with pytest.raises(_AbortTxn):
+            with db._cursor() as cur:
+                cur.execute(
+                    "UPDATE runs SET sample_count = 7 WHERE run_id = ?",
+                    ("run-write-cursor",),
+                )
+                raise _AbortTxn
+        assert not db._conn.in_transaction
+        run = db.get_run("run-write-cursor")
+        assert run is not None
+        assert run.sample_count == 0
+    finally:
+        db.close()
+
+
+def test_history_db_write_transaction_base_exception_rolls_back(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    try:
+        db.create_run("run-write-tx", "2026-01-01T00:00:00Z", _metadata("run-write-tx"))
+        with pytest.raises(_AbortTxn):
+            with db.write_transaction_cursor() as cur:
+                cur.execute(
+                    "UPDATE runs SET sample_count = 9 WHERE run_id = ?",
+                    ("run-write-tx",),
+                )
+                raise _AbortTxn
+        assert not db._conn.in_transaction
+        run = db.get_run("run-write-tx")
+        assert run is not None
+        assert run.sample_count == 0
     finally:
         db.close()
 
