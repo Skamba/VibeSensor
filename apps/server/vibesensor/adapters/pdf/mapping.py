@@ -178,6 +178,9 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     summary = prepared.analysis_summary
     lang = str(normalize_lang(summary.get("lang")))
     report = build_report_from_summary(summary)
+    domain_test_run = prepared.domain_test_run
+    if domain_test_run is None:
+        raise ValueError("PreparedReportInput must include a domain_test_run for report mapping")
 
     def tr(key: str, **kw: object) -> str:
         return str(_tr(lang, key, **kw))
@@ -187,7 +190,7 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
         report=report,
         lang=lang,
         tr=tr,
-        test_run=prepared.domain_test_run,
+        test_run=domain_test_run,
     )
 
 
@@ -210,7 +213,7 @@ def _build_report_template_data(
     report: Report,
     lang: str,
     tr: Callable[..., str],
-    test_run: TestRun | None = None,
+    test_run: TestRun,
 ) -> ReportTemplateData:
     """Map a summary dict into the final report template data structure.
 

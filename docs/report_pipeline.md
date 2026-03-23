@@ -9,11 +9,12 @@ The report generation pipeline has two distinct phases:
    then created at the boundary by `vibesensor.shared.boundaries.analysis_summary`
    / `vibesensor.adapters.analysis_summary`.
 2. **History-side report preparation + rendering** (`vibesensor.use_cases.history`
-   → `vibesensor.adapters.pdf`) — loads the persisted analysis summary, shapes
+   → `vibesensor.adapters.pdf`) — loads the persisted analysis object, shapes
    runtime warnings and cache metadata, prepares one explicit
-   `PreparedReportInput`, maps that prepared input to `ReportTemplateData`, and
-   renders a PDF. This phase performs **zero analysis** — it only canonicalizes
-   persisted summary data and formats pre-computed results.
+   `PreparedReportInput` with an authoritative reconstructed domain aggregate,
+   maps that prepared input to `ReportTemplateData`, and renders a PDF. This
+   phase performs **zero analysis** — it only shapes persisted report data and
+   formats pre-computed results.
 
 ```text
 Recording stops
@@ -57,7 +58,7 @@ The `vibesensor.adapters.pdf` package contains **only** rendering code:
 | `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
 | `pdf_diagram_render.py` | Diagram planning, drawing, and location normalization |
 | `report_data.py` | Dataclass definitions (pure data) |
-| `report_context.py` | Context assembly and card decisions over a prepared summary + reconstructed domain aggregate |
+| `report_context.py` | Context assembly and card decisions over a prepared summary + prebuilt domain aggregate |
 | `mapping.py` | Thin mapper: `PreparedReportInput` → `ReportTemplateData` |
 | `presentation.py` | Rendering-only label helpers (strength/order/classification text) |
 | `peak_table.py` | Peak-row builders for the report evidence table |
@@ -70,11 +71,12 @@ enforces this.
 
 History-side report preparation now lives in
 `vibesensor.use_cases.history.report_preparation`, which owns the explicit
-`PreparedReportInput` seam passed into the PDF adapter. Pure report-domain
-interpretation that reads domain findings/test runs but does not perform i18n
-or PDF dataclass assembly still lives in
-`vibesensor.use_cases.history.report_interpretation`, which `report_context.py`
-consumes during context assembly.
+`PreparedReportInput` seam passed into the PDF adapter and reconstructs the
+authoritative domain aggregate exactly once. Pure report-domain interpretation
+that reads domain findings/test runs but does not perform i18n or PDF
+dataclass assembly still lives in
+`vibesensor.use_cases.history.report_interpretation`, which the PDF adapter
+consumes without reloading or reprojecting persisted summaries.
 
 ### ReportTemplateData schema
 

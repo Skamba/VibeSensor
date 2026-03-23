@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.pdf.mapping import prepare_report_mapping_context
+from vibesensor.adapters.pdf.mapping import prepare_report_input, prepare_report_mapping_context
 from vibesensor.domain import (
     Finding,
     LocationHotspot,
@@ -260,12 +260,20 @@ class TestSummaryHelpers:
         assert secondary.strongest_location == "front right"
 
     def test_sensor_locations_active_prefers_connected(self) -> None:
-        ctx = prepare_report_mapping_context(_minimal_summary())
+        prepared = prepare_report_input(_minimal_summary())
+        assert prepared.domain_test_run is not None
+        ctx = prepare_report_mapping_context(
+            prepared.analysis_summary,
+            test_run=prepared.domain_test_run,
+        )
         assert ctx.sensor_locations_active == ["front_left"]
 
     def test_sensor_locations_active_fallback(self) -> None:
+        prepared = prepare_report_input(_minimal_summary(sensor_locations_connected_throughout=[]))
+        assert prepared.domain_test_run is not None
         ctx = prepare_report_mapping_context(
-            _minimal_summary(sensor_locations_connected_throughout=[]),
+            prepared.analysis_summary,
+            test_run=prepared.domain_test_run,
         )
         assert "front_left" in ctx.sensor_locations_active
 

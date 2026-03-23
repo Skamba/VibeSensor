@@ -8,8 +8,6 @@ subsystems is caught early.
 
 from __future__ import annotations
 
-from dataclasses import replace
-
 from test_support import (
     ALL_WHEEL_SENSORS,
     make_fault_samples,
@@ -130,8 +128,7 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
     assert analysis.test_run is not None
     assert analysis.test_run.speed_profile is not None
 
-    context = prepare_report_mapping_context(summary)
-    context = replace(context, domain_aggregate=analysis.test_run)
+    context = prepare_report_mapping_context(summary, test_run=analysis.test_run)
 
     sensor_intensity = filter_active_sensor_intensity(
         summary["sensor_intensity_by_location"],

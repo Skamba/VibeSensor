@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from vibesensor.adapters.pdf.mapping import (
+    prepare_report_input,
     prepare_report_mapping_context,
     resolve_primary_report_candidate,
 )
@@ -8,7 +9,7 @@ from vibesensor.domain import LocationIntensitySummary
 
 
 def test_prepare_report_mapping_context_prefers_connected_sensor_locations() -> None:
-    context = prepare_report_mapping_context(
+    prepared = prepare_report_input(
         {
             "lang": "en",
             "metadata": {},
@@ -25,13 +26,18 @@ def test_prepare_report_mapping_context_prefers_connected_sensor_locations() -> 
             "run_suitability": [],
         },
     )
+    assert prepared.domain_test_run is not None
+    context = prepare_report_mapping_context(
+        prepared.analysis_summary,
+        test_run=prepared.domain_test_run,
+    )
 
     assert context.sensor_locations_active == ["rear-right"]
 
 
 def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> None:
     sensor_intensity = [LocationIntensitySummary(location="", p95_intensity_db=21.0)]
-    context = prepare_report_mapping_context(
+    prepared = prepare_report_input(
         {
             "sensor_count_used": 0,
             "sensor_intensity_by_location": [{"p95_intensity_db": 21.0}],
@@ -66,6 +72,11 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
             "sensor_locations_connected_throughout": [],
             "run_suitability": [],
         },
+    )
+    assert prepared.domain_test_run is not None
+    context = prepare_report_mapping_context(
+        prepared.analysis_summary,
+        test_run=prepared.domain_test_run,
     )
 
     def tr(key: str, **_kw: object) -> str:
