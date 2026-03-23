@@ -4,7 +4,7 @@ import sqlite3
 
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisExecutionAnalysisFailure,
     PostAnalysisExecutionMissingMetadata,

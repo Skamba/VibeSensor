@@ -362,7 +362,7 @@ class TestBridgeMethods:
     """Config objects bridge to domain objects correctly."""
 
     def test_speed_source_config_to_speed_source(self) -> None:
-        from vibesensor.shared.types.backend_types import SpeedSourceConfig
+        from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
 
         cfg = SpeedSourceConfig.default()
         speed = cfg.to_speed_source()

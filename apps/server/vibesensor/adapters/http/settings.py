@@ -26,17 +26,17 @@ from vibesensor.shared.types.api_models import (
     SpeedUnitRequest,
     SpeedUnitResponse,
 )
-from vibesensor.shared.types.backend_types import (
-    AnalysisSettingsPayload,
+from vibesensor.shared.types.car_config import (
     CarConfigPayload,
     CarConfigUpdatePayload,
     CarsSnapshot,
-    SensorConfigUpdatePayload,
-    SpeedSourceUpdatePayload,
 )
-from vibesensor.shared.types.backend_types import (
+from vibesensor.shared.types.sensor_config import SensorConfigUpdatePayload
+from vibesensor.shared.types.settings_types import AnalysisSettingsPayload
+from vibesensor.shared.types.speed_source_config import (
     SpeedSourcePayload as BackendSpeedSourcePayload,
 )
+from vibesensor.shared.types.speed_source_config import SpeedSourceUpdatePayload
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor

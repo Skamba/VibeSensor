@@ -23,7 +23,7 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.shared.sampling import bounded_sample as _bounded_sample
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 # -- shared helpers ----------------------------------------------------------

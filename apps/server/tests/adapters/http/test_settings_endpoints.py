@@ -8,7 +8,7 @@ from test_support import response_payload
 
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.domain import AnalysisSettingsSnapshot
-from vibesensor.shared.types.backend_types import CarConfigPayload, CarsSnapshot
+from vibesensor.shared.types.car_config import CarConfigPayload, CarsSnapshot
 
 
 def _make_default_snapshot() -> AnalysisSettingsSnapshot:

@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from threading import RLock
 
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [

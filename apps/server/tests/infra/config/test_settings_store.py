@@ -11,12 +11,10 @@ from vibesensor.infra.config.settings_store import (
     PersistenceError,
     SettingsStore,
 )
-from vibesensor.shared.types.backend_types import (
-    SensorConfig,
-    SettingsSnapshotPayload,
-    _parse_manual_speed,
-    car_to_persistence_dict,
-)
+from vibesensor.shared.types.car_config import car_to_persistence_dict
+from vibesensor.shared.types.sensor_config import SensorConfig
+from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
+from vibesensor.shared.types.speed_source_config import _parse_manual_speed
 
 DEFAULT_CAR_ASPECTS = AnalysisSettingsSnapshot.DEFAULTS
 

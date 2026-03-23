@@ -12,10 +12,10 @@ from vibesensor.shared.boundaries.analysis_summary import (
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_summary,
 )
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_analysis_contracts import PayloadObject
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 

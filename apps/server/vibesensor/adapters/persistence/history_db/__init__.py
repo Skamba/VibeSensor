@@ -23,8 +23,8 @@ from vibesensor.adapters.persistence.history_db._schema import (
 from vibesensor.shared.boundaries.settings_snapshot import settings_snapshot_from_payload
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.backend_types import SettingsSnapshotPayload
 from vibesensor.shared.types.json_types import is_json_object
+from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 
 # Re-export for public API.
 __all__ = ["HistoryDB"]

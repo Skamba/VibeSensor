@@ -7,12 +7,12 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.shared.types.backend_types import (
+from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import (
     RUN_END_TYPE,
     RUN_METADATA_TYPE,
     RUN_SAMPLE_TYPE,
 )
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [

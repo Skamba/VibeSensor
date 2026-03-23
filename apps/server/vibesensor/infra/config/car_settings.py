@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 from vibesensor.domain import Car, CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.exceptions import PersistenceError
-from vibesensor.shared.types.backend_types import (
-    AnalysisSettingsPayload,
+from vibesensor.shared.types.car_config import (
     CarConfigUpdatePayload,
     CarsSnapshot,
     car_to_persistence_dict,
     new_car_id,
 )
+from vibesensor.shared.types.settings_types import AnalysisSettingsPayload
 
 if TYPE_CHECKING:
     from threading import RLock

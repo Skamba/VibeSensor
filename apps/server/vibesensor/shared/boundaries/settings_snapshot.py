@@ -5,16 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from vibesensor.domain import Car, normalize_sensor_id
-from vibesensor.shared.types.backend_types import (
-    CarConfigPayload,
-    LanguageCode,
-    SensorConfig,
-    SensorsByMacPayload,
-    SettingsSnapshotPayload,
-    SpeedSourceConfig,
-    SpeedUnitCode,
-    car_to_persistence_dict,
-)
+from vibesensor.shared.types.car_config import CarConfigPayload, car_to_persistence_dict
+from vibesensor.shared.types.sensor_config import SensorConfig, SensorsByMacPayload
+from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
+from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
+from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
 
 
 def _normalize_choice(value: object, default: str) -> str:

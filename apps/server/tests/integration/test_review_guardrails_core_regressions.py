@@ -17,7 +17,7 @@ from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.order_bands import build_order_bands
 from vibesensor.shared.sampling import bounded_sample
-from vibesensor.shared.types.backend_types import new_car_id
+from vibesensor.shared.types.car_config import new_car_id
 
 # ---------------------------------------------------------------------------
 # Item 1 + 2: Public API naming in domain_models
@@ -173,7 +173,9 @@ class TestModuleAllExports:
     @pytest.mark.parametrize(
         "module_path",
         [
-            "vibesensor.shared.types.backend_types",
+            "vibesensor.shared.types.car_config",
+            "vibesensor.shared.types.run_schema",
+            "vibesensor.shared.types.speed_source_config",
             "vibesensor.adapters.udp.protocol",
             "vibesensor.infra.workers.worker_pool",
             "vibesensor.adapters.persistence.car_library",
