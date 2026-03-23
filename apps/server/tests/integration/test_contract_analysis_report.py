@@ -129,11 +129,7 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
     assert prepared.report_facts is not None
     assert prepared.domain_test_run.speed_profile is not None
 
-    context = prepare_report_mapping_context(
-        prepared.analysis_summary,
-        report_facts=prepared.report_facts,
-        test_run=prepared.domain_test_run,
-    )
+    context = prepare_report_mapping_context(prepared)
 
     primary = resolve_primary_report_candidate(
         context=context,

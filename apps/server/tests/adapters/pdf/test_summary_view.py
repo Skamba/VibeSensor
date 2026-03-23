@@ -263,22 +263,14 @@ class TestSummaryHelpers:
         prepared = prepare_report_input(_minimal_summary())
         assert prepared.domain_test_run is not None
         assert prepared.report_facts is not None
-        ctx = prepare_report_mapping_context(
-            prepared.analysis_summary,
-            report_facts=prepared.report_facts,
-            test_run=prepared.domain_test_run,
-        )
+        ctx = prepare_report_mapping_context(prepared)
         assert ctx.sensor_locations_active == ["front_left"]
 
     def test_sensor_locations_active_fallback(self) -> None:
         prepared = prepare_report_input(_minimal_summary(sensor_locations_connected_throughout=[]))
         assert prepared.domain_test_run is not None
         assert prepared.report_facts is not None
-        ctx = prepare_report_mapping_context(
-            prepared.analysis_summary,
-            report_facts=prepared.report_facts,
-            test_run=prepared.domain_test_run,
-        )
+        ctx = prepare_report_mapping_context(prepared)
         assert "front_left" in ctx.sensor_locations_active
 
     def test_boundary_test_plan_payload_projects_semantic_action_fields(self) -> None:
