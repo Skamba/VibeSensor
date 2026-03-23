@@ -42,7 +42,12 @@ class SignalBufferStore:
         self.lock = RLock()
         self.stats = ProcessorStats()
 
-    def flush_client_buffer(self, client_id: str) -> None:
+    def flush_client_buffer(
+        self,
+        client_id: str,
+        *,
+        reason: str = "sensor reset",
+    ) -> None:
         """Reset the buffer for *client_id*, discarding all stored samples."""
         with self.locked_client_buffer(client_id) as buf:
             if buf is None:
@@ -57,7 +62,7 @@ class SignalBufferStore:
             buf.latest_strength_metrics = empty_vibration_strength_metrics()
             buf.invalidate_caches()
             buf.ingest_generation += 1
-        LOGGER.info("Flushed signal buffer for client %s after sensor reset", client_id)
+        LOGGER.info("Flushed signal buffer for client %s (%s)", client_id, reason)
 
     def ingest(
         self,

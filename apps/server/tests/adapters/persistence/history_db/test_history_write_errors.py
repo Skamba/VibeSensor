@@ -88,11 +88,22 @@ class _FakeProcessor:
     def __init__(self, registry: _FakeRegistry | None = None) -> None:
         self._registry = registry
 
+    def flush_client_buffer(
+        self,
+        client_id: str,
+        *,
+        reason: str = "sensor reset",
+    ) -> None:
+        return None
+
     def latest_sample_xyz(self, client_id: str):
         return (0.01, 0.02, 0.03)
 
     def latest_sample_rate_hz(self, client_id: str):
         return 800
+
+    def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> ClientMetrics:
+        return self.latest_metrics(client_id)
 
     def latest_metrics(self, client_id: str) -> ClientMetrics:
         if self._registry is None:

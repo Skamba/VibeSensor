@@ -642,29 +642,55 @@ def test_reset_clears_seen_seqs(tmp_path: Path) -> None:
     assert registry.get(client_id.hex()).duplicates_received == 0
 
 
-def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
-    """Simulator restart with seq=0 after a short session must not be a dup.
+def test_short_session_restart_beyond_dedup_window_not_flagged_as_duplicate(
+    tmp_path: Path,
+) -> None:
+    """Short-session restart must not depend on the dedup window retaining seq=0.
 
     Reproduces the E2E failure where the simulator runs twice with the same
     client IDs but fewer than 1000 frames (below the hard-reset threshold).
     """
     registry, client_id = _make_registry_with_hello(tmp_path)
 
-    # First session: seq 0..49 (a short E2E run)
-    for seq in range(50):
+    # First session: seq 0..199 (below the hard-reset threshold, but well past
+    # the 128-entry dedup window so the second session cannot rely on seen-seq
+    # retention for restart handling).
+    for seq in range(200):
         msg = _data_msg(client_id, seq, seq * 10000)
         registry.update_from_data(msg, ("10.4.0.2", 50000), now=2.0 + seq * 0.01)
 
     row = snapshot_for_api(registry, now=3.0)[0]
-    assert row["frames_total"] == 50
+    assert row["frames_total"] == 200
     assert registry.get(client_id.hex()).duplicates_received == 0
 
     # Second session: simulator restarts, seq goes back to 0
     for seq in range(50):
-        msg = _data_msg(client_id, seq, 100_000 + seq * 10000)
+        msg = _data_msg(client_id, seq, 3_000_000 + seq * 10000)
         r = registry.update_from_data(msg, ("10.4.0.2", 50000), now=5.0 + seq * 0.01)
         assert r.is_duplicate is False, f"seq={seq} wrongly flagged as duplicate"
 
     row2 = snapshot_for_api(registry, now=6.0)[0]
-    assert row2["frames_total"] == 100
+    assert row2["frames_total"] == 250
+    assert registry.get(client_id.hex()).duplicates_received == 0
+
+
+def test_ultra_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
+    """A four-frame restart must not drop the next seq=0..3 window."""
+    registry, client_id = _make_registry_with_hello(tmp_path)
+
+    for seq in range(4):
+        msg = _data_msg(client_id, seq, seq * 10_000)
+        registry.update_from_data(msg, ("10.4.0.2", 50000), now=2.0 + seq * 0.01)
+
+    row = snapshot_for_api(registry, now=3.0)[0]
+    assert row["frames_total"] == 4
+    assert registry.get(client_id.hex()).duplicates_received == 0
+
+    for seq in range(4):
+        msg = _data_msg(client_id, seq, 100_000 + seq * 10_000)
+        r = registry.update_from_data(msg, ("10.4.0.2", 50000), now=5.0 + seq * 0.01)
+        assert r.is_duplicate is False, f"seq={seq} wrongly flagged as duplicate"
+
+    row2 = snapshot_for_api(registry, now=6.0)[0]
+    assert row2["frames_total"] == 8
     assert registry.get(client_id.hex()).duplicates_received == 0

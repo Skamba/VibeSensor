@@ -33,10 +33,14 @@ class _HistoryDBSampleIOMixin:
         run_id: str,
         batch_size: int = 1000,
         offset: int = 0,
+        *,
+        stride: int = 1,
     ) -> Iterator[list[SensorFrame]]:
         if offset < 0:
             raise ValueError(f"iter_run_samples: offset must be >= 0, got {offset}")
-        yield from self._iter_v2_samples(run_id, batch_size, offset)
+        if stride < 1:
+            raise ValueError(f"iter_run_samples: stride must be >= 1, got {stride}")
+        yield from self._iter_v2_samples(run_id, batch_size, offset, stride)
 
     def _resolve_keyset_offset(
         self,
@@ -62,6 +66,7 @@ class _HistoryDBSampleIOMixin:
         run_id: str,
         batch_size: int = 1000,
         offset: int = 0,
+        stride: int = 1,
     ) -> Iterator[list[SensorFrame]]:
         size = max(1, batch_size)
         last_id: int | None = None
@@ -70,6 +75,7 @@ class _HistoryDBSampleIOMixin:
             if last_id is None:
                 return
         total_skipped = 0
+        sample_index = offset
         while True:
             with self._cursor(commit=False) as cur:
                 if last_id is None:
@@ -96,6 +102,10 @@ class _HistoryDBSampleIOMixin:
             last_id = batch_rows[-1][0]
             parsed_batch: list[SensorFrame] = []
             for row in batch_rows:
+                include_row = (sample_index % stride) == 0
+                sample_index += 1
+                if not include_row:
+                    continue
                 try:
                     parsed_batch.append(v2_row_to_sensor_frame(row))
                 except (json.JSONDecodeError, KeyError, ValueError, TypeError):

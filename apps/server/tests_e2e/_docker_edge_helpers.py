@@ -47,6 +47,15 @@ def _assert_no_placeholders(text: str) -> None:
         assert token not in padded
 
 
+def _run_status_context(run: dict) -> str:
+    return (
+        f"run_id={run.get('run_id')} "
+        f"status={run.get('status')} "
+        f"sample_count={run.get('sample_count')} "
+        f"error_message={run.get('error_message')!r}"
+    )
+
+
 def _pdf_mentions_frequency(text: str, hz: float) -> bool:
     """Return True when PDF text mentions *hz* with rounding tolerance.
 

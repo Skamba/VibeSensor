@@ -56,6 +56,8 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
         "sample_count": run.sample_count,
         "metadata": run.metadata.to_dict(),
     }
+    if run.error_message is not None:
+        payload["error_message"] = run.error_message
     if run.analysis is not None:
         projected, _ = _project_history_analysis(run.analysis.to_json_object(), strip_internal=True)
         payload["analysis"] = projected

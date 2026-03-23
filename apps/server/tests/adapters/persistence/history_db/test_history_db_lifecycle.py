@@ -102,6 +102,24 @@ def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
     assert len(db.get_run_samples("run-2")) == 400
 
 
+def test_append_samples_rejects_non_recording_runs(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-guard", "2026-01-01T00:00:00Z", _metadata("run-guard"))
+
+    written = db.append_samples("run-guard", [SensorFrame.from_dict({"i": 1})])
+    assert written == 1
+
+    db.finalize_run("run-guard", "2026-01-01T00:10:00Z")
+    rejected = db.append_samples("run-guard", [SensorFrame.from_dict({"i": 2})])
+
+    assert rejected == 0
+    run = db.get_run("run-guard")
+    assert run is not None
+    assert run.status.value == "analyzing"
+    assert run.sample_count == 1
+    assert len(db.get_run_samples("run-guard")) == 1
+
+
 def test_close_uses_lock_and_clears_connection(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     events: list[str] = []

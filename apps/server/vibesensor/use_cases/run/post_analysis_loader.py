@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -39,25 +38,39 @@ PostAnalysisLoadResult = (
 )
 
 
+def _sample_stride(total_sample_count: int) -> int:
+    if total_sample_count <= _MAX_POST_ANALYSIS_SAMPLES:
+        return 1
+    return -(-total_sample_count // _MAX_POST_ANALYSIS_SAMPLES)
+
+
 def load_post_analysis_run(
     *,
     run_id: str,
     db: RunPersistence,
 ) -> PostAnalysisLoadResult:
-    metadata = db.get_run_metadata(run_id)
-    if metadata is None:
-        return MissingPostAnalysisMetadata(
-            run_id=run_id,
-            error_message="Metadata not found or corrupt; cannot analyse",
-        )
+    get_run = getattr(db, "get_run", None)
+    stored_run = get_run(run_id) if callable(get_run) else None
+    if stored_run is not None:
+        metadata = stored_run.metadata
+        total_sample_count = max(0, int(stored_run.sample_count))
+    else:
+        metadata = db.get_run_metadata(run_id)
+        if metadata is None:
+            return MissingPostAnalysisMetadata(
+                run_id=run_id,
+                error_message="Metadata not found or corrupt; cannot analyse",
+            )
+        total_sample_count = 0
 
-    sample_iter = (
-        sample for batch in db.iter_run_samples(run_id, batch_size=1024) for sample in batch
-    )
-    samples, total_sample_count, stride = bounded_sample(
-        sample_iter,
-        max_items=_MAX_POST_ANALYSIS_SAMPLES,
-    )
+    stride = _sample_stride(total_sample_count)
+    if stored_run is not None:
+        sample_batches = db.iter_run_samples(run_id, batch_size=1024, stride=stride)
+    else:
+        sample_batches = db.iter_run_samples(run_id, batch_size=1024)
+    samples = [sample for batch in sample_batches for sample in batch]
+    if total_sample_count <= 0:
+        total_sample_count = len(samples)
     if not samples:
         return EmptyPostAnalysisSamples(
             run_id=run_id,
