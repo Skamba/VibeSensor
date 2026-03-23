@@ -1215,6 +1215,10 @@
     "en": "Analysis sampling",
     "nl": "Analysebemonstering"
   },
+  "SUITABILITY_CHECK_RUN_DURATION": {
+    "en": "Run duration",
+    "nl": "Ritduur"
+  },
   "SUITABILITY_CHECK_FRAME_INTEGRITY": {
     "en": "Frame integrity",
     "nl": "Frame-integriteit"
@@ -1234,6 +1238,10 @@
   "SUITABILITY_CHECK_SPEED_VARIATION": {
     "en": "Speed variation",
     "nl": "Snelheidsvariatie"
+  },
+  "SUITABILITY_RUN_DURATION_WARNING": {
+    "en": "Very short run analyzed. Confidence may be limited.",
+    "nl": "Zeer korte rit geanalyseerd. De betrouwbaarheid kan beperkt zijn."
   },
   "SUITABILITY_FRAME_INTEGRITY_PASS": {
     "en": "No dropped frames or queue overflows detected.",

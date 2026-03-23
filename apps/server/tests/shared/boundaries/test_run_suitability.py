@@ -26,6 +26,7 @@ def test_run_suitability_payload_projects_domain_checks() -> None:
     suitability = RunSuitability(
         checks=(
             SuitabilityCheck(check_key="speed_profile", state="warn"),
+            SuitabilityCheck(check_key="SUITABILITY_CHECK_RUN_DURATION", state="warn"),
             SuitabilityCheck(check_key="steady_cruise", state="pass"),
         )
     )
@@ -36,7 +37,9 @@ def test_run_suitability_payload_projects_domain_checks() -> None:
     assert payload[0]["check_key"] == "speed_profile"
     assert payload[0]["state"] == "warn"
     assert "explanation" in payload[0]
-    assert payload[1]["check_key"] == "steady_cruise"
+    assert payload[1]["check_key"] == "SUITABILITY_CHECK_RUN_DURATION"
+    assert payload[1]["explanation"] == {"_i18n_key": "SUITABILITY_RUN_DURATION_WARNING"}
+    assert payload[2]["check_key"] == "steady_cruise"
 
 
 def test_run_suitability_payload_handles_none() -> None:
