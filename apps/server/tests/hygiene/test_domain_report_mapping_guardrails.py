@@ -4,10 +4,10 @@ from __future__ import annotations
 
 
 def test_report_mapping_context_has_domain_aggregate() -> None:
-    """``prepare_report_mapping_context`` must build a domain aggregate."""
+    """``prepare_report_mapping_context`` must consume a prepared domain aggregate."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.mapping import prepare_report_mapping_context
+    from vibesensor.adapters.pdf.mapping import prepare_report_input, prepare_report_mapping_context
     from vibesensor.domain import TestRun
 
     summary = {
@@ -25,7 +25,12 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
         "most_likely_origin": {},
         "run_suitability": [],
     }
-    context = prepare_report_mapping_context(summary)
+    prepared = prepare_report_input(summary)
+    assert prepared.domain_test_run is not None
+    context = prepare_report_mapping_context(
+        prepared.analysis_summary,
+        test_run=prepared.domain_test_run,
+    )
     assert context.domain_aggregate is not None
     assert isinstance(context.domain_aggregate, TestRun)
     assert len(context.domain_aggregate.findings) == 1
@@ -141,6 +146,7 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     from test_support.findings import make_finding_payload
 
     from vibesensor.adapters.pdf.mapping import (
+        prepare_report_input,
         prepare_report_mapping_context,
         resolve_primary_report_candidate,
     )
@@ -169,7 +175,12 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
         "run_suitability": [],
     }
 
-    context = prepare_report_mapping_context(summary)
+    prepared = prepare_report_input(summary)
+    assert prepared.domain_test_run is not None
+    context = prepare_report_mapping_context(
+        prepared.analysis_summary,
+        test_run=prepared.domain_test_run,
+    )
     assert context.domain_aggregate is not None
     assert isinstance(context.domain_aggregate, TestRun)
 

@@ -6,16 +6,12 @@ import json
 from dataclasses import dataclass
 
 from vibesensor.domain import CarSnapshot, RunStatus
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.analysis_summary import analysis_summary_with_warnings
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
-    persisted_analysis_to_summary,
-)
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.helpers import (
     async_require_run,
     resolve_run_language,
@@ -31,7 +27,8 @@ class HistoryReportRequest:
     cache_key: ReportPdfCacheKey
     filename: str
     language: str
-    analysis_summary: AnalysisSummary
+    analysis: PersistedAnalysis
+    warnings: object
 
 
 class HistoryReportRequestLoader:
@@ -64,18 +61,16 @@ class HistoryReportRequestLoader:
         analysis = run.analysis
         if analysis is None:
             raise AnalysisNotReadyError("No analysis available for this run")
-        analysis_summary = persisted_analysis_to_summary(analysis)
 
         requested_lang = self._analysis_language(run, requested_lang)
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )
         warnings = add_current_context_warnings(
-            analysis_summary.get("warnings"),
-            metadata=analysis_summary.get("metadata"),
+            analysis.get("warnings"),
+            metadata=analysis.get("metadata"),
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        analysis_summary = analysis_summary_with_warnings(analysis_summary, warnings)
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
@@ -86,7 +81,8 @@ class HistoryReportRequestLoader:
             cache_key=cache_key,
             filename=f"{safe_filename(run_id)}_report.pdf",
             language=self._report_pdf_cache_lang(run, requested_lang),
-            analysis_summary=analysis_summary,
+            analysis=analysis,
+            warnings=warnings,
         )
 
     @staticmethod

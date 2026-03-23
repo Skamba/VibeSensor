@@ -112,17 +112,13 @@ class ReportMappingContext:
 def prepare_report_mapping_context(
     summary: AnalysisSummary,
     *,
-    test_run: TestRun | None = None,
+    test_run: TestRun,
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping.
 
-    Builds a domain ``TestRun`` aggregate from the summary dict
-    so that downstream business decisions (effective-cause selection,
-    reference-gap detection, strength lookup) are domain-first.
-
-    When *test_run* is supplied, reconstruction is skipped and the
-    caller-provided aggregate is used directly (avoids double
-    reconstruction when the caller already holds a ``TestRun``).
+    Consumes the prepared domain ``TestRun`` aggregate supplied by the
+    report-preparation seam so downstream business decisions stay
+    domain-first without reconstructing from summary payloads again.
     """
     meta = summary["metadata"]
     car_name = str(meta.get("car_name") or "").strip() or None
@@ -135,13 +131,7 @@ def prepare_report_mapping_context(
     if not sensor_locations_active:
         sensor_locations_active = [loc for loc in summary["sensor_locations"] if loc.strip()]
 
-    # Build domain aggregate for domain-first decisions downstream
-    if test_run is None:
-        from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
-
-        domain_aggregate = test_run_from_summary(summary)
-    else:
-        domain_aggregate = test_run
+    domain_aggregate = test_run
 
     origin = resolve_report_origin(domain_aggregate)
 
