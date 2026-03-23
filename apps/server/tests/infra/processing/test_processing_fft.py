@@ -125,6 +125,7 @@ class TestFloatList:
         result = float_list(arr)
         assert isinstance(result, list)
         assert result == [1.0, 2.0, 3.0]
+        assert all(type(value) is float for value in result)
 
     def test_python_list(self) -> None:
         result = float_list([1, 2, 3])
