@@ -1374,6 +1374,8 @@ export interface components {
      */
     HistoryRunResponse: {
       analysis?: components["schemas"]["AnalysisSummaryResponse"] | null;
+      /** Error Message */
+      error_message?: string | null;
       /** Metadata */
       metadata?: {
         [key: string]: unknown;
