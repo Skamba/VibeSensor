@@ -76,6 +76,26 @@ def test_metrics_computer_operates_on_snapshot_without_shared_state() -> None:
     assert any(abs(float(peak["hz"]) - 20.0) < 1.0 for peak in result.metrics["combined"]["peaks"])
 
 
+def test_buffer_store_reuses_fft_snapshot_for_short_time_window() -> None:
+    store = SignalBufferStore(_config(sample_rate_hz=8, waveform_seconds=1, fft_n=4))
+    client_id = "client-short-window"
+
+    store.ingest(
+        client_id,
+        np.arange(12, dtype=np.float32).reshape(4, 3),
+        sample_rate_hz=8,
+    )
+
+    plan = store.snapshot_for_compute(client_id, sample_rate_hz=2)
+
+    assert isinstance(plan, MetricsSnapshot)
+    assert plan.fft_block is not None
+    assert plan.time_window.shape == (3, 2)
+    assert plan.fft_block.shape == (3, 4)
+    assert np.shares_memory(plan.time_window, plan.fft_block)
+    np.testing.assert_array_equal(plan.time_window, plan.fft_block[:, -2:])
+
+
 def test_buffer_store_does_not_regress_last_t0_us_for_older_frame() -> None:
     store = SignalBufferStore(_config())
     client_id = "client-1"
@@ -97,3 +117,15 @@ def test_buffer_store_does_not_regress_last_t0_us_for_older_frame() -> None:
         buf = store.buffers[client_id]
         assert buf.last_t0_us == 1_000_000
         assert buf.samples_since_t0 == 6
+
+
+def test_fft_params_uses_lru_eviction(monkeypatch) -> None:
+    monkeypatch.setattr("vibesensor.infra.processing.compute._FFT_CACHE_MAXSIZE", 2)
+    computer = SignalMetricsComputer(_config(fft_n=8, sample_rate_hz=200, spectrum_max_hz=90.0))
+
+    computer.fft_params(200)
+    computer.fft_params(300)
+    computer.fft_params(200)
+    computer.fft_params(400)
+
+    assert list(computer.fft_cache) == [200, 400]

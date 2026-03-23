@@ -157,13 +157,17 @@ class SignalBufferStore:
 
             desired_samples = int(max(1.0, float(sr) * float(self.config.waveform_seconds)))
             n_time = min(buf.count, buf.capacity, max(1, desired_samples))
-            time_window = self.copy_latest(buf, n_time)
             fft_block: FloatArray | None = None
-            if buf.count >= self.config.fft_n:
-                if n_time >= self.config.fft_n:
+            if buf.count >= self.config.fft_n and n_time < self.config.fft_n:
+                # The compute path always consumes the latest overlapping suffix
+                # windows. Copy the larger FFT block once, then let the shorter
+                # time window borrow its tail view from that owned snapshot.
+                fft_block = self.copy_latest(buf, self.config.fft_n)
+                time_window = fft_block[:, -n_time:]
+            else:
+                time_window = self.copy_latest(buf, n_time)
+                if buf.count >= self.config.fft_n:
                     fft_block = time_window[:, -self.config.fft_n :]
-                else:
-                    fft_block = self.copy_latest(buf, self.config.fft_n)
             return MetricsSnapshot(
                 client_id=client_id,
                 sample_rate_hz=sr,
