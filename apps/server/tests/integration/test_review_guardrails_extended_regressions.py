@@ -116,13 +116,14 @@ class TestResolveSpeedAtomicSnapshot:
         assert m.speed_mps == 10.0
         assert m._speed_snapshot[0] == 10.0
 
-    def test_speed_mps_setter_preserves_timestamp(self) -> None:
+    def test_speed_mps_setter_refreshes_timestamp(self) -> None:
         m = _make_gps_monitor()
         ts = time.monotonic()
         m._speed_snapshot = (5.0, ts)
         m.speed_mps = 10.0
-        # Timestamp should be preserved
-        assert m._speed_snapshot == (10.0, ts)
+        assert m._speed_snapshot[0] == 10.0
+        assert m._speed_snapshot[1] is not None
+        assert m._speed_snapshot[1] > ts
 
     def test_resolve_speed_uses_snapshot_speed(self) -> None:
         m = _make_gps_monitor()

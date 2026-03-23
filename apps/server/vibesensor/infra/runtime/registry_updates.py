@@ -46,7 +46,12 @@ def apply_data_message_update(
         backward = (
             (record.last_seq - seq) if record.last_seq is not None and record.last_seq > seq else 0
         )
-        if 0 <= backward <= _DEDUP_RESTART_GAP:
+        short_session_restart = (
+            seq == 0
+            and record.last_seq is not None
+            and _DEDUP_RESTART_GAP < backward < _RESTART_SEQ_GAP
+        )
+        if not short_session_restart:
             record.duplicates_received += 1
             return DataUpdateResult(is_duplicate=True)
 

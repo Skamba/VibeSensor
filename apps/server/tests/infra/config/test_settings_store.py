@@ -37,11 +37,14 @@ class FakeSpeedSourceSync:
         self.manual_selected: bool | None = None
         self.override_kmh: float | None = None
         self.stale_timeout_s: float | None = None
+        self.calls: list[str] = []
 
     def set_manual_source_selected(self, selected: bool) -> None:
+        self.calls.append("manual")
         self.manual_selected = selected
 
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
+        self.calls.append("override")
         self.override_kmh = speed_kmh
         return speed_kmh
 
@@ -50,6 +53,7 @@ class FakeSpeedSourceSync:
         stale_timeout_s: float | None = None,
         **_kwargs: object,
     ) -> None:
+        self.calls.append("fallback")
         self.stale_timeout_s = stale_timeout_s
 
 
@@ -316,6 +320,7 @@ def test_store_syncs_speed_source_with_protocol_shaped_monitor() -> None:
     assert gps_monitor.manual_selected is True
     assert gps_monitor.override_kmh == pytest.approx(80.0)
     assert gps_monitor.stale_timeout_s == pytest.approx(17.0)
+    assert gps_monitor.calls == ["override", "manual", "fallback"]
 
 
 def test_parse_manual_speed_returns_none_for_invalid() -> None:

@@ -58,7 +58,14 @@ class GPSTransportState:
 
     @speed_mps.setter
     def speed_mps(self, value: float | None) -> None:
-        self._speed_snapshot = (value, self._speed_snapshot[1])
+        if value is None or isinstance(value, bool) or not isinstance(value, NUMERIC_TYPES):
+            self._speed_snapshot = (None, None)
+            return
+        speed_f = float(value)
+        if not math.isfinite(speed_f):
+            self._speed_snapshot = (None, None)
+            return
+        self._speed_snapshot = (speed_f, time.monotonic())
 
     @property
     def last_update_ts(self) -> float | None:
