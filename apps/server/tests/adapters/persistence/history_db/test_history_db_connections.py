@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+import sqlite3
+from pathlib import Path
+from threading import Event, Thread
+
+import pytest
+
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.types.backend_types import RunMetadata
+
+
+def _metadata(run_id: str) -> RunMetadata:
+    return RunMetadata.from_dict(
+        {
+            "run_id": run_id,
+            "start_time_utc": "2026-01-01T00:00:00Z",
+            "sensor_model": "ADXL345",
+            "raw_sample_rate_hz": 800,
+            "sample_rate_hz": 800,
+            "feature_interval_s": 1.0,
+            "source": "test",
+        }
+    )
+
+
+def test_history_db_read_connection_is_query_only(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    try:
+        assert db._read_conn is not None
+        row = db._read_conn.execute("PRAGMA query_only").fetchone()
+        assert row is not None
+        assert int(row[0]) == 1
+    finally:
+        db.close()
+
+
+def test_history_db_read_errors_clear_read_transaction(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    try:
+        assert db._read_conn is not None
+        with pytest.raises(sqlite3.OperationalError):
+            with db._cursor(commit=False) as cur:
+                cur.execute("SELECT * FROM missing_table")
+        assert not db._read_conn.in_transaction
+    finally:
+        db.close()
+
+
+def test_history_db_allows_reads_during_write_transaction(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-read", "2026-01-01T00:00:00Z", _metadata("run-read"))
+    read_started = Event()
+    read_finished = Event()
+    errors: list[BaseException] = []
+
+    def _reader() -> None:
+        read_started.set()
+        try:
+            runs = db.list_runs()
+            assert [run.run_id for run in runs] == ["run-read"]
+        except BaseException as exc:  # pragma: no cover - re-raised in test thread
+            errors.append(exc)
+        finally:
+            read_finished.set()
+
+    with db.write_transaction_cursor() as cur:
+        cur.execute(
+            "UPDATE runs SET error_message = ? WHERE run_id = ?",
+            ("pending", "run-read"),
+        )
+        thread = Thread(target=_reader)
+        thread.start()
+        try:
+            assert read_started.wait(1.0)
+            assert read_finished.wait(1.0)
+        finally:
+            thread.join(timeout=1.0)
+
+    db.close()
+    if errors:
+        raise errors[0]

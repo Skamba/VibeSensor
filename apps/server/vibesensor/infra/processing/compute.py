@@ -68,7 +68,13 @@ class SignalMetricsComputer:
                 del self.fft_cache[oldest]
             return freq_slice, valid_idx
 
-    def compute_fft_spectrum(self, fft_block: FloatArray, sample_rate_hz: int) -> FftSpectrumResult:
+    def compute_fft_spectrum(
+        self,
+        fft_block: FloatArray,
+        sample_rate_hz: int,
+        *,
+        spike_filter_enabled: bool = True,
+    ) -> FftSpectrumResult:
         freq_slice, valid_idx = self.fft_params(sample_rate_hz)
         return compute_fft_spectrum(
             fft_block,
@@ -77,7 +83,7 @@ class SignalMetricsComputer:
             fft_scale=self.fft_scale,
             freq_slice=freq_slice,
             valid_idx=valid_idx,
-            spike_filter_enabled=True,
+            spike_filter_enabled=spike_filter_enabled,
         )
 
     def compute(self, snapshot: MetricsSnapshot) -> MetricsComputationResult:
@@ -116,7 +122,16 @@ class SignalMetricsComputer:
         strength_metrics_dict = empty_vibration_strength_metrics()
         has_fft_data = snapshot.fft_block is not None
         if has_fft_data and snapshot.fft_block is not None:
-            fft_result = self.compute_fft_spectrum(snapshot.fft_block, snapshot.sample_rate_hz)
+            fft_input = (
+                time_window[:, -snapshot.fft_block.shape[1] :]
+                if time_window.shape[1] >= snapshot.fft_block.shape[1]
+                else medfilt3(snapshot.fft_block)
+            )
+            fft_result = self.compute_fft_spectrum(
+                fft_input,
+                snapshot.sample_rate_hz,
+                spike_filter_enabled=False,
+            )
             freq_slice = fft_result["freq_slice"]
             spectrum_by_axis = fft_result["spectrum_by_axis"]
 

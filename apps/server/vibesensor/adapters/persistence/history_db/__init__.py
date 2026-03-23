@@ -40,39 +40,69 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
     def __init__(self, db_path: Path) -> None:
         self.db_path = db_path
         self._lock = RLock()
+        self._read_lock = RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._use_separate_read_conn = str(db_path) != ":memory:"
         self._conn: sqlite3.Connection | None = sqlite3.connect(db_path, check_same_thread=False)
+        self._read_conn: sqlite3.Connection | None = None
         try:
-            self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute("PRAGMA wal_autocheckpoint=500")
-            self._conn.execute("PRAGMA foreign_keys=ON")
-            self._conn.execute("PRAGMA busy_timeout=5000")
+            self._configure_connection(self._conn, read_only=False)
             self._ensure_schema()
             self._run_startup_quick_check()
+            if self._use_separate_read_conn:
+                self._read_conn = sqlite3.connect(db_path, check_same_thread=False)
+                self._configure_connection(self._read_conn, read_only=True)
         except sqlite3.Error:
+            if self._read_conn is not None:
+                self._read_conn.close()
             self._conn.close()
             raise
 
     # -- lifecycle ------------------------------------------------------------
+
+    @staticmethod
+    def _configure_connection(conn: sqlite3.Connection, *, read_only: bool) -> None:
+        conn.execute("PRAGMA journal_mode=WAL")
+        if not read_only:
+            conn.execute("PRAGMA wal_autocheckpoint=500")
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA busy_timeout=5000")
+        if read_only:
+            conn.execute("PRAGMA query_only=ON")
 
     def close(self) -> None:
         with self._lock:
             if self._conn is not None:
                 self._conn.close()
                 self._conn = None
+        with self._read_lock:
+            if self._read_conn is not None:
+                self._read_conn.close()
+                self._read_conn = None
+
+    def _cursor_connection(
+        self,
+        *,
+        commit: bool,
+    ) -> tuple[sqlite3.Connection | None, RLock]:
+        if not commit and self._read_conn is not None:
+            return self._read_conn, self._read_lock
+        return self._conn, self._lock
 
     @contextmanager
     def _cursor(self, *, commit: bool = True) -> Iterator[sqlite3.Cursor]:
-        with self._lock:
-            if self._conn is None:
+        conn, lock = self._cursor_connection(commit=commit)
+        with lock:
+            if conn is None:
                 raise RuntimeError("HistoryDB is closed")
-            cur = self._conn.cursor()
+            cur = conn.cursor()
             try:
                 yield cur
                 if commit:
-                    self._conn.commit()
+                    conn.commit()
             except sqlite3.Error:
-                self._conn.rollback()
+                if conn.in_transaction:
+                    conn.rollback()
                 raise
             finally:
                 cur.close()

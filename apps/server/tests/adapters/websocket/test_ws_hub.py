@@ -7,6 +7,7 @@ import logging
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import numpy as np
 import pytest
 
 from vibesensor.adapters.websocket.hub import WebSocketHub, WSConnection
@@ -256,6 +257,40 @@ async def test_error_payload_is_cached_per_client_id() -> None:
     for ws in (ws1, ws2):
         ws.send_text.assert_awaited_once()
         assert _sent_json(ws) == {"error": "payload_build_failed"}
+
+
+@pytest.mark.asyncio
+async def test_broadcast_serializes_plain_payload_without_recursive_sanitizing() -> None:
+    hub = WebSocketHub()
+    ws = _make_ws()
+    await hub.add(ws, None)
+
+    with patch(
+        "vibesensor.adapters.websocket.hub.sanitize_for_json",
+        side_effect=AssertionError(
+            "sanitize_for_json should not run on the common plain-Python path"
+        ),
+    ):
+        await hub.broadcast(lambda _: {"value": 1.5, "nested": {"ok": True}})
+
+    assert _sent_json(ws) == {"value": 1.5, "nested": {"ok": True}}
+
+
+@pytest.mark.asyncio
+async def test_broadcast_falls_back_to_sanitizer_for_numpy_payload() -> None:
+    hub = WebSocketHub()
+    ws = _make_ws()
+    await hub.add(ws, "client_x")
+    payload = {"freq": np.array([1.0, float("nan"), 3.0], dtype=np.float32)}
+
+    with patch(
+        "vibesensor.adapters.websocket.hub.sanitize_for_json",
+        wraps=sanitize_for_json,
+    ) as sanitize:
+        await hub.broadcast(lambda _: payload)
+
+    assert sanitize.call_count == 1
+    assert _sent_json(ws) == {"freq": [1.0, None, 3.0]}
 
 
 # ── sanitize_for_json unit tests ─────────────────────────────────────────────
