@@ -9,15 +9,20 @@ from statistics import median as _median
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
-from vibesensor.use_cases.diagnostics._types import PeakTableRowData, Sample
-from vibesensor.use_cases.diagnostics.helpers import (
+from vibesensor.use_cases.diagnostics._sample_metrics import (
     _effective_baseline_floor,
     _run_noise_baseline_g,
 )
-from vibesensor.use_cases.diagnostics.peak_classification import classify_peak_type
+from vibesensor.use_cases.diagnostics._types import PeakTableRowData, Sample
+from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
+from vibesensor.use_cases.diagnostics.peaks.statistics import (
+    compute_peak_distribution_stats,
+    compute_peak_persistence_score,
+    compute_peak_spatial_uniformity,
+    compute_peak_speed_uniformity,
+)
 from vibesensor.use_cases.diagnostics.spectrogram import (
     PeakSampleScan,
-    safe_percentile,
     scan_peak_samples,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
@@ -107,48 +112,35 @@ def top_peaks_table_rows(
     )
 
     for bucket in grouped.values():
-        amps = sorted(bucket.amps)
-        floor_amps = sorted(bucket.floor_amps)
-        count = len(amps)
+        stats = compute_peak_distribution_stats(bucket.amps, bucket.floor_amps)
+        count = stats.sample_count
         presence_ratio = min(1.0, count / max(1, n_samples))
-        median_amp = safe_percentile(amps, 0.50)
-        p95_amp = safe_percentile(amps, 0.95)
-        max_amp = amps[-1] if amps else 0.0
-        floor_amp_val = safe_percentile(floor_amps, 0.50) if floor_amps else None
-        max_intensity_db = compute_db_or_none(max_amp, floor_amp_val)
-        median_intensity_db = compute_db_or_none(median_amp, floor_amp_val)
-        p95_intensity_db = compute_db_or_none(p95_amp, floor_amp_val)
-        burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
-        spatial_uniformity: float | None = None
-        if len(total_locations) >= 2:
-            spatial_uniformity = len(bucket.location_counts) / len(total_locations)
-        speed_uniformity: float | None = None
-        if len(total_speed_bin_counts) >= 2:
-            hit_rates: list[float] = []
-            for speed_bin, total_count in total_speed_bin_counts.items():
-                if total_count <= 0:
-                    continue
-                hit_rates.append(
-                    float(bucket.speed_bin_counts.get(speed_bin, 0)) / float(total_count),
-                )
-            if hit_rates:
-                hit_rate_mean = sum(hit_rates) / len(hit_rates)
-                speed_uniformity = (
-                    (sum((rate - hit_rate_mean) ** 2 for rate in hit_rates) / len(hit_rates)) ** 0.5
-                    if len(hit_rates) > 1
-                    else 0.0
-                )
+        floor_amp_val = stats.median_floor_amp
+        max_intensity_db = compute_db_or_none(stats.max_amp, floor_amp_val)
+        median_intensity_db = compute_db_or_none(stats.median_amp, floor_amp_val)
+        p95_intensity_db = compute_db_or_none(stats.p95_amp, floor_amp_val)
+        spatial_uniformity = compute_peak_spatial_uniformity(
+            matching_locations=len(bucket.location_counts),
+            total_locations=len(total_locations),
+        )
+        speed_uniformity = compute_peak_speed_uniformity(
+            speed_bin_counts_for_bin=bucket.speed_bin_counts,
+            total_speed_bin_counts=total_speed_bin_counts,
+        )
         bucket.max_intensity_db = max_intensity_db
         bucket.median_intensity_db = median_intensity_db
         bucket.p95_intensity_db = p95_intensity_db
         bucket.run_noise_baseline_db = run_noise_baseline_db
-        bucket.median_vs_run_noise_ratio = median_amp / baseline_floor
-        bucket.p95_vs_run_noise_ratio = p95_amp / baseline_floor
+        bucket.median_vs_run_noise_ratio = stats.median_amp / baseline_floor
+        bucket.p95_vs_run_noise_ratio = stats.p95_amp / baseline_floor
         bucket.strength_floor_db = compute_db_or_none(floor_amp_val, MEMS_NOISE_FLOOR_G)
         bucket.strength_db = p95_intensity_db
         bucket.presence_ratio = presence_ratio
-        bucket.burstiness = burstiness
-        bucket.persistence_score = (presence_ratio**2) * p95_amp
+        bucket.burstiness = stats.burstiness
+        bucket.persistence_score = compute_peak_persistence_score(
+            presence_ratio=presence_ratio,
+            p95_amp=stats.p95_amp,
+        )
         bucket.spatial_uniformity = spatial_uniformity
         bucket.speed_uniformity = speed_uniformity
 

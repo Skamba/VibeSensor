@@ -11,10 +11,10 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding
 
-from vibesensor.use_cases.diagnostics.order_heuristics import (
+from vibesensor.use_cases.diagnostics.orders.heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.use_cases.diagnostics.order_statistics import (
+from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
 
@@ -180,7 +180,7 @@ class TestPersistentPeakNegligibleCapAligned:
         that a weak order finding at ~0.37 confidence always suppresses
         persistent peaks at the same frequency.
         """
-        from vibesensor.use_cases.diagnostics.peak_scoring import PeakBin
+        from vibesensor.use_cases.diagnostics.peaks.scoring import PeakBin
 
         # Build a PeakBin with high presence (patterned), low burstiness,
         # decent SNR so it classifies as patterned, but low enough absolute

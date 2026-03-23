@@ -11,6 +11,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding as DomainFinding
+from vibesensor.use_cases.diagnostics._sample_metrics import (
+    _primary_vibration_strength_db,
+    _run_noise_baseline_g,
+)
 from vibesensor.use_cases.diagnostics._types import (
     AmpVsPhaseRowData,
     AnalysisSampleInput,
@@ -25,11 +29,7 @@ from vibesensor.use_cases.diagnostics._types import (
     SpeedBreakdownRowData,
     ensure_analysis_samples,
 )
-from vibesensor.use_cases.diagnostics.helpers import (
-    _primary_vibration_strength_db,
-    _run_noise_baseline_g,
-)
-from vibesensor.use_cases.diagnostics.peak_table import (
+from vibesensor.use_cases.diagnostics.peaks.table import (
     annotate_peak_rows_with_order_labels,
     top_peaks_table_rows,
 )

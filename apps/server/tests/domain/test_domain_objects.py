@@ -240,7 +240,7 @@ class TestFindingDomainObject:
         assert f.severity == "high"
         assert f.strongest_location == "FL"
         assert f.strongest_speed_band == "80-100 km/h"
-        assert f.peak_classification == "harmonic"
+        assert f.peaks.classification == "harmonic"
         assert f.is_diagnostic
         assert f.confidence_pct == 85
 

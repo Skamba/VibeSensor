@@ -24,14 +24,14 @@ from vibesensor.shared.constants import (
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
 from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
-from vibesensor.use_cases.diagnostics.order_heuristics import (
+from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
-from vibesensor.use_cases.diagnostics.order_heuristics import (
+from vibesensor.use_cases.diagnostics.orders.heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.use_cases.diagnostics.order_match_rate import _compute_effective_match_rate
-from vibesensor.use_cases.diagnostics.order_statistics import (
+from vibesensor.use_cases.diagnostics.orders.match_rate import _compute_effective_match_rate
+from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase

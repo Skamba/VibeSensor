@@ -274,7 +274,7 @@ def finding_payload_from_domain(
         "dominance_ratio": finding.dominance_ratio,
         "diffuse_excitation": finding.diffuse_excitation,
         "ranking_score": finding.ranking_score,
-        "peak_classification": finding.peak_classification,
+        "peak_classification": finding.peaks.classification,
         "signatures_observed": list(finding.signature_labels),
         "evidence_summary": "",
         "frequency_hz_or_order": (

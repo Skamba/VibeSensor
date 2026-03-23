@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.use_cases.diagnostics.peak_finding_builder import assemble_peak_finding
-from vibesensor.use_cases.diagnostics.peak_scoring import PeakBin
+from vibesensor.use_cases.diagnostics.peaks.finding_builder import assemble_peak_finding
+from vibesensor.use_cases.diagnostics.peaks.scoring import PeakBin
 
 
 def _make_peak_bin(

@@ -197,7 +197,7 @@ def _finding_to_presentation(f: Finding) -> FindingPresentation:
         suspected_source=str(f.suspected_source),
         severity=f.severity,
         strongest_location=f.strongest_location,
-        peak_classification=f.peak_classification,
+        peak_classification=f.peaks.classification,
         order=f.order,
         frequency_hz=f.frequency_hz,
         effective_confidence=f.effective_confidence,

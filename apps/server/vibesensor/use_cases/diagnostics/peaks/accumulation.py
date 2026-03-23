@@ -8,9 +8,10 @@ from math import floor as _math_floor
 
 from vibesensor.domain import speed_bin_label
 
-from ._types import AnalysisSampleInput, PhaseLabels, ensure_analysis_sample
-from .helpers import _estimate_strength_floor_amp_g, _location_label, _sample_top_peaks
-from .speed_profile_helpers import _phase_to_str
+from .._sample_metrics import _estimate_strength_floor_amp_g, _sample_top_peaks
+from .._sensor_locations import _location_label
+from .._types import AnalysisSampleInput, PhaseLabels, ensure_analysis_sample
+from ..speed_profile_helpers import _phase_to_str
 
 
 def _make_nested_int_defaultdict() -> defaultdict:

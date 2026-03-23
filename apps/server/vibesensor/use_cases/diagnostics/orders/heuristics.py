@@ -8,15 +8,7 @@ from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import OrderMatchObservation, VibrationSource
 from vibesensor.shared.constants import ORDER_MIN_CONFIDENCE, ORDER_MIN_MATCH_POINTS
 from vibesensor.use_cases.diagnostics.math_utils import _mean
-
-_DIFFUSE_AMPLITUDE_DOMINANCE_RATIO = 2.0
-_DIFFUSE_MATCH_RATE_RANGE_THRESHOLD = 0.15
-_DIFFUSE_MIN_MEAN_RATE = 0.15
-_DIFFUSE_PENALTY_BASE = 0.85
-_DIFFUSE_PENALTY_PER_SENSOR = 0.04
-_DIFFUSE_PENALTY_FLOOR = 0.65
-_HARMONIC_ALIAS_RATIO = 1.15
-_ENGINE_ALIAS_SUPPRESSION = 0.60
+from vibesensor.use_cases.diagnostics.orders.settings import ORDER_HEURISTIC_SETTINGS
 
 
 def _normalized_source(finding: DomainFinding) -> str:
@@ -33,6 +25,7 @@ def detect_diffuse_excitation(
     min_match_points: int = ORDER_MIN_MATCH_POINTS,
 ) -> tuple[bool, float]:
     """Detect diffuse, non-localized excitation across multiple sensors."""
+    settings = ORDER_HEURISTIC_SETTINGS
     if len(connected_locations) < 2 or not possible_by_location:
         return False, 1.0
     loc_rates: list[float] = []
@@ -58,16 +51,16 @@ def detect_diffuse_excitation(
     if loc_mean_amps and len(loc_mean_amps) >= 2:
         max_amp = max(loc_mean_amps.values())
         min_amp = min(loc_mean_amps.values())
-        if min_amp > 0 and max_amp / min_amp > _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO:
+        if min_amp > 0 and max_amp / min_amp > settings.diffuse_amplitude_dominance_ratio:
             amp_uniform = False
     if (
-        rate_range < _DIFFUSE_MATCH_RATE_RANGE_THRESHOLD
-        and mean_rate > _DIFFUSE_MIN_MEAN_RATE
+        rate_range < settings.diffuse_match_rate_range_threshold
+        and mean_rate > settings.diffuse_min_mean_rate
         and amp_uniform
     ):
         penalty = max(
-            _DIFFUSE_PENALTY_FLOOR,
-            _DIFFUSE_PENALTY_BASE - _DIFFUSE_PENALTY_PER_SENSOR * len(loc_rates),
+            settings.diffuse_penalty_floor,
+            settings.diffuse_penalty_base - settings.diffuse_penalty_per_sensor * len(loc_rates),
         )
         return True, penalty
     return False, 1.0
@@ -102,15 +95,16 @@ def suppress_engine_aliases(
         default=0.0,
     )
     if best_wheel_conf > 0:
+        settings = ORDER_HEURISTIC_SETTINGS
         for index, (ranking_score, finding) in enumerate(findings):
             if _normalized_source(finding) != VibrationSource.ENGINE:
                 continue
             if ranking_score >= best_wheel_ranking:
                 continue
             eng_conf = finding.effective_confidence
-            if eng_conf <= best_wheel_conf * _HARMONIC_ALIAS_RATIO:
-                suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
-                new_ranking_score = ranking_score * _ENGINE_ALIAS_SUPPRESSION
+            if eng_conf <= best_wheel_conf * settings.harmonic_alias_ratio:
+                suppressed = eng_conf * settings.engine_alias_suppression
+                new_ranking_score = ranking_score * settings.engine_alias_suppression
                 finding = replace(
                     finding,
                     confidence=suppressed,
@@ -134,13 +128,18 @@ def apply_localization_override(
     min_match_points: int = ORDER_MIN_MATCH_POINTS,
 ) -> tuple[float, bool]:
     """Adjust localization confidence when only one connected sensor matched."""
+    settings = ORDER_HEURISTIC_SETTINGS
     if (
         per_location_dominant
         and len(unique_match_locations) == 1
         and len(connected_locations) >= 2
         and not no_wheel_override
     ):
-        localization_confidence = min(1.0, 0.50 + 0.15 * (len(connected_locations) - 1))
+        localization_confidence = min(
+            1.0,
+            settings.dominant_single_location_base
+            + settings.dominant_single_location_step * (len(connected_locations) - 1),
+        )
         weak_spatial_separation = False
     elif (
         len(unique_match_locations) == 1
@@ -150,7 +149,11 @@ def apply_localization_override(
     ):
         localization_confidence = max(
             localization_confidence,
-            min(1.0, 0.40 + 0.10 * (len(connected_locations) - 1)),
+            min(
+                1.0,
+                settings.fallback_single_location_base
+                + settings.fallback_single_location_step * (len(connected_locations) - 1),
+            ),
         )
         weak_spatial_separation = False
     return localization_confidence, weak_spatial_separation
