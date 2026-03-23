@@ -9,7 +9,6 @@ This makes them independently testable and reusable outside of the
 from __future__ import annotations
 
 import math
-import warnings
 from typing import TypeAlias
 
 import numpy as np
@@ -24,7 +23,7 @@ from vibesensor.vibration_strength import (
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
     empty_vibration_strength_metrics,
-    noise_floor_amp_p20_g,
+    percentile,
 )
 
 AXES: tuple[Axis, Axis, Axis] = ("x", "y", "z")
@@ -51,11 +50,45 @@ def medfilt3(block: FloatArray) -> FloatArray:
         raise ValueError(f"medfilt3 expects a 2-D (axes, samples) array, got ndim={block.ndim}")
     if block.shape[-1] < 3:
         return block
-    stacked = np.stack([block[:, :-2], block[:, 1:-1], block[:, 2:]], axis=0)
     filtered = block.copy()
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        filtered[:, 1:-1] = np.nanmedian(stacked, axis=0)
+    center = filtered[:, 1:-1]
+    left = block[:, :-2]
+    mid = block[:, 1:-1]
+    right = block[:, 2:]
+
+    # Fast path for the common all-finite case: one scratch array + fixed-size
+    # pairwise min/max avoids the large transient stack that ``np.nanmedian``
+    # would allocate for a three-sample window.
+    scratch = np.empty_like(center)
+    np.minimum(left, mid, out=scratch)
+    np.maximum(left, mid, out=center)
+    np.minimum(center, right, out=center)
+    np.maximum(scratch, center, out=center)
+
+    left_valid = ~np.isnan(left)
+    mid_valid = ~np.isnan(mid)
+    right_valid = ~np.isnan(right)
+
+    missing_left = ~left_valid & mid_valid & right_valid
+    center[missing_left] = (mid[missing_left] + right[missing_left]) * np.float32(0.5)
+
+    missing_mid = left_valid & ~mid_valid & right_valid
+    center[missing_mid] = (left[missing_mid] + right[missing_mid]) * np.float32(0.5)
+
+    missing_right = left_valid & mid_valid & ~right_valid
+    center[missing_right] = (left[missing_right] + mid[missing_right]) * np.float32(0.5)
+
+    only_left = left_valid & ~mid_valid & ~right_valid
+    center[only_left] = left[only_left]
+
+    only_mid = ~left_valid & mid_valid & ~right_valid
+    center[only_mid] = mid[only_mid]
+
+    only_right = ~left_valid & ~mid_valid & right_valid
+    center[only_right] = right[only_right]
+
+    all_invalid = ~left_valid & ~mid_valid & ~right_valid
+    center[all_invalid] = np.nan
     return filtered
 
 
@@ -77,16 +110,12 @@ def smooth_spectrum(amps: FloatArray, bins: int = 5) -> FloatArray:
 
 
 def noise_floor(amps: FloatArray) -> float:
-    """Compute the P20 noise floor, filtering non-finite and negative values.
+    """Compute the P20 noise floor from the provided analysis-band amplitudes.
 
-    Returns ``0.0`` for empty or all-invalid inputs.  Delegates the
-    actual percentile computation to
-    :func:`~vibesensor.vibration_strength.noise_floor_amp_p20_g`.
-
-    Pre-sorts the array so that when ``noise_floor_amp_p20_g`` strips the DC
-    bin (index 0), it discards the global minimum amplitude, yielding a
-    slightly more conservative (higher) floor estimate.  A single-element
-    array returns that element directly since there is no minimum to strip.
+    The caller already provides a frequency-ordered spectrum slice, so this
+    helper must not skip index 0 or delegate to helpers that assume DC is still
+    present there. It simply filters invalid values and computes the 20th
+    percentile of the remaining non-negative amplitudes.
     """
     if amps.size == 0:
         return 0.0
@@ -98,12 +127,8 @@ def noise_floor(amps: FloatArray) -> float:
         return 0.0
     sorted_non_neg = np.sort(non_neg).tolist()
     if len(sorted_non_neg) == 1:
-        # noise_floor_amp_p20_g treats a single-element input as DC-only and
-        # returns 0.0, which is correct for the full-spectrum context but not
-        # here — the single value is a valid amplitude reading, not the DC
-        # bias.  Return it directly so callers get a usable floor estimate.
         return float(sorted_non_neg[0])
-    return float(noise_floor_amp_p20_g(combined_spectrum_amp_g=sorted_non_neg))
+    return float(percentile(sorted_non_neg, 0.20))
 
 
 def float_list(values: FloatArray | list[float]) -> list[float]:
