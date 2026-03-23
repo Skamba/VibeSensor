@@ -715,6 +715,39 @@ _ALLOWED_IMPORTS: dict[str, frozenset[str]] = {
     "app": frozenset({"domain", "shared", "use_cases", "infra", "adapters"}),
 }
 
+_ALLOWED_ROOT_MODULE_FILES = frozenset(
+    {
+        "__init__.py",
+        "__main__.py",
+        "_version.py",
+        "report_i18n.py",
+        "strength_bands.py",
+        "vibration_strength.py",
+    }
+)
+
+_ALLOWED_ROOT_MODULE_FILES = frozenset(
+    {
+        "__init__.py",
+        "__main__.py",
+        "_version.py",
+        "report_i18n.py",
+        "strength_bands.py",
+        "vibration_strength.py",
+    }
+)
+
+_ALLOWED_ROOT_MODULE_FILES = frozenset(
+    {
+        "__init__.py",
+        "__main__.py",
+        "_version.py",
+        "report_i18n.py",
+        "strength_bands.py",
+        "vibration_strength.py",
+    }
+)
+
 
 def _classify_layer(rel_path: str) -> str:
     first = rel_path.split("/")[0]
@@ -794,6 +827,108 @@ def _check_layer_boundaries() -> list[str]:
             peer_allowed = _ALLOWED_IMPORTS.get(target, frozenset())
             if layer in peer_allowed:
                 failures.append(f"Layer DAG cycle detected: {layer} <-> {target}")
+    return failures
+
+
+def _check_root_module_allowlist() -> list[str]:
+    root_files = {
+        path.name
+        for path in VIBESENSOR_DIR.iterdir()
+        if path.is_file() and path.suffix == ".py"
+    }
+    unexpected = sorted(root_files - _ALLOWED_ROOT_MODULE_FILES)
+    if not unexpected:
+        return []
+    return [
+        "Unexpected Python modules at apps/server/vibesensor/ root:\n  "
+        + "\n  ".join(unexpected)
+    ]
+
+
+def _check_http_api_models_live_under_http_adapters() -> list[str]:
+    failures: list[str] = []
+    old_dir = VIBESENSOR_DIR / "shared" / "types" / "api_models"
+    if old_dir.exists():
+        failures.append(
+            f"{old_dir.relative_to(REPO_ROOT)} should not exist; HTTP models belong under adapters/http/models/"
+        )
+    new_dir = VIBESENSOR_DIR / "adapters" / "http" / "models"
+    if not new_dir.is_dir():
+        failures.append(f"Missing HTTP model package: {new_dir.relative_to(REPO_ROOT)}")
+    for path in _python_files(VIBESENSOR_DIR):
+        source = _read_text(path)
+        if "vibesensor.shared.types.api_models" in source:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} imports HTTP models from shared/types/api_models"
+            )
+    return failures
+
+
+def _check_root_module_allowlist() -> list[str]:
+    root_files = {
+        path.name
+        for path in VIBESENSOR_DIR.iterdir()
+        if path.is_file() and path.suffix == ".py"
+    }
+    unexpected = sorted(root_files - _ALLOWED_ROOT_MODULE_FILES)
+    if not unexpected:
+        return []
+    return [
+        "Unexpected Python modules at apps/server/vibesensor/ root:\n  "
+        + "\n  ".join(unexpected)
+    ]
+
+
+def _check_http_api_models_live_under_http_adapters() -> list[str]:
+    failures: list[str] = []
+    old_dir = VIBESENSOR_DIR / "shared" / "types" / "api_models"
+    if old_dir.exists():
+        failures.append(
+            f"{old_dir.relative_to(REPO_ROOT)} should not exist; HTTP models belong under adapters/http/models/"
+        )
+    new_dir = VIBESENSOR_DIR / "adapters" / "http" / "models"
+    if not new_dir.is_dir():
+        failures.append(f"Missing HTTP model package: {new_dir.relative_to(REPO_ROOT)}")
+    for path in _python_files(VIBESENSOR_DIR):
+        source = _read_text(path)
+        if "vibesensor.shared.types.api_models" in source:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} imports HTTP models from shared/types/api_models"
+            )
+    return failures
+
+
+def _check_root_module_allowlist() -> list[str]:
+    root_files = {
+        path.name
+        for path in VIBESENSOR_DIR.iterdir()
+        if path.is_file() and path.suffix == ".py"
+    }
+    unexpected = sorted(root_files - _ALLOWED_ROOT_MODULE_FILES)
+    if not unexpected:
+        return []
+    return [
+        "Unexpected Python modules at apps/server/vibesensor/ root:\n  "
+        + "\n  ".join(unexpected)
+    ]
+
+
+def _check_http_api_models_live_under_http_adapters() -> list[str]:
+    failures: list[str] = []
+    old_dir = VIBESENSOR_DIR / "shared" / "types" / "api_models"
+    if old_dir.exists():
+        failures.append(
+            f"{old_dir.relative_to(REPO_ROOT)} should not exist; HTTP models belong under adapters/http/models/"
+        )
+    new_dir = VIBESENSOR_DIR / "adapters" / "http" / "models"
+    if not new_dir.is_dir():
+        failures.append(f"Missing HTTP model package: {new_dir.relative_to(REPO_ROOT)}")
+    for path in _python_files(VIBESENSOR_DIR):
+        source = _read_text(path)
+        if "vibesensor.shared.types.api_models" in source:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} imports HTTP models from shared/types/api_models"
+            )
     return failures
 
 
@@ -1413,6 +1548,14 @@ CHECKS: tuple[Check, ...] = (
     (
         "Summary serialization uses a build context",
         _check_summary_payload_uses_build_context,
+    ),
+    (
+        "Root module allowlist stays tight",
+        _check_root_module_allowlist,
+    ),
+    (
+        "HTTP API models live under adapters/http",
+        _check_http_api_models_live_under_http_adapters,
     ),
     (
         "SettingsStore uses one rollback helper",

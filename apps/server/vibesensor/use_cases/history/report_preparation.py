@@ -6,12 +6,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
-from vibesensor.coerce import coerce_float, coerce_int
 from vibesensor.domain import (
     LocationHotspotRow,
     LocationIntensitySummary,
     RecommendedAction,
     VibrationOrigin,
+    coerce_float,
+    coerce_int,
 )
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.analysis_payload import (

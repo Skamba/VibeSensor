@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Query
 
 from vibesensor.adapters.http._helpers import domain_errors_to_http
-from vibesensor.shared.types.api_models import (
+from vibesensor.adapters.http.models import (
     EspFlashCancelResponse,
     EspFlashHistoryResponse,
     EspFlashLogsResponse,
