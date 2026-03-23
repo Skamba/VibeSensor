@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.request import Request, urlopen
 
+from packaging.version import Version
+
 from vibesensor.shared.constants.github import GITHUB_REPO
 from vibesensor.shared.types.json_types import JsonValue, is_json_array, is_json_object
 
@@ -304,8 +306,6 @@ class ServerReleaseFetcher(GitHubAPIClient):
         # Guard against suggesting downgrades: compare versions so that only
         # genuinely newer releases are reported.
         try:
-            from packaging.version import Version
-
             if Version(release.version) <= Version(current_version):
                 LOGGER.info(
                     "Latest release %s is not newer than current %s; skipping",
@@ -313,9 +313,8 @@ class ServerReleaseFetcher(GitHubAPIClient):
                     current_version,
                 )
                 return None
-        except (ImportError, ValueError):
-            # If packaging is unavailable or versions are unparseable,
-            # fall through and treat any difference as an update.
+        except ValueError:
+            # If versions are unparseable, fall through and treat any difference as an update.
             LOGGER.warning(
                 "Could not compare versions %r vs %r; treating as update",
                 release.version,

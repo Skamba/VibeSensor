@@ -8,6 +8,9 @@ from dataclasses import dataclass
 
 from vibesensor.shared.types.json_types import JsonObject
 
+PERSISTED_ANALYSIS_SCHEMA_VERSION = 1
+_STORAGE_SCHEMA_VERSION_KEY = "_schema_version"
+
 
 @dataclass(frozen=True, slots=True)
 class PersistedAnalysis(Mapping[str, object]):
@@ -19,8 +22,21 @@ class PersistedAnalysis(Mapping[str, object]):
     def from_json_object(cls, payload: JsonObject) -> PersistedAnalysis:
         return cls(_payload=deepcopy(payload))
 
+    @classmethod
+    def from_storage_json_object(cls, payload: JsonObject) -> PersistedAnalysis:
+        normalized = deepcopy(payload)
+        raw_version = normalized.pop(_STORAGE_SCHEMA_VERSION_KEY, 0)
+        if raw_version not in (0, PERSISTED_ANALYSIS_SCHEMA_VERSION):
+            raise ValueError(f"Unsupported persisted analysis schema version: {raw_version!r}")
+        return cls(_payload=normalized)
+
     def to_json_object(self) -> JsonObject:
         return deepcopy(self._payload)
+
+    def to_storage_json_object(self) -> JsonObject:
+        payload = self.to_json_object()
+        payload[_STORAGE_SCHEMA_VERSION_KEY] = PERSISTED_ANALYSIS_SCHEMA_VERSION
+        return payload
 
     def __getitem__(self, key: str) -> object:
         return self._payload[key]
