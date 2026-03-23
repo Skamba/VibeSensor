@@ -12,7 +12,11 @@ from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter
-from vibesensor.use_cases.run.sample_builder import build_sample_records, resolve_speed_context
+from vibesensor.use_cases.run.sample_builder import (
+    _LIVE_SAMPLE_WINDOW_S,
+    build_sample_records,
+    resolve_speed_context,
+)
 
 AnalysisSettingsProvider = Callable[[], AnalysisSettingsSnapshot]
 CurrentTotalProvider = Callable[[], int]
@@ -52,6 +56,30 @@ class SampleFlushOrchestrator:
         self._current_run_id = current_run_id
         self._monotonic = monotonic
         self._timestamp_utc = timestamp_utc
+
+    def _refresh_recent_client_metrics(self) -> None:
+        active_client_ids = self._registry.active_client_ids()
+        recent_client_ids = sorted(
+            set(
+                self._processor.clients_with_recent_data(
+                    active_client_ids,
+                    max_age_s=_LIVE_SAMPLE_WINDOW_S,
+                ),
+            ),
+        )
+        for client_id in recent_client_ids:
+            record = self._registry.get(client_id)
+            record_rate_hz = int(record.sample_rate_hz or 0) if record is not None else 0
+            sample_rate_hz = (
+                self._processor.latest_sample_rate_hz(client_id)
+                or record_rate_hz
+                or self._default_sample_rate_hz
+                or None
+            )
+            self._processor.compute_metrics(
+                client_id,
+                sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
+            )
 
     def build_sample_records(
         self,
@@ -105,10 +133,17 @@ class SampleFlushOrchestrator:
         run_start_mono_s: float,
         *,
         prebuilt_rows: list[SensorFrame] | None = None,
+        refresh_metrics: bool = False,
     ) -> bool:
         now_mono_s = self._monotonic()
         if self._current_run_id() != run_id:
             return False
+
+        if prebuilt_rows is None and refresh_metrics:
+            # Capture one final up-to-date metrics snapshot before stop/rollover
+            # finalizes the run; short runs can otherwise miss their first
+            # FFT-complete batch depending on processing-loop timing.
+            self._refresh_recent_client_metrics()
 
         current_total = self._active_frames_total()
         self._lifecycle.refresh_data_progress(

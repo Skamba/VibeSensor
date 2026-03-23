@@ -105,6 +105,12 @@ class SignalSource(Protocol):
 
     def flush_client_buffer(self, client_id: str, *, reason: str = "sensor reset") -> None: ...
 
+    def compute_metrics(
+        self,
+        client_id: str,
+        sample_rate_hz: int | None = None,
+    ) -> ClientMetrics: ...
+
     def clients_with_recent_data(
         self,
         client_ids: list[str],

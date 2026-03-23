@@ -200,6 +200,7 @@ class RunRecorder:
                         flush_snapshot.run_id,
                         flush_snapshot.start_time_utc,
                         flush_snapshot.start_mono_s,
+                        refresh_metrics=True,
                     )
             if self.enabled and self._run_id:
                 run_id = self._run_id
@@ -237,6 +238,7 @@ class RunRecorder:
                     flush_snapshot.run_id,
                     flush_snapshot.start_time_utc,
                     flush_snapshot.start_mono_s,
+                    refresh_metrics=True,
                 )
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()

@@ -32,11 +32,20 @@ class _FakeGPSMonitor:
 
 
 class _FakeProcessor:
+    def flush_client_buffer(self, client_id: str, *, reason: str = "sensor reset") -> None:
+        return None
+
     def latest_sample_xyz(self, client_id: str):
         return (0.0, 0.0, 0.0)
 
     def latest_sample_rate_hz(self, client_id: str):
         return 800
+
+    def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None):
+        return {}
+
+    def latest_metrics(self, client_id: str):
+        return {}
 
     def clients_with_recent_data(self, client_ids, max_age_s=3.0):
         return list(client_ids)

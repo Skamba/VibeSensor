@@ -3698,6 +3698,17 @@
               }
             ]
           },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
           "metadata": {
             "additionalProperties": true,
             "title": "Metadata",
