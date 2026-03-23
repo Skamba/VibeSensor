@@ -1,6 +1,3 @@
-# ruff: noqa: E402
-from __future__ import annotations
-
 """Spectrum smoothing and peak-selection regressions:
 - _smooth_spectrum uses edge-padding instead of zero-padding to prevent
   boundary attenuation of edge frequency bins.
@@ -8,6 +5,7 @@ from __future__ import annotations
   spectrum bin as a potential peak candidate.
 """
 
+from __future__ import annotations
 
 import numpy as np
 import pytest
