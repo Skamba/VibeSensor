@@ -94,6 +94,11 @@ Optional override via local file (recommended for non-default networks):
 
 `include/vibesensor_network.local.h` is gitignored; do not commit secrets.
 
+Wi-Fi credentials are intentionally configured at build time (default header or
+gitignored local override), not mutated at runtime. The offline-first Pi
+hotspot remains the deployment authority, so the firmware/server pair shares a
+stable network target instead of exposing an on-device provisioning flow.
+
 Runtime-critical firmware parameters can be overridden without editing source by
 adding build flags in `platformio.ini` (`build_flags`).
 

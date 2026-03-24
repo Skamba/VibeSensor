@@ -13,11 +13,15 @@ from vibesensor.adapters.udp.protocol import (
     DATA_ACK_BYTES,
     DATA_ACK_STRUCT,
     DATA_HEADER_BYTES,
+    HELLO_ACK_BYTES,
+    HELLO_ACK_STRUCT,
     HELLO_BASE,
+    HELLO_CAP_EXPLICIT_ACK,
     HELLO_FIXED_BYTES,
     MSG_DATA,
     MSG_DATA_ACK,
     MSG_HELLO,
+    MSG_HELLO_ACK,
     ProtocolError,
     client_id_hex,
     client_id_mac,
@@ -28,12 +32,14 @@ from vibesensor.adapters.udp.protocol import (
     pack_data,
     pack_data_ack,
     pack_hello,
+    pack_hello_ack,
     parse_ack,
     parse_client_id,
     parse_cmd,
     parse_data,
     parse_data_ack,
     parse_hello,
+    parse_hello_ack,
 )
 
 
@@ -47,6 +53,7 @@ def test_hello_roundtrip() -> None:
         frame_samples=200,
         firmware_version="fw-test",
         queue_overflow_drops=7,
+        capabilities=HELLO_CAP_EXPLICIT_ACK,
     )
     assert pkt[0] == MSG_HELLO
     decoded = parse_hello(pkt)
@@ -57,6 +64,23 @@ def test_hello_roundtrip() -> None:
     assert decoded.name == "front-left"
     assert decoded.firmware_version == "fw-test"
     assert decoded.queue_overflow_drops == 7
+    assert decoded.capabilities == HELLO_CAP_EXPLICIT_ACK
+
+
+def test_parse_hello_defaults_capabilities_to_zero_for_legacy_packet() -> None:
+    client_id = bytes.fromhex("a1b2c3d4e5f6")
+    legacy_packet = pack_hello(
+        client_id=client_id,
+        control_port=9123,
+        sample_rate_hz=800,
+        name="front-left",
+        frame_samples=200,
+        firmware_version="fw-test",
+        queue_overflow_drops=7,
+        capabilities=HELLO_CAP_EXPLICIT_ACK,
+    )[:-1]
+    decoded = parse_hello(legacy_packet)
+    assert decoded.capabilities == 0
 
 
 def test_data_roundtrip() -> None:
@@ -109,10 +133,11 @@ def test_parse_client_id_accepts_colon_separated_uppercase_hex() -> None:
 
 
 def test_protocol_layout_constants_match_esp_side() -> None:
-    assert HELLO_FIXED_BYTES == 20
+    assert HELLO_FIXED_BYTES == 21
     assert DATA_HEADER_BYTES == 22
     assert ACK_BYTES == 13
     assert DATA_ACK_BYTES == 12
+    assert HELLO_ACK_BYTES == 8
     assert CMD_HEADER_BYTES == 13
     assert CMD_IDENTIFY_BYTES == 15
 
@@ -238,13 +263,22 @@ def test_ack_roundtrip() -> None:
     assert decoded.status == 0
 
 
+def test_hello_ack_roundtrip() -> None:
+    client_id = bytes.fromhex("aabbccddeeff")
+    pkt = pack_hello_ack(client_id)
+    assert pkt[0] == MSG_HELLO_ACK
+    decoded = parse_hello_ack(pkt)
+    assert decoded.client_id == client_id
+
+
 @pytest.mark.parametrize(
     ("parse_fn", "short_data", "match"),
     [
         (parse_ack, b"\x04\x01\x00", "ACK has unexpected size"),
         (parse_data_ack, b"\x05\x01\x00", "DATA_ACK has unexpected size"),
+        (parse_hello_ack, b"\x06\x01\x00", "HELLO_ACK has unexpected size"),
     ],
-    ids=["ack", "data_ack"],
+    ids=["ack", "data_ack", "hello_ack"],
 )
 def test_parse_wrong_size(parse_fn, short_data, match) -> None:
     with pytest.raises(ProtocolError, match=match):
@@ -256,8 +290,9 @@ def test_parse_wrong_size(parse_fn, short_data, match) -> None:
     [
         (ACK_STRUCT, parse_ack, (0xFF, 0x01, b"\x00" * 6, 0, 0), "Invalid ACK header"),
         (DATA_ACK_STRUCT, parse_data_ack, (0xFF, 0x01, b"\x00" * 6, 0), "Invalid DATA_ACK header"),
+        (HELLO_ACK_STRUCT, parse_hello_ack, (0xFF, 0x01, b"\x00" * 6), "Invalid HELLO_ACK header"),
     ],
-    ids=["ack", "data_ack"],
+    ids=["ack", "data_ack", "hello_ack"],
 )
 def test_parse_ack_invalid_header(struct, parse_fn, pack_args, match) -> None:
     pkt = struct.pack(*pack_args)

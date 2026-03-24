@@ -49,7 +49,7 @@ jobs:
           echo "tag=server-v${version}" >> "${GITHUB_OUTPUT}"
           echo "bundle=vibesensor-fw-v${version}.zip" >> "${GITHUB_OUTPUT}"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
           cache: npm
@@ -267,7 +267,7 @@ jobs:
             ${{ steps.bundle.outputs.path }}
 
       - name: Remove superseded releases
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CURRENT_TAG: ${{ steps.version.outputs.tag }}
         with:
