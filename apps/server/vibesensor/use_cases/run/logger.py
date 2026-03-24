@@ -27,6 +27,7 @@ from vibesensor.use_cases.run.persistence_writer import (
 )
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
+from vibesensor.use_cases.run.run_context import build_run_context_snapshot
 from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
 from vibesensor.use_cases.run.status_reporting import (
     RunRecorderStatusSnapshot,
@@ -37,6 +38,7 @@ from vibesensor.use_cases.run.status_reporting import (
 from . import _recorder_runtime, _recorder_types
 
 if TYPE_CHECKING:
+    from vibesensor.domain import RunContextSnapshot
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
     from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
     from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot
@@ -80,6 +82,7 @@ class RunRecorder:
         self._history_db = history_db
         self._language_provider = language_provider
         self._live_start_mono_s = time.monotonic()
+        self._active_run_context: RunContextSnapshot | None = None
 
         self._lifecycle = RunLifecycleState(
             no_data_timeout_s=max(1.0, float(config.no_data_timeout_s)),
@@ -113,7 +116,7 @@ class RunRecorder:
             registry=self.registry,
             gps_monitor=self.gps_monitor,
             processor=self.processor,
-            analysis_settings_snapshot=self._analysis_settings_snapshot,
+            analysis_settings_snapshot=self._recording_analysis_settings_snapshot,
             default_sample_rate_hz=self.default_sample_rate_hz,
             lifecycle=self._lifecycle,
             persistence=self._persistence,
@@ -148,6 +151,31 @@ class RunRecorder:
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         return _recorder_runtime.analysis_settings_snapshot(self._settings_store)
 
+    def _live_run_context_snapshot(self) -> RunContextSnapshot:
+        active_car_snapshot = (
+            self._settings_store.active_car_snapshot() if self._settings_store is not None else None
+        )
+        return build_run_context_snapshot(
+            analysis_settings_snapshot=self._analysis_settings_snapshot(),
+            active_car_snapshot=active_car_snapshot,
+        )
+
+    def _run_context_snapshot(self, run_id: str | None = None) -> RunContextSnapshot:
+        with self._lock:
+            current_run = self._lifecycle.current_run
+            active_run_context = self._active_run_context
+            if (
+                active_run_context is not None
+                and current_run is not None
+                and current_run.is_recording
+                and (run_id is None or current_run.run_id == run_id)
+            ):
+                return active_run_context
+        return self._live_run_context_snapshot()
+
+    def _recording_analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
+        return self._run_context_snapshot().analysis_settings
+
     def _session_snapshot(self) -> ActiveRunSnapshot | None:
         with self._lock:
             return self._lifecycle.snapshot()
@@ -158,13 +186,15 @@ class RunRecorder:
                 client_id,
                 reason="recording run start",
             )
+        run_context = self._live_run_context_snapshot()
         snapshot = self._lifecycle.start_new_run(
             run_id=uuid4().hex,
-            analysis_settings_snapshot=self._analysis_settings_snapshot(),
+            analysis_settings_snapshot=run_context.analysis_settings,
             start_time_utc=utc_now_iso(),
             start_mono_s=time.monotonic(),
             current_total=_recorder_runtime.active_frames_total(self.registry),
         )
+        self._active_run_context = run_context
         self._persistence.reset()
         self._live_start_mono_s = snapshot.start_mono_s
         return snapshot
@@ -258,6 +288,7 @@ class RunRecorder:
                     run_id,
                 )
             self._lifecycle.stop()
+            self._active_run_context = None
             self._persistence.reset()
             result = self.status()
         if run_id_to_analyze and self._history_db is not None:

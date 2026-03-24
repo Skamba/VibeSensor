@@ -216,7 +216,7 @@ def test_start_recording_rollover_flushes_first_pending_sample_batch(
     assert next_status.run_id != created_run_id
 
 
-def test_finalize_refreshes_run_metadata_from_latest_settings(
+def test_finalize_preserves_run_metadata_from_recording_start(
     make_logger,
     fake_history_db,
     mutable_fake_settings,
@@ -237,7 +237,10 @@ def test_finalize_refreshes_run_metadata_from_latest_settings(
     assert fake_history_db.updated_metadata
     updated_run_id, metadata = fake_history_db.updated_metadata[-1]
     assert updated_run_id == run_id
-    assert metadata.extras["tire_width_mm"] == 315.0
+    assert metadata.extras["tire_width_mm"] == 285.0
+    analysis_settings_snapshot = metadata.extras["analysis_settings_snapshot"]
+    assert isinstance(analysis_settings_snapshot, dict)
+    assert analysis_settings_snapshot["tire_width_mm"] == 285.0
 
 
 def test_append_records_surfaces_create_run_failure_in_status(
