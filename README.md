@@ -273,7 +273,8 @@ run log format. Synthetic analysis scenarios live in
 
 ## Developer Safeguards
 
-Enable versioned local hooks:
+`make setup` enables the versioned local hooks automatically. If you skipped
+that bootstrap flow or want to re-enable them manually, run:
 
 ```bash
 git config core.hooksPath .githooks

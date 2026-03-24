@@ -75,9 +75,12 @@ and complete in under 5 seconds.
 
 ## Running tests
 
-Four tiers: `make test` for fast iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
+Four tiers: `make test-changed` for a fast changed-file heuristic, `make test` for backend iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
 
 ```bash
+# Changed-file heuristic (current branch vs origin/main, fallback to main)
+make test-changed
+
 # Fast iteration — backend unit tests
 make test
 
