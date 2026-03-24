@@ -53,6 +53,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "e2e_parallel"
 PRINT_LOCK = threading.Lock()
 _SKIP_BUILD_ENV = "VIBESENSOR_E2E_SKIP_BUILD"
+_DEFAULT_MIN_SHARDS = 6
 
 
 @dataclass(frozen=True)
@@ -411,7 +412,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--shards",
         type=int,
-        default=2,
+        default=_DEFAULT_MIN_SHARDS,
         help="Minimum number of parallel shards (actual count may be higher for duration balance).",
     )
     parser.add_argument(

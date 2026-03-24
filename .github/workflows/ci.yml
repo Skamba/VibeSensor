@@ -230,7 +230,7 @@ jobs:
 
       - name: Docker-backed e2e suite (skip already-owned checks)
         run: |
-          python3 tools/tests/run_e2e_parallel.py --fast-e2e
+          python3 tools/tests/run_e2e_parallel.py --fast-e2e --shards 6
 
       - name: Upload e2e failure artifacts
         if: failure()
