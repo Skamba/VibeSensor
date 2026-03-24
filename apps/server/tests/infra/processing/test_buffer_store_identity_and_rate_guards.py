@@ -69,3 +69,29 @@ def test_stale_result_is_rejected_after_buffer_eviction_and_recreation() -> None
     next_plan = store.snapshot_for_compute(client_id, sample_rate_hz=200)
     assert isinstance(next_plan, MetricsSnapshot)
     assert not isinstance(next_plan, CachedMetricsHit)
+
+
+def test_sample_rate_change_forces_fresh_snapshot_before_reusing_cache() -> None:
+    config = _config()
+    store = SignalBufferStore(config)
+    computer = SignalMetricsComputer(config)
+    client_id = "sensor-3"
+
+    samples = np.random.default_rng(2).standard_normal((256, 3)).astype(np.float32)
+    store.ingest(client_id, samples, sample_rate_hz=200)
+
+    first_plan = store.snapshot_for_compute(client_id, sample_rate_hz=200)
+    assert isinstance(first_plan, MetricsSnapshot)
+    store.store_metrics_result(computer.compute(first_plan))
+
+    cached_plan = store.snapshot_for_compute(client_id, sample_rate_hz=200)
+    assert isinstance(cached_plan, CachedMetricsHit)
+
+    changed_rate_plan = store.snapshot_for_compute(client_id, sample_rate_hz=400)
+    assert isinstance(changed_rate_plan, MetricsSnapshot)
+    assert changed_rate_plan.sample_rate_hz == 400
+
+    store.store_metrics_result(computer.compute(changed_rate_plan))
+
+    refreshed_cached_plan = store.snapshot_for_compute(client_id, sample_rate_hz=400)
+    assert isinstance(refreshed_cached_plan, CachedMetricsHit)
