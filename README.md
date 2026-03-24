@@ -199,6 +199,11 @@ within seconds.
 > Default AP credentials are for prototype use only. Change SSID/PSK before
 > real-world deployment.
 
+For post-install config tuning, service management, and field troubleshooting,
+use [apps/server/README.md](apps/server/README.md),
+[docs/configuration_reference.md](docs/configuration_reference.md), and
+[docs/operational-runbooks.md](docs/operational-runbooks.md).
+
 ## ESP Sensor Setup
 
 ```bash

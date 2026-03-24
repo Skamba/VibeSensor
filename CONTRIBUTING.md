@@ -152,6 +152,9 @@ cp apps/server/config.dev.yaml apps/server/config.yaml
 
 Then edit `config.yaml` as needed. The file is gitignored, so your local changes won't affect others.
 
+Use [docs/configuration_reference.md](docs/configuration_reference.md) for the
+full key-by-key runtime config reference.
+
 ## API contract sync
 
 The contract-sync flow lives in

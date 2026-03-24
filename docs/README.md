@@ -34,6 +34,7 @@ links onward to the scoped instruction files and repo map below.
 | File | Description |
 |------|-------------|
 | `docs/operational-runbooks.md` | Troubleshooting and operational procedures. |
+| `docs/configuration_reference.md` | Runtime config keys, defaults, constraints, and common override examples. |
 | `docs/history_db_schema.md` | SQLite history database schema. |
 | `docs/run_lifecycle.md` | Recording lifecycle, persistence retries, and post-analysis queue semantics. |
 | `docs/run_schema_v2.md` | Run data persistence schema v2. |
