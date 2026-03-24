@@ -60,6 +60,7 @@ It regenerates:
 | `app/views/` | Focused DOM rendering and event-target decoding for settings, cars wizard, realtime, history, and update panels |
 | `api.ts` | REST API client with typed request/response interfaces |
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
+| `config.ts` | Centralized UI tuning constants for polling intervals, spectrum ranges, and history heatmap positions |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
 | `spectrum.ts` | uPlot chart wrapper for interactive spectrum visualization |
 | `server_payload.ts` | Runtime WebSocket payload adaptation and schema-version guardrails around the generated WS types |
