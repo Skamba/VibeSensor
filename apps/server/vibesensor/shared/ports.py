@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Protocol
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
+from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSource
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
@@ -14,9 +14,10 @@ from vibesensor.shared.types.history_records import (
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.sensor_config import SensorConfigUpdatePayload, SensorsByMacPayload
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
+from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource, SpeedSourcePayload
 
 __all__ = [
     "ClockSyncBroadcaster",
@@ -27,10 +28,12 @@ __all__ = [
     "RegistryHelloMessage",
     "ResolvedSpeedSnapshot",
     "RunPersistence",
+    "SensorSettingsWriter",
     "SettingsReader",
     "SettingsSnapshotPersistence",
     "SignalSource",
     "SpeedProvider",
+    "SpeedSourceSettingsReader",
     "SpeedSourceSync",
     "TrackedClient",
 ]
@@ -90,6 +93,20 @@ class SettingsReader(Protocol):
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot: ...
 
     def active_car_snapshot(self) -> CarSnapshot | None: ...
+
+
+class SpeedSourceSettingsReader(Protocol):
+    """Read-only speed-source access needed by runtime/broadcast settings consumers."""
+
+    def speed_source(self) -> SpeedSource: ...
+
+    def get_speed_source(self) -> SpeedSourcePayload: ...
+
+
+class SensorSettingsWriter(Protocol):
+    """Minimal persisted sensor-settings surface needed by client-location routes."""
+
+    def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload: ...
 
 
 class SettingsSnapshotPersistence(Protocol):

@@ -32,6 +32,9 @@ state. Current `main` is intentionally split more narrowly:
   processing budgets, and update paths.
 - `SettingsStore` owns persisted user-facing runtime settings, such as car
   profiles, speed-source preferences, language, units, and sensor placement.
+  `SettingsDerivationService` projects those persisted car settings into the
+  current analysis/run context, while `SettingsRuntimeApplier` pushes the
+  current speed-source selection into live runtime collaborators.
 - Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
   `PostAnalysisWorker`) own live per-process coordination and per-run state.
 - `HistoryDB` is shared storage for settings snapshots and run history, but the
@@ -108,8 +111,9 @@ the key-by-key operator reference across the `ap`, `server`, `udp`,
 
 Those YAML files cover deployment/process settings. User-facing runtime
 preferences are stored separately through `SettingsStore` snapshots in
-`history.db`, and completed runs persist immutable per-run snapshots for later
-analysis/reporting.
+`history.db`; runtime consumers read the derived current-context view rather
+than mutating persisted settings directly, and completed runs persist immutable
+per-run snapshots for later analysis/reporting.
 
 For live sensor presence, `processing.client_live_ttl_seconds` controls how long
 `/api/clients` and `/ws` keep reporting `connected: true` after the last

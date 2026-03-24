@@ -21,6 +21,8 @@ from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.runtime_state import AppRuntime, RuntimeState
 from vibesensor.app.settings import AppConfig
+from vibesensor.infra.config.settings_derivation import SettingsDerivationService
+from vibesensor.infra.config.settings_runtime import SettingsRuntimeApplier
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -119,19 +121,25 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         corruption_reporter=health_state.mark_db_corrupted,
     )
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
-    settings_store = SettingsStore(
-        db=history_db,
-        gps_monitor=gps_monitor,
+    settings_store = SettingsStore(db=history_db)
+    settings_reader = SettingsDerivationService(
+        active_car_aspects=settings_store.active_car_aspects,
+        active_car_snapshot=settings_store.active_car_snapshot,
     )
+    settings_runtime_applier = SettingsRuntimeApplier(
+        gps_monitor=gps_monitor,
+        speed_source_reader=settings_store,
+    )
+    settings_store.bind_speed_source_sync(settings_runtime_applier.apply_speed_source)
 
     # persistence services
     history_run_service = HistoryRunService(
         history_db,
-        settings_store,
+        settings_reader,
     )
     report_service = HistoryReportService(
         history_db,
-        settings_store,
+        settings_reader,
         pdf_renderer=_build_pdf_bytes,
     )
     history_export_service = HistoryExportService(
@@ -184,7 +192,8 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         processor=processor,
         gps_monitor=gps_monitor,
         gps_enabled=config.gps.gps_enabled,
-        settings_store=settings_store,
+        settings_reader=settings_reader,
+        speed_source_reader=settings_store,
     )
 
     # run recorder
@@ -202,7 +211,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         gps_monitor=gps_monitor,
         processor=processor,
         history_db=history_db,
-        settings_store=settings_store,
+        settings_store=settings_reader,
         language_provider=lambda: settings_store.language,
     )
 
@@ -229,7 +238,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         processor=processor,
         control_plane=control_plane,
         worker_pool=worker_pool,
-        settings_store=settings_store,
+        settings_store=settings_reader,
         gps_monitor=gps_monitor,
         history_db=history_db,
         processing_loop_state=processing_loop_state,
@@ -265,5 +274,5 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             esp_flash_manager=esp_flash_manager,
         ),
     )
-    settings_store.sync_all()
+    settings_runtime_applier.sync_all()
     return AppRuntime(lifecycle=lifecycle, router=router)
