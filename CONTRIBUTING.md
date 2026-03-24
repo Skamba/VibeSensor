@@ -44,9 +44,13 @@ recommended live-dev path is `vibesensor-server --reload --config
 apps/server/config.dev.yaml` plus `npm --prefix apps/ui run dev`, then open
 `http://127.0.0.1:5173`.
 
+If you want the browser to open automatically on local desktop workflows, use
+`npm --prefix apps/ui run dev:open` instead of `npm --prefix apps/ui run dev`.
+
 ## Hooks and local safeguards
 
-Enable versioned hooks if you want local guardrails:
+`make setup` enables the versioned repo hooks automatically. If you skipped that
+bootstrap path or want to re-enable them manually, run:
 
 ```bash
 git config core.hooksPath .githooks
@@ -59,6 +63,10 @@ Current hook behavior:
 - If a hook blocks you unexpectedly, use the commands below directly and then investigate instead of guessing.
 
 ## Validation workflow
+
+Use `make test-changed` as a heuristic shortcut for the files changed on your
+current branch when you want a fast first pass. It is not a replacement for the
+broader tiers below before merge.
 
 Three tiers: use `make test` during iteration, `make test-ci-lite` for the
 non-Docker blocking-CI subset, and `make test-all` when you want the broader
@@ -75,6 +83,7 @@ Additional local-only convenience commands:
 | Goal | Command |
 |---|---|
 | Fast backend tests | `make test` |
+| Changed-file heuristic | `make test-changed` |
 | Non-Docker CI subset | `make test-ci-lite` |
 | Full local CI runner | `make test-all` |
 | Coverage view | `make coverage` |
