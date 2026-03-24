@@ -98,8 +98,9 @@ void setup() {
   initialize_transport(g_runtime.transport);
   begin_sensor(g_runtime.sampling);
   reset_sampling_schedule(g_runtime.sampling, esp_timer_get_time());
-  send_hello(g_runtime.transport, g_runtime.status);
-  g_runtime.transport.last_hello_ms = millis();
+  if (send_hello(g_runtime.transport, g_runtime.status)) {
+    g_runtime.transport.last_hello_ms = millis();
+  }
   enable_runtime_watchdog();
 }
 
