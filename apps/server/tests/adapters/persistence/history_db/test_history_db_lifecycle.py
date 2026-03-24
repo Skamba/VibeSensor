@@ -11,7 +11,7 @@ from typing import cast
 import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import HistoryDB, SQLiteHistoryEngine
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -329,13 +329,13 @@ def test_history_db_runs_startup_quick_check(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[Path] = []
-    original = HistoryDB._run_startup_quick_check
+    original = SQLiteHistoryEngine._run_startup_quick_check
 
-    def _tracking(self: HistoryDB) -> None:
+    def _tracking(self: SQLiteHistoryEngine) -> None:
         calls.append(self.db_path)
         original(self)
 
-    monkeypatch.setattr(HistoryDB, "_run_startup_quick_check", _tracking)
+    monkeypatch.setattr(SQLiteHistoryEngine, "_run_startup_quick_check", _tracking)
     db = HistoryDB(tmp_path / "history.db")
     try:
         assert calls == [tmp_path / "history.db"]

@@ -14,11 +14,17 @@ application settings and client names in a single SQLite file located at
 
 ## Module organization
 
-`adapters/persistence/history_db/` keeps `HistoryDB` as the public facade and
-splits internal responsibilities across focused modules:
+`adapters/persistence/history_db/` now builds a shared SQLite engine plus narrow
+repositories over the same database file:
 
-- `__init__.py`: shared SQLite connection/lock/cursor ownership, schema
-  initialization/migrations, settings snapshot persistence, and client-name persistence.
+- `_engine.py`: shared SQLite connection/lock/cursor ownership, schema
+  initialization/migrations, migration backup/restore, and corruption detection.
+- `_run_repository.py`: run persistence composed from `_run_lifecycle.py`,
+  `_sample_io.py`, and `_queries.py` over the shared engine.
+- `_settings_repository.py`: `settings_snapshot` table persistence only.
+- `_client_names_repository.py`: `client_names` table persistence only.
+- `__init__.py`: adapter bundle factory plus a temporary `HistoryDB`
+  compatibility facade for tests/legacy call sites.
 - `_run_lifecycle.py`: run creation/finalization, sample appends, analysis writes, delete
   flows, stale-recording recovery, and startup retention pruning for old terminal runs.
 - `_sample_io.py`: batched sample reads and keyset-pagination helpers.
@@ -110,8 +116,9 @@ Maps sensor client IDs to human-readable names.
 
 ## Schema upgrades / migrations
 
-Schema versioning uses SQLite's `PRAGMA user_version`. On startup `HistoryDB`
-creates the current tables first, then checks the stored integer version:
+Schema versioning uses SQLite's `PRAGMA user_version`. On startup the shared
+SQLite history engine creates the current tables first, then checks the stored
+integer version:
 
 | Stored version | Action |
 |----------------|--------|
@@ -154,10 +161,10 @@ For a 30-minute run at 4 Hz × 4 sensors (~28,800 samples):
 
 ## Startup retention policy
 
-On startup, `create_history_db()` first recovers stale `recording` rows into
-`error`, then prunes `complete` and `error` runs older than
-`logging.run_retention_days` (default `7`). The prune cutoff uses the run's
-terminal timestamp (`analysis_completed_at`, then `end_time_utc`, then
-`created_at`) so active `recording` / `analyzing` runs are never deleted by the
-automatic policy. Sample rows are removed automatically through the existing
-`ON DELETE CASCADE` foreign key on `samples_v2`.
+On startup, the container builds the shared history engine and run repository,
+first recovers stale `recording` rows into `error`, then prunes `complete` and
+`error` runs older than `logging.run_retention_days` (default `7`). The prune
+cutoff uses the run's terminal timestamp (`analysis_completed_at`, then
+`end_time_utc`, then `created_at`) so active `recording` / `analyzing` runs are
+never deleted by the automatic policy. Sample rows are removed automatically
+through the existing `ON DELETE CASCADE` foreign key on `samples_v2`.

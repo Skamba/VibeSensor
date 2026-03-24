@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import SQLiteHistoryEngine
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
@@ -154,7 +154,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 
     events: list[str] = []
 
-    original_close = HistoryDB.close
+    original_close = SQLiteHistoryEngine.close
 
     def _tracking_close(self):
         events.append("db_close")
@@ -169,7 +169,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 
     monkeypatch.setattr(bootstrap_mod, "start_udp_data_receiver", _fake_udp_receiver)
     monkeypatch.setattr(UDPControlPlane, "start", _fake_start)
-    monkeypatch.setattr(HistoryDB, "close", _tracking_close)
+    monkeypatch.setattr(SQLiteHistoryEngine, "close", _tracking_close)
     monkeypatch.setattr(RunRecorder, "wait_for_post_analysis", _tracking_wait)
 
     app = app_module.create_app(config_path=cfg_path)
