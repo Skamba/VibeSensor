@@ -61,6 +61,7 @@ CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
 
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
 CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);
+CREATE INDEX IF NOT EXISTS idx_runs_status_created_at ON runs(status, created_at);
 
 CREATE TABLE IF NOT EXISTS settings_snapshot (
     id          INTEGER PRIMARY KEY CHECK(id = 1),
