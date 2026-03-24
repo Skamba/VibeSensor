@@ -68,14 +68,15 @@ def create_history_db(
     *,
     corruption_reporter: Callable[[str], None] | None = None,
 ) -> HistoryDB:
-    """Create and initialise the HistoryDB, recovering any stale runs."""
+    """Create and initialise the HistoryDB, recovering stale runs and pruning old ones."""
     history_db = HistoryDB(
         config.logging.history_db_path,
         corruption_reporter=corruption_reporter,
     )
     if history_db.corruption_detected:
         LOGGER.error(
-            "History DB corruption detected at startup; skipping stale-run recovery and "
+            "History DB corruption detected at startup; skipping stale-run recovery, "
+            "retention pruning, and "
             "continuing with writes disabled until the DB is repaired.",
         )
         return history_db
@@ -87,6 +88,23 @@ def create_history_db(
         raise
     if recovered_runs:
         LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
+    try:
+        pruned_runs = history_db.prune_terminal_runs_older_than_days(
+            config.logging.run_retention_days,
+        )
+    except Exception:
+        LOGGER.warning(
+            "Failed to prune terminal runs older than %d day(s) during startup maintenance",
+            config.logging.run_retention_days,
+            exc_info=True,
+        )
+    else:
+        if pruned_runs:
+            LOGGER.info(
+                "Pruned %d terminal run(s) older than %d day(s) during startup maintenance",
+                pruned_runs,
+                config.logging.run_retention_days,
+            )
     return history_db
 
 

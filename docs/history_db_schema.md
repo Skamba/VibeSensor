@@ -1,4 +1,4 @@
-# History DB Schema (v10)
+# History DB Schema (v11)
 
 The VibeSensor server stores run history, samples, analysis results,
 application settings and client names in a single SQLite file located at
@@ -20,7 +20,7 @@ splits internal responsibilities across focused modules:
 - `__init__.py`: shared SQLite connection/lock/cursor ownership, schema
   initialization/migrations, settings snapshot persistence, and client-name persistence.
 - `_run_lifecycle.py`: run creation/finalization, sample appends, analysis writes, delete
-  flows, and stale-recording recovery.
+  flows, stale-recording recovery, and startup retention pruning for old terminal runs.
 - `_sample_io.py`: batched sample reads and keyset-pagination helpers.
 - `_queries.py`: run listing/detail queries, metadata reads, health reads, and integrity
   checks.
@@ -115,13 +115,14 @@ creates the current tables first, then checks the stored integer version:
 
 | Stored version | Action |
 |----------------|--------|
-| `0` on a fresh DB | Create all tables, stamp `user_version = 10` |
+| `0` on a fresh DB | Create all tables, stamp `user_version = 11` |
 | `0` with a legacy `schema_meta` table present | Raise `RuntimeError` directing the user to delete the incompatible DB |
-| `10` | No action needed |
-| `9` | Migrate `settings_kv` → `settings_snapshot` single-row table |
-| `8` | Chain migrate: add `case_id` column (v8→v9), then `settings_kv` → `settings_snapshot` (v9→v10) |
+| `11` | No action needed |
+| `10` | Migrate stored persisted-analysis payloads to stamp the current schema version (v10→v11) |
+| `9` | Migrate `settings_kv` → `settings_snapshot` single-row table, then stamp persisted-analysis payload version (v9→v10→v11) |
+| `8` | Chain migrate: add `case_id` column (v8→v9), then `settings_kv` → `settings_snapshot` (v9→v10), then stamp persisted-analysis payload version (v10→v11) |
 | Older unsupported values (for example `1` or `4`) | Raise `RuntimeError` directing the user to delete the database file |
-| Newer than `10` | Raise `RuntimeError` (downgrade not supported) |
+| Newer than `11` | Raise `RuntimeError` (downgrade not supported) |
 
 ### Schema versioning policy
 
@@ -150,3 +151,13 @@ For a 30-minute run at 4 Hz × 4 sensors (~28,800 samples):
 | Write speed | Slower (JSON serialize per row) | Faster (typed bind params) |
 | Read speed | Slower (JSON parse per row) | Faster (direct column access) |
 | Queryable | No (opaque blobs) | Yes (indexed typed columns) |
+
+## Startup retention policy
+
+On startup, `create_history_db()` first recovers stale `recording` rows into
+`error`, then prunes `complete` and `error` runs older than
+`logging.run_retention_days` (default `7`). The prune cutoff uses the run's
+terminal timestamp (`analysis_completed_at`, then `end_time_utc`, then
+`created_at`) so active `recording` / `analyzing` runs are never deleted by the
+automatic policy. Sample rows are removed automatically through the existing
+`ON DELETE CASCADE` foreign key on `samples_v2`.
