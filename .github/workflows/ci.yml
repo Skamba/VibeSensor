@@ -76,6 +76,8 @@ jobs:
 
   ui-smoke:
     name: UI smoke tests
+    needs:
+      - frontend-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -109,6 +111,10 @@ jobs:
 
   release-smoke:
     name: Release smoke
+    needs:
+      - backend-quality
+      - backend-typecheck
+      - frontend-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -135,6 +141,8 @@ jobs:
 
   firmware-native-tests:
     name: Firmware native tests
+    needs:
+      - backend-quality
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -158,6 +166,9 @@ jobs:
 
   backend-tests:
     name: Backend tests
+    needs:
+      - backend-quality
+      - backend-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -167,13 +178,30 @@ jobs:
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
+
+      - name: Prepare backend test artifacts
+        run: |
+          mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests
         run: |
-          python -m pytest -q --tb=short apps/server/tests
+          python -m pytest -q --tb=short --junitxml artifacts/ai/logs/ci/backend-tests.xml apps/server/tests
+
+      - name: Upload backend test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-artifacts
+          path: artifacts/ai/logs/ci/
+          if-no-files-found: ignore
+          retention-days: 7
 
   e2e:
     name: E2E (docker)
+    needs:
+      - backend-quality
+      - backend-typecheck
+      - frontend-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -183,7 +211,28 @@ jobs:
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-backend
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Prebuild cached E2E image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/server/Dockerfile
+          tags: vibesensor-full-suite:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Docker-backed e2e suite (skip already-owned checks)
         run: |
           python3 tools/tests/run_e2e_parallel.py --fast-e2e
+
+      - name: Upload e2e failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-artifacts
+          path: artifacts/ai/logs/e2e_parallel/
+          if-no-files-found: ignore
+          retention-days: 7
