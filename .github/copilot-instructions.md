@@ -24,6 +24,14 @@ Domain model (scope: behavioral rules only; see `docs/domain-model.md` for the f
 - Consumers import from `vibesensor.domain`, not from individual module files.
 - Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
 - Factories that build domain objects from already-typed internal metadata, snapshots, or computed state belong on domain objects (or the owning use-case), not in `shared/boundaries/`.
+- Backend layer dependency DAG is enforced by `tools/dev/verify_backend_static_guards.py::_check_layer_boundaries()`:
+  - `domain` imports no inner project layers
+  - `shared` may import `domain`
+  - `use_cases` may import `domain` and `shared`
+  - `infra` may import `domain` and `shared`
+  - `adapters` may import `domain`, `shared`, `infra`, and `use_cases`
+  - `app` may import all backend layers
+- Treat `shared -> domain` and `infra -> domain` as intentional current architecture, not violations. The disallowed direction for this issue family is outer-layer leakage back inward, such as `use_cases -> adapters` or `domain -> shared/infra/adapters`.
 
 Commands
 - Other AI guidance and docs should reference this list instead of repeating it.
