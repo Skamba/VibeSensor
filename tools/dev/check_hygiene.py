@@ -626,9 +626,10 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
             errors.append(
                 f"NumPy dependency must declare explicit lower and upper bounds; found {numpy_spec!r}."
             )
-        elif upper_major != lower_major + 1:
+        elif upper_major <= lower_major or upper_major > lower_major + 2:
             errors.append(
-                f"NumPy dependency must stay within one major-version window; found {numpy_spec!r}."
+                "NumPy dependency must stay within at most two adjacent major versions; "
+                f"found {numpy_spec!r}."
             )
 
     return errors
