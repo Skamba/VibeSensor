@@ -230,10 +230,15 @@ def peak_band_rms_amp_g(
     center_idx: int,
     bandwidth_hz: float,
 ) -> float:
-    """Return the RMS amplitude in g of bins within *bandwidth_hz* of *center_idx*."""
+    """Return the RMS amplitude in g of bins within *bandwidth_hz* of *center_idx*.
+
+    Raises ``ValueError`` when *center_idx* is outside the aligned spectrum.
+    """
     freq, amps = _aligned_float_arrays(freq_hz, combined_spectrum_amp_g)
     if not (0 <= center_idx < freq.size):
-        return 0.0
+        raise ValueError(
+            f"center_idx {center_idx} out of range for aligned spectrum size {freq.size}"
+        )
     center_hz = float(freq[center_idx])
     band = amps[np.abs(freq - center_hz) <= bandwidth_hz]
     if band.size == 0:
@@ -245,9 +250,7 @@ def _local_maxima_indexes(values: npt.NDArray[np.float64], threshold: float) -> 
     maxima: list[int] = []
     if values.size > 2:
         interior = values[1:-1]
-        mask = (interior >= threshold) & (interior >= values[2:])
-        if interior.size > 1:
-            mask[1:] &= interior[1:] > values[1:-2]
+        mask = (interior >= threshold) & (interior > values[:-2]) & (interior >= values[2:])
         maxima.extend((np.flatnonzero(mask) + 1).tolist())
     if values.size > 1:
         last_val = float(values[-1])
@@ -266,7 +269,8 @@ def vibration_strength_db_scalar(
     """Compute vibration strength in dB: ``20*log10((peak+eps)/(floor+eps))``.
 
     *epsilon_g* defaults to ``max(1e-9, floor * 0.05)`` to avoid log(0)
-    and to set a meaningful dynamic range floor.
+    and to set a meaningful dynamic range floor. Non-finite or negative inputs
+    are clamped to ``0.0`` before epsilon is applied.
     """
     _floor_raw = float(floor_amp_g)
     _band_raw = float(peak_band_rms_amp_g)
@@ -312,6 +316,11 @@ def compute_vibration_strength_db(
     )
 
     local_maxima = _local_maxima_indexes(combined, threshold)
+    invalid_idx = next((idx for idx in local_maxima if not (0 <= idx < freq.size)), None)
+    if invalid_idx is not None:
+        raise ValueError(
+            f"peak index {invalid_idx} out of range for aligned spectrum size {freq.size}"
+        )
     peak_indexes = [int(idx) for idx in local_maxima[: max(1, top_n)]]
 
     floor_strength = strength_floor_amp_g(

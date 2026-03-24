@@ -77,6 +77,8 @@ and complete in under 5 seconds.
 
 Four tiers: `make test-changed` for a fast changed-file heuristic, `make test` for backend iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
 
+Main local tiers:
+
 ```bash
 # Changed-file heuristic (current branch vs origin/main, fallback to main)
 make test-changed
@@ -92,22 +94,24 @@ make test-all
 
 # Required pre-finalization gate — real GitHub workflow via act (requires Docker)
 act -W .github/workflows/ci.yml
+```
 
-# Single feature area
+Focused feature-area and fuzzing runs:
+
+```bash
 pytest -q apps/server/tests/adapters/pdf/
 pytest -q apps/server/tests/use_cases/history/
 pytest -q apps/server/tests/use_cases/updates/
-python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100
-
-# Cross-cutting scopes
 pytest -q apps/server/tests/integration/
+python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100
+```
 
-# Focused CI job groups
+Focused CI job groups and full-stack validation:
+
+```bash
 python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests
 python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
 python3 tools/tests/run_ci_parallel.py --job release-smoke
-
-# Full-stack (Docker-backed)
 make test-full-suite
 ```
 
