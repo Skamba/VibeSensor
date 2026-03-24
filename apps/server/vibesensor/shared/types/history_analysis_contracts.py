@@ -10,7 +10,7 @@ names, while endpoint-specific HTTP wrappers remain local to
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Literal, Required, TypeAlias
+from typing import Any, Literal, Required, TypeAlias, cast
 
 from pydantic import ConfigDict
 from typing_extensions import TypedDict
@@ -24,7 +24,12 @@ from vibesensor.shared.types.analysis_views import (
     PlotDataResult,
     SpeedBreakdownRow,
 )
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import (
+    JsonObject,
+    JsonSchemaObject,
+    JsonSchemaValue,
+    JsonValue,
+)
 
 __all__ = [
     "AmplitudeMetric",
@@ -55,20 +60,23 @@ __all__ = [
     "TestPlanStepResponse",
 ]
 
-PayloadObject: TypeAlias = dict[str, object]
-PayloadValue: TypeAlias = None | bool | int | float | str | list[object] | PayloadObject
+PayloadObject: TypeAlias = JsonSchemaObject
+PayloadValue: TypeAlias = JsonSchemaValue
 
 
 def payload_value_from_json(value: JsonValue | None) -> PayloadValue:
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, list):
-        return [payload_value_from_json(item) for item in value]
-    return payload_object_from_json(value)
+        # History/report payload producers only emit the bounded JSON depth
+        # modeled by ``PayloadValue``, but mypy cannot prove that through the
+        # recursive conversion helper.
+        return cast(PayloadValue, [payload_value_from_json(item) for item in value])
+    return cast(PayloadValue, payload_object_from_json(value))
 
 
 def payload_object_from_json(value: JsonObject) -> PayloadObject:
-    return {key: payload_value_from_json(item) for key, item in value.items()}
+    return cast(PayloadObject, {key: payload_value_from_json(item) for key, item in value.items()})
 
 
 def payload_objects_from_json(values: Sequence[JsonObject]) -> list[PayloadObject]:
@@ -279,8 +287,8 @@ class FindingPayload(TypedDict, total=False):
     finding_id: Required[str]
     finding_key: str | None
     suspected_source: Required[str]
-    evidence_summary: Required[PayloadValue]
-    frequency_hz_or_order: Required[PayloadValue]
+    evidence_summary: Required[str]
+    frequency_hz_or_order: Required[float | str]
     amplitude_metric: Required[AmplitudeMetric]
     confidence: Required[float | None]
     finding_kind: str | None

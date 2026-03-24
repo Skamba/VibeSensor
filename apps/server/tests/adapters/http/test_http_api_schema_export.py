@@ -208,6 +208,45 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     }
 
 
+def test_export_schema_avoids_unknown_contract_shapes_for_history_payloads(
+    schema_dict: dict[str, Any],
+) -> None:
+    history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
+    analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
+    amplitude_metric = schema_dict["components"]["schemas"]["AmplitudeMetric"]
+    finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
+    run_suitability = schema_dict["components"]["schemas"]["RunSuitabilityCheck"]
+    summary_warning = schema_dict["components"]["schemas"]["SummaryWarningResponse"]
+    suspected_origin = schema_dict["components"]["schemas"]["SuspectedVibrationOriginPayload"]
+
+    def _contains_untyped_object(schema: object) -> bool:
+        if isinstance(schema, dict):
+            if schema.get("type") == "object" and schema.get("additionalProperties") is True:
+                return True
+            return any(_contains_untyped_object(value) for value in schema.values())
+        if isinstance(schema, list):
+            return any(_contains_untyped_object(value) for value in schema)
+        return False
+
+    assert finding_payload["properties"]["evidence_summary"]["type"] == "string"
+    assert finding_payload["properties"]["frequency_hz_or_order"]["anyOf"] == [
+        {"type": "number"},
+        {"type": "string"},
+    ]
+
+    for schema in (
+        history_run["properties"]["metadata"],
+        analysis_summary["properties"]["metadata"],
+        analysis_summary["properties"]["speed_breakdown_skipped_reason"],
+        amplitude_metric["properties"]["definition"],
+        run_suitability["properties"]["explanation"],
+        summary_warning["properties"]["title"],
+        summary_warning["properties"]["detail"],
+        suspected_origin["properties"]["explanation"],
+    ):
+        assert _contains_untyped_object(schema) is False
+
+
 def test_export_schema_contains_debug_endpoint_response_shapes(
     schema_dict: dict[str, Any],
 ) -> None:
