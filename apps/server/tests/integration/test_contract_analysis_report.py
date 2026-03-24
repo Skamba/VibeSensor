@@ -8,6 +8,7 @@ subsystems is caught early.
 
 from __future__ import annotations
 
+import pytest
 from test_support import (
     ALL_WHEEL_SENSORS,
     make_fault_samples,
@@ -27,6 +28,8 @@ from vibesensor.adapters.pdf.mapping import (
 )
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.use_cases.diagnostics import RunAnalysis
+
+pytestmark = pytest.mark.smoke
 
 
 def _make_small_dataset() -> tuple[dict, list[dict]]:

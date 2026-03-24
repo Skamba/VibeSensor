@@ -15,56 +15,44 @@ The test tree is feature-based. Most directories mirror the backend package or m
 
 ```text
 apps/server/tests/
-├── conftest.py
 ├── _paths.py
+├── conftest.py
 ├── test_support/
-├── analysis/
-├── api/
+├── adapters/
 ├── app/
-├── car_library/
-├── config/
-├── diagnostics/
 ├── domain/
-├── gps/
-├── history/
-├── hotspot/
 ├── hygiene/
+├── infra/
 ├── integration/
-├── metrics_log/
-├── processing/
-├── protocol/
-├── report/
-├── update/
-└── websocket/
+├── shared/
+└── use_cases/
 ```
+
+Older flat roots such as `analysis/`, `api/`, `config/`, `gps/`, `history/`,
+`hotspot/`, `metrics_log/`, `processing/`, `protocol/`, `report/`, `update/`,
+and `websocket/` were consolidated into the mirrored tree above. Do not create
+new top-level flat roots; use the matching mirrored area unless the test is
+intentionally cross-cutting.
 
 ## Where tests belong
 
 | If you change... | Start with... |
 |---|---|
-| `vibesensor/analysis/*` | `apps/server/tests/analysis/` |
-| `vibesensor/report/*`, `report_i18n.py` | `apps/server/tests/report/` |
-| `vibesensor/routes/*` | `apps/server/tests/api/` |
-| `vibesensor/app/runtime_state.py`, `vibesensor/adapters/http/dependencies.py`, `vibesensor/infra/runtime/*`, `worker_pool.py` | `apps/server/tests/infra/runtime/` and `apps/server/tests/adapters/http/` |
-| `vibesensor/adapters/persistence/history_db/*`, `vibesensor/use_cases/history/*` | `apps/server/tests/adapters/persistence/history_db/` and `apps/server/tests/use_cases/history/` |
-| `vibesensor/update/*` | `apps/server/tests/update/` |
-| `vibesensor/processing/*` | `apps/server/tests/processing/` |
-| `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
-| `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
-| `vibesensor/shared/order_bands.py` | `apps/server/tests/use_cases/diagnostics/` |
-| `vibesensor/domain/*`, `vibesensor/boundaries/*`, `vibesensor/shared/types/{run_schema,car_config,sensor_config,speed_source_config,settings_snapshot,settings_types}.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
-| `vibesensor/shared/boundaries/*`, `vibesensor/shared/types/sensor_frame.py` | `apps/server/tests/shared/` |
-| `vibesensor/gps_speed.py` | `apps/server/tests/gps/` |
-| `vibesensor/protocol.py`, `udp_*.py` | `apps/server/tests/protocol/` |
-| `vibesensor/metrics_log/*` | `apps/server/tests/metrics_log/` |
-| `vibesensor/car_library.py` and related data | `apps/server/tests/car_library/` |
-| `vibesensor/hotspot/*` | `apps/server/tests/hotspot/` |
-| `vibesensor/locations.py` | `apps/server/tests/analysis/` |
+| `vibesensor/adapters/http/*` | `apps/server/tests/adapters/http/` |
+| `vibesensor/adapters/{hotspot,pdf,persistence,simulator,udp,websocket}/*` | the matching `apps/server/tests/adapters/.../` directory |
+| `vibesensor/app/*` | `apps/server/tests/app/` |
+| `vibesensor/domain/*` | `apps/server/tests/domain/` |
+| `vibesensor/infra/{config,processing,runtime,workers}/*` | the matching `apps/server/tests/infra/.../` directory |
+| `vibesensor/shared/boundaries/*`, `vibesensor/shared/types/sensor_frame.py`, shared helper utilities | `apps/server/tests/shared/` |
+| Shared types and metadata contracts used across the domain boundary (`run_schema`, `car_config`, `sensor_config`, `speed_source_config`, `settings_snapshot`, `settings_types`) | `apps/server/tests/domain/` or `apps/server/tests/shared/` depending on the ownership boundary under test |
+| `vibesensor/use_cases/{diagnostics,history,run,updates}/*` | the matching `apps/server/tests/use_cases/.../` directory |
 
 Use cross-cutting directories when a test is intentionally broader than one package boundary:
 
 - `apps/server/tests/integration/`: scenario, pipeline, multi-module behavior, and bug-fix regressions spanning multiple subsystems.
 - `apps/server/tests/hygiene/`: architecture guards and repo hygiene.
+
+Those two directories are the intentional flat exceptions to the mirrored tree.
 
 Regression tests live alongside the feature they primarily test. Cross-cutting
 regressions that span multiple subsystems go in `integration/`.
@@ -82,7 +70,8 @@ Contract bridge tests live in `apps/server/tests/integration/` and validate that
 | `test_contract_analysis_report.py` | `summarize_run_data()` → `prepare_report_input()` → `map_summary()` |
 | `test_contract_persistence_analysis.py` | `HistoryDB` write → read → `summarize_run_data()` |
 
-These tests run in standard CI (no special markers). They use minimal synthetic data and complete in under 5 seconds.
+These tests are marked `smoke`, run in standard CI, use minimal synthetic data,
+and complete in under 5 seconds.
 
 ## Running tests
 
@@ -223,6 +212,10 @@ The default CI-parity suite now mirrors these blocking GitHub checks:
 3. Reuse shared helpers only when multiple files need the same setup or assertions.
 4. Import `SERVER_ROOT` and `REPO_ROOT` from `_paths.py` instead of using fragile parent traversals.
 
+Cached helpers such as `@lru_cache` are acceptable when they memoize immutable
+test data. If a test monkeypatches the underlying file, path, or other cached
+state, clear the cache in that test before asserting on the changed behavior.
+
 ## Markers
 
 | Marker | Meaning |
@@ -230,3 +223,14 @@ The default CI-parity suite now mirrors these blocking GitHub checks:
 | `e2e` | Docker-based end-to-end tests |
 | `long_sim` | Longer simulated-run tests |
 | `smoke` | Minimal critical-path checks |
+
+Use markers sparingly:
+
+- `@pytest.mark.smoke`: fast, deterministic, high-signal checks for critical
+  paths such as schema/contract bridges or minimal end-to-end behavior.
+- `@pytest.mark.long_sim`: slower simulated-run tests that intentionally trade
+  speed for more scenario coverage.
+- `@pytest.mark.e2e`: Docker-backed end-to-end tests.
+
+Do not mark every fast unit test as `smoke`; keep it a compact slice that is
+useful for quick feedback.
