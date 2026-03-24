@@ -96,16 +96,15 @@ def test_floor_rms_peak_index_out_of_range_ignored() -> None:
 # -- peak_band_rms_amp_g ----------------------------------------------------
 
 
-def test_band_rms_center_out_of_range_returns_zero() -> None:
-    assert (
+@pytest.mark.parametrize("center_idx", [-1, 5])
+def test_band_rms_center_out_of_range_raises(center_idx: int) -> None:
+    with pytest.raises(ValueError, match="center_idx"):
         peak_band_rms_amp_g(
             freq_hz=[10.0],
             combined_spectrum_amp_g=[1.0],
-            center_idx=5,
+            center_idx=center_idx,
             bandwidth_hz=1.0,
         )
-        == 0.0
-    )
 
 
 def test_band_rms_single_bin() -> None:
@@ -129,6 +128,19 @@ def test_band_rms_multiple_bins() -> None:
     )
     # Center 10 Hz ± 1.5 Hz → bins 9, 10, 11 → values 1.0, 2.0, 1.0
     expected = sqrt((1.0 + 4.0 + 1.0) / 3)
+    assert result == pytest.approx(expected)
+
+
+def test_band_rms_last_bin_uses_available_neighbors() -> None:
+    freq = [8.0, 9.0, 10.0, 11.0, 12.0]
+    values = [0.0, 1.0, 2.0, 1.0, 2.0]
+    result = peak_band_rms_amp_g(
+        freq_hz=freq,
+        combined_spectrum_amp_g=values,
+        center_idx=4,
+        bandwidth_hz=1.5,
+    )
+    expected = sqrt((1.0 + 4.0) / 2)
     assert result == pytest.approx(expected)
 
 
