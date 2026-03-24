@@ -150,7 +150,7 @@ static UI build instead of the dev server, run `python tools/build_ui_static.py`
 and skip `npm --prefix apps/ui run dev`, then open http://localhost:8000.
 
 Use [CONTRIBUTING.md](CONTRIBUTING.md) for the full validation, CI reproduction,
-and workflow guidance.
+developer troubleshooting, and workflow guidance.
 
 The simulator supports interactive commands — type `help` to see options like
 `list`, `set <sensor> profile <name>`, `pulse`, `pause`, `resume`.
