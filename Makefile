@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup format lint typecheck-backend typecheck ui-typecheck test test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup format lint typecheck-backend typecheck ui-typecheck test test-changed test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
 
 LINT_TARGETS := apps/server/vibesensor apps/server/tests tools
 CI_LITE_JOBS := --job backend-quality --job backend-typecheck --job frontend-typecheck --job ui-smoke --job release-smoke --job backend-tests
@@ -14,6 +14,7 @@ setup: ## Install backend dev dependencies and UI node_modules
 	python3 -m pip install --upgrade pip
 	python3 -m pip install -e "./apps/server[dev]"
 	cd apps/ui && npm ci
+	git config --local core.hooksPath .githooks
 
 format: ## Run Ruff formatter over backend and tooling files
 	ruff format $(LINT_TARGETS)
@@ -40,6 +41,9 @@ typecheck: typecheck-backend ui-typecheck
 
 test: ## Run the fast backend pytest suite
 	python3 -m pytest -q apps/server/tests
+
+test-changed: ## Run heuristic checks for files changed vs origin/main
+	python3 tools/tests/run_changed.py $(if $(BASE_REF),--base-ref $(BASE_REF),)
 
 test-ci-lite: ## Run the non-Docker blocking CI subset locally
 	python3 tools/tests/run_ci_parallel.py $(CI_LITE_JOBS)

@@ -18,6 +18,7 @@ server over HTTP (REST) and WebSocket (live data).
 cd apps/ui
 npm ci
 npm run dev          # Dev server on http://localhost:5173
+npm run dev:open     # Same dev server, but opens the browser on local desktops
 npm run build        # Production build to dist/
 npm run typecheck    # Type check without emitting
 ```
