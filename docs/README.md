@@ -39,6 +39,14 @@ links onward to the scoped instruction files and repo map below.
 | `docs/time_alignment.md` | Multi-sensor time alignment approach. |
 | `docs/multithreading_performance.md` | Threading model and performance considerations. |
 
+## API & contract quick path
+
+Start with `apps/server/README.md` § "HTTP and WebSocket surface" for the
+human-facing route-group overview, schema export commands, and common
+HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
+"WebSocket contract boundary" for the live payload field guide and
+`docs/operational-runbooks.md` for `/api/health` interpretation and stale-live-update debugging.
+
 ## Testing
 
 | File | Description |
