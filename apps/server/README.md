@@ -73,6 +73,32 @@ packet. `processing.client_ttl_seconds` is the longer retention/eviction window
 for keeping stale clients and their metadata available after they stop sending
 traffic.
 
+## Environment variables
+
+Prefer YAML config for normal runtime settings. The backend also supports a
+small set of `VIBESENSOR_*` environment overrides for packaging, service, and
+debug workflows:
+
+- `VIBESENSOR_CONFIG_PATH`: alternate config path used by the app factory and
+  the hotspot/systemd launch path.
+- `VIBESENSOR_SERVE_STATIC=0`: disable mounting bundled UI static files for
+  API-only runs, backend tests, or release validation helpers.
+- `VIBESENSOR_DISABLE_AUTO_APP=1`: prevent import-time FastAPI app creation;
+  mainly useful for tests, CLI entrypoints, and release validation subprocesses.
+- `VIBESENSOR_WS_DEBUG=1`: enable dev-only WebSocket payload-size debug logs.
+
+Updater and release tooling also expose focused overrides:
+
+- `VIBESENSOR_FIRMWARE_CACHE_DIR`
+- `VIBESENSOR_FIRMWARE_REPO`
+- `VIBESENSOR_FIRMWARE_CHANNEL`
+- `VIBESENSOR_FIRMWARE_PINNED_TAG`
+- `VIBESENSOR_SERVER_REPO`
+- `VIBESENSOR_UPDATE_STATE_PATH`
+
+Those update-related variables are intended for controlled packaging, staging,
+or recovery scenarios rather than day-to-day dashboard use.
+
 Common runtime files under `apps/server/data/` include:
 
 - `history.db`: persisted run history and settings.
