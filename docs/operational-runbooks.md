@@ -38,7 +38,11 @@ map. The response also includes operational metrics:
 docker compose logs --tail 100
 ```
 
-5. If the issue is on a Pi, also review systemd or journal output for the service and hotspot helpers.
+5. If file logging is enabled, use the `X-Request-ID` response header from the
+   failing HTTP call to find the matching structured JSON app-log entry; the
+   same `request_id` also appears on request-scoped `settings_change` audit
+   events.
+6. If the issue is on a Pi, also review systemd or journal output for the service and hotspot helpers.
 
 ## Diagnose stale or missing live updates
 

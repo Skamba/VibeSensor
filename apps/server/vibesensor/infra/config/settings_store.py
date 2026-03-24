@@ -56,6 +56,7 @@ from vibesensor.shared.boundaries.settings_snapshot_codec import (
 )
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.ports import SettingsSnapshotPersistence, SpeedSourceSync
+from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.car_config import car_to_persistence_dict
 from vibesensor.shared.types.sensor_config import (
     SensorConfig,
@@ -80,6 +81,19 @@ VALID_SPEED_UNITS: frozenset[str] = frozenset(get_args(SpeedUnitCode))
 
 _SettingsSnapshotT = TypeVar("_SettingsSnapshotT")
 _SettingsResultT = TypeVar("_SettingsResultT")
+
+
+def _log_settings_change(*, action: str, before: object, after: object, **fields: object) -> None:
+    LOGGER.info(
+        "settings_change",
+        extra=log_extra(
+            event="settings_change",
+            settings_action=action,
+            before=before,
+            after=after,
+            **fields,
+        ),
+    )
 
 
 class SettingsStore(CarSettingsMixin):
@@ -152,6 +166,7 @@ class SettingsStore(CarSettingsMixin):
         snapshot: Callable[[], _SettingsSnapshotT],
         apply: Callable[[_SettingsSnapshotT], bool],
         restore: Callable[[_SettingsSnapshotT], None],
+        audit_log: Callable[[_SettingsSnapshotT], None] | None = None,
         after_persist: Callable[[], None] | None = None,
         result: Callable[[], _SettingsResultT],
     ) -> _SettingsResultT:
@@ -165,6 +180,8 @@ class SettingsStore(CarSettingsMixin):
             except PersistenceError:
                 restore(previous)
                 raise
+            if audit_log is not None:
+                audit_log(previous)
             if after_persist is not None:
                 after_persist()
             return result()
@@ -254,6 +271,11 @@ class SettingsStore(CarSettingsMixin):
                 "_speed_cfg",
                 SpeedSourceConfig.from_dict(previous),
             ),
+            audit_log=lambda previous: _log_settings_change(
+                action="update_speed_source",
+                before=previous,
+                after=self._speed_cfg.to_dict(),
+            ),
             after_persist=self._sync_speed_source,
             result=self._speed_cfg.to_dict,
         )
@@ -291,6 +313,16 @@ class SettingsStore(CarSettingsMixin):
             snapshot=self._sensor_configs_snapshot_unlocked,
             apply=_apply,
             restore=lambda previous: setattr(self, "_sensors", previous),
+            audit_log=lambda previous: _log_settings_change(
+                action="set_sensor",
+                before=(
+                    previous_sensor.to_dict()
+                    if (previous_sensor := previous.get(sensor_id)) is not None
+                    else None
+                ),
+                after=self._sensors[sensor_id].to_dict(),
+                sensor_id=sensor_id,
+            ),
             result=lambda: {sensor_id: self._sensors[sensor_id].to_dict()},
         )
 
@@ -307,6 +339,16 @@ class SettingsStore(CarSettingsMixin):
             snapshot=self._sensor_configs_snapshot_unlocked,
             apply=_apply,
             restore=lambda previous: setattr(self, "_sensors", previous),
+            audit_log=lambda previous: _log_settings_change(
+                action="remove_sensor",
+                before=(
+                    previous_sensor.to_dict()
+                    if (previous_sensor := previous.get(sensor_id)) is not None
+                    else None
+                ),
+                after=None,
+                sensor_id=sensor_id,
+            ),
             result=lambda: removed,
         )
 
@@ -328,6 +370,11 @@ class SettingsStore(CarSettingsMixin):
             snapshot=lambda: self._language,
             apply=_apply,
             restore=lambda previous: setattr(self, "_language", previous),
+            audit_log=lambda previous: _log_settings_change(
+                action="set_language",
+                before=previous,
+                after=self._language,
+            ),
             result=lambda: self._language,
         )
 
@@ -349,5 +396,10 @@ class SettingsStore(CarSettingsMixin):
             snapshot=lambda: self._speed_unit,
             apply=_apply,
             restore=lambda previous: setattr(self, "_speed_unit", previous),
+            audit_log=lambda previous: _log_settings_change(
+                action="set_speed_unit",
+                before=previous,
+                after=self._speed_unit,
+            ),
             result=lambda: self._speed_unit,
         )
