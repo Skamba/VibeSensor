@@ -25,10 +25,11 @@ def create_health_routes(
     run_recorder: RunRecorder,
 ) -> APIRouter:
     """Create and return the health-check API routes."""
-    router = APIRouter()
+    router = APIRouter(tags=["health"])
 
     @router.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
+        """Return the current runtime health snapshot for the server and sensor pipeline."""
         return HealthResponse.model_validate(
             build_system_health_snapshot(
                 loop_state,

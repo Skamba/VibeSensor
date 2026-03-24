@@ -240,6 +240,23 @@ class TestSpeedSourceEndpoint:
         )
 
     @pytest.mark.asyncio
+    async def test_update_speed_source_maps_invalid_config_to_400(self, _settings_router) -> None:
+        router, state = _settings_router
+        endpoint = _find_endpoint(router, "/api/settings/speed-source", "PUT")
+        assert endpoint is not None
+
+        from vibesensor.adapters.http.models import SpeedSourceRequest
+
+        state.settings_store.update_speed_source.side_effect = ValueError(
+            "SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph"
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            await endpoint(req=SpeedSourceRequest(speed_source="manual"))
+
+        assert exc_info.value.status_code == 400
+
+    @pytest.mark.asyncio
     async def test_speed_source_status_response_shape(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/speed-source/status", "GET")
