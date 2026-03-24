@@ -80,6 +80,19 @@ Common runtime files under `apps/server/data/` include:
 - `clients.json`: persisted client metadata.
 - `report_i18n.json`: report translation data.
 
+## Observability
+
+When `logging.app_log_path` is configured, the backend writes structured JSON
+application logs instead of plain text. Each HTTP response now echoes an
+`X-Request-ID` header, and matching request-scoped log entries carry the same
+`request_id` field so operators can correlate a client-visible failure with the
+server log line that handled it.
+
+Successful settings writes also emit `settings_change` audit entries with
+before/after values for the changed setting or car profile. That gives a stable
+operator trail for configuration changes without adding a second persistence
+path.
+
 ## HTTP and WebSocket surface
 
 The API surface is implemented in `apps/server/vibesensor/adapters/http/` and assembled by `adapters/http/__init__.py`.
