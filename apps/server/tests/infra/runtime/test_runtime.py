@@ -321,6 +321,62 @@ async def test_start_creates_tasks(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
+async def test_start_follows_declared_startup_phase_order(monkeypatch) -> None:
+    import vibesensor.infra.runtime as runtime_module
+
+    observed_phases: list[str] = []
+
+    async def _fake_udp(*args, **kwargs):
+        return None, None
+
+    control_plane = MagicMock()
+    control_plane.start = AsyncMock()
+    ws_hub = MagicMock()
+    ws_hub.run = AsyncMock(side_effect=asyncio.CancelledError)
+    run_recorder = MagicMock()
+    run_recorder.run = AsyncMock(side_effect=asyncio.CancelledError)
+    gps_monitor = MagicMock()
+    gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
+    update_manager = MagicMock()
+    update_manager.startup_recover = AsyncMock()
+    update_manager.job_task = None
+
+    rt, lifecycle = _make_runtime(
+        control_plane=control_plane,
+        ws_hub=ws_hub,
+        run_recorder=run_recorder,
+        gps_monitor=gps_monitor,
+        update_manager=update_manager,
+    )
+    lifecycle._start_udp_receiver = _fake_udp
+
+    original_set_phase = runtime_module.RuntimeHealthState.set_phase
+
+    def _record_phase(self, phase: str) -> None:
+        observed_phases.append(phase)
+        original_set_phase(self, phase)
+
+    monkeypatch.setattr(runtime_module.RuntimeHealthState, "set_phase", _record_phase)
+
+    await lifecycle.start()
+
+    assert observed_phases == [
+        "starting",
+        "udp_receiver",
+        "control_plane",
+        "processing-loop",
+        "ws-broadcast",
+        "metrics-log",
+        "gps-speed",
+        "update-startup-recover",
+    ]
+    assert rt.health_state.startup_state == "ready"
+    assert rt.health_state.startup_phase == "ready"
+
+    await lifecycle.stop()
+
+
+@pytest.mark.asyncio
 async def test_start_records_background_task_failure(monkeypatch) -> None:
     import vibesensor.infra.runtime.lifecycle as lifecycle_module
 
