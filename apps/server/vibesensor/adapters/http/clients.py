@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
 
-from vibesensor.adapters.http._helpers import domain_errors_to_http, normalize_client_id_or_400
+from vibesensor.adapters.http._helpers import (
+    OpenAPIResponses,
+    domain_errors_to_http,
+    normalize_client_id_or_400,
+)
 from vibesensor.adapters.http.models import (
     ClientLocationsResponse,
     ClientsResponse,
@@ -28,6 +32,23 @@ if TYPE_CHECKING:
     from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
 
+_IDENTIFY_CLIENT_RESPONSES: OpenAPIResponses = {
+    400: {"description": "Invalid sensor identifier."},
+    404: {"description": "Sensor not found."},
+    503: {"description": "Sensor is known but not currently reachable."},
+}
+
+_SET_CLIENT_LOCATION_RESPONSES: OpenAPIResponses = {
+    400: {"description": "Invalid sensor identifier or unknown location code."},
+    404: {"description": "Sensor not found."},
+    409: {"description": "Requested location is already assigned to another sensor."},
+}
+
+_REMOVE_CLIENT_RESPONSES: OpenAPIResponses = {
+    400: {"description": "Invalid sensor identifier."},
+    404: {"description": "Sensor not found."},
+}
+
 
 def create_client_routes(
     registry: ClientRegistry,
@@ -36,24 +57,31 @@ def create_client_routes(
     processor: SignalProcessor,
 ) -> APIRouter:
     """Create and return the client-management API routes."""
-    router = APIRouter()
+    router = APIRouter(tags=["clients"])
 
     @router.get("/api/clients", response_model=ClientsResponse)
     async def get_clients() -> ClientsResponse:
+        """List known sensor clients with live connection state and latest computed metrics."""
         active_ids = registry.active_client_ids()
         metrics = processor.all_latest_metrics(active_ids)
         return ClientsResponse(clients=snapshot_for_api(registry, metrics_by_client=metrics))
 
     @router.get("/api/client-locations", response_model=ClientLocationsResponse)
     async def get_client_locations() -> ClientLocationsResponse:
+        """List the supported sensor location codes that operators can assign to clients."""
         return ClientLocationsResponse(
             locations=[
                 LocationOptionResponse.model_validate(location) for location in all_locations()
             ]
         )
 
-    @router.post("/api/clients/{client_id}/identify", response_model=IdentifyResponse)
+    @router.post(
+        "/api/clients/{client_id}/identify",
+        response_model=IdentifyResponse,
+        responses=_IDENTIFY_CLIENT_RESPONSES,
+    )
     async def identify_client(client_id: str, req: IdentifyRequest) -> IdentifyResponse:
+        """Send a temporary identify/blink command so an operator can find a sensor physically."""
         normalized = normalize_client_id_or_400(client_id)
         # Distinguish "sensor never seen" (404) from "sensor known but not
         # currently connected" (503) so callers can react appropriately.
@@ -67,11 +95,13 @@ def create_client_routes(
     @router.post(
         "/api/clients/{client_id}/location",
         response_model=SetClientLocationResponse,
+        responses=_SET_CLIENT_LOCATION_RESPONSES,
     )
     async def set_client_location(
         client_id: str,
         req: SetLocationRequest,
     ) -> SetClientLocationResponse:
+        """Assign or clear the logical location for a sensor and persist the updated mapping."""
         normalized_client_id = normalize_client_id_or_400(client_id)
         if registry.get(normalized_client_id) is None:
             raise HTTPException(status_code=404, detail="Sensor not found")
@@ -103,8 +133,13 @@ def create_client_routes(
             name=name,
         )
 
-    @router.delete("/api/clients/{client_id}", response_model=RemoveClientResponse)
+    @router.delete(
+        "/api/clients/{client_id}",
+        response_model=RemoveClientResponse,
+        responses=_REMOVE_CLIENT_RESPONSES,
+    )
     async def remove_client(client_id: str) -> RemoveClientResponse:
+        """Remove a disconnected sensor from the runtime registry."""
         normalized_client_id = normalize_client_id_or_400(client_id)
         removed = registry.remove_client(normalized_client_id)
         if not removed:

@@ -4,12 +4,17 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
+from vibesensor.adapters.http._helpers import OpenAPIResponses
 from vibesensor.adapters.http.models import (
     CarLibraryBrandsResponse,
     CarLibraryModelEntry,
     CarLibraryModelsResponse,
     CarLibraryTypesResponse,
 )
+
+_CAR_LIBRARY_NOT_FOUND_RESPONSES: OpenAPIResponses = {
+    404: {"description": "The requested brand or brand/type combination does not exist."},
+}
 
 
 def create_car_library_routes() -> APIRouter:
@@ -20,26 +25,39 @@ def create_car_library_routes() -> APIRouter:
         get_types_for_brand,
     )
 
-    router = APIRouter()
+    router = APIRouter(tags=["car-library"])
 
     @router.get("/api/car-library/brands", response_model=CarLibraryBrandsResponse)
     async def get_car_library_brands() -> CarLibraryBrandsResponse:
         """Return all available car manufacturer brands from the library."""
         return CarLibraryBrandsResponse(brands=get_brands())
 
-    @router.get("/api/car-library/types", response_model=CarLibraryTypesResponse)
+    @router.get(
+        "/api/car-library/types",
+        response_model=CarLibraryTypesResponse,
+        responses=_CAR_LIBRARY_NOT_FOUND_RESPONSES,
+    )
     async def get_car_library_types(
-        brand: str = Query(..., min_length=1),
+        brand: str = Query(..., min_length=1, description="Manufacturer brand to look up."),
     ) -> CarLibraryTypesResponse:
         """Return body types available for *brand*; 404 if the brand is unknown."""
         if brand not in get_brands():
             raise HTTPException(status_code=404, detail=f"Unknown brand: {brand!r}")
         return CarLibraryTypesResponse(types=get_types_for_brand(brand))
 
-    @router.get("/api/car-library/models", response_model=CarLibraryModelsResponse)
+    @router.get(
+        "/api/car-library/models",
+        response_model=CarLibraryModelsResponse,
+        responses=_CAR_LIBRARY_NOT_FOUND_RESPONSES,
+    )
     async def get_car_library_models(
-        brand: str = Query(..., min_length=1),
-        car_type: str = Query(..., min_length=1, alias="type"),
+        brand: str = Query(..., min_length=1, description="Manufacturer brand to look up."),
+        car_type: str = Query(
+            ...,
+            min_length=1,
+            alias="type",
+            description="Vehicle body type to look up for the selected brand.",
+        ),
     ) -> CarLibraryModelsResponse:
         """Return library entries for *brand* + *type*; 404 if the combination is unknown."""
         if brand not in get_brands():

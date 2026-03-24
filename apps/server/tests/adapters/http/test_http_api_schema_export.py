@@ -278,3 +278,40 @@ def test_export_schema_uses_snake_case_settings_contract_fields(
     assert "speedUnit" not in speed_unit_request["properties"]
     assert "speed_unit" in speed_unit_response["properties"]
     assert "speedUnit" not in speed_unit_response["properties"]
+
+
+def test_export_schema_documents_key_endpoint_descriptions_and_error_responses(
+    schema_dict: dict[str, Any],
+) -> None:
+    health_route = schema_dict["paths"]["/api/health"]["get"]
+    set_client_location = schema_dict["paths"]["/api/clients/{client_id}/location"]["post"]
+    update_speed_source = schema_dict["paths"]["/api/settings/speed-source"]["put"]
+    history_insights = schema_dict["paths"]["/api/history/{run_id}/insights"]["get"]
+    update_start = schema_dict["paths"]["/api/update/start"]["post"]
+
+    assert health_route["tags"] == ["health"]
+    assert "runtime health snapshot" in health_route["description"]
+
+    assert set_client_location["tags"] == ["clients"]
+    assert "persist the updated mapping" in set_client_location["description"]
+    assert (
+        set_client_location["responses"]["409"]["description"]
+        == "Requested location is already assigned to another sensor."
+    )
+
+    assert update_speed_source["tags"] == ["settings"]
+    assert "preferred speed source" in update_speed_source["description"]
+    assert (
+        update_speed_source["responses"]["400"]["description"]
+        == "The requested speed-source configuration is invalid."
+    )
+
+    assert history_insights["tags"] == ["history"]
+    assert "post-analysis findings" in history_insights["description"]
+    assert history_insights["responses"]["422"]["description"] == (
+        "Insights are unavailable because analysis failed or produced unsupported persisted data."
+    )
+
+    assert update_start["tags"] == ["updates"]
+    assert "uplink Wi-Fi credentials" in update_start["description"]
+    assert update_start["responses"]["409"]["description"] == "An update job is already running."
