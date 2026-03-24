@@ -64,7 +64,7 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
 - Heat coloring per location using report-consistent p95 intensity metric over a 10-second rolling window.
 - Event pulse: glow ring + brief blink animation on new vibration events.
 - Tapping the car map does nothing for now.
-- Location taxonomy: reuses the report location codes from `apps/server/vibesensor/locations.py`.
+- Location taxonomy: reuses the report location codes from `apps/server/vibesensor/shared/locations.py`.
 
 ## Do / Don't
 - Do use existing tokens and classes.
