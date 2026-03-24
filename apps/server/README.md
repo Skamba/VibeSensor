@@ -31,7 +31,8 @@ state. Current `main` is intentionally split more narrowly:
   configuration loaded at startup, such as network bindings, retention windows,
   processing budgets, and update paths.
 - `SettingsStore` owns persisted user-facing runtime settings, such as car
-  profiles, speed-source preferences, language, units, and sensor placement.
+  profiles, speed-source preferences, language, units, and canonical sensor
+  metadata (display name plus `location_code`).
   `SettingsDerivationService` projects those persisted car settings into the
   current analysis/run context, while `SettingsRuntimeApplier` pushes the
   current speed-source selection into live runtime collaborators.
@@ -114,7 +115,9 @@ Those YAML files cover deployment/process settings. User-facing runtime
 preferences are stored separately through `SettingsStore` snapshots in
 `history.db`; runtime consumers read the derived current-context view rather
 than mutating persisted settings directly, and completed runs persist immutable
-per-run snapshots for later analysis/reporting.
+per-run snapshots for later analysis/reporting. Persisted sensor display
+metadata also lives in that settings snapshot, while `ClientRegistry` remains
+the owner of live transport/connection state only.
 
 For live sensor presence, `processing.client_live_ttl_seconds` controls how long
 `/api/clients` and `/ws` keep reporting `connected: true` after the last

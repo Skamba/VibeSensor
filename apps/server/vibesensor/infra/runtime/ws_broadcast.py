@@ -18,7 +18,12 @@ from vibesensor.infra.runtime.rotational_speeds import (
     build_rotational_speeds_payload,
     rotational_basis_speed_source,
 )
-from vibesensor.shared.ports import SettingsReader, SpeedProvider, SpeedSourceSettingsReader
+from vibesensor.shared.ports import (
+    SensorMetadataReader,
+    SettingsReader,
+    SpeedProvider,
+    SpeedSourceSettingsReader,
+)
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
@@ -36,6 +41,7 @@ class WsBroadcastService:
         "_gps_monitor",
         "_processor",
         "_registry",
+        "_sensor_metadata_reader",
         "_settings_reader",
         "_speed_source_reader",
         "_ui_heavy_push_hz",
@@ -58,6 +64,7 @@ class WsBroadcastService:
         gps_enabled: bool,
         settings_reader: SettingsReader,
         speed_source_reader: SpeedSourceSettingsReader,
+        sensor_metadata_reader: SensorMetadataReader | None = None,
     ) -> None:
         self.tick = 0
         self.include_heavy = True
@@ -70,6 +77,7 @@ class WsBroadcastService:
         self._registry = registry
         self._processor = processor
         self._gps_monitor = gps_monitor
+        self._sensor_metadata_reader = sensor_metadata_reader
         self._settings_reader = settings_reader
         self._speed_source_reader = speed_source_reader
 
@@ -83,7 +91,11 @@ class WsBroadcastService:
         self.include_heavy = (self.tick % heavy_every) == 0
 
     def _build_shared_payload(self) -> LiveWsPayload:
-        clients = snapshot_for_api(self._registry, include_metrics=False)
+        clients = snapshot_for_api(
+            self._registry,
+            include_metrics=False,
+            sensor_metadata_reader=self._sensor_metadata_reader,
+        )
         client_ids = [c["id"] for c in clients]
         fresh_ids = self._processor.clients_with_recent_data(
             client_ids,

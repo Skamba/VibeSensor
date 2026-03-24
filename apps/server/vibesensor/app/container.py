@@ -200,6 +200,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         gps_enabled=config.gps.gps_enabled,
         settings_reader=settings_reader,
         speed_source_reader=settings_store,
+        sensor_metadata_reader=settings_store,
     )
 
     # run recorder
@@ -218,6 +219,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         processor=processor,
         history_db=history_db,
         settings_store=settings_reader,
+        sensor_metadata_reader=settings_store,
         language_provider=lambda: settings_store.language,
     )
 

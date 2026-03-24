@@ -69,6 +69,7 @@ _UPDATE_SPEED_SOURCE_RESPONSES: OpenAPIResponses = {
 
 _UPDATE_SENSOR_RESPONSES: OpenAPIResponses = {
     400: {"description": "Invalid sensor MAC address or sensor settings payload."},
+    409: {"description": "Requested sensor location is already assigned to another sensor."},
 }
 
 _DELETE_SENSOR_RESPONSES: OpenAPIResponses = {
@@ -319,7 +320,7 @@ def create_settings_routes(
         """Create or update persisted sensor metadata for a specific MAC address."""
         normalized_mac = normalize_mac_or_400(mac)
         payload = _sensor_update_payload(req)
-        with domain_errors_to_http(catch_value_error=400):
+        with domain_errors_to_http(catch_value_error=409):
             await asyncio.to_thread(
                 settings_store.set_sensor,
                 normalized_mac,

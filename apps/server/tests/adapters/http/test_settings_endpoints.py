@@ -297,6 +297,26 @@ class TestSensorEndpoint:
             {"name": "Wheel sensor", "location_code": "front_left"},
         )
 
+    @pytest.mark.asyncio
+    async def test_update_sensor_maps_duplicate_location_to_409(self, _settings_router) -> None:
+        router, state = _settings_router
+        endpoint = _find_endpoint(router, "/api/settings/sensors/{mac}", "POST")
+        assert endpoint is not None
+
+        from vibesensor.adapters.http.models import SensorRequest
+
+        state.settings_store.set_sensor.side_effect = ValueError(
+            "Location 'front_left' already assigned to Rear Left",
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            await endpoint(
+                mac="AA:BB:CC:DD:EE:FF",
+                req=SensorRequest(name="Wheel sensor", location_code="front_left"),
+            )
+
+        assert exc_info.value.status_code == 409
+
 
 class TestSetAnalysisSettingsEndpoint:
     @pytest.mark.asyncio
