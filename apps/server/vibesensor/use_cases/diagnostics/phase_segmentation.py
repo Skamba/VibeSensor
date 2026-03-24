@@ -105,6 +105,12 @@ def _estimate_speed_derivative(
     return None
 
 
+def _segment_duration_s(segment: PhaseSegment) -> float:
+    if not (math.isfinite(segment.start_t_s) and math.isfinite(segment.end_t_s)):
+        return 0.0
+    return max(0.0, segment.end_t_s - segment.start_t_s)
+
+
 def classify_sample_phase(
     speed_kmh: float | None,
     speed_deriv_kmh_s: float | None,
@@ -240,8 +246,9 @@ def segment_run_phases(
         seg_end = i - 1
         seg_speeds = [s for s in speeds[seg_start : seg_end + 1] if s is not None]
         seg_times = [t for t in times[seg_start : seg_end + 1] if t is not None]
-        # When no time values are available in this segment, estimate from
-        # neighboring segments or fall back to the sample index.
+        # When no time values are available in this segment, preserve
+        # continuity only if the previous segment had a finite end timestamp;
+        # otherwise leave the time bounds unknown.
         if seg_times:
             start_t = min(seg_times)
             end_t = max(seg_times)
@@ -279,9 +286,7 @@ def phase_summary(segments: list[PhaseSegment]) -> DrivingPhaseSummary:
         key = seg.phase.value
         phase_counts[key] = phase_counts.get(key, 0) + seg.sample_count
         total += seg.sample_count
-        # Accumulate duration
-        has_times = math.isfinite(seg.end_t_s) and math.isfinite(seg.start_t_s)
-        dur = (seg.end_t_s - seg.start_t_s) if has_times else 0.0
+        dur = _segment_duration_s(seg)
         phase_durations[key] = phase_durations.get(key, 0.0) + dur
         # Track speed range
         if seg.speed_min_kmh is not None:

@@ -119,6 +119,22 @@ def test_buffer_store_does_not_regress_last_t0_us_for_older_frame() -> None:
         assert buf.samples_since_t0 == 6
 
 
+def test_buffer_store_warns_and_truncates_oversized_ingest(caplog) -> None:
+    store = SignalBufferStore(_config(sample_rate_hz=4, waveform_seconds=1))
+    client_id = "client-oversized"
+    samples = np.arange(18, dtype=np.float32).reshape(6, 3)
+
+    with caplog.at_level("WARNING", logger="vibesensor.infra.processing.buffer_store"):
+        store.ingest(client_id, samples, sample_rate_hz=4)
+
+    assert "exceeds buffer capacity 4" in caplog.text
+    assert "discarding 2 oldest samples" in caplog.text
+    with store.locked_client_buffer(client_id) as buf:
+        assert buf is not None
+        latest = store.copy_latest(buf, 4).T
+    np.testing.assert_array_equal(latest, samples[-4:])
+
+
 def test_fft_params_uses_lru_eviction(monkeypatch) -> None:
     monkeypatch.setattr("vibesensor.infra.processing.compute._FFT_CACHE_MAXSIZE", 2)
     computer = SignalMetricsComputer(_config(fft_n=8, sample_rate_hz=200, spectrum_max_hz=90.0))

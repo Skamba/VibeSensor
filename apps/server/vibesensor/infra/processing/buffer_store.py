@@ -102,7 +102,15 @@ class SignalBufferStore:
 
             n = int(chunk.shape[0])
             capacity = buf.capacity
-            if n >= capacity:
+            if n > capacity:
+                dropped = n - capacity
+                LOGGER.warning(
+                    "Sample chunk for %s exceeds buffer capacity %d; discarding %d oldest samples "
+                    "from the incoming batch",
+                    client_id,
+                    capacity,
+                    dropped,
+                )
                 chunk = chunk[-capacity:]
                 n = capacity
 
