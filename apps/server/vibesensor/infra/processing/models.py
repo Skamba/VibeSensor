@@ -75,6 +75,7 @@ class MetricsSnapshot:
     ingest_generation: int
     time_window: FloatArray
     fft_block: FloatArray | None
+    buffer_epoch: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +90,7 @@ class MetricsComputationResult:
     strength_metrics: VibrationStrengthMetrics
     has_fft_data: bool
     duration_s: float
+    buffer_epoch: int = 0
 
 
 @dataclass(frozen=True, slots=True)

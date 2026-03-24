@@ -167,6 +167,7 @@ class SignalMetricsComputer:
             client_id=snapshot.client_id,
             sample_rate_hz=snapshot.sample_rate_hz,
             ingest_generation=snapshot.ingest_generation,
+            buffer_epoch=snapshot.buffer_epoch,
             metrics=metrics,
             spectrum_by_axis=spectrum_by_axis,
             strength_metrics=strength_metrics_dict,
