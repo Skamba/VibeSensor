@@ -350,9 +350,21 @@ export interface components {
      */
     AmplitudeMetric: {
       /** Definition */
-      definition?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      definition?: boolean | number | string | ({
+        [key: string]: boolean | number | string | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | null)[]) | ({
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null)[]) | null;
       /** Name */
       name?: string | null;
       /** Units */
@@ -441,7 +453,21 @@ export interface components {
       accel_scale_g_per_lsb: number | null;
       /** Analysis Metadata */
       analysis_metadata?: {
-        [key: string]: unknown;
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null)[]) | null;
       };
       /** Case Id */
       case_id?: string | null;
@@ -468,7 +494,21 @@ export interface components {
       lang: string;
       /** Metadata */
       metadata: {
-        [key: string]: unknown;
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null)[]) | null;
       };
       most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
       /** Peak Picker Method */
@@ -496,9 +536,23 @@ export interface components {
       /** Run Suitability */
       run_suitability: components["schemas"]["RunSuitabilityCheck"][];
       /** Samples */
-      samples?: {
-          [key: string]: unknown;
-        }[];
+      samples?: ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | ({
+            [key: string]: boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | ((boolean | number | string | ({
+                [key: string]: boolean | number | string | null;
+              }) | null)[]) | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | ((boolean | number | string | ({
+                [key: string]: boolean | number | string | null;
+              }) | null)[]) | null)[]) | null;
+        })[];
       /** Sensor Count Used */
       sensor_count_used: number;
       /** Sensor Intensity By Location */
@@ -512,9 +566,23 @@ export interface components {
       /** Speed Breakdown */
       speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
       /** Speed Breakdown Skipped Reason */
-      speed_breakdown_skipped_reason: {
-        [key: string]: unknown;
-      } | null;
+      speed_breakdown_skipped_reason: ({
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null)[]) | null;
+      }) | null;
       speed_stats: components["schemas"]["SpeedStatsResponse"];
       /** Speed Stats By Phase */
       speed_stats_by_phase: {
@@ -1105,9 +1173,7 @@ export interface components {
       dominant_phase?: string | null;
       evidence_metrics?: components["schemas"]["FindingEvidenceMetrics"] | null;
       /** Evidence Summary */
-      evidence_summary: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      evidence_summary: string;
       /** Finding Id */
       finding_id: string;
       /** Finding Key */
@@ -1115,9 +1181,7 @@ export interface components {
       /** Finding Kind */
       finding_kind?: string | null;
       /** Frequency Hz Or Order */
-      frequency_hz_or_order: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      frequency_hz_or_order: number | string;
       location_hotspot?: components["schemas"]["LocationHotspotPayload"] | null;
       /** Matched Points */
       matched_points?: components["schemas"]["MatchedPoint"][];
@@ -1359,7 +1423,21 @@ export interface components {
       accel_scale_g_per_lsb: number | null;
       /** Analysis Metadata */
       analysis_metadata?: {
-        [key: string]: unknown;
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null)[]) | null;
       };
       /** Case Id */
       case_id?: string | null;
@@ -1386,7 +1464,21 @@ export interface components {
       lang: string;
       /** Metadata */
       metadata: {
-        [key: string]: unknown;
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null)[]) | null;
       };
       most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
       /** Peak Picker Method */
@@ -1414,9 +1506,23 @@ export interface components {
       /** Run Suitability */
       run_suitability: components["schemas"]["RunSuitabilityCheck"][];
       /** Samples */
-      samples?: {
-          [key: string]: unknown;
-        }[];
+      samples?: ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | ({
+            [key: string]: boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | ((boolean | number | string | ({
+                [key: string]: boolean | number | string | null;
+              }) | null)[]) | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | ((boolean | number | string | ({
+                [key: string]: boolean | number | string | null;
+              }) | null)[]) | null)[]) | null;
+        })[];
       /** Sensor Count Used */
       sensor_count_used: number;
       /** Sensor Intensity By Location */
@@ -1430,9 +1536,23 @@ export interface components {
       /** Speed Breakdown */
       speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
       /** Speed Breakdown Skipped Reason */
-      speed_breakdown_skipped_reason: {
-        [key: string]: unknown;
-      } | null;
+      speed_breakdown_skipped_reason: ({
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null)[]) | null;
+      }) | null;
       speed_stats: components["schemas"]["SpeedStatsResponse"];
       /** Speed Stats By Phase */
       speed_stats_by_phase: {
@@ -1491,7 +1611,21 @@ export interface components {
       error_message?: string | null;
       /** Metadata */
       metadata?: {
-        [key: string]: unknown;
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | ({
+          [key: string]: boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | ((boolean | number | string | ({
+              [key: string]: boolean | number | string | null;
+            }) | null)[]) | null)[]) | null;
       };
       /** Run Id */
       run_id: string;
@@ -1922,9 +2056,21 @@ export interface components {
       /** Check Key */
       check_key: string;
       /** Explanation */
-      explanation?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      explanation?: boolean | number | string | ({
+        [key: string]: boolean | number | string | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | null)[]) | ({
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null)[]) | null;
       /** State */
       state: string;
     };
@@ -2180,18 +2326,42 @@ export interface components {
       /** Code */
       code: string;
       /** Detail */
-      detail?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      detail?: boolean | number | string | ({
+        [key: string]: boolean | number | string | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | null)[]) | ({
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null)[]) | null;
       /**
        * Severity
        * @enum {string}
        */
       severity: "warn" | "error";
       /** Title */
-      title: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      title: boolean | number | string | ({
+        [key: string]: boolean | number | string | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | null)[]) | ({
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null)[]) | null;
     };
     /**
      * SuspectedVibrationOriginPayload
@@ -2205,9 +2375,21 @@ export interface components {
       /** Dominant Phase */
       dominant_phase?: string | null;
       /** Explanation */
-      explanation?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      explanation?: boolean | number | string | ({
+        [key: string]: boolean | number | string | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | null)[]) | ({
+        [key: string]: boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null;
+      }) | ((boolean | number | string | ({
+          [key: string]: boolean | number | string | null;
+        }) | ((boolean | number | string | ({
+            [key: string]: boolean | number | string | null;
+          }) | null)[]) | null)[]) | null;
       /** Location */
       location?: string | null;
       /** Speed Band */
