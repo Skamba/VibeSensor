@@ -10,7 +10,6 @@ Owns:
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 import shutil
 import time
@@ -260,6 +259,42 @@ class LifecycleManager:
         self._monitor_task(task)
         return task
 
+    async def _cancel_background_tasks(self, *, timeout_s: float) -> list[asyncio.Task[object]]:
+        for task in self.tasks:
+            task.cancel()
+        if not self.tasks:
+            return []
+        _done, _pending = await asyncio.wait(self.tasks, timeout=timeout_s)
+        if _pending:
+            LOGGER.warning(
+                "%d background task(s) did not finish within the cancellation "
+                "deadline and remain pending: %s",
+                len(_pending),
+                [task.get_name() for task in _pending],
+            )
+        self.tasks = [task for task in self.tasks if not task.done()]
+        return list(self.tasks)
+
+    @staticmethod
+    async def _cancel_managed_tasks(
+        tasks: list[asyncio.Task[None]],
+        *,
+        timeout_s: float,
+    ) -> list[asyncio.Task[None]]:
+        for task in tasks:
+            task.cancel()
+        if not tasks:
+            return []
+        _done, _pending = await asyncio.wait(tasks, timeout=timeout_s)
+        if _pending:
+            LOGGER.warning(
+                "%d managed shutdown task(s) did not finish within the cancellation "
+                "deadline and remain pending: %s",
+                len(_pending),
+                [task.get_name() for task in _pending],
+            )
+        return [task for task in tasks if not task.done()]
+
     _LOW_DISK_THRESHOLD_MB = 100
 
     def _validate_startup(self) -> None:
@@ -380,19 +415,7 @@ class LifecycleManager:
             await asyncio.gather(self._data_consumer_task, return_exceptions=True)
             self._data_consumer_task = None
 
-        for task in self.tasks:
-            task.cancel()
-        # Wait up to 15 s for tasks to respond to cancellation.
-        if self.tasks:
-            _done, _pending = await asyncio.wait(self.tasks, timeout=15.0)
-            if _pending:
-                LOGGER.warning(
-                    "%d background task(s) did not finish within the cancellation "
-                    "deadline and will be abandoned: %s",
-                    len(_pending),
-                    [t.get_name() for t in _pending],
-                )
-        self.tasks.clear()
+        lingering_background_tasks = await self._cancel_background_tasks(timeout_s=15.0)
 
         # Cancel any in-progress update or flash jobs so cleanup
         # (e.g. hotspot restore) can run before shutdown completes.
@@ -400,13 +423,11 @@ class LifecycleManager:
             self._runtime.update_manager.job_task,
             self._runtime.esp_flash_manager.job_task,
         ]
-        for managed_task in managed:
-            if managed_task is not None:
-                managed_task.cancel()
-        for managed_task in managed:
-            if managed_task is not None and not managed_task.done():
-                with contextlib.suppress(asyncio.CancelledError, Exception):
-                    await asyncio.wait_for(asyncio.shield(managed_task), timeout=10.0)
+        active_managed_tasks = [task for task in managed if task is not None and not task.done()]
+        lingering_managed_tasks = await self._cancel_managed_tasks(
+            active_managed_tasks,
+            timeout_s=10.0,
+        )
 
         analysis_timeout_s = self._runtime.shutdown_analysis_timeout_s
         shutdown_report = await asyncio.to_thread(
@@ -433,4 +454,15 @@ class LifecycleManager:
             self._runtime.history_db.close()
         except Exception:
             LOGGER.warning("Error closing history DB", exc_info=True)
+        self.tasks = [task for task in self.tasks if not task.done()]
+        lingering_task_names = [
+            *(task.get_name() for task in lingering_background_tasks if not task.done()),
+            *(task.get_name() for task in lingering_managed_tasks if not task.done()),
+        ]
+        if lingering_task_names:
+            LOGGER.warning(
+                "Runtime lifecycle stop completed with lingering tasks: %s",
+                lingering_task_names,
+            )
+            return
         LOGGER.info("Runtime lifecycle stopped cleanly.")
