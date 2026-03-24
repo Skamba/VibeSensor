@@ -28,6 +28,7 @@ __all__ = [
     "HelloMessage",
     "HelloAckMessage",
     "ProtocolError",
+    "ProtocolVersionMismatch",
     "client_id_hex",
     "client_id_mac",
     "extract_client_id_hex",
@@ -97,6 +98,18 @@ BYTES_PER_SAMPLE: int = ACCEL_AXES * _SAMPLE_DTYPE.itemsize
 """Wire size of one accelerometer sample in bytes (3 axes × 2 bytes for int16)."""
 
 
+class ProtocolVersionMismatch(ProtocolError):
+    """Protocol error raised when a packet uses an unsupported wire version."""
+
+    def __init__(self, *, label: str, expected_version: int, actual_version: int) -> None:
+        super().__init__(
+            f"{label} version mismatch: expected {expected_version}, got {actual_version}",
+        )
+        self.label = label
+        self.expected_version = expected_version
+        self.actual_version = actual_version
+
+
 @dataclass(slots=True)
 class HelloMessage:
     """Decoded HELLO message sent by an ESP32 sensor on connect."""
@@ -156,6 +169,23 @@ class HelloAckMessage:
     client_id: bytes
 
 
+def _validate_header(
+    *,
+    label: str,
+    msg_type: int,
+    expected_msg_type: int,
+    version: int,
+) -> None:
+    if msg_type != expected_msg_type:
+        raise ProtocolError(f"Invalid {label} header")
+    if version != VERSION:
+        raise ProtocolVersionMismatch(
+            label=label,
+            expected_version=VERSION,
+            actual_version=version,
+        )
+
+
 def client_id_hex(client_id: bytes) -> str:
     """Return the 6-byte *client_id* as a lowercase hex string."""
     if len(client_id) != 6:
@@ -200,8 +230,12 @@ def parse_hello(data: bytes) -> HelloMessage:
         frame_samples,
         name_len,
     ) = HELLO_BASE.unpack_from(data, 0)
-    if msg_type != MSG_HELLO or version != VERSION:
-        raise ProtocolError("Invalid HELLO header")
+    _validate_header(
+        label="HELLO",
+        msg_type=msg_type,
+        expected_msg_type=MSG_HELLO,
+        version=version,
+    )
 
     if sample_rate_hz == 0:
         raise ProtocolError("HELLO sample_rate_hz must not be zero")
@@ -299,8 +333,12 @@ def parse_data(data: bytes) -> DataMessage:
     if len(data) < DATA_HEADER_BYTES:
         raise ProtocolError("DATA too short")
     msg_type, version, client_id, seq, t0_us, sample_count = DATA_HEADER.unpack_from(data, 0)
-    if msg_type != MSG_DATA or version != VERSION:
-        raise ProtocolError("Invalid DATA header")
+    _validate_header(
+        label="DATA",
+        msg_type=msg_type,
+        expected_msg_type=MSG_DATA,
+        version=version,
+    )
 
     # Reject unreasonably large frames before any allocation.  The ESP32
     # firmware sends at most ~200 samples per frame at 4096 Hz; 1024 gives
@@ -344,8 +382,12 @@ def parse_cmd(data: bytes) -> CmdMessage:
     if len(data) < CMD_HEADER_BYTES:
         raise ProtocolError("CMD too short")
     msg_type, version, client_id, cmd_id, cmd_seq = CMD_HEADER.unpack_from(data, 0)
-    if msg_type != MSG_CMD or version != VERSION:
-        raise ProtocolError("Invalid CMD header")
+    _validate_header(
+        label="CMD",
+        msg_type=msg_type,
+        expected_msg_type=MSG_CMD,
+        version=version,
+    )
     if cmd_id not in (CMD_IDENTIFY, CMD_SYNC_CLOCK):
         LOGGER.warning(
             "parse_cmd: unrecognized cmd_id=%d; continuing for forward compatibility",
@@ -388,8 +430,12 @@ def parse_hello_ack(data: bytes) -> HelloAckMessage:
     if len(data) != HELLO_ACK_BYTES:
         raise ProtocolError("HELLO_ACK has unexpected size")
     msg_type, version, client_id = HELLO_ACK_STRUCT.unpack_from(data, 0)
-    if msg_type != MSG_HELLO_ACK or version != VERSION:
-        raise ProtocolError("Invalid HELLO_ACK header")
+    _validate_header(
+        label="HELLO_ACK",
+        msg_type=msg_type,
+        expected_msg_type=MSG_HELLO_ACK,
+        version=version,
+    )
     return HelloAckMessage(client_id=client_id)
 
 
@@ -405,8 +451,12 @@ def parse_ack(data: bytes) -> AckMessage:
     if len(data) != ACK_BYTES:
         raise ProtocolError("ACK has unexpected size")
     msg_type, version, client_id, cmd_seq, status = ACK_STRUCT.unpack_from(data, 0)
-    if msg_type != MSG_ACK or version != VERSION:
-        raise ProtocolError("Invalid ACK header")
+    _validate_header(
+        label="ACK",
+        msg_type=msg_type,
+        expected_msg_type=MSG_ACK,
+        version=version,
+    )
     return AckMessage(client_id=client_id, cmd_seq=cmd_seq, status=status)
 
 
@@ -422,8 +472,12 @@ def parse_data_ack(data: bytes) -> DataAckMessage:
     if len(data) != DATA_ACK_BYTES:
         raise ProtocolError("DATA_ACK has unexpected size")
     msg_type, version, client_id, last_seq_received = DATA_ACK_STRUCT.unpack_from(data, 0)
-    if msg_type != MSG_DATA_ACK or version != VERSION:
-        raise ProtocolError("Invalid DATA_ACK header")
+    _validate_header(
+        label="DATA_ACK",
+        msg_type=msg_type,
+        expected_msg_type=MSG_DATA_ACK,
+        version=version,
+    )
     return DataAckMessage(client_id=client_id, last_seq_received=last_seq_received)
 
 

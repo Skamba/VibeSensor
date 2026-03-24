@@ -15,6 +15,7 @@ from vibesensor.use_cases.updates.releases.release_validation import (
     run_server_smoke,
     validate_firmware_dist,
     validate_packaged_static_assets,
+    validate_release_wheel_metadata,
 )
 
 
@@ -77,6 +78,61 @@ def test_validate_firmware_dist_reports_missing_firmware_bin(tmp_path: Path) -> 
 
     errors = validate_firmware_dist(dist_dir)
     assert any("must contain at least one segment" in error for error in errors)
+
+
+def _build_fake_release_wheel(
+    path: Path,
+    *,
+    version: str,
+    name: str = "vibesensor",
+    requires_python: str = "",
+    requires_dist: tuple[str, ...] = (),
+) -> None:
+    import zipfile
+
+    dist_info = f"vibesensor-{version}.dist-info"
+    metadata_lines = [
+        "Metadata-Version: 2.1",
+        f"Name: {name}",
+        f"Version: {version}",
+    ]
+    if requires_python:
+        metadata_lines.append(f"Requires-Python: {requires_python}")
+    metadata_lines.extend(f"Requires-Dist: {entry}" for entry in requires_dist)
+    with zipfile.ZipFile(path, "w") as wheel_zip:
+        wheel_zip.writestr("vibesensor/__init__.py", f"__version__ = '{version}'\n")
+        wheel_zip.writestr(f"{dist_info}/METADATA", "\n".join(metadata_lines) + "\n")
+        wheel_zip.writestr(f"{dist_info}/WHEEL", "Wheel-Version: 1.0\nTag: py3-none-any\n")
+
+
+def test_validate_release_wheel_metadata_accepts_matching_wheel(tmp_path: Path) -> None:
+    wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+    _build_fake_release_wheel(
+        wheel_path,
+        version="2025.6.15",
+        requires_python=">=3.11",
+        requires_dist=("packaging>=24,<27",),
+    )
+
+    assert (
+        validate_release_wheel_metadata(
+            wheel_path,
+            expected_version="2025.6.15",
+        )
+        == []
+    )
+
+
+def test_validate_release_wheel_metadata_rejects_version_mismatch(tmp_path: Path) -> None:
+    wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+    _build_fake_release_wheel(wheel_path, version="2025.6.14")
+
+    errors = validate_release_wheel_metadata(
+        wheel_path,
+        expected_version="2025.6.15",
+    )
+
+    assert any("does not match expected '2025.6.15'" in error for error in errors)
 
 
 def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) -> None:

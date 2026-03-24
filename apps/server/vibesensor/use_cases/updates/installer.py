@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+import json
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator, sha256_file
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
+
+from vibesensor.use_cases.updates.artifact_validation import (
+    WheelArtifactValidator,
+    read_wheel_metadata,
+    sha256_file,
+    wheel_dependency_issues,
+)
 from vibesensor.use_cases.updates.rollback_snapshot import (
     RollbackSnapshotMetadata,
     RollbackSnapshotStore,
@@ -22,6 +31,34 @@ class UpdateInstallerConfig:
     rollback_dir: Path
     reinstall_timeout_s: float
     firmware_refresh_timeout_s: float
+
+
+_TARGET_ENV_SNAPSHOT_SCRIPT = "\n".join(
+    [
+        "import importlib.metadata as metadata",
+        "import json",
+        "import sys",
+        "from packaging.markers import default_environment",
+        "from packaging.utils import canonicalize_name",
+        "payload = json.loads(sys.argv[1])",
+        "distribution_names = [",
+        "    canonicalize_name(str(name))",
+        "    for name in payload.get('distribution_names', [])",
+        "]",
+        "installed_versions = {}",
+        "for distribution_name in distribution_names:",
+        "    try:",
+        "        installed_versions[distribution_name] = metadata.version(distribution_name)",
+        "    except metadata.PackageNotFoundError:",
+        "        installed_versions[distribution_name] = ''",
+        "marker_environment = default_environment()",
+        "print(json.dumps({",
+        "    'python_full_version': marker_environment.get('python_full_version', ''),",
+        "    'marker_environment': marker_environment,",
+        "    'installed_versions': installed_versions,",
+        "}))",
+    ],
+)
 
 
 class UpdateInstaller:
@@ -126,6 +163,8 @@ class UpdateInstaller:
         ):
             return False
         venv_python = reinstall_python_executable(self._config.repo)
+        if not await self._validate_dependency_compatibility(wheel_path, venv_python=venv_python):
+            return False
         rc, _, stderr = await self._commands.run(
             [
                 venv_python,
@@ -154,6 +193,86 @@ class UpdateInstaller:
 
         self._tracker.log(f"Installed vibesensor {expected_version}")
         self._tracker.log(f"Verified installed version: {installed_version}")
+        return True
+
+    async def _validate_dependency_compatibility(
+        self,
+        wheel_path: Path,
+        *,
+        venv_python: str,
+    ) -> bool:
+        metadata = read_wheel_metadata(wheel_path)
+        requirement_names = sorted(
+            {
+                canonicalize_name(Requirement(raw_requirement).name)
+                for raw_requirement in metadata.requires_dist
+            },
+        )
+        if not metadata.requires_python and not requirement_names:
+            return True
+
+        rc, stdout, stderr = await self._commands.run(
+            [
+                venv_python,
+                "-c",
+                _TARGET_ENV_SNAPSHOT_SCRIPT,
+                json.dumps({"distribution_names": requirement_names}),
+            ],
+            phase="installing",
+            timeout=30,
+            sudo=False,
+        )
+        if rc != 0:
+            self._tracker.fail(
+                "installing",
+                f"Could not validate wheel dependency compatibility (exit {rc})",
+                stderr or stdout,
+            )
+            return False
+        try:
+            snapshot = json.loads(stdout or "{}")
+        except json.JSONDecodeError:
+            self._tracker.fail(
+                "installing",
+                "Could not parse wheel dependency compatibility results",
+                stdout or stderr,
+            )
+            return False
+
+        marker_environment_raw = snapshot.get("marker_environment", {})
+        installed_versions_raw = snapshot.get("installed_versions", {})
+        if not isinstance(marker_environment_raw, dict) or not isinstance(
+            installed_versions_raw,
+            dict,
+        ):
+            self._tracker.fail(
+                "installing",
+                "Could not parse wheel dependency compatibility results",
+                stdout or stderr,
+            )
+            return False
+        issues = wheel_dependency_issues(
+            metadata,
+            python_full_version=str(snapshot.get("python_full_version") or ""),
+            marker_environment={
+                str(key): str(value)
+                for key, value in marker_environment_raw.items()
+                if isinstance(key, str)
+            },
+            installed_versions={
+                str(key): str(value)
+                for key, value in installed_versions_raw.items()
+                if isinstance(key, str)
+            },
+        )
+        if issues:
+            self._tracker.fail(
+                "installing",
+                "Downloaded wheel is incompatible with the current environment",
+                "; ".join(issues),
+            )
+            return False
+        self._tracker.log("Validated wheel dependency compatibility against target environment")
         return True
 
     async def rollback(self) -> bool:
