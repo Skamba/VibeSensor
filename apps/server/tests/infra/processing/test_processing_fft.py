@@ -69,6 +69,12 @@ class TestMedfilt3:
         assert result[1, 3] == pytest.approx(0.0)
         assert result[2, 2] == pytest.approx(0.0)
 
+    def test_all_nan_block_is_sanitized_to_zero(self) -> None:
+        block = np.full((3, 5), float("nan"), dtype=np.float32)
+        result = medfilt3(block)
+        assert np.all(np.isfinite(result))
+        assert np.all(result == 0.0)
+
 
 class TestSmoothSpectrum:
     """Tests for the sliding-average spectrum smoother."""
@@ -98,6 +104,14 @@ class TestSmoothSpectrum:
         result_4 = smooth_spectrum(amps, bins=4)
         result_5 = smooth_spectrum(amps, bins=5)
         np.testing.assert_allclose(result_4, result_5)
+
+    def test_nan_input_is_sanitized_before_smoothing(self) -> None:
+        amps = np.array([1.0, np.nan, 3.0], dtype=np.float32)
+        result = smooth_spectrum(amps, bins=3)
+        np.testing.assert_allclose(
+            result,
+            np.array([2.0 / 3.0, 4.0 / 3.0, 2.0], dtype=np.float32),
+        )
 
 
 class TestNoiseFloor:
@@ -257,3 +271,20 @@ class TestComputeFftSpectrum:
             "axis_peaks",
         }
         assert set(result.keys()) == expected_keys
+
+    def test_zero_length_fft_block_returns_empty_result(self) -> None:
+        result = compute_fft_spectrum(
+            np.empty((3, 0), dtype=np.float32),
+            256,
+            fft_window=np.empty((0,), dtype=np.float32),
+            fft_scale=1.0,
+            freq_slice=np.empty((0,), dtype=np.float32),
+            valid_idx=np.empty((0,), dtype=np.intp),
+        )
+        assert result["freq_slice"].size == 0
+        assert result["combined_amp"].size == 0
+        assert result["strength_metrics"]["vibration_strength_db"] == 0.0
+        assert result["strength_metrics"]["top_peaks"] == []
+        for axis in ("x", "y", "z"):
+            assert result["spectrum_by_axis"][axis]["amp"].size == 0
+            assert result["axis_peaks"][axis] == []
