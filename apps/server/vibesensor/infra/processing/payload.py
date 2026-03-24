@@ -288,10 +288,15 @@ def build_multi_spectrum_payload(
 
     # When all clients share the same frequency axis, emit a single
     # top-level "freq" and omit per-client "freq" to reduce payload size.
+    shared_freq_list: list[float]
     if mismatch_ids:
-        for cid, freq_arr in per_client_freq.items():
-            clients[cid]["freq"] = float_list(freq_arr)
-        shared_freq_list: list[float] = []
+        shared_freq_list = float_list(shared_freq) if shared_freq is not None else []
+        mismatch_set = set(mismatch_ids)
+        for cid in clients:
+            clients[cid]["freq"] = (
+                float_list(per_client_freq[cid]) if cid in mismatch_set else shared_freq_list
+            )
+        shared_freq_list = []
     else:
         shared_freq_list = float_list(shared_freq) if shared_freq is not None else []
 
