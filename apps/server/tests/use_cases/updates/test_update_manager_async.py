@@ -342,6 +342,73 @@ class TestUpdateManagerAsync:
             for issue in manager.status.issues
         )
 
+    async def test_cleanup_re_raises_runtime_details_bug_after_finishing_cleanup(
+        self,
+        tmp_path,
+    ) -> None:
+        manager, _runner, _ = setup_update_env(tmp_path)
+        manager.status.state = UpdateState.running
+        manager.status.phase = UpdatePhase.installing
+
+        with patch(
+            "vibesensor.use_cases.updates.manager.collect_runtime_details",
+            side_effect=TypeError("runtime bug"),
+        ):
+            with pytest.raises(TypeError, match="runtime bug"):
+                await manager._cleanup_after_update()
+
+        assert manager.status.finished_at is not None
+        assert manager.status.state == UpdateState.failed
+
+    async def test_cleanup_re_raises_wifi_diagnostics_bug_after_finishing_cleanup(
+        self,
+        tmp_path,
+    ) -> None:
+        manager, _runner, _ = setup_update_env(tmp_path)
+        manager.status.state = UpdateState.running
+        manager.status.phase = UpdatePhase.installing
+
+        with patch(
+            "vibesensor.use_cases.updates.manager.parse_wifi_diagnostics",
+            side_effect=TypeError("diagnostics bug"),
+        ):
+            with pytest.raises(TypeError, match="diagnostics bug"):
+                await manager._cleanup_after_update()
+
+        assert manager.status.finished_at is not None
+        assert manager.status.state == UpdateState.failed
+
+    async def test_run_update_preserves_cancelled_error_when_cleanup_bug_occurs(
+        self,
+        tmp_path,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        manager, _runner, _ = setup_update_env(tmp_path)
+
+        with (
+            patch.object(
+                manager,
+                "_run_update_inner",
+                AsyncMock(side_effect=asyncio.CancelledError()),
+            ),
+            patch(
+                "vibesensor.use_cases.updates.manager.collect_runtime_details",
+                side_effect=TypeError("runtime bug"),
+            ),
+            caplog.at_level("WARNING"),
+        ):
+            manager.start("TestNet", "pass123")
+            assert manager.job_task is not None
+            with pytest.raises(asyncio.CancelledError):
+                await manager.job_task
+
+        assert manager.status.finished_at is not None
+        assert manager.status.state == UpdateState.failed
+        assert any(
+            rec.message == "Update cleanup interrupted during cancellation"
+            for rec in caplog.records
+        )
+
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:

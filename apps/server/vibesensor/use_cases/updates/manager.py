@@ -171,6 +171,7 @@ class UpdateManager:
         request_or_ssid: UpdateRequest | str,
         password: str | None = None,
     ) -> None:
+        cancelled = False
         try:
             await asyncio.wait_for(
                 self._run_update_inner(request_or_ssid, password),
@@ -181,6 +182,7 @@ class UpdateManager:
                 self._tracker.fail("timeout", f"Update timed out after {UPDATE_TIMEOUT_S}s")
                 self._tracker.log(f"Update timed out after {UPDATE_TIMEOUT_S}s")
         except asyncio.CancelledError:
+            cancelled = True
             if hasattr(self, "_tracker"):
                 self._tracker.fail("cancelled", "Update was cancelled")
                 self._tracker.log("Update cancelled")
@@ -190,7 +192,15 @@ class UpdateManager:
                 self._tracker.fail("unexpected", f"Unexpected error: {exc}")
             LOGGER.exception("update: unexpected error")
         finally:
-            await self._cleanup_after_update()
+            if cancelled:
+                try:
+                    await self._cleanup_after_update()
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    LOGGER.warning("Update cleanup interrupted during cancellation", exc_info=True)
+            else:
+                await self._cleanup_after_update()
 
     async def _run_update_inner(
         self,
@@ -361,16 +371,10 @@ class UpdateManager:
                     )
                     LOGGER.warning("Cleanup hotspot restore failed", exc_info=True)
             tracker.clear_secrets()
-            try:
-                tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
-                self._status = tracker.status
-            except Exception:
-                LOGGER.warning("Failed to collect runtime details", exc_info=True)
-            try:
-                diag_issues = await asyncio.to_thread(parse_wifi_diagnostics)
-                tracker.extend_issues(diag_issues)
-            except Exception:
-                LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
+            tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
+            self._status = tracker.status
+            diag_issues = await asyncio.to_thread(parse_wifi_diagnostics)
+            tracker.extend_issues(diag_issues)
             tracker.finish_cleanup()
             self._status = tracker.status
         except Exception:
@@ -378,6 +382,7 @@ class UpdateManager:
             tracker.finish_cleanup()
             self._status = tracker.status
             LOGGER.warning("Update cleanup interrupted", exc_info=True)
+            raise
 
     def _build_command_executor(self) -> UpdateCommandExecutor:
         return UpdateCommandExecutor(runner=self._runner, tracker=self._tracker)
