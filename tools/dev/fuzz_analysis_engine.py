@@ -11,6 +11,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
+import subprocess
+import sys
+import tempfile
+import threading
 import time
 import traceback
 from collections.abc import Mapping, Sequence
@@ -84,9 +89,12 @@ SENSOR_MODELS: tuple[str, ...] = ("ADXL345", "ICM-42688-P", "LSM6DSOX", "unknown
 class FuzzConfig:
     duration_s: float
     batch_examples: int
+    processes: int
     seed: int | None
     include_samples: bool | None
     artifact_dir: Path
+    worker_index: int | None
+    result_file: Path | None
 
 
 def _parse_args() -> FuzzConfig:
@@ -102,6 +110,14 @@ def _parse_args() -> FuzzConfig:
         type=int,
         default=200,
         help="Hypothesis examples per batch before checking the time budget (default: 200).",
+    )
+    parser.add_argument(
+        "--processes",
+        "--threads",
+        dest="processes",
+        type=int,
+        default=16,
+        help="Number of concurrent fuzz worker processes to run (default: 16).",
     )
     parser.add_argument(
         "--seed",
@@ -127,24 +143,28 @@ def _parse_args() -> FuzzConfig:
         default=ARTIFACT_DIR,
         help=f"Directory for minimized failure artifacts (default: {ARTIFACT_DIR}).",
     )
+    parser.add_argument("--worker-index", type=int, default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--result-file", type=Path, default=None, help=argparse.SUPPRESS)
     parser.set_defaults(include_samples=None)
     args = parser.parse_args()
     if args.duration_s <= 0:
         parser.error("--duration-s must be positive")
     if args.batch_examples <= 0:
         parser.error("--batch-examples must be positive")
+    if args.processes <= 0:
+        parser.error("--processes must be positive")
+    if args.worker_index is not None and args.worker_index < 0:
+        parser.error("--worker-index must be non-negative")
     return FuzzConfig(
         duration_s=args.duration_s,
         batch_examples=args.batch_examples,
+        processes=args.processes,
         seed=args.seed,
         include_samples=args.include_samples,
         artifact_dir=args.artifact_dir.resolve(),
+        worker_index=args.worker_index,
+        result_file=args.result_file.resolve() if args.result_file is not None else None,
     )
-
-
-def _configure_hypothesis_seed(seed: int | None) -> None:
-    if seed is not None:
-        os.environ["HYPOTHESIS_SEED"] = str(seed)
 
 
 def _timestamp_at(offset_s: float) -> str:
@@ -605,7 +625,9 @@ def _write_failure_artifact(
         raw_run_id = metadata.get("run_id")
         if isinstance(raw_run_id, str) and raw_run_id.strip():
             run_id = raw_run_id.strip()
-    artifact_path = artifact_dir / f"analysis-fuzz-failure-{timestamp}-{run_id}.json"
+    artifact_path = artifact_dir / (
+        f"analysis-fuzz-failure-{timestamp}-{os.getpid()}-{run_id}.json"
+    )
     payload: dict[str, object] = {
         "exception_type": type(exc).__name__,
         "exception_message": str(exc),
@@ -620,12 +642,66 @@ def _write_failure_artifact(
     return artifact_path
 
 
-def main() -> int:
-    config = _parse_args()
-    _configure_hypothesis_seed(config.seed)
+def _worker_seed(base_seed: int | None, worker_index: int) -> int | None:
+    if base_seed is None:
+        return None
+    return base_seed + worker_index
 
+
+def _worker_prefix(worker_index: int | None) -> str:
+    if worker_index is None:
+        return ""
+    return f"[worker {worker_index}] "
+
+
+def _build_worker_command(config: FuzzConfig, *, worker_index: int, result_file: Path) -> list[str]:
+    cmd = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--duration-s",
+        str(config.duration_s),
+        "--batch-examples",
+        str(config.batch_examples),
+        "--processes",
+        "1",
+        "--artifact-dir",
+        str(config.artifact_dir),
+        "--worker-index",
+        str(worker_index),
+        "--result-file",
+        str(result_file),
+    ]
+    if config.seed is not None:
+        cmd.extend(["--seed", str(_worker_seed(config.seed, worker_index))])
+    if config.include_samples is True:
+        cmd.append("--include-samples")
+    elif config.include_samples is False:
+        cmd.append("--no-include-samples")
+    return cmd
+
+
+def _terminate_processes(processes: Sequence[subprocess.Popen[str]]) -> None:
+    alive = [process for process in processes if process.poll() is None]
+    for process in alive:
+        process.send_signal(signal.SIGTERM)
+    deadline = time.monotonic() + 5.0
+    while alive and time.monotonic() < deadline:
+        alive = [process for process in alive if process.poll() is None]
+        if alive:
+            time.sleep(0.1)
+    for process in alive:
+        process.kill()
+    for process in processes:
+        try:
+            process.wait(timeout=1.0)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=1.0)
+
+
+def _run_worker_main(config: FuzzConfig) -> dict[str, object]:
     try:
-        from hypothesis import HealthCheck, Phase, given, settings
+        from hypothesis import HealthCheck, Phase, given, seed, settings
         from hypothesis import strategies as st
     except (
         ImportError
@@ -644,9 +720,14 @@ def main() -> int:
     from vibesensor.use_cases.diagnostics import vehicle_orders_hz
     from vibesensor.vibration_strength import vibration_strength_db_scalar
 
+    stop_event = threading.Event()
+    start = time.monotonic()
+    deadline = start + config.duration_s
     current_case: dict[str, object] | None = None
     current_summary: dict[str, object] | None = None
     total_examples = 0
+    worker_index = config.worker_index if config.worker_index is not None else 0
+    worker_seed = _worker_seed(config.seed, worker_index)
 
     @settings(
         max_examples=config.batch_examples,
@@ -698,9 +779,14 @@ def main() -> int:
             AnalysisSummary=AnalysisSummary,
         )
 
+    if worker_seed is not None:
+        _fuzz = seed(worker_seed)(_fuzz)
+
     try:
-        _fuzz()
+        while not stop_event.is_set() and time.monotonic() < deadline:
+            _fuzz()
     except BaseException as exc:
+        stop_event.set()
         artifact_path = _write_failure_artifact(
             case=current_case,
             summary=current_summary,
@@ -711,18 +797,84 @@ def main() -> int:
             print(f"Failure artifact written to {artifact_path}")
         raise
 
-    start = time.monotonic()
-    deadline = start + config.duration_s
-    while time.monotonic() < deadline:
-        _fuzz()
-
     elapsed_s = time.monotonic() - start
+    summary = {
+        "target": "analysis",
+        "elapsed_s": elapsed_s,
+        "examples": total_examples,
+    }
+    prefix = _worker_prefix(config.worker_index)
     print(
-        "Fuzz run passed: "
+        f"{prefix}Fuzz run passed: "
         f"{elapsed_s:.1f}s against summarize_run_data() "
         f"with {total_examples} randomized examples "
         f"(seed={config.seed if config.seed is not None else 'auto'})."
     )
+    return summary
+
+
+def _run_process_coordinator(config: FuzzConfig) -> int:
+    with tempfile.TemporaryDirectory(prefix="analysis-fuzz-") as temp_dir:
+        processes: list[tuple[int, subprocess.Popen[str], Path]] = []
+        for worker_index in range(config.processes):
+            result_file = Path(temp_dir) / f"worker-{worker_index}.json"
+            process = subprocess.Popen(
+                _build_worker_command(config, worker_index=worker_index, result_file=result_file),
+                cwd=REPO_ROOT,
+            )
+            processes.append((worker_index, process, result_file))
+
+        failure: tuple[int, int] | None = None
+        try:
+            pending = list(processes)
+            while pending:
+                remaining: list[tuple[int, subprocess.Popen[str], Path]] = []
+                for worker_index, process, result_file in pending:
+                    exit_code = process.poll()
+                    if exit_code is None:
+                        remaining.append((worker_index, process, result_file))
+                        continue
+                    if exit_code != 0 and failure is None:
+                        failure = (worker_index, exit_code)
+                if failure is not None:
+                    _terminate_processes([process for _, process, _ in processes])
+                    break
+                if remaining:
+                    time.sleep(0.2)
+                pending = remaining
+        finally:
+            _terminate_processes([process for _, process, _ in processes])
+
+        if failure is not None:
+            worker_index, exit_code = failure
+            raise SystemExit(f"Worker {worker_index} exited with code {exit_code}.")
+
+        aggregate_examples = 0
+        aggregate_elapsed = 0.0
+        for worker_index, _, result_file in processes:
+            if not result_file.exists():
+                raise SystemExit(f"Worker {worker_index} did not write a result summary.")
+            payload = json.loads(result_file.read_text(encoding="utf-8"))
+            aggregate_examples += int(payload["examples"])
+            aggregate_elapsed = max(aggregate_elapsed, float(payload["elapsed_s"]))
+
+        print(
+            "Aggregate analysis fuzz passed: "
+            f"{aggregate_elapsed:.1f}s per worker, "
+            f"{aggregate_examples} randomized examples across {config.processes} processes."
+        )
+    return 0
+
+
+def main() -> int:
+    config = _parse_args()
+    if config.worker_index is None and config.processes > 1:
+        return _run_process_coordinator(config)
+
+    summary = _run_worker_main(config)
+    if config.result_file is not None:
+        config.result_file.parent.mkdir(parents=True, exist_ok=True)
+        config.result_file.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return 0
 
 
