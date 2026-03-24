@@ -186,9 +186,13 @@ After `RunAnalysis.summarize()` returns, `PostAnalysisWorker`:
 3. Stores the summary via `history_db.store_analysis()` as a
    versioned persistence envelope.
 
-History readers unwrap the envelope back to the summary shape.
-Report endpoints rebuild `ReportTemplateData` from that summary on demand
-via `use_cases/history/report_preparation.py:prepare_report_input()`, which
+History readers unwrap the envelope back to the summary shape. The core
+history/report projection is derived from persisted run data plus the persisted
+analysis summary only; any comparison against current mutable car settings is an
+explicit advisory overlay at the history delivery boundary, not a hidden input
+to the persisted projection or the default report cache path. Report endpoints
+rebuild `ReportTemplateData` from the persisted summary on demand via
+`use_cases/history/report_preparation.py:prepare_report_input()`, which
 reconstructs the domain aggregate and precomputes semantic report facts, and
 `adapters/pdf/mapping.py:map_summary()`, which stays focused on adapter-local
 mapping and rendering data assembly.

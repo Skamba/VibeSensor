@@ -191,14 +191,6 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
                 "analysis": persisted_analysis,
             }
         ),
-        settings_store=_SettingsStoreStub(
-            active_car=CarSnapshot(
-                car_id="car-b",
-                name="Daily Car",
-                car_type="wagon",
-                aspects={"tire_width_mm": 225.0},
-            )
-        ),
     )
 
     request = await loader.load_report_request("run-1", "en")
@@ -216,12 +208,76 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
     assert [warning["code"] for warning in stored_analysis.analysis["warnings"]] == [
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
     ]
+    assert request.cache_key[-1] == "none"
     assert prepared.report_facts is not None
     assert [warning["code"] for warning in prepared.report_facts.warnings] == [
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
-        WARNING_CODE_CAR_SETTINGS_CHANGED,
     ]
     assert prepared.domain_test_run is not None
+
+
+@pytest.mark.asyncio
+async def test_projected_run_service_adds_current_context_overlay_explicitly() -> None:
+    metadata = {
+        "active_car_snapshot": {
+            "id": "car-a",
+            "name": "Track Car",
+            "type": "coupe",
+            "aspects": {"tire_width_mm": 245.0},
+        },
+        "car_name": "Track Car",
+        "tire_width_mm": 245.0,
+        "incomplete_for_order_analysis": True,
+    }
+    persisted_analysis = cast(
+        AnalysisSummary,
+        run_analysis(
+            [
+                report_sample(
+                    0,
+                    speed_kmh=55.0,
+                    dominant_freq_hz=15.0,
+                    peak_amp_g=0.12,
+                ),
+                report_sample(
+                    1,
+                    speed_kmh=65.0,
+                    dominant_freq_hz=15.0,
+                    peak_amp_g=0.14,
+                ),
+            ],
+            metadata=metadata,
+            lang="en",
+        ),
+    )
+    service = ProjectedHistoryRunService(
+        HistoryRunService(
+            _HistoryDbStub(
+                run={
+                    "run_id": "run-1",
+                    "status": "complete",
+                    "metadata": {"language": "en"},
+                    "analysis": persisted_analysis,
+                }
+            ),
+        ),
+        current_car_reader=_SettingsStoreStub(
+            active_car=CarSnapshot(
+                car_id="car-b",
+                name="Daily Car",
+                car_type="wagon",
+                aspects={"tire_width_mm": 225.0},
+            )
+        ),
+    )
+
+    payload = await service.get_insights("run-1", requested_lang="en")
+
+    assert payload is not None
+    assert [warning["code"] for warning in payload["warnings"]] == [
+        WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+        WARNING_CODE_CAR_SETTINGS_CHANGED,
+    ]
 
 
 @pytest.mark.asyncio

@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from vibesensor.shared.ports import RunPersistence, SettingsReader
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
 from vibesensor.use_cases.history.report_preparation import (
@@ -42,11 +42,10 @@ class HistoryReportService:
     def __init__(
         self,
         history_db: RunPersistence,
-        settings_store: SettingsReader | None = None,
         *,
         pdf_renderer: PdfRendererFn,
     ) -> None:
-        self._loader = HistoryReportRequestLoader(history_db, settings_store)
+        self._loader = HistoryReportRequestLoader(history_db)
         self._pdf_cache = HistoryReportPdfCache()
         self._pdf_renderer = pdf_renderer
 

@@ -322,12 +322,11 @@ class FakeState:
         self.run_service = ProjectedHistoryRunService(
             HistoryRunService(
                 self.history_db,
-                self.settings_store,
-            )
+            ),
+            current_car_reader=self.settings_store,
         )
         self.report_service = HistoryReportService(
             self.history_db,
-            self.settings_store,
             pdf_renderer=pdf_renderer,
         )
         self.export_service = ProjectedHistoryExportService(

@@ -236,13 +236,12 @@ class FakeState:
             self.run_service = ProjectedHistoryRunService(
                 HistoryRunService(
                     self.history_db,
-                    self.settings_store,
-                )
+                ),
+                current_car_reader=self.settings_store,
             )
         if self.report_service is None:
             self.report_service = HistoryReportService(
                 self.history_db,
-                self.settings_store,
                 pdf_renderer=lambda _prepared: b"%PDF-stub",
             )
         if self.export_service is None:

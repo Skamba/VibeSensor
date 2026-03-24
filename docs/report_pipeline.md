@@ -122,6 +122,10 @@ needs:
    `PreparedReportInput` preparation in
    `vibesensor.use_cases.history.report_preparation`, then populate the final
    renderer field in `map_summary()` in `vibesensor.adapters.pdf.mapping`.
+   Keep the default report-request/cache path driven only by persisted run data
+   and persisted analysis. If a feature needs to compare a historical run
+   against current mutable settings, model that as an explicit advisory overlay
+   instead of threading live settings into the base report request.
 4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.adapters.pdf`.
 5. Never add history/report semantic interpretation logic to the renderer
    package — always pre-compute it in `report_preparation.py`.

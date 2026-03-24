@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
@@ -16,7 +14,6 @@ from vibesensor.use_cases.run.run_context import (
     add_current_context_warnings,
     apply_run_context_snapshot,
     build_run_context_snapshot,
-    current_car_snapshot_token,
     order_reference_context_complete,
 )
 
@@ -176,25 +173,6 @@ class TestBoundaryHelpers:
             )
             is True
         )
-
-    def test_current_car_snapshot_token_remains_stable_serialization(self) -> None:
-        car = CarSnapshot(
-            car_id="car-1",
-            name="Primary",
-            car_type="sedan",
-            variant="track",
-            aspects={"rim_in": 19.0, "tire_width_mm": 255.0},
-        )
-
-        token = current_car_snapshot_token(car)
-
-        assert json.loads(token) == {
-            "id": "car-1",
-            "name": "Primary",
-            "type": "sedan",
-            "variant": "track",
-            "aspects": {"rim_in": 19.0, "tire_width_mm": 255.0},
-        }
 
 
 def test_add_current_context_warnings_returns_app_level_models() -> None:

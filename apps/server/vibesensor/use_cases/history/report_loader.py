@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
-from vibesensor.domain import CarSnapshot, RunStatus
+from vibesensor.domain import RunStatus
 from vibesensor.shared.exceptions import AnalysisNotReadyError
-from vibesensor.shared.ports import RunPersistence, SettingsReader
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -17,10 +17,8 @@ from vibesensor.use_cases.history.helpers import (
     safe_filename,
 )
 from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey
-from vibesensor.use_cases.run.run_context import (
-    add_current_context_warnings,
-    current_car_snapshot_token,
-)
+
+_PERSISTED_REPORT_MODE_TOKEN = "none"
 
 
 @dataclass(frozen=True)
@@ -37,15 +35,10 @@ class HistoryReportRequest:
 class HistoryReportRequestLoader:
     """Load persisted report data and shape it for PDF generation."""
 
-    __slots__ = ("_history_db", "_settings_store")
+    __slots__ = ("_history_db",)
 
-    def __init__(
-        self,
-        history_db: RunPersistence,
-        settings_store: SettingsReader | None = None,
-    ) -> None:
+    def __init__(self, history_db: RunPersistence) -> None:
         self._history_db = history_db
-        self._settings_store = settings_store
 
     async def load_report_request(
         self,
@@ -66,19 +59,11 @@ class HistoryReportRequestLoader:
             raise AnalysisNotReadyError("No analysis available for this run")
 
         requested_lang = self._analysis_language(run, requested_lang)
-        current_active_car_snapshot = (
-            self._settings_store.active_car_snapshot() if self._settings_store is not None else None
-        )
-        warnings = add_current_context_warnings(
-            analysis.get("warnings"),
-            metadata=analysis.get("metadata"),
-            current_active_car_snapshot=current_active_car_snapshot,
-        )
+        warnings = analysis.get("warnings")
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
             self._report_pdf_cache_lang(run, requested_lang),
-            current_active_car_snapshot=current_active_car_snapshot,
         )
         return HistoryReportRequest(
             cache_key=cache_key,
@@ -97,8 +82,6 @@ class HistoryReportRequestLoader:
         run: StoredHistoryRun,
         run_id: str,
         requested_lang: str,
-        *,
-        current_active_car_snapshot: CarSnapshot | None,
     ) -> ReportPdfCacheKey:
         return (
             run_id,
@@ -106,7 +89,7 @@ class HistoryReportRequestLoader:
             run.analysis_completed_at,
             run.sample_count,
             self._metadata_cache_token(run.metadata),
-            current_car_snapshot_token(current_active_car_snapshot),
+            _PERSISTED_REPORT_MODE_TOKEN,
         )
 
     @staticmethod
