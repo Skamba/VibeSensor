@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from test_support import (
     ALL_WHEEL_SENSORS,
     make_fault_samples,
@@ -21,6 +22,8 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
+
+pytestmark = pytest.mark.smoke
 
 
 def _create_populated_db(
