@@ -73,6 +73,10 @@ packet. `processing.client_ttl_seconds` is the longer retention/eviction window
 for keeping stale clients and their metadata available after they stop sending
 traffic.
 
+For persisted run history on Pi-class devices, `logging.run_retention_days`
+controls how many days of terminal (`complete` / `error`) runs are kept before
+startup maintenance prunes them automatically. The default is `7`.
+
 ## Environment variables
 
 Prefer YAML config for normal runtime settings. The backend also supports a
