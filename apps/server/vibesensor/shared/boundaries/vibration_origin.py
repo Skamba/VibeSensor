@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import Finding, VibrationSource, coerce_float, coerce_int
+from vibesensor.domain import Finding, VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import as_int_or_none as _as_int
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.history_analysis_contracts import (
     SuspectedVibrationOriginPayload as SuspectedVibrationOrigin,
@@ -28,38 +29,14 @@ def location_hotspot_from_payload(payload: dict[str, object]) -> LocationHotspot
     if second_loc and second_loc not in alt_strings:
         alt_strings.append(second_loc)
 
-    dom_raw = payload.get("dominance_ratio")
-    dominance_ratio: float | None = None
-    if dom_raw is not None:
-        try:
-            dominance_ratio = coerce_float(dom_raw)
-        except (TypeError, ValueError):
-            pass
-
-    loc_conf_raw = payload.get("localization_confidence")
-    localization_confidence: float | None = None
-    if loc_conf_raw is not None:
-        try:
-            localization_confidence = coerce_float(loc_conf_raw)
-        except (TypeError, ValueError):
-            pass
-
-    loc_count_raw = payload.get("location_count")
-    loc_count: int | None = None
-    if loc_count_raw is not None:
-        try:
-            loc_count = coerce_int(loc_count_raw)
-        except (TypeError, ValueError):
-            pass
-
     return LocationHotspot(
         strongest_location=str(payload.get("top_location", payload.get("location", "")) or ""),
-        dominance_ratio=dominance_ratio,
-        localization_confidence=localization_confidence,
+        dominance_ratio=_as_float(payload.get("dominance_ratio")),
+        localization_confidence=_as_float(payload.get("localization_confidence")),
         weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
         ambiguous=bool(payload.get("ambiguous_location", payload.get("ambiguous", False))),
         alternative_locations=tuple(alt_strings),
-        location_count=loc_count,
+        location_count=_as_int(payload.get("location_count")),
     )
 
 
