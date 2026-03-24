@@ -156,3 +156,34 @@ drift.
 - Port confusion: production-style access is usually `http://127.0.0.1`, while native dev often uses `http://127.0.0.1:8000`.
 - UI contract drift: follow [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync) for the generated HTTP/WS/constants sync flow and rerun `npm run sync:contracts`.
 - Slow or failing end-to-end runs: check Docker status and the operational runbook before debugging application logic.
+
+### Developer setup troubleshooting
+
+- `make doctor` fails on Python or Node: switch to the versions pinned in
+  [.python-version](.python-version) and [.nvmrc](.nvmrc), then rerun
+  `make doctor` before bootstrapping. A doctor `WARN` on Docker or PlatformIO
+  only means those optional workflow paths are unavailable; the native Python +
+  Vite path can still be usable.
+- `vibesensor-server`, `vibesensor-config-preflight`, or other `vibesensor-*`
+  commands are missing after `pip install -e`: activate the same environment you
+  installed into before running repo commands. If you use a local `.venv`, run
+  `source .venv/bin/activate` first; otherwise, make sure the installing
+  interpreter's script directory is on your `PATH` and rerun
+  `python3 -m pip install -e "./apps/server[dev]"`.
+- Backend bootstrap looks half-installed or editable installs behave strangely:
+  avoid mixing global and virtualenv installs. Recreate the environment you
+  intend to use, then rerun either `make setup` or the native bootstrap flow in
+  [README.md#native-python--vite-recommended-for-backend-or-ui-iteration](README.md#native-python--vite-recommended-for-backend-or-ui-iteration).
+- `npm --prefix apps/ui ci` or `npm --prefix apps/ui run dev` fails right after a
+  Node version switch: confirm `node --version` matches `.nvmrc`, delete
+  `apps/ui/node_modules`, and rerun `npm --prefix apps/ui ci` instead of
+  `npm install`.
+- `docker compose` fails before the app starts: check `docker info` and
+  `docker compose version` before debugging the repo itself. If the daemon is
+  not reachable or your user lacks Docker permissions, fix that first and then
+  retry the commands from [README.md#docker-dev-mode-source-mounted-hot-reload](README.md#docker-dev-mode-source-mounted-hot-reload).
+- The Vite UI loads but `/api` or `/ws` requests fail: keep
+  `vibesensor-server --reload --config apps/server/config.dev.yaml` running on
+  `:8000`, then run `npm --prefix apps/ui run dev` and open
+  `http://127.0.0.1:5173`. The backend listener on `http://127.0.0.1:8000` is
+  the API server, not the Vite dev server.
