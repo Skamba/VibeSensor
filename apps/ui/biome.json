@@ -1,0 +1,57 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!src/generated",
+      "!src/contracts",
+      "!src/constants.ts",
+      "!package-lock.json",
+      "!!dist",
+      "!!test-results",
+      "!!tests/snapshots"
+    ]
+  },
+  "linter": {
+    "enabled": true,
+    "includes": [
+      "src/**/*.ts",
+      "tests/**/*.ts",
+      "playwright.config.ts",
+      "playwright.smoke.config.ts",
+      "vite.config.ts",
+      "take-screenshot.mjs",
+      "update-snapshots.mjs"
+    ],
+    "rules": {
+      "recommended": true
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "includes": [
+      "src/**/*.ts",
+      "src/**/*.css",
+      "src/i18n/catalogs/*.json",
+      "tests/**/*.ts",
+      "index.html",
+      "playwright.config.ts",
+      "playwright.smoke.config.ts",
+      "vite.config.ts",
+      "take-screenshot.mjs",
+      "update-snapshots.mjs",
+      "tsconfig.json",
+      "package.json",
+      "biome.json"
+    ],
+    "indentStyle": "space"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  }
+}

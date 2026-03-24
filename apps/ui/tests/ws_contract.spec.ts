@@ -34,6 +34,12 @@ const basePayload = {
   speed_mps: 10,
 };
 
+function requireSpectra(adapted: ReturnType<typeof adaptServerPayload>) {
+  expect(adapted.spectra).not.toBeNull();
+  if (!adapted.spectra) throw new Error("Expected adapted spectra");
+  return adapted.spectra;
+}
+
 // ---------------------------------------------------------------------------
 // Schema version handling
 // ---------------------------------------------------------------------------
@@ -109,12 +115,12 @@ test.describe("shared freq optimization", () => {
         },
       },
     });
-    expect(adapted.spectra).not.toBeNull();
-    expect(adapted.spectra!.clients.sensor1.freq).toEqual([10, 20, 30]);
-    expect(adapted.spectra!.clients.sensor2.freq).toEqual([10, 20, 30]);
-    expect(adapted.spectra!.clients.sensor1.strength_metrics.peak_amp_g).toBe(0);
-    expect(adapted.spectra!.clients.sensor1.strength_metrics.noise_floor_amp_g).toBe(0);
-    expect(adapted.spectra!.clients.sensor1.strength_metrics.top_peaks).toEqual([]);
+    const spectra = requireSpectra(adapted);
+    expect(spectra.clients.sensor1.freq).toEqual([10, 20, 30]);
+    expect(spectra.clients.sensor2.freq).toEqual([10, 20, 30]);
+    expect(spectra.clients.sensor1.strength_metrics.peak_amp_g).toBe(0);
+    expect(spectra.clients.sensor1.strength_metrics.noise_floor_amp_g).toBe(0);
+    expect(spectra.clients.sensor1.strength_metrics.top_peaks).toEqual([]);
   });
 
   test("prefers per-client freq over shared when both present", () => {
@@ -131,9 +137,9 @@ test.describe("shared freq optimization", () => {
         },
       },
     });
-    expect(adapted.spectra).not.toBeNull();
+    const spectra = requireSpectra(adapted);
     // Per-client freq takes precedence
-    expect(adapted.spectra!.clients.sensor1.freq).toEqual([15, 25, 35]);
+    expect(spectra.clients.sensor1.freq).toEqual([15, 25, 35]);
   });
 
   test("still works with old-style per-client freq (no shared)", () => {
@@ -150,8 +156,8 @@ test.describe("shared freq optimization", () => {
         },
       },
     });
-    expect(adapted.spectra).not.toBeNull();
-    expect(adapted.spectra!.clients.sensor1.freq).toEqual([10, 20, 30]);
+    const spectra = requireSpectra(adapted);
+    expect(spectra.clients.sensor1.freq).toEqual([10, 20, 30]);
   });
 
   test("skips client when neither shared nor per-client freq available", () => {
@@ -168,8 +174,8 @@ test.describe("shared freq optimization", () => {
       },
     });
     // No freq at all → client should be skipped
-    expect(adapted.spectra).not.toBeNull();
-    expect(Object.keys(adapted.spectra!.clients)).toHaveLength(0);
+    const spectra = requireSpectra(adapted);
+    expect(Object.keys(spectra.clients)).toHaveLength(0);
   });
 
   test("rejects malformed per-client freq elements instead of skipping the client", () => {
@@ -202,8 +208,8 @@ test.describe("shared freq optimization", () => {
         },
       },
     });
-    expect(adapted.spectra).not.toBeNull();
-    expect(Object.keys(adapted.spectra!.clients)).toHaveLength(0);
+    const spectra = requireSpectra(adapted);
+    expect(Object.keys(spectra.clients)).toHaveLength(0);
   });
 
   test("handles mixed: some clients with per-client freq, some without", () => {
@@ -224,11 +230,11 @@ test.describe("shared freq optimization", () => {
         },
       },
     });
-    expect(adapted.spectra).not.toBeNull();
+    const spectra = requireSpectra(adapted);
     // sensor1 uses shared freq
-    expect(adapted.spectra!.clients.sensor1.freq).toEqual([10, 20, 30]);
+    expect(spectra.clients.sensor1.freq).toEqual([10, 20, 30]);
     // sensor2 uses its own per-client freq
-    expect(adapted.spectra!.clients.sensor2.freq).toEqual([15, 25, 35]);
+    expect(spectra.clients.sensor2.freq).toEqual([15, 25, 35]);
   });
 
   test("rejects malformed strength metric peaks instead of dropping them", () => {

@@ -43,8 +43,7 @@ export interface UiShellStatusModule {
 export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShellStatusModule {
   const { shell, transport, realtime, settings, els } = ctx;
 
-  function speedValueInSelectedUnit(speedMps: number | null): number | null {
-    if (!(typeof speedMps === "number") || !Number.isFinite(speedMps)) return null;
+  function speedValueInSelectedUnit(speedMps: number): number {
     return shell.speedUnit === "mps" ? speedMps : speedMps * 3.6;
   }
 
@@ -64,7 +63,7 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
         || realtime.rotationalSpeeds?.basis_speed_source === "fallback_manual";
       const isOverride = isManualSource || isFallbackOverride;
       els.speed.textContent = ctx.t(isOverride ? "speed.override" : "speed.gps", {
-        value: fmt(value!, 1),
+        value: fmt(value, 1),
         unit: unitLabel,
       });
       return;
