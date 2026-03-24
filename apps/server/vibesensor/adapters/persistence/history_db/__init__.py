@@ -270,12 +270,16 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
         temp_path = Path(temp_path_text)
         backup_conn = sqlite3.connect(temp_path)
         try:
-            backup_conn.execute("PRAGMA journal_mode=DELETE")
-            self._conn.backup(backup_conn)
-        finally:
-            backup_conn.close()
-            Path(temp_path_text).chmod(0o600)
-        temp_path.replace(backup_path)
+            try:
+                backup_conn.execute("PRAGMA journal_mode=DELETE")
+                self._conn.backup(backup_conn)
+            finally:
+                backup_conn.close()
+            temp_path.chmod(0o600)
+            temp_path.replace(backup_path)
+        except BaseException:
+            temp_path.unlink(missing_ok=True)
+            raise
         LOGGER.warning(
             "Created pre-migration backup for %s at %s",
             self.db_path,
