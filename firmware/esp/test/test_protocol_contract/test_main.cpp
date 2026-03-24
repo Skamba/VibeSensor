@@ -16,10 +16,27 @@ void test_pack_hello_matches_python_fixture() {
                                             fixture::kHelloFrameSamples,
                                             fixture::kHelloName,
                                             fixture::kHelloFirmwareVersion,
-                                            fixture::kHelloQueueOverflowDrops);
+                                            fixture::kHelloQueueOverflowDrops,
+                                            fixture::kHelloCapabilities);
   TEST_ASSERT_EQUAL_UINT32(fixture::kHelloPacket.size(), len);
   TEST_ASSERT_EQUAL_UINT8_ARRAY(
       fixture::kHelloPacket.data(), packet, fixture::kHelloPacket.size());
+}
+
+void test_pack_hello_ack_matches_python_fixture() {
+  uint8_t packet[fixture::kHelloAckPacket.size()] = {};
+  const size_t len = vibesensor::pack_hello_ack(
+      packet, sizeof(packet), fixture::kHelloClientId.data());
+  TEST_ASSERT_EQUAL_UINT32(fixture::kHelloAckPacket.size(), len);
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(
+      fixture::kHelloAckPacket.data(), packet, fixture::kHelloAckPacket.size());
+}
+
+void test_parse_hello_ack_matches_python_fixture() {
+  const bool ok = vibesensor::parse_hello_ack(fixture::kHelloAckPacket.data(),
+                                              fixture::kHelloAckPacket.size(),
+                                              fixture::kHelloClientId.data());
+  TEST_ASSERT_TRUE(ok);
 }
 
 void test_pack_data_matches_python_fixture() {
@@ -107,6 +124,8 @@ void test_pack_data_ack_matches_python_fixture() {
 int main(int argc, char** argv) {
   UNITY_BEGIN();
   RUN_TEST(test_pack_hello_matches_python_fixture);
+  RUN_TEST(test_pack_hello_ack_matches_python_fixture);
+  RUN_TEST(test_parse_hello_ack_matches_python_fixture);
   RUN_TEST(test_pack_data_matches_python_fixture);
   RUN_TEST(test_parse_identify_matches_python_fixture);
   RUN_TEST(test_parse_sync_clock_matches_python_fixture);
