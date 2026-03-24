@@ -155,6 +155,21 @@ def _project_dependency_spec(requirement_name: str) -> str | None:
     return None
 
 
+def _build_system_requirement_spec(requirement_name: str) -> str | None:
+    pyproject = _load_server_pyproject()
+    build_system = pyproject.get("build-system")
+    if not isinstance(build_system, Mapping):
+        return None
+    requires = build_system.get("requires")
+    if not isinstance(requires, list):
+        return None
+    prefix = f"{requirement_name}>="
+    for requirement in requires:
+        if isinstance(requirement, str) and requirement.startswith(prefix):
+            return requirement
+    return None
+
+
 def _lower_bound_major(requirement_spec: str) -> int | None:
     match = re.search(r">=?\s*([0-9]+)", requirement_spec)
     return int(match.group(1)) if match else None
@@ -619,6 +634,75 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     return errors
 
 
+def check_dependency_reproducibility_hygiene() -> list[str]:
+    errors: list[str] = []
+
+    release_fetcher = (
+        ROOT
+        / "apps"
+        / "server"
+        / "vibesensor"
+        / "use_cases"
+        / "updates"
+        / "releases"
+        / "release_fetcher.py"
+    ).read_text(encoding="utf-8")
+    packaging_spec = _project_dependency_spec("packaging")
+    if (
+        "from packaging.version import Version" in release_fetcher
+        and packaging_spec is None
+    ):
+        errors.append(
+            "apps/server/pyproject.toml must declare packaging when release_fetcher imports packaging.version.Version."
+        )
+
+    setuptools_spec = _build_system_requirement_spec("setuptools")
+    if setuptools_spec is None:
+        errors.append(
+            "apps/server/pyproject.toml build-system requires must declare setuptools."
+        )
+    elif "<" not in setuptools_spec:
+        errors.append(
+            f"apps/server/pyproject.toml build-system setuptools requirement must include an upper bound; found {setuptools_spec!r}."
+        )
+
+    dependabot_path = ROOT / ".github" / "dependabot.yml"
+    if not dependabot_path.exists():
+        errors.append(
+            "Missing .github/dependabot.yml for automated dependency updates."
+        )
+        return errors
+
+    dependabot = _load_yaml_mapping(dependabot_path)
+    raw_updates = dependabot.get("updates")
+    if not isinstance(raw_updates, list):
+        errors.append(".github/dependabot.yml must define an updates list.")
+        return errors
+
+    configured_updates: set[tuple[str, str]] = set()
+    for item in raw_updates:
+        if not isinstance(item, Mapping):
+            continue
+        ecosystem = item.get("package-ecosystem")
+        directory = item.get("directory")
+        if isinstance(ecosystem, str) and isinstance(directory, str):
+            configured_updates.add((ecosystem, directory))
+
+    required_updates = {
+        ("pip", "/apps/server"),
+        ("npm", "/apps/ui"),
+        ("github-actions", "/"),
+    }
+    missing_updates = sorted(required_updates - configured_updates)
+    if missing_updates:
+        errors.append(
+            ".github/dependabot.yml is missing required update entries: "
+            f"{missing_updates}"
+        )
+
+    return errors
+
+
 def main() -> int:
     failures = 0
 
@@ -671,6 +755,15 @@ def main() -> int:
         failures += 1
     else:
         print("Docker/CI dependency hygiene checks passed.")
+
+    dependency_repro_errors = check_dependency_reproducibility_hygiene()
+    if dependency_repro_errors:
+        print("Dependency reproducibility hygiene drift detected:")
+        for item in dependency_repro_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Dependency reproducibility hygiene checks passed.")
 
     return 1 if failures else 0
 
