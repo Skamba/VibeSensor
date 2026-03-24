@@ -2,13 +2,8 @@
 
 from __future__ import annotations
 
-from typing import cast
-
 from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck
-from vibesensor.shared.boundaries.analysis_summary import (
-    AnalysisResultLike,
-    analysis_result_to_summary,
-)
+from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_summary
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_summary,
 )
@@ -42,8 +37,26 @@ def build_post_analysis_summary(
         file_name=run_id,
         include_samples=False,
     ).summarize()
-    summary_payload = analysis_result_to_summary(cast(AnalysisResultLike, result))
+    summary_payload = analysis_result_to_summary(result)
     summary_payload["case_id"] = result.diagnostic_case.case_id
+
+    def append_run_suitability_warning(
+        *,
+        check_key: str,
+        state: str,
+        explanation: str,
+    ) -> None:
+        run_suitability = summary_payload.get("run_suitability")
+        if run_suitability is None:
+            run_suitability = []
+            summary_payload["run_suitability"] = run_suitability
+        warning_payload: RunSuitabilityCheck = {
+            "check_key": check_key,
+            "check": check_key,
+            "state": state,
+            "explanation": explanation,
+        }
+        run_suitability.append(warning_payload)
 
     analysis_metadata: JsonObject = {
         "analyzed_sample_count": len(samples),
@@ -61,8 +74,7 @@ def build_post_analysis_summary(
             state="warn",
         )
         explanation = tr(language, "SUITABILITY_RUN_DURATION_WARNING")
-        _append_run_suitability_warning(
-            summary_payload=summary_payload,
+        append_run_suitability_warning(
             check_key=short_run_check.check_key,
             state=short_run_check.state,
             explanation=explanation,
@@ -79,38 +91,13 @@ def build_post_analysis_summary(
             "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
             stride=str(stride),
         )
-        _append_run_suitability_warning(
-            summary_payload=summary_payload,
+        append_run_suitability_warning(
             check_key=stride_check.check_key,
             state=stride_check.state,
             explanation=explanation,
         )
 
     return persisted_analysis_from_summary(summary_payload)
-
-
-def _append_run_suitability_warning(
-    *,
-    summary_payload: object,
-    check_key: str,
-    state: str,
-    explanation: str,
-) -> None:
-    summary_payload_dict = cast(dict[str, object], summary_payload)
-    run_suitability = summary_payload_dict.get("run_suitability")
-    if not isinstance(run_suitability, list):
-        run_suitability_list: list[RunSuitabilityCheck] = []
-        summary_payload_dict["run_suitability"] = run_suitability_list
-        run_suitability = run_suitability_list
-    else:
-        run_suitability = cast(list[RunSuitabilityCheck], run_suitability)
-    warning_payload: RunSuitabilityCheck = {
-        "check_key": check_key,
-        "check": check_key,
-        "state": state,
-        "explanation": explanation,
-    }
-    run_suitability.append(warning_payload)
 
 
 def _post_analysis_sample_rate_hz(metadata: RunMetadata) -> int | None:

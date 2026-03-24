@@ -4,13 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import cast
 
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.analysis_summary import (
-    AnalysisResultLike,
-    analysis_result_to_summary,
-)
+from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_summary
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics import (
     AnalysisSampleInput,
@@ -37,7 +33,7 @@ def summarize_run_data(
         include_samples=include_samples,
         findings_builder=findings_builder,
     ).summarize()
-    return analysis_result_to_summary(cast(AnalysisResultLike, result))
+    return analysis_result_to_summary(result)
 
 
 def summarize_log(

@@ -48,6 +48,7 @@ from vibesensor.domain import (
 from vibesensor.report_i18n import human_source, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
+from vibesensor.shared.types.json_types import JsonValue
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportFacts,
     PreparedReportInput,
@@ -188,7 +189,7 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     if report_facts is None:
         raise ValueError("PreparedReportInput must include report_facts for report mapping")
 
-    def tr(key: str, **kw: object) -> str:
+    def tr(key: str, **kw: JsonValue) -> str:
         return str(_tr(lang, key, **kw))
 
     return _build_report_template_data(

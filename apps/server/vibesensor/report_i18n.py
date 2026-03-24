@@ -9,7 +9,6 @@ import json
 import logging
 from collections.abc import Callable
 from functools import lru_cache
-from typing import Any
 
 from vibesensor.domain import VibrationSource
 from vibesensor.shared._data_files import resolve_static_data_file
@@ -38,7 +37,7 @@ def normalize_lang(lang: object) -> str:
     return "en"
 
 
-def tr(lang: object, key: str, **kwargs: Any) -> str:
+def tr(lang: object, key: str, **kwargs: JsonValue) -> str:
     """Look up translation *key* for *lang* and format with *kwargs*."""
     values = _load_translations().get(key)
     if values is None:
