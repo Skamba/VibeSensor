@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased — Documentation, DX, and Observability Alignment
+
+### Improvements
+
+- **Performance and runtime hardening follow-through** — Recent merged work now
+  reflected here includes broadcast/registry hot-path improvements, stricter
+  locking on runtime-critical paths, SQLite persistence hardening, migration
+  rollback safety, and more explicit UDP/update error handling.
+- **Short-run and operator feedback polish** — Added the short-run suitability
+  warning, normalized settings update verbs, and unified frontend error
+  notifications so API/UI error handling and operator messages stay coherent.
+- **Docs and test-map refresh** — Documented key HTTP routes in OpenAPI, froze
+  recorder run context for more reliable tests, clarified test layout and smoke
+  markers, reused shared boundary decoders, added the developer troubleshooting
+  FAQ, and polished the local development inner loop.
+- **CI and dependency reproducibility** — CI now reuses cached E2E images,
+  captures failure artifacts for slower suites, gates long jobs behind fast
+  prerequisites, runs `pip check`, uses Dependabot for backend/frontend/actions
+  dependencies, and keeps the backend build requirement for `setuptools`
+  explicitly bounded.
+- **Structured observability** — Application file logs now use structured JSON,
+  HTTP responses echo `X-Request-ID`, and successful settings writes emit
+  `settings_change` audit events with before/after values.
+
 ## Unreleased — Engineering Hardening Pass
 
 ### Breaking changes
