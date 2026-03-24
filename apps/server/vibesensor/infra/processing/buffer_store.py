@@ -39,6 +39,7 @@ class SignalBufferStore:
         self.config = config
         self.buffers: dict[str, ClientBuffer] = {}
         self._client_locks: dict[str, RLock] = {}
+        self._next_buffer_epoch = 0
         self.lock = RLock()
         self.stats = ProcessorStats()
 
@@ -91,18 +92,10 @@ class SignalBufferStore:
                 )
                 return
             if sample_rate_hz is not None and sample_rate_hz > 0:
-                requested_rate = int(sample_rate_hz)
-                clamped_rate = max(1, min(MAX_CLIENT_SAMPLE_RATE_HZ, requested_rate))
-                if clamped_rate != requested_rate:
-                    LOGGER.warning(
-                        "Clamped client sample_rate_hz from %d to %d to bound buffer growth",
-                        requested_rate,
-                        clamped_rate,
-                    )
-                buf.sample_rate_hz = clamped_rate
-                self._resize_buffer_unlocked(
+                self._apply_sample_rate_override_unlocked(
                     buf,
-                    buf.sample_rate_hz * self.config.waveform_seconds,
+                    sample_rate_hz,
+                    resize_buffer=True,
                 )
             now_mono = clock()
             buf.last_ingest_mono_s = now_mono
@@ -150,7 +143,11 @@ class SignalBufferStore:
             if buf is None or buf.count == 0:
                 return None
             if sample_rate_hz is not None and sample_rate_hz > 0:
-                buf.sample_rate_hz = int(sample_rate_hz)
+                self._apply_sample_rate_override_unlocked(
+                    buf,
+                    sample_rate_hz,
+                    resize_buffer=False,
+                )
             sr = buf.sample_rate_hz or self.config.sample_rate_hz
             if buf.compute_generation == buf.ingest_generation and buf.compute_sample_rate_hz == sr:
                 return CachedMetricsHit(metrics=buf.latest_metrics)
@@ -172,6 +169,7 @@ class SignalBufferStore:
                 client_id=client_id,
                 sample_rate_hz=sr,
                 ingest_generation=buf.ingest_generation,
+                buffer_epoch=buf.buffer_epoch,
                 time_window=time_window,
                 fft_block=fft_block,
             )
@@ -179,7 +177,11 @@ class SignalBufferStore:
     def store_metrics_result(self, result: MetricsComputationResult) -> ClientMetrics:
         """Commit a compute result back into shared state and update stats."""
         with self.locked_client_buffer(result.client_id) as buf:
-            if buf is not None and result.ingest_generation >= buf.compute_generation:
+            if (
+                buf is not None
+                and result.buffer_epoch == buf.buffer_epoch
+                and result.ingest_generation >= buf.compute_generation
+            ):
                 buf.latest_metrics = result.metrics
                 buf.compute_generation = result.ingest_generation
                 buf.compute_sample_rate_hz = result.sample_rate_hz
@@ -326,7 +328,12 @@ class SignalBufferStore:
         buf = self.buffers.get(client_id)
         if buf is None:
             data: FloatArray = np.zeros((3, self.config.max_samples), dtype=np.float32)
-            buf = ClientBuffer(data=data, capacity=self.config.max_samples)
+            buf = ClientBuffer(
+                data=data,
+                capacity=self.config.max_samples,
+                buffer_epoch=self._next_buffer_epoch,
+            )
+            self._next_buffer_epoch += 1
             self.buffers[client_id] = buf
             self._client_locks[client_id] = RLock()
         return buf
@@ -398,6 +405,30 @@ class SignalBufferStore:
         buf.capacity = new_capacity
         buf.write_idx = latest.shape[1] % new_capacity
         buf.count = min(latest.shape[1], new_capacity)
+
+    def _apply_sample_rate_override_unlocked(
+        self,
+        buf: ClientBuffer,
+        sample_rate_hz: int,
+        *,
+        resize_buffer: bool,
+    ) -> None:
+        requested_rate = int(sample_rate_hz)
+        clamped_rate = max(1, min(MAX_CLIENT_SAMPLE_RATE_HZ, requested_rate))
+        if clamped_rate != requested_rate:
+            LOGGER.warning(
+                "Clamped client sample_rate_hz from %d to %d to bound buffer growth",
+                requested_rate,
+                clamped_rate,
+            )
+        if clamped_rate == buf.sample_rate_hz:
+            return
+        buf.sample_rate_hz = clamped_rate
+        if resize_buffer:
+            self._resize_buffer_unlocked(
+                buf,
+                clamped_rate * self.config.waveform_seconds,
+            )
 
     def copy_latest(self, buf: ClientBuffer, n: int) -> FloatArray:
         if n <= 0 or buf.count == 0:
