@@ -321,6 +321,10 @@ async def test_payload_error_affected_count_logged(caplog) -> None:
 
     # Summary log mentions 2 affected connections
     assert any("2 connection(s)" in r.message for r in caplog.records)
+    assert any(
+        "WebSocket payload build failed for 1 client id(s) ('bad')" in r.message
+        for r in caplog.records
+    )
 
 
 @pytest.mark.asyncio

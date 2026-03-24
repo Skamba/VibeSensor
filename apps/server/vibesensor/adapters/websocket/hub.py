@@ -456,7 +456,7 @@ class WebSocketHub:
                 if selected_client_id in failed_client_ids
             )
             LOGGER.error(
-                "Payload build failed for %d client id(s) (%s); "
+                "WebSocket payload build failed for %d client id(s) (%s); "
                 "%d connection(s) received error payloads.",
                 len(failed_client_ids),
                 ", ".join(repr(cid) for cid in failed_client_ids),
