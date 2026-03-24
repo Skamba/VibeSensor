@@ -91,6 +91,15 @@ class TestComputeVibrationStrengthBoundaries:
         assert result["top_peaks"][0]["hz"] == 10.0
         assert "strength_bucket" in result
 
+    def test_first_interior_candidate_with_stronger_left_neighbor_is_not_reported(self) -> None:
+        result = compute_vibration_strength_db(
+            freq_hz=[0.0, 1.0, 2.0],
+            combined_spectrum_amp_g_values=[10.0, 6.0, 1.0],
+        )
+        assert result["top_peaks"] == []
+        assert result["vibration_strength_db"] == 0.0
+        assert result["peak_amp_g"] == 0.0
+
     def test_large_spectrum(self) -> None:
         """Large spectrum (1000 bins) should complete without issues."""
         freq = [float(i) for i in range(1000)]

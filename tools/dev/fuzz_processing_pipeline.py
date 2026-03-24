@@ -157,19 +157,32 @@ def _strength_case_strategy(st: Any) -> Any:
             )
         )
         freq_step_hz = draw(
-            st.floats(min_value=0.1, max_value=12.0, allow_nan=False, allow_infinity=False)
+            st.floats(
+                min_value=0.1, max_value=12.0, allow_nan=False, allow_infinity=False
+            )
         )
         start_hz = draw(
-            st.floats(min_value=0.0, max_value=20.0, allow_nan=False, allow_infinity=False)
+            st.floats(
+                min_value=0.0, max_value=20.0, allow_nan=False, allow_infinity=False
+            )
         )
-        center_idx = draw(st.integers(min_value=0, max_value=max(0, min(lengths or [0]) - 1)))
+        center_idx = draw(
+            st.integers(min_value=0, max_value=max(0, min(lengths or [0]) - 1))
+        )
         bandwidth_hz = draw(
-            st.floats(min_value=0.05, max_value=8.0, allow_nan=False, allow_infinity=False)
+            st.floats(
+                min_value=0.05, max_value=8.0, allow_nan=False, allow_infinity=False
+            )
         )
         epsilon_g = draw(
             st.one_of(
                 st.none(),
-                st.floats(min_value=1e-12, max_value=0.1, allow_nan=False, allow_infinity=False),
+                st.floats(
+                    min_value=1e-12,
+                    max_value=0.1,
+                    allow_nan=False,
+                    allow_infinity=False,
+                ),
             )
         )
         return {
@@ -191,7 +204,9 @@ def _fft_case_strategy(st: Any) -> Any:
         sample_rate_hz = draw(st.integers(min_value=32, max_value=4096))
         fft_n = draw(st.sampled_from((32, 64, 128, 256, 512)))
         spectrum_min_hz = draw(
-            st.floats(min_value=0.0, max_value=40.0, allow_nan=False, allow_infinity=False)
+            st.floats(
+                min_value=0.0, max_value=40.0, allow_nan=False, allow_infinity=False
+            )
         )
         max_band_hz = max(float(sample_rate_hz) / 2.0, spectrum_min_hz + 1.0)
         spectrum_max_hz = draw(
@@ -206,7 +221,9 @@ def _fft_case_strategy(st: Any) -> Any:
         spike_col = draw(st.integers(min_value=0, max_value=fft_n - 1))
         spike_axis = draw(st.integers(min_value=0, max_value=2))
         dc_offset = draw(
-            st.floats(min_value=-2.0, max_value=2.0, allow_nan=False, allow_infinity=False)
+            st.floats(
+                min_value=-2.0, max_value=2.0, allow_nan=False, allow_infinity=False
+            )
         )
         base_block = draw(
             st.lists(
@@ -225,7 +242,9 @@ def _fft_case_strategy(st: Any) -> Any:
             )
         )
         spike_value = draw(
-            st.floats(min_value=-64.0, max_value=64.0, allow_nan=False, allow_infinity=False)
+            st.floats(
+                min_value=-64.0, max_value=64.0, allow_nan=False, allow_infinity=False
+            )
         )
         return {
             "sample_rate_hz": sample_rate_hz,
@@ -251,7 +270,9 @@ def _processor_case_strategy(st: Any) -> Any:
         waveform_display_hz = draw(st.integers(min_value=1, max_value=120))
         fft_n = draw(st.sampled_from((32, 64, 128, 256)))
         spectrum_min_hz = draw(
-            st.floats(min_value=0.0, max_value=20.0, allow_nan=False, allow_infinity=False)
+            st.floats(
+                min_value=0.0, max_value=20.0, allow_nan=False, allow_infinity=False
+            )
         )
         spectrum_max_hz = draw(
             st.floats(
@@ -264,7 +285,12 @@ def _processor_case_strategy(st: Any) -> Any:
         accel_scale = draw(
             st.one_of(
                 st.none(),
-                st.floats(min_value=1e-5, max_value=0.05, allow_nan=False, allow_infinity=False),
+                st.floats(
+                    min_value=1e-5,
+                    max_value=0.05,
+                    allow_nan=False,
+                    allow_infinity=False,
+                ),
             )
         )
         clients = draw(
@@ -386,8 +412,12 @@ def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> None:
             ),
         )
         if combined:
-            assert all(np.isfinite(combined)), "combined spectrum contains non-finite values"
-            assert all(value >= 0.0 for value in combined), "combined spectrum contains negatives"
+            assert all(np.isfinite(combined)), (
+                "combined spectrum contains non-finite values"
+            )
+            assert all(value >= 0.0 for value in combined), (
+                "combined spectrum contains negatives"
+            )
 
         floor_amp = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
         assert np.isfinite(floor_amp) and floor_amp >= 0.0
@@ -429,7 +459,9 @@ def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> None:
             for peak in metrics["top_peaks"]
             if isinstance(peak, Mapping) and "vibration_strength_db" in peak
         ]
-        assert _is_sorted_desc(peak_strengths), "strength peaks not sorted by descending dB"
+        assert _is_sorted_desc(peak_strengths), (
+            "strength peaks not sorted by descending dB"
+        )
         _json_no_nan(metrics)
 
     try:
@@ -537,7 +569,9 @@ def _run_fft_target(config: FuzzConfig, *, duration_s: float) -> None:
             assert axis_payload["amp"].shape == combined_amp.shape
             assert np.all(np.isfinite(axis_payload["amp"]))
             TypeAdapter(list[AxisPeak]).validate_python(result["axis_peaks"][axis])
-        TypeAdapter(VibrationStrengthMetrics).validate_python(result["strength_metrics"])
+        TypeAdapter(VibrationStrengthMetrics).validate_python(
+            result["strength_metrics"]
+        )
         _json_no_nan(current_output)
 
     try:
@@ -619,7 +653,9 @@ def _run_processor_target(config: FuzzConfig, *, duration_s: float) -> None:
 
         clients_raw = case["clients"]
         chunks_raw = case["chunks"]
-        if not isinstance(clients_raw, Sequence) or not isinstance(chunks_raw, Sequence):
+        if not isinstance(clients_raw, Sequence) or not isinstance(
+            chunks_raw, Sequence
+        ):
             raise TypeError("processor case must contain sequence clients and chunks")
         clients = [str(client_id) for client_id in clients_raw]
         for chunk in chunks_raw:
@@ -634,7 +670,9 @@ def _run_processor_target(config: FuzzConfig, *, duration_s: float) -> None:
                     if isinstance(chunk.get("sample_rate_hz"), int)
                     else None
                 ),
-                t0_us=int(chunk["t0_us"]) if isinstance(chunk.get("t0_us"), int) else None,
+                t0_us=int(chunk["t0_us"])
+                if isinstance(chunk.get("t0_us"), int)
+                else None,
             )
 
         metrics_by_client: dict[str, ClientMetrics] = {}
@@ -739,10 +777,12 @@ def main() -> int:
 
     try:
         import hypothesis  # noqa: F401
-    except ImportError as exc:  # pragma: no cover - only exercised in missing-dev-deps envs
+    except (
+        ImportError
+    ) as exc:  # pragma: no cover - only exercised in missing-dev-deps envs
         raise SystemExit(
             "Missing Hypothesis. Install backend dev dependencies first with "
-            "`python3 -m pip install -e \"./apps/server[dev]\"`."
+            '`python3 -m pip install -e "./apps/server[dev]"`.'
         ) from exc
 
     targets: list[TargetName]

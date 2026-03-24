@@ -166,7 +166,9 @@ def _coerce_include_samples(case: Mapping[str, object], override: bool | None) -
 
 def _metadata_strategy(st: Any) -> Any:
     positive_int = st.integers(min_value=32, max_value=6400)
-    positive_float = st.floats(min_value=0.05, max_value=2.0, allow_nan=False, allow_infinity=False)
+    positive_float = st.floats(
+        min_value=0.05, max_value=2.0, allow_nan=False, allow_infinity=False
+    )
     settings_float = st.floats(
         min_value=0.1,
         max_value=10.0,
@@ -482,7 +484,9 @@ def _materialize_samples(
                 continue
             dominance = 1.0
             if fault_kind != "none" and not diffuse_excitation:
-                dominance = 1.65 if sensor_index == 0 else (0.55 + (sensor_index * 0.12))
+                dominance = (
+                    1.65 if sensor_index == 0 else (0.55 + (sensor_index * 0.12))
+                )
 
             base_amp_g = max(1e-6, floor_amp_g * (1.2 + (sensor_index * 0.18)))
             fault_amp_g = max(1e-6, base_fault_amp_g * dominance)
@@ -546,7 +550,8 @@ def _materialize_samples(
                     else "missing"
                 ),
                 "gear": float(metadata.get("current_gear_ratio") or 0.0) or None,
-                "final_drive_ratio": float(metadata.get("final_drive_ratio") or 0.0) or None,
+                "final_drive_ratio": float(metadata.get("final_drive_ratio") or 0.0)
+                or None,
                 "accel_x_g": round(base_amp_g * (0.8 + accel_scale), 6),
                 "accel_y_g": round(base_amp_g * (0.6 + (accel_scale * 0.5)), 6),
                 "accel_z_g": round(1.0 + base_amp_g * (0.4 + accel_scale), 6),
@@ -573,7 +578,9 @@ def _validate_summary(
     TypeAdapter(AnalysisSummary).validate_python(summary)
     summary_rows = summary.get("rows")
     if summary_rows != expected_rows:
-        raise AssertionError(f"summary rows {summary_rows!r} != expected {expected_rows}")
+        raise AssertionError(
+            f"summary rows {summary_rows!r} != expected {expected_rows}"
+        )
     if summary.get("findings") is None:
         raise AssertionError("summary findings missing")
     if summary.get("run_suitability") is None:
@@ -620,10 +627,12 @@ def main() -> int:
     try:
         from hypothesis import HealthCheck, Phase, given, settings
         from hypothesis import strategies as st
-    except ImportError as exc:  # pragma: no cover - exercised only in missing-dev-deps envs
+    except (
+        ImportError
+    ) as exc:  # pragma: no cover - exercised only in missing-dev-deps envs
         raise SystemExit(
             "Missing Hypothesis. Install backend dev dependencies first with "
-            "`python3 -m pip install -e \"./apps/server[dev]\"`."
+            '`python3 -m pip install -e "./apps/server[dev]"`.'
         ) from exc
 
     from pydantic import TypeAdapter
