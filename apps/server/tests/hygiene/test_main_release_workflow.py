@@ -6,8 +6,7 @@ from tests._paths import REPO_ROOT
 
 _MAIN_RELEASE_YML = REPO_ROOT / ".github" / "workflows" / "main-release.yml"
 _EXPECTED_MODULE = (
-    "vibesensor.use_cases.updates.releases.release_validation "
-    "validate-firmware-manifest"
+    "vibesensor.use_cases.updates.releases.release_validation validate-firmware-manifest"
 )
 _STALE_MODULE = "vibesensor.use_cases.updates.release_validation"
 
