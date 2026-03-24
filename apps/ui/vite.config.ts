@@ -10,9 +10,17 @@ export default defineConfig(({ mode }) => {
       // same language level and avoid duplicate down-transpilation.
       target: "es2020",
     },
+    // Our smoke tests and preview helpers target fixed URLs, so fail fast on
+    // port conflicts instead of silently hopping to the next available port.
+    preview: {
+      host: "0.0.0.0",
+      port: 4173,
+      strictPort: true,
+    },
     server: {
       host: "0.0.0.0",
       port: 5173,
+      strictPort: true,
       proxy: {
         "/api": backendOrigin,
         "/static": backendOrigin,
