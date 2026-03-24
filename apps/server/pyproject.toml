@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68,<83", "wheel"]
+requires = ["setuptools>=68,<83", "wheel>=0.45,<1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,7 +15,7 @@ dependencies = [
   "packaging>=24,<27",
   "PyYAML>=6,<7",
   "reportlab>=4,<5",
-  "websockets>=12,<17",
+  "websockets>=16,<17",
 ]
 
 [project.optional-dependencies]
