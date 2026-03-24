@@ -11,7 +11,7 @@ import time
 from dataclasses import dataclass, field
 from threading import RLock
 
-from vibesensor.domain import normalize_sensor_id as _normalize_client_id
+from vibesensor.domain import normalize_sensor_id
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
 from vibesensor.infra.runtime.registry_updates import (
@@ -189,7 +189,7 @@ class ClientRegistry:
 
     @staticmethod
     def _normalize_wire_client_id(client_id: bytes) -> str:
-        return _normalize_client_id(client_id.hex())
+        return normalize_sensor_id(client_id.hex())
 
     def _is_live_unlocked(self, record: ClientRecord, mono_now: float) -> bool:
         return bool(
@@ -203,7 +203,7 @@ class ClientRegistry:
         )
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
-        normalized = _normalize_client_id(client_id)
+        normalized = normalize_sensor_id(client_id)
         record = self._clients.get(normalized)
         if record is None:
             default_name = self._metadata.default_name_for(normalized)
@@ -289,7 +289,7 @@ class ClientRegistry:
         if not client_id:
             return
         try:
-            normalized = _normalize_client_id(client_id)
+            normalized = normalize_sensor_id(client_id)
         except ValueError:
             return
         with self._lock:
@@ -332,7 +332,7 @@ class ClientRegistry:
                     (
                         cid
                         for cid, rec in self._clients.items()
-                        if cid != _normalize_client_id(client_id) and rec.location_code == clean
+                        if cid != normalize_sensor_id(client_id) and rec.location_code == clean
                     ),
                     None,
                 )
@@ -345,7 +345,7 @@ class ClientRegistry:
 
     def remove_client(self, client_id: str) -> bool:
         try:
-            normalized = _normalize_client_id(client_id)
+            normalized = normalize_sensor_id(client_id)
         except ValueError:
             return False
         with self._lock:
@@ -357,7 +357,7 @@ class ClientRegistry:
     def get(self, client_id: str) -> ClientRecordSnapshot | None:
         """Return an immutable point-in-time snapshot for *client_id*."""
         try:
-            normalized = _normalize_client_id(client_id)
+            normalized = normalize_sensor_id(client_id)
         except ValueError:
             return None
         with self._lock:
