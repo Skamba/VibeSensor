@@ -15,7 +15,7 @@ dependencies = [
   "packaging>=24,<25",
   "PyYAML>=6,<7",
   "reportlab>=4,<5",
-  "websockets>=12,<16",
+  "websockets>=12,<17",
 ]
 
 [project.optional-dependencies]
