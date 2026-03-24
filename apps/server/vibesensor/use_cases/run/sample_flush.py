@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import replace
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.ports import ClientTracker, SignalSource, SpeedProvider
+from vibesensor.shared.ports import ClientTracker, SensorMetadataReader, SignalSource, SpeedProvider
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
@@ -38,6 +38,7 @@ class SampleFlushOrchestrator:
         processor: SignalSource,
         analysis_settings_snapshot: AnalysisSettingsProvider,
         default_sample_rate_hz: int,
+        sensor_metadata_reader: SensorMetadataReader | None = None,
         lifecycle: RunLifecycleState,
         persistence: RunPersistenceWriter,
         active_frames_total: CurrentTotalProvider,
@@ -50,6 +51,7 @@ class SampleFlushOrchestrator:
         self._processor = processor
         self._analysis_settings_snapshot = analysis_settings_snapshot
         self._default_sample_rate_hz = default_sample_rate_hz
+        self._sensor_metadata_reader = sensor_metadata_reader
         self._lifecycle = lifecycle
         self._persistence = persistence
         self._active_frames_total = active_frames_total
@@ -104,6 +106,7 @@ class SampleFlushOrchestrator:
             ),
             analysis_settings_snapshot=analysis_settings_snapshot,
             default_sample_rate_hz=self._default_sample_rate_hz,
+            sensor_metadata_reader=self._sensor_metadata_reader,
         )
 
     def build_live_sample_records(

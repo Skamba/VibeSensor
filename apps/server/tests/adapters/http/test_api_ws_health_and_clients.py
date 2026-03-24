@@ -154,19 +154,19 @@ async def test_identify_client_normalizes_client_id_before_registry_and_control_
 
 
 @pytest.mark.asyncio
-async def test_set_client_location_maps_registry_conflict_to_409() -> None:
+async def test_set_client_location_maps_canonical_location_conflict_to_409() -> None:
     from vibesensor.adapters.http.clients import create_client_routes
 
-    class ConflictRegistry:
+    class KnownRegistry:
         def get(self, _client_id: str) -> object:
             return object()
 
-        def set_location(self, _client_id: str, _location: str) -> None:
-            raise ValueError("Location 'front_left_wheel' already assigned to other sensor")
-
-    registry = ConflictRegistry()
+    registry = KnownRegistry()
     control_plane = MagicMock()
     settings_store = MagicMock()
+    settings_store.set_sensor.side_effect = ValueError(
+        "Location 'front_left_wheel' already assigned to other sensor",
+    )
     router = create_client_routes(registry, control_plane, settings_store, MagicMock())
     endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
 
@@ -175,6 +175,45 @@ async def test_set_client_location_maps_registry_conflict_to_409() -> None:
         await endpoint("aa:bb:cc:dd:ee:ff", request)
     assert exc_info.value.status_code == 409
     assert "already assigned" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_set_client_location_persists_canonical_name_and_location() -> None:
+    from vibesensor.adapters.http.clients import create_client_routes
+
+    class KnownRegistry:
+        def __init__(self) -> None:
+            self.cleared: list[str] = []
+
+        def get(self, _client_id: str):
+            return type("Rec", (), {"name": "legacy-name"})()
+
+        def clear_name(self, client_id: str):
+            self.cleared.append(client_id)
+            return type("Rec", (), {"name": f"client-{client_id[-4:]}"})()
+
+    registry = KnownRegistry()
+    control_plane = MagicMock()
+    settings_store = MagicMock()
+    settings_store.set_sensor.return_value = {
+        "aabbccddeeff": {
+            "name": "Front Left Wheel",
+            "location_code": "front_left_wheel",
+        }
+    }
+    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
+    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
+
+    request = type("Req", (), {"location_code": "front_left_wheel"})()
+    resp = response_payload(await endpoint("aa:bb:cc:dd:ee:ff", request))
+
+    settings_store.set_sensor.assert_called_once_with(
+        "aa:bb:cc:dd:ee:ff",
+        {"name": "Front Left Wheel", "location_code": "front_left_wheel"},
+    )
+    assert registry.cleared == []
+    assert resp["name"] == "Front Left Wheel"
+    assert resp["location_code"] == "front_left_wheel"
 
 
 @pytest.mark.asyncio
@@ -204,6 +243,7 @@ async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected
 
     control_plane = MagicMock()
     settings_store = MagicMock()
+    settings_store.get_sensors.return_value = {}
     processor = MagicMock()
     processor.all_latest_metrics.return_value = {}
     router = create_client_routes(registry, control_plane, settings_store, processor)
@@ -222,6 +262,73 @@ async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected
             "sample_rate_hz": 800,
             "frame_samples": 0,
             "last_seen_age_ms": 8000,
+            "frames_total": 0,
+            "dropped_frames": 0,
+            "latest_metrics": {},
+            "reset_count": 0,
+            "last_reset_time": None,
+        },
+    ]
+
+
+@pytest.mark.asyncio
+async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from vibesensor.adapters.http.clients import create_client_routes
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.udp.protocol import HelloMessage
+    from vibesensor.infra.config.settings_store import SettingsStore
+    from vibesensor.infra.runtime.registry import ClientRegistry
+
+    db = HistoryDB(tmp_path / "history.db")
+    initial_settings = SettingsStore(db=db)
+    initial_settings.set_sensor(
+        "00:11:22:33:44:55",
+        {"name": "Rear Left Wheel", "location_code": "rear_left_wheel"},
+    )
+
+    settings_store = SettingsStore(db=db)
+    registry = ClientRegistry(db=db)
+    registry.update_from_hello(
+        HelloMessage(
+            client_id=bytes.fromhex("001122334455"),
+            control_port=9010,
+            sample_rate_hz=800,
+            name="advertised-name",
+            firmware_version="fw",
+        ),
+        ("10.4.0.2", 9010),
+        now=1.0,
+        now_mono=1.0,
+    )
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: 1.0)
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: 1.0)
+
+    control_plane = MagicMock()
+    processor = MagicMock()
+    processor.all_latest_metrics.return_value = {}
+    router = create_client_routes(registry, control_plane, settings_store, processor)
+    endpoint = route_endpoint(router, "/api/clients")
+
+    resp = response_payload(await endpoint())
+
+    assert settings_store.get_sensors()["001122334455"] == {
+        "name": "Rear Left Wheel",
+        "location_code": "rear_left_wheel",
+    }
+    assert resp["clients"] == [
+        {
+            "id": "001122334455",
+            "mac_address": "00:11:22:33:44:55",
+            "name": "Rear Left Wheel",
+            "connected": True,
+            "location_code": "rear_left_wheel",
+            "firmware_version": "fw",
+            "sample_rate_hz": 800,
+            "frame_samples": 0,
+            "last_seen_age_ms": 0,
             "frames_total": 0,
             "dropped_frames": 0,
             "latest_metrics": {},

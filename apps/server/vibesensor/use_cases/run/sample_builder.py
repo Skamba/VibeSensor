@@ -15,7 +15,8 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
-from vibesensor.shared.ports import ClientTracker
+from vibesensor.shared.ports import ClientTracker, SensorMetadataReader
+from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -129,6 +130,7 @@ def build_sample_records(
     speed_context: SpeedContext,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
+    sensor_metadata_reader: SensorMetadataReader | None = None,
 ) -> list[SensorFrame]:
     """Build one batch of typed sample records from all active clients."""
     (
@@ -144,6 +146,7 @@ def build_sample_records(
     gear_ratio = (
         order_reference_spec.current_gear_ratio if order_reference_spec is not None else None
     )
+    sensors_by_mac = sensor_metadata_reader.get_sensors() if sensor_metadata_reader else {}
 
     records: list[SensorFrame] = []
     active_client_ids = sorted(
@@ -185,13 +188,19 @@ def build_sample_records(
             or default_sample_rate_hz
             or None
         )
+        resolved_name, resolved_location = resolve_sensor_presentation(
+            sensor_id=record.client_id,
+            sensors_by_mac=sensors_by_mac,
+            fallback_name=str(record.name or ""),
+            fallback_location_code=str(getattr(record, "location_code", "") or ""),
+        )
         frame = SensorFrame(
             run_id=run_id,
             timestamp_utc=timestamp_utc,
             t_s=t_s,
             client_id=client_id,
-            client_name=record.name,
-            location=str(getattr(record, "location_code", "") or ""),
+            client_name=resolved_name,
+            location=resolved_location,
             sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
             speed_kmh=speed_kmh,
             gps_speed_kmh=gps_speed_kmh,

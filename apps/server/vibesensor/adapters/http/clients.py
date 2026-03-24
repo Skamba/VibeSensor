@@ -25,7 +25,9 @@ from vibesensor.adapters.http.models import (
 from vibesensor.adapters.udp.protocol import client_id_mac
 from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.shared.locations import all_locations, label_for_code
-from vibesensor.shared.ports import SensorSettingsWriter
+from vibesensor.shared.ports import SensorMetadataStore
+from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
+from vibesensor.shared.types.sensor_config import SensorConfigPayload, SensorConfigUpdatePayload
 
 if TYPE_CHECKING:
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
@@ -53,7 +55,7 @@ _REMOVE_CLIENT_RESPONSES: OpenAPIResponses = {
 def create_client_routes(
     registry: ClientRegistry,
     control_plane: UDPControlPlane,
-    sensor_settings_writer: SensorSettingsWriter,
+    sensor_settings_store: SensorMetadataStore,
     processor: SignalProcessor,
 ) -> APIRouter:
     """Create and return the client-management API routes."""
@@ -64,7 +66,13 @@ def create_client_routes(
         """List known sensor clients with live connection state and latest computed metrics."""
         active_ids = registry.active_client_ids()
         metrics = processor.all_latest_metrics(active_ids)
-        return ClientsResponse(clients=snapshot_for_api(registry, metrics_by_client=metrics))
+        return ClientsResponse(
+            clients=snapshot_for_api(
+                registry,
+                metrics_by_client=metrics,
+                sensor_metadata_reader=sensor_settings_store,
+            ),
+        )
 
     @router.get("/api/client-locations", response_model=ClientLocationsResponse)
     async def get_client_locations() -> ClientLocationsResponse:
@@ -107,25 +115,34 @@ def create_client_routes(
             raise HTTPException(status_code=404, detail="Sensor not found")
 
         code = req.location_code.strip()
+        payload: SensorConfigUpdatePayload
 
         if code:
             label = label_for_code(code)
             if label is None:
                 raise HTTPException(status_code=400, detail="Unknown location_code")
 
-            with domain_errors_to_http(catch_value_error=409):
-                registry.set_location(normalized_client_id, code)
-
-            registry.set_name(normalized_client_id, label)
+            payload = {"location_code": code, "name": label}
         else:
-            # Empty location_code → clear the assignment
-            registry.set_location(normalized_client_id, code)
+            payload = {"location_code": "", "name": normalized_client_id}
             registry.clear_name(normalized_client_id)
 
         updated = registry.get(normalized_client_id)
-        name = updated.name if updated and updated.name is not None else ""
         mac = client_id_mac(normalized_client_id)
-        await asyncio.to_thread(sensor_settings_writer.set_sensor, mac, {"location_code": code})
+        with domain_errors_to_http(catch_value_error=409):
+            stored = await asyncio.to_thread(sensor_settings_store.set_sensor, mac, payload)
+        fallback_sensor: SensorConfigPayload = {
+            "name": payload["name"],
+            "location_code": payload["location_code"],
+        }
+        stored_sensor = stored.get(normalized_client_id, fallback_sensor)
+        fallback_name = updated.name if updated and updated.name is not None else ""
+        name, _ = resolve_sensor_presentation(
+            sensor_id=normalized_client_id,
+            sensors_by_mac={normalized_client_id: stored_sensor},
+            fallback_name=fallback_name,
+            fallback_location_code=code,
+        )
         return SetClientLocationResponse(
             id=normalized_client_id,
             mac_address=mac,

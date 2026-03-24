@@ -11386,6 +11386,9 @@
           "400": {
             "description": "Invalid sensor MAC address or sensor settings payload."
           },
+          "409": {
+            "description": "Requested sensor location is already assigned to another sensor."
+          },
           "422": {
             "content": {
               "application/json": {

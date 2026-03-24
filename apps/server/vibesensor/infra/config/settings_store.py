@@ -327,7 +327,22 @@ class SettingsStore:
                 name = _clamp_str(data["name"], 64)
                 updated.name = name or sensor_id
             if "location_code" in data:
-                updated.location_code = _clamp_str(data["location_code"], 64)
+                location_code = _clamp_str(data["location_code"], 64)
+                if location_code:
+                    conflict = next(
+                        (
+                            other
+                            for other_id, other in self._sensors.items()
+                            if other_id != sensor_id and other.location_code == location_code
+                        ),
+                        None,
+                    )
+                    if conflict is not None:
+                        conflict_name = conflict.name or conflict.sensor_id
+                        raise ValueError(
+                            f"Location '{location_code}' already assigned to {conflict_name}",
+                        )
+                updated.location_code = location_code
             self._sensors[sensor_id] = updated
             return True
 

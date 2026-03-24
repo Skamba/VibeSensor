@@ -3495,6 +3495,10 @@ export interface operations {
       400: {
         content: never;
       };
+      /** @description Requested sensor location is already assigned to another sensor. */
+      409: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {

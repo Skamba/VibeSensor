@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import normalize_sensor_id
+from vibesensor.shared.ports import SensorMetadataReader
+from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.payload_types import ClientApiRow, ClientMetrics
 
 if TYPE_CHECKING:
@@ -80,13 +82,33 @@ def snapshot_for_api(
     now_mono: float | None = None,
     metrics_by_client: dict[str, ClientMetrics] | None = None,
     include_metrics: bool = True,
+    sensor_metadata_reader: SensorMetadataReader | None = None,
 ) -> list[ClientApiRow]:
     """Convenience presenter from registry snapshots to API rows."""
+    snapshots = registry.client_snapshots(
+        now=now,
+        now_mono=now_mono,
+        metrics_by_client=metrics_by_client,
+    )
+    if sensor_metadata_reader is not None:
+        sensors_by_mac = sensor_metadata_reader.get_sensors()
+        snapshots = [
+            replace(
+                snapshot,
+                name=resolved_name,
+                location_code=resolved_location,
+            )
+            for snapshot in snapshots
+            for resolved_name, resolved_location in [
+                resolve_sensor_presentation(
+                    sensor_id=snapshot.client_id,
+                    sensors_by_mac=sensors_by_mac,
+                    fallback_name=snapshot.name,
+                    fallback_location_code=snapshot.location_code,
+                ),
+            ]
+        ]
     return build_client_api_rows(
-        registry.client_snapshots(
-            now=now,
-            now_mono=now_mono,
-            metrics_by_client=metrics_by_client,
-        ),
+        snapshots,
         include_metrics=include_metrics,
     )

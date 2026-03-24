@@ -106,12 +106,17 @@ Single-row table for persistent application settings.
 
 ### `client_names`
 
-Maps sensor client IDs to human-readable names.
+Legacy compatibility table for sensor client display names.
+
+Canonical user-managed sensor metadata now lives in the `settings_snapshot`
+payload (`sensorsByMac`). The runtime registry may still read `client_names`
+for older/offline compatibility paths, but it is no longer the authoritative
+home for persisted sensor name/location semantics.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `client_id` | TEXT PK | Sensor MAC (hex) |
-| `name` | TEXT | Display name |
+| `name` | TEXT | Legacy display name |
 | `updated_at` | TEXT | Last update timestamp |
 
 ## Schema upgrades / migrations
