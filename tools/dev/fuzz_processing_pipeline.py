@@ -79,8 +79,12 @@ def _parse_args() -> FuzzConfig:
         default=ARTIFACT_DIR,
         help=f"Directory for minimized failure artifacts (default: {ARTIFACT_DIR}).",
     )
-    parser.add_argument("--worker-index", type=int, default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--result-file", type=Path, default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--worker-index", type=int, default=None, help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        "--result-file", type=Path, default=None, help=argparse.SUPPRESS
+    )
     args = parser.parse_args()
     if args.duration_s <= 0:
         parser.error("--duration-s must be positive")
@@ -98,7 +102,9 @@ def _parse_args() -> FuzzConfig:
         target=args.target,
         artifact_dir=args.artifact_dir.resolve(),
         worker_index=args.worker_index,
-        result_file=args.result_file.resolve() if args.result_file is not None else None,
+        result_file=args.result_file.resolve()
+        if args.result_file is not None
+        else None,
     )
 
 
@@ -114,7 +120,9 @@ def _write_failure_artifact(
         return None
     artifact_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
-    artifact_path = artifact_dir / f"{target}-fuzz-failure-{timestamp}-{os.getpid()}.json"
+    artifact_path = (
+        artifact_dir / f"{target}-fuzz-failure-{timestamp}-{os.getpid()}.json"
+    )
     payload: dict[str, object] = {
         "target": target,
         "exception_type": type(exc).__name__,
@@ -170,7 +178,9 @@ def _worker_prefix(worker_index: int | None) -> str:
     return f"[worker {worker_index}] "
 
 
-def _build_worker_command(config: FuzzConfig, *, worker_index: int, result_file: Path) -> list[str]:
+def _build_worker_command(
+    config: FuzzConfig, *, worker_index: int, result_file: Path
+) -> list[str]:
     cmd = [
         sys.executable,
         str(Path(__file__).resolve()),
@@ -503,10 +513,12 @@ def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> dict[str, 
                 ),
             )
             if combined:
-                assert all(np.isfinite(combined)), "combined spectrum contains non-finite values"
-                assert all(
-                    value >= 0.0 for value in combined
-                ), "combined spectrum contains negatives"
+                assert all(np.isfinite(combined)), (
+                    "combined spectrum contains non-finite values"
+                )
+                assert all(value >= 0.0 for value in combined), (
+                    "combined spectrum contains negatives"
+                )
 
             floor_amp = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
             assert np.isfinite(floor_amp) and floor_amp >= 0.0
@@ -551,7 +563,9 @@ def _run_strength_target(config: FuzzConfig, *, duration_s: float) -> dict[str, 
                 for peak in metrics["top_peaks"]
                 if isinstance(peak, Mapping) and "vibration_strength_db" in peak
             ]
-            assert _is_sorted_desc(peak_strengths), "strength peaks not sorted by descending dB"
+            assert _is_sorted_desc(peak_strengths), (
+                "strength peaks not sorted by descending dB"
+            )
             _json_no_nan(metrics)
 
         if worker_seed is not None:
@@ -661,14 +675,18 @@ def _run_fft_target(config: FuzzConfig, *, duration_s: float) -> dict[str, objec
             assert np.all(np.isfinite(combined_amp))
             assert np.all(combined_amp >= 0.0)
             if freq_slice.size > 1:
-                assert np.all(np.diff(freq_slice) >= 0.0), "frequency slice not monotonic"
+                assert np.all(np.diff(freq_slice) >= 0.0), (
+                    "frequency slice not monotonic"
+                )
             for axis in ("x", "y", "z"):
                 axis_payload = result["spectrum_by_axis"][axis]
                 assert axis_payload["freq"].shape == freq_slice.shape
                 assert axis_payload["amp"].shape == combined_amp.shape
                 assert np.all(np.isfinite(axis_payload["amp"]))
                 TypeAdapter(list[AxisPeak]).validate_python(result["axis_peaks"][axis])
-            TypeAdapter(VibrationStrengthMetrics).validate_python(result["strength_metrics"])
+            TypeAdapter(VibrationStrengthMetrics).validate_python(
+                result["strength_metrics"]
+            )
             _json_no_nan(current_output)
 
         if worker_seed is not None:
@@ -704,7 +722,9 @@ def _run_fft_target(config: FuzzConfig, *, duration_s: float) -> dict[str, objec
     }
 
 
-def _run_processor_target(config: FuzzConfig, *, duration_s: float) -> dict[str, object]:
+def _run_processor_target(
+    config: FuzzConfig, *, duration_s: float
+) -> dict[str, object]:
     from hypothesis import HealthCheck, Phase, given, seed, settings
     from hypothesis import strategies as st
     from pydantic import TypeAdapter
@@ -759,8 +779,12 @@ def _run_processor_target(config: FuzzConfig, *, duration_s: float) -> dict[str,
 
             clients_raw = case["clients"]
             chunks_raw = case["chunks"]
-            if not isinstance(clients_raw, Sequence) or not isinstance(chunks_raw, Sequence):
-                raise TypeError("processor case must contain sequence clients and chunks")
+            if not isinstance(clients_raw, Sequence) or not isinstance(
+                chunks_raw, Sequence
+            ):
+                raise TypeError(
+                    "processor case must contain sequence clients and chunks"
+                )
             clients = [str(client_id) for client_id in clients_raw]
             for chunk in chunks_raw:
                 if not isinstance(chunk, Mapping):
@@ -774,7 +798,9 @@ def _run_processor_target(config: FuzzConfig, *, duration_s: float) -> dict[str,
                         if isinstance(chunk.get("sample_rate_hz"), int)
                         else None
                     ),
-                    t0_us=int(chunk["t0_us"]) if isinstance(chunk.get("t0_us"), int) else None,
+                    t0_us=int(chunk["t0_us"])
+                    if isinstance(chunk.get("t0_us"), int)
+                    else None,
                 )
 
             metrics_by_client: dict[str, ClientMetrics] = {}
@@ -795,13 +821,17 @@ def _run_processor_target(config: FuzzConfig, *, duration_s: float) -> dict[str,
 
                 debug_payload = processor.debug_spectrum(client_id)
                 if "error" in debug_payload:
-                    TypeAdapter(DebugSpectrumErrorPayload).validate_python(debug_payload)
+                    TypeAdapter(DebugSpectrumErrorPayload).validate_python(
+                        debug_payload
+                    )
                 else:
                     TypeAdapter(DebugSpectrumPayload).validate_python(debug_payload)
                 _json_no_nan(debug_payload)
                 debug_by_client[client_id] = debug_payload
 
-                raw_payload = processor.raw_samples(client_id, n_samples=int(case["fft_n"]))
+                raw_payload = processor.raw_samples(
+                    client_id, n_samples=int(case["fft_n"])
+                )
                 if "error" in raw_payload:
                     TypeAdapter(RawSamplesErrorPayload).validate_python(raw_payload)
                 else:
@@ -916,7 +946,9 @@ def _run_process_coordinator(config: FuzzConfig) -> int:
         for worker_index in range(config.processes):
             result_file = Path(temp_dir) / f"worker-{worker_index}.json"
             process = subprocess.Popen(
-                _build_worker_command(config, worker_index=worker_index, result_file=result_file),
+                _build_worker_command(
+                    config, worker_index=worker_index, result_file=result_file
+                ),
                 cwd=REPO_ROOT,
             )
             processes.append((worker_index, process, result_file))
@@ -950,12 +982,14 @@ def _run_process_coordinator(config: FuzzConfig) -> int:
         aggregate_elapsed: dict[str, float] = {}
         for worker_index, _, result_file in processes:
             if not result_file.exists():
-                raise SystemExit(f"Worker {worker_index} did not write a result summary.")
+                raise SystemExit(
+                    f"Worker {worker_index} did not write a result summary."
+                )
             payload = json.loads(result_file.read_text(encoding="utf-8"))
             for summary in payload.get("summaries", []):
                 target = str(summary["target"])
-                aggregate_examples[target] = (
-                    aggregate_examples.get(target, 0) + int(summary["examples"])
+                aggregate_examples[target] = aggregate_examples.get(target, 0) + int(
+                    summary["examples"]
                 )
                 aggregate_elapsed[target] = max(
                     aggregate_elapsed.get(target, 0.0),
@@ -994,7 +1028,9 @@ def main() -> int:
     if config.result_file is not None:
         config.result_file.parent.mkdir(parents=True, exist_ok=True)
         config.result_file.write_text(
-            json.dumps({"worker_index": config.worker_index, "summaries": summaries}, indent=2),
+            json.dumps(
+                {"worker_index": config.worker_index, "summaries": summaries}, indent=2
+            ),
             encoding="utf-8",
         )
     return 0

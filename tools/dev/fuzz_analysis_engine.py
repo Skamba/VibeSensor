@@ -143,8 +143,12 @@ def _parse_args() -> FuzzConfig:
         default=ARTIFACT_DIR,
         help=f"Directory for minimized failure artifacts (default: {ARTIFACT_DIR}).",
     )
-    parser.add_argument("--worker-index", type=int, default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--result-file", type=Path, default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--worker-index", type=int, default=None, help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        "--result-file", type=Path, default=None, help=argparse.SUPPRESS
+    )
     parser.set_defaults(include_samples=None)
     args = parser.parse_args()
     if args.duration_s <= 0:
@@ -163,7 +167,9 @@ def _parse_args() -> FuzzConfig:
         include_samples=args.include_samples,
         artifact_dir=args.artifact_dir.resolve(),
         worker_index=args.worker_index,
-        result_file=args.result_file.resolve() if args.result_file is not None else None,
+        result_file=args.result_file.resolve()
+        if args.result_file is not None
+        else None,
     )
 
 
@@ -654,7 +660,9 @@ def _worker_prefix(worker_index: int | None) -> str:
     return f"[worker {worker_index}] "
 
 
-def _build_worker_command(config: FuzzConfig, *, worker_index: int, result_file: Path) -> list[str]:
+def _build_worker_command(
+    config: FuzzConfig, *, worker_index: int, result_file: Path
+) -> list[str]:
     cmd = [
         sys.executable,
         str(Path(__file__).resolve()),
@@ -819,7 +827,9 @@ def _run_process_coordinator(config: FuzzConfig) -> int:
         for worker_index in range(config.processes):
             result_file = Path(temp_dir) / f"worker-{worker_index}.json"
             process = subprocess.Popen(
-                _build_worker_command(config, worker_index=worker_index, result_file=result_file),
+                _build_worker_command(
+                    config, worker_index=worker_index, result_file=result_file
+                ),
                 cwd=REPO_ROOT,
             )
             processes.append((worker_index, process, result_file))
@@ -853,7 +863,9 @@ def _run_process_coordinator(config: FuzzConfig) -> int:
         aggregate_elapsed = 0.0
         for worker_index, _, result_file in processes:
             if not result_file.exists():
-                raise SystemExit(f"Worker {worker_index} did not write a result summary.")
+                raise SystemExit(
+                    f"Worker {worker_index} did not write a result summary."
+                )
             payload = json.loads(result_file.read_text(encoding="utf-8"))
             aggregate_examples += int(payload["examples"])
             aggregate_elapsed = max(aggregate_elapsed, float(payload["elapsed_s"]))
