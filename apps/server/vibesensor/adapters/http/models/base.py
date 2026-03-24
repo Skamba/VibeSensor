@@ -6,8 +6,10 @@ from typing import TypeAlias
 
 from pydantic import BaseModel, ConfigDict
 
-ApiPayloadObject: TypeAlias = dict[str, object]
-ApiPayloadValue: TypeAlias = None | bool | int | float | str | list[object] | ApiPayloadObject
+from vibesensor.shared.types.json_types import JsonSchemaObject, JsonSchemaValue
+
+ApiPayloadObject: TypeAlias = JsonSchemaObject
+ApiPayloadValue: TypeAlias = JsonSchemaValue
 
 
 class _FrozenBase(BaseModel):

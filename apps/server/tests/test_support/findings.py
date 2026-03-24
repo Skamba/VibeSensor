@@ -46,7 +46,7 @@ def make_finding_payload(
     base: FindingPayload = {
         "finding_id": finding_id,
         "suspected_source": suspected_source,
-        "evidence_summary": {"_i18n_key": "TEST"},
+        "evidence_summary": "Test evidence summary",
         "frequency_hz_or_order": "1x wheel",
         "amplitude_metric": {
             "name": "vibration_strength_db",
