@@ -309,6 +309,7 @@ class FakeState:
                     "last_compute_all_duration_s": 0.0,
                     "last_ingest_duration_s": 0.0,
                 },
+                "buffer_overflow_drops": lambda self: 0,
             },
         )()
         from vibesensor.infra.runtime import ProcessingLoopState

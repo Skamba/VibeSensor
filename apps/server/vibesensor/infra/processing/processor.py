@@ -211,6 +211,9 @@ class SignalProcessor:
         worker_pool_stats = self._worker_pool.stats() if self._worker_pool is not None else None
         return build_intake_stats_payload(self._store.intake_stats(), worker_pool_stats)
 
+    def buffer_overflow_drops(self) -> int:
+        return self._store.buffer_overflow_drops()
+
     def time_alignment_info(self, client_ids: list[str]) -> TimeAlignmentPayload:
         with self._store.locked_client_buffers(client_ids) as buffers:
             return build_time_alignment_payload(

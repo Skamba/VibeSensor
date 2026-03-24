@@ -13,6 +13,7 @@ class HealthDataLossResponse(BaseModel):
     tracked_clients: int
     affected_clients: int
     frames_dropped: int
+    buffer_overflow_drops: int
     queue_overflow_drops: int
     server_queue_drops: int
     parse_errors: int

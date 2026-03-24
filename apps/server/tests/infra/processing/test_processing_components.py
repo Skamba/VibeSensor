@@ -129,6 +129,7 @@ def test_buffer_store_warns_and_truncates_oversized_ingest(caplog) -> None:
 
     assert "exceeds buffer capacity 4" in caplog.text
     assert "discarding 2 oldest samples" in caplog.text
+    assert store.buffer_overflow_drops() == 2
     with store.locked_client_buffer(client_id) as buf:
         assert buf is not None
         latest = store.copy_latest(buf, 4).T
