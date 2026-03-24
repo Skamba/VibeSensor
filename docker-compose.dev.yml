@@ -21,9 +21,24 @@ services:
       - .:/workspace
       - vibesensor-ui-node_modules:/workspace/apps/ui/node_modules
     command:
-      - sh
-      - -lc
-      - npm ci && npm run dev -- --host 0.0.0.0 --port 5173
+      - npm
+      - run
+      - dev:docker
+      - --
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5173"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:5173/').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 75s
 
 volumes:
   vibesensor-ui-node_modules:
