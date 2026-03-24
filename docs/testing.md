@@ -94,9 +94,9 @@ make test-all
 act -W .github/workflows/ci.yml
 
 # Single feature area
-pytest -q apps/server/tests/report/
-pytest -q apps/server/tests/history/
-pytest -q apps/server/tests/update/
+pytest -q apps/server/tests/adapters/pdf/
+pytest -q apps/server/tests/use_cases/history/
+pytest -q apps/server/tests/use_cases/updates/
 
 # Cross-cutting scopes
 pytest -q apps/server/tests/integration/
@@ -198,7 +198,10 @@ cd apps/server && python -m pytest -q --cov=vibesensor --cov-report=term-missing
 Coverage guidance:
 
 - Treat coverage as a risk-finding tool, not the only quality signal.
-- High-risk backend areas such as `analysis/`, `processing/`, `history_db/`, and `update/` should stay above the repo-wide baseline whenever practical.
+- High-risk backend areas such as `use_cases/diagnostics/`,
+  `infra/processing/`, `adapters/persistence/history_db/`, and
+  `use_cases/updates/` should stay above the repo-wide baseline whenever
+  practical.
 
 The default CI-parity suite now mirrors these blocking GitHub checks:
 
