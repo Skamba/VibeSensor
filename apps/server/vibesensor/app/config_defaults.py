@@ -41,6 +41,7 @@ DEFAULT_CONFIG: JsonObject = {
         "metrics_log_hz": 4,
         "no_data_timeout_s": 15.0,
         "persist_history_db": True,
+        "run_retention_days": 7,
         "shutdown_analysis_timeout_s": 30,
         "app_log_path": "data/app.log",
     },

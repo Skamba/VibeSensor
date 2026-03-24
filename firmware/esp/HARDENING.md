@@ -23,6 +23,10 @@ reduced to startup wiring and cooperative loop orchestration.
 - Added runtime watchdog and reboot diagnostics:
   - startup now logs `esp_reset_reason()` so crash/reset causes are visible over serial
   - the cooperative Arduino loop is now enrolled in the ESP task watchdog with a 15s timeout
+- Added explicit startup control-plane handshake:
+  - firmware now advertises HELLO-ack capability, waits for a server `HELLO_ACK`
+    before sending DATA frames, and keeps the existing periodic HELLO beacons for
+    control-port discovery and liveness
 - Fixed sampling missed-sample double-count:
   - when `sample_once()` returns false (sensor unavailable), the code now advances
     `g_next_sample_due_us` before breaking so the post-loop lag detector does not
