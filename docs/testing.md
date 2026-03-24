@@ -97,6 +97,7 @@ act -W .github/workflows/ci.yml
 pytest -q apps/server/tests/adapters/pdf/
 pytest -q apps/server/tests/use_cases/history/
 pytest -q apps/server/tests/use_cases/updates/
+python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100
 
 # Cross-cutting scopes
 pytest -q apps/server/tests/integration/
@@ -114,6 +115,35 @@ make test-full-suite
 wheel, validates packaged static assets, boots the packaged server, and checks
 that `/api/health` reaches readiness. It is complementary to Docker/e2e
 validation, not a duplicate of it.
+
+## Fuzzing
+
+Use `tools/dev/fuzz_analysis_engine.py` for randomized diagnostics coverage
+against the real `summarize_run_data()` analysis entrypoint. The harness uses
+Hypothesis, validates the produced summary against the typed analysis contract,
+and writes a minimized reproduction artifact under `artifacts/fuzz/` when it
+finds a failure.
+
+```bash
+python3 tools/dev/fuzz_analysis_engine.py
+python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100
+python3 tools/dev/fuzz_processing_pipeline.py
+python3 tools/dev/fuzz_processing_pipeline.py --target fft --duration-s 60
+```
+
+The script expects the backend package plus dev dependencies to be installed,
+for example via:
+
+```bash
+python3 -m pip install -e "./apps/server[dev]"
+```
+
+`tools/dev/fuzz_processing_pipeline.py` covers upstream live-processing entry
+points that sit before persisted diagnostics:
+
+- `strength`: canonical vibration-strength math in `vibesensor.vibration_strength`
+- `fft`: pure FFT spectrum assembly in `vibesensor.infra.processing.fft`
+- `processor`: live ingest / compute / debug payload paths in `SignalProcessor`
 
 ## Local CI with `act`
 
