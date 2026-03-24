@@ -14,6 +14,7 @@ from typing import cast
 
 from vibesensor.adapters.udp.protocol import (
     MSG_DATA,
+    ProtocolError,
     extract_client_id_hex,
     pack_data_ack,
     parse_data,
@@ -92,20 +93,13 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             data, addr = await self._queue.get()
             try:
                 self._process_datagram(data, addr)
-            except Exception:
-                LOGGER.warning(
-                    "Unexpected error processing UDP datagram from %s; "
-                    "dropping packet to keep consumer alive.",
-                    addr,
-                    exc_info=True,
-                )
             finally:
                 self._queue.task_done()
 
     def _process_datagram(self, data: bytes, addr: tuple[str, int]) -> None:
         try:
             msg = parse_data(data)
-        except Exception as exc:
+        except ProtocolError as exc:
             client_id = extract_client_id_hex(data)
             LOGGER.debug("DATA parse error from %s (client=%s): %s", addr, client_id, exc)
             self.registry.note_parse_error(client_id)

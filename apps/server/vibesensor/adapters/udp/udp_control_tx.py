@@ -71,7 +71,7 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
             client_id = extract_client_id_hex(data)
             LOGGER.debug("Control parse error from %s (client=%s): %s", addr, client_id, exc)
             registry.note_parse_error(client_id)
-        except Exception:
+        except (ValueError, KeyError, OSError):
             client_id = extract_client_id_hex(data)
             LOGGER.warning(
                 "Unexpected error processing control datagram from %s (client=%s); "

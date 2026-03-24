@@ -152,15 +152,11 @@ async def test_process_datagram_logs_client_id_on_error(fake_transport, drain_qu
 
 
 @pytest.mark.asyncio
-async def test_process_queue_survives_unexpected_exception_and_keeps_consuming(
+async def test_process_queue_propagates_unexpected_exception(
     fake_transport,
 ) -> None:
     registry = Mock()
-    registry.update_from_data.side_effect = [
-        RuntimeError("boom"),
-        DataUpdateResult(),
-    ]
-    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
+    registry.update_from_data.side_effect = RuntimeError("boom")
     processor = Mock()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)
@@ -169,17 +165,11 @@ async def test_process_queue_survives_unexpected_exception_and_keeps_consuming(
     pkt = pack_data(cid, seq=1, t0_us=100, samples=np.zeros((4, 3), dtype=np.int16))
 
     proto.datagram_received(pkt, ("127.0.0.1", 12345))
-    proto.datagram_received(pkt, ("127.0.0.1", 12345))
 
     consumer = asyncio.create_task(proto.process_queue())
-    await asyncio.wait_for(proto._queue.join(), timeout=1.0)
-    await asyncio.sleep(0)
-
-    assert processor.ingest.call_count == 1
-    assert not consumer.done()
-
-    consumer.cancel()
-    await asyncio.gather(consumer, return_exceptions=True)
+    with pytest.raises(RuntimeError, match="boom"):
+        await asyncio.wait_for(consumer, timeout=1.0)
+    assert processor.ingest.call_count == 0
 
 
 def test_process_datagram_parse_error_marks_registry_and_skips_ack(fake_transport) -> None:
@@ -193,6 +183,26 @@ def test_process_datagram_parse_error_marks_registry_and_skips_ack(fake_transpor
     registry.note_parse_error.assert_called_once()
     registry.update_from_data.assert_not_called()
     assert fake_transport.sent == []
+
+
+def test_process_datagram_parse_bug_propagates(
+    fake_transport,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    registry = Mock()
+    processor = Mock()
+    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
+    proto.connection_made(fake_transport)
+
+    def raise_runtime_error(_data: bytes):
+        raise RuntimeError("parse bug")
+
+    monkeypatch.setattr("vibesensor.adapters.udp.udp_data_rx.parse_data", raise_runtime_error)
+
+    with pytest.raises(RuntimeError, match="parse bug"):
+        proto._process_datagram(b"\x02\x01", ("127.0.0.1", 12345))
+
+    registry.note_parse_error.assert_not_called()
 
 
 def test_process_datagram_reset_detected_flushes_buffer_before_ingest(fake_transport) -> None:
