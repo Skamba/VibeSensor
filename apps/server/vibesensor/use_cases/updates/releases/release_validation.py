@@ -15,6 +15,8 @@ import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 
+from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_validation_errors
+
 
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
@@ -153,6 +155,18 @@ def validate_firmware_dist(dist_dir: Path) -> list[str]:
             errors.append(f"{prefix} does not include firmware.bin")
 
     return errors
+
+
+def validate_release_wheel_metadata(
+    wheel_path: Path,
+    *,
+    expected_version: str,
+) -> list[str]:
+    return wheel_metadata_validation_errors(
+        wheel_path,
+        expected_name="vibesensor",
+        expected_version=expected_version,
+    )
 
 
 def _read_http(url: str) -> tuple[int, str, str]:
@@ -307,6 +321,19 @@ def _cmd_smoke_server(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_validate_wheel_metadata(args: argparse.Namespace) -> int:
+    errors = validate_release_wheel_metadata(
+        args.wheel_path,
+        expected_version=args.expected_version,
+    )
+    if errors:
+        for error in errors:
+            print(error, file=sys.stderr)
+        return 1
+    print(f"Validated release wheel metadata: {args.wheel_path}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Validate VibeSensor release artifacts")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -332,6 +359,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     firmware_parser.add_argument("--dist-dir", type=Path, required=True)
     firmware_parser.set_defaults(handler=_cmd_validate_firmware_manifest)
+
+    wheel_parser = subparsers.add_parser(
+        "validate-wheel-metadata",
+        help="Validate built server wheel metadata for release publishing",
+    )
+    wheel_parser.add_argument("--wheel-path", type=Path, required=True)
+    wheel_parser.add_argument("--expected-version", required=True)
+    wheel_parser.set_defaults(handler=_cmd_validate_wheel_metadata)
     return parser
 
 

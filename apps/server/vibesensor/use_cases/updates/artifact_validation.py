@@ -4,11 +4,161 @@ from __future__ import annotations
 
 import hashlib
 import zipfile
+from collections.abc import Mapping
+from dataclasses import dataclass
+from email.message import Message
+from email.parser import Parser
 from pathlib import Path
+
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.utils import canonicalize_name
 
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
-__all__ = ["WheelArtifactValidator", "sha256_file"]
+__all__ = [
+    "WheelArtifactValidator",
+    "WheelMetadata",
+    "read_wheel_metadata",
+    "sha256_file",
+    "wheel_dependency_issues",
+    "wheel_metadata_validation_errors",
+]
+
+
+@dataclass(frozen=True, slots=True)
+class WheelMetadata:
+    """Parsed wheel metadata relevant to release/update validation."""
+
+    name: str
+    version: str
+    requires_python: str = ""
+    requires_dist: tuple[str, ...] = ()
+
+
+def _metadata_message_from_archive(wheel_zip: zipfile.ZipFile) -> Message:
+    metadata_name = next(
+        (name for name in wheel_zip.namelist() if name.endswith(".dist-info/METADATA")),
+        "",
+    )
+    if not metadata_name:
+        raise ValueError("wheel archive is missing dist-info metadata")
+    try:
+        metadata_text = wheel_zip.read(metadata_name).decode("utf-8")
+    except (KeyError, UnicodeDecodeError) as exc:
+        raise ValueError(f"could not read wheel metadata: {exc}") from exc
+    return Parser().parsestr(metadata_text)
+
+
+def _parse_metadata_message(message: Message) -> WheelMetadata:
+    return WheelMetadata(
+        name=(message.get("Name") or "").strip(),
+        version=(message.get("Version") or "").strip(),
+        requires_python=(message.get("Requires-Python") or "").strip(),
+        requires_dist=tuple(
+            entry.strip()
+            for entry in message.get_all("Requires-Dist", [])
+            if isinstance(entry, str) and entry.strip()
+        ),
+    )
+
+
+def read_wheel_metadata(wheel_path: Path) -> WheelMetadata:
+    """Read and parse ``.dist-info/METADATA`` from a wheel archive."""
+    with zipfile.ZipFile(wheel_path) as wheel_zip:
+        return _parse_metadata_message(_metadata_message_from_archive(wheel_zip))
+
+
+def wheel_metadata_validation_errors(
+    wheel_path: Path,
+    *,
+    expected_name: str | None = None,
+    expected_version: str | None = None,
+) -> list[str]:
+    try:
+        metadata = read_wheel_metadata(wheel_path)
+    except (OSError, ValueError, zipfile.BadZipFile) as exc:
+        return [f"{wheel_path}: {exc}"]
+
+    errors: list[str] = []
+    if not metadata.name:
+        errors.append("wheel metadata is missing Name")
+    elif expected_name and metadata.name != expected_name:
+        errors.append(
+            f"wheel metadata Name {metadata.name!r} does not match expected {expected_name!r}",
+        )
+    if not metadata.version:
+        errors.append("wheel metadata is missing Version")
+    elif expected_version and metadata.version != expected_version:
+        errors.append(
+            "wheel metadata Version "
+            f"{metadata.version!r} does not match expected {expected_version!r}",
+        )
+    if metadata.requires_python:
+        try:
+            SpecifierSet(metadata.requires_python)
+        except InvalidSpecifier as exc:
+            errors.append(
+                f"wheel metadata Requires-Python {metadata.requires_python!r} is invalid: {exc}",
+            )
+    for raw_requirement in metadata.requires_dist:
+        try:
+            Requirement(raw_requirement)
+        except InvalidRequirement as exc:
+            errors.append(
+                f"wheel metadata Requires-Dist {raw_requirement!r} is invalid: {exc}",
+            )
+    return errors
+
+
+def wheel_dependency_issues(
+    metadata: WheelMetadata,
+    *,
+    python_full_version: str,
+    marker_environment: Mapping[str, str],
+    installed_versions: Mapping[str, str],
+) -> list[str]:
+    """Evaluate wheel dependency metadata against a concrete target environment."""
+    issues: list[str] = []
+    environment = {key: str(value) for key, value in marker_environment.items()}
+    if metadata.requires_python:
+        try:
+            specifier = SpecifierSet(metadata.requires_python)
+        except InvalidSpecifier as exc:
+            return [
+                f"wheel metadata Requires-Python {metadata.requires_python!r} is invalid: {exc}",
+            ]
+        if python_full_version and not specifier.contains(python_full_version, prereleases=True):
+            issues.append(
+                "Python "
+                f"{python_full_version} does not satisfy wheel Requires-Python "
+                f"{metadata.requires_python}",
+            )
+    for raw_requirement in metadata.requires_dist:
+        try:
+            requirement = Requirement(raw_requirement)
+        except InvalidRequirement as exc:
+            issues.append(
+                f"wheel metadata Requires-Dist {raw_requirement!r} is invalid: {exc}",
+            )
+            continue
+        if requirement.marker is not None and not requirement.marker.evaluate(environment):
+            continue
+        requirement_name = canonicalize_name(requirement.name)
+        installed_version = installed_versions.get(requirement_name, "")
+        if not installed_version:
+            suffix = str(requirement.specifier) if requirement.specifier else ""
+            issues.append(f"Missing dependency: {requirement.name}{suffix}")
+            continue
+        if requirement.specifier and not requirement.specifier.contains(
+            installed_version,
+            prereleases=True,
+        ):
+            issues.append(
+                f"Dependency {requirement.name}=={installed_version} does not satisfy "
+                f"{requirement.specifier}",
+            )
+    return issues
 
 
 class WheelArtifactValidator:
@@ -89,6 +239,18 @@ class WheelArtifactValidator:
                 phase=phase,
                 message=f"{context} could not be opened",
                 detail=f"{wheel_path}: {exc}",
+                fatal=fatal,
+            )
+            return False
+        metadata_errors = wheel_metadata_validation_errors(
+            wheel_path,
+            expected_name="vibesensor",
+        )
+        if metadata_errors:
+            self._report_failure(
+                phase=phase,
+                message=f"{context} metadata is invalid",
+                detail="; ".join(metadata_errors),
                 fatal=fatal,
             )
             return False
