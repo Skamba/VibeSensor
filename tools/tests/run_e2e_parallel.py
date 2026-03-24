@@ -11,6 +11,7 @@ import sys
 import tempfile
 import threading
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.error import URLError
@@ -51,6 +52,7 @@ def collect_test_ids(pytest_args: list[str]) -> list[str]:
 ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "e2e_parallel"
 PRINT_LOCK = threading.Lock()
+_SKIP_BUILD_ENV = "VIBESENSOR_E2E_SKIP_BUILD"
 
 
 @dataclass(frozen=True)
@@ -176,6 +178,49 @@ def _build_image(image: str) -> int:
     cmd = ["docker", "build", "-f", "apps/server/Dockerfile", "-t", image, "."]
     _emit(f"[e2e-parallel] building docker image once: {shlex.join(cmd)}")
     return _run(cmd, log_path=LOG_DIR / "docker-build.log")
+
+
+def _skip_build_requested(env: Mapping[str, str] | None = None) -> bool:
+    source = os.environ if env is None else env
+    return source.get(_SKIP_BUILD_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _running_in_github_actions(env: Mapping[str, str] | None = None) -> bool:
+    source = os.environ if env is None else env
+    return source.get("GITHUB_ACTIONS", "").strip().lower() == "true"
+
+
+def _docker_image_exists(image: str) -> bool:
+    result = subprocess.run(
+        ["docker", "image", "inspect", image],
+        cwd=str(ROOT),
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return result.returncode == 0
+
+
+def _prepare_image(image: str, *, env: Mapping[str, str] | None = None) -> int:
+    image_exists = _docker_image_exists(image)
+    if image_exists and (_skip_build_requested(env) or _running_in_github_actions(env)):
+        _emit(f"[e2e-parallel] reusing prebuilt docker image: {image}")
+        return 0
+
+    if _skip_build_requested(env):
+        _emit(
+            f"[e2e-parallel] {_SKIP_BUILD_ENV} requested skipping the docker build, "
+            f"but image {image!r} is not present locally"
+        )
+        return 2
+
+    build_rc = _build_image(image)
+    if build_rc != 0:
+        _emit(
+            f"[e2e-parallel] docker build failed (exit {build_rc}); "
+            f"log={LOG_DIR / 'docker-build.log'}"
+        )
+    return build_rc
 
 
 def _api_snapshot(base_url: str, path: str) -> str:
@@ -426,12 +471,8 @@ def main() -> int:
         f"across {num_shards} shards (min requested: {args.shards})"
     )
 
-    build_rc = _build_image(args.docker_image)
+    build_rc = _prepare_image(args.docker_image)
     if build_rc != 0:
-        _emit(
-            f"[e2e-parallel] docker build failed (exit {build_rc}); "
-            f"log={LOG_DIR / 'docker-build.log'}"
-        )
         return build_rc
 
     pid = str(os.getpid())
