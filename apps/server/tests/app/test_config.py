@@ -37,6 +37,14 @@ def test_logging_no_data_timeout_defaults_and_allows_override(cfg_path: Path) ->
     assert cfg.logging.no_data_timeout_s == 30.0
 
 
+def test_logging_run_retention_days_defaults_and_allows_override(cfg_path: Path) -> None:
+    cfg = _write_and_load(cfg_path, {})
+    assert cfg.logging.run_retention_days == 7
+
+    cfg = _write_and_load(cfg_path, {"logging": {"run_retention_days": 21}})
+    assert cfg.logging.run_retention_days == 21
+
+
 def test_dev_and_docker_configs_equivalent() -> None:
     """config.dev.yaml and config.docker.yaml share core settings but Docker
     intentionally overrides environment-specific options (GPS disabled because

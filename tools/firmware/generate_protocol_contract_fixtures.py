@@ -18,12 +18,14 @@ OUTPUT = (
 )
 
 from vibesensor.adapters.udp.protocol import (  # noqa: E402
+    HELLO_CAP_EXPLICIT_ACK,
     pack_ack,
     pack_cmd_identify,
     pack_cmd_sync_clock,
     pack_data,
     pack_data_ack,
     pack_hello,
+    pack_hello_ack,
 )
 
 
@@ -43,6 +45,7 @@ def render_header() -> str:
     hello_name = "front-left"
     hello_firmware_version = "fw-test"
     hello_queue_overflow_drops = 7
+    hello_capabilities = HELLO_CAP_EXPLICIT_ACK
     hello_packet = pack_hello(
         client_id=hello_client_id,
         control_port=hello_control_port,
@@ -51,7 +54,9 @@ def render_header() -> str:
         frame_samples=hello_frame_samples,
         firmware_version=hello_firmware_version,
         queue_overflow_drops=hello_queue_overflow_drops,
+        capabilities=hello_capabilities,
     )
+    hello_ack_packet = pack_hello_ack(hello_client_id)
 
     data_client_id = bytes.fromhex("010203040506")
     data_seq = 17
@@ -115,7 +120,9 @@ constexpr uint16_t kHelloFrameSamples = {hello_frame_samples};
 constexpr char kHelloName[] = "{hello_name}";
 constexpr char kHelloFirmwareVersion[] = "{hello_firmware_version}";
 constexpr uint32_t kHelloQueueOverflowDrops = {hello_queue_overflow_drops};
+constexpr uint8_t kHelloCapabilities = {hello_capabilities};
 constexpr std::array<uint8_t, {len(hello_packet)}> kHelloPacket = {{{_format_u8_array(hello_packet)}}};
+constexpr std::array<uint8_t, {len(hello_ack_packet)}> kHelloAckPacket = {{{_format_u8_array(hello_ack_packet)}}};
 
 constexpr std::array<uint8_t, 6> kDataClientId = {{{_format_u8_array(data_client_id)}}};
 constexpr uint32_t kDataSeq = {data_seq};

@@ -6,7 +6,14 @@ from pathlib import Path
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.adapters.udp.protocol import HelloMessage, pack_ack, parse_cmd
+from vibesensor.adapters.udp.protocol import (
+    HELLO_CAP_EXPLICIT_ACK,
+    MSG_HELLO_ACK,
+    HelloMessage,
+    pack_ack,
+    pack_hello,
+    parse_cmd,
+)
 from vibesensor.adapters.udp.udp_control_tx import ControlDatagramProtocol, UDPControlPlane
 from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -74,6 +81,52 @@ def test_control_datagram_unexpected_exception_is_logged_and_counted(
     assert record is not None
     assert record.parse_errors == 1
     assert "Unexpected error processing control datagram" in caplog.text
+
+
+def test_control_datagram_sends_hello_ack_for_capable_firmware(
+    tmp_path: Path,
+    fake_transport,
+) -> None:
+    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    protocol = ControlDatagramProtocol(registry)
+    protocol.transport = fake_transport
+    packet = pack_hello(
+        client_id=bytes.fromhex("aabbccddeeff"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="node",
+        frame_samples=200,
+        firmware_version="fw",
+        capabilities=HELLO_CAP_EXPLICIT_ACK,
+    )
+
+    protocol.datagram_received(packet, ("127.0.0.1", 54000))
+
+    assert len(fake_transport.sent) == 1
+    payload, addr = fake_transport.sent[0]
+    assert payload[0] == MSG_HELLO_ACK
+    assert addr == ("127.0.0.1", 9010)
+
+
+def test_control_datagram_skips_hello_ack_for_legacy_firmware(
+    tmp_path: Path,
+    fake_transport,
+) -> None:
+    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    protocol = ControlDatagramProtocol(registry)
+    protocol.transport = fake_transport
+    packet = pack_hello(
+        client_id=bytes.fromhex("aabbccddeeff"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="node",
+        frame_samples=200,
+        firmware_version="fw",
+    )
+
+    protocol.datagram_received(packet, ("127.0.0.1", 54000))
+
+    assert fake_transport.sent == []
 
 
 def test_close_closes_transport_once_and_clears_reference(tmp_path: Path, fake_transport) -> None:
