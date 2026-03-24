@@ -5,12 +5,14 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+from pydantic import TypeAdapter
 
 from vibesensor.adapters.analysis_summary import (
     analysis_result_to_summary,
     summarize_run_data,
 )
 from vibesensor.domain import SpeedProfile
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
@@ -181,3 +183,20 @@ class TestRunAnalysis:
         analysis = RunAnalysis(metadata, samples, include_samples=False)
         result = analysis.summarize()
         assert "samples" not in analysis_result_to_summary(result)
+
+    def test_summary_matches_typed_boundary_contract(self) -> None:
+        metadata = {
+            "run_id": "fuzz-contract-repro",
+            "start_time_utc": "2026-01-01T12:00:00Z",
+            "sensor_model": "ADXL345",
+        }
+
+        summary = summarize_run_data(
+            metadata,
+            [],
+            lang="en",
+            include_samples=False,
+        )
+
+        assert "_summary_version" not in summary
+        TypeAdapter(AnalysisSummary).validate_python(summary)
