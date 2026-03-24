@@ -8,7 +8,7 @@ from collections.abc import Callable, Iterable
 from threading import RLock
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import normalize_sensor_id as _normalize_client_id
+from vibesensor.domain import normalize_sensor_id
 
 if TYPE_CHECKING:
     from .registry import ClientRecord
@@ -93,12 +93,12 @@ class ClientMetadataManager:
         return f"client-{client_id[-4:]}"
 
     def default_name_for(self, client_id: str) -> str:
-        normalized = _normalize_client_id(client_id)
+        normalized = normalize_sensor_id(client_id)
         with self._lock:
             return self._user_names.get(normalized, self._default_name(normalized))
 
     def has_user_name(self, client_id: str) -> bool:
-        normalized = _normalize_client_id(client_id)
+        normalized = normalize_sensor_id(client_id)
         with self._lock:
             return normalized in self._user_names
 
@@ -135,7 +135,7 @@ class ClientMetadataManager:
         return record
 
     def discard_name(self, client_id: str) -> bool:
-        normalized = _normalize_client_id(client_id)
+        normalized = normalize_sensor_id(client_id)
         with self._lock:
             existed = normalized in self._user_names
             self._user_names.pop(normalized, None)
