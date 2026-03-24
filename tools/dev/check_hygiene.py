@@ -187,6 +187,34 @@ def _build_system_requirement_spec(requirement_name: str) -> str | None:
     return None
 
 
+def _platformio_package_pin(package_name: str) -> str | None:
+    platformio_path = ROOT / "firmware" / "esp" / "platformio.ini"
+    if not platformio_path.exists():
+        return None
+    in_platform_packages = False
+    for raw_line in platformio_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(";"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            in_platform_packages = False
+            continue
+        if line.startswith("platform_packages"):
+            in_platform_packages = True
+            _, _, value = line.partition("=")
+            candidate = value.strip()
+            if candidate.startswith(f"{package_name}@"):
+                return candidate.split("@", 1)[1].strip()
+            continue
+        if in_platform_packages:
+            if "=" in raw_line and not raw_line.startswith((" ", "\t")):
+                in_platform_packages = False
+                continue
+            if line.startswith(f"{package_name}@"):
+                return line.split("@", 1)[1].strip()
+    return None
+
+
 def _lower_bound_major(requirement_spec: str) -> int | None:
     match = re.search(r">=?\s*([0-9]+)", requirement_spec)
     return int(match.group(1)) if match else None
@@ -735,6 +763,48 @@ def check_dependency_reproducibility_hygiene() -> list[str]:
     elif "<" not in setuptools_spec:
         errors.append(
             f"apps/server/pyproject.toml build-system setuptools requirement must include an upper bound; found {setuptools_spec!r}."
+        )
+
+    wheel_spec = _build_system_requirement_spec("wheel")
+    if wheel_spec is None:
+        errors.append(
+            "apps/server/pyproject.toml build-system requires must declare wheel."
+        )
+    elif ">=" not in wheel_spec or "<" not in wheel_spec:
+        errors.append(
+            "apps/server/pyproject.toml build-system wheel requirement must include "
+            f"explicit lower and upper bounds; found {wheel_spec!r}."
+        )
+
+    websockets_spec = _project_dependency_spec("websockets")
+    if websockets_spec is None:
+        errors.append(
+            "apps/server/pyproject.toml is missing the websockets runtime dependency."
+        )
+    else:
+        lower_major = _lower_bound_major(websockets_spec)
+        upper_major = _upper_bound_major(websockets_spec)
+        if lower_major is None or upper_major is None:
+            errors.append(
+                "websockets dependency must declare explicit lower and upper bounds; "
+                f"found {websockets_spec!r}."
+            )
+        elif upper_major != lower_major + 1:
+            errors.append(
+                "websockets dependency must stay within a single major version window; "
+                f"found {websockets_spec!r}."
+            )
+
+    framework_pin = _platformio_package_pin("framework-arduinoespressif32")
+    if framework_pin is None:
+        errors.append(
+            "firmware/esp/platformio.ini must pin framework-arduinoespressif32 via "
+            "platform_packages."
+        )
+    elif framework_pin.startswith(("~", "^", "<", ">", "=")):
+        errors.append(
+            "firmware/esp/platformio.ini must pin framework-arduinoespressif32 to an "
+            f"exact version; found {framework_pin!r}."
         )
 
     dependabot_path = ROOT / ".github" / "dependabot.yml"
