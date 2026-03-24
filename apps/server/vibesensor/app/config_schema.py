@@ -163,6 +163,7 @@ class LoggingConfig:
     no_data_timeout_s: float
     history_db_path: Path
     persist_history_db: bool
+    run_retention_days: int
     shutdown_analysis_timeout_s: float
     app_log_path: Path | None
 
@@ -181,6 +182,14 @@ class LoggingConfig:
                 self.no_data_timeout_s,
             )
             object.__setattr__(self, "no_data_timeout_s", 15.0)
+        if not isinstance(self.run_retention_days, int) or self.run_retention_days < 1:
+            clamped = max(1, int(self.run_retention_days or 7))
+            LOGGER.warning(
+                "logging.run_retention_days=%r is invalid — clamped to %s",
+                self.run_retention_days,
+                clamped,
+            )
+            object.__setattr__(self, "run_retention_days", clamped)
         if (
             not isinstance(self.shutdown_analysis_timeout_s, NUMERIC_TYPES)
             or self.shutdown_analysis_timeout_s < 0

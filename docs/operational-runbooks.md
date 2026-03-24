@@ -27,6 +27,11 @@ map. The response also includes operational metrics:
 - `tick_duration_s` / `max_tick_duration_s` / `tick_count` — processing loop timing
 - `db_last_write_duration_s` / `db_max_write_duration_s` — DB write latency
 
+Run-history retention is enforced during startup maintenance. By default the Pi
+prunes `complete` and `error` runs older than `logging.run_retention_days: 7`.
+Raise or lower that value in the server config when the device needs a longer
+or shorter local-history window.
+
 ## Diagnose high dropped frames
 
 1. Confirm the health endpoint responds and inspect connected clients.
