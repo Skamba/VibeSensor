@@ -2,15 +2,18 @@
 from __future__ import annotations
 
 import argparse
+import atexit
 import json
 import os
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
 import threading
 import time
+import xml.etree.ElementTree as ET
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -53,7 +56,15 @@ ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "e2e_parallel"
 PRINT_LOCK = threading.Lock()
 _SKIP_BUILD_ENV = "VIBESENSOR_E2E_SKIP_BUILD"
+_DURATION_CACHE_ENV = "VIBESENSOR_E2E_DURATION_CACHE"
 _DEFAULT_MIN_SHARDS = 6
+_DEFAULT_DURATION = 3.0
+_SCOPE_LABEL = "com.vibesensor.role=e2e-shard"
+_RUN_LABEL_KEY = "com.vibesensor.run-id"
+_ACTIVE_CONTAINERS: set[str] = set()
+_ACTIVE_CONTAINERS_LOCK = threading.Lock()
+_CLEANUP_HOOKS_REGISTERED = False
+_PREVIOUS_SIGNAL_HANDLERS: dict[int, object] = {}
 
 
 @dataclass(frozen=True)
@@ -68,6 +79,7 @@ class ShardConfig:
     sim_control_port: int
     sim_client_control_base: int
     log_path: Path
+    junit_path: Path
 
 
 @dataclass(frozen=True)
@@ -79,30 +91,122 @@ class ShardResult:
     selected_tests: int
 
 
-# Duration hints (seconds) for known slow fast-E2E tests.
 # Tests exceeding SLOW_TEST_THRESHOLD get their own dedicated shard.
+# Observed timings are loaded from and saved back to a local cache so the
+# runner can rebalance without hand-maintained per-test constants.
 SLOW_TEST_THRESHOLD = 5.0
-_DURATION_HINTS: dict[str, float] = {
-    "test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys[clients_and_cars]": 17.1,
-    "test_e2e_docker_edge_cases.py::test_logging_start_while_recording_rollover": 11.5,
-    "test_e2e_docker_rear_left_wheel_fault.py::test_e2e_docker_rear_left_wheel_fault": 9.5,
-    "test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys[language_pdf]": 8.9,
-    "test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys[speed_export_delete]": 8.8,
-    "test_e2e_docker_edge_cases.py::test_delete_active_run_returns_409_e2e": 5.8,
-}
-_DEFAULT_DURATION = 3.0
 
 
-def _estimate_duration(test_id: str) -> float:
-    """Return estimated duration for a test ID by matching against duration hints."""
-    for hint_key, duration in _DURATION_HINTS.items():
-        if hint_key in test_id:
-            return duration
-    return _DEFAULT_DURATION
+def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
+    source = os.environ if env is None else env
+    raw_path = source.get(_DURATION_CACHE_ENV, "").strip()
+    if raw_path:
+        return Path(raw_path).expanduser()
+    return Path.home() / ".cache" / "vibesensor" / "e2e-duration-cache.json"
+
+
+def _load_duration_cache(path: Path) -> dict[str, float]:
+    try:
+        raw_payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, json.JSONDecodeError):
+        _emit(f"[e2e-parallel] ignoring unreadable duration cache: {path}")
+        return {}
+    if not isinstance(raw_payload, dict):
+        _emit(f"[e2e-parallel] ignoring invalid duration cache payload: {path}")
+        return {}
+
+    durations: dict[str, float] = {}
+    for test_id, raw_duration in raw_payload.items():
+        if not isinstance(test_id, str):
+            continue
+        try:
+            duration = float(raw_duration)
+        except (TypeError, ValueError):
+            continue
+        if duration > 0:
+            durations[test_id] = duration
+    return durations
+
+
+def _write_duration_cache(path: Path, durations: Mapping[str, float]) -> None:
+    payload = {
+        test_id: round(duration, 3)
+        for test_id, duration in sorted(durations.items())
+        if duration > 0
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            f"{json.dumps(payload, indent=2, sort_keys=True)}\n", encoding="utf-8"
+        )
+    except OSError:
+        _emit(f"[e2e-parallel] failed to update duration cache: {path}")
+
+
+def _merge_duration_observations(
+    cached: Mapping[str, float], observed: Mapping[str, float]
+) -> dict[str, float]:
+    merged = dict(cached)
+    for test_id, duration in observed.items():
+        if duration <= 0:
+            continue
+        previous = merged.get(test_id)
+        merged[test_id] = (
+            duration if previous is None else round((previous + duration) / 2.0, 3)
+        )
+    return merged
+
+
+def _junit_case_key(test_id: str) -> tuple[str, str]:
+    path_part, *segments = test_id.split("::")
+    normalized_path = path_part.removeprefix("apps/server/").removesuffix(".py")
+    module_name = normalized_path.replace("/", ".")
+    name = segments[-1] if segments else test_id
+    classname_segments = [module_name, *segments[:-1]]
+    return ".".join(segment for segment in classname_segments if segment), name
+
+
+def _observed_durations_from_junit(
+    junit_path: Path, selected_tests: list[str]
+) -> dict[str, float]:
+    if not junit_path.exists():
+        return {}
+    try:
+        root = ET.parse(junit_path).getroot()
+    except (ET.ParseError, OSError):
+        _emit(f"[e2e-parallel] ignoring unreadable junit timings: {junit_path}")
+        return {}
+
+    lookup = {_junit_case_key(test_id): test_id for test_id in selected_tests}
+    observed: dict[str, float] = {}
+    for case in root.iter("testcase"):
+        classname = case.attrib.get("classname")
+        name = case.attrib.get("name")
+        raw_time = case.attrib.get("time")
+        if not isinstance(classname, str) or not isinstance(name, str):
+            continue
+        if not isinstance(raw_time, str):
+            continue
+        test_id = lookup.get((classname, name))
+        if test_id is None:
+            continue
+        try:
+            duration = float(raw_time)
+        except ValueError:
+            continue
+        if duration >= 0:
+            observed[test_id] = duration
+    return observed
+
+
+def _estimate_duration(test_id: str, durations: Mapping[str, float]) -> float:
+    return durations.get(test_id, _DEFAULT_DURATION)
 
 
 def _assign_shards_by_duration(
-    collected: list[str], min_shards: int
+    collected: list[str], min_shards: int, durations: Mapping[str, float]
 ) -> list[list[str]]:
     """Assign tests to shards using duration-aware greedy bin-packing.
 
@@ -113,7 +217,7 @@ def _assign_shards_by_duration(
     slow_tests: list[tuple[str, float]] = []
     fast_tests: list[tuple[str, float]] = []
     for test_id in collected:
-        est = _estimate_duration(test_id)
+        est = _estimate_duration(test_id, durations)
         if est > SLOW_TEST_THRESHOLD:
             slow_tests.append((test_id, est))
         else:
@@ -173,6 +277,58 @@ def _tail(path: Path, lines: int = 60) -> str:
         return "<missing log>"
     content = path.read_text(encoding="utf-8").splitlines()
     return "\n".join(content[-lines:])
+
+
+def _force_remove_container(container_name: str) -> int:
+    result = subprocess.run(
+        ["docker", "rm", "-f", container_name],
+        cwd=str(ROOT),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode
+
+
+def _track_active_container(container_name: str) -> None:
+    with _ACTIVE_CONTAINERS_LOCK:
+        _ACTIVE_CONTAINERS.add(container_name)
+
+
+def _untrack_active_container(container_name: str) -> None:
+    with _ACTIVE_CONTAINERS_LOCK:
+        _ACTIVE_CONTAINERS.discard(container_name)
+
+
+def _cleanup_active_containers() -> None:
+    with _ACTIVE_CONTAINERS_LOCK:
+        container_names = sorted(_ACTIVE_CONTAINERS)
+    for container_name in container_names:
+        _force_remove_container(container_name)
+        _untrack_active_container(container_name)
+
+
+def _cleanup_on_signal(signum: int, frame) -> None:
+    _emit(f"[e2e-parallel] received signal {signum}; cleaning up active docker shards")
+    _cleanup_active_containers()
+    previous = _PREVIOUS_SIGNAL_HANDLERS.get(signum, signal.SIG_DFL)
+    if previous is signal.default_int_handler:
+        raise KeyboardInterrupt
+    if callable(previous):
+        previous(signum, frame)
+        raise SystemExit(128 + signum)
+    raise SystemExit(128 + signum)
+
+
+def _register_cleanup_hooks() -> None:
+    global _CLEANUP_HOOKS_REGISTERED
+    if _CLEANUP_HOOKS_REGISTERED:
+        return
+    atexit.register(_cleanup_active_containers)
+    for signum in (signal.SIGINT, signal.SIGTERM):
+        _PREVIOUS_SIGNAL_HANDLERS[signum] = signal.getsignal(signum)
+        signal.signal(signum, _cleanup_on_signal)
+    _CLEANUP_HOOKS_REGISTERED = True
 
 
 def _build_image(image: str) -> int:
@@ -288,6 +444,10 @@ def _run_shard_e2e(
             "--detach",
             "--name",
             config.container_name,
+            "--label",
+            _SCOPE_LABEL,
+            "--label",
+            f"{_RUN_LABEL_KEY}={os.getpid()}",
             "-p",
             f"{config.http_port}:8000",
             "-p",
@@ -302,6 +462,7 @@ def _run_shard_e2e(
         if rc != 0:
             return rc
         container_started = True
+        _track_active_container(config.container_name)
         _wait_health(base_url)
         env = os.environ.copy()
         env.update(
@@ -325,6 +486,8 @@ def _run_shard_e2e(
             "-q",
             "-n",
             "0",
+            "--junitxml",
+            str(config.junit_path),
             "-m",
             marker,
             *config.tests,
@@ -349,12 +512,8 @@ def _run_shard_e2e(
         raise
     finally:
         if container_started:
-            subprocess.run(
-                ["docker", "rm", "-f", config.container_name],
-                cwd=str(ROOT),
-                check=False,
-                capture_output=True,
-            )
+            _force_remove_container(config.container_name)
+            _untrack_active_container(config.container_name)
 
 
 def _shard_worker(
@@ -463,8 +622,15 @@ def main() -> int:
         marker = "e2e and not long_sim" if args.fast_e2e else "e2e"
 
     collected = collect_test_ids(["-m", marker, "apps/server/tests_e2e"])
+    duration_cache_path = _duration_cache_path()
+    duration_cache = _load_duration_cache(duration_cache_path)
+    if duration_cache:
+        _emit(
+            f"[e2e-parallel] loaded {len(duration_cache)} cached test durations from "
+            f"{duration_cache_path}"
+        )
 
-    shard_test_ids = _assign_shards_by_duration(collected, args.shards)
+    shard_test_ids = _assign_shards_by_duration(collected, args.shards, duration_cache)
     num_shards = len(shard_test_ids)
 
     _emit(
@@ -476,6 +642,7 @@ def main() -> int:
     if build_rc != 0:
         return build_rc
 
+    _register_cleanup_hooks()
     pid = str(os.getpid())
     shards: list[ShardConfig] = []
     for shard_index in range(1, num_shards + 1):
@@ -493,6 +660,7 @@ def main() -> int:
                 sim_control_port=args.sim_control_port_base + (shard_index - 1),
                 sim_client_control_base=9100 + ((shard_index - 1) * 100),
                 log_path=LOG_DIR / f"shard-{shard_index}.log",
+                junit_path=LOG_DIR / f"shard-{shard_index}.xml",
             )
         )
 
@@ -517,6 +685,21 @@ def main() -> int:
 
     for thread in threads:
         thread.join()
+
+    observed_durations: dict[str, float] = {}
+    for shard in shards:
+        observed_durations.update(
+            _observed_durations_from_junit(shard.junit_path, shard.tests)
+        )
+    if observed_durations:
+        merged_durations = _merge_duration_observations(
+            duration_cache, observed_durations
+        )
+        _write_duration_cache(duration_cache_path, merged_durations)
+        _emit(
+            f"[e2e-parallel] updated duration cache with {len(observed_durations)} observed "
+            f"test timings at {duration_cache_path}"
+        )
 
     elapsed = time.monotonic() - started
     _emit("\n=== e2e parallel summary ===")
