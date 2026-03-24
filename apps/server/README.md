@@ -131,9 +131,12 @@ debug workflows:
   the hotspot/systemd launch path.
 - `VIBESENSOR_SERVE_STATIC=0`: disable mounting bundled UI static files for
   API-only runs, backend tests, or release validation helpers.
-- `VIBESENSOR_DISABLE_AUTO_APP=1`: prevent import-time FastAPI app creation;
-  mainly useful for tests, CLI entrypoints, and release validation subprocesses.
 - `VIBESENSOR_WS_DEBUG=1`: enable dev-only WebSocket payload-size debug logs.
+
+Importing `vibesensor.app` or `vibesensor.app.bootstrap` is now side-effect
+free. Config loading, runtime construction, SQLite opening, and static-asset
+validation happen only when callers explicitly invoke `create_app(...)` or the
+CLI startup path.
 
 Updater and release tooling also expose focused overrides:
 

@@ -3,10 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
-
-os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
-
 from typing import Any
 
 import numpy as np

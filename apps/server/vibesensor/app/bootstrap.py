@@ -145,13 +145,6 @@ def create_app_from_env() -> FastAPI:
     return create_app(config_path=config_path)
 
 
-app: FastAPI | None = (
-    create_app()
-    if __name__ != "__main__" and os.getenv("VIBESENSOR_DISABLE_AUTO_APP", "0") != "1"
-    else None
-)
-
-
 def _run_server(
     app_target: FastAPI | str,
     *,
@@ -219,7 +212,6 @@ def _run_server_with_port_fallback(
 
 def main() -> None:
     """Entry point for the ``vibesensor-server`` CLI command."""
-    os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
     parser = argparse.ArgumentParser(description="Run VibeSensor server")
     parser.add_argument("--config", type=Path, default=None, help="Path to config YAML")
     parser.add_argument(
