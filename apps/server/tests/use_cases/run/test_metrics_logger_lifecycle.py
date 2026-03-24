@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pytest
@@ -60,6 +61,85 @@ def test_start_append_stop_produces_complete_run_in_db(
     assert stored["score"] == 42
     assert stored["details"] == "looks good"
     assert "analysis_metadata" in stored
+
+
+def test_start_and_stop_recording_emit_structured_run_lifecycle_events(
+    make_logger,
+    fake_history_db,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    logger = make_logger(history_db=fake_history_db)
+    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+
+    with caplog.at_level(logging.INFO, logger="vibesensor.use_cases.run.logger"):
+        started = logger.start_recording()
+        assert started.run_id is not None
+        snapshot = logger._session_snapshot()
+        assert snapshot is not None
+        logger._sample_flush.append_records(
+            snapshot.run_id,
+            snapshot.start_time_utc,
+            snapshot.start_mono_s,
+        )
+        logger.stop_recording()
+
+    lifecycle_records = [rec for rec in caplog.records if rec.message == "run_lifecycle"]
+    assert [rec.run_action for rec in lifecycle_records] == ["started", "stopped"]
+
+    start_record, stop_record = lifecycle_records
+    assert start_record.event == "run_lifecycle"
+    assert start_record.run_id == snapshot.run_id
+    assert start_record.start_time_utc == snapshot.start_time_utc
+    assert not hasattr(start_record, "stop_reason")
+
+    assert stop_record.event == "run_lifecycle"
+    assert stop_record.run_id == snapshot.run_id
+    assert stop_record.start_time_utc == snapshot.start_time_utc
+    assert stop_record.stop_reason == "manual"
+    assert stop_record.samples_written > 0
+    assert stop_record.samples_dropped == 0
+    assert isinstance(stop_record.end_time_utc, str)
+
+
+def test_restart_recording_emits_stop_then_start_lifecycle_events(
+    make_logger,
+    fake_history_db,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    logger = make_logger(history_db=fake_history_db)
+    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+    first_status = logger.start_recording()
+    assert first_status.run_id is not None
+    first_snapshot = logger._session_snapshot()
+    assert first_snapshot is not None
+    logger._sample_flush.append_records(
+        first_snapshot.run_id,
+        first_snapshot.start_time_utc,
+        first_snapshot.start_mono_s,
+    )
+
+    with caplog.at_level(logging.INFO, logger="vibesensor.use_cases.run.logger"):
+        second_status = logger.start_recording()
+
+    assert second_status.run_id is not None
+    assert second_status.run_id != first_snapshot.run_id
+    second_snapshot = logger._session_snapshot()
+    assert second_snapshot is not None
+    lifecycle_records = [rec for rec in caplog.records if rec.message == "run_lifecycle"]
+    assert [rec.run_action for rec in lifecycle_records] == ["stopped", "started"]
+
+    stop_record, start_record = lifecycle_records
+    assert stop_record.event == "run_lifecycle"
+    assert stop_record.run_id == first_snapshot.run_id
+    assert stop_record.stop_reason == "restart"
+    assert stop_record.samples_written > 0
+    assert stop_record.samples_dropped == 0
+
+    assert start_record.event == "run_lifecycle"
+    assert start_record.run_id == second_status.run_id
+    assert start_record.start_time_utc == second_snapshot.start_time_utc
 
 
 class _SpyLock:

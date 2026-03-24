@@ -83,11 +83,15 @@ async def test_runtime_auto_stop_uses_to_thread(
     monkeypatch.setattr(logger._sample_flush, "build_sample_records", lambda **_: [])
     monkeypatch.setattr(logger._sample_flush, "append_records", lambda *args, **kwargs: True)
 
-    stop_calls: list[str] = []
+    stop_calls: list[tuple[str, str]] = []
 
-    def fake_stop_recording(*, _only_if_run_id: str | None = None):
+    def fake_stop_recording(
+        *,
+        _only_if_run_id: str | None = None,
+        reason: str = "manual",
+    ):
         assert _only_if_run_id is not None
-        stop_calls.append(_only_if_run_id)
+        stop_calls.append((_only_if_run_id, reason))
         logger._lifecycle.stop()
         return logger.status()
 
@@ -105,7 +109,7 @@ async def test_runtime_auto_stop_uses_to_thread(
     with pytest.raises(_StopLoop):
         await _recorder_runtime.run_loop(logger, logger=logging.getLogger(__name__))
 
-    assert stop_calls == [snapshot.run_id]
+    assert stop_calls == [(snapshot.run_id, "no_data_timeout")]
     assert fake_stop_recording in to_thread_calls
 
 
