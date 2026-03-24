@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from vibesensor.adapters.http._helpers import OpenAPIResponses, domain_errors_to_http
+from vibesensor.adapters.http._helpers import (
+    OpenAPIResponses,
+    domain_errors_to_http,
+    normalize_run_id_or_400,
+)
 from vibesensor.adapters.http.models import (
     DeleteHistoryRunResponse,
     HistoryInsightsAnalyzingResponse,
@@ -25,6 +29,10 @@ if TYPE_CHECKING:
 
 _RUN_NOT_FOUND_RESPONSE: OpenAPIResponses = {
     404: {"description": "Requested run was not found."},
+}
+
+_INVALID_RUN_ID_RESPONSE: OpenAPIResponses = {
+    400: {"description": "Invalid run identifier."},
 }
 
 _RUN_LOAD_ERROR_RESPONSE: OpenAPIResponses = {
@@ -79,17 +87,22 @@ def create_history_routes(
         response_model=HistoryRunResponse,
         response_model_exclude_unset=True,
         response_model_exclude_none=True,
-        responses={**_RUN_NOT_FOUND_RESPONSE, **_RUN_LOAD_ERROR_RESPONSE},
+        responses={
+            **_INVALID_RUN_ID_RESPONSE,
+            **_RUN_NOT_FOUND_RESPONSE,
+            **_RUN_LOAD_ERROR_RESPONSE,
+        },
     )
     async def get_history_run(run_id: str) -> HistoryRunResponse:
         """Return full metadata and analysis payloads for a single recorded run."""
+        run_id = normalize_run_id_or_400(run_id)
         with domain_errors_to_http():
             return await run_service.get_run(run_id)
 
     @router.get(
         "/api/history/{run_id}/insights",
         response_model=HistoryInsightsResponse,
-        responses=_HISTORY_INSIGHTS_RESPONSES,
+        responses={**_INVALID_RUN_ID_RESPONSE, **_HISTORY_INSIGHTS_RESPONSES},
     )
     async def get_history_insights(
         run_id: str,
@@ -101,6 +114,7 @@ def create_history_routes(
         ),
     ) -> HistoryInsightsResponse | JSONResponse:
         """Return localized post-analysis findings, or a 202 while analysis is still running."""
+        run_id = normalize_run_id_or_400(run_id)
         with domain_errors_to_http():
             result = await run_service.get_insights(run_id, requested_lang=lang)
         if result is None:
@@ -114,10 +128,11 @@ def create_history_routes(
     @router.delete(
         "/api/history/{run_id}",
         response_model=DeleteHistoryRunResponse,
-        responses=_RUN_NOT_FOUND_RESPONSE,
+        responses={**_INVALID_RUN_ID_RESPONSE, **_RUN_NOT_FOUND_RESPONSE},
     )
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
         """Delete a persisted run and its derived artifacts from history storage."""
+        run_id = normalize_run_id_or_400(run_id)
         with domain_errors_to_http():
             return await run_service.delete_run(run_id)
 
@@ -126,7 +141,7 @@ def create_history_routes(
     @router.get(
         "/api/history/{run_id}/report.pdf",
         response_class=Response,
-        responses=_REPORT_RESPONSES,
+        responses={**_INVALID_RUN_ID_RESPONSE, **_REPORT_RESPONSES},
     )
     async def download_history_report_pdf(
         run_id: str,
@@ -139,6 +154,7 @@ def create_history_routes(
         ),
     ) -> Response:
         """Build and download the PDF diagnostic report for a persisted run."""
+        run_id = normalize_run_id_or_400(run_id)
         with domain_errors_to_http():
             pdf = await report_service.build_pdf(run_id, lang)
         pdf_headers = {
@@ -155,10 +171,11 @@ def create_history_routes(
     @router.get(
         "/api/history/{run_id}/export",
         response_class=StreamingResponse,
-        responses=_EXPORT_RESPONSES,
+        responses={**_INVALID_RUN_ID_RESPONSE, **_EXPORT_RESPONSES},
     )
     async def export_history_run(run_id: str) -> StreamingResponse:
         """Build and stream the ZIP export bundle for a persisted run."""
+        run_id = normalize_run_id_or_400(run_id)
         with domain_errors_to_http():
             export = await export_service.build_export(run_id)
         return StreamingResponse(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any, TypeAlias
@@ -25,12 +26,16 @@ __all__ = [
     "OpenAPIResponses",
     "async_require_run",
     "domain_errors_to_http",
+    "normalize_car_id_or_400",
     "normalize_client_id_or_400",
     "normalize_mac_or_400",
+    "normalize_run_id_or_400",
     "safe_filename",
 ]
 
 OpenAPIResponses: TypeAlias = dict[int | str, dict[str, Any]]
+_CAR_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+_RUN_ID_RE = re.compile(r"^[!-~]{1,128}$")
 
 
 @contextmanager
@@ -86,6 +91,20 @@ def normalize_client_id_or_400(client_id: str) -> str:
         return normalize_sensor_id(client_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid sensor identifier") from exc
+
+
+def normalize_run_id_or_400(run_id: str) -> str:
+    """Validate a history run identifier or raise HTTP 400."""
+    if _RUN_ID_RE.fullmatch(run_id):
+        return run_id
+    raise HTTPException(status_code=400, detail="Invalid run identifier")
+
+
+def normalize_car_id_or_400(car_id: str) -> str:
+    """Validate a car configuration identifier or raise HTTP 400."""
+    if _CAR_ID_RE.fullmatch(car_id):
+        return car_id
+    raise HTTPException(status_code=400, detail="Invalid car identifier")
 
 
 def normalize_mac_or_400(mac: str) -> str:
