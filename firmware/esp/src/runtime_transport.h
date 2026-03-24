@@ -15,11 +15,12 @@ struct TransportState {
   uint8_t client_id[6] = {};
   uint16_t control_port = 0;
   uint32_t last_hello_ms = 0;
+  bool handshake_complete = false;
   int64_t clock_offset_us = 0;
 };
 
 void initialize_transport(TransportState& state);
-void send_hello(TransportState& state, RuntimeStatus& status);
+bool send_hello(TransportState& state, RuntimeStatus& status);
 void service_hello(TransportState& state, RuntimeStatus& status);
 void service_tx(TransportState& state,
                 FrameQueueState& queue_state,

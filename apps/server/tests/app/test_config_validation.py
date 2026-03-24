@@ -183,6 +183,7 @@ class TestLoggingConfigValidation:
             "no_data_timeout_s": 15.0,
             "history_db_path": Path("/tmp/history.db"),
             "persist_history_db": True,
+            "run_retention_days": 7,
             "shutdown_analysis_timeout_s": 30.0,
             "app_log_path": Path("/tmp/app.log"),
         }
@@ -205,6 +206,10 @@ class TestLoggingConfigValidation:
     def test_negative_shutdown_timeout_clamped(self) -> None:
         cfg = self._make(shutdown_analysis_timeout_s=-1.0)
         assert cfg.shutdown_analysis_timeout_s >= 0
+
+    def test_non_positive_run_retention_days_clamped(self) -> None:
+        cfg = self._make(run_retention_days=0)
+        assert cfg.run_retention_days >= 1
 
 
 # ---------------------------------------------------------------------------
