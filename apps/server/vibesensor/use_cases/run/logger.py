@@ -12,6 +12,7 @@ from uuid import uuid4
 from vibesensor.shared.ports import (
     ClientTracker,
     RunPersistence,
+    SensorMetadataReader,
     SettingsReader,
     SignalSource,
     SpeedProvider,
@@ -66,6 +67,7 @@ class RunRecorder:
         processor: SignalSource,
         history_db: RunPersistence | None = None,
         settings_store: SettingsReader | None = None,
+        sensor_metadata_reader: SensorMetadataReader | None = None,
         language_provider: Callable[[], str] | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
@@ -119,6 +121,7 @@ class RunRecorder:
             processor=self.processor,
             analysis_settings_snapshot=self._recording_analysis_settings_snapshot,
             default_sample_rate_hz=self.default_sample_rate_hz,
+            sensor_metadata_reader=sensor_metadata_reader,
             lifecycle=self._lifecycle,
             persistence=self._persistence,
             active_frames_total=lambda: _recorder_runtime.active_frames_total(self.registry),

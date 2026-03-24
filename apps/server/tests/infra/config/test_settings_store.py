@@ -252,6 +252,14 @@ def test_store_set_and_get_sensor() -> None:
     assert sensors["aabbccddeeff"]["location_code"] == "front_left_wheel"
 
 
+def test_store_set_sensor_rejects_duplicate_location() -> None:
+    store = SettingsStore()
+    store.set_sensor("aa:bb:cc:dd:ee:ff", {"location_code": "front_left_wheel"})
+
+    with pytest.raises(ValueError, match="already assigned"):
+        store.set_sensor("11:22:33:44:55:66", {"location_code": "front_left_wheel"})
+
+
 def test_store_remove_sensor() -> None:
     store = SettingsStore()
     store.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "Test"})
