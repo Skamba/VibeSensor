@@ -18,8 +18,10 @@ from vibesensor.adapters.http.models import (
     HistoryRunResponse,
 )
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
+from vibesensor.shared.boundaries.summary_warning import localize_warning_list
+from vibesensor.shared.ports import ActiveCarReader
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.use_cases.history.exports import (
     EXPORT_SPOOL_THRESHOLD,
     HistoryExportContext,
@@ -30,6 +32,7 @@ from vibesensor.use_cases.history.exports import (
 )
 from vibesensor.use_cases.history.helpers import strip_internal_fields
 from vibesensor.use_cases.history.runs import HistoryRunService
+from vibesensor.use_cases.run.run_context import add_current_context_warnings
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
@@ -102,10 +105,15 @@ def build_projected_run_details_json(
 class ProjectedHistoryRunService:
     """Adapter that projects persisted history analysis before HTTP delivery."""
 
-    __slots__ = ("_service",)
+    __slots__ = ("_current_car_reader", "_service")
 
-    def __init__(self, service: HistoryRunService) -> None:
+    def __init__(
+        self,
+        service: HistoryRunService,
+        current_car_reader: ActiveCarReader | None = None,
+    ) -> None:
         self._service = service
+        self._current_car_reader = current_car_reader
 
     async def list_runs(self) -> list[HistoryListEntryResponse]:
         return [
@@ -126,7 +134,21 @@ class ProjectedHistoryRunService:
         result = await self._service.get_insights(run_id, requested_lang=requested_lang)
         if result is None:
             return None
-        validated = _HISTORY_INSIGHTS_ADAPTER.validate_python(project_history_insights(result))
+        projected = project_history_insights(result)
+        if self._current_car_reader is not None:
+            overlay_warnings = add_current_context_warnings(
+                projected.get("warnings"),
+                metadata=projected.get("metadata"),
+                current_active_car_snapshot=self._current_car_reader.active_car_snapshot(),
+            )
+            projected["warnings"] = cast(
+                JsonValue,
+                localize_warning_list(
+                    overlay_warnings,
+                    lang=str(requested_lang or projected.get("lang") or "en"),
+                ),
+            )
+        validated = _HISTORY_INSIGHTS_ADAPTER.validate_python(projected)
         return cast(
             HistoryInsightsResponse,
             _HISTORY_INSIGHTS_ADAPTER.dump_python(validated, mode="json"),

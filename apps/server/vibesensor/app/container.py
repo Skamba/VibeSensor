@@ -140,17 +140,18 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     # persistence services
     history_run_service = HistoryRunService(
         history_db,
-        settings_reader,
     )
     report_service = HistoryReportService(
         history_db,
-        settings_reader,
         pdf_renderer=_build_pdf_bytes,
     )
     history_export_service = HistoryExportService(
         history_db,
     )
-    run_service = ProjectedHistoryRunService(history_run_service)
+    run_service = ProjectedHistoryRunService(
+        history_run_service,
+        current_car_reader=settings_reader,
+    )
     export_service = ProjectedHistoryExportService(history_export_service)
 
     # ingress

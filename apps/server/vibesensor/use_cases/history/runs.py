@@ -8,7 +8,7 @@ from typing import Never, cast
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
-from vibesensor.shared.ports import RunPersistence, SettingsReader
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.use_cases.history.helpers import (
@@ -17,21 +17,15 @@ from vibesensor.use_cases.history.helpers import (
     resolve_run_language,
     strip_internal_fields,
 )
-from vibesensor.use_cases.run.run_context import add_current_context_warnings
 
 
 class HistoryRunService:
     """Run queries and delete operations used by history endpoints."""
 
-    __slots__ = ("_history_db", "_settings_store")
+    __slots__ = ("_history_db",)
 
-    def __init__(
-        self,
-        history_db: RunPersistence,
-        settings_store: SettingsReader | None = None,
-    ) -> None:
+    def __init__(self, history_db: RunPersistence) -> None:
         self._history_db = history_db
-        self._settings_store = settings_store
 
     async def list_runs(self) -> list[HistoryRunListEntry]:
         return await asyncio.to_thread(self._history_db.list_runs)
@@ -51,16 +45,11 @@ class HistoryRunService:
 
         raw_analysis = require_analysis_ready(run)
         analysis = strip_internal_fields(raw_analysis.to_json_object())
-        current_active_car_snapshot = (
-            self._settings_store.active_car_snapshot() if self._settings_store is not None else None
-        )
-        warnings = add_current_context_warnings(
-            analysis.get("warnings"),
-            metadata=analysis.get("metadata"),
-            current_active_car_snapshot=current_active_car_snapshot,
-        )
         response_lang = resolve_run_language(run, requested_lang)
-        analysis["warnings"] = cast(JsonValue, localize_warning_list(warnings, lang=response_lang))
+        analysis["warnings"] = cast(
+            JsonValue,
+            localize_warning_list(analysis.get("warnings"), lang=response_lang),
+        )
         analysis["run_id"] = run.run_id or run_id
         analysis["status"] = RunStatus.COMPLETE.value
 
