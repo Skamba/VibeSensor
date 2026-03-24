@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException
 from vibesensor.adapters.http._helpers import (
     OpenAPIResponses,
     domain_errors_to_http,
+    normalize_car_id_or_400,
     normalize_mac_or_400,
 )
 from vibesensor.adapters.http.models import (
@@ -48,11 +49,17 @@ if TYPE_CHECKING:
     from vibesensor.infra.config.settings_store import SettingsStore
 
 _CAR_NOT_FOUND_RESPONSES: OpenAPIResponses = {
+    400: {"description": "Invalid car identifier."},
     404: {"description": "Requested car profile was not found."},
 }
 
 _DELETE_CAR_RESPONSES: OpenAPIResponses = {
-    400: {"description": "The requested deletion violates current settings constraints."},
+    400: {
+        "description": (
+            "Invalid car identifier or the requested deletion violates "
+            "current settings constraints."
+        )
+    },
     404: {"description": "Requested car profile was not found."},
 }
 
@@ -224,7 +231,7 @@ def create_settings_routes(
     )
     async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
         """Select which saved car profile should drive current analysis settings."""
-        car_id = req.car_id
+        car_id = normalize_car_id_or_400(req.car_id)
         with domain_errors_to_http(catch_value_error=404):
             result = await asyncio.to_thread(settings_store.set_active_car, car_id)
         return _cars_response(result)
@@ -236,6 +243,7 @@ def create_settings_routes(
     )
     async def update_car(car_id: str, req: CarUpsertRequest) -> CarsResponse:
         """Update an existing car profile while preserving unspecified fields."""
+        car_id = normalize_car_id_or_400(car_id)
         payload = _car_upsert_payload(req)
         with domain_errors_to_http(catch_value_error=404):
             result = await asyncio.to_thread(
@@ -252,6 +260,7 @@ def create_settings_routes(
     )
     async def delete_car(car_id: str) -> CarsResponse:
         """Delete a saved car profile when that removal keeps settings state valid."""
+        car_id = normalize_car_id_or_400(car_id)
         # Existence check first so unknown-car yields 404 while business-logic
         # errors (e.g. "cannot delete the last car") propagate as 400.
         cars_snapshot = await asyncio.to_thread(settings_store.get_cars)
