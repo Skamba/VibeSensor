@@ -175,6 +175,13 @@ before/after values for the changed setting or car profile. That gives a stable
 operator trail for configuration changes without adding a second persistence
 path.
 
+Run transitions now also emit structured `run_lifecycle` records with a
+`run_action` (`started` or `stopped`), the `run_id`, timestamps, and, for stop
+events, the stop reason plus written/dropped sample counters. That gives
+operators a queryable trail for manual stops, restart rollovers, inactivity
+auto-stops, and shutdown cleanup without stitching together multiple log
+messages.
+
 ## HTTP and WebSocket surface
 
 The API surface is implemented in `apps/server/vibesensor/adapters/http/` and assembled by `adapters/http/__init__.py`.

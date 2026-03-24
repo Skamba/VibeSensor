@@ -16,6 +16,7 @@ from vibesensor.shared.ports import (
     SignalSource,
     SpeedProvider,
 )
+from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
 from vibesensor.use_cases.run.persistence_writer import (
@@ -215,8 +216,38 @@ class RunRecorder:
             logger=LOGGER,
         )
 
+    def _log_run_lifecycle_event(
+        self,
+        *,
+        action: str,
+        run_id: str,
+        start_time_utc: str,
+        end_time_utc: str | None = None,
+        stop_reason: str | None = None,
+        samples_written: int | None = None,
+        samples_dropped: int | None = None,
+    ) -> None:
+        extra: dict[str, object] = {
+            "event": "run_lifecycle",
+            "run_action": action,
+            "run_id": run_id,
+            "start_time_utc": start_time_utc,
+        }
+        if end_time_utc is not None:
+            extra["end_time_utc"] = end_time_utc
+        if stop_reason is not None:
+            extra["stop_reason"] = stop_reason
+        if samples_written is not None:
+            extra["samples_written"] = samples_written
+        if samples_dropped is not None:
+            extra["samples_dropped"] = samples_dropped
+        LOGGER.info("run_lifecycle", extra=log_extra(**extra))
+
     def start_recording(self) -> RunRecorderStatusSnapshot:
         completed_run_id: str | None = None
+        lifecycle_events: list[
+            tuple[str, str, str, str | None, str | None, int | None, int | None]
+        ] = []
         with self._lock:
             if self._lifecycle.shutdown_requested:
                 LOGGER.info(
@@ -236,10 +267,12 @@ class RunRecorder:
                 run_id = self._run_id
                 completed_run_id = self._persistence.ready_for_analysis(run_id)
                 start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
+                end_time_utc = utc_now_iso()
+                persistence_snapshot = self._persistence.status_snapshot()
                 if run_id and not self._persistence.finalize_run(
                     run_id,
                     start_time_utc,
-                    utc_now_iso(),
+                    end_time_utc,
                 ):
                     # finalize_run may fail (e.g. DB unavailable), but
                     # store_analysis handles the RECORDING→COMPLETE bypass
@@ -248,8 +281,48 @@ class RunRecorder:
                         "finalize_run failed for %s; scheduling analysis anyway",
                         run_id,
                     )
-            self._start_new_run_locked()
+                lifecycle_events.append(
+                    (
+                        "stopped",
+                        run_id,
+                        start_time_utc,
+                        end_time_utc,
+                        "restart",
+                        persistence_snapshot.written_sample_count,
+                        persistence_snapshot.dropped_sample_count,
+                    )
+                )
+            started_run = self._start_new_run_locked()
+            lifecycle_events.append(
+                (
+                    "started",
+                    started_run.run_id,
+                    started_run.start_time_utc,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+            )
             result = self.status()
+        for (
+            event_action,
+            event_run_id,
+            event_start_time_utc,
+            event_end_time_utc,
+            event_stop_reason,
+            event_samples_written,
+            event_samples_dropped,
+        ) in lifecycle_events:
+            self._log_run_lifecycle_event(
+                action=event_action,
+                run_id=event_run_id,
+                start_time_utc=event_start_time_utc,
+                end_time_utc=event_end_time_utc,
+                stop_reason=event_stop_reason,
+                samples_written=event_samples_written,
+                samples_dropped=event_samples_dropped,
+            )
         if completed_run_id and self._history_db is not None:
             self.schedule_post_analysis(completed_run_id)
         return result
@@ -258,7 +331,11 @@ class RunRecorder:
         self,
         *,
         _only_if_run_id: str | None = None,
+        reason: str = "manual",
     ) -> RunRecorderStatusSnapshot:
+        lifecycle_event: (
+            tuple[str, str, str, str | None, str | None, int | None, int | None] | None
+        ) = None
         with self._lock:
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()
@@ -275,10 +352,12 @@ class RunRecorder:
             run_id = self._run_id
             run_id_to_analyze = self._persistence.ready_for_analysis(run_id)
             start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
+            end_time_utc = utc_now_iso()
+            persistence_snapshot = self._persistence.status_snapshot()
             if run_id and not self._persistence.finalize_run(
                 run_id,
                 start_time_utc,
-                utc_now_iso(),
+                end_time_utc,
             ):
                 # finalize_run may fail (e.g. DB unavailable), but
                 # store_analysis handles the RECORDING→COMPLETE bypass
@@ -287,10 +366,39 @@ class RunRecorder:
                     "finalize_run failed for %s; scheduling analysis anyway",
                     run_id,
                 )
+            if run_id is not None:
+                lifecycle_event = (
+                    "stopped",
+                    run_id,
+                    start_time_utc,
+                    end_time_utc,
+                    reason,
+                    persistence_snapshot.written_sample_count,
+                    persistence_snapshot.dropped_sample_count,
+                )
             self._lifecycle.stop()
             self._active_run_context = None
             self._persistence.reset()
             result = self.status()
+        if lifecycle_event is not None:
+            (
+                event_action,
+                event_run_id,
+                event_start_time_utc,
+                event_end_time_utc,
+                event_stop_reason,
+                event_samples_written,
+                event_samples_dropped,
+            ) = lifecycle_event
+            self._log_run_lifecycle_event(
+                action=event_action,
+                run_id=event_run_id,
+                start_time_utc=event_start_time_utc,
+                end_time_utc=event_end_time_utc,
+                stop_reason=event_stop_reason,
+                samples_written=event_samples_written,
+                samples_dropped=event_samples_dropped,
+            )
         if run_id_to_analyze and self._history_db is not None:
             self.schedule_post_analysis(run_id_to_analyze)
         return result

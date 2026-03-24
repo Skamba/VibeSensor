@@ -116,6 +116,7 @@ async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
                     asyncio.to_thread(
                         recorder.stop_recording,
                         _only_if_run_id=run_id,
+                        reason="no_data_timeout",
                     ),
                     timeout=_DB_THREAD_TIMEOUT_S,
                 )
