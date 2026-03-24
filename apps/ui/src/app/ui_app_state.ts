@@ -170,6 +170,8 @@ export function createAppState(): AppState {
         run_id: null,
         write_error: null,
         analysis_in_progress: false,
+        samples_written: 0,
+        samples_dropped: 0,
       },
       locationOptions: [],
       locationCodes: defaultLocationCodes.slice(),

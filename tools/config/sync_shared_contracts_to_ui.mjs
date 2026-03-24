@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -16,6 +16,25 @@ const constantsDst = resolve(root, 'apps/ui/src/constants.ts');
 const wsSchemaSrc = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.json');
 const wsSchemaTsDst = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.generated.ts');
 const wsTypesDst = resolve(root, 'apps/ui/src/contracts/ws_payload_types.ts');
+const openapiPackageJsonPath = requireFromUi.resolve('openapi-typescript/package.json');
+
+function resolvePackageBinPath(packageJsonPath, binName) {
+	const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+	const binField = packageJson.bin;
+	const relativeBinPath = typeof binField === 'string' ? binField : binField?.[binName];
+
+	if (typeof relativeBinPath !== 'string' || relativeBinPath.length === 0) {
+		throw new Error(`Package at ${packageJsonPath} does not expose a ${binName} CLI`);
+	}
+
+	const binPath = resolve(dirname(packageJsonPath), relativeBinPath);
+	if (!existsSync(binPath)) {
+		throw new Error(`Resolved ${binName} CLI does not exist: ${binPath}`);
+	}
+	return binPath;
+}
+
+const openapiCliPath = resolvePackageBinPath(openapiPackageJsonPath, 'openapi-typescript');
 
 function writeGenerated(filePath, content, checkMode) {
 	mkdirSync(dirname(filePath), { recursive: true });
@@ -30,7 +49,6 @@ function writeGenerated(filePath, content, checkMode) {
 }
 
 async function generateHttpTypes() {
-	const openapiCliPath = requireFromUi.resolve('openapi-typescript/bin/cli.js');
 	const result = spawnSync(process.execPath, [openapiCliPath, httpSchemaSrc], {
 		encoding: 'utf8',
 	});
@@ -82,7 +100,6 @@ function wsAliasBlock(schemaVersion) {
 }
 
 async function generateWsTypes() {
-	const openapiCliPath = requireFromUi.resolve('openapi-typescript/bin/cli.js');
 	const wsSchema = JSON.parse(readFileSync(wsSchemaSrc, 'utf8'));
 	const defs = wsSchema.$defs && typeof wsSchema.$defs === 'object' ? wsSchema.$defs : {};
 	const schemaVersion = wsSchema.properties?.schema_version?.default ?? '1';

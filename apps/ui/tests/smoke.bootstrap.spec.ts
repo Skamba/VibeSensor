@@ -33,11 +33,25 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   });
   await page.route("**/api/recording/start", async (route) => {
     startCalls += 1;
-    await fulfillJson(route, { enabled: true, run_id: "run-001" });
+    await fulfillJson(route, {
+      enabled: true,
+      run_id: "run-001",
+      write_error: null,
+      analysis_in_progress: false,
+      samples_written: 0,
+      samples_dropped: 0,
+    });
   });
   await page.route("**/api/recording/stop", async (route) => {
     stopCalls += 1;
-    await fulfillJson(route, { enabled: false, run_id: null });
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      samples_written: 0,
+      samples_dropped: 0,
+    });
   });
 
   await installFakeWebSocket(page, {
