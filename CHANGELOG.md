@@ -23,6 +23,10 @@
 - **Structured observability** — Application file logs now use structured JSON,
   HTTP responses echo `X-Request-ID`, and successful settings writes emit
   `settings_change` audit events with before/after values.
+- **Automatic startup run retention** — The server now prunes terminal
+  (`complete` / `error`) runs older than `logging.run_retention_days`
+  (default `7`) during HistoryDB startup maintenance, keeping long-lived Pi
+  deployments from accumulating unbounded local run history.
 
 ## Unreleased — Engineering Hardening Pass
 

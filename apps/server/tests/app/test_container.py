@@ -11,9 +11,11 @@ def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupte
     monkeypatch,
 ) -> None:
     recovered = {"called": False}
+    pruned = {"called": False}
     fake_db = SimpleNamespace(
         corruption_detected=True,
         recover_stale_recording_runs=lambda: recovered.__setitem__("called", True),
+        prune_terminal_runs_older_than_days=lambda _days: pruned.__setitem__("called", True),
     )
 
     def _fake_history_db(_path: Path, *, corruption_reporter=None):
@@ -22,7 +24,7 @@ def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupte
 
     monkeypatch.setattr(container_module, "HistoryDB", _fake_history_db)
     config = SimpleNamespace(
-        logging=SimpleNamespace(history_db_path=tmp_path / "history.db"),
+        logging=SimpleNamespace(history_db_path=tmp_path / "history.db", run_retention_days=7),
     )
 
     result = container_module.create_history_db(
@@ -32,3 +34,74 @@ def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupte
 
     assert result is fake_db
     assert recovered["called"] is False
+    assert pruned["called"] is False
+
+
+def test_create_history_db_prunes_old_terminal_runs_on_startup(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    calls: list[tuple[str, int | None]] = []
+
+    def _recover() -> int:
+        calls.append(("recover", None))
+        return 0
+
+    def _prune(days: int) -> int:
+        calls.append(("prune", days))
+        return 2
+
+    fake_db = SimpleNamespace(
+        corruption_detected=False,
+        recover_stale_recording_runs=_recover,
+        prune_terminal_runs_older_than_days=_prune,
+    )
+
+    def _fake_history_db(_path: Path, *, corruption_reporter=None):
+        assert corruption_reporter is not None
+        return fake_db
+
+    monkeypatch.setattr(container_module, "HistoryDB", _fake_history_db)
+    config = SimpleNamespace(
+        logging=SimpleNamespace(history_db_path=tmp_path / "history.db", run_retention_days=14),
+    )
+
+    result = container_module.create_history_db(
+        config,
+        corruption_reporter=lambda _details: None,
+    )
+
+    assert result is fake_db
+    assert calls == [("recover", None), ("prune", 14)]
+
+
+def test_create_history_db_continues_when_retention_prune_fails(
+    tmp_path: Path,
+    monkeypatch,
+    caplog,
+) -> None:
+    fake_db = SimpleNamespace(
+        corruption_detected=False,
+        recover_stale_recording_runs=lambda: 0,
+        prune_terminal_runs_older_than_days=lambda _days: (_ for _ in ()).throw(
+            RuntimeError("prune failed")
+        ),
+    )
+
+    def _fake_history_db(_path: Path, *, corruption_reporter=None):
+        assert corruption_reporter is not None
+        return fake_db
+
+    monkeypatch.setattr(container_module, "HistoryDB", _fake_history_db)
+    config = SimpleNamespace(
+        logging=SimpleNamespace(history_db_path=tmp_path / "history.db", run_retention_days=7),
+    )
+
+    with caplog.at_level("WARNING"):
+        result = container_module.create_history_db(
+            config,
+            corruption_reporter=lambda _details: None,
+        )
+
+    assert result is fake_db
+    assert "Failed to prune terminal runs older than 7 day(s)" in caplog.text

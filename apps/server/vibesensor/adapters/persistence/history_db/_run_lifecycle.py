@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from contextlib import AbstractContextManager
+from datetime import UTC, datetime, timedelta
 
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
@@ -242,5 +243,20 @@ class _HistoryDBRunLifecycleMixin:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
                 (f"Recovered stale recording during startup at {now}",),
+            )
+            return int(cur.rowcount)
+
+    def prune_terminal_runs_older_than_days(self, retention_days: int) -> int:
+        if retention_days < 1:
+            raise ValueError("retention_days must be at least 1")
+        cutoff_utc = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
+        with self._cursor() as cur:
+            cur.execute(
+                """
+                DELETE FROM runs
+                WHERE status IN ('complete', 'error')
+                  AND COALESCE(analysis_completed_at, end_time_utc, created_at) < ?
+                """,
+                (cutoff_utc,),
             )
             return int(cur.rowcount)
