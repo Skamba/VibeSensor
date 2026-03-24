@@ -1,8 +1,7 @@
-"""Run-context orchestration helpers for recording and history workflows."""
+"""Run-context orchestration helpers for recording and explicit history overlays."""
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from typing import cast
 
@@ -88,16 +87,6 @@ def add_current_context_warnings(
     }:
         normalized.append(dynamic_warning)
     return normalized
-
-
-def current_car_snapshot_token(current_active_car_snapshot: CarSnapshot | None) -> str:
-    """Return a stable cache token for current active-car context."""
-    return json.dumps(
-        current_active_car_snapshot.to_dict() if current_active_car_snapshot else {},
-        sort_keys=True,
-        ensure_ascii=False,
-        default=str,
-    )
 
 
 def _build_car_settings_changed_warning(

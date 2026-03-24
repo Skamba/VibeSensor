@@ -20,6 +20,7 @@ from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource, SpeedSourcePayload
 
 __all__ = [
+    "ActiveCarReader",
     "ClockSyncBroadcaster",
     "ClientTracker",
     "ClientNamePersistence",
@@ -85,6 +86,12 @@ class RunPersistence(Protocol):
     def store_analysis_error(self, run_id: str, error: str) -> bool: ...
 
     def analyzing_run_health(self) -> AnalyzingRunHealth: ...
+
+
+class ActiveCarReader(Protocol):
+    """Minimal current-car access needed by explicit history overlay composition."""
+
+    def active_car_snapshot(self) -> CarSnapshot | None: ...
 
 
 class SettingsReader(Protocol):
