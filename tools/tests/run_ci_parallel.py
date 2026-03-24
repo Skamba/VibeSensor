@@ -253,6 +253,8 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                     python_cmd,
                     "tools/tests/run_e2e_parallel.py",
                     "--fast-e2e",
+                    "--shards",
+                    "6",
                 ],
             ),
         ],
