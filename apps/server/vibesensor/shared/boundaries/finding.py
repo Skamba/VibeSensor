@@ -28,6 +28,7 @@ from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
     vibration_origin_from_payload,
 )
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.history_analysis_contracts import payload_value_from_json
 
@@ -117,13 +118,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         v = payload.get(key)
         return str(v) if v is not None else ""
 
-    conf_raw = payload.get("confidence")
-    confidence: float | None = None
-    if conf_raw is not None:
-        try:
-            confidence = coerce_float(conf_raw)
-        except (TypeError, ValueError):
-            pass
+    confidence = _as_float(payload.get("confidence"))
 
     freq_raw = payload.get("frequency_hz") or payload.get("frequency_hz_or_order")
     frequency_hz: float | None = None
@@ -139,30 +134,14 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     band = payload.get("strongest_speed_band")
 
     # Evidence / ranking fields
-    ranking_raw = payload.get("ranking_score")
-    ranking_score = 0.0
-    if ranking_raw is not None:
-        try:
-            ranking_score = coerce_float(ranking_raw)
-        except (TypeError, ValueError):
-            pass
-
-    dominance_raw = payload.get("dominance_ratio")
-    dominance_ratio: float | None = None
-    if dominance_raw is not None:
-        try:
-            dominance_ratio = coerce_float(dominance_raw)
-        except (TypeError, ValueError):
-            pass
+    ranking_score = _as_float(payload.get("ranking_score")) or 0.0
+    dominance_ratio = _as_float(payload.get("dominance_ratio"))
 
     phase_ev = payload.get("phase_evidence")
     cruise_fraction = 0.0
     phases_detected: tuple[str, ...] = ()
     if isinstance(phase_ev, dict):
-        try:
-            cruise_fraction = float(phase_ev.get("cruise_fraction", 0.0))
-        except (TypeError, ValueError):
-            pass
+        cruise_fraction = _as_float(phase_ev.get("cruise_fraction")) or 0.0
         raw_phases_detected = phase_ev.get("phases_detected")
         if isinstance(raw_phases_detected, list):
             phases_detected = tuple(
@@ -173,12 +152,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     vib_db: float | None = None
     ev_metrics = payload.get("evidence_metrics")
     if isinstance(ev_metrics, dict):
-        raw_db = ev_metrics.get("vibration_strength_db")
-        if raw_db is not None:
-            try:
-                vib_db = float(raw_db)
-            except (TypeError, ValueError):
-                pass
+        vib_db = _as_float(ev_metrics.get("vibration_strength_db"))
 
     # Build domain value objects from nested dicts when available
     evidence: FindingEvidence | None = None
