@@ -54,7 +54,8 @@ The `vibesensor.adapters.pdf` package contains **only** rendering code:
 | File | Purpose |
 |---|---|
 | `pdf_engine.py` | Public PDF entrypoint, validation, pagination, and page orchestration |
-| `pdf_page1.py`, `pdf_page2.py` | Page-level composition (including section renderers and aspect-ratio helpers) |
+| `pdf_page1.py`, `pdf_page2.py` | Page-level composition over the grouped `panels/_panel_*.py` renderers, including section layout and aspect-ratio helpers |
+| `panels/_panel_*.py` | Panel renderers grouped by page section (header, systems, trust steps, diagram, evidence, observations, peaks, title bar) |
 | `pdf_style.py` | Page geometry, layout calculations, color tokens, styling constants, and render context |
 | `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
 | `pdf_diagram_render.py` | Diagram planning, drawing, and location normalization |

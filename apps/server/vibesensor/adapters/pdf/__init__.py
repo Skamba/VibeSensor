@@ -16,7 +16,8 @@ Module topology
 - **Mapping**: ``mapping.py`` (thin mapper: context → ``ReportTemplateData``).
 - **Mapping helpers**: ``peak_table.py`` (peak rows), ``report_sections.py`` (report sections), ``presentation.py`` (render-only labels), ``pattern_parts.py`` (parts suggestions).
 - **Engine**: ``pdf_engine.py`` (public entry, page orchestration, pagination).
-- **Pages**: ``pdf_page1.py``, ``pdf_page2.py`` (thin page composers over ``_panel_*.py`` modules).
+- **Pages**: ``pdf_page1.py``, ``pdf_page2.py`` (thin page composers over the panel renderers in ``panels/_panel_*.py``).
+- **Panels**: ``panels/_panel_*.py`` (page-section renderers grouped by visual block responsibility).
 - **Diagrams**: ``pdf_diagram_render.py`` (layout planning, drawing).
 - **Primitives**: ``pdf_drawing.py``, ``pdf_text.py``,
   ``pdf_style.py`` (theme, constants, page geometry, render context).

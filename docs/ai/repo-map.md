@@ -33,7 +33,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `adapters/http/`: API route groups, grouped route dependencies, and HTTP-specific Pydantic request/response models under `adapters/http/models/`.
 - `adapters/websocket/hub.py`: live WebSocket fan-out and payload delivery.
 - `adapters/persistence/`: SQLite history storage and static car-library loading.
-- `adapters/pdf/`: report mapping and PDF rendering. See `docs/report_pipeline.md` for the report flow.
+- `adapters/pdf/`: report mapping and PDF rendering, with grouped panel renderers under `adapters/pdf/panels/`. See `docs/report_pipeline.md` for the report flow.
 - `adapters/udp/`, `adapters/gps/`, `adapters/simulator/`, `adapters/hotspot/`: transport and device-facing runtime adapters.
 - `infra/runtime/`: runtime lifecycle, health, registry, and WebSocket coordination.
 - `infra/processing/`: signal-processing execution and payload building.

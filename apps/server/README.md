@@ -159,7 +159,7 @@ Generate a PDF from a saved run:
 vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
 ```
 
-The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Page composition lives in focused modules under `adapters/pdf/`.
+The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Page composition lives in focused modules under `adapters/pdf/`, with panel renderers grouped under `adapters/pdf/panels/`.
 
 ## Updates
 

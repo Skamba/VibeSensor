@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf._panel_header import (
+from vibesensor.adapters.pdf.panels._panel_header import (
     _draw_header_panel,
     _draw_observed_signature_panel,
 )
-from vibesensor.adapters.pdf._panel_systems import _draw_systems_panel
-from vibesensor.adapters.pdf._panel_trust_steps import _draw_bottom_row_panels
+from vibesensor.adapters.pdf.panels._panel_systems import _draw_systems_panel
+from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_bottom_row_panels
 from vibesensor.adapters.pdf.pdf_style import PdfRenderContext
 from vibesensor.adapters.pdf.report_data import NextStep, ReportTemplateData
 from vibesensor.report_i18n import tr as _tr

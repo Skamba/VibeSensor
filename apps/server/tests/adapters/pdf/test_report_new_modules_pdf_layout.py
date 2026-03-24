@@ -12,8 +12,11 @@ from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf._panel_diagram import assert_aspect_preserved, fit_rect_preserve_aspect
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
+from vibesensor.adapters.pdf.panels._panel_diagram import (
+    assert_aspect_preserved,
+    fit_rect_preserve_aspect,
+)
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 
