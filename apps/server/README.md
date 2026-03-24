@@ -127,29 +127,53 @@ path.
 
 The API surface is implemented in `apps/server/vibesensor/adapters/http/` and assembled by `adapters/http/__init__.py`.
 
+Start here for the human-facing API overview, then use the generated schema artifacts for endpoint-level contracts:
+
+- `python -m vibesensor.cli.http_api_schema_export` writes the committed OpenAPI artifact at `apps/ui/src/contracts/http_api_schema.json`. That schema is the endpoint-by-endpoint reference for request/response shapes, route descriptions, and documented HTTP error responses.
+- `python -m vibesensor.cli.ws_schema_export` writes the committed live-payload schema at `apps/ui/src/contracts/ws_payload_schema.json`. Pair that schema with `apps/ui/README.md` § "WebSocket contract boundary" for the human-readable field guide.
+- `docs/operational-runbooks.md` covers `/api/health` interpretation and stale-live-update debugging steps.
+
 Current route groups:
 
-- `health.py`
-- `clients.py`
-- `settings.py`
-- `recording.py`
-- `history.py`
-- `websocket.py`
-- `updates.py`
-- `car_library.py`
-- `debug.py`
+- `health.py` — `/api/health` runtime, startup, and degradation snapshots.
+- `clients.py` — sensor inventory, location assignment, and identify/blink actions.
+- `settings.py` — speed source, language, speed units, cars, and related settings state.
+- `recording.py` — recording lifecycle control and status.
+- `history.py` — saved runs, insights, reports, and exports.
+- `websocket.py` — `/ws` live update stream and selected-client updates.
+- `updates.py` — software updater and ESP flash workflows.
+- `car_library.py` — bundled car library brands/types/variants.
+- `debug.py` — raw-sample and FFT inspection endpoints for development/debugging.
 
 ### HTTP API schema export and versioning stance
 
 - Export the committed HTTP OpenAPI schema with `python -m vibesensor.cli.http_api_schema_export`.
+- Export the committed WebSocket schema with `python -m vibesensor.cli.ws_schema_export`.
 - The checked-in schema artifact lives at
-  `apps/ui/src/contracts/http_api_schema.json` and is kept in sync by CI
-  drift checks.
+  `apps/ui/src/contracts/http_api_schema.json`, while the committed WebSocket
+  payload schema lives at `apps/ui/src/contracts/ws_payload_schema.json`; both
+  are kept in sync by CI drift checks.
 - The current HTTP API intentionally remains a single unversioned `/api/*`
   surface because the backend and bundled UI ship atomically.
 - If independent or third-party clients become a real compatibility concern,
   introduce explicit path versioning starting at `/api/v1/` rather than adding
   ad hoc compatibility shims to the current routes.
+
+### Common error semantics
+
+The exported OpenAPI schema documents per-route error responses. The main status
+families currently used across the HTTP adapters are:
+
+- `400` — invalid identifiers, malformed request values, or invalid config-style inputs.
+- `404` — unknown sensors, runs, or car-library entities.
+- `409` — state conflicts such as already-running workflows or location collisions.
+- `422` — history/analysis requests that are structurally valid but not currently available for the run state.
+- `503` — live sensor actions that cannot be served because the device is not currently reachable.
+- `500` — unexpected internal failures that escape the route-specific error mapping.
+
+WebSocket error frames are separate from `LiveWsPayload` and currently use
+`{"error": "payload_build_failed"}` when the server cannot assemble a live
+update tick.
 
 ## Reports
 

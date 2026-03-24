@@ -96,6 +96,21 @@ HTML rendering helpers and event-target decoding for reusable panels.
 
 AJV-backed runtime validation now sits at the WebSocket boundary. Live payloads must satisfy that JSON Schema directly before the app-state adapter accepts them. The remaining UI-side handling is limited to current, explicit adapter behavior: schema-version warning logging, shared-`freq` fallback when the canonical shared axis is used, and dropping spectrum series that still cannot produce aligned bins for rendering.
 
+Top-level `LiveWsPayload` fields:
+
+- `schema_version` — current live-payload contract version.
+- `server_time` — server UTC timestamp for the tick.
+- `speed_mps` — resolved vehicle speed, or `null` when unavailable.
+- `clients` — current lightweight client snapshots (connectivity, identity, latest metrics metadata).
+- `selected_client_id` — the client whose heavier per-sensor detail the UI is currently focused on, or `null`.
+- `rotational_speeds` — derived wheel/driveshaft/engine speed estimates and current order-band context, or `null`.
+- `spectra` — heavier FFT payload data; omitted on light ticks and present on heavy ticks.
+
+Server-side WebSocket error frames are separate from `LiveWsPayload`. The
+current error payload is `{"error": "payload_build_failed"}`, which indicates
+the backend could not assemble the live update tick and sent an explicit error
+frame instead of the normal payload.
+
 ## Visual Tests
 
 Playwright snapshot tests capture the UI across 4 viewports:
