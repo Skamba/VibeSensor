@@ -54,6 +54,7 @@ async def test_health_endpoint_response_shape(_health_router):
     assert result["frame_size_mismatch_count"] == 0
     assert result["degradation_reasons"] == []
     assert result["data_loss"]["tracked_clients"] == 0
+    assert result["data_loss"]["buffer_overflow_drops"] == 0
     assert result["persistence"]["write_error"] is None
     assert result["persistence"]["analysis_in_progress"] is False
     assert result["persistence"]["analysis_queue_depth"] == 0
@@ -141,6 +142,21 @@ async def test_health_endpoint_degrades_for_db_corruption(_health_router):
     assert result["status"] == "degraded"
     assert result["db_corruption_detected"] is True
     assert "db_corruption_detected" in result["degradation_reasons"]
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint_warns_for_buffer_overflow_drops(_health_router):
+    router, state = _health_router
+    endpoint = _find_endpoint(router, "/api/health")
+    assert endpoint is not None
+
+    state.processor.buffer_overflow_drops.return_value = 4
+
+    result = response_payload(await endpoint())
+
+    assert result["status"] == "warn"
+    assert result["data_loss"]["buffer_overflow_drops"] == 4
+    assert "buffer_overflow_drops" in result["degradation_reasons"]
 
 
 @pytest.mark.asyncio

@@ -1165,6 +1165,8 @@ export interface components {
     HealthDataLossResponse: {
       /** Affected Clients */
       affected_clients: number;
+      /** Buffer Overflow Drops */
+      buffer_overflow_drops: number;
       /** Frames Dropped */
       frames_dropped: number;
       /** Parse Errors */

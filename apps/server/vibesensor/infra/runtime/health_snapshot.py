@@ -17,6 +17,8 @@ class IntakeStatsProvider(Protocol):
 
     def intake_stats(self) -> IntakeStatsPayload: ...
 
+    def buffer_overflow_drops(self) -> int: ...
+
 
 class DataLossSnapshotProvider(Protocol):
     """Collaborator that exposes data-loss counters."""
@@ -49,7 +51,8 @@ def build_system_health_snapshot(
         return value if value is not None else 0.0
 
     failures = loop_state.processing_failure_count
-    data_loss = registry.data_loss_snapshot()
+    data_loss = dict(registry.data_loss_snapshot())
+    data_loss["buffer_overflow_drops"] = int(processor.buffer_overflow_drops())
     persistence = run_recorder.health_snapshot()
     failure_categories = dict(loop_state.processing_failure_categories)
     sample_rate_mismatch_count = len(loop_state.sample_rate_mismatch_logged)
@@ -83,6 +86,7 @@ def build_system_health_snapshot(
         degradation_reasons.append("frame_size_mismatch")
     for key in (
         "frames_dropped",
+        "buffer_overflow_drops",
         "queue_overflow_drops",
         "server_queue_drops",
         "parse_errors",

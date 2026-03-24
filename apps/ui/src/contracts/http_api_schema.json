@@ -2837,6 +2837,10 @@
             "title": "Affected Clients",
             "type": "integer"
           },
+          "buffer_overflow_drops": {
+            "title": "Buffer Overflow Drops",
+            "type": "integer"
+          },
           "frames_dropped": {
             "title": "Frames Dropped",
             "type": "integer"
@@ -2862,6 +2866,7 @@
           "tracked_clients",
           "affected_clients",
           "frames_dropped",
+          "buffer_overflow_drops",
           "queue_overflow_drops",
           "server_queue_drops",
           "parse_errors"

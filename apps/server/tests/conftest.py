@@ -94,6 +94,7 @@ def _processor_mock() -> SignalProcessor:
         "last_compute_all_duration_s": 0.0,
         "last_ingest_duration_s": 0.0,
     }
+    processor.buffer_overflow_drops.return_value = 0
     processor.all_latest_metrics.return_value = {}
     processor.debug_spectrum.return_value = {
         "error": "insufficient samples",

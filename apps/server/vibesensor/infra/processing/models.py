@@ -53,6 +53,7 @@ class ProcessorStats:
     """Mutable observability counters owned by the buffer store."""
 
     total_ingested_samples: int = 0
+    buffer_overflow_drops: int = 0
     total_compute_calls: int = 0
     last_compute_duration_s: float = 0.0
     last_compute_all_duration_s: float = 0.0
