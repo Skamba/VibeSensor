@@ -337,3 +337,39 @@ class TestPhaseSummaryPhaseTypeSegments:
     def test_empty_segments(self) -> None:
         summary = phase_summary([])
         assert summary.phase_type_summaries == ()
+
+    def test_zero_duration_segment_stays_safe(self) -> None:
+        summary = phase_summary(
+            [
+                PhaseSegment(
+                    phase=DrivingPhase.CRUISE,
+                    start_idx=0,
+                    end_idx=0,
+                    start_t_s=5.0,
+                    end_t_s=5.0,
+                    sample_count=1,
+                )
+            ]
+        )
+
+        cruise = summary.phase_type_summaries[0]
+        assert cruise.duration_s == 0.0
+        assert cruise.fraction == pytest.approx(1.0)
+
+    def test_descending_segment_time_clamps_duration_to_zero(self) -> None:
+        summary = phase_summary(
+            [
+                PhaseSegment(
+                    phase=DrivingPhase.DECELERATION,
+                    start_idx=0,
+                    end_idx=9,
+                    start_t_s=8.0,
+                    end_t_s=6.0,
+                    sample_count=10,
+                )
+            ]
+        )
+
+        decel = summary.phase_type_summaries[0]
+        assert decel.duration_s == 0.0
+        assert decel.fraction == pytest.approx(1.0)
