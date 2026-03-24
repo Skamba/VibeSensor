@@ -210,15 +210,7 @@ _SMOKE_SERVER_BOOTSTRAP = "\n".join(
 def packaged_static_index_path() -> Path:
     import importlib
 
-    previous_disable_auto_app = os.environ.get("VIBESENSOR_DISABLE_AUTO_APP")
-    os.environ["VIBESENSOR_DISABLE_AUTO_APP"] = "1"
-    try:
-        app_module = importlib.import_module("vibesensor.app")
-    finally:
-        if previous_disable_auto_app is None:
-            os.environ.pop("VIBESENSOR_DISABLE_AUTO_APP", None)
-        else:
-            os.environ["VIBESENSOR_DISABLE_AUTO_APP"] = previous_disable_auto_app
+    app_module = importlib.import_module("vibesensor.app")
     module_file = app_module.__file__
     if module_file is None:
         raise RuntimeError("vibesensor.app module is missing __file__")
@@ -249,7 +241,6 @@ def run_server_smoke(
         config_path = build_release_smoke_config(source_config, tmp_dir, host=host, port=port)
         env = os.environ.copy()
         env.setdefault("PYTHONUNBUFFERED", "1")
-        env.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
         env.setdefault("VIBESENSOR_UPDATE_STATE_PATH", str(tmp_dir / "data" / "update_status.json"))
         if extra_env:
             env.update(extra_env)

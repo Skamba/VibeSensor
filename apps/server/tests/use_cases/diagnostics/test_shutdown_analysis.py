@@ -142,7 +142,6 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
         encoding="utf-8",
     )
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
-    monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
 
     from vibesensor import app as app_module
     from vibesensor.app import bootstrap as bootstrap_mod

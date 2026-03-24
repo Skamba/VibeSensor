@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import os
-
-os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 

@@ -237,7 +237,6 @@ ls /opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/__editable__.vibe
 
   if ! run_qemu_chroot /bin/bash -lc '
 set -e
-export VIBESENSOR_DISABLE_AUTO_APP=1
 pkill -f "vibesensor-server" >/dev/null 2>&1 || true
 cp /etc/vibesensor/config.yaml /tmp/vibesensor-smoke-config.yaml
 /opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'

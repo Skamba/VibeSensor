@@ -20,7 +20,6 @@ def _runtime_app(port: int):
 
 def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[int]:
     """Shared harness: patch app_module, call ``main()``, return recorded port calls."""
-    monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
     from vibesensor.app import bootstrap as app_module
 
     monkeypatch.setattr(
@@ -53,7 +52,6 @@ def test_main_port_behaviour(monkeypatch, port, fail_port, expected_calls) -> No
 
 
 def test_create_app_from_env_uses_exported_config_path(monkeypatch) -> None:
-    monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
     from vibesensor.app import bootstrap as app_module
 
     config_path = Path("apps/server/config.dev.yaml")
@@ -70,7 +68,6 @@ def test_create_app_from_env_uses_exported_config_path(monkeypatch) -> None:
 
 
 def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
-    monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
     from vibesensor.app import bootstrap as app_module
 
     config_path = tmp_path / "config.dev.yaml"

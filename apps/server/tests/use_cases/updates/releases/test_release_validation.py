@@ -205,7 +205,7 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
     assert list(popen_args[0][:2]) == [release_validation.sys.executable, "-c"]
     assert "from vibesensor.app import create_app" in popen_args[0][2]
     assert popen_args[0][3].endswith("release-smoke.yaml")
-    assert popen_kwargs["env"]["VIBESENSOR_DISABLE_AUTO_APP"] == "1"
+    assert "VIBESENSOR_DISABLE_AUTO_APP" not in popen_kwargs["env"]
     assert popen_kwargs["env"]["VIBESENSOR_SERVE_STATIC"] == "0"
     assert popen_kwargs["env"]["VIBESENSOR_UPDATE_STATE_PATH"].endswith("update_status.json")
     assert recorded["terminated"] is True

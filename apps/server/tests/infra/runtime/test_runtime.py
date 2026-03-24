@@ -8,15 +8,11 @@ in isolation.
 from __future__ import annotations
 
 import asyncio
-import os
 from dataclasses import dataclass
 from typing import Any, get_type_hints
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
-
 
 # ---------------------------------------------------------------------------
 # Stubs – lightweight stand-ins for RuntimeState dependencies
