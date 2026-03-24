@@ -21,11 +21,13 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from vibesensor.adapters.http import create_router
+from vibesensor.adapters.http.middleware import install_request_logging_middleware
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.container import build_runtime
 from vibesensor.app.runtime_state import AppRuntime
 from vibesensor.app.settings import load_config
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
+from vibesensor.shared.structured_logging import StructuredLogFormatter
 
 __all__ = ["create_app", "create_app_from_env", "main"]
 
@@ -60,7 +62,7 @@ def _setup_file_logging(log_path: Path | None) -> None:
             encoding="utf-8",
         )
         handler.setLevel(logging.INFO)
-        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)s: %(message)s"))
+        handler.setFormatter(StructuredLogFormatter())
         logging.getLogger().addHandler(handler)
         LOGGER.info("File logging enabled: %s", log_path)
     except OSError:
@@ -116,6 +118,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
 
     app = FastAPI(title="VibeSensor", lifespan=lifespan)
     app.state.runtime = runtime
+    install_request_logging_middleware(app)
     app.include_router(create_router(runtime.router))
     if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
         static_dir = _PACKAGE_DIR / "static"

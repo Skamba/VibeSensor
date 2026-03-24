@@ -41,11 +41,16 @@ void initialize_transport(TransportState& state) {
   }
   state.control_port =
       static_cast<uint16_t>(kControlPortBase + (state.client_id[5] % 100));
+  state.handshake_complete = false;
   state.data_udp.begin(0);
   state.control_udp.begin(state.control_port);
 }
 
-void send_hello(TransportState& state, RuntimeStatus& status) {
+bool send_hello(TransportState& state, RuntimeStatus& status) {
+  if (WiFi.status() != WL_CONNECTED) {
+    state.handshake_complete = false;
+    return false;
+  }
   uint8_t packet[128];
   size_t len = vibesensor::pack_hello(packet,
                                       sizeof(packet),
@@ -55,26 +60,30 @@ void send_hello(TransportState& state, RuntimeStatus& status) {
                                       kFrameSamples,
                                       kClientName,
                                       kFirmwareVersion,
-                                      status.queue_overflow_drops);
+                                      status.queue_overflow_drops,
+                                      vibesensor::kHelloCapExplicitAck);
   if (len == 0) {
-    return;
+    return false;
   }
 
   if (state.control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort) != 1) {
     set_last_error(status, 4);
-    return;
+    return false;
   }
   state.control_udp.write(packet, len);
   if (state.control_udp.endPacket() != 1) {
     set_last_error(status, 4);
+    return false;
   }
+  return true;
 }
 
 void service_hello(TransportState& state, RuntimeStatus& status) {
   uint32_t now = millis();
   if (now - state.last_hello_ms >= kHelloIntervalMs) {
-    send_hello(state, status);
-    state.last_hello_ms = now;
+    if (send_hello(state, status)) {
+      state.last_hello_ms = now;
+    }
   }
 }
 
@@ -82,6 +91,10 @@ void service_tx(TransportState& state,
                 FrameQueueState& queue_state,
                 RuntimeStatus& status) {
   if (WiFi.status() != WL_CONNECTED) {
+    state.handshake_complete = false;
+    return;
+  }
+  if (!state.handshake_complete) {
     return;
   }
 
@@ -139,6 +152,16 @@ void service_control_rx(TransportState& state,
   uint8_t packet[64];
   size_t read = static_cast<size_t>(state.control_udp.read(packet, sizeof(packet)));
   if (read == 0) {
+    return;
+  }
+
+  if (packet[0] == vibesensor::kMsgHelloAck) {
+    if (!vibesensor::parse_hello_ack(packet, read, state.client_id)) {
+      status.control_parse_errors++;
+      set_last_error(status, 9);
+      return;
+    }
+    state.handshake_complete = true;
     return;
   }
 

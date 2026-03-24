@@ -73,12 +73,55 @@ packet. `processing.client_ttl_seconds` is the longer retention/eviction window
 for keeping stale clients and their metadata available after they stop sending
 traffic.
 
+For persisted run history on Pi-class devices, `logging.run_retention_days`
+controls how many days of terminal (`complete` / `error`) runs are kept before
+startup maintenance prunes them automatically. The default is `7`.
+
+## Environment variables
+
+Prefer YAML config for normal runtime settings. The backend also supports a
+small set of `VIBESENSOR_*` environment overrides for packaging, service, and
+debug workflows:
+
+- `VIBESENSOR_CONFIG_PATH`: alternate config path used by the app factory and
+  the hotspot/systemd launch path.
+- `VIBESENSOR_SERVE_STATIC=0`: disable mounting bundled UI static files for
+  API-only runs, backend tests, or release validation helpers.
+- `VIBESENSOR_DISABLE_AUTO_APP=1`: prevent import-time FastAPI app creation;
+  mainly useful for tests, CLI entrypoints, and release validation subprocesses.
+- `VIBESENSOR_WS_DEBUG=1`: enable dev-only WebSocket payload-size debug logs.
+
+Updater and release tooling also expose focused overrides:
+
+- `VIBESENSOR_FIRMWARE_CACHE_DIR`
+- `VIBESENSOR_FIRMWARE_REPO`
+- `VIBESENSOR_FIRMWARE_CHANNEL`
+- `VIBESENSOR_FIRMWARE_PINNED_TAG`
+- `VIBESENSOR_SERVER_REPO`
+- `VIBESENSOR_UPDATE_STATE_PATH`
+
+Those update-related variables are intended for controlled packaging, staging,
+or recovery scenarios rather than day-to-day dashboard use.
+
 Common runtime files under `apps/server/data/` include:
 
 - `history.db`: persisted run history and settings.
 - `metrics.jsonl`: optional metrics log output.
 - `clients.json`: persisted client metadata.
 - `report_i18n.json`: report translation data.
+
+## Observability
+
+When `logging.app_log_path` is configured, the backend writes structured JSON
+application logs instead of plain text. Each HTTP response now echoes an
+`X-Request-ID` header, and matching request-scoped log entries carry the same
+`request_id` field so operators can correlate a client-visible failure with the
+server log line that handled it.
+
+Successful settings writes also emit `settings_change` audit entries with
+before/after values for the changed setting or car profile. That gives a stable
+operator trail for configuration changes without adding a second persistence
+path.
 
 ## HTTP and WebSocket surface
 

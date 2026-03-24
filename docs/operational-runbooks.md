@@ -27,6 +27,11 @@ map. The response also includes operational metrics:
 - `tick_duration_s` / `max_tick_duration_s` / `tick_count` — processing loop timing
 - `db_last_write_duration_s` / `db_max_write_duration_s` — DB write latency
 
+Run-history retention is enforced during startup maintenance. By default the Pi
+prunes `complete` and `error` runs older than `logging.run_retention_days: 7`.
+Raise or lower that value in the server config when the device needs a longer
+or shorter local-history window.
+
 ## Diagnose high dropped frames
 
 1. Confirm the health endpoint responds and inspect connected clients.
@@ -38,7 +43,11 @@ map. The response also includes operational metrics:
 docker compose logs --tail 100
 ```
 
-5. If the issue is on a Pi, also review systemd or journal output for the service and hotspot helpers.
+5. If file logging is enabled, use the `X-Request-ID` response header from the
+   failing HTTP call to find the matching structured JSON app-log entry; the
+   same `request_id` also appears on request-scoped `settings_change` audit
+   events.
+6. If the issue is on a Pi, also review systemd or journal output for the service and hotspot helpers.
 
 ## Diagnose stale or missing live updates
 

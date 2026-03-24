@@ -110,7 +110,7 @@ here.
 
 ```bash
 # Focused alignment tests (29 tests, <1 s):
-python -m pytest apps/server/tests/processing/test_time_alignment.py -v
+python -m pytest apps/server/tests/infra/processing/test_time_alignment.py -v
 
 # Full backend suite:
 pytest -q apps/server/tests

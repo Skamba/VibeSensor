@@ -194,6 +194,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 path,
             ),
             persist_history_db=bool(logging_cfg["persist_history_db"]),
+            run_retention_days=_coerce_int(
+                logging_cfg["run_retention_days"],
+                "logging.run_retention_days",
+            ),
             shutdown_analysis_timeout_s=_coerce_float(
                 logging_cfg["shutdown_analysis_timeout_s"],
                 "logging.shutdown_analysis_timeout_s",
