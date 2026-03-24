@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import HistoryDB, SQLiteHistoryEngine
 from vibesensor.adapters.persistence.history_db._schema import SCHEMA_VERSION
 from vibesensor.shared.types.run_schema import RunMetadata
 
@@ -577,12 +577,16 @@ def test_historydb_restores_backup_when_v10_migration_fails(
         analysis_json='{"findings": [], "top_causes": [], "warnings": []}',
     )
 
-    def _broken(self: HistoryDB) -> None:
+    def _broken(self: SQLiteHistoryEngine) -> None:
         with self._cursor() as cur:
             cur.execute("UPDATE runs SET analysis_json = NULL WHERE run_id = ?", ("legacy-run",))
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(HistoryDB, "_migrate_v10_to_v11_persisted_analysis_version", _broken)
+    monkeypatch.setattr(
+        SQLiteHistoryEngine,
+        "_migrate_v10_to_v11_persisted_analysis_version",
+        _broken,
+    )
 
     with pytest.raises(RuntimeError, match="restored backup"):
         HistoryDB(db_path)

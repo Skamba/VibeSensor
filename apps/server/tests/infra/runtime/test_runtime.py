@@ -582,12 +582,12 @@ def test_runtime_state_has_public_attribute(attr: str) -> None:
 def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None:
     """RuntimeState should expose existing shared ports for read-side services."""
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.app import runtime_state as runtime_state_module
     from vibesensor.app.runtime_state import RuntimeState
     from vibesensor.app.settings import AppConfig
+    from vibesensor.infra.runtime.lifecycle import LifecycleHistoryDb
     from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource
 
     hints = get_type_hints(
@@ -596,7 +596,7 @@ def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None
             **vars(runtime_state_module),
             "AppConfig": AppConfig,
             "GPSSpeedMonitor": GPSSpeedMonitor,
-            "HistoryDB": HistoryDB,
+            "LifecycleHistoryDb": LifecycleHistoryDb,
             "UDPControlPlane": UDPControlPlane,
             "WebSocketHub": WebSocketHub,
         },

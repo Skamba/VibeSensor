@@ -16,7 +16,10 @@ from vibesensor.adapters.http.dependencies import (
     TelemetryDeps,
     UpdateDeps,
 )
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import (
+    HistoryPersistenceAdapters,
+    create_history_persistence_adapters,
+)
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.runtime_state import AppRuntime, RuntimeState
@@ -69,29 +72,29 @@ def create_history_db(
     config: AppConfig,
     *,
     corruption_reporter: Callable[[str], None] | None = None,
-) -> HistoryDB:
-    """Create and initialise the HistoryDB, recovering stale runs and pruning old ones."""
-    history_db = HistoryDB(
+) -> HistoryPersistenceAdapters:
+    """Create and initialise the shared history persistence collaborators."""
+    history = create_history_persistence_adapters(
         config.logging.history_db_path,
         corruption_reporter=corruption_reporter,
     )
-    if history_db.corruption_detected:
+    if history.lifecycle.corruption_detected:
         LOGGER.error(
             "History DB corruption detected at startup; skipping stale-run recovery, "
             "retention pruning, and "
             "continuing with writes disabled until the DB is repaired.",
         )
-        return history_db
+        return history
     try:
-        recovered_runs = history_db.recover_stale_recording_runs()
+        recovered_runs = history.run_repository.recover_stale_recording_runs()
     except Exception:
         LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
-        history_db.close()
+        history.lifecycle.close()
         raise
     if recovered_runs:
         LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
     try:
-        pruned_runs = history_db.prune_terminal_runs_older_than_days(
+        pruned_runs = history.run_repository.prune_terminal_runs_older_than_days(
             config.logging.run_retention_days,
         )
     except Exception:
@@ -107,7 +110,7 @@ def create_history_db(
                 pruned_runs,
                 config.logging.run_retention_days,
             )
-    return history_db
+    return history
 
 
 def build_runtime(config: AppConfig) -> AppRuntime:
@@ -116,12 +119,14 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     health_state = RuntimeHealthState()
 
     # DB + settings
-    history_db = create_history_db(
+    history = create_history_db(
         config,
         corruption_reporter=health_state.mark_db_corrupted,
     )
+    history_db = history.run_repository
+    history_lifecycle = history.lifecycle
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
-    settings_store = SettingsStore(db=history_db)
+    settings_store = SettingsStore(db=history.settings_snapshot_repository)
     settings_reader = SettingsDerivationService(
         active_car_aspects=settings_store.active_car_aspects,
         active_car_snapshot=settings_store.active_car_snapshot,
@@ -150,7 +155,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
 
     # ingress
     registry = ClientRegistry(
-        db=history_db,
+        db=history.client_name_repository,
         live_ttl_seconds=config.processing.client_live_ttl_seconds,
         retention_ttl_seconds=config.processing.client_ttl_seconds,
     )
@@ -240,7 +245,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         worker_pool=worker_pool,
         settings_store=settings_reader,
         gps_monitor=gps_monitor,
-        history_db=history_db,
+        history_db=history_lifecycle,
         processing_loop_state=processing_loop_state,
         health_state=health_state,
         processing_loop=processing_loop,
