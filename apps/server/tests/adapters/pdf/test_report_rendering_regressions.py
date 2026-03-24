@@ -9,8 +9,8 @@ import pytest
 from _paths import SERVER_ROOT
 from reportlab.pdfgen.canvas import Canvas
 
-import vibesensor.adapters.pdf._panel_trust_steps as panel_trust_steps
-from vibesensor.adapters.pdf._panel_trust_steps import _draw_next_steps_table
+import vibesensor.adapters.pdf.panels._panel_trust_steps as panel_trust_steps
+from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_next_steps_table
 from vibesensor.adapters.pdf.report_data import NextStep
 
 
