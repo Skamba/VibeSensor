@@ -78,6 +78,15 @@ jobs:
           python -m pip install --upgrade pip build
           python -m build --wheel apps/server/
 
+      - name: Validate built server wheel metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel_path="$(echo apps/server/dist/*.whl)"
+          PYTHONPATH=apps/server python -m vibesensor.use_cases.updates.releases.release_validation validate-wheel-metadata \
+            --wheel-path "${wheel_path}" \
+            --expected-version "${{ steps.version.outputs.version }}"
+
       - name: Smoke-validate built server wheel
         shell: bash
         run: |

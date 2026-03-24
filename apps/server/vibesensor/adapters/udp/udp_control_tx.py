@@ -20,6 +20,7 @@ from vibesensor.adapters.udp.protocol import (
     MSG_DATA_ACK,
     MSG_HELLO,
     ProtocolError,
+    ProtocolVersionMismatch,
     extract_client_id_hex,
     pack_cmd_identify,
     pack_cmd_sync_clock,
@@ -67,6 +68,15 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
                 registry.update_from_ack(ack, now_ts)
             elif msg_type == MSG_DATA_ACK:
                 return
+        except ProtocolVersionMismatch as exc:
+            client_id = extract_client_id_hex(data)
+            LOGGER.warning(
+                "Control protocol version mismatch from %s (client=%s): %s",
+                addr,
+                client_id,
+                exc,
+            )
+            registry.note_parse_error(client_id)
         except ProtocolError as exc:
             client_id = extract_client_id_hex(data)
             LOGGER.debug("Control parse error from %s (client=%s): %s", addr, client_id, exc)
