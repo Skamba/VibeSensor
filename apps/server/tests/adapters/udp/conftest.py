@@ -12,12 +12,13 @@ class FakeTransport:
 
     def __init__(self) -> None:
         self.sent: list[tuple[bytes, tuple[str, int]]] = []
+        self.closed = False
 
     def sendto(self, data: bytes, addr: tuple[str, int]) -> None:
         self.sent.append((data, addr))
 
     def close(self) -> None:
-        pass
+        self.closed = True
 
 
 @pytest.fixture
