@@ -95,6 +95,7 @@ _MIRRORED_BACKEND_INSTALL_JOBS = (
     "e2e",
 )
 _FIRMWARE_INSTALL_JOB = "firmware-native-tests"
+_CI_LITE_EXCLUDED_JOBS = ("e2e",)
 _LOCAL_BACKEND_SETUP_ACTION = "./.github/actions/setup-backend"
 _DOCKER_NODE_RE = re.compile(r"^FROM node:(\S+) AS ui-build$", re.MULTILINE)
 _DOCKER_PYTHON_RE = re.compile(r"^FROM python:(\S+)$", re.MULTILINE)
@@ -125,6 +126,22 @@ def _load_ci_parallel_module():
 
 def _read_required_text(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
+
+
+def _makefile_job_list(var_name: str) -> list[str]:
+    text = (ROOT / "Makefile").read_text(encoding="utf-8")
+    match = re.search(rf"^{re.escape(var_name)}\s*[:+?]?=\s*(.+)$", text, re.MULTILINE)
+    if match is None:
+        return []
+    tokens = shlex.split(match.group(1))
+    jobs: list[str] = []
+    index = 0
+    while index < len(tokens):
+        if tokens[index] != "--job" or index + 1 >= len(tokens):
+            return []
+        jobs.append(tokens[index + 1])
+        index += 2
+    return jobs
 
 
 def _load_server_pyproject() -> dict[str, object]:
@@ -495,6 +512,23 @@ def check_ci_command_sync() -> list[str]:
     return errors
 
 
+def check_ci_lite_job_sync() -> list[str]:
+    """Verify Makefile CI_LITE_JOBS tracks the non-Docker CI job subset."""
+    ci_jobs = list(_ci_run_steps_by_job())
+    expected = [
+        job_name for job_name in ci_jobs if job_name not in _CI_LITE_EXCLUDED_JOBS
+    ]
+    actual = _makefile_job_list("CI_LITE_JOBS")
+    if not actual:
+        return ["Makefile CI_LITE_JOBS is missing or unparsable."]
+    if actual == expected:
+        return []
+    return [
+        "Makefile CI_LITE_JOBS drifted from the non-Docker CI subset: "
+        f"expected={expected!r} actual={actual!r}"
+    ]
+
+
 def check_docker_ci_dependency_hygiene() -> list[str]:
     errors: list[str] = []
 
@@ -612,6 +646,42 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     if not playwright_cache_ok:
         errors.append(
             "ui-smoke must cache ~/.cache/ms-playwright with a package-lock-based actions/cache key."
+        )
+
+    e2e_job = jobs.get("e2e") if isinstance(jobs, Mapping) else None
+    steps = e2e_job.get("steps") if isinstance(e2e_job, Mapping) else None
+    e2e_duration_cache_ok = False
+    if isinstance(steps, list):
+        for step in steps:
+            if not isinstance(step, Mapping):
+                continue
+            uses = step.get("uses")
+            if not isinstance(uses, str) or not uses.startswith("actions/cache@"):
+                continue
+            with_data = step.get("with")
+            if not isinstance(with_data, Mapping):
+                continue
+            path = with_data.get("path")
+            key = with_data.get("key")
+            restore_keys = with_data.get("restore-keys")
+            if (
+                isinstance(path, str)
+                and path.strip() == "~/.cache/vibesensor/e2e-duration-cache.json"
+                and isinstance(key, str)
+                and "e2e-durations" in key
+                and "run_e2e_parallel.py" in key
+                and "tests_e2e" in key
+                and "github.run_id" in key
+                and isinstance(restore_keys, str)
+                and "tests_e2e" in restore_keys
+                and "${{ runner.os }}-e2e-durations-" in restore_keys
+            ):
+                e2e_duration_cache_ok = True
+                break
+    if not e2e_duration_cache_ok:
+        errors.append(
+            "e2e must cache ~/.cache/vibesensor/e2e-duration-cache.json with a "
+            "restoreable actions/cache key tied to run_e2e_parallel.py, tests_e2e, and github.run_id."
         )
 
     numpy_spec = _project_dependency_spec("numpy")
@@ -747,6 +817,15 @@ def main() -> int:
         failures += 1
     else:
         print("CI commands in sync between ci.yml and run_ci_parallel.py.")
+
+    ci_lite_sync_errors = check_ci_lite_job_sync()
+    if ci_lite_sync_errors:
+        print("CI lite job drift detected:")
+        for item in ci_lite_sync_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Makefile CI_LITE_JOBS matches the non-Docker CI subset.")
 
     docker_ci_hygiene_errors = check_docker_ci_dependency_hygiene()
     if docker_ci_hygiene_errors:
