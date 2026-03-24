@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 from vibesensor.domain import Car, CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.car_config import (
     CarConfigUpdatePayload,
     CarsSnapshot,
@@ -32,6 +33,31 @@ _CarSettingsResultT = TypeVar("_CarSettingsResultT")
 def _clamp_str(value: object, maxlen: int) -> str:
     """Strip and truncate *value* to *maxlen* characters."""
     return str(value).strip()[:maxlen]
+
+
+def _car_payload(car: Car | None) -> dict[str, object] | None:
+    if car is None:
+        return None
+    return dict(car_to_persistence_dict(car))
+
+
+def _log_car_settings_change(
+    *,
+    action: str,
+    before: object,
+    after: object,
+    **fields: object,
+) -> None:
+    LOGGER.info(
+        "settings_change",
+        extra=log_extra(
+            event="settings_change",
+            settings_action=action,
+            before=before,
+            after=after,
+            **fields,
+        ),
+    )
 
 
 class CarSettingsMixin:
@@ -56,6 +82,7 @@ class CarSettingsMixin:
             snapshot: Callable[[], _CarSettingsSnapshotT],
             apply: Callable[[_CarSettingsSnapshotT], bool],
             restore: Callable[[_CarSettingsSnapshotT], None],
+            audit_log: Callable[[_CarSettingsSnapshotT], None] | None = None,
             after_persist: Callable[[], None] | None = None,
             result: Callable[[], _CarSettingsResultT],
         ) -> _CarSettingsResultT: ...
@@ -122,14 +149,24 @@ class CarSettingsMixin:
             snapshot=lambda: self._active_car_id,
             apply=_apply,
             restore=lambda previous: setattr(self, "_active_car_id", previous),
+            audit_log=lambda previous: _log_car_settings_change(
+                action="set_active_car",
+                before=previous,
+                after=self._active_car_id,
+                car_id=car_id,
+            ),
             after_persist=self._sync_analysis_settings,
             result=self._cars_snapshot_unlocked,
         )
 
     def add_car(self, car_data: CarConfigUpdatePayload) -> CarsSnapshot:
+        created_car_id: str | None = None
+
         def _apply(_previous: list[Car]) -> bool:
+            nonlocal created_car_id
             payload: dict[str, object] = dict(car_data)
-            payload["id"] = new_car_id()
+            created_car_id = new_car_id()
+            payload["id"] = created_car_id
             self._cars.append(Car.from_persisted_dict(payload))
             return True
 
@@ -137,6 +174,12 @@ class CarSettingsMixin:
             snapshot=lambda: list(self._cars),
             apply=_apply,
             restore=lambda previous: setattr(self, "_cars", previous),
+            audit_log=lambda _previous: _log_car_settings_change(
+                action="add_car",
+                before=None,
+                after=_car_payload(self._find_car(created_car_id)),
+                car_id=created_car_id,
+            ),
             after_persist=self._sync_analysis_settings,
             result=self._cars_snapshot_unlocked,
         )
@@ -184,6 +227,12 @@ class CarSettingsMixin:
             snapshot=lambda: list(self._cars),
             apply=_apply,
             restore=lambda previous: setattr(self, "_cars", previous),
+            audit_log=lambda previous: _log_car_settings_change(
+                action="update_car",
+                before=_car_payload(next((car for car in previous if car.id == car_id), None)),
+                after=_car_payload(self._find_car(car_id)),
+                car_id=car_id,
+            ),
             after_persist=self._sync_analysis_settings,
             result=self._cars_snapshot_unlocked,
         )
@@ -210,6 +259,17 @@ class CarSettingsMixin:
             snapshot=lambda: list(self._cars),
             apply=_apply,
             restore=lambda previous: setattr(self, "_cars", previous),
+            audit_log=lambda previous: _log_car_settings_change(
+                action="update_active_car_aspects",
+                before=(
+                    next(
+                        (dict(car.aspects) for car in previous if car.id == self._active_car_id),
+                        None,
+                    )
+                ),
+                after=self.active_car_aspects(),
+                car_id=self._active_car_id,
+            ),
             after_persist=self._sync_analysis_settings,
             result=lambda: self.active_car_aspects() or {},
         )
@@ -234,6 +294,13 @@ class CarSettingsMixin:
             snapshot=lambda: (list(self._cars), self._active_car_id),
             apply=_apply,
             restore=_restore,
+            audit_log=lambda previous: _log_car_settings_change(
+                action="delete_car",
+                before=_car_payload(next((car for car in previous[0] if car.id == car_id), None)),
+                after=None,
+                car_id=car_id,
+                active_car_id=self._active_car_id,
+            ),
             after_persist=self._sync_analysis_settings,
             result=self._cars_snapshot_unlocked,
         )
