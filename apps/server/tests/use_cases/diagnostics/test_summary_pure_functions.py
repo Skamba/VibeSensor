@@ -165,3 +165,27 @@ class TestSelectTopCauses:
         domain_findings = select_top_causes(findings)
         assert isinstance(domain_findings, tuple)
         assert all(isinstance(d, Finding) for d in domain_findings)
+
+    def test_equal_score_groups_keep_first_seen_source_order(self) -> None:
+        findings = self._to_domain(
+            make_finding_payload(
+                finding_id="F_WHEEL",
+                suspected_source="wheel/tire",
+                confidence=0.80,
+                strongest_location="front-left wheel",
+            ),
+            make_finding_payload(
+                finding_id="F_ENGINE",
+                suspected_source="engine",
+                confidence=0.80,
+            ),
+            make_finding_payload(
+                finding_id="F_DRIVELINE",
+                suspected_source="driveline",
+                confidence=0.50,
+            ),
+        )
+
+        domain_findings = select_top_causes(findings, max_causes=2)
+
+        assert [finding.finding_id for finding in domain_findings] == ["F_WHEEL", "F_ENGINE"]
