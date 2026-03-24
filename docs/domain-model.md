@@ -88,6 +88,24 @@ The model uses explicit scope boundaries:
 details are known), and every `TestRun`, `RunCapture`, and `RunSetup` in that
 case is interpreted within that same car context when present.
 
+## Invariant enforcement
+
+Domain objects own invariant enforcement at construction/factory boundaries.
+Adapters, codecs, and settings stores may sanitize payloads, but they should
+feed domain objects rather than duplicating business rules in parallel.
+
+Current examples on `main`:
+
+- `Car` normalizes blank names to `Unnamed Car` and rebuilds its
+  `OrderReferenceSpec` / aspect state from sanitized settings input.
+- `SensorPlacement` rejects empty placement codes.
+- `Finding` rejects out-of-range confidence and cruise-fraction values plus
+  non-finite ranking scores.
+- `TestRun` requires `top_causes` to be drawn from `findings`.
+
+The backend therefore does not rely on one external boundary to keep objects
+valid; invariant ownership lives with the domain concepts that use those rules.
+
 ## Aggregate hierarchy
 
 The aggregate hierarchy is decisive:

@@ -8,6 +8,9 @@ Boundary note
 -------------
 Settings management spans two layers:
 
+- ``vibesensor.app.config_schema`` / ``AppConfig`` — deployment and process
+  configuration loaded at startup (network bindings, retention windows, update
+  paths, processing budgets).
 - ``settings_store.py`` (this module) — user-facing settings (cars, speed
   source, language, unit, sensors) persisted through a narrow snapshot
   persistence port. Also owns the in-memory analysis parameter cache
@@ -16,6 +19,9 @@ Settings management spans two layers:
 - concrete adapters such as ``history_db/`` implement
   ``get_settings_snapshot()`` / ``set_settings_snapshot()`` and persist
   settings as a single JSON blob.
+
+Per-run captures and history rows then store snapshots derived from those
+runtime settings; they are not a second mutable settings source.
 
 ``SettingsStore`` owns the semantic meaning of settings, delegates
 persistence to its injected snapshot-store collaborator, and is the canonical source for
