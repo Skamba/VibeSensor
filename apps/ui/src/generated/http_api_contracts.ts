@@ -30,23 +30,38 @@ export interface paths {
     get: operations["get_car_library_types_api_car_library_types_get"];
   };
   "/api/client-locations": {
-    /** Get Client Locations */
+    /**
+     * Get Client Locations
+     * @description List the supported sensor location codes that operators can assign to clients.
+     */
     get: operations["get_client_locations_api_client_locations_get"];
   };
   "/api/clients": {
-    /** Get Clients */
+    /**
+     * Get Clients
+     * @description List known sensor clients with live connection state and latest computed metrics.
+     */
     get: operations["get_clients_api_clients_get"];
   };
   "/api/clients/{client_id}": {
-    /** Remove Client */
+    /**
+     * Remove Client
+     * @description Remove a disconnected sensor from the runtime registry.
+     */
     delete: operations["remove_client_api_clients__client_id__delete"];
   };
   "/api/clients/{client_id}/identify": {
-    /** Identify Client */
+    /**
+     * Identify Client
+     * @description Send a temporary identify/blink command so an operator can find a sensor physically.
+     */
     post: operations["identify_client_api_clients__client_id__identify_post"];
   };
   "/api/clients/{client_id}/location": {
-    /** Set Client Location */
+    /**
+     * Set Client Location
+     * @description Assign or clear the logical location for a sensor and persist the updated mapping.
+     */
     post: operations["set_client_location_api_clients__client_id__location_post"];
   };
   "/api/debug/raw-samples/{client_id}": {
@@ -64,131 +79,239 @@ export interface paths {
     get: operations["debug_spectrum_api_debug_spectrum__client_id__get"];
   };
   "/api/esp-flash/cancel": {
-    /** Cancel Esp Flash */
+    /**
+     * Cancel Esp Flash
+     * @description Request cancellation of the active ESP32 flash job.
+     */
     post: operations["cancel_esp_flash_api_esp_flash_cancel_post"];
   };
   "/api/esp-flash/history": {
-    /** Get Esp Flash History */
+    /**
+     * Get Esp Flash History
+     * @description List completed and failed ESP32 flash attempts kept in local history.
+     */
     get: operations["get_esp_flash_history_api_esp_flash_history_get"];
   };
   "/api/esp-flash/logs": {
-    /** Get Esp Flash Logs */
+    /**
+     * Get Esp Flash Logs
+     * @description Return incremental ESP32 flash logs for polling clients.
+     */
     get: operations["get_esp_flash_logs_api_esp_flash_logs_get"];
   };
   "/api/esp-flash/ports": {
-    /** List Esp Flash Ports */
+    /**
+     * List Esp Flash Ports
+     * @description List serial ports currently available for ESP32 firmware flashing.
+     */
     get: operations["list_esp_flash_ports_api_esp_flash_ports_get"];
   };
   "/api/esp-flash/start": {
-    /** Start Esp Flash */
+    /**
+     * Start Esp Flash
+     * @description Start a new ESP32 firmware flash job with either auto-detect or an explicit port.
+     */
     post: operations["start_esp_flash_api_esp_flash_start_post"];
   };
   "/api/esp-flash/status": {
-    /** Get Esp Flash Status */
+    /**
+     * Get Esp Flash Status
+     * @description Return the current ESP32 flash job state and the selected serial port, if any.
+     */
     get: operations["get_esp_flash_status_api_esp_flash_status_get"];
   };
   "/api/health": {
-    /** Health */
+    /**
+     * Health
+     * @description Return the current runtime health snapshot for the server and sensor pipeline.
+     */
     get: operations["health_api_health_get"];
   };
   "/api/history": {
-    /** Get History */
+    /**
+     * Get History
+     * @description List all persisted recording runs available in history storage.
+     */
     get: operations["get_history_api_history_get"];
   };
   "/api/history/{run_id}": {
-    /** Get History Run */
+    /**
+     * Get History Run
+     * @description Return full metadata and analysis payloads for a single recorded run.
+     */
     get: operations["get_history_run_api_history__run_id__get"];
-    /** Delete History Run */
+    /**
+     * Delete History Run
+     * @description Delete a persisted run and its derived artifacts from history storage.
+     */
     delete: operations["delete_history_run_api_history__run_id__delete"];
   };
   "/api/history/{run_id}/export": {
-    /** Export History Run */
+    /**
+     * Export History Run
+     * @description Build and stream the ZIP export bundle for a persisted run.
+     */
     get: operations["export_history_run_api_history__run_id__export_get"];
   };
   "/api/history/{run_id}/insights": {
-    /** Get History Insights */
+    /**
+     * Get History Insights
+     * @description Return localized post-analysis findings, or a 202 while analysis is still running.
+     */
     get: operations["get_history_insights_api_history__run_id__insights_get"];
   };
   "/api/history/{run_id}/report.pdf": {
-    /** Download History Report Pdf */
+    /**
+     * Download History Report Pdf
+     * @description Build and download the PDF diagnostic report for a persisted run.
+     */
     get: operations["download_history_report_pdf_api_history__run_id__report_pdf_get"];
   };
   "/api/recording/start": {
-    /** Start Logging */
+    /**
+     * Start Logging
+     * @description Start recording a new run and return the updated recorder status snapshot.
+     */
     post: operations["start_logging_api_recording_start_post"];
   };
   "/api/recording/status": {
-    /** Get Logging Status */
+    /**
+     * Get Logging Status
+     * @description Return the current recording state, counters, and last completed run details.
+     */
     get: operations["get_logging_status_api_recording_status_get"];
   };
   "/api/recording/stop": {
-    /** Stop Logging */
+    /**
+     * Stop Logging
+     * @description Stop the active recording and return the updated recorder status snapshot.
+     */
     post: operations["stop_logging_api_recording_stop_post"];
   };
   "/api/settings/analysis": {
-    /** Get Analysis Settings */
+    /**
+     * Get Analysis Settings
+     * @description Return the validated analysis settings derived from the active car profile.
+     */
     get: operations["get_analysis_settings_api_settings_analysis_get"];
-    /** Set Analysis Settings */
+    /**
+     * Set Analysis Settings
+     * @description Update analysis-specific car aspects such as tire geometry and drivetrain ratios.
+     */
     put: operations["set_analysis_settings_api_settings_analysis_put"];
   };
   "/api/settings/cars": {
-    /** Get Cars */
+    /**
+     * Get Cars
+     * @description List all saved car profiles together with the currently active car ID.
+     */
     get: operations["get_cars_api_settings_cars_get"];
-    /** Add Car */
+    /**
+     * Add Car
+     * @description Create a new car profile from the provided partial settings payload.
+     */
     post: operations["add_car_api_settings_cars_post"];
   };
   "/api/settings/cars/active": {
-    /** Set Active Car */
+    /**
+     * Set Active Car
+     * @description Select which saved car profile should drive current analysis settings.
+     */
     put: operations["set_active_car_api_settings_cars_active_put"];
   };
   "/api/settings/cars/{car_id}": {
-    /** Update Car */
+    /**
+     * Update Car
+     * @description Update an existing car profile while preserving unspecified fields.
+     */
     put: operations["update_car_api_settings_cars__car_id__put"];
-    /** Delete Car */
+    /**
+     * Delete Car
+     * @description Delete a saved car profile when that removal keeps settings state valid.
+     */
     delete: operations["delete_car_api_settings_cars__car_id__delete"];
   };
   "/api/settings/language": {
-    /** Get Language */
+    /**
+     * Get Language
+     * @description Return the currently selected dashboard language code.
+     */
     get: operations["get_language_api_settings_language_get"];
-    /** Set Language */
+    /**
+     * Set Language
+     * @description Update the dashboard language used by the local UI.
+     */
     put: operations["set_language_api_settings_language_put"];
   };
   "/api/settings/sensors": {
-    /** Get Sensors */
+    /**
+     * Get Sensors
+     * @description List persisted per-sensor settings keyed by normalized MAC address.
+     */
     get: operations["get_sensors_api_settings_sensors_get"];
   };
   "/api/settings/sensors/{mac}": {
-    /** Update Sensor */
+    /**
+     * Update Sensor
+     * @description Create or update persisted sensor metadata for a specific MAC address.
+     */
     post: operations["update_sensor_api_settings_sensors__mac__post"];
-    /** Delete Sensor */
+    /**
+     * Delete Sensor
+     * @description Delete persisted sensor metadata for a specific MAC address.
+     */
     delete: operations["delete_sensor_api_settings_sensors__mac__delete"];
   };
   "/api/settings/speed-source": {
-    /** Get Speed Source */
+    /**
+     * Get Speed Source
+     * @description Return the persisted speed-source configuration used for order tracking.
+     */
     get: operations["get_speed_source_api_settings_speed_source_get"];
-    /** Update Speed Source */
+    /**
+     * Update Speed Source
+     * @description Update the preferred speed source, manual fallback speed, and staleness timeout.
+     */
     put: operations["update_speed_source_api_settings_speed_source_put"];
   };
   "/api/settings/speed-source/status": {
-    /** Get Speed Source Status */
+    /**
+     * Get Speed Source Status
+     * @description Return the live GPS connection state and effective speed-source status.
+     */
     get: operations["get_speed_source_status_api_settings_speed_source_status_get"];
   };
   "/api/settings/speed-unit": {
-    /** Get Speed Unit */
+    /**
+     * Get Speed Unit
+     * @description Return the speed unit currently used for UI display and input.
+     */
     get: operations["get_speed_unit_api_settings_speed_unit_get"];
-    /** Set Speed Unit */
+    /**
+     * Set Speed Unit
+     * @description Update the speed unit used for UI display and manual speed entry.
+     */
     put: operations["set_speed_unit_api_settings_speed_unit_put"];
   };
   "/api/update/cancel": {
-    /** Cancel Update */
+    /**
+     * Cancel Update
+     * @description Request cancellation of the active OTA software update job.
+     */
     post: operations["cancel_update_api_update_cancel_post"];
   };
   "/api/update/start": {
-    /** Start Update */
+    /**
+     * Start Update
+     * @description Start an OTA software update using the supplied uplink Wi-Fi credentials.
+     */
     post: operations["start_update_api_update_start_post"];
   };
   "/api/update/status": {
-    /** Get Update Status */
+    /**
+     * Get Update Status
+     * @description Return the current OTA software update job state, logs, and runtime details.
+     */
     get: operations["get_update_status_api_update_status_get"];
   };
 }
@@ -2267,7 +2390,9 @@ export interface operations {
   get_car_library_models_api_car_library_models_get: {
     parameters: {
       query: {
+        /** @description Manufacturer brand to look up. */
         brand: string;
+        /** @description Vehicle body type to look up for the selected brand. */
         type: string;
       };
     };
@@ -2277,6 +2402,10 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["CarLibraryModelsResponse"];
         };
+      };
+      /** @description The requested brand or brand/type combination does not exist. */
+      404: {
+        content: never;
       };
       /** @description Validation Error */
       422: {
@@ -2293,6 +2422,7 @@ export interface operations {
   get_car_library_types_api_car_library_types_get: {
     parameters: {
       query: {
+        /** @description Manufacturer brand to look up. */
         brand: string;
       };
     };
@@ -2303,6 +2433,10 @@ export interface operations {
           "application/json": components["schemas"]["CarLibraryTypesResponse"];
         };
       };
+      /** @description The requested brand or brand/type combination does not exist. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2311,7 +2445,10 @@ export interface operations {
       };
     };
   };
-  /** Get Client Locations */
+  /**
+   * Get Client Locations
+   * @description List the supported sensor location codes that operators can assign to clients.
+   */
   get_client_locations_api_client_locations_get: {
     responses: {
       /** @description Successful Response */
@@ -2322,7 +2459,10 @@ export interface operations {
       };
     };
   };
-  /** Get Clients */
+  /**
+   * Get Clients
+   * @description List known sensor clients with live connection state and latest computed metrics.
+   */
   get_clients_api_clients_get: {
     responses: {
       /** @description Successful Response */
@@ -2333,7 +2473,10 @@ export interface operations {
       };
     };
   };
-  /** Remove Client */
+  /**
+   * Remove Client
+   * @description Remove a disconnected sensor from the runtime registry.
+   */
   remove_client_api_clients__client_id__delete: {
     parameters: {
       path: {
@@ -2347,6 +2490,14 @@ export interface operations {
           "application/json": components["schemas"]["RemoveClientResponse"];
         };
       };
+      /** @description Invalid sensor identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Sensor not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2355,7 +2506,10 @@ export interface operations {
       };
     };
   };
-  /** Identify Client */
+  /**
+   * Identify Client
+   * @description Send a temporary identify/blink command so an operator can find a sensor physically.
+   */
   identify_client_api_clients__client_id__identify_post: {
     parameters: {
       path: {
@@ -2374,15 +2528,30 @@ export interface operations {
           "application/json": components["schemas"]["IdentifyResponse"];
         };
       };
+      /** @description Invalid sensor identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Sensor not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
+      /** @description Sensor is known but not currently reachable. */
+      503: {
+        content: never;
+      };
     };
   };
-  /** Set Client Location */
+  /**
+   * Set Client Location
+   * @description Assign or clear the logical location for a sensor and persist the updated mapping.
+   */
   set_client_location_api_clients__client_id__location_post: {
     parameters: {
       path: {
@@ -2401,6 +2570,18 @@ export interface operations {
           "application/json": components["schemas"]["SetClientLocationResponse"];
         };
       };
+      /** @description Invalid sensor identifier or unknown location code. */
+      400: {
+        content: never;
+      };
+      /** @description Sensor not found. */
+      404: {
+        content: never;
+      };
+      /** @description Requested location is already assigned to another sensor. */
+      409: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2416,6 +2597,7 @@ export interface operations {
   debug_raw_samples_api_debug_raw_samples__client_id__get: {
     parameters: {
       query?: {
+        /** @description Number of recent raw samples to return. */
         n?: number;
       };
       path: {
@@ -2428,6 +2610,14 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["RawSamplesPayload"];
         };
+      };
+      /** @description Invalid sensor identifier. */
+      400: {
+        content: never;
+      };
+      /** @description No debug data is available for the requested sensor. */
+      404: {
+        content: never;
       };
       /** @description Validation Error */
       422: {
@@ -2454,6 +2644,14 @@ export interface operations {
           "application/json": components["schemas"]["DebugSpectrumPayload"];
         };
       };
+      /** @description Invalid sensor identifier. */
+      400: {
+        content: never;
+      };
+      /** @description No debug data is available for the requested sensor. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2462,7 +2660,10 @@ export interface operations {
       };
     };
   };
-  /** Cancel Esp Flash */
+  /**
+   * Cancel Esp Flash
+   * @description Request cancellation of the active ESP32 flash job.
+   */
   cancel_esp_flash_api_esp_flash_cancel_post: {
     responses: {
       /** @description Successful Response */
@@ -2473,7 +2674,10 @@ export interface operations {
       };
     };
   };
-  /** Get Esp Flash History */
+  /**
+   * Get Esp Flash History
+   * @description List completed and failed ESP32 flash attempts kept in local history.
+   */
   get_esp_flash_history_api_esp_flash_history_get: {
     responses: {
       /** @description Successful Response */
@@ -2484,10 +2688,14 @@ export interface operations {
       };
     };
   };
-  /** Get Esp Flash Logs */
+  /**
+   * Get Esp Flash Logs
+   * @description Return incremental ESP32 flash logs for polling clients.
+   */
   get_esp_flash_logs_api_esp_flash_logs_get: {
     parameters: {
       query?: {
+        /** @description Return log lines strictly after this zero-based index. */
         after?: number;
       };
     };
@@ -2506,7 +2714,10 @@ export interface operations {
       };
     };
   };
-  /** List Esp Flash Ports */
+  /**
+   * List Esp Flash Ports
+   * @description List serial ports currently available for ESP32 firmware flashing.
+   */
   list_esp_flash_ports_api_esp_flash_ports_get: {
     responses: {
       /** @description Successful Response */
@@ -2517,7 +2728,10 @@ export interface operations {
       };
     };
   };
-  /** Start Esp Flash */
+  /**
+   * Start Esp Flash
+   * @description Start a new ESP32 firmware flash job with either auto-detect or an explicit port.
+   */
   start_esp_flash_api_esp_flash_start_post: {
     requestBody: {
       content: {
@@ -2531,15 +2745,30 @@ export interface operations {
           "application/json": components["schemas"]["EspFlashStartResponse"];
         };
       };
+      /** @description Invalid flash settings or port selection. */
+      400: {
+        content: never;
+      };
+      /** @description An ESP flash job is already running. */
+      409: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
+      /** @description The flash job could not be started. */
+      500: {
+        content: never;
+      };
     };
   };
-  /** Get Esp Flash Status */
+  /**
+   * Get Esp Flash Status
+   * @description Return the current ESP32 flash job state and the selected serial port, if any.
+   */
   get_esp_flash_status_api_esp_flash_status_get: {
     responses: {
       /** @description Successful Response */
@@ -2550,7 +2779,10 @@ export interface operations {
       };
     };
   };
-  /** Health */
+  /**
+   * Health
+   * @description Return the current runtime health snapshot for the server and sensor pipeline.
+   */
   health_api_health_get: {
     responses: {
       /** @description Successful Response */
@@ -2561,7 +2793,10 @@ export interface operations {
       };
     };
   };
-  /** Get History */
+  /**
+   * Get History
+   * @description List all persisted recording runs available in history storage.
+   */
   get_history_api_history_get: {
     responses: {
       /** @description Successful Response */
@@ -2572,7 +2807,10 @@ export interface operations {
       };
     };
   };
-  /** Get History Run */
+  /**
+   * Get History Run
+   * @description Return full metadata and analysis payloads for a single recorded run.
+   */
   get_history_run_api_history__run_id__get: {
     parameters: {
       path: {
@@ -2586,15 +2824,26 @@ export interface operations {
           "application/json": components["schemas"]["HistoryRunResponse"];
         };
       };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
+      /** @description Run data is corrupt or could not be processed. */
+      500: {
+        content: never;
+      };
     };
   };
-  /** Delete History Run */
+  /**
+   * Delete History Run
+   * @description Delete a persisted run and its derived artifacts from history storage.
+   */
   delete_history_run_api_history__run_id__delete: {
     parameters: {
       path: {
@@ -2608,6 +2857,10 @@ export interface operations {
           "application/json": components["schemas"]["DeleteHistoryRunResponse"];
         };
       };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2616,7 +2869,10 @@ export interface operations {
       };
     };
   };
-  /** Export History Run */
+  /**
+   * Export History Run
+   * @description Build and stream the ZIP export bundle for a persisted run.
+   */
   export_history_run_api_history__run_id__export_get: {
     parameters: {
       path: {
@@ -2628,18 +2884,30 @@ export interface operations {
       200: {
         content: never;
       };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
+      /** @description Export generation failed because the run data is corrupt or incomplete. */
+      500: {
+        content: never;
+      };
     };
   };
-  /** Get History Insights */
+  /**
+   * Get History Insights
+   * @description Return localized post-analysis findings, or a 202 while analysis is still running.
+   */
   get_history_insights_api_history__run_id__insights_get: {
     parameters: {
       query?: {
+        /** @description Optional language override for localized insights text (for example 'en' or 'nl'). */
         lang?: string | null;
       };
       path: {
@@ -2653,24 +2921,38 @@ export interface operations {
           "application/json": components["schemas"]["HistoryInsightsResponse"];
         };
       };
-      /** @description Accepted */
+      /** @description Analysis is still running for the requested run. */
       202: {
         content: {
           "application/json": components["schemas"]["HistoryInsightsAnalyzingResponse"];
         };
       };
-      /** @description Validation Error */
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Insights are not ready yet for the requested run. */
+      409: {
+        content: never;
+      };
+      /** @description Insights are unavailable because analysis failed or produced unsupported persisted data. */
       422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
+        content: never;
+      };
+      /** @description Run data is corrupt or insights generation failed. */
+      500: {
+        content: never;
       };
     };
   };
-  /** Download History Report Pdf */
+  /**
+   * Download History Report Pdf
+   * @description Build and download the PDF diagnostic report for a persisted run.
+   */
   download_history_report_pdf_api_history__run_id__report_pdf_get: {
     parameters: {
       query?: {
+        /** @description Optional language override for the generated PDF report (for example 'en' or 'nl'). */
         lang?: string | null;
       };
       path: {
@@ -2682,15 +2964,26 @@ export interface operations {
       200: {
         content: never;
       };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
+      /** @description Report generation failed because the run data is corrupt or incomplete. */
+      500: {
+        content: never;
+      };
     };
   };
-  /** Start Logging */
+  /**
+   * Start Logging
+   * @description Start recording a new run and return the updated recorder status snapshot.
+   */
   start_logging_api_recording_start_post: {
     responses: {
       /** @description Successful Response */
@@ -2701,7 +2994,10 @@ export interface operations {
       };
     };
   };
-  /** Get Logging Status */
+  /**
+   * Get Logging Status
+   * @description Return the current recording state, counters, and last completed run details.
+   */
   get_logging_status_api_recording_status_get: {
     responses: {
       /** @description Successful Response */
@@ -2712,7 +3008,10 @@ export interface operations {
       };
     };
   };
-  /** Stop Logging */
+  /**
+   * Stop Logging
+   * @description Stop the active recording and return the updated recorder status snapshot.
+   */
   stop_logging_api_recording_stop_post: {
     responses: {
       /** @description Successful Response */
@@ -2723,7 +3022,10 @@ export interface operations {
       };
     };
   };
-  /** Get Analysis Settings */
+  /**
+   * Get Analysis Settings
+   * @description Return the validated analysis settings derived from the active car profile.
+   */
   get_analysis_settings_api_settings_analysis_get: {
     responses: {
       /** @description Successful Response */
@@ -2734,7 +3036,10 @@ export interface operations {
       };
     };
   };
-  /** Set Analysis Settings */
+  /**
+   * Set Analysis Settings
+   * @description Update analysis-specific car aspects such as tire geometry and drivetrain ratios.
+   */
   set_analysis_settings_api_settings_analysis_put: {
     requestBody: {
       content: {
@@ -2748,6 +3053,10 @@ export interface operations {
           "application/json": components["schemas"]["AnalysisSettingsResponse"];
         };
       };
+      /** @description Analysis settings are invalid or no active car is configured. */
+      400: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2756,7 +3065,10 @@ export interface operations {
       };
     };
   };
-  /** Get Cars */
+  /**
+   * Get Cars
+   * @description List all saved car profiles together with the currently active car ID.
+   */
   get_cars_api_settings_cars_get: {
     responses: {
       /** @description Successful Response */
@@ -2767,7 +3079,10 @@ export interface operations {
       };
     };
   };
-  /** Add Car */
+  /**
+   * Add Car
+   * @description Create a new car profile from the provided partial settings payload.
+   */
   add_car_api_settings_cars_post: {
     requestBody: {
       content: {
@@ -2789,7 +3104,10 @@ export interface operations {
       };
     };
   };
-  /** Set Active Car */
+  /**
+   * Set Active Car
+   * @description Select which saved car profile should drive current analysis settings.
+   */
   set_active_car_api_settings_cars_active_put: {
     requestBody: {
       content: {
@@ -2803,6 +3121,10 @@ export interface operations {
           "application/json": components["schemas"]["CarsResponse"];
         };
       };
+      /** @description Requested car profile was not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2811,7 +3133,10 @@ export interface operations {
       };
     };
   };
-  /** Update Car */
+  /**
+   * Update Car
+   * @description Update an existing car profile while preserving unspecified fields.
+   */
   update_car_api_settings_cars__car_id__put: {
     parameters: {
       path: {
@@ -2830,6 +3155,10 @@ export interface operations {
           "application/json": components["schemas"]["CarsResponse"];
         };
       };
+      /** @description Requested car profile was not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2838,7 +3167,10 @@ export interface operations {
       };
     };
   };
-  /** Delete Car */
+  /**
+   * Delete Car
+   * @description Delete a saved car profile when that removal keeps settings state valid.
+   */
   delete_car_api_settings_cars__car_id__delete: {
     parameters: {
       path: {
@@ -2852,6 +3184,14 @@ export interface operations {
           "application/json": components["schemas"]["CarsResponse"];
         };
       };
+      /** @description The requested deletion violates current settings constraints. */
+      400: {
+        content: never;
+      };
+      /** @description Requested car profile was not found. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2860,7 +3200,10 @@ export interface operations {
       };
     };
   };
-  /** Get Language */
+  /**
+   * Get Language
+   * @description Return the currently selected dashboard language code.
+   */
   get_language_api_settings_language_get: {
     responses: {
       /** @description Successful Response */
@@ -2871,7 +3214,10 @@ export interface operations {
       };
     };
   };
-  /** Set Language */
+  /**
+   * Set Language
+   * @description Update the dashboard language used by the local UI.
+   */
   set_language_api_settings_language_put: {
     requestBody: {
       content: {
@@ -2885,6 +3231,10 @@ export interface operations {
           "application/json": components["schemas"]["LanguageResponse"];
         };
       };
+      /** @description Unsupported language code. */
+      400: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2893,7 +3243,10 @@ export interface operations {
       };
     };
   };
-  /** Get Sensors */
+  /**
+   * Get Sensors
+   * @description List persisted per-sensor settings keyed by normalized MAC address.
+   */
   get_sensors_api_settings_sensors_get: {
     responses: {
       /** @description Successful Response */
@@ -2904,7 +3257,10 @@ export interface operations {
       };
     };
   };
-  /** Update Sensor */
+  /**
+   * Update Sensor
+   * @description Create or update persisted sensor metadata for a specific MAC address.
+   */
   update_sensor_api_settings_sensors__mac__post: {
     parameters: {
       path: {
@@ -2923,6 +3279,10 @@ export interface operations {
           "application/json": components["schemas"]["SensorsResponse"];
         };
       };
+      /** @description Invalid sensor MAC address or sensor settings payload. */
+      400: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2931,7 +3291,10 @@ export interface operations {
       };
     };
   };
-  /** Delete Sensor */
+  /**
+   * Delete Sensor
+   * @description Delete persisted sensor metadata for a specific MAC address.
+   */
   delete_sensor_api_settings_sensors__mac__delete: {
     parameters: {
       path: {
@@ -2945,6 +3308,14 @@ export interface operations {
           "application/json": components["schemas"]["SensorsResponse"];
         };
       };
+      /** @description Invalid sensor MAC address. */
+      400: {
+        content: never;
+      };
+      /** @description Sensor configuration not found for the given MAC address. */
+      404: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2953,7 +3324,10 @@ export interface operations {
       };
     };
   };
-  /** Get Speed Source */
+  /**
+   * Get Speed Source
+   * @description Return the persisted speed-source configuration used for order tracking.
+   */
   get_speed_source_api_settings_speed_source_get: {
     responses: {
       /** @description Successful Response */
@@ -2964,7 +3338,10 @@ export interface operations {
       };
     };
   };
-  /** Update Speed Source */
+  /**
+   * Update Speed Source
+   * @description Update the preferred speed source, manual fallback speed, and staleness timeout.
+   */
   update_speed_source_api_settings_speed_source_put: {
     requestBody: {
       content: {
@@ -2978,6 +3355,10 @@ export interface operations {
           "application/json": components["schemas"]["SpeedSourceResponse"];
         };
       };
+      /** @description The requested speed-source configuration is invalid. */
+      400: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -2986,7 +3367,10 @@ export interface operations {
       };
     };
   };
-  /** Get Speed Source Status */
+  /**
+   * Get Speed Source Status
+   * @description Return the live GPS connection state and effective speed-source status.
+   */
   get_speed_source_status_api_settings_speed_source_status_get: {
     responses: {
       /** @description Successful Response */
@@ -2997,7 +3381,10 @@ export interface operations {
       };
     };
   };
-  /** Get Speed Unit */
+  /**
+   * Get Speed Unit
+   * @description Return the speed unit currently used for UI display and input.
+   */
   get_speed_unit_api_settings_speed_unit_get: {
     responses: {
       /** @description Successful Response */
@@ -3008,7 +3395,10 @@ export interface operations {
       };
     };
   };
-  /** Set Speed Unit */
+  /**
+   * Set Speed Unit
+   * @description Update the speed unit used for UI display and manual speed entry.
+   */
   set_speed_unit_api_settings_speed_unit_put: {
     requestBody: {
       content: {
@@ -3022,6 +3412,10 @@ export interface operations {
           "application/json": components["schemas"]["SpeedUnitResponse"];
         };
       };
+      /** @description Unsupported speed unit. */
+      400: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
@@ -3030,7 +3424,10 @@ export interface operations {
       };
     };
   };
-  /** Cancel Update */
+  /**
+   * Cancel Update
+   * @description Request cancellation of the active OTA software update job.
+   */
   cancel_update_api_update_cancel_post: {
     responses: {
       /** @description Successful Response */
@@ -3041,7 +3438,10 @@ export interface operations {
       };
     };
   };
-  /** Start Update */
+  /**
+   * Start Update
+   * @description Start an OTA software update using the supplied uplink Wi-Fi credentials.
+   */
   start_update_api_update_start_post: {
     requestBody: {
       content: {
@@ -3055,15 +3455,30 @@ export interface operations {
           "application/json": components["schemas"]["UpdateStartResponse"];
         };
       };
+      /** @description Invalid Wi-Fi credentials or update request values. */
+      400: {
+        content: never;
+      };
+      /** @description An update job is already running. */
+      409: {
+        content: never;
+      };
       /** @description Validation Error */
       422: {
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
+      /** @description The update process could not be started. */
+      500: {
+        content: never;
+      };
     };
   };
-  /** Get Update Status */
+  /**
+   * Get Update Status
+   * @description Return the current OTA software update job state, logs, and runtime details.
+   */
   get_update_status_api_update_status_get: {
     responses: {
       /** @description Successful Response */
