@@ -22,6 +22,7 @@ class ClientBuffer:
 
     data: np.ndarray
     capacity: int
+    buffer_epoch: int = 0
     write_idx: int = 0
     count: int = 0
     sample_rate_hz: int = 0
