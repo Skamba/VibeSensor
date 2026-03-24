@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Query
 
-from vibesensor.adapters.http._helpers import domain_errors_to_http
+from vibesensor.adapters.http._helpers import OpenAPIResponses, domain_errors_to_http
 from vibesensor.adapters.http.models import (
     EspFlashCancelResponse,
     EspFlashHistoryResponse,
@@ -27,57 +27,92 @@ if TYPE_CHECKING:
 
 __all__ = ["create_update_routes"]
 
+_UPDATE_START_RESPONSES: OpenAPIResponses = {
+    400: {"description": "Invalid Wi-Fi credentials or update request values."},
+    409: {"description": "An update job is already running."},
+    500: {"description": "The update process could not be started."},
+}
+
+_ESP_FLASH_START_RESPONSES: OpenAPIResponses = {
+    400: {"description": "Invalid flash settings or port selection."},
+    409: {"description": "An ESP flash job is already running."},
+    500: {"description": "The flash job could not be started."},
+}
+
 
 def create_update_routes(
     update_manager: UpdateManager,
     esp_flash_manager: EspFlashManager,
 ) -> APIRouter:
     """Create and return the OTA software/firmware update API routes."""
-    router = APIRouter()
+    router = APIRouter(tags=["updates"])
 
     # -- software update -------------------------------------------------------
 
     @router.get("/api/update/status", response_model=UpdateStatusResponse)
     async def get_update_status() -> UpdateStatusResponse:
+        """Return the current OTA software update job state, logs, and runtime details."""
         return UpdateStatusResponse.model_validate(update_manager.status.to_payload())
 
-    @router.post("/api/update/start", response_model=UpdateStartResponse)
+    @router.post(
+        "/api/update/start",
+        response_model=UpdateStartResponse,
+        responses=_UPDATE_START_RESPONSES,
+    )
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
+        """Start an OTA software update using the supplied uplink Wi-Fi credentials."""
         with domain_errors_to_http():
             update_manager.start(req.ssid, req.password)
         return UpdateStartResponse(status="started", ssid=req.ssid)
 
     @router.post("/api/update/cancel", response_model=UpdateCancelResponse)
     async def cancel_update() -> UpdateCancelResponse:
+        """Request cancellation of the active OTA software update job."""
         return UpdateCancelResponse(cancelled=update_manager.cancel())
 
     # -- ESP flash -------------------------------------------------------------
 
     @router.get("/api/esp-flash/ports", response_model=EspFlashPortsResponse)
     async def list_esp_flash_ports() -> EspFlashPortsResponse:
+        """List serial ports currently available for ESP32 firmware flashing."""
         ports = await esp_flash_manager.list_ports()
         return EspFlashPortsResponse.model_validate({"ports": ports})
 
-    @router.post("/api/esp-flash/start", response_model=EspFlashStartResponse)
+    @router.post(
+        "/api/esp-flash/start",
+        response_model=EspFlashStartResponse,
+        responses=_ESP_FLASH_START_RESPONSES,
+    )
     async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
+        """Start a new ESP32 firmware flash job with either auto-detect or an explicit port."""
         with domain_errors_to_http():
             job_id = esp_flash_manager.start(port=req.port, auto_detect=req.auto_detect)
         return EspFlashStartResponse(status="started", job_id=job_id)
 
     @router.get("/api/esp-flash/status", response_model=EspFlashStatusResponse)
     async def get_esp_flash_status() -> EspFlashStatusResponse:
+        """Return the current ESP32 flash job state and the selected serial port, if any."""
         return EspFlashStatusResponse.model_validate(esp_flash_manager.status.to_dict())
 
     @router.get("/api/esp-flash/logs", response_model=EspFlashLogsResponse)
-    async def get_esp_flash_logs(after: int = Query(default=0, ge=0)) -> EspFlashLogsResponse:
+    async def get_esp_flash_logs(
+        after: int = Query(
+            default=0,
+            ge=0,
+            description="Return log lines strictly after this zero-based index.",
+        ),
+    ) -> EspFlashLogsResponse:
+        """Return incremental ESP32 flash logs for polling clients."""
         return EspFlashLogsResponse.model_validate(esp_flash_manager.logs_since(after))
 
     @router.post("/api/esp-flash/cancel", response_model=EspFlashCancelResponse)
     async def cancel_esp_flash() -> EspFlashCancelResponse:
+        """Request cancellation of the active ESP32 flash job."""
         return EspFlashCancelResponse(cancelled=esp_flash_manager.cancel())
 
     @router.get("/api/esp-flash/history", response_model=EspFlashHistoryResponse)
     async def get_esp_flash_history() -> EspFlashHistoryResponse:
+        """List completed and failed ESP32 flash attempts kept in local history."""
         return EspFlashHistoryResponse.model_validate({"attempts": esp_flash_manager.history()})
 
     return router

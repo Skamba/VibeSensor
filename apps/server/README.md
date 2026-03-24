@@ -87,6 +87,18 @@ Current route groups:
 - `car_library.py`
 - `debug.py`
 
+### HTTP API schema export and versioning stance
+
+- Export the committed HTTP OpenAPI schema with `python -m vibesensor.cli.http_api_schema_export`.
+- The checked-in schema artifact lives at
+  `apps/ui/src/contracts/http_api_schema.json` and is kept in sync by CI
+  drift checks.
+- The current HTTP API intentionally remains a single unversioned `/api/*`
+  surface because the backend and bundled UI ship atomically.
+- If independent or third-party clients become a real compatibility concern,
+  introduce explicit path versioning starting at `/api/v1/` rather than adding
+  ad hoc compatibility shims to the current routes.
+
 ## Reports
 
 Generate a PDF from a saved run:

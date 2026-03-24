@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import Any, TypeAlias
 
 from fastapi import HTTPException
 
@@ -21,12 +22,15 @@ from vibesensor.shared.exceptions import (
 from vibesensor.use_cases.history.helpers import async_require_run, safe_filename
 
 __all__ = [
+    "OpenAPIResponses",
     "async_require_run",
     "domain_errors_to_http",
     "normalize_client_id_or_400",
     "normalize_mac_or_400",
     "safe_filename",
 ]
+
+OpenAPIResponses: TypeAlias = dict[int | str, dict[str, Any]]
 
 
 @contextmanager
