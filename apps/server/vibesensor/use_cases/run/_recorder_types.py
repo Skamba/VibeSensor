@@ -51,21 +51,18 @@ def _build_run_metadata_record(
     run_id: str,
     start_time_utc: str,
 ) -> JsonObject:
+    run_context = recorder._run_context_snapshot(run_id)
     return build_run_metadata(
         run_id=run_id,
         start_time_utc=start_time_utc,
-        analysis_settings_snapshot=recorder._analysis_settings_snapshot(),
+        analysis_settings_snapshot=run_context.analysis_settings,
         sensor_model=recorder.sensor_model,
         firmware_version=firmware_version_for_run(recorder.registry),
         default_sample_rate_hz=recorder.default_sample_rate_hz,
         metrics_log_hz=recorder.metrics_log_hz,
         fft_window_size_samples=recorder.fft_window_size_samples,
         accel_scale_g_per_lsb=recorder.accel_scale_g_per_lsb,
-        active_car_snapshot=(
-            recorder._settings_store.active_car_snapshot()
-            if recorder._settings_store is not None
-            else None
-        ),
+        active_car_snapshot=run_context.car,
         language_provider=recorder._language_provider,
     )
 

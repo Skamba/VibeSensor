@@ -74,3 +74,19 @@ def test_control_datagram_unexpected_exception_is_logged_and_counted(
     assert record is not None
     assert record.parse_errors == 1
     assert "Unexpected error processing control datagram" in caplog.text
+
+
+def test_close_closes_transport_once_and_clears_reference(tmp_path: Path, fake_transport) -> None:
+    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    plane = UDPControlPlane(registry=registry, bind_host="127.0.0.1", bind_port=9001)
+    plane.transport = fake_transport
+
+    plane.close()
+
+    assert fake_transport.closed is True
+    assert plane.transport is None
+
+    plane.close()
+
+    assert fake_transport.closed is True
+    assert plane.transport is None
