@@ -11,6 +11,7 @@ from reportlab.lib.units import mm
 from vibesensor.adapters.pdf.report_data import FindingPresentation, ReportTemplateData
 from vibesensor.domain import LocationHotspotRow
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.types.json_types import JsonValue
 
 # ── Theme ────────────────────────────────────────────────────────────────────
 
@@ -273,7 +274,7 @@ class PdfRenderContext:
     ) -> PdfRenderContext:
         lang = data.lang
 
-        def default_tr(key: str, **kw: object) -> str:
+        def default_tr(key: str, **kw: JsonValue) -> str:
             result: str = _tr(lang, key, **kw)
             return result
 
@@ -293,5 +294,5 @@ class PdfRenderContext:
             text_fn=text_fn or default_text,
         )
 
-    def tr(self, key: str, **kw: object) -> str:
+    def tr(self, key: str, **kw: JsonValue) -> str:
         return self.tr_fn(key, **kw)

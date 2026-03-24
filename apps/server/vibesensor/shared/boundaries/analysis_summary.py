@@ -34,38 +34,94 @@ from vibesensor.shared.types.json_types import JsonObject
 
 
 class PreparedRunDataLike(Protocol):
-    run_id: str
-    duration_s: float
-    raw_sample_rate_hz: float | None
-    speed_breakdown: Sequence[SpeedBreakdownRowLike]
-    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowLike]
-    phase_segments: Sequence[PhaseSegmentLike]
-    run_noise_baseline_g: float | None
-    speed_breakdown_skipped_reason: JsonObject | None
-    speed_stats_by_phase: Mapping[str, SpeedProfileSummary]
-    speed_values: list[float]
-    speed_non_null_pct: float
+    @property
+    def run_id(self) -> str: ...
+
+    @property
+    def duration_s(self) -> float: ...
+
+    @property
+    def raw_sample_rate_hz(self) -> float | None: ...
+
+    @property
+    def speed_breakdown(self) -> Sequence[SpeedBreakdownRowLike]: ...
+
+    @property
+    def phase_speed_breakdown(self) -> Sequence[PhaseSpeedBreakdownRowLike]: ...
+
+    @property
+    def phase_segments(self) -> Sequence[PhaseSegmentLike]: ...
+
+    @property
+    def run_noise_baseline_g(self) -> float | None: ...
+
+    @property
+    def speed_breakdown_skipped_reason(self) -> JsonObject | None: ...
+
+    @property
+    def speed_stats_by_phase(self) -> Mapping[str, SpeedProfileSummary]: ...
+
+    @property
+    def speed_values(self) -> list[float]: ...
+
+    @property
+    def speed_non_null_pct(self) -> float: ...
 
 
 class AnalysisResultLike(Protocol):
-    file_name: str
-    metadata: JsonObject
-    samples: Sequence[JsonObject]
-    language: str
-    include_samples: bool
-    prepared: PreparedRunDataLike
-    accel_stats: AccelStatisticsLike
-    reference_complete: bool
-    run_suitability: RunSuitability | None
-    most_likely_origin: VibrationOrigin | None
-    phase_timeline: Sequence[DrivingPhaseInterval]
-    sensor_locations: Sequence[str]
-    connected_locations: Collection[str]
-    sensor_intensity_by_location: Sequence[LocationIntensitySummary]
-    summary_speed_stats: SpeedProfileSummary
-    summary_phase_info: DrivingPhaseSummary
-    plot_data: PlotDataResultLike
-    test_run: TestRun
+    @property
+    def file_name(self) -> str: ...
+
+    @property
+    def metadata(self) -> JsonObject: ...
+
+    @property
+    def samples(self) -> Sequence[JsonObject]: ...
+
+    @property
+    def language(self) -> str: ...
+
+    @property
+    def include_samples(self) -> bool: ...
+
+    @property
+    def prepared(self) -> PreparedRunDataLike: ...
+
+    @property
+    def accel_stats(self) -> AccelStatisticsLike: ...
+
+    @property
+    def reference_complete(self) -> bool: ...
+
+    @property
+    def run_suitability(self) -> RunSuitability | None: ...
+
+    @property
+    def most_likely_origin(self) -> VibrationOrigin | None: ...
+
+    @property
+    def phase_timeline(self) -> Sequence[DrivingPhaseInterval]: ...
+
+    @property
+    def sensor_locations(self) -> Sequence[str]: ...
+
+    @property
+    def connected_locations(self) -> Collection[str]: ...
+
+    @property
+    def sensor_intensity_by_location(self) -> Sequence[LocationIntensitySummary]: ...
+
+    @property
+    def summary_speed_stats(self) -> SpeedProfileSummary: ...
+
+    @property
+    def summary_phase_info(self) -> DrivingPhaseSummary: ...
+
+    @property
+    def plot_data(self) -> PlotDataResultLike: ...
+
+    @property
+    def test_run(self) -> TestRun: ...
 
 
 def _amp_metric_values(accel_stats: AccelStatisticsLike) -> list[float]:
