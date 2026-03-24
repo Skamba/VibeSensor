@@ -79,6 +79,7 @@ class SignalBufferStore:
             return
 
         ingested_samples = 0
+        dropped_samples = 0
         with self.locked_client_buffer(client_id, create=True) as buf:
             assert buf is not None
             chunk: FloatArray = np.asarray(samples, dtype=np.float32)
@@ -103,13 +104,13 @@ class SignalBufferStore:
             n = int(chunk.shape[0])
             capacity = buf.capacity
             if n > capacity:
-                dropped = n - capacity
+                dropped_samples = n - capacity
                 LOGGER.warning(
                     "Sample chunk for %s exceeds buffer capacity %d; discarding %d oldest samples "
                     "from the incoming batch",
                     client_id,
                     capacity,
-                    dropped,
+                    dropped_samples,
                 )
                 chunk = chunk[-capacity:]
                 n = capacity
@@ -138,6 +139,7 @@ class SignalBufferStore:
             ingested_samples = n
         with self.lock:
             self.stats.total_ingested_samples += ingested_samples
+            self.stats.buffer_overflow_drops += dropped_samples
             self.stats.last_ingest_duration_s = clock() - t_start
 
     def snapshot_for_compute(
@@ -331,6 +333,10 @@ class SignalBufferStore:
                 "last_compute_all_duration_s": self.stats.last_compute_all_duration_s,
                 "last_ingest_duration_s": self.stats.last_ingest_duration_s,
             }
+
+    def buffer_overflow_drops(self) -> int:
+        with self.lock:
+            return self.stats.buffer_overflow_drops
 
     def _get_or_create_unlocked(self, client_id: str) -> ClientBuffer:
         buf = self.buffers.get(client_id)

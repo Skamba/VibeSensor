@@ -13,6 +13,7 @@ from vibesensor.shared.types.payload_types import IntakeStatsPayload, WorkerPool
 def _clean_data_loss() -> dict:
     return {
         "frames_dropped": 0,
+        "buffer_overflow_drops": 0,
         "queue_overflow_drops": 0,
         "server_queue_drops": 0,
         "parse_errors": 0,
@@ -75,6 +76,7 @@ def _make_deps(
 def _make_processor(*, intake_stats: IntakeStatsPayload | None = None) -> MagicMock:
     proc = MagicMock()
     proc.intake_stats.return_value = intake_stats or _clean_intake_stats()
+    proc.buffer_overflow_drops.return_value = 0
     return proc
 
 
@@ -274,6 +276,22 @@ class TestBuildSystemHealthSnapshotWarn:
 
         assert result["status"] == "warn"
         assert "frames_dropped" in result["degradation_reasons"]
+
+    def test_buffer_overflow_drops_add_reason(self) -> None:
+        loop_state = ProcessingLoopState()
+        health_state = RuntimeHealthState()
+        health_state.mark_ready()
+        registry, run_recorder = _make_deps()
+        processor = _make_processor()
+        processor.buffer_overflow_drops.return_value = 3
+
+        result = build_system_health_snapshot(
+            loop_state, health_state, processor, registry, run_recorder
+        )
+
+        assert result["status"] == "warn"
+        assert result["data_loss"]["buffer_overflow_drops"] == 3
+        assert "buffer_overflow_drops" in result["degradation_reasons"]
 
     def test_sample_rate_mismatch_adds_reason(self) -> None:
         loop_state = ProcessingLoopState(sample_rate_mismatch_logged={"client_a"})
