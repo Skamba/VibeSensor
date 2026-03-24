@@ -3,9 +3,9 @@
  * Run with: node update-snapshots.mjs
  */
 import { chromium } from "playwright-core";
-import { spawn } from "child_process";
-import { writeFileSync, mkdirSync } from "fs";
-import { dirname } from "path";
+import { spawn } from "node:child_process";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
 const CHROME_EXEC = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
 const SERVER_PORT = 4176;

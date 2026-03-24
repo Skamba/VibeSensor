@@ -73,6 +73,11 @@ jobs:
           cd apps/ui
           npm run check:contracts
 
+      - name: UI lint
+        run: |
+          cd apps/ui
+          npm run lint
+
       - name: UI typecheck
         run: |
           cd apps/ui

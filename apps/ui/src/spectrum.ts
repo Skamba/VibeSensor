@@ -18,16 +18,14 @@ export class SpectrumChart {
   private plot: uPlot | null = null;
   private readonly hostEl: HTMLElement;
   private readonly measureEl: HTMLElement;
-  private readonly overlayEl: HTMLElement | null;
   private readonly height: number;
   private readonly rootStyle: CSSStyleDeclaration;
   private resizeObserver: ResizeObserver | null = null;
   private resizeRaf: number | null = null;
 
-  constructor(hostEl: HTMLElement, overlayEl?: HTMLElement | null, height = 360, measureEl?: HTMLElement | null) {
+  constructor(hostEl: HTMLElement, _overlayEl?: HTMLElement | null, height = 360, measureEl?: HTMLElement | null) {
     this.hostEl = hostEl;
     this.measureEl = measureEl || hostEl;
-    this.overlayEl = overlayEl || null;
     this.height = height;
     this.rootStyle = getComputedStyle(document.documentElement);
     this.startResizeObserver();

@@ -1,4 +1,4 @@
-import type { EspFlashStatusPayload } from "../../api/types";
+import type { EspFlashHistoryPayload, EspFlashStatusPayload } from "../../api/types";
 import {
   ESP_FLASH_POLL_ACTIVE_MS,
   ESP_FLASH_POLL_IDLE_MS,
@@ -80,7 +80,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
 
   async function refreshHistory(): Promise<void> {
     if (!els.espFlashHistoryPanel) return;
-    let payload;
+    let payload: EspFlashHistoryPayload;
     try {
       payload = await getEspFlashHistory();
     } catch {

@@ -194,6 +194,7 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 ["npm", "run", "check:contracts"],
                 cwd=ROOT / "apps" / "ui",
             ),
+            Step("UI lint", ["npm", "run", "lint"], cwd=ROOT / "apps" / "ui"),
             Step("UI typecheck", ["npm", "run", "typecheck"], cwd=ROOT / "apps" / "ui"),
         ],
         "ui-smoke": [

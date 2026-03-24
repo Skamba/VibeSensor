@@ -17,11 +17,16 @@ server over HTTP (REST) and WebSocket (live data).
 ```bash
 cd apps/ui
 npm ci
+npm run lint         # Biome lint over the hand-written UI/config/test files
 npm run dev          # Dev server on http://localhost:5173
 npm run dev:open     # Same dev server, but opens the browser on local desktops
 npm run build        # Production build to dist/
 npm run typecheck    # Type check without emitting
 ```
+
+Use `npm ci` for normal repo bootstrap and dependency refresh from the checked-in
+lockfile. Only use `npm install` when you are intentionally adding or updating
+UI dependencies so the resulting `package-lock.json` change is deliberate.
 
 The Vite dev server proxies `/api`, `/ws`, and `/static` to
 `http://127.0.0.1:8000` by default so you can use HMR without manually swapping
@@ -44,6 +49,16 @@ It regenerates:
 - `src/constants.ts`
 
 `npm run check:contracts` fails if any of those generated files are stale.
+
+## Code Quality
+
+- `npm run lint` checks the hand-written TypeScript, config, and support scripts
+  with Biome.
+- `npm run format` rewrites the supported files when you want to apply the repo
+  UI formatting locally.
+
+Generated contract artifacts stay out of the lint/format path on purpose so the
+source-of-truth export commands remain the only writers for those files.
 
 ## Source Modules
 

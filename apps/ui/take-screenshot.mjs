@@ -5,8 +5,8 @@
  * Exits with code 1 on failure (timeout, no graph data, etc.)
  */
 import { chromium } from "@playwright/test";
-import { spawn } from "child_process";
-import { writeFileSync } from "fs";
+import { spawn } from "node:child_process";
+import { writeFileSync } from "node:fs";
 
 const OUTPUT_PATH = process.argv[2] || "/tmp/vibesensor-screenshot.png";
 const SERVER_PORT = 4175;

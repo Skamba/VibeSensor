@@ -6,7 +6,7 @@ const DOWNLOAD_REVOKE_DELAY_MS = 1000;
 export function filenameFromDisposition(headerValue: string | null, fallback: string): string {
   if (!headerValue) return fallback;
   const utf8Match = headerValue.match(/filename\*=UTF-8''([^;]+)/i);
-  if (utf8Match && utf8Match[1]) {
+  if (utf8Match?.[1]) {
     try {
       return decodeURIComponent(utf8Match[1]);
     } catch {
@@ -14,7 +14,7 @@ export function filenameFromDisposition(headerValue: string | null, fallback: st
     }
   }
   const simpleMatch = headerValue.match(/filename="?([^";]+)"?/i);
-  if (simpleMatch && simpleMatch[1]) return simpleMatch[1];
+  if (simpleMatch?.[1]) return simpleMatch[1];
   return fallback;
 }
 

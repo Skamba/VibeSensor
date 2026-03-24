@@ -35,7 +35,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 - Hardware simulator for full-stack testing without physical sensors
 - Extensive pytest suite with CI integration
 - Playwright visual regression tests across 4 viewports
-- Ruff linting and TypeScript type checking enforced in CI
+- Ruff backend linting plus UI linting and TypeScript type checking enforced in CI
 - Custom binary UDP protocol with sequence-based loss detection
 
 ## Units
@@ -137,10 +137,17 @@ changes hot-reload without rebuilding the image.
 ### Native Python + Vite (recommended for backend or UI iteration)
 
 ```bash
+. .venv/bin/activate  # after creating a local Python 3.11 venv, if you use one
+python3 -m pip install --upgrade pip
 python3 -m pip install -e "./apps/server[dev]"
 npm --prefix apps/ui ci
 vibesensor-server --reload --config apps/server/config.dev.yaml
 ```
+
+The backend uses an editable install from `apps/server/pyproject.toml` so
+commands like `vibesensor-server` and `vibesensor-sim` stay tied to your working
+tree. A local Python 3.11 virtualenv is the recommended native-dev path before
+you run the install above.
 
 In another terminal:
 
