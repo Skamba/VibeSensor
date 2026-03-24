@@ -1,4 +1,4 @@
-import uPlot from "uplot";
+import type uPlot from "uplot";
 
 import {
   SPECTRUM_DB_MAX,
@@ -206,7 +206,9 @@ export class UiSpectrumController {
         [this.bandPlugin()],
       );
     }
-    this.state.spectrum.spectrumPlot!.renderLegend(this.els.legend!, entries);
+    if (this.els.legend) {
+      this.state.spectrum.spectrumPlot?.renderLegend(this.els.legend, entries);
+    }
     this.state.spectrum.chartBands = this.calculateBands();
     if (this.els.bandLegend) {
       this.els.bandLegend.innerHTML = "";
@@ -222,7 +224,7 @@ export class UiSpectrumController {
       this.stopSpectrumTween();
       this.spectrumLastFrame = null;
       this.state.spectrum.hasSpectrumData = false;
-      this.state.spectrum.spectrumPlot!.setData([[], ...entries.map(() => [] as number[])]);
+      this.state.spectrum.spectrumPlot?.setData([[], ...entries.map(() => [] as number[])]);
       this.updateSpectrumOverlay();
       return;
     }
@@ -334,8 +336,9 @@ export class UiSpectrumController {
       this.state.spectrum.spectrumPlot.destroy();
       this.state.spectrum.spectrumPlot = null;
     }
+    if (!this.els.specChart) return;
     this.state.spectrum.spectrumPlot = new SpectrumChart(
-      this.els.specChart!,
+      this.els.specChart,
       this.els.spectrumOverlay,
       360,
       this.els.specChartWrap,

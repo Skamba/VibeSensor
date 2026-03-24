@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup format lint typecheck-backend typecheck ui-typecheck test test-changed test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup format lint typecheck-backend typecheck ui-lint ui-typecheck test test-changed test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
 
 LINT_TARGETS := apps/server/vibesensor apps/server/tests tools
 CI_LITE_JOBS := --job backend-quality --job backend-typecheck --job frontend-typecheck --job ui-smoke --job release-smoke --job backend-tests
@@ -74,5 +74,8 @@ loc: ## Run the repo lines-of-code budget check
 docs-lint: ## Run docs lint without the broader lint suite
 	python3 tools/dev/docs_lint.py
 
-ui-typecheck: ## Run UI contract freshness checks and TypeScript type checking
-	cd apps/ui && npm run check:contracts && npm run typecheck
+ui-lint: ## Run UI lint checks
+	cd apps/ui && npm run lint
+
+ui-typecheck: ## Run UI contract freshness, lint, and TypeScript type checking
+	cd apps/ui && npm run check:contracts && npm run lint && npm run typecheck

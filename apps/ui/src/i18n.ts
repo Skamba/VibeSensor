@@ -12,6 +12,7 @@ export const supported = ["en", "nl"] as const;
 
 const _PLACEHOLDER_RE = /\{([a-zA-Z0-9_]+)\}/g;
 const _numberFormatCache = new Map<string, Intl.NumberFormat>();
+const _HAS_OWN = Object.prototype.hasOwnProperty;
 
 function _getDefaultNumberFormat(lang: string): Intl.NumberFormat {
   let fmt = _numberFormatCache.get(lang);
@@ -55,7 +56,7 @@ export function get(lang: string, key: string, vars?: Record<string, unknown>): 
   const template = dict[normalized]?.[key] || fallback;
   if (!vars || typeof vars !== "object") return template;
   return String(template).replace(_PLACEHOLDER_RE, (_m, placeholder) => {
-    if (Object.prototype.hasOwnProperty.call(vars, placeholder)) {
+    if (_HAS_OWN.call(vars, placeholder)) {
       return formatVar(normalized, vars[placeholder]);
     }
     return `{${placeholder}}`;

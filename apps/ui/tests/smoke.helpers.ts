@@ -1,4 +1,4 @@
-import { type Page, type Route } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
 export type FakeWebSocketOptions = {
@@ -55,7 +55,7 @@ export type CommonRouteOptions = {
   espFlashHandler?: (route: Route) => Promise<void>;
 };
 
-export type SettingsRouteValue = unknown | ((route: Route, path: string, method: string) => Promise<unknown | void>);
+export type SettingsRouteValue = unknown | ((route: Route, path: string, method: string) => Promise<unknown | undefined>);
 
 function jsonOk(body: unknown) {
   return { status: 200, contentType: "application/json", body: JSON.stringify(body) };

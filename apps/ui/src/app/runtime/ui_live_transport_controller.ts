@@ -1,4 +1,4 @@
-import { adaptServerPayload } from "../../server_payload";
+import { adaptServerPayload, type AdaptedPayload } from "../../server_payload";
 import { runDemoMode } from "../demo_mode";
 import { WsClient } from "../../ws";
 import type { AppFeatureBundle } from "../app_feature_bundle";
@@ -80,7 +80,7 @@ export class UiLiveTransportController {
 
   private applyPayload(payload: unknown): void {
     const features = this.requireFeatures();
-    let adapted;
+    let adapted: AdaptedPayload;
     try {
       adapted = adaptServerPayload(payload);
     } catch (error) {

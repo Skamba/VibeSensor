@@ -26,6 +26,12 @@ function makeStrengthMetrics(vibrationStrengthDb: number) {
   };
 }
 
+function requireSpectra(adapted: ReturnType<typeof adaptServerPayload>) {
+  expect(adapted.spectra).not.toBeNull();
+  if (!adapted.spectra) throw new Error("Expected adapted spectra");
+  return adapted.spectra;
+}
+
 // ---------------------------------------------------------------------------
 // 1. adaptServerPayload – spectra null yields null, not stale data
 // ---------------------------------------------------------------------------
@@ -53,9 +59,9 @@ test.describe("adaptServerPayload spectra handling", () => {
         },
       },
     });
-    expect(adapted.spectra).not.toBeNull();
-    expect(adapted.spectra!.clients).toHaveProperty("sensor1");
-    expect(adapted.spectra!.clients.sensor1.freq).toEqual([1, 2, 3]);
+    const spectra = requireSpectra(adapted);
+    expect(spectra.clients).toHaveProperty("sensor1");
+    expect(spectra.clients.sensor1.freq).toEqual([1, 2, 3]);
   });
 
   test("skips client with missing strength_metrics", () => {
@@ -72,9 +78,9 @@ test.describe("adaptServerPayload spectra handling", () => {
         },
       },
     });
-    expect(adapted.spectra).not.toBeNull();
-    expect(adapted.spectra!.clients).not.toHaveProperty("bad");
-    expect(adapted.spectra!.clients).toHaveProperty("good");
+    const spectra = requireSpectra(adapted);
+    expect(spectra.clients).not.toHaveProperty("bad");
+    expect(spectra.clients).toHaveProperty("good");
   });
 });
 

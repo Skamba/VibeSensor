@@ -84,6 +84,7 @@ Additional local-only convenience commands:
 | Goal | Command |
 |---|---|
 | Fast backend tests | `make test` |
+| UI lint | `make ui-lint` |
 | Changed-file heuristic | `make test-changed` |
 | Non-Docker CI subset | `make test-ci-lite` |
 | Full local CI runner | `make test-all` |
