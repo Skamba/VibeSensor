@@ -14,6 +14,7 @@ Primary references:
 - Documentation index: [docs/README.md](docs/README.md)
 - Repo structure: [docs/ai/repo-map.md](docs/ai/repo-map.md)
 - Server setup and deployment: [apps/server/README.md](apps/server/README.md)
+- API surface and contracts: [apps/server/README.md#http-and-websocket-surface](apps/server/README.md#http-and-websocket-surface), [apps/ui/README.md#websocket-contract-boundary](apps/ui/README.md#websocket-contract-boundary), and [docs/operational-runbooks.md](docs/operational-runbooks.md)
 - Testing layout and commands: [docs/testing.md](docs/testing.md)
 - Operational runbooks: [docs/operational-runbooks.md](docs/operational-runbooks.md)
 - Full command reference: [.github/copilot-instructions.md](.github/copilot-instructions.md) § "Commands"

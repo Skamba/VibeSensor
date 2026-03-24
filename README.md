@@ -83,6 +83,11 @@ Each component has its own README with setup instructions and details.
 ## Docs Index
 
 See [docs/README.md](docs/README.md) for the complete documentation index.
+For HTTP/WebSocket developer references, start with
+[apps/server/README.md#http-and-websocket-surface](apps/server/README.md#http-and-websocket-surface)
+and
+[apps/ui/README.md#websocket-contract-boundary](apps/ui/README.md#websocket-contract-boundary),
+then use the docs index for the broader map.
 
 ## Prerequisites
 
