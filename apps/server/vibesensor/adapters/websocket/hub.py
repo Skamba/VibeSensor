@@ -136,6 +136,17 @@ class WebSocketHub:
                 and current.connection_id == conn.connection_id,
             )
 
+    async def _current_selected_client_id(
+        self,
+        conn: _WSConnectionSnapshot,
+    ) -> tuple[bool, str | None]:
+        """Return the live selected client for *conn* when the connection is still current."""
+        async with self._lock:
+            current = self._connections.get(id(conn.websocket))
+            if current is None or current.closing or current.connection_id != conn.connection_id:
+                return False, None
+            return True, current.selected_client_id
+
     async def _mark_snapshot_closing(self, conn: _WSConnectionSnapshot) -> bool:
         """Mark *conn* as closing if it is still the active registered connection."""
         async with self._lock:
@@ -233,10 +244,73 @@ class WebSocketHub:
             )
             return selected_client_id, _ERROR_PAYLOAD, True, None
 
+    async def _build_payload_text(
+        self,
+        selected_client_id: str | None,
+        payload_builder: Callable[[str | None], LiveWsPayload],
+        payload_cache: dict[str | None, str],
+        failed_client_ids: set[str | None],
+        debug_info: dict[str | None, bool] | None,
+    ) -> str:
+        """Build and serialize payload text for *selected_client_id* once for the tick."""
+        raw_payload = self._build_raw_payload(
+            selected_client_id,
+            payload_builder,
+            failed_client_ids,
+        )
+        if raw_payload is None:
+            payload_cache[selected_client_id] = _ERROR_PAYLOAD
+            return _ERROR_PAYLOAD
+        _selected_client_id, text, failed, has_freq = await asyncio.to_thread(
+            self._serialize_payload,
+            selected_client_id,
+            raw_payload,
+            capture_debug=debug_info is not None,
+        )
+        payload_cache[selected_client_id] = text
+        if failed:
+            failed_client_ids.add(selected_client_id)
+        if debug_info is not None and has_freq is not None:
+            debug_info[selected_client_id] = has_freq
+        return text
+
+    async def _get_or_build_payload_text(
+        self,
+        selected_client_id: str | None,
+        payload_builder: Callable[[str | None], LiveWsPayload],
+        payload_cache: dict[str | None, str],
+        pending_payload_tasks: dict[str | None, asyncio.Task[str]],
+        failed_client_ids: set[str | None],
+        debug_info: dict[str | None, bool] | None,
+    ) -> str:
+        """Return cached payload text or build it once for the current tick."""
+        cached = payload_cache.get(selected_client_id)
+        if cached is not None:
+            return cached
+        task = pending_payload_tasks.get(selected_client_id)
+        if task is None:
+            task = asyncio.create_task(
+                self._build_payload_text(
+                    selected_client_id,
+                    payload_builder,
+                    payload_cache,
+                    failed_client_ids,
+                    debug_info,
+                )
+            )
+            pending_payload_tasks[selected_client_id] = task
+        try:
+            return await task
+        finally:
+            if pending_payload_tasks.get(selected_client_id) is task and task.done():
+                pending_payload_tasks.pop(selected_client_id, None)
+
     async def _send_conn(
         self,
         conn: _WSConnectionSnapshot,
         payload_text: str,
+        *,
+        selected_client_id: str | None,
     ) -> _WSConnectionSnapshot | None:
         """Send the appropriate payload to *conn*, return the WebSocket on failure."""
         if not await self._is_snapshot_current(conn):
@@ -254,12 +328,54 @@ class WebSocketHub:
                 LOGGER.warning(
                     "WebSocket broadcast send failed (selected_client=%r); "
                     "connection will be removed.",
-                    conn.selected_client_id,
+                    selected_client_id,
                     exc_info=True,
                 )
             if await self._mark_snapshot_closing(conn):
                 return conn
             return None
+
+    async def _send_current_conn(
+        self,
+        conn: _WSConnectionSnapshot,
+        payload_builder: Callable[[str | None], LiveWsPayload],
+        payload_cache: dict[str | None, str],
+        pending_payload_tasks: dict[str | None, asyncio.Task[str]],
+        failed_client_ids: set[str | None],
+        sent_selected_client_ids: dict[int, str | None],
+        debug_info: dict[str | None, bool] | None,
+    ) -> _WSConnectionSnapshot | None:
+        """Send a payload built for the connection's current selection."""
+        is_current, selected_client_id = await self._current_selected_client_id(conn)
+        if not is_current:
+            return None
+        payload_text = await self._get_or_build_payload_text(
+            selected_client_id,
+            payload_builder,
+            payload_cache,
+            pending_payload_tasks,
+            failed_client_ids,
+            debug_info,
+        )
+        still_current, latest_selected_client_id = await self._current_selected_client_id(conn)
+        if not still_current:
+            return None
+        if latest_selected_client_id != selected_client_id:
+            selected_client_id = latest_selected_client_id
+            payload_text = await self._get_or_build_payload_text(
+                selected_client_id,
+                payload_builder,
+                payload_cache,
+                pending_payload_tasks,
+                failed_client_ids,
+                debug_info,
+            )
+        sent_selected_client_ids[conn.connection_id] = selected_client_id
+        return await self._send_conn(
+            conn,
+            payload_text,
+            selected_client_id=selected_client_id,
+        )
 
     async def broadcast(
         self,
@@ -268,14 +384,16 @@ class WebSocketHub:
         """Broadcast a live metric payload to all connected WebSocket clients.
 
         Calls *payload_builder* at most once per unique ``selected_client_id``
-        across all connections (results are cached per tick).  Connections that
+        observed during the tick (results are cached per tick). Connections that
         fail or time out during send are removed from the hub automatically.
         """
         conns = await self._snapshot()
         if not conns:
             return
         payload_cache: dict[str | None, str] = {}
+        pending_payload_tasks: dict[str | None, asyncio.Task[str]] = {}
         failed_client_ids: set[str | None] = set()
+        sent_selected_client_ids: dict[int, str | None] = {}
         # Collect debug inspection data during build (avoids redundant json.loads later).
         debug_info: dict[str | None, bool] | None = {} if _ws_debug_enabled() else None
         unique_selected_ids = list(dict.fromkeys(conn.selected_client_id for conn in conns))
@@ -313,9 +431,14 @@ class WebSocketHub:
 
         dead_ws = await asyncio.gather(
             *(
-                self._send_conn(
+                self._send_current_conn(
                     conn,
-                    payload_cache[conn.selected_client_id],
+                    payload_builder,
+                    payload_cache,
+                    pending_payload_tasks,
+                    failed_client_ids,
+                    sent_selected_client_ids,
+                    debug_info,
                 )
                 for conn in conns
             ),
@@ -327,7 +450,11 @@ class WebSocketHub:
                 await self._remove_snapshot(conn)
         if failed_client_ids:
             # Count how many connections were affected by build failures.
-            affected = sum(1 for c in conns if c.selected_client_id in failed_client_ids)
+            affected = sum(
+                1
+                for selected_client_id in sent_selected_client_ids.values()
+                if selected_client_id in failed_client_ids
+            )
             LOGGER.error(
                 "Payload build failed for %d client id(s) (%s); "
                 "%d connection(s) received error payloads.",
