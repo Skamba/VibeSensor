@@ -49,6 +49,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `apps/ui/src/app/runtime/`: UI composition root and runtime controllers.
 - `apps/ui/src/app/features/`: UI feature workflows for settings, realtime, history, updates, cars, and ESP flash, plus the shared polling controller used by long-running status features.
 - `apps/ui/src/app/views/`: DOM renderers and event-target decoders, including the car wizard view helpers.
+- `apps/ui/src/config.ts`: centralized UI tuning constants (polling intervals, spectrum bounds, history heatmap positions).
 
 ## Backend layer dependency DAG
 

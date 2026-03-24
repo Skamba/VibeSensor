@@ -1,11 +1,13 @@
 import type { SpeedSourceStatusPayload } from "../../api/types";
 import { getSpeedSourceStatus } from "../../api";
+import {
+  GPS_POLL_FAST_MS,
+  GPS_POLL_SLOW_MS,
+} from "../../config";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
 import { createPollingController } from "./polling_controller";
 
-const GPS_POLL_FAST = 2_000;
-const GPS_POLL_SLOW = 10_000;
 const CONNECTION_STATE_I18N: Record<string, string> = {
   disabled: "settings.speed.state_disabled",
   disconnected: "settings.speed.state_disconnected",
@@ -99,9 +101,11 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
         );
       renderGpsStatus(status);
       ctx.renderSpeedReadout();
-      return status.connection_state === "connected" ? GPS_POLL_FAST : GPS_POLL_SLOW;
+      return status.connection_state === "connected"
+        ? GPS_POLL_FAST_MS
+        : GPS_POLL_SLOW_MS;
     },
-    onErrorDelayMs: GPS_POLL_SLOW,
+    onErrorDelayMs: GPS_POLL_SLOW_MS,
   });
 
   function startGpsStatusPolling(): void {

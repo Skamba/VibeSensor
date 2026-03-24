@@ -4,6 +4,7 @@ import type {
   HistoryInsightWarningPayload,
   HistoryInsightsPayload,
 } from "../../api/types";
+import { HISTORY_HEATMAP_POSITIONS } from "../../config";
 import type { RunDetail } from "../ui_app_state";
 import { heatColor, normalizeUnit } from "../features/heat_utils";
 import { renderTableEmptyRow } from "./dom_helpers";
@@ -20,17 +21,6 @@ const EMPTY_RUN_DETAIL: RunDetail = {
   pdfLoading: false,
   pdfError: "",
 };
-
-const HEATMAP_POSITIONS = [
-  { key: "front-left wheel", top: 23, left: 20 },
-  { key: "front-right wheel", top: 23, left: 80 },
-  { key: "rear-left wheel", top: 76, left: 20 },
-  { key: "rear-right wheel", top: 76, left: 80 },
-  { key: "engine bay", top: 30, left: 50 },
-  { key: "driveshaft tunnel", top: 51, left: 50 },
-  { key: "driver seat", top: 43, left: 40 },
-  { key: "trunk", top: 86, left: 50 },
-];
 
 export interface HistoryTableViewParams {
   runs: HistoryEntry[];
@@ -101,9 +91,9 @@ function renderPreviewHeatmap(
   const values = Object.values(metricByLocation).filter((value) => typeof value === "number");
   const min = values.length ? Math.min(...values) : null;
   const max = values.length ? Math.max(...values) : null;
-  const knownPositionKeys = new Set(HEATMAP_POSITIONS.map((point) => point.key));
+  const knownPositionKeys = new Set<string>(HISTORY_HEATMAP_POSITIONS.map((point) => point.key));
   const unmappedLocationKeys = Object.keys(metricByLocation).filter((key) => !knownPositionKeys.has(key));
-  const dots = HEATMAP_POSITIONS
+  const dots = HISTORY_HEATMAP_POSITIONS
     .map((point) => {
       const value = metricByLocation[point.key];
       const hasValue = typeof value === "number" && Number.isFinite(value);

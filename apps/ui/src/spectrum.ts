@@ -1,5 +1,7 @@
 import uPlot from "uplot";
 
+import { SPECTRUM_DB_MAX, SPECTRUM_DB_MIN } from "./config";
+
 export interface SpectrumSeriesMeta {
   label: string;
   color: string;
@@ -12,7 +14,7 @@ export interface SpectrumText {
 }
 
 export class SpectrumChart {
-  private static readonly FIXED_Y_RANGE: [number, number] = [0, 100];
+  private static readonly FIXED_Y_RANGE: [number, number] = [SPECTRUM_DB_MIN, SPECTRUM_DB_MAX];
   private plot: uPlot | null = null;
   private readonly hostEl: HTMLElement;
   private readonly measureEl: HTMLElement;
