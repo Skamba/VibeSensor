@@ -86,3 +86,12 @@ def test_prepare_image_exits_cleanly_when_skip_requested_but_image_is_missing(
 
     assert module._prepare_image("missing-image", env={module._SKIP_BUILD_ENV: "1"}) == 2
     assert any("missing-image" in line for line in emitted)
+
+
+def test_parse_args_defaults_to_six_shards(monkeypatch) -> None:
+    module = _load_run_e2e_parallel_module()
+    monkeypatch.setattr(module.sys, "argv", ["run_e2e_parallel.py"])
+
+    args = module._parse_args()
+
+    assert args.shards == 6
