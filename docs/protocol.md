@@ -22,16 +22,27 @@ This document is generated from code and shared contract files.
 - CMD: `3`
 - ACK: `4`
 - DATA_ACK: `5`
+- HELLO_ACK: `6`
 - CMD identify id: `1`
+- HELLO explicit-ack capability bit: `0x01`
 
 ## Wire packet byte sizes
 
-- HELLO fixed bytes (without variable name/fw bytes): `20`
+- HELLO fixed bytes (without variable name/fw bytes): `21`
 - DATA header bytes (without sample payload): `22`
 - CMD header bytes: `13`
 - CMD identify bytes: `15`
 - ACK bytes: `13`
 - DATA_ACK bytes: `12`
+- HELLO_ACK bytes: `8`
+
+## Hello handshake
+
+- Capable firmware advertises support for explicit control-plane acknowledgment in
+  the HELLO capability byte.
+- Server replies to capable HELLO packets with `HELLO_ACK` on the sensor control port.
+- Firmware waits for `HELLO_ACK` before sending DATA frames, so the control path
+  is validated before streaming starts.
 
 ## Shared metric payload fields
 

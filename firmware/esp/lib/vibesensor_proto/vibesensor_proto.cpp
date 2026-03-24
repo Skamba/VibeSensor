@@ -78,7 +78,8 @@ size_t pack_hello(uint8_t* out,
                   uint16_t frame_samples,
                   const char* name,
                   const char* firmware_version,
-                  uint32_t queue_overflow_drops) {
+                  uint32_t queue_overflow_drops,
+                  uint8_t capabilities) {
   const size_t name_len = strnlen(name, 32);
   const size_t fw_len = strnlen(firmware_version, 32);
   const size_t need = kHelloFixedBytes + name_len + fw_len;
@@ -104,6 +105,7 @@ size_t pack_hello(uint8_t* out,
   o += fw_len;
   write_u32_le(out + o, queue_overflow_drops);
   o += 4;
+  out[o++] = capabilities;
   return o;
 }
 
@@ -238,6 +240,30 @@ bool parse_data_ack(const uint8_t* data,
     *out_last_seq_received = read_u32_le(data + 8);
   }
   return true;
+}
+
+size_t pack_hello_ack(uint8_t* out, size_t out_len, const uint8_t client_id[6]) {
+  if (out_len < kHelloAckBytes) {
+    return 0;
+  }
+  size_t o = 0;
+  out[o++] = kMsgHelloAck;
+  out[o++] = kProtoVersion;
+  memcpy(out + o, client_id, 6);
+  o += 6;
+  return o;
+}
+
+bool parse_hello_ack(const uint8_t* data,
+                     size_t len,
+                     const uint8_t expected_client_id[6]) {
+  if (len < kHelloAckBytes) {
+    return false;
+  }
+  if (data[0] != kMsgHelloAck || data[1] != kProtoVersion) {
+    return false;
+  }
+  return memcmp(data + 2, expected_client_id, 6) == 0;
 }
 
 }  // namespace vibesensor

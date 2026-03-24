@@ -15,12 +15,15 @@ from vibesensor.adapters.udp.protocol import (
     CMD_IDENTIFY_BYTES,
     DATA_ACK_BYTES,
     DATA_HEADER_BYTES,
+    HELLO_ACK_BYTES,
+    HELLO_CAP_EXPLICIT_ACK,
     HELLO_FIXED_BYTES,
     MSG_ACK,
     MSG_CMD,
     MSG_DATA,
     MSG_DATA_ACK,
     MSG_HELLO,
+    MSG_HELLO_ACK,
     VERSION,
 )
 from vibesensor.app.settings import DEFAULT_CONFIG
@@ -79,7 +82,9 @@ This document is generated from code and shared contract files.
 - CMD: `{MSG_CMD}`
 - ACK: `{MSG_ACK}`
 - DATA_ACK: `{MSG_DATA_ACK}`
+- HELLO_ACK: `{MSG_HELLO_ACK}`
 - CMD identify id: `{CMD_IDENTIFY}`
+- HELLO explicit-ack capability bit: `0x{HELLO_CAP_EXPLICIT_ACK:02x}`
 
 ## Wire packet byte sizes
 
@@ -89,6 +94,15 @@ This document is generated from code and shared contract files.
 - CMD identify bytes: `{CMD_IDENTIFY_BYTES}`
 - ACK bytes: `{ACK_BYTES}`
 - DATA_ACK bytes: `{DATA_ACK_BYTES}`
+- HELLO_ACK bytes: `{HELLO_ACK_BYTES}`
+
+## Hello handshake
+
+- Capable firmware advertises support for explicit control-plane acknowledgment in
+  the HELLO capability byte.
+- Server replies to capable HELLO packets with `HELLO_ACK` on the sensor control port.
+- Firmware waits for `HELLO_ACK` before sending DATA frames, so the control path
+  is validated before streaming starts.
 
 ## Shared metric payload fields
 
