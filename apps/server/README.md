@@ -37,9 +37,10 @@ state. Current `main` is intentionally split more narrowly:
   current speed-source selection into live runtime collaborators.
 - Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
   `PostAnalysisWorker`) own live per-process coordination and per-run state.
-- `HistoryDB` is shared storage for settings snapshots and run history, but the
-  live recording path and post-analysis/report path remain separate phases with
-  different owners.
+- History persistence now uses a shared SQLite lifecycle engine plus narrow
+  run, settings-snapshot, and client-name repositories. The live recording path
+  and post-analysis/report path still remain separate phases with different
+  owners even though they share one SQLite file.
 
 That separation is deliberate: deployment config, mutable user settings, and
 run-attached snapshots are related, but they are not interchangeable sources of
