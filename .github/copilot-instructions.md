@@ -27,10 +27,12 @@ Domain model (scope: behavioral rules only; see `docs/domain-model.md` for the f
 
 Commands
 - Other AI guidance and docs should reference this list instead of repeating it.
+- `make setup`
 - `python -m pip install -e "./apps/server[dev]"`
 - `make lint`
 - `make typecheck-backend`
 - `make docs-lint`
+- `make test-changed` (heuristic changed-file runner vs `origin/main`, falling back to `main`)
 - `make test-all` (CI-parity local suite: `python3 tools/tests/run_ci_parallel.py`)
 - `act -j backend-quality -W .github/workflows/ci.yml` (run a single CI job locally via `act`; requires Docker)
 - `act -l -W .github/workflows/ci.yml` (list CI jobs)
