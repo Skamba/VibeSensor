@@ -48,6 +48,9 @@ apps/server/config.dev.yaml` plus `npm --prefix apps/ui run dev`, then open
 If you want the browser to open automatically on local desktop workflows, use
 `npm --prefix apps/ui run dev:open` instead of `npm --prefix apps/ui run dev`.
 
+If you prefer the source-mounted Docker workflow instead of the native path,
+run `make dev`.
+
 ## Hooks and local safeguards
 
 `make setup` enables the versioned repo hooks automatically. If you skipped that
@@ -83,6 +86,7 @@ Additional local-only convenience commands:
 
 | Goal | Command |
 |---|---|
+| Docker dev stack | `make dev` |
 | Fast backend tests | `make test` |
 | UI lint | `make ui-lint` |
 | Changed-file heuristic | `make test-changed` |

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup format lint typecheck-backend typecheck ui-lint ui-typecheck test test-changed test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck test test-changed test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
 
 LINT_TARGETS := apps/server/vibesensor apps/server/tests tools
 CI_LITE_JOBS := --job backend-quality --job backend-typecheck --job frontend-typecheck --job ui-smoke --job release-smoke --job firmware-native-tests --job backend-tests
@@ -15,6 +15,9 @@ setup: ## Install backend dev dependencies and UI node_modules
 	python3 -m pip install -e "./apps/server[dev]"
 	cd apps/ui && npm ci
 	git config --local core.hooksPath .githooks
+
+dev: ## Start the source-mounted Docker dev stack with backend reload + Vite HMR
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 format: ## Run Ruff formatter over backend and tooling files
 	ruff format $(LINT_TARGETS)

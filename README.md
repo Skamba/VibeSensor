@@ -127,12 +127,16 @@ build, use the Docker dev mode below.
 ```bash
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+make dev
 ```
 
 Open http://127.0.0.1:5173 for the Vite dev server with HMR. The backend keeps
 running on http://127.0.0.1:8000 with `vibesensor-server --reload`, so Python
 changes hot-reload without rebuilding the image.
+
+`make dev` wraps `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`.
+The UI container now reuses the `node_modules` volume unless `apps/ui/package-lock.json`
+changes, and it fails fast if the generated frontend contracts are stale.
 
 ### Native Python + Vite (recommended for backend or UI iteration)
 

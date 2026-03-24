@@ -13,6 +13,7 @@
     "prebuild": "npm run sync:contracts",
     "dev": "vite",
     "dev:open": "vite --open",
+    "dev:docker": "sh ./dev-docker.sh",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
