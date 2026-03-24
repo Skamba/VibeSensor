@@ -20,6 +20,7 @@ npm ci
 npm run lint         # Biome lint over the hand-written UI/config/test files
 npm run dev          # Dev server on http://localhost:5173
 npm run dev:open     # Same dev server, but opens the browser on local desktops
+npm run dev:docker   # Docker-oriented wrapper: contract check + guarded npm ci + Vite
 npm run build        # Production build to dist/
 npm run typecheck    # Type check without emitting
 ```
@@ -27,6 +28,11 @@ npm run typecheck    # Type check without emitting
 Use `npm ci` for normal repo bootstrap and dependency refresh from the checked-in
 lockfile. Only use `npm install` when you are intentionally adding or updating
 UI dependencies so the resulting `package-lock.json` change is deliberate.
+
+The source-mounted Docker dev stack calls `npm run dev:docker` inside the UI
+container. It re-runs `npm ci` only when `node_modules` is missing or the
+checked-in `package-lock.json` changes, and it fails fast if the generated UI
+contract files are stale.
 
 The Vite dev server proxies `/api`, `/ws`, and `/static` to
 `http://127.0.0.1:8000` by default so you can use HMR without manually swapping
