@@ -182,6 +182,98 @@ async def test_payload_error_does_not_block_other_clients() -> None:
 
 
 @pytest.mark.asyncio
+async def test_broadcast_uses_latest_selection_when_selection_changes_during_serialization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    hub = WebSocketHub()
+    ws = _make_ws()
+    await hub.add(ws, "client_a")
+    payload_builder = MagicMock(side_effect=lambda selected: {"selected": selected})
+    selection_swapped = False
+
+    async def fake_to_thread(func, /, *args, **kwargs):
+        nonlocal selection_swapped
+        if not selection_swapped:
+            selection_swapped = True
+            await hub.update_selected_client(ws, "client_b")
+        return func(*args, **kwargs)
+
+    monkeypatch.setattr("vibesensor.adapters.websocket.hub.asyncio.to_thread", fake_to_thread)
+
+    await hub.broadcast(payload_builder)
+
+    assert _sent_json(ws) == {"selected": "client_b"}
+    assert [call.args[0] for call in payload_builder.call_args_list] == [
+        "client_a",
+        "client_b",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_broadcast_reuses_lazy_payload_for_connections_converging_on_same_selection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    hub = WebSocketHub()
+    ws1 = _make_ws()
+    ws2 = _make_ws()
+    await hub.add(ws1, "client_a")
+    await hub.add(ws2, "client_c")
+    payload_builder = MagicMock(side_effect=lambda selected: {"selected": selected})
+    selection_swapped = False
+
+    async def fake_to_thread(func, /, *args, **kwargs):
+        nonlocal selection_swapped
+        if not selection_swapped:
+            selection_swapped = True
+            await hub.update_selected_client(ws1, "client_b")
+            await hub.update_selected_client(ws2, "client_b")
+        return func(*args, **kwargs)
+
+    monkeypatch.setattr("vibesensor.adapters.websocket.hub.asyncio.to_thread", fake_to_thread)
+
+    await hub.broadcast(payload_builder)
+
+    assert _sent_json(ws1) == {"selected": "client_b"}
+    assert _sent_json(ws2) == {"selected": "client_b"}
+    assert [call.args[0] for call in payload_builder.call_args_list] == [
+        "client_a",
+        "client_c",
+        "client_b",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_payload_error_affected_count_uses_updated_selection(
+    caplog,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    hub = WebSocketHub()
+    ws = _make_ws()
+    await hub.add(ws, "client_a")
+    selection_swapped = False
+
+    async def fake_to_thread(func, /, *args, **kwargs):
+        nonlocal selection_swapped
+        if not selection_swapped:
+            selection_swapped = True
+            await hub.update_selected_client(ws, "client_b")
+        return func(*args, **kwargs)
+
+    monkeypatch.setattr("vibesensor.adapters.websocket.hub.asyncio.to_thread", fake_to_thread)
+
+    def selective_builder(client_id):
+        if client_id == "client_b":
+            raise RuntimeError("cannot build for client_b")
+        return {"selected": client_id}
+
+    with caplog.at_level(logging.ERROR, logger="vibesensor.adapters.websocket.hub"):
+        await hub.broadcast(selective_builder)
+
+    assert _sent_json(ws) == {"error": "payload_build_failed"}
+    assert any("1 connection(s)" in record.message for record in caplog.records)
+
+
+@pytest.mark.asyncio
 async def test_payload_error_logged_at_error_level(caplog) -> None:
     """Payload build failures must be logged at ERROR level with client id."""
     hub = WebSocketHub()
