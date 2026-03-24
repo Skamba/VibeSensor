@@ -23,7 +23,10 @@ __all__ = [
     "CmdMessage",
     "DataAckMessage",
     "DataMessage",
+    "HELLO_ACK_BYTES",
+    "HELLO_CAP_EXPLICIT_ACK",
     "HelloMessage",
+    "HelloAckMessage",
     "ProtocolError",
     "client_id_hex",
     "client_id_mac",
@@ -34,12 +37,14 @@ __all__ = [
     "pack_data",
     "pack_data_ack",
     "pack_hello",
+    "pack_hello_ack",
     "parse_ack",
     "parse_client_id",
     "parse_cmd",
     "parse_data",
     "parse_data_ack",
     "parse_hello",
+    "parse_hello_ack",
 ]
 
 VERSION = 1
@@ -51,6 +56,9 @@ MSG_DATA = 2
 MSG_CMD = 3
 MSG_ACK = 4
 MSG_DATA_ACK = 5
+MSG_HELLO_ACK = 6
+
+HELLO_CAP_EXPLICIT_ACK = 1 << 0
 
 CMD_IDENTIFY = 1
 CMD_SYNC_CLOCK = 2
@@ -59,14 +67,16 @@ HELLO_BASE = struct.Struct("<BB6sHHHB")
 DATA_HEADER = struct.Struct("<BB6sIQH")
 ACK_STRUCT = struct.Struct("<BB6sIB")
 DATA_ACK_STRUCT = struct.Struct("<BB6sI")
+HELLO_ACK_STRUCT = struct.Struct("<BB6s")
 CMD_HEADER = struct.Struct("<BB6sBI")
 CMD_IDENTIFY_STRUCT = struct.Struct("<BB6sBIH")
 CMD_SYNC_CLOCK_STRUCT = struct.Struct("<BB6sBIQ")
 
-HELLO_FIXED_BYTES = HELLO_BASE.size + 1 + 4  # +fw_len byte +overflow uint32
+HELLO_FIXED_BYTES = HELLO_BASE.size + 1 + 4 + 1  # +fw_len byte +overflow uint32 +capabilities
 DATA_HEADER_BYTES: int = DATA_HEADER.size
 ACK_BYTES: int = ACK_STRUCT.size
 DATA_ACK_BYTES: int = DATA_ACK_STRUCT.size
+HELLO_ACK_BYTES: int = HELLO_ACK_STRUCT.size
 CMD_HEADER_BYTES: int = CMD_HEADER.size
 CMD_IDENTIFY_BYTES: int = CMD_IDENTIFY_STRUCT.size
 CMD_SYNC_CLOCK_BYTES: int = CMD_SYNC_CLOCK_STRUCT.size
@@ -98,6 +108,7 @@ class HelloMessage:
     firmware_version: str
     frame_samples: int = 0
     queue_overflow_drops: int = 0
+    capabilities: int = 0
 
 
 @dataclass(slots=True)
@@ -136,6 +147,13 @@ class DataAckMessage:
 
     client_id: bytes
     last_seq_received: int
+
+
+@dataclass(slots=True)
+class HelloAckMessage:
+    """Decoded HELLO_ACK message: server acknowledgment of HELLO receipt."""
+
+    client_id: bytes
 
 
 def client_id_hex(client_id: bytes) -> str:
@@ -207,6 +225,7 @@ def parse_hello(data: bytes) -> HelloMessage:
 
     firmware_version = ""
     queue_overflow_drops = 0
+    capabilities = 0
     if len(data) > offset:
         firmware_len = data[offset]
         offset += 1
@@ -225,6 +244,9 @@ def parse_hello(data: bytes) -> HelloMessage:
         firmware_version = raw_fw.decode("utf-8", errors="replace")
         if len(data) >= offset + 4:
             queue_overflow_drops = struct.unpack_from("<I", data, offset)[0]
+            offset += 4
+        if len(data) > offset:
+            capabilities = data[offset]
 
     return HelloMessage(
         client_id=client_id,
@@ -234,6 +256,7 @@ def parse_hello(data: bytes) -> HelloMessage:
         name=name,
         firmware_version=firmware_version,
         queue_overflow_drops=queue_overflow_drops,
+        capabilities=capabilities,
     )
 
 
@@ -245,6 +268,7 @@ def pack_hello(
     frame_samples: int = 0,
     firmware_version: str = "",
     queue_overflow_drops: int = 0,
+    capabilities: int = 0,
 ) -> bytes:
     """Encode a HELLO message as bytes."""
     if len(client_id) != CLIENT_ID_BYTES:
@@ -266,6 +290,7 @@ def pack_hello(
         + bytes([len(fw_bytes)])
         + fw_bytes
         + struct.pack("<I", int(max(0, queue_overflow_drops)))
+        + bytes([capabilities & 0xFF])
     )
 
 
@@ -356,6 +381,23 @@ def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> 
         cmd_seq,
         max(0, int(server_time_us)),
     )
+
+
+def parse_hello_ack(data: bytes) -> HelloAckMessage:
+    """Decode a raw HELLO_ACK message into a :class:`HelloAckMessage`."""
+    if len(data) != HELLO_ACK_BYTES:
+        raise ProtocolError("HELLO_ACK has unexpected size")
+    msg_type, version, client_id = HELLO_ACK_STRUCT.unpack_from(data, 0)
+    if msg_type != MSG_HELLO_ACK or version != VERSION:
+        raise ProtocolError("Invalid HELLO_ACK header")
+    return HelloAckMessage(client_id=client_id)
+
+
+def pack_hello_ack(client_id: bytes) -> bytes:
+    """Encode a HELLO_ACK message as bytes."""
+    if len(client_id) != CLIENT_ID_BYTES:
+        raise ValueError(f"client_id must be {CLIENT_ID_BYTES} bytes, got {len(client_id)}")
+    return HELLO_ACK_STRUCT.pack(MSG_HELLO_ACK, VERSION, client_id)
 
 
 def parse_ack(data: bytes) -> AckMessage:
