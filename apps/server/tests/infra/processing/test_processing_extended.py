@@ -225,6 +225,45 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     assert result["freq"]
 
 
+def test_multi_spectrum_payload_reuses_shared_freq_conversion_for_matching_clients(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from vibesensor.infra.processing.fft import float_list as real_float_list
+
+    proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
+    samples = _random_samples(300)
+
+    proc.ingest("c1", samples, sample_rate_hz=200)
+    proc.ingest("c2", samples, sample_rate_hz=200)
+    proc.ingest("c3", samples, sample_rate_hz=320)
+    proc.compute_metrics("c1", sample_rate_hz=200)
+    proc.compute_metrics("c2", sample_rate_hz=200)
+    proc.compute_metrics("c3", sample_rate_hz=320)
+
+    proc.spectrum_payload("c1")
+    proc.spectrum_payload("c2")
+    proc.spectrum_payload("c3")
+
+    calls: list[int] = []
+
+    def _counting_float_list(values: np.ndarray | list[float]) -> list[float]:
+        calls.append(len(values))
+        return real_float_list(values)
+
+    monkeypatch.setattr(
+        "vibesensor.infra.processing.payload.float_list",
+        _counting_float_list,
+    )
+
+    result = proc.multi_spectrum_payload(["c1", "c2", "c3"])
+
+    assert result["freq"] == []
+    assert len(calls) == 2
+    assert result["clients"]["c1"]["freq"]
+    assert result["clients"]["c2"]["freq"]
+    assert result["clients"]["c3"]["freq"]
+
+
 # -- compute_metrics -----------------------------------------------------------
 
 

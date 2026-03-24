@@ -31,6 +31,35 @@ FloatArray: TypeAlias = npt.NDArray[np.float32]
 IntIndexArray: TypeAlias = npt.NDArray[np.intp]
 
 
+def _sanitize_float_array(values: FloatArray) -> FloatArray:
+    return np.nan_to_num(
+        values,
+        copy=True,
+        nan=0.0,
+        posinf=0.0,
+        neginf=0.0,
+    ).astype(np.float32, copy=False)
+
+
+def _empty_fft_spectrum_result(freq_slice: FloatArray) -> FftSpectrumResult:
+    empty_amp = np.empty(0, dtype=np.float32)
+    spectrum_by_axis: SpectrumByAxis = {}
+    axis_peaks: dict[Axis, list[AxisPeak]] = {}
+    for axis in AXES:
+        spectrum_by_axis[axis] = {
+            "freq": freq_slice,
+            "amp": empty_amp.copy(),
+        }
+        axis_peaks[axis] = []
+    return {
+        "freq_slice": freq_slice,
+        "spectrum_by_axis": spectrum_by_axis,
+        "combined_amp": empty_amp,
+        "strength_metrics": empty_vibration_strength_metrics(),
+        "axis_peaks": axis_peaks,
+    }
+
+
 def medfilt3(block: FloatArray) -> FloatArray:
     """Apply a 3-point median filter per-row (per-axis).
 
@@ -88,23 +117,24 @@ def medfilt3(block: FloatArray) -> FloatArray:
 
     all_invalid = ~left_valid & ~mid_valid & ~right_valid
     center[all_invalid] = np.nan
-    return filtered
+    return _sanitize_float_array(filtered)
 
 
 def smooth_spectrum(amps: FloatArray, bins: int = 5) -> FloatArray:
     """Smooth a spectrum using a sliding-average convolution kernel."""
     if amps.size == 0:
         return amps
+    sanitized = _sanitize_float_array(amps)
     width = max(1, int(bins))
     if width <= 1:
-        return amps.astype(np.float32, copy=True)
+        return sanitized
     if (width % 2) == 0:
         width += 1
-    if amps.size < width:
-        return amps.astype(np.float32, copy=True)
+    if sanitized.size < width:
+        return sanitized
     kernel = np.ones(width, dtype=np.float32) / np.float32(width)
     half = width // 2
-    padded = np.pad(amps, (half, half), mode="edge")
+    padded = np.pad(sanitized, (half, half), mode="edge")
     return np.convolve(padded, kernel, mode="valid").astype(np.float32)
 
 
@@ -247,6 +277,8 @@ def compute_fft_spectrum(
         raise ValueError(
             f"fft_block column count {fft_block.shape[1]} does not match fft_window length {fft_n}",
         )
+    if fft_n == 0:
+        return _empty_fft_spectrum_result(freq_slice)
     if spike_filter_enabled:
         fft_block = medfilt3(fft_block)
     fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
