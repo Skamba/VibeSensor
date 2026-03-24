@@ -4,8 +4,9 @@ import logging
 from unittest.mock import MagicMock
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
+from pydantic import BaseModel
 
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
 from vibesensor.adapters.http.settings import create_settings_routes
@@ -80,3 +81,52 @@ def test_unhandled_errors_still_echo_request_id(caplog: pytest.LogCaptureFixture
     assert response.headers[REQUEST_ID_HEADER] == "failing-request"
     failure_log = next(rec for rec in caplog.records if rec.message == "http_request_failed")
     assert failure_log.request_id == "failing-request"
+
+
+def test_http_exception_keeps_status_code_and_request_id(caplog: pytest.LogCaptureFixture) -> None:
+    app = FastAPI()
+    install_request_logging_middleware(app)
+
+    @app.get("/teapot")
+    async def teapot() -> None:
+        raise HTTPException(status_code=418, detail="teapot")
+
+    with caplog.at_level(logging.INFO):
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.get("/teapot", headers={REQUEST_ID_HEADER: "teapot-request"})
+
+    assert response.status_code == 418
+    assert response.headers[REQUEST_ID_HEADER] == "teapot-request"
+    request_log = next(rec for rec in caplog.records if rec.message == "http_request")
+    assert request_log.request_id == "teapot-request"
+    assert request_log.status_code == 418
+    assert all(rec.message != "http_request_failed" for rec in caplog.records)
+
+
+def test_request_validation_error_keeps_status_code_and_request_id(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    app = FastAPI()
+    install_request_logging_middleware(app)
+
+    class Payload(BaseModel):
+        value: int
+
+    @app.post("/items")
+    async def create_item(payload: Payload) -> dict[str, int]:
+        return {"value": payload.value}
+
+    with caplog.at_level(logging.INFO):
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.post(
+                "/items",
+                json={"value": "bad"},
+                headers={REQUEST_ID_HEADER: "validation-request"},
+            )
+
+    assert response.status_code == 422
+    assert response.headers[REQUEST_ID_HEADER] == "validation-request"
+    request_log = next(rec for rec in caplog.records if rec.message == "http_request")
+    assert request_log.request_id == "validation-request"
+    assert request_log.status_code == 422
+    assert all(rec.message != "http_request_failed" for rec in caplog.records)

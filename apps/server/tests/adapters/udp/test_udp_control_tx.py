@@ -59,10 +59,9 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
     assert cmd.client_id.hex() == client_hex
 
 
-def test_control_datagram_unexpected_exception_is_logged_and_counted(
+def test_control_datagram_programming_bug_propagates(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
 ) -> None:
     client_hex = "aabbccddeeff"
     registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
@@ -73,6 +72,38 @@ def test_control_datagram_unexpected_exception_is_logged_and_counted(
         raise RuntimeError("boom")
 
     monkeypatch.setattr("vibesensor.adapters.udp.udp_control_tx.parse_ack", boom)
+
+    with pytest.raises(RuntimeError, match="boom"):
+        protocol.datagram_received(packet, ("127.0.0.1", 9001))
+
+    assert registry.get(client_hex) is None
+
+
+def test_control_datagram_operational_error_is_logged_and_counted(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client_hex = "aabbccddeeff"
+    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    registry.update_from_hello(
+        HelloMessage(
+            client_id=bytes.fromhex(client_hex),
+            control_port=9010,
+            sample_rate_hz=800,
+            name="node",
+            firmware_version="fw",
+        ),
+        ("127.0.0.1", 54000),
+        now=1.0,
+    )
+    protocol = ControlDatagramProtocol(registry)
+    packet = pack_ack(bytes.fromhex(client_hex), cmd_seq=7, status=0)
+
+    def raise_oserror(ack, now_ts):
+        raise OSError("socket boom")
+
+    monkeypatch.setattr(registry, "update_from_ack", raise_oserror)
 
     with caplog.at_level(logging.WARNING):
         protocol.datagram_received(packet, ("127.0.0.1", 9001))
