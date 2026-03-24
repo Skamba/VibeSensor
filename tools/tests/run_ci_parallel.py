@@ -225,6 +225,10 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
         ],
         "backend-tests": [
             Step(
+                "Prepare backend test artifacts",
+                ["mkdir", "-p", "artifacts/ai/logs/ci"],
+            ),
+            Step(
                 "Backend tests",
                 [
                     python_cmd,
@@ -232,6 +236,8 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                     "pytest",
                     "-q",
                     "--tb=short",
+                    "--junitxml",
+                    "artifacts/ai/logs/ci/backend-tests.xml",
                     "apps/server/tests",
                 ],
             ),
