@@ -67,6 +67,10 @@ install path.
 
 Configuration is YAML-based. Runtime defaults live in `vibesensor/app/config_defaults.py`, and `load_config()` applies precedence `DEFAULT_CONFIG -> selected YAML override file -> typed validation/clamping`. Run `vibesensor-config-preflight --dump-defaults` to see all available keys with defaults, or run `vibesensor-config-preflight apps/server/config.dev.yaml` / `apps/server/config.docker.yaml` to inspect a resolved override file.
 
+Use [docs/configuration_reference.md](../../docs/configuration_reference.md) for
+the key-by-key operator reference across the `ap`, `server`, `udp`,
+`processing`, `logging`, `gps`, and `update` sections.
+
 For live sensor presence, `processing.client_live_ttl_seconds` controls how long
 `/api/clients` and `/ws` keep reporting `connected: true` after the last
 packet. `processing.client_ttl_seconds` is the longer retention/eviction window
@@ -109,6 +113,54 @@ Common runtime files under `apps/server/data/` include:
 - `metrics.jsonl`: optional metrics log output.
 - `clients.json`: persisted client metadata.
 - `report_i18n.json`: report translation data.
+
+## Pi deployment & service operations
+
+Use the top-level [README deployment section](../../README.md#deploying-to-raspberry-pi)
+to choose between manual install and the prebuilt image flow. After the software
+is on the device, this README owns the backend-side service and config path.
+
+- Runtime config lives at `/etc/vibesensor/config.yaml`. Manual install copies
+  `apps/server/config.pi.yaml` there on first install, and the prebuilt image
+  bakes the same overlay into the image build.
+- Validate the on-device config before restarting services:
+
+  ```bash
+  /path/to/venv/bin/vibesensor-config-preflight /etc/vibesensor/config.yaml
+  ```
+
+- The main service units are:
+  - `vibesensor.service`
+  - `vibesensor-hotspot.service`
+  - `vibesensor-hotspot-self-heal.timer`
+
+- Common service operations:
+
+  ```bash
+  sudo systemctl status vibesensor.service vibesensor-hotspot.service --no-pager
+  sudo systemctl restart vibesensor.service
+  sudo systemctl restart vibesensor-hotspot.service
+  sudo systemctl status vibesensor-hotspot-self-heal.timer --no-pager
+  sudo journalctl -u vibesensor.service -u vibesensor-hotspot.service -n 200 --no-pager
+  ```
+
+- Hotspot diagnostics are written under `/var/log/wifi/`, including
+  `hotspot.log` plus the latest `summary.txt`/dump files emitted by
+  `apps/server/scripts/hotspot_nmcli.sh`.
+- Backend runtime data lives under `/var/lib/vibesensor/` and `/var/log/vibesensor/`
+  on Pi installs.
+- First verification after install/flash:
+
+  ```bash
+  curl -sf http://10.4.0.1/api/health || curl -sf http://10.4.0.1:8000/api/health
+  curl -sf http://10.4.0.1/api/clients || curl -sf http://10.4.0.1:8000/api/clients
+  ```
+
+Use [docs/configuration_reference.md](../../docs/configuration_reference.md) for
+config tuning, [docs/operational-runbooks.md](../../docs/operational-runbooks.md)
+for incident response, and
+[infra/pi-image/pi-gen/README.md](../../infra/pi-image/pi-gen/README.md) for the
+image-build path and artifact validation.
 
 ## Observability
 

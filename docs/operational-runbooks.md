@@ -66,6 +66,91 @@ vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
 
 4. If health is good but the UI is stale, check browser console and recent frontend builds.
 
+## Diagnose service or hotspot startup failures
+
+1. Check the systemd units first:
+
+```bash
+sudo systemctl status vibesensor.service vibesensor-hotspot.service --no-pager
+sudo systemctl status vibesensor-hotspot-self-heal.timer --no-pager
+```
+
+2. Inspect the recent service logs:
+
+```bash
+sudo journalctl -u vibesensor.service -u vibesensor-hotspot.service -n 200 --no-pager
+```
+
+3. Validate the on-device config before restarting anything:
+
+```bash
+/path/to/venv/bin/vibesensor-config-preflight /etc/vibesensor/config.yaml
+```
+
+4. For hotspot bring-up or DHCP failures, inspect the files under `/var/log/wifi/`:
+   - `hotspot.log` — full timestamped hotspot script output
+   - `summary.txt` — last status/rc plus effective interface, SSID, and IP
+   - `*_nm_dev.txt`, `*_nm_conn_active.txt`, `*_rfkill.txt` — captured NetworkManager/radio diagnostics
+5. If the hotspot service failed after boot, restart only the AP path first:
+
+```bash
+sudo systemctl restart vibesensor-hotspot.service
+```
+
+6. If the backend service is unhealthy after a config change or package update, restart it separately:
+
+```bash
+sudo systemctl restart vibesensor.service
+```
+
+## Diagnose GPS timeout or missing speed
+
+1. Confirm whether GPS is even enabled in the active config (`gps.gps_enabled`).
+2. Check the daemon status:
+
+```bash
+sudo systemctl status gpsd --no-pager
+```
+
+3. If `gpsd-clients` is installed on the Pi image/manual install path, confirm
+   the device is producing fixes:
+
+```bash
+cgps -s
+```
+
+4. If `/api/health` is good but speed stays empty, verify the configured speed
+   source and whether the environment has enough sky view or signal quality for
+   a lock.
+5. For indoor benches or weak-signal environments, prefer a non-GPS speed path
+   in config instead of repeatedly treating poor satellite reception as a server
+   failure.
+
+## Diagnose storage or history DB write problems
+
+1. Start with `/api/health` and look for persistence-facing degradation reasons
+   such as `persistence_write_error`, `persistence_samples_dropped`, or
+   `last_analysis_failed`.
+2. Check disk headroom before chasing application logic:
+
+```bash
+df -h /var/lib/vibesensor /var/log/vibesensor
+```
+
+3. Review recent backend service logs:
+
+```bash
+sudo journalctl -u vibesensor.service -n 200 --no-pager
+```
+
+4. If file logging is enabled, inspect the structured app log configured by
+   `logging.app_log_path`.
+5. Before any manual DB recovery, copy `/var/lib/vibesensor/history.db` off the
+   device (or snapshot the card) so the original evidence is preserved.
+6. If the device lost power and now reports repeated write failures, treat that
+   as storage integrity or free-space triage first, then rerun the health checks
+   before attempting new recordings.
+
 ## Update and rollback checks
 
 1. Confirm current runtime and update status from the UI or update endpoints.

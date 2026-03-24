@@ -84,6 +84,33 @@ VS_FIRST_USER_NAME=pi VS_FIRST_USER_PASS='your-password' ./infra/pi-image/pi-gen
 
 If you require key-only SSH, provision authorized keys during image customization and validate they exist; this repo defaults to password auth for recovery-oriented hotspot deployments.
 
+## Failure recovery
+
+When `build.sh` fails, isolate which stage failed before retrying everything:
+
+1. If the app artifact build failed, rerun just that stage:
+
+   ```bash
+   BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
+   ```
+
+2. If the app artifacts are already good and the image stage failed, rerun only
+   the image build:
+
+   ```bash
+   BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
+   ```
+
+3. If the main build finished but the validator failed, rerun
+   `validate-image.sh` directly against the existing artifact so you can debug
+   validation separately from the build itself.
+4. Use `FAST=1` or `VALIDATE=0` only to narrow down where the failure occurs;
+   rerun with normal validation before trusting the artifact.
+5. If the generated pi-gen workspace looks suspect, remove `.cache/pi-gen/` and
+   rerun from a clean checkout state.
+6. If first-boot SSH availability is the problem, rebuild with
+   `SSH_FIRST_BOOT_DEBUG=1` so the image writes diagnostics to `/boot/ssh-debug.txt`.
+
 ## What's Included
 
 The image contains:
