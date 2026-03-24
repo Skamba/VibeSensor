@@ -24,7 +24,7 @@ async function startServer(cwd) {
   return new Promise((resolve, reject) => {
     const server = spawn(
       "node",
-      ["node_modules/.bin/vite", "preview", "--host", "0.0.0.0", "--port", String(SERVER_PORT)],
+      ["node_modules/.bin/vite", "preview", "--host", "0.0.0.0", "--strictPort", "--port", String(SERVER_PORT)],
       { cwd, stdio: ["ignore", "pipe", "pipe"] },
     );
     let started = false;
