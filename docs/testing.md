@@ -103,7 +103,7 @@ pytest -q apps/server/tests/adapters/pdf/
 pytest -q apps/server/tests/use_cases/history/
 pytest -q apps/server/tests/use_cases/updates/
 pytest -q apps/server/tests/integration/
-python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100
+python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 --processes 16
 ```
 
 Focused CI job groups and full-stack validation:
@@ -130,9 +130,9 @@ finds a failure.
 
 ```bash
 python3 tools/dev/fuzz_analysis_engine.py
-python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100
+python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 --processes 16
 python3 tools/dev/fuzz_processing_pipeline.py
-python3 tools/dev/fuzz_processing_pipeline.py --target fft --duration-s 60
+python3 tools/dev/fuzz_processing_pipeline.py --target fft --duration-s 60 --processes 16
 ```
 
 The script expects the backend package plus dev dependencies to be installed,
@@ -148,6 +148,10 @@ points that sit before persisted diagnostics:
 - `strength`: canonical vibration-strength math in `vibesensor.vibration_strength`
 - `fft`: pure FFT spectrum assembly in `vibesensor.infra.processing.fft`
 - `processor`: live ingest / compute / debug payload paths in `SignalProcessor`
+
+Both fuzzers default to 16 concurrent worker processes. Use `--processes` to
+tune parallelism if you need to trade off CPU saturation against local
+interactivity. `--threads` remains accepted as a compatibility alias.
 
 ## Local CI with `act`
 
