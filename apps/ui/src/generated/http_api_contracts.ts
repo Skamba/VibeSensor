@@ -2824,6 +2824,10 @@ export interface operations {
           "application/json": components["schemas"]["HistoryRunResponse"];
         };
       };
+      /** @description Invalid run identifier. */
+      400: {
+        content: never;
+      };
       /** @description Requested run was not found. */
       404: {
         content: never;
@@ -2857,6 +2861,10 @@ export interface operations {
           "application/json": components["schemas"]["DeleteHistoryRunResponse"];
         };
       };
+      /** @description Invalid run identifier. */
+      400: {
+        content: never;
+      };
       /** @description Requested run was not found. */
       404: {
         content: never;
@@ -2882,6 +2890,10 @@ export interface operations {
     responses: {
       /** @description Successful Response */
       200: {
+        content: never;
+      };
+      /** @description Invalid run identifier. */
+      400: {
         content: never;
       };
       /** @description Requested run was not found. */
@@ -2927,6 +2939,10 @@ export interface operations {
           "application/json": components["schemas"]["HistoryInsightsAnalyzingResponse"];
         };
       };
+      /** @description Invalid run identifier. */
+      400: {
+        content: never;
+      };
       /** @description Requested run was not found. */
       404: {
         content: never;
@@ -2962,6 +2978,10 @@ export interface operations {
     responses: {
       /** @description Successful Response */
       200: {
+        content: never;
+      };
+      /** @description Invalid run identifier. */
+      400: {
         content: never;
       };
       /** @description Requested run was not found. */
@@ -3121,6 +3141,10 @@ export interface operations {
           "application/json": components["schemas"]["CarsResponse"];
         };
       };
+      /** @description Invalid car identifier. */
+      400: {
+        content: never;
+      };
       /** @description Requested car profile was not found. */
       404: {
         content: never;
@@ -3155,6 +3179,10 @@ export interface operations {
           "application/json": components["schemas"]["CarsResponse"];
         };
       };
+      /** @description Invalid car identifier. */
+      400: {
+        content: never;
+      };
       /** @description Requested car profile was not found. */
       404: {
         content: never;
@@ -3184,7 +3212,7 @@ export interface operations {
           "application/json": components["schemas"]["CarsResponse"];
         };
       };
-      /** @description The requested deletion violates current settings constraints. */
+      /** @description Invalid car identifier or the requested deletion violates current settings constraints. */
       400: {
         content: never;
       };
