@@ -174,6 +174,10 @@ def _bootstrap_steps(
 def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
     return {
         "backend-quality": [
+            Step(
+                "Validate dependency consistency",
+                [python_cmd, "-m", "pip", "check"],
+            ),
             Step("Backend quality checks", ["make", "lint"]),
         ],
         "backend-typecheck": [
