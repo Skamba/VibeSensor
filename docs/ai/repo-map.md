@@ -36,13 +36,13 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `adapters/pdf/`: report mapping and PDF rendering, with grouped panel renderers under `adapters/pdf/panels/`. See `docs/report_pipeline.md` for the report flow.
 - `adapters/udp/`, `adapters/gps/`, `adapters/simulator/`, `adapters/hotspot/`: transport and device-facing runtime adapters.
 - `infra/runtime/`: runtime lifecycle, health, registry, and WebSocket coordination.
-- `infra/processing/`: signal-processing execution and payload building.
+- `infra/processing/`: signal-processing execution and payload building. See `docs/intake_buffering.md` for the live ingest, snapshot/FFT, and buffering flow.
 - `infra/config/`: runtime settings storage and read-side access.
 - `infra/workers/`: worker-pool infrastructure.
-- `use_cases/diagnostics/`: post-stop diagnostics pipeline. Core sample/statistics types stay in `_types.py`, while plot/table/output DTOs live in `_view_types.py`. See `docs/analysis_pipeline.md` for the module map and data flow.
+- `use_cases/diagnostics/`: post-stop diagnostics pipeline. Core sample/statistics types stay in `_types.py`, while plot/table/output DTOs live in `_view_types.py`. See `docs/analysis_pipeline.md` for the module map/data flow and `docs/order_tracking.md` for the shared order-reference and matching flow.
 - `use_cases/history/`: history queries, report loading/preparation/caching, and export orchestration. See `docs/report_pipeline.md` for report-specific flow.
 - `infra/runtime/health_snapshot.py`: application-level runtime health snapshot assembly for the `/api/health` route.
-- `use_cases/run/`: recording pipeline orchestration. `logger.py` is the `RunRecorder` entrypoint, `run_context.py` owns run/history context orchestration helpers, and the `post_analysis*.py` modules split queueing, loading, execution, and summary shaping.
+- `use_cases/run/`: recording pipeline orchestration. `logger.py` is the `RunRecorder` entrypoint, `run_context.py` owns run/history context orchestration helpers, and the `post_analysis*.py` modules split queueing, loading, execution, and summary shaping. See `docs/run_lifecycle.md` for the recording -> persistence -> post-analysis handoff.
 - `use_cases/updates/`: wheel-based updater workflow and public facade. Focused subpackages now group `updates/firmware/`, `updates/wifi/`, and `updates/releases/`, while the root package keeps installer/state/orchestration helpers.
 - `shared/`: cross-cutting ports, model/payload types, JSON helpers, boundary codecs, split constant modules under `shared/constants/`, and small package-level helpers such as `shared/_data_files.py`, `shared/sensor_units.py`, and `shared/run_context_warning.py`. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, `shared/types/history_analysis_contracts.py`, `shared/types/run_schema.py`, `shared/types/car_config.py`, `shared/types/speed_source_config.py`, and the codec/projection modules under `shared/boundaries/` such as `settings_snapshot_codec.py`.
 - `domain/`: domain model package for classification, ranking, lifecycle, and query logic. See `docs/domain-model.md` for the domain object graph.
