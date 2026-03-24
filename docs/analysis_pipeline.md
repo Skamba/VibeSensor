@@ -39,6 +39,17 @@ Mathematical primitives (e.g. `compute_vibration_strength_db`,
 `noise_floor_amp_p20_g`) live in the `vibesensor` top-level package
 and are shared by both layers.
 
+## Related deep dives
+
+- `docs/order_tracking.md` explains how `OrderReferenceSpec`, shared order-band
+  math, and the order-matching pipeline fit together.
+- `docs/intake_buffering.md` covers the live ingest path, snapshot -> compute ->
+  store flow, FFT pipeline, and buffering/backpressure rules that feed the
+  runtime metrics layer.
+- `docs/run_lifecycle.md` documents the recording/persistence/post-analysis
+  handoff around `RunRecorder`, `RunPersistenceWriter`, and
+  `PostAnalysisWorker`.
+
 ## Trigger Flow
 
 ```

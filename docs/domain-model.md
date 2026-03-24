@@ -25,6 +25,9 @@ that `Car` context for tire geometry and driveline/reference-order
 interpretation. It is important interpretive context, but it is not a peer
 aggregate or top-level headline domain concept.
 
+See `docs/order_tracking.md` for the shared order-band math and
+matching/scoring flow built on top of `OrderReferenceSpec`.
+
 The diagnostics / reconstruction / interpretation layer uses these supporting
 typed internal concepts:
 
@@ -50,6 +53,9 @@ meaning sits above that boundary in typed concepts with owned meaning.
 
 `Report` and `HistoryRecord` are boundary-facing derived representations, not
 core diagnostic truth.
+
+See `docs/run_lifecycle.md` for the recording/persistence/post-analysis
+orchestration built around `Run`.
 
 ## Scope and context boundaries
 

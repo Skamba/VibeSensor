@@ -22,6 +22,7 @@ links onward to the scoped instruction files and repo map below.
 |------|-------------|
 | `docs/domain-model.md` | Domain object graph, modeling rules, and adapter inventory. |
 | `docs/analysis_pipeline.md` | Post-stop diagnostics pipeline: steps, modules, and data flow. |
+| `docs/order_tracking.md` | Order-reference math, tolerance bands, and order-finding flow. |
 | `docs/report_pipeline.md` | Report generation flow from analysis to PDF. |
 | `docs/design_language.md` | Visual design decisions for report layout and UI. |
 | `docs/metrics.md` | Vibration metric definitions and unit rules. |
@@ -34,8 +35,9 @@ links onward to the scoped instruction files and repo map below.
 |------|-------------|
 | `docs/operational-runbooks.md` | Troubleshooting and operational procedures. |
 | `docs/history_db_schema.md` | SQLite history database schema. |
+| `docs/run_lifecycle.md` | Recording lifecycle, persistence retries, and post-analysis queue semantics. |
 | `docs/run_schema_v2.md` | Run data persistence schema v2. |
-| `docs/intake_buffering.md` | Sample intake and buffering strategy. |
+| `docs/intake_buffering.md` | Sample intake, buffering, and live signal-processing flow. |
 | `docs/time_alignment.md` | Multi-sensor time alignment approach. |
 | `docs/multithreading_performance.md` | Threading model and performance considerations. |
 
