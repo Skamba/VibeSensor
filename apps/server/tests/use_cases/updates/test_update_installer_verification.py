@@ -7,7 +7,11 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator
+from vibesensor.use_cases.updates.artifact_validation import (
+    WheelArtifactValidator,
+    read_wheel_metadata,
+    wheel_dependency_issues,
+)
 from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
@@ -52,13 +56,28 @@ class RecordingCommands:
         return self.default_response
 
 
-def _build_fake_wheel(path: Path, *, version: str) -> None:
+def _build_fake_wheel(
+    path: Path,
+    *,
+    version: str,
+    name: str = "vibesensor",
+    requires_python: str = "",
+    requires_dist: tuple[str, ...] = (),
+) -> None:
     dist_info = f"vibesensor-{version}.dist-info"
+    metadata_lines = [
+        "Metadata-Version: 2.1",
+        f"Name: {name}",
+        f"Version: {version}",
+    ]
+    if requires_python:
+        metadata_lines.append(f"Requires-Python: {requires_python}")
+    metadata_lines.extend(f"Requires-Dist: {entry}" for entry in requires_dist)
     with zipfile.ZipFile(path, "w") as wheel_zip:
         wheel_zip.writestr("vibesensor/__init__.py", f"__version__ = '{version}'\n")
         wheel_zip.writestr(
             f"{dist_info}/METADATA",
-            f"Metadata-Version: 2.1\nName: vibesensor\nVersion: {version}\n",
+            "\n".join(metadata_lines) + "\n",
         )
         wheel_zip.writestr(f"{dist_info}/WHEEL", "Wheel-Version: 1.0\nTag: py3-none-any\n")
 
@@ -274,6 +293,91 @@ def test_wheel_validator_rejects_corrupt_wheel_without_installer(tmp_path: Path)
 
     assert not ok
     assert any(issue.message == "Downloaded wheel is corrupt" for issue in tracker.status.issues)
+
+
+def test_wheel_validator_rejects_invalid_metadata_requirement(tmp_path: Path) -> None:
+    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "update_status.json"))
+    validator = WheelArtifactValidator(tracker)
+    wheel_path = tmp_path / "broken-metadata.whl"
+    _build_fake_wheel(
+        wheel_path,
+        version="2025.6.15",
+        requires_dist=("not a valid requirement ;;;",),
+    )
+
+    ok = validator.validate_wheel(
+        wheel_path,
+        phase="installing",
+        context="Downloaded wheel",
+        fatal=False,
+    )
+
+    assert not ok
+    assert any(
+        issue.message == "Downloaded wheel metadata is invalid" for issue in tracker.status.issues
+    )
+
+
+def test_wheel_dependency_issues_report_python_and_dependency_mismatches(tmp_path: Path) -> None:
+    wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+    _build_fake_wheel(
+        wheel_path,
+        version="2025.6.15",
+        requires_python=">=3.12",
+        requires_dist=(
+            "packaging>=99",
+            "missingdep>=1",
+            "colorama>=0.4; sys_platform == 'win32'",
+        ),
+    )
+
+    issues = wheel_dependency_issues(
+        read_wheel_metadata(wheel_path),
+        python_full_version="3.11.9",
+        marker_environment={
+            "python_full_version": "3.11.9",
+            "python_version": "3.11",
+            "sys_platform": "linux",
+        },
+        installed_versions={"packaging": "24.2"},
+    )
+
+    assert "Python 3.11.9 does not satisfy wheel Requires-Python >=3.12" in issues
+    assert "Dependency packaging==24.2 does not satisfy >=99" in issues
+    assert "Missing dependency: missingdep>=1" in issues
+    assert all("colorama" not in issue for issue in issues)
+
+
+@pytest.mark.asyncio
+async def test_install_release_rejects_incompatible_environment_before_pip_install(
+    tmp_path: Path,
+) -> None:
+    installer, commands, tracker = _make_installer(tmp_path)
+    wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+    _build_fake_wheel(
+        wheel_path,
+        version="2025.6.15",
+        requires_dist=("missingdep>=1",),
+    )
+    commands.set_response(
+        "missingdep",
+        0,
+        (
+            '{"python_full_version":"3.11.9","marker_environment":{"python_full_version":"3.11.9",'
+            '"python_version":"3.11","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
+        ),
+        "",
+    )
+
+    assert await installer.install_release(wheel_path, "2025.6.15") is False
+    assert tracker.status.state.value == "failed"
+    assert any(
+        issue.message == "Downloaded wheel is incompatible with the current environment"
+        for issue in tracker.status.issues
+    )
+    assert not any(
+        "pip install --force-reinstall --no-deps" in " ".join(call[0]) for call in commands.calls
+    )
 
 
 @pytest.mark.asyncio
