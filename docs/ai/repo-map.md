@@ -47,8 +47,8 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `shared/`: cross-cutting ports, model/payload types, JSON helpers, boundary codecs, split constant modules under `shared/constants/`, and small package-level helpers such as `shared/_data_files.py`, `shared/sensor_units.py`, and `shared/run_context_warning.py`. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, `shared/types/history_analysis_contracts.py`, `shared/types/run_schema.py`, `shared/types/car_config.py`, `shared/types/speed_source_config.py`, and the codec/projection modules under `shared/boundaries/` such as `settings_snapshot_codec.py`.
 - `domain/`: domain model package for classification, ranking, lifecycle, and query logic. See `docs/domain-model.md` for the domain object graph.
 - `apps/ui/src/app/runtime/`: UI composition root and runtime controllers.
-- `apps/ui/src/app/features/`: UI feature workflows for settings, realtime, history, updates, cars, and ESP flash.
-- `apps/ui/src/app/views/`: DOM renderers and event-target decoders.
+- `apps/ui/src/app/features/`: UI feature workflows for settings, realtime, history, updates, cars, and ESP flash, plus the shared polling controller used by long-running status features.
+- `apps/ui/src/app/views/`: DOM renderers and event-target decoders, including the car wizard view helpers.
 
 ## Backend layer dependency DAG
 

@@ -1,6 +1,7 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { EspFlashStatusPayload } from "../../api/types";
+import { createPollingController } from "./polling_controller";
 import {
   cancelEspFlash,
   getEspFlashHistory,
@@ -29,9 +30,6 @@ const STATE_TO_VARIANT: Readonly<Record<string, string>> = {
 
 export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature {
   const { els, t, escapeHtml } = ctx;
-  let pollTimer: ReturnType<typeof setTimeout> | null = null;
-  let pollGeneration = 0;
-  let pollingActive = false;
   let nextLogIndex = 0;
 
   async function refreshPorts(): Promise<void> {
@@ -104,36 +102,16 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     els.espFlashHistoryPanel.innerHTML = `<ul>${rows.join("")}</ul>`;
   }
 
-  function clearPollTimer(): void {
-    if (pollTimer === null) return;
-    clearTimeout(pollTimer);
-    pollTimer = null;
-  }
-
-  function schedulePoll(delayMs: number, generation: number): void {
-    if (!pollingActive || generation !== pollGeneration) return;
-    clearPollTimer();
-    pollTimer = setTimeout(() => void poll(generation), delayMs);
-  }
-
-  async function poll(generation: number = pollGeneration): Promise<void> {
-    try {
+  const polling = createPollingController({
+    poll: async () => {
       const status = await getEspFlashStatus();
       renderStatus(status);
       await refreshLogs(status);
       await refreshHistory();
-      schedulePoll(status.state === "running" ? POLL_ACTIVE_MS : POLL_IDLE_MS, generation);
-    } catch {
-      schedulePoll(POLL_ACTIVE_MS, generation);
-    }
-  }
-
-  function restartPolling(): void {
-    if (!pollingActive) return;
-    pollGeneration += 1;
-    clearPollTimer();
-    void poll(pollGeneration);
-  }
+      return status.state === "running" ? POLL_ACTIVE_MS : POLL_IDLE_MS;
+    },
+    onErrorDelayMs: POLL_ACTIVE_MS,
+  });
 
   async function onStart(): Promise<void> {
     const selected = els.espFlashPortSelect?.value || "__auto__";
@@ -143,7 +121,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       await startEspFlash(port, autoDetect);
       if (els.espFlashLogPanel) els.espFlashLogPanel.textContent = "";
       nextLogIndex = 0;
-      restartPolling();
+      polling.restart();
     } catch (err) {
       ctx.showError(`${t("settings.esp_flash.start_failed")}\n${err instanceof Error ? err.message : String(err)}`);
     }
@@ -155,7 +133,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     } catch {
       // Cancel request may fail if the job already finished; poll to sync state.
     }
-    restartPolling();
+    polling.restart();
   }
 
   function bindHandlers(): void {
@@ -165,17 +143,12 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   }
 
   function startPolling(): void {
-    if (pollingActive) return;
-    pollingActive = true;
     void refreshPorts();
-    restartPolling();
+    polling.start();
   }
 
   function stopPolling(): void {
-    if (!pollingActive && pollTimer === null) return;
-    pollingActive = false;
-    pollGeneration += 1;
-    clearPollTimer();
+    polling.stop();
   }
 
   return { bindHandlers, startPolling, stopPolling };
