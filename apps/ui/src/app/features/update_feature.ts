@@ -1,6 +1,7 @@
 import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
 import { getHealthStatus, getUpdateStatus, startUpdate, cancelUpdate } from "../../api/settings";
 import type { FeatureDepsBase } from "../feature_deps_base";
+import { createPollingController } from "./polling_controller";
 import {
   renderUpdateStatusPanel,
   syncUpdateControls,
@@ -20,9 +21,6 @@ const POLL_INTERVAL_RUNNING = 2_000;
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const { els, t, escapeHtml } = ctx;
 
-  let pollTimer: ReturnType<typeof setTimeout> | null = null;
-  let pollGeneration = 0;
-  let pollingActive = false;
   let passwordVisible = false;
 
   function renderStatus(status: UpdateStatusPayload, health: HealthStatusPayload): void {
@@ -32,35 +30,14 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     renderUpdateStatusPanel(panel, status, health, { t, escapeHtml });
   }
 
-  function clearPollTimer(): void {
-    if (pollTimer === null) return;
-    clearTimeout(pollTimer);
-    pollTimer = null;
-  }
-
-  function schedulePoll(delayMs: number, generation: number): void {
-    if (!pollingActive || generation !== pollGeneration) return;
-    clearPollTimer();
-    pollTimer = setTimeout(() => void pollStatus(generation), delayMs);
-  }
-
-  async function pollStatus(generation: number = pollGeneration): Promise<void> {
-    try {
+  const polling = createPollingController({
+    poll: async () => {
       const [status, health] = await Promise.all([getUpdateStatus(), getHealthStatus()]);
       renderStatus(status, health);
-      const interval = status.state === "running" ? POLL_INTERVAL_RUNNING : POLL_INTERVAL_IDLE;
-      schedulePoll(interval, generation);
-    } catch {
-      schedulePoll(POLL_INTERVAL_RUNNING, generation);
-    }
-  }
-
-  function restartPolling(): void {
-    if (!pollingActive) return;
-    pollGeneration += 1;
-    clearPollTimer();
-    void pollStatus(pollGeneration);
-  }
+      return status.state === "running" ? POLL_INTERVAL_RUNNING : POLL_INTERVAL_IDLE;
+    },
+    onErrorDelayMs: POLL_INTERVAL_RUNNING,
+  });
 
   async function handleStart(): Promise<void> {
     const ssid = els.updateSsidInput?.value?.trim() ?? "";
@@ -76,7 +53,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       if (els.updatePasswordInput) {
         els.updatePasswordInput.value = "";
       }
-      restartPolling();
+      polling.restart();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("409")) {
@@ -90,7 +67,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   async function handleCancel(): Promise<void> {
     try {
       await cancelUpdate();
-      restartPolling();
+      polling.restart();
     } catch {
       /* ignore */
     }
@@ -116,16 +93,11 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   }
 
   function startPolling(): void {
-    if (pollingActive) return;
-    pollingActive = true;
-    restartPolling();
+    polling.start();
   }
 
   function stopPolling(): void {
-    if (!pollingActive && pollTimer === null) return;
-    pollingActive = false;
-    pollGeneration += 1;
-    clearPollTimer();
+    polling.stop();
   }
 
   return {
