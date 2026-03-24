@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from vibesensor.app.settings import AppConfig, load_config
+from vibesensor.app.settings import AppConfig, documented_default_config, load_config
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 
 
@@ -31,12 +31,25 @@ def summarize(cfg: AppConfig) -> dict[str, object]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate and print resolved VibeSensor config")
-    parser.add_argument("config", type=Path, help="Path to config YAML")
-    return parser.parse_args()
+    parser.add_argument("config", type=Path, nargs="?", help="Path to config YAML")
+    parser.add_argument(
+        "--dump-defaults",
+        action="store_true",
+        help="Print the documented default config and exit",
+    )
+    args = parser.parse_args()
+    if args.dump_defaults and args.config is not None:
+        parser.error("--dump-defaults and config are mutually exclusive")
+    if not args.dump_defaults and args.config is None:
+        parser.error("config is required unless --dump-defaults is set")
+    return args
 
 
 def main() -> int:
     args = parse_args()
+    if args.dump_defaults:
+        print(json.dumps(documented_default_config(), indent=2, sort_keys=True))
+        return 0
     cfg = load_config(args.config)
     print(json.dumps(summarize(cfg), indent=2, sort_keys=True))
     return 0

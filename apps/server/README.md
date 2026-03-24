@@ -65,7 +65,7 @@ install path.
 
 ## Configuration
 
-Configuration is YAML-based. Run `vibesensor-config-preflight --dump-defaults` to see all available keys with defaults. Use `apps/server/config.dev.yaml` or `apps/server/config.docker.yaml` for local overrides.
+Configuration is YAML-based. Runtime defaults live in `vibesensor/app/config_defaults.py`, and `load_config()` applies precedence `DEFAULT_CONFIG -> selected YAML override file -> typed validation/clamping`. Run `vibesensor-config-preflight --dump-defaults` to see all available keys with defaults, or run `vibesensor-config-preflight apps/server/config.dev.yaml` / `apps/server/config.docker.yaml` to inspect a resolved override file.
 
 For live sensor presence, `processing.client_live_ttl_seconds` controls how long
 `/api/clients` and `/ws` keep reporting `connected: true` after the last

@@ -1,6 +1,9 @@
-import type { FeatureDepsBase } from "../feature_deps_base";
-import type { UiDomElements } from "../ui_dom_registry";
 import type { EspFlashStatusPayload } from "../../api/types";
+import {
+  ESP_FLASH_POLL_ACTIVE_MS,
+  ESP_FLASH_POLL_IDLE_MS,
+} from "../../config";
+import type { FeatureDepsBase } from "../feature_deps_base";
 import { createPollingController } from "./polling_controller";
 import {
   cancelEspFlash,
@@ -18,9 +21,6 @@ export interface EspFlashFeature {
   startPolling(): void;
   stopPolling(): void;
 }
-
-const POLL_IDLE_MS = 4_000;
-const POLL_ACTIVE_MS = 1_000;
 
 const STATE_TO_VARIANT: Readonly<Record<string, string>> = {
   success: "ok",
@@ -108,9 +108,11 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       renderStatus(status);
       await refreshLogs(status);
       await refreshHistory();
-      return status.state === "running" ? POLL_ACTIVE_MS : POLL_IDLE_MS;
+      return status.state === "running"
+        ? ESP_FLASH_POLL_ACTIVE_MS
+        : ESP_FLASH_POLL_IDLE_MS;
     },
-    onErrorDelayMs: POLL_ACTIVE_MS,
+    onErrorDelayMs: ESP_FLASH_POLL_ACTIVE_MS,
   });
 
   async function onStart(): Promise<void> {

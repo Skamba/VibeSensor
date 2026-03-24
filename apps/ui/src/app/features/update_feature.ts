@@ -1,5 +1,9 @@
 import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
 import { getHealthStatus, getUpdateStatus, startUpdate, cancelUpdate } from "../../api/settings";
+import {
+  UPDATE_POLL_INTERVAL_IDLE_MS,
+  UPDATE_POLL_INTERVAL_RUNNING_MS,
+} from "../../config";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createPollingController } from "./polling_controller";
 import {
@@ -14,9 +18,6 @@ export interface UpdateFeature {
   startPolling(): void;
   stopPolling(): void;
 }
-
-const POLL_INTERVAL_IDLE = 10_000;
-const POLL_INTERVAL_RUNNING = 2_000;
 
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const { els, t, escapeHtml } = ctx;
@@ -34,9 +35,11 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     poll: async () => {
       const [status, health] = await Promise.all([getUpdateStatus(), getHealthStatus()]);
       renderStatus(status, health);
-      return status.state === "running" ? POLL_INTERVAL_RUNNING : POLL_INTERVAL_IDLE;
+      return status.state === "running"
+        ? UPDATE_POLL_INTERVAL_RUNNING_MS
+        : UPDATE_POLL_INTERVAL_IDLE_MS;
     },
-    onErrorDelayMs: POLL_INTERVAL_RUNNING,
+    onErrorDelayMs: UPDATE_POLL_INTERVAL_RUNNING_MS,
   });
 
   async function handleStart(): Promise<void> {

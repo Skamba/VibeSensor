@@ -1,5 +1,12 @@
 import uPlot from "uplot";
 
+import {
+  SPECTRUM_DB_MAX,
+  SPECTRUM_DB_MIN,
+  SPECTRUM_DB_REFERENCE_AMP_G,
+  SPECTRUM_MIN_RENDER_AMP_G,
+  SPECTRUM_TWEEN_DURATION_MS,
+} from "../../config";
 import { escapeHtml } from "../../format";
 import { SpectrumChart } from "../../spectrum";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
@@ -7,11 +14,6 @@ import { areHeavyFramesCompatible, interpolateHeavyFrame, type SpectrumHeavyFram
 import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState, ChartBand } from "../ui_app_state";
 
-const SPECTRUM_DB_MIN = 0;
-const SPECTRUM_DB_MAX = 100;
-const SPECTRUM_DB_REFERENCE_AMP_G = 1e-4;
-const SPECTRUM_MIN_RENDER_AMP_G = 1e-6;
-const SPECTRUM_TWEEN_DURATION_MS = 180;
 const SPECTRUM_LOG10_REF = Math.log10(SPECTRUM_DB_REFERENCE_AMP_G);
 const FREQ_MATCH_EPSILON = 1e-6;
 
