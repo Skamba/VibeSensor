@@ -22,6 +22,41 @@ See [docs/ai/repo-map.md#backend-package-layout](../../docs/ai/repo-map.md#backe
 for the detailed backend ownership map. This README stays focused on
 backend-specific setup, configuration, routes, updates, and testing.
 
+## State and configuration scopes
+
+Several issue reports have described the backend as one pool of global mutable
+state. Current `main` is intentionally split more narrowly:
+
+- `AppConfig` in `vibesensor.app.config_schema` owns deployment/process
+  configuration loaded at startup, such as network bindings, retention windows,
+  processing budgets, and update paths.
+- `SettingsStore` owns persisted user-facing runtime settings, such as car
+  profiles, speed-source preferences, language, units, and sensor placement.
+- Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
+  `PostAnalysisWorker`) own live per-process coordination and per-run state.
+- `HistoryDB` is shared storage for settings snapshots and run history, but the
+  live recording path and post-analysis/report path remain separate phases with
+  different owners.
+
+That separation is deliberate: deployment config, mutable user settings, and
+run-attached snapshots are related, but they are not interchangeable sources of
+truth.
+
+## Startup sequencing
+
+Backend startup is explicit rather than ambient:
+
+1. `vibesensor.app.bootstrap` resolves config and builds the runtime/container.
+2. `LifecycleManager.start()` runs lightweight startup validation, opens the UDP
+   receiver, starts the control plane, and then launches the supervised
+   processing, WebSocket, metrics, GPS, and update-recovery tasks in a declared
+   order.
+3. The runtime is only marked ready after those startup phases succeed.
+
+See `apps/server/vibesensor/infra/runtime/lifecycle.py` and
+`apps/server/tests/infra/runtime/test_runtime.py` for the executable phase
+contract.
+
 ## Important directories
 
 ```text
@@ -70,6 +105,11 @@ Configuration is YAML-based. Runtime defaults live in `vibesensor/app/config_def
 Use [docs/configuration_reference.md](../../docs/configuration_reference.md) for
 the key-by-key operator reference across the `ap`, `server`, `udp`,
 `processing`, `logging`, `gps`, and `update` sections.
+
+Those YAML files cover deployment/process settings. User-facing runtime
+preferences are stored separately through `SettingsStore` snapshots in
+`history.db`, and completed runs persist immutable per-run snapshots for later
+analysis/reporting.
 
 For live sensor presence, `processing.client_live_ttl_seconds` controls how long
 `/api/clients` and `/ws` keep reporting `connected: true` after the last

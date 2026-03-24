@@ -41,7 +41,14 @@ _PERSISTED_ANALYSIS_SCHEMA_MIGRATION_SOURCE_VERSION = 10
 
 
 class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDBQueryMixin):
-    """Thin wrapper around a SQLite database for run history."""
+    """Thin wrapper around a SQLite database for run history.
+
+    The mixins deliberately group non-overlapping public method families:
+    lifecycle writes, sample I/O, and read/query helpers. ``HistoryDB`` owns the
+    shared connection state plus the ``_cursor()`` / transaction hooks that each
+    mixin uses, so the class remains a small composition root rather than a
+    cross-calling diamond of partially overlapping base classes.
+    """
 
     def __init__(
         self,
