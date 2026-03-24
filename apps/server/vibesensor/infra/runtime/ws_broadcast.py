@@ -18,10 +18,9 @@ from vibesensor.infra.runtime.rotational_speeds import (
     build_rotational_speeds_payload,
     rotational_basis_speed_source,
 )
-from vibesensor.shared.ports import SpeedProvider
+from vibesensor.shared.ports import SettingsReader, SpeedProvider, SpeedSourceSettingsReader
 
 if TYPE_CHECKING:
-    from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -37,7 +36,8 @@ class WsBroadcastService:
         "_gps_monitor",
         "_processor",
         "_registry",
-        "_settings_store",
+        "_settings_reader",
+        "_speed_source_reader",
         "_ui_heavy_push_hz",
         "_ui_push_hz",
         "include_heavy",
@@ -56,7 +56,8 @@ class WsBroadcastService:
         processor: SignalProcessor,
         gps_monitor: SpeedProvider,
         gps_enabled: bool,
-        settings_store: SettingsStore,
+        settings_reader: SettingsReader,
+        speed_source_reader: SpeedSourceSettingsReader,
     ) -> None:
         self.tick = 0
         self.include_heavy = True
@@ -69,7 +70,8 @@ class WsBroadcastService:
         self._registry = registry
         self._processor = processor
         self._gps_monitor = gps_monitor
-        self._settings_store = settings_store
+        self._settings_reader = settings_reader
+        self._speed_source_reader = speed_source_reader
 
     def on_tick(self) -> None:
         """Advance the broadcast tick counter and toggle heavy-tick flag."""
@@ -98,8 +100,8 @@ class WsBroadcastService:
             "selected_client_id": None,
             "rotational_speeds": None,
         }
-        analysis_settings_snapshot = self._settings_store.analysis_settings_snapshot()
-        speed_source = self._settings_store.get_speed_source()
+        analysis_settings_snapshot = self._settings_reader.analysis_settings_snapshot()
+        speed_source = self._speed_source_reader.get_speed_source()
         basis = rotational_basis_speed_source(
             str(speed_source.get("speedSource") or "gps"),
             gps_enabled=self._gps_enabled,
