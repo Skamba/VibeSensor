@@ -191,13 +191,12 @@ class TestSettingsStoreRollbackSafety:
         car_data = store.add_car({"name": "TestCar", "type": "sedan"})
         car_id = car_data.cars[0]["id"]
 
-        # Set as active so _find_car works
+        # Set as active so the public current-car snapshot reflects the target car.
         store.set_active_car(car_id)
 
-        # Get the aspects content before update
-        with store._lock:
-            car = store._find_car(car_id)
-            original_aspects = dict(car.aspects)
+        original_snapshot = store.active_car_snapshot()
+        assert original_snapshot is not None
+        original_aspects = dict(original_snapshot.aspects)
 
         # Force persist to fail with PersistenceError (triggers rollback)
         with (
@@ -206,10 +205,9 @@ class TestSettingsStoreRollbackSafety:
         ):
             store.update_car(car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}})
 
-        # The aspects content should be unchanged
-        with store._lock:
-            car = store._find_car(car_id)
-            assert dict(car.aspects) == original_aspects
+        restored_snapshot = store.active_car_snapshot()
+        assert restored_snapshot is not None
+        assert dict(restored_snapshot.aspects) == original_aspects
 
 
 # ------------------------------------------------------------------
