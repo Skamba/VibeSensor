@@ -2,6 +2,7 @@ import type { SpeedSourceStatusPayload } from "../../api/types";
 import { getSpeedSourceStatus } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
+import { createPollingController } from "./polling_controller";
 
 const GPS_POLL_FAST = 2_000;
 const GPS_POLL_SLOW = 10_000;
@@ -26,7 +27,6 @@ export interface SettingsGpsStatusModule {
 
 export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps): SettingsGpsStatusModule {
   const { settings, els, t, fmt } = ctx;
-  let gpsPollTimer: ReturnType<typeof setTimeout> | null = null;
 
   function connectionStateLabel(connectionState: string): string {
     const key = CONNECTION_STATE_I18N[connectionState];
@@ -87,8 +87,8 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
     }
   }
 
-  async function pollGpsStatus(): Promise<void> {
-    try {
+  const polling = createPollingController({
+    poll: async () => {
       const status = await getSpeedSourceStatus();
       settings.gpsFallbackActive = status.fallback_active
         || (
@@ -99,23 +99,17 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
         );
       renderGpsStatus(status);
       ctx.renderSpeedReadout();
-      const interval = status.connection_state === "connected" ? GPS_POLL_FAST : GPS_POLL_SLOW;
-      gpsPollTimer = setTimeout(() => void pollGpsStatus(), interval);
-    } catch {
-      gpsPollTimer = setTimeout(() => void pollGpsStatus(), GPS_POLL_SLOW);
-    }
-  }
+      return status.connection_state === "connected" ? GPS_POLL_FAST : GPS_POLL_SLOW;
+    },
+    onErrorDelayMs: GPS_POLL_SLOW,
+  });
 
   function startGpsStatusPolling(): void {
-    if (gpsPollTimer !== null) return;
-    void pollGpsStatus();
+    polling.start();
   }
 
   function stopGpsStatusPolling(): void {
-    if (gpsPollTimer !== null) {
-      clearTimeout(gpsPollTimer);
-      gpsPollTimer = null;
-    }
+    polling.stop();
   }
 
   return {

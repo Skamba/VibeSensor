@@ -50,6 +50,26 @@ export interface UiDomElements {
   addCarWizard: HTMLElement | null;
   wizardCloseBtn: HTMLButtonElement | null;
   wizardBackBtn: HTMLButtonElement | null;
+  wizardSteps: Array<HTMLElement | null>;
+  wizardStepDots: HTMLElement[];
+  wizardBrandList: HTMLElement | null;
+  wizardTypeList: HTMLElement | null;
+  wizardModelList: HTMLElement | null;
+  wizardVariantList: HTMLElement | null;
+  wizardTireList: HTMLElement | null;
+  wizardGearboxList: HTMLElement | null;
+  wizardCustomBrandInput: HTMLInputElement | null;
+  wizardCustomBrandBtn: HTMLButtonElement | null;
+  wizardCustomTypeInput: HTMLInputElement | null;
+  wizardCustomTypeBtn: HTMLButtonElement | null;
+  wizardCustomModelInput: HTMLInputElement | null;
+  wizardCustomModelBtn: HTMLButtonElement | null;
+  wizardManualAddBtn: HTMLButtonElement | null;
+  wizTireWidthInput: HTMLInputElement | null;
+  wizTireAspectInput: HTMLInputElement | null;
+  wizRimInput: HTMLInputElement | null;
+  wizFinalDriveInput: HTMLInputElement | null;
+  wizGearRatioInput: HTMLInputElement | null;
   speedSourceRadios: HTMLInputElement[];
   manualSpeedInput: HTMLInputElement | null;
   saveSpeedSourceBtn: HTMLButtonElement | null;
@@ -156,6 +176,26 @@ export function createUiDomRegistry(): UiDomElements {
     addCarWizard: el("addCarWizard"),
     wizardCloseBtn: btnEl("wizardCloseBtn"),
     wizardBackBtn: btnEl("wizardBackBtn"),
+    wizardSteps: [0, 1, 2, 3, 4].map((index) => el(`wizardStep${index}`)),
+    wizardStepDots: Array.from(document.querySelectorAll<HTMLElement>(".wizard-step-dot")),
+    wizardBrandList: el("wizardBrandList"),
+    wizardTypeList: el("wizardTypeList"),
+    wizardModelList: el("wizardModelList"),
+    wizardVariantList: el("wizardVariantList"),
+    wizardTireList: el("wizardTireList"),
+    wizardGearboxList: el("wizardGearboxList"),
+    wizardCustomBrandInput: inputEl("wizardCustomBrand"),
+    wizardCustomBrandBtn: btnEl("wizardCustomBrandBtn"),
+    wizardCustomTypeInput: inputEl("wizardCustomType"),
+    wizardCustomTypeBtn: btnEl("wizardCustomTypeBtn"),
+    wizardCustomModelInput: inputEl("wizardCustomModel"),
+    wizardCustomModelBtn: btnEl("wizardCustomModelBtn"),
+    wizardManualAddBtn: btnEl("wizardManualAddBtn"),
+    wizTireWidthInput: inputEl("wizTireWidth"),
+    wizTireAspectInput: inputEl("wizTireAspect"),
+    wizRimInput: inputEl("wizRim"),
+    wizFinalDriveInput: inputEl("wizFinalDrive"),
+    wizGearRatioInput: inputEl("wizGearRatio"),
     speedSourceRadios: Array.from(
       document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]'),
     ),
