@@ -14,6 +14,7 @@ from vibesensor.infra.runtime.processing_loop import (
     MAX_FATAL_BACKOFF_CYCLES,
     ProcessingHealth,
     ProcessingLoop,
+    ProcessingLoopError,
     ProcessingLoopState,
 )
 
@@ -47,6 +48,8 @@ class _StubProcessor:
         self._fail_count = fail_count
         self._call_count = 0
         self.compute_all_calls = 0
+        self.compute_call_args: list[tuple[list[str], dict[str, int]]] = []
+        self.evict_calls: list[set[str]] = []
 
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         return list(client_ids)
@@ -58,12 +61,13 @@ class _StubProcessor:
     ) -> dict[str, Any]:
         self._call_count += 1
         self.compute_all_calls += 1
+        self.compute_call_args.append((list(client_ids), dict(sample_rates_hz or {})))
         if self._call_count <= self._fail_count:
             raise RuntimeError("stub compute_all failure")
         return {}
 
     def evict_clients(self, active: set[str]) -> None:
-        pass
+        self.evict_calls.append(set(active))
 
 
 class _StubControlPlane:
@@ -317,3 +321,71 @@ class TestProcessingLoopMismatchDetection:
         await loop._run_tick(sync_clock=False)
 
         assert len(state.frame_size_mismatch_logged) == 0
+
+
+class TestProcessingLoopCleanup:
+    @pytest.mark.asyncio
+    async def test_compute_all_failure_still_evicts_using_fresh_active_ids(self) -> None:
+        class _RefreshingRegistry(_StubRegistry):
+            def __init__(self) -> None:
+                super().__init__(
+                    clients={
+                        "stay": _StubRecord(sample_rate_hz=800, frame_samples=512),
+                        "drop": _StubRecord(sample_rate_hz=800, frame_samples=512),
+                    }
+                )
+                self._active_snapshots = [
+                    ["stay", "drop"],
+                    ["stay"],
+                ]
+
+            def active_client_ids(self) -> list[str]:
+                if self._active_snapshots:
+                    return self._active_snapshots.pop(0)
+                return ["stay"]
+
+        registry = _RefreshingRegistry()
+        processor = _StubProcessor(fail_count=1)
+        loop, _state = _make_loop(processor=processor, registry=registry)
+
+        with pytest.raises(ProcessingLoopError, match="stub compute_all failure") as exc_info:
+            await loop._run_tick(sync_clock=False)
+
+        assert exc_info.value.category == "compute_all"
+        assert processor.compute_call_args == [
+            (
+                ["stay", "drop"],
+                {"stay": 800, "drop": 800},
+            )
+        ]
+        assert processor.evict_calls == [{"stay"}]
+
+    @pytest.mark.asyncio
+    async def test_disappeared_client_is_skipped_before_compute_all(self) -> None:
+        class _DisappearingRegistry(_StubRegistry):
+            def __init__(self) -> None:
+                super().__init__(
+                    clients={
+                        "stay": _StubRecord(sample_rate_hz=800, frame_samples=512),
+                        "gone": _StubRecord(sample_rate_hz=400, frame_samples=256),
+                    }
+                )
+
+            def get(self, client_id: str) -> _StubRecord | None:
+                if client_id == "gone":
+                    return None
+                return super().get(client_id)
+
+        registry = _DisappearingRegistry()
+        processor = _StubProcessor()
+        loop, _state = _make_loop(processor=processor, registry=registry)
+
+        await loop._run_tick(sync_clock=False)
+
+        assert processor.compute_call_args == [
+            (
+                ["stay"],
+                {"stay": 800},
+            )
+        ]
+        assert processor.evict_calls == [{"stay", "gone"}]

@@ -175,6 +175,7 @@ class ProcessingLoop:
             raise ProcessingLoopError("ingress_state", exc) from exc
 
         sample_rates: dict[str, int] = {}
+        compute_client_ids: list[str] = []
         state = self.state
         for client_id in fresh_ids:
             try:
@@ -183,6 +184,7 @@ class ProcessingLoop:
                 raise ProcessingLoopError("registry_lookup", exc) from exc
             if record is None:
                 continue
+            compute_client_ids.append(client_id)
             sample_rates[client_id] = record.sample_rate_hz
             client_rate = int(record.sample_rate_hz or 0)
             if (
@@ -212,19 +214,30 @@ class ProcessingLoop:
                     self._fft_n,
                 )
 
+        compute_error: Exception | None = None
         try:
             await asyncio.to_thread(
                 self._processor.compute_all,
-                fresh_ids,
+                compute_client_ids,
                 sample_rates_hz=sample_rates,
             )
         except Exception as exc:
-            raise ProcessingLoopError("compute_all", exc) from exc
+            compute_error = exc
 
         try:
-            self._processor.evict_clients(set(active_ids))
+            self._processor.evict_clients(set(self._registry.active_client_ids()))
         except Exception as exc:
+            if compute_error is not None:
+                LOGGER.warning(
+                    "Processing loop cleanup also failed after compute_all failure; "
+                    "reporting compute_all as the primary error.",
+                    exc_info=True,
+                )
+                raise ProcessingLoopError("compute_all", compute_error) from compute_error
             raise ProcessingLoopError("publish_metrics", exc) from exc
+
+        if compute_error is not None:
+            raise ProcessingLoopError("compute_all", compute_error) from compute_error
 
     async def run(self) -> None:
         """~100 ms tick loop: evict stale clients, compute metrics, handle failures."""
