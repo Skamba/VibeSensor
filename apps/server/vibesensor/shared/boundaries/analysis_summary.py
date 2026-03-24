@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Mapping, Sequence
 from copy import deepcopy
-from typing import Protocol, cast
+from typing import Protocol
 
 from vibesensor.domain import (
     DrivingPhaseInterval,
@@ -129,7 +129,6 @@ def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
     report_date = result.metadata.get("end_time_utc")
     summary["report_date"] = report_date if isinstance(report_date, str) else utc_now_iso()
     summary["plots"] = serialize_plot_data(result.plot_data)
-    cast(dict[str, object], summary)["_summary_version"] = 2
     if not result.include_samples:
         summary.pop("samples", None)
     return summary
