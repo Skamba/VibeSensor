@@ -5,12 +5,12 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf._panel_diagram import _draw_car_visual_panel
-from vibesensor.adapters.pdf._panel_evidence import _draw_pattern_evidence
-from vibesensor.adapters.pdf._panel_observations import _draw_additional_observations
-from vibesensor.adapters.pdf._panel_peaks import _draw_peaks_table
-from vibesensor.adapters.pdf._panel_title_bar import _draw_title_bar
-from vibesensor.adapters.pdf._panel_trust_steps import _draw_continued_next_steps
+from vibesensor.adapters.pdf.panels._panel_diagram import _draw_car_visual_panel
+from vibesensor.adapters.pdf.panels._panel_evidence import _draw_pattern_evidence
+from vibesensor.adapters.pdf.panels._panel_observations import _draw_additional_observations
+from vibesensor.adapters.pdf.panels._panel_peaks import _draw_peaks_table
+from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
+from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_continued_next_steps
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
     GAP,
