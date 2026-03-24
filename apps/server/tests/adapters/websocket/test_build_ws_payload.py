@@ -208,7 +208,8 @@ def _make_state(
             processor=processor,
             gps_monitor=gps_monitor,
             gps_enabled=gps_monitor.gps_enabled,
-            settings_store=settings_store,
+            settings_reader=settings_store,
+            speed_source_reader=settings_store,
         ),
         run_recorder=_StubRunRecorder(),
         update_manager=_SENTINEL,
@@ -379,7 +380,8 @@ def test_build_ws_payload_marks_retained_stale_clients_disconnected(
         processor=_StubProcessor(),
         gps_monitor=_StubGPS(),
         gps_enabled=True,
-        settings_store=_StubSettingsStore(),
+        settings_reader=_StubSettingsStore(),
+        speed_source_reader=_StubSettingsStore(),
     )
     payload = ws_broadcast.build_payload(selected_client=None)
     assert len(payload["clients"]) == 1

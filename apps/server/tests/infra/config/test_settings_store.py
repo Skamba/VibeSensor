@@ -7,6 +7,7 @@ import pytest
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import Car
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.infra.config.settings_runtime import SettingsRuntimeApplier
 from vibesensor.infra.config.settings_store import (
     PersistenceError,
     SettingsStore,
@@ -318,7 +319,13 @@ def test_store_persists_with_protocol_shaped_snapshot_store() -> None:
 
 def test_store_syncs_speed_source_with_protocol_shaped_monitor() -> None:
     gps_monitor = FakeSpeedSourceSync()
-    store = SettingsStore(gps_monitor=gps_monitor)
+    store = SettingsStore()
+    store.bind_speed_source_sync(
+        SettingsRuntimeApplier(
+            gps_monitor=gps_monitor,
+            speed_source_reader=store,
+        ).apply_speed_source
+    )
 
     store.update_speed_source(
         {

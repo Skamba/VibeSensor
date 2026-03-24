@@ -25,10 +25,10 @@ from vibesensor.adapters.http.models import (
 from vibesensor.adapters.udp.protocol import client_id_mac
 from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.shared.locations import all_locations, label_for_code
+from vibesensor.shared.ports import SensorSettingsWriter
 
 if TYPE_CHECKING:
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-    from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -53,7 +53,7 @@ _REMOVE_CLIENT_RESPONSES: OpenAPIResponses = {
 def create_client_routes(
     registry: ClientRegistry,
     control_plane: UDPControlPlane,
-    settings_store: SettingsStore,
+    sensor_settings_writer: SensorSettingsWriter,
     processor: SignalProcessor,
 ) -> APIRouter:
     """Create and return the client-management API routes."""
@@ -125,7 +125,7 @@ def create_client_routes(
         updated = registry.get(normalized_client_id)
         name = updated.name if updated and updated.name is not None else ""
         mac = client_id_mac(normalized_client_id)
-        await asyncio.to_thread(settings_store.set_sensor, mac, {"location_code": code})
+        await asyncio.to_thread(sensor_settings_writer.set_sensor, mac, {"location_code": code})
         return SetClientLocationResponse(
             id=normalized_client_id,
             mac_address=mac,

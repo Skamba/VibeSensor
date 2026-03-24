@@ -1,15 +1,12 @@
-"""Car profile CRUD — extracted from ``SettingsStore``.
-
-``CarSettingsMixin`` encapsulates all car-profile management methods.
-``SettingsStore`` inherits from the mixin so that the public API is
-unchanged for all consumers.
-"""
+"""Car profile CRUD extracted into an explicit collaborator."""
 
 from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeVar
+from dataclasses import dataclass, field
+from threading import RLock
+from typing import Protocol, TypeVar
 
 from vibesensor.domain import Car, CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
@@ -22,12 +19,30 @@ from vibesensor.shared.types.car_config import (
 )
 from vibesensor.shared.types.settings_types import AnalysisSettingsPayload
 
-if TYPE_CHECKING:
-    from threading import RLock
-
 LOGGER = logging.getLogger(__name__)
 _CarSettingsSnapshotT = TypeVar("_CarSettingsSnapshotT")
 _CarSettingsResultT = TypeVar("_CarSettingsResultT")
+
+
+class _UpdateWithRollback(Protocol):
+    def __call__(
+        self,
+        *,
+        snapshot: Callable[[], _CarSettingsSnapshotT],
+        apply: Callable[[_CarSettingsSnapshotT], bool],
+        restore: Callable[[_CarSettingsSnapshotT], None],
+        audit_log: Callable[[_CarSettingsSnapshotT], None] | None = None,
+        after_persist: Callable[[], None] | None = None,
+        result: Callable[[], _CarSettingsResultT],
+    ) -> _CarSettingsResultT: ...
+
+
+@dataclass(slots=True)
+class CarSettingsState:
+    """Mutable car-selection state owned by ``SettingsStore``."""
+
+    cars: list[Car] = field(default_factory=list)
+    active_car_id: str | None = None
 
 
 def _clamp_str(value: object, maxlen: int) -> str:
@@ -60,60 +75,41 @@ def _log_car_settings_change(
     )
 
 
-class CarSettingsMixin:
-    """Car-profile CRUD methods mixed into :class:`SettingsStore`.
+class CarSettingsService:
+    """Explicit car-profile CRUD collaborator used by ``SettingsStore``."""
 
-    Accesses ``self._lock``, ``self._cars``, ``self._active_car_id``,
-    ``self._update_with_rollback()``, and ``self._sync_analysis_settings()``
-    from the host class.
-    """
+    __slots__ = ("_lock", "_state", "_update_with_rollback")
 
-    # Declared for type-checker visibility; actual attributes live on SettingsStore.
-    if TYPE_CHECKING:
-        _lock: RLock
-        _cars: list[Car]
-        _active_car_id: str | None
-        _sanitize_analysis: staticmethod
-
-        def _sync_analysis_settings(self) -> None: ...
-        def _update_with_rollback(
-            self,
-            *,
-            snapshot: Callable[[], _CarSettingsSnapshotT],
-            apply: Callable[[_CarSettingsSnapshotT], bool],
-            restore: Callable[[_CarSettingsSnapshotT], None],
-            audit_log: Callable[[_CarSettingsSnapshotT], None] | None = None,
-            after_persist: Callable[[], None] | None = None,
-            result: Callable[[], _CarSettingsResultT],
-        ) -> _CarSettingsResultT: ...
-
-    # -- domain-object accessors -----------------------------------------------
+    def __init__(
+        self,
+        *,
+        lock: RLock,
+        state: CarSettingsState,
+        update_with_rollback: _UpdateWithRollback,
+    ) -> None:
+        self._lock = lock
+        self._state = state
+        self._update_with_rollback = update_with_rollback
 
     def active_car(self) -> Car | None:
         """Return the active car as a domain ``Car`` value object."""
         with self._lock:
-            return self._find_car(self._active_car_id)
+            return self._find_car(self._state.active_car_id)
 
-    # -- car operations --------------------------------------------------------
-
-    def _cars_snapshot_unlocked(self) -> CarsSnapshot:
+    def cars_snapshot_unlocked(self) -> CarsSnapshot:
         return CarsSnapshot(
-            cars=[car_to_persistence_dict(car) for car in self._cars],
-            active_car_id=self._active_car_id,
+            cars=[car_to_persistence_dict(car) for car in self._state.cars],
+            active_car_id=self._state.active_car_id,
         )
 
     def get_cars(self) -> CarsSnapshot:
         with self._lock:
-            return self._cars_snapshot_unlocked()
+            return self.cars_snapshot_unlocked()
 
     def active_car_aspects(self) -> dict[str, float] | None:
-        """Return the active car's aspects as a flat analysis-settings dict.
-
-        Routes through the domain ``Car`` object so dimension validation
-        (rejecting zero and negative values) fires on the hot path.
-        """
+        """Return the active car's aspects as a flat analysis-settings dict."""
         with self._lock:
-            car = self._find_car(self._active_car_id)
+            car = self._find_car(self._state.active_car_id)
             if car is None:
                 return None
             return dict(car.aspects)
@@ -121,7 +117,7 @@ class CarSettingsMixin:
     def active_car_snapshot(self) -> CarSnapshot | None:
         """Return the active car profile as a typed domain snapshot."""
         with self._lock:
-            car = self._find_car(self._active_car_id)
+            car = self._find_car(self._state.active_car_id)
             if car is None:
                 return None
             return CarSnapshot(
@@ -135,28 +131,27 @@ class CarSettingsMixin:
     def _find_car(self, car_id: str | None) -> Car | None:
         if not car_id:
             return None
-        return next((c for c in self._cars if c.id == car_id), None)
+        return next((c for c in self._state.cars if c.id == car_id), None)
 
     def set_active_car(self, car_id: str) -> CarsSnapshot:
         def _apply(_previous: str | None) -> bool:
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
-            self._active_car_id = car_id
+            self._state.active_car_id = car_id
             return True
 
         return self._update_with_rollback(
-            snapshot=lambda: self._active_car_id,
+            snapshot=lambda: self._state.active_car_id,
             apply=_apply,
-            restore=lambda previous: setattr(self, "_active_car_id", previous),
+            restore=lambda previous: setattr(self._state, "active_car_id", previous),
             audit_log=lambda previous: _log_car_settings_change(
                 action="set_active_car",
                 before=previous,
-                after=self._active_car_id,
+                after=self._state.active_car_id,
                 car_id=car_id,
             ),
-            after_persist=self._sync_analysis_settings,
-            result=self._cars_snapshot_unlocked,
+            result=self.cars_snapshot_unlocked,
         )
 
     def add_car(self, car_data: CarConfigUpdatePayload) -> CarsSnapshot:
@@ -167,21 +162,20 @@ class CarSettingsMixin:
             payload: dict[str, object] = dict(car_data)
             created_car_id = new_car_id()
             payload["id"] = created_car_id
-            self._cars.append(Car.from_persisted_dict(payload))
+            self._state.cars.append(Car.from_persisted_dict(payload))
             return True
 
         return self._update_with_rollback(
-            snapshot=lambda: list(self._cars),
+            snapshot=lambda: list(self._state.cars),
             apply=_apply,
-            restore=lambda previous: setattr(self, "_cars", previous),
+            restore=lambda previous: setattr(self._state, "cars", previous),
             audit_log=lambda _previous: _log_car_settings_change(
                 action="add_car",
                 before=None,
                 after=_car_payload(self._find_car(created_car_id)),
                 car_id=created_car_id,
             ),
-            after_persist=self._sync_analysis_settings,
-            result=self._cars_snapshot_unlocked,
+            result=self.cars_snapshot_unlocked,
         )
 
     def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> CarsSnapshot:
@@ -189,7 +183,7 @@ class CarSettingsMixin:
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
-            idx = next(i for i, current in enumerate(self._cars) if current.id == car_id)
+            idx = next(i for i, current in enumerate(self._state.cars) if current.id == car_id)
             new_name = car.name
             if "name" in car_data:
                 raw_name = car_data["name"]
@@ -214,7 +208,7 @@ class CarSettingsMixin:
                     new_variant = _clamp_str(raw_variant, 64) or None
                 else:
                     new_variant = None
-            self._cars[idx] = Car(
+            self._state.cars[idx] = Car(
                 id=car.id,
                 name=new_name,
                 car_type=new_car_type,
@@ -224,17 +218,16 @@ class CarSettingsMixin:
             return True
 
         return self._update_with_rollback(
-            snapshot=lambda: list(self._cars),
+            snapshot=lambda: list(self._state.cars),
             apply=_apply,
-            restore=lambda previous: setattr(self, "_cars", previous),
+            restore=lambda previous: setattr(self._state, "cars", previous),
             audit_log=lambda previous: _log_car_settings_change(
                 action="update_car",
                 before=_car_payload(next((car for car in previous if car.id == car_id), None)),
                 after=_car_payload(self._find_car(car_id)),
                 car_id=car_id,
             ),
-            after_persist=self._sync_analysis_settings,
-            result=self._cars_snapshot_unlocked,
+            result=self.cars_snapshot_unlocked,
         )
 
     def update_active_car_aspects(
@@ -242,11 +235,11 @@ class CarSettingsMixin:
         aspects: AnalysisSettingsPayload,
     ) -> AnalysisSettingsPayload:
         def _apply(_previous: list[Car]) -> bool:
-            car = self._find_car(self._active_car_id)
+            car = self._find_car(self._state.active_car_id)
             if car is None:
                 raise ValueError("No active car configured")
-            idx = next(i for i, current in enumerate(self._cars) if current.id == car.id)
-            self._cars[idx] = Car(
+            idx = next(i for i, current in enumerate(self._state.cars) if current.id == car.id)
+            self._state.cars[idx] = Car(
                 id=car.id,
                 name=car.name,
                 car_type=car.car_type,
@@ -256,21 +249,18 @@ class CarSettingsMixin:
             return True
 
         return self._update_with_rollback(
-            snapshot=lambda: list(self._cars),
+            snapshot=lambda: list(self._state.cars),
             apply=_apply,
-            restore=lambda previous: setattr(self, "_cars", previous),
+            restore=lambda previous: setattr(self._state, "cars", previous),
             audit_log=lambda previous: _log_car_settings_change(
                 action="update_active_car_aspects",
-                before=(
-                    next(
-                        (dict(car.aspects) for car in previous if car.id == self._active_car_id),
-                        None,
-                    )
+                before=next(
+                    (dict(car.aspects) for car in previous if car.id == self._state.active_car_id),
+                    None,
                 ),
                 after=self.active_car_aspects(),
-                car_id=self._active_car_id,
+                car_id=self._state.active_car_id,
             ),
-            after_persist=self._sync_analysis_settings,
             result=lambda: self.active_car_aspects() or {},
         )
 
@@ -279,19 +269,19 @@ class CarSettingsMixin:
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
-            if len(self._cars) <= 1:
+            if len(self._state.cars) <= 1:
                 raise ValueError("Cannot delete the last car")
-            self._cars = [current for current in self._cars if current.id != car_id]
-            if self._active_car_id == car_id:
-                self._active_car_id = self._cars[0].id if self._cars else None
+            self._state.cars = [current for current in self._state.cars if current.id != car_id]
+            if self._state.active_car_id == car_id:
+                self._state.active_car_id = self._state.cars[0].id if self._state.cars else None
             return True
 
         def _restore(previous: tuple[list[Car], str | None]) -> None:
-            self._cars = previous[0]
-            self._active_car_id = previous[1]
+            self._state.cars = previous[0]
+            self._state.active_car_id = previous[1]
 
         return self._update_with_rollback(
-            snapshot=lambda: (list(self._cars), self._active_car_id),
+            snapshot=lambda: (list(self._state.cars), self._state.active_car_id),
             apply=_apply,
             restore=_restore,
             audit_log=lambda previous: _log_car_settings_change(
@@ -299,8 +289,7 @@ class CarSettingsMixin:
                 before=_car_payload(next((car for car in previous[0] if car.id == car_id), None)),
                 after=None,
                 car_id=car_id,
-                active_car_id=self._active_car_id,
+                active_car_id=self._state.active_car_id,
             ),
-            after_persist=self._sync_analysis_settings,
-            result=self._cars_snapshot_unlocked,
+            result=self.cars_snapshot_unlocked,
         )

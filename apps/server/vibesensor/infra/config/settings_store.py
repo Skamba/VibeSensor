@@ -1,4 +1,4 @@
-"""Settings store — persists user settings (car profile, analysis config, etc.).
+"""Settings store — persists user settings and exposes semantic settings CRUD.
 
 ``SettingsStore`` provides thread-safe read/write access to JSON-backed
 settings and exposes the canonical vehicle and analysis settings to other
@@ -13,9 +13,8 @@ Settings management spans two layers:
   paths, processing budgets).
 - ``settings_store.py`` (this module) — user-facing settings (cars, speed
   source, language, unit, sensors) persisted through a narrow snapshot
-  persistence port. Also owns the in-memory analysis parameter cache
-  (tire_diameter, tire_aspect, etc.) recomputed from the active car's
-  aspects whenever car settings change.
+  persistence port. Derived analysis/current-context reads and runtime
+  application now live in explicit collaborators.
 - concrete adapters such as ``history_db/`` implement
   ``get_settings_snapshot()`` / ``set_settings_snapshot()`` and persist
   settings as a single JSON blob.
@@ -23,9 +22,8 @@ Settings management spans two layers:
 Per-run captures and history rows then store snapshots derived from those
 runtime settings; they are not a second mutable settings source.
 
-``SettingsStore`` owns the semantic meaning of settings, delegates
-persistence to its injected snapshot-store collaborator, and is the canonical source for
-runtime settings queries.
+``SettingsStore`` owns the semantic meaning of persisted settings and delegates
+persistence to its injected snapshot-store collaborator.
 """
 
 from __future__ import annotations
@@ -37,17 +35,20 @@ from threading import RLock
 from typing import TypeVar, get_args
 
 from vibesensor.domain import (
+    AnalysisSettingsSnapshot,
     Car,
+    CarSnapshot,
     Sensor,
     SensorPlacement,
     SpeedSource,
     normalize_sensor_id,
 )
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.config.car_settings import (
-    CarSettingsMixin,
+    CarSettingsService,
+    CarSettingsState,
     _clamp_str,
 )
+from vibesensor.infra.config.settings_derivation import analysis_settings_snapshot_from_aspects
 from vibesensor.shared.boundaries.settings_snapshot_codec import (
     coerce_language_code as _coerce_language,
 )
@@ -61,16 +62,24 @@ from vibesensor.shared.boundaries.settings_snapshot_codec import (
     validated_speed_unit_code as _validated_speed_unit,
 )
 from vibesensor.shared.exceptions import PersistenceError
-from vibesensor.shared.ports import SettingsSnapshotPersistence, SpeedSourceSync
+from vibesensor.shared.ports import SettingsSnapshotPersistence
 from vibesensor.shared.structured_logging import log_extra
-from vibesensor.shared.types.car_config import car_to_persistence_dict
+from vibesensor.shared.types.car_config import (
+    CarConfigUpdatePayload,
+    CarsSnapshot,
+    car_to_persistence_dict,
+)
 from vibesensor.shared.types.sensor_config import (
     SensorConfig,
     SensorConfigUpdatePayload,
     SensorsByMacPayload,
 )
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
+from vibesensor.shared.types.settings_types import (
+    AnalysisSettingsPayload,
+    LanguageCode,
+    SpeedUnitCode,
+)
 from vibesensor.shared.types.speed_source_config import (
     SpeedSourceConfig,
     SpeedSourcePayload,
@@ -102,7 +111,7 @@ def _log_settings_change(*, action: str, before: object, after: object, **fields
     )
 
 
-class SettingsStore(CarSettingsMixin):
+class SettingsStore:
     """Holds the full app settings: cars, speed source, and sensors.
 
     Persistence is backed by a snapshot-store collaborator.
@@ -112,22 +121,21 @@ class SettingsStore(CarSettingsMixin):
     def __init__(
         self,
         db: SettingsSnapshotPersistence | None = None,
-        *,
-        gps_monitor: SpeedSourceSync | None = None,
     ) -> None:
         """Initialise the settings store, loading persisted settings from *db* if provided."""
         self._lock = RLock()
         self._db = db
-        self._gps_monitor = gps_monitor
-        self._sanitize_analysis = AnalysisSettingsSnapshot.sanitize
-        self._analysis_values: dict[str, float] = dict(AnalysisSettingsSnapshot.DEFAULTS)
-
-        self._cars: list[Car] = []
-        self._active_car_id: str | None = None
+        self._after_speed_source_change: Callable[[], None] | None = None
+        self._car_state = CarSettingsState()
         self._speed_cfg = SpeedSourceConfig.default()
         self._language: LanguageCode = "en"
         self._speed_unit: SpeedUnitCode = "kmh"
         self._sensors: dict[str, SensorConfig] = {}
+        self._car_settings = CarSettingsService(
+            lock=self._lock,
+            state=self._car_state,
+            update_with_rollback=self._update_with_rollback,
+        )
 
         self._load()
 
@@ -141,11 +149,11 @@ class SettingsStore(CarSettingsMixin):
             return
 
         with self._lock:
-            self._cars = [Car.from_persisted_dict(car) for car in snapshot["cars"]]
+            self._car_state.cars = [Car.from_persisted_dict(car) for car in snapshot["cars"]]
 
             active_id = snapshot["activeCarId"] or ""
-            car_ids = {c.id for c in self._cars}
-            self._active_car_id = active_id if active_id in car_ids else None
+            car_ids = {c.id for c in self._car_state.cars}
+            self._car_state.active_car_id = active_id if active_id in car_ids else None
 
             self._speed_cfg = SpeedSourceConfig.from_dict(snapshot)
             self._language = _coerce_language(snapshot["language"])
@@ -192,50 +200,58 @@ class SettingsStore(CarSettingsMixin):
                 after_persist()
             return result()
 
-    def _sync_analysis_settings(self) -> None:
-        """Recompute in-memory analysis settings from the active car's aspects."""
-        aspects = self.active_car_aspects()
-        if aspects:
-            sanitized = self._sanitize_analysis(aspects)
-            self._analysis_values.update(sanitized)
-
-    def _sync_speed_source(self) -> None:
-        """Push current speed-source config into the GPS monitor."""
-        if self._gps_monitor is None:
-            return
-        ss = self.speed_source()
-        raw = self.get_speed_source()
-        self._gps_monitor.apply_speed_source_settings(
-            effective_speed_kmh=ss.effective_speed_kmh,
-            manual_source_selected=ss.is_manual,
-            stale_timeout_s=raw.get("staleTimeoutS"),
-        )
-
-    def sync_all(self) -> None:
-        """Push all current settings into dependent services.
-
-        Called once at startup after all services are wired.
-        """
-        self._sync_analysis_settings()
-        self._sync_speed_source()
-
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
-        """Return a thread-safe typed snapshot of the current analysis settings."""
-        with self._lock:
-            return AnalysisSettingsSnapshot.from_dict(self._analysis_values)
+        """Return the current typed analysis snapshot derived from the active car."""
+        return analysis_settings_snapshot_from_aspects(self.active_car_aspects())
+
+    def bind_speed_source_sync(self, callback: Callable[[], None]) -> None:
+        """Register the runtime speed-source applier used after persisted updates."""
+        self._after_speed_source_change = callback
 
     # -- full snapshot ---------------------------------------------------------
 
     def snapshot(self) -> SettingsSnapshotPayload:
         with self._lock:
             return {
-                "cars": [car_to_persistence_dict(c) for c in self._cars],
-                "activeCarId": self._active_car_id,
+                "cars": [car_to_persistence_dict(car) for car in self._car_state.cars],
+                "activeCarId": self._car_state.active_car_id,
                 **self._speed_cfg.to_dict(),
                 "language": self._language,
                 "speedUnit": self._speed_unit,
                 "sensorsByMac": {sid: s.to_dict() for sid, s in self._sensors.items()},
             }
+
+    # -- car settings -----------------------------------------------------------
+
+    def active_car(self) -> Car | None:
+        return self._car_settings.active_car()
+
+    def get_cars(self) -> CarsSnapshot:
+        return self._car_settings.get_cars()
+
+    def active_car_aspects(self) -> dict[str, float] | None:
+        return self._car_settings.active_car_aspects()
+
+    def active_car_snapshot(self) -> CarSnapshot | None:
+        return self._car_settings.active_car_snapshot()
+
+    def set_active_car(self, car_id: str) -> CarsSnapshot:
+        return self._car_settings.set_active_car(car_id)
+
+    def add_car(self, car_data: CarConfigUpdatePayload) -> CarsSnapshot:
+        return self._car_settings.add_car(car_data)
+
+    def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> CarsSnapshot:
+        return self._car_settings.update_car(car_id, car_data)
+
+    def update_active_car_aspects(
+        self,
+        aspects: AnalysisSettingsPayload,
+    ) -> AnalysisSettingsPayload:
+        return self._car_settings.update_active_car_aspects(aspects)
+
+    def delete_car(self, car_id: str) -> CarsSnapshot:
+        return self._car_settings.delete_car(car_id)
 
     # -- domain-object accessors -----------------------------------------------
 
@@ -282,7 +298,7 @@ class SettingsStore(CarSettingsMixin):
                 before=previous,
                 after=self._speed_cfg.to_dict(),
             ),
-            after_persist=self._sync_speed_source,
+            after_persist=self._after_speed_source_change,
             result=self._speed_cfg.to_dict,
         )
 
