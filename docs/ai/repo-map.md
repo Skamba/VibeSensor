@@ -50,6 +50,18 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `apps/ui/src/app/features/`: UI feature workflows for settings, realtime, history, updates, cars, and ESP flash.
 - `apps/ui/src/app/views/`: DOM renderers and event-target decoders.
 
+## Backend layer dependency DAG
+
+- Import-direction enforcement lives in `tools/dev/verify_backend_static_guards.py::_check_layer_boundaries()`.
+- Current allowed dependency directions are:
+  - `domain` -> none
+  - `shared` -> `domain`
+  - `use_cases` -> `domain`, `shared`
+  - `infra` -> `domain`, `shared`
+  - `adapters` -> `domain`, `shared`, `infra`, `use_cases`
+  - `app` -> all backend layers
+- `shared -> domain` and `infra -> domain` are intentional in the current architecture. Questions in the `#1271` family should focus on disallowed inward leakage such as `use_cases -> adapters` or `domain -> outer layers`, not these permitted edges.
+
 ## Test layout
 
 - `apps/server/tests/` mirrors the backend package layout with `app/`, `shared/`, `domain/`, `use_cases/`, `adapters/`, and `infra/` subtrees.
