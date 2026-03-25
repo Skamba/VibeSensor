@@ -22,7 +22,10 @@ from vibesensor.shared.time_utils import utc_now_iso
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-    from vibesensor.use_cases.history.report_preparation import PreparedReportInput
+    from vibesensor.use_cases.history.report_preparation import (
+        PreparedReportInput,
+        ValidatedPreparedReportInput,
+    )
 
 __all__ = [
     "ReportMappingContext",
@@ -105,21 +108,20 @@ class ReportMappingContext:
 
 
 def prepare_report_mapping_context(
-    prepared: PreparedReportInput,
+    prepared: PreparedReportInput | ValidatedPreparedReportInput,
 ) -> ReportMappingContext:
     """Extract structural prepared-report context for report mapping.
 
-    Consumes the prepared domain ``TestRun`` aggregate plus minimal
-    renderer-edge metadata so downstream business decisions stay domain-first
-    without depending on a raw summary payload.
+    Consumes the validated prepared report seam plus minimal renderer-edge
+    metadata so downstream business decisions stay domain-first without
+    depending on a raw summary payload.
     """
-    report_facts = prepared.report_facts
-    test_run = prepared.domain_test_run
-    if report_facts is None:
-        raise ValueError("PreparedReportInput must include report_facts for report mapping")
-    if test_run is None:
-        raise ValueError("PreparedReportInput must include a domain_test_run for report mapping")
-    renderer_payload = prepared.renderer_payload
+    from vibesensor.use_cases.history.report_preparation import validate_prepared_report_input
+
+    validated = validate_prepared_report_input(prepared)
+    report_facts = validated.report_facts
+    test_run = validated.domain_test_run
+    renderer_payload = validated.renderer_payload
     report_date = renderer_payload.report_date or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
