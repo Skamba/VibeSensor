@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+import vibesensor.adapters.pdf.peak_table as peak_table
 from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
 from vibesensor.adapters.pdf.peak_table import (
     build_peak_row,
-    build_peak_rows_from_plots,
     peak_row_system_label,
 )
 from vibesensor.adapters.pdf.presentation import (
@@ -78,7 +78,8 @@ def test_peak_classification_text_uses_translations() -> None:
 
 
 def test_extracted_pdf_builders_are_importable() -> None:
-    assert callable(build_peak_rows_from_plots)
+    assert not hasattr(peak_table, "build_peak_rows_from_plots")
+    assert "build_peak_rows_from_plots" not in peak_table.__all__
     assert callable(build_peak_row)
     assert callable(peak_row_system_label)
     assert callable(build_next_steps)
