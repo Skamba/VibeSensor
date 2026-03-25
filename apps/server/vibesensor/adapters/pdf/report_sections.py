@@ -7,7 +7,12 @@ from collections.abc import Callable, Sequence
 from vibesensor.adapters.pdf.report_data import DataTrustItem, NextStep
 from vibesensor.domain import RecommendedAction
 from vibesensor.report_i18n import is_i18n_ref, resolve_i18n
-from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck, SummaryWarningPayload
+from vibesensor.shared.types.history_analysis_contracts import (
+    RunSuitabilityCheck,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    SummaryWarningResponse as SummaryWarningPayload,
+)
 
 __all__ = [
     "build_data_trust",
