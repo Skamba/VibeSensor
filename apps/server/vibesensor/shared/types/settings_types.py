@@ -34,7 +34,7 @@ class AnalysisSettingsPayload(TypedDict, total=False):
 
 
 def analysis_settings_payload_from_mapping(
-    values: Mapping[str, object],
+    values: Mapping[str, float | int],
 ) -> AnalysisSettingsPayload:
     """Project a trusted flat mapping into the named-field settings payload."""
     payload: AnalysisSettingsPayload = {}
