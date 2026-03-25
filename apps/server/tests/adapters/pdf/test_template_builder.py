@@ -26,7 +26,7 @@ class _StubTestRun:
 
 
 def _make_context(**overrides: object):  # type: ignore[no-untyped-def]
-    from vibesensor.use_cases.history.report_preparation import ReportMappingContext
+    from vibesensor.adapters.pdf.report_context import ReportMappingContext
 
     defaults = {
         "car_name": "TestCar",
