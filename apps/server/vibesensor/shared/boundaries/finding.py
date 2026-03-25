@@ -5,12 +5,18 @@ analysis finalization).
 ``finding_payload_from_domain`` — domain → payload (persistence serialization).
 
 Also includes boundary functions for finding sub-objects (evidence,
-location hotspot, test steps) and the structured-step-content helper.
+location hotspot, test steps) and the structured-step-content helper. The
+encoder keeps an internal split between domain-owned finding fields and
+presentation-only finding metadata before composing the public
+``FindingPayload`` contract.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import cast
+
+from typing_extensions import TypedDict
 
 from vibesensor.domain import Finding, FindingEvidence, Signature, VibrationSource, coerce_float
 from vibesensor.domain.order_match import OrderMatchObservation
@@ -96,6 +102,50 @@ def _amplitude_metric_payload(finding: Finding) -> AmplitudeMetric:
     }
 
 
+class _FindingCorePayload(TypedDict, total=False):
+    """Internal domain-owned finding payload fields.
+
+    This is the core mechanical/diagnostic meaning that the boundary encoder
+    persists and the decoder reconstructs back into ``Finding``.
+    """
+
+    finding_id: str
+    finding_key: str | None
+    suspected_source: str
+    confidence: float | None
+    finding_kind: str | None
+    severity: str | None
+    matched_points: list[MatchedPoint]
+    location_hotspot: LocationHotspotPayload | None
+    strongest_location: str | None
+    strongest_speed_band: str | None
+    dominant_phase: str | None
+    dominance_ratio: float | None
+    weak_spatial_separation: bool
+    diffuse_excitation: bool
+    phase_evidence: PhaseEvidence | None
+    evidence_metrics: FindingEvidenceMetrics | None
+    ranking_score: float | None
+    peak_classification: str | None
+    signatures_observed: list[str]
+    order: str | None
+
+
+class _FindingPresentationPayload(TypedDict, total=False):
+    """Internal rendering-oriented finding metadata.
+
+    These fields keep outward API/report payload behavior stable, but the
+    domain decoder does not own most of them directly.
+    """
+
+    evidence_summary: str
+    frequency_hz_or_order: float | str
+    amplitude_metric: AmplitudeMetric
+    confidence_label_key: str | None
+    confidence_tone: str | None
+    confidence_pct: str | None
+
+
 # ---------------------------------------------------------------------------
 # Finding decoder and projector
 # ---------------------------------------------------------------------------
@@ -111,8 +161,9 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     * **analysis finalization** — converting analysis-pipeline dicts into
       domain objects at the end of ``finalize_findings()``.
 
-    Extracts the subset of fields that the domain object cares about,
-    ignoring serialization-only keys present in the full payload.
+    Extracts the domain-owned fields plus the persisted public-field fallbacks
+    still needed to reconstruct origin/order semantics, while ignoring pure
+    presentation hints such as ``amplitude_metric`` and ``confidence_*``.
 
     """
 
@@ -236,15 +287,9 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     )
 
 
-def finding_payload_from_domain(
-    finding: Finding,
-) -> FindingPayload:
-    """Project a domain Finding to the current persisted/public payload dict.
-
-    Produces the documented ``FindingPayload`` contract from domain objects
-    alone, without pass-through shortcuts to original payload dicts.
-    """
-    payload: FindingPayload = {
+def _finding_core_payload_from_domain(finding: Finding) -> _FindingCorePayload:
+    """Project only the domain-owned finding fields."""
+    payload: _FindingCorePayload = {
         "finding_id": finding.finding_id,
         "finding_key": finding.finding_key,
         "suspected_source": str(finding.suspected_source),
@@ -257,11 +302,6 @@ def finding_payload_from_domain(
         "ranking_score": finding.ranking_score,
         "peak_classification": finding.peaks.classification,
         "signatures_observed": list(finding.signature_labels),
-        "evidence_summary": "",
-        "frequency_hz_or_order": (
-            finding.frequency_hz if finding.frequency_hz is not None else finding.order or ""
-        ),
-        "amplitude_metric": _amplitude_metric_payload(finding),
     }
     if finding.severity:
         payload["severity"] = finding.severity
@@ -276,7 +316,6 @@ def finding_payload_from_domain(
             matched_point_from_observation(point) for point in finding.matched_points
         ]
 
-    # Evidence metrics
     if finding.evidence is not None:
         ev = finding.evidence
         metrics: FindingEvidenceMetrics = {
@@ -312,14 +351,12 @@ def finding_payload_from_domain(
     elif finding.vibration_strength_db is not None:
         payload["evidence_metrics"] = {"vibration_strength_db": finding.vibration_strength_db}
 
-    # Phase evidence
     if finding.cruise_fraction > 0.0 or finding.phases_detected:
         phase_evidence: PhaseEvidence = {"cruise_fraction": finding.cruise_fraction}
         if finding.phases_detected:
             phase_evidence["phases_detected"] = list(finding.phases_detected)
         payload["phase_evidence"] = phase_evidence
 
-    # Location hotspot
     if finding.location is not None:
         loc = finding.location
         hotspot: LocationHotspotPayload = {
@@ -335,17 +372,41 @@ def finding_payload_from_domain(
             hotspot["location_count"] = loc.location_count
         payload["location_hotspot"] = hotspot
 
-    # Confidence assessment
+    if finding.origin is not None and finding.origin.dominant_phase is not None:
+        payload["dominant_phase"] = finding.origin.dominant_phase
+
+    return payload
+
+
+def _finding_presentation_payload_from_domain(
+    finding: Finding,
+) -> _FindingPresentationPayload:
+    """Project rendering- and report-oriented finding metadata."""
+    payload: _FindingPresentationPayload = {
+        "evidence_summary": "",
+        "frequency_hz_or_order": (
+            finding.frequency_hz if finding.frequency_hz is not None else finding.order or ""
+        ),
+        "amplitude_metric": _amplitude_metric_payload(finding),
+    }
     if finding.confidence_assessment is not None:
         ca = finding.confidence_assessment
         payload["confidence_label_key"] = ca.label_key
         payload["confidence_tone"] = ca.tone
         payload["confidence_pct"] = ca.pct_text
-
-    # Origin / evidence summary
     if finding.origin is not None:
         payload["evidence_summary"] = finding.origin.reason
-        if finding.origin.dominant_phase is not None:
-            payload["dominant_phase"] = finding.origin.dominant_phase
-
     return payload
+
+
+def finding_payload_from_domain(
+    finding: Finding,
+) -> FindingPayload:
+    """Project a domain Finding to the current persisted/public payload dict.
+
+    Produces the documented ``FindingPayload`` contract from domain objects
+    alone, without pass-through shortcuts to original payload dicts.
+    """
+    core_payload = _finding_core_payload_from_domain(finding)
+    presentation_payload = _finding_presentation_payload_from_domain(finding)
+    return cast(FindingPayload, {**core_payload, **presentation_payload})
