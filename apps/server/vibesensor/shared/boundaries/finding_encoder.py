@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import cast
 
-from typing_extensions import TypedDict
-
 from vibesensor.domain import Finding
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.boundaries.analysis_payload import (
@@ -16,6 +14,10 @@ from vibesensor.shared.boundaries.analysis_payload import (
     PhaseEvidence,
 )
 from vibesensor.shared.json_utils import i18n_ref, payload_value_from_json
+from vibesensor.shared.types.finding_payload_parts import (
+    FindingCorePayload,
+    FindingPresentationPayload,
+)
 from vibesensor.shared.types.history_analysis_contracts import FindingPayload
 
 
@@ -43,45 +45,9 @@ def _amplitude_metric_payload(finding: Finding) -> AmplitudeMetric:
     }
 
 
-class _FindingCorePayload(TypedDict, total=False):
-    """Internal domain-owned finding payload fields."""
-
-    finding_id: str
-    finding_key: str | None
-    suspected_source: str
-    confidence: float | None
-    finding_kind: str | None
-    severity: str | None
-    matched_points: list[MatchedPoint]
-    location_hotspot: LocationHotspotPayload | None
-    strongest_location: str | None
-    strongest_speed_band: str | None
-    dominant_phase: str | None
-    dominance_ratio: float | None
-    weak_spatial_separation: bool
-    diffuse_excitation: bool
-    phase_evidence: PhaseEvidence | None
-    evidence_metrics: FindingEvidenceMetrics | None
-    ranking_score: float | None
-    peak_classification: str | None
-    signatures_observed: list[str]
-    order: str | None
-
-
-class _FindingPresentationPayload(TypedDict, total=False):
-    """Internal rendering-oriented finding metadata."""
-
-    evidence_summary: str
-    frequency_hz_or_order: float | str
-    amplitude_metric: AmplitudeMetric
-    confidence_label_key: str | None
-    confidence_tone: str | None
-    confidence_pct: str | None
-
-
-def _finding_core_payload_from_domain(finding: Finding) -> _FindingCorePayload:
+def _finding_core_payload_from_domain(finding: Finding) -> FindingCorePayload:
     """Project only the domain-owned finding fields."""
-    payload: _FindingCorePayload = {
+    payload: FindingCorePayload = {
         "finding_id": finding.finding_id,
         "finding_key": finding.finding_key,
         "suspected_source": str(finding.suspected_source),
@@ -172,9 +138,9 @@ def _finding_core_payload_from_domain(finding: Finding) -> _FindingCorePayload:
 
 def _finding_presentation_payload_from_domain(
     finding: Finding,
-) -> _FindingPresentationPayload:
+) -> FindingPresentationPayload:
     """Project rendering- and report-oriented finding metadata."""
-    payload: _FindingPresentationPayload = {
+    payload: FindingPresentationPayload = {
         "evidence_summary": "",
         "frequency_hz_or_order": (
             finding.frequency_hz if finding.frequency_hz is not None else finding.order or ""
