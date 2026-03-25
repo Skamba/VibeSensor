@@ -24,18 +24,18 @@ from vibesensor.shared.boundaries.report_interpretation import (
 )
 from vibesensor.shared.boundaries.report_payload_projection import (
     active_sensor_locations,
-    coerce_count,
-    peak_table_rows,
-    report_duration_s,
     sensor_intensity_payload,
     summary_metadata,
     summary_warnings,
+)
+from vibesensor.shared.boundaries.report_renderer_payload import (
+    PreparedReportRendererPayload,
+    build_report_renderer_payload,
 )
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.analysis_views import PeakTableRow
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary,
     RunSuitabilityCheck,
@@ -58,40 +58,6 @@ def _has_projectable_payload(payload: Mapping[str, object]) -> bool:
 def _default_report_filename(payload: Mapping[str, object]) -> str:
     run_id = str(payload.get("run_id") or payload.get("file_name") or "report")
     return f"{safe_filename(run_id)}_report.pdf"
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedReportRendererPayload:
-    """Minimal renderer-edge payload prepared from summary or persisted analysis."""
-
-    run_id: str
-    car_name: str | None
-    car_type: str | None
-    report_date: str | None
-    duration_s: float | None
-    sample_count: int
-    sensor_count: int
-    peak_table_rows: tuple[PeakTableRow, ...]
-
-
-def _build_renderer_payload(payload: Mapping[str, object]) -> PreparedReportRendererPayload:
-    metadata = summary_metadata(payload)
-    rows = payload.get("rows")
-    sample_count = coerce_count(rows)
-    sensor_count_raw = payload.get("sensor_count_used")
-    sensor_count = coerce_count(sensor_count_raw)
-    report_date = payload.get("report_date")
-    report_date_str = str(report_date).strip() or None if isinstance(report_date, str) else None
-    return PreparedReportRendererPayload(
-        run_id=str(payload.get("run_id") or "unknown") or "unknown",
-        car_name=str(metadata.get("car_name") or "").strip() or None,
-        car_type=str(metadata.get("car_type") or "").strip() or None,
-        report_date=report_date_str,
-        duration_s=report_duration_s(payload),
-        sample_count=sample_count,
-        sensor_count=sensor_count,
-        peak_table_rows=peak_table_rows(payload),
-    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -345,7 +311,7 @@ def _build_prepared_report_input(
 ) -> PreparedReportInput:
     domain_test_run = _reconstruct_report_test_run(payload)
     prepared_language = str(normalize_lang(language or payload.get("lang")))
-    renderer_payload = _build_renderer_payload(payload)
+    renderer_payload = build_report_renderer_payload(payload)
     report_facts = (
         _prepare_report_facts(payload, test_run=domain_test_run, warnings=warnings)
         if domain_test_run is not None
