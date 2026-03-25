@@ -333,3 +333,11 @@ def test_history_insights_response_is_http_owned_wrapper() -> None:
     from vibesensor.adapters.http.models.history import HistoryInsightsResponse
 
     assert BoundaryAnalysisSummaryCoreResponse not in HistoryInsightsResponse.__bases__
+
+
+def test_history_run_response_analysis_uses_local_http_alias() -> None:
+    from vibesensor.adapters.http.models.history import HistoryRunResponse
+
+    annotation = HistoryRunResponse.__annotations__["analysis"]
+    assert "_SharedAnalysisSummaryResponse" not in annotation
+    assert "_HistoryRunAnalysisResponse" in annotation
