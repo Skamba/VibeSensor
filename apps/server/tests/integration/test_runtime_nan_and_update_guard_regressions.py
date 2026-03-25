@@ -166,24 +166,27 @@ class TestUpdateManagerCancelledError:
     async def test_cancelled_error_is_reraised(self):
         """_run_update should re-raise CancelledError."""
         mgr = UpdateManager.__new__(UpdateManager)
-        mgr._status = MagicMock()
-        mgr._status.phase = MagicMock()
-        mgr._status.state = UpdateState.running
-        mgr._status.issues = []
-        mgr._status.finished_at = None
-        mgr._state_store = MagicMock()
-        mgr._state_store.save = MagicMock()
-
+        status = MagicMock()
+        status.phase = MagicMock()
+        status.state = UpdateState.running
+        status.issues = []
+        status.finished_at = None
         tracker = MagicMock()
-        tracker.status = mgr._status
+        tracker.status = status
         mgr._tracker = tracker
         mgr._executor = UpdateJobExecutor(task_name="system-update")
+        mgr._lifecycle = MagicMock(
+            handle_timeout=MagicMock(),
+            handle_cancelled=MagicMock(),
+            handle_unexpected=MagicMock(),
+            cleanup_after_update=AsyncMock(return_value=None),
+            handle_cancelled_cleanup_error=MagicMock(),
+        )
 
         async def mock_inner(ssid, password):
             raise asyncio.CancelledError()
 
         mgr._run_update_inner = mock_inner
-        mgr._cleanup_after_update = AsyncMock(return_value=None)
 
         with pytest.raises(asyncio.CancelledError):
             await mgr._run_update("ssid", "pass")
