@@ -166,6 +166,8 @@ def build_analysis_summary(
             amp_metric_values=amp_metric_values,
         )
     )
+
+
 def _json_object(value: JsonObject) -> PayloadObject:
     return payload_object_from_json(value)
 
@@ -199,6 +201,8 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
         MEMS_NOISE_FLOOR_G,
     )
     return result
+
+
 def _speed_stats_payload(speed_stats: SpeedProfileSummary) -> SpeedStatsPayload:
     return {
         "min_kmh": speed_stats.min_kmh,
@@ -263,6 +267,8 @@ def _location_intensity_summary_payload(
         "strength_bucket_distribution": bucket_distribution,
         "phase_intensity": phase_intensity,
     }
+
+
 def serialize_origin_summary(
     origin: VibrationOrigin | None,
 ) -> SuspectedVibrationOrigin:
