@@ -221,11 +221,10 @@ class UpdateManager:
             await firmware_refresher.refresh_esp_firmware(pinned_tag=release_check.latest_tag)
             if cancel_requested():
                 return
-            await self._complete_update_success(
-                tracker,
-                wifi,
+            if not await wifi.complete_update_success(
                 "No server update needed; ESP firmware checked",
-            )
+            ):
+                return
             return
 
         tracker.log(f"Update available: {current_version} → {release_check.release.version}")
@@ -275,7 +274,8 @@ class UpdateManager:
 
         if cancel_requested():
             return
-        await self._complete_update_success(tracker, wifi, "Update completed successfully")
+        if not await wifi.complete_update_success("Update completed successfully"):
+            return
         if await schedule_service_restart(
             commands=commands,
             tracker=tracker,
@@ -290,40 +290,11 @@ class UpdateManager:
         )
         tracker.log("Automatic backend restart scheduling failed")
 
-    async def _complete_update_success(
-        self,
-        tracker: UpdateStatusTracker,
-        wifi: UpdateWifiOrchestrator,
-        message: str,
-    ) -> None:
-        tracker.transition(UpdatePhase.restoring_hotspot)
-        tracker.log("Restoring hotspot...")
-        restored = await wifi.restore_hotspot()
-        if not restored:
-            tracker.status.state = UpdateState.failed
-            tracker.persist()
-            return
-        tracker.mark_success(message)
-
     async def _cleanup_after_update(self) -> None:
         tracker = self._tracker
         wifi = self._build_wifi_orchestrator()
         try:
-            restore_phases = {
-                UpdatePhase.stopping_hotspot,
-                UpdatePhase.connecting_wifi,
-                UpdatePhase.checking,
-                UpdatePhase.downloading,
-                UpdatePhase.installing,
-                UpdatePhase.restoring_hotspot,
-            }
-            if (
-                tracker.status.state == UpdateState.running
-                or tracker.status.phase in restore_phases
-            ):
-                tracker.transition(UpdatePhase.restoring_hotspot)
-                tracker.log("Restoring hotspot...")
-                await wifi.cleanup_restore_hotspot()
+            await wifi.maybe_restore_hotspot_during_cleanup()
             tracker.clear_secrets()
             tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
             self._status = tracker.status

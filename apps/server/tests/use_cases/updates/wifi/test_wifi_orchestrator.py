@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 from _update_manager_test_helpers import FakeRunner
 
-from vibesensor.use_cases.updates.models import UpdateIssue
+from vibesensor.use_cases.updates.models import UpdateIssue, UpdatePhase, UpdateState
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi import UpdateWifiOrchestrator, build_default_wifi_config
@@ -106,3 +106,56 @@ async def test_collect_cleanup_diagnostics_returns_parsed_issues(tmp_path: Path)
         return_value=expected_issues,
     ):
         assert await orchestrator.collect_cleanup_diagnostics() == expected_issues
+
+
+@pytest.mark.asyncio
+async def test_complete_update_success_restores_hotspot_and_marks_success(tmp_path: Path) -> None:
+    orchestrator, _runner, tracker = _build_orchestrator(tmp_path)
+    tracker.start_job("TestNet")
+
+    assert await orchestrator.complete_update_success("Update completed successfully") is True
+
+    assert tracker.status.state == UpdateState.success
+    assert tracker.status.phase == UpdatePhase.done
+    assert any("Update completed successfully" in line for line in tracker.status.log_tail)
+
+
+@pytest.mark.asyncio
+async def test_complete_update_success_marks_failed_when_restore_fails(tmp_path: Path) -> None:
+    orchestrator, runner, tracker = _build_orchestrator(
+        tmp_path,
+        restore_retries=1,
+        restore_delay_s=0,
+    )
+    tracker.start_job("TestNet")
+    runner.set_response("connection up VibeSensor-AP", 10, "", "failed")
+
+    assert await orchestrator.complete_update_success("Update completed successfully") is False
+
+    assert tracker.status.state == UpdateState.failed
+
+
+@pytest.mark.asyncio
+async def test_cleanup_restore_orchestration_restores_hotspot_when_needed(tmp_path: Path) -> None:
+    orchestrator, _runner, tracker = _build_orchestrator(tmp_path)
+    tracker.start_job("TestNet")
+    tracker.transition(UpdatePhase.installing)
+
+    await orchestrator.maybe_restore_hotspot_during_cleanup()
+
+    assert tracker.status.phase == UpdatePhase.restoring_hotspot
+    assert any("Restoring hotspot..." in line for line in tracker.status.log_tail)
+
+
+@pytest.mark.asyncio
+async def test_cleanup_restore_orchestration_skips_restore_when_no_longer_needed(
+    tmp_path: Path,
+) -> None:
+    orchestrator, runner, tracker = _build_orchestrator(tmp_path)
+    tracker.start_job("TestNet")
+    tracker.mark_success("done")
+
+    await orchestrator.maybe_restore_hotspot_during_cleanup()
+
+    commands = [" ".join(call[0]) for call in runner.calls]
+    assert not any("connection up VibeSensor-AP" in command for command in commands)
