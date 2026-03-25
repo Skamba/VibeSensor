@@ -12,6 +12,23 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from vibesensor.adapters.udp.protocol_validator import (
+    ACCEL_AXES,
+    CLIENT_ID_BYTES,
+    HELLO_MAX_NAME_BYTES,
+    VERSION,
+    validate_client_id,
+    validate_cmd_seq,
+    validate_data_frame,
+    validate_fixed_message_size,
+    validate_header,
+    validate_hello_sample_rate,
+    validate_minimum_size,
+    validate_samples_array,
+)
+from vibesensor.adapters.udp.protocol_validator import (
+    ProtocolVersionMismatch as ProtocolVersionMismatch,  # re-export
+)
 from vibesensor.shared.exceptions import (
     ProtocolError as ProtocolError,  # re-export for consumers
 )
@@ -48,8 +65,6 @@ __all__ = [
     "parse_hello_ack",
 ]
 
-VERSION = 1
-CLIENT_ID_BYTES = 6
 CLIENT_ID_OFFSET = 2  # Byte offset of the client_id field in all message types.
 
 MSG_HELLO = 1
@@ -82,32 +97,11 @@ CMD_HEADER_BYTES: int = CMD_HEADER.size
 CMD_IDENTIFY_BYTES: int = CMD_IDENTIFY_STRUCT.size
 CMD_SYNC_CLOCK_BYTES: int = CMD_SYNC_CLOCK_STRUCT.size
 
-HELLO_MAX_NAME_BYTES: int = 32
-"""Maximum length (in UTF-8 bytes) for the name and firmware_version fields
-in HELLO messages.  ``pack_hello`` enforces this limit on the send path;
-``parse_hello`` warns when an inbound message exceeds it (the value is still
-accepted to preserve forward compatibility with future firmware)."""
-
 # Pre-resolved dtype for the hot ingest path (parse_data / pack_data).
 _SAMPLE_DTYPE = np.dtype("<i2")
 
-ACCEL_AXES: int = 3
-"""Number of accelerometer axes per sample (X, Y, Z)."""
-
 BYTES_PER_SAMPLE: int = ACCEL_AXES * _SAMPLE_DTYPE.itemsize
 """Wire size of one accelerometer sample in bytes (3 axes × 2 bytes for int16)."""
-
-
-class ProtocolVersionMismatch(ProtocolError):
-    """Protocol error raised when a packet uses an unsupported wire version."""
-
-    def __init__(self, *, label: str, expected_version: int, actual_version: int) -> None:
-        super().__init__(
-            f"{label} version mismatch: expected {expected_version}, got {actual_version}",
-        )
-        self.label = label
-        self.expected_version = expected_version
-        self.actual_version = actual_version
 
 
 @dataclass(slots=True)
@@ -169,23 +163,6 @@ class HelloAckMessage:
     client_id: bytes
 
 
-def _validate_header(
-    *,
-    label: str,
-    msg_type: int,
-    expected_msg_type: int,
-    version: int,
-) -> None:
-    if msg_type != expected_msg_type:
-        raise ProtocolError(f"Invalid {label} header")
-    if version != VERSION:
-        raise ProtocolVersionMismatch(
-            label=label,
-            expected_version=VERSION,
-            actual_version=version,
-        )
-
-
 def client_id_hex(client_id: bytes) -> str:
     """Return the 6-byte *client_id* as a lowercase hex string."""
     if len(client_id) != 6:
@@ -219,8 +196,7 @@ def parse_client_id(client_id_text: str) -> bytes:
 
 def parse_hello(data: bytes) -> HelloMessage:
     """Decode a raw HELLO message into a :class:`HelloMessage`."""
-    if len(data) < HELLO_BASE.size:
-        raise ProtocolError("HELLO too short")
+    validate_minimum_size(label="HELLO", data_length=len(data), minimum=HELLO_BASE.size)
     (
         msg_type,
         version,
@@ -230,15 +206,13 @@ def parse_hello(data: bytes) -> HelloMessage:
         frame_samples,
         name_len,
     ) = HELLO_BASE.unpack_from(data, 0)
-    _validate_header(
+    validate_header(
         label="HELLO",
         msg_type=msg_type,
         expected_msg_type=MSG_HELLO,
         version=version,
     )
-
-    if sample_rate_hz == 0:
-        raise ProtocolError("HELLO sample_rate_hz must not be zero")
+    validate_hello_sample_rate(sample_rate_hz)
 
     if control_port == 0:
         LOGGER.warning("HELLO control_port is 0; sensor may not be reachable for commands")
@@ -305,8 +279,7 @@ def pack_hello(
     capabilities: int = 0,
 ) -> bytes:
     """Encode a HELLO message as bytes."""
-    if len(client_id) != CLIENT_ID_BYTES:
-        raise ValueError(f"client_id must be {CLIENT_ID_BYTES} bytes, got {len(client_id)}")
+    validate_client_id(client_id)
     name_bytes = name.encode("utf-8")[:HELLO_MAX_NAME_BYTES]
     fw_bytes = firmware_version.encode("utf-8")[:HELLO_MAX_NAME_BYTES]
     header = HELLO_BASE.pack(
@@ -330,29 +303,20 @@ def pack_hello(
 
 def parse_data(data: bytes) -> DataMessage:
     """Decode a raw DATA message into a :class:`DataMessage`."""
-    if len(data) < DATA_HEADER_BYTES:
-        raise ProtocolError("DATA too short")
+    validate_minimum_size(label="DATA", data_length=len(data), minimum=DATA_HEADER_BYTES)
     msg_type, version, client_id, seq, t0_us, sample_count = DATA_HEADER.unpack_from(data, 0)
-    _validate_header(
+    validate_header(
         label="DATA",
         msg_type=msg_type,
         expected_msg_type=MSG_DATA,
         version=version,
     )
-
-    # Reject unreasonably large frames before any allocation.  The ESP32
-    # firmware sends at most ~200 samples per frame at 4096 Hz; 1024 gives
-    # generous headroom while preventing accidental or malicious OOM.
-    _MAX_SAMPLE_COUNT = 1024
-    if sample_count > _MAX_SAMPLE_COUNT:
-        raise ProtocolError(f"DATA sample_count {sample_count} exceeds maximum {_MAX_SAMPLE_COUNT}")
-
-    if sample_count == 0:
-        raise ProtocolError("DATA sample_count must not be zero")
-    payload_len = sample_count * BYTES_PER_SAMPLE
-    expected_len = DATA_HEADER_BYTES + payload_len
-    if len(data) != expected_len:
-        raise ProtocolError(f"DATA payload size mismatch: expected {expected_len}, got {len(data)}")
+    validate_data_frame(
+        sample_count=sample_count,
+        data_length=len(data),
+        header_bytes=DATA_HEADER_BYTES,
+        bytes_per_sample=BYTES_PER_SAMPLE,
+    )
 
     payload = memoryview(data)[DATA_HEADER_BYTES:]
     samples = np.frombuffer(payload, dtype=_SAMPLE_DTYPE).reshape(sample_count, ACCEL_AXES).copy()
@@ -368,21 +332,16 @@ def parse_data(data: bytes) -> DataMessage:
 def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> bytes:
     """Encode a DATA message as bytes from an (N, 3) int16 samples array."""
     samples_int16 = np.asarray(samples, dtype=_SAMPLE_DTYPE)
-    if samples_int16.ndim != 2 or samples_int16.shape[1] != ACCEL_AXES:
-        raise ValueError(f"samples must be shaped (N, {ACCEL_AXES})")
-    sample_count = int(samples_int16.shape[0])
-    if sample_count == 0:
-        raise ValueError("pack_data: samples array must not be empty (sample_count must be > 0)")
+    sample_count = validate_samples_array(samples_int16)
     header = DATA_HEADER.pack(MSG_DATA, VERSION, client_id, seq, t0_us, sample_count)
     return bytes(header + samples_int16.tobytes(order="C"))
 
 
 def parse_cmd(data: bytes) -> CmdMessage:
     """Decode a raw CMD message into a :class:`CmdMessage`."""
-    if len(data) < CMD_HEADER_BYTES:
-        raise ProtocolError("CMD too short")
+    validate_minimum_size(label="CMD", data_length=len(data), minimum=CMD_HEADER_BYTES)
     msg_type, version, client_id, cmd_id, cmd_seq = CMD_HEADER.unpack_from(data, 0)
-    _validate_header(
+    validate_header(
         label="CMD",
         msg_type=msg_type,
         expected_msg_type=MSG_CMD,
@@ -399,8 +358,7 @@ def parse_cmd(data: bytes) -> CmdMessage:
 
 def pack_cmd_identify(client_id: bytes, cmd_seq: int, duration_ms: int) -> bytes:
     """Encode a CMD_IDENTIFY command as bytes."""
-    if cmd_seq < 0:
-        raise ValueError(f"cmd_seq must be non-negative, got {cmd_seq}")
+    validate_cmd_seq(cmd_seq)
     return CMD_IDENTIFY_STRUCT.pack(
         MSG_CMD,
         VERSION,
@@ -413,8 +371,7 @@ def pack_cmd_identify(client_id: bytes, cmd_seq: int, duration_ms: int) -> bytes
 
 def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> bytes:
     """Encode a CMD_SYNC_CLOCK command as bytes."""
-    if cmd_seq < 0:
-        raise ValueError(f"cmd_seq must be non-negative, got {cmd_seq}")
+    validate_cmd_seq(cmd_seq)
     return CMD_SYNC_CLOCK_STRUCT.pack(
         MSG_CMD,
         VERSION,
@@ -427,10 +384,11 @@ def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> 
 
 def parse_hello_ack(data: bytes) -> HelloAckMessage:
     """Decode a raw HELLO_ACK message into a :class:`HelloAckMessage`."""
-    if len(data) != HELLO_ACK_BYTES:
-        raise ProtocolError("HELLO_ACK has unexpected size")
+    validate_fixed_message_size(
+        label="HELLO_ACK", data_length=len(data), expected_size=HELLO_ACK_BYTES
+    )
     msg_type, version, client_id = HELLO_ACK_STRUCT.unpack_from(data, 0)
-    _validate_header(
+    validate_header(
         label="HELLO_ACK",
         msg_type=msg_type,
         expected_msg_type=MSG_HELLO_ACK,
@@ -441,17 +399,15 @@ def parse_hello_ack(data: bytes) -> HelloAckMessage:
 
 def pack_hello_ack(client_id: bytes) -> bytes:
     """Encode a HELLO_ACK message as bytes."""
-    if len(client_id) != CLIENT_ID_BYTES:
-        raise ValueError(f"client_id must be {CLIENT_ID_BYTES} bytes, got {len(client_id)}")
+    validate_client_id(client_id)
     return HELLO_ACK_STRUCT.pack(MSG_HELLO_ACK, VERSION, client_id)
 
 
 def parse_ack(data: bytes) -> AckMessage:
     """Decode a raw ACK message into an :class:`AckMessage`."""
-    if len(data) != ACK_BYTES:
-        raise ProtocolError("ACK has unexpected size")
+    validate_fixed_message_size(label="ACK", data_length=len(data), expected_size=ACK_BYTES)
     msg_type, version, client_id, cmd_seq, status = ACK_STRUCT.unpack_from(data, 0)
-    _validate_header(
+    validate_header(
         label="ACK",
         msg_type=msg_type,
         expected_msg_type=MSG_ACK,
@@ -462,17 +418,17 @@ def parse_ack(data: bytes) -> AckMessage:
 
 def pack_ack(client_id: bytes, cmd_seq: int, status: int = 0) -> bytes:
     """Encode an ACK message as bytes."""
-    if cmd_seq < 0:
-        raise ValueError(f"cmd_seq must be non-negative, got {cmd_seq}")
+    validate_cmd_seq(cmd_seq)
     return ACK_STRUCT.pack(MSG_ACK, VERSION, client_id, cmd_seq, status & 0xFF)
 
 
 def parse_data_ack(data: bytes) -> DataAckMessage:
     """Decode a raw DATA_ACK message into a :class:`DataAckMessage`."""
-    if len(data) != DATA_ACK_BYTES:
-        raise ProtocolError("DATA_ACK has unexpected size")
+    validate_fixed_message_size(
+        label="DATA_ACK", data_length=len(data), expected_size=DATA_ACK_BYTES
+    )
     msg_type, version, client_id, last_seq_received = DATA_ACK_STRUCT.unpack_from(data, 0)
-    _validate_header(
+    validate_header(
         label="DATA_ACK",
         msg_type=msg_type,
         expected_msg_type=MSG_DATA_ACK,
