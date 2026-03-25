@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import vibesensor.shared.boundaries.finding as boundary_finding
 from vibesensor.domain import Finding, OrderMatchObservation, VibrationSource
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.finding import (
+from vibesensor.shared.boundaries.finding_encoder import (
     _finding_core_payload_from_domain,
     _finding_presentation_payload_from_domain,
     finding_payload_from_domain,
@@ -122,3 +123,9 @@ def test_projection_separates_core_and_presentation_metadata_before_composing() 
     assert presentation_payload["confidence_tone"] == finding.confidence_assessment.tone
 
     assert payload == {**core_payload, **presentation_payload}
+
+
+def test_boundary_module_no_longer_owns_encoder_private_helpers() -> None:
+    assert not hasattr(boundary_finding, "_finding_core_payload_from_domain")
+    assert not hasattr(boundary_finding, "_finding_presentation_payload_from_domain")
+    assert not hasattr(boundary_finding, "matched_point_from_observation")
