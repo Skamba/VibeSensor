@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from vibesensor.infra.processing.buffer_store import (
+from vibesensor.infra.processing.buffer_capacity import (
     MAX_CLIENT_SAMPLE_RATE_HZ as _MAX_CLIENT_SAMPLE_RATE_HZ,
 )
 from vibesensor.infra.processing.buffer_store import SignalBufferStore
