@@ -29,16 +29,18 @@ from vibesensor.shared.types.analysis_views import (
     SpectrogramResult,
     SpeedBreakdownRow,
 )
-from vibesensor.shared.types.history_analysis_contracts import (
-    AmplitudeMetric,
+from vibesensor.shared.types.data_quality_contracts import (
     DataQualityAccelSanityResponse,
     DataQualityOutliersResponse,
     DataQualityRequiredMissingPctResponse,
     DataQualityResponse,
     DataQualitySpeedCoverageResponse,
+    OutlierSummaryResponse,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    AmplitudeMetric,
     FindingPayload,
     LocationIntensitySummaryResponse,
-    OutlierSummaryResponse,
     PhaseInfoResponse,
     PhaseIntensityStatsResponse,
     PhaseSegmentSummaryResponse,

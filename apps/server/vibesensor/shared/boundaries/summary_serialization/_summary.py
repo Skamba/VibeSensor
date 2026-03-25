@@ -27,19 +27,19 @@ from vibesensor.shared.json_utils import (
 )
 from vibesensor.shared.statistics_utils import _outlier_summary, _percent_missing
 from vibesensor.shared.time_utils import format_duration_mm_ss
+from vibesensor.shared.types.data_quality_contracts import (
+    DataQualityResponse as DataQualityPayload,
+)
+from vibesensor.shared.types.data_quality_contracts import (
+    OutlierSummaryResponse as OutlierSummaryPayload,
+)
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary,
     PayloadObject,
     PayloadValue,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
-    DataQualityResponse as DataQualityPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
     LocationIntensitySummaryResponse as LocationIntensitySummaryPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    OutlierSummaryResponse as OutlierSummaryPayload,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     PhaseInfoResponse as PhaseInfoPayload,
