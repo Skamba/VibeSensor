@@ -2,10 +2,11 @@
 
 These TypedDicts are the single semantic owners for analysis/history wrapper
 and composite contracts that are shared between persisted boundary payloads and
-the HTTP/OpenAPI response schema. ``FindingPayload`` is canonically owned here.
-Boundary modules only alias contracts that need boundary-specific payload
-names, while endpoint-specific HTTP wrappers remain local to
-``shared.types.api_models.history``.
+the HTTP/OpenAPI response schema. ``FindingPayload``, ``AnalysisSummary``,
+``AnalysisSummaryCoreResponse``, and ``AnalysisSummaryResponse`` are
+canonically owned here. Boundary modules should import these shared wrapper
+contracts directly from this module, while endpoint-specific HTTP wrappers
+remain local to ``shared.types.api_models.history``.
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ from vibesensor.shared.types.json_types import (
 
 __all__ = [
     "AmplitudeMetric",
+    "AnalysisSummary",
     "AnalysisSummaryCoreResponse",
     "AnalysisSummaryResponse",
     "DataQualityAccelSanityResponse",
@@ -378,6 +380,9 @@ class AnalysisSummaryResponse(AnalysisSummaryCoreResponse):
     """Typed HTTP contract for the persisted analysis summary on one history run."""
 
     warnings: Required[list[SummaryWarningResponse]]
+
+
+AnalysisSummary: TypeAlias = AnalysisSummaryResponse
 
 
 def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:

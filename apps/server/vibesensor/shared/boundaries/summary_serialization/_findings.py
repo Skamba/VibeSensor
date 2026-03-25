@@ -7,10 +7,9 @@ from statistics import median as _median
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.finding import finding_payload_from_domain
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.history_analysis_contracts import FindingPayload
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary, FindingPayload
 from vibesensor.shared.types.json_types import is_json_object
 
 

@@ -13,7 +13,6 @@ from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.analysis_payload import (
-    AnalysisSummary,
     DataQualityPayload,
     LocationIntensitySummaryPayload,
     OutlierSummaryPayload,
@@ -35,6 +34,7 @@ from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.statistics_utils import _outlier_summary, _percent_missing
 from vibesensor.shared.time_utils import format_duration_mm_ss
 from vibesensor.shared.types.history_analysis_contracts import (
+    AnalysisSummary,
     PayloadObject,
     PayloadValue,
     payload_object_from_json,

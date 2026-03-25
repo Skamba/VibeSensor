@@ -18,12 +18,12 @@ from vibesensor.adapters.history import (
     build_projected_run_details_json,
 )
 from vibesensor.domain import CarSnapshot, RunStatus
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
 )
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame

@@ -8,8 +8,8 @@ from vibesensor.adapters.pdf.presentation import order_label_human, peak_classif
 from vibesensor.adapters.pdf.report_data import PeakRow
 from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.domain import VibrationSource
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 
 __all__ = [
     "build_peak_rows",
