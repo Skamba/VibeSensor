@@ -305,7 +305,7 @@ class SuspectedVibrationOriginPayload(TypedDict, total=False):
 
 
 class AnalysisSummaryCoreResponse(TypedDict, total=False):
-    """Shared core fields reused by persisted and localized history summaries."""
+    """Canonical shared owner for persisted/localized summary core fields."""
 
     file_name: Required[str]
     run_id: Required[str]
@@ -352,7 +352,7 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
 
 
 class AnalysisSummaryResponse(AnalysisSummaryCoreResponse):
-    """Typed HTTP contract for the persisted analysis summary on one history run."""
+    """Canonical shared owner for the persisted analysis summary wrapper."""
 
     warnings: Required[list[SummaryWarningResponse]]
 

@@ -31,7 +31,6 @@ from .health import (
 from .history import (
     AmplitudeMetric,
     AmpVsPhaseRow,
-    AnalysisSummaryResponse,
     DeleteHistoryRunResponse,
     FindingEvidenceMetrics,
     FindingPayload,
@@ -130,7 +129,6 @@ __all__ = [
     "HistoryListEntryResponse",
     "HistoryListResponse",
     "HistoryRunResponse",
-    "AnalysisSummaryResponse",
     "HistoryInsightsAnalyzingResponse",
     "HistoryInsightWarningResponse",
     "AmpVsPhaseRow",
