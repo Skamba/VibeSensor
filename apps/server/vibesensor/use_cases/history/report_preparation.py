@@ -4,15 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from vibesensor.domain import (
     LocationHotspotRow,
     LocationIntensitySummary,
     RecommendedAction,
     VibrationOrigin,
-    coerce_float,
-    coerce_int,
 )
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.report_interpretation import (
@@ -24,8 +22,16 @@ from vibesensor.shared.boundaries.report_interpretation import (
     resolve_report_origin,
     tire_spec_text,
 )
+from vibesensor.shared.boundaries.report_payload_projection import (
+    active_sensor_locations,
+    coerce_count,
+    peak_table_rows,
+    report_duration_s,
+    sensor_intensity_payload,
+    summary_metadata,
+    summary_warnings,
+)
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
-from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
@@ -54,67 +60,6 @@ def _default_report_filename(payload: Mapping[str, object]) -> str:
     return f"{safe_filename(run_id)}_report.pdf"
 
 
-def _summary_metadata(payload: Mapping[str, object]) -> Mapping[str, object]:
-    metadata = payload.get("metadata")
-    return metadata if isinstance(metadata, dict) else {}
-
-
-def _active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:
-    connected = payload.get("sensor_locations_connected_throughout")
-    locations = connected if isinstance(connected, list) else []
-    active = tuple(str(loc).strip() for loc in locations if str(loc).strip())
-    if active:
-        return active
-    fallback = payload.get("sensor_locations")
-    fallback_locations = fallback if isinstance(fallback, list) else []
-    return tuple(str(loc).strip() for loc in fallback_locations if str(loc).strip())
-
-
-def _summary_warnings(
-    payload: Mapping[str, object],
-    *,
-    warnings: object | None = None,
-) -> tuple[SummaryWarningPayload, ...]:
-    raw_warnings = warnings if warnings is not None else payload.get("warnings")
-    return tuple(summary_warning_payloads(raw_warnings))
-
-
-def _report_duration_s(payload: Mapping[str, object]) -> float | None:
-    duration_s_raw = payload.get("duration_s")
-    if duration_s_raw is None:
-        return None
-    try:
-        return coerce_float(duration_s_raw)
-    except (TypeError, ValueError):
-        return None
-
-
-def _peak_table_rows(payload: Mapping[str, object]) -> tuple[PeakTableRow, ...]:
-    plots = payload.get("plots")
-    if not isinstance(plots, Mapping):
-        return ()
-    raw_peaks = plots.get("peaks_table")
-    if not isinstance(raw_peaks, list):
-        return ()
-    return tuple(cast(PeakTableRow, row) for row in raw_peaks if isinstance(row, Mapping))
-
-
-def _sensor_intensity_payload(payload: Mapping[str, object]) -> tuple[object, ...]:
-    raw_sensor_intensity = payload.get("sensor_intensity_by_location")
-    if not isinstance(raw_sensor_intensity, list):
-        return ()
-    return tuple(raw_sensor_intensity)
-
-
-def _coerce_count(value: object) -> int:
-    if value is None:
-        return 0
-    try:
-        return coerce_int(value)
-    except (TypeError, ValueError):
-        return 0
-
-
 @dataclass(frozen=True, slots=True)
 class PreparedReportRendererPayload:
     """Minimal renderer-edge payload prepared from summary or persisted analysis."""
@@ -130,11 +75,11 @@ class PreparedReportRendererPayload:
 
 
 def _build_renderer_payload(payload: Mapping[str, object]) -> PreparedReportRendererPayload:
-    metadata = _summary_metadata(payload)
+    metadata = summary_metadata(payload)
     rows = payload.get("rows")
-    sample_count = _coerce_count(rows)
+    sample_count = coerce_count(rows)
     sensor_count_raw = payload.get("sensor_count_used")
-    sensor_count = _coerce_count(sensor_count_raw)
+    sensor_count = coerce_count(sensor_count_raw)
     report_date = payload.get("report_date")
     report_date_str = str(report_date).strip() or None if isinstance(report_date, str) else None
     return PreparedReportRendererPayload(
@@ -142,10 +87,10 @@ def _build_renderer_payload(payload: Mapping[str, object]) -> PreparedReportRend
         car_name=str(metadata.get("car_name") or "").strip() or None,
         car_type=str(metadata.get("car_type") or "").strip() or None,
         report_date=report_date_str,
-        duration_s=_report_duration_s(payload),
+        duration_s=report_duration_s(payload),
         sample_count=sample_count,
         sensor_count=sensor_count,
-        peak_table_rows=_peak_table_rows(payload),
+        peak_table_rows=peak_table_rows(payload),
     )
 
 
@@ -348,14 +293,14 @@ def _prepare_report_facts(
     test_run: TestRun,
     warnings: object | None = None,
 ) -> PreparedReportFacts:
-    metadata = _summary_metadata(payload)
-    sensor_locations_active = _active_sensor_locations(payload)
+    metadata = summary_metadata(payload)
+    sensor_locations_active = active_sensor_locations(payload)
     origin = resolve_report_origin(test_run)
     origin_location = normalize_origin_location(origin)
     config_snap = test_run.capture.setup.configuration_snapshot
     active_sensor_intensity = tuple(
         filter_active_sensor_intensity(
-            _sensor_intensity_payload(payload),
+            sensor_intensity_payload(payload),
             sensor_locations_active,
         )
     )
@@ -386,7 +331,7 @@ def _prepare_report_facts(
         primary_candidate_facts=primary_candidate_facts,
         recommended_actions=test_run.recommended_actions,
         suitability_checks=tuple(run_suitability_payload(test_run.suitability)),
-        warnings=_summary_warnings(payload, warnings=warnings),
+        warnings=summary_warnings(payload, warnings=warnings),
     )
 
 

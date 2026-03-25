@@ -1,0 +1,84 @@
+"""Project low-level report payload fields into normalized helper values."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import cast
+
+from vibesensor.domain import coerce_float, coerce_int
+from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
+from vibesensor.shared.types.analysis_views import PeakTableRow
+from vibesensor.shared.types.history_analysis_contracts import (
+    SummaryWarningResponse as SummaryWarningPayload,
+)
+
+__all__ = [
+    "active_sensor_locations",
+    "coerce_count",
+    "peak_table_rows",
+    "report_duration_s",
+    "sensor_intensity_payload",
+    "summary_metadata",
+    "summary_warnings",
+]
+
+
+def summary_metadata(payload: Mapping[str, object]) -> Mapping[str, object]:
+    metadata = payload.get("metadata")
+    return metadata if isinstance(metadata, dict) else {}
+
+
+def active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:
+    connected = payload.get("sensor_locations_connected_throughout")
+    locations = connected if isinstance(connected, list) else []
+    active = tuple(str(loc).strip() for loc in locations if str(loc).strip())
+    if active:
+        return active
+    fallback = payload.get("sensor_locations")
+    fallback_locations = fallback if isinstance(fallback, list) else []
+    return tuple(str(loc).strip() for loc in fallback_locations if str(loc).strip())
+
+
+def summary_warnings(
+    payload: Mapping[str, object],
+    *,
+    warnings: object | None = None,
+) -> tuple[SummaryWarningPayload, ...]:
+    raw_warnings = warnings if warnings is not None else payload.get("warnings")
+    return tuple(summary_warning_payloads(raw_warnings))
+
+
+def report_duration_s(payload: Mapping[str, object]) -> float | None:
+    duration_s_raw = payload.get("duration_s")
+    if duration_s_raw is None:
+        return None
+    try:
+        return coerce_float(duration_s_raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def peak_table_rows(payload: Mapping[str, object]) -> tuple[PeakTableRow, ...]:
+    plots = payload.get("plots")
+    if not isinstance(plots, Mapping):
+        return ()
+    raw_peaks = plots.get("peaks_table")
+    if not isinstance(raw_peaks, list):
+        return ()
+    return tuple(cast(PeakTableRow, row) for row in raw_peaks if isinstance(row, Mapping))
+
+
+def sensor_intensity_payload(payload: Mapping[str, object]) -> tuple[object, ...]:
+    raw_sensor_intensity = payload.get("sensor_intensity_by_location")
+    if not isinstance(raw_sensor_intensity, list):
+        return ()
+    return tuple(raw_sensor_intensity)
+
+
+def coerce_count(value: object) -> int:
+    if value is None:
+        return 0
+    try:
+        return coerce_int(value)
+    except (TypeError, ValueError):
+        return 0
