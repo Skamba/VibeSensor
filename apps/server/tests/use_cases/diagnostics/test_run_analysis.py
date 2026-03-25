@@ -12,7 +12,7 @@ from vibesensor.adapters.analysis_summary import (
     summarize_run_data,
 )
 from vibesensor.domain import SpeedProfile
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,

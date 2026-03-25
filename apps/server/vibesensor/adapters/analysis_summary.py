@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_summary
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics import (
     AnalysisSampleInput,
