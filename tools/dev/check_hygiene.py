@@ -88,10 +88,15 @@ def check_path_indirections() -> tuple[list[str], list[str]]:
 
 
 _MIRRORED_UI_INSTALL_JOBS = ("frontend-typecheck", "ui-smoke")
+_BACKEND_TEST_SHARD_JOBS = (
+    "backend-tests-1",
+    "backend-tests-2",
+    "backend-tests-3",
+)
 _MIRRORED_BACKEND_INSTALL_JOBS = (
     "backend-quality",
     "backend-typecheck",
-    "backend-tests",
+    *_BACKEND_TEST_SHARD_JOBS,
     "e2e",
 )
 _FIRMWARE_INSTALL_JOB = "firmware-native-tests"
@@ -723,6 +728,47 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
         errors.append(
             "ui-smoke must cache ~/.cache/ms-playwright with a package-lock-based actions/cache key."
         )
+
+    for job_name in _BACKEND_TEST_SHARD_JOBS:
+        backend_job = jobs.get(job_name) if isinstance(jobs, Mapping) else None
+        backend_steps = (
+            backend_job.get("steps") if isinstance(backend_job, Mapping) else None
+        )
+        backend_duration_cache_ok = False
+        if isinstance(backend_steps, list):
+            for step in backend_steps:
+                if not isinstance(step, Mapping):
+                    continue
+                uses = step.get("uses")
+                if not isinstance(uses, str) or not uses.startswith("actions/cache@"):
+                    continue
+                with_data = step.get("with")
+                if not isinstance(with_data, Mapping):
+                    continue
+                path = with_data.get("path")
+                key = with_data.get("key")
+                restore_keys = with_data.get("restore-keys")
+                if (
+                    isinstance(path, str)
+                    and path.strip()
+                    == "~/.cache/vibesensor/backend-duration-cache.json"
+                    and isinstance(key, str)
+                    and "backend-test-durations" in key
+                    and "run_backend_parallel.py" in key
+                    and "apps/server/tests/**/*.py" in key
+                    and "github.run_id" in key
+                    and isinstance(restore_keys, str)
+                    and "run_backend_parallel.py" in restore_keys
+                    and "${{ runner.os }}-backend-test-durations-" in restore_keys
+                ):
+                    backend_duration_cache_ok = True
+                    break
+        if not backend_duration_cache_ok:
+            errors.append(
+                f"{job_name} must cache ~/.cache/vibesensor/backend-duration-cache.json "
+                "with a restoreable actions/cache key tied to run_backend_parallel.py, "
+                "apps/server/tests, and github.run_id."
+            )
 
     e2e_job = jobs.get("e2e") if isinstance(jobs, Mapping) else None
     steps: object = None
