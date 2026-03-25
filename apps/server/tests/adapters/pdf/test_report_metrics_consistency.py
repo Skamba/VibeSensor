@@ -223,7 +223,7 @@ def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> 
     """Assert the tier stored in report matches ConfidenceAssessment.tier."""
     from vibesensor.adapters.pdf.presentation import strength_label
     from vibesensor.domain import ConfidenceAssessment
-    from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
+    from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 
     test_run = test_run_from_summary(summary)
     effective = test_run.effective_top_causes()
