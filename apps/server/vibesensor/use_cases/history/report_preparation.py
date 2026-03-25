@@ -13,6 +13,10 @@ from vibesensor.domain import (
     VibrationOrigin,
 )
 from vibesensor.report_i18n import normalize_lang
+from vibesensor.shared.boundaries.report_facts_projection import (
+    report_suitability_checks,
+    report_warning_payloads,
+)
 from vibesensor.shared.boundaries.report_interpretation import (
     PrimaryReportFacts,
     compute_location_hotspot_rows,
@@ -26,13 +30,11 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     active_sensor_locations,
     sensor_intensity_payload,
     summary_metadata,
-    summary_warnings,
 )
 from vibesensor.shared.boundaries.report_renderer_payload import (
     PreparedReportRendererPayload,
     build_report_renderer_payload,
 )
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
@@ -296,8 +298,8 @@ def _prepare_report_facts(
         location_hotspot_rows=tuple(compute_location_hotspot_rows(active_sensor_intensity)),
         primary_candidate_facts=primary_candidate_facts,
         recommended_actions=test_run.recommended_actions,
-        suitability_checks=tuple(run_suitability_payload(test_run.suitability)),
-        warnings=summary_warnings(payload, warnings=warnings),
+        suitability_checks=report_suitability_checks(test_run.suitability),
+        warnings=report_warning_payloads(payload, warnings=warnings),
     )
 
 
