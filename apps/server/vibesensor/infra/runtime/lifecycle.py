@@ -19,9 +19,8 @@ from typing import Protocol
 
 from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.task_supervisor import TaskSupervisor, task_failure_message
+from vibesensor.infra.runtime.task_supervisor import TaskSupervisor
 from vibesensor.infra.runtime.udp_transport_lifecycle import StartUdpReceiver, UdpTransportLifecycle
-from vibesensor.shared.constants.ui import UI_PUSH_HZ
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 
@@ -168,26 +167,6 @@ class LifecycleManager:
     def tasks(self, tasks: list[asyncio.Task[object]]) -> None:
         self._background_tasks.tasks = tasks
 
-    @staticmethod
-    async def _cancel_managed_tasks(
-        tasks: list[asyncio.Task[None]],
-        *,
-        timeout_s: float,
-    ) -> list[asyncio.Task[None]]:
-        for task in tasks:
-            task.cancel()
-        if not tasks:
-            return []
-        _done, _pending = await asyncio.wait(tasks, timeout=timeout_s)
-        if _pending:
-            LOGGER.warning(
-                "%d managed shutdown task(s) did not finish within the cancellation "
-                "deadline and remain pending: %s",
-                len(_pending),
-                [task.get_name() for task in _pending],
-            )
-        return [task for task in tasks if not task.done()]
-
     _LOW_DISK_THRESHOLD_MB = 100
 
     def _validate_startup(self) -> None:
@@ -213,102 +192,47 @@ class LifecycleManager:
 
     async def start(self) -> None:
         """Launch UDP receiver, control plane, and background async tasks."""
-        phase = "starting"
-        self._health_state.set_phase(phase)
+        from vibesensor.infra.runtime.startup_runner import StartupRunner
+
         self._validate_startup()
-        try:
-            phase = "udp_receiver"
-            self._health_state.set_phase(phase)
-            await self._udp_transport_lifecycle.startup(
-                host=self._runtime.udp_data_host,
-                port=self._runtime.udp_data_port,
-                registry=self._runtime.registry,
-                processor=self._runtime.processor,
-                queue_maxsize=self._runtime.udp_data_queue_maxsize,
-            )
-
-            phase = "control_plane"
-            self._health_state.set_phase(phase)
-            await self._runtime.control_plane.start()
-
-            self.tasks = []
-
-            phase = "processing-loop"
-            self._health_state.set_phase(phase)
-            self._background_tasks.add(
-                self._task_supervisor.start(
-                    lambda: self._runtime.processing_loop.run(),
-                    name=phase,
-                ),
-            )
-
-            phase = "ws-broadcast"
-            self._health_state.set_phase(phase)
-            self._background_tasks.add(
-                self._task_supervisor.start(
-                    lambda: self._runtime.ws_hub.run(
-                        UI_PUSH_HZ,
-                        self._runtime.ws_broadcast.build_payload,
-                        on_tick=self._runtime.ws_broadcast.on_tick,
-                    ),
-                    name=phase,
-                ),
-            )
-
-            phase = "metrics-log"
-            self._health_state.set_phase(phase)
-            self._background_tasks.add(
-                self._task_supervisor.start(
-                    lambda: self._runtime.run_recorder.run(),
-                    name=phase,
-                ),
-            )
-
-            phase = "gps-speed"
-            self._health_state.set_phase(phase)
-            self._background_tasks.add(
-                self._task_supervisor.start(
-                    lambda: self._runtime.gps_monitor.run(
-                        host=self._runtime.gpsd_host,
-                        port=self._runtime.gpsd_port,
-                    ),
-                    name=phase,
-                ),
-            )
-
-            phase = "update-startup-recover"
-            self._health_state.set_phase(phase)
-            self._background_tasks.start(
-                self._runtime.update_manager.startup_recover(),
-                name=phase,
-            )
-            self._health_state.mark_ready()
-        except Exception as exc:
-            self._health_state.mark_failed(phase, task_failure_message(exc))
-            raise
+        self.tasks = []
+        runner = StartupRunner(
+            runtime=self._runtime,
+            health_state=self._health_state,
+            task_supervisor=self._task_supervisor,
+            background_tasks=self._background_tasks,
+            udp_transport_lifecycle=self._udp_transport_lifecycle,
+        )
+        await runner.run()
 
     async def stop(self) -> None:
         """Graceful shutdown with explicit ingress-stop and metrics-drain phases."""
+        self._stop_ingress()
+        await self._udp_transport_lifecycle.shutdown()
+        await self._background_tasks.cancel_all(timeout_s=15.0)
+        lingering_managed = await self._cancel_managed_jobs()
+        await self._drain_analysis()
+        await self._shutdown_resources()
+        self._report_lingering_tasks(lingering_managed)
+
+    def _stop_ingress(self) -> None:
         try:
             self._runtime.control_plane.close()
         except OSError:
             LOGGER.warning("Error closing control plane", exc_info=True)
-        await self._udp_transport_lifecycle.shutdown()
 
-        await self._background_tasks.cancel_all(timeout_s=15.0)
+    async def _cancel_managed_jobs(self) -> list[asyncio.Task[None]]:
+        from vibesensor.infra.runtime.managed_job_shutdown import ManagedJobShutdown
 
-        # Cancel any in-progress update or flash jobs so cleanup
-        # (e.g. hotspot restore) can run before shutdown completes.
-        managed: list[asyncio.Task[None] | None] = [
-            self._runtime.update_manager.job_task,
-            self._runtime.esp_flash_manager.job_task,
-        ]
-        active_managed_tasks = [task for task in managed if task is not None and not task.done()]
-        lingering_managed_tasks = await self._cancel_managed_tasks(
-            active_managed_tasks,
-            timeout_s=10.0,
+        managed_shutdown = ManagedJobShutdown(
+            [
+                self._runtime.update_manager,
+                self._runtime.esp_flash_manager,
+            ]
         )
+        return await managed_shutdown.cancel(timeout_s=10.0)
 
+    async def _drain_analysis(self) -> None:
         analysis_timeout_s = self._runtime.shutdown_analysis_timeout_s
         shutdown_report = await asyncio.to_thread(
             self._runtime.run_recorder.shutdown_report,
@@ -326,6 +250,8 @@ class LifecycleManager:
                 shutdown_report.analysis_queue_oldest_age_s,
                 shutdown_report.write_error,
             )
+
+    async def _shutdown_resources(self) -> None:
         try:
             await asyncio.to_thread(self._runtime.worker_pool.shutdown, True)
         except Exception:
@@ -334,10 +260,15 @@ class LifecycleManager:
             self._runtime.history_db.close()
         except Exception:
             LOGGER.warning("Error closing history DB", exc_info=True)
-        lingering_background_tasks = self._background_tasks.retain_pending()
+
+    def _report_lingering_tasks(
+        self,
+        lingering_managed: list[asyncio.Task[None]],
+    ) -> None:
+        lingering_background = self._background_tasks.retain_pending()
         lingering_task_names = [
-            *(task.get_name() for task in lingering_background_tasks if not task.done()),
-            *(task.get_name() for task in lingering_managed_tasks if not task.done()),
+            *(task.get_name() for task in lingering_background if not task.done()),
+            *(task.get_name() for task in lingering_managed if not task.done()),
         ]
         if lingering_task_names:
             LOGGER.warning(
