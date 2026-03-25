@@ -157,9 +157,12 @@ async def test_run_reconnects_on_connection_failure(
 
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=9999))
     await asyncio.wait_for(enough_attempts.wait(), timeout=5.0)
+    await asyncio.sleep(0.05)
 
     assert attempt_count >= 2, f"Expected at least 2 attempts, got {attempt_count}"
     assert monitor.speed_mps is None
+    assert monitor.last_error == "mock refused"
+    assert 0.02 <= monitor.current_reconnect_delay <= 0.04
 
     task.cancel()
     await asyncio.wait_for(asyncio.gather(task, return_exceptions=True), timeout=5.0)
