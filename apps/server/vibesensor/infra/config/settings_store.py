@@ -49,6 +49,7 @@ from vibesensor.infra.config.car_settings import (
     _clamp_str,
 )
 from vibesensor.infra.config.settings_derivation import analysis_settings_snapshot_from_aspects
+from vibesensor.infra.config.settings_transaction import update_with_rollback
 from vibesensor.infra.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
@@ -189,21 +190,16 @@ class SettingsStore:
         after_persist: Callable[[], None] | None = None,
         result: Callable[[], _SettingsResultT],
     ) -> _SettingsResultT:
-        with self._lock:
-            previous = snapshot()
-            changed = apply(previous)
-            if not changed:
-                return result()
-            try:
-                self._persist()
-            except PersistenceError:
-                restore(previous)
-                raise
-            if audit_log is not None:
-                audit_log(previous)
-            if after_persist is not None:
-                after_persist()
-            return result()
+        return update_with_rollback(
+            lock=self._lock,
+            persist=self._persist,
+            snapshot=snapshot,
+            apply=apply,
+            restore=restore,
+            audit_log=audit_log,
+            after_persist=after_persist,
+            result=result,
+        )
 
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         """Return the current typed analysis snapshot derived from the active car."""
