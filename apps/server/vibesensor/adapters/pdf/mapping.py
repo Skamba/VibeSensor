@@ -27,7 +27,6 @@ from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.adapters.pdf.report_context import (
     ReportMappingContext,
     observed_signature,
-    prepare_report_mapping_context,
 )
 from vibesensor.adapters.pdf.report_data import (
     FindingPresentation,
@@ -66,7 +65,6 @@ __all__ = [
     "humanize_signatures",
     "map_summary",
     "prepare_report_input",
-    "prepare_report_mapping_context",
     "resolve_primary_report_candidate",
 ]
 
@@ -219,7 +217,7 @@ def _build_report_template_data(
     The *report* metadata and renderer payload are prepared on the history side;
     the PDF adapter only resolves final presentation details.
     """
-    context = prepare_report_mapping_context(prepared)
+    context = prepared.mapping_context
     raw_sensor_intensity = list(report_facts.active_sensor_intensity)
     primary = resolve_primary_report_candidate(
         context=context,
