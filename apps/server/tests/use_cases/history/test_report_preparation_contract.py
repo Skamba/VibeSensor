@@ -6,6 +6,7 @@ import pytest
 from test_support.findings import make_finding_payload
 
 from vibesensor.adapters.pdf import mapping as pdf_mapping
+from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportInput,
     ValidatedPreparedReportInput,
@@ -61,11 +62,21 @@ def test_validate_prepared_report_input_rejects_missing_report_facts() -> None:
 
 
 def test_validate_prepared_report_input_returns_mapping_ready_handoff() -> None:
-    validated = validate_prepared_report_input(_prepared_report_input())
+    prepared = _prepared_report_input()
+    validated = validate_prepared_report_input(prepared)
 
     assert isinstance(validated, ValidatedPreparedReportInput)
     assert validated.domain_test_run is not None
     assert validated.report_facts is not None
+    assert prepared.mapping_context is not None
+    assert validated.mapping_context is prepared.mapping_context
+
+
+def test_prepare_report_mapping_context_returns_precomputed_context() -> None:
+    prepared = _prepared_report_input()
+
+    assert prepared.mapping_context is not None
+    assert prepare_report_mapping_context(prepared) is prepared.mapping_context
 
 
 def test_map_summary_fails_before_pdf_mapping_for_invalid_prepared_input(
