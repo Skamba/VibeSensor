@@ -409,6 +409,34 @@ class GPSTransportState:
             device_info=device_info,
         )
 
+    def _normalize_tpv_payload(
+        self,
+        payload: JsonObject,
+        *,
+        tpv_mode: TpvModeReader | None = None,
+        read_metric: MetricReader | None = None,
+    ) -> NormalizedTpvData:
+        read_mode = self._tpv_mode if tpv_mode is None else tpv_mode
+        metric_reader = self._read_non_negative_metric if read_metric is None else read_metric
+
+        speed = payload.get("speed")
+        normalized_speed: float | None = None
+        if isinstance(speed, NUMERIC_TYPES) and not isinstance(speed, bool):
+            speed_f = float(speed)
+            if math.isfinite(speed_f):
+                normalized_speed = speed_f
+
+        device = payload.get("device")
+        normalized_device = device if isinstance(device, str) and device else None
+        return NormalizedTpvData(
+            mode=read_mode(payload),
+            speed=normalized_speed,
+            epx=metric_reader(payload, "epx"),
+            epy=metric_reader(payload, "epy"),
+            epv=metric_reader(payload, "epv"),
+            device=normalized_device,
+        )
+
     def ingest_tpv(
         self,
         payload: JsonObject,
@@ -416,41 +444,12 @@ class GPSTransportState:
         tpv_mode: TpvModeReader | None = None,
         read_metric: MetricReader | None = None,
     ) -> None:
-        read_mode = self._tpv_mode if tpv_mode is None else tpv_mode
-        metric_reader = self._read_non_negative_metric if read_metric is None else read_metric
-        snapshot = self._state.transport
-
-        mode = read_mode(payload)
-        speed_snapshot = snapshot.speed_snapshot
-        zero_speed_streak = snapshot.zero_speed_streak
-
-        speed = payload.get("speed")
-        if (
-            isinstance(mode, int)
-            and mode >= 2
-            and isinstance(speed, NUMERIC_TYPES)
-            and not isinstance(speed, bool)
-        ):
-            speed_f = float(speed)
-            if is_speed_plausible(speed_f):
-                accepted, zero_speed_streak = self._evaluate_speed_sample(snapshot, speed_f)
-                if accepted:
-                    speed_snapshot = (speed_f, time.monotonic())
-            else:
-                zero_speed_streak = 0
-        else:
-            zero_speed_streak = 0
-
-        device = payload.get("device")
-        device_info = device if isinstance(device, str) and device else snapshot.device_info
-        self._replace_transport(
-            last_fix_mode=mode if isinstance(mode, int) else None,
-            last_epx_m=metric_reader(payload, "epx"),
-            last_epy_m=metric_reader(payload, "epy"),
-            last_epv_m=metric_reader(payload, "epv"),
-            speed_snapshot=speed_snapshot,
-            zero_speed_streak=zero_speed_streak,
-            device_info=device_info,
+        self._apply_tpv(
+            self._normalize_tpv_payload(
+                payload,
+                tpv_mode=tpv_mode,
+                read_metric=read_metric,
+            )
         )
 
     async def run(
