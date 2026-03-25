@@ -2,10 +2,10 @@
 
 These aliases define the wire/persistence shapes for analysis data that
 crosses the domain-adapter boundary. Stable exact history/view shapes shared
-with the HTTP layer live in ``shared.types.analysis_views``; shared
+with the HTTP layer live in ``shared.types.analysis_views``. Shared
 analysis/history wrapper and composite owners live in
-``shared.types.history_analysis_contracts`` and are re-exported here under
-boundary-friendly payload names.
+``shared.types.history_analysis_contracts`` and are only re-exported here when
+the boundary layer needs a distinct payload-oriented alias.
 """
 
 from __future__ import annotations
@@ -28,7 +28,6 @@ from vibesensor.shared.types.analysis_views import (
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     AmplitudeMetric,
-    FindingPayload,
     RunSuitabilityCheck,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
@@ -90,7 +89,6 @@ __all__ = [
     "DataQualityRequiredMissingPctPayload",
     "DataQualitySpeedCoveragePayload",
     "FindingEvidenceMetrics",
-    "FindingPayload",
     "FreqVsSpeedByFindingSeries",
     "LocationHotspotPayload",
     "LocationIntensitySummaryPayload",

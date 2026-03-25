@@ -18,7 +18,6 @@ from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.shared.boundaries.analysis_payload import (
     AmplitudeMetric,
     FindingEvidenceMetrics,
-    FindingPayload,
     LocationHotspotPayload,
     MatchedPoint,
     PhaseEvidence,
@@ -30,7 +29,10 @@ from vibesensor.shared.boundaries.vibration_origin import (
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
-from vibesensor.shared.types.history_analysis_contracts import payload_value_from_json
+from vibesensor.shared.types.history_analysis_contracts import (
+    FindingPayload,
+    payload_value_from_json,
+)
 
 _MAX_SIGNATURES_PER_FINDING: int = 3
 

@@ -8,7 +8,9 @@ High-level analysis entry points are re-exported here so callers can use
 ``from vibesensor.use_cases.diagnostics import …`` without depending on file layout.
 
 ``FindingPayload`` is the TypedDict shape used for serialised analysis
-findings.  The domain ``Finding`` lives in ``vibesensor.domain``.
+findings and is canonically owned by
+``vibesensor.shared.types.history_analysis_contracts``. The domain ``Finding``
+lives in ``vibesensor.domain``.
 """
 
 from vibesensor.shared.order_bands import build_order_bands, vehicle_orders_hz
