@@ -375,8 +375,6 @@ async def test_start_follows_declared_startup_phase_order(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_start_records_background_task_failure(monkeypatch) -> None:
-    import vibesensor.infra.runtime.lifecycle as lifecycle_module
-
     async def _fake_udp(*args, **kwargs):
         return None, None
 
@@ -405,7 +403,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
     )
     lifecycle._start_udp_receiver = _fake_udp
 
-    monkeypatch.setattr(lifecycle_module, "_TASK_RESTART_MAX_ATTEMPTS", 0)
+    lifecycle._task_supervisor._max_attempts = 0
 
     await lifecycle.start()
     failed_task = next(task for task in lifecycle.tasks if task.get_name() == "ws-broadcast")
@@ -418,7 +416,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_start_restarts_supervised_task_after_failure(monkeypatch) -> None:
-    import vibesensor.infra.runtime.lifecycle as lifecycle_module
+    import vibesensor.infra.runtime.task_supervisor as task_supervisor_module
 
     async def _fake_udp(*args, **kwargs):
         return None, None
@@ -458,9 +456,9 @@ async def test_start_restarts_supervised_task_after_failure(monkeypatch) -> None
     )
     lifecycle._start_udp_receiver = _fake_udp
 
-    monkeypatch.setattr(lifecycle_module, "_TASK_RESTART_BASE_DELAY_S", 0.0)
-    monkeypatch.setattr(lifecycle_module, "_TASK_RESTART_MAX_DELAY_S", 0.0)
-    monkeypatch.setattr(lifecycle_module.asyncio, "sleep", _fast_sleep)
+    lifecycle._task_supervisor._base_delay_s = 0.0
+    lifecycle._task_supervisor._max_delay_s = 0.0
+    monkeypatch.setattr(task_supervisor_module.asyncio, "sleep", _fast_sleep)
 
     await lifecycle.start()
     await asyncio.wait_for(restart_started.wait(), timeout=1.0)
