@@ -111,7 +111,7 @@ python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 -
 Focused CI job groups and full-stack validation:
 
 ```bash
-python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3
+python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5
 python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
 python3 tools/tests/run_ci_parallel.py --job release-smoke
 make test-full-suite
@@ -178,6 +178,8 @@ act -j frontend-typecheck -W .github/workflows/ci.yml
 act -j backend-tests-1 -W .github/workflows/ci.yml
 act -j backend-tests-2 -W .github/workflows/ci.yml
 act -j backend-tests-3 -W .github/workflows/ci.yml
+act -j backend-tests-4 -W .github/workflows/ci.yml
+act -j backend-tests-5 -W .github/workflows/ci.yml
 act -j ui-smoke -W .github/workflows/ci.yml
 act -j release-smoke -W .github/workflows/ci.yml
 
@@ -211,7 +213,7 @@ No secrets are currently required. If needed in the future, copy
 | `frontend-typecheck` | ✅ Fully supported | — |
 | `ui-smoke` | ✅ Fully supported | — |
 | `release-smoke` | ✅ Fully supported | — |
-| `backend-tests-1/2/3` | ⚠️ Mostly works | 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
+| `backend-tests-1/2/3/4/5` | ⚠️ Mostly works | 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
 | `e2e` | ❌ Not supported | Requires Docker-in-Docker. Run `make test-full-suite` or use GitHub CI instead. |
 
 ### Relationship to `run_ci_parallel.py`
@@ -251,7 +253,7 @@ The default CI-parity suite now mirrors these blocking GitHub checks:
 - `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
-- `ui-smoke`, `backend-tests-1`, `backend-tests-2`, `backend-tests-3`, `e2e`: required test jobs.
+- `ui-smoke`, `backend-tests-1`, `backend-tests-2`, `backend-tests-3`, `backend-tests-4`, `backend-tests-5`, `e2e`: required test jobs.
 
 ## Adding or moving tests
 
