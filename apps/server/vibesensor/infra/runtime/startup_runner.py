@@ -1,0 +1,137 @@
+"""Startup phase runner for LifecycleManager.
+
+Owns the named startup phase sequence and health-state reporting
+previously inlined in ``LifecycleManager.start()``.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Awaitable, Callable, Coroutine
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.infra.runtime.task_supervisor import task_failure_message
+
+if TYPE_CHECKING:
+    from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
+    from vibesensor.infra.runtime.lifecycle import (
+        LifecycleRuntime,
+    )
+    from vibesensor.infra.runtime.task_supervisor import TaskSupervisor
+    from vibesensor.infra.runtime.udp_transport_lifecycle import UdpTransportLifecycle
+
+
+@dataclass(frozen=True, slots=True)
+class StartupPhase:
+    """A single named startup phase."""
+
+    name: str
+    run: Callable[[], Awaitable[None]]
+
+
+class StartupRunner:
+    """Execute named startup phases with health-state tracking."""
+
+    __slots__ = (
+        "_background_tasks",
+        "_health_state",
+        "_runtime",
+        "_task_supervisor",
+        "_udp_transport_lifecycle",
+    )
+
+    def __init__(
+        self,
+        *,
+        runtime: LifecycleRuntime,
+        health_state: RuntimeHealthState,
+        task_supervisor: TaskSupervisor,
+        background_tasks: BackgroundTaskCoordinator,
+        udp_transport_lifecycle: UdpTransportLifecycle,
+    ) -> None:
+        self._runtime = runtime
+        self._health_state = health_state
+        self._task_supervisor = task_supervisor
+        self._background_tasks = background_tasks
+        self._udp_transport_lifecycle = udp_transport_lifecycle
+
+    async def run(self) -> None:
+        """Execute all startup phases in order."""
+        phase_name = "starting"
+        self._health_state.set_phase(phase_name)
+        try:
+            for phase in self._phases():
+                phase_name = phase.name
+                self._health_state.set_phase(phase_name)
+                await phase.run()
+            self._health_state.mark_ready()
+        except Exception as exc:
+            self._health_state.mark_failed(phase_name, task_failure_message(exc))
+            raise
+
+    def _phases(self) -> list[StartupPhase]:
+        from vibesensor.shared.constants.ui import UI_PUSH_HZ
+
+        r = self._runtime
+        return [
+            StartupPhase("udp_receiver", self._start_udp_receiver),
+            StartupPhase("control_plane", r.control_plane.start),
+            StartupPhase(
+                "processing-loop",
+                lambda: self._start_background(lambda: r.processing_loop.run(), "processing-loop"),
+            ),
+            StartupPhase(
+                "ws-broadcast",
+                lambda: self._start_background(
+                    lambda: r.ws_hub.run(
+                        UI_PUSH_HZ,
+                        r.ws_broadcast.build_payload,
+                        on_tick=r.ws_broadcast.on_tick,
+                    ),
+                    "ws-broadcast",
+                ),
+            ),
+            StartupPhase(
+                "metrics-log",
+                lambda: self._start_background(lambda: r.run_recorder.run(), "metrics-log"),
+            ),
+            StartupPhase(
+                "gps-speed",
+                lambda: self._start_background(
+                    lambda: r.gps_monitor.run(
+                        host=r.gpsd_host,
+                        port=r.gpsd_port,
+                    ),
+                    "gps-speed",
+                ),
+            ),
+            StartupPhase(
+                "update-startup-recover",
+                self._start_update_recovery,
+            ),
+        ]
+
+    async def _start_udp_receiver(self) -> None:
+        await self._udp_transport_lifecycle.startup(
+            host=self._runtime.udp_data_host,
+            port=self._runtime.udp_data_port,
+            registry=self._runtime.registry,
+            processor=self._runtime.processor,
+            queue_maxsize=self._runtime.udp_data_queue_maxsize,
+        )
+
+    async def _start_background(
+        self,
+        coro_factory: Callable[[], Coroutine[object, object, object]],
+        name: str,
+    ) -> None:
+        self._background_tasks.add(
+            self._task_supervisor.start(coro_factory, name=name),
+        )
+
+    async def _start_update_recovery(self) -> None:
+        self._background_tasks.start(
+            self._runtime.update_manager.startup_recover(),
+            name="update-startup-recover",
+        )
