@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.analysis_payload import PeakTableRow
+from vibesensor.shared.types.analysis_views import PeakTableRow
 
 __all__ = ["PeakTableRow"]

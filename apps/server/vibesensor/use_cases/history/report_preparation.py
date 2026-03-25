@@ -15,11 +15,6 @@ from vibesensor.domain import (
     coerce_int,
 )
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.analysis_payload import (
-    PeakTableRow,
-    RunSuitabilityCheck,
-    SummaryWarningPayload,
-)
 from vibesensor.shared.boundaries.report_interpretation import (
     PrimaryReportFacts,
     compute_location_hotspot_rows,
@@ -34,7 +29,14 @@ from vibesensor.shared.boundaries.summary_warning import summary_warning_payload
 from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
+from vibesensor.shared.types.analysis_views import PeakTableRow
+from vibesensor.shared.types.history_analysis_contracts import (
+    AnalysisSummary,
+    RunSuitabilityCheck,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    SummaryWarningResponse as SummaryWarningPayload,
+)
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.helpers import safe_filename
 from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey

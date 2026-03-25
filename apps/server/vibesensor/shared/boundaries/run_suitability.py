@@ -6,8 +6,8 @@ from collections.abc import Mapping, Sequence
 from typing import cast
 
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
-from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck
 from vibesensor.shared.json_utils import payload_value_from_json
+from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.json_types import JsonValue
 
 

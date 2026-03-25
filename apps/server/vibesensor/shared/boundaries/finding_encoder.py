@@ -6,19 +6,18 @@ from typing import cast
 
 from vibesensor.domain import Finding
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.boundaries.analysis_payload import (
-    AmplitudeMetric,
+from vibesensor.shared.json_utils import i18n_ref, payload_value_from_json
+from vibesensor.shared.types.analysis_views import (
     FindingEvidenceMetrics,
     LocationHotspotPayload,
     MatchedPoint,
     PhaseEvidence,
 )
-from vibesensor.shared.json_utils import i18n_ref, payload_value_from_json
 from vibesensor.shared.types.finding_payload_parts import (
     FindingCorePayload,
     FindingPresentationPayload,
 )
-from vibesensor.shared.types.history_analysis_contracts import FindingPayload
+from vibesensor.shared.types.history_analysis_contracts import AmplitudeMetric, FindingPayload
 
 
 def matched_point_from_observation(obs: OrderMatchObservation) -> MatchedPoint:

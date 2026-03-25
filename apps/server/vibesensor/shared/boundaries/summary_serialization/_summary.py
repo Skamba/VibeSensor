@@ -12,17 +12,6 @@ from vibesensor.domain import (
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.analysis_payload import (
-    DataQualityPayload,
-    LocationIntensitySummaryPayload,
-    OutlierSummaryPayload,
-    PhaseInfoPayload,
-    PhaseIntensityStatsPayload,
-    PhaseTimelineEntryPayload,
-    SpeedStatsPayload,
-    StrengthBucketDistributionPayload,
-    TestPlanStepPayload,
-)
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin,
@@ -42,6 +31,33 @@ from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary,
     PayloadObject,
     PayloadValue,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityResponse as DataQualityPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    LocationIntensitySummaryResponse as LocationIntensitySummaryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    OutlierSummaryResponse as OutlierSummaryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseInfoResponse as PhaseInfoPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseIntensityStatsResponse as PhaseIntensityStatsPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseTimelineEntryResponse as PhaseTimelineEntryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    SpeedStatsResponse as SpeedStatsPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    StrengthBucketDistributionResponse as StrengthBucketDistributionPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    TestPlanStepResponse as TestPlanStepPayload,
 )
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.vibration_strength import compute_db

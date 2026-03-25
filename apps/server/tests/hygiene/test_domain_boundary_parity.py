@@ -23,14 +23,13 @@ from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.run_suitability import SuitabilityCheck
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.analysis_payload import (
+from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
+from vibesensor.shared.types.analysis_views import (
     FindingEvidenceMetrics,
     LocationHotspotPayload,
     MatchedPoint,
-    RunSuitabilityCheck,
 )
-from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
-from vibesensor.shared.types.history_analysis_contracts import FindingPayload
+from vibesensor.shared.types.history_analysis_contracts import FindingPayload, RunSuitabilityCheck
 
 
 def _dc_fields(cls: type) -> set[str]:

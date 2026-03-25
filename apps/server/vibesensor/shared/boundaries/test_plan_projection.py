@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
-from vibesensor.shared.boundaries.analysis_payload import TestPlanStepPayload
+from vibesensor.shared.types.history_analysis_contracts import (
+    TestPlanStepResponse as TestPlanStepPayload,
+)
 
 __all__ = [
     "step_payload_from_action",

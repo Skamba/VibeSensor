@@ -7,18 +7,20 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from vibesensor.domain import DrivingPhase
-from vibesensor.shared.boundaries.analysis_payload import (
+from vibesensor.shared.types.analysis_views import (
     AmpVsPhaseRow,
     FreqVsSpeedByFindingSeries,
     MatchedAmpVsSpeedSeries,
     PeakTableRow,
     PhaseBoundary,
     PhaseSegmentOut,
-    PhaseSegmentSummaryPayload,
     PhaseSpeedBreakdownRow,
     PlotDataResult,
     SpectrogramResult,
     SpeedBreakdownRow,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseSegmentSummaryResponse as PhaseSegmentSummaryPayload,
 )
 
 
