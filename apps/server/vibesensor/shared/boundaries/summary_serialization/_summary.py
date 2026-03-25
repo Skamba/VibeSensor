@@ -32,22 +32,13 @@ from vibesensor.shared.types.history_analysis_contracts import (
     PayloadValue,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
-    LocationIntensitySummaryResponse as LocationIntensitySummaryPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
     PhaseInfoResponse as PhaseInfoPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    PhaseIntensityStatsResponse as PhaseIntensityStatsPayload,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     PhaseTimelineEntryResponse as PhaseTimelineEntryPayload,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     SpeedStatsResponse as SpeedStatsPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    StrengthBucketDistributionResponse as StrengthBucketDistributionPayload,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     TestPlanStepResponse as TestPlanStepPayload,
@@ -57,6 +48,7 @@ from vibesensor.vibration_strength import compute_db
 
 from ._data_quality import AccelStatisticsLike, build_data_quality_dict
 from ._findings import serialize_findings
+from ._location_intensity import serialize_location_intensity_rows
 from ._plots import (
     PhaseSegmentLike,
     PhaseSpeedBreakdownRowLike,
@@ -229,46 +221,6 @@ def _phase_info_payload(phase_info: DrivingPhaseSummary) -> PhaseInfoPayload:
     }
 
 
-def _location_intensity_summary_payload(
-    row: LocationIntensitySummary,
-) -> LocationIntensitySummaryPayload:
-    bucket_distribution: StrengthBucketDistributionPayload = {
-        "total": row.strength_bucket_distribution.total,
-        "counts": dict(row.strength_bucket_distribution.counts),
-        "percent_time_l0": row.strength_bucket_distribution.percent_time_l0,
-        "percent_time_l1": row.strength_bucket_distribution.percent_time_l1,
-        "percent_time_l2": row.strength_bucket_distribution.percent_time_l2,
-        "percent_time_l3": row.strength_bucket_distribution.percent_time_l3,
-        "percent_time_l4": row.strength_bucket_distribution.percent_time_l4,
-        "percent_time_l5": row.strength_bucket_distribution.percent_time_l5,
-    }
-    phase_intensity: dict[str, PhaseIntensityStatsPayload] | None = None
-    if row.phase_intensity:
-        phase_intensity = {
-            phase: {
-                "count": stats.count,
-                "mean_intensity_db": stats.mean_intensity_db,
-                "max_intensity_db": stats.max_intensity_db,
-            }
-            for phase, stats in row.phase_intensity.items()
-        }
-    return {
-        "location": row.location,
-        "partial_coverage": row.partial_coverage,
-        "sample_count": row.sample_count,
-        "sample_coverage_ratio": row.sample_coverage_ratio,
-        "sample_coverage_warning": row.sample_coverage_warning,
-        "mean_intensity_db": row.mean_intensity_db,
-        "p50_intensity_db": row.p50_intensity_db,
-        "p95_intensity_db": row.p95_intensity_db,
-        "max_intensity_db": row.max_intensity_db,
-        "dropped_frames_delta": row.dropped_frames_delta,
-        "queue_overflow_drops_delta": row.queue_overflow_drops_delta,
-        "strength_bucket_distribution": bucket_distribution,
-        "phase_intensity": phase_intensity,
-    }
-
-
 def serialize_origin_summary(
     origin: VibrationOrigin | None,
 ) -> SuspectedVibrationOrigin:
@@ -368,9 +320,9 @@ def build_summary_payload(context: AnalysisSummaryBuildContext) -> AnalysisSumma
         "sensor_locations": context.sensor_locations,
         "sensor_locations_connected_throughout": sorted(context.connected_locations),
         "sensor_count_used": len(context.sensor_locations),
-        "sensor_intensity_by_location": [
-            _location_intensity_summary_payload(row) for row in context.sensor_intensity_by_location
-        ],
+        "sensor_intensity_by_location": serialize_location_intensity_rows(
+            context.sensor_intensity_by_location
+        ),
         "run_suitability": run_suitability_payload(context.run_suitability),
         "samples": _json_objects(context.samples),
         "data_quality": build_data_quality_dict(
