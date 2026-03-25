@@ -39,21 +39,18 @@ from vibesensor.domain import (
     Car,
     CarSnapshot,
     Sensor,
-    SensorPlacement,
     SpeedSource,
-    normalize_sensor_id,
 )
 from vibesensor.infra.config.car_settings import (
     CarSettingsService,
     CarSettingsState,
-    _clamp_str,
+)
+from vibesensor.infra.config.sensor_settings import (
+    SensorSettingsService,
+    SensorSettingsState,
 )
 from vibesensor.infra.config.settings_derivation import analysis_settings_snapshot_from_aspects
 from vibesensor.infra.config.settings_transaction import update_with_rollback
-from vibesensor.infra.location_assignment_validator import (
-    AssignedLocation,
-    LocationAssignmentValidator,
-)
 from vibesensor.shared.boundaries.settings_snapshot_codec import (
     coerce_language_code as _coerce_language,
 )
@@ -92,7 +89,6 @@ from vibesensor.shared.types.speed_source_config import (
 )
 
 LOGGER = logging.getLogger(__name__)
-_LOCATION_VALIDATOR = LocationAssignmentValidator()
 
 VALID_LANGUAGES: frozenset[str] = frozenset(get_args(LanguageCode))
 """Supported UI languages — derived from ``LanguageCode``."""
@@ -133,13 +129,18 @@ class SettingsStore:
         self._db = db
         self._after_speed_source_change: Callable[[], None] | None = None
         self._car_state = CarSettingsState()
+        self._sensor_state = SensorSettingsState()
         self._speed_cfg = SpeedSourceConfig.default()
         self._language: LanguageCode = "en"
         self._speed_unit: SpeedUnitCode = "kmh"
-        self._sensors: dict[str, SensorConfig] = {}
         self._car_settings = CarSettingsService(
             lock=self._lock,
             state=self._car_state,
+            update_with_rollback=self._update_with_rollback,
+        )
+        self._sensor_settings = SensorSettingsService(
+            lock=self._lock,
+            state=self._sensor_state,
             update_with_rollback=self._update_with_rollback,
         )
 
@@ -165,7 +166,7 @@ class SettingsStore:
             self._language = _coerce_language(snapshot["language"])
             self._speed_unit = _coerce_speed_unit(snapshot["speedUnit"])
 
-            self._sensors = {
+            self._sensor_state.sensors = {
                 sensor_id: SensorConfig.from_dict(sensor_id, value)
                 for sensor_id, value in snapshot["sensorsByMac"].items()
             }
@@ -219,7 +220,7 @@ class SettingsStore:
                 **self._speed_cfg.to_dict(),
                 "language": self._language,
                 "speedUnit": self._speed_unit,
-                "sensorsByMac": {sid: s.to_dict() for sid, s in self._sensors.items()},
+                "sensorsByMac": self._sensor_settings.sensors_payload_unlocked(),
             }
 
     # -- car settings -----------------------------------------------------------
@@ -263,17 +264,7 @@ class SettingsStore:
 
     def sensors(self) -> list[Sensor]:
         """Return all configured sensors as domain ``Sensor`` value objects."""
-        with self._lock:
-            return [
-                Sensor(
-                    sensor_id=cfg.sensor_id,
-                    name=cfg.name,
-                    placement=(
-                        SensorPlacement.from_code(cfg.location_code) if cfg.location_code else None
-                    ),
-                )
-                for cfg in self._sensors.values()
-            ]
+        return self._sensor_settings.sensors()
 
     # -- speed source ----------------------------------------------------------
 
@@ -306,87 +297,13 @@ class SettingsStore:
     # -- sensors ---------------------------------------------------------------
 
     def get_sensors(self) -> SensorsByMacPayload:
-        with self._lock:
-            return {sid: s.to_dict() for sid, s in self._sensors.items()}
-
-    def _sensor_configs_snapshot_unlocked(self) -> dict[str, SensorConfig]:
-        return {
-            sensor_id: SensorConfig.from_dict(sensor_id, cfg.to_dict())
-            for sensor_id, cfg in self._sensors.items()
-        }
+        return self._sensor_settings.get_sensors()
 
     def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload:
-        sensor_id = normalize_sensor_id(mac)
-
-        def _apply(_previous: dict[str, SensorConfig]) -> bool:
-            existing = self._sensors.get(sensor_id)
-            if existing is None:
-                updated = SensorConfig(sensor_id=sensor_id, name=sensor_id, location_code="")
-            else:
-                updated = SensorConfig.from_dict(sensor_id, existing.to_dict())
-            if "name" in data:
-                name = _clamp_str(data["name"], 64)
-                updated.name = name or sensor_id
-            if "location_code" in data:
-                location_code = _clamp_str(data["location_code"], 64)
-                _LOCATION_VALIDATOR.validate_assignment(
-                    owner_id=sensor_id,
-                    location_code=location_code,
-                    assigned_locations=(
-                        AssignedLocation(
-                            owner_id=other_id,
-                            owner_name=other.name or other.sensor_id,
-                            location_code=other.location_code,
-                        )
-                        for other_id, other in self._sensors.items()
-                    ),
-                )
-                updated.location_code = location_code
-            self._sensors[sensor_id] = updated
-            return True
-
-        return self._update_with_rollback(
-            snapshot=self._sensor_configs_snapshot_unlocked,
-            apply=_apply,
-            restore=lambda previous: setattr(self, "_sensors", previous),
-            audit_log=lambda previous: _log_settings_change(
-                action="set_sensor",
-                before=(
-                    previous_sensor.to_dict()
-                    if (previous_sensor := previous.get(sensor_id)) is not None
-                    else None
-                ),
-                after=self._sensors[sensor_id].to_dict(),
-                sensor_id=sensor_id,
-            ),
-            result=lambda: {sensor_id: self._sensors[sensor_id].to_dict()},
-        )
+        return self._sensor_settings.set_sensor(mac, data)
 
     def remove_sensor(self, mac: str) -> bool:
-        sensor_id = normalize_sensor_id(mac)
-        removed = False
-
-        def _apply(_previous: dict[str, SensorConfig]) -> bool:
-            nonlocal removed
-            removed = self._sensors.pop(sensor_id, None) is not None
-            return removed
-
-        return self._update_with_rollback(
-            snapshot=self._sensor_configs_snapshot_unlocked,
-            apply=_apply,
-            restore=lambda previous: setattr(self, "_sensors", previous),
-            audit_log=lambda previous: _log_settings_change(
-                action="remove_sensor",
-                before=(
-                    previous_sensor.to_dict()
-                    if (previous_sensor := previous.get(sensor_id)) is not None
-                    else None
-                ),
-                after=None,
-                sensor_id=sensor_id,
-            ),
-            result=lambda: removed,
-        )
+        return self._sensor_settings.remove_sensor(mac)
 
     @property
     def language(self) -> LanguageCode:
