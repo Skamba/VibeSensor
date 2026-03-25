@@ -80,24 +80,6 @@ class ClientRecord:
     duplicates_received: int = 0
     dedup_window: DedupWindow = field(default_factory=DedupWindow)
 
-    # -- deduplication window helpers -----------------------------------------
-
-    def clear_dedup(self) -> None:
-        """Reset the per-client dedup window (e.g. on restart or hard reset)."""
-        self.dedup_window.clear()
-
-    def has_seq(self, seq: int) -> bool:
-        """Return True if *seq* is already in the dedup window."""
-        return self.dedup_window.contains(seq)
-
-    def record_seq(self, seq: int) -> None:
-        """Add *seq* to the dedup window and update the running max."""
-        self.dedup_window.record(seq)
-
-    def prune_seqs(self, window_size: int) -> None:
-        """Discard old entries so the window stays bounded to *window_size*."""
-        self.dedup_window.prune(window_size)
-
 
 @dataclass(frozen=True, slots=True)
 class ClientRecordSnapshot:
@@ -229,7 +211,7 @@ class ClientRegistry:
             if record.firmware_version and hello.firmware_version != record.firmware_version:
                 record.reset_count += 1
                 record.last_reset_time = now_ts
-                record.clear_dedup()
+                record.dedup_window.clear()
             record.firmware_version = hello.firmware_version
             record.queue_overflow_drops = hello.queue_overflow_drops
             self._metadata.apply_advertised_name(record, hello.name)
