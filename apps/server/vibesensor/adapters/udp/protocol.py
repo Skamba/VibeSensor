@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import struct
 from dataclasses import dataclass
+from typing import cast
 
 import numpy as np
 
@@ -104,6 +105,20 @@ BYTES_PER_SAMPLE: int = ACCEL_AXES * _SAMPLE_DTYPE.itemsize
 """Wire size of one accelerometer sample in bytes (3 axes × 2 bytes for int16)."""
 
 
+def _validate_unpacked_header(
+    *,
+    label: str,
+    header_fields: tuple[object, ...],
+    expected_msg_type: int,
+) -> None:
+    validate_header(
+        label=label,
+        msg_type=cast(int, header_fields[0]),
+        expected_msg_type=expected_msg_type,
+        version=cast(int, header_fields[1]),
+    )
+
+
 @dataclass(slots=True)
 class HelloMessage:
     """Decoded HELLO message sent by an ESP32 sensor on connect."""
@@ -197,21 +212,21 @@ def parse_client_id(client_id_text: str) -> bytes:
 def parse_hello(data: bytes) -> HelloMessage:
     """Decode a raw HELLO message into a :class:`HelloMessage`."""
     validate_minimum_size(label="HELLO", data_length=len(data), minimum=HELLO_BASE.size)
+    header = HELLO_BASE.unpack_from(data, 0)
+    _validate_unpacked_header(
+        label="HELLO",
+        header_fields=header,
+        expected_msg_type=MSG_HELLO,
+    )
     (
-        msg_type,
-        version,
+        _msg_type,
+        _version,
         client_id,
         control_port,
         sample_rate_hz,
         frame_samples,
         name_len,
-    ) = HELLO_BASE.unpack_from(data, 0)
-    validate_header(
-        label="HELLO",
-        msg_type=msg_type,
-        expected_msg_type=MSG_HELLO,
-        version=version,
-    )
+    ) = header
     validate_hello_sample_rate(sample_rate_hz)
 
     if control_port == 0:
@@ -304,13 +319,13 @@ def pack_hello(
 def parse_data(data: bytes) -> DataMessage:
     """Decode a raw DATA message into a :class:`DataMessage`."""
     validate_minimum_size(label="DATA", data_length=len(data), minimum=DATA_HEADER_BYTES)
-    msg_type, version, client_id, seq, t0_us, sample_count = DATA_HEADER.unpack_from(data, 0)
-    validate_header(
+    header = DATA_HEADER.unpack_from(data, 0)
+    _validate_unpacked_header(
         label="DATA",
-        msg_type=msg_type,
+        header_fields=header,
         expected_msg_type=MSG_DATA,
-        version=version,
     )
+    _msg_type, _version, client_id, seq, t0_us, sample_count = header
     validate_data_frame(
         sample_count=sample_count,
         data_length=len(data),
@@ -340,13 +355,13 @@ def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> by
 def parse_cmd(data: bytes) -> CmdMessage:
     """Decode a raw CMD message into a :class:`CmdMessage`."""
     validate_minimum_size(label="CMD", data_length=len(data), minimum=CMD_HEADER_BYTES)
-    msg_type, version, client_id, cmd_id, cmd_seq = CMD_HEADER.unpack_from(data, 0)
-    validate_header(
+    header = CMD_HEADER.unpack_from(data, 0)
+    _validate_unpacked_header(
         label="CMD",
-        msg_type=msg_type,
+        header_fields=header,
         expected_msg_type=MSG_CMD,
-        version=version,
     )
+    _msg_type, _version, client_id, cmd_id, cmd_seq = header
     if cmd_id not in (CMD_IDENTIFY, CMD_SYNC_CLOCK):
         LOGGER.warning(
             "parse_cmd: unrecognized cmd_id=%d; continuing for forward compatibility",
@@ -387,13 +402,13 @@ def parse_hello_ack(data: bytes) -> HelloAckMessage:
     validate_fixed_message_size(
         label="HELLO_ACK", data_length=len(data), expected_size=HELLO_ACK_BYTES
     )
-    msg_type, version, client_id = HELLO_ACK_STRUCT.unpack_from(data, 0)
-    validate_header(
+    header = HELLO_ACK_STRUCT.unpack_from(data, 0)
+    _validate_unpacked_header(
         label="HELLO_ACK",
-        msg_type=msg_type,
+        header_fields=header,
         expected_msg_type=MSG_HELLO_ACK,
-        version=version,
     )
+    _msg_type, _version, client_id = header
     return HelloAckMessage(client_id=client_id)
 
 
@@ -406,13 +421,13 @@ def pack_hello_ack(client_id: bytes) -> bytes:
 def parse_ack(data: bytes) -> AckMessage:
     """Decode a raw ACK message into an :class:`AckMessage`."""
     validate_fixed_message_size(label="ACK", data_length=len(data), expected_size=ACK_BYTES)
-    msg_type, version, client_id, cmd_seq, status = ACK_STRUCT.unpack_from(data, 0)
-    validate_header(
+    header = ACK_STRUCT.unpack_from(data, 0)
+    _validate_unpacked_header(
         label="ACK",
-        msg_type=msg_type,
+        header_fields=header,
         expected_msg_type=MSG_ACK,
-        version=version,
     )
+    _msg_type, _version, client_id, cmd_seq, status = header
     return AckMessage(client_id=client_id, cmd_seq=cmd_seq, status=status)
 
 
@@ -427,13 +442,13 @@ def parse_data_ack(data: bytes) -> DataAckMessage:
     validate_fixed_message_size(
         label="DATA_ACK", data_length=len(data), expected_size=DATA_ACK_BYTES
     )
-    msg_type, version, client_id, last_seq_received = DATA_ACK_STRUCT.unpack_from(data, 0)
-    validate_header(
+    header = DATA_ACK_STRUCT.unpack_from(data, 0)
+    _validate_unpacked_header(
         label="DATA_ACK",
-        msg_type=msg_type,
+        header_fields=header,
         expected_msg_type=MSG_DATA_ACK,
-        version=version,
     )
+    _msg_type, _version, client_id, last_seq_received = header
     return DataAckMessage(client_id=client_id, last_seq_received=last_seq_received)
 
 
