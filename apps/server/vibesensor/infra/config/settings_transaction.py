@@ -1,0 +1,56 @@
+"""Reusable settings update-with-rollback transaction helper.
+
+Owns the generic snapshot → apply → persist → audit → restore-on-failure
+sequencing used by all settings update paths.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from threading import RLock
+from typing import TypeVar
+
+from vibesensor.shared.exceptions import PersistenceError
+
+_SnapshotT = TypeVar("_SnapshotT")
+_ResultT = TypeVar("_ResultT")
+
+
+def update_with_rollback(
+    *,
+    lock: RLock,
+    persist: Callable[[], None],
+    snapshot: Callable[[], _SnapshotT],
+    apply: Callable[[_SnapshotT], bool],
+    restore: Callable[[_SnapshotT], None],
+    audit_log: Callable[[_SnapshotT], None] | None = None,
+    after_persist: Callable[[], None] | None = None,
+    result: Callable[[], _ResultT],
+) -> _ResultT:
+    """Execute an atomic settings update with rollback on persistence failure.
+
+    1. Acquire *lock*.
+    2. Take a *snapshot* of the current state.
+    3. *apply* the change; if it returns ``False`` (no-op), return *result*
+       immediately.
+    4. *persist* the updated state.
+    5. On ``PersistenceError``, *restore* the previous snapshot and re-raise.
+    6. Call *audit_log* (if supplied) after successful persistence.
+    7. Call *after_persist* (if supplied) for post-commit side effects.
+    8. Return *result*.
+    """
+    with lock:
+        previous = snapshot()
+        changed = apply(previous)
+        if not changed:
+            return result()
+        try:
+            persist()
+        except PersistenceError:
+            restore(previous)
+            raise
+        if audit_log is not None:
+            audit_log(previous)
+        if after_persist is not None:
+            after_persist()
+        return result()
