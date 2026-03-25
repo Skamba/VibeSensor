@@ -1,9 +1,9 @@
 """report_mapping – thin mapper from prepared report inputs to template data.
 
-Context preparation now happens on the history side, while this module keeps
-focused PDF mapping logic plus the final renderer-facing orchestration. It
-receives an explicit prepared report input and maps it to
-:class:`ReportTemplateData` for the PDF renderer.
+Context preparation now happens on the PDF side from the validated prepared
+report-input seam, while this module keeps focused PDF mapping logic plus the
+final renderer-facing orchestration. It receives an explicit prepared report
+input and maps it to :class:`ReportTemplateData` for the PDF renderer.
 """
 
 from __future__ import annotations
@@ -27,6 +27,7 @@ from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.adapters.pdf.report_context import (
     ReportMappingContext,
     observed_signature,
+    prepare_report_mapping_context,
 )
 from vibesensor.adapters.pdf.report_data import (
     FindingPresentation,
@@ -172,6 +173,7 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     report facts already guaranteed.
     """
     validated = validate_prepared_report_input(prepared)
+    context = prepare_report_mapping_context(validated)
     lang = str(normalize_lang(validated.language))
     report = build_report_from_renderer_payload(
         validated.renderer_payload,
@@ -183,6 +185,7 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
 
     return _build_report_template_data(
         validated,
+        context=context,
         report=report,
         lang=lang,
         tr=tr,
@@ -207,6 +210,7 @@ def _finding_to_presentation(f: Finding) -> FindingPresentation:
 def _build_report_template_data(
     prepared: ValidatedPreparedReportInput,
     *,
+    context: ReportMappingContext,
     report: Report,
     lang: str,
     tr: Callable[..., str],
@@ -214,7 +218,6 @@ def _build_report_template_data(
     report_facts: PreparedReportFacts,
 ) -> ReportTemplateData:
     """Resolve report sections, then delegate field assignment to the builder."""
-    context = prepared.mapping_context
     raw_sensor_intensity = list(report_facts.active_sensor_intensity)
     primary = resolve_primary_report_candidate(
         context=context,
