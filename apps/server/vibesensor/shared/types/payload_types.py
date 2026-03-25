@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, NotRequired, TypedDict
 
 from pydantic import ConfigDict
-from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 

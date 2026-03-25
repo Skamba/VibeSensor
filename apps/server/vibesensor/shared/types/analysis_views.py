@@ -2,16 +2,14 @@
 
 These TypedDicts are the single semantic owner for stable analysis/history
 concepts that must be understood by both persistence-boundary payloads and
-the HTTP/OpenAPI response schema. ``typing_extensions.TypedDict`` keeps these
-shapes compatible with Pydantic schema generation on Python 3.11.
+the HTTP/OpenAPI response schema.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Required, TypedDict
 
 from pydantic import ConfigDict
-from typing_extensions import Required, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 __all__ = [
     "AmpVsPhaseRow",

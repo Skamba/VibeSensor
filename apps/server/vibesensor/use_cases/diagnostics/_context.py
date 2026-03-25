@@ -11,7 +11,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
-from typing import TypeAlias
 
 from vibesensor.domain import (
     OrderReferenceSpec,
@@ -22,8 +21,8 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
 from ._types import Sample
 
-ScalarSettingValue: TypeAlias = int | float | bool | str
-ScalarSettings: TypeAlias = tuple[tuple[str, ScalarSettingValue], ...]
+type ScalarSettingValue = int | float | bool | str
+type ScalarSettings = tuple[tuple[str, ScalarSettingValue], ...]
 
 
 @dataclass(frozen=True, slots=True)

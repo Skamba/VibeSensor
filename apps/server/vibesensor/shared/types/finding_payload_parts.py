@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Required
-
-from typing_extensions import TypedDict
+from typing import Required, TypedDict
 
 from vibesensor.shared.types.analysis_views import (
     FindingEvidenceMetrics,

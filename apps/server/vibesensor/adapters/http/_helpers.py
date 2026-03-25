@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, TypeAlias
+from typing import Any
 
 from fastapi import HTTPException
 
@@ -33,7 +33,7 @@ __all__ = [
     "safe_filename",
 ]
 
-OpenAPIResponses: TypeAlias = dict[int | str, dict[str, Any]]
+type OpenAPIResponses = dict[int | str, dict[str, Any]]
 _CAR_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 _RUN_ID_RE = re.compile(r"^[!-~]{1,128}$")
 

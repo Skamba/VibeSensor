@@ -6,7 +6,7 @@ evolve independently of finding, summary, and warning wrappers.
 
 from __future__ import annotations
 
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 __all__ = [
     "DataQualityAccelSanityResponse",

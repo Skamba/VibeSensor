@@ -5,9 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, TypeAlias
-
-from typing_extensions import TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
@@ -26,7 +24,7 @@ __all__ = [
 
 _isfinite = math.isfinite
 
-ResolvedSpeedSource: TypeAlias = Literal["gps", "manual", "fallback_manual", "none"]
+type ResolvedSpeedSource = Literal["gps", "manual", "fallback_manual", "none"]
 VALID_SPEED_SOURCES: tuple[str, ...] = tuple(kind.value for kind in SpeedSourceKind)
 
 

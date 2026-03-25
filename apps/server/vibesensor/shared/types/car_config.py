@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
-
-from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
+from typing import TYPE_CHECKING, NotRequired, TypedDict
 
 from vibesensor.shared.types.settings_types import AnalysisSettingsPayload
 

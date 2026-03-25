@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TypeAlias
-
-from typing_extensions import TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
+from typing import TypedDict
 
 __all__ = [
     "SensorConfig",
@@ -26,7 +24,7 @@ class SensorConfigUpdatePayload(TypedDict, total=False):
     location_code: str
 
 
-SensorsByMacPayload: TypeAlias = dict[str, SensorConfigPayload]
+type SensorsByMacPayload = dict[str, SensorConfigPayload]
 
 
 @dataclass(slots=True)

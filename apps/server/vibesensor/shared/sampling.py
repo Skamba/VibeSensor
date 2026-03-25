@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TypeVar
-
-SampleT = TypeVar("SampleT")
 
 
-def bounded_sample(
+def bounded_sample[SampleT](
     samples: Iterator[SampleT],
     *,
     max_items: int,

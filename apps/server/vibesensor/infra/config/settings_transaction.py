@@ -8,25 +8,21 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from threading import RLock
-from typing import TypeVar
 
 from vibesensor.shared.exceptions import PersistenceError
 
-_SnapshotT = TypeVar("_SnapshotT")
-_ResultT = TypeVar("_ResultT")
 
-
-def update_with_rollback(
+def update_with_rollback[SnapshotT, ResultT](
     *,
     lock: RLock,
     persist: Callable[[], None],
-    snapshot: Callable[[], _SnapshotT],
-    apply: Callable[[_SnapshotT], bool],
-    restore: Callable[[_SnapshotT], None],
-    audit_log: Callable[[_SnapshotT], None] | None = None,
+    snapshot: Callable[[], SnapshotT],
+    apply: Callable[[SnapshotT], bool],
+    restore: Callable[[SnapshotT], None],
+    audit_log: Callable[[SnapshotT], None] | None = None,
     after_persist: Callable[[], None] | None = None,
-    result: Callable[[], _ResultT],
-) -> _ResultT:
+    result: Callable[[], ResultT],
+) -> ResultT:
     """Execute an atomic settings update with rollback on persistence failure.
 
     1. Acquire *lock*.
