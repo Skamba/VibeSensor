@@ -101,6 +101,8 @@ def _finding_core_payload_from_domain(finding: Finding) -> FindingCorePayload:
             metrics["snr_db"] = ev.snr_db
         if ev.vibration_strength_db is not None:
             metrics["vibration_strength_db"] = ev.vibration_strength_db
+        elif finding.vibration_strength_db is not None:
+            metrics["vibration_strength_db"] = finding.vibration_strength_db
         if ev.phases_with_evidence is not None:
             metrics["phases_with_evidence"] = ev.phases_with_evidence
         if ev.phase_confidences:
