@@ -24,6 +24,10 @@ from vibesensor.infra.processing.models import (
     ProcessorConfig,
     ProcessorStats,
 )
+from vibesensor.infra.processing.snapshot_builder import (
+    check_cache_hit,
+    compute_snapshot_window,
+)
 from vibesensor.shared.types.payload_types import (
     IntakeStatsPayload,
     RawSamplesErrorPayload,
@@ -163,20 +167,31 @@ class SignalBufferStore:
                     resize_buffer=False,
                 )
             sr = buf.sample_rate_hz or self.config.sample_rate_hz
-            if buf.compute_generation == buf.ingest_generation and buf.compute_sample_rate_hz == sr:
-                return CachedMetricsHit(metrics=buf.latest_metrics)
 
-            desired_samples = int(max(1.0, float(sr) * float(self.config.waveform_seconds)))
-            n_time = min(buf.count, buf.capacity, max(1, desired_samples))
+            cache_hit = check_cache_hit(
+                ingest_generation=buf.ingest_generation,
+                compute_generation=buf.compute_generation,
+                compute_sample_rate_hz=buf.compute_sample_rate_hz,
+                effective_sample_rate_hz=sr,
+                latest_metrics=buf.latest_metrics,
+            )
+            if cache_hit is not None:
+                return cache_hit
+
+            window = compute_snapshot_window(
+                count=buf.count,
+                capacity=buf.capacity,
+                sample_rate_hz=sr,
+                waveform_seconds=self.config.waveform_seconds,
+                fft_n=self.config.fft_n,
+            )
+
             fft_block: FloatArray | None = None
-            if buf.count >= self.config.fft_n and n_time < self.config.fft_n:
-                # The compute path always consumes the latest overlapping suffix
-                # windows. Copy the larger FFT block once, then let the shorter
-                # time window borrow its tail view from that owned snapshot.
+            if window.needs_separate_fft_block:
                 fft_block = self.copy_latest(buf, self.config.fft_n)
-                time_window = fft_block[:, -n_time:]
+                time_window = fft_block[:, -window.n_time :]
             else:
-                time_window = self.copy_latest(buf, n_time)
+                time_window = self.copy_latest(buf, window.n_time)
                 if buf.count >= self.config.fft_n:
                     fft_block = time_window[:, -self.config.fft_n :]
             return MetricsSnapshot(
