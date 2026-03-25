@@ -213,6 +213,8 @@ def _validate_server_dockerfile(
         errors.append(
             f"{label} must stay backend-only and must not build or copy UI assets."
         )
+    if not require_ui_stage and "VIBESENSOR_SERVE_STATIC=0" not in dockerfile_text:
+        errors.append(f"{label} must disable static UI serving.")
 
     return errors
 
