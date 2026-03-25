@@ -63,8 +63,8 @@ def test_findings_module_no_longer_reexports_helper_names() -> None:
         assert not hasattr(findings_module, helper_name)
 
 
-def test_finding_typed_dict_exposes_core_contract() -> None:
-    """FindingPayload TypedDict must expose all expected core fields."""
+def test_finding_typed_dict_exposes_shared_finding_contract() -> None:
+    """FindingPayload TypedDict must expose the shared outward finding fields."""
     hints = get_type_hints(FindingPayload)
     assert {
         "finding_id",
