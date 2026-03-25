@@ -18,6 +18,7 @@ from vibesensor.infra.location_assignment_validator import (
 )
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
+from vibesensor.infra.runtime.client_snapshot_projection import project_client_snapshots
 from vibesensor.infra.runtime.dedup_window import DedupWindow
 from vibesensor.infra.runtime.registry_updates import (
     DataUpdateResult,
@@ -411,44 +412,11 @@ class ClientRegistry:
     ) -> list[ClientSnapshot]:
         """Return raw per-client snapshots for transport presenters."""
         with self._lock:
-            now_ts = _resolve_now_wall(now)
-            mono_now = _resolve_now_mono(now_mono)
-            snapshots: list[ClientSnapshot] = []
-            all_client_ids = self._metadata.known_client_ids(self._clients)
-            for client_id in all_client_ids:
-                record = self._clients.get(client_id)
-                if record is None:
-                    snapshots.append(
-                        ClientSnapshot(
-                            client_id=client_id,
-                            name=self._metadata.default_name_for(client_id),
-                            connected=False,
-                        ),
-                    )
-                    continue
-                age_ms = (
-                    int(max(0.0, now_ts - record.last_seen) * 1000) if record.last_seen else None
-                )
-                connected = self._is_live_unlocked(record, mono_now)
-                snapshots.append(
-                    ClientSnapshot(
-                        client_id=record.client_id,
-                        name=record.name,
-                        connected=connected,
-                        location_code=record.location_code,
-                        firmware_version=record.firmware_version,
-                        sample_rate_hz=record.sample_rate_hz,
-                        frame_samples=record.frame_samples,
-                        last_seen_age_ms=age_ms,
-                        frames_total=record.frames_total,
-                        dropped_frames=record.frames_dropped,
-                        latest_metrics=(
-                            metrics_by_client.get(record.client_id)
-                            if metrics_by_client is not None
-                            else None
-                        ),
-                        reset_count=record.reset_count,
-                        last_reset_time=record.last_reset_time,
-                    ),
-                )
-            return snapshots
+            return project_client_snapshots(
+                self._clients,
+                self._metadata,
+                now_wall=_resolve_now_wall(now),
+                now_mono=_resolve_now_mono(now_mono),
+                live_ttl_seconds=self._live_ttl_seconds,
+                metrics_by_client=metrics_by_client,
+            )

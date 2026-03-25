@@ -575,7 +575,10 @@ async def test_send_error_logging_is_rate_limited(caplog) -> None:
     fake_loop = MagicMock()
     fake_loop.time.side_effect = [1000.0, 1001.0]
     with (
-        patch("vibesensor.adapters.websocket.hub.asyncio.get_running_loop", return_value=fake_loop),
+        patch(
+            "vibesensor.adapters.websocket.broadcast_runner.asyncio.get_running_loop",
+            return_value=fake_loop,
+        ),
         caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"),
     ):
         await hub.broadcast(lambda _: {"ok": True})
