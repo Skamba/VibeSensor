@@ -31,7 +31,10 @@ from vibesensor.shared.boundaries.summary_serialization._summary import (
 )
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.boundaries.test_plan_projection import step_payloads_from_plan
-from vibesensor.shared.run_context_warning import build_summary_warnings
+from vibesensor.shared.run_context_warning import (
+    RunContextWarningsInput,
+    build_summary_warnings,
+)
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
@@ -137,7 +140,7 @@ def _amp_metric_values(accel_stats: AccelStatisticsLike) -> list[float]:
 
 def analysis_summary_with_warnings(
     summary: AnalysisSummary,
-    warnings: object,
+    warnings: RunContextWarningsInput,
 ) -> AnalysisSummary:
     """Return a typed summary copy with report-facing warning payloads replaced."""
 

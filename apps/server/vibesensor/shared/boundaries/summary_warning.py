@@ -8,6 +8,7 @@ from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.json_utils import payload_value_from_json
 from vibesensor.shared.run_context_warning import (
     RunContextWarning,
+    RunContextWarningsInput,
     normalize_run_context_warnings,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
@@ -28,7 +29,9 @@ def summary_warning_payload(warning: RunContextWarning) -> SummaryWarningPayload
     return payload
 
 
-def summary_warning_payloads(warnings: object) -> list[SummaryWarningPayload]:
+def summary_warning_payloads(
+    warnings: RunContextWarningsInput,
+) -> list[SummaryWarningPayload]:
     """Serialize warning models into the summary payload list shape."""
     return [
         summary_warning_payload(warning) for warning in normalize_run_context_warnings(warnings)
@@ -36,7 +39,7 @@ def summary_warning_payloads(warnings: object) -> list[SummaryWarningPayload]:
 
 
 def localize_warning_list(
-    warnings: object,
+    warnings: RunContextWarningsInput,
     *,
     lang: str,
 ) -> list[JsonObject]:

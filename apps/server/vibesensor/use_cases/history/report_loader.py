@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from vibesensor.domain import RunStatus
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.ports import RunPersistence
+from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.json_types import is_json_array
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.helpers import (
@@ -29,7 +31,7 @@ class HistoryReportRequest:
     filename: str
     language: str
     analysis: PersistedAnalysis
-    warnings: object
+    warnings: RunContextWarningsInput
 
 
 class HistoryReportRequestLoader:
@@ -59,7 +61,8 @@ class HistoryReportRequestLoader:
             raise AnalysisNotReadyError("No analysis available for this run")
 
         requested_lang = self._analysis_language(run, requested_lang)
-        warnings = analysis.get("warnings")
+        raw_warnings = analysis.get("warnings")
+        warnings = raw_warnings if is_json_array(raw_warnings) else None
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
