@@ -1,10 +1,9 @@
 """report_mapping – thin mapper from prepared report inputs to template data.
 
-Context assembly (domain aggregate reconstruction, primary-candidate
-preparation) lives in :mod:`report_context`, with focused helper logic in
-``_candidate_resolver.py`` and ``_card_builder.py``. This module receives
-an explicit prepared report input and maps it to :class:`ReportTemplateData`
-for the PDF renderer.
+Context preparation now happens on the history side, while this module keeps
+focused PDF mapping logic plus the final renderer-facing orchestration. It
+receives an explicit prepared report input and maps it to
+:class:`ReportTemplateData` for the PDF renderer.
 """
 
 from __future__ import annotations
@@ -27,6 +26,7 @@ from vibesensor.adapters.pdf.peak_table import build_peak_rows
 from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.adapters.pdf.report_context import (
     ReportMappingContext,
+    observed_signature,
     prepare_report_mapping_context,
 )
 from vibesensor.adapters.pdf.report_data import (
@@ -234,7 +234,7 @@ def _build_report_template_data(
         tr=tr,
         lang=lang,
     )
-    observed = context.observed_signature(primary)
+    observed = observed_signature(primary)
     system_cards = build_system_cards(
         context,
         primary,

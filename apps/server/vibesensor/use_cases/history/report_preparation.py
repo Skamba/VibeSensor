@@ -23,6 +23,8 @@ from vibesensor.shared.boundaries.analysis_payload import (
 from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.helpers import safe_filename
@@ -38,7 +40,7 @@ from vibesensor.use_cases.history.report_interpretation import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
+    from vibesensor.domain import Finding, TestRun
 
 
 def _has_projectable_payload(payload: Mapping[str, object]) -> bool:
@@ -168,6 +170,49 @@ class PreparedReportFacts:
     warnings: tuple[SummaryWarningPayload, ...]
 
 
+@dataclass(frozen=True)
+class ReportMappingContext:
+    """Normalized structural context prepared on the history side for PDF mapping."""
+
+    car_name: str | None
+    car_type: str | None
+    date_str: str
+    origin: VibrationOrigin | None
+    origin_location: str
+    sensor_locations_active: list[str]
+    duration_text: str | None
+    start_time_utc: str | None
+    end_time_utc: str | None
+    sample_rate_hz: str | None
+    tire_spec_text: str | None
+    sample_count: int
+    sensor_model: str | None
+    firmware_version: str | None
+    domain_aggregate: TestRun
+
+    def top_report_candidate(self) -> Finding | None:
+        """Return the primary report candidate (first effective top cause or finding)."""
+        effective = self.domain_aggregate.effective_top_causes()
+        if effective:
+            return effective[0]
+        non_ref = self.domain_aggregate.non_reference_findings
+        if non_ref:
+            return non_ref[0]
+        all_findings = self.domain_aggregate.findings
+        return all_findings[0] if all_findings else None
+
+    def has_significant_location_intensity(
+        self,
+        sensor_intensity: list[LocationIntensitySummary],
+    ) -> bool:
+        """Whether any sensor location shows significant above-noise intensity."""
+        for row in sensor_intensity:
+            p95 = _as_float(row.p95_intensity_db)
+            if p95 is not None and p95 > 0:
+                return True
+        return False
+
+
 @dataclass(frozen=True, slots=True)
 class PreparedReportInput:
     """Resolved report input ready for PDF mapping and rendering.
@@ -177,13 +222,13 @@ class PreparedReportInput:
       downstream PDF mapping helpers as the authoritative report aggregate.
     - ``report_facts`` contains the semantic report facts that the PDF adapter
       needs so it does not have to call back into history-layer interpretation.
-     - ``renderer_payload`` contains only the minimal final-edge payload that the
-       PDF mapper still needs after domain/report preparation is complete.
-     - ``language`` is canonicalized once so the renderer consumes one
-       consistent locale choice.
-     - ``domain_test_run`` and ``report_facts`` may still be ``None`` for
-       non-projectable inputs; call ``validate_prepared_report_input()`` before
-       entering the PDF mapping seam.
+    - ``renderer_payload`` contains only the minimal final-edge payload that the
+      PDF mapper still needs after domain/report preparation is complete.
+    - ``language`` is canonicalized once so the renderer consumes one
+      consistent locale choice.
+    - ``domain_test_run`` and ``report_facts`` may still be ``None`` for
+      non-projectable inputs; ``mapping_context`` is likewise absent until the
+      report handoff is projectable and validated for PDF mapping.
     """
 
     renderer_payload: PreparedReportRendererPayload
@@ -192,6 +237,7 @@ class PreparedReportInput:
     domain_test_run: TestRun | None
     cache_key: ReportPdfCacheKey | None = None
     report_facts: PreparedReportFacts | None = None
+    mapping_context: ReportMappingContext | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,7 +253,35 @@ class ValidatedPreparedReportInput:
     filename: str
     domain_test_run: TestRun
     report_facts: PreparedReportFacts
+    mapping_context: ReportMappingContext
     cache_key: ReportPdfCacheKey | None = None
+
+
+def _build_report_mapping_context(
+    *,
+    renderer_payload: PreparedReportRendererPayload,
+    report_facts: PreparedReportFacts,
+    test_run: TestRun,
+) -> ReportMappingContext:
+    report_date = renderer_payload.report_date or utc_now_iso()
+    date_str = str(report_date)[:19].replace("T", " ") + " UTC"
+    return ReportMappingContext(
+        car_name=renderer_payload.car_name,
+        car_type=renderer_payload.car_type,
+        date_str=date_str,
+        origin=report_facts.origin,
+        origin_location=report_facts.origin_location,
+        sensor_locations_active=list(report_facts.sensor_locations_active),
+        duration_text=report_facts.duration_text,
+        start_time_utc=report_facts.start_time_utc,
+        end_time_utc=report_facts.end_time_utc,
+        sample_rate_hz=report_facts.sample_rate_hz,
+        tire_spec_text=report_facts.tire_spec_text,
+        sample_count=report_facts.sample_count,
+        sensor_model=report_facts.sensor_model,
+        firmware_version=report_facts.firmware_version,
+        domain_aggregate=test_run,
+    )
 
 
 def validate_prepared_report_input(
@@ -220,12 +294,15 @@ def validate_prepared_report_input(
         raise ValueError("PreparedReportInput must include a domain_test_run for report mapping")
     if prepared.report_facts is None:
         raise ValueError("PreparedReportInput must include report_facts for report mapping")
+    if prepared.mapping_context is None:
+        raise ValueError("PreparedReportInput must include mapping_context for report mapping")
     return ValidatedPreparedReportInput(
         renderer_payload=prepared.renderer_payload,
         language=prepared.language,
         filename=prepared.filename,
         domain_test_run=prepared.domain_test_run,
         report_facts=prepared.report_facts,
+        mapping_context=prepared.mapping_context,
         cache_key=prepared.cache_key,
     )
 
@@ -294,18 +371,29 @@ def _build_prepared_report_input(
 ) -> PreparedReportInput:
     domain_test_run = _reconstruct_report_test_run(payload)
     prepared_language = str(normalize_lang(language or payload.get("lang")))
+    renderer_payload = _build_renderer_payload(payload)
     report_facts = (
         _prepare_report_facts(payload, test_run=domain_test_run, warnings=warnings)
         if domain_test_run is not None
         else None
     )
+    mapping_context = (
+        _build_report_mapping_context(
+            renderer_payload=renderer_payload,
+            report_facts=report_facts,
+            test_run=domain_test_run,
+        )
+        if domain_test_run is not None and report_facts is not None
+        else None
+    )
     return PreparedReportInput(
-        renderer_payload=_build_renderer_payload(payload),
+        renderer_payload=renderer_payload,
         language=prepared_language,
         filename=filename or _default_report_filename(payload),
         domain_test_run=domain_test_run,
         cache_key=cache_key,
         report_facts=report_facts,
+        mapping_context=mapping_context,
     )
 
 
