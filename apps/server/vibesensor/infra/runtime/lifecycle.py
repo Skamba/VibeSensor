@@ -19,13 +19,9 @@ from typing import Protocol
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.task_supervisor import TaskSupervisor, task_failure_message
+from vibesensor.infra.runtime.udp_transport_lifecycle import StartUdpReceiver, UdpTransportLifecycle
 from vibesensor.shared.constants.ui import UI_PUSH_HZ
 from vibesensor.shared.types.payload_types import LiveWsPayload
-
-StartUdpReceiver = Callable[
-    ...,
-    Coroutine[object, object, tuple[asyncio.DatagramTransport, asyncio.Task[None]]],
-]
 
 
 class LifecycleControlPlane(Protocol):
@@ -133,12 +129,10 @@ class LifecycleManager:
     """Manages server startup (UDP receiver, background tasks) and graceful shutdown."""
 
     __slots__ = (
-        "_data_consumer_task",
-        "_data_transport",
         "_health_state",
         "_runtime",
-        "_start_udp_receiver",
         "_task_supervisor",
+        "_udp_transport_lifecycle",
         "tasks",
     )
 
@@ -150,14 +144,16 @@ class LifecycleManager:
     ) -> None:
         self._runtime = runtime
         self._health_state = runtime.health_state
-        self._start_udp_receiver = start_udp_receiver
         self._task_supervisor = TaskSupervisor(
             health_state=self._health_state,
             logger=LOGGER,
         )
+        self._udp_transport_lifecycle = UdpTransportLifecycle(
+            start_udp_receiver=start_udp_receiver,
+            monitor_task=self._monitor_task,
+            logger=LOGGER,
+        )
         self.tasks: list[asyncio.Task[object]] = []
-        self._data_transport: asyncio.DatagramTransport | None = None
-        self._data_consumer_task: asyncio.Task[object] | None = None
 
     def _monitor_task(self, task: asyncio.Task[object]) -> None:
         task_name = task.get_name()
@@ -254,15 +250,13 @@ class LifecycleManager:
         try:
             phase = "udp_receiver"
             self._health_state.set_phase(phase)
-            self._data_transport, self._data_consumer_task = await self._start_udp_receiver(
+            await self._udp_transport_lifecycle.startup(
                 host=self._runtime.udp_data_host,
                 port=self._runtime.udp_data_port,
                 registry=self._runtime.registry,
                 processor=self._runtime.processor,
                 queue_maxsize=self._runtime.udp_data_queue_maxsize,
             )
-            if self._data_consumer_task is not None:
-                self._monitor_task(self._data_consumer_task)
 
             phase = "control_plane"
             self._health_state.set_phase(phase)
@@ -332,16 +326,7 @@ class LifecycleManager:
             self._runtime.control_plane.close()
         except OSError:
             LOGGER.warning("Error closing control plane", exc_info=True)
-        try:
-            if self._data_transport is not None:
-                self._data_transport.close()
-                self._data_transport = None
-        except OSError:
-            LOGGER.warning("Error closing data transport", exc_info=True)
-        if self._data_consumer_task is not None:
-            self._data_consumer_task.cancel()
-            await asyncio.gather(self._data_consumer_task, return_exceptions=True)
-            self._data_consumer_task = None
+        await self._udp_transport_lifecycle.shutdown()
 
         lingering_background_tasks = await self._cancel_background_tasks(timeout_s=15.0)
 

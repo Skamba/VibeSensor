@@ -7,6 +7,7 @@ Submodules
 - ``registry_updates``: DATA-message dedup/reset bookkeeping
 - ``processing_loop``: ProcessingLoop (async tick loop + failure tracking)
 - ``task_supervisor``: TaskSupervisor (managed restart policy + backoff)
+- ``udp_transport_lifecycle``: UdpTransportLifecycle (UDP startup + cleanup seam)
 - ``ws_broadcast``: WsBroadcastService (payload assembly + cache)
 - ``lifecycle``: LifecycleManager (start/stop + task management)
 - ``rotational_speeds``: Stateless rotational speed payload helpers
