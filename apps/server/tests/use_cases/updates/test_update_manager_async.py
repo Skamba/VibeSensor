@@ -369,7 +369,7 @@ class TestUpdateManagerAsync:
         manager.status.phase = UpdatePhase.installing
 
         with patch(
-            "vibesensor.use_cases.updates.manager.parse_wifi_diagnostics",
+            "vibesensor.use_cases.updates.wifi.wifi_orchestrator.parse_wifi_diagnostics",
             side_effect=TypeError("diagnostics bug"),
         ):
             with pytest.raises(TypeError, match="diagnostics bug"):
