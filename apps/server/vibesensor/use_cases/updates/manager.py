@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
@@ -37,6 +38,7 @@ from vibesensor.use_cases.updates.validation import (
     validate_prerequisites,
 )
 from vibesensor.use_cases.updates.wifi import (
+    UpdateWifiConfig,
     UpdateWifiOrchestrator,
     build_default_wifi_config,
 )
@@ -49,6 +51,55 @@ ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
+
+CommandExecutorFactory = Callable[
+    [CommandRunner, UpdateStatusTracker],
+    UpdateCommandExecutor,
+]
+WifiOrchestratorFactory = Callable[
+    [UpdateCommandExecutor, UpdateStatusTracker, UpdateWifiConfig],
+    UpdateWifiOrchestrator,
+]
+InstallerFactory = Callable[
+    [UpdateCommandExecutor, UpdateStatusTracker, UpdateInstallerConfig],
+    UpdateInstaller,
+]
+FirmwareRefresherFactory = Callable[
+    [UpdateCommandExecutor, UpdateStatusTracker, Path, float],
+    FirmwareRefresher,
+]
+
+
+def _default_command_executor(
+    runner: CommandRunner,
+    tracker: UpdateStatusTracker,
+) -> UpdateCommandExecutor:
+    return UpdateCommandExecutor(runner=runner, tracker=tracker)
+
+
+def _default_wifi_orchestrator(
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateWifiConfig,
+) -> UpdateWifiOrchestrator:
+    return UpdateWifiOrchestrator(commands=commands, tracker=tracker, config=config)
+
+
+def _default_installer(
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateInstallerConfig,
+) -> UpdateInstaller:
+    return UpdateInstaller(commands=commands, tracker=tracker, config=config)
+
+
+def _default_firmware_refresher(
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    repo: Path,
+    timeout_s: float,
+) -> FirmwareRefresher:
+    return FirmwareRefresher(commands=commands, tracker=tracker, repo=repo, timeout_s=timeout_s)
 
 
 class UpdateManager:
@@ -63,6 +114,10 @@ class UpdateManager:
         wifi_ifname: str = "wlan0",
         rollback_dir: str | None = None,
         state_store: UpdateStateStore | None = None,
+        command_executor_factory: CommandExecutorFactory = _default_command_executor,
+        wifi_orchestrator_factory: WifiOrchestratorFactory = _default_wifi_orchestrator,
+        installer_factory: InstallerFactory = _default_installer,
+        firmware_refresher_factory: FirmwareRefresherFactory = _default_firmware_refresher,
     ) -> None:
         self._runner = runner or CommandRunner()
         self._repo_path = repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor")
@@ -80,6 +135,13 @@ class UpdateManager:
         )
         self._tracker.set_runtime(collect_runtime_details(self._repo))
         self._executor = UpdateJobExecutor(task_name="system-update")
+
+        # Store factories for collaborator construction.
+        self._command_executor_factory = command_executor_factory
+        self._wifi_orchestrator_factory = wifi_orchestrator_factory
+        self._installer_factory = installer_factory
+        self._firmware_refresher_factory = firmware_refresher_factory
+
         self._lifecycle = UpdateJobLifecycleHandler(
             tracker=self._tracker,
             repo=self._repo,
@@ -153,11 +215,7 @@ class UpdateManager:
         commands = self._build_command_executor()
         tracker = self._tracker
         wifi = self._build_wifi_orchestrator(commands=commands)
-        installer = UpdateInstaller(
-            commands=commands,
-            tracker=tracker,
-            config=self._installer_config,
-        )
+        installer = self._build_installer(commands)
         firmware_refresher = self._build_firmware_refresher(commands=commands)
         cancel_requested = self._executor.cancel_requested
 
@@ -265,50 +323,49 @@ class UpdateManager:
         tracker.log("Automatic backend restart scheduling failed")
 
     def _build_command_executor(self) -> UpdateCommandExecutor:
-        return UpdateCommandExecutor(runner=self._runner, tracker=self._tracker)
+        return self._command_executor_factory(self._runner, self._tracker)
 
     def _build_wifi_orchestrator(
         self,
         *,
         commands: UpdateCommandExecutor | None = None,
     ) -> UpdateWifiOrchestrator:
-        return UpdateWifiOrchestrator(
-            commands=commands or self._build_command_executor(),
-            tracker=self._tracker,
-            config=build_default_wifi_config(
-                ap_con_name=self._ap_con_name,
-                wifi_ifname=self._wifi_ifname,
-            ),
+        wifi_config = build_default_wifi_config(
+            ap_con_name=self._ap_con_name,
+            wifi_ifname=self._wifi_ifname,
         )
+        return self._wifi_orchestrator_factory(
+            commands or self._build_command_executor(),
+            self._tracker,
+            wifi_config,
+        )
+
+    def _build_installer(
+        self,
+        commands: UpdateCommandExecutor,
+    ) -> UpdateInstaller:
+        return self._installer_factory(commands, self._tracker, self._installer_config)
 
     def _build_firmware_refresher(
         self,
         *,
         commands: UpdateCommandExecutor | None = None,
     ) -> FirmwareRefresher:
-        return FirmwareRefresher(
-            commands=commands or self._build_command_executor(),
-            tracker=self._tracker,
-            repo=self._repo,
-            timeout_s=self._installer_config.firmware_refresh_timeout_s,
+        return self._firmware_refresher_factory(
+            commands or self._build_command_executor(),
+            self._tracker,
+            self._repo,
+            self._installer_config.firmware_refresh_timeout_s,
         )
 
     async def _snapshot_for_rollback(self) -> bool:
         commands = self._build_command_executor()
-        installer = UpdateInstaller(
-            commands=commands,
-            tracker=self._tracker,
-            config=self._installer_config,
-        )
+        installer = self._build_installer(commands)
         return await installer.snapshot_for_rollback()
 
     async def _rollback(self) -> bool:
         commands = self._build_command_executor()
-        installer = UpdateInstaller(
-            commands=commands,
-            tracker=self._tracker,
-            config=self._installer_config,
-        )
+        installer = self._build_installer(commands)
         return await installer.rollback()
 
 
