@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from vibesensor.infra.processing.buffer_store import (
-    MAX_CLIENT_SAMPLE_RATE_HZ,
-    SignalBufferStore,
-)
+from vibesensor.infra.processing.buffer_capacity import MAX_CLIENT_SAMPLE_RATE_HZ
+from vibesensor.infra.processing.buffer_store import SignalBufferStore
 from vibesensor.infra.processing.compute import SignalMetricsComputer
 from vibesensor.infra.processing.models import CachedMetricsHit, MetricsSnapshot, ProcessorConfig
 
