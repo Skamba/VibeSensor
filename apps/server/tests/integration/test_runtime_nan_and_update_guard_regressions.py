@@ -21,7 +21,8 @@ from vibesensor.use_cases.updates.firmware.firmware_bundle import dir_sha256
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
 from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
-from vibesensor.use_cases.updates.manager import UpdateManager, UpdateState
+from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.models import UpdateState
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
 

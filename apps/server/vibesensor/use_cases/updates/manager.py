@@ -5,27 +5,20 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import shutil
-import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
-from vibesensor.shared.exceptions import ConfigurationError
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
 from vibesensor.use_cases.updates.job_lifecycle import UpdateJobLifecycleHandler
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
-    UpdatePhase,
     UpdateRequest,
-    UpdateState,
     UpdateValidationConfig,
+    validate_update_request,
 )
-from vibesensor.use_cases.updates.releases import (
-    check_for_update,
-    download_release,
-    verify_download,
-)
+from vibesensor.use_cases.updates.recovery import InterruptedUpdateRecovery
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
@@ -34,12 +27,13 @@ from vibesensor.use_cases.updates.status import (
 )
 from vibesensor.use_cases.updates.validation import (
     MIN_FREE_DISK_BYTES,
-    validate_prerequisites,
 )
 from vibesensor.use_cases.updates.wifi import (
+    UpdateWifiConfig,
     UpdateWifiOrchestrator,
     build_default_wifi_config,
 )
+from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,6 +43,55 @@ ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
+
+CommandExecutorFactory = Callable[
+    [CommandRunner, UpdateStatusTracker],
+    UpdateCommandExecutor,
+]
+WifiOrchestratorFactory = Callable[
+    [UpdateCommandExecutor, UpdateStatusTracker, UpdateWifiConfig],
+    UpdateWifiOrchestrator,
+]
+InstallerFactory = Callable[
+    [UpdateCommandExecutor, UpdateStatusTracker, UpdateInstallerConfig],
+    UpdateInstaller,
+]
+FirmwareRefresherFactory = Callable[
+    [UpdateCommandExecutor, UpdateStatusTracker, Path, float],
+    FirmwareRefresher,
+]
+
+
+def _default_command_executor(
+    runner: CommandRunner,
+    tracker: UpdateStatusTracker,
+) -> UpdateCommandExecutor:
+    return UpdateCommandExecutor(runner=runner, tracker=tracker)
+
+
+def _default_wifi_orchestrator(
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateWifiConfig,
+) -> UpdateWifiOrchestrator:
+    return UpdateWifiOrchestrator(commands=commands, tracker=tracker, config=config)
+
+
+def _default_installer(
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateInstallerConfig,
+) -> UpdateInstaller:
+    return UpdateInstaller(commands=commands, tracker=tracker, config=config)
+
+
+def _default_firmware_refresher(
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    repo: Path,
+    timeout_s: float,
+) -> FirmwareRefresher:
+    return FirmwareRefresher(commands=commands, tracker=tracker, repo=repo, timeout_s=timeout_s)
 
 
 class UpdateManager:
@@ -63,6 +106,10 @@ class UpdateManager:
         wifi_ifname: str = "wlan0",
         rollback_dir: str | None = None,
         state_store: UpdateStateStore | None = None,
+        command_executor_factory: CommandExecutorFactory = _default_command_executor,
+        wifi_orchestrator_factory: WifiOrchestratorFactory = _default_wifi_orchestrator,
+        installer_factory: InstallerFactory = _default_installer,
+        firmware_refresher_factory: FirmwareRefresherFactory = _default_firmware_refresher,
     ) -> None:
         self._runner = runner or CommandRunner()
         self._repo_path = repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor")
@@ -80,11 +127,22 @@ class UpdateManager:
         )
         self._tracker.set_runtime(collect_runtime_details(self._repo))
         self._executor = UpdateJobExecutor(task_name="system-update")
+
+        # Store factories for collaborator construction.
+        self._command_executor_factory = command_executor_factory
+        self._wifi_orchestrator_factory = wifi_orchestrator_factory
+        self._installer_factory = installer_factory
+        self._firmware_refresher_factory = firmware_refresher_factory
+
         self._lifecycle = UpdateJobLifecycleHandler(
             tracker=self._tracker,
             repo=self._repo,
             wifi_factory=self._build_wifi_orchestrator,
             logger=LOGGER,
+        )
+        self._recovery = InterruptedUpdateRecovery(
+            tracker=self._tracker,
+            wifi_factory=self._build_wifi_orchestrator,
         )
 
         # Build config objects once — shared by workflow, snapshot, and rollback.
@@ -108,12 +166,7 @@ class UpdateManager:
         return self._executor.job_task
 
     def start(self, ssid: str, password: str) -> None:
-        ssid = ssid.strip()
-        if not ssid or len(ssid) > 64:
-            raise ConfigurationError("SSID must be 1-64 characters")
-        if password and len(password) > 128:
-            raise ConfigurationError("Password must be at most 128 characters")
-        request = UpdateRequest(ssid=ssid, password=password)
+        request = validate_update_request(ssid, password)
         self._executor.start(
             lambda: self._run_update(request),
             before_start=lambda: self._lifecycle.prepare_start(request),
@@ -123,16 +176,8 @@ class UpdateManager:
         return self._executor.cancel()
 
     async def startup_recover(self) -> None:
-        if (
-            self._tracker.status.state != UpdateState.running
-            or self._tracker.status.finished_at is not None
-        ):
-            return
-        LOGGER.warning("Detected interrupted update job; marking as failed and cleaning up")
-        self._tracker.mark_interrupted("Update interrupted by server restart")
-        wifi = self._build_wifi_orchestrator()
-        await wifi.recover_interrupted_update()
-        self._tracker.persist()
+        if self._recovery.needs_recovery():
+            await self._recovery.recover()
 
     async def _run_update(
         self,
@@ -160,200 +205,62 @@ class UpdateManager:
             else UpdateRequest(ssid=request_or_ssid, password=password or "")
         )
         commands = self._build_command_executor()
-        tracker = self._tracker
-        wifi = self._build_wifi_orchestrator(commands=commands)
-        installer = UpdateInstaller(
+        workflow = UpdateWorkflow(
+            tracker=self._tracker,
             commands=commands,
-            tracker=tracker,
-            config=self._installer_config,
-        )
-        firmware_refresher = self._build_firmware_refresher(commands=commands)
-        cancel_requested = self._executor.cancel_requested
-
-        if not await validate_prerequisites(
-            commands=commands,
-            tracker=tracker,
-            config=self._validation_config,
-            ssid=request.ssid,
-        ):
-            return
-        if cancel_requested():
-            return
-
-        tracker.transition(UpdatePhase.stopping_hotspot)
-        if not await wifi.stop_hotspot():
-            return
-        if cancel_requested():
-            return
-
-        tracker.transition(UpdatePhase.connecting_wifi)
-        if not await wifi.connect_uplink(request.ssid, request.password):
-            return
-        if cancel_requested():
-            return
-
-        tracker.transition(UpdatePhase.checking)
-        tracker.log("Checking for available updates...")
-        from vibesensor import __version__ as current_version
-
-        release_check = await check_for_update(tracker, self._rollback_dir, current_version)
-        if release_check.failed:
-            return
-        if release_check.release is None:
-            tracker.log(f"Already up-to-date (version={current_version})")
-            await firmware_refresher.refresh_esp_firmware(pinned_tag=release_check.latest_tag)
-            if cancel_requested():
-                return
-            if not await wifi.complete_update_success(
-                "No server update needed; ESP firmware checked",
-            ):
-                return
-            return
-
-        tracker.log(f"Update available: {current_version} → {release_check.release.version}")
-        if cancel_requested():
-            return
-
-        tracker.transition(UpdatePhase.downloading)
-        tracker.log(f"Downloading release {release_check.release.tag}...")
-        staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
-        try:
-            wheel_path = await download_release(
-                tracker,
-                self._rollback_dir,
-                release_check.release,
-                staging_dir,
-            )
-            if wheel_path is None:
-                return
-            tracker.log(
-                "Downloaded "
-                f"{wheel_path.name} "
-                f"(sha256={getattr(release_check.release, 'sha256', '')})",
-            )
-            if not await verify_download(tracker, release_check.release, wheel_path):
-                return
-            await firmware_refresher.refresh_esp_firmware(pinned_tag=release_check.release.tag)
-            if cancel_requested():
-                return
-
-            tracker.transition(UpdatePhase.installing)
-            tracker.log("Installing update...")
-            rollback_ok = await installer.snapshot_for_rollback()
-            if not rollback_ok:
-                tracker.fail(
-                    UpdatePhase.installing,
-                    "Rollback snapshot could not be created",
-                    "Install aborted before mutating the live environment",
-                )
-                return
-            if not await installer.install_release(
-                wheel_path,
-                str(release_check.release.version),
-            ):
-                return
-        finally:
-            shutil.rmtree(staging_dir, ignore_errors=True)
-
-        if cancel_requested():
-            return
-        if not await wifi.complete_update_success("Update completed successfully"):
-            return
-        if await schedule_service_restart(
-            commands=commands,
-            tracker=tracker,
+            wifi=self._build_wifi_orchestrator(commands=commands),
+            installer=self._build_installer(commands),
+            firmware_refresher=self._build_firmware_refresher(commands=commands),
+            cancel_requested=self._executor.cancel_requested,
+            validation_config=self._validation_config,
+            rollback_dir=self._rollback_dir,
             service_name=UPDATE_SERVICE_NAME,
             restart_unit=UPDATE_RESTART_UNIT,
-        ):
-            return
-        tracker.add_issue(
-            "done",
-            "Backend restart was not scheduled automatically",
-            "Run 'sudo systemctl restart vibesensor.service' manually",
         )
-        tracker.log("Automatic backend restart scheduling failed")
+        await workflow.execute(request)
 
     def _build_command_executor(self) -> UpdateCommandExecutor:
-        return UpdateCommandExecutor(runner=self._runner, tracker=self._tracker)
+        return self._command_executor_factory(self._runner, self._tracker)
 
     def _build_wifi_orchestrator(
         self,
         *,
         commands: UpdateCommandExecutor | None = None,
     ) -> UpdateWifiOrchestrator:
-        return UpdateWifiOrchestrator(
-            commands=commands or self._build_command_executor(),
-            tracker=self._tracker,
-            config=build_default_wifi_config(
-                ap_con_name=self._ap_con_name,
-                wifi_ifname=self._wifi_ifname,
-            ),
+        wifi_config = build_default_wifi_config(
+            ap_con_name=self._ap_con_name,
+            wifi_ifname=self._wifi_ifname,
         )
+        return self._wifi_orchestrator_factory(
+            commands or self._build_command_executor(),
+            self._tracker,
+            wifi_config,
+        )
+
+    def _build_installer(
+        self,
+        commands: UpdateCommandExecutor,
+    ) -> UpdateInstaller:
+        return self._installer_factory(commands, self._tracker, self._installer_config)
 
     def _build_firmware_refresher(
         self,
         *,
         commands: UpdateCommandExecutor | None = None,
     ) -> FirmwareRefresher:
-        return FirmwareRefresher(
-            commands=commands or self._build_command_executor(),
-            tracker=self._tracker,
-            repo=self._repo,
-            timeout_s=self._installer_config.firmware_refresh_timeout_s,
+        return self._firmware_refresher_factory(
+            commands or self._build_command_executor(),
+            self._tracker,
+            self._repo,
+            self._installer_config.firmware_refresh_timeout_s,
         )
 
     async def _snapshot_for_rollback(self) -> bool:
         commands = self._build_command_executor()
-        installer = UpdateInstaller(
-            commands=commands,
-            tracker=self._tracker,
-            config=self._installer_config,
-        )
+        installer = self._build_installer(commands)
         return await installer.snapshot_for_rollback()
 
     async def _rollback(self) -> bool:
         commands = self._build_command_executor()
-        installer = UpdateInstaller(
-            commands=commands,
-            tracker=self._tracker,
-            config=self._installer_config,
-        )
+        installer = self._build_installer(commands)
         return await installer.rollback()
-
-
-# ---------------------------------------------------------------------------
-# Service control
-# ---------------------------------------------------------------------------
-
-
-async def schedule_service_restart(
-    *,
-    commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
-    service_name: str,
-    restart_unit: str,
-) -> bool:
-    """Schedule a systemd restart of the backend service."""
-    restart_attempts = [
-        [
-            "systemd-run",
-            "--unit",
-            restart_unit,
-            "--on-active=2s",
-            "systemctl",
-            "restart",
-            service_name,
-        ],
-        ["systemctl", "restart", service_name],
-    ]
-    for command in restart_attempts:
-        rc, _, _ = await commands.run(
-            command,
-            phase="done",
-            timeout=30,
-            sudo=True,
-        )
-        if rc == 0:
-            tracker.log("Scheduled backend service restart")
-            return True
-    return False
