@@ -6,14 +6,15 @@ modules own each concern:
 Module topology
 ---------------
 - **Facade**: ``manager.py`` — public ``UpdateManager`` API for routes and
-  runtime lifecycle. Update workflow orchestration is inlined in
-  ``_run_update_inner()``.
+  runtime lifecycle. Delegates update sequencing to ``workflow.py``.
+- **Workflow**: ``workflow.py`` — ``UpdateWorkflow`` runs the full update
+  sequence as named phase handlers with centralized cancellation. Also owns
+  ``schedule_service_restart()``.
 - **Recovery**: ``recovery.py`` — ``InterruptedUpdateRecovery`` collaborator
   for interrupted-job detection, cleanup, and persistence on startup.
 - **Validation**: ``validation.py`` — runtime prerequisite checks for tools,
   privileges, rollback storage, and disk space before update orchestration.
-- **Services**: ``manager.py`` — backend restart scheduling and runtime update
-  workflow orchestration; ``job_executor.py`` — task ownership, cancellation,
+- **Services**: ``job_executor.py`` — task ownership, cancellation,
   timeout handling, and cleanup coordination for long-running update jobs.
 - **Firmware**: ``firmware/`` — ESP flash orchestration, firmware cache,
   bundle validation, refresh, release fetcher, and flash-specific contracts.
