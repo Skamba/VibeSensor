@@ -6,6 +6,7 @@
 - Use `make test-ci-lite` for the non-Docker blocking-CI subset.
 - Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner, including Docker-backed jobs when Docker is available.
 - The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which defaults to the lean backend-only `apps/server/Dockerfile.e2e` image path with static UI serving disabled.
+- `tools/tests/run_backend_parallel.py` shards `apps/server/tests` by whole test file, using cached JUnit timings from `~/.cache/vibesensor/backend-duration-cache.json` to keep the backend CI shards balanced over time.
 - `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
 - Python test configuration lives in `apps/server/pyproject.toml`.
 - Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py` and run via `make lint` (or directly with `cd apps/server && python3 ../../tools/dev/verify_backend_static_guards.py`).
@@ -110,7 +111,7 @@ python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 -
 Focused CI job groups and full-stack validation:
 
 ```bash
-python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests
+python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3
 python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
 python3 tools/tests/run_ci_parallel.py --job release-smoke
 make test-full-suite
@@ -174,7 +175,9 @@ act -W .github/workflows/ci.yml
 act -j backend-quality -W .github/workflows/ci.yml
 act -j backend-typecheck -W .github/workflows/ci.yml
 act -j frontend-typecheck -W .github/workflows/ci.yml
-act -j backend-tests -W .github/workflows/ci.yml
+act -j backend-tests-1 -W .github/workflows/ci.yml
+act -j backend-tests-2 -W .github/workflows/ci.yml
+act -j backend-tests-3 -W .github/workflows/ci.yml
 act -j ui-smoke -W .github/workflows/ci.yml
 act -j release-smoke -W .github/workflows/ci.yml
 
@@ -208,7 +211,7 @@ No secrets are currently required. If needed in the future, copy
 | `frontend-typecheck` | ✅ Fully supported | — |
 | `ui-smoke` | ✅ Fully supported | — |
 | `release-smoke` | ✅ Fully supported | — |
-| `backend-tests` | ⚠️ Mostly works | 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
+| `backend-tests-1/2/3` | ⚠️ Mostly works | 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
 | `e2e` | ❌ Not supported | Requires Docker-in-Docker. Run `make test-full-suite` or use GitHub CI instead. |
 
 ### Relationship to `run_ci_parallel.py`
@@ -248,7 +251,7 @@ The default CI-parity suite now mirrors these blocking GitHub checks:
 - `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
-- `ui-smoke`, `backend-tests`, `e2e`: required test jobs.
+- `ui-smoke`, `backend-tests-1`, `backend-tests-2`, `backend-tests-3`, `e2e`: required test jobs.
 
 ## Adding or moving tests
 
