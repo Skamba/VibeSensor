@@ -65,7 +65,7 @@ async def test_stop_retains_background_tasks_that_outlive_cancel_timeout(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    import vibesensor.infra.runtime.lifecycle as lifecycle_module
+    import vibesensor.infra.runtime.background_task_coordinator as coordinator_module
 
     lifecycle = _make_lifecycle()
     stubborn = asyncio.create_task(_stubborn_task(), name="stubborn-background")
@@ -77,7 +77,7 @@ async def test_stop_retains_background_tasks_that_outlive_cancel_timeout(
         await asyncio.sleep(0)
         return set(), set(tasks)
 
-    monkeypatch.setattr(lifecycle_module.asyncio, "wait", _wait_pending)
+    monkeypatch.setattr(coordinator_module.asyncio, "wait", _wait_pending)
 
     with caplog.at_level(logging.WARNING):
         await lifecycle.stop()
