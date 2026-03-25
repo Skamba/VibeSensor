@@ -22,7 +22,7 @@ from vibesensor.shared.boundaries.report_payload_gate import has_projectable_rep
 from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.ports import ActiveCarReader
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array
 from vibesensor.use_cases.history.exports import (
     EXPORT_SPOOL_THRESHOLD,
     HistoryExportContext,
@@ -131,8 +131,9 @@ class ProjectedHistoryRunService:
             return None
         projected = project_history_insights(result)
         if self._current_car_reader is not None:
+            raw_warnings = projected.get("warnings")
             overlay_warnings = add_current_context_warnings(
-                projected.get("warnings"),
+                raw_warnings if is_json_array(raw_warnings) else None,
                 metadata=projected.get("metadata"),
                 current_active_car_snapshot=self._current_car_reader.active_car_snapshot(),
             )

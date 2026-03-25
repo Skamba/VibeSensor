@@ -15,6 +15,7 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     RunContextWarning,
+    RunContextWarningsInput,
     normalize_run_context_warnings,
 )
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
@@ -71,7 +72,7 @@ def order_reference_context_complete(metadata: Mapping[str, object]) -> bool:
 
 
 def add_current_context_warnings(
-    warnings: object,
+    warnings: RunContextWarningsInput,
     *,
     metadata: object,
     current_active_car_snapshot: CarSnapshot | None,

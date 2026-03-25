@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, cast
 
@@ -25,6 +25,9 @@ class RunContextWarning:
     detail: JsonValue | None = None
 
 
+type RunContextWarningsInput = Sequence[RunContextWarning | JsonValue] | None
+
+
 def build_summary_warnings(
     metadata: Mapping[str, object],
     *,
@@ -45,8 +48,10 @@ def build_summary_warnings(
     return warnings
 
 
-def normalize_run_context_warnings(warnings: object) -> list[RunContextWarning]:
-    if not isinstance(warnings, list):
+def normalize_run_context_warnings(
+    warnings: RunContextWarningsInput,
+) -> list[RunContextWarning]:
+    if warnings is None:
         return []
     normalized: list[RunContextWarning] = []
     for warning in warnings:

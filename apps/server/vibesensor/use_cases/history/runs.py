@@ -10,7 +10,7 @@ from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array
 from vibesensor.use_cases.history.helpers import (
     async_require_run,
     require_analysis_ready,
@@ -46,9 +46,13 @@ class HistoryRunService:
         raw_analysis = require_analysis_ready(run)
         analysis = strip_internal_fields(raw_analysis.to_json_object())
         response_lang = resolve_run_language(run, requested_lang)
+        raw_warnings = analysis.get("warnings")
         analysis["warnings"] = cast(
             JsonValue,
-            localize_warning_list(analysis.get("warnings"), lang=response_lang),
+            localize_warning_list(
+                raw_warnings if is_json_array(raw_warnings) else None,
+                lang=response_lang,
+            ),
         )
         analysis["run_id"] = run.run_id or run_id
         analysis["status"] = RunStatus.COMPLETE.value

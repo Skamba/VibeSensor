@@ -37,6 +37,7 @@ from vibesensor.shared.boundaries.report_renderer_payload import (
     build_report_renderer_payload,
 )
 from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
+from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary,
     RunSuitabilityCheck,
@@ -159,7 +160,7 @@ def _prepare_report_facts(
     payload: Mapping[str, object],
     *,
     test_run: TestRun,
-    warnings: object | None = None,
+    warnings: RunContextWarningsInput = None,
 ) -> PreparedReportFacts:
     metadata = summary_metadata(payload)
     sensor_locations_active = active_sensor_locations(payload)
@@ -209,7 +210,7 @@ def _build_prepared_report_input(
     filename: str | None,
     language: str | None,
     cache_key: ReportPdfCacheKey | None,
-    warnings: object | None = None,
+    warnings: RunContextWarningsInput = None,
 ) -> PreparedReportInput:
     domain_test_run = _reconstruct_report_test_run(payload)
     prepared_language = str(normalize_lang(language or payload.get("lang")))
@@ -248,7 +249,7 @@ def prepare_report_input(
 def prepare_persisted_report_input(
     analysis: PersistedAnalysis,
     *,
-    warnings: object | None = None,
+    warnings: RunContextWarningsInput = None,
     filename: str | None = None,
     language: str | None = None,
     cache_key: ReportPdfCacheKey | None = None,
