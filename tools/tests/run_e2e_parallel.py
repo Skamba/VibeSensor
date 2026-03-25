@@ -95,7 +95,7 @@ class ShardResult:
 # Tests exceeding SLOW_TEST_THRESHOLD get their own dedicated shard.
 # Observed timings are loaded from and saved back to a local cache so the
 # runner can rebalance without hand-maintained per-test constants.
-SLOW_TEST_THRESHOLD = 5.0
+SLOW_TEST_THRESHOLD = 2.5
 
 
 def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
