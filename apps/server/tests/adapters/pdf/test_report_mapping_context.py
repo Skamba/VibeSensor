@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import pytest
+from test_support.findings import make_finding_payload
 
 from vibesensor.adapters.pdf import report_context
 from vibesensor.adapters.pdf.mapping import (
     PrimaryCandidateContext,
     ReportMappingContext,
+    prepare_report_input,
 )
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
 from vibesensor.domain.run_capture import RunCapture
@@ -184,6 +186,71 @@ class TestTypedMetadata:
         assert context.sample_count == 500
         assert context.sensor_model == "ESP32"
         assert context.firmware_version == "1.0.0"
+
+
+class TestPrepareReportMappingContext:
+    def test_maps_renderer_and_report_fact_fields(self) -> None:
+        finding = make_finding_payload(finding_id="F001")
+        prepared = prepare_report_input(
+            {
+                "run_id": "report-context-metadata",
+                "lang": "en",
+                "metadata": {"car_name": "Track Car", "car_type": "coupe"},
+                "report_date": "2026-03-25T10:00:00Z",
+                "record_length": "5m",
+                "start_time_utc": "2026-03-25T09:55:00Z",
+                "end_time_utc": "2026-03-25T10:00:00Z",
+                "sensor_locations": ["front-left", "rear-right"],
+                "sensor_locations_connected_throughout": ["rear-right"],
+                "sensor_intensity_by_location": [],
+                "most_likely_origin": {
+                    "location": "rear-right",
+                    "suspected_source": "wheel/tire",
+                },
+                "run_suitability": [],
+                "findings": [finding],
+                "top_causes": [finding],
+            }
+        )
+        assert prepared.report_facts is not None
+
+        context = report_context.prepare_report_mapping_context(prepared)
+
+        assert context.car_name == "Track Car"
+        assert context.car_type == "coupe"
+        assert context.date_str == "2026-03-25 10:00:00 UTC"
+        assert context.origin is prepared.report_facts.origin
+        assert context.origin_location == prepared.report_facts.origin_location
+        assert context.sensor_locations_active == ["rear-right"]
+
+    def test_falls_back_to_current_utc_time_when_report_date_missing(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(report_context, "utc_now_iso", lambda: "2026-04-02T03:04:05Z")
+        finding = make_finding_payload(finding_id="F001")
+        prepared = prepare_report_input(
+            {
+                "run_id": "report-context-fallback-date",
+                "lang": "en",
+                "metadata": {},
+                "report_date": "",
+                "record_length": "",
+                "start_time_utc": "",
+                "end_time_utc": "",
+                "sensor_locations": [],
+                "sensor_locations_connected_throughout": [],
+                "sensor_intensity_by_location": [],
+                "most_likely_origin": {},
+                "run_suitability": [],
+                "findings": [finding],
+                "top_causes": [finding],
+            }
+        )
+
+        context = report_context.prepare_report_mapping_context(prepared)
+
+        assert context.date_str == "2026-04-02 03:04:05 UTC"
 
 
 def test_report_context_module_no_longer_reexports_pdf_helper_facade() -> None:
