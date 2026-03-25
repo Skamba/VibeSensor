@@ -63,6 +63,21 @@ def test_validate_prepared_report_input_rejects_missing_report_facts() -> None:
         validate_prepared_report_input(prepared)
 
 
+def test_validate_prepared_report_input_rejects_missing_mapping_context() -> None:
+    prepared = replace(_prepared_report_input(), mapping_context=None)
+
+    with pytest.raises(ValueError, match="mapping_context"):
+        validate_prepared_report_input(prepared)
+
+
+def test_validate_prepared_report_input_is_idempotent() -> None:
+    prepared = _prepared_report_input()
+    validated = validate_prepared_report_input(prepared)
+    revalidated = validate_prepared_report_input(validated)
+
+    assert revalidated is validated
+
+
 def test_validate_prepared_report_input_returns_mapping_ready_handoff() -> None:
     prepared = _prepared_report_input()
     validated = validate_prepared_report_input(prepared)
@@ -81,6 +96,13 @@ def test_prepare_report_mapping_context_returns_precomputed_context() -> None:
     assert prepare_report_mapping_context(prepared) is prepared.mapping_context
 
 
+def test_prepare_report_mapping_context_rejects_invalid_input() -> None:
+    prepared = replace(_prepared_report_input(), domain_test_run=None)
+
+    with pytest.raises(ValueError, match="domain_test_run"):
+        prepare_report_mapping_context(prepared)
+
+
 def test_map_summary_fails_before_pdf_mapping_for_invalid_prepared_input(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -92,6 +114,20 @@ def test_map_summary_fails_before_pdf_mapping_for_invalid_prepared_input(
     monkeypatch.setattr(pdf_mapping, "_build_report_template_data", _explode)
 
     with pytest.raises(ValueError, match="report_facts"):
+        pdf_mapping.map_summary(prepared)
+
+
+def test_map_summary_fails_before_pdf_mapping_for_missing_mapping_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    prepared = replace(_prepared_report_input(), mapping_context=None)
+
+    def _explode(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("map_summary should validate the prepared handoff before mapping")
+
+    monkeypatch.setattr(pdf_mapping, "_build_report_template_data", _explode)
+
+    with pytest.raises(ValueError, match="mapping_context"):
         pdf_mapping.map_summary(prepared)
 
 
