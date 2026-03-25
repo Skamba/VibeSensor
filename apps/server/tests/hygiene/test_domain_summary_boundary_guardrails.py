@@ -49,3 +49,11 @@ def test_shared_type_modules_use_focused_history_and_settings_owners() -> None:
     assert "class HistoryRunListEntry" in history_records_source
     assert "class StoredHistoryRun" in history_records_source
     assert "class SettingsSnapshotPayload" in settings_snapshot_source
+
+
+def test_summary_serialization_package_hides_internal_build_context() -> None:
+    from vibesensor.shared.boundaries import summary_serialization
+
+    assert callable(summary_serialization.build_analysis_summary)
+    assert not hasattr(summary_serialization, "AnalysisSummaryBuildContext")
+    assert not hasattr(summary_serialization, "build_summary_payload")
