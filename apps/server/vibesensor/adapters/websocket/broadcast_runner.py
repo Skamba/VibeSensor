@@ -121,7 +121,7 @@ class BroadcastRunner:
 
     async def _cleanup_dead(
         self,
-        dead_ws: tuple[WSConnectionSnapshot | None, ...],
+        dead_ws: list[WSConnectionSnapshot | None],
     ) -> None:
         for conn in dead_ws:
             if conn is not None:
@@ -151,7 +151,7 @@ class BroadcastRunner:
         self,
         payloads: PayloadBuildOrchestrator,
         conns: list[WSConnectionSnapshot],
-        dead_ws: tuple[WSConnectionSnapshot | None, ...],
+        dead_ws: list[WSConnectionSnapshot | None],
     ) -> None:
         if payloads.debug_info is None or not payloads.payload_cache:
             return
