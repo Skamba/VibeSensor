@@ -1,5 +1,6 @@
 """Stable public API for summary payload serialization helpers."""
 
+from ._data_quality import AccelStatisticsLike, build_data_quality_dict
 from ._findings import annotate_peaks_with_order_labels, serialize_findings
 from ._plots import (
     PhaseSegmentLike,
@@ -13,13 +14,7 @@ from ._plots import (
     serialize_spectrogram,
     serialize_speed_breakdown,
 )
-from ._summary import (
-    AccelStatisticsLike,
-    build_analysis_summary,
-    build_data_quality_dict,
-    noise_baseline_db,
-    serialize_origin_summary,
-)
+from ._summary import build_analysis_summary, noise_baseline_db, serialize_origin_summary
 
 __all__ = [
     "AccelStatisticsLike",
