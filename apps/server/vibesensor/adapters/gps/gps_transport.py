@@ -23,20 +23,25 @@ from vibesensor.adapters.gps.speed_validation import (
     evaluate_speed_sample,
     is_speed_plausible,
 )
+from vibesensor.adapters.gps.transport_lifecycle import (
+    GPS_CONNECT_TIMEOUT_S,
+    GPS_DISABLED_POLL_S,
+    GPS_READ_TIMEOUT_S,
+    GPS_RECONNECT_DELAY_S,
+    GPS_RECONNECT_MAX_DELAY_S,
+    TransportLifecycle,
+)
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 LOGGER = logging.getLogger(__name__)
 
-_GPS_DISABLED_POLL_S: float = 5.0
-"""Sleep interval when GPS is disabled."""
-
-_GPS_RECONNECT_DELAY_S: float = 2.0
-"""Delay before reconnecting after a GPS connection loss."""
-
-_GPS_CONNECT_TIMEOUT_S: float = 3.0
-_GPS_READ_TIMEOUT_S: float = 3.0
-_GPS_RECONNECT_MAX_DELAY_S: float = 15.0
+# Backward-compatible aliases for constants that consumers import from here.
+_GPS_DISABLED_POLL_S: float = GPS_DISABLED_POLL_S
+_GPS_RECONNECT_DELAY_S: float = GPS_RECONNECT_DELAY_S
+_GPS_CONNECT_TIMEOUT_S: float = GPS_CONNECT_TIMEOUT_S
+_GPS_READ_TIMEOUT_S: float = GPS_READ_TIMEOUT_S
+_GPS_RECONNECT_MAX_DELAY_S: float = GPS_RECONNECT_MAX_DELAY_S
 
 # Re-export for consumers that import from this module.
 _GPS_MAX_SPEED_MPS: float = DEFAULT_SPEED_VALIDATION_CONFIG.max_speed_mps
@@ -111,35 +116,19 @@ class GPSTransportState:
 
     def _mark_connected(self) -> None:
         self._replace_snapshot(
-            connection_state="connected",
-            last_error=None,
-            current_reconnect_delay=_GPS_RECONNECT_DELAY_S,
+            **TransportLifecycle().on_connected().changes,
         )
 
     def _mark_stream_disconnected(self) -> None:
         self._replace_snapshot(
-            connection_state="disconnected",
-            speed_snapshot=(None, None),
-            last_fix_mode=None,
-            last_epx_m=None,
-            last_epy_m=None,
-            last_epv_m=None,
-            zero_speed_streak=0,
-            device_info=None,
+            **TransportLifecycle().on_stream_disconnected().changes,
         )
 
     def _mark_connection_error(self, exc: BaseException, reconnect_delay: float) -> None:
+        transition = TransportLifecycle().on_connection_error(exc)
+        # Override the delay from the caller's tracked value.
         self._replace_snapshot(
-            connection_state="disconnected",
-            speed_snapshot=(None, None),
-            last_fix_mode=None,
-            last_epx_m=None,
-            last_epy_m=None,
-            last_epv_m=None,
-            zero_speed_streak=0,
-            device_info=None,
-            last_error=str(exc) or type(exc).__name__,
-            current_reconnect_delay=reconnect_delay,
+            **{**transition.changes, "current_reconnect_delay": reconnect_delay},
         )
 
     def set_enabled(self, enabled: bool) -> None:
@@ -392,7 +381,10 @@ class GPSTransportState:
         read_metric: MetricReader | None = None,
     ) -> None:
         loads = json.loads
-        reconnect_delay = _GPS_RECONNECT_DELAY_S
+        lifecycle = TransportLifecycle(
+            initial_delay=_GPS_RECONNECT_DELAY_S,
+            max_delay=_GPS_RECONNECT_MAX_DELAY_S,
+        )
         while True:
             if not self.gps_enabled:
                 self.set_enabled(False)
@@ -410,15 +402,16 @@ class GPSTransportState:
                 writer = connected_writer
                 writer.write(b'?WATCH={"enable":true,"json":true};\n')
                 await writer.drain()
-                self._mark_connected()
-                reconnect_delay = _GPS_RECONNECT_DELAY_S
+                transition = lifecycle.on_connected()
+                self._replace_snapshot(**transition.changes)
                 while True:
                     if not self.gps_enabled:
                         self.set_enabled(False)
                         break
                     line = await asyncio.wait_for(reader.readline(), timeout=_GPS_READ_TIMEOUT_S)
                     if not line:
-                        self._mark_stream_disconnected()
+                        transition = lifecycle.on_stream_disconnected()
+                        self._replace_snapshot(**transition.changes)
                         break
                     try:
                         parsed = loads(line.decode("utf-8", errors="replace"))
@@ -429,7 +422,7 @@ class GPSTransportState:
                         LOGGER.debug("Ignoring non-object GPS JSON line")
                         continue
                     self.ingest_message(parsed, tpv_mode=tpv_mode, read_metric=read_metric)
-                reconnect_delay = _GPS_RECONNECT_DELAY_S
+                lifecycle.reset_delay()
             except asyncio.CancelledError:
                 if writer is not None:
                     writer.close()
@@ -444,15 +437,15 @@ class GPSTransportState:
                 EOFError,
                 json.JSONDecodeError,
             ) as exc:
-                self._mark_connection_error(exc, reconnect_delay)
+                transition = lifecycle.on_connection_error(exc)
+                self._replace_snapshot(**transition.changes)
                 LOGGER.warning(
                     "GPS connection lost, retrying in %gs: %s",
-                    reconnect_delay,
+                    transition.sleep_before_retry,
                     exc,
                     exc_info=True,
                 )
-                await asyncio.sleep(reconnect_delay)
-                reconnect_delay = min(_GPS_RECONNECT_MAX_DELAY_S, reconnect_delay * 2.0)
+                await asyncio.sleep(transition.sleep_before_retry)  # type: ignore[arg-type]
             finally:
                 if writer is not None and not writer_closed:
                     writer.close()
