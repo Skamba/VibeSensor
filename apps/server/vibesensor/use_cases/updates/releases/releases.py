@@ -5,10 +5,13 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from vibesensor.use_cases.updates.artifact_validation import sha256_file
-from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+
+if TYPE_CHECKING:
+    from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
+    from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
 @dataclass(frozen=True, slots=True)
