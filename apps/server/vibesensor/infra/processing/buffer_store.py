@@ -69,7 +69,7 @@ class SignalBufferStore:
             buf.latest_metrics = {}
             buf.latest_spectrum = {}
             buf.latest_strength_metrics = empty_vibration_strength_metrics()
-            buf.invalidate_caches()
+            self._invalidate_cached_payloads_unlocked(buf)
             buf.ingest_generation += 1
         LOGGER.info("Flushed signal buffer for client %s (%s)", client_id, reason)
 
@@ -143,7 +143,7 @@ class SignalBufferStore:
             else:
                 buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
             buf.ingest_generation += 1
-            buf.invalidate_caches()
+            self._invalidate_cached_payloads_unlocked(buf)
             ingested_samples = n
         with self.lock:
             self.stats.total_ingested_samples += ingested_samples
@@ -221,7 +221,7 @@ class SignalBufferStore:
                     buf.latest_spectrum = {}
                     buf.latest_strength_metrics = empty_vibration_strength_metrics()
                 buf.spectrum_generation += 1
-                buf.invalidate_caches()
+                self._invalidate_cached_payloads_unlocked(buf)
         with self.lock:
             self.stats.last_compute_duration_s = result.duration_s
             self.stats.total_compute_calls += 1
@@ -438,6 +438,9 @@ class SignalBufferStore:
         buf.capacity = new_capacity
         buf.write_idx = latest.shape[1] % new_capacity
         buf.count = min(latest.shape[1], new_capacity)
+
+    def _invalidate_cached_payloads_unlocked(self, buf: ClientBuffer) -> None:
+        buf.invalidate_caches()
 
     def _apply_sample_rate_override_unlocked(
         self,
