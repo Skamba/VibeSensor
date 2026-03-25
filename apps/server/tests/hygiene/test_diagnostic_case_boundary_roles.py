@@ -14,6 +14,8 @@ def test_diagnostic_case_boundary_does_not_expose_domain_factories() -> None:
     assert not hasattr(diagnostic_case, "project_analysis_summary")
     assert not hasattr(diagnostic_case, "run_suitability_payload")
     assert not hasattr(diagnostic_case, "run_suitability_from_payload")
+    assert not hasattr(diagnostic_case, "test_run_from_summary")
+    assert not hasattr(diagnostic_case, "_enrich_findings")
 
 
 def test_diagnostics_use_cases_do_not_reexport_boundary_factories() -> None:

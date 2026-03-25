@@ -9,7 +9,7 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.domain import SpeedProfile
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.boundaries.diagnostic_case import (
+from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as _reconstruct,
 )
 
