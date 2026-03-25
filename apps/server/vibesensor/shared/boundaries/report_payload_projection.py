@@ -6,11 +6,7 @@ from collections.abc import Mapping
 from typing import cast
 
 from vibesensor.domain import coerce_float, coerce_int
-from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.types.analysis_views import PeakTableRow
-from vibesensor.shared.types.history_analysis_contracts import (
-    SummaryWarningResponse as SummaryWarningPayload,
-)
 
 __all__ = [
     "active_sensor_locations",
@@ -19,7 +15,6 @@ __all__ = [
     "report_duration_s",
     "sensor_intensity_payload",
     "summary_metadata",
-    "summary_warnings",
 ]
 
 
@@ -37,17 +32,6 @@ def active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:
     fallback = payload.get("sensor_locations")
     fallback_locations = fallback if isinstance(fallback, list) else []
     return tuple(str(loc).strip() for loc in fallback_locations if str(loc).strip())
-
-
-def summary_warnings(
-    payload: Mapping[str, object],
-    *,
-    warnings: object | None = None,
-) -> tuple[SummaryWarningPayload, ...]:
-    raw_warnings = warnings if warnings is not None else payload.get("warnings")
-    return tuple(summary_warning_payloads(raw_warnings))
-
-
 def report_duration_s(payload: Mapping[str, object]) -> float | None:
     duration_s_raw = payload.get("duration_s")
     if duration_s_raw is None:

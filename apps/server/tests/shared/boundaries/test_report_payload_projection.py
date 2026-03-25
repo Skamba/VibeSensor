@@ -7,7 +7,6 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     report_duration_s,
     sensor_intensity_payload,
     summary_metadata,
-    summary_warnings,
 )
 
 
@@ -32,17 +31,6 @@ def test_active_sensor_locations_falls_back_to_sensor_locations() -> None:
     }
 
     assert active_sensor_locations(payload) == ("front-left", "rear-right")
-
-
-def test_summary_warnings_prefers_explicit_override() -> None:
-    payload = {"warnings": [{"code": "PAYLOAD", "severity": "warn", "applies_to": "report"}]}
-    override = [{"code": "OVERRIDE", "severity": "warn", "applies_to": "report"}]
-
-    warnings = summary_warnings(payload, warnings=override)
-
-    assert [warning["code"] for warning in warnings] == ["OVERRIDE"]
-
-
 def test_report_duration_s_returns_none_for_invalid_values() -> None:
     assert report_duration_s({}) is None
     assert report_duration_s({"duration_s": "bad"}) is None
