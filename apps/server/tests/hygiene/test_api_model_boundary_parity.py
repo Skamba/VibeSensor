@@ -113,9 +113,6 @@ from vibesensor.shared.boundaries.analysis_payload import (
     AmpVsPhaseRow as BoundaryAmpVsPhaseRow,
 )
 from vibesensor.shared.boundaries.analysis_payload import (
-    AnalysisSummary as BoundaryAnalysisSummary,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
     DataQualityAccelSanityPayload as BoundaryDataQualityAccelSanityPayload,
 )
 from vibesensor.shared.boundaries.analysis_payload import (
@@ -204,6 +201,9 @@ from vibesensor.shared.boundaries.analysis_payload import (
 )
 from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin as BoundarySuspectedVibrationOrigin,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    AnalysisSummary as BoundaryAnalysisSummary,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     FindingPayload as BoundaryFindingPayload,

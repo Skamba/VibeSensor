@@ -24,7 +24,7 @@ __all__ = [
 from dataclasses import dataclass, field
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary, coerce_float
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 
 # ---------------------------------------------------------------------------
 # Data model
