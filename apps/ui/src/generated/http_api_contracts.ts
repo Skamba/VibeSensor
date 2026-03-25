@@ -446,7 +446,7 @@ export interface components {
     };
     /**
      * AnalysisSummaryResponse
-     * @description Typed HTTP contract for the persisted analysis summary on one history run.
+     * @description Canonical shared owner for the persisted analysis summary wrapper.
      */
     AnalysisSummaryResponse: {
       /** Accel Scale G Per Lsb */

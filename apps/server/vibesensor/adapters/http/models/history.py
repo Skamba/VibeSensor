@@ -1,10 +1,10 @@
 """History and finding-oriented HTTP API models.
 
 Stable exact analysis/history view shapes live in
-``vibesensor.shared.types.analysis_views``. Shared wrapper/composite contracts
-that must stay aligned with persisted boundary payloads live in
-``vibesensor.shared.types.history_analysis_contracts`` so this module only
-keeps HTTP-specific wrappers and localized response models.
+``vibesensor.shared.types.analysis_views``. Canonical shared summary wrappers
+live in ``vibesensor.shared.types.history_analysis_contracts`` and are imported
+privately here so this module only exports adapter-local wrappers and
+localized response models.
 """
 
 from __future__ import annotations
@@ -31,8 +31,6 @@ from vibesensor.shared.types.analysis_views import (
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     AmplitudeMetric,
-    AnalysisSummaryCoreResponse,
-    AnalysisSummaryResponse,
     DataQualityAccelSanityResponse,
     DataQualityOutliersResponse,
     DataQualityRequiredMissingPctResponse,
@@ -52,14 +50,18 @@ from vibesensor.shared.types.history_analysis_contracts import (
     SuspectedVibrationOriginPayload,
     TestPlanStepResponse,
 )
+from vibesensor.shared.types.history_analysis_contracts import (
+    AnalysisSummaryCoreResponse as _SharedAnalysisSummaryCoreResponse,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    AnalysisSummaryResponse as _SharedAnalysisSummaryResponse,
+)
 
 from .base import ApiPayloadObject, _StrictBase
 
 __all__ = [
     "AmplitudeMetric",
     "AmpVsPhaseRow",
-    "AnalysisSummaryCoreResponse",
-    "AnalysisSummaryResponse",
     "DataQualityAccelSanityResponse",
     "DataQualityOutliersResponse",
     "DataQualityRequiredMissingPctResponse",
@@ -120,7 +122,7 @@ class HistoryRunResponse(_StrictBase):
     sample_count: int
     error_message: str | None = None
     metadata: ApiPayloadObject = Field(default_factory=dict)
-    analysis: AnalysisSummaryResponse | None = None
+    analysis: _SharedAnalysisSummaryResponse | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):
@@ -140,7 +142,7 @@ class HistoryInsightsAnalyzingResponse(BaseModel):
     status: Literal["analyzing"]
 
 
-class HistoryInsightsResponse(AnalysisSummaryCoreResponse, total=False):
+class HistoryInsightsResponse(_SharedAnalysisSummaryCoreResponse, total=False):
     """Response body for the localized history insights endpoint payload."""
 
     status: Annotated[Literal["complete"], Field(default="complete")]
