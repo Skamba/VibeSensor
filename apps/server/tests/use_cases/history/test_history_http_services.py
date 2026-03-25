@@ -16,6 +16,7 @@ from vibesensor.adapters.history import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
     build_projected_run_details_json,
+    project_history_insights,
 )
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.exceptions import AnalysisNotReadyError
@@ -401,6 +402,21 @@ def test_build_run_details_json_projects_analysis_through_domain() -> None:
 
     assert payload["analysis"]["top_causes"][0]["finding_id"] == "F001"
     assert payload["analysis"]["most_likely_origin"]["suspected_source"] == "wheel/tire"
+
+
+def test_project_history_insights_keeps_non_projectable_analysis_shape() -> None:
+    projected = project_history_insights(
+        {
+            "lang": "en",
+            "metadata": {"car_name": "Track Car"},
+            "_internal": {"secret": True},
+        }
+    )
+
+    assert projected == {
+        "lang": "en",
+        "metadata": {"car_name": "Track Car"},
+    }
 
 
 def test_build_run_details_json_sanitizes_non_finite_floats() -> None:

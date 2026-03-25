@@ -18,6 +18,7 @@ from vibesensor.adapters.http.models import (
     HistoryRunResponse,
 )
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
+from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
 from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.ports import ActiveCarReader
 from vibesensor.shared.types.history_records import StoredHistoryRun
@@ -40,18 +41,12 @@ if TYPE_CHECKING:
 _HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 
 
-def _has_projectable_analysis(analysis: Mapping[str, object]) -> bool:
-    return isinstance(analysis.get("findings"), list) or isinstance(
-        analysis.get("top_causes"), list
-    )
-
-
 def _project_history_analysis(
     analysis: Mapping[str, object],
     *,
     strip_internal: bool,
 ) -> tuple[JsonObject, TestRun | None]:
-    if _has_projectable_analysis(analysis):
+    if has_projectable_report_payload(analysis):
         projected, test_run = project_analysis_summary(cast(JsonObject, dict(analysis)))
     else:
         projected = cast(JsonObject, {key: value for key, value in analysis.items()})

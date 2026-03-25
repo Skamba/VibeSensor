@@ -105,6 +105,24 @@ def test_prepare_report_mapping_context_rejects_invalid_input() -> None:
         prepare_report_mapping_context(prepared)
 
 
+def test_prepare_report_input_keeps_non_projectable_payload_unprepared() -> None:
+    prepared = prepare_report_input(
+        {
+            "run_id": "non-projectable",
+            "lang": "en",
+            "metadata": {},
+            "report_date": "",
+            "record_length": "",
+            "start_time_utc": "",
+            "end_time_utc": "",
+        }
+    )
+
+    assert prepared.domain_test_run is None
+    assert prepared.report_facts is None
+    assert prepared.mapping_context is None
+
+
 def test_map_summary_fails_before_pdf_mapping_for_invalid_prepared_input(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

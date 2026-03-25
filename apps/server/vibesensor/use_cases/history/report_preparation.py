@@ -26,6 +26,7 @@ from vibesensor.shared.boundaries.report_interpretation import (
     resolve_report_origin,
     tire_spec_text,
 )
+from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
 from vibesensor.shared.boundaries.report_payload_projection import (
     active_sensor_locations,
     sensor_intensity_payload,
@@ -51,10 +52,6 @@ from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey
 
 if TYPE_CHECKING:
     from vibesensor.domain import Finding, TestRun
-
-
-def _has_projectable_payload(payload: Mapping[str, object]) -> bool:
-    return isinstance(payload.get("findings"), list) or isinstance(payload.get("top_causes"), list)
 
 
 def _default_report_filename(payload: Mapping[str, object]) -> str:
@@ -250,7 +247,7 @@ def validate_prepared_report_input(
 
 
 def _reconstruct_report_test_run(payload: Mapping[str, object]) -> TestRun | None:
-    if not _has_projectable_payload(payload):
+    if not has_projectable_report_payload(payload):
         return None
     return test_run_from_summary(payload)
 
