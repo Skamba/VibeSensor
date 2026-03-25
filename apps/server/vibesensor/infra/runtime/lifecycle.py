@@ -12,13 +12,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
-import time
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.infra.runtime.task_supervisor import TaskSupervisor, task_failure_message
 from vibesensor.shared.constants.ui import UI_PUSH_HZ
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
@@ -26,12 +26,6 @@ StartUdpReceiver = Callable[
     ...,
     Coroutine[object, object, tuple[asyncio.DatagramTransport, asyncio.Task[None]]],
 ]
-TaskFactory = Callable[[], Coroutine[object, object, object]]
-
-_TASK_RESTART_MAX_ATTEMPTS = 3
-_TASK_RESTART_BASE_DELAY_S = 1.0
-_TASK_RESTART_MAX_DELAY_S = 10.0
-_TASK_RESTART_RESET_AFTER_S = 60.0
 
 
 class LifecycleControlPlane(Protocol):
@@ -144,6 +138,7 @@ class LifecycleManager:
         "_health_state",
         "_runtime",
         "_start_udp_receiver",
+        "_task_supervisor",
         "tasks",
     )
 
@@ -156,14 +151,13 @@ class LifecycleManager:
         self._runtime = runtime
         self._health_state = runtime.health_state
         self._start_udp_receiver = start_udp_receiver
+        self._task_supervisor = TaskSupervisor(
+            health_state=self._health_state,
+            logger=LOGGER,
+        )
         self.tasks: list[asyncio.Task[object]] = []
         self._data_transport: asyncio.DatagramTransport | None = None
         self._data_consumer_task: asyncio.Task[object] | None = None
-
-    @staticmethod
-    def _task_failure_message(exc: BaseException) -> str:
-        message = str(exc).strip() or exc.__class__.__name__
-        return message[:240]
 
     def _monitor_task(self, task: asyncio.Task[object]) -> None:
         task_name = task.get_name()
@@ -177,16 +171,11 @@ class LifecycleManager:
                 return
             if exc is None:
                 return
-            message = self._task_failure_message(exc)
+            message = task_failure_message(exc)
             self._health_state.record_task_failure(task_name, message)
             LOGGER.error("Managed task %s failed: %s", task_name, message, exc_info=exc)
 
         task.add_done_callback(_record_failure)
-
-    @staticmethod
-    def _restart_delay_s(restart_count: int) -> float:
-        exponent = max(0, restart_count - 1)
-        return float(min(_TASK_RESTART_MAX_DELAY_S, _TASK_RESTART_BASE_DELAY_S * (2**exponent)))
 
     def _start_task(
         self,
@@ -195,67 +184,6 @@ class LifecycleManager:
         name: str,
     ) -> asyncio.Task[object]:
         task = asyncio.create_task(coroutine, name=name)
-        self._monitor_task(task)
-        return task
-
-    def _start_supervised_task(
-        self,
-        task_factory: TaskFactory,
-        *,
-        name: str,
-    ) -> asyncio.Task[object]:
-        async def _run_supervised() -> None:
-            restart_count = 0
-            while True:
-                started_at = time.monotonic()
-                try:
-                    await task_factory()
-                except asyncio.CancelledError:
-                    raise
-                except Exception as exc:
-                    runtime_s = time.monotonic() - started_at
-                    if runtime_s >= _TASK_RESTART_RESET_AFTER_S:
-                        restart_count = 0
-                    if restart_count >= _TASK_RESTART_MAX_ATTEMPTS:
-                        raise
-                    restart_count += 1
-                    delay_s = self._restart_delay_s(restart_count)
-                    self._health_state.record_task_failure(name, self._task_failure_message(exc))
-                    LOGGER.error(
-                        "Managed task %s failed; restarting in %.1fs (%d/%d).",
-                        name,
-                        delay_s,
-                        restart_count,
-                        _TASK_RESTART_MAX_ATTEMPTS,
-                        exc_info=exc,
-                    )
-                    await asyncio.sleep(delay_s)
-                    self._health_state.clear_task_failure(name)
-                    continue
-
-                runtime_s = time.monotonic() - started_at
-                if runtime_s >= _TASK_RESTART_RESET_AFTER_S:
-                    restart_count = 0
-                unexpected_exit = RuntimeError(f"managed task {name} exited unexpectedly")
-                if restart_count >= _TASK_RESTART_MAX_ATTEMPTS:
-                    raise unexpected_exit
-                restart_count += 1
-                delay_s = self._restart_delay_s(restart_count)
-                self._health_state.record_task_failure(
-                    name,
-                    self._task_failure_message(unexpected_exit),
-                )
-                LOGGER.error(
-                    "Managed task %s exited unexpectedly; restarting in %.1fs (%d/%d).",
-                    name,
-                    delay_s,
-                    restart_count,
-                    _TASK_RESTART_MAX_ATTEMPTS,
-                )
-                await asyncio.sleep(delay_s)
-                self._health_state.clear_task_failure(name)
-
-        task = asyncio.create_task(_run_supervised(), name=name)
         self._monitor_task(task)
         return task
 
@@ -345,7 +273,7 @@ class LifecycleManager:
             phase = "processing-loop"
             self._health_state.set_phase(phase)
             self.tasks.append(
-                self._start_supervised_task(
+                self._task_supervisor.start(
                     lambda: self._runtime.processing_loop.run(),
                     name=phase,
                 ),
@@ -354,7 +282,7 @@ class LifecycleManager:
             phase = "ws-broadcast"
             self._health_state.set_phase(phase)
             self.tasks.append(
-                self._start_supervised_task(
+                self._task_supervisor.start(
                     lambda: self._runtime.ws_hub.run(
                         UI_PUSH_HZ,
                         self._runtime.ws_broadcast.build_payload,
@@ -367,7 +295,7 @@ class LifecycleManager:
             phase = "metrics-log"
             self._health_state.set_phase(phase)
             self.tasks.append(
-                self._start_supervised_task(
+                self._task_supervisor.start(
                     lambda: self._runtime.run_recorder.run(),
                     name=phase,
                 ),
@@ -376,7 +304,7 @@ class LifecycleManager:
             phase = "gps-speed"
             self._health_state.set_phase(phase)
             self.tasks.append(
-                self._start_supervised_task(
+                self._task_supervisor.start(
                     lambda: self._runtime.gps_monitor.run(
                         host=self._runtime.gpsd_host,
                         port=self._runtime.gpsd_port,
@@ -395,7 +323,7 @@ class LifecycleManager:
             )
             self._health_state.mark_ready()
         except Exception as exc:
-            self._health_state.mark_failed(phase, self._task_failure_message(exc))
+            self._health_state.mark_failed(phase, task_failure_message(exc))
             raise
 
     async def stop(self) -> None:
