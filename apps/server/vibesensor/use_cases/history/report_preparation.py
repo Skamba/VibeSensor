@@ -177,10 +177,13 @@ class PreparedReportInput:
       downstream PDF mapping helpers as the authoritative report aggregate.
     - ``report_facts`` contains the semantic report facts that the PDF adapter
       needs so it does not have to call back into history-layer interpretation.
-    - ``renderer_payload`` contains only the minimal final-edge payload that the
-      PDF mapper still needs after domain/report preparation is complete.
-    - ``language`` is canonicalized once so the renderer consumes one
-      consistent locale choice.
+     - ``renderer_payload`` contains only the minimal final-edge payload that the
+       PDF mapper still needs after domain/report preparation is complete.
+     - ``language`` is canonicalized once so the renderer consumes one
+       consistent locale choice.
+     - ``domain_test_run`` and ``report_facts`` may still be ``None`` for
+       non-projectable inputs; call ``validate_prepared_report_input()`` before
+       entering the PDF mapping seam.
     """
 
     renderer_payload: PreparedReportRendererPayload
@@ -189,6 +192,42 @@ class PreparedReportInput:
     domain_test_run: TestRun | None
     cache_key: ReportPdfCacheKey | None = None
     report_facts: PreparedReportFacts | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ValidatedPreparedReportInput:
+    """Prepared report handoff validated for PDF mapping.
+
+    This mapping-ready shape guarantees the domain aggregate and prepared report
+    facts are both present before adapter-side mapping begins.
+    """
+
+    renderer_payload: PreparedReportRendererPayload
+    language: str
+    filename: str
+    domain_test_run: TestRun
+    report_facts: PreparedReportFacts
+    cache_key: ReportPdfCacheKey | None = None
+
+
+def validate_prepared_report_input(
+    prepared: PreparedReportInput | ValidatedPreparedReportInput,
+) -> ValidatedPreparedReportInput:
+    """Validate that the prepared report seam is ready for PDF mapping."""
+    if isinstance(prepared, ValidatedPreparedReportInput):
+        return prepared
+    if prepared.domain_test_run is None:
+        raise ValueError("PreparedReportInput must include a domain_test_run for report mapping")
+    if prepared.report_facts is None:
+        raise ValueError("PreparedReportInput must include report_facts for report mapping")
+    return ValidatedPreparedReportInput(
+        renderer_payload=prepared.renderer_payload,
+        language=prepared.language,
+        filename=prepared.filename,
+        domain_test_run=prepared.domain_test_run,
+        report_facts=prepared.report_facts,
+        cache_key=prepared.cache_key,
+    )
 
 
 def _reconstruct_report_test_run(payload: Mapping[str, object]) -> TestRun | None:
