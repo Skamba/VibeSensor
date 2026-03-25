@@ -8,8 +8,10 @@ from test_support.findings import make_finding_payload
 from vibesensor.adapters.pdf import mapping as pdf_mapping
 from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.shared.boundaries import report_interpretation as shared_report_interpretation
+from vibesensor.shared.boundaries import report_renderer_payload as shared_report_renderer_payload
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportInput,
+    PreparedReportRendererPayload,
     PrimaryReportFacts,
     ValidatedPreparedReportInput,
     prepare_report_input,
@@ -133,6 +135,13 @@ def test_map_summary_fails_before_pdf_mapping_for_missing_mapping_context(
 
 def test_report_preparation_imports_primary_report_facts_from_shared_boundaries() -> None:
     assert PrimaryReportFacts is shared_report_interpretation.PrimaryReportFacts
+
+
+def test_report_preparation_imports_renderer_payload_from_shared_boundaries() -> None:
+    assert (
+        PreparedReportRendererPayload
+        is shared_report_renderer_payload.PreparedReportRendererPayload
+    )
 
 
 # ---------------------------------------------------------------------------
