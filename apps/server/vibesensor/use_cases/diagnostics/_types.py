@@ -1,7 +1,7 @@
 """Analysis-internal type aliases and value objects.
 
-Boundary serialization TypedDicts (``FindingPayload``, ``AnalysisSummary``,
-etc.) live in ``vibesensor.shared.boundaries.analysis_payload``.
+Boundary serialization TypedDicts (for example ``FindingPayload`` and
+``AnalysisSummary``) live in shared boundary/type contract modules, not here.
 This module is the diagnostics package's internal source of truth for
 analysis-local value objects that should not depend on boundary payload
 TypedDicts.
