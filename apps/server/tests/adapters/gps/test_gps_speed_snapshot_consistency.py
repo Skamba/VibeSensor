@@ -6,6 +6,7 @@ from dataclasses import replace
 import pytest
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.gps.gps_transport import GPSTransportCapturedState
 
 
 def test_resolve_speed_captures_policy_and_transport_snapshots_once(
@@ -67,32 +68,46 @@ def test_status_snapshot_captures_policy_and_transport_snapshots_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
-    base_transport = monitor._transport.snapshot()
+    base_captured = monitor._transport.captured_state()
     base_policy = monitor._policy.snapshot()
-    transport_calls = 0
+    captured_state_calls = 0
     policy_calls = 0
 
-    def _transport_snapshot():
-        nonlocal transport_calls
-        transport_calls += 1
-        if transport_calls == 1:
+    def _captured_transport_state() -> GPSTransportCapturedState:
+        nonlocal captured_state_calls
+        captured_state_calls += 1
+        if captured_state_calls == 1:
             return replace(
-                base_transport,
-                gps_enabled=True,
-                connection_state="connected",
-                speed_snapshot=(10.0, time.monotonic()),
-                device_info="/dev/ttyUSB0",
-                last_fix_mode=3,
-                last_error="old error",
+                base_captured,
+                transport=replace(
+                    base_captured.transport,
+                    gps_enabled=True,
+                    connection_state="connected",
+                    speed_snapshot=(10.0, time.monotonic()),
+                    device_info="/dev/ttyUSB0",
+                    last_fix_mode=3,
+                ),
+                lifecycle=replace(
+                    base_captured.lifecycle,
+                    last_error="old error",
+                    current_reconnect_delay=4.0,
+                ),
             )
         return replace(
-            base_transport,
-            gps_enabled=False,
-            connection_state="disabled",
-            speed_snapshot=(None, None),
-            device_info=None,
-            last_fix_mode=None,
-            last_error=None,
+            base_captured,
+            transport=replace(
+                base_captured.transport,
+                gps_enabled=False,
+                connection_state="disabled",
+                speed_snapshot=(None, None),
+                device_info=None,
+                last_fix_mode=None,
+            ),
+            lifecycle=replace(
+                base_captured.lifecycle,
+                last_error=None,
+                current_reconnect_delay=99.0,
+            ),
         )
 
     def _policy_snapshot():
@@ -112,18 +127,19 @@ def test_status_snapshot_captures_policy_and_transport_snapshots_once(
             stale_timeout_s=99.0,
         )
 
-    monkeypatch.setattr(monitor._transport, "snapshot", _transport_snapshot)
+    monkeypatch.setattr(monitor._transport, "captured_state", _captured_transport_state)
     monkeypatch.setattr(monitor._policy, "snapshot", _policy_snapshot)
 
     status = monitor.status_snapshot()
 
-    assert transport_calls == 1
+    assert captured_state_calls == 1
     assert policy_calls == 1
     assert status.gps_enabled is True
     assert status.connection_state == "connected"
     assert status.device == "/dev/ttyUSB0"
     assert status.fix_mode == 3
     assert status.raw_speed_kmh == pytest.approx(36.0, abs=0.1)
+    assert status.last_error == "old error"
     assert status.stale_timeout_s == pytest.approx(17.0)
 
 
