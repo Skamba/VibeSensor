@@ -16,14 +16,18 @@ from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.summary_serialization import (
-    AccelStatisticsLike,
-    AnalysisSummaryBuildContext,
+    build_summary_payload,
+    serialize_plot_data,
+)
+from vibesensor.shared.boundaries.summary_serialization._plots import (
     PhaseSegmentLike,
     PhaseSpeedBreakdownRowLike,
     PlotDataResultLike,
     SpeedBreakdownRowLike,
-    build_summary_payload,
-    serialize_plot_data,
+)
+from vibesensor.shared.boundaries.summary_serialization._summary import (
+    AccelStatisticsLike,
+    AnalysisSummaryBuildContext,
 )
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.boundaries.test_plan_projection import step_payloads_from_plan
