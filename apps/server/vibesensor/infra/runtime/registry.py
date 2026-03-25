@@ -12,6 +12,10 @@ from dataclasses import dataclass, field
 from threading import RLock
 
 from vibesensor.domain import normalize_sensor_id
+from vibesensor.infra.location_assignment_validator import (
+    AssignedLocation,
+    LocationAssignmentValidator,
+)
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
 from vibesensor.infra.runtime.dedup_window import DedupWindow
@@ -28,6 +32,7 @@ from vibesensor.shared.ports import (
 from vibesensor.shared.types.payload_types import ClientMetrics
 
 LOGGER = logging.getLogger(__name__)
+_LOCATION_VALIDATOR = LocationAssignmentValidator()
 
 __all__ = [
     "ClientRecord",
@@ -299,25 +304,22 @@ class ClientRegistry:
         ValueError
             If the location is already assigned to a different client.
         """
-        clean = location.strip()
-        # Cap at 64 UTF-8 bytes without splitting multi-byte characters.
-        encoded = clean.encode("utf-8", errors="ignore")
-        if len(encoded) > 64:
-            clean = encoded[:64].decode("utf-8", errors="ignore")
+        normalized_client_id = normalize_sensor_id(client_id)
+        clean = _LOCATION_VALIDATOR.normalize(location)
         with self._lock:
-            if clean:
-                conflict = next(
-                    (
-                        cid
-                        for cid, rec in self._clients.items()
-                        if cid != normalize_sensor_id(client_id) and rec.location_code == clean
-                    ),
-                    None,
-                )
-                if conflict is not None:
-                    conflict_name = self._clients[conflict].name or conflict
-                    raise ValueError(f"Location '{clean}' already assigned to {conflict_name}")
-            record = self._get_or_create(client_id)
+            _LOCATION_VALIDATOR.validate_assignment(
+                owner_id=normalized_client_id,
+                location_code=clean,
+                assigned_locations=(
+                    AssignedLocation(
+                        owner_id=cid,
+                        owner_name=rec.name or cid,
+                        location_code=rec.location_code,
+                    )
+                    for cid, rec in self._clients.items()
+                ),
+            )
+            record = self._get_or_create(normalized_client_id)
             record.location_code = clean
             return record
 

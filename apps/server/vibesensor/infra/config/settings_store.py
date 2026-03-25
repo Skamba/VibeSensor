@@ -49,6 +49,10 @@ from vibesensor.infra.config.car_settings import (
     _clamp_str,
 )
 from vibesensor.infra.config.settings_derivation import analysis_settings_snapshot_from_aspects
+from vibesensor.infra.location_assignment_validator import (
+    AssignedLocation,
+    LocationAssignmentValidator,
+)
 from vibesensor.shared.boundaries.settings_snapshot_codec import (
     coerce_language_code as _coerce_language,
 )
@@ -87,6 +91,7 @@ from vibesensor.shared.types.speed_source_config import (
 )
 
 LOGGER = logging.getLogger(__name__)
+_LOCATION_VALIDATOR = LocationAssignmentValidator()
 
 VALID_LANGUAGES: frozenset[str] = frozenset(get_args(LanguageCode))
 """Supported UI languages — derived from ``LanguageCode``."""
@@ -328,20 +333,18 @@ class SettingsStore:
                 updated.name = name or sensor_id
             if "location_code" in data:
                 location_code = _clamp_str(data["location_code"], 64)
-                if location_code:
-                    conflict = next(
-                        (
-                            other
-                            for other_id, other in self._sensors.items()
-                            if other_id != sensor_id and other.location_code == location_code
-                        ),
-                        None,
-                    )
-                    if conflict is not None:
-                        conflict_name = conflict.name or conflict.sensor_id
-                        raise ValueError(
-                            f"Location '{location_code}' already assigned to {conflict_name}",
+                _LOCATION_VALIDATOR.validate_assignment(
+                    owner_id=sensor_id,
+                    location_code=location_code,
+                    assigned_locations=(
+                        AssignedLocation(
+                            owner_id=other_id,
+                            owner_name=other.name or other.sensor_id,
+                            location_code=other.location_code,
                         )
+                        for other_id, other in self._sensors.items()
+                    ),
+                )
                 updated.location_code = location_code
             self._sensors[sensor_id] = updated
             return True
