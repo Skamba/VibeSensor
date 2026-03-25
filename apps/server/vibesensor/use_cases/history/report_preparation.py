@@ -311,9 +311,7 @@ def validate_prepared_report_input(
         )
     # Cross-object consistency: origin must agree between mapping_context and report_facts
     if prepared.mapping_context.origin is not prepared.report_facts.origin:
-        raise ValueError(
-            "mapping_context.origin must match report_facts.origin"
-        )
+        raise ValueError("mapping_context.origin must match report_facts.origin")
     # Cross-object consistency: active sensor locations must agree
     facts_locations = list(prepared.report_facts.sensor_locations_active)
     if facts_locations != prepared.mapping_context.sensor_locations_active:
@@ -323,13 +321,9 @@ def validate_prepared_report_input(
         )
     # Cross-object consistency: renderer payload car metadata must agree with mapping_context
     if prepared.renderer_payload.car_name != prepared.mapping_context.car_name:
-        raise ValueError(
-            "mapping_context.car_name must match renderer_payload.car_name"
-        )
+        raise ValueError("mapping_context.car_name must match renderer_payload.car_name")
     if prepared.renderer_payload.car_type != prepared.mapping_context.car_type:
-        raise ValueError(
-            "mapping_context.car_type must match renderer_payload.car_type"
-        )
+        raise ValueError("mapping_context.car_type must match renderer_payload.car_type")
 
     return ValidatedPreparedReportInput(
         renderer_payload=prepared.renderer_payload,
