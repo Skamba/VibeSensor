@@ -1,4 +1,4 @@
-"""Shared JSON sanitisation, merging, and coercion utilities.
+"""Shared JSON sanitisation, payload projection, merging, and coercion utilities.
 
 Provides numpy-aware non-finite-float sanitisation and recursive
 dict-merge used across config loading, WebSocket hub, and history.
@@ -9,16 +9,26 @@ from __future__ import annotations
 import json
 import logging
 import math
+from collections.abc import Sequence
 from typing import cast
 
 from vibesensor.domain import coerce_float
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.json_types import (
+    JsonObject,
+    JsonSchemaObject,
+    JsonSchemaValue,
+    JsonValue,
+    is_json_object,
+)
 
 __all__ = [
     "as_float_or_none",
     "as_int_or_none",
     "deep_merge",
     "i18n_ref",
+    "payload_object_from_json",
+    "payload_objects_from_json",
+    "payload_value_from_json",
     "safe_json_dumps",
     "safe_json_loads",
     "sanitize_for_json",
@@ -47,6 +57,28 @@ def as_int_or_none(value: object) -> int | None:
     if out is None:
         return None
     return round(out)
+
+
+def payload_value_from_json(value: JsonValue | None) -> JsonSchemaValue:
+    """Project recursive JSON into the bounded schema-safe payload JSON shape."""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, list):
+        return cast(JsonSchemaValue, [payload_value_from_json(item) for item in value])
+    return cast(JsonSchemaValue, payload_object_from_json(value))
+
+
+def payload_object_from_json(value: JsonObject) -> JsonSchemaObject:
+    """Project a JSON object into the bounded schema-safe payload object shape."""
+    return cast(
+        JsonSchemaObject,
+        {key: payload_value_from_json(item) for key, item in value.items()},
+    )
+
+
+def payload_objects_from_json(values: Sequence[JsonObject]) -> list[JsonSchemaObject]:
+    """Project a sequence of JSON objects into the bounded schema-safe payload list shape."""
+    return [payload_object_from_json(value) for value in values]
 
 
 LOGGER = logging.getLogger(__name__)

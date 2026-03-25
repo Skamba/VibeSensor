@@ -8,6 +8,9 @@ import numpy as np
 import pytest
 
 from vibesensor.shared.json_utils import (
+    payload_object_from_json,
+    payload_objects_from_json,
+    payload_value_from_json,
     safe_json_dumps,
     safe_json_loads,
     sanitize_for_json,
@@ -230,3 +233,23 @@ class TestSafeJsonLoads:
     def test_scalar_json(self) -> None:
         result = safe_json_loads("42", context="test")
         assert result == 42
+
+
+def test_payload_value_from_json_projects_nested_json() -> None:
+    value = {
+        "_i18n_key": "SUMMARY_LABEL",
+        "params": {"severity": "warn"},
+        "bands": [1, {"name": "cruise"}],
+    }
+
+    assert payload_value_from_json(value) == value
+
+
+def test_payload_object_helpers_project_json_object_sequences() -> None:
+    values = [
+        {"code": "speed_gap", "state": "warn"},
+        {"title": {"_i18n_key": "SUMMARY_LABEL"}},
+    ]
+
+    assert payload_object_from_json(values[1]) == values[1]
+    assert payload_objects_from_json(values) == values

@@ -11,8 +11,7 @@ remain local to ``shared.types.api_models.history``.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any, Literal, Required, TypeAlias, cast
+from typing import Any, Literal, Required, TypeAlias
 
 from pydantic import ConfigDict
 from typing_extensions import TypedDict
@@ -27,10 +26,8 @@ from vibesensor.shared.types.analysis_views import (
     SpeedBreakdownRow,
 )
 from vibesensor.shared.types.json_types import (
-    JsonObject,
     JsonSchemaObject,
     JsonSchemaValue,
-    JsonValue,
 )
 
 __all__ = [
@@ -48,9 +45,6 @@ __all__ = [
     "OutlierSummaryResponse",
     "PayloadObject",
     "PayloadValue",
-    "payload_object_from_json",
-    "payload_objects_from_json",
-    "payload_value_from_json",
     "PhaseInfoResponse",
     "PhaseIntensityStatsResponse",
     "PhaseSegmentSummaryResponse",
@@ -65,25 +59,6 @@ __all__ = [
 
 PayloadObject: TypeAlias = JsonSchemaObject
 PayloadValue: TypeAlias = JsonSchemaValue
-
-
-def payload_value_from_json(value: JsonValue | None) -> PayloadValue:
-    if value is None or isinstance(value, (bool, int, float, str)):
-        return value
-    if isinstance(value, list):
-        # History/report payload producers only emit the bounded JSON depth
-        # modeled by ``PayloadValue``, but mypy cannot prove that through the
-        # recursive conversion helper.
-        return cast(PayloadValue, [payload_value_from_json(item) for item in value])
-    return cast(PayloadValue, payload_object_from_json(value))
-
-
-def payload_object_from_json(value: JsonObject) -> PayloadObject:
-    return cast(PayloadObject, {key: payload_value_from_json(item) for key, item in value.items()})
-
-
-def payload_objects_from_json(values: Sequence[JsonObject]) -> list[PayloadObject]:
-    return [payload_object_from_json(value) for value in values]
 
 
 _FORBID_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
