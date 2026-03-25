@@ -92,6 +92,8 @@ _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-1",
     "backend-tests-2",
     "backend-tests-3",
+    "backend-tests-4",
+    "backend-tests-5",
 )
 _MIRRORED_BACKEND_INSTALL_JOBS = (
     "backend-quality",
@@ -731,6 +733,13 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
 
     for job_name in _BACKEND_TEST_SHARD_JOBS:
         backend_job = jobs.get(job_name) if isinstance(jobs, Mapping) else None
+        if isinstance(backend_job, Mapping) and backend_job.get("needs") not in (
+            None,
+            [],
+        ):
+            errors.append(
+                f"{job_name} must not declare job needs so backend test shards can start immediately."
+            )
         backend_steps = (
             backend_job.get("steps") if isinstance(backend_job, Mapping) else None
         )

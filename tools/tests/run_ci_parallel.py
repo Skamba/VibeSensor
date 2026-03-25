@@ -234,12 +234,12 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 ["mkdir", "-p", "artifacts/ai/logs/ci"],
             ),
             Step(
-                "Backend tests shard 1/3",
+                "Backend tests shard 1/5",
                 [
                     python_cmd,
                     "tools/tests/run_backend_parallel.py",
                     "--shards",
-                    "3",
+                    "5",
                     "--shard-index",
                     "1",
                     "--junitxml",
@@ -253,12 +253,12 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 ["mkdir", "-p", "artifacts/ai/logs/ci"],
             ),
             Step(
-                "Backend tests shard 2/3",
+                "Backend tests shard 2/5",
                 [
                     python_cmd,
                     "tools/tests/run_backend_parallel.py",
                     "--shards",
-                    "3",
+                    "5",
                     "--shard-index",
                     "2",
                     "--junitxml",
@@ -272,16 +272,54 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 ["mkdir", "-p", "artifacts/ai/logs/ci"],
             ),
             Step(
-                "Backend tests shard 3/3",
+                "Backend tests shard 3/5",
                 [
                     python_cmd,
                     "tools/tests/run_backend_parallel.py",
                     "--shards",
-                    "3",
+                    "5",
                     "--shard-index",
                     "3",
                     "--junitxml",
                     "artifacts/ai/logs/ci/backend-tests-3.xml",
+                ],
+            ),
+        ],
+        "backend-tests-4": [
+            Step(
+                "Prepare backend test artifacts",
+                ["mkdir", "-p", "artifacts/ai/logs/ci"],
+            ),
+            Step(
+                "Backend tests shard 4/5",
+                [
+                    python_cmd,
+                    "tools/tests/run_backend_parallel.py",
+                    "--shards",
+                    "5",
+                    "--shard-index",
+                    "4",
+                    "--junitxml",
+                    "artifacts/ai/logs/ci/backend-tests-4.xml",
+                ],
+            ),
+        ],
+        "backend-tests-5": [
+            Step(
+                "Prepare backend test artifacts",
+                ["mkdir", "-p", "artifacts/ai/logs/ci"],
+            ),
+            Step(
+                "Backend tests shard 5/5",
+                [
+                    python_cmd,
+                    "tools/tests/run_backend_parallel.py",
+                    "--shards",
+                    "5",
+                    "--shard-index",
+                    "5",
+                    "--junitxml",
+                    "artifacts/ai/logs/ci/backend-tests-5.xml",
                 ],
             ),
         ],
@@ -343,6 +381,8 @@ def main() -> int:
             "backend-tests-1",
             "backend-tests-2",
             "backend-tests-3",
+            "backend-tests-4",
+            "backend-tests-5",
             "e2e",
         ],
         help="Run only selected job(s). Repeat to run multiple jobs.",
@@ -376,6 +416,8 @@ def main() -> int:
             "backend-tests-1",
             "backend-tests-2",
             "backend-tests-3",
+            "backend-tests-4",
+            "backend-tests-5",
             "e2e",
         ]
     )
