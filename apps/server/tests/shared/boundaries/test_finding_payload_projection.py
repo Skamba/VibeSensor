@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from vibesensor.domain import Finding, OrderMatchObservation, VibrationSource
-from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.shared.boundaries.finding import (
+    _finding_core_payload_from_domain,
+    _finding_presentation_payload_from_domain,
+    finding_payload_from_domain,
+)
 
 
 def test_projection_emits_canonical_amplitude_metric_shape() -> None:
@@ -77,3 +82,43 @@ def test_projection_serializes_matched_points_with_boundary_shape() -> None:
             "phase": "cruise",
         }
     ]
+
+
+def test_projection_separates_core_and_presentation_metadata_before_composing() -> None:
+    finding = Finding(
+        finding_id="F_ORDER",
+        suspected_source=VibrationSource.WHEEL_TIRE,
+        confidence=0.82,
+        strongest_location="rear-right",
+        strongest_speed_band="80-100 km/h",
+        dominance_ratio=3.1,
+        vibration_strength_db=22.3,
+        origin=VibrationOrigin.from_analysis_inputs(
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            dominance_ratio=3.1,
+            speed_band="80-100 km/h",
+            dominant_phase="cruise",
+            reason="Strong wheel-order correlation",
+        ),
+    ).with_confidence_assessment(
+        strength_band_key="moderate",
+        steady_speed=True,
+        has_reference_gaps=False,
+        sensor_count=2,
+    )
+
+    core_payload = _finding_core_payload_from_domain(finding)
+    presentation_payload = _finding_presentation_payload_from_domain(finding)
+    payload = finding_payload_from_domain(finding)
+
+    assert "evidence_summary" not in core_payload
+    assert "frequency_hz_or_order" not in core_payload
+    assert "amplitude_metric" not in core_payload
+    assert "confidence_tone" not in core_payload
+
+    assert "finding_id" not in presentation_payload
+    assert "strongest_location" not in presentation_payload
+    assert presentation_payload["evidence_summary"] == "Strong wheel-order correlation"
+    assert presentation_payload["confidence_tone"] == finding.confidence_assessment.tone
+
+    assert payload == {**core_payload, **presentation_payload}

@@ -160,3 +160,26 @@ class TestFindingRoundtrip:
         restored = _roundtrip(original)
         assert restored.origin is not None
         assert restored.origin.reason == "Strong 1x wheel order detected"
+
+    def test_decode_ignores_pure_presentation_hints(self) -> None:
+        baseline_payload = finding_payload_from_domain(
+            Finding(
+                finding_id="F007",
+                suspected_source=VibrationSource.WHEEL_TIRE,
+                confidence=0.7,
+                order="1x wheel",
+                vibration_strength_db=22.3,
+            )
+        )
+        noisy_payload = dict(baseline_payload)
+        noisy_payload["amplitude_metric"] = {
+            "name": "render-only",
+            "value": 999.0,
+            "units": "g",
+            "definition": {"_i18n_key": "IGNORED"},
+        }
+        noisy_payload["confidence_label_key"] = "CONFIDENCE_LOW"
+        noisy_payload["confidence_tone"] = "neutral"
+        noisy_payload["confidence_pct"] = "999%"
+
+        assert finding_from_payload(noisy_payload) == finding_from_payload(baseline_payload)
