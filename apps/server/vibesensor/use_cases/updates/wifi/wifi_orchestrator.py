@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from vibesensor.use_cases.updates.models import UpdateIssue
+from vibesensor.use_cases.updates.models import UpdateIssue, UpdatePhase, UpdateState
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi.wifi import UpdateWifiController
@@ -11,6 +11,16 @@ from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.wifi.wifi_diagnostics import parse_wifi_diagnostics
 
 LOGGER = logging.getLogger(__name__)
+_HOTSPOT_RESTORE_PHASES = frozenset(
+    {
+        UpdatePhase.stopping_hotspot,
+        UpdatePhase.connecting_wifi,
+        UpdatePhase.checking,
+        UpdatePhase.downloading,
+        UpdatePhase.installing,
+        UpdatePhase.restoring_hotspot,
+    }
+)
 
 
 class UpdateWifiOrchestrator:
@@ -86,3 +96,21 @@ class UpdateWifiOrchestrator:
 
     async def collect_cleanup_diagnostics(self) -> list[UpdateIssue]:
         return await asyncio.to_thread(parse_wifi_diagnostics)
+
+    async def complete_update_success(self, message: str) -> bool:
+        self._tracker.transition(UpdatePhase.restoring_hotspot)
+        self._tracker.log("Restoring hotspot...")
+        restored = await self.restore_hotspot()
+        if not restored:
+            self._tracker.status.state = UpdateState.failed
+            self._tracker.persist()
+            return False
+        self._tracker.mark_success(message)
+        return True
+
+    async def maybe_restore_hotspot_during_cleanup(self) -> None:
+        status = self._tracker.status
+        if status.state == UpdateState.running or status.phase in _HOTSPOT_RESTORE_PHASES:
+            self._tracker.transition(UpdatePhase.restoring_hotspot)
+            self._tracker.log("Restoring hotspot...")
+            await self.cleanup_restore_hotspot()
