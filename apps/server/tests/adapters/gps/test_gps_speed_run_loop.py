@@ -171,10 +171,10 @@ async def test_run_reconnects_on_connection_failure(
 async def test_run_does_not_swallow_processing_programming_errors() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
 
-    def _raise_bug(payload: dict[str, object]) -> int:
+    def _raise_bug(tpv: object) -> None:
         raise RuntimeError("bug")
 
-    monitor._tpv_mode = _raise_bug
+    monitor._transport._apply_tpv = _raise_bug  # type: ignore[assignment]
 
     async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         await reader.readline()

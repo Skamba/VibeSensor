@@ -7,6 +7,10 @@ from typing import Literal
 from vibesensor.adapters.gps import gps_transport as _gps_transport
 from vibesensor.adapters.gps import speed_resolution as _speed_resolution
 from vibesensor.adapters.gps.gps_transport import GPSTransportSnapshot, GPSTransportState
+from vibesensor.adapters.gps.gpsd_message_handler import (
+    read_non_negative_metric,
+    read_tpv_mode,
+)
 from vibesensor.adapters.gps.speed_resolution import (
     SpeedResolution,
     SpeedResolutionPolicy,
@@ -235,11 +239,11 @@ class GPSSpeedMonitor:
 
     @staticmethod
     def _read_non_negative_metric(payload: JsonObject, field: str) -> float | None:
-        return GPSTransportState._read_non_negative_metric(payload, field)
+        return read_non_negative_metric(payload, field)
 
     @staticmethod
     def _tpv_mode(payload: JsonObject) -> int | None:
-        return GPSTransportState._tpv_mode(payload)
+        return read_tpv_mode(payload)
 
     def _speed_confidence(self) -> Literal["low", "medium", "high"]:
         return speed_confidence(self.last_fix_mode, self.last_epx_m, self.last_epy_m)
