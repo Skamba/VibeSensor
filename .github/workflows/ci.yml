@@ -173,8 +173,8 @@ jobs:
           cd firmware/esp
           pio test -e native
 
-  backend-tests:
-    name: Backend tests
+  backend-tests-1:
+    name: Backend tests (shard 1/3)
     needs:
       - backend-quality
       - backend-typecheck
@@ -188,19 +188,107 @@ jobs:
 
       - uses: ./.github/actions/setup-backend
 
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/vibesensor/backend-duration-cache.json
+          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-1-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
+            ${{ runner.os }}-backend-test-durations-
+
       - name: Prepare backend test artifacts
         run: |
           mkdir -p artifacts/ai/logs/ci
 
-      - name: Backend tests
+      - name: Backend tests shard 1/3
         run: |
-          python -m pytest -q --tb=short --junitxml artifacts/ai/logs/ci/backend-tests.xml apps/server/tests
+          python3 tools/tests/run_backend_parallel.py --shards 3 --shard-index 1 --junitxml artifacts/ai/logs/ci/backend-tests-1.xml
 
       - name: Upload backend test artifacts
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: backend-test-artifacts
+          name: backend-test-artifacts-1
+          path: artifacts/ai/logs/ci/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  backend-tests-2:
+    name: Backend tests (shard 2/3)
+    needs:
+      - backend-quality
+      - backend-typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-backend
+
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/vibesensor/backend-duration-cache.json
+          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-2-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
+            ${{ runner.os }}-backend-test-durations-
+
+      - name: Prepare backend test artifacts
+        run: |
+          mkdir -p artifacts/ai/logs/ci
+
+      - name: Backend tests shard 2/3
+        run: |
+          python3 tools/tests/run_backend_parallel.py --shards 3 --shard-index 2 --junitxml artifacts/ai/logs/ci/backend-tests-2.xml
+
+      - name: Upload backend test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-artifacts-2
+          path: artifacts/ai/logs/ci/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  backend-tests-3:
+    name: Backend tests (shard 3/3)
+    needs:
+      - backend-quality
+      - backend-typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-backend
+
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/vibesensor/backend-duration-cache.json
+          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-3-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
+            ${{ runner.os }}-backend-test-durations-
+
+      - name: Prepare backend test artifacts
+        run: |
+          mkdir -p artifacts/ai/logs/ci
+
+      - name: Backend tests shard 3/3
+        run: |
+          python3 tools/tests/run_backend_parallel.py --shards 3 --shard-index 3 --junitxml artifacts/ai/logs/ci/backend-tests-3.xml
+
+      - name: Upload backend test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-artifacts-3
           path: artifacts/ai/logs/ci/
           if-no-files-found: ignore
           retention-days: 7

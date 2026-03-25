@@ -7,7 +7,7 @@
 #   ./tools/tests/run_ci_with_act.sh              # run all CI jobs (push event)
 #   ./tools/tests/run_ci_with_act.sh -l            # list available jobs
 #   ./tools/tests/run_ci_with_act.sh -j backend-quality   # run one job
-#   ./tools/tests/run_ci_with_act.sh -j backend-tests     # run backend tests
+#   ./tools/tests/run_ci_with_act.sh -j backend-tests-1   # run one backend test shard
 #   ./tools/tests/run_ci_with_act.sh <extra act args>     # pass-through
 set -euo pipefail
 

@@ -228,22 +228,60 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 cwd=ROOT / "firmware" / "esp",
             ),
         ],
-        "backend-tests": [
+        "backend-tests-1": [
             Step(
                 "Prepare backend test artifacts",
                 ["mkdir", "-p", "artifacts/ai/logs/ci"],
             ),
             Step(
-                "Backend tests",
+                "Backend tests shard 1/3",
                 [
                     python_cmd,
-                    "-m",
-                    "pytest",
-                    "-q",
-                    "--tb=short",
+                    "tools/tests/run_backend_parallel.py",
+                    "--shards",
+                    "3",
+                    "--shard-index",
+                    "1",
                     "--junitxml",
-                    "artifacts/ai/logs/ci/backend-tests.xml",
-                    "apps/server/tests",
+                    "artifacts/ai/logs/ci/backend-tests-1.xml",
+                ],
+            ),
+        ],
+        "backend-tests-2": [
+            Step(
+                "Prepare backend test artifacts",
+                ["mkdir", "-p", "artifacts/ai/logs/ci"],
+            ),
+            Step(
+                "Backend tests shard 2/3",
+                [
+                    python_cmd,
+                    "tools/tests/run_backend_parallel.py",
+                    "--shards",
+                    "3",
+                    "--shard-index",
+                    "2",
+                    "--junitxml",
+                    "artifacts/ai/logs/ci/backend-tests-2.xml",
+                ],
+            ),
+        ],
+        "backend-tests-3": [
+            Step(
+                "Prepare backend test artifacts",
+                ["mkdir", "-p", "artifacts/ai/logs/ci"],
+            ),
+            Step(
+                "Backend tests shard 3/3",
+                [
+                    python_cmd,
+                    "tools/tests/run_backend_parallel.py",
+                    "--shards",
+                    "3",
+                    "--shard-index",
+                    "3",
+                    "--junitxml",
+                    "artifacts/ai/logs/ci/backend-tests-3.xml",
                 ],
             ),
         ],
@@ -302,7 +340,9 @@ def main() -> int:
             "ui-smoke",
             "release-smoke",
             "firmware-native-tests",
-            "backend-tests",
+            "backend-tests-1",
+            "backend-tests-2",
+            "backend-tests-3",
             "e2e",
         ],
         help="Run only selected job(s). Repeat to run multiple jobs.",
@@ -333,7 +373,9 @@ def main() -> int:
             "ui-smoke",
             "release-smoke",
             "firmware-native-tests",
-            "backend-tests",
+            "backend-tests-1",
+            "backend-tests-2",
+            "backend-tests-3",
             "e2e",
         ]
     )
