@@ -7,7 +7,7 @@ from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_sum
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_summary,
 )
-from vibesensor.shared.types.history_analysis_contracts import payload_object_from_json
+from vibesensor.shared.json_utils import payload_object_from_json
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
