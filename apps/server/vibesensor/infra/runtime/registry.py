@@ -14,6 +14,7 @@ from threading import RLock
 from vibesensor.domain import normalize_sensor_id
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
+from vibesensor.infra.runtime.dedup_window import DedupWindow
 from vibesensor.infra.runtime.registry_updates import (
     DataUpdateResult,
     apply_data_message_update,
@@ -51,7 +52,7 @@ def _resolve_now_mono(now_mono: float | None) -> float:
 
 @dataclass(slots=True)
 class ClientRecord:
-    """Per-client state: last-seen timestamps, dedup window, hello/firmware metadata."""
+    """Per-client state: last-seen timestamps, dedup helper, hello/firmware metadata."""
 
     client_id: str
     name: str
@@ -77,30 +78,25 @@ class ClientRecord:
     timing_jitter_us_ema: float = 0.0
     timing_drift_us_total: float = 0.0
     duplicates_received: int = 0
-    _seen_seqs: set[int] = field(default_factory=set)
-    _seen_seqs_max: int = -1
+    dedup_window: DedupWindow = field(default_factory=DedupWindow)
 
     # -- deduplication window helpers -----------------------------------------
 
     def clear_dedup(self) -> None:
         """Reset the per-client dedup window (e.g. on restart or hard reset)."""
-        self._seen_seqs.clear()
-        self._seen_seqs_max = -1
+        self.dedup_window.clear()
 
     def has_seq(self, seq: int) -> bool:
         """Return True if *seq* is already in the dedup window."""
-        return seq in self._seen_seqs
+        return self.dedup_window.contains(seq)
 
     def record_seq(self, seq: int) -> None:
         """Add *seq* to the dedup window and update the running max."""
-        self._seen_seqs.add(seq)
-        self._seen_seqs_max = max(self._seen_seqs_max, seq)
+        self.dedup_window.record(seq)
 
     def prune_seqs(self, window_size: int) -> None:
         """Discard old entries so the window stays bounded to *window_size*."""
-        if len(self._seen_seqs) > window_size:
-            cutoff = self._seen_seqs_max - window_size + 1
-            self._seen_seqs = {s for s in self._seen_seqs if s >= cutoff}
+        self.dedup_window.prune(window_size)
 
 
 @dataclass(frozen=True, slots=True)
