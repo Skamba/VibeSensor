@@ -11,6 +11,11 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 from typing import Any, cast
 
+from vibesensor.adapters.gps.speed_validation import (
+    DEFAULT_SPEED_VALIDATION_CONFIG,
+    evaluate_speed_sample,
+    is_speed_plausible,
+)
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
@@ -25,10 +30,9 @@ _GPS_RECONNECT_DELAY_S: float = 2.0
 _GPS_CONNECT_TIMEOUT_S: float = 3.0
 _GPS_READ_TIMEOUT_S: float = 3.0
 _GPS_RECONNECT_MAX_DELAY_S: float = 15.0
-_GPS_MAX_SPEED_MPS: float = 150.0
-"""Reject GPS TPV speed samples above this value (≈ 540 km/h) as implausible."""
-_GPS_ZERO_DROP_PREV_THRESHOLD_MPS: float = 0.5
-_GPS_ZERO_CONFIRM_SAMPLES: int = 3
+
+# Re-export for consumers that import from this module.
+_GPS_MAX_SPEED_MPS: float = DEFAULT_SPEED_VALIDATION_CONFIG.max_speed_mps
 
 TpvModeReader = Callable[[JsonObject], int | None]
 MetricReader = Callable[[JsonObject, str], float | None]
@@ -91,16 +95,12 @@ class GPSTransportState:
         snapshot: GPSTransportSnapshot,
         speed_mps: float,
     ) -> tuple[bool, int]:
-        if speed_mps == 0.0:
-            prev_speed = snapshot.speed_snapshot[0]
-            if (
-                isinstance(prev_speed, NUMERIC_TYPES)
-                and not isinstance(prev_speed, bool)
-                and prev_speed > _GPS_ZERO_DROP_PREV_THRESHOLD_MPS
-            ):
-                streak = snapshot.zero_speed_streak + 1
-                return streak >= _GPS_ZERO_CONFIRM_SAMPLES, streak
-        return True, 0
+        verdict = evaluate_speed_sample(
+            speed_mps,
+            snapshot.speed_snapshot[0],
+            snapshot.zero_speed_streak,
+        )
+        return verdict.accepted, verdict.zero_speed_streak
 
     def _mark_connected(self) -> None:
         self._replace_snapshot(
@@ -336,7 +336,7 @@ class GPSTransportState:
             and not isinstance(speed, bool)
         ):
             speed_f = float(speed)
-            if math.isfinite(speed_f) and 0 <= speed_f <= _GPS_MAX_SPEED_MPS:
+            if is_speed_plausible(speed_f):
                 accepted, zero_speed_streak = self._evaluate_speed_sample(snapshot, speed_f)
                 if accepted:
                     speed_snapshot = (speed_f, time.monotonic())
