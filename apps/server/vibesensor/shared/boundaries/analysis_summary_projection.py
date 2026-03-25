@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import cast
 
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 from vibesensor.shared.boundaries.finding import finding_payload_from_domain
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.test_plan_projection import (
     _has_structured_step_content,
     step_payloads_from_plan,
 )
+from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.shared.types.json_types import JsonObject
 

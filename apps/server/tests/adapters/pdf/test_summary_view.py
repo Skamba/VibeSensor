@@ -15,11 +15,11 @@ from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
-from vibesensor.shared.boundaries.diagnostic_case import (
-    test_run_from_summary as _test_run_from_summary,
-)
 from vibesensor.shared.boundaries.report_interpretation import resolve_report_origin
 from vibesensor.shared.boundaries.test_plan_projection import step_payloads_from_plan
+from vibesensor.shared.boundaries.test_run_reconstruction import (
+    test_run_from_summary as _test_run_from_summary,
+)
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 
 

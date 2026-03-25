@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 
-from vibesensor.shared.boundaries.diagnostic_case import _enrich_findings
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.test_run_reconstruction import _enrich_findings
 
 
 def _enriched_finding(payload: dict) -> object:
