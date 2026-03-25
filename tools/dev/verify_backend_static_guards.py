@@ -536,20 +536,29 @@ def _check_summary_payload_uses_build_context() -> list[str]:
 def _check_settings_store_uses_shared_update_helper() -> list[str]:
     settings_path = VIBESENSOR_DIR / "infra" / "config" / "settings_store.py"
     car_settings_path = VIBESENSOR_DIR / "infra" / "config" / "car_settings.py"
+    transaction_path = VIBESENSOR_DIR / "infra" / "config" / "settings_transaction.py"
     settings_source = _read_text(settings_path)
     car_settings_source = _read_text(car_settings_path)
+    transaction_source = _read_text(transaction_path)
     failures: list[str] = []
-    if "def _update_with_rollback(" not in settings_source:
+    if (
+        "from vibesensor.infra.config.settings_transaction import update_with_rollback"
+        not in settings_source
+    ):
         failures.append(
-            f"{settings_path.relative_to(REPO_ROOT)} must define the shared _update_with_rollback helper"
+            f"{settings_path.relative_to(REPO_ROOT)} must import update_with_rollback from settings_transaction"
         )
-    if settings_source.count("except PersistenceError") != 1:
+    if "except PersistenceError" in settings_source:
         failures.append(
-            f"{settings_path.relative_to(REPO_ROOT)} must keep PersistenceError rollback handling in one helper"
+            f"{settings_path.relative_to(REPO_ROOT)} must not handle PersistenceError directly; delegate to settings_transaction"
+        )
+    if transaction_source.count("except PersistenceError") != 1:
+        failures.append(
+            f"{transaction_path.relative_to(REPO_ROOT)} must keep PersistenceError rollback handling in one helper"
         )
     if "except PersistenceError" in car_settings_source:
         failures.append(
-            f"{car_settings_path.relative_to(REPO_ROOT)} must delegate rollback handling to SettingsStore._update_with_rollback"
+            f"{car_settings_path.relative_to(REPO_ROOT)} must delegate rollback handling to settings_transaction"
         )
     return failures
 
