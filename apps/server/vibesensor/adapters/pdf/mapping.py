@@ -34,7 +34,7 @@ from vibesensor.adapters.pdf.report_data import (
     PatternEvidence,
     Report,
     ReportTemplateData,
-    build_report_from_summary,
+    build_report_from_renderer_payload,
 )
 from vibesensor.adapters.pdf.report_sections import (
     build_data_trust,
@@ -62,7 +62,6 @@ __all__ = [
     "PreparedReportInput",
     "Report",
     "ReportMappingContext",
-    "build_report_from_summary",
     "build_system_cards",
     "humanize_signatures",
     "map_summary",
@@ -175,15 +174,9 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     """
     validated = validate_prepared_report_input(prepared)
     lang = str(normalize_lang(validated.language))
-    report = Report(
-        run_id=validated.renderer_payload.run_id,
-        lang=lang,
-        car_name=validated.renderer_payload.car_name,
-        car_type=validated.renderer_payload.car_type,
-        report_date=validated.renderer_payload.report_date,
-        duration_s=validated.renderer_payload.duration_s,
-        sample_count=validated.renderer_payload.sample_count,
-        sensor_count=validated.renderer_payload.sensor_count,
+    report = build_report_from_renderer_payload(
+        validated.renderer_payload,
+        language=lang,
     )
 
     def tr(key: str, **kw: JsonValue) -> str:
