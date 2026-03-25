@@ -207,10 +207,6 @@ jobs:
 
   e2e:
     name: E2E (docker)
-    needs:
-      - backend-quality
-      - backend-typecheck
-      - frontend-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -235,7 +231,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: apps/server/Dockerfile
+          file: apps/server/Dockerfile.e2e
           tags: vibesensor-full-suite:latest
           load: true
           cache-from: type=gha

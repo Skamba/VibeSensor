@@ -24,19 +24,23 @@ def _load_run_e2e_parallel_module():
 
 def test_prepare_image_builds_by_default(monkeypatch) -> None:
     module = _load_run_e2e_parallel_module()
-    built_images: list[str] = []
+    built_images: list[tuple[str, str]] = []
 
-    monkeypatch.setattr(module, "_build_image", lambda image: built_images.append(image) or 0)
+    monkeypatch.setattr(
+        module,
+        "_build_image",
+        lambda image, dockerfile: built_images.append((image, dockerfile)) or 0,
+    )
 
     assert module._prepare_image("vibesensor-full-suite", env={}) == 0
-    assert built_images == ["vibesensor-full-suite"]
+    assert built_images == [("vibesensor-full-suite", module._DEFAULT_DOCKERFILE)]
 
 
 def test_prepare_image_reuses_prebuilt_image_when_skip_requested(monkeypatch) -> None:
     module = _load_run_e2e_parallel_module()
     emitted: list[str] = []
 
-    def _unexpected_build(_image: str) -> int:
+    def _unexpected_build(_image: str, _dockerfile: str) -> int:
         raise AssertionError("skip-build mode should not rebuild the docker image")
 
     monkeypatch.setattr(module, "_build_image", _unexpected_build)
@@ -61,7 +65,7 @@ def test_prepare_image_reuses_prebuilt_image_in_github_actions(monkeypatch) -> N
     module = _load_run_e2e_parallel_module()
     emitted: list[str] = []
 
-    def _unexpected_build(_image: str) -> int:
+    def _unexpected_build(_image: str, _dockerfile: str) -> int:
         raise AssertionError("GitHub Actions should reuse the prebuilt docker image")
 
     monkeypatch.setattr(module, "_build_image", _unexpected_build)
@@ -78,7 +82,7 @@ def test_prepare_image_exits_cleanly_when_skip_requested_but_image_is_missing(
     module = _load_run_e2e_parallel_module()
     emitted: list[str] = []
 
-    def _unexpected_build(_image: str) -> int:
+    def _unexpected_build(_image: str, _dockerfile: str) -> int:
         raise AssertionError("skip-build mode should not rebuild missing images")
 
     monkeypatch.setattr(module, "_build_image", _unexpected_build)
@@ -164,3 +168,4 @@ def test_parse_args_defaults_to_six_shards(monkeypatch) -> None:
     args = module._parse_args()
 
     assert args.shards == 6
+    assert args.dockerfile == module._DEFAULT_DOCKERFILE

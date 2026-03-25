@@ -5,7 +5,7 @@
 - Server tests live under `apps/server/tests/`.
 - Use `make test-ci-lite` for the non-Docker blocking-CI subset.
 - Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner, including Docker-backed jobs when Docker is available.
-- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`).
+- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which defaults to the lean backend-only `apps/server/Dockerfile.e2e` image path with static UI serving disabled.
 - `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
 - Python test configuration lives in `apps/server/pyproject.toml`.
 - Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py` and run via `make lint` (or directly with `cd apps/server && python3 ../../tools/dev/verify_backend_static_guards.py`).

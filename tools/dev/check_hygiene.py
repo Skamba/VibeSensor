@@ -157,6 +157,68 @@ def _version_core(image_tag: str) -> str:
     return image_tag.split("-", 1)[0]
 
 
+def _validate_server_dockerfile(
+    *,
+    path: Path,
+    label: str,
+    expected_python: str,
+    expected_node: str | None,
+    require_ui_stage: bool,
+) -> list[str]:
+    errors: list[str] = []
+    if not path.exists():
+        errors.append(f"Missing {label} at {path.relative_to(ROOT)}.")
+        return errors
+
+    dockerfile_text = path.read_text(encoding="utf-8")
+
+    docker_python = _docker_base_tag(_DOCKER_PYTHON_RE, dockerfile_text)
+    if docker_python is None:
+        errors.append(f"{label} is missing the runtime python base image line.")
+    elif _version_core(docker_python) != expected_python:
+        errors.append(
+            f"{label} runtime python tag {docker_python!r} does not match .python-version "
+            f"{expected_python!r}."
+        )
+
+    docker_node = _docker_base_tag(_DOCKER_NODE_RE, dockerfile_text)
+    if require_ui_stage:
+        if docker_node is None:
+            errors.append(f"{label} is missing the UI node base image line.")
+        elif expected_node is not None and _version_core(docker_node) != expected_node:
+            errors.append(
+                f"{label} UI node tag {docker_node!r} does not match .nvmrc {expected_node!r}."
+            )
+    elif docker_node is not None:
+        errors.append(
+            f"{label} must stay backend-only and must not include a ui-build stage."
+        )
+
+    if '.get("optional-dependencies", {}).get("esp"' in dockerfile_text:
+        errors.append(f"{label} must not install the optional esp dependency group.")
+    if "tomllib" in dockerfile_text or "subprocess.check_call" in dockerfile_text:
+        errors.append(
+            f"{label} must not parse pyproject.toml inline; let pip resolve /app/apps/server directly."
+        )
+    if "--no-deps /app/apps/server" in dockerfile_text:
+        errors.append(f"{label} must not install /app/apps/server with --no-deps.")
+    if "python -m pip install --no-cache-dir /app/apps/server" not in dockerfile_text:
+        errors.append(f"{label} must install /app/apps/server directly with pip.")
+
+    if not require_ui_stage and (
+        "npm ci" in dockerfile_text
+        or "npm run build" in dockerfile_text
+        or "COPY --from=ui-build" in dockerfile_text
+    ):
+        errors.append(
+            f"{label} must stay backend-only and must not build or copy UI assets."
+        )
+    if not require_ui_stage and "VIBESENSOR_SERVE_STATIC=0" not in dockerfile_text:
+        errors.append(f"{label} must disable static UI serving.")
+
+    return errors
+
+
 def _project_dependency_spec(requirement_name: str) -> str | None:
     pyproject = _load_server_pyproject()
     project = pyproject.get("project")
@@ -560,40 +622,26 @@ def check_ci_lite_job_sync() -> list[str]:
 def check_docker_ci_dependency_hygiene() -> list[str]:
     errors: list[str] = []
 
-    dockerfile_text = (ROOT / "apps" / "server" / "Dockerfile").read_text(
-        encoding="utf-8"
-    )
     expected_python = _read_required_text(ROOT / ".python-version")
     expected_node = _read_required_text(ROOT / ".nvmrc")
-
-    docker_python = _docker_base_tag(_DOCKER_PYTHON_RE, dockerfile_text)
-    if docker_python is None:
-        errors.append("Dockerfile is missing the runtime python base image line.")
-    elif _version_core(docker_python) != expected_python:
-        errors.append(
-            f"Dockerfile runtime python tag {docker_python!r} does not match .python-version {expected_python!r}."
+    errors.extend(
+        _validate_server_dockerfile(
+            path=ROOT / "apps" / "server" / "Dockerfile",
+            label="Production Dockerfile",
+            expected_python=expected_python,
+            expected_node=expected_node,
+            require_ui_stage=True,
         )
-
-    docker_node = _docker_base_tag(_DOCKER_NODE_RE, dockerfile_text)
-    if docker_node is None:
-        errors.append("Dockerfile is missing the UI node base image line.")
-    elif _version_core(docker_node) != expected_node:
-        errors.append(
-            f"Dockerfile UI node tag {docker_node!r} does not match .nvmrc {expected_node!r}."
+    )
+    errors.extend(
+        _validate_server_dockerfile(
+            path=ROOT / "apps" / "server" / "Dockerfile.e2e",
+            label="E2E Dockerfile",
+            expected_python=expected_python,
+            expected_node=None,
+            require_ui_stage=False,
         )
-
-    if '.get("optional-dependencies", {}).get("esp"' in dockerfile_text:
-        errors.append(
-            "Production Dockerfile must not install the optional esp dependency group."
-        )
-    if "tomllib" in dockerfile_text or "subprocess.check_call" in dockerfile_text:
-        errors.append(
-            "Dockerfile must not parse pyproject.toml inline; let pip resolve /app/apps/server directly."
-        )
-    if "--no-deps /app/apps/server" in dockerfile_text:
-        errors.append("Dockerfile must not install /app/apps/server with --no-deps.")
-    if "python -m pip install --no-cache-dir /app/apps/server" not in dockerfile_text:
-        errors.append("Dockerfile must install /app/apps/server directly with pip.")
+    )
 
     workflow = _load_ci_workflow()
     jobs = workflow.get("jobs")
@@ -677,7 +725,38 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
         )
 
     e2e_job = jobs.get("e2e") if isinstance(jobs, Mapping) else None
-    steps = e2e_job.get("steps") if isinstance(e2e_job, Mapping) else None
+    steps: object = None
+    prebuild_e2e_dockerfile_ok = False
+    if not isinstance(e2e_job, Mapping):
+        errors.append("CI workflow is missing the e2e job.")
+    else:
+        if e2e_job.get("needs") not in (None, []):
+            errors.append("e2e must not declare job needs so it can start immediately.")
+
+        steps = e2e_job.get("steps")
+        if isinstance(steps, list):
+            for step in steps:
+                if not isinstance(step, Mapping):
+                    continue
+                if step.get("name") != "Prebuild cached E2E image":
+                    continue
+                uses = step.get("uses")
+                with_data = step.get("with")
+                dockerfile = (
+                    with_data.get("file") if isinstance(with_data, Mapping) else None
+                )
+                if (
+                    isinstance(uses, str)
+                    and uses.startswith("docker/build-push-action@")
+                    and dockerfile == "apps/server/Dockerfile.e2e"
+                ):
+                    prebuild_e2e_dockerfile_ok = True
+                    break
+    if not prebuild_e2e_dockerfile_ok:
+        errors.append(
+            "e2e must prebuild its shared image from apps/server/Dockerfile.e2e."
+        )
+
     e2e_duration_cache_ok = False
     if isinstance(steps, list):
         for step in steps:
