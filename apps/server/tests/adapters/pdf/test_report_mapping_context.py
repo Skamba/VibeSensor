@@ -130,7 +130,6 @@ class TestHasSignificantLocationIntensity:
 
 class TestObservedSignature:
     def test_builds_from_primary(self) -> None:
-        context = _make_context()
         primary = PrimaryCandidateContext(
             primary_candidate=_make_finding(),
             primary_source="wheel/tire",
@@ -150,7 +149,7 @@ class TestObservedSignature:
             certainty_reason="Consistent order-tracking match",
             tier="C",
         )
-        sig = context.observed_signature(primary)
+        sig = report_context.observed_signature(primary)
         assert sig.primary_system == "Wheel / Tire"
         assert sig.strongest_location == "front_left"
         assert sig.speed_band == "80-100 km/h"
