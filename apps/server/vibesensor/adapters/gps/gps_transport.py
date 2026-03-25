@@ -11,6 +11,13 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 from typing import Any, cast
 
+from vibesensor.adapters.gps.gpsd_message_handler import (
+    GpsdVersionInfo,
+    NormalizedTpvData,
+    classify_gpsd_message,
+    read_non_negative_metric,
+    read_tpv_mode,
+)
 from vibesensor.adapters.gps.speed_validation import (
     DEFAULT_SPEED_VALIDATION_CONFIG,
     evaluate_speed_sample,
@@ -266,19 +273,11 @@ class GPSTransportState:
 
     @staticmethod
     def _read_non_negative_metric(payload: JsonObject, field: str) -> float | None:
-        value = payload.get(field)
-        if isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool):
-            numeric_value = float(value)
-            if math.isfinite(numeric_value) and numeric_value >= 0:
-                return numeric_value
-        return None
+        return read_non_negative_metric(payload, field)
 
     @staticmethod
     def _tpv_mode(payload: JsonObject) -> int | None:
-        mode = payload.get("mode")
-        if isinstance(mode, int) and not isinstance(mode, bool):
-            return mode
-        return None
+        return read_tpv_mode(payload)
 
     def _accept_speed_sample(self, speed_mps: float) -> bool:
         accepted, zero_speed_streak = self._evaluate_speed_sample(self._snapshot, speed_mps)
@@ -303,15 +302,41 @@ class GPSTransportState:
         tpv_mode: TpvModeReader | None = None,
         read_metric: MetricReader | None = None,
     ) -> None:
-        payload_class = payload.get("class")
-        if payload_class == "VERSION":
-            revision = payload.get("rev")
-            if isinstance(revision, str):
-                self._replace_snapshot(device_info=f"gpsd {revision}")
+        message = classify_gpsd_message(payload)
+        if message is None:
             return
-        if payload_class != "TPV":
+        if isinstance(message, GpsdVersionInfo):
+            self._replace_snapshot(device_info=f"gpsd {message.revision}")
             return
-        self.ingest_tpv(payload, tpv_mode=tpv_mode, read_metric=read_metric)
+        self._apply_tpv(message)
+
+    def _apply_tpv(self, tpv: NormalizedTpvData) -> None:
+        """Apply normalized TPV data to the transport snapshot."""
+        snapshot = self._snapshot
+        speed_snapshot = snapshot.speed_snapshot
+        zero_speed_streak = snapshot.zero_speed_streak
+
+        if isinstance(tpv.mode, int) and tpv.mode >= 2 and tpv.speed is not None:
+            if is_speed_plausible(tpv.speed):
+                accepted, zero_speed_streak = self._evaluate_speed_sample(snapshot, tpv.speed)
+                if accepted:
+                    speed_snapshot = (tpv.speed, time.monotonic())
+            else:
+                zero_speed_streak = 0
+        else:
+            zero_speed_streak = 0
+
+        device_info = tpv.device if tpv.device else snapshot.device_info
+        self._snapshot = replace(
+            snapshot,
+            last_fix_mode=tpv.mode,
+            last_epx_m=tpv.epx,
+            last_epy_m=tpv.epy,
+            last_epv_m=tpv.epv,
+            speed_snapshot=speed_snapshot,
+            zero_speed_streak=zero_speed_streak,
+            device_info=device_info,
+        )
 
     def ingest_tpv(
         self,
