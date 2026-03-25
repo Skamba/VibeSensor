@@ -173,6 +173,9 @@ from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary as BoundaryAnalysisSummary,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
+    AnalysisSummaryCoreResponse as BoundaryAnalysisSummaryCoreResponse,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummaryResponse as ApiAnalysisSummaryResponse,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
@@ -324,3 +327,9 @@ def test_http_history_models_do_not_reexport_shared_summary_wrappers() -> None:
     assert not hasattr(history_models, "AnalysisSummaryCoreResponse")
     assert not hasattr(history_models, "AnalysisSummaryResponse")
     assert not hasattr(http_models, "AnalysisSummaryResponse")
+
+
+def test_history_insights_response_is_http_owned_wrapper() -> None:
+    from vibesensor.adapters.http.models.history import HistoryInsightsResponse
+
+    assert BoundaryAnalysisSummaryCoreResponse not in HistoryInsightsResponse.__bases__
