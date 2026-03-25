@@ -129,3 +129,5 @@ def test_boundary_module_no_longer_owns_encoder_private_helpers() -> None:
     assert not hasattr(boundary_finding, "_finding_core_payload_from_domain")
     assert not hasattr(boundary_finding, "_finding_presentation_payload_from_domain")
     assert not hasattr(boundary_finding, "matched_point_from_observation")
+    assert not hasattr(boundary_finding, "step_payload_from_action")
+    assert not hasattr(boundary_finding, "step_payloads_from_plan")
