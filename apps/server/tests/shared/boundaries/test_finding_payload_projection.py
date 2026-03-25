@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import vibesensor.shared.boundaries.finding as boundary_finding
-from vibesensor.domain import Finding, OrderMatchObservation, VibrationSource
+from vibesensor.domain import Finding, FindingEvidence, OrderMatchObservation, VibrationSource
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.finding_encoder import (
     _finding_core_payload_from_domain,
@@ -49,6 +49,29 @@ def test_projection_omits_removed_dead_contract_fields() -> None:
         "grouped_count",
         "diagnostic_caveat",
     }.isdisjoint(payload)
+
+
+def test_projection_keeps_strength_metric_when_evidence_exists_without_nested_strength() -> None:
+    payload = finding_payload_from_domain(
+        Finding(
+            finding_id="F001",
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            vibration_strength_db=22.3,
+            evidence=FindingEvidence(
+                match_rate=0.8,
+                presence_ratio=0.9,
+                burstiness=0.1,
+                spatial_concentration=0.7,
+                frequency_correlation=0.6,
+                speed_uniformity=0.5,
+                spatial_uniformity=0.4,
+                snr_db=15.0,
+            ),
+        )
+    )
+
+    assert payload["amplitude_metric"]["value"] == 22.3
+    assert payload["evidence_metrics"]["vibration_strength_db"] == 22.3
 
 
 def test_projection_serializes_matched_points_with_boundary_shape() -> None:
