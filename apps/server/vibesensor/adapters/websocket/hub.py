@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import json
 import logging
 import os
 from collections.abc import Callable
@@ -17,8 +16,8 @@ from dataclasses import dataclass
 
 from fastapi import WebSocket
 
-from vibesensor.shared.json_utils import sanitize_for_json
-from vibesensor.shared.types.payload_types import LiveWsPayload, WsErrorPayload
+from vibesensor.adapters.websocket.payload_orchestrator import PayloadBuildOrchestrator
+from vibesensor.shared.types.payload_types import LiveWsPayload
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,10 +35,6 @@ _SEND_TIMEOUT_S: float = 0.5
 
 _SEND_ERROR_LOG_INTERVAL_S: float = 10.0
 """Minimum interval between logged send-error warnings to avoid log spam."""
-
-_ERROR_PAYLOAD_BODY: WsErrorPayload = {"error": "payload_build_failed"}
-_ERROR_PAYLOAD: str = json.dumps(_ERROR_PAYLOAD_BODY, separators=(",", ":"))
-"""Pre-serialised error payload sent to clients when their payload build fails."""
 
 _MAX_CONSECUTIVE_FAILURES: int = 10
 """Back off after this many consecutive broadcast tick failures."""
@@ -163,148 +158,6 @@ class WebSocketHub:
             if current is not None and current.connection_id == conn.connection_id:
                 self._connections.pop(id(conn.websocket), None)
 
-    def _build_raw_payload(
-        self,
-        selected_client_id: str | None,
-        payload_builder: Callable[[str | None], LiveWsPayload],
-        failed_client_ids: set[str | None],
-    ) -> LiveWsPayload | None:
-        """Build the raw payload for *selected_client_id* on the event-loop thread.
-
-        Builder failures keep the transport behavior consistent with the
-        previous implementation: the caller records the failure and falls back
-        to the shared error payload for affected connections.
-        """
-        try:
-            return payload_builder(selected_client_id)
-        except (TypeError, ValueError, OverflowError, KeyError, AttributeError, RuntimeError):
-            LOGGER.error(
-                "WebSocket payload build failed for client %r; "
-                "sending error payload to affected connections.",
-                selected_client_id,
-                exc_info=True,
-            )
-            failed_client_ids.add(selected_client_id)
-            return None
-
-    @staticmethod
-    def _payload_has_per_client_freq(payload: object) -> bool:
-        """Return True when *payload* contains per-client frequency data."""
-        try:
-            spectra = payload.get("spectra") if isinstance(payload, dict) else None
-            if isinstance(spectra, dict):
-                for _cid, cs in (spectra.get("clients") or {}).items():
-                    if isinstance(cs, dict) and cs.get("freq"):
-                        return True
-        except (AttributeError, TypeError, ValueError, KeyError):
-            LOGGER.debug("Debug freq-inspection failed", exc_info=True)
-        return False
-
-    def _serialize_payload(
-        self,
-        selected_client_id: str | None,
-        raw_payload: LiveWsPayload,
-        *,
-        capture_debug: bool,
-    ) -> tuple[str | None, str, bool, bool | None]:
-        """Serialize *raw_payload* off the event loop and report debug metadata."""
-        payload_for_debug: object = raw_payload
-        _dumps = json.dumps  # local-bind for hot-path
-        try:
-            try:
-                text = _dumps(
-                    raw_payload,
-                    separators=(",", ":"),
-                    allow_nan=False,
-                )
-                had_non_finite = False
-            except (TypeError, ValueError, OverflowError):
-                payload_for_debug, had_non_finite = sanitize_for_json(raw_payload)
-                if had_non_finite:
-                    LOGGER.warning(
-                        "WebSocket payload for client %r contained NaN/Inf values; "
-                        "replaced with null.",
-                        selected_client_id,
-                    )
-                text = _dumps(
-                    payload_for_debug,
-                    separators=(",", ":"),
-                    allow_nan=False,
-                )
-            has_freq = (
-                self._payload_has_per_client_freq(payload_for_debug) if capture_debug else None
-            )
-            return selected_client_id, text, False, has_freq
-        except (TypeError, ValueError, OverflowError, KeyError, AttributeError, RuntimeError):
-            LOGGER.error(
-                "WebSocket payload build failed for client %r; "
-                "sending error payload to affected connections.",
-                selected_client_id,
-                exc_info=True,
-            )
-            return selected_client_id, _ERROR_PAYLOAD, True, None
-
-    async def _build_payload_text(
-        self,
-        selected_client_id: str | None,
-        payload_builder: Callable[[str | None], LiveWsPayload],
-        payload_cache: dict[str | None, str],
-        failed_client_ids: set[str | None],
-        debug_info: dict[str | None, bool] | None,
-    ) -> str:
-        """Build and serialize payload text for *selected_client_id* once for the tick."""
-        raw_payload = self._build_raw_payload(
-            selected_client_id,
-            payload_builder,
-            failed_client_ids,
-        )
-        if raw_payload is None:
-            payload_cache[selected_client_id] = _ERROR_PAYLOAD
-            return _ERROR_PAYLOAD
-        _selected_client_id, text, failed, has_freq = await asyncio.to_thread(
-            self._serialize_payload,
-            selected_client_id,
-            raw_payload,
-            capture_debug=debug_info is not None,
-        )
-        payload_cache[selected_client_id] = text
-        if failed:
-            failed_client_ids.add(selected_client_id)
-        if debug_info is not None and has_freq is not None:
-            debug_info[selected_client_id] = has_freq
-        return text
-
-    async def _get_or_build_payload_text(
-        self,
-        selected_client_id: str | None,
-        payload_builder: Callable[[str | None], LiveWsPayload],
-        payload_cache: dict[str | None, str],
-        pending_payload_tasks: dict[str | None, asyncio.Task[str]],
-        failed_client_ids: set[str | None],
-        debug_info: dict[str | None, bool] | None,
-    ) -> str:
-        """Return cached payload text or build it once for the current tick."""
-        cached = payload_cache.get(selected_client_id)
-        if cached is not None:
-            return cached
-        task = pending_payload_tasks.get(selected_client_id)
-        if task is None:
-            task = asyncio.create_task(
-                self._build_payload_text(
-                    selected_client_id,
-                    payload_builder,
-                    payload_cache,
-                    failed_client_ids,
-                    debug_info,
-                )
-            )
-            pending_payload_tasks[selected_client_id] = task
-        try:
-            return await task
-        finally:
-            if pending_payload_tasks.get(selected_client_id) is task and task.done():
-                pending_payload_tasks.pop(selected_client_id, None)
-
     async def _send_conn(
         self,
         conn: _WSConnectionSnapshot,
@@ -338,38 +191,20 @@ class WebSocketHub:
     async def _send_current_conn(
         self,
         conn: _WSConnectionSnapshot,
-        payload_builder: Callable[[str | None], LiveWsPayload],
-        payload_cache: dict[str | None, str],
-        pending_payload_tasks: dict[str | None, asyncio.Task[str]],
-        failed_client_ids: set[str | None],
+        payloads: PayloadBuildOrchestrator,
         sent_selected_client_ids: dict[int, str | None],
-        debug_info: dict[str | None, bool] | None,
     ) -> _WSConnectionSnapshot | None:
         """Send a payload built for the connection's current selection."""
         is_current, selected_client_id = await self._current_selected_client_id(conn)
         if not is_current:
             return None
-        payload_text = await self._get_or_build_payload_text(
-            selected_client_id,
-            payload_builder,
-            payload_cache,
-            pending_payload_tasks,
-            failed_client_ids,
-            debug_info,
-        )
+        payload_text = await payloads.get_or_build_payload_text(selected_client_id)
         still_current, latest_selected_client_id = await self._current_selected_client_id(conn)
         if not still_current:
             return None
         if latest_selected_client_id != selected_client_id:
             selected_client_id = latest_selected_client_id
-            payload_text = await self._get_or_build_payload_text(
-                selected_client_id,
-                payload_builder,
-                payload_cache,
-                pending_payload_tasks,
-                failed_client_ids,
-                debug_info,
-            )
+            payload_text = await payloads.get_or_build_payload_text(selected_client_id)
         sent_selected_client_ids[conn.connection_id] = selected_client_id
         return await self._send_conn(
             conn,
@@ -390,55 +225,19 @@ class WebSocketHub:
         conns = await self._snapshot()
         if not conns:
             return
-        payload_cache: dict[str | None, str] = {}
-        pending_payload_tasks: dict[str | None, asyncio.Task[str]] = {}
-        failed_client_ids: set[str | None] = set()
+        payloads = PayloadBuildOrchestrator(
+            payload_builder,
+            capture_debug=_ws_debug_enabled(),
+        )
+        await payloads.prepare(conn.selected_client_id for conn in conns)
         sent_selected_client_ids: dict[int, str | None] = {}
-        # Collect debug inspection data during build (avoids redundant json.loads later).
-        debug_info: dict[str | None, bool] | None = {} if _ws_debug_enabled() else None
-        unique_selected_ids = list(dict.fromkeys(conn.selected_client_id for conn in conns))
-        raw_payloads: dict[str | None, LiveWsPayload] = {}
-
-        for selected_client_id in unique_selected_ids:
-            raw_payload = self._build_raw_payload(
-                selected_client_id,
-                payload_builder,
-                failed_client_ids,
-            )
-            if raw_payload is None:
-                payload_cache[selected_client_id] = _ERROR_PAYLOAD
-                continue
-            raw_payloads[selected_client_id] = raw_payload
-
-        if raw_payloads:
-            serialized_payloads = await asyncio.gather(
-                *(
-                    asyncio.to_thread(
-                        self._serialize_payload,
-                        selected_client_id,
-                        raw_payload,
-                        capture_debug=debug_info is not None,
-                    )
-                    for selected_client_id, raw_payload in raw_payloads.items()
-                ),
-            )
-            for selected_client_id, text, failed, has_freq in serialized_payloads:
-                payload_cache[selected_client_id] = text
-                if failed:
-                    failed_client_ids.add(selected_client_id)
-                if debug_info is not None and has_freq is not None:
-                    debug_info[selected_client_id] = has_freq
 
         dead_ws = await asyncio.gather(
             *(
                 self._send_current_conn(
                     conn,
-                    payload_builder,
-                    payload_cache,
-                    pending_payload_tasks,
-                    failed_client_ids,
+                    payloads,
                     sent_selected_client_ids,
-                    debug_info,
                 )
                 for conn in conns
             ),
@@ -448,31 +247,31 @@ class WebSocketHub:
                 with contextlib.suppress(Exception):
                     await conn.websocket.close()
                 await self._remove_snapshot(conn)
-        if failed_client_ids:
+        if payloads.failed_client_ids:
             # Count how many connections were affected by build failures.
             affected = sum(
                 1
                 for selected_client_id in sent_selected_client_ids.values()
-                if selected_client_id in failed_client_ids
+                if selected_client_id in payloads.failed_client_ids
             )
             LOGGER.error(
                 "WebSocket payload build failed for %d client id(s) (%s); "
                 "%d connection(s) received error payloads.",
-                len(failed_client_ids),
-                ", ".join(repr(cid) for cid in failed_client_ids),
+                len(payloads.failed_client_ids),
+                ", ".join(repr(cid) for cid in payloads.failed_client_ids),
                 affected,
             )
 
         # Dev-only instrumentation: log payload sizes when VIBESENSOR_WS_DEBUG=1.
-        if debug_info is not None and payload_cache:
+        if payloads.debug_info is not None and payloads.payload_cache:
             live_count = len(conns) - sum(1 for ws in dead_ws if ws is not None)
-            for sel_id, text in payload_cache.items():
+            for sel_id, text in payloads.payload_cache.items():
                 LOGGER.debug(
                     "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",
                     sel_id,
                     len(text),
                     live_count,
-                    debug_info.get(sel_id, False),
+                    payloads.debug_info.get(sel_id, False),
                 )
 
     async def run(
