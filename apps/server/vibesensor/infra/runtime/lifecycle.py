@@ -12,11 +12,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.task_supervisor import TaskSupervisor, task_failure_message
 from vibesensor.infra.runtime.udp_transport_lifecycle import StartUdpReceiver, UdpTransportLifecycle
@@ -129,11 +130,11 @@ class LifecycleManager:
     """Manages server startup (UDP receiver, background tasks) and graceful shutdown."""
 
     __slots__ = (
+        "_background_tasks",
         "_health_state",
         "_runtime",
         "_task_supervisor",
         "_udp_transport_lifecycle",
-        "tasks",
     )
 
     def __init__(
@@ -148,56 +149,24 @@ class LifecycleManager:
             health_state=self._health_state,
             logger=LOGGER,
         )
-        self._udp_transport_lifecycle = UdpTransportLifecycle(
-            start_udp_receiver=start_udp_receiver,
-            monitor_task=self._monitor_task,
+        self._background_tasks = BackgroundTaskCoordinator(
+            monitor_task=self._task_supervisor.monitor_task,
             logger=LOGGER,
         )
-        self.tasks: list[asyncio.Task[object]] = []
+        self._udp_transport_lifecycle = UdpTransportLifecycle(
+            start_udp_receiver=start_udp_receiver,
+            monitor_task=self._task_supervisor.monitor_task,
+            logger=LOGGER,
+        )
+        self.tasks = []
 
-    def _monitor_task(self, task: asyncio.Task[object]) -> None:
-        task_name = task.get_name()
+    @property
+    def tasks(self) -> list[asyncio.Task[object]]:
+        return self._background_tasks.tasks
 
-        def _record_failure(done_task: asyncio.Task[object]) -> None:
-            if done_task.cancelled():
-                return
-            try:
-                exc = done_task.exception()
-            except asyncio.CancelledError:
-                return
-            if exc is None:
-                return
-            message = task_failure_message(exc)
-            self._health_state.record_task_failure(task_name, message)
-            LOGGER.error("Managed task %s failed: %s", task_name, message, exc_info=exc)
-
-        task.add_done_callback(_record_failure)
-
-    def _start_task(
-        self,
-        coroutine: Coroutine[object, object, object],
-        *,
-        name: str,
-    ) -> asyncio.Task[object]:
-        task = asyncio.create_task(coroutine, name=name)
-        self._monitor_task(task)
-        return task
-
-    async def _cancel_background_tasks(self, *, timeout_s: float) -> list[asyncio.Task[object]]:
-        for task in self.tasks:
-            task.cancel()
-        if not self.tasks:
-            return []
-        _done, _pending = await asyncio.wait(self.tasks, timeout=timeout_s)
-        if _pending:
-            LOGGER.warning(
-                "%d background task(s) did not finish within the cancellation "
-                "deadline and remain pending: %s",
-                len(_pending),
-                [task.get_name() for task in _pending],
-            )
-        self.tasks = [task for task in self.tasks if not task.done()]
-        return list(self.tasks)
+    @tasks.setter
+    def tasks(self, tasks: list[asyncio.Task[object]]) -> None:
+        self._background_tasks.tasks = tasks
 
     @staticmethod
     async def _cancel_managed_tasks(
@@ -266,7 +235,7 @@ class LifecycleManager:
 
             phase = "processing-loop"
             self._health_state.set_phase(phase)
-            self.tasks.append(
+            self._background_tasks.add(
                 self._task_supervisor.start(
                     lambda: self._runtime.processing_loop.run(),
                     name=phase,
@@ -275,7 +244,7 @@ class LifecycleManager:
 
             phase = "ws-broadcast"
             self._health_state.set_phase(phase)
-            self.tasks.append(
+            self._background_tasks.add(
                 self._task_supervisor.start(
                     lambda: self._runtime.ws_hub.run(
                         UI_PUSH_HZ,
@@ -288,7 +257,7 @@ class LifecycleManager:
 
             phase = "metrics-log"
             self._health_state.set_phase(phase)
-            self.tasks.append(
+            self._background_tasks.add(
                 self._task_supervisor.start(
                     lambda: self._runtime.run_recorder.run(),
                     name=phase,
@@ -297,7 +266,7 @@ class LifecycleManager:
 
             phase = "gps-speed"
             self._health_state.set_phase(phase)
-            self.tasks.append(
+            self._background_tasks.add(
                 self._task_supervisor.start(
                     lambda: self._runtime.gps_monitor.run(
                         host=self._runtime.gpsd_host,
@@ -309,11 +278,9 @@ class LifecycleManager:
 
             phase = "update-startup-recover"
             self._health_state.set_phase(phase)
-            self.tasks.append(
-                self._start_task(
-                    self._runtime.update_manager.startup_recover(),
-                    name=phase,
-                ),
+            self._background_tasks.start(
+                self._runtime.update_manager.startup_recover(),
+                name=phase,
             )
             self._health_state.mark_ready()
         except Exception as exc:
@@ -328,7 +295,7 @@ class LifecycleManager:
             LOGGER.warning("Error closing control plane", exc_info=True)
         await self._udp_transport_lifecycle.shutdown()
 
-        lingering_background_tasks = await self._cancel_background_tasks(timeout_s=15.0)
+        await self._background_tasks.cancel_all(timeout_s=15.0)
 
         # Cancel any in-progress update or flash jobs so cleanup
         # (e.g. hotspot restore) can run before shutdown completes.
@@ -367,7 +334,7 @@ class LifecycleManager:
             self._runtime.history_db.close()
         except Exception:
             LOGGER.warning("Error closing history DB", exc_info=True)
-        self.tasks = [task for task in self.tasks if not task.done()]
+        lingering_background_tasks = self._background_tasks.retain_pending()
         lingering_task_names = [
             *(task.get_name() for task in lingering_background_tasks if not task.done()),
             *(task.get_name() for task in lingering_managed_tasks if not task.done()),
