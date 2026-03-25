@@ -52,7 +52,9 @@ from vibesensor.shared.types.json_types import JsonValue
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportFacts,
     PreparedReportInput,
+    ValidatedPreparedReportInput,
     prepare_report_input,
+    validate_prepared_report_input,
 )
 
 __all__ = [
@@ -167,38 +169,33 @@ def build_version_marker() -> str:
 def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     """Map a prepared report input into the final report template data model.
 
-    ``PreparedReportInput`` guarantees that report projection and domain
-    reconstruction have already happened on the history side, so the PDF
-    adapter can stay focused on mapping and rendering decisions.
+    Mapping begins by validating the prepared handoff once so the rest of the
+    PDF adapter consumes a mapping-ready shape with domain reconstruction and
+    report facts already guaranteed.
     """
-    lang = str(normalize_lang(prepared.language))
+    validated = validate_prepared_report_input(prepared)
+    lang = str(normalize_lang(validated.language))
     report = Report(
-        run_id=prepared.renderer_payload.run_id,
+        run_id=validated.renderer_payload.run_id,
         lang=lang,
-        car_name=prepared.renderer_payload.car_name,
-        car_type=prepared.renderer_payload.car_type,
-        report_date=prepared.renderer_payload.report_date,
-        duration_s=prepared.renderer_payload.duration_s,
-        sample_count=prepared.renderer_payload.sample_count,
-        sensor_count=prepared.renderer_payload.sensor_count,
+        car_name=validated.renderer_payload.car_name,
+        car_type=validated.renderer_payload.car_type,
+        report_date=validated.renderer_payload.report_date,
+        duration_s=validated.renderer_payload.duration_s,
+        sample_count=validated.renderer_payload.sample_count,
+        sensor_count=validated.renderer_payload.sensor_count,
     )
-    domain_test_run = prepared.domain_test_run
-    report_facts = prepared.report_facts
-    if domain_test_run is None:
-        raise ValueError("PreparedReportInput must include a domain_test_run for report mapping")
-    if report_facts is None:
-        raise ValueError("PreparedReportInput must include report_facts for report mapping")
 
     def tr(key: str, **kw: JsonValue) -> str:
         return str(_tr(lang, key, **kw))
 
     return _build_report_template_data(
-        prepared,
+        validated,
         report=report,
         lang=lang,
         tr=tr,
-        test_run=domain_test_run,
-        report_facts=report_facts,
+        test_run=validated.domain_test_run,
+        report_facts=validated.report_facts,
     )
 
 
@@ -216,7 +213,7 @@ def _finding_to_presentation(f: Finding) -> FindingPresentation:
 
 
 def _build_report_template_data(
-    prepared: PreparedReportInput,
+    prepared: ValidatedPreparedReportInput,
     *,
     report: Report,
     lang: str,
