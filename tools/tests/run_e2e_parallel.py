@@ -58,6 +58,7 @@ PRINT_LOCK = threading.Lock()
 _SKIP_BUILD_ENV = "VIBESENSOR_E2E_SKIP_BUILD"
 _DURATION_CACHE_ENV = "VIBESENSOR_E2E_DURATION_CACHE"
 _DEFAULT_MIN_SHARDS = 6
+_DEFAULT_DOCKERFILE = "apps/server/Dockerfile.e2e"
 _DEFAULT_DURATION = 3.0
 _SCOPE_LABEL = "com.vibesensor.role=e2e-shard"
 _RUN_LABEL_KEY = "com.vibesensor.run-id"
@@ -331,8 +332,8 @@ def _register_cleanup_hooks() -> None:
     _CLEANUP_HOOKS_REGISTERED = True
 
 
-def _build_image(image: str) -> int:
-    cmd = ["docker", "build", "-f", "apps/server/Dockerfile", "-t", image, "."]
+def _build_image(image: str, dockerfile: str = _DEFAULT_DOCKERFILE) -> int:
+    cmd = ["docker", "build", "-f", dockerfile, "-t", image, "."]
     _emit(f"[e2e-parallel] building docker image once: {shlex.join(cmd)}")
     return _run(cmd, log_path=LOG_DIR / "docker-build.log")
 
@@ -358,7 +359,12 @@ def _docker_image_exists(image: str) -> bool:
     return result.returncode == 0
 
 
-def _prepare_image(image: str, *, env: Mapping[str, str] | None = None) -> int:
+def _prepare_image(
+    image: str,
+    *,
+    dockerfile: str = _DEFAULT_DOCKERFILE,
+    env: Mapping[str, str] | None = None,
+) -> int:
     image_exists = _docker_image_exists(image)
     if image_exists and (_skip_build_requested(env) or _running_in_github_actions(env)):
         _emit(f"[e2e-parallel] reusing prebuilt docker image: {image}")
@@ -371,7 +377,7 @@ def _prepare_image(image: str, *, env: Mapping[str, str] | None = None) -> int:
         )
         return 2
 
-    build_rc = _build_image(image)
+    build_rc = _build_image(image, dockerfile)
     if build_rc != 0:
         _emit(
             f"[e2e-parallel] docker build failed (exit {build_rc}); "
@@ -590,6 +596,11 @@ def _parse_args() -> argparse.Namespace:
         help="Docker image name to build once and reuse across shards.",
     )
     parser.add_argument(
+        "--dockerfile",
+        default=_DEFAULT_DOCKERFILE,
+        help="Dockerfile path for the shared e2e image build.",
+    )
+    parser.add_argument(
         "--http-port-base",
         type=int,
         default=18020,
@@ -638,7 +649,7 @@ def main() -> int:
         f"across {num_shards} shards (min requested: {args.shards})"
     )
 
-    build_rc = _prepare_image(args.docker_image)
+    build_rc = _prepare_image(args.docker_image, dockerfile=args.dockerfile)
     if build_rc != 0:
         return build_rc
 

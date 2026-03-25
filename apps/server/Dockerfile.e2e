@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    VIBESENSOR_SERVE_STATIC=0
+
+WORKDIR /app
+
+COPY apps/server /app/apps/server
+RUN rm -rf /app/apps/server/vibesensor/static && mkdir -p /app/apps/server/vibesensor/static
+
+RUN python -m pip install --no-cache-dir /app/apps/server
+
+EXPOSE 8000/tcp
+EXPOSE 9000/udp
+EXPOSE 9001/udp
+
+STOPSIGNAL SIGINT
+CMD ["vibesensor-server", "--config", "/app/apps/server/config.docker.yaml"]
