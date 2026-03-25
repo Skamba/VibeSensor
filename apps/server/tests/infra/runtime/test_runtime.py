@@ -306,7 +306,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
-    lifecycle._start_udp_receiver = _fake_udp
+    lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
     assert len(lifecycle.tasks) == 5
@@ -345,7 +345,7 @@ async def test_start_follows_declared_startup_phase_order(monkeypatch) -> None:
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
-    lifecycle._start_udp_receiver = _fake_udp
+    lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     original_set_phase = runtime_module.RuntimeHealthState.set_phase
 
@@ -401,7 +401,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
-    lifecycle._start_udp_receiver = _fake_udp
+    lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     lifecycle._task_supervisor._max_attempts = 0
 
@@ -454,7 +454,7 @@ async def test_start_restarts_supervised_task_after_failure(monkeypatch) -> None
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
-    lifecycle._start_udp_receiver = _fake_udp
+    lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     lifecycle._task_supervisor._base_delay_s = 0.0
     lifecycle._task_supervisor._max_delay_s = 0.0
@@ -499,12 +499,13 @@ async def test_start_monitors_udp_consumer_failure(monkeypatch) -> None:
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
-    lifecycle._start_udp_receiver = _fake_udp
+    lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
     await asyncio.wait_for(consumer_started.wait(), timeout=1.0)
-    if lifecycle._data_consumer_task is not None:
-        await asyncio.gather(lifecycle._data_consumer_task, return_exceptions=True)
+    consumer_task = lifecycle._udp_transport_lifecycle.consumer_task
+    if consumer_task is not None:
+        await asyncio.gather(consumer_task, return_exceptions=True)
 
     assert rt.health_state.background_task_failures["udp-data-consumer"] == "udp boom"
 
@@ -557,7 +558,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
         history_db=history_db,
         worker_pool=worker_pool,
     )
-    lifecycle._start_udp_receiver = _fake_udp
+    lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
     assert len(lifecycle.tasks) > 0
