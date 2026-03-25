@@ -23,9 +23,9 @@ from vibesensor.adapters.analysis_summary import (
 from vibesensor.adapters.pdf.mapping import (
     map_summary,
     prepare_report_input,
-    prepare_report_mapping_context,
     resolve_primary_report_candidate,
 )
+from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.use_cases.diagnostics import RunAnalysis
 

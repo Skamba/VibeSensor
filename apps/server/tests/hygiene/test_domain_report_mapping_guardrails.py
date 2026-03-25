@@ -7,7 +7,8 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
     """``prepare_report_mapping_context`` must consume a prepared domain aggregate."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.mapping import prepare_report_input, prepare_report_mapping_context
+    from vibesensor.adapters.pdf.mapping import prepare_report_input
+    from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
     from vibesensor.domain import TestRun
 
     summary = {
@@ -145,9 +146,9 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
 
     from vibesensor.adapters.pdf.mapping import (
         prepare_report_input,
-        prepare_report_mapping_context,
         resolve_primary_report_candidate,
     )
+    from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
     from vibesensor.domain import TestRun, VibrationSource
     from vibesensor.report_i18n import tr
 

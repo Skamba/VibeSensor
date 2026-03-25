@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.pdf.mapping import prepare_report_input, prepare_report_mapping_context
+from vibesensor.adapters.pdf.mapping import prepare_report_input
+from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.domain import (
     Finding,
     LocationHotspot,
