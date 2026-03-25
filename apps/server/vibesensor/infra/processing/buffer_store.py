@@ -9,6 +9,7 @@ from threading import RLock
 import numpy as np
 
 from vibesensor.infra.processing.buffer_capacity import (
+    OverflowResult,
     clamp_sample_rate,
     compute_resize_capacity,
     evaluate_overflow,
@@ -109,16 +110,11 @@ class SignalBufferStore:
             now_mono = clock()
             buf.last_ingest_mono_s = now_mono
 
-            overflow = evaluate_overflow(int(chunk.shape[0]), buf.capacity)
-            if overflow.drop_count:
-                LOGGER.warning(
-                    "Sample chunk for %s exceeds buffer capacity %d; discarding %d oldest samples "
-                    "from the incoming batch",
-                    client_id,
-                    buf.capacity,
-                    overflow.drop_count,
-                )
-                chunk = chunk[overflow.start_offset :]
+            chunk, overflow = self._apply_overflow_policy_unlocked(
+                client_id,
+                chunk,
+                capacity=buf.capacity,
+            )
             n = overflow.keep_count
             dropped_samples = overflow.drop_count
             capacity = buf.capacity
@@ -441,6 +437,25 @@ class SignalBufferStore:
 
     def _invalidate_cached_payloads_unlocked(self, buf: ClientBuffer) -> None:
         buf.invalidate_caches()
+
+    def _apply_overflow_policy_unlocked(
+        self,
+        client_id: str,
+        chunk: FloatArray,
+        *,
+        capacity: int,
+    ) -> tuple[FloatArray, OverflowResult]:
+        overflow = evaluate_overflow(int(chunk.shape[0]), capacity)
+        if overflow.drop_count:
+            LOGGER.warning(
+                "Sample chunk for %s exceeds buffer capacity %d; discarding %d oldest samples "
+                "from the incoming batch",
+                client_id,
+                capacity,
+                overflow.drop_count,
+            )
+            chunk = chunk[overflow.start_offset :]
+        return chunk, overflow
 
     def _apply_sample_rate_override_unlocked(
         self,
