@@ -4,9 +4,9 @@ import pytest
 
 from vibesensor.adapters.pdf.mapping import (
     prepare_report_input,
-    prepare_report_mapping_context,
     resolve_primary_report_candidate,
 )
+from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_preparation import prepare_persisted_report_input
 
