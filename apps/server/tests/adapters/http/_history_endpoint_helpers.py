@@ -24,7 +24,7 @@ from vibesensor.adapters.http.dependencies import (
 )
 from vibesensor.domain import RunStatus
 from vibesensor.infra.runtime import RuntimeHealthState
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata

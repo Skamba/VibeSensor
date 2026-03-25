@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 

@@ -723,7 +723,7 @@ def _run_worker_main(config: FuzzConfig) -> dict[str, object]:
 
     from vibesensor.adapters.analysis_summary import summarize_run_data
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-    from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+    from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
     from vibesensor.strength_bands import bucket_for_strength
     from vibesensor.use_cases.diagnostics import vehicle_orders_hz
     from vibesensor.vibration_strength import vibration_strength_db_scalar

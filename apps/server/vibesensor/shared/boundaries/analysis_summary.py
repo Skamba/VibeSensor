@@ -15,7 +15,6 @@ from vibesensor.domain import (
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.finding import step_payloads_from_plan
 from vibesensor.shared.boundaries.summary_serialization import (
     AccelStatisticsLike,
@@ -30,6 +29,7 @@ from vibesensor.shared.boundaries.summary_serialization import (
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.run_context_warning import build_summary_warnings
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
 
 

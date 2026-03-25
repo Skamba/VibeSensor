@@ -16,7 +16,6 @@ from vibesensor.domain import (
 )
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.analysis_payload import (
-    AnalysisSummary,
     PeakTableRow,
     RunSuitabilityCheck,
     SummaryWarningPayload,
@@ -24,6 +23,7 @@ from vibesensor.shared.boundaries.analysis_payload import (
 from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.helpers import safe_filename
 from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey

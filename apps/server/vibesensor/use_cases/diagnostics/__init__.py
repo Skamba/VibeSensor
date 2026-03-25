@@ -7,9 +7,12 @@ lives here.  Report-mapping logic lives in ``vibesensor.adapters.pdf.mapping``.
 High-level analysis entry points are re-exported here so callers can use
 ``from vibesensor.use_cases.diagnostics import …`` without depending on file layout.
 
-``FindingPayload`` is the TypedDict shape used for serialised analysis
-findings and is canonically owned by
-``vibesensor.shared.types.history_analysis_contracts``. The domain ``Finding``
+``FindingPayload`` and the shared serialized summary contracts
+(``AnalysisSummary``, ``AnalysisSummaryCoreResponse``, and
+``AnalysisSummaryResponse``) are canonically owned by
+``vibesensor.shared.types.history_analysis_contracts``. The boundary serializer
+that produces ``AnalysisSummary`` lives in
+``vibesensor.shared.boundaries.analysis_summary``, and the domain ``Finding``
 lives in ``vibesensor.domain``.
 """
 
