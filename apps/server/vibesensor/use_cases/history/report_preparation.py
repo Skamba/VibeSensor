@@ -289,7 +289,12 @@ def _build_report_mapping_context(
 def validate_prepared_report_input(
     prepared: PreparedReportInput | ValidatedPreparedReportInput,
 ) -> ValidatedPreparedReportInput:
-    """Validate that the prepared report seam is ready for PDF mapping."""
+    """Validate that the prepared report seam is ready for PDF mapping.
+
+    Checks both field presence and cross-object consistency so mismatched
+    prepared data fails at the history/report seam instead of surfacing
+    later inside template mapping.
+    """
     if isinstance(prepared, ValidatedPreparedReportInput):
         return prepared
     if prepared.domain_test_run is None:
@@ -298,6 +303,34 @@ def validate_prepared_report_input(
         raise ValueError("PreparedReportInput must include report_facts for report mapping")
     if prepared.mapping_context is None:
         raise ValueError("PreparedReportInput must include mapping_context for report mapping")
+
+    # Cross-object consistency: mapping_context must reference the same TestRun
+    if prepared.mapping_context.domain_aggregate is not prepared.domain_test_run:
+        raise ValueError(
+            "mapping_context.domain_aggregate must be the same TestRun as domain_test_run"
+        )
+    # Cross-object consistency: origin must agree between mapping_context and report_facts
+    if prepared.mapping_context.origin is not prepared.report_facts.origin:
+        raise ValueError(
+            "mapping_context.origin must match report_facts.origin"
+        )
+    # Cross-object consistency: active sensor locations must agree
+    facts_locations = list(prepared.report_facts.sensor_locations_active)
+    if facts_locations != prepared.mapping_context.sensor_locations_active:
+        raise ValueError(
+            "mapping_context.sensor_locations_active must match "
+            "report_facts.sensor_locations_active"
+        )
+    # Cross-object consistency: renderer payload car metadata must agree with mapping_context
+    if prepared.renderer_payload.car_name != prepared.mapping_context.car_name:
+        raise ValueError(
+            "mapping_context.car_name must match renderer_payload.car_name"
+        )
+    if prepared.renderer_payload.car_type != prepared.mapping_context.car_type:
+        raise ValueError(
+            "mapping_context.car_type must match renderer_payload.car_type"
+        )
+
     return ValidatedPreparedReportInput(
         renderer_payload=prepared.renderer_payload,
         language=prepared.language,
