@@ -31,6 +31,8 @@ def test_active_sensor_locations_falls_back_to_sensor_locations() -> None:
     }
 
     assert active_sensor_locations(payload) == ("front-left", "rear-right")
+
+
 def test_report_duration_s_returns_none_for_invalid_values() -> None:
     assert report_duration_s({}) is None
     assert report_duration_s({"duration_s": "bad"}) is None

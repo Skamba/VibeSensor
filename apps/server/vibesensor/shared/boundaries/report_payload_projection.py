@@ -32,6 +32,8 @@ def active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:
     fallback = payload.get("sensor_locations")
     fallback_locations = fallback if isinstance(fallback, list) else []
     return tuple(str(loc).strip() for loc in fallback_locations if str(loc).strip())
+
+
 def report_duration_s(payload: Mapping[str, object]) -> float | None:
     duration_s_raw = payload.get("duration_s")
     if duration_s_raw is None:

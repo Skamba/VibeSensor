@@ -36,7 +36,7 @@ def test_report_suitability_checks_wraps_boundary_payloads_as_tuple() -> None:
             "check": "speed_profile",
             "check_key": "speed_profile",
             "state": "warn",
-            "explanation": {"_i18n_key": "SUITABILITY_SPEED_PROFILE_WARNING"},
+            "explanation": "",
         },
     )
 
