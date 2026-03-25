@@ -46,18 +46,17 @@ from vibesensor.shared.types.history_analysis_contracts import (
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.vibration_strength import compute_db
 
-from ._contracts import (
-    AccelStatisticsLike,
+from ._findings import serialize_findings
+from ._plots import (
     PhaseSegmentLike,
     PhaseSpeedBreakdownRowLike,
     SpeedBreakdownRowLike,
-)
-from ._findings import serialize_findings
-from ._plots import (
     serialize_phase_segments,
     serialize_phase_speed_breakdown,
     serialize_speed_breakdown,
 )
+
+AccelStatisticsLike = Mapping[str, object]
 
 
 @dataclass(frozen=True, slots=True)
