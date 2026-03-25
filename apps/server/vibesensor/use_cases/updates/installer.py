@@ -15,6 +15,7 @@ from vibesensor.use_cases.updates.artifact_validation import (
     read_wheel_metadata,
     sha256_file,
     wheel_dependency_issues,
+    wheel_metadata_validation_errors,
 )
 from vibesensor.use_cases.updates.rollback_snapshot import (
     RollbackSnapshotMetadata,
@@ -79,80 +80,198 @@ class UpdateInstaller:
         self._rollback_snapshots = RollbackSnapshotStore(config.rollback_dir, tracker)
         self._wheel_validator = WheelArtifactValidator(tracker)
 
+    def _existing_local_rollback_wheel(self, *, current_version: str) -> Path | None:
+        candidates = sorted(
+            self._config.rollback_dir.glob(f"vibesensor-{current_version}-*.whl"),
+            reverse=True,
+        )
+        for candidate in candidates:
+            errors = wheel_metadata_validation_errors(
+                candidate,
+                expected_name="vibesensor",
+                expected_version=current_version,
+            )
+            if not errors:
+                self._tracker.log(
+                    f"Reusing existing local rollback wheel {candidate.name}",
+                )
+                return candidate
+            self._tracker.log(
+                "Ignoring existing rollback wheel "
+                f"{candidate.name}: {'; '.join(errors)}",
+            )
+        return None
+
+    def _select_staged_rollback_wheel(
+        self,
+        *,
+        stage_dir: Path,
+        current_version: str,
+        source_label: str,
+    ) -> Path | None:
+        staged_wheels = sorted(stage_dir.glob("vibesensor-*.whl"), reverse=True)
+        for rollback_wheel in staged_wheels:
+            errors = wheel_metadata_validation_errors(
+                rollback_wheel,
+                expected_name="vibesensor",
+                expected_version=current_version,
+            )
+            if not errors:
+                return rollback_wheel
+            self._tracker.log(
+                f"{source_label} produced unusable wheel {rollback_wheel.name}: "
+                f"{'; '.join(errors)}",
+            )
+        self._tracker.log(
+            f"{source_label} did not produce a usable wheel for {current_version}",
+        )
+        return None
+
+    async def _build_local_rollback_wheel(
+        self,
+        *,
+        current_version: str,
+        stage_dir: Path,
+        venv_python: str,
+    ) -> Path | None:
+        package_dir = self._config.repo / "apps" / "server"
+        if not (package_dir / "pyproject.toml").is_file():
+            self._tracker.log(
+                f"Local rollback wheel build skipped: {package_dir / 'pyproject.toml'} not found",
+            )
+            return None
+        rc, _, stderr = await self._commands.run(
+            [
+                venv_python,
+                "-m",
+                "pip",
+                "wheel",
+                "--no-deps",
+                "--no-build-isolation",
+                "-w",
+                str(stage_dir),
+                str(package_dir),
+            ],
+            phase="installing",
+            timeout=60,
+            sudo=False,
+        )
+        if rc != 0:
+            self._tracker.log(
+                "Local rollback wheel build failed "
+                f"(exit {rc}); falling back to package-index download: {stderr}",
+            )
+            return None
+        return self._select_staged_rollback_wheel(
+            stage_dir=stage_dir,
+            current_version=current_version,
+            source_label="Local rollback wheel build",
+        )
+
+    async def _download_rollback_wheel(
+        self,
+        *,
+        current_version: str,
+        stage_dir: Path,
+        venv_python: str,
+    ) -> Path | None:
+        rc, _, stderr = await self._commands.run(
+            [
+                venv_python,
+                "-m",
+                "pip",
+                "download",
+                "--no-deps",
+                "--no-build-isolation",
+                "-d",
+                str(stage_dir),
+                f"vibesensor=={current_version}",
+            ],
+            phase="installing",
+            timeout=60,
+            sudo=False,
+        )
+        if rc != 0:
+            self._tracker.log(
+                "Package-index rollback download failed "
+                f"(exit {rc}): {stderr}",
+            )
+            return None
+        return self._select_staged_rollback_wheel(
+            stage_dir=stage_dir,
+            current_version=current_version,
+            source_label="Package-index rollback download",
+        )
+
+    def _write_rollback_snapshot(
+        self,
+        *,
+        rollback_wheel: Path,
+        current_version: str,
+    ) -> bool:
+        rollback_sha256 = sha256_file(rollback_wheel)
+        promoted_wheel = self._config.rollback_dir / rollback_wheel.name
+        if rollback_wheel != promoted_wheel:
+            rollback_wheel.replace(promoted_wheel)
+        try:
+            self._rollback_snapshots.write_metadata(
+                RollbackSnapshotMetadata(
+                    version=current_version,
+                    wheel_name=promoted_wheel.name,
+                    sha256=rollback_sha256,
+                ),
+            )
+        except OSError as exc:
+            self._tracker.add_issue(
+                "installing",
+                "Rollback metadata could not be written",
+                str(exc),
+            )
+            return False
+        self._rollback_snapshots.prune_wheels(keep_name=promoted_wheel.name)
+        self._tracker.log(
+            "Rollback snapshot created successfully "
+            f"(wheel={promoted_wheel.name}, sha256={rollback_sha256})",
+        )
+        return True
+
     async def snapshot_for_rollback(self) -> bool:
         self._config.rollback_dir.mkdir(parents=True, exist_ok=True)
         venv_python = reinstall_python_executable(self._config.repo)
         from vibesensor import __version__ as current_version
 
         self._tracker.log(f"Creating rollback snapshot (version={current_version})")
+        if existing_wheel := self._existing_local_rollback_wheel(current_version=current_version):
+            return self._write_rollback_snapshot(
+                rollback_wheel=existing_wheel,
+                current_version=current_version,
+            )
         with tempfile.TemporaryDirectory(
             prefix="vibesensor-rollback-stage-",
             dir=self._config.rollback_dir.parent,
         ) as stage_dir_text:
             stage_dir = Path(stage_dir_text)
-            rc, _, stderr = await self._commands.run(
-                [
-                    venv_python,
-                    "-m",
-                    "pip",
-                    "download",
-                    "--no-deps",
-                    "--no-build-isolation",
-                    "-d",
-                    str(stage_dir),
-                    f"vibesensor=={current_version}",
-                ],
-                phase="installing",
-                timeout=60,
-                sudo=False,
+            rollback_wheel = await self._build_local_rollback_wheel(
+                current_version=current_version,
+                stage_dir=stage_dir,
+                venv_python=venv_python,
             )
-            if rc != 0:
-                self._tracker.log(f"pip download for rollback failed (exit {rc}): {stderr}")
+            if rollback_wheel is None:
+                rollback_wheel = await self._download_rollback_wheel(
+                    current_version=current_version,
+                    stage_dir=stage_dir,
+                    venv_python=venv_python,
+                )
+            if rollback_wheel is None:
                 (self._config.rollback_dir / "rollback_version.txt").write_text(
                     current_version,
                     encoding="utf-8",
                 )
                 return False
-            staged_wheels = sorted(stage_dir.glob("vibesensor-*.whl"), reverse=True)
-            if not staged_wheels:
-                self._tracker.add_issue(
-                    "installing",
-                    "Rollback snapshot did not produce a wheel",
-                    f"Expected vibesensor=={current_version} in {stage_dir}",
-                )
-                return False
-            rollback_wheel = staged_wheels[0]
-            if not self._wheel_validator.validate_wheel(
-                rollback_wheel,
-                phase="installing",
-                context="Rollback snapshot wheel",
-                fatal=False,
-            ):
-                return False
-            rollback_sha256 = sha256_file(rollback_wheel)
-            promoted_wheel = self._config.rollback_dir / rollback_wheel.name
-            rollback_wheel.replace(promoted_wheel)
-            try:
-                self._rollback_snapshots.write_metadata(
-                    RollbackSnapshotMetadata(
-                        version=current_version,
-                        wheel_name=promoted_wheel.name,
-                        sha256=rollback_sha256,
-                    ),
-                )
-            except OSError as exc:
-                self._tracker.add_issue(
-                    "installing",
-                    "Rollback metadata could not be written",
-                    str(exc),
-                )
-                return False
-            self._rollback_snapshots.prune_wheels(keep_name=promoted_wheel.name)
-            self._tracker.log(
-                "Rollback snapshot created successfully "
-                f"(wheel={promoted_wheel.name}, sha256={rollback_sha256})",
+            return self._write_rollback_snapshot(
+                rollback_wheel=rollback_wheel,
+                current_version=current_version,
             )
-            return True
 
     async def install_release(self, wheel_path: Path, expected_version: str) -> bool:
         if not self._wheel_validator.validate_wheel(

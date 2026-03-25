@@ -23,6 +23,7 @@ class RecordingCommands:
         self.calls: list[tuple[list[str], str]] = []
         self.responses: list[tuple[str, tuple[int, str, str]]] = []
         self.default_response: tuple[int, str, str] = (0, "", "")
+        self.local_wheel_version: str = ""
 
     def set_response(self, match_substr: str, rc: int, stdout: str = "", stderr: str = "") -> None:
         self.responses.append((match_substr, (rc, stdout, stderr)))
@@ -42,6 +43,12 @@ class RecordingCommands:
         for match_substr, response in self.responses:
             if match_substr in joined:
                 return response
+        if "pip" in args and "wheel" in args and "-w" in args and self.local_wheel_version:
+            wheel_dir = Path(args[args.index("-w") + 1])
+            _build_fake_wheel(
+                wheel_dir / f"vibesensor-{self.local_wheel_version}-py3-none-any.whl",
+                version=self.local_wheel_version,
+            )
         if "pip" in args and "download" in args and "-d" in args:
             download_dir = Path(args[args.index("-d") + 1])
             version = next(
@@ -86,7 +93,19 @@ def _make_installer(
     tmp_path: Path,
 ) -> tuple[UpdateInstaller, RecordingCommands, UpdateStatusTracker]:
     repo = tmp_path / "repo"
-    (repo / "apps" / "server" / ".venv" / "bin").mkdir(parents=True)
+    server_dir = repo / "apps" / "server"
+    (server_dir / ".venv" / "bin").mkdir(parents=True)
+    (server_dir / "pyproject.toml").write_text(
+        "\n".join(
+            (
+                "[build-system]",
+                "requires = ['setuptools', 'wheel']",
+                "build-backend = 'setuptools.build_meta'",
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
     python_path = repo / "apps" / "server" / ".venv" / "bin" / "python3"
     python_path.write_text("#!/bin/sh\n", encoding="utf-8")
     python_path.chmod(0o755)
@@ -109,6 +128,7 @@ def _make_installer(
 @pytest.mark.asyncio
 async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) -> None:
     installer, commands, _tracker = _make_installer(tmp_path)
+    commands.local_wheel_version = "2025.6.14"
     rollback_dir = tmp_path / "rollback"
     rollback_dir.mkdir()
     wheel_path = rollback_dir / "vibesensor-2025.6.14-py3-none-any.whl"
@@ -121,14 +141,48 @@ async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) ->
     assert metadata["version"] == "2025.6.14"
     assert metadata["wheel_name"] == wheel_path.name
     assert len(metadata["sha256"]) == 64
-    assert any("pip download" in " ".join(call[0]) for call in commands.calls)
+    assert commands.calls == []
+
+
+@pytest.mark.asyncio
+async def test_snapshot_for_rollback_builds_local_wheel_before_package_index_download(
+    tmp_path: Path,
+) -> None:
+    installer, commands, _tracker = _make_installer(tmp_path)
+    commands.local_wheel_version = "2025.6.14"
+
+    with patch("vibesensor.__version__", "2025.6.14"):
+        assert await installer.snapshot_for_rollback() is True
+
+    calls = [" ".join(call[0]) for call in commands.calls]
+    assert any("pip wheel" in call for call in calls)
+    assert not any("pip download" in call for call in calls)
+
+
+@pytest.mark.asyncio
+async def test_snapshot_for_rollback_falls_back_to_package_index_download(
+    tmp_path: Path,
+) -> None:
+    installer, commands, tracker = _make_installer(tmp_path)
+    commands.set_response("pip wheel", 1, "", "local build failed")
+
+    with patch("vibesensor.__version__", "2025.6.14"):
+        assert await installer.snapshot_for_rollback() is True
+
+    calls = [" ".join(call[0]) for call in commands.calls]
+    assert any("pip wheel" in call for call in calls)
+    assert any("pip download" in call for call in calls)
+    assert any(
+        "Local rollback wheel build failed" in line for line in tracker.status.log_tail
+    )
 
 
 @pytest.mark.asyncio
 async def test_snapshot_for_rollback_keeps_latest_previous_wheel_as_secondary_fallback(
     tmp_path: Path,
 ) -> None:
-    installer, _commands, _tracker = _make_installer(tmp_path)
+    installer, commands, _tracker = _make_installer(tmp_path)
+    commands.local_wheel_version = "2025.6.14"
     rollback_dir = tmp_path / "rollback"
     rollback_dir.mkdir()
     _build_fake_wheel(rollback_dir / "vibesensor-2025.6.12-py3-none-any.whl", version="2025.6.12")
@@ -146,11 +200,10 @@ async def test_snapshot_for_rollback_keeps_latest_previous_wheel_as_secondary_fa
 
 @pytest.mark.asyncio
 async def test_snapshot_for_rollback_fails_when_metadata_write_fails(tmp_path: Path) -> None:
-    installer, _commands, tracker = _make_installer(tmp_path)
+    installer, commands, tracker = _make_installer(tmp_path)
+    commands.local_wheel_version = "2025.6.14"
     rollback_dir = tmp_path / "rollback"
     rollback_dir.mkdir()
-    wheel_path = rollback_dir / "vibesensor-2025.6.14-py3-none-any.whl"
-    _build_fake_wheel(wheel_path, version="2025.6.14")
 
     with (
         patch("vibesensor.__version__", "2025.6.14"),
