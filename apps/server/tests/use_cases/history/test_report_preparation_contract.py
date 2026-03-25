@@ -133,3 +133,95 @@ def test_map_summary_fails_before_pdf_mapping_for_missing_mapping_context(
 
 def test_report_preparation_imports_primary_report_facts_from_shared_boundaries() -> None:
     assert PrimaryReportFacts is shared_report_interpretation.PrimaryReportFacts
+
+
+# ---------------------------------------------------------------------------
+# Cross-object consistency validation
+# ---------------------------------------------------------------------------
+
+
+def test_validate_rejects_mismatched_domain_aggregate() -> None:
+    """mapping_context.domain_aggregate must be the same TestRun as domain_test_run."""
+    prepared = _prepared_report_input()
+    assert prepared.mapping_context is not None
+    # Build a second, distinct TestRun from the same payload
+    second_run = prepare_report_input(
+        {
+            "run_id": "other-run",
+            "findings": [make_finding_payload(finding_id="F002")],
+            "top_causes": [make_finding_payload(finding_id="F002")],
+            "lang": "en",
+            "metadata": {},
+            "report_date": "",
+            "record_length": "",
+            "start_time_utc": "",
+            "end_time_utc": "",
+            "sensor_locations": [],
+            "sensor_locations_connected_throughout": [],
+            "most_likely_origin": {},
+            "run_suitability": [],
+        }
+    )
+    assert second_run.domain_test_run is not None
+    # Replace mapping_context with one pointing at a different domain_aggregate
+    mismatched_context = replace(
+        prepared.mapping_context, domain_aggregate=second_run.domain_test_run
+    )
+    bad = replace(prepared, mapping_context=mismatched_context)
+
+    with pytest.raises(ValueError, match="domain_aggregate"):
+        validate_prepared_report_input(bad)
+
+
+def test_validate_rejects_mismatched_origin() -> None:
+    """mapping_context.origin must match report_facts.origin."""
+    from vibesensor.domain import VibrationOrigin, VibrationSource
+
+    prepared = _prepared_report_input()
+    assert prepared.mapping_context is not None
+    different_origin = VibrationOrigin(
+        suspected_source=VibrationSource.ENGINE,
+        speed_band="60-80",
+        dominance_ratio=0.9,
+    )
+    mismatched_context = replace(prepared.mapping_context, origin=different_origin)
+    bad = replace(prepared, mapping_context=mismatched_context)
+
+    with pytest.raises(ValueError, match="origin"):
+        validate_prepared_report_input(bad)
+
+
+def test_validate_rejects_mismatched_sensor_locations() -> None:
+    """mapping_context.sensor_locations_active must match report_facts."""
+    prepared = _prepared_report_input()
+    assert prepared.mapping_context is not None
+    mismatched_context = replace(
+        prepared.mapping_context,
+        sensor_locations_active=["front_left", "rear_right"],
+    )
+    bad = replace(prepared, mapping_context=mismatched_context)
+
+    with pytest.raises(ValueError, match="sensor_locations_active"):
+        validate_prepared_report_input(bad)
+
+
+def test_validate_rejects_mismatched_renderer_car_name() -> None:
+    """mapping_context.car_name must match renderer_payload.car_name."""
+    prepared = _prepared_report_input()
+    assert prepared.mapping_context is not None
+    mismatched_context = replace(prepared.mapping_context, car_name="Different Car")
+    bad = replace(prepared, mapping_context=mismatched_context)
+
+    with pytest.raises(ValueError, match="car_name"):
+        validate_prepared_report_input(bad)
+
+
+def test_validate_rejects_mismatched_renderer_car_type() -> None:
+    """mapping_context.car_type must match renderer_payload.car_type."""
+    prepared = _prepared_report_input()
+    assert prepared.mapping_context is not None
+    mismatched_context = replace(prepared.mapping_context, car_type="SUV")
+    bad = replace(prepared, mapping_context=mismatched_context)
+
+    with pytest.raises(ValueError, match="car_type"):
+        validate_prepared_report_input(bad)
