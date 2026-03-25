@@ -140,7 +140,18 @@ def resolve_primary_report_facts(
     sensor_locations_active: Sequence[str],
     sensor_intensity: Sequence[LocationIntensitySummary],
 ) -> PrimaryReportFacts:
-    """Resolve the domain-derived facts for the report's primary candidate."""
+    """Resolve the domain-derived facts for the report's primary candidate.
+
+    **strength_db precedence** (first non-None wins):
+
+    1. Domain-derived: ``aggregate.top_strength_db()`` — the
+       ``vibration_strength_db`` of the first effective top-cause finding,
+       or the first finding with a non-None strength if no top-cause has one.
+    2. Sensor-fallback: ``sensor_fallback_strength_db(sensor_intensity)`` —
+       the maximum ``p95_intensity_db`` across all active sensor locations.
+    3. None: if neither source provides a value, ``strength_db`` is ``None``
+       and downstream tier/label logic must handle the absence.
+    """
     effective = aggregate.effective_top_causes()
     domain_primary = effective[0] if effective else aggregate.primary_finding
 
