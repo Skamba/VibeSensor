@@ -3,7 +3,7 @@ import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
 
-const ANALYSIS_SETTING_KEYS = [
+export const ANALYSIS_SETTING_KEYS = [
   "tire_width_mm",
   "tire_aspect_pct",
   "rim_in",
