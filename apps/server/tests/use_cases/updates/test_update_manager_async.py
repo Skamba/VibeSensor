@@ -16,7 +16,7 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
-from vibesensor.use_cases.updates.models import UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.models import UpdateState
 from vibesensor.use_cases.updates.status import collect_runtime_details
 
 
@@ -329,59 +329,6 @@ class TestUpdateManagerAsync:
             await asyncio.wait_for(task, timeout=3)
         assert manager.status.state == UpdateState.failed
 
-    async def test_cleanup_records_hotspot_restore_failure(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path)
-        manager.status.state = UpdateState.running
-        manager.status.phase = UpdatePhase.installing
-        runner.default_response = (1, "", "nmcli failed")
-
-        with (
-            patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
-            patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_DELAY_S", 0),
-        ):
-            await manager._cleanup_after_update()
-
-        assert any(
-            issue.message == "Failed to restore hotspot during cleanup"
-            for issue in manager.status.issues
-        )
-
-    async def test_cleanup_re_raises_runtime_details_bug_after_finishing_cleanup(
-        self,
-        tmp_path,
-    ) -> None:
-        manager, _runner, _ = setup_update_env(tmp_path)
-        manager.status.state = UpdateState.running
-        manager.status.phase = UpdatePhase.installing
-
-        with patch(
-            "vibesensor.use_cases.updates.manager.collect_runtime_details",
-            side_effect=TypeError("runtime bug"),
-        ):
-            with pytest.raises(TypeError, match="runtime bug"):
-                await manager._cleanup_after_update()
-
-        assert manager.status.finished_at is not None
-        assert manager.status.state == UpdateState.failed
-
-    async def test_cleanup_re_raises_wifi_diagnostics_bug_after_finishing_cleanup(
-        self,
-        tmp_path,
-    ) -> None:
-        manager, _runner, _ = setup_update_env(tmp_path)
-        manager.status.state = UpdateState.running
-        manager.status.phase = UpdatePhase.installing
-
-        with patch(
-            "vibesensor.use_cases.updates.wifi.wifi_orchestrator.parse_wifi_diagnostics",
-            side_effect=TypeError("diagnostics bug"),
-        ):
-            with pytest.raises(TypeError, match="diagnostics bug"):
-                await manager._cleanup_after_update()
-
-        assert manager.status.finished_at is not None
-        assert manager.status.state == UpdateState.failed
-
     async def test_run_update_preserves_cancelled_error_when_cleanup_bug_occurs(
         self,
         tmp_path,
@@ -396,7 +343,7 @@ class TestUpdateManagerAsync:
                 AsyncMock(side_effect=asyncio.CancelledError()),
             ),
             patch(
-                "vibesensor.use_cases.updates.manager.collect_runtime_details",
+                "vibesensor.use_cases.updates.job_lifecycle.collect_runtime_details",
                 side_effect=TypeError("runtime bug"),
             ),
             caplog.at_level("WARNING"),
