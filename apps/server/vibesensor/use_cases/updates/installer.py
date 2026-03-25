@@ -97,8 +97,7 @@ class UpdateInstaller:
                 )
                 return candidate
             self._tracker.log(
-                "Ignoring existing rollback wheel "
-                f"{candidate.name}: {'; '.join(errors)}",
+                f"Ignoring existing rollback wheel {candidate.name}: {'; '.join(errors)}",
             )
         return None
 
@@ -193,8 +192,7 @@ class UpdateInstaller:
         )
         if rc != 0:
             self._tracker.log(
-                "Package-index rollback download failed "
-                f"(exit {rc}): {stderr}",
+                f"Package-index rollback download failed (exit {rc}): {stderr}",
             )
             return None
         return self._select_staged_rollback_wheel(

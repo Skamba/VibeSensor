@@ -172,9 +172,7 @@ async def test_snapshot_for_rollback_falls_back_to_package_index_download(
     calls = [" ".join(call[0]) for call in commands.calls]
     assert any("pip wheel" in call for call in calls)
     assert any("pip download" in call for call in calls)
-    assert any(
-        "Local rollback wheel build failed" in line for line in tracker.status.log_tail
-    )
+    assert any("Local rollback wheel build failed" in line for line in tracker.status.log_tail)
 
 
 @pytest.mark.asyncio
