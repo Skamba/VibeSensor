@@ -232,9 +232,9 @@ class TestNoSecretsInPersistedFile:
 
         with patch("shutil.which", _mock_which):
             mgr.start("TestNet", secret_password)
-            assert mgr._task is not None
+            assert mgr.job_task is not None
             with contextlib.suppress(TimeoutError, asyncio.CancelledError):
-                await asyncio.wait_for(mgr._task, timeout=15)
+                await asyncio.wait_for(mgr.job_task, timeout=15)
 
         assert state_path.is_file(), "State file should have been created"
         contents = state_path.read_text(encoding="utf-8")
@@ -419,10 +419,11 @@ class TestPersistenceDuringLifecycle:
             loaded = store.load()
             assert loaded is not None
             assert loaded.state == UpdateState.running
-            if mgr._task is not None:
-                mgr._task.cancel()
+            task = mgr.job_task
+            if task is not None:
+                mgr.cancel()
                 with contextlib.suppress(asyncio.CancelledError, Exception):
-                    await mgr._task
+                    await task
 
     @pytest.mark.asyncio
     async def test_state_persisted_after_job_ends(self, update_env) -> None:
@@ -433,8 +434,9 @@ class TestPersistenceDuringLifecycle:
 
         with patch("shutil.which", _mock_which):
             mgr.start("TestNet", "")
-            assert mgr._task is not None
-            await asyncio.wait_for(mgr._task, timeout=10)
+            task = mgr.job_task
+            assert task is not None
+            await asyncio.wait_for(task, timeout=10)
 
         loaded = store.load()
         assert loaded is not None

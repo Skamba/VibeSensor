@@ -92,10 +92,11 @@ def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True
 
 
 async def cancel_task(mgr: UpdateManager) -> None:
-    if mgr._task:
-        mgr._task.cancel()
+    task = mgr.job_task
+    if task is not None:
+        mgr.cancel()
         with contextlib.suppress(asyncio.CancelledError, Exception):
-            await mgr._task
+            await task
 
 
 def assert_hotspot_restored(runner: FakeRunner) -> None:
@@ -115,8 +116,9 @@ async def run_update(
     timeout: float = 10,
 ) -> None:
     mgr.start(ssid, password)
-    assert mgr._task is not None
-    await asyncio.wait_for(mgr._task, timeout=timeout)
+    task = mgr.job_task
+    assert task is not None
+    await asyncio.wait_for(task, timeout=timeout)
 
 
 @contextmanager
