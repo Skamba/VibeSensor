@@ -9,7 +9,6 @@ This makes them independently testable and reusable outside of the
 from __future__ import annotations
 
 import math
-from typing import TypeAlias
 
 import numpy as np
 import numpy.typing as npt
@@ -27,8 +26,8 @@ from vibesensor.vibration_strength import (
 
 AXES: tuple[Axis, Axis, Axis] = ("x", "y", "z")
 
-FloatArray: TypeAlias = npt.NDArray[np.float32]
-IntIndexArray: TypeAlias = npt.NDArray[np.intp]
+type FloatArray = npt.NDArray[np.float32]
+type IntIndexArray = npt.NDArray[np.intp]
 
 
 def _sanitize_float_array(values: FloatArray) -> FloatArray:

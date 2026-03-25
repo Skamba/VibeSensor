@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from pydantic import BaseModel, ConfigDict
 
 from vibesensor.shared.types.json_types import JsonSchemaObject, JsonSchemaValue
 
-ApiPayloadObject: TypeAlias = JsonSchemaObject
-ApiPayloadValue: TypeAlias = JsonSchemaValue
+type ApiPayloadObject = JsonSchemaObject
+type ApiPayloadValue = JsonSchemaValue
 
 
 class _FrozenBase(BaseModel):

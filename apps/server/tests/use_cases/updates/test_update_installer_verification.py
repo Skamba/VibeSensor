@@ -323,7 +323,7 @@ def test_wheel_dependency_issues_report_python_and_dependency_mismatches(tmp_pat
     _build_fake_wheel(
         wheel_path,
         version="2025.6.15",
-        requires_python=">=3.12",
+        requires_python=">=3.15",
         requires_dist=(
             "packaging>=99",
             "missingdep>=1",
@@ -333,16 +333,16 @@ def test_wheel_dependency_issues_report_python_and_dependency_mismatches(tmp_pat
 
     issues = wheel_dependency_issues(
         read_wheel_metadata(wheel_path),
-        python_full_version="3.11.9",
+        python_full_version="3.14.3",
         marker_environment={
-            "python_full_version": "3.11.9",
-            "python_version": "3.11",
+            "python_full_version": "3.14.3",
+            "python_version": "3.14",
             "sys_platform": "linux",
         },
         installed_versions={"packaging": "24.2"},
     )
 
-    assert "Python 3.11.9 does not satisfy wheel Requires-Python >=3.12" in issues
+    assert "Python 3.14.3 does not satisfy wheel Requires-Python >=3.15" in issues
     assert "Dependency packaging==24.2 does not satisfy >=99" in issues
     assert "Missing dependency: missingdep>=1" in issues
     assert all("colorama" not in issue for issue in issues)
@@ -363,8 +363,8 @@ async def test_install_release_rejects_incompatible_environment_before_pip_insta
         "missingdep",
         0,
         (
-            '{"python_full_version":"3.11.9","marker_environment":{"python_full_version":"3.11.9",'
-            '"python_version":"3.11","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
+            '{"python_full_version":"3.14.3","marker_environment":{"python_full_version":"3.14.3",'
+            '"python_version":"3.14","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
         ),
         "",
     )

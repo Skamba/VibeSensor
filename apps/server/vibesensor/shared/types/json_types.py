@@ -2,25 +2,25 @@
 
 from __future__ import annotations
 
-from typing import TypeAlias, TypeGuard
+from typing import TypeGuard
 
-JsonScalar: TypeAlias = None | bool | int | float | str
-JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
-JsonObject: TypeAlias = dict[str, JsonValue]
-JsonArray: TypeAlias = list[JsonValue]
-JsonSchemaScalar: TypeAlias = JsonScalar
+type JsonScalar = None | bool | int | float | str
+type JsonValue = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
+type JsonObject = dict[str, JsonValue]
+type JsonArray = list[JsonValue]
+type JsonSchemaScalar = JsonScalar
 
 # OpenAPI -> TypeScript generation cannot represent recursive component aliases
 # safely here, so keep the schema-facing JSON shape bounded to the nesting depth
 # used by the persisted analysis/history payloads.
-JsonSchemaLeafObject: TypeAlias = dict[str, JsonSchemaScalar]
-JsonSchemaNestedValue: TypeAlias = (
+type JsonSchemaLeafObject = dict[str, JsonSchemaScalar]
+type JsonSchemaNestedValue = (
     JsonSchemaScalar | JsonSchemaLeafObject | list[JsonSchemaScalar | JsonSchemaLeafObject]
 )
-JsonSchemaValue: TypeAlias = (
+type JsonSchemaValue = (
     JsonSchemaNestedValue | dict[str, JsonSchemaNestedValue] | list[JsonSchemaNestedValue]
 )
-JsonSchemaObject: TypeAlias = dict[str, JsonSchemaValue]
+type JsonSchemaObject = dict[str, JsonSchemaValue]
 
 __all__ = [
     "JsonArray",

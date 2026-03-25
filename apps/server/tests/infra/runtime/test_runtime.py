@@ -506,6 +506,8 @@ async def test_start_monitors_udp_consumer_failure(monkeypatch) -> None:
     consumer_task = lifecycle._udp_transport_lifecycle.consumer_task
     if consumer_task is not None:
         await asyncio.gather(consumer_task, return_exceptions=True)
+    # Yield so the done-callback that records the failure can fire.
+    await asyncio.sleep(0)
 
     assert rt.health_state.background_task_failures["udp-data-consumer"] == "udp boom"
 
