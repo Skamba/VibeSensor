@@ -2,6 +2,8 @@
 
 This package contains the core vibration signal processing pipeline:
 
+- :mod:`~vibesensor.infra.processing.buffer_capacity` — buffer capacity, overflow,
+  and resize policy helpers.
 - :mod:`~vibesensor.infra.processing.buffer_store` — shared buffer state, ingest, locking,
   and state snapshots.
 - :mod:`~vibesensor.infra.processing.compute` — FFT cache/window ownership plus metric
