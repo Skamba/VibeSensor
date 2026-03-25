@@ -11,7 +11,8 @@ Module topology
 - **Validation**: ``validation.py`` — runtime prerequisite checks for tools,
   privileges, rollback storage, and disk space before update orchestration.
 - **Services**: ``manager.py`` — backend restart scheduling and runtime update
-  lifecycle orchestration.
+  workflow orchestration; ``job_executor.py`` — task ownership, cancellation,
+  timeout handling, and cleanup coordination for long-running update jobs.
 - **Firmware**: ``firmware/`` — ESP flash orchestration, firmware cache,
   bundle validation, refresh, release fetcher, and flash-specific contracts.
 - **Wi-Fi**: ``wifi/`` — uplink setup, readiness policy, hotspot recovery,

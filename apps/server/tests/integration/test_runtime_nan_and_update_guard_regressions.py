@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -20,6 +20,7 @@ from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.updates.firmware.firmware_bundle import dir_sha256
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
+from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
 from vibesensor.use_cases.updates.manager import UpdateManager, UpdateState
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
@@ -176,14 +177,13 @@ class TestUpdateManagerCancelledError:
         tracker = MagicMock()
         tracker.status = mgr._status
         mgr._tracker = tracker
+        mgr._executor = UpdateJobExecutor(task_name="system-update")
 
         async def mock_inner(ssid, password):
             raise asyncio.CancelledError()
 
         mgr._run_update_inner = mock_inner
-        mgr._runtime_details = MagicMock()
-        mgr._runtime_details.collect = MagicMock(return_value={})
-        mgr._build_wifi_controller = MagicMock()
+        mgr._cleanup_after_update = AsyncMock(return_value=None)
 
         with pytest.raises(asyncio.CancelledError):
             await mgr._run_update("ssid", "pass")
