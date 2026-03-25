@@ -232,3 +232,9 @@ def test_next_steps_consume_prepared_actions() -> None:
     assert "recommended_actions" in params
     assert "summary" not in params
     assert "aggregate" not in params
+
+
+def test_mapping_module_no_longer_reexports_raw_summary_report_builder() -> None:
+    import vibesensor.adapters.pdf.mapping as mapping
+
+    assert not hasattr(mapping, "build_report_from_summary")
