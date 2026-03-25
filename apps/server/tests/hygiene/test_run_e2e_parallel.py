@@ -113,6 +113,26 @@ def test_assign_shards_uses_cached_durations() -> None:
     assert shards[1] == [fast_b, fast_a]
 
 
+def test_assign_shards_only_dedicates_tests_above_threshold() -> None:
+    module = _load_run_e2e_parallel_module()
+    threshold_test = "apps/server/tests_e2e/test_threshold.py::test_threshold"
+    above_threshold_test = "apps/server/tests_e2e/test_slow.py::test_slow"
+    fast_test = "apps/server/tests_e2e/test_fast.py::test_fast"
+
+    shards = module._assign_shards_by_duration(
+        [threshold_test, above_threshold_test, fast_test],
+        2,
+        {
+            threshold_test: module.SLOW_TEST_THRESHOLD,
+            above_threshold_test: module.SLOW_TEST_THRESHOLD + 0.1,
+            fast_test: 1.0,
+        },
+    )
+
+    assert shards[0] == [above_threshold_test]
+    assert shards[1] == [threshold_test, fast_test]
+
+
 def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path) -> None:
     module = _load_run_e2e_parallel_module()
     junit_path = tmp_path / "shard.xml"
