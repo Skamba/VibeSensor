@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
-from _update_manager_test_helpers import FakeRunner
+from use_cases.updates._update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
