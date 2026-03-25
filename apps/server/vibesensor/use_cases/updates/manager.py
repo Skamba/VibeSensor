@@ -13,6 +13,7 @@ from vibesensor.shared.exceptions import ConfigurationError
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
+from vibesensor.use_cases.updates.job_lifecycle import UpdateJobLifecycleHandler
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdatePhase,
@@ -78,8 +79,13 @@ class UpdateManager:
             status=loaded if loaded is not None else UpdateJobStatus(),
         )
         self._tracker.set_runtime(collect_runtime_details(self._repo))
-        self._status = self._tracker.status
         self._executor = UpdateJobExecutor(task_name="system-update")
+        self._lifecycle = UpdateJobLifecycleHandler(
+            tracker=self._tracker,
+            repo=self._repo,
+            wifi_factory=self._build_wifi_orchestrator,
+            logger=LOGGER,
+        )
 
         # Build config objects once — shared by workflow, snapshot, and rollback.
         self._installer_config = UpdateInstallerConfig(
@@ -110,16 +116,11 @@ class UpdateManager:
         request = UpdateRequest(ssid=ssid, password=password)
         self._executor.start(
             lambda: self._run_update(request),
-            before_start=lambda: self._prepare_start(request),
+            before_start=lambda: self._lifecycle.prepare_start(request),
         )
 
     def cancel(self) -> bool:
         return self._executor.cancel()
-
-    def _prepare_start(self, request: UpdateRequest) -> None:
-        self._tracker.start_job(request.ssid)
-        self._status = self._tracker.status
-        self._tracker.track_secret(request.password)
 
     async def startup_recover(self) -> None:
         if (
@@ -141,30 +142,12 @@ class UpdateManager:
         await self._executor.run(
             workflow_factory=lambda: self._run_update_inner(request_or_ssid, password),
             timeout_s=UPDATE_TIMEOUT_S,
-            on_timeout=self._handle_timeout,
-            on_cancelled=self._handle_cancelled,
-            on_unexpected=self._handle_unexpected,
-            cleanup=self._cleanup_after_update,
-            on_cancelled_cleanup_error=self._handle_cancelled_cleanup_error,
+            on_timeout=lambda: self._lifecycle.handle_timeout(UPDATE_TIMEOUT_S),
+            on_cancelled=self._lifecycle.handle_cancelled,
+            on_unexpected=self._lifecycle.handle_unexpected,
+            cleanup=self._lifecycle.cleanup_after_update,
+            on_cancelled_cleanup_error=self._lifecycle.handle_cancelled_cleanup_error,
         )
-
-    def _handle_timeout(self) -> None:
-        if hasattr(self, "_tracker"):
-            self._tracker.fail("timeout", f"Update timed out after {UPDATE_TIMEOUT_S}s")
-            self._tracker.log(f"Update timed out after {UPDATE_TIMEOUT_S}s")
-
-    def _handle_cancelled(self) -> None:
-        if hasattr(self, "_tracker"):
-            self._tracker.fail("cancelled", "Update was cancelled")
-            self._tracker.log("Update cancelled")
-
-    def _handle_unexpected(self, exc: Exception) -> None:
-        if hasattr(self, "_tracker"):
-            self._tracker.fail("unexpected", f"Unexpected error: {exc}")
-        LOGGER.exception("update: unexpected error")
-
-    def _handle_cancelled_cleanup_error(self) -> None:
-        LOGGER.warning("Update cleanup interrupted during cancellation", exc_info=True)
 
     async def _run_update_inner(
         self,
@@ -289,25 +272,6 @@ class UpdateManager:
             "Run 'sudo systemctl restart vibesensor.service' manually",
         )
         tracker.log("Automatic backend restart scheduling failed")
-
-    async def _cleanup_after_update(self) -> None:
-        tracker = self._tracker
-        wifi = self._build_wifi_orchestrator()
-        try:
-            await wifi.maybe_restore_hotspot_during_cleanup()
-            tracker.clear_secrets()
-            tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
-            self._status = tracker.status
-            diag_issues = await wifi.collect_cleanup_diagnostics()
-            tracker.extend_issues(diag_issues)
-            tracker.finish_cleanup()
-            self._status = tracker.status
-        except Exception:
-            tracker.clear_secrets()
-            tracker.finish_cleanup()
-            self._status = tracker.status
-            LOGGER.warning("Update cleanup interrupted", exc_info=True)
-            raise
 
     def _build_command_executor(self) -> UpdateCommandExecutor:
         return UpdateCommandExecutor(runner=self._runner, tracker=self._tracker)
