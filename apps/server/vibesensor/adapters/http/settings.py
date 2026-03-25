@@ -102,7 +102,7 @@ def create_settings_routes(
             id=payload["id"],
             name=payload["name"],
             type=payload["type"],
-            aspects=dict(payload["aspects"]),
+            aspects=payload["aspects"],
             variant=payload.get("variant"),
         )
 
