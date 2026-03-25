@@ -9,6 +9,7 @@ Canvas-based renderer.
 from __future__ import annotations
 
 __all__ = [
+    "build_report_from_renderer_payload",
     "DataTrustItem",
     "FindingPresentation",
     "NextStep",
@@ -18,13 +19,12 @@ __all__ = [
     "Report",
     "ReportTemplateData",
     "SystemFindingCard",
-    "build_report_from_summary",
 ]
 
 from dataclasses import dataclass, field
 
-from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary, coerce_float
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
+from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
+from vibesensor.use_cases.history.report_preparation import PreparedReportRendererPayload
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -185,41 +185,19 @@ class ReportTemplateData:
     location_hotspot_rows: list[LocationHotspotRow] = field(default_factory=list)
 
 
-def build_report_from_summary(summary: AnalysisSummary) -> Report:
-    """Create a ``Report`` metadata object from an analysis summary."""
-    meta = summary.get("metadata") or {}
-    if not isinstance(meta, dict):
-        meta = {}
-
-    car_name = str(meta.get("car_name") or "").strip() or None
-    car_type = str(meta.get("car_type") or "").strip() or None
-
-    rows = summary.get("rows")
-    sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0
-
-    sensor_count_raw = summary.get("sensor_count_used")
-    sensor_count = int(sensor_count_raw) if isinstance(sensor_count_raw, (int, float, str)) else 0
-
-    duration_s_raw = summary.get("duration_s")
-    duration_s: float | None = None
-    if duration_s_raw is not None:
-        try:
-            duration_s = coerce_float(duration_s_raw)
-        except (TypeError, ValueError):
-            pass
-
-    report_date = summary.get("report_date")
-    report_date_str = str(report_date) if isinstance(report_date, str) else None
-
-    run_id = str(summary.get("run_id", ""))
-
+def build_report_from_renderer_payload(
+    renderer_payload: PreparedReportRendererPayload,
+    *,
+    language: str,
+) -> Report:
+    """Create a ``Report`` metadata object from the prepared renderer payload."""
     return Report(
-        run_id=run_id or "unknown",
-        lang=str(summary.get("lang", "en")),
-        car_name=car_name,
-        car_type=car_type,
-        report_date=report_date_str,
-        duration_s=duration_s,
-        sample_count=sample_count,
-        sensor_count=sensor_count,
+        run_id=renderer_payload.run_id or "unknown",
+        lang=language,
+        car_name=renderer_payload.car_name,
+        car_type=renderer_payload.car_type,
+        report_date=renderer_payload.report_date,
+        duration_s=renderer_payload.duration_s,
+        sample_count=renderer_payload.sample_count,
+        sensor_count=renderer_payload.sensor_count,
     )
