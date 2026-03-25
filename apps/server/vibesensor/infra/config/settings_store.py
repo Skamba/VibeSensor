@@ -230,7 +230,7 @@ class SettingsStore:
     def get_cars(self) -> CarsSnapshot:
         return self._car_settings.get_cars()
 
-    def active_car_aspects(self) -> dict[str, float] | None:
+    def active_car_aspects(self) -> AnalysisSettingsPayload | None:
         return self._car_settings.active_car_aspects()
 
     def active_car_snapshot(self) -> CarSnapshot | None:

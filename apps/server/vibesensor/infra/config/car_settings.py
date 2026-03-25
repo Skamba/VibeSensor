@@ -17,7 +17,10 @@ from vibesensor.shared.types.car_config import (
     car_to_persistence_dict,
     new_car_id,
 )
-from vibesensor.shared.types.settings_types import AnalysisSettingsPayload
+from vibesensor.shared.types.settings_types import (
+    AnalysisSettingsPayload,
+    analysis_settings_payload_from_mapping,
+)
 
 LOGGER = logging.getLogger(__name__)
 _CarSettingsSnapshotT = TypeVar("_CarSettingsSnapshotT")
@@ -106,13 +109,13 @@ class CarSettingsService:
         with self._lock:
             return self.cars_snapshot_unlocked()
 
-    def active_car_aspects(self) -> dict[str, float] | None:
-        """Return the active car's aspects as a flat analysis-settings dict."""
+    def active_car_aspects(self) -> AnalysisSettingsPayload | None:
+        """Return the active car's aspects as a typed analysis-settings payload."""
         with self._lock:
             car = self._find_car(self._state.active_car_id)
             if car is None:
                 return None
-            return dict(car.aspects)
+            return analysis_settings_payload_from_mapping(car.aspects)
 
     def active_car_snapshot(self) -> CarSnapshot | None:
         """Return the active car profile as a typed domain snapshot."""
@@ -248,6 +251,12 @@ class CarSettingsService:
             )
             return True
 
+        def _result() -> AnalysisSettingsPayload:
+            active_aspects = self.active_car_aspects()
+            if active_aspects is not None:
+                return active_aspects
+            return {}
+
         return self._update_with_rollback(
             snapshot=lambda: list(self._state.cars),
             apply=_apply,
@@ -261,7 +270,7 @@ class CarSettingsService:
                 after=self.active_car_aspects(),
                 car_id=self._state.active_car_id,
             ),
-            result=lambda: self.active_car_aspects() or {},
+            result=_result,
         )
 
     def delete_car(self, car_id: str) -> CarsSnapshot:

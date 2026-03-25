@@ -6,7 +6,10 @@ import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, NotRequired, TypedDict
 
-from vibesensor.shared.types.settings_types import AnalysisSettingsPayload
+from vibesensor.shared.types.settings_types import (
+    AnalysisSettingsPayload,
+    analysis_settings_payload_from_mapping,
+)
 
 if TYPE_CHECKING:
     from vibesensor.domain import Car
@@ -55,7 +58,7 @@ def car_to_persistence_dict(car: Car) -> CarConfigPayload:
         "id": car.id,
         "name": car.name,
         "type": car.car_type,
-        "aspects": dict(car.aspects),
+        "aspects": analysis_settings_payload_from_mapping(car.aspects),
     }
     if car.variant:
         payload["variant"] = car.variant
