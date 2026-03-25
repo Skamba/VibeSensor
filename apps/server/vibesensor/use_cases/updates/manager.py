@@ -35,9 +35,8 @@ from vibesensor.use_cases.updates.validation import (
     validate_prerequisites,
 )
 from vibesensor.use_cases.updates.wifi import (
-    UpdateWifiController,
+    UpdateWifiOrchestrator,
     build_default_wifi_config,
-    parse_wifi_diagnostics,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -135,35 +134,8 @@ class UpdateManager:
             return
         LOGGER.warning("Detected interrupted update job; marking as failed and cleaning up")
         self._tracker.mark_interrupted("Update interrupted by server restart")
-        wifi = self._build_wifi_controller()
-
-        self._tracker.log("startup_recover: cleaning up uplink connection")
-        try:
-            await wifi.cleanup_uplink()
-        except Exception as exc:
-            self._tracker.add_issue(
-                "startup",
-                "Failed to clean up uplink connection",
-                str(exc),
-            )
-
-        self._tracker.log("startup_recover: restoring hotspot")
-        try:
-            restored = await wifi.restore_hotspot()
-            if restored:
-                self._tracker.log("startup_recover: hotspot restored successfully")
-            else:
-                self._tracker.add_issue(
-                    "startup",
-                    "Failed to restore hotspot after interrupted update",
-                )
-                self._tracker.log("startup_recover: hotspot restore failed")
-        except Exception as exc:
-            self._tracker.add_issue(
-                "startup",
-                "Hotspot restore error during recovery",
-                str(exc),
-            )
+        wifi = self._build_wifi_orchestrator()
+        await wifi.recover_interrupted_update()
         self._tracker.persist()
 
     async def _run_update(
@@ -214,7 +186,7 @@ class UpdateManager:
         )
         commands = self._build_command_executor()
         tracker = self._tracker
-        wifi = self._build_wifi_controller(commands=commands)
+        wifi = self._build_wifi_orchestrator(commands=commands)
         installer = UpdateInstaller(
             commands=commands,
             tracker=tracker,
@@ -329,7 +301,7 @@ class UpdateManager:
     async def _complete_update_success(
         self,
         tracker: UpdateStatusTracker,
-        wifi: UpdateWifiController,
+        wifi: UpdateWifiOrchestrator,
         message: str,
     ) -> None:
         tracker.transition(UpdatePhase.restoring_hotspot)
@@ -343,6 +315,7 @@ class UpdateManager:
 
     async def _cleanup_after_update(self) -> None:
         tracker = self._tracker
+        wifi = self._build_wifi_orchestrator()
         try:
             restore_phases = {
                 UpdatePhase.stopping_hotspot,
@@ -358,22 +331,11 @@ class UpdateManager:
             ):
                 tracker.transition(UpdatePhase.restoring_hotspot)
                 tracker.log("Restoring hotspot...")
-                try:
-                    restored = await asyncio.shield(self._build_wifi_controller().restore_hotspot())
-                    if not restored:
-                        tracker.add_issue("cleanup", "Failed to restore hotspot during cleanup")
-                        tracker.log("Cleanup hotspot restore failed")
-                except Exception as exc:
-                    tracker.add_issue(
-                        "cleanup",
-                        "Hotspot restore error during cleanup",
-                        str(exc),
-                    )
-                    LOGGER.warning("Cleanup hotspot restore failed", exc_info=True)
+                await wifi.cleanup_restore_hotspot()
             tracker.clear_secrets()
             tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
             self._status = tracker.status
-            diag_issues = await asyncio.to_thread(parse_wifi_diagnostics)
+            diag_issues = await wifi.collect_cleanup_diagnostics()
             tracker.extend_issues(diag_issues)
             tracker.finish_cleanup()
             self._status = tracker.status
@@ -387,12 +349,12 @@ class UpdateManager:
     def _build_command_executor(self) -> UpdateCommandExecutor:
         return UpdateCommandExecutor(runner=self._runner, tracker=self._tracker)
 
-    def _build_wifi_controller(
+    def _build_wifi_orchestrator(
         self,
         *,
         commands: UpdateCommandExecutor | None = None,
-    ) -> UpdateWifiController:
-        return UpdateWifiController(
+    ) -> UpdateWifiOrchestrator:
+        return UpdateWifiOrchestrator(
             commands=commands or self._build_command_executor(),
             tracker=self._tracker,
             config=build_default_wifi_config(
