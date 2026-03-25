@@ -7,7 +7,11 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 from vibesensor.domain import SpeedSourceKind
-from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
+from vibesensor.shared.types.settings_types import (
+    AnalysisSettingsPayload,
+    LanguageCode,
+    SpeedUnitCode,
+)
 from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
 
 from .base import _FrozenBase
@@ -50,7 +54,7 @@ class CarUpsertRequest(_FrozenBase):
 
     name: Annotated[str, Field(min_length=1, max_length=64)] | None = None
     type: Annotated[str, Field(min_length=1, max_length=64)] | None = None
-    aspects: dict[str, float] | None = None
+    aspects: AnalysisSettingsPayload | None = None
     variant: Annotated[str, Field(min_length=1, max_length=64)] | None = None
 
 
@@ -81,7 +85,7 @@ class CarResponse(BaseModel):
     id: str
     name: str
     type: str
-    aspects: dict[str, float]
+    aspects: AnalysisSettingsPayload
     variant: str | None = None
 
 
