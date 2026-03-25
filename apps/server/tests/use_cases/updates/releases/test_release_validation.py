@@ -114,7 +114,7 @@ def test_validate_release_wheel_metadata_accepts_matching_wheel(tmp_path: Path) 
     _build_fake_release_wheel(
         wheel_path,
         version="2025.6.15",
-        requires_python=">=3.11",
+        requires_python=">=3.14",
         requires_dist=("packaging>=24,<27",),
     )
 

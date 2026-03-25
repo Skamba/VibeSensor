@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, TypeAlias
+from typing import Literal
 
 __all__ = [
     "AnalysisSettingsPayload",
@@ -10,6 +10,6 @@ __all__ = [
     "SpeedUnitCode",
 ]
 
-AnalysisSettingsPayload: TypeAlias = dict[str, float]
-LanguageCode: TypeAlias = Literal["en", "nl"]
-SpeedUnitCode: TypeAlias = Literal["kmh", "mps"]
+type AnalysisSettingsPayload = dict[str, float]
+type LanguageCode = Literal["en", "nl"]
+type SpeedUnitCode = Literal["kmh", "mps"]

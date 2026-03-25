@@ -23,11 +23,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from math import isfinite, log10
 from statistics import median as _stdlib_median
-from typing import Final, cast
+from typing import Final, TypedDict, cast
 
 import numpy as np
 import numpy.typing as npt
-from typing_extensions import TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.strength_bands import bucket_for_strength
 

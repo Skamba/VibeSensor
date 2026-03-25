@@ -14,10 +14,9 @@ to ``shared.types.api_models.history``.
 
 from __future__ import annotations
 
-from typing import Any, Literal, Required, TypeAlias
+from typing import Any, Literal, Required, TypedDict
 
 from pydantic import ConfigDict
-from typing_extensions import TypedDict
 
 from vibesensor.shared.types.analysis_views import (
     PhaseSpeedBreakdownRow,
@@ -65,8 +64,8 @@ __all__ = [
     "TestPlanStepResponse",
 ]
 
-PayloadObject: TypeAlias = JsonSchemaObject
-PayloadValue: TypeAlias = JsonSchemaValue
+type PayloadObject = JsonSchemaObject
+type PayloadValue = JsonSchemaValue
 
 
 _FORBID_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
@@ -258,7 +257,10 @@ class AnalysisSummaryResponse(AnalysisSummaryCoreResponse):
     warnings: Required[list[SummaryWarningResponse]]
 
 
-AnalysisSummary: TypeAlias = AnalysisSummaryResponse
+# Plain assignment (not ``type`` statement) so ``AnalysisSummary is
+# AnalysisSummaryResponse`` stays True at runtime — the hygiene parity
+# suite relies on this identity.
+AnalysisSummary = AnalysisSummaryResponse
 
 
 def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:

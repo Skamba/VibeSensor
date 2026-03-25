@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, TypedDict
 
 import numpy as np
 import numpy.typing as npt
@@ -9,8 +9,8 @@ import numpy.typing as npt
 from vibesensor.shared.types.payload_types import AxisPeak, ClientMetrics
 from vibesensor.vibration_strength import VibrationStrengthMetrics
 
-FloatArray: TypeAlias = npt.NDArray[np.float32]
-IntIndexArray: TypeAlias = npt.NDArray[np.intp]
+type FloatArray = npt.NDArray[np.float32]
+type IntIndexArray = npt.NDArray[np.intp]
 
 Axis = Literal["x", "y", "z"]
 
@@ -20,7 +20,7 @@ class SpectrumAxisData(TypedDict):
     amp: FloatArray
 
 
-SpectrumByAxis: TypeAlias = dict[str, SpectrumAxisData]
+type SpectrumByAxis = dict[str, SpectrumAxisData]
 
 
 class FftSpectrumResult(TypedDict):

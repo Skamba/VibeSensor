@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import TypeAlias, TypedDict, cast
+from typing import TypedDict, cast
 
 from vibesensor.domain import DrivingPhase, StrengthPeak
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -134,8 +134,8 @@ class AnalysisSample:
         return raw
 
 
-Sample: TypeAlias = AnalysisSample
-AnalysisSampleInput: TypeAlias = AnalysisSample | SensorFrame | JsonObject
+type Sample = AnalysisSample
+type AnalysisSampleInput = AnalysisSample | SensorFrame | JsonObject
 
 
 def normalize_analysis_samples(
@@ -192,5 +192,5 @@ class AccelStatistics(TypedDict):
     z_var: float | None
 
 
-PhaseLabel: TypeAlias = DrivingPhase | str
-PhaseLabels: TypeAlias = Sequence[PhaseLabel]
+type PhaseLabel = DrivingPhase | str
+type PhaseLabels = Sequence[PhaseLabel]
