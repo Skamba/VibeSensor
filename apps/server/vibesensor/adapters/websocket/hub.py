@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from fastapi import WebSocket
 
 from vibesensor.adapters.websocket.payload_orchestrator import PayloadBuildOrchestrator
+from vibesensor.adapters.websocket.tick_controller import BroadcastTickController
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 LOGGER = logging.getLogger(__name__)
@@ -35,12 +36,6 @@ _SEND_TIMEOUT_S: float = 0.5
 
 _SEND_ERROR_LOG_INTERVAL_S: float = 10.0
 """Minimum interval between logged send-error warnings to avoid log spam."""
-
-_MAX_CONSECUTIVE_FAILURES: int = 10
-"""Back off after this many consecutive broadcast tick failures."""
-
-_BACKOFF_MULTIPLIER: int = 5
-"""Sleep multiplier applied to the tick interval during error back-off."""
 
 
 @dataclass(slots=True)
@@ -287,45 +282,8 @@ class WebSocketHub:
         Consecutive broadcast failures trigger back-off to avoid thundering-herd
         log spam.
         """
-        if hz <= 0:
-            LOGGER.warning(
-                "WebSocketHub.run called with hz=%r; clamping to 1 Hz.",
-                hz,
-            )
-        interval = 1.0 / max(1, hz)
-        consecutive_failures = 0
-        loop = asyncio.get_running_loop()
-        while True:
-            tick_start = loop.time()
-            try:
-                if on_tick is not None:
-                    try:
-                        on_tick()
-                    except Exception:
-                        LOGGER.warning(
-                            "WebSocket on_tick callback raised; proceeding to broadcast.",
-                            exc_info=True,
-                        )
-                await self.broadcast(payload_builder)
-                consecutive_failures = 0
-            except Exception:
-                consecutive_failures += 1
-                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
-                    LOGGER.error(
-                        "WebSocket broadcast tick failed %d consecutive times; backing off.",
-                        consecutive_failures,
-                        exc_info=True,
-                    )
-                    await asyncio.sleep(interval * _BACKOFF_MULTIPLIER)
-                    # Reset the tick clock after the backoff sleep so the
-                    # post-tick sleep uses the correct remaining time.
-                    tick_start = loop.time()
-                    consecutive_failures = 0
-                else:
-                    LOGGER.warning(
-                        "WebSocket broadcast tick failed (%d consecutive); will retry.",
-                        consecutive_failures,
-                        exc_info=True,
-                    )
-            elapsed = loop.time() - tick_start
-            await asyncio.sleep(max(0, interval - elapsed))
+        controller = BroadcastTickController(hz=hz, logger=LOGGER)
+        await controller.run(
+            broadcast_tick=lambda: self.broadcast(payload_builder),
+            on_tick=on_tick,
+        )
