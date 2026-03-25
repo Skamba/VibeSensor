@@ -160,7 +160,7 @@ def _finding_presentation_payload_from_domain(
 def finding_payload_from_domain(
     finding: Finding,
 ) -> FindingPayload:
-    """Project a domain Finding to the current persisted/public payload dict."""
+    """Compose the persisted/public finding payload from core and presentation parts."""
     core_payload = _finding_core_payload_from_domain(finding)
     presentation_payload = _finding_presentation_payload_from_domain(finding)
     return cast(FindingPayload, {**core_payload, **presentation_payload})
