@@ -134,9 +134,6 @@ from vibesensor.shared.boundaries.analysis_payload import (
     FindingEvidenceMetrics as BoundaryFindingEvidenceMetrics,
 )
 from vibesensor.shared.boundaries.analysis_payload import (
-    FindingPayload as BoundaryFindingPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
     FreqVsSpeedByFindingSeries as BoundaryFreqVsSpeedByFindingSeries,
 )
 from vibesensor.shared.boundaries.analysis_payload import (
@@ -207,6 +204,9 @@ from vibesensor.shared.boundaries.analysis_payload import (
 )
 from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin as BoundarySuspectedVibrationOrigin,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    FindingPayload as BoundaryFindingPayload,
 )
 
 

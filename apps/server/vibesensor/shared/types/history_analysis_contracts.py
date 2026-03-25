@@ -2,7 +2,8 @@
 
 These TypedDicts are the single semantic owners for analysis/history wrapper
 and composite contracts that are shared between persisted boundary payloads and
-the HTTP/OpenAPI response schema. Boundary modules alias them under payload
+the HTTP/OpenAPI response schema. ``FindingPayload`` is canonically owned here.
+Boundary modules only alias contracts that need boundary-specific payload
 names, while endpoint-specific HTTP wrappers remain local to
 ``shared.types.api_models.history``.
 """
@@ -276,12 +277,13 @@ class LocationIntensitySummaryResponse(TypedDict, total=False):
 
 
 class FindingPayload(TypedDict, total=False):
-    """HTTP contract for one serialized finding in analysis history payloads.
+    """Canonical shared contract for one serialized finding payload.
 
-    This schema mirrors ``shared.boundaries.analysis_payload.FindingPayload``.
-    It intentionally includes a few presentation-oriented projections
-    (``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,
-    and the confidence label fields) alongside the domain-owned finding data.
+    Boundary serializers and HTTP models should import this TypedDict directly
+    so future field changes have one source of truth. It intentionally includes
+    a few presentation-oriented projections (``evidence_summary``,
+    ``frequency_hz_or_order``, ``amplitude_metric``, and the confidence label
+    fields) alongside the domain-owned finding data.
     """
 
     finding_id: Required[str]
