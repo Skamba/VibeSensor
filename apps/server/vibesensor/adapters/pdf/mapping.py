@@ -39,6 +39,7 @@ from vibesensor.adapters.pdf.report_sections import (
     build_data_trust,
     build_next_steps,
 )
+from vibesensor.adapters.pdf.template_builder import build_template_data
 from vibesensor.domain import (
     Finding,
     TestRun,
@@ -212,11 +213,7 @@ def _build_report_template_data(
     test_run: TestRun,
     report_facts: PreparedReportFacts,
 ) -> ReportTemplateData:
-    """Map a prepared report input into the final report template data structure.
-
-    The *report* metadata and renderer payload are prepared on the history side;
-    the PDF adapter only resolves final presentation details.
-    """
+    """Resolve report sections, then delegate field assignment to the builder."""
     context = prepared.mapping_context
     raw_sensor_intensity = list(report_facts.active_sensor_intensity)
     primary = resolve_primary_report_candidate(
@@ -254,24 +251,11 @@ def _build_report_template_data(
     peak_rows = build_peak_rows(prepared.renderer_payload.peak_table_rows, lang=lang, tr=tr)
     version_marker = build_version_marker()
 
-    hotspot_rows = list(report_facts.location_hotspot_rows)
-
-    return ReportTemplateData(
+    return build_template_data(
+        context=context,
+        report=report,
+        primary=primary,
         title=tr("DIAGNOSTIC_WORKSHEET"),
-        run_datetime=context.date_str,
-        run_id=report.run_id,
-        duration_text=context.duration_text,
-        start_time_utc=context.start_time_utc,
-        end_time_utc=context.end_time_utc,
-        sample_rate_hz=context.sample_rate_hz,
-        tire_spec_text=context.tire_spec_text,
-        sample_count=context.sample_count,
-        sensor_count=primary.sensor_count,
-        sensor_locations=context.sensor_locations_active,
-        sensor_model=context.sensor_model,
-        firmware_version=context.firmware_version,
-        car_name=report.car_name or context.car_name,
-        car_type=report.car_type or context.car_type,
         observed=observed,
         system_cards=system_cards,
         next_steps=next_steps,
@@ -279,12 +263,10 @@ def _build_report_template_data(
         pattern_evidence=pattern_evidence,
         peak_rows=peak_rows,
         version_marker=version_marker,
-        lang=report.lang,
-        certainty_tier_key=primary.tier,
         findings=[_finding_to_presentation(f) for f in context.domain_aggregate.findings],
         top_causes=[
             _finding_to_presentation(f) for f in context.domain_aggregate.effective_top_causes()
         ],
-        sensor_intensity_by_location=raw_sensor_intensity,
-        location_hotspot_rows=hotspot_rows,
+        sensor_intensity=raw_sensor_intensity,
+        hotspot_rows=list(report_facts.location_hotspot_rows),
     )
