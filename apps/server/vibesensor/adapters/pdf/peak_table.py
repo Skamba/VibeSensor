@@ -9,12 +9,10 @@ from vibesensor.adapters.pdf.report_data import PeakRow
 from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.domain import VibrationSource
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 
 __all__ = [
     "build_peak_rows",
     "build_peak_row",
-    "build_peak_rows_from_plots",
     "peak_row_system_label",
 ]
 
@@ -30,22 +28,6 @@ def build_peak_rows(
     above_noise = [row for row in raw_peaks if (_as_float(row.get("strength_db")) or 0.0) > 0]
     ranked = above_noise or raw_peaks
     return [build_peak_row(row, lang=lang, tr=tr) for row in ranked[:8]]
-
-
-def build_peak_rows_from_plots(
-    summary: AnalysisSummary,
-    *,
-    lang: str,
-    tr: Callable[..., str],
-) -> list[PeakRow]:
-    """Build peak-table rows from the plots section."""
-    plots = summary.get("plots")
-    if not isinstance(plots, Mapping):
-        return []
-    raw_peaks = plots.get("peaks_table")
-    if not isinstance(raw_peaks, list):
-        return []
-    return build_peak_rows(raw_peaks, lang=lang, tr=tr)
 
 
 def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable[..., str]) -> PeakRow:
