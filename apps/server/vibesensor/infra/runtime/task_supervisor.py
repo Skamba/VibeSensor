@@ -55,7 +55,7 @@ class TaskSupervisor:
         self._max_delay_s = max_delay_s
         self._reset_after_s = reset_after_s
 
-    def _monitor_task(self, task: asyncio.Task[object]) -> None:
+    def monitor_task(self, task: asyncio.Task[object]) -> None:
         task_name = task.get_name()
 
         def _record_failure(done_task: asyncio.Task[object]) -> None:
@@ -137,5 +137,5 @@ class TaskSupervisor:
                 self._health_state.clear_task_failure(name)
 
         task = asyncio.create_task(_run_supervised(), name=name)
-        self._monitor_task(task)
+        self.monitor_task(task)
         return task
