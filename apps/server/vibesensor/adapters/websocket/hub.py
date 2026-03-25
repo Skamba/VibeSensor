@@ -12,10 +12,14 @@ import contextlib
 import logging
 import os
 from collections.abc import Callable
-from dataclasses import dataclass
 
 from fastapi import WebSocket
 
+from vibesensor.adapters.websocket.connection_tracker import (
+    ConnectionTracker,
+    WSConnection,
+    WSConnectionSnapshot,
+)
 from vibesensor.adapters.websocket.payload_orchestrator import PayloadBuildOrchestrator
 from vibesensor.adapters.websocket.tick_controller import BroadcastTickController
 from vibesensor.shared.types.payload_types import LiveWsPayload
@@ -38,130 +42,45 @@ _SEND_ERROR_LOG_INTERVAL_S: float = 10.0
 """Minimum interval between logged send-error warnings to avoid log spam."""
 
 
-@dataclass(slots=True)
-class WSConnection:
-    """Tracks a single active WebSocket connection and its selected client filter."""
-
-    connection_id: int
-    websocket: WebSocket
-    selected_client_id: str | None = None
-    closing: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class _WSConnectionSnapshot:
-    """Immutable point-in-time connection view used by a broadcast tick."""
-
-    connection_id: int
-    websocket: WebSocket
-    selected_client_id: str | None
-
-
 class WebSocketHub:
     """Fan-out broadcaster: sends live metric payloads to all connected WebSocket clients."""
 
     def __init__(self) -> None:
         """Initialise the hub with an empty client registry."""
-        self._connections: dict[int, WSConnection] = {}
-        self._lock = asyncio.Lock()
-        self._next_connection_id = 1
+        self._tracker = ConnectionTracker()
         self._send_timeout_s = _SEND_TIMEOUT_S
         self._last_send_error_log_ts = 0.0
         self._send_error_log_interval_s = _SEND_ERROR_LOG_INTERVAL_S
 
     async def add(self, websocket: WebSocket, selected_client_id: str | None) -> None:
         """Register *websocket* as a new active connection with an optional client filter."""
-        async with self._lock:
-            connection_id = self._next_connection_id
-            self._next_connection_id += 1
-            self._connections[id(websocket)] = WSConnection(
-                connection_id=connection_id,
-                websocket=websocket,
-                selected_client_id=selected_client_id,
-            )
+        await self._tracker.add(websocket, selected_client_id)
 
     def connection_count(self) -> int:
-        """Return an approximate count of active connections.
-
-        Uses ``len()`` on the internal dict, which is atomic in CPython, so
-        no lock is acquired.  The value may be stale by the time the caller
-        acts on it; use ``_snapshot()`` when a consistent view is needed.
-        """
-        return len(self._connections)
+        """Return an approximate count of active connections."""
+        return self._tracker.connection_count()
 
     async def remove(self, websocket: WebSocket) -> None:
         """Deregister *websocket* from the hub."""
-        async with self._lock:
-            conn = self._connections.pop(id(websocket), None)
-            if conn is not None:
-                conn.closing = True
+        await self._tracker.remove(websocket)
 
     async def update_selected_client(self, websocket: WebSocket, client_id: str | None) -> None:
         """Update the client-filter for an existing connection."""
-        async with self._lock:
-            conn = self._connections.get(id(websocket))
-            if conn is not None:
-                conn.selected_client_id = client_id
+        await self._tracker.update_selected_client(websocket, client_id)
 
-    async def _snapshot(self) -> list[_WSConnectionSnapshot]:
+    async def _snapshot(self) -> list[WSConnectionSnapshot]:
         """Return a point-in-time copy of the active connections list."""
-        async with self._lock:
-            return [
-                _WSConnectionSnapshot(
-                    connection_id=conn.connection_id,
-                    websocket=conn.websocket,
-                    selected_client_id=conn.selected_client_id,
-                )
-                for conn in self._connections.values()
-                if not conn.closing
-            ]
-
-    async def _is_snapshot_current(self, conn: _WSConnectionSnapshot) -> bool:
-        """Return True when *conn* still refers to the currently registered connection."""
-        async with self._lock:
-            current = self._connections.get(id(conn.websocket))
-            return bool(
-                current is not None
-                and not current.closing
-                and current.connection_id == conn.connection_id,
-            )
-
-    async def _current_selected_client_id(
-        self,
-        conn: _WSConnectionSnapshot,
-    ) -> tuple[bool, str | None]:
-        """Return the live selected client for *conn* when the connection is still current."""
-        async with self._lock:
-            current = self._connections.get(id(conn.websocket))
-            if current is None or current.closing or current.connection_id != conn.connection_id:
-                return False, None
-            return True, current.selected_client_id
-
-    async def _mark_snapshot_closing(self, conn: _WSConnectionSnapshot) -> bool:
-        """Mark *conn* as closing if it is still the active registered connection."""
-        async with self._lock:
-            current = self._connections.get(id(conn.websocket))
-            if current is None or current.connection_id != conn.connection_id:
-                return False
-            current.closing = True
-            return True
-
-    async def _remove_snapshot(self, conn: _WSConnectionSnapshot) -> None:
-        """Remove *conn* only when the same generation is still registered."""
-        async with self._lock:
-            current = self._connections.get(id(conn.websocket))
-            if current is not None and current.connection_id == conn.connection_id:
-                self._connections.pop(id(conn.websocket), None)
+        return await self._tracker.snapshot()
 
     async def _send_conn(
         self,
-        conn: _WSConnectionSnapshot,
+        conn: WSConnectionSnapshot,
         payload_text: str,
         *,
         selected_client_id: str | None,
-    ) -> _WSConnectionSnapshot | None:
+    ) -> WSConnectionSnapshot | None:
         """Send the appropriate payload to *conn*, return the WebSocket on failure."""
-        if not await self._is_snapshot_current(conn):
+        if not await self._tracker.is_snapshot_current(conn):
             return None
         try:
             await asyncio.wait_for(
@@ -179,22 +98,24 @@ class WebSocketHub:
                     selected_client_id,
                     exc_info=True,
                 )
-            if await self._mark_snapshot_closing(conn):
+            if await self._tracker.mark_snapshot_closing(conn):
                 return conn
             return None
 
     async def _send_current_conn(
         self,
-        conn: _WSConnectionSnapshot,
+        conn: WSConnectionSnapshot,
         payloads: PayloadBuildOrchestrator,
         sent_selected_client_ids: dict[int, str | None],
-    ) -> _WSConnectionSnapshot | None:
+    ) -> WSConnectionSnapshot | None:
         """Send a payload built for the connection's current selection."""
-        is_current, selected_client_id = await self._current_selected_client_id(conn)
+        is_current, selected_client_id = await self._tracker.current_selected_client_id(conn)
         if not is_current:
             return None
         payload_text = await payloads.get_or_build_payload_text(selected_client_id)
-        still_current, latest_selected_client_id = await self._current_selected_client_id(conn)
+        still_current, latest_selected_client_id = await self._tracker.current_selected_client_id(
+            conn
+        )
         if not still_current:
             return None
         if latest_selected_client_id != selected_client_id:
@@ -241,7 +162,7 @@ class WebSocketHub:
             if conn is not None:
                 with contextlib.suppress(Exception):
                     await conn.websocket.close()
-                await self._remove_snapshot(conn)
+                await self._tracker.remove_snapshot(conn)
         if payloads.failed_client_ids:
             # Count how many connections were affected by build failures.
             affected = sum(
