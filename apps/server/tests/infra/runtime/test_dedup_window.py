@@ -26,6 +26,25 @@ def test_dedup_window_prunes_entries_older_than_window_cutoff() -> None:
     assert window.contains(13) is True
 
 
+def test_dedup_window_track_detects_duplicate_sequence() -> None:
+    window = DedupWindow()
+
+    assert window.track(7) is False
+    assert window.track(7) is True
+
+
+def test_dedup_window_track_prunes_entries_using_window_size() -> None:
+    window = DedupWindow()
+
+    for seq in (10, 11, 12, 13):
+        assert window.track(seq, window_size=3) is False
+
+    assert window.contains(10) is False
+    assert window.contains(11) is True
+    assert window.contains(12) is True
+    assert window.contains(13) is True
+
+
 def test_dedup_window_clear_resets_running_max_state() -> None:
     window = DedupWindow()
     window.record(100)
