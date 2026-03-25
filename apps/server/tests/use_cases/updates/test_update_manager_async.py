@@ -138,7 +138,9 @@ class TestUpdateManagerAsync:
         ):
             mock_fetcher.return_value.check_update_available.return_value = None
             manager.start("TestNet", "pass123")
-            await asyncio.wait_for(manager._task, timeout=10)
+            task = manager.job_task
+            assert task is not None
+            await asyncio.wait_for(task, timeout=10)
 
         assert manager.status.state == UpdateState.success
         assert connect_calls["count"] >= 2
@@ -322,7 +324,9 @@ class TestUpdateManagerAsync:
             patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
         ):
             manager.start("TestNet", "pass")
-            await asyncio.wait_for(manager._task, timeout=3)
+            task = manager.job_task
+            assert task is not None
+            await asyncio.wait_for(task, timeout=3)
         assert manager.status.state == UpdateState.failed
 
     async def test_cleanup_records_hotspot_restore_failure(self, tmp_path) -> None:

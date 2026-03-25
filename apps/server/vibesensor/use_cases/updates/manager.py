@@ -9,9 +9,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from vibesensor.shared.exceptions import ConfigurationError, UpdateError
+from vibesensor.shared.exceptions import ConfigurationError
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
+from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdatePhase,
@@ -78,8 +79,7 @@ class UpdateManager:
         )
         self._tracker.set_runtime(collect_runtime_details(self._repo))
         self._status = self._tracker.status
-        self._task: asyncio.Task[None] | None = None
-        self._cancel_event = asyncio.Event()
+        self._executor = UpdateJobExecutor(task_name="system-update")
 
         # Build config objects once — shared by workflow, snapshot, and rollback.
         self._installer_config = UpdateInstallerConfig(
@@ -99,7 +99,7 @@ class UpdateManager:
 
     @property
     def job_task(self) -> asyncio.Task[None] | None:
-        return self._task
+        return self._executor.job_task
 
     def start(self, ssid: str, password: str) -> None:
         ssid = ssid.strip()
@@ -107,24 +107,19 @@ class UpdateManager:
             raise ConfigurationError("SSID must be 1-64 characters")
         if password and len(password) > 128:
             raise ConfigurationError("Password must be at most 128 characters")
-        if self._task is not None and not self._task.done():
-            raise UpdateError("Update already in progress", status="conflict")
-        self._cancel_event.clear()
-        self._tracker.start_job(ssid)
-        self._status = self._tracker.status
-        self._tracker.track_secret(password)
         request = UpdateRequest(ssid=ssid, password=password)
-        self._task = asyncio.get_running_loop().create_task(
-            self._run_update(request),
-            name="system-update",
+        self._executor.start(
+            lambda: self._run_update(request),
+            before_start=lambda: self._prepare_start(request),
         )
 
     def cancel(self) -> bool:
-        if self._task is None or self._task.done():
-            return False
-        self._cancel_event.set()
-        self._task.cancel()
-        return True
+        return self._executor.cancel()
+
+    def _prepare_start(self, request: UpdateRequest) -> None:
+        self._tracker.start_job(request.ssid)
+        self._status = self._tracker.status
+        self._tracker.track_secret(request.password)
 
     async def startup_recover(self) -> None:
         if (
@@ -143,36 +138,33 @@ class UpdateManager:
         request_or_ssid: UpdateRequest | str,
         password: str | None = None,
     ) -> None:
-        cancelled = False
-        try:
-            await asyncio.wait_for(
-                self._run_update_inner(request_or_ssid, password),
-                timeout=UPDATE_TIMEOUT_S,
-            )
-        except TimeoutError:
-            if hasattr(self, "_tracker"):
-                self._tracker.fail("timeout", f"Update timed out after {UPDATE_TIMEOUT_S}s")
-                self._tracker.log(f"Update timed out after {UPDATE_TIMEOUT_S}s")
-        except asyncio.CancelledError:
-            cancelled = True
-            if hasattr(self, "_tracker"):
-                self._tracker.fail("cancelled", "Update was cancelled")
-                self._tracker.log("Update cancelled")
-            raise
-        except Exception as exc:
-            if hasattr(self, "_tracker"):
-                self._tracker.fail("unexpected", f"Unexpected error: {exc}")
-            LOGGER.exception("update: unexpected error")
-        finally:
-            if cancelled:
-                try:
-                    await self._cleanup_after_update()
-                except asyncio.CancelledError:
-                    raise
-                except Exception:
-                    LOGGER.warning("Update cleanup interrupted during cancellation", exc_info=True)
-            else:
-                await self._cleanup_after_update()
+        await self._executor.run(
+            workflow_factory=lambda: self._run_update_inner(request_or_ssid, password),
+            timeout_s=UPDATE_TIMEOUT_S,
+            on_timeout=self._handle_timeout,
+            on_cancelled=self._handle_cancelled,
+            on_unexpected=self._handle_unexpected,
+            cleanup=self._cleanup_after_update,
+            on_cancelled_cleanup_error=self._handle_cancelled_cleanup_error,
+        )
+
+    def _handle_timeout(self) -> None:
+        if hasattr(self, "_tracker"):
+            self._tracker.fail("timeout", f"Update timed out after {UPDATE_TIMEOUT_S}s")
+            self._tracker.log(f"Update timed out after {UPDATE_TIMEOUT_S}s")
+
+    def _handle_cancelled(self) -> None:
+        if hasattr(self, "_tracker"):
+            self._tracker.fail("cancelled", "Update was cancelled")
+            self._tracker.log("Update cancelled")
+
+    def _handle_unexpected(self, exc: Exception) -> None:
+        if hasattr(self, "_tracker"):
+            self._tracker.fail("unexpected", f"Unexpected error: {exc}")
+        LOGGER.exception("update: unexpected error")
+
+    def _handle_cancelled_cleanup_error(self) -> None:
+        LOGGER.warning("Update cleanup interrupted during cancellation", exc_info=True)
 
     async def _run_update_inner(
         self,
@@ -193,7 +185,7 @@ class UpdateManager:
             config=self._installer_config,
         )
         firmware_refresher = self._build_firmware_refresher(commands=commands)
-        cancel_requested = self._cancel_event.is_set
+        cancel_requested = self._executor.cancel_requested
 
         if not await validate_prerequisites(
             commands=commands,
