@@ -148,6 +148,24 @@ from vibesensor.shared.types.analysis_views import (
 from vibesensor.shared.types.analysis_views import (
     SpeedBreakdownRow as BoundarySpeedBreakdownRow,
 )
+from vibesensor.shared.types.data_quality_contracts import (
+    DataQualityAccelSanityResponse as BoundaryDataQualityAccelSanityPayload,
+)
+from vibesensor.shared.types.data_quality_contracts import (
+    DataQualityOutliersResponse as BoundaryDataQualityOutliersPayload,
+)
+from vibesensor.shared.types.data_quality_contracts import (
+    DataQualityRequiredMissingPctResponse as BoundaryDataQualityRequiredMissingPctPayload,
+)
+from vibesensor.shared.types.data_quality_contracts import (
+    DataQualityResponse as BoundaryDataQualityPayload,
+)
+from vibesensor.shared.types.data_quality_contracts import (
+    DataQualitySpeedCoverageResponse as BoundaryDataQualitySpeedCoveragePayload,
+)
+from vibesensor.shared.types.data_quality_contracts import (
+    OutlierSummaryResponse as BoundaryOutlierSummaryPayload,
+)
 from vibesensor.shared.types.history_analysis_contracts import (
     AmplitudeMetric as BoundaryAmplitudeMetric,
 )
@@ -158,28 +176,10 @@ from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummaryResponse as ApiAnalysisSummaryResponse,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
-    DataQualityAccelSanityResponse as BoundaryDataQualityAccelSanityPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    DataQualityOutliersResponse as BoundaryDataQualityOutliersPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    DataQualityRequiredMissingPctResponse as BoundaryDataQualityRequiredMissingPctPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    DataQualityResponse as BoundaryDataQualityPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    DataQualitySpeedCoverageResponse as BoundaryDataQualitySpeedCoveragePayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
     FindingPayload as BoundaryFindingPayload,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     LocationIntensitySummaryResponse as BoundaryLocationIntensitySummaryPayload,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    OutlierSummaryResponse as BoundaryOutlierSummaryPayload,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     PhaseInfoResponse as BoundaryPhaseInfoPayload,
