@@ -1148,12 +1148,13 @@ export interface components {
     };
     /**
      * FindingPayload
-     * @description HTTP contract for one serialized finding in analysis history payloads.
+     * @description Canonical shared contract for one serialized finding payload.
      *
-     * This schema mirrors ``shared.boundaries.analysis_payload.FindingPayload``.
-     * It intentionally includes a few presentation-oriented projections
-     * (``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,
-     * and the confidence label fields) alongside the domain-owned finding data.
+     * Boundary serializers and HTTP models should import this TypedDict directly
+     * so future field changes have one source of truth. It intentionally includes
+     * a few presentation-oriented projections (``evidence_summary``,
+     * ``frequency_hz_or_order``, ``amplitude_metric``, and the confidence label
+     * fields) alongside the domain-owned finding data.
      */
     FindingPayload: {
       amplitude_metric: components["schemas"]["AmplitudeMetric"];
