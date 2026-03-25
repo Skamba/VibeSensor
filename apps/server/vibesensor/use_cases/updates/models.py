@@ -8,8 +8,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypedDict
 
+from vibesensor.shared.exceptions import ConfigurationError
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.types.json_types import JsonObject, is_json_array, is_json_object
+
+_SSID_MAX_LEN = 64
+_PASSWORD_MAX_LEN = 128
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +81,20 @@ class UpdateRequest:
 
     ssid: str
     password: str
+
+
+def validate_update_request(ssid: str, password: str) -> UpdateRequest:
+    """Validate raw SSID/password inputs and return an ``UpdateRequest``.
+
+    Raises :class:`~vibesensor.shared.exceptions.ConfigurationError` when the
+    request shape is invalid.
+    """
+    ssid = ssid.strip()
+    if not ssid or len(ssid) > _SSID_MAX_LEN:
+        raise ConfigurationError(f"SSID must be 1-{_SSID_MAX_LEN} characters")
+    if password and len(password) > _PASSWORD_MAX_LEN:
+        raise ConfigurationError(f"Password must be at most {_PASSWORD_MAX_LEN} characters")
+    return UpdateRequest(ssid=ssid, password=password)
 
 
 class UpdateIssuePayload(TypedDict):

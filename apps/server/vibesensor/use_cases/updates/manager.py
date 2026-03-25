@@ -9,7 +9,6 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from vibesensor.shared.exceptions import ConfigurationError
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
@@ -20,6 +19,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateRequest,
     UpdateState,
     UpdateValidationConfig,
+    validate_update_request,
 )
 from vibesensor.use_cases.updates.releases import (
     check_for_update,
@@ -108,12 +108,7 @@ class UpdateManager:
         return self._executor.job_task
 
     def start(self, ssid: str, password: str) -> None:
-        ssid = ssid.strip()
-        if not ssid or len(ssid) > 64:
-            raise ConfigurationError("SSID must be 1-64 characters")
-        if password and len(password) > 128:
-            raise ConfigurationError("Password must be at most 128 characters")
-        request = UpdateRequest(ssid=ssid, password=password)
+        request = validate_update_request(ssid, password)
         self._executor.start(
             lambda: self._run_update(request),
             before_start=lambda: self._lifecycle.prepare_start(request),

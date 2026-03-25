@@ -25,5 +25,6 @@ Module topology
   ``runner.py`` (process execution and command helpers), and
   ``venv_paths.py`` (reinstall venv discovery).
 - **State**: ``status.py`` (progress tracking, persistent state store,
-  and runtime detail collection), ``models.py`` (data models).
+  and runtime detail collection), ``models.py`` (data models and
+  ``validate_update_request()`` request-shape validation).
 """
