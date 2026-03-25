@@ -3992,10 +3992,10 @@
         "required": [
           "finding_id",
           "suspected_source",
+          "confidence",
           "evidence_summary",
           "frequency_hz_or_order",
-          "amplitude_metric",
-          "confidence"
+          "amplitude_metric"
         ],
         "title": "FindingPayload",
         "type": "object"
