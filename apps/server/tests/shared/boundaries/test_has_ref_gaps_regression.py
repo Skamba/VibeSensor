@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.diagnostic_case import (
+from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as _reconstruct,
 )
 

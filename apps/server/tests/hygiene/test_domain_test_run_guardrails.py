@@ -180,7 +180,7 @@ def test_test_run_primary_source_and_location() -> None:
 
 def test_test_run_from_summary_populates_speed_profile() -> None:
     """test_run_from_summary extracts SpeedProfile when speed_stats is present."""
-    from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
+    from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 
     summary = {
         "run_id": "test-123",
@@ -199,7 +199,7 @@ def test_test_run_from_summary_populates_speed_profile() -> None:
 
 def test_test_run_from_summary_populates_suitability() -> None:
     """test_run_from_summary extracts RunSuitability when run_suitability is present."""
-    from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
+    from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 
     summary = {
         "run_id": "test-123",

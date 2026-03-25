@@ -275,7 +275,7 @@ class TestTestRunWithValueObjects:
         assert result.suitability.is_usable
 
     def test_from_summary_extracts_speed_profile(self) -> None:
-        from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
+        from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 
         summary = {
             "run_id": "test-123",
@@ -298,7 +298,7 @@ class TestTestRunWithValueObjects:
         assert result.speed_profile.cruise_fraction == pytest.approx(0.65)
 
     def test_from_summary_extracts_suitability(self) -> None:
-        from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
+        from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 
         summary = {
             "run_id": "test-123",
@@ -315,7 +315,7 @@ class TestTestRunWithValueObjects:
         assert len(result.suitability.checks) == 2
 
     def test_from_summary_no_speed_stats(self) -> None:
-        from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
+        from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 
         summary = {"run_id": "test-123", "findings": [], "top_causes": []}
         result = test_run_from_summary(summary)

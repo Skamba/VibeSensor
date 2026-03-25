@@ -20,7 +20,6 @@ from vibesensor.shared.boundaries.analysis_payload import (
     RunSuitabilityCheck,
     SummaryWarningPayload,
 )
-from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 from vibesensor.shared.boundaries.report_interpretation import (
     PrimaryReportFacts,
     compute_location_hotspot_rows,
@@ -32,6 +31,7 @@ from vibesensor.shared.boundaries.report_interpretation import (
 )
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
+from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
