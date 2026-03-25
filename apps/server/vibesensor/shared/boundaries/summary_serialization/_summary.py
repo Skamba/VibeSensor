@@ -109,6 +109,73 @@ class AnalysisSummaryBuildContext:
     amp_metric_values: list[float]
 
 
+def build_analysis_summary(
+    *,
+    file_name: str,
+    run_id: str,
+    samples: Sequence[JsonObject],
+    duration_s: float,
+    language: str,
+    metadata: JsonObject,
+    raw_sample_rate_hz: float | None,
+    speed_breakdown: Sequence[SpeedBreakdownRowLike],
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowLike],
+    phase_segments: Sequence[PhaseSegmentLike],
+    run_noise_baseline_g: float | None,
+    speed_breakdown_skipped_reason: JsonObject | None,
+    findings: tuple[DomainFinding, ...],
+    top_causes: tuple[DomainFinding, ...],
+    most_likely_origin: VibrationOrigin | None,
+    test_plan: list[TestPlanStepPayload],
+    phase_timeline: Sequence[DrivingPhaseInterval],
+    speed_stats: SpeedProfileSummary,
+    speed_stats_by_phase: Mapping[str, SpeedProfileSummary],
+    phase_info: DrivingPhaseSummary,
+    sensor_locations: list[str],
+    connected_locations: Collection[str],
+    sensor_intensity_by_location: Sequence[LocationIntensitySummary],
+    run_suitability: RunSuitability | None,
+    speed_values: list[float],
+    speed_non_null_pct: float,
+    accel_stats: AccelStatisticsLike,
+    amp_metric_values: list[float],
+) -> AnalysisSummary:
+    """Stable public entrypoint for assembling an analysis summary payload."""
+
+    return build_summary_payload(
+        AnalysisSummaryBuildContext(
+            file_name=file_name,
+            run_id=run_id,
+            samples=samples,
+            duration_s=duration_s,
+            language=language,
+            metadata=metadata,
+            raw_sample_rate_hz=raw_sample_rate_hz,
+            speed_breakdown=speed_breakdown,
+            phase_speed_breakdown=phase_speed_breakdown,
+            phase_segments=phase_segments,
+            run_noise_baseline_g=run_noise_baseline_g,
+            speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,
+            findings=findings,
+            top_causes=top_causes,
+            most_likely_origin=most_likely_origin,
+            test_plan=test_plan,
+            phase_timeline=phase_timeline,
+            speed_stats=speed_stats,
+            speed_stats_by_phase=speed_stats_by_phase,
+            phase_info=phase_info,
+            sensor_locations=sensor_locations,
+            connected_locations=connected_locations,
+            sensor_intensity_by_location=sensor_intensity_by_location,
+            run_suitability=run_suitability,
+            speed_values=speed_values,
+            speed_non_null_pct=speed_non_null_pct,
+            accel_stats=accel_stats,
+            amp_metric_values=amp_metric_values,
+        )
+    )
+
+
 def _float_list(stats: AccelStatisticsLike, key: str) -> list[float]:
     value = stats.get(key)
     if not isinstance(value, list):

@@ -1,11 +1,11 @@
-"""Summary payload serialization boundary package.
-
-This package keeps the historical import path stable while splitting the
-serialization boundary into focused modules.
-"""
+"""Stable public API for summary payload serialization helpers."""
 
 from ._findings import annotate_peaks_with_order_labels, serialize_findings
 from ._plots import (
+    PhaseSegmentLike,
+    PhaseSpeedBreakdownRowLike,
+    PlotDataResultLike,
+    SpeedBreakdownRowLike,
     serialize_peak_table,
     serialize_phase_segments,
     serialize_phase_speed_breakdown,
@@ -14,19 +14,22 @@ from ._plots import (
     serialize_speed_breakdown,
 )
 from ._summary import (
-    AnalysisSummaryBuildContext,
+    AccelStatisticsLike,
+    build_analysis_summary,
     build_data_quality_dict,
-    build_summary_payload,
     noise_baseline_db,
     serialize_origin_summary,
 )
 
 __all__ = [
-    "AnalysisSummaryBuildContext",
+    "AccelStatisticsLike",
     "annotate_peaks_with_order_labels",
+    "build_analysis_summary",
     "build_data_quality_dict",
-    "build_summary_payload",
     "noise_baseline_db",
+    "PhaseSegmentLike",
+    "PhaseSpeedBreakdownRowLike",
+    "PlotDataResultLike",
     "serialize_findings",
     "serialize_origin_summary",
     "serialize_peak_table",
@@ -35,4 +38,5 @@ __all__ = [
     "serialize_plot_data",
     "serialize_speed_breakdown",
     "serialize_spectrogram",
+    "SpeedBreakdownRowLike",
 ]

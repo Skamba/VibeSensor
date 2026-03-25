@@ -16,18 +16,13 @@ from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.summary_serialization import (
-    build_summary_payload,
-    serialize_plot_data,
-)
-from vibesensor.shared.boundaries.summary_serialization._plots import (
+    AccelStatisticsLike,
     PhaseSegmentLike,
     PhaseSpeedBreakdownRowLike,
     PlotDataResultLike,
     SpeedBreakdownRowLike,
-)
-from vibesensor.shared.boundaries.summary_serialization._summary import (
-    AccelStatisticsLike,
-    AnalysisSummaryBuildContext,
+    build_analysis_summary,
+    serialize_plot_data,
 )
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.boundaries.test_plan_projection import step_payloads_from_plan
@@ -151,37 +146,35 @@ def analysis_summary_with_warnings(
 
 def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
     """Serialize an app-level diagnostics result at an explicit boundary."""
-    summary = build_summary_payload(
-        AnalysisSummaryBuildContext(
-            file_name=result.file_name,
-            run_id=result.prepared.run_id,
-            samples=list(result.samples),
-            duration_s=result.prepared.duration_s,
-            language=result.language,
-            metadata=result.metadata,
-            raw_sample_rate_hz=result.prepared.raw_sample_rate_hz,
-            speed_breakdown=result.prepared.speed_breakdown,
-            phase_speed_breakdown=result.prepared.phase_speed_breakdown,
-            phase_segments=result.prepared.phase_segments,
-            run_noise_baseline_g=result.prepared.run_noise_baseline_g,
-            speed_breakdown_skipped_reason=result.prepared.speed_breakdown_skipped_reason,
-            findings=result.test_run.findings,
-            top_causes=result.test_run.top_causes,
-            most_likely_origin=result.most_likely_origin,
-            test_plan=step_payloads_from_plan(result.test_run.test_plan),
-            phase_timeline=list(result.phase_timeline),
-            speed_stats=result.summary_speed_stats,
-            speed_stats_by_phase=dict(result.prepared.speed_stats_by_phase),
-            phase_info=result.summary_phase_info,
-            sensor_locations=list(result.sensor_locations),
-            connected_locations=set(result.connected_locations),
-            sensor_intensity_by_location=list(result.sensor_intensity_by_location),
-            run_suitability=result.run_suitability,
-            speed_values=result.prepared.speed_values,
-            speed_non_null_pct=result.prepared.speed_non_null_pct,
-            accel_stats=result.accel_stats,
-            amp_metric_values=_amp_metric_values(result.accel_stats),
-        )
+    summary = build_analysis_summary(
+        file_name=result.file_name,
+        run_id=result.prepared.run_id,
+        samples=list(result.samples),
+        duration_s=result.prepared.duration_s,
+        language=result.language,
+        metadata=result.metadata,
+        raw_sample_rate_hz=result.prepared.raw_sample_rate_hz,
+        speed_breakdown=result.prepared.speed_breakdown,
+        phase_speed_breakdown=result.prepared.phase_speed_breakdown,
+        phase_segments=result.prepared.phase_segments,
+        run_noise_baseline_g=result.prepared.run_noise_baseline_g,
+        speed_breakdown_skipped_reason=result.prepared.speed_breakdown_skipped_reason,
+        findings=result.test_run.findings,
+        top_causes=result.test_run.top_causes,
+        most_likely_origin=result.most_likely_origin,
+        test_plan=step_payloads_from_plan(result.test_run.test_plan),
+        phase_timeline=list(result.phase_timeline),
+        speed_stats=result.summary_speed_stats,
+        speed_stats_by_phase=dict(result.prepared.speed_stats_by_phase),
+        phase_info=result.summary_phase_info,
+        sensor_locations=list(result.sensor_locations),
+        connected_locations=set(result.connected_locations),
+        sensor_intensity_by_location=list(result.sensor_intensity_by_location),
+        run_suitability=result.run_suitability,
+        speed_values=result.prepared.speed_values,
+        speed_non_null_pct=result.prepared.speed_non_null_pct,
+        accel_stats=result.accel_stats,
+        amp_metric_values=_amp_metric_values(result.accel_stats),
     )
     summary["warnings"] = summary_warning_payloads(
         build_summary_warnings(
