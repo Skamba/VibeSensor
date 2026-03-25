@@ -12,6 +12,7 @@ import {
   renderSettingsCarList,
 } from "../views/settings_car_list_view";
 import {
+  ANALYSIS_SETTING_KEYS,
   createSettingsAnalysisModule,
   type SettingsAnalysisModule,
 } from "./settings_analysis_module";
@@ -170,8 +171,11 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       return;
     }
     if (car.aspects && typeof car.aspects === "object") {
-      for (const key of Object.keys(car.aspects)) {
-        settings.vehicleSettings[key] = car.aspects[key];
+      for (const key of ANALYSIS_SETTING_KEYS) {
+        const value = car.aspects[key];
+        if (typeof value === "number") {
+          settings.vehicleSettings[key] = value;
+        }
       }
     }
     analysisModule.syncSettingsInputs();
