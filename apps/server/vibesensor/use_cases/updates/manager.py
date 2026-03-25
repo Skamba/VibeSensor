@@ -17,10 +17,10 @@ from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdatePhase,
     UpdateRequest,
-    UpdateState,
     UpdateValidationConfig,
     validate_update_request,
 )
+from vibesensor.use_cases.updates.recovery import InterruptedUpdateRecovery
 from vibesensor.use_cases.updates.releases import (
     check_for_update,
     download_release,
@@ -86,6 +86,10 @@ class UpdateManager:
             wifi_factory=self._build_wifi_orchestrator,
             logger=LOGGER,
         )
+        self._recovery = InterruptedUpdateRecovery(
+            tracker=self._tracker,
+            wifi_factory=self._build_wifi_orchestrator,
+        )
 
         # Build config objects once — shared by workflow, snapshot, and rollback.
         self._installer_config = UpdateInstallerConfig(
@@ -118,16 +122,8 @@ class UpdateManager:
         return self._executor.cancel()
 
     async def startup_recover(self) -> None:
-        if (
-            self._tracker.status.state != UpdateState.running
-            or self._tracker.status.finished_at is not None
-        ):
-            return
-        LOGGER.warning("Detected interrupted update job; marking as failed and cleaning up")
-        self._tracker.mark_interrupted("Update interrupted by server restart")
-        wifi = self._build_wifi_orchestrator()
-        await wifi.recover_interrupted_update()
-        self._tracker.persist()
+        if self._recovery.needs_recovery():
+            await self._recovery.recover()
 
     async def _run_update(
         self,

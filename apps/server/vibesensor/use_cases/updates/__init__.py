@@ -8,6 +8,8 @@ Module topology
 - **Facade**: ``manager.py`` — public ``UpdateManager`` API for routes and
   runtime lifecycle. Update workflow orchestration is inlined in
   ``_run_update_inner()``.
+- **Recovery**: ``recovery.py`` — ``InterruptedUpdateRecovery`` collaborator
+  for interrupted-job detection, cleanup, and persistence on startup.
 - **Validation**: ``validation.py`` — runtime prerequisite checks for tools,
   privileges, rollback storage, and disk space before update orchestration.
 - **Services**: ``manager.py`` — backend restart scheduling and runtime update
