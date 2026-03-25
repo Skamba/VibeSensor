@@ -198,7 +198,10 @@ async def test_broadcast_uses_latest_selection_when_selection_changes_during_ser
             await hub.update_selected_client(ws, "client_b")
         return func(*args, **kwargs)
 
-    monkeypatch.setattr("vibesensor.adapters.websocket.hub.asyncio.to_thread", fake_to_thread)
+    monkeypatch.setattr(
+        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        fake_to_thread,
+    )
 
     await hub.broadcast(payload_builder)
 
@@ -229,7 +232,10 @@ async def test_broadcast_reuses_lazy_payload_for_connections_converging_on_same_
             await hub.update_selected_client(ws2, "client_b")
         return func(*args, **kwargs)
 
-    monkeypatch.setattr("vibesensor.adapters.websocket.hub.asyncio.to_thread", fake_to_thread)
+    monkeypatch.setattr(
+        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        fake_to_thread,
+    )
 
     await hub.broadcast(payload_builder)
 
@@ -259,7 +265,10 @@ async def test_payload_error_affected_count_uses_updated_selection(
             await hub.update_selected_client(ws, "client_b")
         return func(*args, **kwargs)
 
-    monkeypatch.setattr("vibesensor.adapters.websocket.hub.asyncio.to_thread", fake_to_thread)
+    monkeypatch.setattr(
+        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        fake_to_thread,
+    )
 
     def selective_builder(client_id):
         if client_id == "client_b":
@@ -362,7 +371,7 @@ async def test_broadcast_serializes_plain_payload_without_recursive_sanitizing()
     await hub.add(ws, None)
 
     with patch(
-        "vibesensor.adapters.websocket.hub.sanitize_for_json",
+        "vibesensor.adapters.websocket.payload_orchestrator.sanitize_for_json",
         side_effect=AssertionError(
             "sanitize_for_json should not run on the common plain-Python path"
         ),
@@ -385,7 +394,10 @@ async def test_broadcast_offloads_serialization_to_thread(monkeypatch: pytest.Mo
         seen_selected_ids.append(args[0])
         return func(*args, **kwargs)
 
-    monkeypatch.setattr("vibesensor.adapters.websocket.hub.asyncio.to_thread", fake_to_thread)
+    monkeypatch.setattr(
+        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        fake_to_thread,
+    )
 
     await hub.broadcast(lambda selected: {"selected": selected})
 
@@ -402,7 +414,7 @@ async def test_broadcast_falls_back_to_sanitizer_for_numpy_payload() -> None:
     payload = {"freq": np.array([1.0, float("nan"), 3.0], dtype=np.float32)}
 
     with patch(
-        "vibesensor.adapters.websocket.hub.sanitize_for_json",
+        "vibesensor.adapters.websocket.payload_orchestrator.sanitize_for_json",
         wraps=sanitize_for_json,
     ) as sanitize:
         await hub.broadcast(lambda _: payload)
