@@ -34,11 +34,8 @@ from vibesensor.shared.boundaries.vibration_origin import (
     vibration_origin_from_payload,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.json_utils import i18n_ref
-from vibesensor.shared.types.history_analysis_contracts import (
-    FindingPayload,
-    payload_value_from_json,
-)
+from vibesensor.shared.json_utils import i18n_ref, payload_value_from_json
+from vibesensor.shared.types.history_analysis_contracts import FindingPayload
 
 _MAX_SIGNATURES_PER_FINDING: int = 3
 
