@@ -9,12 +9,14 @@ from dataclasses import dataclass
 from email.message import Message
 from email.parser import Parser
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import canonicalize_name
 
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+if TYPE_CHECKING:
+    from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 __all__ = [
     "WheelArtifactValidator",

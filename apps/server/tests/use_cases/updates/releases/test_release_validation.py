@@ -3,6 +3,10 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import os
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -133,6 +137,50 @@ def test_validate_release_wheel_metadata_rejects_version_mismatch(tmp_path: Path
     )
 
     assert any("does not match expected '2025.6.15'" in error for error in errors)
+
+
+def test_release_validation_cli_import_path_does_not_require_pydantic(tmp_path: Path) -> None:
+    wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+    _build_fake_release_wheel(wheel_path, version="2025.6.15")
+    script = textwrap.dedent(
+        f"""
+        import importlib.abc
+        import runpy
+        import sys
+
+        class _BlockPydantic(importlib.abc.MetaPathFinder):
+            def find_spec(self, fullname, path=None, target=None):
+                if fullname == "pydantic" or fullname.startswith("pydantic."):
+                    raise ModuleNotFoundError("No module named 'pydantic'")
+                return None
+
+        sys.meta_path.insert(0, _BlockPydantic())
+        sys.argv = [
+            "vibesensor.use_cases.updates.releases.release_validation",
+            "validate-wheel-metadata",
+            "--wheel-path",
+            {str(wheel_path)!r},
+            "--expected-version",
+            "2025.6.15",
+        ]
+        runpy.run_module(
+            "vibesensor.use_cases.updates.releases.release_validation",
+            run_name="__main__",
+        )
+        """,
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(SERVER_ROOT)
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Validated release wheel metadata" in result.stdout
 
 
 def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) -> None:
