@@ -462,7 +462,9 @@ def _check_analysis_summary_stays_at_boundaries() -> list[str]:
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom):
                 continue
-            if node.module != "vibesensor.shared.boundaries.analysis_payload":
+            if node.module not in (
+                "vibesensor.shared.types.history_analysis_contracts",
+            ):
                 continue
             if any(alias.name == "AnalysisSummary" for alias in node.names):
                 violations.append(
@@ -597,7 +599,7 @@ def _check_report_pdf_entrypoint_uses_prepared_input() -> list[str]:
                     "_build_pdf_bytes must accept PreparedReportInput"
                 )
         if isinstance(node, ast.ImportFrom) and (
-            node.module == "vibesensor.shared.boundaries.analysis_payload"
+            node.module == "vibesensor.shared.types.history_analysis_contracts"
         ):
             if any(alias.name == "AnalysisSummary" for alias in node.names):
                 violations.append(
@@ -983,7 +985,7 @@ def _check_diagnostics_boundary_types() -> list[str]:
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom):
                 continue
-            if node.module != "vibesensor.shared.boundaries.analysis_payload":
+            if node.module != "vibesensor.shared.types.analysis_views":
                 continue
             bad = sorted(
                 alias.name

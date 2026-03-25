@@ -103,101 +103,53 @@ from vibesensor.adapters.http.models.history import (
 from vibesensor.adapters.http.models.history import (
     TestPlanStepResponse as ApiTestPlanStepResponse,
 )
-from vibesensor.shared.boundaries.analysis_payload import (
-    AmplitudeMetric as BoundaryAmplitudeMetric,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    AmpVsPhaseRow as BoundaryAmpVsPhaseRow,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    DataQualityAccelSanityPayload as BoundaryDataQualityAccelSanityPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    DataQualityOutliersPayload as BoundaryDataQualityOutliersPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    DataQualityPayload as BoundaryDataQualityPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    DataQualityRequiredMissingPctPayload as BoundaryDataQualityRequiredMissingPctPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    DataQualitySpeedCoveragePayload as BoundaryDataQualitySpeedCoveragePayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    FindingEvidenceMetrics as BoundaryFindingEvidenceMetrics,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    FreqVsSpeedByFindingSeries as BoundaryFreqVsSpeedByFindingSeries,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    LocationHotspotPayload as BoundaryLocationHotspotPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    LocationIntensitySummaryPayload as BoundaryLocationIntensitySummaryPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    MatchedAmpVsSpeedSeries as BoundaryMatchedAmpVsSpeedSeries,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    MatchedPoint as BoundaryMatchedPoint,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    OutlierSummaryPayload as BoundaryOutlierSummaryPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PeakTableRow as BoundaryPeakTableRow,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseBoundary as BoundaryPhaseBoundary,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseEvidence as BoundaryPhaseEvidence,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseInfoPayload as BoundaryPhaseInfoPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseIntensityStatsPayload as BoundaryPhaseIntensityStatsPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseSegmentOut as BoundaryPhaseSegmentOut,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseSegmentSummaryPayload as BoundaryPhaseSegmentSummaryPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseSpeedBreakdownRow as BoundaryPhaseSpeedBreakdownRow,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseTimelineEntryPayload as BoundaryPhaseTimelineEntryPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    PlotDataResult as BoundaryPlotDataResult,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    RunSuitabilityCheck as BoundaryRunSuitabilityCheck,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    SpectrogramResult as BoundarySpectrogramResult,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    SpeedBreakdownRow as BoundarySpeedBreakdownRow,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    SpeedStatsPayload as BoundarySpeedStatsPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    StrengthBucketDistributionPayload as BoundaryStrengthBucketDistributionPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    SummaryWarningPayload as BoundarySummaryWarningPayload,
-)
-from vibesensor.shared.boundaries.analysis_payload import (
-    TestPlanStepPayload as BoundaryTestPlanStepPayload,
-)
 from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin as BoundarySuspectedVibrationOrigin,
+)
+from vibesensor.shared.types.analysis_views import (
+    AmpVsPhaseRow as BoundaryAmpVsPhaseRow,
+)
+from vibesensor.shared.types.analysis_views import (
+    FindingEvidenceMetrics as BoundaryFindingEvidenceMetrics,
+)
+from vibesensor.shared.types.analysis_views import (
+    FreqVsSpeedByFindingSeries as BoundaryFreqVsSpeedByFindingSeries,
+)
+from vibesensor.shared.types.analysis_views import (
+    LocationHotspotPayload as BoundaryLocationHotspotPayload,
+)
+from vibesensor.shared.types.analysis_views import (
+    MatchedAmpVsSpeedSeries as BoundaryMatchedAmpVsSpeedSeries,
+)
+from vibesensor.shared.types.analysis_views import (
+    MatchedPoint as BoundaryMatchedPoint,
+)
+from vibesensor.shared.types.analysis_views import (
+    PeakTableRow as BoundaryPeakTableRow,
+)
+from vibesensor.shared.types.analysis_views import (
+    PhaseBoundary as BoundaryPhaseBoundary,
+)
+from vibesensor.shared.types.analysis_views import (
+    PhaseEvidence as BoundaryPhaseEvidence,
+)
+from vibesensor.shared.types.analysis_views import (
+    PhaseSegmentOut as BoundaryPhaseSegmentOut,
+)
+from vibesensor.shared.types.analysis_views import (
+    PhaseSpeedBreakdownRow as BoundaryPhaseSpeedBreakdownRow,
+)
+from vibesensor.shared.types.analysis_views import (
+    PlotDataResult as BoundaryPlotDataResult,
+)
+from vibesensor.shared.types.analysis_views import (
+    SpectrogramResult as BoundarySpectrogramResult,
+)
+from vibesensor.shared.types.analysis_views import (
+    SpeedBreakdownRow as BoundarySpeedBreakdownRow,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    AmplitudeMetric as BoundaryAmplitudeMetric,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary as BoundaryAnalysisSummary,
@@ -206,7 +158,55 @@ from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummaryResponse as ApiAnalysisSummaryResponse,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityAccelSanityResponse as BoundaryDataQualityAccelSanityPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityOutliersResponse as BoundaryDataQualityOutliersPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityRequiredMissingPctResponse as BoundaryDataQualityRequiredMissingPctPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualityResponse as BoundaryDataQualityPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    DataQualitySpeedCoverageResponse as BoundaryDataQualitySpeedCoveragePayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
     FindingPayload as BoundaryFindingPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    LocationIntensitySummaryResponse as BoundaryLocationIntensitySummaryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    OutlierSummaryResponse as BoundaryOutlierSummaryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseInfoResponse as BoundaryPhaseInfoPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseIntensityStatsResponse as BoundaryPhaseIntensityStatsPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseSegmentSummaryResponse as BoundaryPhaseSegmentSummaryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    PhaseTimelineEntryResponse as BoundaryPhaseTimelineEntryPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    RunSuitabilityCheck as BoundaryRunSuitabilityCheck,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    SpeedStatsResponse as BoundarySpeedStatsPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    StrengthBucketDistributionResponse as BoundaryStrengthBucketDistributionPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    SummaryWarningResponse as BoundarySummaryWarningPayload,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
+    TestPlanStepResponse as BoundaryTestPlanStepPayload,
 )
 
 
