@@ -15,7 +15,6 @@ import vibesensor.use_cases.diagnostics.findings as findings_module
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.boundaries.analysis_payload import (
     AmplitudeMetric,
-    FindingPayload,
     MatchedPoint,
 )
 from vibesensor.shared.constants.analysis import (
@@ -23,6 +22,7 @@ from vibesensor.shared.constants.analysis import (
     CONFIDENCE_FLOOR,
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
+from vibesensor.shared.types.history_analysis_contracts import FindingPayload
 from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,

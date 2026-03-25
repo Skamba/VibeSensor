@@ -3740,7 +3740,7 @@
       },
       "FindingPayload": {
         "additionalProperties": false,
-        "description": "HTTP contract for one serialized finding in analysis history payloads.\n\nThis schema mirrors ``shared.boundaries.analysis_payload.FindingPayload``.\nIt intentionally includes a few presentation-oriented projections\n(``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,\nand the confidence label fields) alongside the domain-owned finding data.",
+        "description": "Canonical shared contract for one serialized finding payload.\n\nBoundary serializers and HTTP models should import this TypedDict directly\nso future field changes have one source of truth. It intentionally includes\na few presentation-oriented projections (``evidence_summary``,\n``frequency_hz_or_order``, ``amplitude_metric``, and the confidence label\nfields) alongside the domain-owned finding data.",
         "properties": {
           "amplitude_metric": {
             "$ref": "#/components/schemas/AmplitudeMetric"

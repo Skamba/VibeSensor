@@ -25,12 +25,12 @@ from vibesensor.domain.run_suitability import SuitabilityCheck
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.analysis_payload import (
     FindingEvidenceMetrics,
-    FindingPayload,
     LocationHotspotPayload,
     MatchedPoint,
     RunSuitabilityCheck,
 )
 from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
+from vibesensor.shared.types.history_analysis_contracts import FindingPayload
 
 
 def _dc_fields(cls: type) -> set[str]:
