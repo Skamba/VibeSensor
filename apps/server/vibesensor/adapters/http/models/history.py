@@ -114,6 +114,12 @@ class HistoryListResponse(BaseModel):
     runs: list[HistoryListEntryResponse]
 
 
+# Keep plain assignment so ``HistoryRunResponse.analysis`` can name a local HTTP
+# alias while preserving the shared ``AnalysisSummaryResponse`` runtime/schema
+# identity for OpenAPI generation.
+_HistoryRunAnalysisResponse = _SharedAnalysisSummaryResponse
+
+
 class HistoryRunResponse(_StrictBase):
     """Response body for a single history run with metadata and optional analysis."""
 
@@ -122,7 +128,7 @@ class HistoryRunResponse(_StrictBase):
     sample_count: int
     error_message: str | None = None
     metadata: ApiPayloadObject = Field(default_factory=dict)
-    analysis: _SharedAnalysisSummaryResponse | None = None
+    analysis: _HistoryRunAnalysisResponse | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):
