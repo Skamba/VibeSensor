@@ -41,8 +41,6 @@ class GPSTransportSnapshot:
     gps_enabled: bool
     connection_state: str
     speed_snapshot: tuple[float | None, float | None] = (None, None)
-    last_error: str | None = None
-    current_reconnect_delay: float = _GPS_RECONNECT_DELAY_S
     device_info: str | None = None
     last_fix_mode: int | None = None
     last_epx_m: float | None = None
@@ -51,23 +49,76 @@ class GPSTransportSnapshot:
     zero_speed_streak: int = 0
 
 
+@dataclass(frozen=True, slots=True)
+class GPSTransportLifecycleState:
+    """Reconnect/backoff state captured alongside the observational transport snapshot."""
+
+    last_error: str | None = None
+    current_reconnect_delay: float = _GPS_RECONNECT_DELAY_S
+
+
+@dataclass(frozen=True, slots=True)
+class GPSTransportCapturedState:
+    """Atomic GPS state handoff containing both observational and lifecycle snapshots."""
+
+    transport: GPSTransportSnapshot
+    lifecycle: GPSTransportLifecycleState
+
+
 class GPSTransportState:
     """Owns GPS transport state as immutable snapshots atomically swapped by writers."""
 
     def __init__(self, gps_enabled: bool):
-        self._snapshot = GPSTransportSnapshot(
-            gps_enabled=bool(gps_enabled),
-            connection_state="disabled" if not gps_enabled else "disconnected",
+        self._state = GPSTransportCapturedState(
+            transport=GPSTransportSnapshot(
+                gps_enabled=bool(gps_enabled),
+                connection_state="disabled" if not gps_enabled else "disconnected",
+            ),
+            lifecycle=GPSTransportLifecycleState(),
         )
 
     def snapshot(self) -> GPSTransportSnapshot:
-        return self._snapshot
+        return self._state.transport
+
+    def lifecycle_snapshot(self) -> GPSTransportLifecycleState:
+        return self._state.lifecycle
+
+    def captured_state(self) -> GPSTransportCapturedState:
+        return self._state
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, GPSTransportState) and self._snapshot == other._snapshot
+        return isinstance(other, GPSTransportState) and self._state == other._state
 
-    def _replace_snapshot(self, **changes: object) -> None:
-        self._snapshot = replace(self._snapshot, **cast(dict[str, Any], changes))
+    def _replace_transport(self, **changes: object) -> None:
+        self._state = replace(
+            self._state,
+            transport=replace(self._state.transport, **cast(dict[str, Any], changes)),
+        )
+
+    def _replace_lifecycle(self, **changes: object) -> None:
+        self._state = replace(
+            self._state,
+            lifecycle=replace(self._state.lifecycle, **cast(dict[str, Any], changes)),
+        )
+
+    def _replace_captured_state(
+        self,
+        *,
+        transport_changes: dict[str, object] | None = None,
+        lifecycle_changes: dict[str, object] | None = None,
+    ) -> None:
+        self._state = GPSTransportCapturedState(
+            transport=(
+                self._state.transport
+                if transport_changes is None
+                else replace(self._state.transport, **cast(dict[str, Any], transport_changes))
+            ),
+            lifecycle=(
+                self._state.lifecycle
+                if lifecycle_changes is None
+                else replace(self._state.lifecycle, **cast(dict[str, Any], lifecycle_changes))
+            ),
+        )
 
     @staticmethod
     def _normalize_optional_float(value: object) -> float | None:
@@ -103,14 +154,16 @@ class GPSTransportState:
         return True, 0
 
     def _mark_connected(self) -> None:
-        self._replace_snapshot(
-            connection_state="connected",
-            last_error=None,
-            current_reconnect_delay=_GPS_RECONNECT_DELAY_S,
+        self._replace_captured_state(
+            transport_changes={"connection_state": "connected"},
+            lifecycle_changes={
+                "last_error": None,
+                "current_reconnect_delay": _GPS_RECONNECT_DELAY_S,
+            },
         )
 
     def _mark_stream_disconnected(self) -> None:
-        self._replace_snapshot(
+        self._replace_transport(
             connection_state="disconnected",
             speed_snapshot=(None, None),
             last_fix_mode=None,
@@ -122,24 +175,27 @@ class GPSTransportState:
         )
 
     def _mark_connection_error(self, exc: BaseException, reconnect_delay: float) -> None:
-        self._replace_snapshot(
-            connection_state="disconnected",
-            speed_snapshot=(None, None),
-            last_fix_mode=None,
-            last_epx_m=None,
-            last_epy_m=None,
-            last_epv_m=None,
-            zero_speed_streak=0,
-            device_info=None,
-            last_error=str(exc) or type(exc).__name__,
-            current_reconnect_delay=reconnect_delay,
+        self._replace_captured_state(
+            transport_changes={
+                "connection_state": "disconnected",
+                "speed_snapshot": (None, None),
+                "last_fix_mode": None,
+                "last_epx_m": None,
+                "last_epy_m": None,
+                "last_epv_m": None,
+                "zero_speed_streak": 0,
+                "device_info": None,
+            },
+            lifecycle_changes={
+                "last_error": str(exc) or type(exc).__name__,
+                "current_reconnect_delay": reconnect_delay,
+            },
         )
 
     def set_enabled(self, enabled: bool) -> None:
-        snapshot = self._snapshot
+        snapshot = self._state.transport
         if not enabled:
-            self._snapshot = replace(
-                snapshot,
+            self._replace_transport(
                 gps_enabled=False,
                 connection_state="disabled",
                 speed_snapshot=(None, None),
@@ -147,17 +203,16 @@ class GPSTransportState:
             )
             return
         if snapshot.connection_state == "disabled":
-            self._snapshot = replace(
-                snapshot,
+            self._replace_transport(
                 gps_enabled=True,
                 connection_state="disconnected",
             )
             return
-        self._snapshot = replace(snapshot, gps_enabled=True)
+        self._replace_transport(gps_enabled=True)
 
     @property
     def gps_enabled(self) -> bool:
-        return self._snapshot.gps_enabled
+        return self._state.transport.gps_enabled
 
     @gps_enabled.setter
     def gps_enabled(self, value: bool) -> None:
@@ -165,104 +220,104 @@ class GPSTransportState:
 
     @property
     def connection_state(self) -> str:
-        return self._snapshot.connection_state
+        return self._state.transport.connection_state
 
     @connection_state.setter
     def connection_state(self, value: str) -> None:
-        self._replace_snapshot(connection_state=str(value))
+        self._replace_transport(connection_state=str(value))
 
     @property
     def speed_mps(self) -> float | None:
-        return self._snapshot.speed_snapshot[0]
+        return self._state.transport.speed_snapshot[0]
 
     @speed_mps.setter
     def speed_mps(self, value: float | None) -> None:
         if value is None or isinstance(value, bool) or not isinstance(value, NUMERIC_TYPES):
-            self._replace_snapshot(speed_snapshot=(None, None))
+            self._replace_transport(speed_snapshot=(None, None))
             return
         speed_f = float(value)
         if not math.isfinite(speed_f):
-            self._replace_snapshot(speed_snapshot=(None, None))
+            self._replace_transport(speed_snapshot=(None, None))
             return
-        self._replace_snapshot(speed_snapshot=(speed_f, time.monotonic()))
+        self._replace_transport(speed_snapshot=(speed_f, time.monotonic()))
 
     @property
     def _speed_snapshot(self) -> tuple[float | None, float | None]:
-        return self._snapshot.speed_snapshot
+        return self._state.transport.speed_snapshot
 
     @_speed_snapshot.setter
     def _speed_snapshot(self, value: tuple[float | None, float | None]) -> None:
-        self._replace_snapshot(speed_snapshot=self._normalize_speed_snapshot(value))
+        self._replace_transport(speed_snapshot=self._normalize_speed_snapshot(value))
 
     @property
     def last_update_ts(self) -> float | None:
-        return self._snapshot.speed_snapshot[1]
+        return self._state.transport.speed_snapshot[1]
 
     @property
     def last_error(self) -> str | None:
-        return self._snapshot.last_error
+        return self._state.lifecycle.last_error
 
     @last_error.setter
     def last_error(self, value: str | None) -> None:
-        self._replace_snapshot(last_error=(str(value) if value is not None else None))
+        self._replace_lifecycle(last_error=(str(value) if value is not None else None))
 
     @property
     def current_reconnect_delay(self) -> float:
-        return self._snapshot.current_reconnect_delay
+        return self._state.lifecycle.current_reconnect_delay
 
     @current_reconnect_delay.setter
     def current_reconnect_delay(self, value: float) -> None:
-        self._replace_snapshot(current_reconnect_delay=float(value))
+        self._replace_lifecycle(current_reconnect_delay=float(value))
 
     @property
     def device_info(self) -> str | None:
-        return self._snapshot.device_info
+        return self._state.transport.device_info
 
     @device_info.setter
     def device_info(self, value: str | None) -> None:
-        self._replace_snapshot(device_info=(str(value) if value is not None else None))
+        self._replace_transport(device_info=(str(value) if value is not None else None))
 
     @property
     def last_fix_mode(self) -> int | None:
-        return self._snapshot.last_fix_mode
+        return self._state.transport.last_fix_mode
 
     @last_fix_mode.setter
     def last_fix_mode(self, value: int | None) -> None:
-        self._replace_snapshot(
+        self._replace_transport(
             last_fix_mode=value if isinstance(value, int) and not isinstance(value, bool) else None
         )
 
     @property
     def last_epx_m(self) -> float | None:
-        return self._snapshot.last_epx_m
+        return self._state.transport.last_epx_m
 
     @last_epx_m.setter
     def last_epx_m(self, value: float | None) -> None:
-        self._replace_snapshot(last_epx_m=self._normalize_optional_float(value))
+        self._replace_transport(last_epx_m=self._normalize_optional_float(value))
 
     @property
     def last_epy_m(self) -> float | None:
-        return self._snapshot.last_epy_m
+        return self._state.transport.last_epy_m
 
     @last_epy_m.setter
     def last_epy_m(self, value: float | None) -> None:
-        self._replace_snapshot(last_epy_m=self._normalize_optional_float(value))
+        self._replace_transport(last_epy_m=self._normalize_optional_float(value))
 
     @property
     def last_epv_m(self) -> float | None:
-        return self._snapshot.last_epv_m
+        return self._state.transport.last_epv_m
 
     @last_epv_m.setter
     def last_epv_m(self, value: float | None) -> None:
-        self._replace_snapshot(last_epv_m=self._normalize_optional_float(value))
+        self._replace_transport(last_epv_m=self._normalize_optional_float(value))
 
     @property
     def _zero_speed_streak(self) -> int:
-        return self._snapshot.zero_speed_streak
+        return self._state.transport.zero_speed_streak
 
     @_zero_speed_streak.setter
     def _zero_speed_streak(self, value: int) -> None:
-        self._replace_snapshot(zero_speed_streak=max(0, int(value)))
+        self._replace_transport(zero_speed_streak=max(0, int(value)))
 
     @staticmethod
     def _read_non_negative_metric(payload: JsonObject, field: str) -> float | None:
@@ -281,12 +336,13 @@ class GPSTransportState:
         return None
 
     def _accept_speed_sample(self, speed_mps: float) -> bool:
-        accepted, zero_speed_streak = self._evaluate_speed_sample(self._snapshot, speed_mps)
-        self._replace_snapshot(zero_speed_streak=zero_speed_streak)
+        transport_snapshot = self._state.transport
+        accepted, zero_speed_streak = self._evaluate_speed_sample(transport_snapshot, speed_mps)
+        self._replace_transport(zero_speed_streak=zero_speed_streak)
         return accepted
 
     def _reset_fix_metadata(self) -> None:
-        self._replace_snapshot(
+        self._replace_transport(
             last_fix_mode=None,
             last_epx_m=None,
             last_epy_m=None,
@@ -322,7 +378,7 @@ class GPSTransportState:
     ) -> None:
         read_mode = self._tpv_mode if tpv_mode is None else tpv_mode
         metric_reader = self._read_non_negative_metric if read_metric is None else read_metric
-        snapshot = self._snapshot
+        snapshot = self._state.transport
 
         mode = read_mode(payload)
         speed_snapshot = snapshot.speed_snapshot
@@ -347,8 +403,7 @@ class GPSTransportState:
 
         device = payload.get("device")
         device_info = device if isinstance(device, str) and device else snapshot.device_info
-        self._snapshot = replace(
-            snapshot,
+        self._replace_transport(
             last_fix_mode=mode if isinstance(mode, int) else None,
             last_epx_m=metric_reader(payload, "epx"),
             last_epy_m=metric_reader(payload, "epy"),

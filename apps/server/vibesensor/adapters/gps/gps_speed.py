@@ -6,7 +6,11 @@ from typing import Literal
 
 from vibesensor.adapters.gps import gps_transport as _gps_transport
 from vibesensor.adapters.gps import speed_resolution as _speed_resolution
-from vibesensor.adapters.gps.gps_transport import GPSTransportSnapshot, GPSTransportState
+from vibesensor.adapters.gps.gps_transport import (
+    GPSTransportCapturedState,
+    GPSTransportSnapshot,
+    GPSTransportState,
+)
 from vibesensor.adapters.gps.speed_resolution import (
     SpeedResolution,
     SpeedResolutionPolicy,
@@ -255,8 +259,15 @@ class GPSSpeedMonitor:
     ) -> tuple[GPSTransportSnapshot, SpeedResolutionPolicySnapshot]:
         return self._transport.snapshot(), self._policy.snapshot()
 
+    def _captured_status_snapshots(
+        self,
+    ) -> tuple[GPSTransportCapturedState, SpeedResolutionPolicySnapshot]:
+        return self._transport.captured_state(), self._policy.snapshot()
+
     def status_snapshot(self) -> SpeedSourceStatusSnapshot:
-        transport_snapshot, policy_snapshot = self._captured_snapshots()
+        captured_state, policy_snapshot = self._captured_status_snapshots()
+        transport_snapshot = captured_state.transport
+        lifecycle_snapshot = captured_state.lifecycle
         speed_snapshot = transport_snapshot.speed_snapshot
         resolution = self._policy.resolve(
             gps_enabled=transport_snapshot.gps_enabled,
@@ -274,8 +285,8 @@ class GPSSpeedMonitor:
             last_epv_m=transport_snapshot.last_epv_m,
             raw_speed_mps=speed_snapshot[0],
             last_update_ts=speed_snapshot[1],
-            last_error=transport_snapshot.last_error,
-            current_reconnect_delay=transport_snapshot.current_reconnect_delay,
+            last_error=lifecycle_snapshot.last_error,
+            current_reconnect_delay=lifecycle_snapshot.current_reconnect_delay,
             stale_timeout_s=policy_snapshot.stale_timeout_s,
         )
         return build_status_snapshot(
