@@ -14,8 +14,5 @@ def analysis_settings_payload_from_request(
 ) -> AnalysisSettingsPayload:
     """Project a partial HTTP request body into the internal settings payload."""
     return analysis_settings_payload_from_mapping(
-        {
-            key: float(value)
-            for key, value in request.model_dump(exclude_none=True).items()
-        }
+        {key: float(value) for key, value in request.model_dump(exclude_none=True).items()}
     )
