@@ -28,7 +28,7 @@ def test_dispatch_data_message_logs_processing_error_without_parse_step(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     registry = Mock()
-    registry.update_from_data.side_effect = RuntimeError("boom")
+    registry.update_from_data.side_effect = ValueError("boom")
     processor = Mock()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
     proto.connection_made(fake_transport)

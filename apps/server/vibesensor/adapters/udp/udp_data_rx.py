@@ -111,12 +111,12 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             client_id = extract_client_id_hex(data)
             LOGGER.warning("DATA version mismatch from %s (client=%s): %s", addr, client_id, exc)
             self.registry.note_parse_error(client_id)
-            return
+            return None
         except ProtocolError as exc:
             client_id = extract_client_id_hex(data)
             LOGGER.debug("DATA parse error from %s (client=%s): %s", addr, client_id, exc)
             self.registry.note_parse_error(client_id)
-            return
+            return None
 
     def _dispatch_data_message(self, msg: DataMessage, addr: tuple[str, int]) -> None:
         client_id = msg.client_id.hex()
