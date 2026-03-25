@@ -11,9 +11,6 @@ from vibesensor.adapters.http.models.history import (
     AmpVsPhaseRow as ApiAmpVsPhaseRow,
 )
 from vibesensor.adapters.http.models.history import (
-    AnalysisSummaryResponse as ApiAnalysisSummaryResponse,
-)
-from vibesensor.adapters.http.models.history import (
     DataQualityAccelSanityResponse as ApiDataQualityAccelSanityResponse,
 )
 from vibesensor.adapters.http.models.history import (
@@ -206,6 +203,9 @@ from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary as BoundaryAnalysisSummary,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
+    AnalysisSummaryResponse as ApiAnalysisSummaryResponse,
+)
+from vibesensor.shared.types.history_analysis_contracts import (
     FindingPayload as BoundaryFindingPayload,
 )
 
@@ -315,3 +315,12 @@ def test_shared_analysis_history_shapes_have_single_owner_alias(
         f"{name} should be re-exported from one shared owner instead of "
         "duplicated across boundary and api_models.history modules"
     )
+
+
+def test_http_history_models_do_not_reexport_shared_summary_wrappers() -> None:
+    import vibesensor.adapters.http.models as http_models
+    import vibesensor.adapters.http.models.history as history_models
+
+    assert not hasattr(history_models, "AnalysisSummaryCoreResponse")
+    assert not hasattr(history_models, "AnalysisSummaryResponse")
+    assert not hasattr(http_models, "AnalysisSummaryResponse")
