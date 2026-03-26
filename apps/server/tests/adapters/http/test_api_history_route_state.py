@@ -100,6 +100,7 @@ async def test_history_insights_status_and_analysis_errors(
         assert payload.status_code == 202
         body = json.loads(payload.body)
         assert body["status"] == "analyzing"
+        assert body["run_id"] == "run-1"
         return
 
     with pytest.raises(HTTPException) as exc_info:
@@ -318,21 +319,3 @@ async def test_history_run_preserves_missing_optional_analysis_fields() -> None:
     assert "samples" not in payload
     assert "plots" not in payload
     assert "analysis_metadata" not in payload
-
-
-@pytest.mark.asyncio
-async def test_history_insights_analyzing_returns_202_json_response() -> None:
-    from fastapi.responses import JSONResponse
-
-    router = make_status_router(
-        status="analyzing",
-        analysis={"status": "analyzing"},
-        include_error_message=False,
-    )
-    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
-    result = await endpoint("run-1")
-    assert isinstance(result, JSONResponse)
-    assert result.status_code == 202
-    body = json.loads(result.body)
-    assert body["status"] == "analyzing"
-    assert body["run_id"] == "run-1"

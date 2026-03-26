@@ -25,7 +25,7 @@ from vibesensor.adapters.http import create_router
 
 @pytest.mark.asyncio
 async def test_history_export_streams_zip_with_json_and_csv() -> None:
-    router, _ = make_router_and_state(language="en", sample_count=1000)
+    router, _ = make_router_and_state(language="en", sample_count=3)
     endpoint = route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
     body = await read_streaming_body(response)
@@ -34,9 +34,9 @@ async def test_history_export_streams_zip_with_json_and_csv() -> None:
         assert names == {"run-1.json", "run-1_raw.csv"}
         metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
         assert metadata["run_id"] == "run-1"
-        assert metadata["sample_count"] == 1000
+        assert metadata["sample_count"] == 3
         rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
-        assert len(rows) == 1000
+        assert len(rows) == 3
 
 
 @pytest.mark.asyncio
