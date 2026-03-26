@@ -26,7 +26,7 @@ from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_fi
 
 def _minimal_summary(**overrides: object) -> dict[str, object]:
     """Build a minimal SummaryData dict with overrides."""
-    base: dict = {
+    base: dict[str, object] = {
         "file_name": "test",
         "run_id": "run-1",
         "rows": 10,

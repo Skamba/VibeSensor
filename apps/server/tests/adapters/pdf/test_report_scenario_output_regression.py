@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from test_support.core import standard_metadata
 from test_support.sample_scenarios import build_speed_sweep_samples, make_sample
 
@@ -32,7 +30,7 @@ class TestMultiSensorLocalization:
     """Multi-sensor runs should retain strongest-location evidence in summary output."""
 
     def test_multi_sensor_run(self) -> None:
-        samples: list[dict[str, Any]] = []
+        samples: list[dict[str, object]] = []
         tire_circumference = 2.036
         for idx in range(30):
             speed = 40.0 + idx * 2.0

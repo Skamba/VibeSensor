@@ -68,8 +68,8 @@ def _make_summary(
     speed_band: str = "60-70 km/h",
     sensor_count: int = 2,
     lang: str = "en",
-    test_plan: list[dict] | None = None,
-) -> dict:
+    test_plan: list[dict[str, object]] | None = None,
+) -> dict[str, object]:
     """Build a minimal summary dict for map_summary() testing."""
     finding = {
         "finding_id": "order_1x_wheel",

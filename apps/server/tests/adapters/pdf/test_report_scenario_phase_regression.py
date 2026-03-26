@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 from test_support.core import standard_metadata
 from test_support.sample_scenarios import (
@@ -90,7 +88,7 @@ class TestPhaseSegmentation:
     def test_diagnostic_mask(
         self,
         phases: list[DrivingPhase],
-        kwargs: dict[str, Any],
+        kwargs: dict[str, object],
         expected: list[bool],
     ) -> None:
         assert diagnostic_sample_mask(phases, **kwargs) == expected
