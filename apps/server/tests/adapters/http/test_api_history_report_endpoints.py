@@ -23,6 +23,10 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http import create_router
 
 
+def _pdf_text(body: bytes) -> str:
+    return "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(body)).pages).lower()
+
+
 @pytest.mark.asyncio
 async def test_history_insights_returns_persisted_analysis() -> None:
     router, _ = make_router_and_state(language="en")
@@ -60,10 +64,8 @@ async def test_report_pdf_respects_lang_query_with_persisted_report_template_dat
     assert nl.body.startswith(b"%PDF")
     assert en.body.startswith(b"%PDF")
 
-    nl_reader = PdfReader(BytesIO(nl.body))
-    en_reader = PdfReader(BytesIO(en.body))
-    nl_text = "\n".join(page.extract_text() or "" for page in nl_reader.pages).lower()
-    text_from_en_request = "\n".join(page.extract_text() or "" for page in en_reader.pages).lower()
+    nl_text = _pdf_text(nl.body)
+    text_from_en_request = _pdf_text(en.body)
     assert "diagnostisch werkformulier" in nl_text
     assert "diagnostisch werkformulier" in text_from_en_request
     assert "diagnostic worksheet" not in text_from_en_request
@@ -98,12 +100,8 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
 
     assert nl.body.startswith(b"%PDF")
     assert en.body.startswith(b"%PDF")
-    nl_text = "\n".join(
-        (page.extract_text() or "") for page in PdfReader(BytesIO(nl.body)).pages
-    ).lower()
-    text_from_en_request = "\n".join(
-        (page.extract_text() or "") for page in PdfReader(BytesIO(en.body)).pages
-    ).lower()
+    nl_text = _pdf_text(nl.body)
+    text_from_en_request = _pdf_text(en.body)
     assert "diagnostisch werkformulier" in nl_text
     assert "diagnostisch werkformulier" in text_from_en_request
     assert "diagnostic worksheet" not in text_from_en_request
