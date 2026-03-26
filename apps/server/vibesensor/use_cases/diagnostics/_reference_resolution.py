@@ -10,6 +10,7 @@ from ._types import AnalysisSampleInput, Sample, ensure_analysis_sample
 
 
 def _tire_reference_from_context(context: DiagnosticsContext) -> tuple[float | None, str | None]:
+    """Return the wheel reference circumference and the metadata source name."""
     spec = _order_reference_spec_from_context(context)
     if spec is not None and spec.supports_wheel_reference:
         return spec.tire_circumference_m, "order_reference_spec"
@@ -24,6 +25,7 @@ def _order_reference_spec_from_context(
     context: DiagnosticsContext,
     sample: Sample | None = None,
 ) -> OrderReferenceSpec | None:
+    """Return the effective order-reference spec for one optional sample override."""
     return context.effective_order_reference_spec(sample)
 
 
@@ -32,6 +34,7 @@ def _effective_engine_rpm(
     context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
+    """Resolve measured or inferred engine rpm plus the source label."""
     typed_sample = ensure_analysis_sample(sample)
     measured = typed_sample.engine_rpm
     if measured is not None and measured > 0:
