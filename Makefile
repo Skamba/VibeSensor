@@ -1,7 +1,9 @@
 .DEFAULT_GOAL := help
 .PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck test test-changed test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
 
-LINT_TARGETS := apps/server/vibesensor apps/server/tests tools
+SERVER_DIR := apps/server
+UI_DIR := apps/ui
+LINT_TARGETS := $(SERVER_DIR)/vibesensor $(SERVER_DIR)/tests tools
 CI_LITE_JOBS := --job backend-quality --job backend-typecheck --job frontend-typecheck --job ui-smoke --job release-smoke --job firmware-native-tests --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5
 PYTHON_VERSION := $(strip $(shell cat .python-version))
 PYTHON_MAJOR := $(word 1,$(subst ., ,$(PYTHON_VERSION)))
@@ -11,6 +13,8 @@ PYTHON_BOOTSTRAP := python$(PYTHON_MAJOR_MINOR)
 VENV_DIR := $(CURDIR)/.venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 
+# Prefer the repo venv after setup, but still allow bootstrap targets to run
+# against the pinned host interpreter before `.venv` exists.
 define RESOLVE_PYTHON
 PYTHON="$(VENV_PYTHON)"; \
 if [ ! -x "$$PYTHON" ]; then PYTHON="$(PYTHON_BOOTSTRAP)"; fi;
@@ -31,7 +35,7 @@ setup: ## Install backend dev dependencies and UI node_modules
 	@if [ ! -x "$(VENV_PYTHON)" ]; then "$(PYTHON_BOOTSTRAP)" -m venv "$(VENV_DIR)"; fi
 	"$(VENV_PYTHON)" -m pip install --upgrade pip
 	"$(VENV_PYTHON)" -m pip install -e "./apps/server[dev]"
-	cd apps/ui && npm ci
+	cd $(UI_DIR) && npm ci
 	git config --local core.hooksPath .githooks
 
 dev: ## Start the source-mounted Docker dev stack with backend reload + Vite HMR
@@ -46,17 +50,17 @@ lint: ## Run repo hygiene, static guards, docs lint, and contract drift checks
 	"$$PYTHON" -m ruff check $(LINT_TARGETS) && \
 	"$$PYTHON" -m ruff format --check $(LINT_TARGETS) && \
 	"$$PYTHON" tools/dev/check_hygiene.py && \
-	cd apps/server && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
-	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight apps/server/config.dev.yaml && \
-	"$$PYTHON" -m vibesensor.cli.preflight apps/server/config.docker.yaml && \
-	"$$PYTHON" -m vibesensor.cli.preflight apps/server/config.pi.yaml && \
+	cd $(SERVER_DIR) && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
+	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.dev.yaml && \
+	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.docker.yaml && \
+	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.pi.yaml && \
 	"$$PYTHON" tools/dev/docs_lint.py && \
 	"$$PYTHON" -m vibesensor.cli.ws_schema_export --check && \
 	"$$PYTHON" -m vibesensor.cli.http_api_schema_export --check
 
 typecheck-backend: ## Run backend mypy checks
 	@$(RESOLVE_PYTHON) \
-	cd apps/server && "$$PYTHON" -m mypy --config-file pyproject.toml
+	cd $(SERVER_DIR) && "$$PYTHON" -m mypy --config-file pyproject.toml
 
 typecheck: ## Run backend and UI type checks
 typecheck: typecheck-backend ui-typecheck
@@ -82,7 +86,7 @@ test-full-suite: ## Run the full Docker-backed end-to-end suite locally
 	"$$PYTHON" tools/tests/run_e2e_parallel.py --shards 1
 
 sync-contracts: ## Regenerate shared frontend HTTP/WS/contracts artifacts
-	cd apps/ui && npm run sync:contracts
+	cd $(UI_DIR) && npm run sync:contracts
 
 regen-contracts: ## Sync contracts and rebuild the contract reference doc
 regen-contracts: sync-contracts
@@ -91,7 +95,7 @@ regen-contracts: sync-contracts
 
 coverage: ## Run backend coverage with optional COV_OPTS overrides
 	@$(RESOLVE_PYTHON) \
-	cd apps/server && "$$PYTHON" -m pytest -q --cov=vibesensor --cov-report=term-missing:skip-covered $(COV_OPTS) tests
+	cd $(SERVER_DIR) && "$$PYTHON" -m pytest -q --cov=vibesensor --cov-report=term-missing:skip-covered $(COV_OPTS) tests
 
 smoke: ## Run simulator and websocket smoke checks against a local server
 	@$(RESOLVE_PYTHON) \
@@ -107,7 +111,7 @@ docs-lint: ## Run docs lint without the broader lint suite
 	"$$PYTHON" tools/dev/docs_lint.py
 
 ui-lint: ## Run UI lint checks
-	cd apps/ui && npm run lint
+	cd $(UI_DIR) && npm run lint
 
 ui-typecheck: ## Run UI contract freshness, lint, and TypeScript type checking
-	cd apps/ui && npm run check:contracts && npm run lint && npm run typecheck
+	cd $(UI_DIR) && npm run check:contracts && npm run lint && npm run typecheck
