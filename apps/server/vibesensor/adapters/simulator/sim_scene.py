@@ -16,37 +16,37 @@ _WHEEL_SLOT_ALIASES: dict[str, str] = {
 }
 
 
+def _normalize_wheel_slot(name: str) -> str | None:
+    normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
+    if normalized in _WHEEL_SLOT_ALIASES:
+        return _WHEEL_SLOT_ALIASES[normalized]
+    axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
+    side = "left" if "left" in normalized else "right" if "right" in normalized else None
+    if axle and side:
+        return f"{axle}-{side}"
+    return None
+
+
+def _cross_corner_coupling(source_name: str, sink_name: str) -> float:
+    source = _normalize_wheel_slot(source_name)
+    sink = _normalize_wheel_slot(sink_name)
+    if source is None or sink is None:
+        return 0.34
+    if source == sink:
+        return 1.0
+    source_axle, source_side = source.split("-", maxsplit=1)
+    sink_axle, sink_side = sink.split("-", maxsplit=1)
+    if source_side == sink_side and source_axle != sink_axle:
+        return 0.52
+    if source_axle == sink_axle and source_side != sink_side:
+        return 0.48
+    return 0.40
+
+
 class RoadSceneController:
     def __init__(self, clients: list[SimClient]):
         self.clients = clients
         self.rng = random.Random(2026)
-
-    @staticmethod
-    def _normalize_wheel_slot(name: str) -> str | None:
-        normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
-        if normalized in _WHEEL_SLOT_ALIASES:
-            return _WHEEL_SLOT_ALIASES[normalized]
-        axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
-        side = "left" if "left" in normalized else "right" if "right" in normalized else None
-        if axle and side:
-            return f"{axle}-{side}"
-        return None
-
-    @classmethod
-    def _cross_corner_coupling(cls, source_name: str, sink_name: str) -> float:
-        source = cls._normalize_wheel_slot(source_name)
-        sink = cls._normalize_wheel_slot(sink_name)
-        if source is None or sink is None:
-            return 0.34
-        if source == sink:
-            return 1.0
-        source_axle, source_side = source.split("-", maxsplit=1)
-        sink_axle, sink_side = sink.split("-", maxsplit=1)
-        if source_side == sink_side and source_axle != sink_axle:
-            return 0.52
-        if source_axle == sink_axle and source_side != sink_side:
-            return 0.48
-        return 0.40
 
     @staticmethod
     def _baseline_profile(name: str) -> str:
@@ -70,7 +70,7 @@ class RoadSceneController:
         active_name = self.clients[active_idx].name
         for i, client in enumerate(self.clients):
             client.scene_mode = "single"
-            coupling = self._cross_corner_coupling(active_name, client.name)
+            coupling = _cross_corner_coupling(active_name, client.name)
             if i == active_idx:
                 client.profile_name = "wheel_mild_imbalance"
                 client.scene_gain = self.rng.uniform(0.78, 1.05)
@@ -121,7 +121,7 @@ class RoadSceneController:
             client.scene_mode = "highway100-sync"
             client.profile_name = (
                 "wheel_mild_imbalance"
-                if self._normalize_wheel_slot(client.name) is not None
+                if _normalize_wheel_slot(client.name) is not None
                 else "rear_body"
             )
             client.scene_gain = self.rng.uniform(0.54, 0.78)
