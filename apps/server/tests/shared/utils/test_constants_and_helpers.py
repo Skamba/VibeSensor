@@ -36,28 +36,15 @@ def test_peak_constants_positive() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _spec_with_circumference(circ_m: float) -> OrderReferenceSpec:
-    """Build a minimal OrderReferenceSpec whose tire has the given circumference.
-
-    Uses a TireSpec with dimensions reverse-engineered to approximate the
-    requested circumference.  For test convenience only.
-    """
-    from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-
-    return OrderReferenceSpec.from_settings(
-        {**AnalysisSettingsSnapshot.DEFAULTS, "tire_circumference_m": circ_m},
-    )
-
-
-def _make_spec(circ_m: float) -> OrderReferenceSpec:
-    """Build a spec using defaults — circumference comes from real tire dims."""
+def _make_spec() -> OrderReferenceSpec:
+    """Build a spec using default analysis settings."""
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
     return OrderReferenceSpec.from_settings(AnalysisSettingsSnapshot.DEFAULTS)
 
 
 def test_wheel_hz_from_speed_kmh_basic() -> None:
-    spec = _make_spec(2.0)
+    spec = _make_spec()
     circ = spec.tire_circumference_m
     result = spec.wheel_hz_from_speed_kmh(100.0)
     assert result is not None
@@ -79,7 +66,7 @@ def test_wheel_hz_from_speed_kmh_basic() -> None:
     ],
 )
 def test_wheel_hz_returns_none_for_invalid_input(speed: float, func: str) -> None:
-    spec = _make_spec(2.0)
+    spec = _make_spec()
     if func == "kmh":
         assert spec.wheel_hz_from_speed_kmh(speed) is None
     else:
@@ -87,7 +74,7 @@ def test_wheel_hz_returns_none_for_invalid_input(speed: float, func: str) -> Non
 
 
 def test_wheel_hz_from_speed_mps_basic() -> None:
-    spec = _make_spec(2.0)
+    spec = _make_spec()
     circ = spec.tire_circumference_m
     result = spec.wheel_hz(27.78)
     assert result is not None
@@ -96,7 +83,7 @@ def test_wheel_hz_from_speed_mps_basic() -> None:
 
 def test_wheel_hz_mps_kmh_consistency() -> None:
     """Both wheel_hz helpers must agree for the same physical speed."""
-    spec = _make_spec(2.1)
+    spec = _make_spec()
     speed_kmh = 90.0
     speed_mps = speed_kmh * KMH_TO_MPS
     from_kmh = spec.wheel_hz_from_speed_kmh(speed_kmh)
@@ -112,7 +99,7 @@ def test_wheel_hz_mps_kmh_consistency() -> None:
 
 
 def test_engine_rpm_basic() -> None:
-    spec = _make_spec(2.0)
+    spec = _make_spec()
     wh = spec.wheel_hz(10.0 * spec.tire_circumference_m)
     assert wh is not None
     rpm = spec.engine_rpm_from_wheel_hz(wh)
