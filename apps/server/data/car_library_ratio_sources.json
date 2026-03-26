@@ -53,12 +53,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F20+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F20+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -123,12 +118,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F40+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F40+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -178,12 +168,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F22+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F22+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -249,12 +234,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G42+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G42+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -336,12 +316,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F45+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F45+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -405,12 +380,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F30+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F30+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -475,12 +445,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G20+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G20+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -543,12 +508,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F32+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F32+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -605,12 +565,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G22+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G22+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -658,12 +613,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F10+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F10+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -711,12 +661,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G30+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G30+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -779,12 +724,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G60+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G60+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -841,12 +781,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F06+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F06+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -898,12 +833,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G32+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G32+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -954,12 +884,7 @@
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F01+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F01+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1003,12 +928,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G11+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G11+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1071,12 +991,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G70+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G70+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1120,12 +1035,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G15+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G15+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1169,12 +1079,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G14+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G14+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1218,12 +1123,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G16+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G16+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1267,12 +1167,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F48+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F48+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1316,12 +1211,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=U11+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=U11+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1365,12 +1255,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F39+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F39+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1414,12 +1299,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=U10+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=U10+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1463,12 +1343,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F25+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F25+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1512,12 +1387,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G01+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G01+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1561,12 +1431,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G45+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G45+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1610,12 +1475,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F26+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F26+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1659,12 +1519,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G02+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G02+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1708,12 +1563,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F15+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F15+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1757,12 +1607,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G05+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G05+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1806,12 +1651,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F16+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F16+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1855,12 +1695,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G06+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G06+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1904,12 +1739,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G07+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G07+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -1953,12 +1783,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G29+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G29+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -2002,12 +1827,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F80+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F80+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -2051,12 +1871,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G80+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G80+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -2100,12 +1915,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F82+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F82+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -2149,12 +1959,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G82+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G82+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -2198,12 +2003,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=F90+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=F90+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -2247,12 +2047,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=I20+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=I20+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -2296,12 +2091,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G26+technical+data&language=en",
-            "note": "BMW Group official press search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search?query=G26+technical+data&language=en",
-            "note": "BMW Group official PressClub search for model-code technical data documents.",
+            "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
             "confidence": "medium"
           },
           {
@@ -2345,12 +2135,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=8X",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=8X",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2394,12 +2179,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=GB",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=GB",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2443,12 +2223,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=8V",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=8V",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2492,12 +2267,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=8Y",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=8Y",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2541,12 +2311,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=B8",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=B8",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2620,12 +2385,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=B8",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=B8",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2704,17 +2464,12 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=C7",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
             "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-s6-avant-c7-v8-comfort-for-every-journey-127765",
             "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=C7",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2758,17 +2513,12 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=C8",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
             "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-a6-avant-c8-modern-efficient-ready-for-any-destination-127766",
             "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=C8",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2812,17 +2562,12 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=C7",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
             "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-s6-avant-c7-v8-comfort-for-every-journey-127765",
             "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=C7",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2866,17 +2611,12 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=C8",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
             "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-a6-avant-c8-modern-efficient-ready-for-any-destination-127766",
             "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=C8",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2920,12 +2660,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=D4",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=D4",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -2969,12 +2704,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=D5",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=D5",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3018,7 +2748,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=GA",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3044,11 +2774,6 @@
           {
             "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-e-gas-plant-9865",
             "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=GA",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3092,12 +2817,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=8U",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=8U",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3141,12 +2861,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=F3",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=F3",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3190,12 +2905,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=8R",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=8R",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3269,12 +2979,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=4M",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=4M",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3318,12 +3023,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=4M8",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=4M8",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3367,12 +3067,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=8J",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=8J",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3416,12 +3111,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=8S",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=8S",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3465,12 +3155,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=4S",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=4S",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3514,12 +3199,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=8V%2F8Y",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=8V%2F8Y",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3563,12 +3243,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=B9",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=B9",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3612,12 +3287,7 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=B9",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=B9",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3661,17 +3331,12 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=C8",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
             "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-a6-avant-c8-modern-efficient-ready-for-any-destination-127766",
             "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=C8",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
             "confidence": "medium"
           },
           {
@@ -3715,17 +3380,12 @@
           },
           {
             "url": "https://www.audi-mediacenter.com/en/search?query=C8",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
+            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
           },
           {
             "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-a6-avant-c8-modern-efficient-ready-for-any-destination-127766",
             "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=C8",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
             "confidence": "medium"
           },
           {
