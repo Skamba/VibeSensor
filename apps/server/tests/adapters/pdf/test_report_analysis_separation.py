@@ -71,8 +71,7 @@ def test_report_package_imports_without_shared_report_interpretation() -> None:
         mod_path.stem: getattr(pdf_pkg, mod_path.stem, None) for mod_path in _REPORT_MODULES
     }
     saved_modules = {
-        name: sys.modules.get(name)
-        for name in [report_interpretation_helper, *pdf_module_names]
+        name: sys.modules.get(name) for name in [report_interpretation_helper, *pdf_module_names]
     }
 
     try:
