@@ -1,3 +1,5 @@
+"""CLI coverage for config preflight defaults, argument errors, and JSON output."""
+
 from __future__ import annotations
 
 import json
