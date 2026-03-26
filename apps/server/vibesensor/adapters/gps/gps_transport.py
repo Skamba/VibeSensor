@@ -176,45 +176,6 @@ class GPSTransportState:
             lifecycle_changes=lifecycle_changes or None,
         )
 
-    def _mark_connected(self) -> None:
-        self._replace_captured_state(
-            transport_changes={"connection_state": "connected"},
-            lifecycle_changes={
-                "last_error": None,
-                "current_reconnect_delay": _GPS_RECONNECT_DELAY_S,
-            },
-        )
-
-    def _mark_stream_disconnected(self) -> None:
-        self._replace_transport(
-            connection_state="disconnected",
-            speed_snapshot=(None, None),
-            last_fix_mode=None,
-            last_epx_m=None,
-            last_epy_m=None,
-            last_epv_m=None,
-            zero_speed_streak=0,
-            device_info=None,
-        )
-
-    def _mark_connection_error(self, exc: BaseException, reconnect_delay: float) -> None:
-        self._replace_captured_state(
-            transport_changes={
-                "connection_state": "disconnected",
-                "speed_snapshot": (None, None),
-                "last_fix_mode": None,
-                "last_epx_m": None,
-                "last_epy_m": None,
-                "last_epv_m": None,
-                "zero_speed_streak": 0,
-                "device_info": None,
-            },
-            lifecycle_changes={
-                "last_error": str(exc) or type(exc).__name__,
-                "current_reconnect_delay": reconnect_delay,
-            },
-        )
-
     def set_enabled(self, enabled: bool) -> None:
         snapshot = self._state.transport
         if not enabled:
