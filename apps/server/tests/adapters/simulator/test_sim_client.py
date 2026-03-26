@@ -1,3 +1,5 @@
+"""Deterministic frame-generation coverage for the simulator client."""
+
 from __future__ import annotations
 
 import numpy as np
