@@ -64,6 +64,8 @@ def _fill_sensor(
 
 
 class TestAnalysisTimeRange:
+    """Cover per-sensor time-window derivation before overlap is computed."""
+
     def test_empty_buffer_returns_none(self) -> None:
         proc = _make_processor()
         info = proc.time_alignment_info(["no_such_sensor"])
@@ -94,6 +96,8 @@ class TestAnalysisTimeRange:
 
 
 class TestTimeAlignmentInfoAligned:
+    """Verify multi-sensor windows are marked aligned when overlap stays sufficient."""
+
     def test_two_sensors_same_time(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", mono_time=100.0)
@@ -131,6 +135,8 @@ class TestTimeAlignmentInfoAligned:
 
 
 class TestTimeAlignmentInfoMisaligned:
+    """Verify stale or offset sensor windows report partial or zero alignment correctly."""
+
     def test_stale_sensor_not_aligned(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", mono_time=100.0)
@@ -167,6 +173,8 @@ class TestTimeAlignmentInfoMisaligned:
 
 
 class TestMultiSpectrumPayloadAlignment:
+    """Ensure multi-sensor spectrum payloads surface the expected alignment metadata."""
+
     def test_alignment_included_when_multiple_sensors(self) -> None:
         proc = _make_processor(sample_rate_hz=200, fft_n=128, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=300, mono_time=100.0)
@@ -202,6 +210,8 @@ class TestMultiSpectrumPayloadAlignment:
 
 
 class TestDriftSimulation:
+    """Cover drift and restart scenarios that should still surface sane alignment metadata."""
+
     def test_gradual_drift_stays_aligned(self) -> None:
         """Sensors ingesting data with small monotonic jitter remain aligned."""
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
@@ -230,6 +240,8 @@ class TestDriftSimulation:
 
 
 class TestCmdSyncClockProtocol:
+    """Verify the sync-clock UDP command round-trip and struct sizing stay consistent."""
+
     def test_pack_and_parse_sync_clock(self) -> None:
         from vibesensor.adapters.udp.protocol import (
             CMD_SYNC_CLOCK,
