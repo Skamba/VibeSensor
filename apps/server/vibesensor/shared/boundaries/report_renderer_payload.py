@@ -36,13 +36,17 @@ class PreparedReportRendererPayload:
 def build_report_renderer_payload(
     payload: Mapping[str, object],
 ) -> PreparedReportRendererPayload:
+    """Return the normalized renderer-edge payload derived from a report summary."""
     metadata = summary_metadata(payload)
     rows = payload.get("rows")
     sample_count = coerce_count(rows)
     sensor_count_raw = payload.get("sensor_count_used")
     sensor_count = coerce_count(sensor_count_raw)
     report_date = payload.get("report_date")
-    report_date_str = str(report_date).strip() or None if isinstance(report_date, str) else None
+    report_date_str = None
+    if isinstance(report_date, str):
+        normalized_report_date = report_date.strip()
+        report_date_str = normalized_report_date or None
     return PreparedReportRendererPayload(
         run_id=str(payload.get("run_id") or "unknown") or "unknown",
         car_name=str(metadata.get("car_name") or "").strip() or None,

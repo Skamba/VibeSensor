@@ -19,11 +19,13 @@ __all__ = [
 
 
 def summary_metadata(payload: Mapping[str, object]) -> Mapping[str, object]:
+    """Return the summary metadata mapping, or an empty mapping when absent."""
     metadata = payload.get("metadata")
     return metadata if isinstance(metadata, dict) else {}
 
 
 def active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:
+    """Return active sensor locations, preferring the connected-throughout list."""
     connected = payload.get("sensor_locations_connected_throughout")
     locations = connected if isinstance(connected, list) else []
     active = tuple(str(loc).strip() for loc in locations if str(loc).strip())
@@ -35,6 +37,7 @@ def active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:
 
 
 def report_duration_s(payload: Mapping[str, object]) -> float | None:
+    """Return a coerced report duration in seconds, or ``None`` for invalid input."""
     duration_s_raw = payload.get("duration_s")
     if duration_s_raw is None:
         return None
@@ -45,6 +48,7 @@ def report_duration_s(payload: Mapping[str, object]) -> float | None:
 
 
 def peak_table_rows(payload: Mapping[str, object]) -> tuple[PeakTableRow, ...]:
+    """Return normalized peak-table rows from the plots payload."""
     plots = payload.get("plots")
     if not isinstance(plots, Mapping):
         return ()
@@ -55,6 +59,7 @@ def peak_table_rows(payload: Mapping[str, object]) -> tuple[PeakTableRow, ...]:
 
 
 def sensor_intensity_payload(payload: Mapping[str, object]) -> tuple[object, ...]:
+    """Return the sensor-intensity payload as an immutable tuple copy."""
     raw_sensor_intensity = payload.get("sensor_intensity_by_location")
     if not isinstance(raw_sensor_intensity, list):
         return ()
@@ -62,6 +67,7 @@ def sensor_intensity_payload(payload: Mapping[str, object]) -> tuple[object, ...
 
 
 def coerce_count(value: object) -> int:
+    """Coerce count-like values to ``int``, defaulting invalid inputs to zero."""
     if value is None:
         return 0
     try:
