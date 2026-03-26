@@ -48,7 +48,11 @@ from vibesensor.vibration_strength import percentile
     ],
 )
 def test_as_float(value: object, expected: float | None) -> None:
-    assert _as_float(value) is expected if expected is None else _as_float(value) == expected
+    result = _as_float(value)
+    if expected is None:
+        assert result is None
+        return
+    assert result == expected
 
 
 # -- format_duration_mm_ss -----------------------------------------------------

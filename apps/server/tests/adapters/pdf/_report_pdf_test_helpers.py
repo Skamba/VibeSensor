@@ -1,3 +1,5 @@
+"""Shared PDF test helpers for sample generation and byte-level assertions."""
+
 from __future__ import annotations
 
 import re
