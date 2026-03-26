@@ -11,11 +11,6 @@ from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.orders.settings import ORDER_HEURISTIC_SETTINGS
 
 
-def _normalized_source(finding: DomainFinding) -> str:
-    src: str = finding.source_normalized
-    return src
-
-
 def detect_diffuse_excitation(
     connected_locations: set[str],
     possible_by_location: dict[str, int],
@@ -82,7 +77,7 @@ def suppress_engine_aliases(
         (
             finding.effective_confidence
             for _, finding in findings
-            if _normalized_source(finding) == VibrationSource.WHEEL_TIRE
+            if finding.source_normalized == VibrationSource.WHEEL_TIRE
         ),
         default=0.0,
     )
@@ -90,14 +85,14 @@ def suppress_engine_aliases(
         (
             score
             for score, finding in findings
-            if _normalized_source(finding) == VibrationSource.WHEEL_TIRE
+            if finding.source_normalized == VibrationSource.WHEEL_TIRE
         ),
         default=0.0,
     )
     if best_wheel_conf > 0:
         settings = ORDER_HEURISTIC_SETTINGS
         for index, (ranking_score, finding) in enumerate(findings):
-            if _normalized_source(finding) != VibrationSource.ENGINE:
+            if finding.source_normalized != VibrationSource.ENGINE:
                 continue
             if ranking_score >= best_wheel_ranking:
                 continue
