@@ -71,7 +71,6 @@ def test_low_speed_fault_not_rescued_when_highest_bin_poor() -> None:
             ("90-100 km/h", 8, 1),  # noise at highest bin
         ),
     )
-    # Highest bin (90-100) doesn’t qualify → no speed-band rescue
     # Highest bin (90-100) doesn't qualify → no speed-band rescue
     assert band is None
     assert eff == 0.20
@@ -93,7 +92,6 @@ def test_second_highest_bin_not_considered() -> None:
             ("90-100 km/h", 6, 1),  # poor – highest
         ),
     )
-    # Highest bin (90-100) doesn’t qualify → no rescue
     # Highest bin (90-100) doesn't qualify → no rescue
     assert band is None
     assert eff == 0.20
@@ -137,7 +135,6 @@ def test_only_highest_bin_evaluated() -> None:
             ("90-100 km/h", 6, 1),  # noise – highest
         ),
     )
-    # Highest bin (90-100) doesn’t qualify → no rescue
     # Highest bin (90-100) doesn't qualify → no rescue
     assert band is None
     assert eff == 0.20
