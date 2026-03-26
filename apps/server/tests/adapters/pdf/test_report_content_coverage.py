@@ -1,3 +1,5 @@
+"""Coverage tests for report content selection, labels, and rendered headings."""
+
 from __future__ import annotations
 
 import json
