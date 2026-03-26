@@ -1,8 +1,8 @@
 """FastAPI application factory and CLI entry point.
 
-Service construction lives in ``runtime/builders.py``.  Runtime coordination
-lives in the ``runtime/`` package.  This module creates the FastAPI app,
-wires the lifespan, and serves static assets.
+Service construction lives in ``container.py`` and runtime state lives in
+``runtime_state.py``. This module creates the FastAPI app, wires the lifespan,
+and serves static assets.
 """
 
 from __future__ import annotations
