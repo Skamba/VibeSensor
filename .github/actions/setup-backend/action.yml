@@ -23,7 +23,7 @@ runs:
         python -m pip install -e "./apps/server[dev]"
 
     - name: Install PlatformIO dependencies
+      # Keep firmware tooling opt-in so non-firmware jobs reuse the shared backend setup.
       if: ${{ inputs.include-platformio == 'true' }}
       shell: bash
-      run: |
-        python -m pip install "platformio>=6,<7"
+      run: python -m pip install "platformio>=6,<7"
