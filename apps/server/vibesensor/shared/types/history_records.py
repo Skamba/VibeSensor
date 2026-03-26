@@ -29,6 +29,7 @@ class HistoryRunListEntry:
     error_message: str | None = None
 
     def to_json_object(self) -> JsonObject:
+        """Serialize the list-entry record into a JSON-safe persistence payload."""
         payload: JsonObject = {
             "run_id": self.run_id,
             "status": self.status.value,
@@ -61,6 +62,7 @@ class StoredHistoryRun:
     analysis_completed_at: str | None = None
 
     def to_json_object(self) -> JsonObject:
+        """Serialize the full stored-run record into a JSON-safe payload."""
         payload: JsonObject = {
             "run_id": self.run_id,
             "status": self.status.value,
@@ -94,6 +96,7 @@ class AnalyzingRunHealth:
     analyzing_oldest_started_at: str | None = None
 
     def to_json_object(self) -> JsonObject:
+        """Serialize the analyzer-health snapshot into a JSON-safe payload."""
         payload: JsonObject = {
             "analyzing_run_count": self.analyzing_run_count,
             "analyzing_oldest_age_s": self.analyzing_oldest_age_s,
