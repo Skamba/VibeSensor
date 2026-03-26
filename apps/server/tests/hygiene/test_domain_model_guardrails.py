@@ -1,7 +1,6 @@
-"""Domain model guardrails — snapshot enum members, graph relationships,
-analysis machinery boundaries, and typed-concept conformance.
+"""Domain model guardrails for graph relationships and typed-concept conformance.
 
-Covers migration-plan items T02, T03, T05, T06, and T07.
+Covers the migration-plan seams that this file still enforces directly: T03 and T07.
 """
 
 from __future__ import annotations

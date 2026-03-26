@@ -1,3 +1,5 @@
+"""Guard diagnostic-case boundary ownership versus domain and use-case factories."""
+
 from __future__ import annotations
 
 from vibesensor.domain import Car, SpeedProfile, Symptom
