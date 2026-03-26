@@ -1,3 +1,5 @@
+"""Smoke guard for canonical vibration-strength metric fields in shared contracts."""
+
 from __future__ import annotations
 
 import math
