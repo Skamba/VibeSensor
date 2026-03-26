@@ -4,6 +4,10 @@ import type { AppFeatureBundle } from "../app_feature_bundle";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState } from "../ui_app_state";
 import {
+  createUiShellLanguageRefreshModule,
+  type UiShellLanguageRefreshModule,
+} from "./ui_shell_language_refresh_module";
+import {
   createUiShellNavigationModule,
   type UiShellNavigationModule,
 } from "./ui_shell_navigation_module";
@@ -37,6 +41,8 @@ export class UiShellController {
   private readonly preferences: UiShellPreferencesModule;
 
   private readonly status: UiShellStatusModule;
+
+  private readonly languageRefresh: UiShellLanguageRefreshModule;
 
   private features: AppFeatureBundle | null = null;
 
@@ -74,6 +80,16 @@ export class UiShellController {
       applyLanguage: (forceReloadInsights = false) => this.applyLanguage(forceReloadInsights),
       renderSpeedReadout: () => this.status.renderSpeedReadout(),
       showError: (message) => this.showError(message),
+    });
+    this.languageRefresh = createUiShellLanguageRefreshModule({
+      state: this.state,
+      els: this.els,
+      t: (key, vars) => this.t(key, vars),
+      renderSpeedReadout: () => this.renderSpeedReadout(),
+      renderWsState: () => this.renderWsState(),
+      renderCarSelectionWarning: () => this.renderCarSelectionWarning(),
+      renderSpectrum: () => this.renderSpectrumChart?.(),
+      updateSpectrumOverlay: () => this.updateSpectrumOverlayState?.(),
     });
   }
 
@@ -135,31 +151,7 @@ export class UiShellController {
   }
 
   applyLanguage(forceReloadInsights = false): void {
-    const features = this.requireFeatures();
-    document.documentElement.lang = this.state.shell.lang;
-    document.querySelectorAll("[data-i18n]").forEach((element) => {
-      const key = element.getAttribute("data-i18n");
-      if (key) element.textContent = this.t(key);
-    });
-    if (this.els.languageSelect) this.els.languageSelect.value = this.state.shell.lang;
-    if (this.els.speedUnitSelect) this.els.speedUnitSelect.value = this.state.shell.speedUnit;
-    this.state.realtime.locationOptions = features.realtime.buildLocationOptions(this.state.realtime.locationCodes);
-    this.state.realtime.sensorsSettingsSignature = "";
-    features.realtime.maybeRenderSensorsSettingsList(true);
-    this.renderSpeedReadout();
-    features.realtime.renderLoggingStatus();
-    features.history.renderHistoryTable();
-    this.renderWsState();
-    this.renderCarSelectionWarning();
-    if (this.state.spectrum.spectrumPlot) {
-      this.state.spectrum.spectrumPlot.destroy();
-      this.state.spectrum.spectrumPlot = null;
-      this.renderSpectrumChart?.();
-    }
-    if (forceReloadInsights) {
-      features.history.reloadExpandedRunOnLanguageChange();
-    }
-    this.updateSpectrumOverlayState?.();
+    this.languageRefresh.applyLanguage(this.requireFeatures(), forceReloadInsights);
   }
 
   bindUiEvents(): void {
