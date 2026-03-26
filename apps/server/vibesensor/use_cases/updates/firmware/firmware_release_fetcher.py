@@ -36,6 +36,8 @@ _FW_ASSET_SUFFIX = ".zip"
 
 
 def _coerce_release_asset_payload(raw: JsonObject) -> GitHubReleaseAssetPayload:
+    """Project a raw GitHub asset JSON object into the updater payload shape."""
+
     payload: GitHubReleaseAssetPayload = {}
     name = raw.get("name")
     url = raw.get("url")
@@ -47,6 +49,8 @@ def _coerce_release_asset_payload(raw: JsonObject) -> GitHubReleaseAssetPayload:
 
 
 def _coerce_release_payload(raw: JsonObject) -> GitHubReleasePayload:
+    """Project a raw GitHub release JSON object into the updater payload shape."""
+
     payload: GitHubReleasePayload = {}
     tag_name = raw.get("tag_name")
     if isinstance(tag_name, str):
@@ -166,6 +170,8 @@ class GitHubReleaseFetcher(GitHubAPIClient):
 
     @staticmethod
     def _release_has_firmware_asset(release: GitHubReleasePayload) -> bool:
+        """Return whether the release exposes at least one firmware bundle asset."""
+
         return any(
             is_firmware_asset_name(str(a.get("name", ""))) for a in release.get("assets", [])
         )

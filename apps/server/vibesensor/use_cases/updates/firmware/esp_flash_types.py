@@ -144,6 +144,8 @@ class EspFlashStatus:
     log_count: int = 0
 
     def to_dict(self) -> EspFlashStatusDict:
+        """Serialise the live flash-manager status for API responses."""
+
         return EspFlashStatusDict(
             state=self.state.value,
             phase=self.phase,

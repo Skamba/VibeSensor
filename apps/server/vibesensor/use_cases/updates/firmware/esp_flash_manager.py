@@ -34,12 +34,13 @@ LOGGER = logging.getLogger(__name__)
 _FLASH_HISTORY_LIMIT = 10
 _FLASH_STEP_TIMEOUT_S = 90
 _FLASH_LOG_MAX_LINES: int = 2000
-"""Maximum number of log lines retained for a single flash job."""
 _FLASH_LOG_TRIM_TO: int = 1000
-"""Number of most-recent log lines to keep after the log buffer is trimmed."""
+# Retain a bounded flash log buffer while keeping enough recent context for polling.
 
 
 def _esptool_base_cmd() -> list[str] | None:
+    """Return the preferred esptool invocation, or ``None`` when unavailable."""
+
     esptool = shutil.which("esptool.py")
     if esptool:
         return [esptool]
@@ -82,10 +83,14 @@ class EspFlashManager:
         return self._task
 
     async def list_ports(self) -> list[SerialPortInfoDict]:
+        """List currently detected serial ports in API-response form."""
+
         ports = await self._ports.list_ports()
         return [p.to_dict() for p in ports]
 
     def start(self, *, port: str | None, auto_detect: bool) -> int:
+        """Start a new flash job and return its monotonically increasing job id."""
+
         if self._task is not None and not self._task.done():
             raise UpdateError("Flash already in progress", status="conflict")
         self._job_counter += 1
@@ -104,12 +109,16 @@ class EspFlashManager:
         return self._job_counter
 
     def cancel(self) -> bool:
+        """Request cancellation for the active flash job, if one exists."""
+
         if self._task is None or self._task.done():
             return False
         self._cancel_event.set()
         return True
 
     def logs_since(self, after: int) -> FlashLogResponse:
+        """Return the retained flash log lines strictly after the requested index."""
+
         start = max(0, after)
         return FlashLogResponse(
             from_index=start,
@@ -118,9 +127,13 @@ class EspFlashManager:
         )
 
     def history(self) -> list[EspFlashHistoryEntryDict]:
+        """Return completed flash attempts newest-first for the HTTP API."""
+
         return [entry.to_dict() for entry in self._history]
 
     def _append_log(self, line: str) -> None:
+        """Append one log line while enforcing the bounded in-memory log buffer."""
+
         self._logs.append(line)
         if len(self._logs) > _FLASH_LOG_MAX_LINES:
             del self._logs[:-_FLASH_LOG_TRIM_TO]
@@ -135,6 +148,8 @@ class EspFlashManager:
         cwd: Path,
         timeout_s: float = _FLASH_STEP_TIMEOUT_S,
     ) -> int:
+        """Run one esptool phase, streaming its output into the job log."""
+
         self._status.phase = phase
         self._append_log(f"$ {' '.join(args)}")
         rc = await self._runner.run(
@@ -157,6 +172,8 @@ class EspFlashManager:
         return True
 
     def _finalize(self, *, state: EspFlashState, error: str | None = None) -> None:
+        """Store terminal job state and append a bounded history entry."""
+
         self._status.state = state
         self._status.error = error
         self._status.finished_at = time.time()
