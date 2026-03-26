@@ -1,3 +1,5 @@
+"""Regression tests for PDF rendering, layout, and header/footer text output."""
+
 from __future__ import annotations
 
 from io import BytesIO
@@ -9,6 +11,7 @@ from _report_pdf_test_helpers import (
 )
 from pypdf import PdfReader
 from reportlab.pdfgen.canvas import Canvas
+from test_support.core import extract_pdf_text
 from test_support.report_helpers import (
     RUN_END,
     write_jsonl,
@@ -91,7 +94,7 @@ def test_report_pdf_footer_contains_version_marker(tmp_path: Path, monkeypatch) 
     )
     marker = f"v{__version__} (a1b2c3d4)"
     reader = PdfReader(BytesIO(pdf))
-    text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
+    text_blob = extract_pdf_text(pdf)
     meta_blob = " ".join(
         str(value)
         for value in (
@@ -119,15 +122,10 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
-    text_blob = "\n".join(
-        (page.extract_text() or "")
-        for page in PdfReader(
-            BytesIO(
-                build_report_pdf(
-                    map_summary(prepare_report_input(summarize_log(run_path))),
-                )
-            )
-        ).pages
+    text_blob = extract_pdf_text(
+        build_report_pdf(
+            map_summary(prepare_report_input(summarize_log(run_path))),
+        ),
     )
     assert text_blob.count("Next steps") == 1
 
@@ -146,15 +144,10 @@ def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
         records.append(current_sample)
     records.append(RUN_END)
     write_jsonl(run_path, records)
-    text_blob = "\n".join(
-        (page.extract_text() or "")
-        for page in PdfReader(
-            BytesIO(
-                build_report_pdf(
-                    map_summary(prepare_report_input(summarize_log(run_path, lang="nl"))),
-                )
-            ),
-        ).pages
+    text_blob = extract_pdf_text(
+        build_report_pdf(
+            map_summary(prepare_report_input(summarize_log(run_path, lang="nl"))),
+        ),
     )
     assert "Duur:" in text_blob
     assert "Sensoren:" in text_blob
@@ -183,12 +176,7 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
     records.append(RUN_END)
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
-    text_blob = "\n".join(
-        (page.extract_text() or "")
-        for page in PdfReader(
-            BytesIO(build_report_pdf(map_summary(prepare_report_input(summary))))
-        ).pages
-    )
+    text_blob = extract_pdf_text(build_report_pdf(map_summary(prepare_report_input(summary))))
     assert "Firmware Version" in text_blob
     assert "esp-fw-1.2.3" in text_blob
 
