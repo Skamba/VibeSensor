@@ -4,11 +4,7 @@ from __future__ import annotations
 
 from vibesensor.domain import (
     Finding,
-)
-from vibesensor.domain import (
     RecommendedAction as DomainRecommendedAction,
-)
-from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
 from vibesensor.domain.test_plan import plan_test_actions
