@@ -1,3 +1,5 @@
+"""Coverage for WebSocket payload assembly and tick-driven payload reuse."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
