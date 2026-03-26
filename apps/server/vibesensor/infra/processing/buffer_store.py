@@ -25,6 +25,7 @@ from vibesensor.infra.processing.models import (
     ProcessorConfig,
     ProcessorStats,
 )
+from vibesensor.infra.processing.ring_buffer_ingest import apply_ring_buffer_ingest
 from vibesensor.infra.processing.snapshot_builder import (
     check_cache_hit,
     compute_snapshot_window,
@@ -37,8 +38,6 @@ from vibesensor.shared.types.payload_types import (
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 LOGGER = logging.getLogger(__name__)
-_MAX_SAMPLES_SINCE_T0 = 2**28
-"""Cap `samples_since_t0` so long sessions cannot grow the accumulator without bound."""
 
 
 class SignalBufferStore:
@@ -115,32 +114,9 @@ class SignalBufferStore:
                 chunk,
                 capacity=buf.capacity,
             )
-            n = overflow.keep_count
             dropped_samples = overflow.drop_count
-            capacity = buf.capacity
-
-            end = buf.write_idx + n
-            if end <= capacity:
-                buf.data[:, buf.write_idx : end] = chunk.T
-            else:
-                first = capacity - buf.write_idx
-                buf.data[:, buf.write_idx :] = chunk[:first].T
-                buf.data[:, : end % capacity] = chunk[first:].T
-
-            buf.write_idx = end % capacity
-            buf.count = min(capacity, buf.count + n)
-            if t0_us is not None and t0_us > 0:
-                next_t0_us = int(t0_us)
-                if next_t0_us > buf.last_t0_us:
-                    buf.last_t0_us = next_t0_us
-                    buf.samples_since_t0 = n
-                else:
-                    buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
-            else:
-                buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
-            buf.ingest_generation += 1
+            ingested_samples = apply_ring_buffer_ingest(buf, chunk, t0_us=t0_us)
             self._invalidate_cached_payloads_unlocked(buf)
-            ingested_samples = n
         with self.lock:
             self.stats.total_ingested_samples += ingested_samples
             self.stats.buffer_overflow_drops += dropped_samples
