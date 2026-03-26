@@ -8,4 +8,5 @@ __all__ = ["has_projectable_report_payload"]
 
 
 def has_projectable_report_payload(payload: Mapping[str, object]) -> bool:
+    """Return whether *payload* has the minimum shape needed for report projection."""
     return isinstance(payload.get("findings"), list) or isinstance(payload.get("top_causes"), list)
