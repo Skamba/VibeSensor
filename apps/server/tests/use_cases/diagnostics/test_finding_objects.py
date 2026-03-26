@@ -12,6 +12,25 @@ from vibesensor.use_cases.diagnostics.findings import PeakFindingAnalyzer, final
 # ===========================================================================
 
 
+def _peak_samples(
+    *,
+    hz: float = 50.0,
+    amp: float = 0.05,
+    vibration_strength_db: float = 25.0,
+    count: int = 30,
+) -> list[dict[str, float | str | list[dict[str, float]]]]:
+    return [
+        {
+            "speed_kmh": 60.0,
+            "t_s": float(i),
+            "top_peaks": [{"hz": hz, "amp": amp}],
+            "vibration_strength_db": vibration_strength_db,
+            "client_name": "sensor_fl",
+        }
+        for i in range(count)
+    ]
+
+
 class TestDomainFindingFromPayload:
     def test_finding_id(self) -> None:
         f = finding_from_payload(make_finding_payload(confidence=0.65))
@@ -111,18 +130,8 @@ class TestPeakFindingAnalyzer:
 
     def test_returns_findings(self) -> None:
         """Smoke test: samples with top peaks produce findings."""
-        samples = [
-            {
-                "speed_kmh": 60.0,
-                "t_s": float(i),
-                "top_peaks": [{"hz": 50.0, "amp": 0.05}],
-                "vibration_strength_db": 25.0,
-                "client_name": "sensor_fl",
-            }
-            for i in range(30)
-        ]
         analyzer = PeakFindingAnalyzer(
-            samples=samples,
+            samples=_peak_samples(),
             order_finding_freqs=set(),
             lang="en",
         )
@@ -134,16 +143,7 @@ class TestPeakFindingAnalyzer:
 
     def test_order_freq_exclusion(self) -> None:
         """Bins overlapping with order frequencies are excluded."""
-        samples = [
-            {
-                "speed_kmh": 60.0,
-                "t_s": float(i),
-                "top_peaks": [{"hz": 50.0, "amp": 0.05}],
-                "vibration_strength_db": 25.0,
-                "client_name": "sensor_fl",
-            }
-            for i in range(30)
-        ]
+        samples = _peak_samples()
         # With 50 Hz in order freqs → should be excluded
         analyzer_excluded = PeakFindingAnalyzer(
             samples=samples,
