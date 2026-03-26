@@ -7,9 +7,33 @@ sequencing used by all settings update paths.
 from __future__ import annotations
 
 from collections.abc import Callable
+from logging import Logger
 from threading import RLock
 
 from vibesensor.shared.exceptions import PersistenceError
+from vibesensor.shared.structured_logging import log_extra
+
+
+def log_settings_change(
+    logger: Logger,
+    *,
+    action: str,
+    before: object,
+    after: object,
+    **fields: object,
+) -> None:
+    """Emit a structured settings-change audit record for the supplied logger."""
+
+    logger.info(
+        "settings_change",
+        extra=log_extra(
+            event="settings_change",
+            settings_action=action,
+            before=before,
+            after=after,
+            **fields,
+        ),
+    )
 
 
 def update_with_rollback[SnapshotT, ResultT](
