@@ -16,7 +16,7 @@ from vibesensor.domain import Car
 from vibesensor.shared.types.car_config import car_to_persistence_dict
 
 
-def _variant_label(entry: dict, variant: dict) -> str:
+def _variant_label(entry: dict[str, object], variant: dict[str, object]) -> str:
     """Short label for assertion messages: ``'3 Series (G20) / 320i'``."""
     return f"{entry['model']} / {variant.get('name', '?')}"
 
