@@ -1,3 +1,5 @@
+"""BroadcastTickController coverage for tick flow, warnings, and backoff."""
+
 from __future__ import annotations
 
 import asyncio
