@@ -1,4 +1,3 @@
-# Manual refresh touch to prompt a Dependabot scan.
 version: 2
 updates:
   - package-ecosystem: pip
