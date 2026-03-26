@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 from typing import Any
 
-import pytest
 from test_support import (
     ALL_SENSORS,
     assert_summary_sections,
@@ -17,10 +16,6 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 
 
 class TestDualFaultTwoCorners:
-    @pytest.mark.xfail(
-        reason="Pipeline collapses same-order dual faults into single finding (GH-292)",
-        strict=False,
-    )
     def test_dual_fault_front_right_and_rear_left(self) -> None:
         samples: list[dict[str, Any]] = []
         whz = wheel_hz(80.0)
