@@ -7,6 +7,7 @@ import { createSettingsFeature, type SettingsFeature } from "./features/settings
 import { createUpdateFeature, type UpdateFeature } from "./features/update_feature";
 import type { AppState } from "./ui_app_state";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
+import { createUiRecordingHistoryRefresh } from "./runtime/ui_recording_history_refresh";
 import type { AdaptedClient } from "../server_payload";
 
 export interface AppFeatureBundle {
@@ -50,6 +51,9 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     fmtTs,
     formatInt,
   });
+  const recordingHistoryRefresh = createUiRecordingHistoryRefresh({
+    refreshHistory: () => history.refreshHistory(),
+  });
 
   const realtime = createRealtimeFeature({
     realtime: state.realtime,
@@ -62,7 +66,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     setPillState: deps.setPillState,
     setStatValue: deps.setStatValue,
     sendSelection: deps.sendSelection,
-    refreshHistory: () => history.refreshHistory(),
+    onRecordingStatusChanged: () => recordingHistoryRefresh.onRecordingStatusChanged(),
   });
 
   const settings = createSettingsFeature({
