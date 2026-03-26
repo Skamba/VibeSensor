@@ -45,6 +45,20 @@ def _sensor_intensity(p95: float) -> list[LocationIntensitySummary]:
     return [LocationIntensitySummary(location="front", p95_intensity_db=p95)]
 
 
+def _resolve_strength_db(
+    run: TestRun,
+    *,
+    sensor_intensity: list[LocationIntensitySummary],
+) -> float | None:
+    """Resolve report facts and return only the strength_db under test."""
+    return resolve_primary_report_facts(
+        aggregate=run,
+        origin_location="",
+        sensor_locations_active=["front"],
+        sensor_intensity=sensor_intensity,
+    ).strength_db
+
+
 # ---------------------------------------------------------------------------
 # Precedence tier 1: domain-derived strength takes priority
 # ---------------------------------------------------------------------------
@@ -53,14 +67,7 @@ def _sensor_intensity(p95: float) -> list[LocationIntensitySummary]:
 def test_domain_strength_takes_precedence_over_sensor_fallback() -> None:
     """When domain aggregate provides strength_db, sensor fallback is ignored."""
     run = _make_test_run(strength_db=25.0)
-    facts = resolve_primary_report_facts(
-        aggregate=run,
-        origin_location="",
-        sensor_locations_active=["front"],
-        sensor_intensity=_sensor_intensity(18.0),
-    )
-
-    assert facts.strength_db == 25.0
+    assert _resolve_strength_db(run, sensor_intensity=_sensor_intensity(18.0)) == 25.0
 
 
 # ---------------------------------------------------------------------------
@@ -71,14 +78,7 @@ def test_domain_strength_takes_precedence_over_sensor_fallback() -> None:
 def test_sensor_fallback_used_when_domain_strength_is_none() -> None:
     """When no finding has vibration_strength_db, sensor p95 is the fallback."""
     run = _make_test_run(strength_db=None)
-    facts = resolve_primary_report_facts(
-        aggregate=run,
-        origin_location="",
-        sensor_locations_active=["front"],
-        sensor_intensity=_sensor_intensity(18.0),
-    )
-
-    assert facts.strength_db == 18.0
+    assert _resolve_strength_db(run, sensor_intensity=_sensor_intensity(18.0)) == 18.0
 
 
 # ---------------------------------------------------------------------------
@@ -89,14 +89,7 @@ def test_sensor_fallback_used_when_domain_strength_is_none() -> None:
 def test_strength_db_is_none_when_both_sources_absent() -> None:
     """When neither domain nor sensor provides strength_db, result is None."""
     run = _make_test_run(strength_db=None)
-    facts = resolve_primary_report_facts(
-        aggregate=run,
-        origin_location="",
-        sensor_locations_active=["front"],
-        sensor_intensity=[],
-    )
-
-    assert facts.strength_db is None
+    assert _resolve_strength_db(run, sensor_intensity=[]) is None
 
 
 # ---------------------------------------------------------------------------
