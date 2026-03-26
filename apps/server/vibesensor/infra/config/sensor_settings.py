@@ -8,11 +8,11 @@ from threading import RLock
 
 from vibesensor.domain import Sensor, SensorPlacement, normalize_sensor_id
 from vibesensor.infra.config.car_settings import _clamp_str, _UpdateWithRollback
+from vibesensor.infra.config.settings_transaction import log_settings_change
 from vibesensor.infra.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
 )
-from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.sensor_config import (
     SensorConfig,
     SensorConfigUpdatePayload,
@@ -28,25 +28,6 @@ class SensorSettingsState:
     """Mutable sensor-settings state owned by ``SettingsStore``."""
 
     sensors: dict[str, SensorConfig] = field(default_factory=dict)
-
-
-def _log_sensor_settings_change(
-    *,
-    action: str,
-    before: object,
-    after: object,
-    **fields: object,
-) -> None:
-    LOGGER.info(
-        "settings_change",
-        extra=log_extra(
-            event="settings_change",
-            settings_action=action,
-            before=before,
-            after=after,
-            **fields,
-        ),
-    )
 
 
 class SensorSettingsService:
@@ -125,7 +106,8 @@ class SensorSettingsService:
             snapshot=self.sensor_configs_snapshot_unlocked,
             apply=_apply,
             restore=lambda previous: setattr(self._state, "sensors", previous),
-            audit_log=lambda previous: _log_sensor_settings_change(
+            audit_log=lambda previous: log_settings_change(
+                LOGGER,
                 action="set_sensor",
                 before=(
                     previous_sensor.to_dict()
@@ -151,7 +133,8 @@ class SensorSettingsService:
             snapshot=self.sensor_configs_snapshot_unlocked,
             apply=_apply,
             restore=lambda previous: setattr(self._state, "sensors", previous),
-            audit_log=lambda previous: _log_sensor_settings_change(
+            audit_log=lambda previous: log_settings_change(
+                LOGGER,
                 action="remove_sensor",
                 before=(
                     previous_sensor.to_dict()

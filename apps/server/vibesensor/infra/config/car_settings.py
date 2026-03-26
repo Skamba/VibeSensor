@@ -10,7 +10,7 @@ from typing import Protocol, TypeVar
 
 from vibesensor.domain import Car, CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.structured_logging import log_extra
+from vibesensor.infra.config.settings_transaction import log_settings_change
 from vibesensor.shared.types.car_config import (
     CarConfigUpdatePayload,
     CarsSnapshot,
@@ -57,25 +57,6 @@ def _car_payload(car: Car | None) -> dict[str, object] | None:
     if car is None:
         return None
     return dict(car_to_persistence_dict(car))
-
-
-def _log_car_settings_change(
-    *,
-    action: str,
-    before: object,
-    after: object,
-    **fields: object,
-) -> None:
-    LOGGER.info(
-        "settings_change",
-        extra=log_extra(
-            event="settings_change",
-            settings_action=action,
-            before=before,
-            after=after,
-            **fields,
-        ),
-    )
 
 
 class CarSettingsService:
@@ -148,7 +129,8 @@ class CarSettingsService:
             snapshot=lambda: self._state.active_car_id,
             apply=_apply,
             restore=lambda previous: setattr(self._state, "active_car_id", previous),
-            audit_log=lambda previous: _log_car_settings_change(
+            audit_log=lambda previous: log_settings_change(
+                LOGGER,
                 action="set_active_car",
                 before=previous,
                 after=self._state.active_car_id,
@@ -172,7 +154,8 @@ class CarSettingsService:
             snapshot=lambda: list(self._state.cars),
             apply=_apply,
             restore=lambda previous: setattr(self._state, "cars", previous),
-            audit_log=lambda _previous: _log_car_settings_change(
+            audit_log=lambda _previous: log_settings_change(
+                LOGGER,
                 action="add_car",
                 before=None,
                 after=_car_payload(self._find_car(created_car_id)),
@@ -224,7 +207,8 @@ class CarSettingsService:
             snapshot=lambda: list(self._state.cars),
             apply=_apply,
             restore=lambda previous: setattr(self._state, "cars", previous),
-            audit_log=lambda previous: _log_car_settings_change(
+            audit_log=lambda previous: log_settings_change(
+                LOGGER,
                 action="update_car",
                 before=_car_payload(next((car for car in previous if car.id == car_id), None)),
                 after=_car_payload(self._find_car(car_id)),
@@ -261,7 +245,8 @@ class CarSettingsService:
             snapshot=lambda: list(self._state.cars),
             apply=_apply,
             restore=lambda previous: setattr(self._state, "cars", previous),
-            audit_log=lambda previous: _log_car_settings_change(
+            audit_log=lambda previous: log_settings_change(
+                LOGGER,
                 action="update_active_car_aspects",
                 before=next(
                     (dict(car.aspects) for car in previous if car.id == self._state.active_car_id),
@@ -293,7 +278,8 @@ class CarSettingsService:
             snapshot=lambda: (list(self._state.cars), self._state.active_car_id),
             apply=_apply,
             restore=_restore,
-            audit_log=lambda previous: _log_car_settings_change(
+            audit_log=lambda previous: log_settings_change(
+                LOGGER,
                 action="delete_car",
                 before=_car_payload(next((car for car in previous[0] if car.id == car_id), None)),
                 after=None,
