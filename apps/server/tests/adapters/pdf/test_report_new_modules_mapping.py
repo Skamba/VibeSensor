@@ -20,7 +20,13 @@ from vibesensor.use_cases.diagnostics.summary_builder import (
 )
 
 
-def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: float) -> dict:
+def _sample(
+    idx: int,
+    *,
+    speed_kmh: float,
+    dominant_freq_hz: float,
+    peak_amp_g: float,
+) -> dict[str, object]:
     return _base_sample(
         idx,
         speed_kmh=speed_kmh,
@@ -52,7 +58,7 @@ def _origin_explanation(origin: VibrationOrigin) -> object:
 
 def test_map_summary_basic(tmp_path: Path) -> None:
     run_path = tmp_path / "map_summary.jsonl"
-    records: list[dict] = [_run_metadata(tire_circumference_m=2.2)]
+    records: list[dict[str, object]] = [_run_metadata(tire_circumference_m=2.2)]
     for idx in range(20):
         speed = 50 + idx
         wheel_hz = (speed * (1000.0 / 3600.0)) / 2.2

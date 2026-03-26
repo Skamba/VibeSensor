@@ -4,7 +4,7 @@ from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 
-_ORDER_TOP_CAUSE: dict = {
+_ORDER_TOP_CAUSE: dict[str, object] = {
     "finding_id": "F_ORDER",
     "suspected_source": "wheel/tire",
     "strongest_location": "front-left",
@@ -13,14 +13,18 @@ _ORDER_TOP_CAUSE: dict = {
     "signatures_observed": ["1x wheel order"],
 }
 
-_BASE_ORDER_FINDING: dict = {
+_BASE_ORDER_FINDING: dict[str, object] = {
     "finding_id": "F_ORDER",
     "amplitude_metric": {"value": 0.015, "units": "g"},
     "evidence_metrics": {"vibration_strength_db": 23.4},
 }
 
 
-def _summary_with_top_order(finding: dict, *, sensor_rows: list[dict] | None = None) -> dict:
+def _summary_with_top_order(
+    finding: dict[str, object],
+    *,
+    sensor_rows: list[dict[str, object]] | None = None,
+) -> dict[str, object]:
     return minimal_summary(
         top_causes=[_ORDER_TOP_CAUSE],
         findings=[finding],
