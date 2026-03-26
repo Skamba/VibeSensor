@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class UpdateReleaseCheck:
+    """Outcome of checking for a newer server release during updater execution."""
+
     release: ReleaseInfo | None
     latest_tag: str = ""
     failed: bool = False
