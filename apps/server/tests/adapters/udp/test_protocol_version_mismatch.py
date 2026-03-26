@@ -1,3 +1,5 @@
+"""Version-mismatch coverage across UDP packet parsers and datagram protocols."""
+
 from __future__ import annotations
 
 import logging
