@@ -27,11 +27,8 @@ LOGGER = logging.getLogger(__name__)
 
 _DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 
-# Shared download constants used by both server and firmware fetchers.
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
-"""Chunk size for streaming downloads.  Shared between
-:class:`ServerReleaseFetcher` and
-:class:`~vibesensor.use_cases.updates.firmware.firmware_release_fetcher.GitHubReleaseFetcher`."""
+# Shared chunk size for both server and firmware GitHub asset downloads.
 
 _HASH_CHUNK_BYTES = 65536  # 64 KB per hash update
 
@@ -65,6 +62,8 @@ class ReleaseInfo:
     published_at: str = ""
 
     def to_dict(self) -> dict[str, str]:
+        """Serialise discovered release metadata for status or debug output."""
+
         return {
             "tag": self.tag,
             "version": self.version,
@@ -84,6 +83,8 @@ class GitHubReleaseAsset:
 
     @classmethod
     def from_api_payload(cls, raw: object) -> GitHubReleaseAsset | None:
+        """Decode one GitHub asset payload into the typed helper model."""
+
         if not is_json_object(raw):
             return None
         name = raw.get("name")
@@ -105,6 +106,8 @@ class GitHubRelease:
 
     @classmethod
     def from_api_payload(cls, raw: object) -> GitHubRelease | None:
+        """Decode one GitHub release payload into the typed helper model."""
+
         if not is_json_object(raw):
             return None
         tag_name = raw.get("tag_name")
@@ -188,6 +191,8 @@ class ServerReleaseFetcher(GitHubAPIClient):
     _MAX_DOWNLOAD_MB = _MAX_DOWNLOAD_BYTES // (1024 * 1024)
 
     def _download_asset(self, url: str, dest: Path) -> None:
+        """Stream a release asset to disk with an upper size bound."""
+
         validate_https_url(url, context="release")
         headers = self._api_headers()
         headers["Accept"] = "application/octet-stream"
