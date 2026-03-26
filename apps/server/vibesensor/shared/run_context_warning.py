@@ -51,6 +51,7 @@ def build_summary_warnings(
 def normalize_run_context_warnings(
     warnings: RunContextWarningsInput,
 ) -> list[RunContextWarning]:
+    """Return normalized warning models from stored domain objects or JSON-shaped payloads."""
     if warnings is None:
         return []
     normalized: list[RunContextWarning] = []
