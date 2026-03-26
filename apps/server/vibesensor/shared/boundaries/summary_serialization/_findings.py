@@ -14,6 +14,7 @@ from vibesensor.shared.types.json_types import is_json_object
 
 
 def serialize_findings(findings: tuple[DomainFinding, ...]) -> list[FindingPayload]:
+    """Project domain findings into persisted summary payload dictionaries."""
     return [finding_payload_from_domain(finding) for finding in findings]
 
 
