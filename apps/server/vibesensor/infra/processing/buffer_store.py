@@ -18,7 +18,6 @@ from vibesensor.infra.processing.buffers import ClientBuffer
 from vibesensor.infra.processing.models import (
     CachedMetricsHit,
     ClientMetrics,
-    DebugSpectrumRequest,
     FloatArray,
     MetricsComputationResult,
     MetricsSnapshot,
@@ -32,8 +31,6 @@ from vibesensor.infra.processing.snapshot_builder import (
 )
 from vibesensor.shared.types.payload_types import (
     IntakeStatsPayload,
-    RawSamplesErrorPayload,
-    RawSamplesPayload,
 )
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
@@ -237,51 +234,6 @@ class SignalBufferStore:
                 if buf is not None and buf.latest_metrics:
                     result[cid] = buf.latest_metrics
             return result
-
-    def debug_request(self, client_id: str) -> DebugSpectrumRequest:
-        with self.locked_client_buffer(client_id) as buf:
-            if buf is None:
-                return DebugSpectrumRequest(
-                    client_id=client_id,
-                    sample_rate_hz=self.config.sample_rate_hz,
-                    count=0,
-                    fft_block=None,
-                )
-            sr = buf.sample_rate_hz or self.config.sample_rate_hz
-            if buf.count < self.config.fft_n:
-                return DebugSpectrumRequest(
-                    client_id=client_id,
-                    sample_rate_hz=sr,
-                    count=buf.count,
-                    fft_block=None,
-                )
-            return DebugSpectrumRequest(
-                client_id=client_id,
-                sample_rate_hz=sr,
-                count=buf.count,
-                fft_block=self.copy_latest(buf, self.config.fft_n),
-            )
-
-    def raw_samples(
-        self,
-        client_id: str,
-        *,
-        n_samples: int,
-    ) -> RawSamplesPayload | RawSamplesErrorPayload:
-        with self.locked_client_buffer(client_id) as buf:
-            if buf is None or buf.count == 0:
-                return {"error": "no data", "count": 0}
-            sr = buf.sample_rate_hz or self.config.sample_rate_hz
-            n = min(n_samples, buf.count)
-            block = self.copy_latest(buf, n)
-        return {
-            "client_id": client_id,
-            "sample_rate_hz": sr,
-            "n_samples": n,
-            "x": [float(v) for v in block[0].tolist()],
-            "y": [float(v) for v in block[1].tolist()],
-            "z": [float(v) for v in block[2].tolist()],
-        }
 
     def clients_with_recent_data(
         self,
