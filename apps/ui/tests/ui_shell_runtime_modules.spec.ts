@@ -3,6 +3,9 @@ import { expect, test } from "@playwright/test";
 import { createAppState } from "../src/app/ui_app_state";
 import type { UiDomElements } from "../src/app/ui_dom_registry";
 import {
+  createUiShellLanguageRefreshModule,
+} from "../src/app/runtime/ui_shell_language_refresh_module";
+import {
   DEFAULT_SHELL_VIEW_ID,
   createUiShellNavigationModule,
 } from "../src/app/runtime/ui_shell_navigation_module";
@@ -143,6 +146,15 @@ function createTextElement(): HTMLElement {
   } as unknown as HTMLElement;
 }
 
+function createI18nElement(key: string): Element {
+  return {
+    textContent: "",
+    getAttribute(name: string) {
+      return name === "data-i18n" ? key : null;
+    },
+  } as unknown as Element;
+}
+
 function createShellDeps(overrides?: Partial<UiDomElements>): {
   els: UiDomElements;
   dashboardView: HTMLElement;
@@ -211,6 +223,26 @@ function jsonResponse(body: unknown): Response {
 
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
+}
+
+function installShellDocument(elements: Element[]) {
+  const originalDocument = (globalThis as { document?: Document }).document;
+  const documentElement = { lang: "" } as HTMLElement;
+  (globalThis as { document?: Document }).document = {
+    documentElement,
+    querySelectorAll(selector: string) {
+      if (selector === "[data-i18n]") {
+        return elements;
+      }
+      return [];
+    },
+  } as unknown as Document;
+  return {
+    documentElement,
+    restore() {
+      (globalThis as { document?: Document }).document = originalDocument;
+    },
+  };
 }
 
 test.describe("createUiShellNavigationModule", () => {
@@ -463,5 +495,177 @@ test.describe("createUiShellStatusModule", () => {
     expect(speed.textContent).toContain("\"unit\":\"speed.unit.kmh\"");
     expect(carSelectionBanner.hidden).toBe(false);
     expect(carSelectionBanner.textContent).toContain("header.no_car_selected");
+  });
+});
+
+test.describe("createUiShellLanguageRefreshModule", () => {
+  test("applies the cross-feature language refresh sequence", () => {
+    const state = createAppState();
+    state.shell.lang = "nl";
+    state.shell.speedUnit = "mps";
+    state.realtime.locationCodes = ["front_left_wheel"];
+    state.realtime.sensorsSettingsSignature = "stale";
+    let destroyCalls = 0;
+    state.spectrum.spectrumPlot = {
+      destroy() {
+        destroyCalls += 1;
+      },
+    } as unknown as NonNullable<typeof state.spectrum.spectrumPlot>;
+
+    const { els, languageSelect, speedUnitSelect } = createShellDeps();
+    const documentHarness = installShellDocument([
+      createI18nElement("header.title"),
+      createI18nElement("nav.history"),
+    ]);
+    const i18nElements = documentHarness.documentElement
+      ? ((globalThis as { document?: Document }).document?.querySelectorAll("[data-i18n]") ?? [])
+      : [];
+
+    let renderSpeedReadoutCalls = 0;
+    let renderWsStateCalls = 0;
+    let renderCarSelectionWarningCalls = 0;
+    let renderSpectrumCalls = 0;
+    let updateSpectrumOverlayCalls = 0;
+    const portCalls: string[] = [];
+
+    const module = createUiShellLanguageRefreshModule({
+      state,
+      els,
+      t: testTranslation,
+      renderSpeedReadout: () => {
+        renderSpeedReadoutCalls += 1;
+      },
+      renderWsState: () => {
+        renderWsStateCalls += 1;
+      },
+      renderCarSelectionWarning: () => {
+        renderCarSelectionWarningCalls += 1;
+      },
+      renderSpectrum: () => {
+        renderSpectrumCalls += 1;
+      },
+      updateSpectrumOverlay: () => {
+        updateSpectrumOverlayCalls += 1;
+      },
+    });
+
+    try {
+      module.applyLanguage({
+        realtime: {
+          buildLocationOptions(codes) {
+            portCalls.push("buildLocationOptions");
+            return codes.map((code) => ({ code, label: `${code}-label` }));
+          },
+          maybeRenderSensorsSettingsList(force = false) {
+            portCalls.push(`maybeRenderSensorsSettingsList:${String(force)}`);
+          },
+          renderLoggingStatus() {
+            portCalls.push("renderLoggingStatus");
+          },
+        },
+        history: {
+          renderHistoryTable() {
+            portCalls.push("renderHistoryTable");
+          },
+          reloadExpandedRunOnLanguageChange() {
+            portCalls.push("reloadExpandedRunOnLanguageChange");
+          },
+        },
+      }, true);
+    } finally {
+      documentHarness.restore();
+    }
+
+    expect(documentHarness.documentElement.lang).toBe("nl");
+    expect(Array.from(i18nElements, (element) => element.textContent)).toEqual([
+      "header.title",
+      "nav.history",
+    ]);
+    expect(languageSelect.value).toBe("nl");
+    expect(speedUnitSelect.value).toBe("mps");
+    expect(state.realtime.locationOptions).toEqual([
+      { code: "front_left_wheel", label: "front_left_wheel-label" },
+    ]);
+    expect(state.realtime.sensorsSettingsSignature).toBe("");
+    expect(portCalls).toEqual([
+      "buildLocationOptions",
+      "maybeRenderSensorsSettingsList:true",
+      "renderLoggingStatus",
+      "renderHistoryTable",
+      "reloadExpandedRunOnLanguageChange",
+    ]);
+    expect(renderSpeedReadoutCalls).toBe(1);
+    expect(renderWsStateCalls).toBe(1);
+    expect(renderCarSelectionWarningCalls).toBe(1);
+    expect(destroyCalls).toBe(1);
+    expect(state.spectrum.spectrumPlot).toBeNull();
+    expect(renderSpectrumCalls).toBe(1);
+    expect(updateSpectrumOverlayCalls).toBe(1);
+  });
+
+  test("skips spectrum rebuild and history reload when not needed", () => {
+    const state = createAppState();
+    state.shell.lang = "en";
+    state.shell.speedUnit = "kmh";
+    state.realtime.locationCodes = ["rear_left_wheel"];
+    state.spectrum.spectrumPlot = null;
+
+    const { els } = createShellDeps();
+    const documentHarness = installShellDocument([createI18nElement("status.ready")]);
+
+    let renderSpectrumCalls = 0;
+    let updateSpectrumOverlayCalls = 0;
+    const portCalls: string[] = [];
+
+    const module = createUiShellLanguageRefreshModule({
+      state,
+      els,
+      t: testTranslation,
+      renderSpeedReadout: () => undefined,
+      renderWsState: () => undefined,
+      renderCarSelectionWarning: () => undefined,
+      renderSpectrum: () => {
+        renderSpectrumCalls += 1;
+      },
+      updateSpectrumOverlay: () => {
+        updateSpectrumOverlayCalls += 1;
+      },
+    });
+
+    try {
+      module.applyLanguage({
+        realtime: {
+          buildLocationOptions(codes) {
+            portCalls.push("buildLocationOptions");
+            return codes.map((code) => ({ code, label: code }));
+          },
+          maybeRenderSensorsSettingsList(force = false) {
+            portCalls.push(`maybeRenderSensorsSettingsList:${String(force)}`);
+          },
+          renderLoggingStatus() {
+            portCalls.push("renderLoggingStatus");
+          },
+        },
+        history: {
+          renderHistoryTable() {
+            portCalls.push("renderHistoryTable");
+          },
+          reloadExpandedRunOnLanguageChange() {
+            portCalls.push("reloadExpandedRunOnLanguageChange");
+          },
+        },
+      });
+    } finally {
+      documentHarness.restore();
+    }
+
+    expect(portCalls).toEqual([
+      "buildLocationOptions",
+      "maybeRenderSensorsSettingsList:true",
+      "renderLoggingStatus",
+      "renderHistoryTable",
+    ]);
+    expect(renderSpectrumCalls).toBe(0);
+    expect(updateSpectrumOverlayCalls).toBe(1);
   });
 });
