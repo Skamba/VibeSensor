@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 from urllib.request import Request
 
 from vibesensor.adapters.simulator.server_http import set_server_speed_override_kmh
 
 
 class _FakeResponse:
-    def __init__(self, payload: dict[str, Any]) -> None:
+    def __init__(self, payload: dict[str, object]) -> None:
         self._payload = payload
 
     def __enter__(self) -> _FakeResponse:
@@ -24,7 +23,7 @@ class _FakeResponse:
 
 
 def test_set_server_speed_override_uses_http_api_snake_case(monkeypatch) -> None:
-    captured: dict[str, Any] = {}
+    captured: dict[str, object] = {}
 
     def fake_urlopen(req: Request, timeout: float) -> _FakeResponse:
         captured["url"] = req.full_url
