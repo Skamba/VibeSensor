@@ -55,7 +55,7 @@ def _make_context(**overrides: object) -> ReportMappingContext:
 
 
 def _make_report(**overrides: object) -> Report:
-    defaults: dict = {
+    defaults: dict[str, object] = {
         "run_id": "run-001",
         "lang": "en",
         "car_name": None,
@@ -66,7 +66,7 @@ def _make_report(**overrides: object) -> Report:
 
 
 def _make_primary(**overrides: object) -> PrimaryCandidateContext:
-    defaults: dict = {
+    defaults: dict[str, object] = {
         "primary_candidate": None,
         "primary_source": "wheel/tire",
         "primary_system": "Wheel/Tire",
