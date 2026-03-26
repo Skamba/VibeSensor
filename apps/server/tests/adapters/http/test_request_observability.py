@@ -14,6 +14,10 @@ from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.shared.structured_logging import REQUEST_ID_HEADER
 
 
+def _log_record(caplog: pytest.LogCaptureFixture, message: str):
+    return next(rec for rec in caplog.records if rec.message == message)
+
+
 def test_request_logging_middleware_sets_response_header_and_logs_request(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -29,7 +33,7 @@ def test_request_logging_middleware_sets_response_header_and_logs_request(
             response = client.get("/ping")
 
     assert response.status_code == 200
-    request_log = next(rec for rec in caplog.records if rec.message == "http_request")
+    request_log = _log_record(caplog, "http_request")
     assert response.headers[REQUEST_ID_HEADER] == request_log.request_id
     assert request_log.method == "GET"
     assert request_log.path == "/ping"
@@ -52,7 +56,7 @@ def test_request_id_flows_into_settings_audit_logs(caplog: pytest.LogCaptureFixt
     assert response.status_code == 200
     assert response.headers[REQUEST_ID_HEADER] == "client-req-42"
 
-    request_log = next(rec for rec in caplog.records if rec.message == "http_request")
+    request_log = _log_record(caplog, "http_request")
     audit_log = next(
         rec
         for rec in caplog.records
@@ -79,7 +83,7 @@ def test_unhandled_errors_still_echo_request_id(caplog: pytest.LogCaptureFixture
 
     assert response.status_code == 500
     assert response.headers[REQUEST_ID_HEADER] == "failing-request"
-    failure_log = next(rec for rec in caplog.records if rec.message == "http_request_failed")
+    failure_log = _log_record(caplog, "http_request_failed")
     assert failure_log.request_id == "failing-request"
 
 
@@ -97,7 +101,7 @@ def test_http_exception_keeps_status_code_and_request_id(caplog: pytest.LogCaptu
 
     assert response.status_code == 418
     assert response.headers[REQUEST_ID_HEADER] == "teapot-request"
-    request_log = next(rec for rec in caplog.records if rec.message == "http_request")
+    request_log = _log_record(caplog, "http_request")
     assert request_log.request_id == "teapot-request"
     assert request_log.status_code == 418
     assert all(rec.message != "http_request_failed" for rec in caplog.records)
@@ -126,7 +130,7 @@ def test_request_validation_error_keeps_status_code_and_request_id(
 
     assert response.status_code == 422
     assert response.headers[REQUEST_ID_HEADER] == "validation-request"
-    request_log = next(rec for rec in caplog.records if rec.message == "http_request")
+    request_log = _log_record(caplog, "http_request")
     assert request_log.request_id == "validation-request"
     assert request_log.status_code == 422
     assert all(rec.message != "http_request_failed" for rec in caplog.records)
