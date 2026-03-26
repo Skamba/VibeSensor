@@ -178,7 +178,7 @@ def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult
 def _collect_health_for(
     tmp_path: Path,
     overrides: dict[tuple[str, ...], list[CommandResult]] | None = None,
-):
+) -> HealthState:
     """Create default AP config, apply response overrides, return health state."""
     ap = _ap_cfg(tmp_path)
     responses = _healthy_responses(ap)
@@ -306,7 +306,7 @@ def test_run_self_heal_restarts_networkmanager_when_stopped(tmp_path: Path) -> N
     responses[("systemctl", "restart", "NetworkManager")] = [_ok("")]
     runner = _FakeRunner(responses)
 
-    result = run_self_heal_once(
+    exit_code = run_self_heal_once(
         ap,
         ap.self_heal,
         runner,
@@ -314,7 +314,7 @@ def test_run_self_heal_restarts_networkmanager_when_stopped(tmp_path: Path) -> N
         diagnostics_only=False,
     )
 
-    assert result == 0
+    assert exit_code == 0
     assert ("systemctl", "restart", "NetworkManager") in runner.commands
 
 
@@ -360,8 +360,8 @@ def test_ensure_ap_connection_open_mode_recreates_without_security_keys(tmp_path
         },
     )
 
-    ok = _ensure_ap_connection(ap, runner)
-    assert ok
+    success = _ensure_ap_connection(ap, runner)
+    assert success
     assert ("nmcli", "connection", "delete", ap.con_name) in runner.commands
     assert _nmcli_modify_cmd(ap) in runner.commands
     assert "802-11-wireless-security.key-mgmt" not in _nmcli_modify_cmd(ap)
@@ -385,7 +385,7 @@ def test_run_self_heal_port53_conflict_disables_resolved_stub(tmp_path: Path) ->
     responses[("nmcli", "--wait", "12", "connection", "up", ap.con_name)] = [_ok(""), _ok("")]
     runner = _FakeRunner(responses)
 
-    result = run_self_heal_once(
+    exit_code = run_self_heal_once(
         ap,
         ap.self_heal,
         runner,
@@ -393,5 +393,5 @@ def test_run_self_heal_port53_conflict_disables_resolved_stub(tmp_path: Path) ->
         diagnostics_only=False,
     )
 
-    assert result == 0
+    assert exit_code == 0
     assert ("systemctl", "restart", "systemd-resolved") in runner.commands
