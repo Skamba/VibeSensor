@@ -53,6 +53,8 @@ def _make_control_plane() -> UDPControlPlane:
 
 
 class TestRemoveSensorRollback:
+    """Verify sensor removal rolls back in-memory state when persistence fails."""
+
     def test_remove_sensor_rolls_back_on_persist_failure(self) -> None:
         store = _make_store_with_sensor()
         assert "aabbccddeeff" in store.get_sensors()
@@ -83,6 +85,8 @@ class TestRemoveSensorRollback:
 
 
 class TestNonWheelTokensModuleLevel:
+    """Verify non-wheel classification tokens stay module-scoped and effective."""
+
     def test_non_wheel_tokens_is_module_constant(self) -> None:
         assert hasattr(locations_mod, "_NON_WHEEL_TOKENS")
         assert isinstance(locations_mod._NON_WHEEL_TOKENS, tuple)
@@ -107,6 +111,8 @@ class TestNonWheelTokensModuleLevel:
 
 
 class TestResolveSpeedAtomicSnapshot:
+    """Verify GPS speed resolution reads from and updates the atomic snapshot."""
+
     def test_speed_mps_property_reads_from_snapshot(self) -> None:
         m = _make_gps_monitor()
         assert m.speed_mps is None
@@ -147,6 +153,8 @@ class TestResolveSpeedAtomicSnapshot:
 
 
 class TestCarLibraryCopies:
+    """Verify car-library query helpers return copies rather than mutable internals."""
+
     def test_get_models_returns_copies(self) -> None:
         if not CAR_LIBRARY:
             pytest.skip("No car library data loaded")
@@ -182,6 +190,8 @@ class TestCarLibraryCopies:
 
 
 class TestCmdSeqLock:
+    """Verify UDP control sequence generation remains lock-protected and monotonic."""
+
     def test_udp_control_plane_has_cmd_seq_lock(self) -> None:
         cp = _make_control_plane()
         assert hasattr(cp, "_cmd_seq_lock")
@@ -202,6 +212,8 @@ class TestCmdSeqLock:
 
 
 class TestWSDebugLazy:
+    """Verify WebSocket debug mode is determined from the environment at call time."""
+
     def test_ws_debug_function_exists(self) -> None:
         assert callable(_ws_debug_enabled)
 
@@ -227,6 +239,8 @@ class TestWSDebugLazy:
 
 
 class TestWorkerPoolAliveProtection:
+    """Verify WorkerPool shutdown state is enforced through the locked alive flag."""
+
     def test_submit_checks_alive_under_lock(self) -> None:
         pool = WorkerPool(max_workers=1)
         pool.shutdown()
@@ -247,6 +261,8 @@ class TestWorkerPoolAliveProtection:
 
 
 class TestAsFloatOrNoneImport:
+    """Verify order-band float parsing remains exposed without extra alias layers."""
+
     def test_as_float_or_none_accessible_from_order_bands(self) -> None:
         assert order_bands_as_float_or_none(3.14) == 3.14
         assert order_bands_as_float_or_none(None) is None
@@ -258,6 +274,8 @@ class TestAsFloatOrNoneImport:
 
 
 class TestUdpControlTxAll:
+    """Verify udp_control_tx keeps the intended public __all__ surface."""
+
     def test_has_all_export(self) -> None:
         assert hasattr(udp_control_tx_mod, "__all__")
         assert "UDPControlPlane" in udp_control_tx_mod.__all__
