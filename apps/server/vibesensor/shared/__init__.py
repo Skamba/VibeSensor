@@ -1,4 +1,4 @@
-"""Cross-cutting shared server helpers."""
+"""Cross-cutting shared helpers and protocol-style ports used across the server."""
 
 from vibesensor.shared.ports import (
     ClientTracker,
