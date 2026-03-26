@@ -38,6 +38,14 @@ export type AdaptedPayload = {
   } | null;
 };
 
+function hasCompleteSpectrumData(
+  freq: number[],
+  combined: number[],
+  strengthMetrics: SpectrumClientData["strength_metrics"] | null,
+): strengthMetrics is NonNullable<SpectrumClientData["strength_metrics"]> {
+  return freq.length > 0 && combined.length > 0 && strengthMetrics !== null && freq.length === combined.length;
+}
+
 function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectra"] | null {
   if (!spectra?.clients) return null;
   const sharedFreq = spectra.freq ?? [];
@@ -48,7 +56,7 @@ function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectr
     const freq = rawPerClientFreq.length > 0 ? rawPerClientFreq : sharedFreq;
     const combined = spectrum.combined_spectrum_amp_g ?? [];
     const strengthMetrics = spectrum.strength_metrics ?? null;
-    if (!freq.length || !combined.length || strengthMetrics === null || freq.length !== combined.length) {
+    if (!hasCompleteSpectrumData(freq, combined, strengthMetrics)) {
       continue;
     }
     adaptedClients[clientId] = {
