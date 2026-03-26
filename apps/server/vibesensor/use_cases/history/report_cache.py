@@ -25,6 +25,7 @@ class HistoryReportPdfCache:
         self._locks: dict[ReportPdfCacheKey, asyncio.Lock] = {}
 
     def get(self, cache_key: ReportPdfCacheKey) -> bytes | None:
+        """Return a cached PDF and refresh its LRU position."""
         cached_pdf = self._entries.get(cache_key)
         if cached_pdf is None:
             return None
@@ -38,6 +39,7 @@ class HistoryReportPdfCache:
         *,
         run_id: str,
     ) -> bytes:
+        """Reuse or build a cached PDF while serializing concurrent builds per key."""
         build_lock = self._locks.setdefault(cache_key, asyncio.Lock())
         async with build_lock:
             cached_pdf = self.get(cache_key)
@@ -56,6 +58,7 @@ class HistoryReportPdfCache:
             return pdf
 
     def _put(self, cache_key: ReportPdfCacheKey, pdf: bytes) -> None:
+        """Insert a PDF into the LRU cache and prune related coordination state."""
         self._entries[cache_key] = pdf
         self._entries.move_to_end(cache_key)
         while len(self._entries) > REPORT_PDF_CACHE_MAX_ENTRIES:
@@ -64,6 +67,7 @@ class HistoryReportPdfCache:
         self._prune_stale_locks()
 
     def _prune_stale_locks(self) -> None:
+        """Drop unlocked coordination locks whose cache entries were already evicted."""
         if len(self._locks) > REPORT_PDF_CACHE_MAX_ENTRIES * 2:
             stale_keys = [
                 key

@@ -61,17 +61,18 @@ class HistoryReportRequestLoader:
             raise AnalysisNotReadyError("No analysis available for this run")
 
         requested_lang = self._analysis_language(run, requested_lang)
+        report_language = self._report_pdf_cache_lang(run, requested_lang)
         raw_warnings = analysis.get("warnings")
         warnings = raw_warnings if is_json_array(raw_warnings) else None
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
-            self._report_pdf_cache_lang(run, requested_lang),
+            report_language,
         )
         return HistoryReportRequest(
             cache_key=cache_key,
             filename=f"{safe_filename(run_id)}_report.pdf",
-            language=self._report_pdf_cache_lang(run, requested_lang),
+            language=report_language,
             analysis=analysis,
             warnings=warnings,
         )
