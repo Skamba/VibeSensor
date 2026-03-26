@@ -288,9 +288,12 @@ class TestSensorFrame:
         base.update(overrides)
         return base
 
+    def _frame(self, **overrides: Any) -> SensorFrame:
+        return SensorFrame.from_dict(self._minimal_record(**overrides))
+
     @pytest.mark.smoke
     def test_from_dict_basic(self) -> None:
-        sf = SensorFrame.from_dict(self._minimal_record())
+        sf = self._frame()
         assert sf.run_id == "run1"
         assert sf.speed_kmh == 80.0
         assert sf.accel_x_g == 0.02
@@ -298,30 +301,28 @@ class TestSensorFrame:
 
     def test_nan_fields_replaced_with_none(self) -> None:
         """NaN in numeric fields should be normalized to None."""
-        sf = SensorFrame.from_dict(
-            self._minimal_record(
-                speed_kmh=float("nan"),
-                accel_x_g=float("inf"),
-            ),
+        sf = self._frame(
+            speed_kmh=float("nan"),
+            accel_x_g=float("inf"),
         )
         assert sf.speed_kmh is None
         assert sf.accel_x_g is None
 
     def test_vibration_strength_db_zero_preserved(self) -> None:
         """0.0 is a valid measurement (signal at noise floor) and must not become None."""
-        sf = SensorFrame.from_dict(self._minimal_record(vibration_strength_db=0.0))
+        sf = self._frame(vibration_strength_db=0.0)
         assert sf.vibration_strength_db == 0.0
 
     def test_vibration_strength_db_zero_roundtrip(self) -> None:
         """0.0 must survive from_dict → to_dict → from_dict."""
-        sf = SensorFrame.from_dict(self._minimal_record(vibration_strength_db=0.0))
+        sf = self._frame(vibration_strength_db=0.0)
         d = sf.to_dict()
         sf2 = SensorFrame.from_dict(d)
         assert sf2.vibration_strength_db == 0.0
 
     def test_top_peaks_normalized(self) -> None:
         """Invalid peaks (hz<=0, None amp) are filtered out."""
-        record = self._minimal_record(
+        sf = self._frame(
             top_peaks=[
                 {"hz": 25.0, "amp": 0.05},
                 {"hz": -1.0, "amp": 0.03},  # negative hz
@@ -329,19 +330,16 @@ class TestSensorFrame:
                 {"hz": 0.0, "amp": 0.01},  # zero hz
             ],
         )
-        sf = SensorFrame.from_dict(record)
         assert len(sf.top_peaks) == 1
         assert sf.top_peaks[0] == StrengthPeak(hz=25.0, amp=0.05)
 
     def test_top_peaks_capped_at_10(self) -> None:
         peaks = [{"hz": float(i + 1), "amp": 0.01} for i in range(20)]
-        sf = SensorFrame.from_dict(self._minimal_record(top_peaks=peaks))
+        sf = self._frame(top_peaks=peaks)
         assert len(sf.top_peaks) <= 10
 
     def test_roundtrip(self) -> None:
-        sf = SensorFrame.from_dict(
-            self._minimal_record(),
-        )
+        sf = self._frame()
         d = sf.to_dict()
         sf2 = SensorFrame.from_dict(d)
         assert sf2.run_id == sf.run_id
