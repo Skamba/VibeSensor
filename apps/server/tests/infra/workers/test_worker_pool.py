@@ -46,6 +46,8 @@ def make_pool():
 
 
 class TestWorkerPool:
+    """Cover WorkerPool batching, saturation, shutdown, and thread-usage behavior."""
+
     def test_map_unordered_basic(self, make_pool) -> None:
         pool = make_pool(max_workers=2, thread_name_prefix="test")
         result = pool.map_unordered(lambda x: x * 2, [1, 2, 3, 4])
@@ -223,6 +225,8 @@ def _inject_test_signal(
 
 
 class TestParallelComputeAll:
+    """Cover parallel compute_all parity, concurrency safety, and timing counters."""
+
     def test_single_client_no_pool(self) -> None:
         """Single-client path should work without a pool."""
         proc = _make_processor(pool=None)
