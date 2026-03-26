@@ -1,3 +1,5 @@
+"""Tests for serializing summary data-quality payloads from typed inputs."""
+
 from __future__ import annotations
 
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
