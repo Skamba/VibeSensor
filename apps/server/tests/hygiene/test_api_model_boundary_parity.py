@@ -1,3 +1,5 @@
+"""Guard shared analysis/history TypedDict ownership between HTTP and boundary layers."""
+
 from __future__ import annotations
 
 from typing import Protocol

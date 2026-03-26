@@ -1,3 +1,5 @@
+"""Smoke guards for critical AI-facing runtime and image-build entrypoints."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
