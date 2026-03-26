@@ -11,40 +11,40 @@ from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
 
 def test_gps_used_as_fallback_when_no_override() -> None:
-    m = GPSSpeedMonitor(gps_enabled=True)
-    m.speed_mps = 10.0
-    set_gps_snapshot_age(m)  # mark GPS data as fresh
-    assert m.effective_speed_mps == 10.0
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+    monitor.speed_mps = 10.0
+    set_gps_snapshot_age(monitor)  # mark GPS data as fresh
+    assert monitor.effective_speed_mps == 10.0
 
 
 def test_override_has_priority_over_gps() -> None:
-    m = GPSSpeedMonitor(gps_enabled=True)
-    m.speed_mps = 10.0
-    m.override_speed_mps = 25.0
-    assert m.effective_speed_mps == 25.0
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+    monitor.speed_mps = 10.0
+    monitor.override_speed_mps = 25.0
+    assert monitor.effective_speed_mps == 25.0
 
 
 def test_override_used_when_no_gps() -> None:
-    m = GPSSpeedMonitor(gps_enabled=False)
-    m.manual_source_selected = True
-    m.override_speed_mps = 25.0
-    assert m.effective_speed_mps == 25.0
+    monitor = GPSSpeedMonitor(gps_enabled=False)
+    monitor.manual_source_selected = True
+    monitor.override_speed_mps = 25.0
+    assert monitor.effective_speed_mps == 25.0
 
 
 def test_effective_none_when_nothing_set() -> None:
-    m = GPSSpeedMonitor(gps_enabled=False)
-    assert m.effective_speed_mps is None
+    monitor = GPSSpeedMonitor(gps_enabled=False)
+    assert monitor.effective_speed_mps is None
 
 
 # -- set_speed_override_kmh ---------------------------------------------------
 
 
 def test_override_converts_kmh_to_mps() -> None:
-    m = GPSSpeedMonitor(gps_enabled=False)
-    result = m.set_speed_override_kmh(72.0)
+    monitor = GPSSpeedMonitor(gps_enabled=False)
+    result = monitor.set_speed_override_kmh(72.0)
     assert result == 72.0
-    assert m.override_speed_mps is not None
-    assert abs(m.override_speed_mps - 20.0) < 1e-9
+    assert monitor.override_speed_mps is not None
+    assert abs(monitor.override_speed_mps - 20.0) < 1e-9
 
 
 @pytest.mark.parametrize(
@@ -57,10 +57,10 @@ def test_override_converts_kmh_to_mps() -> None:
 )
 def test_override_boundary_values(clear_value: float | None, expected: float | None) -> None:
     """Setting override after a valid value: None clears, 0 is stationary, negative clears."""
-    m = GPSSpeedMonitor(gps_enabled=False)
-    m.set_speed_override_kmh(90.0)
-    m.set_speed_override_kmh(clear_value)
-    assert m.override_speed_mps == expected
+    monitor = GPSSpeedMonitor(gps_enabled=False)
+    monitor.set_speed_override_kmh(90.0)
+    monitor.set_speed_override_kmh(clear_value)
+    assert monitor.override_speed_mps == expected
 
 
 # -- integer speed_mps ---------------------------------------------------------
@@ -68,10 +68,10 @@ def test_override_boundary_values(clear_value: float | None, expected: float | N
 
 def test_integer_speed_mps_treated_as_float() -> None:
     """speed_mps set to int should still be returned as float via effective_speed_mps."""
-    m = GPSSpeedMonitor(gps_enabled=True)
-    m.speed_mps = 10
-    set_gps_snapshot_age(m)  # mark GPS data as fresh
-    result = m.effective_speed_mps
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+    monitor.speed_mps = 10
+    set_gps_snapshot_age(monitor)  # mark GPS data as fresh
+    result = monitor.effective_speed_mps
     assert result is not None
     assert isinstance(result, float)
     assert result == 10.0
