@@ -9,6 +9,8 @@ from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 
 class UpdateWifiReadiness:
+    """Wait for the transient uplink connection to become usable for updates."""
+
     __slots__ = ("_commands", "_config", "_tracker")
 
     def __init__(
@@ -23,6 +25,8 @@ class UpdateWifiReadiness:
         self._config = config
 
     async def bring_uplink_up(self, ssid: str) -> bool:
+        """Bring the prepared uplink connection up, retrying on scan lag."""
+
         rc = 1
         stderr = ""
         for attempt in range(1, self._config.uplink_connect_retries + 1):
@@ -73,6 +77,8 @@ class UpdateWifiReadiness:
         return False
 
     async def wait_for_dns_ready(self) -> bool:
+        """Wait for DNS resolution to succeed before download work begins."""
+
         self._tracker.log(
             "Validating uplink internet/DNS readiness for at least "
             f"{int(self._config.dns_ready_min_wait_s)}s...",
