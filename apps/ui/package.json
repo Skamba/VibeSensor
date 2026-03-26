@@ -28,7 +28,7 @@
     "uplot": "^1.6.31"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.8",
+    "@biomejs/biome": "^2.4.9",
     "@playwright/test": "^1.58.2",
     "openapi-typescript": "^6.7.6",
     "typescript": "^6.0.2",
