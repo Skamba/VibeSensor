@@ -106,6 +106,7 @@ sed \
   "${HOTSPOT_HEAL_TIMER_TEMPLATE}" | run_as_root tee /etc/systemd/system/vibesensor-hotspot-self-heal.timer >/dev/null
 
 if [ "${SKIP_SERVICE_START}" = "1" ]; then
+  # Image-build and chroot installs cannot start services, so enable them via symlinks only.
   run_as_root systemctl daemon-reload >/dev/null 2>&1 || true
   if ! run_as_root systemctl enable vibesensor.service >/dev/null 2>&1; then
     run_as_root install -d /etc/systemd/system/multi-user.target.wants

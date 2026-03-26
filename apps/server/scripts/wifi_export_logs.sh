@@ -17,6 +17,7 @@ fi
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "${tmp_dir}"' EXIT
 
+# Stage files outside LOG_DIR so the output archive never includes itself recursively.
 cp -a "${LOG_DIR}"/. "${tmp_dir}"/ 2>/dev/null || true
 (
   cd "${tmp_dir}"

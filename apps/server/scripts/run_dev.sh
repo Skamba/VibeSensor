@@ -17,6 +17,7 @@ python -m pip install -e ".[dev]"
 vibesensor-server --reload --config "${PI_DIR}/config.dev.yaml" &
 SERVER_PID=$!
 
+# Let the simulator exit naturally; this script stays attached to the server lifecycle.
 vibesensor-sim --count 5 --server-host 127.0.0.1 &
 SIM_PID=$!
 
