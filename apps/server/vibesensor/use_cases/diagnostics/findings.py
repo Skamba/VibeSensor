@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from vibesensor.domain import Finding as DomainFinding
 
 from . import _reference_findings
@@ -25,7 +27,7 @@ __all__ = [
 
 
 def finalize_findings(
-    findings: list[DomainFinding],
+    findings: Sequence[DomainFinding],
 ) -> tuple[DomainFinding, ...]:
     """Partition, rank by confidence, and assign stable ``F###`` IDs.
 
