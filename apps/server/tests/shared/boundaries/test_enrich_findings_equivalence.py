@@ -9,15 +9,21 @@ from __future__ import annotations
 
 from test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 
+from vibesensor.domain import Finding
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.boundaries.test_run_reconstruction import _enrich_findings
 
 
-def _enriched_finding(payload: dict) -> object:
+def _enriched_finding(payload: dict) -> Finding:
     """Run _enrich_findings on a single payload."""
     results = _enrich_findings([payload])
     assert len(results) == 1
     return results[0]
+
+
+def _decoded_findings(payload: dict) -> tuple[Finding, Finding]:
+    """Decode the payload through both the direct and enriched boundary paths."""
+    return finding_from_payload(payload), _enriched_finding(payload)
 
 
 class TestEnrichFindingsEquivalence:
@@ -38,8 +44,7 @@ class TestEnrichFindingsEquivalence:
             strongest_speed_band="60-80 km/h",
             evidence_summary="Test reason",
         )
-        direct = finding_from_payload(payload)
-        enriched = _enriched_finding(payload)
+        direct, enriched = _decoded_findings(payload)
 
         assert direct.origin is not None
         assert enriched.origin is not None
@@ -49,8 +54,7 @@ class TestEnrichFindingsEquivalence:
         payload = make_finding_payload(
             signatures_observed=["1x wheel", "harmonic pattern", "speed-dependent"],
         )
-        direct = finding_from_payload(payload)
-        enriched = _enriched_finding(payload)
+        direct, enriched = _decoded_findings(payload)
 
         assert len(direct.signatures) == len(enriched.signatures)
         for d, e in zip(direct.signatures, enriched.signatures, strict=True):
@@ -63,8 +67,7 @@ class TestEnrichFindingsEquivalence:
         payload = make_ref_finding(
             signatures_observed=["baseline noise"],
         )
-        direct = finding_from_payload(payload)
-        enriched = _enriched_finding(payload)
+        direct, enriched = _decoded_findings(payload)
 
         assert direct.origin == enriched.origin
         assert direct.signatures == enriched.signatures
@@ -74,16 +77,14 @@ class TestEnrichFindingsEquivalence:
             signatures_observed=["transient peak"],
             strongest_speed_band="40-60 km/h",
         )
-        direct = finding_from_payload(payload)
-        enriched = _enriched_finding(payload)
+        direct, enriched = _decoded_findings(payload)
 
         assert direct.origin == enriched.origin
         assert direct.signatures == enriched.signatures
 
     def test_no_signatures_equivalent(self) -> None:
         payload = make_finding_payload()  # no signatures_observed key
-        direct = finding_from_payload(payload)
-        enriched = _enriched_finding(payload)
+        direct, enriched = _decoded_findings(payload)
 
         assert direct.signatures == enriched.signatures == ()
         assert direct.origin == enriched.origin
@@ -92,8 +93,7 @@ class TestEnrichFindingsEquivalence:
         payload = make_finding_payload(
             signatures_observed=["1x wheel"],
         )
-        direct = finding_from_payload(payload)
-        enriched = _enriched_finding(payload)
+        direct, enriched = _decoded_findings(payload)
 
         assert direct.origin == enriched.origin
         assert direct.signatures == enriched.signatures
@@ -103,8 +103,7 @@ class TestEnrichFindingsEquivalence:
             confidence=None,
             signatures_observed=["noisy signal"],
         )
-        direct = finding_from_payload(payload)
-        enriched = _enriched_finding(payload)
+        direct, enriched = _decoded_findings(payload)
 
         assert direct.origin == enriched.origin
         assert direct.signatures == enriched.signatures
@@ -128,8 +127,7 @@ class TestEnrichFindingsEquivalence:
             evidence_summary="Strong wheel-order correlation",
             dominant_phase="cruise",
         )
-        direct = finding_from_payload(payload)
-        enriched = _enriched_finding(payload)
+        direct, enriched = _decoded_findings(payload)
 
         # The entire Finding should be equal (frozen dataclass)
         assert direct == enriched
