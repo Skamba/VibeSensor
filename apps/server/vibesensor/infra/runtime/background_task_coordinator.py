@@ -44,8 +44,7 @@ class BackgroundTaskCoordinator:
     ) -> asyncio.Task[object]:
         task = asyncio.create_task(coroutine, name=name)
         self._monitor_task(task)
-        self._tasks.append(task)
-        return task
+        return self.add(task)
 
     def retain_pending(self) -> list[asyncio.Task[object]]:
         self._tasks = [task for task in self._tasks if not task.done()]
