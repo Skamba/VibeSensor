@@ -87,7 +87,14 @@ class TestUpdateManagerAsync:
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path, sudo_ok=False, rollback=False)
         runner.set_response("sudo -n true", 1, "", "sudo: a password is required")
-        with patch("shutil.which", mock_which):
+        with (
+            patch("shutil.which", mock_which),
+            patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
+            patch(
+                "vibesensor.use_cases.updates.workflow.check_for_update",
+                side_effect=AssertionError("check_for_update should not run without privileges"),
+            ),
+        ):
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
         assert (

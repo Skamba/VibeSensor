@@ -20,15 +20,22 @@ def _make_tracker(status: UpdateJobStatus | None = None) -> UpdateStatusTracker:
     )
 
 
+def _running_status(
+    phase: UpdatePhase,
+    *,
+    finished_at: float | None = None,
+) -> UpdateJobStatus:
+    return UpdateJobStatus(
+        state=UpdateState.running,
+        phase=phase,
+        started_at=time.time() - 60,
+        finished_at=finished_at,
+    )
+
+
 class TestNeedsRecovery:
     def test_running_without_finished_at_needs_recovery(self) -> None:
-        tracker = _make_tracker(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.installing,
-                started_at=time.time() - 60,
-            ),
-        )
+        tracker = _make_tracker(_running_status(UpdatePhase.installing))
         recovery = InterruptedUpdateRecovery(tracker=tracker, wifi_factory=lambda: None)
         assert recovery.needs_recovery() is True
 
@@ -39,10 +46,8 @@ class TestNeedsRecovery:
 
     def test_running_with_finished_at_does_not_need_recovery(self) -> None:
         tracker = _make_tracker(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.done,
-                started_at=time.time() - 60,
+            _running_status(
+                UpdatePhase.done,
                 finished_at=time.time() - 30,
             ),
         )
@@ -67,13 +72,7 @@ class TestNeedsRecovery:
 class TestRecover:
     @pytest.mark.asyncio
     async def test_marks_as_failed_and_persists(self) -> None:
-        tracker = _make_tracker(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.downloading,
-                started_at=time.time() - 60,
-            ),
-        )
+        tracker = _make_tracker(_running_status(UpdatePhase.downloading))
         wifi = AsyncMock()
         recovery = InterruptedUpdateRecovery(
             tracker=tracker,
@@ -90,13 +89,7 @@ class TestRecover:
 
     @pytest.mark.asyncio
     async def test_calls_wifi_cleanup(self) -> None:
-        tracker = _make_tracker(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.connecting_wifi,
-                started_at=time.time() - 60,
-            ),
-        )
+        tracker = _make_tracker(_running_status(UpdatePhase.connecting_wifi))
         wifi = AsyncMock()
         recovery = InterruptedUpdateRecovery(
             tracker=tracker,
@@ -112,11 +105,7 @@ class TestRecover:
         state_path = tmp_path / "update_state.json"
         store = UpdateStateStore(path=state_path)
         store.save(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.installing,
-                started_at=time.time() - 60,
-            ),
+            _running_status(UpdatePhase.installing),
         )
         tracker = UpdateStatusTracker(
             state_store=store,

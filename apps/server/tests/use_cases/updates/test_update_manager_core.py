@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import tempfile
 import time
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -10,12 +12,17 @@ from _update_manager_test_helpers import FakeRunner, cancel_task, mock_which
 from vibesensor.shared.exceptions import ConfigurationError, UpdateError
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.status import UpdateStateStore
 
 
 class TestUpdateManager:
     def make_manager(self, *, runner: FakeRunner | None = None) -> tuple[UpdateManager, FakeRunner]:
         active_runner = runner or FakeRunner()
-        manager = UpdateManager(runner=active_runner, repo_path="/tmp/fakerepo")
+        manager = UpdateManager(
+            runner=active_runner,
+            repo_path="/tmp/fakerepo",
+            state_store=UpdateStateStore(Path(tempfile.mkdtemp()) / "update_status.json"),
+        )
         return manager, active_runner
 
     def test_initial_status_is_idle(self) -> None:
@@ -51,7 +58,7 @@ class TestUpdateManager:
 
         runner.run = slow_run
         runner.set_response("sudo -n true", 0)
-        manager = UpdateManager(runner=runner, repo_path="/tmp/fakerepo")
+        manager, _ = self.make_manager(runner=runner)
 
         with patch("shutil.which", mock_which):
             manager.start("TestNet", "pass123")
@@ -80,7 +87,7 @@ class TestUpdateManager:
 
         runner.run = slow_run
         runner.set_response("sudo -n true", 0)
-        manager = UpdateManager(runner=runner, repo_path="/tmp/fakerepo")
+        manager, _ = self.make_manager(runner=runner)
 
         with patch("shutil.which", mock_which):
             manager.start("TestNet", "pass")
@@ -92,7 +99,7 @@ class TestUpdateManager:
     async def test_status_to_payload_never_leaks_password(self) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
-        manager = UpdateManager(runner=runner, repo_path="/tmp/fakerepo")
+        manager, _ = self.make_manager(runner=runner)
 
         with patch("shutil.which", mock_which):
             manager.start("TestNet", "supersecret")
@@ -104,7 +111,7 @@ class TestUpdateManager:
     async def test_start_sets_ssid_and_timestamps(self) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
-        manager = UpdateManager(runner=runner, repo_path="/tmp/fakerepo")
+        manager, _ = self.make_manager(runner=runner)
 
         before = time.time()
         with patch("shutil.which", mock_which):
