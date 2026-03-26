@@ -1,3 +1,5 @@
+"""Tests for report-facts projection helpers that prepare warnings and suitability payloads."""
+
 from __future__ import annotations
 
 from vibesensor.domain import RunSuitability, SuitabilityCheck
