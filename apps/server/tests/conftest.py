@@ -1,8 +1,8 @@
 """Shared test fixtures and helpers for the vibesensor test suite.
 
-Plain helper functions / assertion utilities live in
-``_test_helpers.py`` so they can be imported unambiguously even when
-sub-directory ``conftest.py`` files exist (which shadow this module in
+Plain helper functions / assertion utilities live in dedicated
+``_*_test_helpers.py`` modules so they can be imported unambiguously even
+when sub-directory ``conftest.py`` files exist (which shadow this module in
 ``sys.modules``).
 """
 
