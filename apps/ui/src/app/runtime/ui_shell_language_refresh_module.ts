@@ -1,0 +1,63 @@
+import type { HistoryFeature } from "../features/history_feature";
+import type { RealtimeFeature } from "../features/realtime_feature";
+import type { UiDomElements } from "../ui_dom_registry";
+import type { AppState } from "../ui_app_state";
+
+export interface UiShellLanguageRefreshFeaturePorts {
+  realtime: Pick<RealtimeFeature, "buildLocationOptions" | "maybeRenderSensorsSettingsList" | "renderLoggingStatus">;
+  history: Pick<HistoryFeature, "renderHistoryTable" | "reloadExpandedRunOnLanguageChange">;
+}
+
+export interface UiShellLanguageRefreshModuleDeps {
+  state: AppState;
+  els: UiDomElements;
+  t: (key: string, vars?: Record<string, unknown>) => string;
+  renderSpeedReadout: () => void;
+  renderWsState: () => void;
+  renderCarSelectionWarning: () => void;
+  renderSpectrum: () => void;
+  updateSpectrumOverlay: () => void;
+}
+
+export interface UiShellLanguageRefreshModule {
+  applyLanguage(features: UiShellLanguageRefreshFeaturePorts, forceReloadInsights?: boolean): void;
+}
+
+export function createUiShellLanguageRefreshModule(
+  deps: UiShellLanguageRefreshModuleDeps,
+): UiShellLanguageRefreshModule {
+  return {
+    applyLanguage(features: UiShellLanguageRefreshFeaturePorts, forceReloadInsights = false): void {
+      document.documentElement.lang = deps.state.shell.lang;
+      document.querySelectorAll("[data-i18n]").forEach((element) => {
+        const key = element.getAttribute("data-i18n");
+        if (key) {
+          element.textContent = deps.t(key);
+        }
+      });
+      if (deps.els.languageSelect) {
+        deps.els.languageSelect.value = deps.state.shell.lang;
+      }
+      if (deps.els.speedUnitSelect) {
+        deps.els.speedUnitSelect.value = deps.state.shell.speedUnit;
+      }
+      deps.state.realtime.locationOptions = features.realtime.buildLocationOptions(deps.state.realtime.locationCodes);
+      deps.state.realtime.sensorsSettingsSignature = "";
+      features.realtime.maybeRenderSensorsSettingsList(true);
+      deps.renderSpeedReadout();
+      features.realtime.renderLoggingStatus();
+      features.history.renderHistoryTable();
+      deps.renderWsState();
+      deps.renderCarSelectionWarning();
+      if (deps.state.spectrum.spectrumPlot) {
+        deps.state.spectrum.spectrumPlot.destroy();
+        deps.state.spectrum.spectrumPlot = null;
+        deps.renderSpectrum();
+      }
+      if (forceReloadInsights) {
+        features.history.reloadExpandedRunOnLanguageChange();
+      }
+      deps.updateSpectrumOverlay();
+    },
+  };
+}
