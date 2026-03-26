@@ -1,3 +1,5 @@
+"""Cover runtime client-name persistence, clearing, and advertised-name application."""
+
 from __future__ import annotations
 
 from pathlib import Path

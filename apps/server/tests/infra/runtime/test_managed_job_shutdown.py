@@ -19,6 +19,8 @@ class _FakeJobSource:
 
 
 class TestManagedJobShutdown:
+    """Verify managed-job shutdown ignores inactive sources and cancels active tasks."""
+
     @pytest.mark.asyncio
     async def test_no_active_tasks_returns_empty(self) -> None:
         """Sources with no active tasks produce an empty lingering list."""

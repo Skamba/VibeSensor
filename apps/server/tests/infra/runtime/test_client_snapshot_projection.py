@@ -37,6 +37,8 @@ _POLICY = ClientLivenessPolicy(live_ttl_seconds=10.0, retention_ttl_seconds=30.0
 
 
 class TestProjectClientSnapshots:
+    """Cover connected/offline projection, ages, and optional metrics attachment."""
+
     def test_connected_record(self) -> None:
         """Active record with recent mono time → connected=True."""
         rec = _make_record(last_seen_mono=100.0)

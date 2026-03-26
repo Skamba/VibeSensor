@@ -52,6 +52,8 @@ def _make_lifecycle(db_path: str | None) -> tuple[LifecycleManager, RuntimeHealt
 
 
 class TestValidateStartupDiskCheck:
+    """Exercise low-disk warnings and startup skip branches around the history DB path."""
+
     def test_low_disk_appends_warning(self, tmp_path: Path) -> None:
         """Free space below threshold appends a warning to startup_warnings."""
         db_path = str(tmp_path / "vibesensor.db")
