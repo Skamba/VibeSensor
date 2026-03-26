@@ -1,3 +1,5 @@
+"""Config-loader coverage for deep merge, path resolution, and AP self-heal defaults."""
+
 from __future__ import annotations
 
 from pathlib import Path

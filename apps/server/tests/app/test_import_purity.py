@@ -1,3 +1,5 @@
+"""Import-purity guardrails for the app package and bootstrap module."""
+
 from __future__ import annotations
 
 import os
