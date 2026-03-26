@@ -1,4 +1,4 @@
-"""Tests for hotspot_parsers text-parsing helpers."""
+"""Tests for hotspot parser helpers and HealStateStore behavior."""
 
 from __future__ import annotations
 

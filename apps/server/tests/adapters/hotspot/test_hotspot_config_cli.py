@@ -1,3 +1,5 @@
+"""CLI regression tests for hotspot-config fallback behavior."""
+
 from __future__ import annotations
 
 import sys
