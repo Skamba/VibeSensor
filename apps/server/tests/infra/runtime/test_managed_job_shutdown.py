@@ -18,6 +18,14 @@ class _FakeJobSource:
         return self._task
 
 
+async def _slow_job() -> None:
+    await asyncio.sleep(100)
+
+
+async def _instant_job() -> None:
+    return None
+
+
 class TestManagedJobShutdown:
     """Verify managed-job shutdown ignores inactive sources and cancels active tasks."""
 
@@ -36,11 +44,7 @@ class TestManagedJobShutdown:
     @pytest.mark.asyncio
     async def test_cancels_active_tasks(self) -> None:
         """Active tasks get cancelled and finish within timeout."""
-
-        async def slow_job() -> None:
-            await asyncio.sleep(100)
-
-        task = asyncio.create_task(slow_job(), name="test-update-job")
+        task = asyncio.create_task(_slow_job(), name="test-update-job")
         shutdown = ManagedJobShutdown([_FakeJobSource(task)])
         lingering = await shutdown.cancel(timeout_s=5.0)
         assert lingering == []
@@ -49,11 +53,7 @@ class TestManagedJobShutdown:
     @pytest.mark.asyncio
     async def test_done_tasks_ignored(self) -> None:
         """Already-done tasks are not included in cancellation."""
-
-        async def instant_job() -> None:
-            pass
-
-        task = asyncio.create_task(instant_job(), name="test-done-job")
+        task = asyncio.create_task(_instant_job(), name="test-done-job")
         await task  # let it finish
         shutdown = ManagedJobShutdown([_FakeJobSource(task)])
         lingering = await shutdown.cancel(timeout_s=5.0)
@@ -62,16 +62,9 @@ class TestManagedJobShutdown:
     @pytest.mark.asyncio
     async def test_mixed_sources(self) -> None:
         """Mix of None, done, and active tasks — only active gets cancelled."""
-
-        async def slow_job() -> None:
-            await asyncio.sleep(100)
-
-        async def instant_job() -> None:
-            pass
-
-        done_task = asyncio.create_task(instant_job(), name="done")
+        done_task = asyncio.create_task(_instant_job(), name="done")
         await done_task
-        active_task = asyncio.create_task(slow_job(), name="active")
+        active_task = asyncio.create_task(_slow_job(), name="active")
 
         shutdown = ManagedJobShutdown(
             [
