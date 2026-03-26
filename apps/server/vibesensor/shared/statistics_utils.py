@@ -9,6 +9,7 @@ from vibesensor.vibration_strength import percentile
 
 
 def _percent_missing(samples: list[JsonObject], key: str) -> float:
+    """Return the percentage of samples whose *key* is missing or blank."""
     if not samples:
         return 100.0
     missing = sum(1 for sample in samples if sample.get(key) in (None, ""))
@@ -16,6 +17,7 @@ def _percent_missing(samples: list[JsonObject], key: str) -> float:
 
 
 def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
+    """Return the mean and sample variance for *values*."""
     if not values:
         return None, None
     count = len(values)
@@ -37,6 +39,7 @@ class _OutlierSummary(TypedDict):
 
 
 def _outlier_summary(values: list[float]) -> _OutlierSummary:
+    """Summarize Tukey-IQR outlier bounds and counts for *values*."""
     if not values:
         return {
             "count": 0,
