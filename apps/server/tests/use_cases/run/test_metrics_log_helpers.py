@@ -14,6 +14,7 @@ from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
 from vibesensor.use_cases.run import _recorder_runtime
 from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
+from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot
 from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
 
 
@@ -22,6 +23,13 @@ class _NullDB:
 
     def analyzing_run_health(self):
         return AnalyzingRunHealth(analyzing_run_count=0, analyzing_oldest_age_s=None)
+
+
+def _started_snapshot(logger) -> ActiveRunSnapshot:
+    logger.start_recording()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    return snapshot
 
 
 def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
@@ -123,9 +131,7 @@ def test_append_records_ignores_stale_recent_metrics_without_new_frames(
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -151,9 +157,7 @@ def test_append_records_ignores_stale_recent_metrics_without_new_frames(
 def test_history_run_created_on_first_sample_append(make_logger, fake_history_db) -> None:
     logger = make_logger(history_db=fake_history_db)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -223,9 +227,7 @@ def test_finalize_preserves_run_metadata_from_recording_start(
 ) -> None:
     logger = make_logger(settings_store=mutable_fake_settings, history_db=fake_history_db)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -249,9 +251,7 @@ def test_append_records_surfaces_create_run_failure_in_status(
 ) -> None:
     logger = make_logger(history_db=failing_create_run_db)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -270,9 +270,7 @@ def test_append_records_clears_write_error_after_successful_retry(
 ) -> None:
     logger = make_logger(history_db=failing_append_once_db)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -293,9 +291,7 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(
 ) -> None:
     logger = make_logger(registry=no_active_registry)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -317,9 +313,7 @@ def test_append_records_does_not_timeout_on_brief_gap(
 ) -> None:
     logger = make_logger(registry=no_active_registry)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -368,9 +362,7 @@ def test_stop_recording_does_not_block_on_post_analysis(
     )
     logger = make_logger(history_db=history_db)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -409,9 +401,7 @@ def test_post_analysis_failure_sets_persistent_error_status(
     )
     logger = make_logger(history_db=history_db)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -535,9 +525,7 @@ def test_post_analysis_uses_run_language_from_metadata(
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, language_provider=lambda: "nl")
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -625,9 +613,7 @@ def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, persist_history_db=True)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
@@ -653,9 +639,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db)
 
-    logger.start_recording()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
+    snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
