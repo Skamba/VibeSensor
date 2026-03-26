@@ -38,6 +38,8 @@ def _advance_sensor_clock(
     *,
     t0_us: int | None,
 ) -> None:
+    """Advance the buffer's sensor-clock anchors after a successful ingest."""
+
     if t0_us is not None and t0_us > 0:
         next_t0_us = int(t0_us)
         if next_t0_us > buf.last_t0_us:
