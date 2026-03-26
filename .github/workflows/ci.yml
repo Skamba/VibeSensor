@@ -180,6 +180,7 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: ~/.cache/vibesensor/backend-duration-cache.json
+          # Keep each run's write key distinct while still restoring from the stable test-history prefix.
           key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-1-${{ github.run_id }}
           restore-keys: |
             ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
