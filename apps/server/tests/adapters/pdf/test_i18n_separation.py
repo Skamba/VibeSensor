@@ -19,6 +19,24 @@ from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.report_i18n import is_i18n_ref, tr
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 
+_TRANSLATED_MARKERS = [
+    # Dutch markers
+    "Onbekend",
+    "Wiel / Band",
+    "Wielorde",
+    "wielorde",
+    "motororde",
+    "aandrijfasorde",
+    "Sensor zonder label",
+    "Snelheidsvariatie",
+    "Sensordekking",
+    # English translated phrases (from report_i18n, not raw codes)
+    "Unlabeled sensor",
+    "wheel order",
+    "engine order",
+    "driveshaft order",
+]
+
 
 def _resolve_i18n(lang: str, value: object) -> str:
     return resolve_i18n_impl(lang, value, tr=lambda key, **kw: tr(lang, key, **kw))
@@ -106,24 +124,6 @@ def _check_no_translated_strings(obj: object, path: str = "") -> list[str]:
 
     Returns a list of paths where localized text was found.
     """
-    # Known translated strings that should NOT appear in analysis output
-    _TRANSLATED_MARKERS = [
-        # Dutch markers
-        "Onbekend",
-        "Wiel / Band",
-        "Wielorde",
-        "wielorde",
-        "motororde",
-        "aandrijfasorde",
-        "Sensor zonder label",
-        "Snelheidsvariatie",
-        "Sensordekking",
-        # English translated phrases (from report_i18n, not raw codes)
-        "Unlabeled sensor",
-        "wheel order",
-        "engine order",
-        "driveshaft order",
-    ]
     violations: list[str] = []
 
     if isinstance(obj, str):

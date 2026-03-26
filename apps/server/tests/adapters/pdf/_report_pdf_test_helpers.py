@@ -19,7 +19,7 @@ def sample(
     speed_kmh: float | None,
     dominant_freq_hz: float,
     peak_amp_g: float,
-) -> dict:
+) -> dict[str, object]:
     return base_sample(
         idx,
         speed_kmh=speed_kmh,

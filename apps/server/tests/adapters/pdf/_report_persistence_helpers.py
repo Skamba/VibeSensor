@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from test_support.report_helpers import analysis_metadata as make_metadata
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
@@ -18,16 +20,16 @@ def uniform_samples(
     speed: float = 80.0,
     dt: float = 0.5,
     **kwargs: object,
-) -> list[dict]:
+) -> list[dict[str, object]]:
     return [sample(float(i) * dt, speed, [{"hz": freq, "amp": amp}], **kwargs) for i in range(n)]
 
 
 def build_findings(
-    samples: list[dict],
+    samples: list[dict[str, object]],
     *,
     order_finding_freqs: set[float] | None = None,
     per_sample_phases: list[DrivingPhase] | None = None,
-) -> list[dict]:
+) -> list[dict[str, object]]:
     return _build_persistent_peak_findings(
         samples=samples,
         order_finding_freqs=order_finding_freqs or set(),
@@ -36,7 +38,7 @@ def build_findings(
     )
 
 
-def findings_at_freq(findings: tuple | list, *freq_strs: str) -> list:
+def findings_at_freq(findings: Sequence[object], *freq_strs: str) -> list[object]:
     from vibesensor.domain import Finding
 
     def _matches(finding: object) -> bool:
@@ -50,5 +52,5 @@ def findings_at_freq(findings: tuple | list, *freq_strs: str) -> list:
     return [f for f in findings if _matches(f)]
 
 
-def summarize(samples: list[dict], **meta_overrides: object) -> dict:
+def summarize(samples: list[dict[str, object]], **meta_overrides: object) -> dict[str, object]:
     return summarize_run_data(make_metadata(**meta_overrides), samples, lang="en")
