@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
+
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
@@ -16,6 +18,12 @@ from vibesensor.use_cases.run.run_context import (
     build_run_context_snapshot,
     order_reference_context_complete,
 )
+
+
+def _analysis_settings_metadata(
+    snapshot: AnalysisSettingsSnapshot,
+) -> dict[str, float]:
+    return asdict(snapshot)
 
 
 class TestBuildRunContextSnapshot:
@@ -34,16 +42,17 @@ class TestBuildRunContextSnapshot:
 class TestApplyRunContextSnapshot:
     def test_serializes_snapshot_into_metadata_shape(self) -> None:
         metadata: dict[str, object] = {}
+        settings = AnalysisSettingsSnapshot(
+            tire_width_mm=255.0,
+            tire_aspect_pct=40.0,
+            rim_in=19.0,
+            final_drive_ratio=3.15,
+            current_gear_ratio=0.81,
+        )
 
         apply_run_context_snapshot(
             metadata,
-            analysis_settings_snapshot=AnalysisSettingsSnapshot(
-                tire_width_mm=255.0,
-                tire_aspect_pct=40.0,
-                rim_in=19.0,
-                final_drive_ratio=3.15,
-                current_gear_ratio=0.81,
-            ),
+            analysis_settings_snapshot=settings,
             active_car_snapshot=CarSnapshot(
                 car_id="car-1",
                 name="Primary",
@@ -57,23 +66,7 @@ class TestApplyRunContextSnapshot:
         assert metadata["car_name"] == "Primary"
         assert metadata["car_type"] == "sedan"
         assert metadata["car_variant"] == "track"
-        assert metadata["analysis_settings_snapshot"] == {
-            "tire_width_mm": 255.0,
-            "tire_aspect_pct": 40.0,
-            "rim_in": 19.0,
-            "final_drive_ratio": 3.15,
-            "current_gear_ratio": 0.81,
-            "wheel_bandwidth_pct": 0.0,
-            "driveshaft_bandwidth_pct": 0.0,
-            "engine_bandwidth_pct": 0.0,
-            "speed_uncertainty_pct": 0.0,
-            "tire_diameter_uncertainty_pct": 0.0,
-            "final_drive_uncertainty_pct": 0.0,
-            "gear_uncertainty_pct": 0.0,
-            "min_abs_band_hz": 0.0,
-            "max_band_half_width_pct": 0.0,
-            "tire_deflection_factor": 1.0,
-        }
+        assert metadata["analysis_settings_snapshot"] == _analysis_settings_metadata(settings)
         assert metadata["active_car_snapshot"] == {
             "id": "car-1",
             "name": "Primary",
@@ -127,10 +120,11 @@ class TestApplyRunContextSnapshot:
 
     def test_no_active_car_snapshot_keeps_car_fields_absent(self) -> None:
         metadata: dict[str, object] = {}
+        settings = AnalysisSettingsSnapshot(tire_width_mm=205.0)
 
         apply_run_context_snapshot(
             metadata,
-            analysis_settings_snapshot=AnalysisSettingsSnapshot(tire_width_mm=205.0),
+            analysis_settings_snapshot=settings,
             active_car_snapshot=None,
         )
 
@@ -139,23 +133,7 @@ class TestApplyRunContextSnapshot:
         assert "car_name" not in metadata
         assert "car_type" not in metadata
         assert "car_variant" not in metadata
-        assert metadata["analysis_settings_snapshot"] == {
-            "tire_width_mm": 205.0,
-            "tire_aspect_pct": 0.0,
-            "rim_in": 0.0,
-            "final_drive_ratio": 0.0,
-            "current_gear_ratio": 0.0,
-            "wheel_bandwidth_pct": 0.0,
-            "driveshaft_bandwidth_pct": 0.0,
-            "engine_bandwidth_pct": 0.0,
-            "speed_uncertainty_pct": 0.0,
-            "tire_diameter_uncertainty_pct": 0.0,
-            "final_drive_uncertainty_pct": 0.0,
-            "gear_uncertainty_pct": 0.0,
-            "min_abs_band_hz": 0.0,
-            "max_band_half_width_pct": 0.0,
-            "tire_deflection_factor": 1.0,
-        }
+        assert metadata["analysis_settings_snapshot"] == _analysis_settings_metadata(settings)
 
 
 class TestBoundaryHelpers:
