@@ -32,7 +32,9 @@ def bounded_sample[SampleT](
     """
     if max_items <= 0:
         raise ValueError(f"bounded_sample: max_items must be >= 1, got {max_items}")
-    stride: int = max(1, -(-total_hint // max_items)) if total_hint > max_items else 1
+    stride = 1
+    if total_hint > max_items:
+        stride = max(1, -(-total_hint // max_items))
     kept: list[SampleT] = []
     total = 0
     for sample in samples:
