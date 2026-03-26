@@ -3,6 +3,9 @@ import { defineConfig, loadEnv } from "vite";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
   const backendOrigin = env.VITE_BACKEND_ORIGIN || "http://127.0.0.1:8000";
+  const host = "0.0.0.0";
+  const previewPort = 4173;
+  const devPort = 5173;
 
   return {
     build: {
@@ -13,13 +16,13 @@ export default defineConfig(({ mode }) => {
     // Our smoke tests and preview helpers target fixed URLs, so fail fast on
     // port conflicts instead of silently hopping to the next available port.
     preview: {
-      host: "0.0.0.0",
-      port: 4173,
+      host,
+      port: previewPort,
       strictPort: true,
     },
     server: {
-      host: "0.0.0.0",
-      port: 5173,
+      host,
+      port: devPort,
       strictPort: true,
       proxy: {
         "/api": backendOrigin,
