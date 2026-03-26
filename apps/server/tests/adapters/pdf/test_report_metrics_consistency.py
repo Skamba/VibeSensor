@@ -288,6 +288,12 @@ def _run_all_consistency_checks(
     return pdf
 
 
+def _assert_scenario_consistency(scenario: ScenarioPair) -> None:
+    """Run the shared consistency checks for a scenario fixture payload."""
+    summary, rd = scenario
+    _run_all_consistency_checks(summary, rd)
+
+
 # ---------------------------------------------------------------------------
 # Scenario 1: No-fault baseline
 # ---------------------------------------------------------------------------
@@ -301,8 +307,7 @@ class TestScenario1NoFaultBaseline:
         return _build_no_fault_baseline()
 
     def test_consistency(self, scenario: ScenarioPair) -> None:
-        summary, rd = scenario
-        _run_all_consistency_checks(summary, rd)
+        _assert_scenario_consistency(scenario)
 
     def test_no_overconfident_claims(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
@@ -332,8 +337,7 @@ class TestScenario2SingleWheelFault:
         return _build_single_wheel_fault()
 
     def test_consistency(self, scenario: ScenarioPair) -> None:
-        summary, rd = scenario
-        _run_all_consistency_checks(summary, rd)
+        _assert_scenario_consistency(scenario)
 
     def test_fl_localisation(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
@@ -373,8 +377,7 @@ class TestScenario3HighSpeedFault:
         return _build_high_speed_fault()
 
     def test_consistency(self, scenario: ScenarioPair) -> None:
-        summary, rd = scenario
-        _run_all_consistency_checks(summary, rd)
+        _assert_scenario_consistency(scenario)
 
     def test_speed_band_reflects_high_speed(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
@@ -404,8 +407,7 @@ class TestScenario4MixedNoiseFault:
         return _build_mixed_noise_fault()
 
     def test_consistency(self, scenario: ScenarioPair) -> None:
-        summary, rd = scenario
-        _run_all_consistency_checks(summary, rd)
+        _assert_scenario_consistency(scenario)
 
     def test_fault_not_masked_by_noise(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
@@ -430,8 +432,7 @@ class TestScenario5SparseSensors:
         return _build_sparse_sensors()
 
     def test_consistency(self, scenario: ScenarioPair) -> None:
-        summary, rd = scenario
-        _run_all_consistency_checks(summary, rd)
+        _assert_scenario_consistency(scenario)
 
     def test_sensor_count_accurate(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
