@@ -124,6 +124,8 @@ class TestAutoStopGenerationGuard:
 
 
 class TestDeleteRunIfSafe:
+    """Cover safe-delete outcomes for complete, active, analyzing, missing, and error runs."""
+
     def test_delete_complete_run(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
         db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
@@ -176,6 +178,8 @@ class TestDeleteRunIfSafe:
 
 
 class TestFinalizeRunWithMetadata:
+    """Cover metadata updates on finalize_run and the no-op path after status changes."""
+
     def test_atomic_metadata_and_status(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
         db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
