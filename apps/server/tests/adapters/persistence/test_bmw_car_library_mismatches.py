@@ -1,3 +1,5 @@
+"""Regression coverage for the BMW variant and ratio-source corrections."""
+
 from __future__ import annotations
 
 import json
