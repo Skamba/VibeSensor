@@ -32,6 +32,7 @@ def _wheel_hz(
     context: DiagnosticsContext | None = None,
     order_reference_spec: OrderReferenceSpec | None = None,
 ) -> float | None:
+    """Return wheel rotational frequency from speed plus optional reference data."""
     typed_sample = ensure_analysis_sample(sample)
     speed_kmh = typed_sample.speed_kmh
     if speed_kmh is None or speed_kmh <= 0:
@@ -51,6 +52,7 @@ def _driveshaft_hz(
     context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> float | None:
+    """Return driveshaft frequency from the best available wheel/final-drive inputs."""
     typed_sample = ensure_analysis_sample(sample)
     speed_kmh = typed_sample.speed_kmh
     spec = _order_reference_spec_from_context(context, typed_sample)
@@ -82,6 +84,7 @@ def _engine_hz(
     context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
+    """Return engine rotational frequency plus the source label used to derive it."""
     rpm, src = _effective_engine_rpm(
         ensure_analysis_sample(sample),
         context,
@@ -166,4 +169,5 @@ _ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
 
 
 def _order_hypotheses() -> tuple[OrderHypothesis, ...]:
+    """Return the static hypothesis catalog used by order-analysis sessions."""
     return _ORDER_HYPOTHESES
