@@ -115,7 +115,7 @@ class _FakeProcessor:
         return list(client_ids)
 
 
-def _make_logger(history_db, tmp_path: Path) -> RunRecorder:
+def _make_logger(history_db, _tmp_path: Path) -> RunRecorder:
     reg = _FakeRegistry()
     return RunRecorder(
         RunRecorderConfig(
@@ -193,7 +193,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
         db.create_run.side_effect = OSError("persistent failure")
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, _start_mono = _start_and_snapshot(logger)
+        run_id, start_utc, start_mono = _start_and_snapshot(logger)
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES + 3):
             logger._persistence.ensure_history_run(

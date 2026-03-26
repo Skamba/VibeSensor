@@ -1,3 +1,5 @@
+"""Lifecycle, pruning, corruption, and metadata CRUD coverage for HistoryDB."""
+
 from __future__ import annotations
 
 import logging

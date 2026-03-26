@@ -1,3 +1,5 @@
+"""HistoryDB input sanitization, integrity checks, and warning-path coverage."""
+
 from __future__ import annotations
 
 import json
