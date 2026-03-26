@@ -1,3 +1,5 @@
+"""Shared helpers for persistence-oriented PDF analysis tests."""
+
 from __future__ import annotations
 
 from test_support.report_helpers import analysis_metadata as make_metadata
