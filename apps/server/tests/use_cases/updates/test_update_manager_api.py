@@ -13,10 +13,11 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.status import UpdateStateStore
 
 
 class TestUpdateApiEndpoints:
-    def test_status_endpoint_exists(self) -> None:
+    def test_status_endpoint_exists(self, tmp_path) -> None:
         from vibesensor.adapters.http import create_router
 
         placeholder = MagicMock()
@@ -40,7 +41,9 @@ class TestUpdateApiEndpoints:
                 export_service=placeholder,
             ),
             updates=UpdateDeps(
-                update_manager=UpdateManager(),
+                update_manager=UpdateManager(
+                    state_store=UpdateStateStore(tmp_path / "update_status.json"),
+                ),
                 esp_flash_manager=MagicMock(),
             ),
         )
