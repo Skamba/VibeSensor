@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.app.settings import SERVER_DIR, load_config
+from vibesensor.app.settings import AppConfig, SERVER_DIR, load_config
 
 
-def _write_config(path: Path, payload: dict) -> None:
+def _write_config(path: Path, payload: dict[str, object]) -> None:
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
 
-def _write_and_load(path: Path, payload: dict):
+def _write_and_load(path: Path, payload: dict[str, object]) -> AppConfig:
     """Write YAML payload and return loaded config."""
     _write_config(path, payload)
     return load_config(path)
