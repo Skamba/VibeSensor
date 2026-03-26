@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from vibesensor.infra.runtime.registry import ClientRegistry
 
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload, SpectraPayload
+from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload
 
 
 class WsBroadcastService:
@@ -104,14 +104,6 @@ class WsBroadcastService:
 
         resolution = self._gps_monitor.resolve_speed()
         speed_mps = resolution.speed_mps
-        payload: LiveWsPayload = {
-            "schema_version": SCHEMA_VERSION,
-            "server_time": utc_now_iso(),
-            "speed_mps": speed_mps,
-            "clients": clients,
-            "selected_client_id": None,
-            "rotational_speeds": None,
-        }
         analysis_settings_snapshot = self._settings_reader.analysis_settings_snapshot()
         speed_source = self._speed_source_reader.get_speed_source()
         basis = rotational_basis_speed_source(
@@ -119,15 +111,20 @@ class WsBroadcastService:
             gps_enabled=self._gps_enabled,
             resolution_source=resolution.source,
         )
-        payload["rotational_speeds"] = build_rotational_speeds_payload(
-            basis_speed_source=basis,
-            speed_mps=speed_mps,
-            analysis_settings=analysis_settings_snapshot,
-        )
-        spectra: SpectraPayload | None = None
+        payload: LiveWsPayload = {
+            "schema_version": SCHEMA_VERSION,
+            "server_time": utc_now_iso(),
+            "speed_mps": speed_mps,
+            "clients": clients,
+            "selected_client_id": None,
+            "rotational_speeds": build_rotational_speeds_payload(
+                basis_speed_source=basis,
+                speed_mps=speed_mps,
+                analysis_settings=analysis_settings_snapshot,
+            ),
+        }
         if self.include_heavy:
-            spectra = self._processor.multi_spectrum_payload(fresh_ids)
-            payload["spectra"] = spectra
+            payload["spectra"] = self._processor.multi_spectrum_payload(fresh_ids)
         return payload
 
     def _refresh_shared_payload(self) -> LiveWsPayload:
