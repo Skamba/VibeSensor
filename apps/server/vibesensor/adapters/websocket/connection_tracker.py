@@ -59,9 +59,7 @@ class ConnectionTracker:
     async def remove(self, websocket: WebSocket) -> None:
         """Deregister *websocket* from the tracker."""
         async with self._lock:
-            conn = self._connections.pop(id(websocket), None)
-            if conn is not None:
-                conn.closing = True
+            self._connections.pop(id(websocket), None)
 
     async def update_selected_client(self, websocket: WebSocket, client_id: str | None) -> None:
         """Update the client-filter for an existing connection."""
