@@ -1,3 +1,5 @@
+"""Persistence-focused finding classification and order-label regression tests."""
+
 from __future__ import annotations
 
 from _report_persistence_helpers import (
