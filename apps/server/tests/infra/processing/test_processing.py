@@ -10,6 +10,8 @@ from threading import Event, Thread
 import numpy as np
 
 from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.fft import top_peaks
+from vibesensor.infra.processing.time_align import compute_overlap
 
 
 def _make_3axis(x: np.ndarray) -> np.ndarray:
@@ -348,8 +350,6 @@ def test_spectrum_min_hz_zero_allows_all_frequencies() -> None:
 
 def test_top_peaks_handles_nan_noise_floor() -> None:
     """_top_peaks must not produce NaN when noise floor returns non-finite values."""
-    from vibesensor.infra.processing.fft import top_peaks
-
     freqs = np.array([10.0, 20.0, 30.0], dtype=np.float32)
     amps = np.array([0.01, 0.05, 0.01], dtype=np.float32)
     peaks = top_peaks(freqs, amps, top_n=3)
@@ -362,18 +362,14 @@ def test_top_peaks_handles_nan_noise_floor() -> None:
 
 def test_compute_overlap_empty_lists() -> None:
     """_compute_overlap must not crash on empty input lists."""
-    from vibesensor.infra.processing.time_align import compute_overlap as _compute_overlap
-
-    result = _compute_overlap([], [])
+    result = compute_overlap([], [])
     assert result.overlap_ratio == 0.0
     assert result.aligned is False
 
 
 def test_compute_overlap_mismatched_lengths() -> None:
     """_compute_overlap returns zero-overlap when starts/ends lengths differ."""
-    from vibesensor.infra.processing.time_align import compute_overlap as _compute_overlap
-
-    result = _compute_overlap([1.0, 2.0], [3.0])
+    result = compute_overlap([1.0, 2.0], [3.0])
     assert result.overlap_ratio == 0.0
     assert result.aligned is False
     assert result.overlap_s == 0.0
@@ -381,9 +377,7 @@ def test_compute_overlap_mismatched_lengths() -> None:
 
 def test_compute_overlap_single_range() -> None:
     """_compute_overlap handles a single time range correctly."""
-    from vibesensor.infra.processing.time_align import compute_overlap as _compute_overlap
-
-    result = _compute_overlap([0.0], [10.0])
+    result = compute_overlap([0.0], [10.0])
     assert result.overlap_ratio == 1.0
     assert result.aligned is True
     assert result.shared_start == 0.0
@@ -393,9 +387,7 @@ def test_compute_overlap_single_range() -> None:
 
 def test_compute_overlap_partial_overlap() -> None:
     """_compute_overlap correctly computes partial overlap between two ranges."""
-    from vibesensor.infra.processing.time_align import compute_overlap as _compute_overlap
-
-    result = _compute_overlap([0.0, 5.0], [10.0, 15.0])
+    result = compute_overlap([0.0, 5.0], [10.0, 15.0])
     # Shared: max(0,5)=5 to min(10,15)=10 => 5s overlap
     # Union: min(0,5)=0 to max(10,15)=15 => 15s
     assert abs(result.overlap_ratio - 5.0 / 15.0) < 1e-9
@@ -406,9 +398,7 @@ def test_compute_overlap_partial_overlap() -> None:
 
 def test_compute_overlap_no_overlap() -> None:
     """_compute_overlap returns zero overlap for disjoint ranges."""
-    from vibesensor.infra.processing.time_align import compute_overlap as _compute_overlap
-
-    result = _compute_overlap([0.0, 20.0], [10.0, 30.0])
+    result = compute_overlap([0.0, 20.0], [10.0, 30.0])
     # Shared: max(0,20)=20 to min(10,30)=10 => negative => 0
     assert result.overlap_ratio == 0.0
     assert result.aligned is False
