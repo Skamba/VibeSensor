@@ -106,11 +106,7 @@ class RunLifecycleState:
                 return None
         elif current_total <= self.start_frames_total:
             return None
-        return ActiveRunSnapshot(
-            run_id=run_id,
-            start_time_utc=self.start_time_utc,
-            start_mono_s=self.start_mono_s,
-        )
+        return self.snapshot()
 
     def should_drop_prebuilt_rows(
         self,

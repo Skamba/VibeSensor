@@ -52,6 +52,7 @@ def active_frames_total(registry: ClientTracker) -> int:
 
 
 def _is_tick_error_message(message: str | None) -> bool:
+    """Return whether a write error came from the periodic runtime tick path."""
     return message == _DB_TIMEOUT_ERROR or bool(
         message and message.startswith(_TICK_FAILURE_PREFIX),
     )
@@ -62,6 +63,7 @@ def _flush_active_run_tick(
     *,
     logger: logging.Logger,
 ) -> tuple[str | None, bool]:
+    """Flush one active-run tick without holding the recorder lock during I/O-heavy work."""
     with recorder._lock:
         snapshot = recorder._lifecycle.snapshot()
         if snapshot is None:
