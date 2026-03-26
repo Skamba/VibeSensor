@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.shared.boundaries.test_run_reconstruction import (
+    test_run_from_summary as reconstruct_test_run_from_summary,
+)
+
 
 def test_test_run_is_frozen_dataclass() -> None:
     """``TestRun`` must be a frozen dataclass."""
@@ -180,8 +184,6 @@ def test_test_run_primary_source_and_location() -> None:
 
 def test_test_run_from_summary_populates_speed_profile() -> None:
     """test_run_from_summary extracts SpeedProfile when speed_stats is present."""
-    from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
-
     summary = {
         "run_id": "test-123",
         "findings": [],
@@ -192,15 +194,13 @@ def test_test_run_from_summary_populates_speed_profile() -> None:
             "steady_speed": True,
         },
     }
-    result = test_run_from_summary(summary)
+    result = reconstruct_test_run_from_summary(summary)
     assert result.speed_profile is not None, "test_run_from_summary must populate speed_profile"
     assert result.speed_profile.steady_speed
 
 
 def test_test_run_from_summary_populates_suitability() -> None:
     """test_run_from_summary extracts RunSuitability when run_suitability is present."""
-    from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
-
     summary = {
         "run_id": "test-123",
         "findings": [],
@@ -209,7 +209,7 @@ def test_test_run_from_summary_populates_suitability() -> None:
             {"check_key": "speed", "state": "pass", "explanation": "OK"},
         ],
     }
-    result = test_run_from_summary(summary)
+    result = reconstruct_test_run_from_summary(summary)
     assert result.suitability is not None, "test_run_from_summary must populate suitability"
     assert result.suitability.is_usable
 
