@@ -43,11 +43,6 @@ if TYPE_CHECKING:
 
 _EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
 
-EMPTY_SPECTRUM_PAYLOAD: SpectrumSeriesPayload = {
-    "combined_spectrum_amp_g": [],
-    "strength_metrics": empty_vibration_strength_metrics(),
-}
-
 
 def _empty_spectrum_payload() -> SpectrumSeriesPayload:
     return {
