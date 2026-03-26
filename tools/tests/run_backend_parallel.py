@@ -57,6 +57,41 @@ def _normalize_collected_test_id(line: str) -> str | None:
     return None
 
 
+def _parse_collected_test_ids(output: str) -> list[str]:
+    return collect_normalized_test_ids(output, normalize=_normalize_collected_test_id)
+
+
+def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
+    return resolve_duration_cache_path(
+        _DURATION_CACHE_ENV,
+        "backend-duration-cache.json",
+        env=env,
+    )
+
+
+def _load_duration_cache(path: Path) -> dict[str, float]:
+    return read_duration_cache(path, emit=_emit, label="backend-parallel")
+
+
+def _merge_duration_observations(
+    cached: Mapping[str, float],
+    observed: Mapping[str, float],
+) -> dict[str, float]:
+    return merge_duration_observations(cached, observed)
+
+
+def _observed_durations_from_junit(
+    junit_path: Path,
+    selected_tests: list[str],
+) -> dict[str, float]:
+    return read_observed_durations_from_junit(
+        junit_path,
+        selected_tests,
+        emit=_emit,
+        label="backend-parallel",
+    )
+
+
 def collect_test_ids(pytest_args: list[str]) -> list[str]:
     cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q", *pytest_args]
     result = subprocess.run(
@@ -66,10 +101,7 @@ def collect_test_ids(pytest_args: list[str]) -> list[str]:
         sys.stdout.write(result.stdout or "")
         sys.stderr.write(result.stderr or "")
         raise SystemExit(result.returncode)
-    return collect_normalized_test_ids(
-        result.stdout or "",
-        normalize=_normalize_collected_test_id,
-    )
+    return _parse_collected_test_ids(result.stdout or "")
 
 
 def _write_duration_cache(path: Path, durations: Mapping[str, float]) -> None:
@@ -101,8 +133,8 @@ def _update_duration_cache(path: Path, observed: Mapping[str, float]) -> None:
         return
     try:
         with _locked_duration_cache(path):
-            cached = read_duration_cache(path, emit=_emit, label="backend-parallel")
-            merged = merge_duration_observations(cached, observed)
+            cached = _load_duration_cache(path)
+            merged = _merge_duration_observations(cached, observed)
             _write_duration_cache(path, merged)
     except OSError:
         _emit(f"[backend-parallel] failed to update duration cache: {path}")
@@ -219,16 +251,8 @@ def main() -> int:
     collected = collect_test_ids(["apps/server/tests"])
     grouped_tests = _group_tests_by_path(collected)
 
-    duration_cache_path = resolve_duration_cache_path(
-        _DURATION_CACHE_ENV,
-        "backend-duration-cache.json",
-        env=os.environ,
-    )
-    duration_cache = read_duration_cache(
-        duration_cache_path,
-        emit=_emit,
-        label="backend-parallel",
-    )
+    duration_cache_path = _duration_cache_path(os.environ)
+    duration_cache = _load_duration_cache(duration_cache_path)
     if duration_cache:
         _emit(
             f"[backend-parallel] loaded {len(duration_cache)} cached test durations from "
@@ -276,12 +300,7 @@ def main() -> int:
     rc = _run(pytest_cmd, log_path=log_path)
     elapsed = time.monotonic() - started
 
-    observed_durations = read_observed_durations_from_junit(
-        junit_path,
-        selected_tests,
-        emit=_emit,
-        label="backend-parallel",
-    )
+    observed_durations = _observed_durations_from_junit(junit_path, selected_tests)
     if observed_durations:
         _update_duration_cache(duration_cache_path, observed_durations)
         _emit(

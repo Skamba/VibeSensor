@@ -53,6 +53,41 @@ def _normalize_collected_test_id(line: str) -> str | None:
     return None
 
 
+def _parse_collected_test_ids(output: str) -> list[str]:
+    return collect_normalized_test_ids(output, normalize=_normalize_collected_test_id)
+
+
+def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
+    return resolve_duration_cache_path(
+        _DURATION_CACHE_ENV,
+        "e2e-duration-cache.json",
+        env=env,
+    )
+
+
+def _load_duration_cache(path: Path) -> dict[str, float]:
+    return read_duration_cache(path, emit=_emit, label="e2e-parallel")
+
+
+def _merge_duration_observations(
+    cached: Mapping[str, float],
+    observed: Mapping[str, float],
+) -> dict[str, float]:
+    return merge_duration_observations(cached, observed)
+
+
+def _observed_durations_from_junit(
+    junit_path: Path,
+    selected_tests: list[str],
+) -> dict[str, float]:
+    return read_observed_durations_from_junit(
+        junit_path,
+        selected_tests,
+        emit=_emit,
+        label="e2e-parallel",
+    )
+
+
 def collect_test_ids(pytest_args: list[str]) -> list[str]:
     cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q", *pytest_args]
     result = subprocess.run(cmd, check=False, capture_output=True, text=True)
@@ -60,10 +95,7 @@ def collect_test_ids(pytest_args: list[str]) -> list[str]:
         sys.stdout.write(result.stdout or "")
         sys.stderr.write(result.stderr or "")
         raise SystemExit(result.returncode)
-    return collect_normalized_test_ids(
-        result.stdout or "",
-        normalize=_normalize_collected_test_id,
-    )
+    return _parse_collected_test_ids(result.stdout or "")
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -558,16 +590,8 @@ def main() -> int:
         marker = "e2e and not long_sim" if args.fast_e2e else "e2e"
 
     collected = collect_test_ids(["-m", marker, "apps/server/tests_e2e"])
-    duration_cache_path = resolve_duration_cache_path(
-        _DURATION_CACHE_ENV,
-        "e2e-duration-cache.json",
-        env=os.environ,
-    )
-    duration_cache = read_duration_cache(
-        duration_cache_path,
-        emit=_emit,
-        label="e2e-parallel",
-    )
+    duration_cache_path = _duration_cache_path(os.environ)
+    duration_cache = _load_duration_cache(duration_cache_path)
     if duration_cache:
         _emit(
             f"[e2e-parallel] loaded {len(duration_cache)} cached test durations from "
@@ -633,15 +657,10 @@ def main() -> int:
     observed_durations: dict[str, float] = {}
     for shard in shards:
         observed_durations.update(
-            read_observed_durations_from_junit(
-                shard.junit_path,
-                shard.tests,
-                emit=_emit,
-                label="e2e-parallel",
-            )
+            _observed_durations_from_junit(shard.junit_path, shard.tests)
         )
     if observed_durations:
-        merged_durations = merge_duration_observations(
+        merged_durations = _merge_duration_observations(
             duration_cache, observed_durations
         )
         _write_duration_cache(duration_cache_path, merged_durations)
