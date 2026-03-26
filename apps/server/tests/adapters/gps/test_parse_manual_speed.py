@@ -1,4 +1,4 @@
-"""Tests for _parse_manual_speed rejecting Inf/NaN/out-of-range values."""
+"""Tests for _parse_manual_speed valid and invalid input handling."""
 
 from __future__ import annotations
 
@@ -29,11 +29,8 @@ def test_normal_values(value: float, expected: float) -> None:
         math.inf,
         -math.inf,
         math.nan,
-        float("inf"),
-        float("-inf"),
-        float("nan"),
     ],
-    ids=["inf", "neg-inf", "nan", "float-inf", "float-neg-inf", "float-nan"],
+    ids=["inf", "neg-inf", "nan"],
 )
 def test_non_finite_returns_none(value: float) -> None:
     assert _parse_manual_speed(value) is None
