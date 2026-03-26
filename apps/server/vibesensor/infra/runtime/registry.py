@@ -16,6 +16,7 @@ from vibesensor.infra.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
 )
+from vibesensor.infra.runtime.client_liveness_policy import ClientLivenessPolicy
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
 from vibesensor.infra.runtime.client_snapshot_projection import project_client_snapshots
@@ -156,8 +157,10 @@ class ClientRegistry:
         retention_ttl_seconds: float = 120.0,
     ):
         self._lock = RLock()
-        self._live_ttl_seconds = max(1.0, live_ttl_seconds)
-        self._retention_ttl_seconds = max(self._live_ttl_seconds, retention_ttl_seconds)
+        self._liveness_policy = ClientLivenessPolicy(
+            live_ttl_seconds=live_ttl_seconds,
+            retention_ttl_seconds=retention_ttl_seconds,
+        )
         self._clients: dict[str, ClientRecord] = {}
         self._metadata = ClientMetadataManager(
             lock=self._lock,
@@ -174,17 +177,6 @@ class ClientRegistry:
     @staticmethod
     def _normalize_wire_client_id(client_id: bytes) -> str:
         return normalize_sensor_id(client_id.hex())
-
-    def _is_live_unlocked(self, record: ClientRecord, mono_now: float) -> bool:
-        return bool(
-            record.last_seen_mono and (mono_now - record.last_seen_mono) <= self._live_ttl_seconds,
-        )
-
-    def _is_retained_unlocked(self, record: ClientRecord, mono_now: float) -> bool:
-        return bool(
-            record.last_seen_mono
-            and (mono_now - record.last_seen_mono) <= self._retention_ttl_seconds,
-        )
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
         normalized = normalize_sensor_id(client_id)
@@ -355,11 +347,7 @@ class ClientRegistry:
     ) -> list[str]:
         with self._lock:
             mono_now = _resolve_now_mono(now_mono)
-            return [
-                record.client_id
-                for record in self._clients.values()
-                if self._is_live_unlocked(record, mono_now)
-            ]
+            return self._liveness_policy.active_client_ids(self._clients, mono_now)
 
     def data_loss_snapshot(self) -> dict[str, int]:
         with self._lock:
@@ -388,11 +376,7 @@ class ClientRegistry:
     def evict_stale(self, now: float | None = None, *, now_mono: float | None = None) -> list[str]:
         with self._lock:
             mono_now = _resolve_now_mono(now_mono)
-            stale_ids = [
-                client_id
-                for client_id, record in self._clients.items()
-                if record.last_seen_mono and not self._is_retained_unlocked(record, mono_now)
-            ]
+            stale_ids = self._liveness_policy.stale_client_ids(self._clients, mono_now)
             for client_id in stale_ids:
                 self._clients.pop(client_id, None)
             return stale_ids
@@ -417,6 +401,6 @@ class ClientRegistry:
                 self._metadata,
                 now_wall=_resolve_now_wall(now),
                 now_mono=_resolve_now_mono(now_mono),
-                live_ttl_seconds=self._live_ttl_seconds,
+                policy=self._liveness_policy,
                 metrics_by_client=metrics_by_client,
             )
