@@ -54,6 +54,7 @@ if TYPE_CHECKING:
 
 
 def _default_report_filename(payload: Mapping[str, object]) -> str:
+    """Derive the default PDF filename from stable report-identifying payload fields."""
     run_id = str(payload.get("run_id") or payload.get("file_name") or "report")
     return f"{safe_filename(run_id)}_report.pdf"
 
@@ -151,6 +152,7 @@ def validate_prepared_report_input(
 
 
 def _reconstruct_report_test_run(payload: Mapping[str, object]) -> TestRun | None:
+    """Rebuild the report domain aggregate only when the payload is projectable."""
     if not has_projectable_report_payload(payload):
         return None
     return test_run_from_summary(payload)
@@ -162,6 +164,7 @@ def _prepare_report_facts(
     test_run: TestRun,
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportFacts:
+    """Resolve the semantic report facts shared by downstream PDF mapping."""
     metadata = summary_metadata(payload)
     sensor_locations_active = active_sensor_locations(payload)
     origin = resolve_report_origin(test_run)
@@ -212,6 +215,7 @@ def _build_prepared_report_input(
     cache_key: ReportPdfCacheKey | None,
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportInput:
+    """Assemble the canonical history-side report handoff for PDF rendering."""
     domain_test_run = _reconstruct_report_test_run(payload)
     prepared_language = str(normalize_lang(language or payload.get("lang")))
     renderer_payload = build_report_renderer_payload(payload)
