@@ -32,6 +32,16 @@ LOCATION_CODES = (
 )
 
 
+def _delete_resources(base_url: str, path_template: str, identifiers: list[str]) -> None:
+    for identifier in identifiers:
+        api_json(
+            base_url,
+            path_template.format(identifier=identifier),
+            method="DELETE",
+            expected_status=(200, 404),
+        )
+
+
 def _circumference_m(width_mm: float, aspect_pct: float, rim_in: float) -> float:
     # Apply default deflection factor (0.97) to match server-side computation.
     return math.pi * ((rim_in * 25.4 + 2.0 * (width_mm * (aspect_pct / 100.0))) / 1000.0) * 0.97
@@ -267,27 +277,9 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             assert "diagnostic worksheet" not in text_from_en_request
 
     finally:
-        for run_id in list(created_run_ids):
-            api_json(
-                base_url,
-                f"/api/history/{run_id}",
-                method="DELETE",
-                expected_status=(200, 404),
-            )
-        for sensor_mac in seen_sensor_macs:
-            api_json(
-                base_url,
-                f"/api/settings/sensors/{sensor_mac}",
-                method="DELETE",
-                expected_status=(200, 404),
-            )
-        for client_id in seen_client_ids:
-            api_json(
-                base_url,
-                f"/api/clients/{client_id}",
-                method="DELETE",
-                expected_status=(200, 404),
-            )
+        _delete_resources(base_url, "/api/history/{identifier}", list(created_run_ids))
+        _delete_resources(base_url, "/api/settings/sensors/{identifier}", seen_sensor_macs)
+        _delete_resources(base_url, "/api/clients/{identifier}", seen_client_ids)
         api_json(
             base_url,
             "/api/settings/speed-source",
