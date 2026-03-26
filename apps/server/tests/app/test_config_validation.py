@@ -21,7 +21,7 @@ from vibesensor.app.settings import (
 )
 
 
-def _write_config(path: Path, payload: dict) -> None:
+def _write_config(path: Path, payload: dict[str, object]) -> None:
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
 
