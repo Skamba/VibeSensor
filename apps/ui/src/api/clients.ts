@@ -1,6 +1,8 @@
 import { apiJson } from "./http";
 import type { ClientLocationsResponse } from "./types";
 
+const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
+
 export async function getClientLocations(): Promise<ClientLocationsResponse> {
   return apiJson("/api/client-locations");
 }
@@ -8,7 +10,7 @@ export async function getClientLocations(): Promise<ClientLocationsResponse> {
 export async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
   await apiJson(`/api/clients/${encodeURIComponent(clientId)}/location`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify({ location_code: locationCode }),
   });
 }
@@ -16,7 +18,7 @@ export async function setClientLocation(clientId: string, locationCode: string):
 export async function identifyClient(clientId: string, durationMs = 1500): Promise<void> {
   await apiJson(`/api/clients/${encodeURIComponent(clientId)}/identify`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify({ duration_ms: durationMs }),
   });
 }
