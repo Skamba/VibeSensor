@@ -12,14 +12,14 @@ _RATIO_SOURCES_FILE = _DATA_FILE.with_name("car_library_ratio_sources.json")
 _VARIANT_SOURCES_FILE = _DATA_FILE.with_name("CAR_VARIANT_SOURCES.md")
 
 
-def _entry_for(model: str) -> dict:
+def _entry_for(model: str) -> dict[str, object]:
     for entry in CAR_LIBRARY:
         if entry["brand"] == "BMW" and entry["model"] == model:
             return entry
     raise AssertionError(f"BMW model not found: {model}")
 
 
-def _variant_map(entry: dict) -> dict[str, tuple[str, str]]:
+def _variant_map(entry: dict[str, object]) -> dict[str, tuple[str, str]]:
     return {
         variant["name"]: (variant["engine"], variant["drivetrain"]) for variant in entry["variants"]
     }

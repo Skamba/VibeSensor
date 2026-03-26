@@ -11,8 +11,6 @@ Uses the five shared profiles from ``builders.CAR_PROFILES``.
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 from test_support import (
     ALL_WHEEL_SENSORS,
@@ -35,7 +33,7 @@ from test_support import (
 )
 
 
-def _profile_engine_hz(profile: dict[str, Any], speed_kmh: float) -> float:
+def _profile_engine_hz(profile: dict[str, object], speed_kmh: float) -> float:
     """Compute engine-1x Hz for a profile at a given speed."""
     whz = profile_wheel_hz(profile, speed_kmh)
     return whz * profile["final_drive_ratio"] * profile["current_gear_ratio"]
@@ -47,7 +45,7 @@ def _profile_engine_hz(profile: dict[str, Any], speed_kmh: float) -> float:
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", list(CORNER_SENSORS))
-def test_fault_detected_across_profiles(profile: dict[str, Any], corner: str) -> None:
+def test_fault_detected_across_profiles(profile: dict[str, object], corner: str) -> None:
     """Wheel fault must be detected with correct profile-specific wheel Hz."""
     sensor = CORNER_SENSORS[corner]
     samples = make_profile_fault_samples(
@@ -71,7 +69,7 @@ def test_fault_detected_across_profiles(profile: dict[str, Any], corner: str) ->
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", [SPEED_MID, SPEED_HIGH], ids=["mid", "high"])
-def test_nofault_baseline_across_profiles(profile: dict[str, Any], speed: float) -> None:
+def test_nofault_baseline_across_profiles(profile: dict[str, object], speed: float) -> None:
     """Pure noise with any car profile should not produce a wheel fault."""
     samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, speed_kmh=speed, n_samples=35)
     meta = profile_metadata(profile)
@@ -85,7 +83,7 @@ def test_nofault_baseline_across_profiles(profile: dict[str, Any], speed: float)
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-def test_fault_across_speeds_and_profiles(profile: dict[str, Any], speed: float) -> None:
+def test_fault_across_speeds_and_profiles(profile: dict[str, object], speed: float) -> None:
     """Fault detection must work across different speed bands for each profile."""
     samples = make_profile_fault_samples(
         profile=profile,
@@ -138,7 +136,7 @@ def test_wrong_profile_analysis_robust(profile_idx: int) -> None:
 # 5 profiles = 5 cases
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-def test_wheel_hz_sanity(profile: dict[str, Any]) -> None:
+def test_wheel_hz_sanity(profile: dict[str, object]) -> None:
     """Each profile's tire circumference produces a reasonable wheel Hz."""
     circ = profile_circ(profile)
     assert 1.5 < circ < 3.5, f"Tire circumference {circ:.3f}m out of expected range"
