@@ -1,3 +1,5 @@
+"""Tests for projecting domain findings into the canonical boundary payload shape."""
+
 from __future__ import annotations
 
 import vibesensor.shared.boundaries.finding as boundary_finding
