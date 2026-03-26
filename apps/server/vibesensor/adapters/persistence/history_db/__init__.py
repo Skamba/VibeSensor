@@ -14,7 +14,10 @@ from typing import Any
 from vibesensor.adapters.persistence.history_db._client_names_repository import (
     ClientNameRepository,
 )
-from vibesensor.adapters.persistence.history_db._engine import SQLiteHistoryEngine
+from vibesensor.adapters.persistence.history_db._engine import (
+    SQLiteHistoryEngine,
+    run_startup_quick_check,
+)
 from vibesensor.adapters.persistence.history_db._run_repository import RunHistoryRepository
 from vibesensor.adapters.persistence.history_db._settings_repository import (
     SettingsSnapshotRepository,
@@ -203,22 +206,8 @@ class HistoryDB:
         self._engine._migrate_v10_to_v11_persisted_analysis_version()
 
     def _run_startup_quick_check(self) -> None:
-        try:
-            with self._cursor(commit=False) as cur:
-                cur.execute("PRAGMA quick_check")
-                problems = [str(row[0]) for row in cur.fetchall() if str(row[0]) != "ok"]
-        except sqlite3.Error:
-            LOGGER.critical(
-                "History DB quick_check failed during startup for %s",
-                self.db_path,
-                exc_info=True,
-            )
-            raise
-        if problems:
-            details = "; ".join(problems)
-            self._mark_corrupted(details)
-            LOGGER.critical(
-                "History DB quick_check reported corruption for %s: %s",
-                self.db_path,
-                details,
-            )
+        run_startup_quick_check(
+            cursor_provider=self._cursor,
+            db_path=self.db_path,
+            mark_corrupted=self._mark_corrupted,
+        )
