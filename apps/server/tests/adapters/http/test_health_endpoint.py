@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import pytest
+from _history_endpoint_helpers import route_endpoint
 from test_support import response_payload
-
-from ._history_endpoint_helpers import route_endpoint
 
 
 @pytest.fixture

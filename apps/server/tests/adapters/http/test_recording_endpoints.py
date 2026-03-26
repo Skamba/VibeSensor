@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from _history_endpoint_helpers import route_endpoint
 from test_support import response_payload
 
 from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
-
-from ._history_endpoint_helpers import route_endpoint
 
 
 def _make_recording_status_snapshot(

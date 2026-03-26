@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from _history_endpoint_helpers import route_endpoint, route_endpoint_with_method
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from test_support import response_payload
@@ -10,8 +11,6 @@ from test_support import response_payload
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.shared.types.car_config import CarConfigPayload, CarsSnapshot
-
-from ._history_endpoint_helpers import route_endpoint, route_endpoint_with_method
 
 
 def _make_default_snapshot() -> AnalysisSettingsSnapshot:
