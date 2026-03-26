@@ -1,3 +1,5 @@
+"""Tests for dropping non-finite numeric values while decoding boundary payloads."""
+
 from __future__ import annotations
 
 from vibesensor.shared.boundaries.finding import finding_from_payload

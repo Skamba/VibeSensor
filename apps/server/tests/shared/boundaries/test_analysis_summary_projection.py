@@ -1,3 +1,5 @@
+"""Tests for projecting reconstructed analysis summaries back to boundary payloads."""
+
 from __future__ import annotations
 
 from test_support.findings import make_finding_payload
