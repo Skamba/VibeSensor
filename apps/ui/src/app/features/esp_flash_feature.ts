@@ -28,6 +28,10 @@ const STATE_TO_VARIANT: Readonly<Record<string, string>> = {
   failed: "bad",
 };
 
+function safeEspFlashState(state: string | null | undefined): string {
+  return state || "idle";
+}
+
 export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature {
   const { els, t, escapeHtml } = ctx;
   let nextLogIndex = 0;
@@ -50,7 +54,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   function renderStatus(status: EspFlashStatusPayload): void {
     if (els.espFlashStatusBanner) {
       // Defensively fallback to "idle" when state is missing from API response
-      const safeState: string = status.state || "idle";
+      const safeState = safeEspFlashState(status.state);
       const stateLabel = t(`settings.esp_flash.state.${safeState}`);
       const extra = status.error ? ` — ${status.error}` : "";
       els.espFlashStatusBanner.textContent = `${stateLabel}${extra}`;
@@ -94,7 +98,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     }
     const rows = attempts.map((attempt) => {
       // Defensively fallback to "idle" when state is missing from API response
-      const safeState: string = attempt.state || "idle";
+      const safeState = safeEspFlashState(attempt.state);
       const stateLabel = t(`settings.esp_flash.state.${safeState}`);
       const port = attempt.selected_port || t("settings.esp_flash.auto_detect");
       return `<li><strong>${escapeHtml(stateLabel)}</strong> — ${escapeHtml(port)}</li>`;
