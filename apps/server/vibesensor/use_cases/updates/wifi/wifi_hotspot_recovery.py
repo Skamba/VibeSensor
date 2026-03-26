@@ -8,6 +8,8 @@ from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 
 class UpdateHotspotRecovery:
+    """Manage the updater's hotspot shutdown and restoration lifecycle."""
+
     __slots__ = ("_commands", "_config", "_tracker")
 
     def __init__(
@@ -22,6 +24,8 @@ class UpdateHotspotRecovery:
         self._config = config
 
     async def stop_hotspot(self) -> bool:
+        """Stop the hotspot before attempting an uplink connection."""
+
         self._tracker.log("Stopping hotspot...")
         rc, _, _ = await self._commands.run(
             ["nmcli", "connection", "down", self._config.ap_con_name],
@@ -34,6 +38,8 @@ class UpdateHotspotRecovery:
         return True
 
     async def cleanup_uplink(self) -> None:
+        """Tear down any transient updater uplink connection state."""
+
         await self._commands.run(
             ["nmcli", "connection", "down", self._config.uplink_connection_name],
             phase="restore",
@@ -48,6 +54,8 @@ class UpdateHotspotRecovery:
         )
 
     async def restore_hotspot(self) -> bool:
+        """Re-enable the hotspot, retrying within the configured restore budget."""
+
         await self.cleanup_uplink()
         for attempt in range(1, self._config.hotspot_restore_retries + 1):
             rc, _, _ = await self._commands.run(

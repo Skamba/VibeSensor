@@ -10,6 +10,8 @@ _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
 
 
 def ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
+    """Return the advertised security modes for the matching SSID in nmcli output."""
+
     modes: set[str] = set()
     target = ssid.strip()
     if not target:
@@ -31,6 +33,8 @@ def ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
 
 
 class UpdateUplinkProvisioner:
+    """Create and configure the temporary Wi-Fi uplink connection for updates."""
+
     __slots__ = ("_commands", "_config", "_tracker")
 
     def __init__(
@@ -45,6 +49,8 @@ class UpdateUplinkProvisioner:
         self._config = config
 
     async def prepare_uplink_connection(self, ssid: str, password: str) -> bool:
+        """Create the transient uplink profile and apply any required credentials."""
+
         if not password and not await self._validate_open_network(ssid):
             return False
         await self._delete_existing_uplink_connections()
@@ -57,6 +63,8 @@ class UpdateUplinkProvisioner:
         return True
 
     async def _validate_open_network(self, ssid: str) -> bool:
+        """Reject blank-password attempts when the scanned SSID is secured."""
+
         rc, stdout, _ = await self._commands.run(
             [
                 "nmcli",
@@ -88,6 +96,8 @@ class UpdateUplinkProvisioner:
         return False
 
     async def _delete_existing_uplink_connections(self) -> None:
+        """Remove any stale transient uplink profiles before recreating them."""
+
         rc, stdout, _ = await self._commands.run(
             ["nmcli", "-t", "-f", "UUID,NAME", "connection", "show"],
             phase="connecting_wifi",
@@ -110,6 +120,8 @@ class UpdateUplinkProvisioner:
             )
 
     async def _create_uplink_connection(self, ssid: str) -> bool:
+        """Create a new transient uplink profile for the requested SSID."""
+
         rc, _, stderr = await self._commands.run(
             [
                 "nmcli",
@@ -136,6 +148,8 @@ class UpdateUplinkProvisioner:
         return False
 
     async def _configure_uplink_connection(self) -> bool:
+        """Apply the non-secret updater defaults to the uplink profile."""
+
         rc, _, stderr = await self._commands.run(
             [
                 "nmcli",
@@ -160,15 +174,12 @@ class UpdateUplinkProvisioner:
         if rc == 0:
             return True
         self._tracker.fail("connecting_wifi", "Failed to configure uplink", stderr)
-        await self._commands.run(
-            ["nmcli", "connection", "delete", self._config.uplink_connection_name],
-            phase="connecting_wifi",
-            timeout=self._config.nmcli_timeout_s,
-            sudo=True,
-        )
+        await self._delete_uplink_connection()
         return False
 
     async def _apply_wifi_password(self, password: str) -> bool:
+        """Apply WPA-PSK credentials to the transient uplink profile."""
+
         rc, _, stderr = await self._commands.run(
             [
                 "nmcli",
@@ -187,10 +198,15 @@ class UpdateUplinkProvisioner:
         if rc == 0:
             return True
         self._tracker.fail("connecting_wifi", "Failed to set Wi-Fi credentials", stderr)
+        await self._delete_uplink_connection()
+        return False
+
+    async def _delete_uplink_connection(self) -> None:
+        """Delete the transient uplink profile after a partial setup failure."""
+
         await self._commands.run(
             ["nmcli", "connection", "delete", self._config.uplink_connection_name],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
-        return False
