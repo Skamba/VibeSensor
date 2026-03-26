@@ -28,6 +28,7 @@ class UpdateJobExecutor:
         return self._task
 
     def cancel_requested(self) -> bool:
+        """Return whether cancellation has been requested for the active job."""
         return self._cancel_event.is_set()
 
     def start(
@@ -36,6 +37,7 @@ class UpdateJobExecutor:
         *,
         before_start: BeforeStartCallback | None = None,
     ) -> None:
+        """Start a new update task after running any synchronous pre-start hook."""
         if self._task is not None and not self._task.done():
             raise UpdateError("Update already in progress", status="conflict")
         self._cancel_event.clear()
@@ -47,6 +49,7 @@ class UpdateJobExecutor:
         )
 
     def cancel(self) -> bool:
+        """Request cancellation for the active task and signal the cancel event."""
         if self._task is None or self._task.done():
             return False
         self._cancel_event.set()
@@ -64,6 +67,7 @@ class UpdateJobExecutor:
         cleanup: CleanupCallback,
         on_cancelled_cleanup_error: VoidCallback,
     ) -> None:
+        """Run the workflow with timeout/cancel handling and guaranteed cleanup."""
         cancelled = False
         try:
             await asyncio.wait_for(workflow_factory(), timeout=timeout_s)

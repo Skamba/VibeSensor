@@ -39,6 +39,7 @@ class WheelMetadata:
 
 
 def _metadata_message_from_archive(wheel_zip: zipfile.ZipFile) -> Message:
+    """Return the parsed ``METADATA`` message stored inside a wheel archive."""
     metadata_name = next(
         (name for name in wheel_zip.namelist() if name.endswith(".dist-info/METADATA")),
         "",
@@ -53,6 +54,7 @@ def _metadata_message_from_archive(wheel_zip: zipfile.ZipFile) -> Message:
 
 
 def _parse_metadata_message(message: Message) -> WheelMetadata:
+    """Project the raw metadata message into the small updater-facing model."""
     return WheelMetadata(
         name=(message.get("Name") or "").strip(),
         version=(message.get("Version") or "").strip(),
@@ -77,6 +79,7 @@ def wheel_metadata_validation_errors(
     expected_name: str | None = None,
     expected_version: str | None = None,
 ) -> list[str]:
+    """Return human-readable wheel metadata problems for validation/reporting."""
     try:
         metadata = read_wheel_metadata(wheel_path)
     except (OSError, ValueError, zipfile.BadZipFile) as exc:
@@ -193,6 +196,7 @@ class WheelArtifactValidator:
         fatal: bool,
         expected_sha256: str | None = None,
     ) -> bool:
+        """Validate a wheel file and report any failure through the tracker."""
         if not wheel_path.is_file():
             self._report_failure(
                 phase=phase,
@@ -273,6 +277,7 @@ class WheelArtifactValidator:
 
 
 def sha256_file(path: Path) -> str:
+    """Hash a file as lowercase SHA-256 without loading it fully into memory."""
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
