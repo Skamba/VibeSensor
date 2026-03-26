@@ -112,6 +112,8 @@ def test_ring_buffer_wraparound_returns_correct_latest_data() -> None:
 
 
 class TestBoundedSample:
+    """Verify bounded_sample handles small inputs, halving, and total_hint cases."""
+
     @pytest.mark.parametrize(
         ("n_items", "max_items", "total_hint", "exp_total", "exp_len", "exp_stride"),
         [
