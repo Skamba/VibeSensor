@@ -1,3 +1,5 @@
+"""OCR-based full-page text fidelity checks for rendered PDF reports."""
+
 from __future__ import annotations
 
 import json
