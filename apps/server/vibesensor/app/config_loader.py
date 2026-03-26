@@ -82,7 +82,7 @@ def _read_config_file(path: Path) -> JsonObject:
 def load_config(config_path: Path | None = None) -> AppConfig:
     """Load, validate, and return the application configuration.
 
-     Reads *config_path* (or the default ``config.yaml`` next to this module),
+    Reads *config_path* (or the default ``config.yaml`` next to this module),
     applies precedence ``DEFAULT_CONFIG -> YAML override file -> typed
     validation/clamping``, and returns a fully validated ``AppConfig``.
     """
