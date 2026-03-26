@@ -6,6 +6,7 @@ import { createRealtimeFeature, type RealtimeFeature } from "./features/realtime
 import { createSettingsFeature, type SettingsFeature } from "./features/settings_feature";
 import { createUpdateFeature, type UpdateFeature } from "./features/update_feature";
 import type { AppState } from "./ui_app_state";
+import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
 import type { AdaptedClient } from "../server_payload";
 
 export interface AppFeatureBundle {
@@ -76,6 +77,13 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     renderSpeedReadout: deps.renderSpeedReadout,
     onCarSelectionStateChange: deps.renderCarSelectionWarning,
   });
+  const carCreation = createUiCarCreationCommand({
+    getVehicleSettings: () => state.settings.vehicleSettings,
+    syncCarsPayload: (payload) => settings.syncCarsPayload(payload),
+    syncActiveCarToInputs: () => settings.syncActiveCarToInputs(),
+    renderCarList: () => settings.renderCarList(),
+    renderSpectrum: deps.renderSpectrum,
+  });
 
   const cars = createCarsFeature({
     els,
@@ -83,7 +91,8 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     escapeHtml,
     showError: deps.showError,
     fmt,
-    addCarFromWizard: settings.addCarFromWizard,
+    addCarFromWizard: (name, carType, aspects, variant) =>
+      carCreation.addCarFromWizard(name, carType, aspects, variant),
   });
 
   const update = createUpdateFeature({ els, t, escapeHtml, showError: deps.showError });
