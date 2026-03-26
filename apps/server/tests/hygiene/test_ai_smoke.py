@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -45,44 +46,28 @@ def install_pi_text() -> str:
 def test_smoke_health_route_registered() -> None:
     state = MagicMock()
     placeholder = MagicMock()
-    state.telemetry = type(
-        "Telemetry",
-        (),
-        {
-            "control_plane": placeholder,
-            "health_state": placeholder,
-            "processing_loop_state": placeholder,
-            "processor": placeholder,
-            "registry": placeholder,
-            "run_recorder": placeholder,
-            "ws_hub": placeholder,
-        },
-    )()
-    state.settings = type(
-        "Settings",
-        (),
-        {
-            "gps_monitor": placeholder,
-            "settings_store": placeholder,
-        },
-    )()
-    state.history = type(
-        "History",
-        (),
-        {
-            "export_service": placeholder,
-            "report_service": placeholder,
-            "run_service": placeholder,
-        },
-    )()
-    state.updates = type(
-        "Updates",
-        (),
-        {
-            "esp_flash_manager": placeholder,
-            "update_manager": placeholder,
-        },
-    )()
+    state.telemetry = SimpleNamespace(
+        control_plane=placeholder,
+        health_state=placeholder,
+        processing_loop_state=placeholder,
+        processor=placeholder,
+        registry=placeholder,
+        run_recorder=placeholder,
+        ws_hub=placeholder,
+    )
+    state.settings = SimpleNamespace(
+        gps_monitor=placeholder,
+        settings_store=placeholder,
+    )
+    state.history = SimpleNamespace(
+        export_service=placeholder,
+        report_service=placeholder,
+        run_service=placeholder,
+    )
+    state.updates = SimpleNamespace(
+        esp_flash_manager=placeholder,
+        update_manager=placeholder,
+    )
     router = create_router(state)
     routes = {r.path: r.methods for r in router.routes if hasattr(r, "methods")}
     assert "/api/health" in routes, "Missing /api/health route"
