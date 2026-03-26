@@ -316,19 +316,17 @@ class WorkerPool:
         for a free outstanding-task slot.
         """
         with self._condition:
-            avg_run = (
-                round(self._total_run_s / self._total_tasks, 6) if self._total_tasks > 0 else 0.0
-            )
-            avg_submit_wait = (
-                round(self._total_submit_wait_s / self._total_tasks, 6)
-                if self._total_tasks > 0
-                else 0.0
-            )
+            total_tasks = self._total_tasks
+            avg_run = 0.0
+            avg_submit_wait = 0.0
+            if total_tasks > 0:
+                avg_run = round(self._total_run_s / total_tasks, 6)
+                avg_submit_wait = round(self._total_submit_wait_s / total_tasks, 6)
             return {
                 "max_workers": self._max_workers,
                 "max_queue_size": self._max_queue_size,
                 "max_pending_tasks": self._max_pending_tasks,
-                "total_tasks": self._total_tasks,
+                "total_tasks": total_tasks,
                 "pending_tasks": self._pending_tasks,
                 "queued_tasks": self._queued_tasks,
                 "running_tasks": self._running_tasks,
