@@ -1,5 +1,5 @@
 # Docker overrides — only fields that differ from Pi defaults.
-# Uses local relative paths inside the container working directory.
+# Disables Pi-only services and keeps rollback data in container-local storage.
 
 ap:
   self_heal:
