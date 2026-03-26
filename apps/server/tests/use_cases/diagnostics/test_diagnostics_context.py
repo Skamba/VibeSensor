@@ -44,8 +44,12 @@ def _context_metadata() -> dict[str, object]:
     }
 
 
+def _context():
+    return build_diagnostics_context(_context_metadata(), file_name="ctx")
+
+
 def test_diagnostics_context_decodes_typed_reference_data() -> None:
-    context = build_diagnostics_context(_context_metadata(), file_name="ctx")
+    context = _context()
 
     assert context.run_id == "ctx-run"
     assert context.raw_sample_rate_hz == 200.0
@@ -58,7 +62,7 @@ def test_diagnostics_context_decodes_typed_reference_data() -> None:
 
 
 def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None:
-    context = build_diagnostics_context(_context_metadata(), file_name="ctx")
+    context = _context()
     sample = replace(
         make_analysis_sample(
             t_s=0.0,
@@ -78,7 +82,7 @@ def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None
 
 
 def test_diagnostics_context_rehydrates_boundary_metadata_with_known_and_unknown_fields() -> None:
-    context = build_diagnostics_context(_context_metadata(), file_name="ctx")
+    context = _context()
 
     metadata = context_to_metadata_dict(context)
 
