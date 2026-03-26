@@ -1,3 +1,5 @@
+"""Guard buffer-store cache identity and sample-rate invalidation behavior."""
+
 from __future__ import annotations
 
 import numpy as np
