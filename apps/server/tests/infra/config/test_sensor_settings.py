@@ -1,3 +1,5 @@
+"""Cover sensor settings service mutations, defaults, and rollback behavior."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
