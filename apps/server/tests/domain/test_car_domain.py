@@ -6,6 +6,17 @@ from types import MappingProxyType
 
 from vibesensor.domain import Car, CarSnapshot, OrderReferenceSpec
 
+
+def _order_settings(**overrides: float) -> dict[str, float]:
+    settings = {
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0,
+    }
+    settings.update(overrides)
+    return settings
+
+
 # ---------------------------------------------------------------------------
 # OrderReferenceSpec tests
 # ---------------------------------------------------------------------------
@@ -16,22 +27,19 @@ class TestOrderReferenceSpecFromSettings:
         assert OrderReferenceSpec.from_settings({"final_drive_ratio": 3.0}) is None
 
     def test_returns_spec_with_complete_tire_keys(self) -> None:
-        settings: dict[str, float] = {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "final_drive_ratio": 3.08,
-            "current_gear_ratio": 0.64,
-            "wheel_bandwidth_pct": 5.0,
-            "driveshaft_bandwidth_pct": 4.5,
-            "engine_bandwidth_pct": 5.2,
-            "speed_uncertainty_pct": 1.0,
-            "tire_diameter_uncertainty_pct": 1.0,
-            "final_drive_uncertainty_pct": 0.1,
-            "gear_uncertainty_pct": 0.2,
-            "min_abs_band_hz": 0.2,
-            "max_band_half_width_pct": 6.0,
-        }
+        settings = _order_settings(
+            final_drive_ratio=3.08,
+            current_gear_ratio=0.64,
+            wheel_bandwidth_pct=5.0,
+            driveshaft_bandwidth_pct=4.5,
+            engine_bandwidth_pct=5.2,
+            speed_uncertainty_pct=1.0,
+            tire_diameter_uncertainty_pct=1.0,
+            final_drive_uncertainty_pct=0.1,
+            gear_uncertainty_pct=0.2,
+            min_abs_band_hz=0.2,
+            max_band_half_width_pct=6.0,
+        )
         spec = OrderReferenceSpec.from_settings(settings, deflection_factor=0.97)
         assert spec is not None
         assert spec.tire_spec.width_mm == 285.0
@@ -40,66 +48,39 @@ class TestOrderReferenceSpecFromSettings:
         assert spec.tire_spec.deflection_factor == 0.97
 
     def test_missing_non_tire_keys_default_to_zero(self) -> None:
-        settings: dict[str, float] = {
-            "tire_width_mm": 205.0,
-            "tire_aspect_pct": 55.0,
-            "rim_in": 16.0,
-        }
+        settings = {"tire_width_mm": 205.0, "tire_aspect_pct": 55.0, "rim_in": 16.0}
         spec = OrderReferenceSpec.from_settings(settings)
         assert spec is not None
         assert spec.final_drive_ratio == 0.0
         assert spec.wheel_bandwidth_pct == 0.0
 
     def test_tire_circumference(self) -> None:
-        settings: dict[str, float] = {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-        }
+        settings = _order_settings()
         spec = OrderReferenceSpec.from_settings(settings)
         assert spec is not None
         assert spec.tire_circumference_m > 0
         assert spec.tire_circumference_m == spec.tire_spec.circumference_m
 
     def test_has_engine_reference(self) -> None:
-        settings: dict[str, float] = {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "current_gear_ratio": 0.64,
-        }
+        settings = _order_settings(current_gear_ratio=0.64)
         spec = OrderReferenceSpec.from_settings(settings)
         assert spec is not None
         assert spec.has_engine_reference is True
 
     def test_no_engine_reference_when_zero(self) -> None:
-        settings: dict[str, float] = {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "current_gear_ratio": 0.0,
-        }
+        settings = _order_settings(current_gear_ratio=0.0)
         spec = OrderReferenceSpec.from_settings(settings)
         assert spec is not None
         assert spec.has_engine_reference is False
 
     def test_is_complete(self) -> None:
-        settings: dict[str, float] = {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "final_drive_ratio": 3.08,
-        }
+        settings = _order_settings(final_drive_ratio=3.08)
         spec = OrderReferenceSpec.from_settings(settings)
         assert spec is not None
         assert spec.is_complete is True
 
     def test_not_complete_without_drive_ratio(self) -> None:
-        settings: dict[str, float] = {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-        }
+        settings = _order_settings()
         spec = OrderReferenceSpec.from_settings(settings)
         assert spec is not None
         assert spec.is_complete is False
@@ -108,12 +89,7 @@ class TestOrderReferenceSpecFromSettings:
 class TestCarOrderReferenceSpec:
     def test_car_with_tire_aspects_has_spec(self) -> None:
         car = Car(
-            aspects={
-                "tire_width_mm": 285.0,
-                "tire_aspect_pct": 30.0,
-                "rim_in": 21.0,
-                "final_drive_ratio": 3.08,
-            },
+            aspects=_order_settings(final_drive_ratio=3.08),
         )
         assert car.order_reference_spec is not None
         assert car.order_reference_spec.final_drive_ratio == 3.08
@@ -128,12 +104,7 @@ class TestCarOrderReferenceSpec:
 
     def test_car_with_deflection_factor(self) -> None:
         car = Car(
-            aspects={
-                "tire_width_mm": 285.0,
-                "tire_aspect_pct": 30.0,
-                "rim_in": 21.0,
-                "tire_deflection_factor": 0.97,
-            },
+            aspects=_order_settings(tire_deflection_factor=0.97),
         )
         assert car.order_reference_spec is not None
         assert car.order_reference_spec.tire_spec.deflection_factor == 0.97
