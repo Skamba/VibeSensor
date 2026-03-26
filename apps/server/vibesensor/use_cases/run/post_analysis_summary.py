@@ -101,6 +101,7 @@ def build_post_analysis_summary(
 
 
 def _post_analysis_sample_rate_hz(metadata: RunMetadata) -> int | None:
+    """Resolve the sample rate used for duration checks from canonical or extra metadata."""
     raw_sample_rate_hz = metadata.raw_sample_rate_hz
     if raw_sample_rate_hz is not None and raw_sample_rate_hz > 0:
         return raw_sample_rate_hz

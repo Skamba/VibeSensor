@@ -38,6 +38,8 @@ class PostAnalysisRunner(Protocol):
 
 
 class PostAnalysisLoader(Protocol):
+    """Injected boundary for loading metadata and samples for a completed run."""
+
     def __call__(
         self,
         *,
@@ -96,6 +98,7 @@ PostAnalysisAttemptResult = PostAnalysisExecutionResult | PostAnalysisExecutionR
 
 
 def is_retryable_post_analysis_error(exc: Exception) -> bool:
+    """Return whether a post-analysis exception should be retried before storing failure."""
     return isinstance(exc, (sqlite3.Error, OSError, MemoryError))
 
 
