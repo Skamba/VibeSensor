@@ -33,7 +33,7 @@ def export_schema(out_path: Path | None = None) -> str:
     text = json.dumps(schema, indent=2, sort_keys=True) + "\n"
     if out_path is not None:
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(text)
+        out_path.write_text(text, encoding="utf-8")
     return text
 
 
@@ -49,7 +49,7 @@ def main() -> None:
         if not args.out.exists():
             print(f"FAIL: {args.out} does not exist. Run without --check first.", file=sys.stderr)
             raise SystemExit(1)
-        committed = args.out.read_text()
+        committed = args.out.read_text(encoding="utf-8")
         if committed != generated:
             print(
                 f"FAIL: {args.out} is out of date.\n"
