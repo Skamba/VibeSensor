@@ -12,6 +12,7 @@ from test_support.report_helpers import report_sample as _base_sample
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
+from vibesensor.domain import VibrationOrigin
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.use_cases.diagnostics.summary_builder import (
@@ -36,6 +37,17 @@ def _assert_no_phase_onset(explanation: object) -> None:
         )
     else:
         assert isinstance(explanation, dict)
+
+
+def _origin_explanation(origin: VibrationOrigin) -> object:
+    return build_origin_explanation(
+        source=str(origin.suspected_source),
+        speed_band=origin.speed_band or "",
+        location=origin.summary_location,
+        dominance=origin.dominance_ratio,
+        weak=origin.weak_spatial_separation,
+        dominant_phase=origin.dominant_phase or "",
+    )
 
 
 def test_map_summary_basic(tmp_path: Path) -> None:
@@ -192,14 +204,7 @@ def test_most_likely_origin_summary_phase_onset(
     assert origin is not None
 
     assert origin.dominant_phase == phase
-    explanation = build_origin_explanation(
-        source=str(origin.suspected_source),
-        speed_band=origin.speed_band or "",
-        location=origin.summary_location,
-        dominance=origin.dominance_ratio,
-        weak=origin.weak_spatial_separation,
-        dominant_phase=origin.dominant_phase or "",
-    )
+    explanation = _origin_explanation(origin)
     assert isinstance(explanation, list)
     assert any(
         isinstance(part, dict)
@@ -227,16 +232,7 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
 
     origin = summarize_origin(findings)
     assert origin is not None
-    _assert_no_phase_onset(
-        build_origin_explanation(
-            source=str(origin.suspected_source),
-            speed_band=origin.speed_band or "",
-            location=origin.summary_location,
-            dominance=origin.dominance_ratio,
-            weak=origin.weak_spatial_separation,
-            dominant_phase=origin.dominant_phase or "",
-        )
-    )
+    _assert_no_phase_onset(_origin_explanation(origin))
 
 
 def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
@@ -258,16 +254,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
 
     assert origin is not None
     assert origin.dominant_phase is None
-    _assert_no_phase_onset(
-        build_origin_explanation(
-            source=str(origin.suspected_source),
-            speed_band=origin.speed_band or "",
-            location=origin.summary_location,
-            dominance=origin.dominance_ratio,
-            weak=origin.weak_spatial_separation,
-            dominant_phase=origin.dominant_phase or "",
-        )
-    )
+    _assert_no_phase_onset(_origin_explanation(origin))
 
     summary = minimal_summary(
         lang="en",
