@@ -1,3 +1,5 @@
+"""Core structural and API-shape checks for the bundled car library."""
+
 from __future__ import annotations
 
 from pathlib import Path
