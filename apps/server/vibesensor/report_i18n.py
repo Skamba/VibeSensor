@@ -16,6 +16,16 @@ from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 
 _DATA_FILE = resolve_static_data_file("report_i18n.json")
+_SOURCE_I18N_KEYS: dict[VibrationSource, str] = {
+    VibrationSource.WHEEL_TIRE: "SOURCE_WHEEL_TIRE",
+    VibrationSource.DRIVELINE: "SOURCE_DRIVELINE",
+    VibrationSource.ENGINE: "SOURCE_ENGINE",
+    VibrationSource.BODY_RESONANCE: "SOURCE_BODY_RESONANCE",
+    VibrationSource.TRANSIENT_IMPACT: "SOURCE_TRANSIENT_IMPACT",
+    VibrationSource.BASELINE_NOISE: "SOURCE_BASELINE_NOISE",
+    VibrationSource.UNKNOWN_RESONANCE: "SOURCE_UNKNOWN_RESONANCE",
+    VibrationSource.UNKNOWN: "UNKNOWN",
+}
 
 
 @lru_cache(maxsize=1)
@@ -62,16 +72,6 @@ def is_i18n_ref(value: object) -> bool:
 def human_source(source: object, *, tr: Callable[[str], str]) -> str:
     """Resolve a source code to its user-facing label."""
     raw = str(source or "").strip().lower()
-    mapping: dict[VibrationSource, str] = {
-        VibrationSource.WHEEL_TIRE: tr("SOURCE_WHEEL_TIRE"),
-        VibrationSource.DRIVELINE: tr("SOURCE_DRIVELINE"),
-        VibrationSource.ENGINE: tr("SOURCE_ENGINE"),
-        VibrationSource.BODY_RESONANCE: tr("SOURCE_BODY_RESONANCE"),
-        VibrationSource.TRANSIENT_IMPACT: tr("SOURCE_TRANSIENT_IMPACT"),
-        VibrationSource.BASELINE_NOISE: tr("SOURCE_BASELINE_NOISE"),
-        VibrationSource.UNKNOWN_RESONANCE: tr("SOURCE_UNKNOWN_RESONANCE"),
-        VibrationSource.UNKNOWN: tr("UNKNOWN"),
-    }
     try:
         key = VibrationSource(raw)
     except ValueError:
@@ -80,7 +80,7 @@ def human_source(source: object, *, tr: Callable[[str], str]) -> str:
             raw,
         )
         return raw.replace("_", " ").title() if raw else tr("UNKNOWN")
-    return mapping.get(key, tr("UNKNOWN"))
+    return tr(_SOURCE_I18N_KEYS.get(key, "UNKNOWN"))
 
 
 def resolve_i18n(
