@@ -18,6 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Current CodeQL coverage targets the Python backend.
         language:
           - python
     steps:
