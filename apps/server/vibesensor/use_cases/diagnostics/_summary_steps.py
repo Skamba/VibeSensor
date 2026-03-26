@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from statistics import median as _median
 
 from vibesensor.domain import LocationIntensitySummary, RunSuitability
@@ -64,22 +65,22 @@ def build_findings_bundle(
 
 
 def build_sensor_bundle(
-    samples: list[Sample],
+    samples: Sequence[Sample],
     *,
     language: str,
-    per_sample_phases: list[DrivingPhase],
+    per_sample_phases: Sequence[DrivingPhase],
 ) -> tuple[list[str], set[str], list[LocationIntensitySummary]]:
     """Build location-scoped sensor summaries used by analysis and reports."""
     return build_sensor_analysis(
         samples=samples,
         language=language,
-        per_sample_phases=per_sample_phases,
+        per_sample_phases=list(per_sample_phases),
     )
 
 
 def build_run_suitability_bundle(
     context: DiagnosticsContext,
-    samples: list[Sample],
+    samples: Sequence[Sample],
     *,
     prepared: PreparedRunData,
     accel_stats: AccelStatistics,

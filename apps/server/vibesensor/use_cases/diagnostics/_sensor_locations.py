@@ -33,6 +33,7 @@ def _locations_connected_throughout_run(
     *,
     lang: str = "en",
 ) -> set[str]:
+    """Return locations that remain present across the full run span."""
     by_location_times: dict[str, set[float]] = defaultdict(set)
     all_times: list[float] = []
 
