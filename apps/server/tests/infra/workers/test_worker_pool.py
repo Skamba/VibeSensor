@@ -10,9 +10,9 @@ Validates:
 
 from __future__ import annotations
 
-from concurrent.futures import Future
 import threading
 import time
+from concurrent.futures import Future
 from math import pi
 
 import numpy as np
