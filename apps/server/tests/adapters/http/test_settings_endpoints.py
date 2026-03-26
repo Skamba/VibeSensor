@@ -82,24 +82,21 @@ def _settings_router(fake_state):
 class TestNormalizeMacOr400:
     """normalize_mac_or_400 raises HTTP 400 for invalid MAC path parameters."""
 
-    @pytest.mark.asyncio
-    async def test_empty_mac_raises_400(self, _settings_router) -> None:
+    def test_empty_mac_raises_400(self) -> None:
         from vibesensor.adapters.http._helpers import normalize_mac_or_400
 
         with pytest.raises(HTTPException) as exc_info:
             normalize_mac_or_400("")
         assert exc_info.value.status_code == 400
 
-    @pytest.mark.asyncio
-    async def test_oversized_mac_raises_400(self, _settings_router) -> None:
+    def test_oversized_mac_raises_400(self) -> None:
         from vibesensor.adapters.http._helpers import normalize_mac_or_400
 
         with pytest.raises(HTTPException) as exc_info:
             normalize_mac_or_400("A" * 65)
         assert exc_info.value.status_code == 400
 
-    @pytest.mark.asyncio
-    async def test_invalid_mac_format_raises_400(self, _settings_router) -> None:
+    def test_invalid_mac_format_raises_400(self) -> None:
         from vibesensor.adapters.http._helpers import normalize_mac_or_400
 
         with pytest.raises(HTTPException) as exc_info:
