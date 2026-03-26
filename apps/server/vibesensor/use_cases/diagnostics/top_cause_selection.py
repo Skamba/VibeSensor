@@ -10,6 +10,7 @@ Core selection and ranking logic operates on domain ``Finding`` objects.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import replace as _dc_replace
 
 from vibesensor.domain import Finding, Signature, VibrationSource
@@ -20,7 +21,7 @@ from vibesensor.domain import Finding, Signature, VibrationSource
 
 
 def group_findings_by_source(
-    findings: tuple[Finding, ...],
+    findings: Sequence[Finding],
 ) -> list[tuple[float, Finding]]:
     """Group findings by source and return ranked representatives.
 
@@ -73,7 +74,7 @@ def group_findings_by_source(
 
 
 def select_top_causes(
-    findings: tuple[Finding, ...],
+    findings: Sequence[Finding],
     *,
     drop_off_points: float = 15.0,
     max_causes: int = 3,
@@ -86,7 +87,7 @@ def select_top_causes(
     if not surfaceable:
         return ()
 
-    grouped = group_findings_by_source(tuple(surfaceable))
+    grouped = group_findings_by_source(surfaceable)
     best_score_pct = grouped[0][0] * 100.0
     threshold_pct = best_score_pct - drop_off_points
 

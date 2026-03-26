@@ -23,8 +23,8 @@ from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 
 
 def _amplitude_weighted_speed_window(
-    speeds: list[float],
-    amplitudes: list[float],
+    speeds: Sequence[float],
+    amplitudes: Sequence[float],
 ) -> tuple[float | None, float | None]:
     """Return the dominant amplitude-weighted speed bin window."""
     bin_weight: dict[str, float] = defaultdict(float)
@@ -46,12 +46,12 @@ def _amplitude_weighted_speed_window(
     return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
-def _speed_stats(speed_values: list[float]) -> SpeedProfileSummary:
+def _speed_stats(speed_values: Sequence[float]) -> SpeedProfileSummary:
     if not speed_values:
         return SpeedProfileSummary()
     vmin = min(speed_values)
     vmax = max(speed_values)
-    vmean, var = _mean_variance(speed_values)
+    vmean, var = _mean_variance(list(speed_values))
     stddev = sqrt(var) if var is not None else 0.0
     vrange = max(0.0, vmax - vmin)
     return SpeedProfileSummary(
@@ -107,10 +107,10 @@ def _phase_to_str(phase: object) -> str | None:
 
 
 def _speed_profile_from_points(
-    points: list[tuple[float, float]],
+    points: Sequence[tuple[float, float]],
     *,
-    allowed_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
-    phase_weights: list[float] | None = None,
+    allowed_speed_bins: Sequence[str] | set[str] | None = None,
+    phase_weights: Sequence[float] | None = None,
 ) -> tuple[float | None, tuple[float, float] | None, str | None]:
     allowed = set(allowed_speed_bins) if allowed_speed_bins is not None else None
 
