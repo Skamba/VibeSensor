@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.runner import CommandRunner
-from vibesensor.use_cases.updates.status import collect_runtime_details
+from vibesensor.use_cases.updates.status import UpdateStateStore, collect_runtime_details
 
 
 def _build_fake_downloaded_wheel(path: Path, *, version: str) -> None:
@@ -146,7 +146,11 @@ def setup_update_env(
         runner.set_response("sudo -n true", 0)
     repo = tmp_path / "repo"
     repo.mkdir()
-    kwargs: dict[str, object] = {"runner": runner, "repo_path": str(repo)}
+    kwargs: dict[str, object] = {
+        "runner": runner,
+        "repo_path": str(repo),
+        "state_store": UpdateStateStore(tmp_path / "update_status.json"),
+    }
     if rollback:
         kwargs["rollback_dir"] = str(tmp_path / "rollback")
     mgr = UpdateManager(**kwargs)
