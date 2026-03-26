@@ -1,3 +1,5 @@
+"""Tests for building the normalized renderer payload used by report rendering."""
+
 from __future__ import annotations
 
 from vibesensor.shared.boundaries.report_renderer_payload import (

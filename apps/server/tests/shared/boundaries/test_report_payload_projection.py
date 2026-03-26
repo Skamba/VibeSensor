@@ -1,3 +1,5 @@
+"""Tests for lightweight report-payload projection helper functions."""
+
 from __future__ import annotations
 
 from vibesensor.shared.boundaries.report_payload_projection import (
