@@ -22,6 +22,17 @@ from vibesensor.use_cases.diagnostics.orders.physics import _driveshaft_hz, _ord
 # ------------------------------------------------------------------
 
 
+def _guarded_float(value: object) -> float:
+    try:
+        return float(value or 0.0)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _context(overrides: dict | None = None):
+    return build_diagnostics_context(overrides or {}, file_name="test")
+
+
 class TestPdfBuilderConfidenceGuard:
     """float() on confidence should not crash on non-numeric values."""
 
@@ -34,12 +45,7 @@ class TestPdfBuilderConfidenceGuard:
         ],
     )
     def test_confidence_guard(self, raw_value: object, expected: object) -> None:
-        finding = {"confidence": raw_value}
-        try:
-            confidence = float(finding.get("confidence") or 0.0)
-        except (ValueError, TypeError):
-            confidence = 0.0
-        assert confidence == expected
+        assert _guarded_float(raw_value) == expected
 
 
 # ------------------------------------------------------------------
@@ -56,12 +62,7 @@ class TestSummaryFrequencyGuard:
             float(row.get("frequency_hz") or 0.0)
 
     def test_none_frequency(self) -> None:
-        row = {"frequency_hz": None}
-        try:
-            freq = float(row.get("frequency_hz") or 0.0)
-        except (ValueError, TypeError):
-            freq = 0.0
-        assert freq == 0.0
+        assert _guarded_float(None) == 0.0
 
 
 # ------------------------------------------------------------------
@@ -118,11 +119,11 @@ class TestDriveshaftHz:
         overrides: dict,
         tire_m: float | None,
     ) -> None:
-        context = build_diagnostics_context(overrides, file_name="test")
+        context = _context(overrides)
         assert _driveshaft_hz(sample, context, tire_circumference_m=tire_m) is None
 
     def test_valid_inputs(self) -> None:
-        context = build_diagnostics_context({}, file_name="test")
+        context = _context()
         result = _driveshaft_hz(
             {"speed_kmh": 72.0, "final_drive_ratio": 3.5},
             context,
@@ -148,7 +149,7 @@ class TestDriveshaftHz:
             lambda data: _FakeSpec(),
         )
 
-        context = build_diagnostics_context({}, file_name="test")
+        context = _context()
         result = _driveshaft_hz({"speed_kmh": 72.0}, context, tire_circumference_m=None)
 
         assert result == pytest.approx(44.5)
