@@ -9,6 +9,18 @@ from vibesensor.infra.processing.snapshot_builder import (
     compute_snapshot_window,
 )
 
+_DEFAULT_WINDOW_KWARGS = {
+    "count": 1000,
+    "capacity": 2000,
+    "sample_rate_hz": 200,
+    "waveform_seconds": 2,
+    "fft_n": 256,
+}
+
+
+def _snapshot_window(**overrides: int) -> SnapshotWindow:
+    return compute_snapshot_window(**{**_DEFAULT_WINDOW_KWARGS, **overrides})
+
 
 class TestCheckCacheHit:
     """Cover snapshot-builder cache-hit eligibility based on generations and sample rate."""
@@ -71,87 +83,57 @@ class TestComputeSnapshotWindow:
     """Exercise snapshot-window sizing and whether a separate FFT block is needed."""
 
     def test_basic_window_smaller_than_count(self) -> None:
-        result = compute_snapshot_window(
-            count=1000,
-            capacity=2000,
-            sample_rate_hz=200,
-            waveform_seconds=2,
-            fft_n=256,
-        )
+        result = _snapshot_window()
         assert result == SnapshotWindow(n_time=400, needs_separate_fft_block=False)
 
     def test_count_limits_window(self) -> None:
-        result = compute_snapshot_window(
-            count=50,
-            capacity=2000,
-            sample_rate_hz=200,
-            waveform_seconds=2,
-            fft_n=256,
-        )
+        result = _snapshot_window(count=50)
         assert result.n_time == 50
 
     def test_capacity_limits_window(self) -> None:
-        result = compute_snapshot_window(
-            count=500,
-            capacity=100,
-            sample_rate_hz=200,
-            waveform_seconds=2,
-            fft_n=256,
-        )
+        result = _snapshot_window(count=500, capacity=100)
         assert result.n_time == 100
 
     def test_needs_separate_fft_block_when_n_time_smaller(self) -> None:
         # count >= fft_n and n_time < fft_n → needs separate fft block
-        result = compute_snapshot_window(
+        result = _snapshot_window(
             count=512,
             capacity=512,
             sample_rate_hz=100,
             waveform_seconds=1,
-            fft_n=256,
         )
         assert result.n_time == 100
         assert result.needs_separate_fft_block is True
 
     def test_separate_fft_block_true_when_small_window_large_count(self) -> None:
         # count >= fft_n but n_time < fft_n → needs separate fft block
-        result = compute_snapshot_window(
+        result = _snapshot_window(
             count=512,
             capacity=512,
             sample_rate_hz=10,
-            waveform_seconds=2,
-            fft_n=256,
         )
         assert result.n_time == 20
         assert result.needs_separate_fft_block is True
 
     def test_no_separate_fft_block_when_n_time_ge_fft_n(self) -> None:
-        result = compute_snapshot_window(
-            count=1000,
-            capacity=1000,
-            sample_rate_hz=200,
-            waveform_seconds=2,
-            fft_n=256,
-        )
+        result = _snapshot_window(capacity=1000)
         assert result.n_time == 400
         assert result.needs_separate_fft_block is False
 
     def test_no_separate_fft_block_when_count_lt_fft_n(self) -> None:
-        result = compute_snapshot_window(
+        result = _snapshot_window(
             count=100,
             capacity=1000,
             sample_rate_hz=10,
-            waveform_seconds=2,
-            fft_n=256,
         )
         assert result.n_time == 20
         assert result.needs_separate_fft_block is False
 
     def test_minimum_window_is_one(self) -> None:
-        result = compute_snapshot_window(
+        result = _snapshot_window(
             count=5,
             capacity=100,
             sample_rate_hz=1,
             waveform_seconds=0,
-            fft_n=256,
         )
         assert result.n_time >= 1
