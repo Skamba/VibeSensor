@@ -1,3 +1,5 @@
+"""App lifespan coverage for shutting down runtime resources cleanly."""
+
 from __future__ import annotations
 
 from pathlib import Path

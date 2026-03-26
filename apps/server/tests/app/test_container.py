@@ -1,3 +1,5 @@
+"""Container wiring coverage for history-db startup recovery and retention hooks."""
+
 from __future__ import annotations
 
 from pathlib import Path

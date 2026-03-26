@@ -1,3 +1,5 @@
+"""CLI/bootstrap main-entry coverage for port fallback and reload wiring."""
+
 from __future__ import annotations
 
 import errno
