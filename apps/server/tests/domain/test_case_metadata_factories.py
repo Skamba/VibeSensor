@@ -1,3 +1,5 @@
+"""Metadata-factory coverage for deriving Car and Symptom context from case inputs."""
+
 from __future__ import annotations
 
 import pytest
