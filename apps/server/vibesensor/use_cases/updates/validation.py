@@ -15,6 +15,8 @@ MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
 
 
 def _probe_rollback_dir(rollback_dir: Path) -> None:
+    """Verify that the rollback directory exists and accepts a small temp file."""
+
     rollback_dir.mkdir(parents=True, exist_ok=True)
     probe_handle = tempfile.NamedTemporaryFile(
         prefix=".rollback-write-probe-",
@@ -28,6 +30,15 @@ def _probe_rollback_dir(rollback_dir: Path) -> None:
     finally:
         probe_handle.close()
     probe_path.unlink(missing_ok=True)
+
+
+def _disk_check_path(rollback_dir: Path) -> Path:
+    """Choose the filesystem whose free space should gate update work."""
+
+    disk_check_path = rollback_dir.parent
+    if not disk_check_path.exists():
+        return Path("/var/lib") if Path("/var/lib").exists() else Path("/")
+    return disk_check_path
 
 
 async def validate_prerequisites(
@@ -71,9 +82,7 @@ async def validate_prerequisites(
         return False
 
     try:
-        disk_check_path = config.rollback_dir.parent
-        if not disk_check_path.exists():
-            disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
+        disk_check_path = _disk_check_path(config.rollback_dir)
         free_bytes = shutil.disk_usage(disk_check_path).free
         if free_bytes < config.min_free_disk_bytes:
             free_mb = free_bytes // (1024 * 1024)
