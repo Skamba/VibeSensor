@@ -11,6 +11,8 @@ from vibesensor.infra.processing.snapshot_builder import (
 
 
 class TestCheckCacheHit:
+    """Cover snapshot-builder cache-hit eligibility based on generations and sample rate."""
+
     def test_cache_hit_when_generations_and_rate_match(self) -> None:
         metrics = {"rms_x": 0.5}
         result = check_cache_hit(
@@ -66,6 +68,8 @@ class TestCheckCacheHit:
 
 
 class TestComputeSnapshotWindow:
+    """Exercise snapshot-window sizing and whether a separate FFT block is needed."""
+
     def test_basic_window_smaller_than_count(self) -> None:
         result = compute_snapshot_window(
             count=1000,
