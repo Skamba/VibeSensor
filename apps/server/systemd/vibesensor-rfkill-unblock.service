@@ -9,4 +9,5 @@ ExecStart=/bin/sh -c 'if command -v rfkill >/dev/null 2>&1; then rfkill unblock 
 RemainAfterExit=yes
 
 [Install]
+# Tie this preflight to NetworkManager startup so boot ordering stays explicit.
 WantedBy=NetworkManager.service
