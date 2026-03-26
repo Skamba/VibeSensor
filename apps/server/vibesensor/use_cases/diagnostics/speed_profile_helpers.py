@@ -51,7 +51,7 @@ def _speed_stats(speed_values: Sequence[float]) -> SpeedProfileSummary:
         return SpeedProfileSummary()
     vmin = min(speed_values)
     vmax = max(speed_values)
-    vmean, var = _mean_variance(speed_values)
+    vmean, var = _mean_variance(list(speed_values))
     stddev = sqrt(var) if var is not None else 0.0
     vrange = max(0.0, vmax - vmin)
     return SpeedProfileSummary(

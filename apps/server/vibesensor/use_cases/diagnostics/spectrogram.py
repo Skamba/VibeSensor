@@ -109,7 +109,7 @@ def scan_peak_samples(samples: Sequence[AnalysisSampleInput]) -> PeakSampleScan:
 def safe_percentile(sorted_vals: Sequence[float], q: float, *, default: float = 0.0) -> float:
     """Return ``percentile(sorted_vals, q)`` when possible, else a safe fallback."""
     if len(sorted_vals) >= 2:
-        return float(percentile(sorted_vals, q))
+        return float(percentile(list(sorted_vals), q))
     return sorted_vals[-1] if sorted_vals else default
 
 
