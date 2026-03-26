@@ -99,9 +99,11 @@ def test_history_routes_reject_invalid_run_ids_before_reaching_services(
 
     assert response.status_code == 400
     assert response.json() == {"detail": "Invalid run identifier"}
-    getattr(run_service, service_attr, AsyncMock()).assert_not_called()
-    getattr(report_service, service_attr, AsyncMock()).assert_not_called()
-    getattr(export_service, service_attr, AsyncMock()).assert_not_called()
+    run_service.get_run.assert_not_called()
+    run_service.get_insights.assert_not_called()
+    run_service.delete_run.assert_not_called()
+    report_service.build_pdf.assert_not_called()
+    export_service.build_export.assert_not_called()
 
 
 def test_settings_routes_reject_invalid_car_id_in_active_car_request() -> None:
