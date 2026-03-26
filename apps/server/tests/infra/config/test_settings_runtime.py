@@ -1,3 +1,5 @@
+"""Guard runtime speed-source synchronization between settings and the monitor."""
+
 from __future__ import annotations
 
 import pytest

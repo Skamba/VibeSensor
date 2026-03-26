@@ -1,3 +1,5 @@
+"""Verify settings-store audit logs capture key language and car mutations."""
+
 from __future__ import annotations
 
 import logging
