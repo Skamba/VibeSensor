@@ -1,3 +1,5 @@
+"""Verify lifecycle shutdown logs lingering background and managed tasks consistently."""
+
 from __future__ import annotations
 
 import asyncio
