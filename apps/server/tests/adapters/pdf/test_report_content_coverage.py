@@ -33,7 +33,13 @@ _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
 # -- Fixtures reused from test_reports.py pattern ----------------------------
 
 
-def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: float) -> dict:
+def _sample(
+    idx: int,
+    *,
+    speed_kmh: float,
+    dominant_freq_hz: float,
+    peak_amp_g: float,
+) -> dict[str, object]:
     return _base_sample(
         idx,
         speed_kmh=speed_kmh,
@@ -45,7 +51,7 @@ def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: 
 
 def _make_run_jsonl(tmp_path: Path, *, tire_circumference_m: float = 2.20) -> Path:
     run_path = tmp_path / "run_content.jsonl"
-    records: list[dict] = [_run_metadata(tire_circumference_m=tire_circumference_m)]
+    records: list[dict[str, object]] = [_run_metadata(tire_circumference_m=tire_circumference_m)]
     for idx in range(30):
         speed = 40 + idx
         wheel_hz = (speed * KMH_TO_MPS) / tire_circumference_m
