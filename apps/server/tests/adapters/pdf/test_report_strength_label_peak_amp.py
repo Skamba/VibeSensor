@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
@@ -14,7 +12,7 @@ from vibesensor.adapters.pdf.presentation import strength_text
 # Shared top-cause / finding templates
 # ---------------------------------------------------------------------------
 
-_F_ORDER_CAUSE: dict[str, Any] = {
+_F_ORDER_CAUSE: dict[str, object] = {
     "finding_id": "F_ORDER",
     "suspected_source": "wheel/tire",
     "strongest_location": "front-left",
