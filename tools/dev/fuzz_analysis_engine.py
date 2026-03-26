@@ -716,7 +716,7 @@ def _run_worker_main(config: FuzzConfig) -> dict[str, object]:
     ) as exc:  # pragma: no cover - exercised only in missing-dev-deps envs
         raise SystemExit(
             "Missing Hypothesis. Install backend dev dependencies first with "
-            '`python3 -m pip install -e "./apps/server[dev]"`.'
+            '`make setup` or `.venv/bin/python -m pip install -e "./apps/server[dev]"`.'
         ) from exc
 
     from pydantic import TypeAdapter
