@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import atexit
+import importlib.util
 import json
 import os
 import shlex
@@ -19,13 +20,27 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from _parallel_runner_support import (
-    duration_cache_path as resolve_duration_cache_path,
-    load_duration_cache as read_duration_cache,
-    merge_duration_observations,
-    observed_durations_from_junit as read_observed_durations_from_junit,
-    parse_collected_test_ids as collect_normalized_test_ids,
+
+def _load_parallel_runner_support():
+    helper_path = Path(__file__).with_name("_parallel_runner_support.py")
+    spec = importlib.util.spec_from_file_location(
+        "_parallel_runner_support", helper_path
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load parallel runner helpers from {helper_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_parallel_runner_support = _load_parallel_runner_support()
+resolve_duration_cache_path = _parallel_runner_support.duration_cache_path
+read_duration_cache = _parallel_runner_support.load_duration_cache
+merge_duration_observations = _parallel_runner_support.merge_duration_observations
+read_observed_durations_from_junit = (
+    _parallel_runner_support.observed_durations_from_junit
 )
+collect_normalized_test_ids = _parallel_runner_support.parse_collected_test_ids
 
 
 def _normalize_collected_test_id(line: str) -> str | None:
