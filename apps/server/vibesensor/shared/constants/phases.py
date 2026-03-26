@@ -9,3 +9,4 @@ PHASE_I18N_KEYS: Final[dict[str, str]] = {
     "deceleration": "DRIVING_PHASE_DECELERATION",
     "coast_down": "DRIVING_PHASE_COAST_DOWN",
 }
+"""Map persisted driving-phase keys to report/boundary i18n labels."""

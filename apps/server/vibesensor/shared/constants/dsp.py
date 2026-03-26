@@ -4,8 +4,14 @@ from __future__ import annotations
 
 from typing import Final
 
-from vibesensor.vibration_strength import PEAK_BANDWIDTH_HZ as PEAK_BANDWIDTH_HZ
-from vibesensor.vibration_strength import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ
+from vibesensor.vibration_strength import PEAK_BANDWIDTH_HZ as _PEAK_BANDWIDTH_HZ
+from vibesensor.vibration_strength import PEAK_SEPARATION_HZ as _PEAK_SEPARATION_HZ
+
+PEAK_BANDWIDTH_HZ: Final[float] = _PEAK_BANDWIDTH_HZ
+"""Bandwidth around each detected strength peak (Hz)."""
+
+PEAK_SEPARATION_HZ: Final[float] = _PEAK_SEPARATION_HZ
+"""Minimum separation between neighbouring detected peaks (Hz)."""
 
 WAVEFORM_DISPLAY_HZ: Final[int] = 120
 """Decimated sample rate sent to the UI waveform chart (Hz)."""
