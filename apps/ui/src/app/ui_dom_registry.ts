@@ -127,10 +127,14 @@ function el(id: string): HTMLElement | null {
   return getById<HTMLElement>(id);
 }
 
+function queryAll<T extends Element>(selector: string): T[] {
+  return Array.from(document.querySelectorAll<T>(selector));
+}
+
 export function createUiDomRegistry(): UiDomElements {
   return {
-    menuButtons: Array.from(document.querySelectorAll(".menu-btn")),
-    views: Array.from(document.querySelectorAll(".view")),
+    menuButtons: queryAll<HTMLElement>(".menu-btn"),
+    views: queryAll<HTMLElement>(".view"),
     languageSelect: selectEl("languageSelect"),
     speedUnitSelect: selectEl("speedUnitSelect"),
     speed: el("speed"),
@@ -181,7 +185,7 @@ export function createUiDomRegistry(): UiDomElements {
     wizardCloseBtn: btnEl("wizardCloseBtn"),
     wizardBackBtn: btnEl("wizardBackBtn"),
     wizardSteps: [0, 1, 2, 3, 4].map((index) => el(`wizardStep${index}`)),
-    wizardStepDots: Array.from(document.querySelectorAll<HTMLElement>(".wizard-step-dot")),
+    wizardStepDots: queryAll<HTMLElement>(".wizard-step-dot"),
     wizardBrandList: el("wizardBrandList"),
     wizardTypeList: el("wizardTypeList"),
     wizardModelList: el("wizardModelList"),
@@ -200,13 +204,11 @@ export function createUiDomRegistry(): UiDomElements {
     wizRimInput: inputEl("wizRim"),
     wizFinalDriveInput: inputEl("wizFinalDrive"),
     wizGearRatioInput: inputEl("wizGearRatio"),
-    speedSourceRadios: Array.from(
-      document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]'),
-    ),
+    speedSourceRadios: queryAll<HTMLInputElement>('input[name="speedSourceRadio"]'),
     manualSpeedInput: inputEl("manualSpeedInput"),
     saveSpeedSourceBtn: btnEl("saveSpeedSourceBtn"),
-    settingsTabs: Array.from(document.querySelectorAll(".settings-tab")),
-    settingsTabPanels: Array.from(document.querySelectorAll(".settings-tab-panel")),
+    settingsTabs: queryAll<HTMLElement>(".settings-tab"),
+    settingsTabPanels: queryAll<HTMLElement>(".settings-tab-panel"),
     updateSsidInput: inputEl("updateSsidInput"),
     updatePasswordInput: inputEl("updatePasswordInput"),
     updateTogglePasswordBtn: btnEl("updateTogglePasswordBtn"),
