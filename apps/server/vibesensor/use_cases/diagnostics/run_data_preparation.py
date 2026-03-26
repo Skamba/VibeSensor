@@ -53,7 +53,7 @@ from vibesensor.use_cases.diagnostics.statistics import (
 
 
 def build_phase_timeline(
-    phase_segments: list[PhaseSegment],
+    phase_segments: Sequence[PhaseSegment],
     findings: Sequence[DomainFinding],
     *,
     min_confidence: float,
@@ -80,8 +80,9 @@ def build_phase_timeline(
 
 
 def build_domain_driving_segments(
-    phase_segments: list[PhaseSegment],
+    phase_segments: Sequence[PhaseSegment],
 ) -> tuple[DomainDrivingSegment, ...]:
+    """Project diagnostics phase segments into the domain driving-segment shape."""
     return tuple(
         DomainDrivingSegment(
             phase=segment.phase,
@@ -109,7 +110,7 @@ def build_sensor_analysis(
     *,
     samples: Sequence[AnalysisSampleInput],
     language: str,
-    per_sample_phases: list[DrivingPhase],
+    per_sample_phases: Sequence[DrivingPhase],
 ) -> tuple[list[str], set[str], list[LocationIntensitySummary]]:
     """Build sensor location lists and intensity rows from analysed samples."""
     typed_samples = ensure_analysis_samples(samples)
@@ -213,8 +214,8 @@ def prepare_run_data(
     )
 
 
-def build_phase_summary(phase_segments: list[PhaseSegment]) -> DrivingPhaseSummary:
+def build_phase_summary(phase_segments: Sequence[PhaseSegment]) -> DrivingPhaseSummary:
     """Small wrapper to keep phase-summary imports localized."""
     from vibesensor.use_cases.diagnostics.phase_segmentation import phase_summary
 
-    return phase_summary(phase_segments)
+    return phase_summary(list(phase_segments))

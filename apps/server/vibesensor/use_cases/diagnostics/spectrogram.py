@@ -106,7 +106,7 @@ def scan_peak_samples(samples: Sequence[AnalysisSampleInput]) -> PeakSampleScan:
     )
 
 
-def safe_percentile(sorted_vals: list[float], q: float, *, default: float = 0.0) -> float:
+def safe_percentile(sorted_vals: Sequence[float], q: float, *, default: float = 0.0) -> float:
     """Return ``percentile(sorted_vals, q)`` when possible, else a safe fallback."""
     if len(sorted_vals) >= 2:
         return float(percentile(sorted_vals, q))
@@ -119,7 +119,7 @@ def safe_percentile(sorted_vals: list[float], q: float, *, default: float = 0.0)
 
 
 def aggregate_fft_spectrum(
-    samples: list[Sample],
+    samples: Sequence[Sample],
     *,
     freq_bin_hz: float = 2.0,
     aggregation: str = "persistence",
@@ -157,7 +157,7 @@ def aggregate_fft_spectrum(
 
 
 def aggregate_fft_spectrum_raw(
-    samples: list[Sample],
+    samples: Sequence[Sample],
     *,
     freq_bin_hz: float = 2.0,
     run_noise_baseline_g: float | None = None,
@@ -179,7 +179,7 @@ def aggregate_fft_spectrum_raw(
 
 
 def spectrogram_from_peaks(
-    samples: list[Sample],
+    samples: Sequence[Sample],
     *,
     aggregation: Literal["persistence", "max"] = "persistence",
     run_noise_baseline_g: float | None = None,
@@ -314,7 +314,7 @@ def spectrogram_from_peaks(
 
 
 def spectrogram_from_peaks_raw(
-    samples: list[Sample],
+    samples: Sequence[Sample],
     *,
     run_noise_baseline_g: float | None = None,
     peak_scan: PeakSampleScan | None = None,

@@ -33,7 +33,7 @@ from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
 from vibesensor.vibration_strength import percentile
 
 
-def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
+def _counter_delta(counter_values: Sequence[tuple[float | None, float]]) -> int:
     """Sort timestamped counter pairs and delegate to shared helper."""
     min_counter_pairs = 2
     if len(counter_values) < min_counter_pairs:
@@ -53,7 +53,7 @@ _EMPTY_BUCKET_COUNTS: dict[str, int] = {f"l{idx}": 0 for idx in range(6)}
 
 def _phase_speed_breakdown(
     samples: Sequence[AnalysisSampleInput],
-    per_sample_phases: list[DrivingPhase],
+    per_sample_phases: Sequence[DrivingPhase],
 ) -> list[PhaseSpeedBreakdownRowData]:
     """Group vibration statistics by driving phase (temporal context)."""
     typed_samples = ensure_analysis_samples(samples)
@@ -129,11 +129,11 @@ def _speed_breakdown(samples: Sequence[AnalysisSampleInput]) -> list[SpeedBreakd
 
 def _sensor_intensity_by_location(
     samples: Sequence[AnalysisSampleInput],
-    include_locations: set[str] | None = None,
+    include_locations: Sequence[str] | set[str] | None = None,
     *,
     lang: str = "en",
-    connected_locations: set[str] | None = None,
-    per_sample_phases: list[DrivingPhase] | None = None,
+    connected_locations: Sequence[str] | set[str] | None = None,
+    per_sample_phases: Sequence[DrivingPhase] | None = None,
 ) -> list[LocationIntensitySummary]:
     """Compute per-location vibration intensity statistics."""
     typed_samples = ensure_analysis_samples(samples)

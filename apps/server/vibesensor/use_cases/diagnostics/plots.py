@@ -55,13 +55,13 @@ from vibesensor.vibration_strength import percentile
 
 def build_plot_series(
     *,
-    samples: list[Sample],
-    speed_breakdown: list[SpeedBreakdownRowData],
-    phase_speed_breakdown: list[PhaseSpeedBreakdownRowData],
+    samples: Sequence[Sample],
+    speed_breakdown: Sequence[SpeedBreakdownRowData],
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowData],
     findings: Sequence[DomainFinding],
     steady_speed: bool,
-    per_sample_phases: list[DrivingPhase],
-    phase_segments: list[PhaseSegment],
+    per_sample_phases: Sequence[DrivingPhase],
+    phase_segments: Sequence[PhaseSegment],
     raw_sample_rate_hz: float | None,
 ) -> PlotSeriesBundle:
     """Build reusable time/speed/finding series for the plot payload."""
@@ -160,7 +160,7 @@ def _finding_series_label(finding: DomainFinding) -> str:
 def build_steady_speed_distribution(
     *,
     steady_speed: bool,
-    vib_mag_points: list[tuple[float, float, str]],
+    vib_mag_points: Sequence[tuple[float, float, str]],
 ) -> dict[str, float] | None:
     """Build steady-speed percentile distribution when appropriate."""
     if not (steady_speed and vib_mag_points):
@@ -177,7 +177,7 @@ def build_steady_speed_distribution(
 
 
 def build_amp_vs_phase(
-    phase_speed_breakdown: list[PhaseSpeedBreakdownRowData],
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowData],
 ) -> list[AmpVsPhaseRowData]:
     """Shape the phase-grouped vibration rows for plotting."""
     amp_vs_phase: list[AmpVsPhaseRowData] = []
@@ -197,7 +197,7 @@ def build_amp_vs_phase(
 
 
 def serialize_phase_context(
-    phase_segments: list[PhaseSegment],
+    phase_segments: Sequence[PhaseSegment],
 ) -> tuple[list[PhaseSegmentPlotData], list[PhaseBoundaryData]]:
     """Serialize phase segments for plot consumers."""
     phase_segments_out: list[PhaseSegmentPlotData] = []
@@ -229,14 +229,14 @@ def serialize_phase_context(
 def _plot_data(
     *,
     samples: Sequence[AnalysisSampleInput],
-    speed_breakdown: list[SpeedBreakdownRowData],
-    phase_speed_breakdown: list[PhaseSpeedBreakdownRowData],
+    speed_breakdown: Sequence[SpeedBreakdownRowData],
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowData],
     findings: Sequence[DomainFinding],
     raw_sample_rate_hz: float | None,
     steady_speed: bool,
     run_noise_baseline_g: float | None = None,
-    per_sample_phases: list[DrivingPhase] | None = None,
-    phase_segments: list[PhaseSegment] | None = None,
+    per_sample_phases: Sequence[DrivingPhase] | None = None,
+    phase_segments: Sequence[PhaseSegment] | None = None,
 ) -> PlotDataResultData:
     typed_samples = ensure_analysis_samples(samples)
     if run_noise_baseline_g is None:
