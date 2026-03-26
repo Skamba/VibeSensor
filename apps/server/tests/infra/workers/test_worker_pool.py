@@ -31,6 +31,7 @@ def _submit_blocking_task(
     future = pool.submit(lambda: release.wait(timeout=1.0) or result)
     return release, future
 
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
