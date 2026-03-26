@@ -33,6 +33,8 @@ def golden_summary() -> dict:
 
 
 class TestGoldenFileReconstruction:
+    """Reconstruct a canonical summary fixture into the typed test-run model."""
+
     def test_test_run_from_summary_does_not_raise(self, golden_summary: dict) -> None:
         test_run = _reconstruct(golden_summary)
         assert test_run is not None

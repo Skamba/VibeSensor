@@ -1,3 +1,5 @@
+"""Tests for injecting and preserving summary-warning boundary payloads."""
+
 from __future__ import annotations
 
 from typing import cast
