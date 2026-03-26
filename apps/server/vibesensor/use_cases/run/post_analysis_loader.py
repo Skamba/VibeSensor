@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import ceil
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -39,9 +40,10 @@ PostAnalysisLoadResult = (
 
 
 def _sample_stride(total_sample_count: int) -> int:
+    """Return the minimum stride that keeps bounded post-analysis under the sample cap."""
     if total_sample_count <= _MAX_POST_ANALYSIS_SAMPLES:
         return 1
-    return -(-total_sample_count // _MAX_POST_ANALYSIS_SAMPLES)
+    return ceil(total_sample_count / _MAX_POST_ANALYSIS_SAMPLES)
 
 
 def load_post_analysis_run(
