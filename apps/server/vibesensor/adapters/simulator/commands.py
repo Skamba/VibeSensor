@@ -5,12 +5,7 @@ import shlex
 from collections.abc import Sequence
 from typing import Protocol
 
-_WHEEL_ALIASES: dict[str, str] = {
-    "fl": "front-left",
-    "fr": "front-right",
-    "rl": "rear-left",
-    "rr": "rear-right",
-}
+from vibesensor.adapters.simulator.sim_scene import _cross_corner_coupling, _normalize_wheel_slot
 
 _DEFAULT_PROFILE_ORDER: tuple[str, ...] = (
     "engine_idle",
@@ -38,40 +33,6 @@ class SimClientLike(Protocol):
     def pulse(self, strength: float) -> None: ...
 
     def summary(self) -> str: ...
-
-
-def _normalize_wheel_slot(name: str) -> str | None:
-    normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
-    if normalized in _WHEEL_ALIASES:
-        return _WHEEL_ALIASES[normalized]
-    axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
-    side = "left" if "left" in normalized else "right" if "right" in normalized else None
-    if axle and side:
-        return f"{axle}-{side}"
-    return None
-
-
-def _cross_corner_coupling(fault_wheel: str, sensor_name: str) -> float:
-    """Return deterministic single-wheel coupling for non-fault corners.
-
-    Values are chosen to keep transfer-path realism:
-    - same-side front↔rear coupling strongest,
-    - same-axle opposite side moderate,
-    - diagonal weakest but still clearly above floor.
-    """
-    fault = _normalize_wheel_slot(fault_wheel)
-    sensor = _normalize_wheel_slot(sensor_name)
-    if fault is None or sensor is None:
-        return 0.34
-    if fault == sensor:
-        return 1.0
-    fault_axle, fault_side = fault.split("-", maxsplit=1)
-    sensor_axle, sensor_side = sensor.split("-", maxsplit=1)
-    if fault_side == sensor_side and fault_axle != sensor_axle:
-        return 0.52
-    if fault_axle == sensor_axle and fault_side != sensor_side:
-        return 0.48
-    return 0.40
 
 
 def choose_default_profile(index: int) -> str:
