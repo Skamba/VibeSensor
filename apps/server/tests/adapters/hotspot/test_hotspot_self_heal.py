@@ -1,3 +1,5 @@
+"""Tests for hotspot health collection and self-heal remediation flows."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
