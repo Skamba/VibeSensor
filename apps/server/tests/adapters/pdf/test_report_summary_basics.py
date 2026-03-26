@@ -1,3 +1,5 @@
+"""End-to-end summary-to-report smoke tests for complete and degraded runs."""
+
 from __future__ import annotations
 
 from pathlib import Path
