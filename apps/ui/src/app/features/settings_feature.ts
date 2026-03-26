@@ -1,8 +1,7 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
-import type { CarUpsertRequest, CarsPayload } from "../../api/types";
+import type { CarsPayload } from "../../api/types";
 import {
-  addSettingsCar,
   deleteSettingsCar,
   getSettingsCars,
   setActiveSettingsCar,
@@ -42,11 +41,11 @@ export interface SettingsFeature {
   loadAnalysisSettingsFromServer(): Promise<void>;
   loadCarsFromServer(): Promise<void>;
   renderCarList(): void;
+  syncCarsPayload(payload: CarsPayload): void;
   syncActiveCarToInputs(): void;
   saveAnalysisFromInputs(): void;
   saveSpeedSourceFromInputs(): void;
   saveHeaderManualSpeedFromInput(): void;
-  addCarFromWizard(name: string, carType: string, aspects: Record<string, number>, variant?: string): Promise<void>;
   startGpsStatusPolling(): void;
   stopGpsStatusPolling(): void;
 }
@@ -105,7 +104,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     renderSpeedReadout: ctx.renderSpeedReadout,
   });
 
-  function applyCarsPayload(payload: CarsPayload): void {
+  function syncCarsPayload(payload: CarsPayload): void {
     settings.cars = payload.cars;
     const requestedActiveCarId = payload.active_car_id;
     const hasRequestedActive = requestedActiveCarId
@@ -118,7 +117,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   async function loadCarsFromServer(): Promise<void> {
     try {
       const payload = await getSettingsCars();
-      applyCarsPayload(payload);
+      syncCarsPayload(payload);
       renderCarList();
       syncActiveCarToInputs();
     } catch (_err) { /* ignore */ }
@@ -128,7 +127,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     if (!carId) return;
     try {
       const result = await setActiveSettingsCar(carId);
-      applyCarsPayload(result);
+      syncCarsPayload(result);
       syncActiveCarToInputs();
       renderCarList();
       ctx.renderSpectrum();
@@ -144,7 +143,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     if (!ok) return;
     try {
       const result = await deleteSettingsCar(carId);
-      applyCarsPayload(result);
+      syncCarsPayload(result);
       syncActiveCarToInputs();
       renderCarList();
       ctx.renderSpectrum();
@@ -208,31 +207,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     speedSourceModule.bindHandlers();
   }
 
-  async function addCarFromWizard(
-    name: string,
-    carType: string,
-    aspects: Record<string, number>,
-    variant?: string,
-  ): Promise<void> {
-    try {
-      const fullAspects = { ...settings.vehicleSettings, ...aspects };
-      const payload: CarUpsertRequest = { name, type: carType, aspects: fullAspects };
-      if (variant) payload.variant = variant;
-      const result = await addSettingsCar(payload);
-      if (Array.isArray(result.cars)) {
-        applyCarsPayload(result);
-        const newCar = settings.cars[settings.cars.length - 1];
-        if (newCar) {
-          const setResult = await setActiveSettingsCar(newCar.id);
-          applyCarsPayload(setResult);
-        }
-        syncActiveCarToInputs();
-        renderCarList();
-        ctx.renderSpectrum();
-      }
-    } catch (_err) { /* ignore */ }
-  }
-
   return {
     bindHandlers,
     syncSettingsInputs: analysisModule.syncSettingsInputs,
@@ -240,11 +214,11 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     loadAnalysisSettingsFromServer: analysisModule.loadAnalysisSettingsFromServer,
     loadCarsFromServer,
     renderCarList,
+    syncCarsPayload,
     syncActiveCarToInputs,
     saveAnalysisFromInputs: analysisModule.saveAnalysisFromInputs,
     saveSpeedSourceFromInputs: speedSourceModule.saveSpeedSourceFromInputs,
     saveHeaderManualSpeedFromInput: speedSourceModule.saveHeaderManualSpeedFromInput,
-    addCarFromWizard,
     startGpsStatusPolling: gpsStatusModule.startGpsStatusPolling,
     stopGpsStatusPolling: gpsStatusModule.stopGpsStatusPolling,
   };
