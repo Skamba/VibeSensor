@@ -10,6 +10,7 @@ import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 import yaml
 from _paths import SERVER_ROOT
 
@@ -276,9 +277,5 @@ def test_validate_packaged_static_assets_requires_index(monkeypatch) -> None:
         lambda self: False if self == static_dir / "index.html" else original_is_file(self),
     )
 
-    try:
+    with pytest.raises(RuntimeError, match="Missing packaged UI asset"):
         validate_packaged_static_assets()
-    except RuntimeError as exc:
-        assert "Missing packaged UI asset" in str(exc)
-    else:
-        raise AssertionError("Expected missing packaged UI asset failure")
