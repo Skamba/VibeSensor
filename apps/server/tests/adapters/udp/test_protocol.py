@@ -1,3 +1,5 @@
+"""Coverage for UDP protocol packet packing, parsing, and validation edges."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -310,7 +312,7 @@ def test_data_ack_roundtrip() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Wave 3 Bruno3 — new validation fixes
+# Additional validation regression coverage
 # ---------------------------------------------------------------------------
 
 

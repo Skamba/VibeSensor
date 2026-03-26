@@ -1,3 +1,5 @@
+"""UDP control-plane coverage for ACK handling, HELLO_ACK behavior, and shutdown."""
+
 from __future__ import annotations
 
 import logging

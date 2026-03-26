@@ -1,3 +1,5 @@
+"""UDP data-receiver queueing, duplicate, and reset-handling regression coverage."""
+
 from __future__ import annotations
 
 import asyncio

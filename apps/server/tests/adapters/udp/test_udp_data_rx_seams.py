@@ -1,3 +1,5 @@
+"""Focused seam coverage for UDP data-message parsing and dispatch helpers."""
+
 from __future__ import annotations
 
 from unittest.mock import Mock
