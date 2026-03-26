@@ -1,3 +1,5 @@
+"""Domain-facing planning-service coverage for action selection and fallback plans."""
+
 from __future__ import annotations
 
 from vibesensor.domain import (

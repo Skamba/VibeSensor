@@ -112,43 +112,43 @@ class TestFindingWithValueObjects:
         assert f.evidence.snr_db == 15.0
         assert f.evidence.vibration_strength_db == 25.3
 
-        def test_promote_near_tie_marks_hotspot_ambiguous(self) -> None:
-            hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
-            promoted = hotspot.promote_near_tie(
-                alternative_location="rear_right",
-                top_confidence=0.8,
-                alternative_confidence=0.6,
-            )
-            assert promoted.ambiguous is True
-            assert promoted.weak_spatial_separation is True
-            assert promoted.supporting_locations == ("rear_right",)
-
-        def test_promote_near_tie_ignores_distant_second_finding(self) -> None:
-            hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
-            promoted = hotspot.promote_near_tie(
-                alternative_location="rear_right",
-                top_confidence=0.9,
-                alternative_confidence=0.3,
-            )
-            assert promoted == hotspot
-
-        def test_with_adaptive_weak_spatial_promotes_below_threshold(self) -> None:
-            hotspot = LocationHotspot.from_analysis_inputs(
-                strongest_location="front_left",
-                dominance_ratio=1.3,
-            )
-            promoted = hotspot.with_adaptive_weak_spatial(3)
-            assert promoted.weak_spatial_separation is True
-
-        def test_with_adaptive_weak_spatial_leaves_strong_separation_unchanged(self) -> None:
-            hotspot = LocationHotspot.from_analysis_inputs(
-                strongest_location="front_left",
-                dominance_ratio=1.5,
-            )
-            promoted = hotspot.with_adaptive_weak_spatial(3)
-            assert promoted == hotspot
-
         assert f.vibration_strength_db == 25.3  # still extracted directly too
+
+    def test_promote_near_tie_marks_hotspot_ambiguous(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        promoted = hotspot.promote_near_tie(
+            alternative_location="rear_right",
+            top_confidence=0.8,
+            alternative_confidence=0.6,
+        )
+        assert promoted.ambiguous is True
+        assert promoted.weak_spatial_separation is True
+        assert promoted.supporting_locations == ("rear_right",)
+
+    def test_promote_near_tie_ignores_distant_second_finding(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        promoted = hotspot.promote_near_tie(
+            alternative_location="rear_right",
+            top_confidence=0.9,
+            alternative_confidence=0.3,
+        )
+        assert promoted == hotspot
+
+    def test_with_adaptive_weak_spatial_promotes_below_threshold(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            dominance_ratio=1.3,
+        )
+        promoted = hotspot.with_adaptive_weak_spatial(3)
+        assert promoted.weak_spatial_separation is True
+
+    def test_with_adaptive_weak_spatial_leaves_strong_separation_unchanged(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            dominance_ratio=1.5,
+        )
+        promoted = hotspot.with_adaptive_weak_spatial(3)
+        assert promoted == hotspot
 
     def test_finding_from_payload_extracts_location(self) -> None:
         payload = {
