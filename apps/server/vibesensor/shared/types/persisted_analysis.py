@@ -20,10 +20,12 @@ class PersistedAnalysis(Mapping[str, object]):
 
     @classmethod
     def from_json_object(cls, payload: JsonObject) -> PersistedAnalysis:
+        """Build a persisted-analysis wrapper from an in-memory JSON payload."""
         return cls(_payload=deepcopy(payload))
 
     @classmethod
     def from_storage_json_object(cls, payload: JsonObject) -> PersistedAnalysis:
+        """Build from storage JSON, validating and stripping the schema-version field."""
         normalized = deepcopy(payload)
         raw_version = normalized.pop(_STORAGE_SCHEMA_VERSION_KEY, 0)
         if raw_version not in (0, PERSISTED_ANALYSIS_SCHEMA_VERSION):
@@ -31,9 +33,11 @@ class PersistedAnalysis(Mapping[str, object]):
         return cls(_payload=normalized)
 
     def to_json_object(self) -> JsonObject:
+        """Return a deep-copied JSON payload for in-memory consumers."""
         return deepcopy(self._payload)
 
     def to_storage_json_object(self) -> JsonObject:
+        """Return a storage payload with the persisted-analysis schema version attached."""
         payload = self.to_json_object()
         payload[_STORAGE_SCHEMA_VERSION_KEY] = PERSISTED_ANALYSIS_SCHEMA_VERSION
         return payload
@@ -49,6 +53,7 @@ class PersistedAnalysis(Mapping[str, object]):
 
     @property
     def language(self) -> str:
+        """Return the persisted language code, or an empty string when absent."""
         value = self._payload.get("lang")
         return value if isinstance(value, str) else ""
 
