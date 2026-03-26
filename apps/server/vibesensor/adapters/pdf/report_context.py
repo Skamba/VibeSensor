@@ -68,7 +68,25 @@ class ReportMappingContext:
         return False
 
 
-def _build_report_mapping_context(validated: ValidatedPreparedReportInput) -> ReportMappingContext:
+def observed_signature(primary: PrimaryCandidateContext) -> PatternEvidence:
+    """Build the observed-signature block for the report template."""
+    return PatternEvidence(
+        primary_system=primary.primary_system,
+        strongest_location=primary.primary_location,
+        speed_band=primary.primary_speed,
+        strength_label=primary.strength_text,
+        strength_peak_db=primary.strength_db,
+        certainty_label=primary.certainty_label_text,
+        certainty_pct=primary.certainty_pct,
+        certainty_reason=primary.certainty_reason,
+    )
+
+
+def prepare_report_mapping_context(
+    prepared: PreparedReportInput | ValidatedPreparedReportInput,
+) -> ReportMappingContext:
+    """Build the adapter-owned report mapping context from the validated handoff."""
+    validated = validate_prepared_report_input(prepared)
     report_facts = validated.report_facts
     report_date = validated.renderer_payload.report_date or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
@@ -89,25 +107,3 @@ def _build_report_mapping_context(validated: ValidatedPreparedReportInput) -> Re
         firmware_version=report_facts.firmware_version,
         domain_aggregate=validated.domain_test_run,
     )
-
-
-def observed_signature(primary: PrimaryCandidateContext) -> PatternEvidence:
-    """Build the observed-signature block for the report template."""
-    return PatternEvidence(
-        primary_system=primary.primary_system,
-        strongest_location=primary.primary_location,
-        speed_band=primary.primary_speed,
-        strength_label=primary.strength_text,
-        strength_peak_db=primary.strength_db,
-        certainty_label=primary.certainty_label_text,
-        certainty_pct=primary.certainty_pct,
-        certainty_reason=primary.certainty_reason,
-    )
-
-
-def prepare_report_mapping_context(
-    prepared: PreparedReportInput | ValidatedPreparedReportInput,
-) -> ReportMappingContext:
-    """Build the adapter-owned report mapping context from the validated handoff."""
-    validated = validate_prepared_report_input(prepared)
-    return _build_report_mapping_context(validated)
