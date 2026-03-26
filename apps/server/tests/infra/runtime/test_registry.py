@@ -365,6 +365,44 @@ def test_registry_retains_stale_client_until_retention_ttl(tmp_path: Path) -> No
     assert registry.get("001122334455") is None
 
 
+def test_registry_data_loss_snapshot_preserves_public_counter_shape(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
+    client_id = bytes.fromhex("001122334455")
+    hello = HelloMessage(
+        client_id=client_id,
+        control_port=9010,
+        sample_rate_hz=800,
+        name="sensor",
+        firmware_version="fw",
+        queue_overflow_drops=2,
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
+
+    samples = np.zeros((200, 3), dtype=np.int16)
+    registry.update_from_data(
+        DataMessage(client_id=client_id, seq=0, t0_us=10, sample_count=200, samples=samples),
+        ("10.4.0.2", 50000),
+        now=2.0,
+    )
+    registry.update_from_data(
+        DataMessage(client_id=client_id, seq=2, t0_us=20, sample_count=200, samples=samples),
+        ("10.4.0.2", 50000),
+        now=3.0,
+    )
+    registry.note_parse_error("001122334455")
+    registry.note_server_queue_drop("001122334455")
+
+    assert registry.data_loss_snapshot() == {
+        "tracked_clients": 1,
+        "affected_clients": 1,
+        "frames_dropped": 1,
+        "queue_overflow_drops": 2,
+        "server_queue_drops": 1,
+        "parse_errors": 1,
+    }
+
+
 def test_registry_remove_client_clears_persisted_entry(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)
