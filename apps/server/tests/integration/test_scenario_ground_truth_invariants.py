@@ -38,6 +38,8 @@ class _FakeSimClient:
 
 
 class TestSimulatorDeterminism:
+    """Verify simulator command helpers keep stable per-sensor scenario contracts."""
+
     def test_road_fixed_scenario_applies_stable_gains(self) -> None:
         from vibesensor.adapters.simulator.commands import apply_road_fixed_scenario
 
@@ -126,6 +128,8 @@ class TestSimulatorDeterminism:
 
 
 class TestLanguageSelectionPrecedence:
+    """Verify report-language selection prefers explicit inputs over fallback metadata."""
+
     def test_explicit_lang_overrides_metadata(self) -> None:
         summary = summarize_run_data(
             standard_metadata(language="nl"),
@@ -190,6 +194,8 @@ class TestLanguageSelectionPrecedence:
 
 
 class TestSpeedBandMixedPhase:
+    """Verify mixed-phase runs report the dominant fault speed band rather than setup phases."""
+
     def test_ramp_then_cruise_fault_reports_cruise_band(self) -> None:
         samples: list[dict[str, Any]] = []
         t = 0.0
@@ -324,6 +330,8 @@ class TestSpeedBandMixedPhase:
 
 
 class TestConfidenceGuardrails:
+    """Verify confidence stays bounded across clear, diffuse, and short-lived faults."""
+
     def test_clear_single_sensor_fault_has_reasonable_confidence(self) -> None:
         summary = summarize_run_data(
             standard_metadata(),

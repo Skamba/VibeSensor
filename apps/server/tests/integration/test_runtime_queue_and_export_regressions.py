@@ -12,6 +12,8 @@ from vibesensor.infra.processing import SignalProcessor
 # Fix 1 – SQLite busy_timeout is set
 # ---------------------------------------------------------------------------
 class TestSQLiteBusyTimeout:
+    """Verify HistoryDB configures a nonzero SQLite busy timeout on connect."""
+
     def test_busy_timeout_is_set(self, tmp_path: Path) -> None:
         """HistoryDB must set PRAGMA busy_timeout to avoid immediate SQLITE_BUSY."""
         db = HistoryDB(tmp_path / "test.db")
@@ -27,6 +29,8 @@ class TestSQLiteBusyTimeout:
 # Fix 2 – flush_client_buffer bumps ingest_generation
 # ---------------------------------------------------------------------------
 class TestFlushBumpsGeneration:
+    """Verify flush_client_buffer invalidates cached metrics via generation bumps."""
+
     def test_flush_increments_ingest_generation(self) -> None:
         """Flushing a buffer must bump ingest_generation to invalidate stale caches."""
         proc = SignalProcessor(
