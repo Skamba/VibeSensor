@@ -16,6 +16,8 @@ HOTSPOT_RESTORE_DELAY_S = 2.0
 
 @dataclass(frozen=True, slots=True)
 class UpdateWifiConfig:
+    """Static knobs for the updater's hotspot-to-uplink handoff."""
+
     ap_con_name: str
     wifi_ifname: str
     uplink_connection_name: str
@@ -31,6 +33,8 @@ class UpdateWifiConfig:
 
 
 def build_default_wifi_config(*, ap_con_name: str, wifi_ifname: str) -> UpdateWifiConfig:
+    """Build the default updater Wi-Fi configuration for the active device."""
+
     return UpdateWifiConfig(
         ap_con_name=ap_con_name,
         wifi_ifname=wifi_ifname,

@@ -43,15 +43,23 @@ class UpdateWifiOrchestrator:
         )
 
     async def stop_hotspot(self) -> bool:
+        """Stop the hotspot before the updater attempts to join an uplink."""
+
         return await self._controller.stop_hotspot()
 
     async def connect_uplink(self, ssid: str, password: str) -> bool:
+        """Create and connect the transient uplink profile for this update run."""
+
         return await self._controller.connect_uplink(ssid, password)
 
     async def restore_hotspot(self) -> bool:
+        """Restore the hotspot after update work completes or is interrupted."""
+
         return await self._controller.restore_hotspot()
 
     async def recover_interrupted_update(self) -> None:
+        """Recover updater Wi-Fi state after a previously interrupted job."""
+
         self._tracker.log("startup_recover: cleaning up uplink connection")
         try:
             await self._controller.cleanup_uplink()
@@ -81,6 +89,8 @@ class UpdateWifiOrchestrator:
             )
 
     async def cleanup_restore_hotspot(self) -> None:
+        """Restore the hotspot during cleanup without letting cancellation interrupt it."""
+
         try:
             restored = await asyncio.shield(self.restore_hotspot())
             if not restored:
@@ -95,9 +105,13 @@ class UpdateWifiOrchestrator:
             LOGGER.warning("Cleanup hotspot restore failed", exc_info=True)
 
     async def collect_cleanup_diagnostics(self) -> list[UpdateIssue]:
+        """Collect any hotspot diagnostics that should be attached to cleanup failures."""
+
         return await asyncio.to_thread(parse_wifi_diagnostics)
 
     async def complete_update_success(self, message: str) -> bool:
+        """Restore the hotspot and then finalize the job as successful."""
+
         self._tracker.transition(UpdatePhase.restoring_hotspot)
         self._tracker.log("Restoring hotspot...")
         restored = await self.restore_hotspot()
@@ -109,6 +123,8 @@ class UpdateWifiOrchestrator:
         return True
 
     async def maybe_restore_hotspot_during_cleanup(self) -> None:
+        """Restore the hotspot if cleanup begins while the updater still owns Wi-Fi state."""
+
         status = self._tracker.status
         if status.state == UpdateState.running or status.phase in _HOTSPOT_RESTORE_PHASES:
             self._tracker.transition(UpdatePhase.restoring_hotspot)
