@@ -13,8 +13,6 @@ from vibesensor.domain import normalize_sensor_id
 from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
     ConfigurationError,
-    DataCorruptError,
-    ProcessingError,
     ProtocolError,
     RunNotFoundError,
     UpdateError,
@@ -69,10 +67,6 @@ def domain_errors_to_http(
     except UpdateError as exc:
         status_code = 409 if exc.status == "conflict" else 500
         raise HTTPException(status_code=status_code, detail=str(exc)) from exc
-    except DataCorruptError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-    except ProcessingError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
     except VibeSensorError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except ValueError as exc:
