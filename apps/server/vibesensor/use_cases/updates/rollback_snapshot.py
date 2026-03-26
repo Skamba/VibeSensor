@@ -33,9 +33,13 @@ class RollbackSnapshotStore:
         self._tracker = tracker
 
     def _metadata_path(self) -> Path:
+        """Return the canonical JSON metadata path for rollback snapshot state."""
+
         return self._rollback_dir / _ROLLBACK_METADATA_FILE
 
     def write_metadata(self, metadata: RollbackSnapshotMetadata) -> None:
+        """Atomically persist rollback metadata alongside stored wheels."""
+
         self._rollback_dir.mkdir(parents=True, exist_ok=True)
         payload = (
             json.dumps(
@@ -65,6 +69,8 @@ class RollbackSnapshotStore:
             temp_path.unlink(missing_ok=True)
 
     def rollback_wheels(self) -> list[Path]:
+        """Return rollback wheels newest-first by modification time."""
+
         return sorted(
             self._rollback_dir.glob("vibesensor-*.whl"),
             key=lambda path: path.stat().st_mtime,
@@ -72,6 +78,8 @@ class RollbackSnapshotStore:
         )
 
     def prune_wheels(self, *, keep_name: str) -> None:
+        """Keep the current rollback wheel plus the newest fallback candidate."""
+
         wheels = self.rollback_wheels()
         keep_names = {keep_name}
         for old_wheel in wheels:
@@ -85,6 +93,8 @@ class RollbackSnapshotStore:
                 old_wheel.unlink(missing_ok=True)
 
     def load_metadata(self) -> RollbackSnapshotMetadata | None:
+        """Load rollback metadata, reporting unreadable or incomplete state."""
+
         metadata_path = self._metadata_path()
         if not metadata_path.is_file():
             return None
