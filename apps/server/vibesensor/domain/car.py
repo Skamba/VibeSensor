@@ -201,25 +201,19 @@ class Car:
 
     @property
     def tire_width_mm(self) -> float | None:
-        spec = self.order_reference_spec
-        if spec is not None:
-            return spec.tire_spec.width_mm
-        return None
+        spec = self.tire_spec
+        return spec.width_mm if spec is not None else None
 
     @property
     def tire_aspect_pct(self) -> float | None:
-        spec = self.order_reference_spec
-        if spec is not None:
-            return spec.tire_spec.aspect_pct
-        return None
+        spec = self.tire_spec
+        return spec.aspect_pct if spec is not None else None
 
     @property
     def rim_in(self) -> float | None:
         """Rim diameter in inches (aspects key ``rim_in``)."""
-        spec = self.order_reference_spec
-        if spec is not None:
-            return spec.tire_spec.rim_in
-        return None
+        spec = self.tire_spec
+        return spec.rim_in if spec is not None else None
 
     @property
     def tire_circumference_m(self) -> float | None:
