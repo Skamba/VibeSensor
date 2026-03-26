@@ -19,6 +19,8 @@ from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_vali
 
 
 def _sha256_file(path: Path) -> str:
+    """Hash a file as lowercase SHA-256 for release validation checks."""
+
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
@@ -162,6 +164,8 @@ def validate_release_wheel_metadata(
     *,
     expected_version: str,
 ) -> list[str]:
+    """Return metadata validation errors for a built server release wheel."""
+
     return wheel_metadata_validation_errors(
         wheel_path,
         expected_name="vibesensor",
@@ -170,6 +174,8 @@ def validate_release_wheel_metadata(
 
 
 def _read_http(url: str) -> tuple[int, str, str]:
+    """Fetch a URL and return status, content type, and decoded body text."""
+
     request = urllib.request.Request(url, headers={"Connection": "close"})
     with urllib.request.urlopen(request, timeout=3.0) as response:
         body = response.read().decode("utf-8", errors="replace")
@@ -178,6 +184,8 @@ def _read_http(url: str) -> tuple[int, str, str]:
 
 
 def _terminate_process(process: subprocess.Popen[str]) -> None:
+    """Terminate a spawned smoke-test process, escalating to kill if needed."""
+
     if process.poll() is not None:
         return
     process.terminate()
@@ -208,6 +216,8 @@ _SMOKE_SERVER_BOOTSTRAP = "\n".join(
 
 
 def packaged_static_index_path() -> Path:
+    """Resolve the packaged UI index.html path from the installed app module."""
+
     import importlib
 
     app_module = importlib.import_module("vibesensor.app")
