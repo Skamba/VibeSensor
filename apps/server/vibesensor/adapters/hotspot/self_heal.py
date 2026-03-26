@@ -1,7 +1,7 @@
 """Wi-Fi hotspot self-heal manager.
 
-Monitors hotspot connectivity and automatically recovers from failures
-by restarting ``hostapd``/``dnsmasq`` when the hotspot becomes unreachable.
+Monitors hotspot connectivity and attempts recovery with NetworkManager-driven
+repairs plus related hotspot diagnostics when the AP becomes degraded.
 """
 
 from __future__ import annotations
@@ -121,7 +121,7 @@ def run_self_heal_once(
     state_store: HealStateStore,
     diagnostics_only: bool = False,
 ) -> int:
-    """Run one self-heal cycle; return an exit code (0 = ok, 1 = healed, 2 = failed)."""
+    """Run one self-heal cycle; return 0 when healthy/recovered, else 2."""
     if diagnostics_only:
         _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
         return 0
@@ -136,11 +136,11 @@ def run_self_heal_once(
 
     actions = apply_heals(ap, self_heal, health, runner, state_store)
 
-    healed = collect_health(ap, self_heal, runner)
-    status = "healed" if healed.ok else "failed"
+    post_heal_health = collect_health(ap, self_heal, runner)
+    status = "healed" if post_heal_health.ok else "failed"
 
     for action in actions:
-        action.helped = healed.ok
+        action.helped = post_heal_health.ok
         LOGGER.warning(
             "hotspot heal attempt=%s detected=%s action=%s helped=%s",
             action.name,
@@ -149,8 +149,8 @@ def run_self_heal_once(
             "yes" if action.helped else "no",
         )
 
-    _log_summary(status, ap, healed)
-    if not healed.ok:
+    _log_summary(status, ap, post_heal_health)
+    if not post_heal_health.ok:
         _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
         return 2
     return 0
