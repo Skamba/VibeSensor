@@ -1,3 +1,5 @@
+"""Cover debug-query defaults and raw-sample projection behavior."""
+
 from __future__ import annotations
 
 import numpy as np

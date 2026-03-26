@@ -1,3 +1,5 @@
+"""Exercise processing payload builders for debug spectra, intake stats, and alignment."""
+
 from __future__ import annotations
 
 import math
