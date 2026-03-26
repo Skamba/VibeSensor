@@ -95,6 +95,7 @@ class RunMetadata:
         end_time_utc: str | None = None,
         incomplete_for_order_analysis: bool = False,
     ) -> RunMetadata:
+        """Construct canonical run metadata for a newly recorded run."""
         return cls(
             record_type=RUN_METADATA_TYPE,
             schema_version=RUN_SCHEMA_VERSION,
@@ -115,6 +116,7 @@ class RunMetadata:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> RunMetadata:
+        """Normalize a raw persisted metadata mapping into the typed dataclass."""
         from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 
         run_id = str(data.get("run_id", ""))
@@ -145,6 +147,7 @@ class RunMetadata:
 
     @property
     def language(self) -> str | None:
+        """Return the normalized persisted language code from metadata extras."""
         value = self.extras.get("language")
         if isinstance(value, str):
             normalized = value.strip().lower()
@@ -152,6 +155,7 @@ class RunMetadata:
         return None
 
     def to_dict(self) -> JsonObject:
+        """Serialize typed run metadata back to the canonical JSONL header shape."""
         payload: JsonObject = {
             "record_type": self.record_type,
             "schema_version": self.schema_version,
