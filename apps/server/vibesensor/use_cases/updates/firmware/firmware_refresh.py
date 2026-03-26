@@ -30,6 +30,8 @@ class FirmwareRefresher:
         self._timeout_s = timeout_s
 
     async def refresh_esp_firmware(self, pinned_tag: str = "") -> None:
+        """Refresh the firmware cache, falling back to the current cache on failure."""
+
         self._tracker.log("Refreshing ESP firmware cache...")
         venv_python = reinstall_python_executable(self._repo)
         refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))

@@ -27,6 +27,8 @@ class SubprocessFlashCommandRunner(FlashCommandRunner):
         cancel_event: asyncio.Event,
         timeout_s: float | None = None,
     ) -> int:
+        """Run one flash subprocess, streaming lines until exit, cancel, or timeout."""
+
         proc = await asyncio.create_subprocess_exec(
             *args,
             cwd=cwd,
