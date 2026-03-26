@@ -1,3 +1,5 @@
+"""Persistence summary regressions for plots, spectrograms, and robust summaries."""
+
 from __future__ import annotations
 
 from _report_persistence_helpers import summarize, uniform_samples

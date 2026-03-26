@@ -1,3 +1,5 @@
+"""Tests for persistence-spectrum aggregation and peak classification helpers."""
+
 from __future__ import annotations
 
 import pytest
