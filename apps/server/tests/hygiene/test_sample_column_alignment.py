@@ -54,6 +54,10 @@ def _insert_columns() -> list[str]:
     return list(_V2_COLUMNS)
 
 
+def _core_ddl_columns() -> set[str]:
+    return set(_ddl_columns()) - _DDL_ONLY
+
+
 def _domain_fields() -> list[str]:
     return [f.name for f in dataclasses.fields(SensorFrame)]
 
@@ -62,14 +66,18 @@ def _export_columns() -> list[str]:
     return list(EXPORT_CSV_COLUMNS)
 
 
+def _core_export_columns() -> set[str]:
+    return set(_export_columns()) - _EXPORT_ONLY
+
+
 class TestSampleColumnAlignment:
     def test_insert_columns_match_ddl(self) -> None:
-        ddl = set(_ddl_columns()) - _DDL_ONLY
+        ddl = _core_ddl_columns()
         insert = set(_insert_columns())
         assert ddl == insert, f"DDL↔insert mismatch: {ddl.symmetric_difference(insert)}"
 
     def test_domain_fields_cover_ddl(self) -> None:
-        ddl = set(_ddl_columns()) - _DDL_ONLY
+        ddl = _core_ddl_columns()
         domain = set(_domain_fields())
         missing_from_domain = ddl - domain
         assert not missing_from_domain, (
@@ -77,15 +85,15 @@ class TestSampleColumnAlignment:
         )
 
     def test_export_columns_cover_ddl(self) -> None:
-        ddl = set(_ddl_columns()) - _DDL_ONLY
-        export = set(_export_columns()) - _EXPORT_ONLY
+        ddl = _core_ddl_columns()
+        export = _core_export_columns()
         missing_from_export = ddl - export
         assert not missing_from_export, (
             f"DDL columns missing from EXPORT_CSV_COLUMNS: {missing_from_export}"
         )
 
     def test_no_unexpected_extras_in_domain(self) -> None:
-        ddl = set(_ddl_columns()) - _DDL_ONLY
+        ddl = _core_ddl_columns()
         domain = set(_domain_fields())
         unexpected = domain - ddl
         assert not unexpected, (
@@ -93,8 +101,8 @@ class TestSampleColumnAlignment:
         )
 
     def test_no_unexpected_extras_in_export(self) -> None:
-        ddl = set(_ddl_columns()) - _DDL_ONLY
-        export = set(_export_columns()) - _EXPORT_ONLY
+        ddl = _core_ddl_columns()
+        export = _core_export_columns()
         unexpected = export - ddl
         assert not unexpected, (
             "EXPORT_CSV_COLUMNS has entries not in DDL"
