@@ -257,24 +257,34 @@ class TestCanonicalLocation:
 class TestStrengthWithPeakI18n:
     """Verify _strength_with_peak uses the provided suffix."""
 
-    def test_default_suffix_is_peak(self):
-        result = _strength_with_peak("Moderate", 28.3, fallback="—")
-        assert "peak" in result
-        assert "28.3" in result
+    @pytest.mark.parametrize(
+        ("label", "peak_db", "peak_suffix", "expected_exact", "expected_contains", "forbidden"),
+        [
+            ("Moderate", 28.3, "peak", None, ("peak", "28.3"), ()),
+            ("Matig", 28.3, "piek", None, ("piek", "28.3"), ("peak",)),
+            ("Moderate", None, "peak", "Moderate", (), ()),
+            ("28.3 dB", 28.3, "peak", "28.3 dB", (), ()),
+        ],
+        ids=["default-peak-suffix", "localized-peak-suffix", "no-peak-db", "db-label"],
+    )
+    def test_strength_with_peak_variants(
+        self,
+        label: str,
+        peak_db: float | None,
+        peak_suffix: str,
+        expected_exact: str | None,
+        expected_contains: tuple[str, ...],
+        forbidden: tuple[str, ...],
+    ) -> None:
+        result = _strength_with_peak(label, peak_db, fallback="—", peak_suffix=peak_suffix)
+        if expected_exact is not None:
+            assert result == expected_exact
+            return
 
-    def test_nl_suffix(self):
-        result = _strength_with_peak("Matig", 28.3, fallback="—", peak_suffix="piek")
-        assert "piek" in result
-        assert "peak" not in result
-        assert "28.3" in result
-
-    def test_no_peak_db(self):
-        result = _strength_with_peak("Moderate", None, fallback="—")
-        assert result == "Moderate"
-
-    def test_db_in_label_skips_suffix(self):
-        result = _strength_with_peak("28.3 dB", 28.3, fallback="—")
-        assert result == "28.3 dB"  # no suffix appended
+        for part in expected_contains:
+            assert part in result
+        for part in forbidden:
+            assert part not in result
 
 
 # ── 11. report_i18n STRENGTH_PEAK_SUFFIX key exists ──────────────────────
