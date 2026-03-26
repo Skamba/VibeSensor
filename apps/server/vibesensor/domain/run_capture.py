@@ -148,8 +148,8 @@ class RunSetup:
     """
 
     sensors: tuple[Sensor, ...] = ()
-    speed_source: SpeedSource = SpeedSource()
-    configuration_snapshot: ConfigurationSnapshot = ConfigurationSnapshot()
+    speed_source: SpeedSource = field(default_factory=SpeedSource)
+    configuration_snapshot: ConfigurationSnapshot = field(default_factory=ConfigurationSnapshot)
 
 
 # ---------------------------------------------------------------------------
@@ -173,7 +173,7 @@ class RunCapture:
     """
 
     run_id: str
-    setup: RunSetup = RunSetup()
+    setup: RunSetup = field(default_factory=RunSetup)
     analysis_settings: tuple[tuple[str, int | float | bool | str], ...] = ()
     measurements: tuple[Measurement, ...] = ()
     sample_count: int = 0
