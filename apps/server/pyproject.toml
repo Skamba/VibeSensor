@@ -68,6 +68,7 @@ include = ["vibesensor*"]
 addopts = "-n auto --dist worksteal"
 asyncio_mode = "auto"
 timeout = 120
+# Keep tests/ importable so shared helpers use `from test_support...` short imports.
 pythonpath = [".", "tests"]
 testpaths = ["tests"]
 markers = [
