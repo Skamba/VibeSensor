@@ -5,5 +5,6 @@ Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
+# The timer owns cadence; each run is a single health-check/heal pass.
 ExecStart=__VENV_DIR__/bin/vibesensor-hotspot-self-heal --mode check-heal --config /etc/vibesensor/config.yaml
 SyslogIdentifier=vibesensor-hotspot-selfheal

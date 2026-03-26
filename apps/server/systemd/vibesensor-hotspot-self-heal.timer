@@ -6,6 +6,7 @@ OnBootSec=90s
 OnUnitActiveSec=2min
 AccuracySec=10s
 Unit=vibesensor-hotspot-self-heal.service
+# Catch up a missed periodic run after downtime instead of waiting for the next fresh interval.
 Persistent=true
 
 [Install]
