@@ -1,4 +1,4 @@
-"""Tests for the /api/recording/* endpoint response shapes and behavior."""
+"""HTTP client tests for the /api/recording routes."""
 
 from __future__ import annotations
 

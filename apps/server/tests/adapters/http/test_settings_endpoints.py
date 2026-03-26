@@ -112,7 +112,6 @@ class TestDeleteCarEndpoint:
     async def test_delete_unknown_car_returns_404(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/cars/{car_id}", "DELETE")
-        assert endpoint is not None
 
         state.settings_store.get_cars.return_value = _make_cars_snapshot(
             cars=[],
@@ -127,7 +126,6 @@ class TestDeleteCarEndpoint:
     async def test_delete_known_car_calls_store(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/cars/{car_id}", "DELETE")
-        assert endpoint is not None
 
         state.settings_store.get_cars.return_value = _make_cars_snapshot()
         state.settings_store.delete_car.return_value = _make_cars_snapshot(
@@ -144,7 +142,6 @@ class TestDeleteCarEndpoint:
     async def test_delete_car_business_logic_error_returns_400(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/cars/{car_id}", "DELETE")
-        assert endpoint is not None
 
         state.settings_store.get_cars.return_value = _make_cars_snapshot()
         state.settings_store.delete_car.side_effect = ValueError("cannot delete last car")
@@ -159,7 +156,6 @@ class TestSetActiveCarEndpoint:
     async def test_unknown_car_id_raises_404(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/cars/active", "PUT")
-        assert endpoint is not None
 
         state.settings_store.set_active_car.side_effect = ValueError("Car not found")
 
@@ -191,7 +187,6 @@ class TestCarsEndpoint:
     async def test_get_cars_response_shape(self, _settings_router) -> None:
         router, _ = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/cars", "GET")
-        assert endpoint is not None
 
         result = response_payload(await endpoint())
 
@@ -203,7 +198,6 @@ class TestCarsEndpoint:
     async def test_add_car_passes_only_non_null_fields(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/cars", "POST")
-        assert endpoint is not None
 
         from vibesensor.adapters.http.models import CarUpsertRequest
 
@@ -221,7 +215,6 @@ class TestSpeedSourceEndpoint:
     async def test_update_speed_source_passes_only_non_null_fields(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/speed-source", "PUT")
-        assert endpoint is not None
 
         from vibesensor.adapters.http.models import SpeedSourceRequest
 
@@ -241,7 +234,6 @@ class TestSpeedSourceEndpoint:
     async def test_update_speed_source_maps_invalid_config_to_400(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/speed-source", "PUT")
-        assert endpoint is not None
 
         from vibesensor.adapters.http.models import SpeedSourceRequest
 
@@ -258,7 +250,6 @@ class TestSpeedSourceEndpoint:
     async def test_speed_source_status_response_shape(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/speed-source/status", "GET")
-        assert endpoint is not None
 
         state.gps_monitor.status_snapshot.return_value = _make_speed_source_status_snapshot()
 
@@ -276,7 +267,6 @@ class TestSensorEndpoint:
     ) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/sensors/{mac}", "POST")
-        assert endpoint is not None
 
         from vibesensor.adapters.http.models import SensorRequest
 
@@ -299,7 +289,6 @@ class TestSensorEndpoint:
     async def test_update_sensor_maps_duplicate_location_to_409(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/sensors/{mac}", "POST")
-        assert endpoint is not None
 
         from vibesensor.adapters.http.models import SensorRequest
 
@@ -322,7 +311,6 @@ class TestSetAnalysisSettingsEndpoint:
         """PUT /api/settings/analysis with all-None body skips update_active_car_aspects."""
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/analysis", "PUT")
-        assert endpoint is not None
 
         from vibesensor.adapters.http.models import AnalysisSettingsRequest
 
@@ -335,7 +323,6 @@ class TestSetAnalysisSettingsEndpoint:
     async def test_valid_changes_calls_update(self, _settings_router) -> None:
         router, state = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/analysis", "PUT")
-        assert endpoint is not None
 
         from vibesensor.adapters.http.models import AnalysisSettingsRequest
 
@@ -349,7 +336,6 @@ class TestSetAnalysisSettingsEndpoint:
     async def test_get_analysis_settings_response_shape(self, _settings_router) -> None:
         router, _ = _settings_router
         endpoint = _find_endpoint(router, "/api/settings/analysis", "GET")
-        assert endpoint is not None
 
         result = response_payload(await endpoint())
 
