@@ -20,7 +20,13 @@ from vibesensor.adapters.pdf.panels._panel_diagram import (
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 
-def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: float) -> dict:
+def _sample(
+    idx: int,
+    *,
+    speed_kmh: float,
+    dominant_freq_hz: float,
+    peak_amp_g: float,
+) -> dict[str, object]:
     return _base_sample(
         idx,
         speed_kmh=speed_kmh,
@@ -31,7 +37,7 @@ def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: 
 
 def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     run_path = tmp_path / "no_car.jsonl"
-    records: list[dict] = [_run_metadata()]
+    records: list[dict[str, object]] = [_run_metadata()]
     for idx in range(15):
         records.append(_sample(idx, speed_kmh=50.0 + idx, dominant_freq_hz=14.0, peak_amp_g=0.08))
     records.append(RUN_END)
@@ -47,7 +53,7 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
 
 def test_report_pdf_two_pages(tmp_path: Path) -> None:
     run_path = tmp_path / "two_pages.jsonl"
-    records: list[dict] = [_run_metadata(tire_circumference_m=2.2)]
+    records: list[dict[str, object]] = [_run_metadata(tire_circumference_m=2.2)]
     for idx in range(30):
         speed = 40 + idx
         wheel_hz = (speed * (1000.0 / 3600.0)) / 2.2
