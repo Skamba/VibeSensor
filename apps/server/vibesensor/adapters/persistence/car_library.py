@@ -10,7 +10,7 @@ from __future__ import annotations
 import copy
 import json
 import logging
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict, cast
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError
 
@@ -69,17 +69,13 @@ class CarLibraryEntry(TypedDict):
     variants: list[CarLibraryVariant]
 
 
-def _configure_pydantic_schema(typed_dict: Any) -> None:
-    typed_dict.__pydantic_config__ = _STRICT_TYPEDDICT_CONFIG
-
-
 for _typed_dict in (
     CarLibraryGearbox,
     CarLibraryTireOption,
     CarLibraryVariant,
     CarLibraryEntry,
 ):
-    _configure_pydantic_schema(_typed_dict)
+    cast(Any, _typed_dict).__pydantic_config__ = _STRICT_TYPEDDICT_CONFIG
 
 _CAR_LIBRARY_ADAPTER = TypeAdapter(list[CarLibraryEntry])
 
