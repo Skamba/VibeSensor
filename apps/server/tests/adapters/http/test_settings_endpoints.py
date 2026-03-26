@@ -11,6 +11,8 @@ from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.shared.types.car_config import CarConfigPayload, CarsSnapshot
 
+from ._history_endpoint_helpers import route_endpoint, route_endpoint_with_method
+
 
 def _make_default_snapshot() -> AnalysisSettingsSnapshot:
     return AnalysisSettingsSnapshot(**AnalysisSettingsSnapshot.DEFAULTS)
@@ -61,12 +63,9 @@ def _make_speed_source_status_snapshot() -> SpeedSourceStatusSnapshot:
 
 
 def _find_endpoint(router, path: str, method: str = "GET"):
-    for route in router.routes:
-        if getattr(route, "path", "") == path:
-            methods = getattr(route, "methods", set()) or set()
-            if method.upper() in methods:
-                return route.endpoint
-    return None
+    if method.upper() == "GET":
+        return route_endpoint(router, path)
+    return route_endpoint_with_method(router, path, method)
 
 
 @pytest.fixture

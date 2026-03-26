@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 from test_support import response_payload
 
+from ._history_endpoint_helpers import route_endpoint
+
 
 @pytest.fixture
 def _health_router(fake_state):
@@ -14,14 +16,6 @@ def _health_router(fake_state):
     fake_state.processing_loop_state.processing_state = "ok"
     fake_state.processing_loop_state.processing_failure_count = 0
     return create_router(fake_state), fake_state
-
-
-def _find_endpoint(router, path: str):
-    """Return the endpoint callable for *path*, or ``None``."""
-    for route in router.routes:
-        if getattr(route, "path", "") == path:
-            return route.endpoint
-    return None
 
 
 def test_health_route_registered(_health_router):
@@ -36,8 +30,7 @@ def test_health_route_registered(_health_router):
 async def test_health_endpoint_response_shape(_health_router):
     """Verify GET /api/health returns typed degradation, data-loss, and persistence state."""
     router, _ = _health_router
-    endpoint = _find_endpoint(router, "/api/health")
-    assert endpoint is not None
+    endpoint = route_endpoint(router, "/api/health")
 
     result = response_payload(await endpoint())
     assert result["status"] == "ok"
@@ -65,8 +58,7 @@ async def test_health_endpoint_response_shape(_health_router):
 @pytest.mark.asyncio
 async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_health_router):
     router, state = _health_router
-    endpoint = _find_endpoint(router, "/api/health")
-    assert endpoint is not None
+    endpoint = route_endpoint(router, "/api/health")
 
     state.registry.data_loss_snapshot.return_value = {
         "tracked_clients": 2,
@@ -132,8 +124,7 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
 @pytest.mark.asyncio
 async def test_health_endpoint_degrades_for_db_corruption(_health_router):
     router, state = _health_router
-    endpoint = _find_endpoint(router, "/api/health")
-    assert endpoint is not None
+    endpoint = route_endpoint(router, "/api/health")
 
     state.health_state.mark_db_corrupted("row 7 missing from index")
 
@@ -147,8 +138,7 @@ async def test_health_endpoint_degrades_for_db_corruption(_health_router):
 @pytest.mark.asyncio
 async def test_health_endpoint_warns_for_buffer_overflow_drops(_health_router):
     router, state = _health_router
-    endpoint = _find_endpoint(router, "/api/health")
-    assert endpoint is not None
+    endpoint = route_endpoint(router, "/api/health")
 
     state.processor.buffer_overflow_drops.return_value = 4
 
@@ -181,8 +171,7 @@ async def test_health_endpoint_keeps_public_intake_stats_shape_when_worker_pool_
     _health_router,
 ):
     router, state = _health_router
-    endpoint = _find_endpoint(router, "/api/health")
-    assert endpoint is not None
+    endpoint = route_endpoint(router, "/api/health")
 
     state.processor.intake_stats.return_value = {
         "total_ingested_samples": 10,

@@ -15,8 +15,13 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 
-# Keep these duration-cache and JUnit helpers aligned with tools/tests/run_e2e_parallel.py.
-# They stay local here so this standalone tool can run directly without package-path setup.
+from _parallel_runner_support import (
+    duration_cache_path as resolve_duration_cache_path,
+    load_duration_cache as read_duration_cache,
+    merge_duration_observations,
+    observed_durations_from_junit as read_observed_durations_from_junit,
+    parse_collected_test_ids as collect_normalized_test_ids,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,20 +34,12 @@ def _emit(line: str) -> None:
     print(line, flush=True)
 
 
-def _parse_collected_test_ids(output: str) -> list[str]:
-    test_ids: list[str] = []
-    for raw_line in output.splitlines():
-        line = raw_line.strip()
-        if "::" not in line:
-            continue
-        if line.startswith("=") or line.startswith("<"):
-            continue
-        if line.startswith("tests/"):
-            test_ids.append(f"apps/server/{line}")
-            continue
-        if line.startswith("apps/server/tests/"):
-            test_ids.append(line)
-    return test_ids
+def _normalize_collected_test_id(line: str) -> str | None:
+    if line.startswith("tests/"):
+        return f"apps/server/{line}"
+    if line.startswith("apps/server/tests/"):
+        return line
+    return None
 
 
 def collect_test_ids(pytest_args: list[str]) -> list[str]:
@@ -54,40 +51,10 @@ def collect_test_ids(pytest_args: list[str]) -> list[str]:
         sys.stdout.write(result.stdout or "")
         sys.stderr.write(result.stderr or "")
         raise SystemExit(result.returncode)
-    return _parse_collected_test_ids(result.stdout or "")
-
-
-def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
-    source = os.environ if env is None else env
-    raw_path = source.get(_DURATION_CACHE_ENV, "").strip()
-    if raw_path:
-        return Path(raw_path).expanduser()
-    return Path.home() / ".cache" / "vibesensor" / "backend-duration-cache.json"
-
-
-def _load_duration_cache(path: Path) -> dict[str, float]:
-    try:
-        raw_payload = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return {}
-    except (OSError, json.JSONDecodeError):
-        _emit(f"[backend-parallel] ignoring unreadable duration cache: {path}")
-        return {}
-    if not isinstance(raw_payload, dict):
-        _emit(f"[backend-parallel] ignoring invalid duration cache payload: {path}")
-        return {}
-
-    durations: dict[str, float] = {}
-    for test_id, raw_duration in raw_payload.items():
-        if not isinstance(test_id, str):
-            continue
-        try:
-            duration = float(raw_duration)
-        except (TypeError, ValueError):
-            continue
-        if duration > 0:
-            durations[test_id] = duration
-    return durations
+    return collect_normalized_test_ids(
+        result.stdout or "",
+        normalize=_normalize_collected_test_id,
+    )
 
 
 def _write_duration_cache(path: Path, durations: Mapping[str, float]) -> None:
@@ -100,20 +67,6 @@ def _write_duration_cache(path: Path, durations: Mapping[str, float]) -> None:
     path.write_text(
         f"{json.dumps(payload, indent=2, sort_keys=True)}\n", encoding="utf-8"
     )
-
-
-def _merge_duration_observations(
-    cached: Mapping[str, float], observed: Mapping[str, float]
-) -> dict[str, float]:
-    merged = dict(cached)
-    for test_id, duration in observed.items():
-        if duration <= 0:
-            continue
-        previous = merged.get(test_id)
-        merged[test_id] = (
-            duration if previous is None else round((previous + duration) / 2.0, 3)
-        )
-    return merged
 
 
 @contextmanager
@@ -133,53 +86,11 @@ def _update_duration_cache(path: Path, observed: Mapping[str, float]) -> None:
         return
     try:
         with _locked_duration_cache(path):
-            cached = _load_duration_cache(path)
-            merged = _merge_duration_observations(cached, observed)
+            cached = read_duration_cache(path, emit=_emit, label="backend-parallel")
+            merged = merge_duration_observations(cached, observed)
             _write_duration_cache(path, merged)
     except OSError:
         _emit(f"[backend-parallel] failed to update duration cache: {path}")
-
-
-def _junit_case_key(test_id: str) -> tuple[str, str]:
-    path_part, *segments = test_id.split("::")
-    normalized_path = path_part.removeprefix("apps/server/").removesuffix(".py")
-    module_name = normalized_path.replace("/", ".")
-    name = segments[-1] if segments else test_id
-    classname_segments = [module_name, *segments[:-1]]
-    return ".".join(segment for segment in classname_segments if segment), name
-
-
-def _observed_durations_from_junit(
-    junit_path: Path, selected_tests: list[str]
-) -> dict[str, float]:
-    if not junit_path.exists():
-        return {}
-    try:
-        root = ET.parse(junit_path).getroot()
-    except (ET.ParseError, OSError):
-        _emit(f"[backend-parallel] ignoring unreadable junit timings: {junit_path}")
-        return {}
-
-    lookup = {_junit_case_key(test_id): test_id for test_id in selected_tests}
-    observed: dict[str, float] = {}
-    for case in root.iter("testcase"):
-        classname = case.attrib.get("classname")
-        name = case.attrib.get("name")
-        raw_time = case.attrib.get("time")
-        if not isinstance(classname, str) or not isinstance(name, str):
-            continue
-        if not isinstance(raw_time, str):
-            continue
-        test_id = lookup.get((classname, name))
-        if test_id is None:
-            continue
-        try:
-            duration = float(raw_time)
-        except ValueError:
-            continue
-        if duration >= 0:
-            observed[test_id] = duration
-    return observed
 
 
 def _group_tests_by_path(collected: list[str]) -> dict[str, list[str]]:
@@ -293,8 +204,16 @@ def main() -> int:
     collected = collect_test_ids(["apps/server/tests"])
     grouped_tests = _group_tests_by_path(collected)
 
-    duration_cache_path = _duration_cache_path()
-    duration_cache = _load_duration_cache(duration_cache_path)
+    duration_cache_path = resolve_duration_cache_path(
+        _DURATION_CACHE_ENV,
+        "backend-duration-cache.json",
+        env=os.environ,
+    )
+    duration_cache = read_duration_cache(
+        duration_cache_path,
+        emit=_emit,
+        label="backend-parallel",
+    )
     if duration_cache:
         _emit(
             f"[backend-parallel] loaded {len(duration_cache)} cached test durations from "
@@ -342,7 +261,12 @@ def main() -> int:
     rc = _run(pytest_cmd, log_path=log_path)
     elapsed = time.monotonic() - started
 
-    observed_durations = _observed_durations_from_junit(junit_path, selected_tests)
+    observed_durations = read_observed_durations_from_junit(
+        junit_path,
+        selected_tests,
+        emit=_emit,
+        label="backend-parallel",
+    )
     if observed_durations:
         _update_duration_cache(duration_cache_path, observed_durations)
         _emit(
