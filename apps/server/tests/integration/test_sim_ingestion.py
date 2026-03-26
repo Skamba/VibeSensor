@@ -19,6 +19,7 @@ import os
 import subprocess
 import sys
 import time
+from typing import Any
 from urllib.request import Request, urlopen
 
 import pytest
@@ -34,13 +35,13 @@ SIM_DATA_PORT = os.environ.get("VIBESENSOR_TEST_SIM_DATA_PORT", "9000")
 SIM_CONTROL_PORT = os.environ.get("VIBESENSOR_TEST_SIM_CONTROL_PORT", "9001")
 
 
-def _api_json(path: str, *, timeout: int = 30) -> dict:
+def _api_json(path: str, *, timeout: int = 30) -> dict[str, Any]:
     """Simple HTTP GET returning JSON."""
     with urlopen(f"{BASE_URL}{path}", timeout=timeout) as resp:
         return json.loads(resp.read())
 
 
-def _api_post_json(path: str, *, timeout: int = 30) -> dict:
+def _api_post_json(path: str, *, timeout: int = 30) -> dict[str, Any]:
     """Simple HTTP POST returning JSON."""
     req = Request(
         f"{BASE_URL}{path}",
@@ -74,7 +75,7 @@ def _wait_for_run_persisted(run_id: str, *, timeout_s: float = 15.0) -> bool:
     return False
 
 
-def _wait_for_analysis(run_id: str, *, timeout_s: float = 120.0) -> dict:
+def _wait_for_analysis(run_id: str, *, timeout_s: float = 120.0) -> dict[str, Any]:
     """Poll until the insights payload reflects completed current analysis."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:

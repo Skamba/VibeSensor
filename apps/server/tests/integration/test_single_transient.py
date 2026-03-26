@@ -62,9 +62,9 @@ def _build_fault_with_transient_samples(
     spike_start_t: float = 15,
     spike_amp: float = 0.20,
     spike_vib_db: float = 38.0,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Assemble fault + transient sample list (DRY helper for C.1/C.4/C.10/C.11)."""
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     samples.extend(
         make_profile_fault_samples(
             profile=profile,
@@ -117,7 +117,7 @@ def test_fault_with_transient_preserves_diagnosis(
 def test_transient_only_no_persistent_fault(speed: float, profile: dict[str, Any]) -> None:
     """Only transient spikes on one sensor → no persistent wheel fault."""
     sensor = SENSOR_FL
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     # Road noise baseline
     samples.extend(make_noise_samples(sensors=[sensor], speed_kmh=speed, n_samples=35))
     # Transient spike
@@ -144,7 +144,7 @@ def test_transient_only_no_persistent_fault(speed: float, profile: dict[str, Any
 def test_multiple_transients_no_false_fault(corner: str, profile: dict[str, Any]) -> None:
     """Multiple short transients scattered through recording → no persistent fault."""
     sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     samples.extend(make_noise_samples(sensors=[sensor], speed_kmh=SPEED_MID, n_samples=30))
     # Three separate transient bursts
     for t_start in [5, 15, 25]:
@@ -212,7 +212,7 @@ def test_transient_amplitude_deweighting(
 def test_phased_onset_with_transient(corner: str, profile: dict[str, Any]) -> None:
     """Idle → ramp → fault + transient → fault still detected."""
     sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     samples.extend(make_idle_samples(sensors=[sensor], n_samples=8, start_t_s=0))
     samples.extend(
         make_ramp_samples(
@@ -262,7 +262,7 @@ _SPIKE_FREQS = [20.0, 50.0, 100.0, 200.0]
 def test_transient_frequency_variation(freq: float, profile: dict[str, Any]) -> None:
     """Transient at various frequencies should all be de-weighted."""
     sensor = SENSOR_FR
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     samples.extend(make_noise_samples(sensors=[sensor], speed_kmh=SPEED_MID, n_samples=35))
     samples.extend(
         make_transient_samples(
@@ -287,7 +287,7 @@ def test_transient_frequency_variation(freq: float, profile: dict[str, Any]) -> 
 def test_long_transient_burst(corner: str, profile: dict[str, Any]) -> None:
     """Longer transient burst (10 samples) within noise → no persistent fault."""
     sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     samples.extend(make_noise_samples(sensors=[sensor], speed_kmh=SPEED_MID, n_samples=30))
     samples.extend(
         make_transient_samples(
@@ -312,7 +312,7 @@ def test_transient_at_wheel_freq_no_false_positive(corner: str, profile: dict[st
     """Transient spike at exactly wheel-1x Hz → should not be persistent fault."""
     sensor = CORNER_SENSORS[corner]
     whz = profile_wheel_hz(profile, SPEED_MID)
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     samples.extend(make_noise_samples(sensors=[sensor], speed_kmh=SPEED_MID, n_samples=35))
     # Transient at wheel-1x frequency
     samples.extend(
@@ -338,7 +338,7 @@ def test_transient_at_wheel_freq_no_false_positive(corner: str, profile: dict[st
 def test_diffuse_plus_transient_no_fault(speed: float, profile: dict[str, Any]) -> None:
     """Diffuse excitation + transient → no wheel fault."""
     sensor = SENSOR_RR
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     samples.extend(make_diffuse_samples(sensors=[sensor], speed_kmh=speed, n_samples=35))
     samples.extend(
         make_transient_samples(
