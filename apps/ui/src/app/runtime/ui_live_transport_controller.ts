@@ -1,7 +1,6 @@
-import { adaptServerPayload, type AdaptedPayload } from "../../server_payload";
+import { adaptServerPayload, type AdaptedClient, type AdaptedPayload } from "../../server_payload";
 import { runDemoMode } from "../demo_mode";
 import { WsClient } from "../../ws";
-import type { AppFeatureBundle } from "../app_feature_bundle";
 import { applySpectrumTick, type AppState } from "../ui_app_state";
 
 type UiLiveTransportControllerDeps = {
@@ -13,10 +12,17 @@ type UiLiveTransportControllerDeps = {
   updateSpectrumOverlay: () => void;
 };
 
+export interface UiTransportFeaturePorts {
+  updateClientSelection(): void;
+  maybeRenderSensorsSettingsList(force?: boolean): void;
+  renderLoggingStatus(): void;
+  renderStatus(clientRow: AdaptedClient | undefined): void;
+}
+
 export class UiLiveTransportController {
   private readonly state: AppState;
 
-  private features: AppFeatureBundle | null = null;
+  private ports: UiTransportFeaturePorts | null = null;
 
   private readonly payloadErrorMessage: () => string;
 
@@ -37,8 +43,8 @@ export class UiLiveTransportController {
     this.updateSpectrumOverlay = deps.updateSpectrumOverlay;
   }
 
-  attachFeatures(features: AppFeatureBundle): void {
-    this.features = features;
+  attachPorts(ports: UiTransportFeaturePorts): void {
+    this.ports = ports;
   }
 
   sendSelection(): void {
@@ -79,7 +85,7 @@ export class UiLiveTransportController {
   }
 
   private applyPayload(payload: unknown): void {
-    const features = this.requireFeatures();
+    const ports = this.requirePorts();
     let adapted: AdaptedPayload;
     try {
       adapted = adaptServerPayload(payload);
@@ -102,9 +108,9 @@ export class UiLiveTransportController {
       adapted.spectra,
     );
     this.state.spectrum.spectra = spectrumTick.spectra;
-    features.realtime.updateClientSelection();
-    features.realtime.maybeRenderSensorsSettingsList();
-    features.realtime.renderLoggingStatus();
+    ports.updateClientSelection();
+    ports.maybeRenderSensorsSettingsList();
+    ports.renderLoggingStatus();
     if (prevSelected !== this.state.realtime.selectedClientId) {
       this.sendSelection();
     }
@@ -117,7 +123,7 @@ export class UiLiveTransportController {
     } else {
       this.updateSpectrumOverlay();
     }
-    features.realtime.renderStatus(
+    ports.renderStatus(
       this.state.realtime.clients.find((client) => client.id === this.state.realtime.selectedClientId),
     );
   }
@@ -143,10 +149,10 @@ export class UiLiveTransportController {
     this.state.transport.ws.connect();
   }
 
-  private requireFeatures(): AppFeatureBundle {
-    if (this.features === null) {
-      throw new Error("UiLiveTransportController features used before initialization");
+  private requirePorts(): UiTransportFeaturePorts {
+    if (this.ports === null) {
+      throw new Error("UiLiveTransportController ports used before initialization");
     }
-    return this.features;
+    return this.ports;
   }
 }

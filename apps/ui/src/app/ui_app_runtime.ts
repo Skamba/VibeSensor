@@ -4,7 +4,7 @@ import { createUiDomRegistry } from "./ui_dom_registry";
 import { createAppFeatureBundle, type AppFeatureBundle } from "./app_feature_bundle";
 import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
-import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
+import { UiLiveTransportController, type UiTransportFeaturePorts } from "./runtime/ui_live_transport_controller";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
@@ -69,7 +69,13 @@ export class UiAppRuntime {
       sendSelection: () => this.transport.sendSelection(),
     });
     this.shell.attachFeatures(this.features);
-    this.transport.attachFeatures(this.features);
+    const transportPorts: UiTransportFeaturePorts = {
+      updateClientSelection: () => this.features.realtime.updateClientSelection(),
+      maybeRenderSensorsSettingsList: (force) => this.features.realtime.maybeRenderSensorsSettingsList(force),
+      renderLoggingStatus: () => this.features.realtime.renderLoggingStatus(),
+      renderStatus: (clientRow) => this.features.realtime.renderStatus(clientRow),
+    };
+    this.transport.attachPorts(transportPorts);
     this.startup = new UiStartupCoordinator({
       shell: this.shell,
       transport: this.transport,
