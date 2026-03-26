@@ -1,5 +1,5 @@
 # Development overrides — only fields that differ from defaults.
-# Uses local relative paths instead of system paths.
+# Keeps local development on port 8000 without depending on gpsd.
 
 server:
   port: 8000
