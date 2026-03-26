@@ -1,3 +1,5 @@
+"""Structured sample-storage and v2 row retrieval coverage for HistoryDB."""
+
 from __future__ import annotations
 
 import sqlite3

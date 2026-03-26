@@ -1,3 +1,5 @@
+"""HistoryDB connection-mode and transaction-cleanup regression coverage."""
+
 from __future__ import annotations
 
 import sqlite3
