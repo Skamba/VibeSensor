@@ -35,28 +35,41 @@ SIM_DATA_PORT = os.environ.get("VIBESENSOR_TEST_SIM_DATA_PORT", "9000")
 SIM_CONTROL_PORT = os.environ.get("VIBESENSOR_TEST_SIM_CONTROL_PORT", "9001")
 
 
+def _api_response_bytes(
+    path: str,
+    *,
+    timeout: int = 30,
+    method: str = "GET",
+    data: bytes | None = None,
+) -> bytes:
+    """Read raw API response bytes for GET/POST helper wrappers."""
+    request: str | Request
+    if method == "GET" and data is None:
+        request = f"{BASE_URL}{path}"
+    else:
+        request = Request(
+            f"{BASE_URL}{path}",
+            data=data,
+            method=method,
+            headers={"Content-Type": "application/json"},
+        )
+    with urlopen(request, timeout=timeout) as resp:
+        return resp.read()
+
+
 def _api_json(path: str, *, timeout: int = 30) -> dict[str, Any]:
     """Simple HTTP GET returning JSON."""
-    with urlopen(f"{BASE_URL}{path}", timeout=timeout) as resp:
-        return json.loads(resp.read())
+    return json.loads(_api_response_bytes(path, timeout=timeout))
 
 
 def _api_post_json(path: str, *, timeout: int = 30) -> dict[str, Any]:
     """Simple HTTP POST returning JSON."""
-    req = Request(
-        f"{BASE_URL}{path}",
-        data=b"",
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
-    with urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read())
+    return json.loads(_api_response_bytes(path, timeout=timeout, method="POST", data=b""))
 
 
 def _api_bytes(path: str, *, timeout: int = 30) -> bytes:
     """Simple HTTP GET returning raw bytes."""
-    with urlopen(f"{BASE_URL}{path}", timeout=timeout) as resp:
-        return resp.read()
+    return _api_response_bytes(path, timeout=timeout)
 
 
 def _history_run_ids() -> set[str]:
