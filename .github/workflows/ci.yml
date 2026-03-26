@@ -23,8 +23,7 @@ jobs:
       - uses: ./.github/actions/setup-backend
 
       - name: Validate dependency consistency
-        run: |
-          python -m pip check
+        run: python -m pip check
 
       - name: Backend quality checks
         run: make lint
@@ -45,8 +44,7 @@ jobs:
         working-directory: apps/server
         env:
           MYPYPATH: .
-        run: |
-          python -m mypy --config-file pyproject.toml
+        run: python -m mypy --config-file pyproject.toml
 
   frontend-typecheck:
     name: Frontend type check
@@ -65,23 +63,20 @@ jobs:
           cache-dependency-path: apps/ui/package-lock.json
 
       - name: Install UI dependencies
-        run: |
-          cd apps/ui && npm ci
+        working-directory: apps/ui
+        run: npm ci
 
       - name: UI contract sync check
-        run: |
-          cd apps/ui
-          npm run check:contracts
+        working-directory: apps/ui
+        run: npm run check:contracts
 
       - name: UI lint
-        run: |
-          cd apps/ui
-          npm run lint
+        working-directory: apps/ui
+        run: npm run lint
 
       - name: UI typecheck
-        run: |
-          cd apps/ui
-          npm run typecheck
+        working-directory: apps/ui
+        run: npm run typecheck
 
   ui-smoke:
     name: UI smoke tests
@@ -109,12 +104,12 @@ jobs:
             ${{ runner.os }}-ms-playwright-
 
       - name: Install UI dependencies
-        run: |
-          cd apps/ui && npm ci
+        working-directory: apps/ui
+        run: npm ci
 
       - name: UI smoke tests
+        working-directory: apps/ui
         run: |
-          cd apps/ui
           npx playwright install chromium
           npm run test:smoke
 
@@ -145,8 +140,7 @@ jobs:
           cache-dependency-path: apps/server/pyproject.toml
 
       - name: Release smoke validation
-        run: |
-          python3 tools/tests/run_release_smoke.py
+        run: python3 tools/tests/run_release_smoke.py
 
   firmware-native-tests:
     name: Firmware native tests
@@ -165,13 +159,11 @@ jobs:
           include-platformio: "true"
 
       - name: Verify firmware protocol fixtures
-        run: |
-          python tools/firmware/generate_protocol_contract_fixtures.py --check
+        run: python tools/firmware/generate_protocol_contract_fixtures.py --check
 
       - name: Firmware native tests
-        run: |
-          cd firmware/esp
-          pio test -e native
+        working-directory: firmware/esp
+        run: pio test -e native
 
   backend-tests-1:
     name: Backend tests (shard 1/5)
@@ -194,8 +186,7 @@ jobs:
             ${{ runner.os }}-backend-test-durations-
 
       - name: Prepare backend test artifacts
-        run: |
-          mkdir -p artifacts/ai/logs/ci
+        run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 1/5
         run: |
@@ -231,8 +222,7 @@ jobs:
             ${{ runner.os }}-backend-test-durations-
 
       - name: Prepare backend test artifacts
-        run: |
-          mkdir -p artifacts/ai/logs/ci
+        run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 2/5
         run: |
@@ -268,8 +258,7 @@ jobs:
             ${{ runner.os }}-backend-test-durations-
 
       - name: Prepare backend test artifacts
-        run: |
-          mkdir -p artifacts/ai/logs/ci
+        run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 3/5
         run: |
@@ -305,8 +294,7 @@ jobs:
             ${{ runner.os }}-backend-test-durations-
 
       - name: Prepare backend test artifacts
-        run: |
-          mkdir -p artifacts/ai/logs/ci
+        run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 4/5
         run: |
@@ -342,8 +330,7 @@ jobs:
             ${{ runner.os }}-backend-test-durations-
 
       - name: Prepare backend test artifacts
-        run: |
-          mkdir -p artifacts/ai/logs/ci
+        run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 5/5
         run: |
@@ -391,8 +378,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Docker-backed e2e suite (skip already-owned checks)
-        run: |
-          python3 tools/tests/run_e2e_parallel.py --fast-e2e --shards 6
+        run: python3 tools/tests/run_e2e_parallel.py --fast-e2e --shards 6
 
       - name: Upload e2e failure artifacts
         if: failure()
