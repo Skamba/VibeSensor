@@ -227,6 +227,24 @@ def make_profile_fault_samples(
     )
 
 
+def _apply_gain_mismatch(
+    base: list[dict[str, Any]],
+    *,
+    fault_sensor: str,
+    gain_factor: float,
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for sample in base:
+        if sample["client_name"] == fault_sensor:
+            sample = {**sample}
+            sample["top_peaks"] = [
+                {"hz": peak["hz"], "amp": peak["amp"] * gain_factor} for peak in sample["top_peaks"]
+            ]
+            sample["vibration_strength_db"] = sample["vibration_strength_db"] + 3.0
+        result.append(sample)
+    return result
+
+
 def make_gain_mismatch_samples(
     *,
     fault_sensor: str,
@@ -254,16 +272,7 @@ def make_gain_mismatch_samples(
         fault_vib_db=fault_vib_db,
         noise_vib_db=noise_vib_db,
     )
-    result: list[dict[str, Any]] = []
-    for sample in base:
-        if sample["client_name"] == fault_sensor:
-            sample = {**sample}
-            sample["top_peaks"] = [
-                {"hz": peak["hz"], "amp": peak["amp"] * gain_factor} for peak in sample["top_peaks"]
-            ]
-            sample["vibration_strength_db"] = sample["vibration_strength_db"] + 3.0
-        result.append(sample)
-    return result
+    return _apply_gain_mismatch(base, fault_sensor=fault_sensor, gain_factor=gain_factor)
 
 
 def make_engine_order_samples(
@@ -442,16 +451,7 @@ def make_profile_gain_mismatch_samples(
         fault_vib_db=fault_vib_db,
         noise_vib_db=noise_vib_db,
     )
-    result: list[dict[str, Any]] = []
-    for sample in base:
-        if sample["client_name"] == fault_sensor:
-            sample = {**sample}
-            sample["top_peaks"] = [
-                {"hz": peak["hz"], "amp": peak["amp"] * gain_factor} for peak in sample["top_peaks"]
-            ]
-            sample["vibration_strength_db"] = sample["vibration_strength_db"] + 3.0
-        result.append(sample)
-    return result
+    return _apply_gain_mismatch(base, fault_sensor=fault_sensor, gain_factor=gain_factor)
 
 
 def build_fault_samples_at_speed(
