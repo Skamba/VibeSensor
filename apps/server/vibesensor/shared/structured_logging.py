@@ -1,3 +1,5 @@
+"""Structured logging helpers for request-scoped JSON log output."""
+
 from __future__ import annotations
 
 import json
@@ -16,10 +18,12 @@ _STANDARD_LOG_RECORD_FIELDS = frozenset(logging.makeLogRecord({}).__dict__) | {"
 
 
 def current_request_id() -> str | None:
+    """Return the currently bound request identifier, if any."""
     return _REQUEST_ID.get()
 
 
 def normalize_request_id(raw_value: str | None) -> str:
+    """Sanitize a request-id header value or generate a new opaque fallback."""
     if raw_value is None:
         return uuid4().hex
     candidate = "".join(ch for ch in raw_value.strip() if ch in _ALLOWED_REQUEST_ID_CHARS)[:64]
@@ -27,15 +31,18 @@ def normalize_request_id(raw_value: str | None) -> str:
 
 
 def bind_request_id(raw_value: str | None) -> tuple[str, Token[str | None]]:
+    """Normalize and bind a request id to the current context."""
     request_id = normalize_request_id(raw_value)
     return request_id, _REQUEST_ID.set(request_id)
 
 
 def reset_request_id(token: Token[str | None]) -> None:
+    """Restore the previous request-id context using *token*."""
     _REQUEST_ID.reset(token)
 
 
 def log_extra(**fields: object) -> dict[str, object]:
+    """Build ``logging`` extra fields, automatically attaching the bound request id."""
     extra = dict(fields)
     request_id = current_request_id()
     if request_id is not None:
@@ -55,6 +62,7 @@ def _json_compatible(value: object) -> JsonValue:
 
 class StructuredLogFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
+        """Serialize *record* as a stable JSON object with extra fields preserved."""
         payload: dict[str, JsonValue] = {
             "timestamp": self.formatTime(record, self.datefmt),
             "level": record.levelname,
