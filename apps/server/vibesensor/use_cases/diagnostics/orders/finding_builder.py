@@ -35,10 +35,11 @@ def assemble_order_finding(
     score: OrderFindingScore,
 ) -> tuple[float, DomainFinding]:
     """Build a single order finding from a scored match result."""
+    order_label = _order_label(hypothesis.order, hypothesis.order_label_base)
     ref_text = ", ".join(sorted(match.ref_sources))
     evidence = i18n_ref(
         "EVIDENCE_ORDER_TRACKED",
-        order_label=_order_label(hypothesis.order, hypothesis.order_label_base),
+        order_label=order_label,
         matched=match.matched,
         possible=match.possible,
         match_rate=context.effective_match_rate,
@@ -59,7 +60,7 @@ def assemble_order_finding(
         finding_key=hypothesis.key,
         suspected_source=hypothesis.suspected_source,
         confidence=score.confidence,
-        order=_order_label(hypothesis.order, hypothesis.order_label_base),
+        order=order_label,
         strongest_location=score.strongest_location or None,
         strongest_speed_band=phase_evidence.strongest_speed_band or None,
         kind=FindingKind.DIAGNOSTIC,
