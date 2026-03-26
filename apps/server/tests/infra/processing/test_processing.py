@@ -1,3 +1,5 @@
+"""Exercise end-to-end processor behavior around ingest, locking, spectra, and overlap helpers."""
+
 from __future__ import annotations
 
 import math

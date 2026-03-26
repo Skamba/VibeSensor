@@ -1,3 +1,5 @@
+"""Cover snapshot, cache, and FFT-parameter behavior across processing components."""
+
 from __future__ import annotations
 
 import numpy as np
