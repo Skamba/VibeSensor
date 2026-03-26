@@ -1,8 +1,11 @@
 import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
-import type { AppFeatureBundle } from "../app_feature_bundle";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState } from "../ui_app_state";
+import {
+  bindUiShellFeatureEvents,
+  type UiShellFeaturePorts,
+} from "./ui_shell_feature_ports";
 import {
   createUiShellLanguageRefreshModule,
   type UiShellLanguageRefreshModule,
@@ -44,7 +47,7 @@ export class UiShellController {
 
   private readonly languageRefresh: UiShellLanguageRefreshModule;
 
-  private features: AppFeatureBundle | null = null;
+  private ports: UiShellFeaturePorts | null = null;
 
   private renderSpectrumChart: (() => void) | null = null;
 
@@ -93,8 +96,8 @@ export class UiShellController {
     });
   }
 
-  attachFeatures(features: AppFeatureBundle): void {
-    this.features = features;
+  attachPorts(ports: UiShellFeaturePorts): void {
+    this.ports = ports;
   }
 
   attachSpectrumHooks(deps: {
@@ -151,7 +154,7 @@ export class UiShellController {
   }
 
   applyLanguage(forceReloadInsights = false): void {
-    this.languageRefresh.applyLanguage(this.requireFeatures(), forceReloadInsights);
+    this.languageRefresh.applyLanguage(this.requirePorts().languageRefresh, forceReloadInsights);
   }
 
   bindUiEvents(): void {
@@ -165,19 +168,13 @@ export class UiShellController {
   }
 
   private bindFeatureEvents(): void {
-    const features = this.requireFeatures();
-    features.settings.bindHandlers();
-    features.cars.bindWizardHandlers();
-    features.realtime.bindHandlers();
-    features.history.bindHandlers();
-    features.update.bindUpdateHandlers();
-    features.espFlash.bindHandlers();
+    bindUiShellFeatureEvents(this.requirePorts());
   }
 
-  private requireFeatures(): AppFeatureBundle {
-    if (this.features === null) {
-      throw new Error("UiShellController features used before initialization");
+  private requirePorts(): UiShellFeaturePorts {
+    if (this.ports === null) {
+      throw new Error("UiShellController ports used before initialization");
     }
-    return this.features;
+    return this.ports;
   }
 }
