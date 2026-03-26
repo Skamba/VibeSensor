@@ -1,3 +1,5 @@
+"""Guard extended processor edge cases for ingest, payload reuse, spectra, and eviction."""
+
 from __future__ import annotations
 
 import numpy as np
