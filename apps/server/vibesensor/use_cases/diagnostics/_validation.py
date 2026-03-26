@@ -8,6 +8,7 @@ from ._types import AnalysisSampleInput, ensure_analysis_sample
 
 
 def _validate_required_strength_metrics(samples: Sequence[AnalysisSampleInput]) -> None:
+    """Require at least one precomputed strength-metric sample in the run input."""
     typed_samples = [ensure_analysis_sample(sample) for sample in samples]
     if not typed_samples:
         return

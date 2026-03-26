@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from math import isfinite, sqrt
 
 
-def _mean(values: list[float]) -> float:
+def _mean(values: Sequence[float]) -> float:
     """Arithmetic mean returning 0.0 for empty inputs."""
     if not values:
         return 0.0
     return sum(values) / len(values)
 
 
-def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
+def _corr_abs(x_vals: Sequence[float], y_vals: Sequence[float]) -> float | None:
+    """Absolute Pearson correlation for equal-length numeric sequences."""
     if len(x_vals) != len(y_vals) or len(x_vals) < 3:
         return None
     n = len(x_vals)
@@ -35,7 +37,7 @@ def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
     return result if isfinite(result) else None
 
 
-def _corr_abs_clamped(x: list[float], y: list[float]) -> float | None:
+def _corr_abs_clamped(x: Sequence[float], y: Sequence[float]) -> float | None:
     """Absolute Pearson correlation, clamped to [0, 1]."""
     raw = _corr_abs(x, y)
     if raw is None:
@@ -44,7 +46,7 @@ def _corr_abs_clamped(x: list[float], y: list[float]) -> float | None:
 
 
 def _weighted_percentile(
-    pairs: list[tuple[float, float]],
+    pairs: Sequence[tuple[float, float]],
     q: float,
 ) -> float | None:
     """Return the *q*-th weighted percentile from *(value, weight)* pairs."""
