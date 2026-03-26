@@ -25,6 +25,7 @@ __all__ = [
 def report_suitability_checks(
     suitability: RunSuitability | None,
 ) -> tuple[RunSuitabilityCheck, ...]:
+    """Return report-facing suitability checks as an immutable payload tuple."""
     return tuple(run_suitability_payload(suitability))
 
 
@@ -33,6 +34,7 @@ def report_warning_payloads(
     *,
     warnings: RunContextWarningsInput = None,
 ) -> tuple[SummaryWarningPayload, ...]:
+    """Return report-facing warning payloads, preferring explicit warning overrides."""
     if warnings is not None:
         return tuple(summary_warning_payloads(warnings))
     raw_warnings = payload.get("warnings")
