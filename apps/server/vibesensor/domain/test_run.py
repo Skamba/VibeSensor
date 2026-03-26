@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from vibesensor.domain.driving_segment import DrivingSegment
 from vibesensor.domain.finding import Finding, VibrationSource
@@ -24,7 +24,7 @@ class TestRun:
     top_causes: tuple[Finding, ...] = ()
     speed_profile: SpeedProfile | None = None
     suitability: RunSuitability | None = None
-    test_plan: TestPlan = TestPlan()
+    test_plan: TestPlan = field(default_factory=TestPlan)
 
     def __post_init__(self) -> None:
         if not self.top_causes:
