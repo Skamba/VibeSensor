@@ -232,6 +232,8 @@ class FakeState:
 
     def __post_init__(self) -> None:
         self.health_state.mark_ready()
+        # Keep router assembly tests focused on dependency wiring rather than
+        # bespoke history/export service setup in each caller.
         if self.run_service is None:
             self.run_service = ProjectedHistoryRunService(
                 HistoryRunService(
@@ -299,6 +301,7 @@ class FakeState:
 def fake_state() -> FakeState:
     """Return a fresh ``FakeState`` for each test."""
     state = FakeState()
+    # Health endpoints read a dedicated recorder health payload, not status().
     state.run_recorder.health_snapshot.return_value = {
         "write_error": None,
         "analysis_in_progress": False,
