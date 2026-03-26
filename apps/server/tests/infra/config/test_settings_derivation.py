@@ -1,3 +1,5 @@
+"""Exercise config-derivation defaults and active-car projection behavior."""
+
 from __future__ import annotations
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
