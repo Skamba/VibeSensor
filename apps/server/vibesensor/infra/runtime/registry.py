@@ -21,6 +21,7 @@ from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
 from vibesensor.infra.runtime.client_snapshot_projection import project_client_snapshots
 from vibesensor.infra.runtime.dedup_window import DedupWindow
+from vibesensor.infra.runtime.registry_diagnostics import RegistryDiagnostics
 from vibesensor.infra.runtime.registry_updates import (
     DataUpdateResult,
     apply_data_message_update,
@@ -162,6 +163,11 @@ class ClientRegistry:
             retention_ttl_seconds=retention_ttl_seconds,
         )
         self._clients: dict[str, ClientRecord] = {}
+        self._diagnostics = RegistryDiagnostics(
+            lock=self._lock,
+            clients=self._clients,
+            get_or_create=self._get_or_create,
+        )
         self._metadata = ClientMetadataManager(
             lock=self._lock,
             get_or_create=self._get_or_create,
@@ -260,23 +266,11 @@ class ClientRegistry:
             record.last_ack_cmd_seq = ack.cmd_seq
             record.last_ack_status = ack.status
 
-    def _note_client_counter(self, client_id: str | None, attr: str) -> None:
-        """Increment a counter attribute on a client record, creating it if needed."""
-        if not client_id:
-            return
-        try:
-            normalized = normalize_sensor_id(client_id)
-        except ValueError:
-            return
-        with self._lock:
-            record = self._get_or_create(normalized)
-            setattr(record, attr, getattr(record, attr) + 1)
-
     def note_parse_error(self, client_id: str | None) -> None:
-        self._note_client_counter(client_id, "parse_errors")
+        self._diagnostics.note_parse_error(client_id)
 
     def note_server_queue_drop(self, client_id: str | None) -> None:
-        self._note_client_counter(client_id, "server_queue_drops")
+        self._diagnostics.note_server_queue_drop(client_id)
 
     def set_name(self, client_id: str, name: str) -> ClientRecord:
         return self._metadata.set_name(client_id, name)
@@ -350,28 +344,7 @@ class ClientRegistry:
             return self._liveness_policy.active_client_ids(self._clients, mono_now)
 
     def data_loss_snapshot(self) -> dict[str, int]:
-        with self._lock:
-            snapshot: dict[str, int] = {
-                "tracked_clients": len(self._clients),
-                "affected_clients": 0,
-                "frames_dropped": 0,
-                "queue_overflow_drops": 0,
-                "server_queue_drops": 0,
-                "parse_errors": 0,
-            }
-            for record in self._clients.values():
-                snapshot["frames_dropped"] += int(record.frames_dropped)
-                snapshot["queue_overflow_drops"] += int(record.queue_overflow_drops)
-                snapshot["server_queue_drops"] += int(record.server_queue_drops)
-                snapshot["parse_errors"] += int(record.parse_errors)
-                if (
-                    record.frames_dropped > 0
-                    or record.queue_overflow_drops > 0
-                    or record.server_queue_drops > 0
-                    or record.parse_errors > 0
-                ):
-                    snapshot["affected_clients"] += 1
-            return snapshot
+        return self._diagnostics.data_loss_snapshot()
 
     def evict_stale(self, now: float | None = None, *, now_mono: float | None = None) -> list[str]:
         with self._lock:
