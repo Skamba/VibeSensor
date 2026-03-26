@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Collection, Sequence, Set
 from dataclasses import dataclass, replace
 from math import ceil, floor, log1p, pow
 
@@ -51,7 +52,8 @@ class LocationAnalysisResult:
         return self.top_location
 
 
-def _weighted_speed_window_label(speed_weight_pairs: list[tuple[float, float]]) -> str | None:
+def _weighted_speed_window_label(speed_weight_pairs: Sequence[tuple[float, float]]) -> str | None:
+    """Return a human-readable weighted speed window for one location winner."""
     valid = [(speed, weight) for speed, weight in speed_weight_pairs if speed > 0]
     p10 = _weighted_percentile(valid, 0.10)
     p90 = _weighted_percentile(valid, 0.90)
@@ -82,10 +84,10 @@ def _localization_confidence(
 
 def _score_locations_in_bin(
     bin_label: str,
-    rows: list[JsonObject],
+    rows: Sequence[JsonObject],
     *,
     corroboration_amp_multiplier: float,
-    connected_locations: set[str] | None,
+    connected_locations: Set[str] | None,
     suspected_source: str | None,
 ) -> LocationAnalysisResult | None:
     """Score and rank sensor locations within a single speed-bin.
@@ -204,10 +206,10 @@ def _score_locations_in_bin(
 
 
 def summarize_order_match_locations(
-    matches: list[OrderMatchObservation],
+    matches: Sequence[OrderMatchObservation],
     lang: str,
-    relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
-    connected_locations: set[str] | None = None,
+    relevant_speed_bins: Collection[str] | None = None,
+    connected_locations: Set[str] | None = None,
     suspected_source: str | None = None,
 ) -> tuple[object, LocationAnalysisResult | None]:
     """Return strongest location summary, optionally restricted to specific speed bins.
