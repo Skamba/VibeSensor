@@ -1,4 +1,4 @@
-"""Tests for LocationHotspot.compute_confidence()."""
+"""Domain coverage for hotspot confidence scoring and typed intensity summaries."""
 
 from __future__ import annotations
 
