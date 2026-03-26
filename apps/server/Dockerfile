@@ -8,6 +8,7 @@ COPY apps/ui/package*.json ./
 RUN npm ci
 
 RUN mkdir -p /app/tools/config /app/apps/server/vibesensor/shared
+# Copy the shared-code inputs early so UI rebuilds only invalidate when these contracts change.
 COPY tools/config/sync_shared_contracts_to_ui.mjs /app/tools/config/sync_shared_contracts_to_ui.mjs
 COPY tools/config/generate_ui_shared_constants.py /app/tools/config/generate_ui_shared_constants.py
 COPY apps/server/vibesensor/shared/locations.py /app/apps/server/vibesensor/shared/locations.py
