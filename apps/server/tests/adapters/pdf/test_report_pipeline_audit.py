@@ -13,9 +13,12 @@ from vibesensor.report_i18n import tr
 # ---------------------------------------------------------------------------
 
 
-def _make_minimal_summary(*, overrides: dict | None = None) -> dict:
+def _make_minimal_summary(
+    *,
+    overrides: dict[str, object] | None = None,
+) -> dict[str, object]:
     """Return a minimal summary dict that ``map_summary`` can process."""
-    base: dict = {
+    base: dict[str, object] = {
         "lang": "en",
         "report_date": "2025-01-01T00:00:00",
         "metadata": {"car_name": "Test Car"},
@@ -56,7 +59,7 @@ def _make_peaks_table_row(
     p95_vs_run_noise_ratio: float = 5.0,
     spatial_uniformity: float | None = None,
     speed_uniformity: float | None = None,
-) -> dict:
+) -> dict[str, object]:
     """Build a single peaks-table row dict as produced by diagnostics peak-table builders."""
     if strength_db is None:
         strength_db = p95_intensity_db  # mirrors the current (buggy) behavior
