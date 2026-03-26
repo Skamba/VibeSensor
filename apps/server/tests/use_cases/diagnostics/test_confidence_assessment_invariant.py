@@ -21,22 +21,25 @@ def _assert_all_findings_have_assessment(findings: tuple[Any, ...]) -> None:
     assert not missing, f"Findings without ConfidenceAssessment: {missing}"
 
 
+def _wheel_fault_result(file_name: str):
+    return RunAnalysis(
+        standard_metadata(),
+        fault_phase(
+            speed_kmh=80.0,
+            duration_s=20.0,
+            fault_sensor="front-right",
+            sensors=ALL_SENSORS,
+        ),
+        lang="en",
+        file_name=file_name,
+    ).summarize()
+
+
 class TestLivePipelineConfidenceInvariant:
     """All findings produced by live analysis must carry ConfidenceAssessment."""
 
     def test_wheel_fault_all_findings_assessed(self) -> None:
-        analysis = RunAnalysis(
-            standard_metadata(),
-            fault_phase(
-                speed_kmh=80.0,
-                duration_s=20.0,
-                fault_sensor="front-right",
-                sensors=ALL_SENSORS,
-            ),
-            lang="en",
-            file_name="invariant-wheel",
-        )
-        result = analysis.summarize()
+        result = _wheel_fault_result("invariant-wheel")
         test_run = result.test_run
 
         assert test_run is not None
@@ -44,18 +47,7 @@ class TestLivePipelineConfidenceInvariant:
         _assert_all_findings_have_assessment(test_run.findings)
 
     def test_top_causes_subset_of_enriched_findings(self) -> None:
-        analysis = RunAnalysis(
-            standard_metadata(),
-            fault_phase(
-                speed_kmh=80.0,
-                duration_s=20.0,
-                fault_sensor="front-right",
-                sensors=ALL_SENSORS,
-            ),
-            lang="en",
-            file_name="invariant-subset",
-        )
-        result = analysis.summarize()
+        result = _wheel_fault_result("invariant-subset")
         test_run = result.test_run
 
         assert test_run is not None
@@ -70,18 +62,7 @@ class TestBoundaryDecoderConfidenceInvariant:
     """Findings decoded from historical summary payloads get synthesized assessment."""
 
     def test_decoded_findings_all_assessed(self) -> None:
-        analysis = RunAnalysis(
-            standard_metadata(),
-            fault_phase(
-                speed_kmh=80.0,
-                duration_s=20.0,
-                fault_sensor="front-right",
-                sensors=ALL_SENSORS,
-            ),
-            lang="en",
-            file_name="invariant-decode",
-        )
-        result = analysis.summarize()
+        result = _wheel_fault_result("invariant-decode")
         summary = analysis_result_to_summary(result)
 
         # Decode through the boundary (simulates historical data load)
@@ -91,18 +72,7 @@ class TestBoundaryDecoderConfidenceInvariant:
         _assert_all_findings_have_assessment(decoded_run.findings)
 
     def test_decoded_top_causes_assessed(self) -> None:
-        analysis = RunAnalysis(
-            standard_metadata(),
-            fault_phase(
-                speed_kmh=80.0,
-                duration_s=20.0,
-                fault_sensor="front-right",
-                sensors=ALL_SENSORS,
-            ),
-            lang="en",
-            file_name="invariant-decode-tc",
-        )
-        result = analysis.summarize()
+        result = _wheel_fault_result("invariant-decode-tc")
         summary = analysis_result_to_summary(result)
 
         decoded_run = _decode_test_run(summary)
