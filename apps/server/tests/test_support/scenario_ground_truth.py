@@ -18,6 +18,10 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
 
+def _sample_count(duration_s: float, dt_s: float) -> int:
+    return max(1, int(duration_s / dt_s))
+
+
 def idle_phase(
     *,
     duration_s: float,
@@ -29,7 +33,7 @@ def idle_phase(
     """Generate idle/stationary samples with only noise peaks."""
     return make_idle_samples(
         sensors=sensors,
-        n_samples=max(1, int(duration_s / dt_s)),
+        n_samples=_sample_count(duration_s, dt_s),
         dt_s=dt_s,
         start_t_s=start_t_s,
         noise_amp=noise_amp,
@@ -50,7 +54,7 @@ def road_noise_phase(
     return make_noise_samples(
         sensors=sensors,
         speed_kmh=speed_kmh,
-        n_samples=max(1, int(duration_s / dt_s)),
+        n_samples=_sample_count(duration_s, dt_s),
         dt_s=dt_s,
         start_t_s=start_t_s,
         noise_amp=noise_amp,
@@ -71,7 +75,7 @@ def ramp_phase(
     road_vib_db: float = 10.0,
 ) -> list[dict[str, Any]]:
     """Generate speed ramp phase with road-only noise."""
-    total_samples = n_steps * max(1, int(step_duration_s / dt_s))
+    total_samples = n_steps * _sample_count(step_duration_s, dt_s)
     return make_ramp_samples(
         sensors=sensors,
         speed_start=speed_start,
@@ -104,7 +108,7 @@ def fault_phase(
         fault_sensor=fault_sensor,
         sensors=sensors,
         speed_kmh=speed_kmh,
-        n_samples=max(1, int(duration_s / dt_s)),
+        n_samples=_sample_count(duration_s, dt_s),
         dt_s=dt_s,
         start_t_s=start_t_s,
         fault_amp=fault_amp,
