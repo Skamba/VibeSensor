@@ -1,3 +1,5 @@
+"""Verify registry snapshots stay frozen and point-in-time safe for callers."""
+
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError

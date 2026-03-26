@@ -1,3 +1,5 @@
+"""Cover registry protocol updates, persistence, deduplication, and snapshot behavior."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

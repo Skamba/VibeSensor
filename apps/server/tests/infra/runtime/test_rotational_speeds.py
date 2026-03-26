@@ -1,3 +1,5 @@
+"""Guard rotational-basis speed-source selection across fallback and GPS states."""
+
 from __future__ import annotations
 
 from vibesensor.infra.runtime.rotational_speeds import rotational_basis_speed_source
