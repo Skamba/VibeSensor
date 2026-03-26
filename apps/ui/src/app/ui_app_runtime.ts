@@ -8,6 +8,7 @@ import { UiLiveTransportController } from "./runtime/ui_live_transport_controlle
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
+import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 
 export class UiAppRuntime {
   private readonly els: UiDomElements;
@@ -21,6 +22,8 @@ export class UiAppRuntime {
   private readonly spectrum: UiSpectrumController;
 
   private readonly transport: UiLiveTransportController;
+
+  private readonly startup: UiStartupCoordinator;
 
   constructor(
     els: UiDomElements = createUiDomRegistry(),
@@ -67,34 +70,15 @@ export class UiAppRuntime {
     });
     this.shell.attachFeatures(this.features);
     this.transport.attachFeatures(this.features);
-  }
-
-  start(): void {
-    this.shell.bindUiEvents();
-    this.features.settings.syncSettingsInputs();
-    this.runAsyncTask("hydrate persisted preferences", () => this.shell.hydratePersistedPreferences());
-    this.shell.applyLanguage(false);
-    this.shell.renderCarSelectionWarning();
-    this.shell.setActiveView(DEFAULT_SHELL_VIEW_ID);
-    this.startBackgroundActivity();
-    this.transport.startTransportMode();
-  }
-
-  private runAsyncTask(taskName: string, task: () => Promise<void>): void {
-    void task().catch((error) => {
-      console.warn(`UI startup task failed: ${taskName}`, error);
+    this.startup = new UiStartupCoordinator({
+      shell: this.shell,
+      transport: this.transport,
+      features: this.features,
+      defaultViewId: DEFAULT_SHELL_VIEW_ID,
     });
   }
 
-  private startBackgroundActivity(): void {
-    this.runAsyncTask("refresh location options", () => this.features.realtime.refreshLocationOptions());
-    this.runAsyncTask("load speed source", () => this.features.settings.loadSpeedSourceFromServer());
-    this.runAsyncTask("load analysis settings", () => this.features.settings.loadAnalysisSettingsFromServer());
-    this.runAsyncTask("load cars", () => this.features.settings.loadCarsFromServer());
-    this.runAsyncTask("refresh logging status", () => this.features.realtime.refreshLoggingStatus());
-    this.runAsyncTask("refresh history", () => this.features.history.refreshHistory());
-    this.features.update.startPolling();
-    this.features.espFlash.startPolling();
-    this.features.settings.startGpsStatusPolling();
+  start(): void {
+    this.startup.start();
   }
 }
