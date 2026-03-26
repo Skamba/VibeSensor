@@ -15,6 +15,7 @@ from vibesensor.domain import (
     FindingEvidence,
     LocationHotspot,
     RunCapture,
+    RunSetup,
     RunSuitability,
     Sensor,
     SpeedProfile,
@@ -23,6 +24,9 @@ from vibesensor.domain import (
 )
 from vibesensor.shared.boundaries.finding import (
     finding_from_payload,
+)
+from vibesensor.shared.boundaries.test_run_reconstruction import (
+    test_run_from_summary as reconstruct_test_run_from_summary,
 )
 
 
@@ -275,8 +279,6 @@ class TestTestRunWithValueObjects:
         assert result.suitability.is_usable
 
     def test_from_summary_extracts_speed_profile(self) -> None:
-        from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
-
         summary = {
             "run_id": "test-123",
             "findings": [],
@@ -290,7 +292,7 @@ class TestTestRunWithValueObjects:
             },
             "phase_summary": {"has_cruise": True, "cruise_pct": 65.0},
         }
-        result = test_run_from_summary(summary)
+        result = reconstruct_test_run_from_summary(summary)
         assert result.speed_profile is not None
         assert result.speed_profile.min_kmh == 30.0
         assert result.speed_profile.steady_speed
@@ -298,8 +300,6 @@ class TestTestRunWithValueObjects:
         assert result.speed_profile.cruise_fraction == pytest.approx(0.65)
 
     def test_from_summary_extracts_suitability(self) -> None:
-        from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
-
         summary = {
             "run_id": "test-123",
             "findings": [],
@@ -309,16 +309,14 @@ class TestTestRunWithValueObjects:
                 {"check_key": "noise", "state": "warn", "explanation": "Marginal"},
             ],
         }
-        result = test_run_from_summary(summary)
+        result = reconstruct_test_run_from_summary(summary)
         assert result.suitability is not None
         assert result.suitability.overall == "caution"
         assert len(result.suitability.checks) == 2
 
     def test_from_summary_no_speed_stats(self) -> None:
-        from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
-
         summary = {"run_id": "test-123", "findings": [], "top_causes": []}
-        result = test_run_from_summary(summary)
+        result = reconstruct_test_run_from_summary(summary)
         assert result.speed_profile is None
         assert result.suitability is None
 
@@ -341,8 +339,6 @@ class TestTestRunSensors:
         assert tr.sensor_count == 0
 
     def test_test_run_with_sensors(self) -> None:
-        from vibesensor.domain import RunSetup
-
         sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle"])
         tr = TestRun(
             capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
@@ -351,8 +347,6 @@ class TestTestRunSensors:
         assert tr.sensor_count == 2
 
     def test_test_run_sensor_count_property(self) -> None:
-        from vibesensor.domain import RunSetup
-
         sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle", "dashboard"])
         tr = TestRun(
             capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
