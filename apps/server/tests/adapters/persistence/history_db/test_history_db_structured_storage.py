@@ -40,7 +40,7 @@ def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
     return cast(AnalysisSummary, payload)
 
 
-def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict:
+def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict[str, object]:
     return {
         "record_type": "sample",
         "schema_version": "v2-jsonl",
