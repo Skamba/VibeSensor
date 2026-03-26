@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 
-def counter_delta(counter_values: list[float]) -> int:
+
+def counter_delta(counter_values: Sequence[float]) -> int:
     """Compute cumulative positive delta from a list of monotonic counter values."""
     if len(counter_values) < 2:
         return 0
