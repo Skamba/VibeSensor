@@ -14,17 +14,10 @@ These tests verify the phase is always coherent after _finalize().
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.firmware.esp_flash_types import EspFlashState, EspFlashStatus
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-
-
-def _make_manager(tmp_path: Path) -> EspFlashManager:
-    """Return an EspFlashManager with minimal construction."""
-    return EspFlashManager()
 
 
 def _manager_with_active_phase(phase: str) -> EspFlashManager:
