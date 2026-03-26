@@ -59,6 +59,7 @@ dump_cmd() {
   local rc=$?
   set -e
   echo "[dump] ${name}: rc=${rc} file=${out_file}"
+  # Diagnostics are best-effort; collection failures should not mask the main error.
   return 0
 }
 
