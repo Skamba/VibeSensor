@@ -1,3 +1,5 @@
+"""Low-level samples_v2 row encoding and decoding coverage."""
+
 from __future__ import annotations
 
 import pytest

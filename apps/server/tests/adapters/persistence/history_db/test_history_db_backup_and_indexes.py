@@ -1,3 +1,5 @@
+"""HistoryDB backup-creation and index/query-plan regression coverage."""
+
 from __future__ import annotations
 
 import sqlite3
