@@ -32,6 +32,23 @@ def _make_sample(
     }
 
 
+def _samples_at_speed(
+    count: int,
+    *,
+    speed_kmh: float,
+    start_t_s: float = 0.0,
+    vib_db: float = 20.0,
+) -> list[dict]:
+    return [
+        _make_sample(
+            t_s=start_t_s + float(i),
+            speed_kmh=speed_kmh,
+            vib_db=vib_db,
+        )
+        for i in range(count)
+    ]
+
+
 def _build_plot_data(
     samples: list[dict],
     *,
@@ -60,8 +77,7 @@ _SEGMENT_REQUIRED_KEYS = {"phase", "start_t_s", "end_t_s"}
 @pytest.fixture
 def cruise_plots():
     """Pre-computed _plot_data result for a simple 6-sample cruise run at 60 km/h."""
-    samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(6)]
-    return _build_plot_data(samples)
+    return _build_plot_data(_samples_at_speed(6, speed_kmh=60.0))
 
 
 class TestVibMagnitudePhaseAnnotation:
@@ -77,8 +93,7 @@ class TestVibMagnitudePhaseAnnotation:
 
     def test_idle_samples_labelled_idle(self) -> None:
         """Samples with speed below idle threshold (3 km/h) should be labelled 'idle'."""
-        samples = [_make_sample(t_s=float(i), speed_kmh=0.0) for i in range(4)]
-        plots = _build_plot_data(samples)
+        plots = _build_plot_data(_samples_at_speed(4, speed_kmh=0.0))
         assert plots.vib_magnitude, "Expected non-empty vib_magnitude"
         for _t, _v, phase in plots.vib_magnitude:
             assert phase == DrivingPhase.IDLE.value, f"Expected idle, got {phase!r}"
@@ -129,7 +144,7 @@ class TestPhaseSegmentsOutput:
 
 
 def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.MonkeyPatch) -> None:
-    samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
+    samples = _samples_at_speed(4, speed_kmh=60.0)
     per_sample_phases, phase_segments = segment_run_phases(samples)
 
     segment_calls = 0
@@ -162,7 +177,7 @@ def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.Monkey
 def test_plot_data_scans_peak_samples_once_for_peak_driven_views(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
+    samples = _samples_at_speed(4, speed_kmh=60.0)
     scan_calls = 0
     original_scan = plots_module.scan_peak_samples
 
