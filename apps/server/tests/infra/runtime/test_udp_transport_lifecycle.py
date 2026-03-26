@@ -1,3 +1,5 @@
+"""Verify UDP transport startup wiring and shutdown cleanup behavior."""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,3 +1,5 @@
+"""Exercise supervised task restart, terminal failure recording, and backoff caps."""
+
 from __future__ import annotations
 
 import asyncio
