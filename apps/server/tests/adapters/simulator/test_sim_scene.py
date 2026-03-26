@@ -1,3 +1,5 @@
+"""Road-scene controller coverage for single-active simulator behavior."""
+
 from __future__ import annotations
 
 import numpy as np

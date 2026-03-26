@@ -1,7 +1,10 @@
+"""Simulator HTTP helper coverage for speed-override requests."""
+
 from __future__ import annotations
 
 import json
 from typing import Any
+from urllib.request import Request
 
 from vibesensor.adapters.simulator.server_http import set_server_speed_override_kmh
 
@@ -23,7 +26,7 @@ class _FakeResponse:
 def test_set_server_speed_override_uses_http_api_snake_case(monkeypatch) -> None:
     captured: dict[str, Any] = {}
 
-    def fake_urlopen(req, timeout: float):  # type: ignore[no-untyped-def]
+    def fake_urlopen(req: Request, timeout: float) -> _FakeResponse:
         captured["url"] = req.full_url
         captured["method"] = req.get_method()
         captured["timeout"] = timeout
