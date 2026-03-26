@@ -4,6 +4,7 @@
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
 LINT_TARGETS := $(SERVER_DIR)/vibesensor $(SERVER_DIR)/tests tools
+# Keep this list aligned with the non-Docker blocking subset enforced in CI.
 CI_LITE_JOBS := --job backend-quality --job backend-typecheck --job frontend-typecheck --job ui-smoke --job release-smoke --job firmware-native-tests --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5
 PYTHON_VERSION := $(strip $(shell cat .python-version))
 PYTHON_MAJOR := $(word 1,$(subst ., ,$(PYTHON_VERSION)))

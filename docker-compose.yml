@@ -1,5 +1,6 @@
 services:
   vibesensor-server:
+    # Base runtime service; docker-compose.dev.yml adds source mounts and HMR.
     build:
       context: .
       dockerfile: apps/server/Dockerfile
