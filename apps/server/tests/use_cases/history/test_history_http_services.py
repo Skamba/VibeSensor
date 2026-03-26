@@ -120,6 +120,22 @@ def _projectable_analysis(**overrides: object) -> dict[str, object]:
     return cast(dict[str, object], summary)
 
 
+def _projected_run_service(
+    run: dict[str, Any],
+    *,
+    active_car: CarSnapshot | None = None,
+) -> ProjectedHistoryRunService:
+    service = HistoryRunService(
+        _HistoryDbStub(run=run),
+    )
+    if active_car is None:
+        return ProjectedHistoryRunService(service)
+    return ProjectedHistoryRunService(
+        service,
+        current_car_reader=_SettingsStoreStub(active_car=active_car),
+    )
+
+
 def test_raise_delete_run_error_maps_unknown_reason_to_domain_error() -> None:
     with pytest.raises(AnalysisNotReadyError, match="Cannot delete run at this time"):
         raise_delete_run_error("locked")
@@ -251,24 +267,18 @@ async def test_projected_run_service_adds_current_context_overlay_explicitly() -
             lang="en",
         ),
     )
-    service = ProjectedHistoryRunService(
-        HistoryRunService(
-            _HistoryDbStub(
-                run={
-                    "run_id": "run-1",
-                    "status": "complete",
-                    "metadata": {"language": "en"},
-                    "analysis": persisted_analysis,
-                }
-            ),
-        ),
-        current_car_reader=_SettingsStoreStub(
-            active_car=CarSnapshot(
-                car_id="car-b",
-                name="Daily Car",
-                car_type="wagon",
-                aspects={"tire_width_mm": 225.0},
-            )
+    service = _projected_run_service(
+        {
+            "run_id": "run-1",
+            "status": "complete",
+            "metadata": {"language": "en"},
+            "analysis": persisted_analysis,
+        },
+        active_car=CarSnapshot(
+            car_id="car-b",
+            name="Daily Car",
+            car_type="wagon",
+            aspects={"tire_width_mm": 225.0},
         ),
     )
 
@@ -283,33 +293,29 @@ async def test_projected_run_service_adds_current_context_overlay_explicitly() -
 
 @pytest.mark.asyncio
 async def test_projected_run_service_projects_persisted_summary_through_domain() -> None:
-    service = ProjectedHistoryRunService(
-        HistoryRunService(
-            _HistoryDbStub(
-                run={
-                    "run_id": "run-1",
-                    "status": "complete",
-                    "analysis": _projectable_analysis(
-                        lang="en",
-                        findings=[
-                            {
-                                "finding_id": "F001",
-                                "suspected_source": "wheel/tire",
-                                "strongest_location": "front-left",
-                                "strongest_speed_band": "50-80 km/h",
-                                "confidence": 0.71,
-                                "evidence_metrics": {"vibration_strength_db": 21.0},
-                            },
-                        ],
-                        top_causes=[],
-                        test_plan=[],
-                        run_suitability=[],
-                        most_likely_origin={},
-                        _internal={"secret": True},
-                    ),
-                },
+    service = _projected_run_service(
+        {
+            "run_id": "run-1",
+            "status": "complete",
+            "analysis": _projectable_analysis(
+                lang="en",
+                findings=[
+                    {
+                        "finding_id": "F001",
+                        "suspected_source": "wheel/tire",
+                        "strongest_location": "front-left",
+                        "strongest_speed_band": "50-80 km/h",
+                        "confidence": 0.71,
+                        "evidence_metrics": {"vibration_strength_db": 21.0},
+                    },
+                ],
+                top_causes=[],
+                test_plan=[],
+                run_suitability=[],
+                most_likely_origin={},
+                _internal={"secret": True},
             ),
-        )
+        }
     )
 
     run = await service.get_run("run-1")
@@ -323,28 +329,24 @@ async def test_projected_run_service_projects_persisted_summary_through_domain()
 
 @pytest.mark.asyncio
 async def test_projected_run_service_drops_persisted_origin_without_primary_finding() -> None:
-    service = ProjectedHistoryRunService(
-        HistoryRunService(
-            _HistoryDbStub(
-                run={
-                    "run_id": "run-1",
-                    "status": "complete",
-                    "analysis": _projectable_analysis(
-                        lang="en",
-                        findings=[],
-                        top_causes=[],
-                        test_plan=[],
-                        run_suitability=[],
-                        most_likely_origin={
-                            "location": "rear left",
-                            "suspected_source": "wheel/tire",
-                            "weak_spatial_separation": True,
-                        },
-                        _internal={"secret": True},
-                    ),
+    service = _projected_run_service(
+        {
+            "run_id": "run-1",
+            "status": "complete",
+            "analysis": _projectable_analysis(
+                lang="en",
+                findings=[],
+                top_causes=[],
+                test_plan=[],
+                run_suitability=[],
+                most_likely_origin={
+                    "location": "rear left",
+                    "suspected_source": "wheel/tire",
+                    "weak_spatial_separation": True,
                 },
+                _internal={"secret": True},
             ),
-        )
+        }
     )
 
     run = await service.get_run("run-1")
