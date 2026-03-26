@@ -2,10 +2,11 @@
  * Regenerates Playwright snapshot baselines using the available chromium binary.
  * Run with: node update-snapshots.mjs
  */
-import { chromium } from "playwright-core";
+import { chromium } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const CHROME_EXEC = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
 const SERVER_PORT = 4176;
@@ -49,7 +50,7 @@ function savePng(path, buf) {
 }
 
 async function main() {
-  const cwd = new URL(".", import.meta.url).pathname;
+  const cwd = fileURLToPath(new URL(".", import.meta.url));
   let server;
   let browser;
 
