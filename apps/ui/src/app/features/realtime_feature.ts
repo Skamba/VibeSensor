@@ -26,7 +26,7 @@ export interface RealtimeFeatureDeps extends FeatureDepsBase {
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
   setStatValue: (container: HTMLElement | null, value: string | number) => void;
   sendSelection: () => void;
-  refreshHistory: () => Promise<void>;
+  onRecordingStatusChanged: () => Promise<void>;
 }
 
 export interface RealtimeFeature {
@@ -165,7 +165,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     try {
       realtime.loggingStatus = await startLoggingRun();
       renderLoggingStatus();
-      await ctx.refreshHistory();
+      await ctx.onRecordingStatusChanged();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
@@ -176,7 +176,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     try {
       realtime.loggingStatus = await stopLoggingRun();
       renderLoggingStatus();
-      await ctx.refreshHistory();
+      await ctx.onRecordingStatusChanged();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
