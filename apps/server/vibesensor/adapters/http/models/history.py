@@ -9,7 +9,7 @@ localized response models.
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal, Required, TypedDict
+from typing import Annotated, Any, Literal, Required, TypedDict, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -202,11 +202,7 @@ class HistoryInsightsResponse(_HistoryInsightsCoreResponse, total=False):
     warnings: list[HistoryInsightWarningResponse]
 
 
-def _configure_pydantic_schema(typed_dict: Any) -> None:
-    typed_dict.__pydantic_config__ = ConfigDict(extra="forbid")
-
-
-_configure_pydantic_schema(HistoryInsightsResponse)
+cast(Any, HistoryInsightsResponse).__pydantic_config__ = ConfigDict(extra="forbid")
 
 
 class DeleteHistoryRunResponse(BaseModel):
