@@ -118,9 +118,9 @@ def _build_car_settings_changed_warning(
 
 def _normalized_aspects(snapshot: CarSnapshot) -> tuple[tuple[str, float], ...]:
     normalized = [
-        (key, float(value))
+        (key, numeric_value)
         for key, value in snapshot.aspects.items()
-        if isinstance(key, str) and _as_float(value) is not None
+        if isinstance(key, str) and (numeric_value := _as_float(value)) is not None
     ]
     return tuple(sorted(normalized))
 

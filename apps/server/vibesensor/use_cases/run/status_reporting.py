@@ -38,6 +38,7 @@ def build_run_recorder_status(
     persistence: RunPersistenceWriter,
     post_analysis: PostAnalysisWorker,
 ) -> RunRecorderStatusSnapshot:
+    """Build the compact status snapshot exposed by recorder-facing APIs."""
     post_snapshot = post_analysis.snapshot()
     persist = persistence.status_snapshot()
     return RunRecorderStatusSnapshot(
@@ -59,6 +60,7 @@ def build_run_recorder_health_snapshot(
     post_analysis: PostAnalysisWorker,
     logger: logging.Logger,
 ) -> RunRecorderHealthSnapshot:
+    """Build the richer health snapshot used by diagnostics and monitoring surfaces."""
     snapshot = post_analysis.snapshot()
     analysis_elapsed_s = None
     if snapshot.active_started_at is not None:
