@@ -210,6 +210,8 @@ class TestMultiSpectrumAlignment:
 
 
 class TestWorkerPoolExtended:
+    """Cover direct submit behavior, runtime stats, worker clamping, and wait-free shutdown."""
+
     def test_submit_returns_future(self) -> None:
         pool = WorkerPool(max_workers=2)
         try:
@@ -312,6 +314,8 @@ class TestWSHubRunLoop:
 
 
 class TestGPSFallbackSettings:
+    """Cover fallback timeout clamping, non-finite overrides, and manual-source toggles."""
+
     def test_set_fallback_settings_clamps_stale_timeout(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.set_fallback_settings(stale_timeout_s=0.1)
@@ -346,6 +350,8 @@ class TestGPSFallbackSettings:
 
 
 class TestGPSReconnectBackoff:
+    """Cover reconnect delay growth/capping and VERSION-message device-info capture."""
+
     @pytest.mark.asyncio
     async def test_reconnect_delay_doubles_and_caps(self, monkeypatch: pytest.MonkeyPatch) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
@@ -417,6 +423,8 @@ class TestGPSReconnectBackoff:
 
 
 class TestHistoryDBAnalysisIdempotency:
+    """Cover store_analysis idempotency, error transitions, and stored-analysis readback."""
+
     def test_store_analysis_twice_keeps_first(self, history_db: HistoryDB) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
@@ -459,6 +467,8 @@ class TestHistoryDBAnalysisIdempotency:
 
 
 class TestHistoryDBFinalizeNoOp:
+    """Cover finalize_run no-op behavior for complete, missing, and non-recording runs."""
+
     def test_finalize_run_noop_on_already_complete(self, history_db: HistoryDB) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
@@ -504,6 +514,8 @@ class TestHistoryDBFinalizeNoOp:
 
 
 class TestFlattenForCSV:
+    """Cover CSV flattening for nested known fields and omission of unknown extras."""
+
     def test_nested_dict_serialised_as_json(self) -> None:
         row = {"top_peaks": [{"hz": 30, "amp": 0.1}], "accel_x_g": 0.5}
         flat = _flatten_for_csv(row)
@@ -538,6 +550,8 @@ class TestFlattenForCSV:
 
 
 class TestSafeFilename:
+    """Cover exact sanitization outputs, special-character replacement, and truncation."""
+
     @pytest.mark.parametrize(
         ("input_name", "expected"),
         [
