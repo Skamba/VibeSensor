@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 
 import pytest
+
+from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 
 
 class FakeTransport:
@@ -28,10 +31,10 @@ def fake_transport() -> FakeTransport:
 
 
 @pytest.fixture
-def drain_queue():
+def drain_queue() -> Callable[[DataDatagramProtocol], Awaitable[None]]:
     """Return an async callable that drains a DataDatagramProtocol queue."""
 
-    async def _drain(proto, *, timeout: float = 2.0) -> None:
+    async def _drain(proto: DataDatagramProtocol, *, timeout: float = 2.0) -> None:
         consumer = asyncio.create_task(proto.process_queue())
         await asyncio.wait_for(proto._queue.join(), timeout=timeout)
         consumer.cancel()

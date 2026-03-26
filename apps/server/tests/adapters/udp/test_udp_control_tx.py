@@ -102,7 +102,7 @@ def test_control_datagram_operational_error_is_logged_and_counted(
     protocol = ControlDatagramProtocol(registry)
     packet = pack_ack(bytes.fromhex(client_hex), cmd_seq=7, status=0)
 
-    def raise_oserror(ack, now_ts):
+    def raise_oserror(_ack: object, _now_ts: float) -> None:
         raise OSError("socket boom")
 
     monkeypatch.setattr(registry, "update_from_ack", raise_oserror)
