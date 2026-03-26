@@ -108,10 +108,7 @@ def _check_runtime_docs_reading(source_files: list[str]) -> list[str]:
     ]
     source_exts = {".py", ".ts", ".js", ".sh"}
     for path in source_files:
-        import os
-
-        _, ext = os.path.splitext(path)
-        if ext not in source_exts:
+        if Path(path).suffix not in source_exts:
             continue
         if "docs/" in path or "tools/dev/" in path:
             continue

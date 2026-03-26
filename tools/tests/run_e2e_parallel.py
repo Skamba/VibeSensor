@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import atexit
+import importlib.util
 import json
 import os
 import shlex
@@ -13,7 +14,6 @@ import sys
 import tempfile
 import threading
 import time
-import xml.etree.ElementTree as ET
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,25 +21,71 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 
+def _load_parallel_runner_support():
+    helper_path = Path(__file__).with_name("_parallel_runner_support.py")
+    spec = importlib.util.spec_from_file_location(
+        "_parallel_runner_support", helper_path
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load parallel runner helpers from {helper_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_parallel_runner_support = _load_parallel_runner_support()
+resolve_duration_cache_path = _parallel_runner_support.duration_cache_path
+read_duration_cache = _parallel_runner_support.load_duration_cache
+merge_duration_observations = _parallel_runner_support.merge_duration_observations
+read_observed_durations_from_junit = (
+    _parallel_runner_support.observed_durations_from_junit
+)
+collect_normalized_test_ids = _parallel_runner_support.parse_collected_test_ids
+
+
+def _normalize_collected_test_id(line: str) -> str | None:
+    if line.startswith("tests/") or line.startswith("tests_e2e/"):
+        return f"apps/server/{line}"
+    if line.startswith("apps/server/tests/") or line.startswith(
+        "apps/server/tests_e2e/"
+    ):
+        return line
+    return None
+
+
 def _parse_collected_test_ids(output: str) -> list[str]:
-    test_ids: list[str] = []
-    for raw_line in output.splitlines():
-        line = raw_line.strip()
-        if "::" not in line:
-            continue
-        if line.startswith("=") or line.startswith("<"):
-            continue
-        if line.startswith("tests/"):
-            test_ids.append(f"apps/server/{line}")
-            continue
-        if line.startswith("apps/server/tests/") or line.startswith(
-            "apps/server/tests_e2e/"
-        ):
-            test_ids.append(line)
-            continue
-        if line.startswith("tests_e2e/"):
-            test_ids.append(f"apps/server/{line}")
-    return test_ids
+    return collect_normalized_test_ids(output, normalize=_normalize_collected_test_id)
+
+
+def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
+    return resolve_duration_cache_path(
+        _DURATION_CACHE_ENV,
+        "e2e-duration-cache.json",
+        env=env,
+    )
+
+
+def _load_duration_cache(path: Path) -> dict[str, float]:
+    return read_duration_cache(path, emit=_emit, label="e2e-parallel")
+
+
+def _merge_duration_observations(
+    cached: Mapping[str, float],
+    observed: Mapping[str, float],
+) -> dict[str, float]:
+    return merge_duration_observations(cached, observed)
+
+
+def _observed_durations_from_junit(
+    junit_path: Path,
+    selected_tests: list[str],
+) -> dict[str, float]:
+    return read_observed_durations_from_junit(
+        junit_path,
+        selected_tests,
+        emit=_emit,
+        label="e2e-parallel",
+    )
 
 
 def collect_test_ids(pytest_args: list[str]) -> list[str]:
@@ -98,39 +144,6 @@ class ShardResult:
 SLOW_TEST_THRESHOLD = 2.5
 
 
-def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
-    source = os.environ if env is None else env
-    raw_path = source.get(_DURATION_CACHE_ENV, "").strip()
-    if raw_path:
-        return Path(raw_path).expanduser()
-    return Path.home() / ".cache" / "vibesensor" / "e2e-duration-cache.json"
-
-
-def _load_duration_cache(path: Path) -> dict[str, float]:
-    try:
-        raw_payload = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return {}
-    except (OSError, json.JSONDecodeError):
-        _emit(f"[e2e-parallel] ignoring unreadable duration cache: {path}")
-        return {}
-    if not isinstance(raw_payload, dict):
-        _emit(f"[e2e-parallel] ignoring invalid duration cache payload: {path}")
-        return {}
-
-    durations: dict[str, float] = {}
-    for test_id, raw_duration in raw_payload.items():
-        if not isinstance(test_id, str):
-            continue
-        try:
-            duration = float(raw_duration)
-        except (TypeError, ValueError):
-            continue
-        if duration > 0:
-            durations[test_id] = duration
-    return durations
-
-
 def _write_duration_cache(path: Path, durations: Mapping[str, float]) -> None:
     payload = {
         test_id: round(duration, 3)
@@ -144,62 +157,6 @@ def _write_duration_cache(path: Path, durations: Mapping[str, float]) -> None:
         )
     except OSError:
         _emit(f"[e2e-parallel] failed to update duration cache: {path}")
-
-
-def _merge_duration_observations(
-    cached: Mapping[str, float], observed: Mapping[str, float]
-) -> dict[str, float]:
-    merged = dict(cached)
-    for test_id, duration in observed.items():
-        if duration <= 0:
-            continue
-        previous = merged.get(test_id)
-        merged[test_id] = (
-            duration if previous is None else round((previous + duration) / 2.0, 3)
-        )
-    return merged
-
-
-def _junit_case_key(test_id: str) -> tuple[str, str]:
-    path_part, *segments = test_id.split("::")
-    normalized_path = path_part.removeprefix("apps/server/").removesuffix(".py")
-    module_name = normalized_path.replace("/", ".")
-    name = segments[-1] if segments else test_id
-    classname_segments = [module_name, *segments[:-1]]
-    return ".".join(segment for segment in classname_segments if segment), name
-
-
-def _observed_durations_from_junit(
-    junit_path: Path, selected_tests: list[str]
-) -> dict[str, float]:
-    if not junit_path.exists():
-        return {}
-    try:
-        root = ET.parse(junit_path).getroot()
-    except (ET.ParseError, OSError):
-        _emit(f"[e2e-parallel] ignoring unreadable junit timings: {junit_path}")
-        return {}
-
-    lookup = {_junit_case_key(test_id): test_id for test_id in selected_tests}
-    observed: dict[str, float] = {}
-    for case in root.iter("testcase"):
-        classname = case.attrib.get("classname")
-        name = case.attrib.get("name")
-        raw_time = case.attrib.get("time")
-        if not isinstance(classname, str) or not isinstance(name, str):
-            continue
-        if not isinstance(raw_time, str):
-            continue
-        test_id = lookup.get((classname, name))
-        if test_id is None:
-            continue
-        try:
-            duration = float(raw_time)
-        except ValueError:
-            continue
-        if duration >= 0:
-            observed[test_id] = duration
-    return observed
 
 
 def _estimate_duration(test_id: str, durations: Mapping[str, float]) -> float:
@@ -633,7 +590,7 @@ def main() -> int:
         marker = "e2e and not long_sim" if args.fast_e2e else "e2e"
 
     collected = collect_test_ids(["-m", marker, "apps/server/tests_e2e"])
-    duration_cache_path = _duration_cache_path()
+    duration_cache_path = _duration_cache_path(os.environ)
     duration_cache = _load_duration_cache(duration_cache_path)
     if duration_cache:
         _emit(

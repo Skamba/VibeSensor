@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from _history_endpoint_helpers import route_endpoint
 from test_support import response_payload
 
 from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
@@ -31,13 +32,6 @@ def _make_recording_status_snapshot(
     )
 
 
-def _find_endpoint(router, path: str):
-    for route in router.routes:
-        if getattr(route, "path", "") == path:
-            return route.endpoint
-    return None
-
-
 @pytest.fixture
 def _recording_router(fake_state):
     from vibesensor.adapters.http.recording import create_recording_routes
@@ -64,8 +58,7 @@ class TestRecordingStatusEndpoint:
     @pytest.mark.asyncio
     async def test_status_response_shape(self, _recording_router) -> None:
         router, state = _recording_router
-        endpoint = _find_endpoint(router, "/api/recording/status")
-        assert endpoint is not None
+        endpoint = route_endpoint(router, "/api/recording/status")
 
         result = response_payload(await endpoint())
 
@@ -81,7 +74,7 @@ class TestRecordingStatusEndpoint:
     @pytest.mark.asyncio
     async def test_status_idle_enabled_false(self, _recording_router) -> None:
         router, _ = _recording_router
-        endpoint = _find_endpoint(router, "/api/recording/status")
+        endpoint = route_endpoint(router, "/api/recording/status")
 
         result = response_payload(await endpoint())
 
@@ -94,8 +87,7 @@ class TestRecordingStartEndpoint:
     @pytest.mark.asyncio
     async def test_start_calls_run_recorder(self, _recording_router) -> None:
         router, state = _recording_router
-        endpoint = _find_endpoint(router, "/api/recording/start")
-        assert endpoint is not None
+        endpoint = route_endpoint(router, "/api/recording/start")
 
         result = response_payload(await endpoint())
 
@@ -107,7 +99,7 @@ class TestRecordingStartEndpoint:
     async def test_start_when_already_recording_returns_status(self, _recording_router) -> None:
         """start_recording is idempotent — called again it still returns a valid status."""
         router, state = _recording_router
-        endpoint = _find_endpoint(router, "/api/recording/start")
+        endpoint = route_endpoint(router, "/api/recording/start")
         state.run_recorder.start_recording.return_value = _make_recording_status_snapshot(
             enabled=True,
             run_id="run-abc",
@@ -124,8 +116,7 @@ class TestRecordingStopEndpoint:
     @pytest.mark.asyncio
     async def test_stop_calls_run_recorder(self, _recording_router) -> None:
         router, state = _recording_router
-        endpoint = _find_endpoint(router, "/api/recording/stop")
-        assert endpoint is not None
+        endpoint = route_endpoint(router, "/api/recording/stop")
 
         result = response_payload(await endpoint())
 
@@ -136,7 +127,7 @@ class TestRecordingStopEndpoint:
     async def test_stop_when_not_recording_returns_idle_status(self, _recording_router) -> None:
         """stop_recording when not recording is safe — returns idle status."""
         router, state = _recording_router
-        endpoint = _find_endpoint(router, "/api/recording/stop")
+        endpoint = route_endpoint(router, "/api/recording/stop")
         state.run_recorder.stop_recording.return_value = _make_recording_status_snapshot(
             enabled=False,
             run_id=None,

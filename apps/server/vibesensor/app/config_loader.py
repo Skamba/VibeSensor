@@ -57,6 +57,13 @@ def _coerce_float(value: object, field_name: str) -> float:
     return float(value)
 
 
+def _coerce_port(value: object, field_name: str) -> int:
+    port = _coerce_int(value, field_name)
+    if not 1 <= port <= 65535:
+        raise ValueError(f"{field_name} must be 1-65535, got {port}")
+    return port
+
+
 def _read_config_file(path: Path) -> JsonObject:
     if not path.exists():
         return {}
@@ -94,13 +101,9 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     update_cfg = _require_config_section(merged.get("update", {}), "update")
 
     data_host = str(udp_cfg["data_host"])
-    data_port = _coerce_int(udp_cfg["data_port"], "udp.data_port")
-    if not 1 <= data_port <= 65535:
-        raise ValueError(f"udp.data_port must be 1-65535, got {data_port}")
+    data_port = _coerce_port(udp_cfg["data_port"], "udp.data_port")
     control_host = str(udp_cfg["control_host"])
-    control_port = _coerce_int(udp_cfg["control_port"], "udp.control_port")
-    if not 1 <= control_port <= 65535:
-        raise ValueError(f"udp.control_port must be 1-65535, got {control_port}")
+    control_port = _coerce_port(udp_cfg["control_port"], "udp.control_port")
 
     accel_scale_raw = processing_cfg.get("accel_scale_g_per_lsb")
     accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, NUMERIC_TYPES) else None
@@ -115,9 +118,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     if ap_channel not in VALID_24GHZ_CHANNELS:
         raise ValueError(f"ap.channel must be 1-14 for 2.4 GHz, got {ap_channel}")
 
-    server_port = _coerce_int(server_cfg["port"], "server.port")
-    if not 1 <= server_port <= 65535:
-        raise ValueError(f"server.port must be 1-65535, got {server_port}")
+    server_port = _coerce_port(server_cfg["port"], "server.port")
 
     ap_ip_raw = str(ap_cfg["ip"])
     try:

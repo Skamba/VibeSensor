@@ -35,8 +35,6 @@ __all__ = [
     "sanitize_value",
 ]
 
-_isfinite = math.isfinite
-
 
 def as_float_or_none(value: object) -> float | None:
     """Return *value* as a finite float, or ``None`` for non-numeric / non-finite input."""
@@ -46,7 +44,7 @@ def as_float_or_none(value: object) -> float | None:
         out = coerce_float(value)
     except (TypeError, ValueError):
         return None
-    if not _isfinite(out):
+    if not math.isfinite(out):
         return None
     return out
 

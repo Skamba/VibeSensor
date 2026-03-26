@@ -107,20 +107,24 @@ export interface UiDomElements {
   rotationalAssumptionsBody: HTMLElement | null;
 }
 
+function getById<T extends HTMLElement>(id: string): T | null {
+  return document.getElementById(id) as T | null;
+}
+
 function inputEl(id: string): HTMLInputElement | null {
-  return document.getElementById(id) as HTMLInputElement | null;
+  return getById<HTMLInputElement>(id);
 }
 
 function selectEl(id: string): HTMLSelectElement | null {
-  return document.getElementById(id) as HTMLSelectElement | null;
+  return getById<HTMLSelectElement>(id);
 }
 
 function btnEl(id: string): HTMLButtonElement | null {
-  return document.getElementById(id) as HTMLButtonElement | null;
+  return getById<HTMLButtonElement>(id);
 }
 
 function el(id: string): HTMLElement | null {
-  return document.getElementById(id);
+  return getById<HTMLElement>(id);
 }
 
 export function createUiDomRegistry(): UiDomElements {
