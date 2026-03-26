@@ -63,6 +63,23 @@ def _mock_which(name: str) -> str | None:
     return f"/usr/bin/{name}" if name in ("nmcli", "python3") else None
 
 
+def _running_status(
+    phase: UpdatePhase,
+    *,
+    finished_at: float | None = None,
+    ssid: str = "",
+    log_tail: list[str] | None = None,
+) -> UpdateJobStatus:
+    return UpdateJobStatus(
+        state=UpdateState.running,
+        phase=phase,
+        started_at=time.time() - 60,
+        finished_at=finished_at,
+        ssid=ssid,
+        log_tail=[] if log_tail is None else log_tail,
+    )
+
+
 @pytest.fixture
 def update_env(
     tmp_path: Path,
@@ -253,10 +270,8 @@ class TestStartupRecovery:
         state_path, store, _, make_mgr = update_env
 
         store.save(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.installing,
-                started_at=time.time() - 60,
+            _running_status(
+                UpdatePhase.installing,
                 ssid="CrashNet",
                 log_tail=["some log"],
             ),
@@ -290,10 +305,8 @@ class TestStartupRecovery:
         """A running job WITH finished_at set does not trigger recovery."""
         _, store, _, make_mgr = update_env
         store.save(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.done,
-                started_at=time.time() - 60,
+            _running_status(
+                UpdatePhase.done,
                 finished_at=time.time() - 30,
             ),
         )
@@ -306,13 +319,7 @@ class TestStartupRecovery:
     async def test_recovery_attempts_network_cleanup(self, update_env) -> None:
         """Startup recovery attempts to clean up uplink and restore hotspot."""
         _, store, runner, make_mgr = update_env
-        store.save(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.connecting_wifi,
-                started_at=time.time() - 60,
-            ),
-        )
+        store.save(_running_status(UpdatePhase.connecting_wifi))
         mgr = make_mgr()
 
         await mgr.startup_recover()
@@ -325,13 +332,7 @@ class TestStartupRecovery:
     async def test_recovery_handles_nmcli_failure_gracefully(self, update_env) -> None:
         """If nmcli fails during recovery, it adds issues but doesn't crash."""
         _, store, runner, make_mgr = update_env
-        store.save(
-            UpdateJobStatus(
-                state=UpdateState.running,
-                phase=UpdatePhase.downloading,
-                started_at=time.time() - 60,
-            ),
-        )
+        store.save(_running_status(UpdatePhase.downloading))
         runner.default_response = (1, "", "nmcli not found")
         mgr = make_mgr()
 
@@ -432,7 +433,14 @@ class TestPersistenceDuringLifecycle:
         runner.set_response("sudo -n true", 1, "", "no sudo")
         mgr = make_mgr()
 
-        with patch("shutil.which", _mock_which):
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
+            patch(
+                "vibesensor.use_cases.updates.workflow.check_for_update",
+                side_effect=AssertionError("check_for_update should not run without privileges"),
+            ),
+        ):
             mgr.start("TestNet", "")
             task = mgr.job_task
             assert task is not None
