@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -33,8 +34,8 @@ def _make_processor(**kwargs) -> SignalProcessor:
 
 def test_flush_client_buffer_resets_count_and_write_idx() -> None:
     proc = _make_processor()
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((500, 3)).astype(np.float32)
+    rng = np.random.default_rng(42)
+    samples = rng.standard_normal((500, 3)).astype(np.float32)
     proc.ingest("c1", samples, sample_rate_hz=800)
 
     buf = proc._store.buffers["c1"]
@@ -65,8 +66,8 @@ def test_fft_waits_for_new_samples_after_flush() -> None:
     proc = _make_processor(fft_n=fft_n)
 
     # Ingest enough for FFT
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((fft_n, 3)).astype(np.float32)
+    rng = np.random.default_rng(42)
+    samples = rng.standard_normal((fft_n, 3)).astype(np.float32)
     proc.ingest("c1", samples, sample_rate_hz=800)
     metrics = proc.compute_metrics("c1", sample_rate_hz=800)
     # Should have spectrum data
@@ -140,7 +141,7 @@ def _data_msg(seq: int, t0_us: int) -> DataMessage:
 
 
 @pytest.fixture
-def registry_ctx(tmp_path):
+def registry_ctx(tmp_path: Path) -> ClientRegistry:
     """Registry pre-registered with a single client."""
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)
@@ -172,10 +173,10 @@ def test_registry_update_from_data_returns_true_on_reset(registry_ctx) -> None:
 
 
 def test_registry_update_from_data_returns_false_on_normal_seq(registry_ctx) -> None:
-    r1 = registry_ctx.update_from_data(_data_msg(100, 100_000), _ADDR, now=2.0)
-    r2 = registry_ctx.update_from_data(_data_msg(101, 200_000), _ADDR, now=3.0)
-    assert r1.reset_detected is False
-    assert r2.reset_detected is False
+    first_result = registry_ctx.update_from_data(_data_msg(100, 100_000), _ADDR, now=2.0)
+    second_result = registry_ctx.update_from_data(_data_msg(101, 200_000), _ADDR, now=3.0)
+    assert first_result.reset_detected is False
+    assert second_result.reset_detected is False
 
 
 # ---------------------------------------------------------------------------
