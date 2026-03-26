@@ -1,3 +1,5 @@
+"""Guard dedup-window recording, pruning, duplicate detection, and reset behavior."""
+
 from __future__ import annotations
 
 from vibesensor.infra.runtime.dedup_window import DedupWindow

@@ -130,6 +130,8 @@ async def _run_loop(loop: ProcessingLoop, *, max_ticks: int) -> None:
 
 
 class TestProcessingLoopFailureTracking:
+    """Cover failure accounting, fatal backoff, and recovery transitions in the loop state."""
+
     @pytest.mark.asyncio
     async def test_single_failure_records_category_and_count(self) -> None:
         """A single ProcessingLoopError records category and increments failure count."""
@@ -229,6 +231,8 @@ class TestProcessingLoopFailureTracking:
 
 
 class TestProcessingLoopMismatchDetection:
+    """Verify sync-clock handling and configuration mismatch tracking during run ticks."""
+
     @pytest.mark.asyncio
     async def test_sync_clock_uses_control_plane_broadcaster(self) -> None:
         """Sync-clock ticks use the injected control-plane broadcaster seam."""
@@ -324,6 +328,8 @@ class TestProcessingLoopMismatchDetection:
 
 
 class TestProcessingLoopCleanup:
+    """Ensure eviction cleanup still runs around compute failures and disappearing clients."""
+
     @pytest.mark.asyncio
     async def test_compute_all_failure_still_evicts_using_fresh_active_ids(self) -> None:
         class _RefreshingRegistry(_StubRegistry):

@@ -1,3 +1,5 @@
+"""Exercise background task supervision and cancellation timeout behavior."""
+
 from __future__ import annotations
 
 import asyncio
