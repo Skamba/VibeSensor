@@ -7,7 +7,7 @@ import shutil
 import tempfile
 import zipfile
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from pydantic import TypeAdapter
 
@@ -35,9 +35,6 @@ from vibesensor.use_cases.history.helpers import strip_internal_fields
 from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run.run_context import add_current_context_warnings
 
-if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
-
 _HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 
 
@@ -45,15 +42,14 @@ def _project_history_analysis(
     analysis: Mapping[str, object],
     *,
     strip_internal: bool,
-) -> tuple[JsonObject, TestRun | None]:
+) -> JsonObject:
     if has_projectable_report_payload(analysis):
-        projected, test_run = project_analysis_summary(cast(JsonObject, dict(analysis)))
+        projected, _ = project_analysis_summary(cast(JsonObject, dict(analysis)))
     else:
         projected = cast(JsonObject, {key: value for key, value in analysis.items()})
-        test_run = None
     if strip_internal:
         projected = strip_internal_fields(projected)
-    return projected, test_run
+    return projected
 
 
 def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
@@ -67,15 +63,16 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
     if run.error_message is not None:
         payload["error_message"] = run.error_message
     if run.analysis is not None:
-        projected, _ = _project_history_analysis(run.analysis.to_json_object(), strip_internal=True)
-        payload["analysis"] = projected
+        payload["analysis"] = _project_history_analysis(
+            run.analysis.to_json_object(),
+            strip_internal=True,
+        )
     return payload
 
 
 def project_history_insights(analysis: Mapping[str, object]) -> JsonObject:
     """Project persisted insights payloads for HTTP responses."""
-    projected, _ = _project_history_analysis(analysis, strip_internal=True)
-    return projected
+    return _project_history_analysis(analysis, strip_internal=True)
 
 
 def build_projected_run_details_json(
@@ -87,9 +84,11 @@ def build_projected_run_details_json(
     analysis = run.analysis
     if analysis is None:
         return build_run_details_json(run, sample_count, run_id)
-    projected, _ = _project_history_analysis(analysis.to_json_object(), strip_internal=True)
     payload = run.to_json_object()
-    payload["analysis"] = projected
+    payload["analysis"] = _project_history_analysis(
+        analysis.to_json_object(),
+        strip_internal=True,
+    )
     return serialize_run_details_json(
         payload,
         sample_count=sample_count,
