@@ -241,15 +241,6 @@ def create_settings_routes(
 
     # -- speed source ----------------------------------------------------------
 
-    async def _apply_speed_source_update(req: SpeedSourceRequest) -> SpeedSourceResponse:
-        payload = _speed_source_update_payload(req)
-        with domain_errors_to_http(catch_value_error=400):
-            result = await asyncio.to_thread(
-                settings_store.update_speed_source,
-                payload,
-            )
-        return _speed_source_response(result)
-
     @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
     async def get_speed_source() -> SpeedSourceResponse:
         """Return the persisted speed-source configuration used for order tracking."""
@@ -262,7 +253,13 @@ def create_settings_routes(
     )
     async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
         """Update the preferred speed source, manual fallback speed, and staleness timeout."""
-        return await _apply_speed_source_update(req)
+        payload = _speed_source_update_payload(req)
+        with domain_errors_to_http(catch_value_error=400):
+            result = await asyncio.to_thread(
+                settings_store.update_speed_source,
+                payload,
+            )
+        return _speed_source_response(result)
 
     @router.get("/api/settings/speed-source/status", response_model=SpeedSourceStatusResponse)
     async def get_speed_source_status() -> SpeedSourceStatusResponse:
