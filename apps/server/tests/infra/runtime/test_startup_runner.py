@@ -33,9 +33,14 @@ def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock]:
     task_supervisor = MagicMock()
     task_supervisor.start = MagicMock(return_value=MagicMock(spec=asyncio.Task))
 
+    def _start_background_task(coro, *, name: str) -> MagicMock:
+        del name
+        coro.close()
+        return MagicMock(spec=asyncio.Task)
+
     background_tasks = MagicMock()
     background_tasks.add = MagicMock()
-    background_tasks.start = MagicMock()
+    background_tasks.start = MagicMock(side_effect=_start_background_task)
 
     udp_transport = MagicMock()
     udp_transport.startup = AsyncMock()
@@ -51,6 +56,8 @@ def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock]:
 
 
 class TestStartupRunnerPhases:
+    """Cover startup phase ordering, success, failure, and UDP-before-background sequencing."""
+
     @pytest.mark.asyncio
     async def test_phases_tracked_in_order(self) -> None:
         """Health-state phases are set in the expected order."""
