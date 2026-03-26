@@ -10,6 +10,8 @@ __all__ = ["AssignedLocation", "LocationAssignmentValidator"]
 
 @dataclass(frozen=True, slots=True)
 class AssignedLocation:
+    """A currently claimed location code owned by a specific runtime/config record."""
+
     owner_id: str
     owner_name: str
     location_code: str
@@ -24,6 +26,8 @@ class LocationAssignmentValidator:
         self._max_utf8_bytes = max_utf8_bytes
 
     def normalize(self, location: str) -> str:
+        """Trim a location string and cap it to the stored UTF-8 byte budget."""
+
         clean = location.strip()
         encoded = clean.encode("utf-8", errors="ignore")
         if len(encoded) <= self._max_utf8_bytes:
@@ -37,6 +41,8 @@ class LocationAssignmentValidator:
         location_code: str,
         assigned_locations: Iterable[AssignedLocation],
     ) -> None:
+        """Raise when *location_code* is already assigned to a different owner."""
+
         if not location_code:
             return
         for assigned in assigned_locations:
