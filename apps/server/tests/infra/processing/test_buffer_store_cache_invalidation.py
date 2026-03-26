@@ -1,3 +1,5 @@
+"""Verify buffer-store mutations invalidate cached spectrum payload state."""
+
 from __future__ import annotations
 
 import numpy as np

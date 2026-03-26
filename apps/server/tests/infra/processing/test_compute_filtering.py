@@ -1,3 +1,5 @@
+"""Ensure compute filtering reuses or isolates FFT inputs without double filtering."""
+
 from __future__ import annotations
 
 import numpy as np
