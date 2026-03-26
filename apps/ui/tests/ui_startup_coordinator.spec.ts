@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { UiStartupCoordinator } from "../src/app/runtime/ui_startup_coordinator";
+import { flushAsyncWork } from "./async_test_helpers";
 
 type Deferred<T> = {
   promise: Promise<T>;
@@ -16,14 +17,6 @@ function createDeferred<T>(): Deferred<T> {
     reject = rejectPromise;
   });
   return { promise, resolve, reject };
-}
-
-async function flushAsyncWork(rounds = 12): Promise<void> {
-  for (let index = 0; index < rounds; index += 1) {
-    await new Promise<void>((resolve) => {
-      setImmediate(resolve);
-    });
-  }
 }
 
 function createCoordinatorHarness() {

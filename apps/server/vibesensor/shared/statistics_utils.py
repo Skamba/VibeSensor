@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.vibration_strength import percentile
@@ -63,11 +63,4 @@ def _outlier_summary(values: list[float]) -> _OutlierSummary:
 
 def _json_outlier_summary(values: list[float]) -> JsonObject:
     """Convert the local outlier summary helper output into the shared JSON shape."""
-    summary = _outlier_summary(values)
-    return {
-        "count": summary["count"],
-        "outlier_count": summary["outlier_count"],
-        "outlier_pct": summary["outlier_pct"],
-        "lower_bound": summary["lower_bound"],
-        "upper_bound": summary["upper_bound"],
-    }
+    return cast(JsonObject, _outlier_summary(values))
