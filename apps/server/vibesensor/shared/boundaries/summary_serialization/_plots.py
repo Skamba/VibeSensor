@@ -231,6 +231,7 @@ def serialize_phase_segments(
 def serialize_speed_breakdown(
     rows: Sequence[SpeedBreakdownRowLike],
 ) -> list[SpeedBreakdownRow]:
+    """Project speed-breakdown rows into their persisted summary payload shape."""
     payload_rows: list[SpeedBreakdownRow] = []
     for row in rows:
         payload: SpeedBreakdownRow = {
@@ -246,6 +247,7 @@ def serialize_speed_breakdown(
 def serialize_phase_speed_breakdown(
     rows: Sequence[PhaseSpeedBreakdownRowLike],
 ) -> list[PhaseSpeedBreakdownRow]:
+    """Project per-phase speed breakdown rows into persisted summary payloads."""
     payload_rows: list[PhaseSpeedBreakdownRow] = []
     for row in rows:
         payload: PhaseSpeedBreakdownRow = {
@@ -263,6 +265,7 @@ def serialize_phase_speed_breakdown(
 def serialize_peak_table(
     rows: Sequence[PeakTableRowLike],
 ) -> list[PeakTableRow]:
+    """Project peak-table rows into persisted summary payload dictionaries."""
     payload_rows: list[PeakTableRow] = []
     for row in rows:
         payload: PeakTableRow = {
@@ -289,6 +292,7 @@ def serialize_peak_table(
 
 
 def serialize_spectrogram(result: SpectrogramResultLike) -> SpectrogramResult:
+    """Project a spectrogram result into a JSON-safe persisted payload."""
     payload: SpectrogramResult = {
         "x_axis": result.x_axis,
         "x_label_key": result.x_label_key,
@@ -305,6 +309,7 @@ def serialize_spectrogram(result: SpectrogramResultLike) -> SpectrogramResult:
 
 
 def serialize_plot_data(plot_data: PlotDataResultLike) -> PlotDataResult:
+    """Project composite plot data into the persisted summary payload shape."""
     amp_vs_phase: list[AmpVsPhaseRow] = []
     for phase_row in plot_data.amp_vs_phase:
         phase_payload: AmpVsPhaseRow = {
