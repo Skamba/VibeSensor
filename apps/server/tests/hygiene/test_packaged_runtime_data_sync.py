@@ -1,3 +1,5 @@
+"""Guard packaged server runtime data copies against drift from canonical sources."""
+
 from __future__ import annotations
 
 from _paths import SERVER_ROOT
