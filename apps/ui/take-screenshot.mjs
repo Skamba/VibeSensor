@@ -7,6 +7,7 @@
 import { chromium } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const OUTPUT_PATH = process.argv[2] || "/tmp/vibesensor-screenshot.png";
 const SERVER_PORT = 4175;
@@ -36,7 +37,7 @@ async function startServer(cwd) {
 }
 
 async function main() {
-  const cwd = new URL(".", import.meta.url).pathname;
+  const cwd = fileURLToPath(new URL(".", import.meta.url));
   let server;
   let browser;
   try {
