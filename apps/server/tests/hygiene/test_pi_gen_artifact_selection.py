@@ -1,3 +1,5 @@
+"""Guard pi-gen artifact selection priority and legacy artifact-name rejection."""
+
 from __future__ import annotations
 
 import shlex
