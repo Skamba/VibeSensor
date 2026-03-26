@@ -1,3 +1,5 @@
+"""Guard the shared sensor model and acceleration-scale constants."""
+
 from __future__ import annotations
 
 from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL

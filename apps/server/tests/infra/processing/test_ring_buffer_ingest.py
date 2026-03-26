@@ -1,3 +1,5 @@
+"""Verify ring-buffer ingest writes, wraparound, and timestamp tracking behavior."""
+
 from __future__ import annotations
 
 import numpy as np
