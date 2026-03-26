@@ -6,6 +6,7 @@ import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
 import { UiLiveTransportController, type UiTransportFeaturePorts } from "./runtime/ui_live_transport_controller";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
+import type { UiShellFeaturePorts } from "./runtime/ui_shell_feature_ports";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
@@ -68,7 +69,26 @@ export class UiAppRuntime {
       renderCarSelectionWarning: () => this.shell.renderCarSelectionWarning(),
       sendSelection: () => this.transport.sendSelection(),
     });
-    this.shell.attachFeatures(this.features);
+    const shellPorts: UiShellFeaturePorts = {
+      bindSettingsHandlers: () => this.features.settings.bindHandlers(),
+      bindCarWizardHandlers: () => this.features.cars.bindWizardHandlers(),
+      bindRealtimeHandlers: () => this.features.realtime.bindHandlers(),
+      bindHistoryHandlers: () => this.features.history.bindHandlers(),
+      bindUpdateHandlers: () => this.features.update.bindUpdateHandlers(),
+      bindEspFlashHandlers: () => this.features.espFlash.bindHandlers(),
+      languageRefresh: {
+        realtime: {
+          buildLocationOptions: (codes) => this.features.realtime.buildLocationOptions(codes),
+          maybeRenderSensorsSettingsList: (force) => this.features.realtime.maybeRenderSensorsSettingsList(force),
+          renderLoggingStatus: () => this.features.realtime.renderLoggingStatus(),
+        },
+        history: {
+          renderHistoryTable: () => this.features.history.renderHistoryTable(),
+          reloadExpandedRunOnLanguageChange: () => this.features.history.reloadExpandedRunOnLanguageChange(),
+        },
+      },
+    };
+    this.shell.attachPorts(shellPorts);
     const transportPorts: UiTransportFeaturePorts = {
       updateClientSelection: () => this.features.realtime.updateClientSelection(),
       maybeRenderSensorsSettingsList: (force) => this.features.realtime.maybeRenderSensorsSettingsList(force),

@@ -3,6 +3,10 @@ import { expect, test } from "@playwright/test";
 import { createAppState } from "../src/app/ui_app_state";
 import type { UiDomElements } from "../src/app/ui_dom_registry";
 import {
+  bindUiShellFeatureEvents,
+  type UiShellFeaturePorts,
+} from "../src/app/runtime/ui_shell_feature_ports";
+import {
   createUiShellLanguageRefreshModule,
 } from "../src/app/runtime/ui_shell_language_refresh_module";
 import {
@@ -667,5 +671,53 @@ test.describe("createUiShellLanguageRefreshModule", () => {
     ]);
     expect(renderSpectrumCalls).toBe(0);
     expect(updateSpectrumOverlayCalls).toBe(1);
+  });
+});
+
+test.describe("bindUiShellFeatureEvents", () => {
+  test("invokes the narrow shell binding hooks without needing an AppFeatureBundle", () => {
+    const portCalls: string[] = [];
+    const ports = {
+      bindSettingsHandlers() {
+        portCalls.push("bindSettingsHandlers");
+      },
+      bindCarWizardHandlers() {
+        portCalls.push("bindCarWizardHandlers");
+      },
+      bindRealtimeHandlers() {
+        portCalls.push("bindRealtimeHandlers");
+      },
+      bindHistoryHandlers() {
+        portCalls.push("bindHistoryHandlers");
+      },
+      bindUpdateHandlers() {
+        portCalls.push("bindUpdateHandlers");
+      },
+      bindEspFlashHandlers() {
+        portCalls.push("bindEspFlashHandlers");
+      },
+      languageRefresh: {
+        realtime: {
+          buildLocationOptions: () => [],
+          maybeRenderSensorsSettingsList: () => undefined,
+          renderLoggingStatus: () => undefined,
+        },
+        history: {
+          renderHistoryTable: () => undefined,
+          reloadExpandedRunOnLanguageChange: () => undefined,
+        },
+      },
+    } satisfies UiShellFeaturePorts;
+
+    bindUiShellFeatureEvents(ports);
+
+    expect(portCalls).toEqual([
+      "bindSettingsHandlers",
+      "bindCarWizardHandlers",
+      "bindRealtimeHandlers",
+      "bindHistoryHandlers",
+      "bindUpdateHandlers",
+      "bindEspFlashHandlers",
+    ]);
   });
 });
