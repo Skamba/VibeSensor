@@ -18,11 +18,15 @@ _PASSWORD_MAX_LEN = 128
 
 @dataclass(frozen=True, slots=True)
 class UpdateValidationConfig:
+    """Runtime prerequisites needed before an update job can proceed."""
+
     rollback_dir: Path
     min_free_disk_bytes: int
 
 
 def _coerce_update_state(value: object) -> UpdateState:
+    """Best-effort decode of persisted state values, defaulting to idle."""
+
     if not isinstance(value, str):
         return UpdateState.idle
     try:
@@ -32,6 +36,8 @@ def _coerce_update_state(value: object) -> UpdateState:
 
 
 def _coerce_update_phase(value: object) -> UpdatePhase:
+    """Best-effort decode of persisted phase values, defaulting to idle."""
+
     if not isinstance(value, str):
         return UpdatePhase.idle
     try:
@@ -131,6 +137,8 @@ class UpdateJobStatusPayload(TypedDict):
 
 
 def _coerce_bool(value: object) -> bool:
+    """Decode loosely typed persisted booleans used by status payloads."""
+
     if isinstance(value, bool):
         return value
     if isinstance(value, (int, float)):

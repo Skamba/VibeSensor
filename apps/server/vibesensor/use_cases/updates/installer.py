@@ -62,6 +62,12 @@ _TARGET_ENV_SNAPSHOT_SCRIPT = "\n".join(
 )
 
 
+def _rollback_wheel_version(wheel_path: Path) -> str:
+    """Extract the version token from a rollback wheel filename when present."""
+    wheel_parts = wheel_path.stem.split("-")
+    return wheel_parts[1] if len(wheel_parts) >= 2 else ""
+
+
 class UpdateInstaller:
     """Owns install, rollback snapshot orchestration, and rollback execution."""
 
@@ -409,18 +415,14 @@ class UpdateInstaller:
             for fallback_wheel in rollback_wheels:
                 if fallback_wheel.name == metadata.wheel_name:
                     continue
-                wheel_parts = fallback_wheel.stem.split("-")
-                fallback_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
-                candidates.append((fallback_wheel, fallback_version, None))
+                candidates.append((fallback_wheel, _rollback_wheel_version(fallback_wheel), None))
         else:
             self._tracker.log(
                 "Rollback metadata missing; falling back to newest "
                 "rollback wheel without checksum pin",
             )
             for fallback_wheel in rollback_wheels:
-                wheel_parts = fallback_wheel.stem.split("-")
-                fallback_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
-                candidates.append((fallback_wheel, fallback_version, None))
+                candidates.append((fallback_wheel, _rollback_wheel_version(fallback_wheel), None))
 
         for idx, (candidate_wheel, candidate_version, candidate_sha256) in enumerate(candidates):
             if not candidate_wheel.is_file():
