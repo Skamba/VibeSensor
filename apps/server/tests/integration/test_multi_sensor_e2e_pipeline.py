@@ -1,3 +1,5 @@
+"""Exercise the four-sensor UDP-to-analysis-to-PDF pipeline end to end."""
+
 from __future__ import annotations
 
 import io
