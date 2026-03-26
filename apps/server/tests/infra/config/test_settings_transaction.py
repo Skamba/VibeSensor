@@ -14,6 +14,14 @@ def _make_state() -> dict[str, int]:
     return {"value": 1}
 
 
+def _apply_state_value(state: dict[str, int], value: int):
+    def _apply(_prev: dict[str, int]) -> bool:
+        state["value"] = value
+        return True
+
+    return _apply
+
+
 class TestUpdateWithRollback:
     """Exercise the generic snapshot→apply→persist→audit→restore flow."""
 
@@ -25,7 +33,7 @@ class TestUpdateWithRollback:
             lock=RLock(),
             persist=lambda: None,
             snapshot=lambda: dict(state),
-            apply=lambda prev: (state.update(value=10), True)[1],
+            apply=_apply_state_value(state, 10),
             restore=lambda prev: state.update(prev),
             audit_log=lambda prev: audit_calls.append(prev),
             result=lambda: state["value"],
@@ -60,7 +68,7 @@ class TestUpdateWithRollback:
                 lock=RLock(),
                 persist=bad_persist,
                 snapshot=lambda: dict(state),
-                apply=lambda prev: (state.update(value=99), True)[1],
+                apply=_apply_state_value(state, 99),
                 restore=lambda prev: state.update(prev),
                 result=lambda: state["value"],
             )
