@@ -9,6 +9,14 @@ from vibesensor.shared.run_context_warning import (
     normalize_run_context_warnings,
 )
 
+_REFERENCE_CONTEXT_WARNING = RunContextWarning(
+    code=WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+    severity="warn",
+    applies_to="order_analysis",
+    title={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"},
+    detail={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
+)
+
 
 def test_build_summary_warnings_returns_app_level_models() -> None:
     warnings = build_summary_warnings(
@@ -16,15 +24,7 @@ def test_build_summary_warnings_returns_app_level_models() -> None:
         reference_complete=False,
     )
 
-    assert warnings == [
-        RunContextWarning(
-            code=WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
-            severity="warn",
-            applies_to="order_analysis",
-            title={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"},
-            detail={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
-        )
-    ]
+    assert warnings == [_REFERENCE_CONTEXT_WARNING]
 
 
 def test_normalize_run_context_warnings_keeps_wire_payload_shape() -> None:
@@ -41,12 +41,4 @@ def test_normalize_run_context_warnings_keeps_wire_payload_shape() -> None:
         ]
     )
 
-    assert warnings == [
-        RunContextWarning(
-            code=WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
-            severity="warn",
-            applies_to="order_analysis",
-            title={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"},
-            detail={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
-        )
-    ]
+    assert warnings == [_REFERENCE_CONTEXT_WARNING]
