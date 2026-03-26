@@ -1,12 +1,4 @@
-"""Chunk 4 — Type Safety & Validation Consolidation.
-
-Verifies:
-- normalize_lang is sourced from one canonical module (report_i18n)
-- SettingsStore._coerce_language handles locale variants (e.g. "nl-BE")
-- ClientRegistry uses normalize_sensor_id (no private duplicate)
-- ClassificationResult TypedDict returned from classify_peak_hz
-- mypy enforcement uses package-level discovery without internal denylist exceptions
-"""
+"""Guard language normalization and mypy package-discovery configuration."""
 
 from __future__ import annotations
 
