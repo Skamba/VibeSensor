@@ -91,7 +91,6 @@ def build_pattern_evidence(
     # Domain-first: use aggregate effective top causes for matched systems
     aggregate = context.domain_aggregate
     assert aggregate is not None
-    domain_primary = None
     effective = aggregate.effective_top_causes()
     domain_primary = effective[0] if effective else aggregate.primary_finding
     systems_raw = [human_source(str(f.suspected_source), tr=tr) for f in effective[:3]]
