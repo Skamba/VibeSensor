@@ -46,7 +46,7 @@ def prepare_analysis_samples(
     ]
     use_filtered_samples = len(diagnostic_samples) >= _MIN_DIAGNOSTIC_SAMPLES
     analysis_samples = diagnostic_samples if use_filtered_samples else samples
-    if analysis_samples is diagnostic_samples:
+    if use_filtered_samples:
         analysis_phases: Sequence[DrivingPhase] = [
             phase for phase, keep in zip(resolved_phases, diagnostic_mask, strict=True) if keep
         ]
@@ -151,6 +151,7 @@ class PeakFindingAnalyzer:
         *,
         run_noise_baseline_g: float | None,
     ) -> list[PeakBin]:
+        """Project accumulated peak-bin statistics into scored peak bins."""
         bins: list[PeakBin] = []
         for bin_center, amps in stats.bin_amps.items():
             if any(abs(bin_center - of) < self._freq_bin_hz for of in self._order_finding_freqs):
@@ -175,6 +176,7 @@ class PeakFindingAnalyzer:
 
     @staticmethod
     def _select_top_findings(bins: list[PeakBin], *, n_samples: int) -> list[DomainFinding]:
+        """Rank persistent bins ahead of transient bins and export the top findings."""
         del n_samples
         persistent: list[tuple[float, PeakBin]] = []
         transient: list[tuple[float, PeakBin]] = []

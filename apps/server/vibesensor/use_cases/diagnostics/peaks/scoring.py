@@ -29,6 +29,7 @@ def _presence_ratio_with_location_rescue(
     total_location_sample_counts: Mapping[str, int],
     loc_counts_for_bin: Mapping[str, int],
 ) -> float:
+    """Rescue sparse global presence when one well-sampled location stays consistent."""
     presence = count / max(1, n_samples)
     settings = PEAK_CONFIDENCE_SETTINGS
     if total_location_sample_counts and loc_counts_for_bin:
@@ -50,6 +51,7 @@ def _compute_peak_confidence(
     has_location_counts: bool,
     peak_strength_db: float,
 ) -> float:
+    """Apply the shared confidence policy for classified peak bins."""
     settings = PEAK_CONFIDENCE_SETTINGS
     snr_score = min(1.0, log1p(raw_snr) / SNR_LOG_DIVISOR)
     spatial_penalty = (

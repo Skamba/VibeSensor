@@ -10,6 +10,7 @@ from vibesensor.vibration_strength import percentile
 
 
 def _safe_percentile(sorted_vals: Sequence[float], q: float, *, default: float = 0.0) -> float:
+    """Return a percentile for sorted input while tolerating empty and singleton cases."""
     if len(sorted_vals) >= 2:
         return float(percentile(list(sorted_vals), q))
     return float(sorted_vals[-1]) if sorted_vals else default
