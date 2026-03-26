@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
 from _paths import REPO_ROOT
@@ -26,7 +26,7 @@ def schema_text() -> str:
 
 
 @pytest.fixture(scope="module")
-def schema_dict(schema_text: str) -> dict[str, Any]:
+def schema_dict(schema_text: str) -> dict[str, object]:
     """Cached parsed schema dict."""
     return json.loads(schema_text)
 
@@ -36,7 +36,7 @@ def schema_dict(schema_text: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def test_export_schema_returns_valid_json(schema_dict: dict[str, Any]) -> None:
+def test_export_schema_returns_valid_json(schema_dict: dict[str, object]) -> None:
     """export_schema() must return a valid JSON string."""
     assert isinstance(schema_dict, dict)
     assert "properties" in schema_dict or "$defs" in schema_dict
@@ -77,14 +77,14 @@ def test_export_schema_matches_committed_schema(schema_text: str) -> None:
     )
 
 
-def test_export_schema_has_schema_version(schema_dict: dict[str, Any]) -> None:
+def test_export_schema_has_schema_version(schema_dict: dict[str, object]) -> None:
     """The schema must include the schema_version field."""
     props = schema_dict.get("properties", {})
     assert "schema_version" in props, "schema_version must be a top-level property"
 
 
 def test_export_schema_requires_always_present_top_level_fields(
-    schema_dict: dict[str, Any],
+    schema_dict: dict[str, object],
 ) -> None:
     """Always-emitted WS payload fields must be required in the schema."""
     required = set(schema_dict.get("required", []))
