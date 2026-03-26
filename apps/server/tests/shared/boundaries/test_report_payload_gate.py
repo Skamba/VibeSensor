@@ -1,3 +1,5 @@
+"""Tests for the report-payload projection gate helper."""
+
 from __future__ import annotations
 
 from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload

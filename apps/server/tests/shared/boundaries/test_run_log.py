@@ -1,3 +1,5 @@
+"""Tests for JSONL run-log parsing, normalization, and metadata helpers."""
+
 from __future__ import annotations
 
 import json

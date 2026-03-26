@@ -1,3 +1,5 @@
+"""Tests for converting run-suitability checks to and from boundary payloads."""
+
 from __future__ import annotations
 
 from vibesensor.domain import RunSuitability, SuitabilityCheck

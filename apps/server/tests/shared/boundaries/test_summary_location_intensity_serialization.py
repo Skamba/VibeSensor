@@ -1,3 +1,5 @@
+"""Tests for serializing location-intensity summary rows into payload dictionaries."""
+
 from __future__ import annotations
 
 from vibesensor.domain import (
