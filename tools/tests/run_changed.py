@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import shlex
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
@@ -167,7 +168,7 @@ def _plan_commands(changed_files: tuple[str, ...]) -> tuple[PlannedCommand, ...]
         commands.append(
             PlannedCommand(
                 "pytest",
-                ("python3", "-m", "pytest", "-q", *tuple(sorted(pytest_targets))),
+                (sys.executable, "-m", "pytest", "-q", *tuple(sorted(pytest_targets))),
             )
         )
     return tuple(commands)

@@ -57,8 +57,13 @@ class TaskSupervisor:
 
     def monitor_task(self, task: asyncio.Task[object]) -> None:
         task_name = task.get_name()
+        recorded = False
 
         def _record_failure(done_task: asyncio.Task[object]) -> None:
+            nonlocal recorded
+            if recorded:
+                return
+            recorded = True
             if done_task.cancelled():
                 return
             try:
@@ -72,6 +77,8 @@ class TaskSupervisor:
             self._logger.error("Managed task %s failed: %s", task_name, message, exc_info=exc)
 
         task.add_done_callback(_record_failure)
+        if task.done():
+            _record_failure(task)
 
     def _restart_delay_s(self, restart_count: int) -> float:
         exponent = max(0, restart_count - 1)

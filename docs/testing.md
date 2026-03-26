@@ -141,7 +141,7 @@ The script expects the backend package plus dev dependencies to be installed,
 for example via:
 
 ```bash
-python3 -m pip install -e "./apps/server[dev]"
+.venv/bin/python -m pip install -e "./apps/server[dev]"
 ```
 
 `tools/dev/fuzz_processing_pipeline.py` covers upstream live-processing entry

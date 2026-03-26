@@ -186,8 +186,8 @@ drift.
   commands are missing after `pip install -e`: activate the same environment you
   installed into before running repo commands. If you use a local `.venv`, run
   `source .venv/bin/activate` first; otherwise, make sure the installing
-  interpreter's script directory is on your `PATH` and rerun
-  `python3 -m pip install -e "./apps/server[dev]"`.
+  interpreter's script directory is on your `PATH` and rerun `make setup` or
+  `.venv/bin/python -m pip install -e "./apps/server[dev]"`.
 - Backend bootstrap looks half-installed or editable installs behave strangely:
   avoid mixing global and virtualenv installs. Recreate the environment you
   intend to use, then rerun either `make setup` or the native bootstrap flow in
