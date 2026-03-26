@@ -30,7 +30,7 @@ def test_plan_commands_maps_backend_source_to_mirrored_test_dir() -> None:
     assert commands == (
         module.PlannedCommand(
             "pytest",
-            ("python3", "-m", "pytest", "-q", "apps/server/tests/shared"),
+            (sys.executable, "-m", "pytest", "-q", "apps/server/tests/shared"),
         ),
     )
 
@@ -46,7 +46,7 @@ def test_plan_commands_uses_changed_test_file_directly() -> None:
         module.PlannedCommand(
             "pytest",
             (
-                "python3",
+                sys.executable,
                 "-m",
                 "pytest",
                 "-q",
@@ -66,7 +66,7 @@ def test_plan_commands_combines_docs_ui_and_hygiene_checks() -> None:
         module.PlannedCommand("ui-typecheck", ("make", "ui-typecheck")),
         module.PlannedCommand(
             "pytest",
-            ("python3", "-m", "pytest", "-q", "apps/server/tests/hygiene"),
+            (sys.executable, "-m", "pytest", "-q", "apps/server/tests/hygiene"),
         ),
     )
 

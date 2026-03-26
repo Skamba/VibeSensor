@@ -43,32 +43,69 @@ def _first_line(text: str) -> str:
     return text.splitlines()[0].strip() if text else ""
 
 
-def _check_python(expected_major_minor: str) -> CheckResult:
-    if _which("python3") is None:
+def _python_matches_expected(actual: str, expected: str) -> bool:
+    expected_parts = expected.split(".")
+    if len(expected_parts) >= 3:
+        return actual == expected
+    return actual.startswith(f"{expected}.")
+
+
+def _python_candidates(expected_version: str) -> list[str]:
+    expected_parts = expected_version.split(".")
+    candidates = [str(ROOT / ".venv" / "bin" / "python")]
+    if len(expected_parts) >= 2:
+        candidates.append(f"python{expected_parts[0]}.{expected_parts[1]}")
+    candidates.extend(["python3", "python"])
+
+    seen: set[str] = set()
+    unique_candidates: list[str] = []
+    for candidate in candidates:
+        if candidate not in seen:
+            unique_candidates.append(candidate)
+            seen.add(candidate)
+    return unique_candidates
+
+
+def _check_python(expected_version: str) -> CheckResult:
+    candidate_errors: list[tuple[str, str]] = []
+    for candidate in _python_candidates(expected_version):
+        candidate_path = Path(candidate)
+        resolved = (
+            str(candidate_path) if candidate_path.is_absolute() else _which(candidate)
+        )
+        if resolved is None:
+            continue
+        ok, output = _run(
+            [
+                resolved,
+                "-c",
+                "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')",
+            ]
+        )
+        if not ok:
+            candidate_errors.append(
+                (candidate, f"unable to read version: {_first_line(output)}")
+            )
+            continue
+        actual = output.strip()
+        if _python_matches_expected(actual, expected_version):
+            return CheckResult(candidate, "OK", f"{actual} (matches .python-version)")
+        candidate_errors.append(
+            (
+                candidate,
+                f"found {actual}; expected {expected_version} (see .python-version)",
+            )
+        )
+
+    if not candidate_errors:
         return CheckResult(
-            "python3",
+            "python",
             "FAIL",
-            f"missing (expected {expected_major_minor}.x from .python-version)",
+            f"missing (expected {expected_version} from .python-version)",
         )
-    ok, output = _run(
-        [
-            "python3",
-            "-c",
-            "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')",
-        ]
-    )
-    if not ok:
-        return CheckResult(
-            "python3", "FAIL", f"unable to read version: {_first_line(output)}"
-        )
-    actual = output.strip()
-    if not actual.startswith(f"{expected_major_minor}."):
-        return CheckResult(
-            "python3",
-            "FAIL",
-            f"found {actual}; expected {expected_major_minor}.x (see .python-version)",
-        )
-    return CheckResult("python3", "OK", f"{actual} (matches .python-version)")
+
+    candidate, message = candidate_errors[0]
+    return CheckResult(candidate, "FAIL", message)
 
 
 def _check_node(expected_major: str) -> CheckResult:

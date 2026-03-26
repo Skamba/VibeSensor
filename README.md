@@ -91,7 +91,7 @@ then use the docs index for the broader map.
 
 ## Prerequisites
 
-- Python `3.11.x` for the native backend, local tooling, and simulator (`.python-version`)
+- Python `3.14.3` for the native backend, local tooling, and simulator (`.python-version`)
 - Node `22.x` plus `npm` for the UI build and dev server (`.nvmrc`)
 - Docker plus Docker Compose for the Docker quick-start and Docker dev mode
 - PlatformIO `6.x` only when you are working on firmware
@@ -141,17 +141,19 @@ changes, and it fails fast if the generated frontend contracts are stale.
 ### Native Python + Vite (recommended for backend or UI iteration)
 
 ```bash
-. .venv/bin/activate  # after creating a local Python 3.11 venv, if you use one
-python3 -m pip install --upgrade pip
-python3 -m pip install -e "./apps/server[dev]"
+python3.14 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e "./apps/server[dev]"
 npm --prefix apps/ui ci
 vibesensor-server --reload --config apps/server/config.dev.yaml
 ```
 
 The backend uses an editable install from `apps/server/pyproject.toml` so
 commands like `vibesensor-server` and `vibesensor-sim` stay tied to your working
-tree. A local Python 3.11 virtualenv is the recommended native-dev path before
-you run the install above.
+tree. A local Python `3.14.3` virtualenv is the recommended native-dev path
+before you run the install above, and `make setup` will create or refresh that
+`.venv` for you automatically.
 
 In another terminal:
 
