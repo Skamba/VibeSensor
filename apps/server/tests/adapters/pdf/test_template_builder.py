@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
 from vibesensor.adapters.pdf.report_data import (
@@ -17,6 +18,10 @@ from vibesensor.adapters.pdf.report_data import (
 from vibesensor.adapters.pdf.template_builder import build_template_data
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
+if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.report_context import ReportMappingContext
+    from vibesensor.adapters.pdf.report_data import ReportTemplateData
+
 
 @dataclass
 class _StubTestRun:
@@ -25,10 +30,10 @@ class _StubTestRun:
     findings: list[object] = field(default_factory=list)
 
 
-def _make_context(**overrides: object):  # type: ignore[no-untyped-def]
+def _make_context(**overrides: object) -> ReportMappingContext:
     from vibesensor.adapters.pdf.report_context import ReportMappingContext
 
-    defaults = {
+    defaults: dict[str, object] = {
         "car_name": "TestCar",
         "car_type": "Sedan",
         "date_str": "2026-01-01 12:00:00 UTC",
@@ -84,9 +89,9 @@ def _make_primary(**overrides: object) -> PrimaryCandidateContext:
     return PrimaryCandidateContext(**defaults)
 
 
-def _build(**overrides: object):  # type: ignore[no-untyped-def]
+def _build(**overrides: object) -> ReportTemplateData:
     """Build a ReportTemplateData with sensible defaults, allowing overrides."""
-    defaults: dict = {
+    defaults: dict[str, object] = {
         "context": _make_context(),
         "report": _make_report(),
         "primary": _make_primary(),
