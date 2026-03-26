@@ -19,7 +19,7 @@ from vibesensor.infra.location_assignment_validator import (
 from vibesensor.infra.runtime.client_liveness_policy import ClientLivenessPolicy
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
-from vibesensor.infra.runtime.client_snapshot_projection import project_client_snapshots
+from vibesensor.infra.runtime.client_snapshot_assembler import ClientSnapshotAssembler
 from vibesensor.infra.runtime.dedup_window import DedupWindow
 from vibesensor.infra.runtime.registry_diagnostics import RegistryDiagnostics
 from vibesensor.infra.runtime.registry_updates import (
@@ -178,6 +178,14 @@ class ClientRegistry:
             delete_client_name=(lambda client_id: db.delete_client_name(client_id))
             if db is not None
             else None,
+        )
+        self._snapshot_assembler = ClientSnapshotAssembler(
+            lock=self._lock,
+            clients=self._clients,
+            metadata=self._metadata,
+            policy=self._liveness_policy,
+            resolve_now_wall=_resolve_now_wall,
+            resolve_now_mono=_resolve_now_mono,
         )
 
     @staticmethod
@@ -368,12 +376,8 @@ class ClientRegistry:
         metrics_by_client: dict[str, ClientMetrics] | None = None,
     ) -> list[ClientSnapshot]:
         """Return raw per-client snapshots for transport presenters."""
-        with self._lock:
-            return project_client_snapshots(
-                self._clients,
-                self._metadata,
-                now_wall=_resolve_now_wall(now),
-                now_mono=_resolve_now_mono(now_mono),
-                policy=self._liveness_policy,
-                metrics_by_client=metrics_by_client,
-            )
+        return self._snapshot_assembler.client_snapshots(
+            now=now,
+            now_mono=now_mono,
+            metrics_by_client=metrics_by_client,
+        )
