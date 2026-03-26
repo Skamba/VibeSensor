@@ -17,7 +17,7 @@ from vibesensor.shared.types.history_analysis_contracts import (
 from vibesensor.shared.types.json_types import JsonValue
 
 
-def location_hotspot_from_payload(payload: dict[str, object]) -> LocationHotspot:
+def location_hotspot_from_payload(payload: Mapping[str, object]) -> LocationHotspot:
     """Decode a persisted or transported hotspot payload into a domain object."""
     alts = payload.get("alternative_locations") or payload.get("ambiguous_locations") or []
     if not isinstance(alts, (list, tuple)):
@@ -52,6 +52,7 @@ def _source_from_payload(
     *,
     fallback: VibrationSource | None = None,
 ) -> VibrationSource:
+    """Resolve a suspected source, preferring the provided fallback when present."""
     if fallback is not None:
         return fallback
     raw_source = str(payload.get("suspected_source") or "").strip().lower()
@@ -78,12 +79,17 @@ def vibration_origin_from_payload(
     resolved_speed_band = speed_band
     if resolved_speed_band is None:
         raw_speed_band = payload.get("strongest_speed_band") or payload.get("speed_band")
-        resolved_speed_band = (
-            str(raw_speed_band).strip() or None if raw_speed_band is not None else None
-        )
+        if raw_speed_band is not None:
+            normalized_speed_band = str(raw_speed_band).strip()
+            resolved_speed_band = normalized_speed_band or None
 
     resolved_reason = payload.get("evidence_summary")
     reason = str(resolved_reason).strip() if isinstance(resolved_reason, str) else ""
+    raw_dominant_phase = payload.get("dominant_phase")
+    dominant_phase = None
+    if raw_dominant_phase is not None:
+        normalized_dominant_phase = str(raw_dominant_phase).strip()
+        dominant_phase = normalized_dominant_phase or None
 
     return VibrationOrigin.from_analysis_inputs(
         suspected_source=_source_from_payload(payload, fallback=suspected_source),
@@ -94,7 +100,7 @@ def vibration_origin_from_payload(
             else _as_float(payload.get("dominance_ratio"))
         ),
         speed_band=resolved_speed_band,
-        dominant_phase=str(payload.get("dominant_phase") or "").strip() or None,
+        dominant_phase=dominant_phase,
         reason=reason,
     )
 
