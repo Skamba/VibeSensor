@@ -8,7 +8,7 @@ import shutil
 import sqlite3
 import tempfile
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
 from threading import RLock
 
@@ -27,6 +27,33 @@ _SETTINGS_SNAPSHOT_MIGRATION_SOURCE_VERSION = 9
 _PERSISTED_ANALYSIS_SCHEMA_MIGRATION_SOURCE_VERSION = 10
 
 __all__ = ["SQLiteHistoryEngine"]
+
+
+def run_startup_quick_check(
+    *,
+    cursor_provider: Callable[..., AbstractContextManager[sqlite3.Cursor]],
+    db_path: Path,
+    mark_corrupted: Callable[[str], None],
+) -> None:
+    try:
+        with cursor_provider(commit=False) as cur:
+            cur.execute("PRAGMA quick_check")
+            problems = [str(row[0]) for row in cur.fetchall() if str(row[0]) != "ok"]
+    except sqlite3.Error:
+        LOGGER.critical(
+            "History DB quick_check failed during startup for %s",
+            db_path,
+            exc_info=True,
+        )
+        raise
+    if problems:
+        details = "; ".join(problems)
+        mark_corrupted(details)
+        LOGGER.critical(
+            "History DB quick_check reported corruption for %s: %s",
+            db_path,
+            details,
+        )
 
 
 class SQLiteHistoryEngine:
@@ -375,22 +402,8 @@ class SQLiteHistoryEngine:
             cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
     def _run_startup_quick_check(self) -> None:
-        try:
-            with self._cursor(commit=False) as cur:
-                cur.execute("PRAGMA quick_check")
-                problems = [str(row[0]) for row in cur.fetchall() if str(row[0]) != "ok"]
-        except sqlite3.Error:
-            LOGGER.critical(
-                "History DB quick_check failed during startup for %s",
-                self.db_path,
-                exc_info=True,
-            )
-            raise
-        if problems:
-            details = "; ".join(problems)
-            self._mark_corrupted(details)
-            LOGGER.critical(
-                "History DB quick_check reported corruption for %s: %s",
-                self.db_path,
-                details,
-            )
+        run_startup_quick_check(
+            cursor_provider=self._cursor,
+            db_path=self.db_path,
+            mark_corrupted=self._mark_corrupted,
+        )
