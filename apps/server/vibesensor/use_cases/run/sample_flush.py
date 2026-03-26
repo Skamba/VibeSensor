@@ -60,6 +60,7 @@ class SampleFlushOrchestrator:
         self._timestamp_utc = timestamp_utc
 
     def _refresh_recent_client_metrics(self) -> None:
+        """Refresh metrics only for clients that still have recent live samples."""
         active_client_ids = self._registry.active_client_ids()
         recent_client_ids = sorted(
             set(
