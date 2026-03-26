@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import threading
 import time
+from concurrent.futures import Future
 from math import pi
 
 import numpy as np
@@ -19,6 +20,17 @@ import pytest
 
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.workers.worker_pool import WorkerPool
+
+
+def _submit_blocking_task(
+    pool: WorkerPool,
+    *,
+    result: int | bool = True,
+) -> tuple[threading.Event, Future[int | bool]]:
+    release = threading.Event()
+    future = pool.submit(lambda: release.wait(timeout=1.0) or result)
+    return release, future
+
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -100,12 +112,11 @@ class TestWorkerPool:
 
     def test_submit_blocks_when_pool_is_saturated(self, make_pool) -> None:
         pool = make_pool(max_workers=1, max_queue_size=0)
-        release_first = threading.Event()
         second_submitted = threading.Event()
         second_finished = threading.Event()
         results: list[int] = []
 
-        first = pool.submit(lambda: release_first.wait(timeout=1.0) or 1)
+        release_first, first = _submit_blocking_task(pool, result=1)
 
         def _submit_second() -> None:
             future = pool.submit(lambda: 2)
@@ -131,8 +142,7 @@ class TestWorkerPool:
 
     def test_submit_timeout_raises_when_pool_is_saturated(self, make_pool) -> None:
         pool = make_pool(max_workers=1, max_queue_size=0)
-        release_first = threading.Event()
-        first = pool.submit(lambda: release_first.wait(timeout=1.0))
+        release_first, first = _submit_blocking_task(pool)
 
         with pytest.raises(TimeoutError, match="saturated"):
             pool.submit(lambda: 2, timeout_s=0.05)
@@ -146,8 +156,7 @@ class TestWorkerPool:
 
     def test_shutdown_wakes_blocked_submitter(self, make_pool) -> None:
         pool = make_pool(max_workers=1, max_queue_size=0)
-        release_first = threading.Event()
-        first = pool.submit(lambda: release_first.wait(timeout=1.0))
+        release_first, first = _submit_blocking_task(pool)
         blocked_result: dict[str, str] = {}
 
         def _blocked_submit() -> None:
