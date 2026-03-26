@@ -1,0 +1,112 @@
+import { expect, test } from "@playwright/test";
+
+import type { AdaptedPayload } from "../src/server_payload";
+import { createAppState, applyLivePayloadUpdate } from "../src/app/ui_app_state";
+
+function makeAdaptedPayload(overrides: Partial<AdaptedPayload> = {}): AdaptedPayload {
+  return {
+    clients: [],
+    speed_mps: 10,
+    rotational_speeds: null,
+    spectra: null,
+    ...overrides,
+  };
+}
+
+function makeClient(id: string) {
+  return {
+    id,
+    name: `Sensor ${id}`,
+    connected: true,
+    mac_address: `00:11:22:33:44:${id.slice(-2).padStart(2, "0")}`,
+    location_code: "",
+    last_seen_age_ms: 0,
+    dropped_frames: 0,
+    frames_total: 1,
+    sample_rate_hz: 1600,
+    firmware_version: "1.0.0",
+  };
+}
+
+test.describe("applyLivePayloadUpdate", () => {
+  test("applies client, speed, spectrum, and selection changes and reports side-effect decisions", () => {
+    const state = createAppState();
+
+    const update = applyLivePayloadUpdate({
+      realtime: state.realtime,
+      spectrum: state.spectrum,
+      adaptedPayload: makeAdaptedPayload({
+        clients: [makeClient("client-1")],
+        speed_mps: 12,
+        spectra: {
+          clients: {
+            "client-1": {
+              freq: [10, 20, 30],
+              combined: [0.1, 0.2, 0.15],
+              strength_metrics: {
+                vibration_strength_db: 12,
+                peak_amp_g: 0,
+                noise_floor_amp_g: 0,
+                strength_bucket: null,
+                top_peaks: [],
+              },
+            },
+          },
+        },
+      }),
+      updateClientSelection: () => {
+        state.realtime.selectedClientId = state.realtime.clients[0]?.id ?? null;
+      },
+    });
+
+    expect(state.realtime.clients.map((client) => client.id)).toEqual(["client-1"]);
+    expect(state.realtime.selectedClientId).toBe("client-1");
+    expect(state.realtime.speedMps).toBe(12);
+    expect(state.spectrum.spectra.clients["client-1"]?.freq).toEqual([10, 20, 30]);
+    expect(state.spectrum.hasSpectrumData).toBe(true);
+    expect(update.hasSelectedClientChanged).toBe(true);
+    expect(update.hasNewSpectrumFrame).toBe(true);
+    expect(update.selectedClient?.id).toBe("client-1");
+  });
+
+  test("preserves the previous spectrum frame when the adapted payload omits spectra", () => {
+    const state = createAppState();
+    state.realtime.selectedClientId = "client-1";
+    state.spectrum.spectra = {
+      clients: {
+        "client-1": {
+          freq: [1, 2, 3],
+          combined: [0.01, 0.02, 0.03],
+          strength_metrics: {
+            vibration_strength_db: 5,
+            peak_amp_g: 0,
+            noise_floor_amp_g: 0,
+            strength_bucket: null,
+            top_peaks: [],
+          },
+        },
+      },
+    };
+    state.spectrum.hasSpectrumData = true;
+
+    const update = applyLivePayloadUpdate({
+      realtime: state.realtime,
+      spectrum: state.spectrum,
+      adaptedPayload: makeAdaptedPayload({
+        clients: [makeClient("client-1")],
+        speed_mps: 14,
+        spectra: null,
+      }),
+      updateClientSelection: () => {
+        state.realtime.selectedClientId = "client-1";
+      },
+    });
+
+    expect(state.spectrum.spectra.clients["client-1"]?.freq).toEqual([1, 2, 3]);
+    expect(state.spectrum.hasSpectrumData).toBe(true);
+    expect(state.realtime.speedMps).toBe(14);
+    expect(update.hasSelectedClientChanged).toBe(false);
+    expect(update.hasNewSpectrumFrame).toBe(false);
+    expect(update.selectedClient?.id).toBe("client-1");
+  });
+});

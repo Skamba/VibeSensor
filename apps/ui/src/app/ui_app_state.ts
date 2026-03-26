@@ -1,7 +1,7 @@
 import type { SpectrumChart } from "../spectrum";
 import type { WsClient } from "../ws";
 import type { StrengthMetricsPayload } from "../contracts/ws_payload_types";
-import type { AdaptedClient, RotationalSpeeds } from "../server_payload";
+import type { AdaptedClient, AdaptedPayload, RotationalSpeeds } from "../server_payload";
 import { defaultLocationCodes } from "../constants";
 import type {
   CarRecord,
@@ -61,6 +61,19 @@ export interface SpectrumTickUpdate {
   hasNewSpectrumFrame: boolean;
 }
 
+export interface LivePayloadUpdateDeps {
+  realtime: RealtimeState;
+  spectrum: SpectrumState;
+  adaptedPayload: AdaptedPayload;
+  updateClientSelection: () => void;
+}
+
+export interface LivePayloadUpdateResult {
+  hasSelectedClientChanged: boolean;
+  selectedClient: AdaptedClient | undefined;
+  hasNewSpectrumFrame: boolean;
+}
+
 export function applySpectrumTick(
   previousSpectra: { clients: Record<string, SpectrumClientData> },
   previousHasSpectrumData: boolean,
@@ -80,6 +93,23 @@ export function applySpectrumTick(
     spectra: incomingSpectra,
     hasSpectrumData,
     hasNewSpectrumFrame: true,
+  };
+}
+
+export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayloadUpdateResult {
+  const { realtime, spectrum, adaptedPayload, updateClientSelection } = deps;
+  const previousSelectedClientId = realtime.selectedClientId;
+  realtime.clients = adaptedPayload.clients;
+  const spectrumTick = applySpectrumTick(spectrum.spectra, spectrum.hasSpectrumData, adaptedPayload.spectra);
+  spectrum.spectra = spectrumTick.spectra;
+  updateClientSelection();
+  realtime.speedMps = adaptedPayload.speed_mps;
+  realtime.rotationalSpeeds = adaptedPayload.rotational_speeds;
+  spectrum.hasSpectrumData = spectrumTick.hasSpectrumData;
+  return {
+    hasSelectedClientChanged: previousSelectedClientId !== realtime.selectedClientId,
+    selectedClient: realtime.clients.find((client) => client.id === realtime.selectedClientId),
+    hasNewSpectrumFrame: spectrumTick.hasNewSpectrumFrame,
   };
 }
 

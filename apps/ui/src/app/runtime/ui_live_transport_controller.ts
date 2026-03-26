@@ -1,7 +1,7 @@
 import { adaptServerPayload, type AdaptedClient, type AdaptedPayload } from "../../server_payload";
 import { runDemoMode } from "../demo_mode";
 import { WsClient } from "../../ws";
-import { applySpectrumTick, type AppState } from "../ui_app_state";
+import { applyLivePayloadUpdate, type AppState } from "../ui_app_state";
 
 type UiLiveTransportControllerDeps = {
   state: AppState;
@@ -100,32 +100,24 @@ export class UiLiveTransportController {
     this.state.transport.payloadError = null;
     this.renderWsState();
 
-    const prevSelected = this.state.realtime.selectedClientId;
-    this.state.realtime.clients = adapted.clients;
-    const spectrumTick = applySpectrumTick(
-      this.state.spectrum.spectra,
-      this.state.spectrum.hasSpectrumData,
-      adapted.spectra,
-    );
-    this.state.spectrum.spectra = spectrumTick.spectra;
-    ports.updateClientSelection();
+    const update = applyLivePayloadUpdate({
+      realtime: this.state.realtime,
+      spectrum: this.state.spectrum,
+      adaptedPayload: adapted,
+      updateClientSelection: () => ports.updateClientSelection(),
+    });
     ports.maybeRenderSensorsSettingsList();
     ports.renderLoggingStatus();
-    if (prevSelected !== this.state.realtime.selectedClientId) {
+    if (update.hasSelectedClientChanged) {
       this.sendSelection();
     }
-    this.state.realtime.speedMps = adapted.speed_mps;
-    this.state.realtime.rotationalSpeeds = adapted.rotational_speeds;
-    this.state.spectrum.hasSpectrumData = spectrumTick.hasSpectrumData;
     this.renderSpeedReadout();
-    if (spectrumTick.hasNewSpectrumFrame) {
+    if (update.hasNewSpectrumFrame) {
       this.renderSpectrum();
     } else {
       this.updateSpectrumOverlay();
     }
-    ports.renderStatus(
-      this.state.realtime.clients.find((client) => client.id === this.state.realtime.selectedClientId),
-    );
+    ports.renderStatus(update.selectedClient);
   }
 
   private connectWs(): void {
