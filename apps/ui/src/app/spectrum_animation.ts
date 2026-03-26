@@ -7,6 +7,8 @@ export interface SpectrumHeavyFrame {
 }
 
 const FREQ_EPSILON = 1e-6;
+const MAX_INTERIOR_FINGERPRINT_SAMPLES = 4;
+const FINGERPRINT_SAMPLE_SEGMENTS = MAX_INTERIOR_FINGERPRINT_SAMPLES + 1;
 
 /** Compute a lightweight fingerprint (length + sampled values) for a freq array. */
 function freqFingerprint(freq: number[]): string {
@@ -14,8 +16,8 @@ function freqFingerprint(freq: number[]): string {
   if (n === 0) return "0";
   // Sample first, last, and up to 4 evenly-spaced interior points.
   const indices = [0, n - 1];
-  for (let k = 1; k <= 4 && k * (n - 1) / 5 < n; k++) {
-    indices.push(Math.round(k * (n - 1) / 5));
+  for (let k = 1; k <= MAX_INTERIOR_FINGERPRINT_SAMPLES && k * (n - 1) / FINGERPRINT_SAMPLE_SEGMENTS < n; k++) {
+    indices.push(Math.round(k * (n - 1) / FINGERPRINT_SAMPLE_SEGMENTS));
   }
   const parts = [String(n)];
   for (const idx of indices) {
