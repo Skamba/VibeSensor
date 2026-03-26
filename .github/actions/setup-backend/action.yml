@@ -20,6 +20,7 @@ runs:
       shell: bash
       run: |
         python -m pip install --upgrade pip
+        # Reuse the backend dev extra so CI matches the local editable setup.
         python -m pip install -e "./apps/server[dev]"
 
     - name: Install PlatformIO dependencies
