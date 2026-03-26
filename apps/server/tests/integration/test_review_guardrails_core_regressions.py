@@ -53,6 +53,8 @@ class TestDomainModelsPublicAPI:
 
 
 class TestBuildOrderBandsLocation:
+    """Verify order-band helpers stay in the shared module and keep basic behavior."""
+
     def test_importable_from_order_bands(self) -> None:
         assert callable(build_order_bands)
 
@@ -89,6 +91,8 @@ class TestBuildOrderBandsLocation:
 
 
 class TestWorkerPoolSubmitTiming:
+    """Verify WorkerPool.submit accumulates task counts and total runtime metrics."""
+
     def test_submit_tracks_run_time(self) -> None:
         pool = WorkerPool(max_workers=2)
         try:
@@ -119,6 +123,8 @@ class TestWorkerPoolSubmitTiming:
 
 
 class TestSanitizeName:
+    """Verify client-name sanitization strips controls and truncates by UTF-8 byte length."""
+
     def test_ascii_within_limit(self) -> None:
         assert sanitize_client_name("Hello") == "Hello"
 
@@ -145,6 +151,8 @@ class TestSanitizeName:
 
 
 class TestBoundedSampleTrim:
+    """Verify bounded_sample never exceeds max_items, including tight edge cases."""
+
     def test_never_exceeds_max_items(self) -> None:
         for total in range(1, 30):
             for max_items in range(1, 10):
@@ -168,6 +176,8 @@ class TestBoundedSampleTrim:
 
 
 class TestModuleAllExports:
+    """Verify key public modules keep non-empty __all__ exports for import guardrails."""
+
     @pytest.mark.parametrize(
         "module_path",
         [
