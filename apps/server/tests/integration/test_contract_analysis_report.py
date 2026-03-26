@@ -63,6 +63,16 @@ def _make_steady_speed_fault_dataset() -> tuple[dict, list[dict]]:
     return meta, samples
 
 
+def _report_data_from_samples(
+    meta: dict,
+    samples: list[dict],
+    *,
+    lang: str,
+) -> ReportTemplateData:
+    summary = summarize_run_data(meta, samples, lang=lang)
+    return map_summary(prepare_report_input(summary))
+
+
 # ------------------------------------------------------------------
 # Tests
 # ------------------------------------------------------------------
@@ -71,9 +81,7 @@ def _make_steady_speed_fault_dataset() -> tuple[dict, list[dict]]:
 def test_analysis_output_accepted_by_report_mapper():
     """summarize_run_data() output must prepare and map cleanly."""
     meta, samples = _make_small_dataset()
-    summary = summarize_run_data(meta, samples, lang="en")
-
-    report_data = map_summary(prepare_report_input(summary))
+    report_data = _report_data_from_samples(meta, samples, lang="en")
 
     assert isinstance(report_data, ReportTemplateData)
 
@@ -81,8 +89,7 @@ def test_analysis_output_accepted_by_report_mapper():
 def test_report_data_has_populated_fields():
     """Key report fields must be non-empty after mapping real analysis output."""
     meta, samples = _make_small_dataset()
-    summary = summarize_run_data(meta, samples, lang="en")
-    report_data = map_summary(prepare_report_input(summary))
+    report_data = _report_data_from_samples(meta, samples, lang="en")
 
     # Structural: the report must have a title and language
     assert report_data.title
@@ -100,9 +107,7 @@ def test_analysis_without_fault_maps_cleanly():
     """A run with only road-noise (no fault) must still map without errors."""
     meta = standard_metadata(language="en")
     samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30, speed_kmh=60.0)
-    summary = summarize_run_data(meta, samples, lang="en")
-
-    report_data = map_summary(prepare_report_input(summary))
+    report_data = _report_data_from_samples(meta, samples, lang="en")
 
     assert isinstance(report_data, ReportTemplateData)
     assert report_data.lang == "en"
@@ -112,9 +117,7 @@ def test_multilingual_mapping():
     """Analysis + report mapping must work for non-English languages."""
     meta = standard_metadata(language="nl")
     samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=20, speed_kmh=60.0)
-    summary = summarize_run_data(meta, samples, lang="nl")
-
-    report_data = map_summary(prepare_report_input(summary))
+    report_data = _report_data_from_samples(meta, samples, lang="nl")
 
     assert isinstance(report_data, ReportTemplateData)
     assert report_data.lang == "nl"
