@@ -19,6 +19,15 @@ _MINIMAL_META: dict[str, Any] = {
 }
 
 
+def _summary(*, findings_builder) -> dict[str, Any]:
+    return summarize_run_data(
+        _MINIMAL_META,
+        [],
+        lang="en",
+        findings_builder=findings_builder,
+    )
+
+
 def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan() -> None:
     payload = make_finding_payload(
         suspected_source="wheel/tire",
@@ -40,12 +49,7 @@ def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan() ->
     def _findings_builder(_: FindingsBuildRequest) -> tuple[Finding, ...]:
         return finalize_findings([finding_from_payload(payload)])
 
-    summary = summarize_run_data(
-        _MINIMAL_META,
-        [],
-        lang="en",
-        findings_builder=_findings_builder,
-    )
+    summary = _summary(findings_builder=_findings_builder)
 
     action_ids = [str(step.get("action_id") or "") for step in summary["test_plan"]]
 
@@ -55,10 +59,7 @@ def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan() ->
 
 
 def test_summary_test_plan_uses_boundary_step_shape_from_domain_actions() -> None:
-    summary = summarize_run_data(
-        _MINIMAL_META,
-        [],
-        lang="en",
+    summary = _summary(
         findings_builder=lambda _request: finalize_findings(
             [finding_from_payload(make_finding_payload(suspected_source="engine"))]
         ),
