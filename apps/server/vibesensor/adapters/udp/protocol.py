@@ -180,8 +180,7 @@ class HelloAckMessage:
 
 def client_id_hex(client_id: bytes) -> str:
     """Return the 6-byte *client_id* as a lowercase hex string."""
-    if len(client_id) != 6:
-        raise ValueError(f"client_id must be 6 bytes, got {len(client_id)}")
+    validate_client_id(client_id)
     return client_id.hex()
 
 
@@ -196,8 +195,7 @@ def extract_client_id_hex(data: bytes) -> str | None:
 def client_id_mac(client_id: bytes | str) -> str:
     """Return *client_id* formatted as a colon-separated MAC address string."""
     raw = parse_client_id(client_id) if isinstance(client_id, str) else client_id
-    if len(raw) != 6:
-        raise ValueError(f"client_id must be 6 bytes, got {len(raw)}")
+    validate_client_id(raw)
     return ":".join(f"{b:02x}" for b in raw)
 
 
