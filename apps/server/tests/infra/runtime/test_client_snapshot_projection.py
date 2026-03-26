@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+from vibesensor.infra.runtime.client_liveness_policy import ClientLivenessPolicy
 from vibesensor.infra.runtime.client_snapshot_projection import project_client_snapshots
 from vibesensor.infra.runtime.registry import ClientRecord
 
@@ -32,6 +33,9 @@ def _make_metadata(known_ids: list[str], names: dict[str, str] | None = None) ->
     return meta
 
 
+_POLICY = ClientLivenessPolicy(live_ttl_seconds=10.0, retention_ttl_seconds=30.0)
+
+
 class TestProjectClientSnapshots:
     def test_connected_record(self) -> None:
         """Active record with recent mono time → connected=True."""
@@ -39,7 +43,11 @@ class TestProjectClientSnapshots:
         clients = {rec.client_id: rec}
         meta = _make_metadata([rec.client_id])
         snaps = project_client_snapshots(
-            clients, meta, now_wall=1001.0, now_mono=105.0, live_ttl_seconds=10.0
+            clients,
+            meta,
+            now_wall=1001.0,
+            now_mono=105.0,
+            policy=_POLICY,
         )
         assert len(snaps) == 1
         assert snaps[0].connected is True
@@ -51,7 +59,11 @@ class TestProjectClientSnapshots:
         clients = {rec.client_id: rec}
         meta = _make_metadata([rec.client_id])
         snaps = project_client_snapshots(
-            clients, meta, now_wall=1100.0, now_mono=200.0, live_ttl_seconds=10.0
+            clients,
+            meta,
+            now_wall=1100.0,
+            now_mono=200.0,
+            policy=_POLICY,
         )
         assert snaps[0].connected is False
 
@@ -60,7 +72,11 @@ class TestProjectClientSnapshots:
         cid = "aabbccddeeff"
         meta = _make_metadata([cid], {cid: "My Sensor"})
         snaps = project_client_snapshots(
-            {}, meta, now_wall=1000.0, now_mono=500.0, live_ttl_seconds=10.0
+            {},
+            meta,
+            now_wall=1000.0,
+            now_mono=500.0,
+            policy=_POLICY,
         )
         assert len(snaps) == 1
         assert snaps[0].connected is False
@@ -76,7 +92,7 @@ class TestProjectClientSnapshots:
             meta,
             now_wall=1001.0,
             now_mono=105.0,
-            live_ttl_seconds=10.0,
+            policy=_POLICY,
             metrics_by_client=metrics,
         )
         assert snaps[0].latest_metrics == {"rms": 0.5}
@@ -86,6 +102,10 @@ class TestProjectClientSnapshots:
         clients = {rec.client_id: rec}
         meta = _make_metadata([rec.client_id])
         snaps = project_client_snapshots(
-            clients, meta, now_wall=1002.5, now_mono=102.5, live_ttl_seconds=10.0
+            clients,
+            meta,
+            now_wall=1002.5,
+            now_mono=102.5,
+            policy=_POLICY,
         )
         assert snaps[0].last_seen_age_ms == 2500

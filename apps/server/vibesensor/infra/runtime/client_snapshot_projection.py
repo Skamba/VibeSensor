@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from vibesensor.infra.runtime.client_liveness_policy import ClientLivenessPolicy
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
 from vibesensor.shared.types.payload_types import ClientMetrics
@@ -24,7 +25,7 @@ def project_client_snapshots(
     *,
     now_wall: float,
     now_mono: float,
-    live_ttl_seconds: float,
+    policy: ClientLivenessPolicy,
     metrics_by_client: dict[str, ClientMetrics] | None = None,
 ) -> list[ClientSnapshot]:
     """Build transport-facing ``ClientSnapshot`` rows from registry state."""
@@ -41,9 +42,7 @@ def project_client_snapshots(
             )
             continue
         age_ms = int(max(0.0, now_wall - record.last_seen) * 1000) if record.last_seen else None
-        connected = bool(
-            record.last_seen_mono and (now_mono - record.last_seen_mono) <= live_ttl_seconds,
-        )
+        connected = policy.is_live(record, now_mono)
         snapshots.append(
             ClientSnapshot(
                 client_id=record.client_id,
