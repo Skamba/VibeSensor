@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.infra.processing.buffer_capacity import (
     MAX_CLIENT_SAMPLE_RATE_HZ,
     ClampedRate,
@@ -13,25 +15,24 @@ from vibesensor.infra.processing.buffer_capacity import (
 
 
 class TestEvaluateOverflow:
-    def test_chunk_fits_in_capacity(self) -> None:
-        result = evaluate_overflow(100, 500)
-        assert result == OverflowResult(keep_count=100, drop_count=0, start_offset=0)
-
-    def test_chunk_exactly_fills_capacity(self) -> None:
-        result = evaluate_overflow(500, 500)
-        assert result == OverflowResult(keep_count=500, drop_count=0, start_offset=0)
-
-    def test_chunk_exceeds_capacity(self) -> None:
-        result = evaluate_overflow(700, 500)
-        assert result == OverflowResult(keep_count=500, drop_count=200, start_offset=200)
-
-    def test_single_sample_capacity(self) -> None:
-        result = evaluate_overflow(10, 1)
-        assert result == OverflowResult(keep_count=1, drop_count=9, start_offset=9)
-
-    def test_zero_chunk_size(self) -> None:
-        result = evaluate_overflow(0, 500)
-        assert result == OverflowResult(keep_count=0, drop_count=0, start_offset=0)
+    @pytest.mark.parametrize(
+        ("chunk_size", "capacity", "expected"),
+        [
+            (100, 500, OverflowResult(keep_count=100, drop_count=0, start_offset=0)),
+            (500, 500, OverflowResult(keep_count=500, drop_count=0, start_offset=0)),
+            (700, 500, OverflowResult(keep_count=500, drop_count=200, start_offset=200)),
+            (10, 1, OverflowResult(keep_count=1, drop_count=9, start_offset=9)),
+            (0, 500, OverflowResult(keep_count=0, drop_count=0, start_offset=0)),
+        ],
+    )
+    def test_expected_overflow_result(
+        self,
+        chunk_size: int,
+        capacity: int,
+        expected: OverflowResult,
+    ) -> None:
+        result = evaluate_overflow(chunk_size, capacity)
+        assert result == expected
 
     def test_large_overflow(self) -> None:
         result = evaluate_overflow(10_000, 256)
@@ -41,33 +42,34 @@ class TestEvaluateOverflow:
 
 
 class TestClampSampleRate:
-    def test_rate_within_range(self) -> None:
-        result = clamp_sample_rate(500)
-        assert result == ClampedRate(rate_hz=500, was_clamped=False)
-
-    def test_rate_at_maximum(self) -> None:
-        result = clamp_sample_rate(MAX_CLIENT_SAMPLE_RATE_HZ)
-        assert result == ClampedRate(rate_hz=MAX_CLIENT_SAMPLE_RATE_HZ, was_clamped=False)
-
-    def test_rate_exceeds_maximum(self) -> None:
-        result = clamp_sample_rate(MAX_CLIENT_SAMPLE_RATE_HZ + 1000)
-        assert result == ClampedRate(rate_hz=MAX_CLIENT_SAMPLE_RATE_HZ, was_clamped=True)
-
-    def test_rate_zero_clamped_to_one(self) -> None:
-        result = clamp_sample_rate(0)
-        assert result == ClampedRate(rate_hz=1, was_clamped=True)
-
-    def test_negative_rate_clamped_to_one(self) -> None:
-        result = clamp_sample_rate(-100)
-        assert result == ClampedRate(rate_hz=1, was_clamped=True)
-
-    def test_rate_one(self) -> None:
-        result = clamp_sample_rate(1)
-        assert result == ClampedRate(rate_hz=1, was_clamped=False)
-
-    def test_custom_max_rate(self) -> None:
-        result = clamp_sample_rate(200, max_rate=100)
-        assert result == ClampedRate(rate_hz=100, was_clamped=True)
+    @pytest.mark.parametrize(
+        ("rate_hz", "max_rate", "expected"),
+        [
+            (500, MAX_CLIENT_SAMPLE_RATE_HZ, ClampedRate(rate_hz=500, was_clamped=False)),
+            (
+                MAX_CLIENT_SAMPLE_RATE_HZ,
+                MAX_CLIENT_SAMPLE_RATE_HZ,
+                ClampedRate(rate_hz=MAX_CLIENT_SAMPLE_RATE_HZ, was_clamped=False),
+            ),
+            (
+                MAX_CLIENT_SAMPLE_RATE_HZ + 1000,
+                MAX_CLIENT_SAMPLE_RATE_HZ,
+                ClampedRate(rate_hz=MAX_CLIENT_SAMPLE_RATE_HZ, was_clamped=True),
+            ),
+            (0, MAX_CLIENT_SAMPLE_RATE_HZ, ClampedRate(rate_hz=1, was_clamped=True)),
+            (-100, MAX_CLIENT_SAMPLE_RATE_HZ, ClampedRate(rate_hz=1, was_clamped=True)),
+            (1, MAX_CLIENT_SAMPLE_RATE_HZ, ClampedRate(rate_hz=1, was_clamped=False)),
+            (200, 100, ClampedRate(rate_hz=100, was_clamped=True)),
+        ],
+    )
+    def test_expected_clamped_rate(
+        self,
+        rate_hz: int,
+        max_rate: int,
+        expected: ClampedRate,
+    ) -> None:
+        result = clamp_sample_rate(rate_hz, max_rate=max_rate)
+        assert result == expected
 
 
 class TestComputeResizeCapacity:
