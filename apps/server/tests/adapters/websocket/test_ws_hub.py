@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
@@ -21,7 +20,7 @@ def _make_ws() -> AsyncMock:
     return ws
 
 
-def _sent_json(ws: AsyncMock) -> Any:
+def _sent_json(ws: AsyncMock) -> dict[str, object]:
     """Return the parsed JSON sent via ``ws.send_text``."""
     return json.loads(ws.send_text.call_args[0][0])
 
@@ -466,7 +465,7 @@ class TestSanitizeForJson:
         assert had is False
 
     @pytest.mark.parametrize("empty", [{}, []], ids=["dict", "list"])
-    def test_empty_structures(self, empty: Any) -> None:
+    def test_empty_structures(self, empty: object) -> None:
         cleaned, had = sanitize_for_json(empty)
         assert cleaned == empty
         assert had is False
