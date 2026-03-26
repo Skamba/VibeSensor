@@ -157,7 +157,6 @@ class LifecycleManager:
             monitor_task=self._task_supervisor.monitor_task,
             logger=LOGGER,
         )
-        self.tasks = []
 
     @property
     def tasks(self) -> list[asyncio.Task[object]]:
