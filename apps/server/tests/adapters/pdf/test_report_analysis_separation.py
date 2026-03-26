@@ -57,34 +57,36 @@ def test_report_package_imports_without_analysis() -> None:
 
 # ---------------------------------------------------------------------------
 # 2.  Runtime import guard — verify the report package does not pull in
-#     history-layer interpretation helpers at module import time.
+#     shared report-interpretation helpers at module import time.
 # ---------------------------------------------------------------------------
 
 
-def test_report_package_imports_without_history_interpretation() -> None:
+def test_report_package_imports_without_shared_report_interpretation() -> None:
     """Importing ``vibesensor.adapters.pdf`` must not import report interpretation."""
     import vibesensor.adapters.pdf as pdf_pkg
 
-    history_helper = "vibesensor.use_cases.history.report_interpretation"
+    report_interpretation_helper = "vibesensor.shared.boundaries.report_interpretation"
     pdf_module_names = [f"vibesensor.adapters.pdf.{mod_path.stem}" for mod_path in _REPORT_MODULES]
     saved_attrs = {
         mod_path.stem: getattr(pdf_pkg, mod_path.stem, None) for mod_path in _REPORT_MODULES
     }
-    saved_modules = {name: sys.modules.get(name) for name in [history_helper, *pdf_module_names]}
+    saved_modules = {
+        name: sys.modules.get(name) for name in [report_interpretation_helper, *pdf_module_names]
+    }
 
     try:
-        sys.modules.pop(history_helper, None)
+        sys.modules.pop(report_interpretation_helper, None)
         for mod_name in pdf_module_names:
             sys.modules.pop(mod_name, None)
 
         for mod_name in pdf_module_names:
             importlib.import_module(mod_name)
 
-        assert history_helper not in sys.modules
+        assert report_interpretation_helper not in sys.modules
     finally:
         for name in pdf_module_names:
             sys.modules.pop(name, None)
-        sys.modules.pop(history_helper, None)
+        sys.modules.pop(report_interpretation_helper, None)
         for name, module in saved_modules.items():
             if module is not None:
                 sys.modules[name] = module
