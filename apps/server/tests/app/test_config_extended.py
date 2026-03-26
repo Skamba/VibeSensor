@@ -79,7 +79,7 @@ def test_read_config_file_non_dict_raises(tmp_path: Path) -> None:
 # test_config_validation.py::TestAccelScaleValidation.
 
 
-def _write_config(path: Path, payload: dict) -> None:
+def _write_config(path: Path, payload: dict[str, object]) -> None:
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
 
