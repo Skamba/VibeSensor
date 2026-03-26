@@ -114,15 +114,13 @@ class TestFallback:
         assert m.fallback_active is False
 
     def test_stale_gps_triggers_manual_fallback(self) -> None:
-        """When GPS data is stale and an override_speed_mps is set,
-        effective_speed_mps returns the override (since override always wins).
-        When no override is set, stale GPS triggers fallback → None.
-        """
+        """When GPS is primary and stale, a manual override becomes the fallback."""
         m = GPSSpeedMonitor(gps_enabled=True)
+        m.manual_source_selected = False
         m.speed_mps = 10.0
         set_gps_snapshot_age(m, age_s=999)
-        # No override set → stale GPS → fallback path → None
-        assert m.effective_speed_mps is None
+        m.override_speed_mps = 25.0
+        assert m.effective_speed_mps == pytest.approx(25.0)
         assert m.fallback_active is True
 
     def test_stale_gps_no_override_returns_none(self) -> None:
