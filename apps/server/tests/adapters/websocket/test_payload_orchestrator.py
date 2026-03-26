@@ -1,3 +1,5 @@
+"""PayloadBuildOrchestrator coverage for caching and serialization fallbacks."""
+
 from __future__ import annotations
 
 import asyncio
