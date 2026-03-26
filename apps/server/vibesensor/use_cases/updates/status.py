@@ -31,6 +31,8 @@ _LOG_TAIL_TRIM_TO = 100
 
 
 def _phase_name(phase: UpdatePhase | str) -> str:
+    """Normalize enum-backed phases to their persisted string representation."""
+
     return phase.value if isinstance(phase, UpdatePhase) else phase
 
 
@@ -54,6 +56,8 @@ class UpdateStatusTracker:
         return self._status
 
     def persist(self) -> None:
+        """Flush the current in-memory status snapshot to the state store."""
+
         self._state_store.save(self._status)
 
     def _touch(self, *, phase_changed: bool = False) -> float:
@@ -101,6 +105,8 @@ class UpdateStatusTracker:
         return redacted
 
     def redacted_args(self, args: list[str], sensitive_keys: set[str]) -> list[str]:
+        """Redact positional values that follow sensitive command-line flags."""
+
         redacted: list[str] = []
         hide_next = False
         for raw_arg in args:
@@ -175,6 +181,8 @@ class UpdateStatusTracker:
         self.persist()
 
     def finish_cleanup(self) -> None:
+        """Finalize status after cleanup, preserving successful end states."""
+
         now = time.time()
         self._status.finished_at = self._status.finished_at or now
         if self._status.state == UpdateState.running:

@@ -87,6 +87,8 @@ class UpdateWorkflow:
     # ------------------------------------------------------------------
 
     async def _validate(self, request: UpdateRequest) -> bool:
+        """Run prerequisite validation before any network or install mutation."""
+
         if not await validate_prerequisites(
             commands=self._commands,
             tracker=self._tracker,
@@ -136,6 +138,8 @@ class UpdateWorkflow:
         current_version: str,
         latest_tag: str,
     ) -> None:
+        """Finish successfully when only the ESP firmware refresh still matters."""
+
         self._tracker.log(f"Already up-to-date (version={current_version})")
         await self._firmware_refresher.refresh_esp_firmware(pinned_tag=latest_tag)
         if self._cancelled():
@@ -145,6 +149,8 @@ class UpdateWorkflow:
         )
 
     async def _download_and_install(self, release_check: UpdateReleaseCheck) -> None:
+        """Download, verify, and install a newly discovered server release."""
+
         release = release_check.release
         assert release is not None  # noqa: S101
         self._tracker.transition(UpdatePhase.downloading)
@@ -177,6 +183,8 @@ class UpdateWorkflow:
         await self._finalize()
 
     async def _install(self, wheel_path: Path, version: str) -> bool:
+        """Create rollback state before mutating the live server environment."""
+
         self._tracker.transition(UpdatePhase.installing)
         self._tracker.log("Installing update...")
         if not await self._installer.snapshot_for_rollback():
@@ -189,6 +197,8 @@ class UpdateWorkflow:
         return await self._installer.install_release(wheel_path, version)
 
     async def _finalize(self) -> None:
+        """Restore normal runtime state and schedule the backend restart."""
+
         if not await self._wifi.complete_update_success("Update completed successfully"):
             return
         if await schedule_service_restart(
@@ -210,6 +220,8 @@ class UpdateWorkflow:
     # ------------------------------------------------------------------
 
     def _cancelled(self) -> bool:
+        """Centralize the workflow's cancellation check for phase handlers."""
+
         return self._cancel_requested()
 
 
