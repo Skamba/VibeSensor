@@ -1,3 +1,5 @@
+"""Guard normalization and duplicate-assignment behavior in location assignment validation."""
+
 from __future__ import annotations
 
 import pytest
