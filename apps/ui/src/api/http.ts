@@ -1,14 +1,14 @@
 const DEFAULT_TIMEOUT_MS = 10000;
-const _NOOP = () => {};
-const _WHITESPACE_RE = /\s+/g;
+const NOOP = () => {};
+const WHITESPACE_RE = /\s+/g;
 
 function composeSignal(
   timeoutSignal: AbortSignal,
   externalSignal?: AbortSignal,
 ): { signal: AbortSignal; cleanup: () => void } {
-  if (!externalSignal) return { signal: timeoutSignal, cleanup: _NOOP };
+  if (!externalSignal) return { signal: timeoutSignal, cleanup: NOOP };
   if ("any" in AbortSignal) {
-    return { signal: AbortSignal.any([timeoutSignal, externalSignal]), cleanup: _NOOP };
+    return { signal: AbortSignal.any([timeoutSignal, externalSignal]), cleanup: NOOP };
   }
 
   const controller = new AbortController();
@@ -28,7 +28,7 @@ function composeSignal(
 }
 
 function formatBodySnippet(text: string): string {
-  const compact = text.trim().replace(_WHITESPACE_RE, " ");
+  const compact = text.trim().replace(WHITESPACE_RE, " ");
   return compact.slice(0, 160);
 }
 
@@ -41,9 +41,8 @@ export async function apiJsonResponse<T = unknown>(
   path: string,
   init?: RequestInit,
 ): Promise<ApiJsonResponse<T>> {
-  const timeoutMs = DEFAULT_TIMEOUT_MS;
   const timeoutController = new AbortController();
-  const timeoutId = window.setTimeout(() => timeoutController.abort(), timeoutMs);
+  const timeoutId = window.setTimeout(() => timeoutController.abort(), DEFAULT_TIMEOUT_MS);
   const { signal, cleanup } = composeSignal(timeoutController.signal, init?.signal ?? undefined);
   const response = await fetch(path, { ...init, signal }).finally(() => {
     window.clearTimeout(timeoutId);
