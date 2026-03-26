@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -12,6 +12,9 @@ from vibesensor.cli.ws_schema_export import export_schema
 from vibesensor.infra.processing import ClientBuffer, SignalProcessor
 from vibesensor.shared.types.payload_types import SCHEMA_VERSION
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
+
+if TYPE_CHECKING:
+    from vibesensor.app.runtime_state import RuntimeState
 
 # ---------------------------------------------------------------------------
 # Schema export check
@@ -32,7 +35,7 @@ def test_schema_export_check_passes() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _make_state(**kwargs: Any) -> Any:
+def _make_state(**kwargs: object) -> RuntimeState:
     """Build a RuntimeState with stubs (reuse the helpers from test_build_ws_payload)."""
     # Import the factory from the existing test module.
     from test_build_ws_payload import _make_state as _factory
@@ -60,8 +63,8 @@ class TestMultiSpectrumFreqDedup:
 
     @staticmethod
     def _make_processor_with_clients(
-        client_data: dict[str, dict[str, Any]],
-    ) -> Any:
+        client_data: dict[str, dict[str, list[float]]],
+    ) -> SignalProcessor:
         """Create a SignalProcessor and inject fake spectrum data."""
         proc = SignalProcessor(
             sample_rate_hz=800,
