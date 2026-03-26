@@ -142,8 +142,8 @@ def _short_run_samples() -> list[dict[str, Any]]:
     return samples
 
 
-def test_characterization_wheel_fault_summary_contract() -> None:
-    analysis = RunAnalysis(
+def _wheel_fault_analysis(file_name: str) -> RunAnalysis:
+    return RunAnalysis(
         standard_metadata(),
         fault_phase(
             speed_kmh=80.0,
@@ -152,8 +152,12 @@ def test_characterization_wheel_fault_summary_contract() -> None:
             sensors=ALL_SENSORS,
         ),
         lang="en",
-        file_name="characterization-wheel",
+        file_name=file_name,
     )
+
+
+def test_characterization_wheel_fault_summary_contract() -> None:
+    analysis = _wheel_fault_analysis("characterization-wheel")
     result = analysis.summarize()
     summary = analysis_result_to_summary(result)
 
@@ -179,17 +183,7 @@ def test_characterization_wheel_fault_summary_contract() -> None:
 
 
 def test_characterization_live_analysis_surfaces_domain_plan_ordering() -> None:
-    analysis = RunAnalysis(
-        standard_metadata(),
-        fault_phase(
-            speed_kmh=80.0,
-            duration_s=20.0,
-            fault_sensor="front-right",
-            sensors=ALL_SENSORS,
-        ),
-        lang="en",
-        file_name="characterization-wheel-planning",
-    )
+    analysis = _wheel_fault_analysis("characterization-wheel-planning")
 
     result = analysis.summarize()
     summary = analysis_result_to_summary(result)
@@ -209,17 +203,7 @@ def test_characterization_live_analysis_surfaces_domain_plan_ordering() -> None:
 
 
 def test_characterization_wheel_fault_persist_reload_round_trip(tmp_path: Path) -> None:
-    analysis = RunAnalysis(
-        standard_metadata(),
-        fault_phase(
-            speed_kmh=80.0,
-            duration_s=20.0,
-            fault_sensor="front-right",
-            sensors=ALL_SENSORS,
-        ),
-        lang="en",
-        file_name="characterization-wheel-roundtrip",
-    )
+    analysis = _wheel_fault_analysis("characterization-wheel-roundtrip")
 
     round_trip_summary = _persist_and_reload_summary(
         tmp_path,
