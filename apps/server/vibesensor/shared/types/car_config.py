@@ -24,6 +24,8 @@ __all__ = [
 
 
 class CarConfigUpdatePayload(TypedDict, total=False):
+    """Partial update payload for mutating one stored car configuration."""
+
     id: str
     name: str
     type: str
@@ -32,6 +34,8 @@ class CarConfigUpdatePayload(TypedDict, total=False):
 
 
 class CarConfigPayload(TypedDict):
+    """Canonical persisted/shared payload for one car configuration profile."""
+
     id: str
     name: str
     type: str
