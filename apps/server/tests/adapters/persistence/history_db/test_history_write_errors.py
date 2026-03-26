@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from vibesensor.adapters.gps.gps_speed import SpeedResolution
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 from vibesensor.use_cases.run.logger import _MAX_HISTORY_CREATE_RETRIES
@@ -78,9 +79,7 @@ class _FakeGPSMonitor:
     effective_speed_mps = None
     override_speed_mps = None
 
-    def resolve_speed(self):
-        from vibesensor.adapters.gps.gps_speed import SpeedResolution
-
+    def resolve_speed(self) -> SpeedResolution:
         return SpeedResolution(speed_mps=None, fallback_active=False, source="none")
 
 
@@ -96,10 +95,10 @@ class _FakeProcessor:
     ) -> None:
         return None
 
-    def latest_sample_xyz(self, client_id: str):
+    def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float]:
         return (0.01, 0.02, 0.03)
 
-    def latest_sample_rate_hz(self, client_id: str):
+    def latest_sample_rate_hz(self, client_id: str) -> int:
         return 800
 
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> ClientMetrics:
@@ -131,7 +130,7 @@ def _make_logger(history_db, _tmp_path: Path) -> RunRecorder:
     )
 
 
-def _start_and_snapshot(logger: RunRecorder):
+def _start_and_snapshot(logger: RunRecorder) -> tuple[str, str, float]:
     """Start logging and return (run_id, start_utc, start_mono)."""
     logger.start_recording()
     snap = logger._session_snapshot()
