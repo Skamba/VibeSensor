@@ -34,7 +34,7 @@ def _draw_systems_panel(
     y_cursor: float,
 ) -> float:
     cards = data.system_cards[:2]
-    n_cards = len(cards) if cards else 0
+    n_cards = len(cards)
     layout = build_page1_layout(
         width=width,
         page_top=PAGE_H - MARGIN,
