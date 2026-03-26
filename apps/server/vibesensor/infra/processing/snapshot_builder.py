@@ -47,7 +47,7 @@ def compute_snapshot_window(
 ) -> SnapshotWindow:
     """Compute the time-window size and FFT-block strategy for a compute snapshot."""
     desired_samples = int(max(1.0, float(sample_rate_hz) * float(waveform_seconds)))
-    n_time = min(count, capacity, max(1, desired_samples))
+    n_time = min(count, capacity, desired_samples)
     needs_separate_fft_block = count >= fft_n and n_time < fft_n
     return SnapshotWindow(
         n_time=n_time,
