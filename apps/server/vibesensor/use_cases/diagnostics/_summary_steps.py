@@ -74,7 +74,7 @@ def build_sensor_bundle(
     return build_sensor_analysis(
         samples=samples,
         language=language,
-        per_sample_phases=per_sample_phases,
+        per_sample_phases=list(per_sample_phases),
     )
 
 
