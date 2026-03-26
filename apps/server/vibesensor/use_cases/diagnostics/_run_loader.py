@@ -10,6 +10,7 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 
 
 def _load_run(path: Path) -> tuple[JsonObject, list[SensorFrame], list[str]]:
+    """Load one JSONL run and return metadata, samples, and decode warnings."""
     if not path.exists():
         raise FileNotFoundError(path)
     if path.suffix.lower() != ".jsonl":

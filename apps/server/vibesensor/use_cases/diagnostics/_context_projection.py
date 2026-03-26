@@ -68,6 +68,7 @@ def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
 
 
 def context_to_configuration_snapshot(context: DiagnosticsContext) -> ConfigurationSnapshot:
+    """Project diagnostics context into the domain configuration snapshot shape."""
     spec = context.order_reference_spec
     return ConfigurationSnapshot(
         sensor_model=context.sensor_model,
@@ -81,6 +82,7 @@ def context_to_configuration_snapshot(context: DiagnosticsContext) -> Configurat
 
 
 def context_to_car(context: DiagnosticsContext) -> Car | None:
+    """Project the optional car context used by report and finding consumers."""
     spec = context.order_reference_spec
     car_snapshot = context.run_context.car
     if not (context.car_name or context.car_type or context.car_variant or spec is not None):
@@ -96,6 +98,7 @@ def context_to_car(context: DiagnosticsContext) -> Car | None:
 
 
 def context_to_symptom(context: DiagnosticsContext) -> Symptom:
+    """Project diagnostics symptom metadata into the domain symptom object."""
     if not context.symptom_description:
         return Symptom.unspecified()
     return Symptom(

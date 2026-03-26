@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import FindingKind, VibrationSource
 from vibesensor.shared.constants.analysis import SPEED_COVERAGE_MIN_PCT
@@ -24,6 +26,7 @@ def _reference_missing_finding(
     suspected_source: VibrationSource,
     kind: FindingKind = FindingKind.REFERENCE,
 ) -> DomainFinding:
+    """Build a bare reference-gap finding with the standard diagnostics shape."""
     return DomainFinding(
         finding_id=finding_id,
         suspected_source=suspected_source,
@@ -35,7 +38,7 @@ def _reference_missing_finding(
 def build_reference_findings(
     *,
     context: DiagnosticsContext,
-    samples: list[Sample],
+    samples: Sequence[Sample],
     speed_sufficient: bool,
     tire_circumference_m: float | None,
     raw_sample_rate_hz: float | None,
@@ -82,7 +85,7 @@ def build_reference_findings(
 
 
 def engine_reference_coverage_pct(
-    samples: list[Sample],
+    samples: Sequence[Sample],
     *,
     context: DiagnosticsContext,
     tire_circumference_m: float | None,
@@ -97,7 +100,7 @@ def engine_reference_coverage_pct(
 
 
 def has_engine_reference(
-    samples: list[Sample],
+    samples: Sequence[Sample],
     *,
     context: DiagnosticsContext,
     tire_circumference_m: float | None,
