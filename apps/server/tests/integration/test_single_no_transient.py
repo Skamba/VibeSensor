@@ -186,7 +186,7 @@ def test_single_sensor_amplitude_scaling_monotonic(corner: str, profile: dict[st
 def test_single_sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
     """Idle → ramp → steady fault at one corner."""
     sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
+    samples: list[dict[str, Any]] = []
     samples.extend(make_idle_samples(sensors=[sensor], n_samples=10, start_t_s=0))
     samples.extend(
         make_ramp_samples(
