@@ -74,6 +74,10 @@ export interface LivePayloadUpdateResult {
   hasNewSpectrumFrame: boolean;
 }
 
+function hasRenderableSpectrumData(spectra: { clients: Record<string, SpectrumClientData> }): boolean {
+  return Object.values(spectra.clients).some((clientSpec) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
+}
+
 export function applySpectrumTick(
   previousSpectra: { clients: Record<string, SpectrumClientData> },
   previousHasSpectrumData: boolean,
@@ -86,12 +90,9 @@ export function applySpectrumTick(
       hasNewSpectrumFrame: false,
     };
   }
-  const hasSpectrumData = Object.values(incomingSpectra.clients).some(
-    (clientSpec) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0,
-  );
   return {
     spectra: incomingSpectra,
-    hasSpectrumData,
+    hasSpectrumData: hasRenderableSpectrumData(incomingSpectra),
     hasNewSpectrumFrame: true,
   };
 }
