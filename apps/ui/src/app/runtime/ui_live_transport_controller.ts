@@ -53,6 +53,11 @@ export class UiLiveTransportController {
     }
   }
 
+  private refreshWsChrome(): void {
+    this.renderWsState();
+    this.updateSpectrumOverlay();
+  }
+
   startTransportMode(): void {
     const isDemoMode = new URLSearchParams(window.location.search).has("demo");
     if (isDemoMode) {
@@ -92,8 +97,7 @@ export class UiLiveTransportController {
     } catch (error) {
       this.state.transport.payloadError = error instanceof Error ? error.message : this.payloadErrorMessage();
       this.state.spectrum.hasSpectrumData = false;
-      this.renderWsState();
-      this.updateSpectrumOverlay();
+      this.refreshWsChrome();
       return;
     }
 
@@ -131,8 +135,7 @@ export class UiLiveTransportController {
       },
       onStateChange: (nextState) => {
         this.state.transport.wsState = nextState;
-        this.renderWsState();
-        this.updateSpectrumOverlay();
+        this.refreshWsChrome();
         if (nextState === "connected" || nextState === "no_data") {
           this.sendSelection();
         }
