@@ -19,6 +19,7 @@ export interface SettingsGpsStatusModuleDeps extends FeatureDepsBase {
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
+  syncSpeedSourceSelectionUi: () => void;
   renderSpeedReadout: () => void;
 }
 
@@ -53,7 +54,9 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
     const unitLabel = selectedSpeedUnitLabel();
     if (els.headerGpsStatus) {
       const stateLabel = connectionStateLabel(status.connection_state);
-      const speedText = formatSpeedValue(status.effective_speed_kmh, unitLabel);
+      const speedText = status.speed_source === "gps"
+        ? formatSpeedValue(status.effective_speed_kmh, unitLabel)
+        : null;
       els.headerGpsStatus.textContent = `GPS ${stateLabel}${speedText ? ` ${speedText}` : ""}`;
       const variant = status.connection_state === "connected"
         ? "ok"
@@ -92,14 +95,10 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
   const polling = createPollingController({
     poll: async () => {
       const status = await getSpeedSourceStatus();
-      settings.gpsFallbackActive = status.fallback_active
-        || (
-          settings.speedSource !== "manual"
-          && typeof settings.manualSpeedKph === "number"
-          && settings.manualSpeedKph > 0
-          && status.connection_state !== "connected"
-        );
+      settings.gpsFallbackActive = status.fallback_active;
+      settings.resolvedSpeedSource = status.speed_source;
       renderGpsStatus(status);
+      ctx.syncSpeedSourceSelectionUi();
       ctx.renderSpeedReadout();
       return status.connection_state === "connected"
         ? GPS_POLL_FAST_MS

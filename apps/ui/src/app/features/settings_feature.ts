@@ -107,6 +107,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     settings,
     getSpeedUnit: ctx.getSpeedUnit,
     fmt,
+    syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
     renderSpeedReadout: ctx.renderSpeedReadout,
   });
   syncCarDependentUiState();
