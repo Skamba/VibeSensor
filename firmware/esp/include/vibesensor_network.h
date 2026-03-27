@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 
+// Allow per-developer network overrides without editing the committed defaults.
 #if __has_include("vibesensor_network.local.h")
 #include "vibesensor_network.local.h"
 #endif
