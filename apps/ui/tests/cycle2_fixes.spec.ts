@@ -15,6 +15,7 @@ import { expect, test } from "@playwright/test";
 import { adaptServerPayload } from "../src/server_payload";
 import { applySpectrumTick } from "../src/app/ui_app_state";
 import { areHeavyFramesCompatible, interpolateHeavyFrame } from "../src/app/spectrum_animation";
+import { EXPECTED_SCHEMA_VERSION, type LiveWsPayload } from "../src/contracts/ws_payload_types";
 
 function makeStrengthMetrics(vibrationStrengthDb: number) {
   return {
@@ -36,10 +37,17 @@ function requireSpectra(adapted: ReturnType<typeof adaptServerPayload>) {
 // 1. adaptServerPayload – spectra null yields null, not stale data
 // ---------------------------------------------------------------------------
 test.describe("adaptServerPayload spectra handling", () => {
-  const basePayload: Record<string, unknown> = {
+  const basePayload = {
+    schema_version: EXPECTED_SCHEMA_VERSION,
+    server_time: "2026-01-01T00:00:00Z",
     clients: [],
     speed_mps: 10,
-  };
+    selected_client_id: null,
+    rotational_speeds: null,
+  } satisfies Pick<
+    LiveWsPayload,
+    "schema_version" | "server_time" | "clients" | "speed_mps" | "selected_client_id" | "rotational_speeds"
+  >;
 
   test("returns null spectra when payload has no spectra field", () => {
     const adapted = adaptServerPayload({ ...basePayload });
