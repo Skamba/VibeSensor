@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Run docker-backed e2e shards with cached duration balancing and cleanup hooks."""
+
 from __future__ import annotations
 
 import argparse

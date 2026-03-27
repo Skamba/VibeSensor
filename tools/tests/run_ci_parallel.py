@@ -27,6 +27,20 @@ UI_LOCK_FILE = UI_DIR / "package-lock.json"
 UI_LOCK_HASH_FILE = UI_DIR / ".npm-ci-lock.sha256"
 PRINT_LOCK = threading.Lock()
 RESULT_LOCK = threading.Lock()
+ALL_JOB_NAMES = (
+    "backend-quality",
+    "backend-typecheck",
+    "frontend-typecheck",
+    "ui-smoke",
+    "release-smoke",
+    "firmware-native-tests",
+    "backend-tests-1",
+    "backend-tests-2",
+    "backend-tests-3",
+    "backend-tests-4",
+    "backend-tests-5",
+    "e2e",
+)
 
 
 @dataclass(frozen=True)
@@ -371,20 +385,7 @@ def main() -> int:
     parser.add_argument(
         "--job",
         action="append",
-        choices=[
-            "backend-quality",
-            "backend-typecheck",
-            "frontend-typecheck",
-            "ui-smoke",
-            "release-smoke",
-            "firmware-native-tests",
-            "backend-tests-1",
-            "backend-tests-2",
-            "backend-tests-3",
-            "backend-tests-4",
-            "backend-tests-5",
-            "e2e",
-        ],
+        choices=ALL_JOB_NAMES,
         help="Run only selected job(s). Repeat to run multiple jobs.",
     )
     parser.add_argument(
@@ -403,24 +404,7 @@ def main() -> int:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     all_jobs = _job_steps(python_cmd)
-    selected_jobs = (
-        args.job
-        if args.job
-        else [
-            "backend-quality",
-            "backend-typecheck",
-            "frontend-typecheck",
-            "ui-smoke",
-            "release-smoke",
-            "firmware-native-tests",
-            "backend-tests-1",
-            "backend-tests-2",
-            "backend-tests-3",
-            "backend-tests-4",
-            "backend-tests-5",
-            "e2e",
-        ]
-    )
+    selected_jobs = args.job if args.job else list(ALL_JOB_NAMES)
 
     if _shared_ui_workspace_would_race(
         selected_jobs,
