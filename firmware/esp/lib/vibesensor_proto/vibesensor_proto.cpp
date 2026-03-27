@@ -5,6 +5,12 @@
 
 namespace vibesensor {
 namespace {
+constexpr size_t kMacStringBytes = 17;
+constexpr size_t kClientIdHexChars = kClientIdBytes * 2;
+constexpr size_t kHelloNameMaxBytes = 32;
+constexpr size_t kFirmwareVersionMaxBytes = 32;
+constexpr size_t kXyzSampleBytes = 6;
+constexpr size_t kPacketClientIdOffset = 2;
 
 void write_u16_le(uint8_t* dst, uint16_t v) {
   dst[0] = static_cast<uint8_t>(v & 0xFF);
@@ -44,26 +50,35 @@ uint64_t read_u64_le(const uint8_t* src) {
   return v;
 }
 
+void copy_client_id(uint8_t* dst, const uint8_t client_id[kClientIdBytes]) {
+  memcpy(dst, client_id, kClientIdBytes);
+}
+
+bool packet_client_id_matches(const uint8_t* data,
+                              const uint8_t expected_client_id[kClientIdBytes]) {
+  return memcmp(data + kPacketClientIdOffset, expected_client_id, kClientIdBytes) == 0;
+}
+
 }  // namespace
 
 bool parse_mac(const String& mac, uint8_t out_client_id[6]) {
-  if (mac.length() != 17) {
+  if (mac.length() != kMacStringBytes) {
     return false;
   }
-  unsigned int values[6];
+  unsigned int values[kClientIdBytes];
   if (sscanf(mac.c_str(), "%2x:%2x:%2x:%2x:%2x:%2x",
-             &values[0], &values[1], &values[2],
-             &values[3], &values[4], &values[5]) != 6) {
+              &values[0], &values[1], &values[2],
+              &values[3], &values[4], &values[5]) != static_cast<int>(kClientIdBytes)) {
     return false;
   }
-  for (size_t i = 0; i < 6; ++i) {
+  for (size_t i = 0; i < kClientIdBytes; ++i) {
     out_client_id[i] = static_cast<uint8_t>(values[i]);
   }
   return true;
 }
 
 String client_id_hex(const uint8_t client_id[6]) {
-  char buf[13];
+  char buf[kClientIdHexChars + 1];
   snprintf(buf, sizeof(buf), "%02x%02x%02x%02x%02x%02x",
            client_id[0], client_id[1], client_id[2],
            client_id[3], client_id[4], client_id[5]);
@@ -77,11 +92,11 @@ size_t pack_hello(uint8_t* out,
                   uint16_t sample_rate_hz,
                   uint16_t frame_samples,
                   const char* name,
-                  const char* firmware_version,
-                  uint32_t queue_overflow_drops,
-                  uint8_t capabilities) {
-  const size_t name_len = strnlen(name, 32);
-  const size_t fw_len = strnlen(firmware_version, 32);
+                   const char* firmware_version,
+                   uint32_t queue_overflow_drops,
+                   uint8_t capabilities) {
+  const size_t name_len = strnlen(name, kHelloNameMaxBytes);
+  const size_t fw_len = strnlen(firmware_version, kFirmwareVersionMaxBytes);
   const size_t need = kHelloFixedBytes + name_len + fw_len;
   if (out_len < need) {
     return 0;
@@ -89,8 +104,8 @@ size_t pack_hello(uint8_t* out,
   size_t o = 0;
   out[o++] = kMsgHello;
   out[o++] = kProtoVersion;
-  memcpy(out + o, client_id, 6);
-  o += 6;
+  copy_client_id(out + o, client_id);
+  o += kClientIdBytes;
   write_u16_le(out + o, control_port);
   o += 2;
   write_u16_le(out + o, sample_rate_hz);
@@ -113,10 +128,10 @@ size_t pack_data(uint8_t* out,
                  size_t out_len,
                  const uint8_t client_id[6],
                  uint32_t seq,
-                 uint64_t t0_us,
-                 const int16_t* xyz_interleaved,
-                 uint16_t sample_count) {
-  const size_t payload_len = static_cast<size_t>(sample_count) * 6;
+                  uint64_t t0_us,
+                  const int16_t* xyz_interleaved,
+                  uint16_t sample_count) {
+  const size_t payload_len = static_cast<size_t>(sample_count) * kXyzSampleBytes;
   const size_t need = kDataHeaderBytes + payload_len;
   if (out_len < need) {
     return 0;
@@ -124,8 +139,8 @@ size_t pack_data(uint8_t* out,
   size_t o = 0;
   out[o++] = kMsgData;
   out[o++] = kProtoVersion;
-  memcpy(out + o, client_id, 6);
-  o += 6;
+  copy_client_id(out + o, client_id);
+  o += kClientIdBytes;
   write_u32_le(out + o, seq);
   o += 4;
   write_u64_le(out + o, t0_us);
@@ -152,7 +167,7 @@ bool parse_cmd(const uint8_t* data,
   if (data[0] != kMsgCmd || data[1] != kProtoVersion) {
     return false;
   }
-  if (memcmp(data + 2, expected_client_id, 6) != 0) {
+  if (!packet_client_id_matches(data, expected_client_id)) {
     return false;
   }
 
@@ -198,8 +213,8 @@ size_t pack_ack(uint8_t* out,
   size_t o = 0;
   out[o++] = kMsgAck;
   out[o++] = kProtoVersion;
-  memcpy(out + o, client_id, 6);
-  o += 6;
+  copy_client_id(out + o, client_id);
+  o += kClientIdBytes;
   write_u32_le(out + o, cmd_seq);
   o += 4;
   out[o++] = status;
@@ -216,8 +231,8 @@ size_t pack_data_ack(uint8_t* out,
   size_t o = 0;
   out[o++] = kMsgDataAck;
   out[o++] = kProtoVersion;
-  memcpy(out + o, client_id, 6);
-  o += 6;
+  copy_client_id(out + o, client_id);
+  o += kClientIdBytes;
   write_u32_le(out + o, last_seq_received);
   o += 4;
   return o;
@@ -233,7 +248,7 @@ bool parse_data_ack(const uint8_t* data,
   if (data[0] != kMsgDataAck || data[1] != kProtoVersion) {
     return false;
   }
-  if (memcmp(data + 2, expected_client_id, 6) != 0) {
+  if (!packet_client_id_matches(data, expected_client_id)) {
     return false;
   }
   if (out_last_seq_received != nullptr) {
@@ -249,8 +264,8 @@ size_t pack_hello_ack(uint8_t* out, size_t out_len, const uint8_t client_id[6]) 
   size_t o = 0;
   out[o++] = kMsgHelloAck;
   out[o++] = kProtoVersion;
-  memcpy(out + o, client_id, 6);
-  o += 6;
+  copy_client_id(out + o, client_id);
+  o += kClientIdBytes;
   return o;
 }
 
@@ -263,7 +278,7 @@ bool parse_hello_ack(const uint8_t* data,
   if (data[0] != kMsgHelloAck || data[1] != kProtoVersion) {
     return false;
   }
-  return memcmp(data + 2, expected_client_id, 6) == 0;
+  return packet_client_id_matches(data, expected_client_id);
 }
 
 }  // namespace vibesensor
