@@ -1913,6 +1913,8 @@ export interface components {
        * @default 0
        */
       samples_written?: number;
+      /** Start Time Utc */
+      start_time_utc?: string | null;
       /** Write Error */
       write_error: string | null;
     };

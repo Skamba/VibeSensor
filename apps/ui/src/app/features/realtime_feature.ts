@@ -19,6 +19,7 @@ import {
   renderRealtimeSensorOverview,
   renderRealtimeSensorTable,
 } from "../views/realtime_sensor_table_view";
+import { createPollingController } from "./polling_controller";
 
 export interface RealtimeFeatureDeps extends FeatureDepsBase {
   realtime: RealtimeState;
@@ -47,7 +48,13 @@ export interface RealtimeFeature {
 
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
   const { realtime, spectrum, els, t, escapeHtml, formatInt, setPillState } = ctx;
+  const isDemoMode = new URLSearchParams(window.location.search).has("demo");
+  const LOGGING_STATUS_IDLE_POLL_MS = 15_000;
+  const LOGGING_STATUS_ACTIVE_POLL_MS = 2_000;
+  const LOGGING_STATUS_ERROR_POLL_MS = 5_000;
   let handlersBound = false;
+  let pendingLoggingAction: "starting" | "stopping" | null = null;
+  let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
 
   const SHORTHAND_LOCATION_MAP: Record<string, string> = {
     "front left": "front_left_wheel",
@@ -153,6 +160,20 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     summary: string;
   };
 
+  type RecordingPanelState = {
+    pillVariant: "muted" | "ok" | "warn" | "bad";
+    pillText: string;
+    phaseText: string;
+    summaryText: string;
+    runIdText: string;
+    elapsedText: string;
+    samplesText: string;
+    showStart: boolean;
+    showStop: boolean;
+    startDisabled: boolean;
+    stopDisabled: boolean;
+  };
+
   function computeLiveHealth(): LiveHealth {
     if (realtime.loggingStatus.write_error) {
       return {
@@ -232,14 +253,6 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     const health = computeLiveHealth();
     setPillState(els.liveRunHealth, health.variant, health.text);
     setPillState(els.shellLiveStatus, health.variant, health.text);
-    if (els.loggingSummary) {
-      els.loggingSummary.textContent = health.summary;
-    }
-    if (els.loggingRunId) {
-      const runId = realtime.loggingStatus.run_id;
-      els.loggingRunId.hidden = !runId;
-      els.loggingRunId.textContent = runId ? t("dashboard.logging.run_id", { runId }) : "";
-    }
   }
 
   function sensorsSettingsSignature(): string {
@@ -287,38 +300,197 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   function renderStatus(clientRow?: AdaptedClient): void {
     const currentClient = selectedClient(clientRow);
     renderLiveOverviewStats(currentClient);
-    if (!currentClient) {
-      ctx.setStatValue(els.lastSeen, "--");
-      ctx.setStatValue(els.dropped, "--");
-      ctx.setStatValue(els.framesTotal, "--");
-      return;
-    }
-    const age = currentClient.last_seen_age_ms ?? null;
-    const ageValue = age === null ? "--" : t("status.age_ms_ago", { value: formatInt(Math.max(0, age)) });
-    ctx.setStatValue(els.lastSeen, ageValue);
-    ctx.setStatValue(els.dropped, formatInt(currentClient.dropped_frames ?? 0));
-    ctx.setStatValue(els.framesTotal, formatInt(currentClient.frames_total ?? 0));
   }
 
-  function renderLoggingStatus(): void {
+  function clearLoggingElapsedTimer(): void {
+    if (loggingElapsedTimer === null) return;
+    clearInterval(loggingElapsedTimer);
+    loggingElapsedTimer = null;
+  }
+
+  function formatElapsed(startTimeUtc: string | null | undefined): string {
+    if (!startTimeUtc) return "--";
+    const startMs = Date.parse(startTimeUtc);
+    if (!Number.isFinite(startMs)) return "--";
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+    const hours = Math.floor(elapsedSeconds / 3600);
+    const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+    const seconds = elapsedSeconds % 60;
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  function syncLoggingElapsedTimer(): void {
+    const shouldTick = handlersBound && Boolean(realtime.loggingStatus.enabled && realtime.loggingStatus.start_time_utc);
+    if (!shouldTick) {
+      clearLoggingElapsedTimer();
+      return;
+    }
+    if (loggingElapsedTimer !== null) return;
+    loggingElapsedTimer = setInterval(() => {
+      ctx.setStatValue(els.loggingElapsed, formatElapsed(realtime.loggingStatus.start_time_utc));
+    }, 1_000);
+  }
+
+  function recordingRunIdText(status = realtime.loggingStatus): string {
+    if (status.enabled && status.run_id) {
+      return t("dashboard.logging.run_id", { runId: status.run_id });
+    }
+    if (status.last_completed_run_id) {
+      return t("dashboard.logging.last_run_id", { runId: status.last_completed_run_id });
+    }
+    return "";
+  }
+
+  function computeRecordingPanelState(): RecordingPanelState {
     const status = realtime.loggingStatus;
     const on = Boolean(status.enabled);
     const hasActiveClients = realtime.clients.some((client) => Boolean(client?.connected));
-    if (status.write_error) {
-      setPillState(els.loggingStatus, "bad", status.write_error);
-    } else {
-      setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
+    const connectedCount = formatInt(connectedClients().length);
+    const assignedCount = formatInt(assignedClientCount());
+    const liveHealth = computeLiveHealth();
+    const runIdText = recordingRunIdText(status);
+    const elapsedText = on ? formatElapsed(status.start_time_utc) : "--";
+    const samplesText = formatInt(status.samples_written ?? 0);
+
+    if (pendingLoggingAction === "starting") {
+      return {
+        pillVariant: "muted",
+        pillText: t("dashboard.recording_phase.starting"),
+        phaseText: t("dashboard.recording_phase.starting"),
+        summaryText: t("dashboard.logging.starting"),
+        runIdText,
+        elapsedText: "--",
+        samplesText,
+        showStart: true,
+        showStop: false,
+        startDisabled: true,
+        stopDisabled: true,
+      };
     }
-    if (els.startLoggingBtn) els.startLoggingBtn.disabled = on || !hasActiveClients;
-    if (els.stopLoggingBtn) els.stopLoggingBtn.disabled = !on;
+
+    if (pendingLoggingAction === "stopping") {
+      return {
+        pillVariant: "warn",
+        pillText: t("dashboard.recording_phase.stopping"),
+        phaseText: t("dashboard.recording_phase.stopping"),
+        summaryText: t("dashboard.logging.stopping"),
+        runIdText,
+        elapsedText,
+        samplesText,
+        showStart: false,
+        showStop: true,
+        startDisabled: true,
+        stopDisabled: true,
+      };
+    }
+
+    if (on) {
+      return {
+        pillVariant: status.write_error ? "bad" : "ok",
+        pillText: status.write_error || t("dashboard.recording_phase.recording"),
+        phaseText: status.write_error ? t("dashboard.health.attention") : t("dashboard.recording_phase.recording"),
+        summaryText: liveHealth.variant === "ok"
+          ? t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount })
+          : liveHealth.summary,
+        runIdText,
+        elapsedText,
+        samplesText,
+        showStart: false,
+        showStop: true,
+        startDisabled: true,
+        stopDisabled: false,
+      };
+    }
+
+    if (status.analysis_in_progress) {
+      const runId = status.last_completed_run_id ?? t("status.unavailable");
+      return {
+        pillVariant: "warn",
+        pillText: t("dashboard.recording_phase.processing"),
+        phaseText: t("dashboard.recording_phase.processing"),
+        summaryText: t("dashboard.logging.processing", { runId }),
+        runIdText,
+        elapsedText: "--",
+        samplesText,
+        showStart: true,
+        showStop: false,
+        startDisabled: !hasActiveClients,
+        stopDisabled: true,
+      };
+    }
+
+    if (status.last_completed_run_id) {
+      return {
+        pillVariant: "ok",
+        pillText: t("dashboard.recording_phase.saved"),
+        phaseText: t("dashboard.recording_phase.saved"),
+        summaryText: t("dashboard.logging.saved", { runId: status.last_completed_run_id }),
+        runIdText,
+        elapsedText: "--",
+        samplesText,
+        showStart: true,
+        showStop: false,
+        startDisabled: !hasActiveClients,
+        stopDisabled: true,
+      };
+    }
+
+    return {
+      pillVariant: hasActiveClients ? "muted" : liveHealth.variant,
+      pillText: t("dashboard.recording_phase.ready"),
+      phaseText: t("dashboard.recording_phase.ready"),
+      summaryText: hasActiveClients
+        ? t("dashboard.logging.ready", { connected: connectedCount, assigned: assignedCount })
+        : liveHealth.summary,
+      runIdText,
+      elapsedText: "--",
+      samplesText,
+      showStart: true,
+      showStop: false,
+      startDisabled: !hasActiveClients,
+      stopDisabled: true,
+    };
+  }
+
+  function renderLoggingStatus(): void {
+    const panelState = computeRecordingPanelState();
+    setPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText);
+    ctx.setStatValue(els.loggingPhase, panelState.phaseText);
+    ctx.setStatValue(els.loggingElapsed, panelState.elapsedText);
+    ctx.setStatValue(els.loggingSamples, panelState.samplesText);
+    if (els.loggingSummary) {
+      els.loggingSummary.textContent = panelState.summaryText;
+    }
+    if (els.loggingRunId) {
+      els.loggingRunId.hidden = panelState.runIdText === "";
+      els.loggingRunId.textContent = panelState.runIdText;
+    }
+    if (els.startLoggingBtn) {
+      els.startLoggingBtn.hidden = !panelState.showStart;
+      els.startLoggingBtn.disabled = panelState.startDisabled;
+    }
+    if (els.stopLoggingBtn) {
+      els.stopLoggingBtn.hidden = !panelState.showStop;
+      els.stopLoggingBtn.disabled = panelState.stopDisabled;
+    }
+    syncLoggingElapsedTimer();
     renderLiveHealth();
   }
 
   async function refreshLoggingStatus(): Promise<void> {
+    if (isDemoMode && pendingLoggingAction === null) {
+      renderLoggingStatus();
+      return;
+    }
     try {
       realtime.loggingStatus = await getLoggingStatus();
       renderLoggingStatus();
     } catch (_err) {
+      pendingLoggingAction = null;
+      clearLoggingElapsedTimer();
       setPillState(els.loggingStatus, "bad", t("status.unavailable"));
       if (els.loggingSummary) {
         els.loggingSummary.textContent = t("status.unavailable");
@@ -327,30 +499,71 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         els.loggingRunId.hidden = true;
         els.loggingRunId.textContent = "";
       }
+      ctx.setStatValue(els.loggingPhase, t("status.unavailable"));
+      ctx.setStatValue(els.loggingElapsed, "--");
+      ctx.setStatValue(els.loggingSamples, "--");
+      if (els.startLoggingBtn) {
+        els.startLoggingBtn.hidden = false;
+        els.startLoggingBtn.disabled = true;
+      }
+      if (els.stopLoggingBtn) {
+        els.stopLoggingBtn.hidden = true;
+        els.stopLoggingBtn.disabled = true;
+      }
     }
   }
 
   async function startLogging(): Promise<void> {
+    if (pendingLoggingAction) return;
+    pendingLoggingAction = "starting";
+    renderLoggingStatus();
     try {
       realtime.loggingStatus = await startLoggingRun();
-      renderLoggingStatus();
       await ctx.onRecordingStatusChanged();
+      loggingStatusPolling.restart();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      pendingLoggingAction = null;
       setPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
+      if (els.loggingSummary) {
+        els.loggingSummary.textContent = msg || t("status.unavailable");
+      }
+      return;
     }
+    pendingLoggingAction = null;
+    renderLoggingStatus();
   }
 
   async function stopLogging(): Promise<void> {
+    if (pendingLoggingAction) return;
+    pendingLoggingAction = "stopping";
+    renderLoggingStatus();
     try {
       realtime.loggingStatus = await stopLoggingRun();
-      renderLoggingStatus();
       await ctx.onRecordingStatusChanged();
+      loggingStatusPolling.restart();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      pendingLoggingAction = null;
       setPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
+      if (els.loggingSummary) {
+        els.loggingSummary.textContent = msg || t("status.unavailable");
+      }
+      return;
     }
+    pendingLoggingAction = null;
+    renderLoggingStatus();
   }
+
+  const loggingStatusPolling = createPollingController({
+    poll: async () => {
+      await refreshLoggingStatus();
+      return realtime.loggingStatus.enabled || realtime.loggingStatus.analysis_in_progress
+        ? LOGGING_STATUS_ACTIVE_POLL_MS
+        : LOGGING_STATUS_IDLE_POLL_MS;
+    },
+    onErrorDelayMs: LOGGING_STATUS_ERROR_POLL_MS,
+  });
 
   async function refreshLocationOptions(): Promise<void> {
     try {
@@ -416,6 +629,10 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       return;
     }
     handlersBound = true;
+    if (!isDemoMode) {
+      loggingStatusPolling.start();
+    }
+    syncLoggingElapsedTimer();
     els.startLoggingBtn?.addEventListener("click", () => void startLogging());
     els.stopLoggingBtn?.addEventListener("click", () => void stopLogging());
     els.sensorsSettingsBody?.addEventListener("change", (event) => {

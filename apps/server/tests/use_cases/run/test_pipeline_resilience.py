@@ -472,6 +472,18 @@ class TestLoggingStatusEnrichment:
         assert status.samples_written == 0
         assert status.samples_dropped == 0
 
+    def test_status_includes_active_run_start_time(self, make_logger, tmp_path) -> None:
+        """Status response includes the active run start time when recording."""
+        logger = make_logger()
+
+        assert logger.status().start_time_utc is None
+
+        started = logger.start_recording()
+        status = logger.status()
+
+        assert started.start_time_utc is not None
+        assert status.start_time_utc == started.start_time_utc
+
     def test_status_includes_last_completed_fields(self, make_logger, tmp_path) -> None:
         """Status response includes last_completed_run_id and last_completed_run_error."""
         logger = make_logger()

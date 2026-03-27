@@ -207,6 +207,7 @@ class RunRecorder:
         return build_run_recorder_status(
             enabled=self.enabled,
             run_id=self._run_id,
+            start_time_utc=self._lifecycle.start_time_utc,
             persistence=self._persistence,
             post_analysis=self._post_analysis,
         )
