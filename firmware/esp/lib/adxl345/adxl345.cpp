@@ -11,7 +11,16 @@ constexpr uint8_t REG_FIFO_CTL = 0x38;
 constexpr uint8_t REG_FIFO_STATUS = 0x39;
 
 constexpr uint8_t VALUE_DEVID = 0xE5;
+constexpr uint8_t VALUE_POWER_CTL_STANDBY = 0x00;
+constexpr uint8_t VALUE_POWER_CTL_MEASURE = 0x08;
+constexpr uint8_t VALUE_INT_ENABLE_WATERMARK = 0x02;
+constexpr uint8_t VALUE_DATA_FORMAT_FULL_RES_16G = 0x0B;
+constexpr uint8_t VALUE_BW_RATE_400HZ = 0x0C;
+constexpr uint8_t VALUE_FIFO_STREAM_MODE = 0x80;
+constexpr uint8_t MASK_FIFO_WATERMARK = 0x1F;
+constexpr uint8_t MASK_FIFO_ENTRIES = 0x3F;
 constexpr uint32_t kI2cClockHz = 400000;
+constexpr unsigned int kFifoPopDelayUs = 5;
 }  // namespace
 
 ADXL345::ADXL345(TwoWire& wire,
@@ -41,19 +50,21 @@ bool ADXL345::begin() {
   }
 
   // Standby while configuring.
-  if (!write_reg(REG_POWER_CTL, 0x00)) { available_ = false; return false; }
+  if (!write_reg(REG_POWER_CTL, VALUE_POWER_CTL_STANDBY)) { available_ = false; return false; }
   // Full resolution + +/-16g.
-  if (!write_reg(REG_DATA_FORMAT, 0x0B)) { available_ = false; return false; }
+  if (!write_reg(REG_DATA_FORMAT, VALUE_DATA_FORMAT_FULL_RES_16G)) { available_ = false; return false; }
   // 400 Hz output data rate.
-  if (!write_reg(REG_BW_RATE, 0x0C)) { available_ = false; return false; }
+  if (!write_reg(REG_BW_RATE, VALUE_BW_RATE_400HZ)) { available_ = false; return false; }
   // FIFO stream mode with configurable watermark.
-  if (!write_reg(REG_FIFO_CTL, static_cast<uint8_t>(0x80 | (fifo_watermark_ & 0x1F)))) {
+  if (!write_reg(
+          REG_FIFO_CTL,
+          static_cast<uint8_t>(VALUE_FIFO_STREAM_MODE | (fifo_watermark_ & MASK_FIFO_WATERMARK)))) {
     available_ = false; return false;
   }
   // Enable watermark interrupt bit (optional, polled in this prototype).
-  if (!write_reg(REG_INT_ENABLE, 0x02)) { available_ = false; return false; }
+  if (!write_reg(REG_INT_ENABLE, VALUE_INT_ENABLE_WATERMARK)) { available_ = false; return false; }
   // Measurement mode.
-  if (!write_reg(REG_POWER_CTL, 0x08)) { available_ = false; return false; }
+  if (!write_reg(REG_POWER_CTL, VALUE_POWER_CTL_MEASURE)) { available_ = false; return false; }
 
   available_ = true;
   return true;
@@ -84,7 +95,7 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved,
     }
     return 0;
   }
-  size_t entries = static_cast<size_t>(fifo_status & 0x3F);
+  size_t entries = static_cast<size_t>(fifo_status & MASK_FIFO_ENTRIES);
   if (entries == 0) {
     return 0;
   }
@@ -106,7 +117,7 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved,
   uint8_t raw[6];
   for (size_t i = 0; i < count; ++i) {
     if (i > 0) {
-      delayMicroseconds(5);
+      delayMicroseconds(kFifoPopDelayUs);
     }
     if (!read_multi(REG_DATAX0, raw, 6)) {
       if (had_io_error != nullptr) {
