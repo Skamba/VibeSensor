@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { createHistoryFeature } from "../src/app/features/history_feature";
 import { createHistoryDetailModule } from "../src/app/features/history_detail_module";
 import {
   createHistoryDownloadDeleteModule,
@@ -115,6 +116,18 @@ function historyInsightsAnalyzingPayload(runId: string) {
   };
 }
 
+function historyListRun(runId: string) {
+  return {
+    run_id: runId,
+    status: "complete" as const,
+    start_time_utc: "2026-01-01T00:00:00Z",
+    end_time_utc: "2026-01-01T00:00:12Z",
+    created_at: "2026-01-01T00:00:00Z",
+    sample_count: 42,
+    error_message: null,
+  };
+}
+
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
 }
@@ -147,7 +160,7 @@ test("history list module refreshes runs and renders table state", async () => {
     const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
     if (url === "/api/history") {
       return jsonResponse({
-        runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
+        runs: [historyListRun("run-001")],
       });
     }
     throw new Error(`Unexpected request: ${url}`);
@@ -178,6 +191,8 @@ test("history list module refreshes runs and renders table state", async () => {
   expect(historyTableBody.innerHTML).toContain("run-001");
   expect(historyTableBody.innerHTML).toContain('data-run-toggle="details"');
   expect(historyTableBody.innerHTML).toContain('aria-expanded="false"');
+  expect(historyTableBody.innerHTML).toContain("history.row_status.complete");
+  expect(historyTableBody.innerHTML).toContain("history.summary_size");
   expect(historyTableBody.innerHTML).toContain("history.preview_available");
   expect(deleteAllRunsBtn.disabled).toBe(false);
 });
@@ -293,7 +308,7 @@ test("history detail module treats analyzing insights responses as not-yet-avail
 
 test("history list rendering promotes loaded findings ahead of supporting statistics", () => {
   const state = createAppState();
-  state.history.runs = [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }];
+  state.history.runs = [historyListRun("run-001")];
   state.history.expandedRunId = "run-001";
   state.history.runDetailsById["run-001"] = {
     preview: historyInsightsWithFindingsPayload("run-001", 2) as RunDetail["preview"],
@@ -328,6 +343,52 @@ test("history list rendering promotes loaded findings ahead of supporting statis
   expect(historyTableBody.innerHTML).toContain("Front-right wheel imbalance");
   expect(historyTableBody.innerHTML).toContain("history.findings_location");
   expect(historyTableBody.innerHTML).toContain("history.preview_stats_title");
+});
+
+test("history feature preloads collapsed row context for completed runs", async () => {
+  const state = createAppState();
+  const { els, historyTableBody } = createHistoryElements();
+  const originalFetch = globalThis.fetch;
+  const requests: string[] = [];
+  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
+    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
+    requests.push(url);
+    if (url === "/api/history") {
+      return jsonResponse({ runs: [historyListRun("run-001")] });
+    }
+    if (url === "/api/history/run-001/insights?lang=en") {
+      return jsonResponse(historyInsightsWithFindingsPayload("run-001", 2));
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  }) as typeof fetch;
+
+  const feature = createHistoryFeature({
+    history: state.history,
+    getLanguage: () => state.shell.lang,
+    els,
+    t: testTranslation,
+    escapeHtml: (value) => String(value ?? ""),
+    showError: () => {
+      /* no-op */
+    },
+    fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    fmtTs: (iso) => iso,
+    formatInt: (value) => String(value),
+  });
+
+  try {
+    await feature.refreshHistory();
+    await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  expect(historyTableBody.innerHTML).toContain("Front-right wheel imbalance");
+  expect(historyTableBody.innerHTML).toContain("report.confidence");
+  expect(requests).toEqual([
+    "/api/history",
+    "/api/history/run-001/insights?lang=en",
+  ]);
 });
 
 test("downloadBlobFile downloads with decoded filename and revokes the blob URL", async () => {

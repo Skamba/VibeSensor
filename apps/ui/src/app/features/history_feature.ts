@@ -38,6 +38,7 @@ export interface HistoryFeature {
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   const { history, els } = ctx;
   let handlersBound = false;
+  let previewPrefetchToken = 0;
 
   function ensureRunDetail(runId: string): RunDetail {
     if (!history.runDetailsById[runId]) {
@@ -76,6 +77,27 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     collapseExpandedRun,
     renderHistoryTable: () => listModule.renderHistoryTable(),
   });
+
+  function prefetchCollapsedRunContext(): void {
+    const token = ++previewPrefetchToken;
+    void (async () => {
+      for (const run of history.runs) {
+        if (token !== previewPrefetchToken) {
+          return;
+        }
+        if (run.status !== "complete") {
+          continue;
+        }
+        await detailModule.loadRunPreview(run.run_id);
+      }
+    })();
+  }
+
+  async function refreshHistory(): Promise<void> {
+    await listModule.refreshHistory();
+    prefetchCollapsedRunContext();
+  }
+
   const downloadDeleteModule: HistoryDownloadDeleteModule = createHistoryDownloadDeleteModule({
     history,
     getLanguage: ctx.getLanguage,
@@ -84,7 +106,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     ensureRunDetail,
     collapseExpandedRun,
     renderHistoryTable: () => listModule.renderHistoryTable(),
-    refreshHistory: () => listModule.refreshHistory(),
+    refreshHistory,
     loadRunInsights: (runId, force = false) => detailModule.loadRunInsights(runId, force),
   });
 
@@ -93,7 +115,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       return;
     }
     handlersBound = true;
-    els.refreshHistoryBtn?.addEventListener("click", () => void listModule.refreshHistory());
+    els.refreshHistoryBtn?.addEventListener("click", () => void refreshHistory());
     els.deleteAllRunsBtn?.addEventListener("click", () => void downloadDeleteModule.deleteAllRuns());
     els.historyTableBody?.addEventListener("click", (event) => {
       const action = getHistoryTableAction(event.target);
@@ -118,7 +140,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   return {
     bindHandlers,
     renderHistoryTable: () => listModule.renderHistoryTable(),
-    refreshHistory: () => listModule.refreshHistory(),
+    refreshHistory,
     deleteAllRuns: () => downloadDeleteModule.deleteAllRuns(),
     onHistoryTableAction: (action, runId) => downloadDeleteModule.onHistoryTableAction(action, runId),
     toggleRunDetails: (runId) => detailModule.toggleRunDetails(runId),
