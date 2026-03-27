@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import subprocess
 import sys
 import tempfile
@@ -15,6 +14,12 @@ import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 
+from vibesensor.app.subprocess_server import (
+    build_isolated_server_config,
+    build_isolated_server_env,
+    start_server_subprocess,
+    terminate_subprocess,
+)
 from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_validation_errors
 
 
@@ -35,51 +40,17 @@ def build_release_smoke_config(
     host: str,
     port: int,
 ) -> Path:
-    import yaml
-
-    data = yaml.safe_load(source_config.read_text(encoding="utf-8")) or {}
-    if not isinstance(data, dict):
-        raise ValueError(f"Expected config mapping in {source_config}")
-
-    runtime_data = runtime_root / "data"
-    rollback_dir = runtime_root / "rollback"
-    runtime_data.mkdir(parents=True, exist_ok=True)
-    rollback_dir.mkdir(parents=True, exist_ok=True)
-
-    data.setdefault("server", {})
-    data["server"]["host"] = host
-    data["server"]["port"] = port
-
     udp_data_port = port + 1000
     udp_control_port = port + 1001
-    if udp_control_port > 65535:
-        raise ValueError(
-            f"Release smoke UDP ports exceed range for HTTP port {port}: "
-            f"{udp_data_port}, {udp_control_port}",
-        )
-    data.setdefault("udp", {})
-    data["udp"]["data_host"] = host
-    data["udp"]["data_port"] = udp_data_port
-    data["udp"]["control_host"] = host
-    data["udp"]["control_port"] = udp_control_port
-
-    data.setdefault("gps", {})
-    data["gps"]["gps_enabled"] = False
-
-    data.setdefault("ap", {})
-    data["ap"].setdefault("self_heal", {})
-    data["ap"]["self_heal"]["enabled"] = False
-    data["ap"]["self_heal"]["state_file"] = str(runtime_data / "hotspot-self-heal-state.json")
-
-    data.setdefault("logging", {})
-    data["logging"]["history_db_path"] = str(runtime_data / "history.db")
-
-    data.setdefault("update", {})
-    data["update"]["rollback_dir"] = str(rollback_dir)
-
-    config_path = runtime_root / "release-smoke.yaml"
-    config_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
-    return config_path
+    return build_isolated_server_config(
+        source_config,
+        runtime_root,
+        host=host,
+        port=port,
+        udp_data_port=udp_data_port,
+        udp_control_port=udp_control_port,
+        config_name="release-smoke.yaml",
+    ).config_path
 
 
 def validate_firmware_dist(dist_dir: Path) -> list[str]:
@@ -183,38 +154,6 @@ def _read_http(url: str) -> tuple[int, str, str]:
         return response.status, content_type, body
 
 
-def _terminate_process(process: subprocess.Popen[str]) -> None:
-    """Terminate a spawned smoke-test process, escalating to kill if needed."""
-
-    if process.poll() is not None:
-        return
-    process.terminate()
-    try:
-        process.wait(timeout=10.0)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait(timeout=5.0)
-
-
-_SMOKE_SERVER_BOOTSTRAP = "\n".join(
-    [
-        "import sys",
-        "from pathlib import Path",
-        "import uvicorn",
-        "from vibesensor.app import create_app",
-        "config_path = Path(sys.argv[1])",
-        "runtime_app = create_app(config_path=config_path)",
-        "runtime = runtime_app.state.runtime",
-        "uvicorn.run(",
-        "    runtime_app,",
-        "    host=runtime.config.server.host,",
-        "    port=runtime.config.server.port,",
-        "    log_level='info',",
-        ")",
-    ],
-)
-
-
 def packaged_static_index_path() -> Path:
     """Resolve the packaged UI index.html path from the installed app module."""
 
@@ -249,18 +188,14 @@ def run_server_smoke(
     with tempfile.TemporaryDirectory(prefix="vibesensor-release-smoke-") as tmp_dir_text:
         tmp_dir = Path(tmp_dir_text)
         config_path = build_release_smoke_config(source_config, tmp_dir, host=host, port=port)
-        env = os.environ.copy()
-        env.setdefault("PYTHONUNBUFFERED", "1")
-        env.setdefault("VIBESENSOR_UPDATE_STATE_PATH", str(tmp_dir / "data" / "update_status.json"))
-        if extra_env:
-            env.update(extra_env)
-
-        process = subprocess.Popen(
-            [sys.executable, "-c", _SMOKE_SERVER_BOOTSTRAP, str(config_path)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
+        env = build_isolated_server_env(
+            tmp_dir,
+            extra_env=extra_env,
+        )
+        process = start_server_subprocess(
+            config_path,
             env=env,
+            stdout=subprocess.PIPE,
         )
         try:
             deadline = time.monotonic() + startup_timeout_s
@@ -303,7 +238,7 @@ def run_server_smoke(
                 f"Output:\n{output}",
             )
         finally:
-            _terminate_process(process)
+            terminate_subprocess(process)
 
 
 def _cmd_validate_firmware_manifest(args: argparse.Namespace) -> int:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run docker-backed e2e shards with cached duration balancing and cleanup hooks."""
+"""Run process-backed e2e shards with cached duration balancing and cleanup hooks."""
 
 from __future__ import annotations
 
@@ -20,7 +20,16 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.error import URLError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
+
+from vibesensor.app.subprocess_server import (
+    IsolatedRuntimePaths,
+    build_isolated_server_config,
+    build_isolated_server_env,
+    build_server_subprocess_cmd,
+    start_server_subprocess,
+    terminate_subprocess,
+)
 
 
 def _load_parallel_runner_support():
@@ -103,15 +112,15 @@ def collect_test_ids(pytest_args: list[str]) -> list[str]:
 ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "e2e_parallel"
 PRINT_LOCK = threading.Lock()
-_SKIP_BUILD_ENV = "VIBESENSOR_E2E_SKIP_BUILD"
 _DURATION_CACHE_ENV = "VIBESENSOR_E2E_DURATION_CACHE"
 _DEFAULT_MIN_SHARDS = 6
-_DEFAULT_DOCKERFILE = "apps/server/Dockerfile.e2e"
 _DEFAULT_DURATION = 3.0
-_SCOPE_LABEL = "com.vibesensor.role=e2e-shard"
-_RUN_LABEL_KEY = "com.vibesensor.run-id"
-_ACTIVE_CONTAINERS: set[str] = set()
-_ACTIVE_CONTAINERS_LOCK = threading.Lock()
+_DEFAULT_BASE_CONFIG = ROOT / "apps" / "server" / "config.docker.yaml"
+_DEFAULT_DATA_SEED_DIR = ROOT / "apps" / "server" / "data"
+_ACTIVE_PROCESSES: dict[str, subprocess.Popen[str]] = {}
+_ACTIVE_PROCESSES_LOCK = threading.Lock()
+_ACTIVE_RUNTIME_ROOTS: set[Path] = set()
+_ACTIVE_RUNTIME_ROOTS_LOCK = threading.Lock()
 _CLEANUP_HOOKS_REGISTERED = False
 _PREVIOUS_SIGNAL_HANDLERS: dict[int, object] = {}
 
@@ -121,14 +130,25 @@ class ShardConfig:
     index: int
     count: int
     tests: list[str]
-    container_name: str
-    data_dir: Path
+    runtime: IsolatedRuntimePaths
     http_port: int
     sim_data_port: int
     sim_control_port: int
     sim_client_control_base: int
     log_path: Path
     junit_path: Path
+
+    @property
+    def base_url(self) -> str:
+        return f"http://127.0.0.1:{self.http_port}"
+
+    @property
+    def app_log_path(self) -> Path:
+        return self.runtime.data_dir / "app.log"
+
+    @property
+    def sim_log_path(self) -> Path:
+        return self.runtime.data_dir / "sim_sender.log"
 
 
 @dataclass(frozen=True)
@@ -183,13 +203,9 @@ def _assign_shards_by_duration(
         else:
             fast_tests.append((test_id, est))
 
-    # Sort slow tests by duration descending for consistent ordering.
     slow_tests.sort(key=lambda t: t[1], reverse=True)
-
-    # Each slow test gets a dedicated shard.
     dedicated: list[list[str]] = [[t[0]] for t in slow_tests]
 
-    # Pack remaining fast tests into separate remainder shards.
     remainder_count = max(1, min_shards - len(dedicated))
     remainder: list[list[str]] = [[] for _ in range(remainder_count)]
     remainder_load: list[float] = [0.0] * remainder_count
@@ -201,11 +217,8 @@ def _assign_shards_by_duration(
         remainder_load[target] += est
 
     shard_tests = dedicated + remainder
-
-    # Remove any empty trailing shards.
     while shard_tests and not shard_tests[-1]:
         shard_tests.pop()
-
     return shard_tests
 
 
@@ -214,63 +227,57 @@ def _emit(line: str) -> None:
         print(line, flush=True)
 
 
-def _run(cmd: list[str], *, log_path: Path) -> int:
-    with log_path.open("w", encoding="utf-8") as log_file:
-        log_file.write(f"$ {shlex.join(cmd)}\n")
-        proc = subprocess.run(
-            cmd,
-            cwd=str(ROOT),
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        output = proc.stdout or ""
-        if output:
-            log_file.write(output)
-            if not output.endswith("\n"):
-                log_file.write("\n")
-    return proc.returncode if proc.returncode is not None else 1
-
-
 def _tail(path: Path, lines: int = 60) -> str:
     if not path.exists():
         return "<missing log>"
-    content = path.read_text(encoding="utf-8").splitlines()
+    content = path.read_text(encoding="utf-8", errors="replace").splitlines()
     return "\n".join(content[-lines:])
 
 
-def _force_remove_container(container_name: str) -> int:
-    result = subprocess.run(
-        ["docker", "rm", "-f", container_name],
-        cwd=str(ROOT),
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode
+def _track_active_process(label: str, process: subprocess.Popen[str]) -> None:
+    with _ACTIVE_PROCESSES_LOCK:
+        _ACTIVE_PROCESSES[label] = process
 
 
-def _track_active_container(container_name: str) -> None:
-    with _ACTIVE_CONTAINERS_LOCK:
-        _ACTIVE_CONTAINERS.add(container_name)
+def _untrack_active_process(label: str) -> None:
+    with _ACTIVE_PROCESSES_LOCK:
+        _ACTIVE_PROCESSES.pop(label, None)
 
 
-def _untrack_active_container(container_name: str) -> None:
-    with _ACTIVE_CONTAINERS_LOCK:
-        _ACTIVE_CONTAINERS.discard(container_name)
+def _track_active_runtime_root(runtime_root: Path) -> None:
+    with _ACTIVE_RUNTIME_ROOTS_LOCK:
+        _ACTIVE_RUNTIME_ROOTS.add(runtime_root)
 
 
-def _cleanup_active_containers() -> None:
-    with _ACTIVE_CONTAINERS_LOCK:
-        container_names = sorted(_ACTIVE_CONTAINERS)
-    for container_name in container_names:
-        _force_remove_container(container_name)
-        _untrack_active_container(container_name)
+def _untrack_active_runtime_root(runtime_root: Path) -> None:
+    with _ACTIVE_RUNTIME_ROOTS_LOCK:
+        _ACTIVE_RUNTIME_ROOTS.discard(runtime_root)
+
+
+def _cleanup_active_processes() -> None:
+    with _ACTIVE_PROCESSES_LOCK:
+        active_processes = list(_ACTIVE_PROCESSES.items())
+    for label, process in active_processes:
+        terminate_subprocess(process)
+        _untrack_active_process(label)
+
+
+def _cleanup_active_runtime_roots() -> None:
+    with _ACTIVE_RUNTIME_ROOTS_LOCK:
+        runtime_roots = list(_ACTIVE_RUNTIME_ROOTS)
+    for runtime_root in runtime_roots:
+        shutil.rmtree(runtime_root, ignore_errors=True)
+        _untrack_active_runtime_root(runtime_root)
+
+
+def _cleanup_active_resources() -> None:
+    _cleanup_active_processes()
+    _cleanup_active_runtime_roots()
 
 
 def _cleanup_on_signal(signum: int, frame) -> None:
-    _emit(f"[e2e-parallel] received signal {signum}; cleaning up active docker shards")
-    _cleanup_active_containers()
+    _emit(f"[e2e-parallel] received signal {signum}; cleaning up active shard processes")
+    _cleanup_active_resources()
     previous = _PREVIOUS_SIGNAL_HANDLERS.get(signum, signal.SIG_DFL)
     if previous is signal.default_int_handler:
         raise KeyboardInterrupt
@@ -284,208 +291,276 @@ def _register_cleanup_hooks() -> None:
     global _CLEANUP_HOOKS_REGISTERED
     if _CLEANUP_HOOKS_REGISTERED:
         return
-    atexit.register(_cleanup_active_containers)
+    atexit.register(_cleanup_active_resources)
     for signum in (signal.SIGINT, signal.SIGTERM):
         _PREVIOUS_SIGNAL_HANDLERS[signum] = signal.getsignal(signum)
         signal.signal(signum, _cleanup_on_signal)
     _CLEANUP_HOOKS_REGISTERED = True
 
 
-def _build_image(image: str, dockerfile: str = _DEFAULT_DOCKERFILE) -> int:
-    cmd = ["docker", "build", "-f", dockerfile, "-t", image, "."]
-    _emit(f"[e2e-parallel] building docker image once: {shlex.join(cmd)}")
-    return _run(cmd, log_path=LOG_DIR / "docker-build.log")
-
-
-def _skip_build_requested(env: Mapping[str, str] | None = None) -> bool:
-    source = os.environ if env is None else env
-    return source.get(_SKIP_BUILD_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _running_in_github_actions(env: Mapping[str, str] | None = None) -> bool:
-    source = os.environ if env is None else env
-    return source.get("GITHUB_ACTIONS", "").strip().lower() == "true"
-
-
-def _docker_image_exists(image: str) -> bool:
-    result = subprocess.run(
-        ["docker", "image", "inspect", image],
-        cwd=str(ROOT),
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    return result.returncode == 0
-
-
-def _prepare_image(
-    image: str,
-    *,
-    dockerfile: str = _DEFAULT_DOCKERFILE,
-    env: Mapping[str, str] | None = None,
-) -> int:
-    image_exists = _docker_image_exists(image)
-    if image_exists and (_skip_build_requested(env) or _running_in_github_actions(env)):
-        _emit(f"[e2e-parallel] reusing prebuilt docker image: {image}")
-        return 0
-
-    if _skip_build_requested(env):
-        _emit(
-            f"[e2e-parallel] {_SKIP_BUILD_ENV} requested skipping the docker build, "
-            f"but image {image!r} is not present locally"
-        )
-        return 2
-
-    build_rc = _build_image(image, dockerfile)
-    if build_rc != 0:
-        _emit(
-            f"[e2e-parallel] docker build failed (exit {build_rc}); "
-            f"log={LOG_DIR / 'docker-build.log'}"
-        )
-    return build_rc
-
-
 def _api_snapshot(base_url: str, path: str) -> str:
+    request = Request(f"{base_url}{path}", headers={"Connection": "close"})
     try:
-        with urlopen(f"{base_url}{path}", timeout=5) as resp:
-            payload = json.loads(resp.read())
+        with urlopen(request, timeout=5) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+        payload = json.loads(body)
         return json.dumps(payload, indent=2, sort_keys=True)
     except (URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
         return f"<unavailable: {exc}>"
 
 
-def _wait_health(base_url: str, timeout_s: float = 60.0) -> None:
+def _wait_health(
+    config: ShardConfig,
+    server_process: subprocess.Popen[str],
+    timeout_s: float = 60.0,
+) -> None:
     deadline = time.monotonic() + timeout_s
+    last_error: Exception | None = None
+    health_url = f"{config.base_url}/api/health"
+    request = Request(health_url, headers={"Connection": "close"})
     while time.monotonic() < deadline:
+        if server_process.poll() is not None:
+            raise RuntimeError(
+                "Shard server exited before becoming healthy "
+                f"(exit {server_process.returncode})."
+            )
         try:
-            with urlopen(f"{base_url}/api/health", timeout=2) as resp:
-                if resp.status == 200:
-                    return
-        except (URLError, TimeoutError, OSError):
-            pass
-        time.sleep(0.5)
-    raise RuntimeError("Container did not become healthy in time")
+            with urlopen(request, timeout=2.0) as resp:
+                if resp.status != 200:
+                    raise RuntimeError(f"Health endpoint returned HTTP {resp.status}")
+                payload = json.loads(resp.read().decode("utf-8", errors="replace"))
+            if payload.get("status") not in {"ok", "degraded"}:
+                raise RuntimeError(f"Unexpected health payload: {payload}")
+            if payload.get("startup_state") != "ready":
+                raise RuntimeError(f"Server not ready yet: {payload}")
+            if payload.get("background_task_failures"):
+                raise RuntimeError(f"Managed startup task failed: {payload}")
+            return
+        except (
+            URLError,
+            TimeoutError,
+            OSError,
+            json.JSONDecodeError,
+            RuntimeError,
+        ) as exc:
+            last_error = exc
+            time.sleep(0.5)
+    raise RuntimeError(
+        "Shard server did not become ready before timeout. "
+        f"Last error: {last_error}"
+    )
 
 
-def _print_diagnostics(*, sim_log: Path, container_name: str, base_url: str) -> None:
-    _emit("\n=== diagnostics: docker ps ===")
-    subprocess.run(["docker", "ps", "-a"], cwd=str(ROOT), check=False)
-    _emit("\n=== diagnostics: docker logs (tail 200) ===")
-    subprocess.run(
-        ["docker", "logs", "--tail", "200", container_name],
-        cwd=str(ROOT),
-        check=False,
-    )
+def _print_diagnostics(config: ShardConfig) -> None:
     _emit(
-        f"\n=== diagnostics: /api/clients ===\n{_api_snapshot(base_url, '/api/clients')}"
+        f"\n=== diagnostics: shard {config.index}/{config.count} runtime ===\n"
+        f"runtime_root={config.runtime.root}\n"
+        f"config={config.runtime.config_path}"
     )
-    _emit(
-        f"\n=== diagnostics: /api/history ===\n{_api_snapshot(base_url, '/api/history')}"
-    )
-    if sim_log.exists():
+    if config.runtime.config_path.exists():
         _emit(
-            f"\n=== diagnostics: simulator log ===\n{sim_log.read_text(encoding='utf-8')}"
+            "\n=== diagnostics: generated config ===\n"
+            f"{config.runtime.config_path.read_text(encoding='utf-8', errors='replace')}"
         )
+    _emit(f"\n=== diagnostics: shard log tail ===\n{_tail(config.log_path, 120)}")
+    _emit(f"\n=== diagnostics: app log tail ===\n{_tail(config.app_log_path, 120)}")
+    _emit(
+        f"\n=== diagnostics: /api/health ===\n"
+        f"{_api_snapshot(config.base_url, '/api/health')}"
+    )
+    _emit(
+        f"\n=== diagnostics: /api/clients ===\n"
+        f"{_api_snapshot(config.base_url, '/api/clients')}"
+    )
+    _emit(
+        f"\n=== diagnostics: /api/history ===\n"
+        f"{_api_snapshot(config.base_url, '/api/history')}"
+    )
+    if config.sim_log_path.exists():
+        _emit(
+            f"\n=== diagnostics: simulator log tail ===\n"
+            f"{_tail(config.sim_log_path, 120)}"
+        )
+
+
+def _write_log_header(log_file, *, config: ShardConfig) -> None:
+    log_file.write(f"runtime_root={config.runtime.root}\n")
+    log_file.write(f"config_path={config.runtime.config_path}\n")
+    log_file.write(f"base_url={config.base_url}\n")
+    log_file.flush()
+
+
+def _start_logged_process(
+    cmd: list[str],
+    *,
+    env: Mapping[str, str] | None,
+    cwd: Path,
+    log_file,
+) -> subprocess.Popen[str]:
+    return subprocess.Popen(
+        cmd,
+        cwd=str(cwd),
+        text=True,
+        stdout=log_file,
+        stderr=subprocess.STDOUT,
+        env=None if env is None else dict(env),
+        start_new_session=True,
+    )
+
+
+def _terminate_tracked_process(
+    label: str,
+    process: subprocess.Popen[str] | None,
+) -> None:
+    if process is None:
+        return
+    try:
+        terminate_subprocess(process)
+    finally:
+        _untrack_active_process(label)
 
 
 def _run_shard_e2e(
     *,
     config: ShardConfig,
     marker: str,
-    image: str,
-    log_path: Path,
 ) -> int:
-    """Run Docker e2e tests for one shard — replaces the old run_full_suite.py subprocess call."""
-    base_url = f"http://127.0.0.1:{config.http_port}"
-    data_dir = config.data_dir
-    data_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(ROOT / "apps" / "server" / "data", data_dir, dirs_exist_ok=True)
-    sim_log = data_dir / "sim_sender.log"
-    container_started = False
+    server_label = f"shard-{config.index}-server"
+    pytest_label = f"shard-{config.index}-pytest"
+    server_process: subprocess.Popen[str] | None = None
+    pytest_process: subprocess.Popen[str] | None = None
+
+    server_env = build_isolated_server_env(
+        config.runtime.root,
+        repo_root=ROOT,
+        extra_env={"VIBESENSOR_SERVE_STATIC": "0"},
+    )
+    pytest_env = os.environ.copy()
+    pytest_env.update(
+        {
+            "VIBESENSOR_BASE_URL": config.base_url,
+            "VIBESENSOR_SIM_SERVER_HOST": "127.0.0.1",
+            "VIBESENSOR_SIM_DATA_PORT": str(config.sim_data_port),
+            "VIBESENSOR_SIM_CONTROL_PORT": str(config.sim_control_port),
+            "VIBESENSOR_SIM_CLIENT_CONTROL_BASE": str(config.sim_client_control_base),
+            "VIBESENSOR_SIM_DURATION": "8",
+            "VIBESENSOR_SIM_DURATION_LONG": "20",
+            "VIBESENSOR_SIM_LOG": str(config.sim_log_path),
+        }
+    )
     try:
-        docker_run_cmd = [
-            "docker",
-            "run",
-            "--detach",
-            "--name",
-            config.container_name,
-            "--label",
-            _SCOPE_LABEL,
-            "--label",
-            f"{_RUN_LABEL_KEY}={os.getpid()}",
-            "-p",
-            f"{config.http_port}:8000",
-            "-p",
-            f"{config.sim_data_port}:9000/udp",
-            "-p",
-            f"{config.sim_control_port}:9001/udp",
-            "-v",
-            f"{data_dir}:/app/apps/server/data",
-            image,
-        ]
-        rc = _run(docker_run_cmd, log_path=log_path)
-        if rc != 0:
-            return rc
-        container_started = True
-        _track_active_container(config.container_name)
-        _wait_health(base_url)
-        env = os.environ.copy()
-        env.update(
-            {
-                "VIBESENSOR_BASE_URL": base_url,
-                "VIBESENSOR_SIM_SERVER_HOST": "127.0.0.1",
-                "VIBESENSOR_SIM_DATA_PORT": str(config.sim_data_port),
-                "VIBESENSOR_SIM_CONTROL_PORT": str(config.sim_control_port),
-                "VIBESENSOR_SIM_CLIENT_CONTROL_BASE": str(
-                    config.sim_client_control_base
-                ),
-                "VIBESENSOR_SIM_DURATION": "8",
-                "VIBESENSOR_SIM_DURATION_LONG": "20",
-                "VIBESENSOR_SIM_LOG": str(sim_log),
-            }
-        )
-        pytest_cmd = [
-            sys.executable,
-            "-m",
-            "pytest",
-            "-q",
-            "-n",
-            "0",
-            "--junitxml",
-            str(config.junit_path),
-            "-m",
-            marker,
-            *config.tests,
-        ]
-        with log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write(f"$ {shlex.join(pytest_cmd)}\n")
-            proc = subprocess.run(
-                pytest_cmd,
-                cwd=str(ROOT),
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                env=env,
+        with config.log_path.open("w", encoding="utf-8") as log_file:
+            _write_log_header(log_file, config=config)
+
+            server_cmd = build_server_subprocess_cmd(config.runtime.config_path)
+            log_file.write(f"$ {shlex.join(server_cmd)}\n")
+            log_file.flush()
+            server_process = start_server_subprocess(
+                config.runtime.config_path,
+                env=server_env,
+                cwd=ROOT,
+                stdout=log_file,
             )
-            if proc.stdout:
-                log_file.write(proc.stdout)
-        return proc.returncode if proc.returncode is not None else 1
+            _track_active_process(server_label, server_process)
+            _wait_health(config, server_process)
+
+            pytest_cmd = [
+                sys.executable,
+                "-m",
+                "pytest",
+                "-q",
+                "-n",
+                "0",
+                "--junitxml",
+                str(config.junit_path),
+                "-m",
+                marker,
+                *config.tests,
+            ]
+            log_file.write(f"$ {shlex.join(pytest_cmd)}\n")
+            log_file.flush()
+            pytest_process = _start_logged_process(
+                pytest_cmd,
+                env=pytest_env,
+                cwd=ROOT,
+                log_file=log_file,
+            )
+            _track_active_process(pytest_label, pytest_process)
+            rc = pytest_process.wait()
+        if rc != 0:
+            _print_diagnostics(config)
+        return rc if rc is not None else 1
     except Exception:
-        _print_diagnostics(
-            sim_log=sim_log, container_name=config.container_name, base_url=base_url
-        )
+        _print_diagnostics(config)
         raise
     finally:
-        if container_started:
-            _force_remove_container(config.container_name)
-            _untrack_active_container(config.container_name)
+        _terminate_tracked_process(pytest_label, pytest_process)
+        _terminate_tracked_process(server_label, server_process)
+
+
+def _resolve_repo_path(path: Path) -> Path:
+    return path if path.is_absolute() else (ROOT / path)
+
+
+def _validate_port(port: int, *, label: str) -> int:
+    if not 1 <= port <= 65535:
+        raise ValueError(f"{label} must be 1-65535, got {port}")
+    return port
+
+
+def _build_shard_config(
+    *,
+    source_config: Path,
+    shard_index: int,
+    shard_count: int,
+    tests: list[str],
+    http_port_base: int,
+    sim_data_port_base: int,
+    sim_control_port_base: int,
+) -> ShardConfig:
+    http_port = _validate_port(
+        http_port_base + (shard_index - 1),
+        label=f"shard {shard_index} http port",
+    )
+    sim_data_port = _validate_port(
+        sim_data_port_base + (shard_index - 1),
+        label=f"shard {shard_index} sim data port",
+    )
+    sim_control_port = _validate_port(
+        sim_control_port_base + (shard_index - 1),
+        label=f"shard {shard_index} sim control port",
+    )
+
+    runtime_root = Path(tempfile.mkdtemp(prefix=f"vibesensor-e2e-shard-{shard_index}-"))
+    _track_active_runtime_root(runtime_root)
+    runtime = build_isolated_server_config(
+        source_config,
+        runtime_root,
+        host="127.0.0.1",
+        port=http_port,
+        udp_data_port=sim_data_port,
+        udp_control_port=sim_control_port,
+        config_name=f"shard-{shard_index}.yaml",
+        data_seed_dir=_DEFAULT_DATA_SEED_DIR,
+    )
+    return ShardConfig(
+        index=shard_index,
+        count=shard_count,
+        tests=tests,
+        runtime=runtime,
+        http_port=http_port,
+        sim_data_port=sim_data_port,
+        sim_control_port=sim_control_port,
+        sim_client_control_base=9100 + ((shard_index - 1) * 100),
+        log_path=LOG_DIR / f"shard-{shard_index}.log",
+        junit_path=LOG_DIR / f"shard-{shard_index}.xml",
+    )
 
 
 def _shard_worker(
     *,
     config: ShardConfig,
     marker: str,
-    image: str,
     results: dict[int, ShardResult],
     lock: threading.Lock,
 ) -> None:
@@ -494,7 +569,8 @@ def _shard_worker(
     try:
         if not config.tests:
             _emit(
-                f"[e2e-parallel] shard {config.index}/{config.count}: no tests selected; skipping"
+                f"[e2e-parallel] shard {config.index}/{config.count}: "
+                "no tests selected; skipping"
             )
             rc = 0
         else:
@@ -505,8 +581,6 @@ def _shard_worker(
             rc = _run_shard_e2e(
                 config=config,
                 marker=marker,
-                image=image,
-                log_path=config.log_path,
             )
             if rc != 0:
                 _emit(
@@ -517,7 +591,8 @@ def _shard_worker(
         rc = 1
         _emit(f"[e2e-parallel] shard {config.index}/{config.count} crashed: {exc!r}")
     finally:
-        shutil.rmtree(config.data_dir, ignore_errors=True)
+        shutil.rmtree(config.runtime.root, ignore_errors=True)
+        _untrack_active_runtime_root(config.runtime.root)
         elapsed = time.monotonic() - started
         with lock:
             results[config.index] = ShardResult(
@@ -531,7 +606,7 @@ def _shard_worker(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run docker-backed e2e tests in isolated parallel shards."
+        description="Run process-backed e2e tests in isolated parallel shards."
     )
     parser.add_argument(
         "--shards",
@@ -550,14 +625,10 @@ def _parse_args() -> argparse.Namespace:
         help="Override pytest marker expression for e2e selection.",
     )
     parser.add_argument(
-        "--docker-image",
-        default="vibesensor-full-suite",
-        help="Docker image name to build once and reuse across shards.",
-    )
-    parser.add_argument(
-        "--dockerfile",
-        default=_DEFAULT_DOCKERFILE,
-        help="Dockerfile path for the shared e2e image build.",
+        "--config",
+        type=Path,
+        default=_DEFAULT_BASE_CONFIG,
+        help="Base YAML config cloned into each shard runtime root.",
     )
     parser.add_argument(
         "--http-port-base",
@@ -586,6 +657,11 @@ def _parse_args() -> argparse.Namespace:
 def main() -> int:
     args = _parse_args()
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    _register_cleanup_hooks()
+
+    source_config = _resolve_repo_path(args.config).resolve()
+    if not source_config.is_file():
+        raise SystemExit(f"Base config does not exist: {source_config}")
 
     marker = args.pytest_marker
     if marker is None:
@@ -608,29 +684,17 @@ def main() -> int:
         f"across {num_shards} shards (min requested: {args.shards})"
     )
 
-    build_rc = _prepare_image(args.docker_image, dockerfile=args.dockerfile)
-    if build_rc != 0:
-        return build_rc
-
-    _register_cleanup_hooks()
-    pid = str(os.getpid())
     shards: list[ShardConfig] = []
     for shard_index in range(1, num_shards + 1):
         shards.append(
-            ShardConfig(
-                index=shard_index,
-                count=num_shards,
+            _build_shard_config(
+                source_config=source_config,
+                shard_index=shard_index,
+                shard_count=num_shards,
                 tests=shard_test_ids[shard_index - 1],
-                container_name=f"vibesensor-e2e-shard-{pid}-{shard_index}",
-                data_dir=Path(
-                    tempfile.mkdtemp(prefix=f"vibesensor-e2e-shard-{shard_index}-")
-                ),
-                http_port=args.http_port_base + (shard_index - 1),
-                sim_data_port=args.sim_data_port_base + (shard_index - 1),
-                sim_control_port=args.sim_control_port_base + (shard_index - 1),
-                sim_client_control_base=9100 + ((shard_index - 1) * 100),
-                log_path=LOG_DIR / f"shard-{shard_index}.log",
-                junit_path=LOG_DIR / f"shard-{shard_index}.xml",
+                http_port_base=args.http_port_base,
+                sim_data_port_base=args.sim_data_port_base,
+                sim_control_port_base=args.sim_control_port_base,
             )
         )
 
@@ -644,7 +708,6 @@ def main() -> int:
             kwargs={
                 "config": shard,
                 "marker": marker,
-                "image": args.docker_image,
                 "results": results,
                 "lock": results_lock,
             },
