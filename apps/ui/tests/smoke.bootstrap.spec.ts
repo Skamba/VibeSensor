@@ -13,6 +13,18 @@ const strengthMetrics = {
 test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
   let startCalls = 0;
   let stopCalls = 0;
+  const startedAt = new Date(Date.now() - 65_000).toISOString();
+  let recordingStatus = {
+    enabled: false,
+    run_id: null,
+    write_error: null,
+    analysis_in_progress: false,
+    start_time_utc: null,
+    samples_written: 0,
+    samples_dropped: 0,
+    last_completed_run_id: null,
+    last_completed_run_error: null,
+  };
 
   await installCommonRoutes(page, {
     runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
@@ -33,11 +45,33 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   });
   await page.route("**/api/recording/start", async (route) => {
     startCalls += 1;
-    await fulfillJson(route, { enabled: true, run_id: "run-001" });
+    recordingStatus = {
+      ...recordingStatus,
+      enabled: true,
+      run_id: "run-001",
+      analysis_in_progress: false,
+      start_time_utc: startedAt,
+      samples_written: 24,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+    };
+    await fulfillJson(route, recordingStatus);
   });
   await page.route("**/api/recording/stop", async (route) => {
     stopCalls += 1;
-    await fulfillJson(route, { enabled: false, run_id: null });
+    recordingStatus = {
+      ...recordingStatus,
+      enabled: false,
+      run_id: null,
+      analysis_in_progress: true,
+      start_time_utc: null,
+      last_completed_run_id: "run-001",
+      last_completed_run_error: null,
+    };
+    await fulfillJson(route, recordingStatus);
+  });
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, recordingStatus);
   });
 
   await installFakeWebSocket(page, {
@@ -79,7 +113,14 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#liveFocusSensor [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveSensorRoster")).toContainText("Front Left Wheel");
-  await expect(page.locator("#loggingSummary")).toHaveText("Ready to record with 1 online sensor(s) and 1 assigned location(s).");
+  await expect(page.locator("#loggingSummary")).toHaveText(
+    "Ready to record with 1 online sensor(s) and 1 assigned location(s). Press Start Recording to begin a new run.",
+  );
+  await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Ready");
+  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
+  await expect(page.locator("#loggingSamples [data-value]")).toHaveText("0");
+  await expect(page.locator("#startLoggingBtn")).toBeVisible();
+  await expect(page.locator("#stopLoggingBtn")).toBeHidden();
   const dashboardTab = page.locator("#tab-dashboard");
   const historyTab = page.locator("#tab-history");
   const settingsTab = page.locator("#tab-settings");
@@ -98,10 +139,21 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#historyTableBody")).toContainText("run-001");
   await dashboardTab.click();
   await page.locator("#startLoggingBtn").click();
-  await expect(page.locator("#loggingStatus")).toHaveText("Running");
+  await expect(page.locator("#loggingStatus")).toHaveText("Recording");
   await expect(page.locator("#loggingRunId")).toHaveText("Run ID: run-001");
+  await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Recording");
+  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(/^\d+:\d{2}$/);
+  await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
+  await expect(page.locator("#startLoggingBtn")).toBeHidden();
+  await expect(page.locator("#stopLoggingBtn")).toBeVisible();
   await expect.poll(() => startCalls).toBe(1);
   await page.locator("#stopLoggingBtn").click();
-  await expect(page.locator("#loggingStatus")).toHaveText("Stopped");
+  await expect(page.locator("#loggingStatus")).toHaveText("Processing");
+  await expect(page.locator("#loggingRunId")).toHaveText("Last run: run-001");
+  await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Processing");
+  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
+  await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
+  await expect(page.locator("#startLoggingBtn")).toBeVisible();
+  await expect(page.locator("#stopLoggingBtn")).toBeHidden();
   await expect.poll(() => stopCalls).toBe(1);
 });

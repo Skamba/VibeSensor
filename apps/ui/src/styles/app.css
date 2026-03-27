@@ -794,7 +794,7 @@ input:focus-visible,
 .logging-row .subtle[hidden] { display: none; }
 .logging-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
@@ -812,6 +812,9 @@ input:focus-visible,
 .stat--compact .stat__value { font-size: 1rem; }
 .logging-actions .btn {
   width: 100%;
+}
+.logging-actions .btn[hidden] {
+  display: none;
 }
 .live-speed-readout { margin-top: var(--space-3); }
 .live-speed-row {
