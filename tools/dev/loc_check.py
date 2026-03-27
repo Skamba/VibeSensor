@@ -14,6 +14,7 @@ Exit code is always 0.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 
@@ -49,8 +50,6 @@ def _tracked_files() -> list[str]:
 
 
 def _should_check(path: str) -> bool:
-    import os
-
     _, ext = os.path.splitext(path)
     if ext not in SOURCE_EXTS:
         return False
