@@ -115,6 +115,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     escapeHtml,
     showError: ctx.showError,
     settings,
+    getSpeedUnit: ctx.getSpeedUnit,
+    fmt,
     renderSpeedReadout: ctx.renderSpeedReadout,
     onSaveError: showSettingsSaveError,
   });

@@ -62,7 +62,12 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="speedSourceTab"]').click();
-  await page.locator('input[name="speedSourceRadio"][value="manual"]').check();
+  await expect(page.locator("#speedSourceCurrentSource")).toHaveText("GPS");
+  await expect(page.locator("#gpsFallbackPanel")).toBeVisible();
+  await expect(page.locator("#manualSpeedConfig")).toBeHidden();
+  await page.locator('[data-speed-source-choice="manual"]').click();
+  await expect(page.locator("#manualSpeedConfig")).toBeVisible();
+  await expect(page.locator("#gpsFallbackPanel")).toBeHidden();
   await page.locator("#manualSpeedInput").fill("45");
   await page.locator("#saveSpeedSourceBtn").click();
   await expect.poll(() => speedSourcePutCalls).toBe(1);
@@ -103,6 +108,14 @@ test("resolved fallback manual state stays coherent across header status, form, 
 
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await expect(page.locator("#speedSourceCurrentSource")).toHaveText("Manual fallback");
+  await expect(page.locator("#speedSourceEffectiveSpeed")).toHaveText("80.0 km/h");
+  await expect(page.locator("#manualSpeedConfig")).toBeVisible();
+  await expect(page.locator("#gpsFallbackPanel")).toBeHidden();
+  const diagnostics = page.locator("#speedSourceDiagnostics");
+  await expect(diagnostics.locator(".settings-help-disclosure__body")).not.toBeVisible();
+  await diagnostics.locator("summary").click();
+  await expect(diagnostics.locator(".settings-help-disclosure__body")).toBeVisible();
   await expect(page.locator("#gpsStatusState")).toHaveText("Disabled");
   await expect(page.locator("#gpsStatusEffectiveSpeed")).toHaveText("80.0 km/h");
   await expect(page.locator("#gpsStatusFallback")).toHaveText("Yes");
@@ -371,7 +384,7 @@ test("failed speed-source save reverts the UI and shows an error", async ({ page
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="speedSourceTab"]').click();
-  await page.locator('input[name="speedSourceRadio"][value="manual"]').check();
+  await page.locator('[data-speed-source-choice="manual"]').click();
   await page.locator("#manualSpeedInput").fill("45");
   await page.locator("#saveSpeedSourceBtn").click();
 
