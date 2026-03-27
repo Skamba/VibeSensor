@@ -1,15 +1,25 @@
 #include <unity.h>
 
+#include <array>
+
 #include "../native_support/generated_protocol_contract_fixtures.h"
 
 #include "../../lib/vibesensor_proto/vibesensor_proto.cpp"
 
 namespace fixture = vibesensor::test_support;
 
+template <size_t N>
+void expect_packet_matches_fixture(const std::array<uint8_t, N>& expected,
+                                   const std::array<uint8_t, N>& actual,
+                                   size_t len) {
+  TEST_ASSERT_EQUAL_UINT32(expected.size(), len);
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(expected.data(), actual.data(), expected.size());
+}
+
 void test_pack_hello_matches_python_fixture() {
-  uint8_t packet[fixture::kHelloPacket.size()] = {};
-  const size_t len = vibesensor::pack_hello(packet,
-                                            sizeof(packet),
+  std::array<uint8_t, fixture::kHelloPacket.size()> packet = {};
+  const size_t len = vibesensor::pack_hello(packet.data(),
+                                            packet.size(),
                                             fixture::kHelloClientId.data(),
                                             fixture::kHelloControlPort,
                                             fixture::kHelloSampleRateHz,
@@ -18,18 +28,14 @@ void test_pack_hello_matches_python_fixture() {
                                             fixture::kHelloFirmwareVersion,
                                             fixture::kHelloQueueOverflowDrops,
                                             fixture::kHelloCapabilities);
-  TEST_ASSERT_EQUAL_UINT32(fixture::kHelloPacket.size(), len);
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(
-      fixture::kHelloPacket.data(), packet, fixture::kHelloPacket.size());
+  expect_packet_matches_fixture(fixture::kHelloPacket, packet, len);
 }
 
 void test_pack_hello_ack_matches_python_fixture() {
-  uint8_t packet[fixture::kHelloAckPacket.size()] = {};
+  std::array<uint8_t, fixture::kHelloAckPacket.size()> packet = {};
   const size_t len = vibesensor::pack_hello_ack(
-      packet, sizeof(packet), fixture::kHelloClientId.data());
-  TEST_ASSERT_EQUAL_UINT32(fixture::kHelloAckPacket.size(), len);
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(
-      fixture::kHelloAckPacket.data(), packet, fixture::kHelloAckPacket.size());
+      packet.data(), packet.size(), fixture::kHelloClientId.data());
+  expect_packet_matches_fixture(fixture::kHelloAckPacket, packet, len);
 }
 
 void test_parse_hello_ack_matches_python_fixture() {
@@ -40,17 +46,15 @@ void test_parse_hello_ack_matches_python_fixture() {
 }
 
 void test_pack_data_matches_python_fixture() {
-  uint8_t packet[fixture::kDataPacket.size()] = {};
-  const size_t len = vibesensor::pack_data(packet,
-                                           sizeof(packet),
+  std::array<uint8_t, fixture::kDataPacket.size()> packet = {};
+  const size_t len = vibesensor::pack_data(packet.data(),
+                                           packet.size(),
                                            fixture::kDataClientId.data(),
                                            fixture::kDataSeq,
                                            fixture::kDataT0Us,
                                            fixture::kDataSamples.data(),
                                            fixture::kDataSampleCount);
-  TEST_ASSERT_EQUAL_UINT32(fixture::kDataPacket.size(), len);
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(
-      fixture::kDataPacket.data(), packet, fixture::kDataPacket.size());
+  expect_packet_matches_fixture(fixture::kDataPacket, packet, len);
 }
 
 void test_parse_identify_matches_python_fixture() {
@@ -89,15 +93,13 @@ void test_parse_sync_clock_matches_python_fixture() {
 }
 
 void test_pack_ack_matches_python_fixture() {
-  uint8_t packet[fixture::kAckPacket.size()] = {};
-  const size_t len = vibesensor::pack_ack(packet,
-                                          sizeof(packet),
+  std::array<uint8_t, fixture::kAckPacket.size()> packet = {};
+  const size_t len = vibesensor::pack_ack(packet.data(),
+                                          packet.size(),
                                           fixture::kAckClientId.data(),
                                           fixture::kAckCmdSeq,
                                           fixture::kAckStatus);
-  TEST_ASSERT_EQUAL_UINT32(fixture::kAckPacket.size(), len);
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(
-      fixture::kAckPacket.data(), packet, fixture::kAckPacket.size());
+  expect_packet_matches_fixture(fixture::kAckPacket, packet, len);
 }
 
 void test_parse_data_ack_matches_python_fixture() {
@@ -111,14 +113,12 @@ void test_parse_data_ack_matches_python_fixture() {
 }
 
 void test_pack_data_ack_matches_python_fixture() {
-  uint8_t packet[fixture::kDataAckPacket.size()] = {};
-  const size_t len = vibesensor::pack_data_ack(packet,
-                                               sizeof(packet),
+  std::array<uint8_t, fixture::kDataAckPacket.size()> packet = {};
+  const size_t len = vibesensor::pack_data_ack(packet.data(),
+                                               packet.size(),
                                                fixture::kDataClientId.data(),
                                                fixture::kDataAckLastSeqReceived);
-  TEST_ASSERT_EQUAL_UINT32(fixture::kDataAckPacket.size(), len);
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(
-      fixture::kDataAckPacket.data(), packet, fixture::kDataAckPacket.size());
+  expect_packet_matches_fixture(fixture::kDataAckPacket, packet, len);
 }
 
 int main(int argc, char** argv) {
