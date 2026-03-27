@@ -79,9 +79,23 @@ function createInput(value = "", type = "text"): HTMLInputElement {
 }
 
 function createPanel(): HTMLElement {
+  let textContent = "";
+  let innerHTML = "";
   return {
-    textContent: "",
-    innerHTML: "",
+    get textContent() {
+      return textContent;
+    },
+    set textContent(value: string | null) {
+      textContent = value ?? "";
+      innerHTML = textContent;
+    },
+    get innerHTML() {
+      return innerHTML;
+    },
+    set innerHTML(value: string) {
+      innerHTML = value;
+      textContent = value;
+    },
     className: "",
     scrollTop: 0,
     scrollHeight: 0,
@@ -94,6 +108,7 @@ function createDeps() {
   const espFlashStartBtn = createButton();
   const espFlashCancelBtn = createButton();
   const espFlashStatusBanner = createPanel();
+  const espFlashReadinessPanel = createPanel();
   const espFlashLogPanel = createPanel();
   const espFlashHistoryPanel = createPanel();
 
@@ -107,6 +122,7 @@ function createDeps() {
     espFlashStartBtn,
     espFlashCancelBtn,
     espFlashStatusBanner,
+    espFlashReadinessPanel,
     espFlashLogPanel,
     espFlashHistoryPanel,
   } as unknown as UiDomElements;
@@ -115,6 +131,7 @@ function createDeps() {
     els,
     espFlashStartBtn,
     espFlashCancelBtn,
+    espFlashReadinessPanel,
     t: (key: string) => key,
     escapeHtml: (value: unknown) => String(value ?? ""),
     showError: () => {},
@@ -219,6 +236,40 @@ test.beforeEach(() => {
 });
 
 test.describe("createEspFlashFeature polling", () => {
+  test("idle state renders readiness, empty log, and empty history context", async () => {
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/esp-flash/ports") {
+        return jsonResponse({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
+      }
+      if (url.pathname === "/api/esp-flash/status") {
+        return jsonResponse({ state: "idle", phase: "idle", selected_port: null, auto_detect: true, last_success_at: null, error: null, log_count: 0 });
+      }
+      if (url.pathname === "/api/esp-flash/history") {
+        return jsonResponse({ attempts: [] });
+      }
+      if (url.pathname === "/api/esp-flash/logs") {
+        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createDeps();
+      const feature = createEspFlashFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.summary.ready_ports");
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.one_port");
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.auto_detect");
+      expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.logs_idle_title");
+      expect((deps.els.espFlashHistoryPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.history_empty_title");
+    } finally {
+      restoreFetch();
+    }
+  });
+
   test("start replaces the previous poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
     const restoreFetch = installFetchMock(async (url, method) => {
@@ -325,6 +376,41 @@ test.describe("createEspFlashFeature polling", () => {
 });
 
 test.describe("createUpdateFeature polling", () => {
+  test("idle update status renders readiness instead of clearing the panel", async () => {
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse({
+          ...createIdleUpdateStatus(),
+          runtime: {
+            version: "1.2.3",
+            commit: "abcdef1234567890",
+            static_assets_hash: "feedfacecafebeef",
+            assets_verified: true,
+          },
+        });
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      const feature = createUpdateFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_title");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_summary.ready");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("1.2.3");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.health_card_title");
+    } finally {
+      restoreFetch();
+    }
+  });
+
   test("start replaces the previous update poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
     const restoreFetch = installFetchMock(async (url, method) => {
