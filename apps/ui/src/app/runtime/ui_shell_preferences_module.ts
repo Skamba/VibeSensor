@@ -33,11 +33,27 @@ export function createUiShellPreferencesModule(
     return raw === "mps" ? "mps" : "kmh";
   }
 
+  function syncSelectValue(select: HTMLSelectElement | null, value: string): void {
+    if (select) {
+      select.value = value;
+    }
+  }
+
+  function applyLanguageValue(rawLanguage: string): void {
+    shell.lang = ctx.normalizeLanguage(rawLanguage);
+    syncSelectValue(els.languageSelect, shell.lang);
+  }
+
+  function applySpeedUnitValue(rawUnit: string): void {
+    shell.speedUnit = normalizeSpeedUnit(rawUnit);
+    syncSelectValue(els.speedUnitSelect, shell.speedUnit);
+  }
+
   async function hydratePersistedPreferences(): Promise<void> {
     try {
       const languageResponse = await getSettingsLanguage();
       if (languageResponse?.language) {
-        shell.lang = ctx.normalizeLanguage(languageResponse.language);
+        applyLanguageValue(languageResponse.language);
         ctx.applyLanguage(true);
       }
     } catch (error) {
@@ -46,10 +62,7 @@ export function createUiShellPreferencesModule(
     try {
       const speedUnitResponse = await getSettingsSpeedUnit();
       if (speedUnitResponse?.speed_unit) {
-        shell.speedUnit = normalizeSpeedUnit(speedUnitResponse.speed_unit);
-        if (els.speedUnitSelect) {
-          els.speedUnitSelect.value = shell.speedUnit;
-        }
+        applySpeedUnitValue(speedUnitResponse.speed_unit);
         ctx.renderSpeedReadout();
       }
     } catch (error) {
@@ -62,15 +75,10 @@ export function createUiShellPreferencesModule(
     const nextLang = ctx.normalizeLanguage(lang);
     try {
       const payload = await setSettingsLanguage(nextLang);
-      shell.lang = ctx.normalizeLanguage(payload?.language || nextLang);
-      if (els.languageSelect) {
-        els.languageSelect.value = shell.lang;
-      }
+      applyLanguageValue(payload?.language || nextLang);
       ctx.applyLanguage(true);
     } catch (error) {
-      if (els.languageSelect) {
-        els.languageSelect.value = previousLang;
-      }
+      syncSelectValue(els.languageSelect, previousLang);
       ctx.showError(error instanceof Error ? error.message : ctx.t("settings.save_failed"));
     }
   }
@@ -80,15 +88,10 @@ export function createUiShellPreferencesModule(
     const nextUnit = normalizeSpeedUnit(unit);
     try {
       const payload = await setSettingsSpeedUnit(nextUnit);
-      shell.speedUnit = normalizeSpeedUnit(payload?.speed_unit || nextUnit);
-      if (els.speedUnitSelect) {
-        els.speedUnitSelect.value = shell.speedUnit;
-      }
+      applySpeedUnitValue(payload?.speed_unit || nextUnit);
       ctx.renderSpeedReadout();
     } catch (error) {
-      if (els.speedUnitSelect) {
-        els.speedUnitSelect.value = previousUnit;
-      }
+      syncSelectValue(els.speedUnitSelect, previousUnit);
       ctx.showError(error instanceof Error ? error.message : ctx.t("settings.save_failed"));
     }
   }

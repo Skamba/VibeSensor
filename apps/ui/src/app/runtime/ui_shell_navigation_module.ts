@@ -38,23 +38,24 @@ export function createUiShellNavigationModule(
     }
   }
 
+  function activateMenuButton(button: HTMLElement): void {
+    const viewId = button.dataset.view;
+    if (!viewId) return;
+    setActiveView(viewId);
+  }
+
   function activateMenuTabByIndex(index: number): void {
     if (!els.menuButtons.length) return;
     const safeIndex = ((index % els.menuButtons.length) + els.menuButtons.length)
       % els.menuButtons.length;
     const button = els.menuButtons[safeIndex];
-    const viewId = button.dataset.view;
-    if (!viewId) return;
-    setActiveView(viewId);
+    activateMenuButton(button);
     button.focus();
   }
 
   function bindHandlers(): void {
     els.menuButtons.forEach((button, index) => {
-      const activate = (): void => {
-        const viewId = button.dataset.view;
-        if (viewId) setActiveView(viewId);
-      };
+      const activate = (): void => activateMenuButton(button);
       button.addEventListener("click", activate);
       button.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
