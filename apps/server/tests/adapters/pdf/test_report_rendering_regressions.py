@@ -50,7 +50,7 @@ class TestNextStepNumberingContinuation:
 
 
 class TestNextStepFieldsRendered:
-    """Regression: confirm/falsify/eta must appear in rendered text."""
+    """Regression: action renders separately from compact why/confirm/eta details."""
 
     def test_optional_fields_are_included_in_rendered_text(
         self,
