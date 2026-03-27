@@ -6,6 +6,7 @@ export interface RealtimeSensorTableViewParams {
   clients: AdaptedClient[];
   locationOptions: LocationOption[];
   locationCodeForClient: (client: AdaptedClient) => string;
+  strongestClientId?: string | null;
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
 }
@@ -86,9 +87,10 @@ export function renderRealtimeSensorOverview(
       const connected = Boolean(client.connected);
       const statusText = connected ? t("status.online") : t("status.offline");
       const statusClass = connected ? "online" : "offline";
+      const strongestClass = params.strongestClientId === client.id ? " live-sensor-card--strongest" : "";
       const primaryLabel = escapeHtml(client.name || client.id);
       const locationLabel = escapeHtml(locationLabelForClient(client, params));
-      return `<article class="live-sensor-card"><div class="live-sensor-card__header"><strong>${primaryLabel}</strong><span class="status-pill ${statusClass}">${escapeHtml(statusText)}</span></div><div class="live-sensor-card__meta">${locationLabel}</div><div class="live-sensor-card__subtle"><code>${escapeHtml(client.id)}</code></div></article>`;
+      return `<article class="live-sensor-card${strongestClass}"><div class="live-sensor-card__header"><strong>${primaryLabel}</strong><span class="status-pill ${statusClass}">${escapeHtml(statusText)}</span></div><div class="live-sensor-card__meta">${locationLabel}</div><div class="live-sensor-card__subtle"><code>${escapeHtml(client.id)}</code></div></article>`;
     })
     .join("");
 }

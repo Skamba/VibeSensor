@@ -127,8 +127,13 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
   await expect(page.locator("#liveDataFreshness [data-value]")).toHaveText("Fresh - 10 ms ago");
   await expect(page.locator("#liveRunHealth")).toHaveText("Ready");
+  await expect(page.locator("#liveStrongestSignal")).toHaveClass(/stat--spotlight/);
   await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
+  await expect(page.locator("#liveSensorRoster .live-sensor-card--strongest")).toContainText("Front Left Wheel");
   await expect(page.locator("#liveSensorRoster")).toContainText("Front Left Wheel");
+  await expect(page.locator(".spectrum-controls-panel")).toContainText("Use the trace chips to isolate one sensor at a time.");
+  await expect(page.locator(".spectrum-controls-panel #spectrumInspector")).toBeVisible();
+  await expect(page.locator(".spectrum-controls-panel #legend")).toContainText("Front Left");
   await expect(page.locator("#loggingSummary")).toHaveText(
     "Ready to record with 1 online sensor(s) and 1 assigned location(s). Press Start Recording to begin a new run.",
   );
@@ -163,6 +168,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
   await expect(page.locator("#startLoggingBtn")).toBeHidden();
   await expect(page.locator("#stopLoggingBtn")).toBeVisible();
+  await expect(page.locator("#stopLoggingBtn")).toHaveClass(/btn--danger-quiet/);
   await expect.poll(() => startCalls).toBe(1);
   await page.locator("#stopLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toHaveText("Processing");
