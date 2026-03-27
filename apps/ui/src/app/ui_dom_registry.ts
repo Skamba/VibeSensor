@@ -36,6 +36,7 @@ export interface UiDomElements {
   specChartWrap: HTMLElement | null;
   specChart: HTMLElement | null;
   spectrumOverlay: HTMLElement | null;
+  spectrumInspector: HTMLElement | null;
   legend: HTMLElement | null;
   bandLegend: HTMLElement | null;
   wheelBandwidthInput: HTMLInputElement | null;
@@ -175,6 +176,7 @@ export function createUiDomRegistry(): UiDomElements {
     specChartWrap: el("specChartWrap"),
     specChart: el("specChart"),
     spectrumOverlay: el("spectrumOverlay"),
+    spectrumInspector: el("spectrumInspector"),
     legend: el("legend"),
     bandLegend: el("bandLegend"),
     wheelBandwidthInput: inputEl("wheelBandwidthInput"),
