@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Build release-like artifacts locally and run the packaged smoke validator."""
+
 from __future__ import annotations
 
 import argparse
