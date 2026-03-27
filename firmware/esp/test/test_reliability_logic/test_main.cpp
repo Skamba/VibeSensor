@@ -4,6 +4,12 @@
 
 namespace {
 constexpr size_t kDataHeaderBytes = 18;
+constexpr uint32_t kRetryBaseMs = 4000;
+constexpr uint32_t kRetryCapMs = 60000;
+constexpr uint16_t kMinSampleRateHz = 25;
+constexpr uint16_t kMaxSampleRateHz = 3200;
+constexpr uint8_t kSensorReinitThreshold = 3;
+constexpr uint32_t kSensorReinitCooldownMs = 5000;
 }
 
 void test_frame_samples_are_clamped_to_datagram_limit() {
@@ -27,11 +33,12 @@ void test_frame_samples_clamped_for_mtu_safe_payload() {
 }
 
 void test_retry_backoff_grows_and_caps_with_jitter() {
-  const uint32_t base = 4000;
-  const uint32_t cap = 60000;
-  const uint32_t d1 = vibesensor::reliability::compute_retry_delay_ms(base, cap, 1, 1);
-  const uint32_t d5 = vibesensor::reliability::compute_retry_delay_ms(base, cap, 5, 2);
-  const uint32_t d20 = vibesensor::reliability::compute_retry_delay_ms(base, cap, 20, 3);
+  const uint32_t d1 =
+      vibesensor::reliability::compute_retry_delay_ms(kRetryBaseMs, kRetryCapMs, 1, 1);
+  const uint32_t d5 =
+      vibesensor::reliability::compute_retry_delay_ms(kRetryBaseMs, kRetryCapMs, 5, 2);
+  const uint32_t d20 =
+      vibesensor::reliability::compute_retry_delay_ms(kRetryBaseMs, kRetryCapMs, 20, 3);
   TEST_ASSERT_TRUE(d1 >= 7000 && d1 <= 8999);
   TEST_ASSERT_TRUE(d5 >= 52500 && d5 <= 60000);
   TEST_ASSERT_TRUE(d20 >= 52500 && d20 <= 60000);
@@ -42,8 +49,9 @@ void test_fault_injection_repeated_failures_keep_retry_bounded() {
   uint32_t now = 1000;
   for (uint32_t i = 0; i < 300; ++i) {
     failures = vibesensor::reliability::saturating_inc_u8(failures);
-    const uint32_t delay = vibesensor::reliability::compute_retry_delay_ms(4000, 60000, failures, i);
-    TEST_ASSERT_TRUE(delay >= 4000 && delay <= 60000);
+    const uint32_t delay =
+        vibesensor::reliability::compute_retry_delay_ms(kRetryBaseMs, kRetryCapMs, failures, i);
+    TEST_ASSERT_TRUE(delay >= kRetryBaseMs && delay <= kRetryCapMs);
     if (i > 6) {
       TEST_ASSERT_TRUE(delay >= 52500);
     }
@@ -56,30 +64,43 @@ void test_fault_injection_repeated_failures_keep_retry_bounded() {
 
 void test_clamp_sample_rate_within_range() {
   // Values already in range pass through unchanged.
-  TEST_ASSERT_EQUAL_UINT16(400,
-      vibesensor::reliability::clamp_sample_rate(400, 25, 3200));
-  TEST_ASSERT_EQUAL_UINT16(25,
-      vibesensor::reliability::clamp_sample_rate(25, 25, 3200));
-  TEST_ASSERT_EQUAL_UINT16(3200,
-      vibesensor::reliability::clamp_sample_rate(3200, 25, 3200));
+  TEST_ASSERT_EQUAL_UINT16(
+      400,
+      vibesensor::reliability::clamp_sample_rate(400, kMinSampleRateHz, kMaxSampleRateHz));
+  TEST_ASSERT_EQUAL_UINT16(
+      kMinSampleRateHz,
+      vibesensor::reliability::clamp_sample_rate(
+          kMinSampleRateHz, kMinSampleRateHz, kMaxSampleRateHz));
+  TEST_ASSERT_EQUAL_UINT16(
+      kMaxSampleRateHz,
+      vibesensor::reliability::clamp_sample_rate(
+          kMaxSampleRateHz, kMinSampleRateHz, kMaxSampleRateHz));
 }
 
 void test_clamp_sample_rate_below_minimum() {
   // Values below the minimum are raised to the minimum.
-  TEST_ASSERT_EQUAL_UINT16(25,
-      vibesensor::reliability::clamp_sample_rate(0, 25, 3200));
-  TEST_ASSERT_EQUAL_UINT16(25,
-      vibesensor::reliability::clamp_sample_rate(1, 25, 3200));
-  TEST_ASSERT_EQUAL_UINT16(25,
-      vibesensor::reliability::clamp_sample_rate(24, 25, 3200));
+  TEST_ASSERT_EQUAL_UINT16(
+      kMinSampleRateHz,
+      vibesensor::reliability::clamp_sample_rate(0, kMinSampleRateHz, kMaxSampleRateHz));
+  TEST_ASSERT_EQUAL_UINT16(
+      kMinSampleRateHz,
+      vibesensor::reliability::clamp_sample_rate(1, kMinSampleRateHz, kMaxSampleRateHz));
+  TEST_ASSERT_EQUAL_UINT16(
+      kMinSampleRateHz,
+      vibesensor::reliability::clamp_sample_rate(
+          kMinSampleRateHz - 1, kMinSampleRateHz, kMaxSampleRateHz));
 }
 
 void test_clamp_sample_rate_above_maximum() {
   // Values above the maximum are lowered to the maximum.
-  TEST_ASSERT_EQUAL_UINT16(3200,
-      vibesensor::reliability::clamp_sample_rate(3201, 25, 3200));
-  TEST_ASSERT_EQUAL_UINT16(3200,
-      vibesensor::reliability::clamp_sample_rate(65535, 25, 3200));
+  TEST_ASSERT_EQUAL_UINT16(
+      kMaxSampleRateHz,
+      vibesensor::reliability::clamp_sample_rate(
+          kMaxSampleRateHz + 1, kMinSampleRateHz, kMaxSampleRateHz));
+  TEST_ASSERT_EQUAL_UINT16(
+      kMaxSampleRateHz,
+      vibesensor::reliability::clamp_sample_rate(
+          UINT16_MAX, kMinSampleRateHz, kMaxSampleRateHz));
 }
 
 void test_retry_due_zero_retry_at_always_true() {
@@ -113,45 +134,53 @@ void test_saturating_inc_u8_does_not_wrap() {
 // Below threshold → reinit not triggered, even with no cooldown constraint.
 void test_flaky_sensor_below_threshold_no_reinit() {
   TEST_ASSERT_FALSE(
-      vibesensor::reliability::sensor_should_reinit(0, 3, 5000, 0, 5000));
+      vibesensor::reliability::sensor_should_reinit(
+          0, kSensorReinitThreshold, 5000, 0, kSensorReinitCooldownMs));
   TEST_ASSERT_FALSE(
-      vibesensor::reliability::sensor_should_reinit(2, 3, 5000, 0, 5000));
+      vibesensor::reliability::sensor_should_reinit(
+          2, kSensorReinitThreshold, 5000, 0, kSensorReinitCooldownMs));
 }
 
 // At/above threshold with cooldown satisfied → reinit triggered.
 void test_flaky_sensor_at_threshold_triggers_reinit() {
   // Exactly at threshold; last_reinit_ms=0 so cooldown is always satisfied.
   TEST_ASSERT_TRUE(
-      vibesensor::reliability::sensor_should_reinit(3, 3, 5000, 0, 5000));
+      vibesensor::reliability::sensor_should_reinit(
+          kSensorReinitThreshold,
+          kSensorReinitThreshold,
+          5000,
+          0,
+          kSensorReinitCooldownMs));
   // Above threshold.
   TEST_ASSERT_TRUE(
-      vibesensor::reliability::sensor_should_reinit(10, 3, 5000, 0, 5000));
+      vibesensor::reliability::sensor_should_reinit(
+          10, kSensorReinitThreshold, 5000, 0, kSensorReinitCooldownMs));
 }
 
 // Cooldown not yet elapsed → reinit blocked even though threshold is met.
 void test_flaky_sensor_cooldown_blocks_rapid_reinit() {
   // last_reinit_ms=3000, now=6000, cooldown=5000 → elapsed=3000 < 5000
   TEST_ASSERT_FALSE(
-      vibesensor::reliability::sensor_should_reinit(5, 3, 6000, 3000, 5000));
+      vibesensor::reliability::sensor_should_reinit(
+          5, kSensorReinitThreshold, 6000, 3000, kSensorReinitCooldownMs));
 }
 
 // Cooldown just satisfied → reinit allowed.
 void test_flaky_sensor_cooldown_satisfied_allows_reinit() {
   // last_reinit_ms=3000, now=8001, cooldown=5000 → elapsed=5001 >= 5000
   TEST_ASSERT_TRUE(
-      vibesensor::reliability::sensor_should_reinit(5, 3, 8001, 3000, 5000));
+      vibesensor::reliability::sensor_should_reinit(
+          5, kSensorReinitThreshold, 8001, 3000, kSensorReinitCooldownMs));
   // Exactly at boundary: elapsed == cooldown.
   TEST_ASSERT_TRUE(
-      vibesensor::reliability::sensor_should_reinit(5, 3, 8000, 3000, 5000));
+      vibesensor::reliability::sensor_should_reinit(
+          5, kSensorReinitThreshold, 8000, 3000, kSensorReinitCooldownMs));
 }
 
 // Simulates a sustained sensor failure: errors saturate at 0xFF, reinit
 // keeps triggering each time the cooldown elapses.
 void test_flaky_sensor_sustained_failure_reinit_cycles() {
   uint8_t errs = 0;
-  constexpr uint8_t kThreshold = 3;
-  constexpr uint32_t kCooldown = 5000;
-
   uint32_t now = 0;
   uint32_t last_reinit = 0;
   uint32_t reinit_count = 0;
@@ -163,7 +192,7 @@ void test_flaky_sensor_sustained_failure_reinit_cycles() {
     errs = vibesensor::reliability::saturating_inc_u8(errs);
 
     if (vibesensor::reliability::sensor_should_reinit(
-            errs, kThreshold, now, last_reinit, kCooldown)) {
+            errs, kSensorReinitThreshold, now, last_reinit, kSensorReinitCooldownMs)) {
       reinit_count++;
       last_reinit = now;
       // Reinit fails: errors stay high (not reset to 0).
@@ -179,15 +208,13 @@ void test_flaky_sensor_sustained_failure_reinit_cycles() {
 // re-triggered on the very next error.
 void test_flaky_sensor_reinit_success_resets_counter() {
   uint8_t errs = 0xFF;
-  constexpr uint8_t kThreshold = 3;
-  constexpr uint32_t kCooldown = 5000;
   const uint32_t now = 10000;
-  const uint32_t last_reinit = now - kCooldown;  // cooldown satisfied
+  const uint32_t last_reinit = now - kSensorReinitCooldownMs;  // cooldown satisfied
 
   // Before reset: reinit is triggered.
   TEST_ASSERT_TRUE(
-      vibesensor::reliability::sensor_should_reinit(
-          errs, kThreshold, now, last_reinit, kCooldown));
+       vibesensor::reliability::sensor_should_reinit(
+           errs, kSensorReinitThreshold, now, last_reinit, kSensorReinitCooldownMs));
 
   // Simulate successful reinit: reset error counter and update last_reinit.
   errs = 0;
@@ -196,8 +223,8 @@ void test_flaky_sensor_reinit_success_resets_counter() {
   // A single new error after successful reinit should not re-trigger reinit.
   errs = vibesensor::reliability::saturating_inc_u8(errs);
   TEST_ASSERT_FALSE(
-      vibesensor::reliability::sensor_should_reinit(
-          errs, kThreshold, now, new_reinit_ts, kCooldown));
+       vibesensor::reliability::sensor_should_reinit(
+           errs, kSensorReinitThreshold, now, new_reinit_ts, kSensorReinitCooldownMs));
 }
 
 // ---------------------------------------------------------------------------
@@ -208,15 +235,12 @@ void test_flaky_sensor_reinit_success_resets_counter() {
 // be capped, never exceeding the maximum or dropping below the minimum.
 void test_flaky_wifi_backoff_bounded_across_many_failures() {
   uint8_t failures = 0;
-  constexpr uint32_t kBase = 4000;
-  constexpr uint32_t kMax = 60000;
-
   for (uint32_t i = 0; i < 200; ++i) {
     failures = vibesensor::reliability::saturating_inc_u8(failures);
     const uint32_t delay =
-        vibesensor::reliability::compute_retry_delay_ms(kBase, kMax, failures, i);
-    TEST_ASSERT_TRUE(delay >= kBase);
-    TEST_ASSERT_TRUE(delay <= kMax);
+        vibesensor::reliability::compute_retry_delay_ms(kRetryBaseMs, kRetryCapMs, failures, i);
+    TEST_ASSERT_TRUE(delay >= kRetryBaseMs);
+    TEST_ASSERT_TRUE(delay <= kRetryCapMs);
   }
 }
 
@@ -224,18 +248,15 @@ void test_flaky_wifi_backoff_bounded_across_many_failures() {
 // successful reconnect (failures reset to 0), the next delay is short again.
 void test_flaky_wifi_reconnect_success_resets_backoff() {
   uint8_t failures = 20;
-  constexpr uint32_t kBase = 4000;
-  constexpr uint32_t kMax = 60000;
-
   // When heavily backed off, delay is near the cap.
   const uint32_t long_delay =
-      vibesensor::reliability::compute_retry_delay_ms(kBase, kMax, failures, 0);
+      vibesensor::reliability::compute_retry_delay_ms(kRetryBaseMs, kRetryCapMs, failures, 0);
   TEST_ASSERT_TRUE(long_delay >= 52500);
 
   // On reconnect success failures are reset to 0.
   failures = 0;
   const uint32_t short_delay =
-      vibesensor::reliability::compute_retry_delay_ms(kBase, kMax, failures, 0);
+      vibesensor::reliability::compute_retry_delay_ms(kRetryBaseMs, kRetryCapMs, failures, 0);
   // First retry after success should be well below 10 s.
   TEST_ASSERT_TRUE(short_delay < 10000);
 }
@@ -243,9 +264,6 @@ void test_flaky_wifi_reconnect_success_resets_backoff() {
 // Simulate a flaky AP: repeated connect/disconnect cycles.  The retry timer
 // must always be set in the future and must never regress below the minimum.
 void test_flaky_wifi_repeated_connect_disconnect_cycles() {
-  constexpr uint32_t kBase = 4000;
-  constexpr uint32_t kMax = 60000;
-
   uint8_t failures = 0;
   uint32_t now = 1000;
   uint32_t retry_at = 0;  // fire immediately on first check
@@ -257,7 +275,8 @@ void test_flaky_wifi_repeated_connect_disconnect_cycles() {
     // Attempt reconnect (fails).
     failures = vibesensor::reliability::saturating_inc_u8(failures);
     const uint32_t delay =
-        vibesensor::reliability::compute_retry_delay_ms(kBase, kMax, failures, cycle);
+        vibesensor::reliability::compute_retry_delay_ms(
+            kRetryBaseMs, kRetryCapMs, failures, cycle);
     retry_at = now + delay;
 
     // Not yet due immediately after scheduling.
