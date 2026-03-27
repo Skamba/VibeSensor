@@ -227,6 +227,30 @@
     "en": "Medium",
     "nl": "Gemiddeld"
   },
+  "DATA_TRUST_CAVEATS": {
+    "en": "Confidence caveats",
+    "nl": "Betrouwbaarheidspunten"
+  },
+  "DATA_TRUST_CHECKS_PASSED": {
+    "en": "Checks passed",
+    "nl": "Controles geslaagd"
+  },
+  "DATA_TRUST_EFFECT_HIGH": {
+    "en": "Current data supports the diagnosis.",
+    "nl": "De huidige data ondersteunt de diagnose."
+  },
+  "DATA_TRUST_EFFECT_LOW": {
+    "en": "Rerun with better data before treating the diagnosis as final.",
+    "nl": "Herhaal met betere data voordat je de diagnose als definitief behandelt."
+  },
+  "DATA_TRUST_EFFECT_MEDIUM": {
+    "en": "Use the diagnosis directionally until the caveats below are checked.",
+    "nl": "Gebruik de diagnose richtinggevend totdat de punten hieronder zijn gecontroleerd."
+  },
+  "DATA_TRUST_MORE_CAVEATS": {
+    "en": "more caveats",
+    "nl": "meer aandachtspunten"
+  },
   "CONFIRM": {
     "en": "Confirm",
     "nl": "Bevestig"
