@@ -126,17 +126,26 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
   await expect(toggle).toContainText("View diagnosis and heatmap");
   const overflowMetrics = await toggle.evaluate((button) => {
+    const title = button.querySelector<HTMLElement>(".history-row__toggle-title");
     const hint = button.querySelector<HTMLElement>(".history-row__toggle-hint");
+    const buttonRect = button.getBoundingClientRect();
     return {
       buttonClientWidth: button.clientWidth,
       buttonScrollWidth: button.scrollWidth,
+      buttonClientHeight: button.clientHeight,
+      buttonScrollHeight: button.scrollHeight,
       hintClientWidth: hint?.clientWidth ?? 0,
       hintScrollWidth: hint?.scrollWidth ?? 0,
+      hintBottomGap: hint ? buttonRect.bottom - hint.getBoundingClientRect().bottom : 0,
+      titleTopGap: title ? title.getBoundingClientRect().top - buttonRect.top : 0,
     };
   });
   const overflowTolerancePx = 2;
   expect(overflowMetrics.buttonScrollWidth).toBeLessThanOrEqual(overflowMetrics.buttonClientWidth + overflowTolerancePx);
   expect(overflowMetrics.hintScrollWidth).toBeLessThanOrEqual(overflowMetrics.hintClientWidth + overflowTolerancePx);
+  expect(overflowMetrics.buttonScrollHeight).toBeLessThanOrEqual(overflowMetrics.buttonClientHeight + 1);
+  expect(overflowMetrics.hintBottomGap).toBeGreaterThanOrEqual(2);
+  expect(overflowMetrics.titleTopGap).toBeGreaterThanOrEqual(2);
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
