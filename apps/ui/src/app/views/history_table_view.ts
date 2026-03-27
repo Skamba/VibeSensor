@@ -7,7 +7,7 @@ import type {
 import { HISTORY_HEATMAP_POSITIONS } from "../../config";
 import type { RunDetail } from "../ui_app_state";
 import { heatColor, normalizeUnit } from "../features/heat_utils";
-import { renderTableEmptyRow } from "./dom_helpers";
+import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
 
 type LocationIntensityRow = HistoryInsightsPayload["sensor_intensity_by_location"][number];
 
@@ -301,10 +301,7 @@ export function renderHistoryTable(
 export function getHistoryTableAction(
   target: EventTarget | null,
 ): HistoryTableAction | null {
-  if (!(target instanceof Element)) {
-    return null;
-  }
-  const actionElement = target.closest<HTMLElement>("[data-run-action]");
+  const actionElement = closestFromTarget<HTMLElement>(target, "[data-run-action]");
   if (!actionElement) {
     return null;
   }
@@ -315,8 +312,6 @@ export function getHistoryTableAction(
 }
 
 export function getHistoryTableRowRunId(target: EventTarget | null): string | null {
-  if (!(target instanceof Element)) {
-    return null;
-  }
-  return target.closest<HTMLElement>('tr[data-run-row="1"]')?.getAttribute("data-run") ?? null;
+  return closestFromTarget<HTMLElement>(target, 'tr[data-run-row="1"]')
+    ?.getAttribute("data-run") ?? null;
 }
