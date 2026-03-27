@@ -81,3 +81,87 @@ test("history PDF download revokes object URL with safe delay", async ({ page })
   await page.waitForTimeout(1000);
   expect(await revokeCallCount()).toBe(1);
 });
+
+test("history loaded insights promote the result summary above supporting evidence", async ({ page }) => {
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/cars") {
+        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+    historyHandler: async (route) => {
+      const pathname = requestPath(route);
+      if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, { runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }] });
+    },
+  });
+  await page.route("**/api/history/**/insights**", async (route) => {
+    await fulfillJson(route, {
+      run_id: "run-001",
+      status: "complete",
+      start_time_utc: "2026-01-01T00:00:00Z",
+      duration_s: 12.3,
+      sensor_count_used: 2,
+      most_likely_origin: {
+        suspected_source: "Front-right wheel imbalance",
+        location: "Front-right wheel",
+        speed_band: "60-90 km/h",
+        explanation: "Order content and spatial dominance agree on the front-right wheel.",
+      },
+      findings: [
+        {
+          finding_id: "finding-1",
+          amplitude_metric: "db",
+          confidence: 0.92,
+          confidence_pct: "92%",
+          evidence_summary: "Consistent wheel-order energy remains strongest at the front-right wheel.",
+          frequency_hz_or_order: "1x wheel",
+          strongest_location: "Front-right wheel",
+          strongest_speed_band: "60-90 km/h",
+          suspected_source: "Front-right wheel imbalance",
+        },
+        {
+          finding_id: "finding-2",
+          amplitude_metric: "db",
+          confidence: 0.67,
+          confidence_pct: "67%",
+          evidence_summary: "Secondary driveline energy appears at the tunnel but is weaker than the wheel finding.",
+          frequency_hz_or_order: "1x driveshaft",
+          strongest_location: "Driveshaft tunnel",
+          strongest_speed_band: "70-90 km/h",
+          suspected_source: "Secondary driveline contribution",
+        },
+      ],
+      sensor_intensity_by_location: [
+        {
+          location: "Front Right Wheel",
+          p50_intensity_db: 18,
+          p95_intensity_db: 32,
+          max_intensity_db: 40,
+          dropped_frames_delta: 0,
+          queue_overflow_drops_delta: 0,
+          sample_count: 20,
+        },
+      ],
+    });
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-history").click();
+  await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
+  await page.locator('[data-run-action="load-insights"]').click();
+  await expect(page.locator(".history-findings-overview__headline")).toHaveText("Front-right wheel imbalance");
+  await expect(page.locator(".history-findings-chip")).toContainText([
+    "Most likely origin",
+    "Strongest location",
+    "Speed band",
+    "Confidence",
+  ]);
+  await expect(page.locator(".history-finding-card")).toHaveCount(2);
+  await expect(page.locator(".history-preview-stats")).toContainText("Sensor statistics");
+});
