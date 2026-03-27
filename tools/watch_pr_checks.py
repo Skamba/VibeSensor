@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Poll GitHub PR checks until they are all green or a failure appears."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,6 +11,7 @@ import time
 from datetime import datetime, timezone
 
 SUCCESS_CONCLUSION = "SUCCESS"
+COMPLETED_STATUS = "COMPLETED"
 MERGE_ISSUE_STATES = {"DIRTY", "BEHIND", "BLOCKED", "UNKNOWN"}
 
 
@@ -53,7 +56,7 @@ def _label(check: dict[str, object]) -> str:
 
 def _is_green(check: dict[str, object]) -> bool:
     return (
-        str(check.get("status") or "") == "COMPLETED"
+        str(check.get("status") or "") == COMPLETED_STATUS
         and str(check.get("conclusion") or "") == SUCCESS_CONCLUSION
     )
 
@@ -61,7 +64,7 @@ def _is_green(check: dict[str, object]) -> bool:
 def _is_non_green_terminal(check: dict[str, object]) -> bool:
     status = str(check.get("status") or "")
     conclusion = str(check.get("conclusion") or "")
-    return status == "COMPLETED" and conclusion != SUCCESS_CONCLUSION
+    return status == COMPLETED_STATUS and conclusion != SUCCESS_CONCLUSION
 
 
 def main() -> int:
