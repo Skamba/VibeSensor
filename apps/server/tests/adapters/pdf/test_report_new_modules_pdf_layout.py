@@ -291,7 +291,7 @@ def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:
         observed_rows=5,
     )
     assert layout.observed.h > layout.header.h
-    assert layout.systems.h < 58 * mm
+    assert layout.systems.h < 50 * mm
 
 
 def test_observed_signature_row_count_reserves_optional_reason_and_tier_a_warning() -> None:
