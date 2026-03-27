@@ -56,6 +56,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
 
   const realtime = createRealtimeFeature({
     realtime: state.realtime,
+    spectrum: state.spectrum,
     getLanguage: () => state.shell.lang,
     els,
     t,

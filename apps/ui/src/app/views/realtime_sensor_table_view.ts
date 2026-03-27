@@ -10,6 +10,18 @@ export interface RealtimeSensorTableViewParams {
   escapeHtml: (value: unknown) => string;
 }
 
+function locationLabelForClient(
+  client: AdaptedClient,
+  params: RealtimeSensorTableViewParams,
+): string {
+  const code = params.locationCodeForClient(client);
+  if (!code) {
+    return params.t("dashboard.sensor_unassigned");
+  }
+  const option = params.locationOptions.find((location) => location.code === code);
+  return option?.label ?? code;
+}
+
 export interface RealtimeSensorTableClickAction {
   type: "identify" | "remove";
   clientId: string;
@@ -55,6 +67,28 @@ export function renderRealtimeSensorTable(
       const statusClass = connected ? "online" : "offline";
       const macAddress = client.mac_address || client.id;
       return `<tr data-client-id="${escapeHtml(client.id)}"><td><strong>${escapeHtml(client.name || client.id)}</strong><div class="subtle">${escapeHtml(client.id)}</div><div class="status-pill ${statusClass}">${statusText}</div></td><td><code>${escapeHtml(macAddress)}</code></td><td><select class="row-location-select" data-client-id="${escapeHtml(client.id)}">${locationOptionsMarkup(locationOptions, selectedCode, t, escapeHtml)}</select></td><td><button class="btn btn--primary row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button></td><td><button class="btn btn--danger row-remove" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("actions.remove"))}</button></td></tr>`;
+    })
+    .join("");
+}
+
+export function renderRealtimeSensorOverview(
+  container: HTMLElement,
+  params: RealtimeSensorTableViewParams,
+): void {
+  const { clients, t, escapeHtml } = params;
+  if (!clients.length) {
+    container.innerHTML = `<div class="subtle">${escapeHtml(t("settings.sensors.no_sensors"))}</div>`;
+    return;
+  }
+
+  container.innerHTML = clients
+    .map((client) => {
+      const connected = Boolean(client.connected);
+      const statusText = connected ? t("status.online") : t("status.offline");
+      const statusClass = connected ? "online" : "offline";
+      const primaryLabel = escapeHtml(client.name || client.id);
+      const locationLabel = escapeHtml(locationLabelForClient(client, params));
+      return `<article class="live-sensor-card"><div class="live-sensor-card__header"><strong>${primaryLabel}</strong><span class="status-pill ${statusClass}">${escapeHtml(statusText)}</span></div><div class="live-sensor-card__meta">${locationLabel}</div><div class="live-sensor-card__subtle"><code>${escapeHtml(client.id)}</code></div></article>`;
     })
     .join("");
 }

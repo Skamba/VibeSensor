@@ -26,7 +26,7 @@ async function assertSpectrumHasData(page: import("@playwright/test").Page): Pro
 }
 
 test.describe("Live view", () => {
-  test("renders spectrum-only dashboard", async ({ page }) => {
+  test("renders the live overview dashboard", async ({ page }) => {
     await page.goto("/?demo=1");
 
     // Verify the spectrum chart has visible graph data (not just an empty canvas)
