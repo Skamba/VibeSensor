@@ -277,9 +277,33 @@ export function renderHistoryTable(
     const detail = runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL;
     const pdfLabel = detail.pdfLoading ? t("history.generating_pdf") : t("history.generate_pdf");
     const rowError = detail.pdfError ? `<div class="history-inline-error">${escapeHtml(detail.pdfError)}</div>` : "";
+    const isExpanded = expandedRunId === run.run_id;
+    const toggleLabel = isExpanded ? t("history.collapse_details") : t("history.expand_details");
+    const toggleTitle = isExpanded
+      ? t("history.collapse_details_for_run", { runId: run.run_id })
+      : t("history.expand_details_for_run", { runId: run.run_id });
     rows.push(`
-        <tr class="history-row${expandedRunId === run.run_id ? " history-row--expanded" : ""}" data-run-row="1" data-run="${escapeHtml(run.run_id)}">
-          <td>${escapeHtml(run.run_id)}</td>
+        <tr class="history-row${isExpanded ? " history-row--expanded" : ""}" data-run-row="1" data-run="${escapeHtml(run.run_id)}">
+          <td>
+            <div class="history-row__run">
+              <div class="history-row__run-id">${escapeHtml(run.run_id)}</div>
+              <div class="history-row__detail-affordance">
+                <button
+                  type="button"
+                  class="history-row__toggle${isExpanded ? " history-row__toggle--expanded" : ""}"
+                  data-run-toggle="details"
+                  data-run="${escapeHtml(run.run_id)}"
+                  aria-expanded="${isExpanded ? "true" : "false"}"
+                  aria-label="${escapeHtml(toggleTitle)}"
+                  title="${escapeHtml(toggleTitle)}"
+                >
+                  <span class="history-row__toggle-icon" aria-hidden="true"></span>
+                  <span>${escapeHtml(toggleLabel)}</span>
+                </button>
+                <span class="history-row__hint">${escapeHtml(t("history.preview_available"))}</span>
+              </div>
+            </div>
+          </td>
           <td>${fmtTs(run.start_time_utc)}</td>
           <td class="numeric">${formatInt(run.sample_count)}</td>
           <td>
@@ -291,7 +315,7 @@ export function renderHistoryTable(
             ${rowError}
           </td>
         </tr>`);
-    if (expandedRunId === run.run_id) {
+    if (isExpanded) {
       rows.push(renderRunDetailsRow(run, detail, params));
     }
   }
