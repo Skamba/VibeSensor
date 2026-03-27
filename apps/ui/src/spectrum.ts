@@ -15,6 +15,7 @@ export interface SpectrumText {
 
 export class SpectrumChart {
   private static readonly FIXED_Y_RANGE: [number, number] = [SPECTRUM_DB_MIN, SPECTRUM_DB_MAX];
+
   private plot: uPlot | null = null;
   private readonly hostEl: HTMLElement;
   private readonly measureEl: HTMLElement;
@@ -47,6 +48,19 @@ export class SpectrumChart {
         title: "",
         width: this.computeWidth(),
         height: this.height,
+        focus: { alpha: 0.16 },
+        cursor: {
+          x: true,
+          y: true,
+          focus: { prox: 24 },
+          hover: { prox: 18 },
+          points: {
+            one: true,
+            size: 7,
+            width: 2,
+            fill: this.cssVar("--surface", "#f8f9fb"),
+          },
+        },
         scales: {
           x: { time: false },
           y: {
@@ -76,6 +90,16 @@ export class SpectrumChart {
   setData(data: uPlot.AlignedData): void {
     if (!this.plot) return;
     this.plot.setData(data);
+  }
+
+  setSeriesIsolation(seriesIdx: number | null): void {
+    const plot = this.plot;
+    if (!plot) return;
+    plot.batch(() => {
+      for (let index = 1; index < plot.series.length; index += 1) {
+        plot.setSeries(index, { show: seriesIdx === null || index === seriesIdx }, false);
+      }
+    });
   }
 
   resize(): void {

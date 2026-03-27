@@ -95,14 +95,25 @@ export class UiSpectrumController {
 
   private readonly t: (key: string, vars?: Record<string, unknown>) => string;
 
+  private readonly rootStyle: CSSStyleDeclaration;
+
   private spectrumTweenRaf: number | null = null;
 
   private spectrumLastFrame: SpectrumHeavyFrame | null = null;
+
+  private currentEntries: SpectrumSeriesEntry[] = [];
+
+  private currentFreqAxis: number[] = [];
+
+  private pinnedSeriesId: string | null = null;
+
+  private cursorDataIdx: number | null = null;
 
   constructor(deps: UiSpectrumControllerDeps) {
     this.state = deps.state;
     this.els = deps.els;
     this.t = deps.t;
+    this.rootStyle = getComputedStyle(document.documentElement);
   }
 
   updateSpectrumOverlay(): void {
@@ -133,6 +144,200 @@ export class UiSpectrumController {
     if (!this.els.spectrumOverlay) return;
     this.els.spectrumOverlay.hidden = message === null;
     this.els.spectrumOverlay.textContent = message ?? "";
+  }
+
+  private cssVar(name: string, fallback: string): string {
+    return this.rootStyle.getPropertyValue(name).trim() || fallback;
+  }
+
+  private formatHz(value: number): string {
+    return value >= 100 ? value.toFixed(0) : value.toFixed(1);
+  }
+
+  private formatDb(value: number): string {
+    return value.toFixed(1);
+  }
+
+  private closestFrequencyIndex(targetHz: number): number | null {
+    if (!this.currentFreqAxis.length || !Number.isFinite(targetHz)) return null;
+    let bestIndex = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let index = 0; index < this.currentFreqAxis.length; index += 1) {
+      const distance = Math.abs(this.currentFreqAxis[index] - targetHz);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    }
+    return bestIndex;
+  }
+
+  private strongestEntry(entries: SpectrumSeriesEntry[] = this.currentEntries): SpectrumSeriesEntry | null {
+    let bestEntry: SpectrumSeriesEntry | null = null;
+    let bestDb = Number.NEGATIVE_INFINITY;
+    for (const entry of entries) {
+      const db = this.state.spectrum.spectra.clients[entry.id]?.strength_metrics?.vibration_strength_db;
+      if (typeof db !== "number" || !Number.isFinite(db)) continue;
+      if (db > bestDb) {
+        bestDb = db;
+        bestEntry = entry;
+      }
+    }
+    return bestEntry;
+  }
+
+  private focusEntry(entries: SpectrumSeriesEntry[] = this.currentEntries): SpectrumSeriesEntry | null {
+    if (this.pinnedSeriesId) {
+      const pinnedEntry = entries.find((entry) => entry.id === this.pinnedSeriesId);
+      if (pinnedEntry) {
+        return pinnedEntry;
+      }
+    }
+    return this.strongestEntry(entries);
+  }
+
+  private focusPeakInfo(entry: SpectrumSeriesEntry): { freq: number; value: number } | null {
+    const peak = this.state.spectrum.spectra.clients[entry.id]?.strength_metrics?.top_peaks?.[0];
+    if (!peak || typeof peak.hz !== "number" || !Number.isFinite(peak.hz)) {
+      return null;
+    }
+    const peakIndex = this.closestFrequencyIndex(peak.hz);
+    if (peakIndex === null) {
+      return null;
+    }
+    const value = entry.values[peakIndex];
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      return null;
+    }
+    return {
+      freq: this.currentFreqAxis[peakIndex] ?? peak.hz,
+      value,
+    };
+  }
+
+  private activeBandsForFrequency(freqHz: number): ChartBand[] {
+    return this.state.spectrum.chartBands.filter((band) => freqHz >= band.min_hz && freqHz <= band.max_hz);
+  }
+
+  private bandSummaryText(bands: ChartBand[]): string {
+    return bands.length
+      ? bands.map((band) => band.label).join(", ")
+      : this.t("spectrum.inspector_no_band");
+  }
+
+  private activeFrequency(): number | null {
+    if (this.cursorDataIdx !== null && this.cursorDataIdx >= 0 && this.cursorDataIdx < this.currentFreqAxis.length) {
+      return this.currentFreqAxis[this.cursorDataIdx];
+    }
+    const focusEntry = this.focusEntry();
+    const peak = focusEntry ? this.focusPeakInfo(focusEntry) : null;
+    return peak?.freq ?? null;
+  }
+
+  private renderSensorLegend(entries: SpectrumSeriesEntry[]): void {
+    if (!this.els.legend) return;
+    this.els.legend.innerHTML = "";
+    for (const entry of entries) {
+      const button = document.createElement("button");
+      button.type = "button";
+      const isActive = this.pinnedSeriesId === entry.id;
+      const isMuted = this.pinnedSeriesId !== null && !isActive;
+      button.className = `legend-item legend-item--interactive${isActive ? " legend-item--active" : ""}${isMuted ? " legend-item--muted" : ""}`;
+      button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      button.title = isActive
+        ? this.t("spectrum.legend.clear_focus")
+        : this.t("spectrum.legend.focus_series", { sensor: entry.label });
+      button.addEventListener("click", () => {
+        this.pinnedSeriesId = isActive ? null : entry.id;
+        this.applyLegendSelection();
+      });
+
+      const swatch = document.createElement("span");
+      swatch.className = "swatch";
+      swatch.style.setProperty("--swatch-color", entry.color);
+
+      const textGroup = document.createElement("span");
+      textGroup.className = "legend-item__text-group";
+
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "legend-item__label";
+      labelSpan.textContent = entry.label;
+
+      const metric = this.state.spectrum.spectra.clients[entry.id]?.strength_metrics?.vibration_strength_db;
+      const metaSpan = document.createElement("span");
+      metaSpan.className = "legend-item__meta";
+      metaSpan.textContent = typeof metric === "number" && Number.isFinite(metric)
+        ? `${this.formatDb(metric)} dB`
+        : "";
+
+      textGroup.appendChild(labelSpan);
+      textGroup.appendChild(metaSpan);
+      button.appendChild(swatch);
+      button.appendChild(textGroup);
+      this.els.legend.appendChild(button);
+    }
+  }
+
+  private renderBandLegend(activeLabels: Set<string> = new Set()): void {
+    if (!this.els.bandLegend) return;
+    this.els.bandLegend.innerHTML = "";
+    for (const band of this.state.spectrum.chartBands) {
+      const row = document.createElement("div");
+      row.className = `legend-item legend-item--band${activeLabels.has(band.label) ? " legend-item--band-active" : ""}`;
+      row.innerHTML = `<span class="swatch" style="--swatch-color:${escapeHtml(band.color)}"></span><span>${escapeHtml(band.label)}</span>`;
+      this.els.bandLegend.appendChild(row);
+    }
+  }
+
+  private updateSpectrumInspector(): void {
+    const activeFreq = this.activeFrequency();
+    const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
+    this.renderBandLegend(new Set(activeBands.map((band) => band.label)));
+
+    if (!this.els.spectrumInspector) return;
+    const focusEntry = this.focusEntry();
+    if (!focusEntry) {
+      this.els.spectrumInspector.textContent = this.t("spectrum.inspector_idle");
+      return;
+    }
+
+    if (activeFreq !== null && this.cursorDataIdx !== null) {
+      const currentValue = focusEntry.values[Math.min(this.cursorDataIdx, focusEntry.values.length - 1)];
+      const valueText = typeof currentValue === "number" && Number.isFinite(currentValue)
+        ? this.formatDb(currentValue)
+        : "--";
+      this.els.spectrumInspector.textContent = this.t("spectrum.inspector_hover", {
+        sensor: focusEntry.label,
+        freq: this.formatHz(activeFreq),
+        value: valueText,
+        bands: this.bandSummaryText(activeBands),
+      });
+      return;
+    }
+
+    const peak = this.focusPeakInfo(focusEntry);
+    if (!peak) {
+      this.els.spectrumInspector.textContent = this.t("spectrum.inspector_idle");
+      return;
+    }
+    this.els.spectrumInspector.textContent = this.t("spectrum.inspector_focus", {
+      sensor: focusEntry.label,
+      freq: this.formatHz(peak.freq),
+      value: this.formatDb(peak.value),
+      bands: this.bandSummaryText(this.activeBandsForFrequency(peak.freq)),
+    });
+  }
+
+  private applyLegendSelection(): void {
+    if (this.pinnedSeriesId && !this.currentEntries.some((entry) => entry.id === this.pinnedSeriesId)) {
+      this.pinnedSeriesId = null;
+    }
+    const activeIndex = this.pinnedSeriesId
+      ? this.currentEntries.findIndex((entry) => entry.id === this.pinnedSeriesId)
+      : -1;
+    this.state.spectrum.spectrumPlot?.setSeriesIsolation(activeIndex >= 0 ? activeIndex + 1 : null);
+    this.renderSensorLegend(this.currentEntries);
+    this.updateSpectrumInspector();
   }
 
   renderSpectrum(): void {
@@ -196,27 +401,21 @@ export class UiSpectrumController {
           axisHz: this.t("chart.axis.hz"),
           axisAmplitude: this.t("chart.axis.amplitude"),
         },
-        [this.bandPlugin()],
+        this.spectrumPlugins(),
       );
     }
-    if (this.els.legend) {
-      this.state.spectrum.spectrumPlot?.renderLegend(this.els.legend, entries);
-    }
     this.state.spectrum.chartBands = this.calculateBands();
-    if (this.els.bandLegend) {
-      this.els.bandLegend.innerHTML = "";
-      for (const band of this.state.spectrum.chartBands) {
-        const row = document.createElement("div");
-        row.className = "legend-item";
-        row.innerHTML = `<span class="swatch" style="--swatch-color:${escapeHtml(band.color)}"></span><span>${escapeHtml(band.label)}</span>`;
-        this.els.bandLegend.appendChild(row);
-      }
-    }
 
     if (!targetFreq.length || !entries.length) {
       this.stopSpectrumTween();
+      this.currentEntries = [];
+      this.currentFreqAxis = [];
+      this.cursorDataIdx = null;
       this.spectrumLastFrame = null;
       this.state.spectrum.hasSpectrumData = false;
+      this.renderSensorLegend([]);
+      this.renderBandLegend();
+      this.updateSpectrumInspector();
       this.state.spectrum.spectrumPlot?.setData([[], ...entries.map(() => [] as number[])]);
       this.updateSpectrumOverlay();
       return;
@@ -232,6 +431,9 @@ export class UiSpectrumController {
         entry.values.length === minLen ? entry.values : entry.values.slice(0, minLen),
       ),
     };
+    this.currentEntries = entries;
+    this.currentFreqAxis = nextFrame.freq;
+    this.applyLegendSelection();
     const canTween = this.state.transport.wsState === "connected"
       && areHeavyFramesCompatible(this.spectrumLastFrame, nextFrame);
     this.stopSpectrumTween();
@@ -271,6 +473,7 @@ export class UiSpectrumController {
 
   private setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
     if (!this.state.spectrum.spectrumPlot) return;
+    this.currentFreqAxis = frame.freq;
     this.state.spectrum.spectrumPlot.setData([frame.freq, ...frame.values]);
     // Store a shallow snapshot for tween comparison.
     // The frame's arrays are not mutated after construction, so no deep clone needed.
@@ -303,6 +506,14 @@ export class UiSpectrumController {
   private bandPlugin(): uPlot.Plugin {
     return {
       hooks: {
+        setCursor: [
+          (plot: uPlot) => {
+            this.cursorDataIdx = typeof plot.cursor.idx === "number" && plot.cursor.idx >= 0
+              ? plot.cursor.idx
+              : null;
+            this.updateSpectrumInspector();
+          },
+        ],
         draw: [
           (plot: uPlot) => {
             if (!this.state.spectrum.chartBands.length) return;
@@ -312,13 +523,68 @@ export class UiSpectrumController {
               if (!(band.max_hz > band.min_hz)) continue;
               const x1 = plot.valToPos(band.min_hz, "x", true);
               const x2 = plot.valToPos(band.max_hz, "x", true);
+              plot.ctx.save();
               plot.ctx.fillStyle = band.color;
               plot.ctx.fillRect(x1, top, Math.max(1, x2 - x1), height);
+              plot.ctx.strokeStyle = band.color;
+              plot.ctx.lineWidth = 1;
+              plot.ctx.strokeRect(x1, top, Math.max(1, x2 - x1), height);
+              plot.ctx.restore();
             }
+
+            const focusEntry = this.focusEntry();
+            if (!focusEntry) return;
+            const focusPeak = this.focusPeakInfo(focusEntry);
+            if (!focusPeak) return;
+            const peakIndex = this.closestFrequencyIndex(focusPeak.freq);
+            if (peakIndex === null) return;
+            const x = plot.valToPos(this.currentFreqAxis[peakIndex], "x", true);
+            const y = plot.valToPos(focusEntry.values[peakIndex], "y", true);
+            const label = `${this.formatHz(focusPeak.freq)} Hz`;
+            const labelPaddingX = 6;
+            const labelHeight = 20;
+            const labelTop = top + 8;
+            plot.ctx.save();
+            plot.ctx.setLineDash([5, 4]);
+            plot.ctx.strokeStyle = focusEntry.color;
+            plot.ctx.lineWidth = 1.5;
+            plot.ctx.beginPath();
+            plot.ctx.moveTo(x, top);
+            plot.ctx.lineTo(x, top + height);
+            plot.ctx.stroke();
+            plot.ctx.setLineDash([]);
+            plot.ctx.fillStyle = focusEntry.color;
+            plot.ctx.beginPath();
+            plot.ctx.arc(x, y, 4, 0, Math.PI * 2);
+            plot.ctx.fill();
+            plot.ctx.font = "12px system-ui, sans-serif";
+            const labelWidth = plot.ctx.measureText(label).width + (labelPaddingX * 2);
+            const labelLeft = Math.max(plot.bbox.left, Math.min(x - (labelWidth / 2), plot.bbox.left + plot.bbox.width - labelWidth));
+            plot.ctx.fillStyle = this.cssVar("--tooltip-bg", "rgba(15, 23, 42, 0.88)");
+            plot.ctx.fillRect(labelLeft, labelTop, labelWidth, labelHeight);
+            plot.ctx.fillStyle = this.cssVar("--tooltip-fg", "#f8f9fb");
+            plot.ctx.textBaseline = "middle";
+            plot.ctx.fillText(label, labelLeft + labelPaddingX, labelTop + (labelHeight / 2));
+            plot.ctx.restore();
+            this.updateSpectrumInspector();
+          },
+        ],
+        setData: [
+          () => {
+            this.applyLegendSelection();
+          },
+        ],
+        setSeries: [
+          () => {
+            this.renderSensorLegend(this.currentEntries);
           },
         ],
       },
     };
+  }
+
+  private spectrumPlugins(): uPlot.Plugin[] {
+    return [this.bandPlugin()];
   }
 
   private recreateSpectrumPlot(seriesMeta: SpectrumSeriesEntry[]): void {
@@ -342,7 +608,7 @@ export class UiSpectrumController {
         axisHz: this.t("chart.axis.hz"),
         axisAmplitude: this.t("chart.axis.amplitude"),
       },
-      [this.bandPlugin()],
+      this.spectrumPlugins(),
     );
   }
 }
