@@ -16,8 +16,8 @@ struct SamplingState {
   TwoWire& i2c;
   ADXL345 adxl;
   bool sensor_ok = false;
-  int16_t sensor_batch_xyz[kSensorReadBatchSamples * 3] = {};
-  int16_t sensor_prefetch_xyz[kSensorPrefetchSamples * 3] = {};
+  int16_t sensor_batch_xyz[kSensorReadBatchSamples * kAxesPerSample] = {};
+  int16_t sensor_prefetch_xyz[kSensorPrefetchSamples * kAxesPerSample] = {};
   size_t sensor_prefetch_head = 0;
   size_t sensor_prefetch_tail = 0;
   size_t sensor_prefetch_count = 0;
