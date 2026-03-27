@@ -339,7 +339,7 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
         ],
         "e2e": [
             Step(
-                "Docker-backed e2e suite (skip already-owned checks)",
+                "Process-backed e2e suite (skip already-owned checks)",
                 [
                     python_cmd,
                     "tools/tests/run_e2e_parallel.py",

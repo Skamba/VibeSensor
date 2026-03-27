@@ -4,8 +4,8 @@
 
 - Server tests live under `apps/server/tests/`.
 - Use `make test-ci-lite` for the non-Docker blocking-CI subset.
-- Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner, including Docker-backed jobs when Docker is available.
-- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which defaults to the lean backend-only `apps/server/Dockerfile.e2e` image path with static UI serving disabled.
+- Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner.
+- The full end-to-end verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
 - `tools/tests/run_backend_parallel.py` shards `apps/server/tests` by whole test file, using cached JUnit timings from `~/.cache/vibesensor/backend-duration-cache.json` to keep the backend CI shards balanced over time.
 - `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
 - Python test configuration lives in `apps/server/pyproject.toml`.
@@ -91,7 +91,7 @@ make test
 # Non-Docker blocking-CI subset
 make test-ci-lite
 
-# Full local runner — includes Docker-backed jobs when Docker is available
+# Full local runner
 make test-all
 
 # Required pre-finalization gate — real GitHub workflow via act (requires Docker)
@@ -214,7 +214,7 @@ No secrets are currently required. If needed in the future, copy
 | `ui-smoke` | ✅ Fully supported | — |
 | `release-smoke` | ✅ Fully supported | — |
 | `backend-tests-1/2/3/4/5` | ⚠️ Mostly works | 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
-| `e2e` | ❌ Not supported | Requires Docker-in-Docker. Run `make test-full-suite` or use GitHub CI instead. |
+| `e2e` | ✅ Fully supported | Runs isolated server subprocess shards directly; no Docker-in-Docker dependency. |
 
 ### Relationship to `run_ci_parallel.py`
 
@@ -270,7 +270,7 @@ state, clear the cache in that test before asserting on the changed behavior.
 
 | Marker | Meaning |
 |---|---|
-| `e2e` | Docker-based end-to-end tests |
+| `e2e` | End-to-end tests |
 | `long_sim` | Longer simulated-run tests |
 | `smoke` | Minimal critical-path checks |
 
@@ -280,7 +280,7 @@ Use markers sparingly:
   paths such as schema/contract bridges or minimal end-to-end behavior.
 - `@pytest.mark.long_sim`: slower simulated-run tests that intentionally trade
   speed for more scenario coverage.
-- `@pytest.mark.e2e`: Docker-backed end-to-end tests.
+- `@pytest.mark.e2e`: end-to-end tests.
 
 Do not mark every fast unit test as `smoke`; keep it a compact slice that is
 useful for quick feedback.

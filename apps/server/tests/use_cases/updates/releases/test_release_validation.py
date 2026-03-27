@@ -43,6 +43,7 @@ def test_build_release_smoke_config_rewrites_runtime_paths(tmp_path: Path) -> No
     assert data["gps"]["gps_enabled"] is False
     assert data["ap"]["self_heal"]["enabled"] is False
     assert data["logging"]["history_db_path"].endswith("history.db")
+    assert data["logging"]["app_log_path"].endswith("app.log")
     assert data["update"]["rollback_dir"].endswith("rollback")
 
 
@@ -204,8 +205,21 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
         def kill(self) -> None:
             raise AssertionError("kill should not be called for a healthy process")
 
-    def fake_popen(*args, **kwargs):
-        recorded["popen"] = (args, kwargs)
+    def fake_start_server_subprocess(
+        config_path: Path,
+        *,
+        env: dict[str, str] | None = None,
+        cwd: Path | None = None,
+        stdout=None,
+    ):
+        recorded["popen"] = (
+            (config_path,),
+            {
+                "env": env,
+                "cwd": cwd,
+                "stdout": stdout,
+            },
+        )
         return FakeProcess()
 
     def fake_build_release_smoke_config(
@@ -239,7 +253,16 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
         "validate_packaged_static_assets",
         lambda: tmp_path / "index.html",
     )
-    monkeypatch.setattr(release_validation.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(
+        release_validation,
+        "start_server_subprocess",
+        fake_start_server_subprocess,
+    )
+    monkeypatch.setattr(
+        release_validation,
+        "terminate_subprocess",
+        lambda process: (process.terminate(), process.wait(timeout=10.0)),
+    )
     monkeypatch.setattr(release_validation, "_read_http", lambda url: responses.pop(0))
 
     run_server_smoke(
@@ -251,12 +274,11 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
     )
 
     popen_args, popen_kwargs = recorded["popen"]
-    assert list(popen_args[0][:2]) == [release_validation.sys.executable, "-c"]
-    assert "from vibesensor.app import create_app" in popen_args[0][2]
-    assert popen_args[0][3].endswith("release-smoke.yaml")
+    assert str(popen_args[0]).endswith("release-smoke.yaml")
     assert "VIBESENSOR_DISABLE_AUTO_APP" not in popen_kwargs["env"]
     assert popen_kwargs["env"]["VIBESENSOR_SERVE_STATIC"] == "0"
     assert popen_kwargs["env"]["VIBESENSOR_UPDATE_STATE_PATH"].endswith("update_status.json")
+    assert popen_kwargs["stdout"] == subprocess.PIPE
     assert recorded["terminated"] is True
 
 

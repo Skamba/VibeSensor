@@ -78,11 +78,11 @@ test-ci-lite: ## Run the non-Docker blocking CI subset locally
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_ci_parallel.py $(CI_LITE_JOBS)
 
-test-all: ## Run the broader local CI runner, including Docker jobs when available
+test-all: ## Run the broader local CI runner
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_ci_parallel.py
 
-test-full-suite: ## Run the full Docker-backed end-to-end suite locally
+test-full-suite: ## Run the full end-to-end suite locally
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_e2e_parallel.py --shards 1
 

@@ -1,10 +1,11 @@
-"""Guard docker-backed e2e image preparation behavior."""
+"""Guard process-backed e2e shard runner behavior."""
 
 from __future__ import annotations
 
 import importlib.util
 import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 from tests._paths import REPO_ROOT
 
@@ -22,75 +23,75 @@ def _load_run_e2e_parallel_module():
     return module
 
 
-def test_prepare_image_builds_by_default(monkeypatch) -> None:
+def test_build_shard_config_creates_isolated_runtime(monkeypatch, tmp_path: Path) -> None:
     module = _load_run_e2e_parallel_module()
-    built_images: list[tuple[str, str]] = []
+    recorded: dict[str, object] = {}
+    shard_root = tmp_path / "shard-root"
+    runtime = module.IsolatedRuntimePaths(
+        root=shard_root,
+        data_dir=shard_root / "data",
+        rollback_dir=shard_root / "rollback",
+        config_path=shard_root / "shard-2.yaml",
+    )
 
+    monkeypatch.setattr(module.tempfile, "mkdtemp", lambda prefix: str(shard_root))
     monkeypatch.setattr(
         module,
-        "_build_image",
-        lambda image, dockerfile: built_images.append((image, dockerfile)) or 0,
+        "_track_active_runtime_root",
+        lambda path: recorded.setdefault("tracked", path),
     )
 
-    assert module._prepare_image("vibesensor-full-suite", env={}) == 0
-    assert built_images == [("vibesensor-full-suite", module._DEFAULT_DOCKERFILE)]
+    def fake_build_isolated_server_config(
+        source_config: Path,
+        runtime_root: Path,
+        *,
+        host: str,
+        port: int,
+        udp_data_port: int,
+        udp_control_port: int,
+        config_name: str,
+        data_seed_dir: Path | None,
+    ):
+        recorded["config_call"] = {
+            "source_config": source_config,
+            "runtime_root": runtime_root,
+            "host": host,
+            "port": port,
+            "udp_data_port": udp_data_port,
+            "udp_control_port": udp_control_port,
+            "config_name": config_name,
+            "data_seed_dir": data_seed_dir,
+        }
+        return runtime
 
+    monkeypatch.setattr(module, "build_isolated_server_config", fake_build_isolated_server_config)
 
-def test_prepare_image_reuses_prebuilt_image_when_skip_requested(monkeypatch) -> None:
-    module = _load_run_e2e_parallel_module()
-    emitted: list[str] = []
-
-    def _unexpected_build(_image: str, _dockerfile: str) -> int:
-        raise AssertionError("skip-build mode should not rebuild the docker image")
-
-    monkeypatch.setattr(module, "_build_image", _unexpected_build)
-    monkeypatch.setattr(
-        module,
-        "_docker_image_exists",
-        lambda image: image == "vibesensor-full-suite",
+    config = module._build_shard_config(
+        source_config=Path("/tmp/base-config.yaml"),
+        shard_index=2,
+        shard_count=6,
+        tests=["apps/server/tests_e2e/test_sample.py::test_alpha"],
+        http_port_base=18020,
+        sim_data_port_base=19020,
+        sim_control_port_base=19120,
     )
-    monkeypatch.setattr(module, "_emit", emitted.append)
 
-    assert (
-        module._prepare_image(
-            "vibesensor-full-suite",
-            env={module._SKIP_BUILD_ENV: "true"},
-        )
-        == 0
-    )
-    assert any("reusing prebuilt docker image" in line for line in emitted)
-
-
-def test_prepare_image_reuses_prebuilt_image_in_github_actions(monkeypatch) -> None:
-    module = _load_run_e2e_parallel_module()
-    emitted: list[str] = []
-
-    def _unexpected_build(_image: str, _dockerfile: str) -> int:
-        raise AssertionError("GitHub Actions should reuse the prebuilt docker image")
-
-    monkeypatch.setattr(module, "_build_image", _unexpected_build)
-    monkeypatch.setattr(module, "_docker_image_exists", lambda _image: True)
-    monkeypatch.setattr(module, "_emit", emitted.append)
-
-    assert module._prepare_image("vibesensor-full-suite", env={"GITHUB_ACTIONS": "true"}) == 0
-    assert any("reusing prebuilt docker image" in line for line in emitted)
-
-
-def test_prepare_image_exits_cleanly_when_skip_requested_but_image_is_missing(
-    monkeypatch,
-) -> None:
-    module = _load_run_e2e_parallel_module()
-    emitted: list[str] = []
-
-    def _unexpected_build(_image: str, _dockerfile: str) -> int:
-        raise AssertionError("skip-build mode should not rebuild missing images")
-
-    monkeypatch.setattr(module, "_build_image", _unexpected_build)
-    monkeypatch.setattr(module, "_docker_image_exists", lambda _image: False)
-    monkeypatch.setattr(module, "_emit", emitted.append)
-
-    assert module._prepare_image("missing-image", env={module._SKIP_BUILD_ENV: "1"}) == 2
-    assert any("missing-image" in line for line in emitted)
+    assert recorded["tracked"] == shard_root
+    assert recorded["config_call"] == {
+        "source_config": Path("/tmp/base-config.yaml"),
+        "runtime_root": shard_root,
+        "host": "127.0.0.1",
+        "port": 18021,
+        "udp_data_port": 19021,
+        "udp_control_port": 19121,
+        "config_name": "shard-2.yaml",
+        "data_seed_dir": module._DEFAULT_DATA_SEED_DIR,
+    }
+    assert config.http_port == 18021
+    assert config.sim_data_port == 19021
+    assert config.sim_control_port == 19121
+    assert config.sim_client_control_base == 9200
+    assert config.runtime == runtime
 
 
 def test_assign_shards_uses_cached_durations() -> None:
@@ -133,7 +134,7 @@ def test_assign_shards_only_dedicates_tests_above_threshold() -> None:
     assert shards[1] == [threshold_test, fast_test]
 
 
-def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path) -> None:
+def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path: Path) -> None:
     module = _load_run_e2e_parallel_module()
     junit_path = tmp_path / "shard.xml"
     root = ET.Element("testsuite")
@@ -167,18 +168,24 @@ def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path) -> No
     }
 
 
-def test_cleanup_active_containers_removes_tracked_names(monkeypatch) -> None:
+def test_cleanup_active_processes_terminates_tracked_processes(monkeypatch) -> None:
     module = _load_run_e2e_parallel_module()
-    removed: list[str] = []
-    module._ACTIVE_CONTAINERS.clear()
-    module._track_active_container("vibesensor-e2e-shard-a")
-    module._track_active_container("vibesensor-e2e-shard-b")
-    monkeypatch.setattr(module, "_force_remove_container", lambda name: removed.append(name) or 0)
+    terminated: list[object] = []
+    process_a = object()
+    process_b = object()
+    module._ACTIVE_PROCESSES.clear()
+    module._track_active_process("shard-a-server", process_a)
+    module._track_active_process("shard-b-pytest", process_b)
+    monkeypatch.setattr(
+        module,
+        "terminate_subprocess",
+        lambda process: terminated.append(process),
+    )
 
-    module._cleanup_active_containers()
+    module._cleanup_active_processes()
 
-    assert removed == ["vibesensor-e2e-shard-a", "vibesensor-e2e-shard-b"]
-    assert module._ACTIVE_CONTAINERS == set()
+    assert terminated == [process_a, process_b]
+    assert module._ACTIVE_PROCESSES == {}
 
 
 def test_parse_args_defaults_to_six_shards(monkeypatch) -> None:
@@ -188,4 +195,4 @@ def test_parse_args_defaults_to_six_shards(monkeypatch) -> None:
     args = module._parse_args()
 
     assert args.shards == 6
-    assert args.dockerfile == module._DEFAULT_DOCKERFILE
+    assert args.config == module._DEFAULT_BASE_CONFIG

@@ -347,7 +347,7 @@ jobs:
           retention-days: 7
 
   e2e:
-    name: E2E (docker)
+    name: E2E
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -358,8 +358,6 @@ jobs:
 
       - uses: ./.github/actions/setup-backend
 
-      - uses: docker/setup-buildx-action@v4
-
       - uses: actions/cache@v5
         with:
           path: ~/.cache/vibesensor/e2e-duration-cache.json
@@ -368,17 +366,7 @@ jobs:
             ${{ runner.os }}-e2e-durations-${{ hashFiles('tools/tests/run_e2e_parallel.py', 'apps/server/tests_e2e/**/*.py') }}-
             ${{ runner.os }}-e2e-durations-
 
-      - name: Prebuild cached E2E image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: apps/server/Dockerfile.e2e
-          tags: vibesensor-full-suite:latest
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Docker-backed e2e suite (skip already-owned checks)
+      - name: Process-backed e2e suite (skip already-owned checks)
         run: python3 tools/tests/run_e2e_parallel.py --fast-e2e --shards 6
 
       - name: Upload e2e failure artifacts
