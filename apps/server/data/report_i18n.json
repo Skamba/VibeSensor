@@ -8,8 +8,8 @@
     "nl": "Er wordt geen aandrijflijnprobleem met speling, slingering of balans gevonden."
   },
   "ACTION_DRIVELINE_INSPECTION_WHAT": {
-    "en": "Inspect propshaft runout/balance, center support bearing, CV/guibo joints {driveline_focus}.",
-    "nl": "Controleer cardanas slingering/balans, middenlager, homokineten/flexschijf {driveline_focus}."
+    "en": "Inspect propshaft runout/balance, center support bearing, and CV/guibo joints.",
+    "nl": "Controleer cardanas slingering/balans, middenlager en homokineten/flexschijf."
   },
   "ACTION_DRIVELINE_INSPECTION_WHY": {
     "en": "Driveline-order vibration is commonly caused by shaft imbalance, joint wear, or support bearing issues.",
@@ -92,8 +92,8 @@
     "nl": "Er wordt geen bandtoestandsafwijking gevonden op de gecontroleerde wielen."
   },
   "ACTION_TIRE_CONDITION_WHAT": {
-    "en": "Inspect {wheel_focus} for tire defects: flat spots, belt shift, uneven wear, pressure mismatch.",
-    "nl": "Controleer {wheel_focus} op banddefecten: vlakke plekken, gordelverschuiving, ongelijk slijtagebeeld, drukverschillen."
+    "en": "Inspect the relevant wheel/tire assemblies for tire defects: flat spots, belt shift, uneven wear, and pressure mismatch.",
+    "nl": "Controleer de relevante wiel-/bandsets op banddefecten: vlakke plekken, gordelverschuiving, ongelijk slijtagebeeld en drukverschillen."
   },
   "ACTION_TIRE_CONDITION_WHY": {
     "en": "Tire structural issues often create strong 1x/2x wheel-order vibration.",
@@ -108,12 +108,12 @@
     "nl": "Balans en slingering zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft ongewijzigd."
   },
   "ACTION_WHEEL_BALANCE_WHAT": {
-    "en": "Inspect and balance {wheel_focus}; measure radial/lateral runout on the wheel and tire{speed_hint}.",
-    "nl": "Controleer en balanceer {wheel_focus}; meet radiale/laterale slingering op wiel en band{speed_hint}."
+    "en": "Inspect and balance the relevant wheel/tire assemblies; measure radial/lateral runout on the wheel and tire.",
+    "nl": "Controleer en balanceer de relevante wiel-/bandsets; meet radiale/laterale slingering op wiel en band."
   },
   "ACTION_WHEEL_BALANCE_WHY": {
-    "en": "{location_hint} wheel-order signatures are most likely caused by imbalance, runout, or tire deformation.",
-    "nl": "{location_hint} wielorde-signaturen worden meestal veroorzaakt door onbalans, slingering of banddeformatie."
+    "en": "Wheel-order signatures are most likely caused by imbalance, runout, or tire deformation.",
+    "nl": "Wielorde-signaturen worden meestal veroorzaakt door onbalans, slingering of banddeformatie."
   },
   "ADDITIONAL_OBSERVATIONS": {
     "en": "Additional Observations",

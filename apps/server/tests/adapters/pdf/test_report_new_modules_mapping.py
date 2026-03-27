@@ -125,6 +125,66 @@ def test_map_summary_uses_domain_action_render_queries_for_next_steps() -> None:
     assert data.next_steps[0].eta == "15-30 min"
 
 
+def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
+    summary = minimal_summary(
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.74,
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.74,
+            }
+        ],
+        test_plan=[
+            {
+                "action_id": "wheel_balance_and_runout",
+                "what": "ACTION_WHEEL_BALANCE_WHAT",
+                "why": "ACTION_WHEEL_BALANCE_WHY",
+                "confirm": "ACTION_WHEEL_BALANCE_CONFIRM",
+                "falsify": "ACTION_WHEEL_BALANCE_FALSIFY",
+                "eta": "20-45 min",
+            },
+            {
+                "action_id": "wheel_tire_condition",
+                "what": "ACTION_TIRE_CONDITION_WHAT",
+                "why": "ACTION_TIRE_CONDITION_WHY",
+                "confirm": "ACTION_TIRE_CONDITION_CONFIRM",
+                "falsify": "ACTION_TIRE_CONDITION_FALSIFY",
+                "eta": "10-20 min",
+            },
+            {
+                "action_id": "driveline_inspection",
+                "what": "ACTION_DRIVELINE_INSPECTION_WHAT",
+                "why": "ACTION_DRIVELINE_INSPECTION_WHY",
+                "confirm": "ACTION_DRIVELINE_INSPECTION_CONFIRM",
+                "falsify": "ACTION_DRIVELINE_INSPECTION_FALSIFY",
+                "eta": "20-35 min",
+            },
+        ],
+    )
+
+    data = map_summary(prepare_report_input(summary))
+    rendered = " ".join(
+        part
+        for step in data.next_steps
+        for part in (step.action, step.why, step.confirm, step.falsify)
+        if part
+    )
+
+    assert "{wheel_focus}" not in rendered
+    assert "{speed_hint}" not in rendered
+    assert "{location_hint}" not in rendered
+    assert "{driveline_focus}" not in rendered
+    assert "{" not in rendered
+    assert "}" not in rendered
+
+
 def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
     summary = minimal_summary(
         lang="en",

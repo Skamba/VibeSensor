@@ -14,6 +14,7 @@ from reportlab.pdfgen.canvas import Canvas
 from test_support.core import extract_pdf_text
 from test_support.report_helpers import (
     RUN_END,
+    minimal_summary,
     write_jsonl,
 )
 from test_support.report_helpers import (
@@ -179,6 +180,60 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
     text_blob = extract_pdf_text(build_report_pdf(map_summary(prepare_report_input(summary))))
     assert "Firmware Version" in text_blob
     assert "esp-fw-1.2.3" in text_blob
+
+
+def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
+    summary = minimal_summary(
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.74,
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.74,
+            }
+        ],
+        test_plan=[
+            {
+                "action_id": "wheel_balance_and_runout",
+                "what": "ACTION_WHEEL_BALANCE_WHAT",
+                "why": "ACTION_WHEEL_BALANCE_WHY",
+                "confirm": "ACTION_WHEEL_BALANCE_CONFIRM",
+                "falsify": "ACTION_WHEEL_BALANCE_FALSIFY",
+                "eta": "20-45 min",
+            },
+            {
+                "action_id": "wheel_tire_condition",
+                "what": "ACTION_TIRE_CONDITION_WHAT",
+                "why": "ACTION_TIRE_CONDITION_WHY",
+                "confirm": "ACTION_TIRE_CONDITION_CONFIRM",
+                "falsify": "ACTION_TIRE_CONDITION_FALSIFY",
+                "eta": "10-20 min",
+            },
+            {
+                "action_id": "driveline_inspection",
+                "what": "ACTION_DRIVELINE_INSPECTION_WHAT",
+                "why": "ACTION_DRIVELINE_INSPECTION_WHY",
+                "confirm": "ACTION_DRIVELINE_INSPECTION_CONFIRM",
+                "falsify": "ACTION_DRIVELINE_INSPECTION_FALSIFY",
+                "eta": "20-35 min",
+            },
+        ],
+    )
+
+    text_blob = extract_pdf_text(build_report_pdf(map_summary(prepare_report_input(summary))))
+
+    assert "{wheel_focus}" not in text_blob
+    assert "{speed_hint}" not in text_blob
+    assert "{location_hint}" not in text_blob
+    assert "{driveline_focus}" not in text_blob
+    assert "Inspect propshaft runout/balance" in text_blob
+    assert "Inspect the relevant wheel/tire assemblies" in text_blob
 
 
 def test_report_pdf_wraps_long_system_card_location() -> None:
