@@ -36,6 +36,36 @@ const STATE_TO_VARIANT: Readonly<Record<string, string>> = {
   failed: "bad",
 };
 
+type JourneyStageState = "upcoming" | "active" | "done" | "attention";
+
+const ESP_FLASH_JOURNEY_STAGES = [
+  {
+    phase: "validating",
+    titleKey: "settings.esp_flash.phase.validating",
+    detailKey: "settings.esp_flash.journey.detail.validating",
+  },
+  {
+    phase: "preparing",
+    titleKey: "settings.esp_flash.phase.preparing",
+    detailKey: "settings.esp_flash.journey.detail.preparing",
+  },
+  {
+    phase: "erasing",
+    titleKey: "settings.esp_flash.phase.erasing",
+    detailKey: "settings.esp_flash.journey.detail.erasing",
+  },
+  {
+    phase: "flashing",
+    titleKey: "settings.esp_flash.phase.flashing",
+    detailKey: "settings.esp_flash.journey.detail.flashing",
+  },
+  {
+    phase: "done",
+    titleKey: "settings.esp_flash.phase.done",
+    detailKey: "settings.esp_flash.journey.detail.done",
+  },
+] as const;
+
 function safeEspFlashState(state: string | null | undefined): string {
   return state || "idle";
 }
@@ -46,6 +76,57 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   let latestStatus: EspFlashStatusPayload | null = null;
   let availablePorts: EspSerialPortPayload[] = [];
   let latestAttempts: EspFlashHistoryAttemptPayload[] = [];
+
+  function translateKeyOrFallback(key: string, fallback: string): string {
+    const translated = t(key);
+    return translated === key ? fallback : translated;
+  }
+
+  function formatEspFlashPhase(phase: string | null | undefined): string {
+    const safePhase = phase || "idle";
+    return translateKeyOrFallback(`settings.esp_flash.phase.${safePhase}`, safePhase);
+  }
+
+  function stageStateLabel(state: JourneyStageState): string {
+    return t(`maintenance.stage_state.${state}`);
+  }
+
+  function resolveJourneyStageState(status: EspFlashStatusPayload, stageIndex: number): JourneyStageState {
+    if (status.state === "success") return "done";
+    if (status.state === "idle") return "upcoming";
+    const currentIndex = ESP_FLASH_JOURNEY_STAGES.findIndex((stage) => stage.phase === (status.phase || "idle"));
+    if (currentIndex === -1) {
+      return "upcoming";
+    }
+    if (stageIndex < currentIndex) return "done";
+    if (stageIndex === currentIndex) {
+      return status.state === "failed" || status.state === "cancelled" ? "attention" : "active";
+    }
+    return "upcoming";
+  }
+
+  function renderJourney(status: EspFlashStatusPayload): string {
+    const items = ESP_FLASH_JOURNEY_STAGES.map((stage, index) => {
+      const stageState = resolveJourneyStageState(status, index);
+      return `<li class="maintenance-stage maintenance-stage--${stageState}">
+        <span class="maintenance-stage__marker">${index + 1}</span>
+        <div class="maintenance-stage__body">
+          <div class="maintenance-stage__title">${escapeHtml(t(stage.titleKey))}</div>
+          <div class="maintenance-stage__detail">${escapeHtml(t(stage.detailKey))}</div>
+        </div>
+        <span class="maintenance-stage__state">${escapeHtml(stageStateLabel(stageState))}</span>
+      </li>`;
+    }).join("");
+    const terminalState = safeEspFlashState(status.state);
+    const terminalNote = terminalState === "failed" || terminalState === "cancelled"
+      ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(t(`settings.esp_flash.journey_terminal.${terminalState}`))}</div>`
+      : "";
+    return `<div class="maintenance-journey">
+      <div class="maintenance-journey__title">${escapeHtml(t("settings.esp_flash.journey_title"))}</div>
+      ${terminalNote}
+      <ol class="maintenance-stage-list">${items}</ol>
+    </div>`;
+  }
 
   function selectedTargetLabel(status: EspFlashStatusPayload): string {
     const selectedValue = els.espFlashPortSelect?.value;
@@ -104,7 +185,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       rows.push(
         renderStatusGridRow(
           escapeHtml(t("settings.esp_flash.readiness.current_step")),
-          escapeHtml(latestStatus.phase || "—"),
+          escapeHtml(formatEspFlashPhase(latestStatus.phase)),
         ),
       );
     }
@@ -127,7 +208,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     const errorHtml = latestStatus.error
       ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(latestStatus.error)}</div>`
       : "";
-    els.espFlashReadinessPanel.innerHTML = `<div class="subtle">${escapeHtml(readinessSummary(latestStatus))}</div><div class="status-grid">${rows.join("")}</div>${errorHtml}`;
+    els.espFlashReadinessPanel.innerHTML = `<div class="subtle">${escapeHtml(readinessSummary(latestStatus))}</div><div class="status-grid">${rows.join("")}</div>${renderJourney(latestStatus)}${errorHtml}`;
   }
 
   function renderLogsEmptyState(status: EspFlashStatusPayload): string {
