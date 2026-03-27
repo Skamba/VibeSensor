@@ -69,7 +69,7 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
   await expect.poll(() => speedOverrideCalls).toBe(0);
 });
 
-test("resolved fallback manual state stays coherent across header, form, and GPS status", async ({ page }) => {
+test("resolved fallback manual state stays coherent across header status, form, and GPS status", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
       "GET /api/settings/speed-source": {
@@ -98,6 +98,7 @@ test("resolved fallback manual state stays coherent across header, form, and GPS
   await page.goto("/");
   await expect(page.locator("#speed")).toContainText("80.0 km/h");
   await expect(page.locator("#speed")).toContainText("Manual");
+  await expect(page.locator("#headerGpsStatus")).toHaveText("GPS Disabled");
 
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="speedSourceTab"]').click();
@@ -107,7 +108,6 @@ test("resolved fallback manual state stays coherent across header, form, and GPS
   await expect(page.locator('input[name="speedSourceRadio"][value="manual"]')).toBeChecked();
   await expect(page.locator('input[name="speedSourceRadio"][value="gps"]')).not.toBeChecked();
   await expect(page.locator("#manualSpeedInput")).toHaveValue("80");
-  await expect(page.locator("#headerManualOverrideGroup")).toBeVisible();
 });
 
 test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {

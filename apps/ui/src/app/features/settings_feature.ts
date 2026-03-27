@@ -50,7 +50,6 @@ export interface SettingsFeature {
   syncActiveCarToInputs(): void;
   saveAnalysisFromInputs(): void;
   saveSpeedSourceFromInputs(): void;
-  saveHeaderManualSpeedFromInput(): void;
   startGpsStatusPolling(): void;
   stopGpsStatusPolling(): void;
 }
@@ -227,7 +226,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     syncActiveCarToInputs,
     saveAnalysisFromInputs: analysisModule.saveAnalysisFromInputs,
     saveSpeedSourceFromInputs: speedSourceModule.saveSpeedSourceFromInputs,
-    saveHeaderManualSpeedFromInput: speedSourceModule.saveHeaderManualSpeedFromInput,
     startGpsStatusPolling: gpsStatusModule.startGpsStatusPolling,
     stopGpsStatusPolling: gpsStatusModule.stopGpsStatusPolling,
   };
