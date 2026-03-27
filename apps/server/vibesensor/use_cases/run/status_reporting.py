@@ -25,6 +25,7 @@ class RunRecorderStatusSnapshot:
     run_id: str | None
     write_error: str | None
     analysis_in_progress: bool
+    start_time_utc: str | None = None
     samples_written: int = 0
     samples_dropped: int = 0
     last_completed_run_id: str | None = None
@@ -35,6 +36,7 @@ def build_run_recorder_status(
     *,
     enabled: bool,
     run_id: str | None,
+    start_time_utc: str | None,
     persistence: RunPersistenceWriter,
     post_analysis: PostAnalysisWorker,
 ) -> RunRecorderStatusSnapshot:
@@ -46,6 +48,7 @@ def build_run_recorder_status(
         run_id=run_id,
         write_error=persist.write_error,
         analysis_in_progress=post_analysis.is_active,
+        start_time_utc=start_time_utc,
         samples_written=persist.written_sample_count,
         samples_dropped=persist.dropped_sample_count,
         last_completed_run_id=post_snapshot.last_completed_run_id,

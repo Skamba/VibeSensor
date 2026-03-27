@@ -12,6 +12,7 @@ class RecordingStatusResponse(BaseModel):
     run_id: str | None
     write_error: str | None
     analysis_in_progress: bool
+    start_time_utc: str | None = None
     samples_written: int = 0
     samples_dropped: int = 0
     last_completed_run_id: str | None = None
