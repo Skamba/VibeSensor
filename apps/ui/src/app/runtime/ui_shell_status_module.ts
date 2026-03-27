@@ -8,7 +8,7 @@ const WS_KEY_BY_STATE: Record<string, string> = {
   connected: "ws.connected",
   reconnecting: "ws.reconnecting",
   stale: "ws.stale",
-  no_data: "ws.no_data",
+  no_data: "ws.connected",
 };
 
 const WS_VARIANT_BY_STATE: Record<string, string> = {
@@ -16,13 +16,7 @@ const WS_VARIANT_BY_STATE: Record<string, string> = {
   connected: "ok",
   reconnecting: "warn",
   stale: "bad",
-  no_data: "muted",
-};
-
-const WS_BANNER_CFG: Record<string, { key: string; cls: string }> = {
-  reconnecting: { key: "ws.banner.reconnecting", cls: "connection-banner--bad" },
-  stale: { key: "ws.banner.stale", cls: "connection-banner--warn" },
-  connecting: { key: "ws.banner.connecting", cls: "connection-banner--muted" },
+  no_data: "ok",
 };
 
 export interface UiShellStatusModuleDeps {
@@ -79,20 +73,6 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
       WS_VARIANT_BY_STATE[transport.wsState] || "muted",
       ctx.t(WS_KEY_BY_STATE[transport.wsState] || "ws.connecting"),
     );
-
-    const banner = els.connectionBanner;
-    if (banner) {
-      const cfg = WS_BANNER_CFG[transport.wsState];
-      if (cfg) {
-        banner.hidden = false;
-        banner.textContent = ctx.t(cfg.key);
-        banner.className = `connection-banner ${cfg.cls}`;
-      } else {
-        banner.hidden = true;
-        banner.textContent = "";
-        banner.className = "connection-banner";
-      }
-    }
 
     if (els.appShellWrap) {
       const degraded = transport.wsState === "reconnecting" || transport.wsState === "stale";

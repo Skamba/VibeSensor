@@ -4,7 +4,6 @@ export interface UiDomElements {
   languageSelect: HTMLSelectElement | null;
   speedUnitSelect: HTMLSelectElement | null;
   speed: HTMLElement | null;
-  headerGpsStatus: HTMLElement | null;
   rotationalBasisSource: HTMLElement | null;
   rotationalReason: HTMLElement | null;
   rotationalWheelValue: HTMLElement | null;
@@ -33,6 +32,7 @@ export interface UiDomElements {
   liveRunHealth: HTMLElement | null;
   liveSensorRoster: HTMLElement | null;
   linkState: HTMLElement | null;
+  shellLiveStatus: HTMLElement | null;
   specChartWrap: HTMLElement | null;
   specChart: HTMLElement | null;
   spectrumOverlay: HTMLElement | null;
@@ -110,7 +110,6 @@ export interface UiDomElements {
   gpsFallbackPanel: HTMLElement | null;
   staleTimeoutInput: HTMLInputElement | null;
 
-  connectionBanner: HTMLElement | null;
   appErrorBanner: HTMLElement | null;
   appShellWrap: HTMLElement | null;
   rotationalAssumptions: HTMLElement | null;
@@ -148,7 +147,6 @@ export function createUiDomRegistry(): UiDomElements {
     languageSelect: selectEl("languageSelect"),
     speedUnitSelect: selectEl("speedUnitSelect"),
     speed: el("speed"),
-    headerGpsStatus: el("headerGpsStatus"),
     rotationalBasisSource: el("rotationalBasisSource"),
     rotationalReason: el("rotationalReason"),
     rotationalWheelValue: el("rotationalWheelValue"),
@@ -177,6 +175,7 @@ export function createUiDomRegistry(): UiDomElements {
     liveRunHealth: el("liveRunHealth"),
     liveSensorRoster: el("liveSensorRoster"),
     linkState: el("linkState"),
+    shellLiveStatus: el("shellLiveStatus"),
     specChartWrap: el("specChartWrap"),
     specChart: el("specChart"),
     spectrumOverlay: el("spectrumOverlay"),
@@ -253,7 +252,6 @@ export function createUiDomRegistry(): UiDomElements {
     gpsStatusFallback: el("gpsStatusFallback"),
     gpsFallbackPanel: el("gpsFallbackPanel"),
     staleTimeoutInput: inputEl("staleTimeoutInput"),
-    connectionBanner: el("connectionBanner"),
     appErrorBanner: el("appErrorBanner"),
     appShellWrap: document.querySelector<HTMLElement>(".wrap"),
 

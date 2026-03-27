@@ -41,15 +41,13 @@
           </div>
         </div>
         <div class="site-header__status">
-          <div id="speed" class="speed" aria-live="polite">Speed --</div>
           <div class="site-header__status-pills">
-            <div id="headerGpsStatus" class="pill pill--muted" aria-live="polite">GPS --</div>
             <div id="linkState" class="pill pill--muted" aria-live="polite">Connecting...</div>
+            <div id="shellLiveStatus" class="pill pill--muted" aria-live="polite">No live signal</div>
           </div>
         </div>
       </header>
 
-      <div id="connectionBanner" class="connection-banner" hidden aria-live="assertive" role="alert"></div>
       <div id="appErrorBanner" class="connection-banner app-error-banner" hidden aria-live="assertive" role="alert"></div>
 
       <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
@@ -78,6 +76,10 @@
               <div id="liveStrongestSignal" class="stat">
                 <div class="stat__label" data-i18n="dashboard.strongest_signal">Strongest signal</div>
                 <div class="stat__value" data-value>--</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label" data-i18n="dashboard.current_speed">Current speed</div>
+                <div id="speed" class="stat__value speed" aria-live="polite">--</div>
               </div>
             </div>
             <div class="live-sensor-roster__header">
