@@ -43,9 +43,15 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-history").click();
-  await page.locator('tr[data-run="run-001"] td').first().click();
+  const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator(".history-details-row")).toBeVisible();
   await expect(page.locator(".mini-car-dot")).toHaveAttribute("title", /20.0 dB$/);
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator(".history-details-row")).toHaveCount(0);
 });
 
 test("history PDF download revokes object URL with safe delay", async ({ page }) => {
