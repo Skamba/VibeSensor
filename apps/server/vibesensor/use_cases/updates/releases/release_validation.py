@@ -14,7 +14,7 @@ import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 
-from vibesensor.app.subprocess_server import (
+from vibesensor.shared.subprocess_server import (
     build_isolated_server_config,
     build_isolated_server_env,
     start_server_subprocess,

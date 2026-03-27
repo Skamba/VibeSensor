@@ -58,6 +58,17 @@ def _load_yaml_mapping(path: Path) -> dict[str, object]:
     return data
 
 
+def _mapping_section(root: dict[str, object], key: str) -> dict[str, object]:
+    value = root.get(key)
+    if value is None:
+        section: dict[str, object] = {}
+        root[key] = section
+        return section
+    if not isinstance(value, dict):
+        raise ValueError(f"Expected config section {key!r} to be a mapping")
+    return value
+
+
 def build_isolated_server_config(
     source_config: Path,
     runtime_root: Path,
@@ -71,8 +82,7 @@ def build_isolated_server_config(
 ) -> IsolatedRuntimePaths:
     if udp_data_port > 65535 or udp_control_port > 65535:
         raise ValueError(
-            "UDP ports exceed range: "
-            f"data_port={udp_data_port} control_port={udp_control_port}",
+            f"UDP ports exceed range: data_port={udp_data_port} control_port={udp_control_port}",
         )
 
     data = _load_yaml_mapping(source_config)
@@ -88,32 +98,30 @@ def build_isolated_server_config(
             raise FileNotFoundError(f"Seed data dir does not exist: {data_seed_dir}")
         shutil.copytree(data_seed_dir, runtime_data)
 
-    data.setdefault("server", {})
-    data["server"]["host"] = host
-    data["server"]["port"] = port
+    server = _mapping_section(data, "server")
+    server["host"] = host
+    server["port"] = port
 
-    data.setdefault("udp", {})
-    data["udp"]["data_host"] = host
-    data["udp"]["data_port"] = udp_data_port
-    data["udp"]["control_host"] = host
-    data["udp"]["control_port"] = udp_control_port
+    udp = _mapping_section(data, "udp")
+    udp["data_host"] = host
+    udp["data_port"] = udp_data_port
+    udp["control_host"] = host
+    udp["control_port"] = udp_control_port
 
-    data.setdefault("gps", {})
-    data["gps"]["gps_enabled"] = False
+    gps = _mapping_section(data, "gps")
+    gps["gps_enabled"] = False
 
-    data.setdefault("ap", {})
-    data["ap"].setdefault("self_heal", {})
-    data["ap"]["self_heal"]["enabled"] = False
-    data["ap"]["self_heal"]["state_file"] = str(
-        runtime_data / "hotspot-self-heal-state.json"
-    )
+    ap = _mapping_section(data, "ap")
+    self_heal = _mapping_section(ap, "self_heal")
+    self_heal["enabled"] = False
+    self_heal["state_file"] = str(runtime_data / "hotspot-self-heal-state.json")
 
-    data.setdefault("logging", {})
-    data["logging"]["history_db_path"] = str(runtime_data / "history.db")
-    data["logging"]["app_log_path"] = str(runtime_data / "app.log")
+    logging = _mapping_section(data, "logging")
+    logging["history_db_path"] = str(runtime_data / "history.db")
+    logging["app_log_path"] = str(runtime_data / "app.log")
 
-    data.setdefault("update", {})
-    data["update"]["rollback_dir"] = str(rollback_dir)
+    update = _mapping_section(data, "update")
+    update["rollback_dir"] = str(rollback_dir)
 
     config_path = runtime_root / config_name
     config_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")

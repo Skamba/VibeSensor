@@ -794,12 +794,9 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                 if not isinstance(step, Mapping):
                     continue
                 uses = step.get("uses")
-                if (
-                    isinstance(uses, str)
-                    and (
-                        uses.startswith("docker/setup-buildx-action@")
-                        or uses.startswith("docker/build-push-action@")
-                    )
+                if isinstance(uses, str) and (
+                    uses.startswith("docker/setup-buildx-action@")
+                    or uses.startswith("docker/build-push-action@")
                 ):
                     e2e_uses_docker_steps = True
                     break

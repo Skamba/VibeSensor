@@ -22,7 +22,7 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from vibesensor.app.subprocess_server import (
+from vibesensor.shared.subprocess_server import (
     IsolatedRuntimePaths,
     build_isolated_server_config,
     build_isolated_server_env,
@@ -276,7 +276,9 @@ def _cleanup_active_resources() -> None:
 
 
 def _cleanup_on_signal(signum: int, frame) -> None:
-    _emit(f"[e2e-parallel] received signal {signum}; cleaning up active shard processes")
+    _emit(
+        f"[e2e-parallel] received signal {signum}; cleaning up active shard processes"
+    )
     _cleanup_active_resources()
     previous = _PREVIOUS_SIGNAL_HANDLERS.get(signum, signal.SIG_DFL)
     if previous is signal.default_int_handler:
@@ -346,8 +348,7 @@ def _wait_health(
             last_error = exc
             time.sleep(0.5)
     raise RuntimeError(
-        "Shard server did not become ready before timeout. "
-        f"Last error: {last_error}"
+        f"Shard server did not become ready before timeout. Last error: {last_error}"
     )
 
 
