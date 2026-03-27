@@ -72,9 +72,10 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "VibeSensor" })).toBeVisible();
   await expect(page.locator("#linkState")).not.toHaveText(/Connecting/i);
+  await expect(page.locator("#shellLiveStatus")).toHaveText("Ready");
   await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText("1 / 1");
   await expect(page.locator("#liveAssignedLocations [data-value]")).toHaveText("1 / 1");
-  await expect(page.locator("#liveRunHealth")).toHaveText("Healthy");
+  await expect(page.locator("#liveRunHealth")).toHaveText("Ready");
   await expect(page.locator("#liveFocusSensor [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveSensorRoster")).toContainText("Front Left Wheel");
