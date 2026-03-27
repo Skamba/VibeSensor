@@ -52,17 +52,6 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
 
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
     const unitLabel = selectedSpeedUnitLabel();
-    if (els.headerGpsStatus) {
-      const stateLabel = connectionStateLabel(status.connection_state);
-      const speedText = status.speed_source === "gps"
-        ? formatSpeedValue(status.effective_speed_kmh, unitLabel)
-        : null;
-      els.headerGpsStatus.textContent = `GPS ${stateLabel}${speedText ? ` ${speedText}` : ""}`;
-      const variant = status.connection_state === "connected"
-        ? "ok"
-        : (status.connection_state === "stale" ? "warn" : "muted");
-      els.headerGpsStatus.className = `pill pill--${variant}`;
-    }
     if (els.gpsStatusState) els.gpsStatusState.textContent = connectionStateLabel(status.connection_state);
     if (els.gpsStatusDevice) els.gpsStatusDevice.textContent = status.device ?? "--";
     if (els.gpsStatusLastUpdate) {

@@ -195,12 +195,17 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     }
     const connectedCount = formatInt(connected.length);
     const assignedCount = formatInt(assignedClientCount());
+    if (realtime.loggingStatus.enabled) {
+      return {
+        variant: "ok",
+        text: t("dashboard.health.recording"),
+        summary: t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount }),
+      };
+    }
     return {
       variant: "ok",
-      text: t("dashboard.health.healthy"),
-      summary: realtime.loggingStatus.enabled
-        ? t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount })
-        : t("dashboard.logging.ready", { connected: connectedCount, assigned: assignedCount }),
+      text: t("dashboard.health.ready"),
+      summary: t("dashboard.logging.ready", { connected: connectedCount, assigned: assignedCount }),
     };
   }
 
@@ -226,6 +231,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   function renderLiveHealth(): void {
     const health = computeLiveHealth();
     setPillState(els.liveRunHealth, health.variant, health.text);
+    setPillState(els.shellLiveStatus, health.variant, health.text);
     if (els.loggingSummary) {
       els.loggingSummary.textContent = health.summary;
     }

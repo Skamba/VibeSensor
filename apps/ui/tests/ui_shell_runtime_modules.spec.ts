@@ -169,7 +169,6 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
   speedUnitSelect: SelectStub;
   speed: HTMLElement;
   linkState: HTMLElement;
-  connectionBanner: HTMLElement;
   appErrorBanner: HTMLElement;
   appShellWrap: HTMLElement;
 } {
@@ -181,7 +180,6 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
   const speedUnitSelect = createSelect("kmh");
   const speed = createTextElement();
   const linkState = createTextElement();
-  const connectionBanner = createTextElement();
   const appErrorBanner = createTextElement();
   const appShellWrap = createTextElement();
 
@@ -192,7 +190,6 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
     speedUnitSelect,
     speed,
     linkState,
-    connectionBanner,
     appErrorBanner,
     appShellWrap,
     ...overrides,
@@ -208,7 +205,6 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
     speedUnitSelect,
     speed,
     linkState,
-    connectionBanner,
     appErrorBanner,
     appShellWrap,
   };
@@ -449,7 +445,7 @@ test.describe("createUiShellStatusModule", () => {
   test("renders websocket state without bootstrap wiring", () => {
     const state = createAppState();
     state.transport.wsState = "stale";
-    const { els, linkState, connectionBanner, appShellWrap } = createShellDeps();
+    const { els, linkState, appShellWrap } = createShellDeps();
     const module = createUiShellStatusModule({
       shell: state.shell,
       transport: state.transport,
@@ -468,8 +464,6 @@ test.describe("createUiShellStatusModule", () => {
 
     expect(linkState.className).toBe("pill pill--bad");
     expect(linkState.textContent).toBe("ws.stale");
-    expect(connectionBanner.hidden).toBe(false);
-    expect(connectionBanner.textContent).toBe("ws.banner.stale");
     expect(appShellWrap.classList.contains("wrap--stale")).toBe(true);
   });
 
