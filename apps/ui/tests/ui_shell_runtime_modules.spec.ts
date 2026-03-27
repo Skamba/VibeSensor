@@ -560,6 +560,9 @@ test.describe("createUiShellLanguageRefreshModule", () => {
           renderLoggingStatus() {
             portCalls.push("renderLoggingStatus");
           },
+          renderStatus() {
+            portCalls.push("renderStatus");
+          },
         },
         history: {
           renderHistoryTable() {
@@ -589,6 +592,7 @@ test.describe("createUiShellLanguageRefreshModule", () => {
       "buildLocationOptions",
       "maybeRenderSensorsSettingsList:true",
       "renderLoggingStatus",
+      "renderStatus",
       "renderHistoryTable",
       "reloadExpandedRunOnLanguageChange",
     ]);
@@ -641,6 +645,9 @@ test.describe("createUiShellLanguageRefreshModule", () => {
           renderLoggingStatus() {
             portCalls.push("renderLoggingStatus");
           },
+          renderStatus() {
+            portCalls.push("renderStatus");
+          },
         },
         history: {
           renderHistoryTable() {
@@ -659,6 +666,7 @@ test.describe("createUiShellLanguageRefreshModule", () => {
       "buildLocationOptions",
       "maybeRenderSensorsSettingsList:true",
       "renderLoggingStatus",
+      "renderStatus",
       "renderHistoryTable",
     ]);
     expect(renderSpectrumCalls).toBe(0);
@@ -693,6 +701,7 @@ test.describe("bindUiShellFeatureEvents", () => {
           buildLocationOptions: () => [],
           maybeRenderSensorsSettingsList: () => undefined,
           renderLoggingStatus: () => undefined,
+          renderStatus: () => undefined,
         },
         history: {
           renderHistoryTable: () => undefined,

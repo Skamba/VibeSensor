@@ -14,6 +14,8 @@ export interface UiDomElements {
   rotationalEngineValue: HTMLElement | null;
   rotationalEngineMode: HTMLElement | null;
   loggingStatus: HTMLElement | null;
+  loggingSummary: HTMLElement | null;
+  loggingRunId: HTMLElement | null;
   startLoggingBtn: HTMLButtonElement | null;
   stopLoggingBtn: HTMLButtonElement | null;
   refreshHistoryBtn: HTMLButtonElement | null;
@@ -24,6 +26,12 @@ export interface UiDomElements {
   lastSeen: HTMLElement | null;
   dropped: HTMLElement | null;
   framesTotal: HTMLElement | null;
+  liveConnectedSensors: HTMLElement | null;
+  liveAssignedLocations: HTMLElement | null;
+  liveFocusSensor: HTMLElement | null;
+  liveStrongestSignal: HTMLElement | null;
+  liveRunHealth: HTMLElement | null;
+  liveSensorRoster: HTMLElement | null;
   linkState: HTMLElement | null;
   specChartWrap: HTMLElement | null;
   specChart: HTMLElement | null;
@@ -145,6 +153,8 @@ export function createUiDomRegistry(): UiDomElements {
     rotationalEngineValue: el("rotationalEngineValue"),
     rotationalEngineMode: el("rotationalEngineMode"),
     loggingStatus: el("loggingStatus"),
+    loggingSummary: el("loggingSummary"),
+    loggingRunId: el("loggingRunId"),
     startLoggingBtn: btnEl("startLoggingBtn"),
     stopLoggingBtn: btnEl("stopLoggingBtn"),
     refreshHistoryBtn: btnEl("refreshHistoryBtn"),
@@ -155,6 +165,12 @@ export function createUiDomRegistry(): UiDomElements {
     lastSeen: el("lastSeen"),
     dropped: el("dropped"),
     framesTotal: el("framesTotal"),
+    liveConnectedSensors: el("liveConnectedSensors"),
+    liveAssignedLocations: el("liveAssignedLocations"),
+    liveFocusSensor: el("liveFocusSensor"),
+    liveStrongestSignal: el("liveStrongestSignal"),
+    liveRunHealth: el("liveRunHealth"),
+    liveSensorRoster: el("liveSensorRoster"),
     linkState: el("linkState"),
     specChartWrap: el("specChartWrap"),
     specChart: el("specChart"),

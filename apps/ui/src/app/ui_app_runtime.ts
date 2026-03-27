@@ -80,6 +80,7 @@ export class UiAppRuntime {
           buildLocationOptions: (codes) => this.features.realtime.buildLocationOptions(codes),
           maybeRenderSensorsSettingsList: (force) => this.features.realtime.maybeRenderSensorsSettingsList(force),
           renderLoggingStatus: () => this.features.realtime.renderLoggingStatus(),
+          renderStatus: () => this.features.realtime.renderStatus(),
         },
         history: {
           renderHistoryTable: () => this.features.history.renderHistoryTable(),

@@ -1,5 +1,5 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { RealtimeState } from "../ui_app_state";
+import type { RealtimeState, SpectrumState } from "../ui_app_state";
 import type { LocationOption } from "../../api/types";
 import type { AdaptedClient } from "../../server_payload";
 import * as I18N from "../../i18n";
@@ -16,11 +16,13 @@ import { defaultLocationCodes } from "../../constants";
 import {
   getRealtimeSensorTableClickAction,
   getRealtimeSensorTableLocationChange,
+  renderRealtimeSensorOverview,
   renderRealtimeSensorTable,
 } from "../views/realtime_sensor_table_view";
 
 export interface RealtimeFeatureDeps extends FeatureDepsBase {
   realtime: RealtimeState;
+  spectrum: SpectrumState;
   getLanguage: () => string;
   formatInt: (value: number) => string;
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
@@ -35,7 +37,7 @@ export interface RealtimeFeature {
   maybeRenderSensorsSettingsList(force?: boolean): void;
   updateClientSelection(): void;
   locationCodeForClient(client: AdaptedClient): string;
-  renderStatus(clientRow: AdaptedClient | undefined): void;
+  renderStatus(clientRow?: AdaptedClient): void;
   renderLoggingStatus(): void;
   refreshLoggingStatus(): Promise<void>;
   startLogging(): Promise<void>;
@@ -44,7 +46,7 @@ export interface RealtimeFeature {
 }
 
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
-  const { realtime, els, t, escapeHtml, formatInt, setPillState } = ctx;
+  const { realtime, spectrum, els, t, escapeHtml, formatInt, setPillState } = ctx;
   let handlersBound = false;
 
   const SHORTHAND_LOCATION_MAP: Record<string, string> = {
@@ -89,6 +91,151 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return match ? match.code : "";
   }
 
+  function clientDisplayName(client: AdaptedClient): string {
+    return String(client.name || "").trim() || client.id;
+  }
+
+  function clientLocationText(client: AdaptedClient): string {
+    const code = locationCodeForClient(client);
+    if (!code) {
+      return t("dashboard.sensor_unassigned");
+    }
+    const option = realtime.locationOptions.find((location) => location.code === code);
+    return option?.label ?? locationLabel(code);
+  }
+
+  function connectedClients(): AdaptedClient[] {
+    return realtime.clients.filter((client) => Boolean(client.connected));
+  }
+
+  function assignedClientCount(): number {
+    return realtime.clients.filter((client) => locationCodeForClient(client)).length;
+  }
+
+  function selectedClient(clientRow?: AdaptedClient): AdaptedClient | undefined {
+    if (clientRow) {
+      return clientRow;
+    }
+    return realtime.clients.find((client) => client.id === realtime.selectedClientId);
+  }
+
+  function strongestSignalText(): string {
+    let bestClient: AdaptedClient | null = null;
+    let bestDb = Number.NEGATIVE_INFINITY;
+    for (const client of connectedClients()) {
+      const db = spectrum.spectra.clients[client.id]?.strength_metrics?.vibration_strength_db;
+      if (typeof db !== "number" || !Number.isFinite(db)) continue;
+      if (db > bestDb) {
+        bestDb = db;
+        bestClient = client;
+      }
+    }
+    if (!bestClient) {
+      return t("dashboard.strongest_signal_none");
+    }
+    const primary = locationCodeForClient(bestClient) ? clientLocationText(bestClient) : clientDisplayName(bestClient);
+    return `${primary} (${formatInt(bestDb)} dB)`;
+  }
+
+  function focusSensorText(clientRow?: AdaptedClient): string {
+    const client = selectedClient(clientRow);
+    if (!client) {
+      return t("dashboard.focus_sensor_none");
+    }
+    const primary = locationCodeForClient(client) ? clientLocationText(client) : clientDisplayName(client);
+    const statusText = client.connected ? t("status.online") : t("status.offline");
+    return `${primary} (${statusText})`;
+  }
+
+  type LiveHealth = {
+    variant: "muted" | "ok" | "warn" | "bad";
+    text: string;
+    summary: string;
+  };
+
+  function computeLiveHealth(): LiveHealth {
+    if (realtime.loggingStatus.write_error) {
+      return {
+        variant: "bad",
+        text: t("dashboard.health.write_error"),
+        summary: realtime.loggingStatus.write_error,
+      };
+    }
+    const connected = connectedClients();
+    if (!connected.length) {
+      return {
+        variant: "muted",
+        text: t("dashboard.health.no_signal"),
+        summary: t("dashboard.logging.waiting"),
+      };
+    }
+    const droppedCount = connected.filter((client) => (client.dropped_frames ?? 0) > 0).length;
+    if (droppedCount > 0) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: t("dashboard.logging.frame_loss", { count: formatInt(droppedCount) }),
+      };
+    }
+    const unassignedConnectedCount = connected.filter((client) => !locationCodeForClient(client)).length;
+    if (unassignedConnectedCount > 0) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: t("dashboard.logging.unassigned", { count: formatInt(unassignedConnectedCount) }),
+      };
+    }
+    const offlineCount = realtime.clients.filter((client) => !client.connected).length;
+    if (offlineCount > 0) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: t("dashboard.logging.offline", { count: formatInt(offlineCount) }),
+      };
+    }
+    const connectedCount = formatInt(connected.length);
+    const assignedCount = formatInt(assignedClientCount());
+    return {
+      variant: "ok",
+      text: t("dashboard.health.healthy"),
+      summary: realtime.loggingStatus.enabled
+        ? t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount })
+        : t("dashboard.logging.ready", { connected: connectedCount, assigned: assignedCount }),
+    };
+  }
+
+  function renderLiveSensorRoster(): void {
+    if (!els.liveSensorRoster) return;
+    renderRealtimeSensorOverview(els.liveSensorRoster, {
+      clients: realtime.clients,
+      locationOptions: realtime.locationOptions,
+      locationCodeForClient,
+      t,
+      escapeHtml,
+    });
+  }
+
+  function renderLiveOverviewStats(clientRow?: AdaptedClient): void {
+    const totalClients = realtime.clients.length;
+    ctx.setStatValue(els.liveConnectedSensors, `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`);
+    ctx.setStatValue(els.liveAssignedLocations, `${formatInt(assignedClientCount())} / ${formatInt(totalClients)}`);
+    ctx.setStatValue(els.liveFocusSensor, focusSensorText(clientRow));
+    ctx.setStatValue(els.liveStrongestSignal, strongestSignalText());
+  }
+
+  function renderLiveHealth(): void {
+    const health = computeLiveHealth();
+    setPillState(els.liveRunHealth, health.variant, health.text);
+    if (els.loggingSummary) {
+      els.loggingSummary.textContent = health.summary;
+    }
+    if (els.loggingRunId) {
+      const runId = realtime.loggingStatus.run_id;
+      els.loggingRunId.hidden = !runId;
+      els.loggingRunId.textContent = runId ? t("dashboard.logging.run_id", { runId }) : "";
+    }
+  }
+
   function sensorsSettingsSignature(): string {
     const clientPart = realtime.clients
       .map((client) => {
@@ -105,6 +252,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     if (!force && nextSig === realtime.sensorsSettingsSignature) return;
     realtime.sensorsSettingsSignature = nextSig;
     renderSensorsSettingsList();
+    renderLiveSensorRoster();
   }
 
   function updateClientSelection(): void {
@@ -130,18 +278,20 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     });
   }
 
-  function renderStatus(clientRow: AdaptedClient | undefined): void {
-    if (!clientRow) {
+  function renderStatus(clientRow?: AdaptedClient): void {
+    const currentClient = selectedClient(clientRow);
+    renderLiveOverviewStats(currentClient);
+    if (!currentClient) {
       ctx.setStatValue(els.lastSeen, "--");
       ctx.setStatValue(els.dropped, "--");
       ctx.setStatValue(els.framesTotal, "--");
       return;
     }
-    const age = clientRow.last_seen_age_ms ?? null;
+    const age = currentClient.last_seen_age_ms ?? null;
     const ageValue = age === null ? "--" : t("status.age_ms_ago", { value: formatInt(Math.max(0, age)) });
     ctx.setStatValue(els.lastSeen, ageValue);
-    ctx.setStatValue(els.dropped, formatInt(clientRow.dropped_frames ?? 0));
-    ctx.setStatValue(els.framesTotal, formatInt(clientRow.frames_total ?? 0));
+    ctx.setStatValue(els.dropped, formatInt(currentClient.dropped_frames ?? 0));
+    ctx.setStatValue(els.framesTotal, formatInt(currentClient.frames_total ?? 0));
   }
 
   function renderLoggingStatus(): void {
@@ -155,6 +305,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     }
     if (els.startLoggingBtn) els.startLoggingBtn.disabled = on || !hasActiveClients;
     if (els.stopLoggingBtn) els.stopLoggingBtn.disabled = !on;
+    renderLiveHealth();
   }
 
   async function refreshLoggingStatus(): Promise<void> {
@@ -163,6 +314,13 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       renderLoggingStatus();
     } catch (_err) {
       setPillState(els.loggingStatus, "bad", t("status.unavailable"));
+      if (els.loggingSummary) {
+        els.loggingSummary.textContent = t("status.unavailable");
+      }
+      if (els.loggingRunId) {
+        els.loggingRunId.hidden = true;
+        els.loggingRunId.textContent = "";
+      }
     }
   }
 
@@ -199,6 +357,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       applyLocationCodes([]);
     }
     maybeRenderSensorsSettingsList(true);
+    renderStatus();
+    renderLoggingStatus();
   }
 
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
@@ -215,6 +375,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     if (client) {
       client.location_code = locationCode;
       maybeRenderSensorsSettingsList();
+      renderStatus();
+      renderLoggingStatus();
     }
   }
 
@@ -239,6 +401,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     updateClientSelection();
     maybeRenderSensorsSettingsList();
     renderLoggingStatus();
+    renderStatus();
     if (prevSelected !== realtime.selectedClientId) ctx.sendSelection();
   }
 
