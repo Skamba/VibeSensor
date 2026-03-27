@@ -531,7 +531,7 @@
           <div class="panel card">
             <strong data-i18n="settings.esp_flash.title">ESP Flash</strong>
             <div class="subtle" data-i18n="settings.esp_flash.hint">Flash ESP firmware from local source on this Pi.</div>
-            <div class="maintenance-layout maintenance-layout--split">
+            <div class="maintenance-layout">
               <div class="maintenance-stack">
                 <section class="maintenance-card">
                   <div class="maintenance-card__header">
@@ -581,50 +581,6 @@
                   <div id="espFlashHistoryPanel" class="maintenance-stack maintenance-stack--tight"></div>
                 </section>
               </div>
-
-              <aside class="maintenance-stack">
-                <section class="maintenance-card">
-                  <div class="maintenance-card__header">
-                    <div>
-                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.guidance.prerequisites_title">Before flashing</div>
-                      <div class="subtle" data-i18n="settings.esp_flash.guidance.prerequisites_intro">These checks help the page feel deliberate instead of experimental.</div>
-                    </div>
-                  </div>
-                  <ul class="maintenance-copy-list">
-                    <li data-i18n="settings.esp_flash.guidance.prerequisites_1">Connect the ESP32 over USB, then refresh the port list if it was plugged in after the page loaded.</li>
-                    <li data-i18n="settings.esp_flash.guidance.prerequisites_2">Leave the board powered and avoid unplugging it while erase or upload steps are running.</li>
-                    <li data-i18n="settings.esp_flash.guidance.prerequisites_3">Use recent attempts and live logs to confirm whether the last flash finished cleanly before retrying.</li>
-                  </ul>
-                </section>
-
-                <section class="maintenance-card">
-                  <div class="maintenance-card__header">
-                    <div>
-                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.guidance.outcome_title">What flashing will do</div>
-                      <div class="subtle" data-i18n="settings.esp_flash.guidance.outcome_intro">This page builds firmware from the local source on the Pi and then writes it to the selected board.</div>
-                    </div>
-                  </div>
-                  <ul class="maintenance-copy-list">
-                    <li data-i18n="settings.esp_flash.guidance.outcome_1">The Pi compiles the current firmware source and opens the chosen serial connection.</li>
-                    <li data-i18n="settings.esp_flash.guidance.outcome_2">Erase, upload, and verification steps appear live in the flash output panel.</li>
-                    <li data-i18n="settings.esp_flash.guidance.outcome_3">A completed attempt is added to recent history so the next operator can see the outcome.</li>
-                  </ul>
-                </section>
-
-                <section class="maintenance-card">
-                  <div class="maintenance-card__header">
-                    <div>
-                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.guidance.recovery_title">Troubleshooting and recovery</div>
-                      <div class="subtle" data-i18n="settings.esp_flash.guidance.recovery_intro">Most failures can be investigated from this page without leaving the workflow.</div>
-                    </div>
-                  </div>
-                  <ul class="maintenance-copy-list">
-                    <li data-i18n="settings.esp_flash.guidance.recovery_1">If no device appears, reconnect the board, verify the cable, and refresh the port list.</li>
-                    <li data-i18n="settings.esp_flash.guidance.recovery_2">If flashing fails, review the latest attempt and log output before retrying.</li>
-                    <li data-i18n="settings.esp_flash.guidance.recovery_3">A new successful flash updates the last-success timestamp so readiness is easier to confirm next time.</li>
-                  </ul>
-                </section>
-              </aside>
             </div>
           </div>
         </div>

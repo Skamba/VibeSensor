@@ -74,6 +74,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   const { els, t, escapeHtml } = ctx;
   let nextLogIndex = 0;
   let latestStatus: EspFlashStatusPayload | null = null;
+  let latestJourneyPhase: string | null = null;
   let availablePorts: EspSerialPortPayload[] = [];
   let latestAttempts: EspFlashHistoryAttemptPayload[] = [];
 
@@ -91,10 +92,24 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     return t(`maintenance.stage_state.${state}`);
   }
 
+  function journeyStageIndex(phase: string | null | undefined): number {
+    return ESP_FLASH_JOURNEY_STAGES.findIndex((stage) => stage.phase === (phase || "idle"));
+  }
+
+  function resolvedJourneyPhase(status: EspFlashStatusPayload): string | null {
+    if (journeyStageIndex(status.phase) !== -1) {
+      return status.phase || null;
+    }
+    if (status.state === "failed" || status.state === "cancelled") {
+      return latestJourneyPhase;
+    }
+    return null;
+  }
+
   function resolveJourneyStageState(status: EspFlashStatusPayload, stageIndex: number): JourneyStageState {
     if (status.state === "success") return "done";
     if (status.state === "idle") return "upcoming";
-    const currentIndex = ESP_FLASH_JOURNEY_STAGES.findIndex((stage) => stage.phase === (status.phase || "idle"));
+    const currentIndex = journeyStageIndex(resolvedJourneyPhase(status));
     if (currentIndex === -1) {
       return "upcoming";
     }
@@ -108,8 +123,10 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   function renderJourney(status: EspFlashStatusPayload): string {
     const items = ESP_FLASH_JOURNEY_STAGES.map((stage, index) => {
       const stageState = resolveJourneyStageState(status, index);
-      return `<li class="maintenance-stage maintenance-stage--${stageState}">
-        <span class="maintenance-stage__marker">${index + 1}</span>
+      const markerLabel = stageState === "done" ? "✓" : `${index + 1}`;
+      const currentStepAttr = stageState === "active" ? ' aria-current="step"' : "";
+      return `<li class="maintenance-stage maintenance-stage--${stageState}" data-stage-phase="${stage.phase}" data-stage-state="${stageState}"${currentStepAttr}>
+        <span class="maintenance-stage__marker">${markerLabel}</span>
         <div class="maintenance-stage__body">
           <div class="maintenance-stage__title">${escapeHtml(t(stage.titleKey))}</div>
           <div class="maintenance-stage__detail">${escapeHtml(t(stage.detailKey))}</div>
@@ -270,6 +287,11 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   }
 
   function renderStatus(status: EspFlashStatusPayload): void {
+    if (journeyStageIndex(status.phase) !== -1) {
+      latestJourneyPhase = status.phase || null;
+    } else if (status.state === "idle" || status.state === "success") {
+      latestJourneyPhase = null;
+    }
     latestStatus = status;
     if (els.espFlashStatusBanner) {
       // Defensively fallback to "idle" when state is missing from API response
