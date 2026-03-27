@@ -140,6 +140,9 @@ test("history list module refreshes runs and renders table state", async () => {
   expect(state.history.runs).toHaveLength(1);
   expect(historySummary.textContent).toContain("history.available_count");
   expect(historyTableBody.innerHTML).toContain("run-001");
+  expect(historyTableBody.innerHTML).toContain('data-run-toggle="details"');
+  expect(historyTableBody.innerHTML).toContain('aria-expanded="false"');
+  expect(historyTableBody.innerHTML).toContain("history.preview_available");
   expect(deleteAllRunsBtn.disabled).toBe(false);
 });
 
