@@ -4,7 +4,7 @@ import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState } from "../ui_app_state";
 
 export interface UiShellLanguageRefreshFeaturePorts {
-  realtime: Pick<RealtimeFeature, "buildLocationOptions" | "maybeRenderSensorsSettingsList" | "renderLoggingStatus">;
+  realtime: Pick<RealtimeFeature, "buildLocationOptions" | "maybeRenderSensorsSettingsList" | "renderLoggingStatus" | "renderStatus">;
   history: Pick<HistoryFeature, "renderHistoryTable" | "reloadExpandedRunOnLanguageChange">;
 }
 
@@ -45,6 +45,7 @@ export function createUiShellLanguageRefreshModule(
       features.realtime.maybeRenderSensorsSettingsList(true);
       deps.renderSpeedReadout();
       features.realtime.renderLoggingStatus();
+      features.realtime.renderStatus();
       features.history.renderHistoryTable();
       deps.renderWsState();
       if (deps.state.spectrum.spectrumPlot) {
