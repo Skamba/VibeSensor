@@ -14,19 +14,22 @@ function setActiveSettingsTab(els: UiDomElements, tabId: string): void {
   });
 }
 
+function activateSettingsTabButton(els: UiDomElements, tab: HTMLElement): void {
+  const tabId = tab.getAttribute("data-settings-tab");
+  if (tabId) setActiveSettingsTab(els, tabId);
+}
+
 export function bindSettingsTabs(els: UiDomElements): void {
   const activateTabByIndex = (index: number): void => {
     if (!els.settingsTabs.length) return;
     const safeIndex = ((index % els.settingsTabs.length) + els.settingsTabs.length) % els.settingsTabs.length;
     const button = els.settingsTabs[safeIndex];
-    const tabId = button.getAttribute("data-settings-tab");
-    if (tabId) setActiveSettingsTab(els, tabId);
+    activateSettingsTabButton(els, button);
     button.focus();
   };
   els.settingsTabs.forEach((tab, idx) => {
     tab.addEventListener("click", () => {
-      const tabId = tab.getAttribute("data-settings-tab");
-      if (tabId) setActiveSettingsTab(els, tabId);
+      activateSettingsTabButton(els, tab);
     });
     tab.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {

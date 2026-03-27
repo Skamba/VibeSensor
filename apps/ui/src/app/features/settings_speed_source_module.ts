@@ -26,6 +26,15 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     return SPEED_SOURCE_KINDS.some((kind) => kind === value);
   }
 
+  function parseManualSpeedKph(rawValue: number): number | null {
+    return Number.isFinite(rawValue) && rawValue > 0 && rawValue <= 500 ? rawValue : null;
+  }
+
+  function applyStaleTimeoutFromInput(payload: SpeedSourceRequest): void {
+    const staleVal = Number(els.staleTimeoutInput?.value);
+    if (staleVal >= 3 && staleVal <= 120) payload.stale_timeout_s = staleVal;
+  }
+
   function syncSpeedSourceInputs(): void {
     els.speedSourceRadios.forEach((radio) => {
       radio.checked = radio.value === settings.speedSource;
@@ -71,24 +80,20 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     els.speedSourceRadios.forEach((radio) => {
       if (radio.checked && isSpeedSourceKind(radio.value)) src = radio.value;
     });
-    const manual = Number(els.manualSpeedInput?.value);
     const payload: SpeedSourceRequest = {
       speed_source: src,
-      manual_speed_kph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
+      manual_speed_kph: parseManualSpeedKph(Number(els.manualSpeedInput?.value)),
     };
-    const staleVal = Number(els.staleTimeoutInput?.value);
-    if (staleVal >= 3 && staleVal <= 120) payload.stale_timeout_s = staleVal;
+    applyStaleTimeoutFromInput(payload);
     void syncSpeedSourceToServer(payload);
   }
 
   function saveHeaderManualSpeedFromInput(): void {
-    const manual = Number(els.headerManualSpeedInput?.value);
     const payload: SpeedSourceRequest = {
       speed_source: "manual",
-      manual_speed_kph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
+      manual_speed_kph: parseManualSpeedKph(Number(els.headerManualSpeedInput?.value)),
     };
-    const staleVal = Number(els.staleTimeoutInput?.value);
-    if (staleVal >= 3 && staleVal <= 120) payload.stale_timeout_s = staleVal;
+    applyStaleTimeoutFromInput(payload);
     void syncSpeedSourceToServer(payload);
   }
 
