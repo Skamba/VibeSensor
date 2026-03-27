@@ -25,6 +25,11 @@ PIP_TMP_CACHE=/tmp/vibesensor-pip-cache
 WHEELHOUSE=/tmp/vibesensor-wheelhouse
 PREBUILT_WHEEL="/opt/vibesensor-artifacts/wheels/__APP_WHEEL_FILE__"
 BUILD_DEPS=(python3-dev)
+PIP_WHEEL_ARGS=(
+  --wheel-dir "${WHEELHOUSE}"
+  --prefer-binary
+  --cache-dir "${PIP_TMP_CACHE}"
+)
 
 if [ ! -f "${PREBUILT_WHEEL}" ]; then
   echo "ERROR: missing prebuilt app wheel at ${PREBUILT_WHEEL}"
@@ -41,13 +46,9 @@ mkdir -p "${WHEELHOUSE}"
 mkdir -p "${PIP_TMP_CACHE}"
 python3 -m venv /tmp/vibesensor-wheel-build
 /tmp/vibesensor-wheel-build/bin/pip install --upgrade pip --quiet
-/tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
-  --prefer-binary \
-  --cache-dir "${PIP_TMP_CACHE}" \
+/tmp/vibesensor-wheel-build/bin/pip wheel "${PIP_WHEEL_ARGS[@]}" \
   "${PREBUILT_WHEEL}[esp]"
-/tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
-  --prefer-binary \
-  --cache-dir "${PIP_TMP_CACHE}" \
+/tmp/vibesensor-wheel-build/bin/pip wheel "${PIP_WHEEL_ARGS[@]}" \
   "setuptools>=68" \
   "wheel>=0.38"
 rm -rf /tmp/vibesensor-wheel-build
