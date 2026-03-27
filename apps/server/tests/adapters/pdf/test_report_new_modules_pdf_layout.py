@@ -24,6 +24,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     PAGE_H,
     PAGE_W,
     build_page1_layout,
+    build_page2_layout,
     observed_signature_row_count,
 )
 
@@ -292,6 +293,21 @@ def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:
     )
     assert layout.observed.h > layout.header.h
     assert layout.systems.h < 50 * mm
+
+
+def test_build_page2_layout_expands_evidence_space_and_keeps_continuation_room() -> None:
+    layout = build_page2_layout(
+        width=PAGE_W - 2 * MARGIN,
+        page_top=PAGE_H - MARGIN,
+        has_transient_findings=True,
+        has_next_steps_continued=True,
+    )
+    assert layout.pattern_panel.h > 125 * mm
+    assert layout.peaks_panel.h >= 58 * mm
+    assert layout.observations_panel is not None
+    assert layout.observations_panel.h < 24 * mm
+    assert layout.continued_next_steps is not None
+    assert layout.continued_next_steps.h > 16 * mm
 
 
 def test_observed_signature_row_count_reserves_optional_reason_and_tier_a_warning() -> None:

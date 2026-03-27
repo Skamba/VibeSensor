@@ -96,7 +96,7 @@ def _draw_pattern_evidence(
             ev.certainty_reason,
             size=FS_SMALL,
             color=SUB_CLR,
-            max_lines=2,
+            max_lines=3,
         )
     ry -= 2.0 * mm
 
@@ -113,7 +113,7 @@ def _draw_pattern_evidence(
             ev.warning,
             size=FS_SMALL,
             color=WARN_CLR,
-            max_lines=3,
+            max_lines=4,
         )
         ry -= 1.5 * mm
 
@@ -124,6 +124,7 @@ def _draw_pattern_evidence(
         w - 8 * mm,
         tr("INTERPRETATION"),
         _safe(ev.interpretation, na),
+        max_lines=5,
     )
     _draw_section_block(
         c,
@@ -133,4 +134,5 @@ def _draw_pattern_evidence(
         tr("WHY_PARTS_LISTED"),
         _safe(ev.why_parts_text, na),
         title_gap=3.0 * mm,
+        max_lines=5,
     )
