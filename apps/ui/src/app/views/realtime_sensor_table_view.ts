@@ -1,6 +1,6 @@
 import type { LocationOption } from "../../api/types";
 import type { AdaptedClient } from "../../server_payload";
-import { renderTableEmptyRow } from "./dom_helpers";
+import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
 
 export interface RealtimeSensorTableViewParams {
   clients: AdaptedClient[];
@@ -62,10 +62,7 @@ export function renderRealtimeSensorTable(
 export function getRealtimeSensorTableClickAction(
   target: EventTarget | null,
 ): RealtimeSensorTableClickAction | null {
-  if (!(target instanceof Element)) {
-    return null;
-  }
-  const button = target.closest<HTMLButtonElement>(".row-identify, .row-remove");
+  const button = closestFromTarget<HTMLButtonElement>(target, ".row-identify, .row-remove");
   if (!button) {
     return null;
   }

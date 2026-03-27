@@ -1,5 +1,5 @@
 import type { CarRecord } from "../../api/types";
-import { renderTableEmptyRow } from "./dom_helpers";
+import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
 
 export interface SettingsCarListViewParams {
   cars: CarRecord[];
@@ -42,10 +42,7 @@ export function renderSettingsCarList(
 export function getSettingsCarListAction(
   target: EventTarget | null,
 ): SettingsCarListAction | null {
-  if (!(target instanceof Element)) {
-    return null;
-  }
-  const button = target.closest<HTMLButtonElement>(".car-activate-btn, .car-delete-btn");
+  const button = closestFromTarget<HTMLButtonElement>(target, ".car-activate-btn, .car-delete-btn");
   if (!button) {
     return null;
   }
