@@ -42,6 +42,7 @@ class TestNextStepNumberingContinuation:
             0,
             [NextStep(action="Inspect wheel bearing")],
             start_number=5,
+            tr=lambda key: key,
         )
 
         assert drawn == 1
@@ -57,8 +58,9 @@ class TestNextStepFieldsRendered:
     ) -> None:
         captured: list[str] = []
 
-        def capture_text(*args, **kwargs) -> None:
+        def capture_text(*args, **kwargs) -> float:
             captured.append(args[4])
+            return float(args[2]) - 10.0
 
         monkeypatch.setattr(panel_trust_steps, "_draw_text", capture_text)
         _draw_next_steps_table(
@@ -76,13 +78,15 @@ class TestNextStepFieldsRendered:
                     eta="15 min",
                 ),
             ],
+            tr=lambda key: {"WHY": "Why", "CONFIRM": "Confirm", "ETA": "ETA"}[key],
         )
 
-        assert len(captured) == 1
-        assert "verify looseness" in captured[0]
-        assert "movement increases" in captured[0]
-        assert "mount remains rigid" in captured[0]
-        assert "15 min" in captured[0]
+        assert len(captured) == 2
+        assert captured[0] == "Inspect mount"
+        assert "Why: verify looseness" in captured[1]
+        assert "Confirm: movement increases" in captured[1]
+        assert "ETA: 15 min" in captured[1]
+        assert "mount remains rigid" not in captured[1]
 
 
 class TestOrphanI18nKeysRemoved:
