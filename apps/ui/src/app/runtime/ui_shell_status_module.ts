@@ -1,5 +1,4 @@
 import { fmt } from "../../format";
-import { deriveCarSelectionState } from "../car_selection_state";
 import { isManualEffectiveSpeedSource } from "../speed_source_state";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { RealtimeState, SettingsState, ShellState, TransportState } from "../ui_app_state";
@@ -39,7 +38,6 @@ export interface UiShellStatusModuleDeps {
 export interface UiShellStatusModule {
   renderSpeedReadout(): void;
   renderWsState(): void;
-  renderCarSelectionWarning(): void;
 }
 
 export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShellStatusModule {
@@ -102,22 +100,8 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
     }
   }
 
-  function renderCarSelectionWarning(): void {
-    const banner = els.carSelectionBanner;
-    if (!banner) return;
-    const carSelectionState = deriveCarSelectionState(settings);
-    if (carSelectionState.kind === "loading" || carSelectionState.kind === "active") {
-      banner.hidden = true;
-      banner.textContent = "";
-      return;
-    }
-    banner.hidden = false;
-    banner.textContent = `${ctx.t("header.no_car_selected")} ${ctx.t("header.no_car_selected_action")}`;
-  }
-
   return {
     renderSpeedReadout,
     renderWsState,
-    renderCarSelectionWarning,
   };
 }

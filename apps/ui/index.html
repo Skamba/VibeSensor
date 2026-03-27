@@ -49,7 +49,6 @@
         </div>
       </header>
 
-      <div id="carSelectionBanner" class="connection-banner connection-banner--warn" hidden aria-live="assertive" role="alert"></div>
       <div id="connectionBanner" class="connection-banner" hidden aria-live="assertive" role="alert"></div>
       <div id="appErrorBanner" class="connection-banner app-error-banner" hidden aria-live="assertive" role="alert"></div>
 
@@ -147,6 +146,7 @@
               <button id="addCarBtn" class="btn btn--success" data-i18n="settings.car.add_new">+ Add Car</button>
             </div>
             <div class="subtle" data-i18n="settings.car.hint">Add cars from the library or enter specs manually. Activate a car to use it for analysis.</div>
+            <div id="carSelectionGuidance" class="empty-state empty-state--inline" hidden></div>
             <table class="car-list-table">
               <thead>
                 <tr>
@@ -249,7 +249,7 @@
         <div id="analysisTab" class="settings-tab-panel" role="tabpanel" hidden>
           <div class="panel card settings-layout">
             <div class="subtle" data-i18n="settings.analysis.hint">These settings apply globally to all cars and control how vibration frequency bands are calculated.</div>
-            <div id="analysisNoCarMessage" class="empty-state" hidden data-i18n="settings.analysis.no_car_selected">No car selected. Select or create a car in Settings → Car to save analysis settings.</div>
+            <div id="analysisNoCarMessage" class="empty-state empty-state--inline" hidden data-i18n="settings.analysis.no_car_selected">No car selected. Select or create a car in Settings → Car to save analysis settings.</div>
             <div class="settings-groups">
               <section class="settings-group">
                 <h3 data-i18n="settings.group.order_band_widths">Order Band Widths</h3>

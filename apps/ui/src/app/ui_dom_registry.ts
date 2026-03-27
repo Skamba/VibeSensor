@@ -4,7 +4,6 @@ export interface UiDomElements {
   languageSelect: HTMLSelectElement | null;
   speedUnitSelect: HTMLSelectElement | null;
   speed: HTMLElement | null;
-  carSelectionBanner: HTMLElement | null;
   headerGpsStatus: HTMLElement | null;
   rotationalBasisSource: HTMLElement | null;
   rotationalReason: HTMLElement | null;
@@ -42,6 +41,7 @@ export interface UiDomElements {
   maxBandHalfWidthInput: HTMLInputElement | null;
   saveAnalysisBtn: HTMLButtonElement | null;
   analysisNoCarMessage: HTMLElement | null;
+  carSelectionGuidance: HTMLElement | null;
   carListBody: HTMLElement | null;
   addCarBtn: HTMLButtonElement | null;
   addCarWizard: HTMLElement | null;
@@ -135,7 +135,6 @@ export function createUiDomRegistry(): UiDomElements {
     languageSelect: selectEl("languageSelect"),
     speedUnitSelect: selectEl("speedUnitSelect"),
     speed: el("speed"),
-    carSelectionBanner: el("carSelectionBanner"),
     headerGpsStatus: el("headerGpsStatus"),
     rotationalBasisSource: el("rotationalBasisSource"),
     rotationalReason: el("rotationalReason"),
@@ -173,6 +172,7 @@ export function createUiDomRegistry(): UiDomElements {
     maxBandHalfWidthInput: inputEl("maxBandHalfWidthInput"),
     saveAnalysisBtn: btnEl("saveAnalysisBtn"),
     analysisNoCarMessage: el("analysisNoCarMessage"),
+    carSelectionGuidance: el("carSelectionGuidance"),
     carListBody: el("carListBody"),
     addCarBtn: btnEl("addCarBtn"),
     addCarWizard: el("addCarWizard"),

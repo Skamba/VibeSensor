@@ -32,7 +32,6 @@ export interface AppFeatureBundleDeps {
   setStatValue: (container: HTMLElement | null, value: string | number) => void;
   renderSpectrum: () => void;
   renderSpeedReadout: () => void;
-  renderCarSelectionWarning: () => void;
   sendSelection: () => void;
   locationCodeForClient?: (client: AdaptedClient) => string;
 }
@@ -79,7 +78,6 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     fmt,
     renderSpectrum: deps.renderSpectrum,
     renderSpeedReadout: deps.renderSpeedReadout,
-    onCarSelectionStateChange: deps.renderCarSelectionWarning,
   });
   const carCreation = createUiCarCreationCommand({
     getVehicleSettings: () => state.settings.vehicleSettings,
