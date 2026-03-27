@@ -150,6 +150,7 @@ export function gpsStatus(overrides: Partial<Record<string, unknown>>) {
     last_error: null,
     reconnect_delay_s: 1,
     fallback_active: false,
+    speed_source: "gps",
     stale_timeout_s: 5,
 
     ...overrides,
