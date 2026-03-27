@@ -1,14 +1,23 @@
+"""Generate frontend constants from shared backend literal definitions."""
+
 from __future__ import annotations
 
 import ast
 import json
 import sys
 from pathlib import Path
+from typing import TypeGuard
 
 ROOT = Path(__file__).resolve().parents[2]
 SHARED_ROOT = ROOT / "apps" / "server" / "vibesensor" / "shared"
 LOCATIONS_PATH = SHARED_ROOT / "locations.py"
 STRENGTH_FIELDS_PATH = SHARED_ROOT / "strength_fields.py"
+
+
+def _is_string_dict(value: object) -> TypeGuard[dict[str, str]]:
+    return isinstance(value, dict) and all(
+        isinstance(key, str) and isinstance(item, str) for key, item in value.items()
+    )
 
 
 def _load_dict_constant(module_path: Path, constant_name: str) -> dict[str, str]:
@@ -31,10 +40,7 @@ def _load_dict_constant(module_path: Path, constant_name: str) -> dict[str, str]
         if value_node is None:
             continue
         value = ast.literal_eval(value_node)
-        if not isinstance(value, dict) or not all(
-            isinstance(key, str) and isinstance(item, str)
-            for key, item in value.items()
-        ):
+        if not _is_string_dict(value):
             msg = f"{module_path}::{constant_name} must be a dict[str, str] literal"
             raise ValueError(msg)
         return dict(value)
