@@ -1,26 +1,27 @@
-choose_final_artifact() {
+latest_artifact_matching() {
   local base_dir="$1"
+  shift
   local candidate=""
+  local pattern=""
 
-  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "image_*${IMG_SUFFIX}*.img" | sort -r | head -n 1 || true)"
-  if [ -n "${candidate}" ]; then
-    printf '%s\n' "${candidate}"
-    return 0
-  fi
-
-  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "image_*${IMG_SUFFIX}*.img.xz" | sort -r | head -n 1 || true)"
-  if [ -n "${candidate}" ]; then
-    printf '%s\n' "${candidate}"
-    return 0
-  fi
-
-  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "image_*${IMG_SUFFIX}*.zip" | sort -r | head -n 1 || true)"
-  if [ -n "${candidate}" ]; then
-    printf '%s\n' "${candidate}"
-    return 0
-  fi
+  for pattern in "$@"; do
+    candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "${pattern}" | sort -r | head -n 1 || true)"
+    if [ -n "${candidate}" ]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
 
   return 1
+}
+
+choose_final_artifact() {
+  local base_dir="$1"
+  latest_artifact_matching \
+    "${base_dir}" \
+    "image_*${IMG_SUFFIX}*.img" \
+    "image_*${IMG_SUFFIX}*.img.xz" \
+    "image_*${IMG_SUFFIX}*.zip"
 }
 
 prune_old_artifacts() {
