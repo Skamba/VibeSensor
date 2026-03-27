@@ -1191,7 +1191,9 @@ input:focus-visible,
   width: min(100%, 17rem);
   max-width: 100%;
   min-width: 0;
-  padding: 0.45rem 0.75rem;
+  min-height: 38px;
+  height: auto;
+  padding: 0.45rem 0.75rem 0.5rem;
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
