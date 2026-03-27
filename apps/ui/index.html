@@ -490,85 +490,39 @@
             <strong data-i18n="settings.update.title">System Update</strong>
             <div class="subtle" data-i18n="settings.update.hint">Connect to a Wi-Fi network to update from GitHub. The hotspot will be temporarily disabled during the update.</div>
             <div class="subtle" data-i18n="settings.update.reconnect_note" style="margin-top:0.25rem;">Note: The page may disconnect while the hotspot is down. It will reconnect automatically.</div>
-            <div class="maintenance-layout maintenance-layout--split">
-              <div class="maintenance-stack">
-                <section class="maintenance-card">
-                  <div class="maintenance-card__header">
-                    <div>
-                      <div class="maintenance-card__title" data-i18n="settings.update.controls_title">Update connection</div>
-                      <div class="subtle" data-i18n="settings.update.controls_intro">Enter the Wi-Fi network the Pi should use while it downloads and installs the next release.</div>
-                    </div>
+            <div class="maintenance-stack" style="margin-top:1rem;">
+              <section class="maintenance-card">
+                <div class="maintenance-card__header">
+                  <div>
+                    <div class="maintenance-card__title" data-i18n="settings.update.controls_title">Update connection</div>
+                    <div class="subtle" data-i18n="settings.update.controls_intro">Enter the Wi-Fi network the Pi should use while it downloads and installs the next release.</div>
                   </div>
-                  <div class="update-form">
-                    <div class="form-group">
-                      <label for="updateSsidInput" data-i18n="settings.update.ssid">Wi-Fi SSID</label>
-                      <input type="text" id="updateSsidInput" autocomplete="off" maxlength="64" style="width:100%;max-width:20rem;" />
-                    </div>
-                   <div class="form-group">
-                      <label for="updatePasswordInput" data-i18n="settings.update.password">Wi-Fi Password</label>
-                      <div style="display:flex;gap:0.5rem;align-items:center;">
-                        <input type="password" id="updatePasswordInput" autocomplete="off" maxlength="128" style="width:100%;max-width:20rem;" />
-                        <button type="button" id="updateTogglePasswordBtn" class="btn btn--small">
-                          <span data-i18n="settings.update.show_password">Show</span>
-                        </button>
-                      </div>
-                    </div>
-                    <div class="maintenance-note" data-i18n="settings.update.preflight_note">Starting an update temporarily pauses hotspot access while the Pi joins Wi-Fi, downloads the next release, and restores the local web UI when the job is done.</div>
-                    <div class="maintenance-action-row">
-                      <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
-                      <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
-                    </div>
-                  </div>
-                </section>
-
-                <div id="updateStatusPanel" class="maintenance-stack" aria-live="polite">
-                  <!-- Rendered dynamically by update_feature.ts -->
                 </div>
+                <div class="update-form">
+                  <div class="form-group">
+                    <label for="updateSsidInput" data-i18n="settings.update.ssid">Wi-Fi SSID</label>
+                    <input type="text" id="updateSsidInput" autocomplete="off" maxlength="64" style="width:100%;max-width:20rem;" />
+                  </div>
+                 <div class="form-group">
+                    <label for="updatePasswordInput" data-i18n="settings.update.password">Wi-Fi Password</label>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                      <input type="password" id="updatePasswordInput" autocomplete="off" maxlength="128" style="width:100%;max-width:20rem;" />
+                      <button type="button" id="updateTogglePasswordBtn" class="btn btn--small">
+                        <span data-i18n="settings.update.show_password">Show</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="maintenance-note" data-i18n="settings.update.preflight_note">Starting an update temporarily pauses hotspot access while the Pi joins Wi-Fi, downloads the next release, and restores the local web UI when the job is done.</div>
+                  <div class="maintenance-action-row">
+                    <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
+                    <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
+                  </div>
+                </div>
+              </section>
+
+              <div id="updateStatusPanel" class="maintenance-stack" aria-live="polite">
+                <!-- Rendered dynamically by update_feature.ts -->
               </div>
-
-              <aside class="maintenance-stack">
-                <section class="maintenance-card">
-                  <div class="maintenance-card__header">
-                    <div>
-                      <div class="maintenance-card__title" data-i18n="settings.update.guidance.prerequisites_title">Review before you start</div>
-                      <div class="subtle" data-i18n="settings.update.guidance.prerequisites_intro">A calm update page should answer the basics before the Pi leaves hotspot mode.</div>
-                    </div>
-                  </div>
-                  <ul class="maintenance-copy-list">
-                    <li data-i18n="settings.update.guidance.prerequisites_1">Use a Wi-Fi network with internet access so the Pi can reach GitHub.</li>
-                    <li data-i18n="settings.update.guidance.prerequisites_2">Make sure you are ready to reconnect after hotspot access pauses for the update.</li>
-                    <li data-i18n="settings.update.guidance.prerequisites_3">Run updates when no critical recording or support session depends on the hotspot.</li>
-                  </ul>
-                </section>
-
-                <section class="maintenance-card">
-                  <div class="maintenance-card__header">
-                    <div>
-                      <div class="maintenance-card__title" data-i18n="settings.update.guidance.outcome_title">What happens next</div>
-                      <div class="subtle" data-i18n="settings.update.guidance.outcome_intro">Starting an update triggers a short maintenance sequence on this Pi.</div>
-                    </div>
-                  </div>
-                  <ul class="maintenance-copy-list">
-                    <li data-i18n="settings.update.guidance.outcome_1">The hotspot pauses while the Pi joins the Wi-Fi network you provide.</li>
-                    <li data-i18n="settings.update.guidance.outcome_2">The updater checks GitHub, downloads the release, and installs the new package.</li>
-                    <li data-i18n="settings.update.guidance.outcome_3">The hotspot and web UI return automatically when the update flow finishes.</li>
-                  </ul>
-                </section>
-
-                <section class="maintenance-card">
-                  <div class="maintenance-card__header">
-                    <div>
-                      <div class="maintenance-card__title" data-i18n="settings.update.guidance.recovery_title">If something goes wrong</div>
-                      <div class="subtle" data-i18n="settings.update.guidance.recovery_intro">Most update interruptions are recoverable from this page.</div>
-                    </div>
-                  </div>
-                  <ul class="maintenance-copy-list">
-                    <li data-i18n="settings.update.guidance.recovery_1">Use the health and issues panels to see whether the blocker came from Wi-Fi, runtime validation, or package install steps.</li>
-                    <li data-i18n="settings.update.guidance.recovery_2">If the page disconnects, wait for the hotspot to come back before retrying.</li>
-                    <li data-i18n="settings.update.guidance.recovery_3">A successful run records the installed version and last completion time here for the next check.</li>
-                  </ul>
-                </section>
-              </aside>
             </div>
           </div>
         </div>

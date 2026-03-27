@@ -26,51 +26,6 @@ const HEALTH_REASON_KEYS: Readonly<Record<string, string>> = {
 
 const ASSET_ISSUE_RE = /asset|artifacts|stale|hash|missing/i;
 
-type JourneyStageState = "upcoming" | "active" | "done" | "attention";
-
-const UPDATE_JOURNEY_STAGES = [
-  {
-    phase: "validating",
-    titleKey: "settings.update.phase.validating",
-    detailKey: "settings.update.journey.detail.validating",
-  },
-  {
-    phase: "stopping_hotspot",
-    titleKey: "settings.update.phase.stopping_hotspot",
-    detailKey: "settings.update.journey.detail.stopping_hotspot",
-  },
-  {
-    phase: "connecting_wifi",
-    titleKey: "settings.update.phase.connecting_wifi",
-    detailKey: "settings.update.journey.detail.connecting_wifi",
-  },
-  {
-    phase: "checking",
-    titleKey: "settings.update.phase.checking",
-    detailKey: "settings.update.journey.detail.checking",
-  },
-  {
-    phase: "downloading",
-    titleKey: "settings.update.phase.downloading",
-    detailKey: "settings.update.journey.detail.downloading",
-  },
-  {
-    phase: "installing",
-    titleKey: "settings.update.phase.installing",
-    detailKey: "settings.update.journey.detail.installing",
-  },
-  {
-    phase: "restoring_hotspot",
-    titleKey: "settings.update.phase.restoring_hotspot",
-    detailKey: "settings.update.journey.detail.restoring_hotspot",
-  },
-  {
-    phase: "done",
-    titleKey: "settings.update.phase.done",
-    detailKey: "settings.update.journey.detail.done",
-  },
-] as const;
-
 export interface UpdateStatusViewDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
@@ -128,54 +83,6 @@ function renderInlineEmptyState(
   escapeHtml: (value: unknown) => string,
 ): string {
   return `<div class="empty-state empty-state--inline"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(body)}</span></div>`;
-}
-
-function stageStateLabel(
-  state: JourneyStageState,
-  t: (key: string, vars?: Record<string, unknown>) => string,
-): string {
-  return t(`maintenance.stage_state.${state}`);
-}
-
-function resolveUpdateStageState(
-  status: UpdateStatusPayload,
-  stageIndex: number,
-): JourneyStageState {
-  if (status.state === "success") return "done";
-  if (status.state === "idle") return "upcoming";
-  const currentIndex = UPDATE_JOURNEY_STAGES.findIndex((stage) => stage.phase === normalizeUpdatePhase(status.phase));
-  if (currentIndex === -1) {
-    return "upcoming";
-  }
-  if (stageIndex < currentIndex) return "done";
-  if (stageIndex === currentIndex) return status.state === "failed" ? "attention" : "active";
-  return "upcoming";
-}
-
-function renderJourneyCard(
-  status: UpdateStatusPayload,
-  deps: UpdateStatusViewDeps,
-): string {
-  const { t, escapeHtml } = deps;
-  const items = UPDATE_JOURNEY_STAGES.map((stage, index) => {
-    const stageState = resolveUpdateStageState(status, index);
-    return `<li class="maintenance-stage maintenance-stage--${stageState}">
-      <span class="maintenance-stage__marker">${index + 1}</span>
-      <div class="maintenance-stage__body">
-        <div class="maintenance-stage__title">${escapeHtml(t(stage.titleKey))}</div>
-        <div class="maintenance-stage__detail">${escapeHtml(t(stage.detailKey))}</div>
-      </div>
-      <span class="maintenance-stage__state">${escapeHtml(stageStateLabel(stageState, t))}</span>
-    </li>`;
-  }).join("");
-  return renderMaintenanceCard(
-    escapeHtml(t("settings.update.journey_title")),
-    escapeHtml(t("settings.update.journey_intro")),
-    `<div class="maintenance-journey">
-      <div class="maintenance-journey__title">${escapeHtml(t("settings.update.journey_sequence_title"))}</div>
-      <ol class="maintenance-stage-list">${items}</ol>
-    </div>`,
-  );
 }
 
 function renderMaintenanceCard(
@@ -343,36 +250,6 @@ function renderHealthGrid(
   return `<div class="status-grid">${renderHealthSummaryRows(health, deps)}${renderHealthDataLossRows(health, deps)}${renderHealthPersistenceRows(health, deps)}</div>`;
 }
 
-function renderIssuesList(
-  status: UpdateStatusPayload,
-  deps: UpdateStatusViewDeps,
-): string {
-  const { t, escapeHtml } = deps;
-  if (!status.issues.length) {
-    return renderMaintenanceCard(
-      escapeHtml(t("settings.update.issues")),
-      escapeHtml(t("settings.update.issues_intro")),
-      renderInlineEmptyState(
-        t("settings.update.issues_empty_title"),
-        t("settings.update.issues_empty_body"),
-        escapeHtml,
-      ),
-    );
-  }
-  const items = status.issues.map((issue) => {
-    const phaseLabel = formatUpdatePhase(issue.phase, t);
-    const detail = issue.detail
-      ? `<div class="issue-detail subtle">${escapeHtml(issue.detail)}</div>`
-      : "";
-    return `<li class="issue-item"><div class="maintenance-attempt__header"><span class="pill pill--muted">${escapeHtml(phaseLabel)}</span><span class="issue-message">${escapeHtml(issue.message)}</span></div>${detail}</li>`;
-  }).join("");
-  return renderMaintenanceCard(
-    escapeHtml(t("settings.update.issues")),
-    escapeHtml(t("settings.update.issues_intro")),
-    `<ul class="issue-list">${items}</ul>`,
-  );
-}
-
 function renderLogTail(
   status: UpdateStatusPayload,
   deps: UpdateStatusViewDeps,
@@ -430,14 +307,12 @@ export function renderUpdateStatusPanel(
       renderStateGrid(status, showRuntimeAssetsCheck, deps),
       renderStateBadge(status, deps),
     ),
-    renderJourneyCard(status, deps),
     renderMaintenanceCard(
       deps.escapeHtml(deps.t("settings.update.health_card_title")),
       renderHealthSummary(health, deps),
       renderHealthGrid(health, deps),
       renderHealthBadge(health, deps),
     ),
-    renderIssuesList(status, deps),
     renderLogTail(status, deps),
   ].filter(Boolean).join("");
 }
