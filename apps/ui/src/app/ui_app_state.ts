@@ -10,6 +10,7 @@ import type {
   LocationOption,
   LoggingStatusPayload,
   SpeedSourceKind,
+  SpeedSourceStatusPayload,
 } from "../api/types";
 
 export interface VehicleSettings {
@@ -156,6 +157,7 @@ export interface SettingsState {
   activeCarId: string | null;
   speedSource: SpeedSourceKind;
   manualSpeedKph: number | null;
+  resolvedSpeedSource: SpeedSourceStatusPayload["speed_source"] | null;
   gpsFallbackActive: boolean;
 }
 
@@ -236,6 +238,7 @@ export function createAppState(): AppState {
       activeCarId: null,
       speedSource: "gps",
       manualSpeedKph: null,
+      resolvedSpeedSource: null,
       gpsFallbackActive: false,
     },
     spectrum: {

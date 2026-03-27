@@ -182,7 +182,7 @@
   "status.stopped": "Stopped",
   "status.unavailable": "Unavailable",
   "speed.gps": "Speed: {value} {unit} (GPS)",
-  "speed.override": "Speed: {value} {unit} (Override)",
+  "speed.override": "Speed: {value} {unit} (Manual)",
   "speed.none": "Speed: -- {unit}",
   "speed.unit": "Unit",
   "speed.unit.kmh": "km/h",

@@ -69,6 +69,47 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
   await expect.poll(() => speedOverrideCalls).toBe(0);
 });
 
+test("resolved fallback manual state stays coherent across header, form, and GPS status", async ({ page }) => {
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/speed-source": {
+        speed_source: "gps",
+        manual_speed_kph: 80,
+        stale_timeout_s: 5,
+      },
+      "GET /api/settings/speed-source/status": gpsStatus({
+        gps_enabled: false,
+        connection_state: "disabled",
+        raw_speed_kmh: null,
+        effective_speed_kmh: 80,
+        fallback_active: true,
+        speed_source: "fallback_manual",
+      }),
+    }),
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      speed_mps: 80 / 3.6,
+      clients: [],
+      spectra: { clients: {} },
+    },
+  });
+  await page.goto("/");
+  await expect(page.locator("#speed")).toContainText("80.0 km/h");
+  await expect(page.locator("#speed")).toContainText("Manual");
+
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await expect(page.locator("#gpsStatusState")).toHaveText("Disabled");
+  await expect(page.locator("#gpsStatusEffectiveSpeed")).toHaveText("80.0 km/h");
+  await expect(page.locator("#gpsStatusFallback")).toHaveText("Yes");
+  await expect(page.locator('input[name="speedSourceRadio"][value="manual"]')).toBeChecked();
+  await expect(page.locator('input[name="speedSourceRadio"][value="gps"]')).not.toBeChecked();
+  await expect(page.locator("#manualSpeedInput")).toHaveValue("80");
+  await expect(page.locator("#headerManualOverrideGroup")).toBeVisible();
+});
+
 test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {
   let persistedAnalysisSettings: Record<string, number> = {};
   let analysisPutCalls = 0;

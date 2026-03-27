@@ -1,6 +1,7 @@
 import type { SpeedSourceKind, SpeedSourcePayload, SpeedSourceRequest } from "../../api/types";
 import { getSettingsSpeedSource, updateSettingsSpeedSource } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
+import { deriveDisplayedSpeedSourceMode } from "../speed_source_state";
 import type { SettingsState } from "../ui_app_state";
 
 const SPEED_SOURCE_KINDS = ["gps", "manual", "obd2"] as const satisfies readonly SpeedSourceKind[];
@@ -13,6 +14,7 @@ export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
 
 export interface SettingsSpeedSourceModule {
   bindHandlers(): void;
+  syncSpeedSourceSelectionUi(): void;
   syncSpeedSourceInputs(): void;
   loadSpeedSourceFromServer(): Promise<void>;
   saveSpeedSourceFromInputs(): void;
@@ -35,24 +37,30 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     if (staleVal >= 3 && staleVal <= 120) payload.stale_timeout_s = staleVal;
   }
 
-  function syncSpeedSourceInputs(): void {
+  function syncSpeedSourceSelectionUi(): void {
+    const displayedMode = deriveDisplayedSpeedSourceMode(settings);
     els.speedSourceRadios.forEach((radio) => {
-      radio.checked = radio.value === settings.speedSource;
+      radio.checked = radio.value === displayedMode;
     });
+    if (els.headerManualOverrideGroup) {
+      els.headerManualOverrideGroup.hidden = displayedMode !== "manual";
+    }
+  }
+
+  function syncSpeedSourceInputs(): void {
+    syncSpeedSourceSelectionUi();
     if (els.manualSpeedInput) {
       els.manualSpeedInput.value = settings.manualSpeedKph != null ? String(settings.manualSpeedKph) : "";
     }
     if (els.headerManualSpeedInput) {
       els.headerManualSpeedInput.value = settings.manualSpeedKph != null ? String(settings.manualSpeedKph) : "";
     }
-    if (els.headerManualOverrideGroup) {
-      els.headerManualOverrideGroup.hidden = settings.speedSource !== "manual";
-    }
   }
 
   function applySpeedSourcePayload(payload: SpeedSourcePayload): void {
     settings.speedSource = payload.speed_source;
     settings.manualSpeedKph = payload.manual_speed_kph;
+    settings.resolvedSpeedSource = null;
     if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.stale_timeout_s);
     syncSpeedSourceInputs();
     ctx.renderSpeedReadout();
@@ -109,6 +117,7 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
 
   return {
     bindHandlers,
+    syncSpeedSourceSelectionUi,
     syncSpeedSourceInputs,
     loadSpeedSourceFromServer,
     saveSpeedSourceFromInputs,
