@@ -1,5 +1,6 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { RealtimeState, SpectrumState } from "../ui_app_state";
+import { deriveCarSelectionState } from "../car_selection_state";
+import type { RealtimeState, SettingsState, SpectrumState } from "../ui_app_state";
 import type { LocationOption } from "../../api/types";
 import type { AdaptedClient } from "../../server_payload";
 import * as I18N from "../../i18n";
@@ -24,6 +25,7 @@ import { createPollingController } from "./polling_controller";
 export interface RealtimeFeatureDeps extends FeatureDepsBase {
   realtime: RealtimeState;
   spectrum: SpectrumState;
+  settings: SettingsState;
   getLanguage: () => string;
   formatInt: (value: number) => string;
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
@@ -47,7 +49,7 @@ export interface RealtimeFeature {
 }
 
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
-  const { realtime, spectrum, els, t, escapeHtml, formatInt, setPillState } = ctx;
+  const { realtime, settings, spectrum, els, t, escapeHtml, formatInt, setPillState } = ctx;
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
   const LOGGING_STATUS_IDLE_POLL_MS = 15_000;
   const LOGGING_STATUS_ACTIVE_POLL_MS = 2_000;
@@ -119,13 +121,6 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return realtime.clients.filter((client) => locationCodeForClient(client)).length;
   }
 
-  function selectedClient(clientRow?: AdaptedClient): AdaptedClient | undefined {
-    if (clientRow) {
-      return clientRow;
-    }
-    return realtime.clients.find((client) => client.id === realtime.selectedClientId);
-  }
-
   function strongestSignalText(): string {
     let bestClient: AdaptedClient | null = null;
     let bestDb = Number.NEGATIVE_INFINITY;
@@ -144,14 +139,33 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return `${primary} (${formatInt(bestDb)} dB)`;
   }
 
-  function focusSensorText(clientRow?: AdaptedClient): string {
-    const client = selectedClient(clientRow);
-    if (!client) {
-      return t("dashboard.focus_sensor_none");
+  function activeCarText(): string {
+    const selection = deriveCarSelectionState(settings);
+    if (selection.kind === "loading") {
+      return t("dashboard.active_car_loading");
     }
-    const primary = locationCodeForClient(client) ? clientLocationText(client) : clientDisplayName(client);
-    const statusText = client.connected ? t("status.online") : t("status.offline");
-    return `${primary} (${statusText})`;
+    if (selection.kind !== "active") {
+      return t("dashboard.active_car_none");
+    }
+    return selection.car.name;
+  }
+
+  function dataFreshnessText(): string {
+    const ages = connectedClients()
+      .map((client) => client.last_seen_age_ms)
+      .filter((age): age is number => typeof age === "number" && Number.isFinite(age));
+    if (!ages.length) {
+      return t("dashboard.data_freshness_none");
+    }
+    const ageMs = Math.max(...ages.map((age) => Math.max(0, age)));
+    const ageText = t("status.age_ms_ago", { value: formatInt(ageMs) });
+    if (ageMs <= 250) {
+      return t("dashboard.data_freshness_fresh", { age: ageText });
+    }
+    if (ageMs <= 1000) {
+      return t("dashboard.data_freshness_delayed", { age: ageText });
+    }
+    return t("dashboard.data_freshness_stale", { age: ageText });
   }
 
   type LiveHealth = {
@@ -241,11 +255,12 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     });
   }
 
-  function renderLiveOverviewStats(clientRow?: AdaptedClient): void {
+  function renderLiveOverviewStats(): void {
     const totalClients = realtime.clients.length;
     ctx.setStatValue(els.liveConnectedSensors, `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`);
-    ctx.setStatValue(els.liveAssignedLocations, `${formatInt(assignedClientCount())} / ${formatInt(totalClients)}`);
-    ctx.setStatValue(els.liveFocusSensor, focusSensorText(clientRow));
+    ctx.setStatValue(els.liveActiveCar, activeCarText());
+    ctx.setStatValue(els.liveRecordingState, computeRecordingPanelState().phaseText);
+    ctx.setStatValue(els.liveDataFreshness, dataFreshnessText());
     ctx.setStatValue(els.liveStrongestSignal, strongestSignalText());
   }
 
@@ -298,8 +313,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function renderStatus(clientRow?: AdaptedClient): void {
-    const currentClient = selectedClient(clientRow);
-    renderLiveOverviewStats(currentClient);
+    void clientRow;
+    renderLiveOverviewStats();
   }
 
   function clearLoggingElapsedTimer(): void {
@@ -457,6 +472,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   function renderLoggingStatus(): void {
     const panelState = computeRecordingPanelState();
+    renderLiveOverviewStats();
     setPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText);
     ctx.setStatValue(els.loggingPhase, panelState.phaseText);
     ctx.setStatValue(els.loggingElapsed, panelState.elapsedText);

@@ -40,6 +40,21 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
       });
     },
     settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [
+            {
+              id: "car-1",
+              name: "Test Hatch",
+              type: "Simulated setup",
+              variant: null,
+              aspects: {},
+            },
+          ],
+          active_car_id: "car-1",
+        });
+        return;
+      }
       await fulfillJson(route, {});
     },
   });
@@ -108,9 +123,10 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#linkState")).not.toHaveText(/Connecting/i);
   await expect(page.locator("#shellLiveStatus")).toHaveText("Ready");
   await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText("1 / 1");
-  await expect(page.locator("#liveAssignedLocations [data-value]")).toHaveText("1 / 1");
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Test Hatch");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
+  await expect(page.locator("#liveDataFreshness [data-value]")).toHaveText("Fresh - 10 ms ago");
   await expect(page.locator("#liveRunHealth")).toHaveText("Ready");
-  await expect(page.locator("#liveFocusSensor [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveSensorRoster")).toContainText("Front Left Wheel");
   await expect(page.locator("#loggingSummary")).toHaveText(
@@ -141,6 +157,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await page.locator("#startLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toHaveText("Recording");
   await expect(page.locator("#loggingRunId")).toHaveText("Run ID: run-001");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Recording");
   await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Recording");
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(/^\d+:\d{2}$/);
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
@@ -150,6 +167,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await page.locator("#stopLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toHaveText("Processing");
   await expect(page.locator("#loggingRunId")).toHaveText("Last run: run-001");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Processing");
   await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Processing");
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
