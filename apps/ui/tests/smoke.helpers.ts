@@ -105,12 +105,17 @@ export async function installCommonRoutes(page: Page, options: CommonRouteOption
     await fulfillJson(route, { brands: [], types: [], models: [] });
   });
   await page.route("**/api/settings/**", async (route) => {
-    if (!requestPath(route).startsWith("/api/settings")) {
+    const path = requestPath(route);
+    if (!path.startsWith("/api/settings")) {
       await route.fallback();
       return;
     }
     if (options.settingsHandler) {
       await options.settingsHandler(route);
+      return;
+    }
+    if (path === "/api/settings/cars" || path === "/api/settings/cars/active") {
+      await fulfillJson(route, { cars: [], active_car_id: null });
       return;
     }
     await fulfillJson(route, {});
