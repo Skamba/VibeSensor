@@ -218,81 +218,119 @@
           </div>
 
           <!-- Add Car Wizard (hidden by default) -->
-          <div id="addCarWizard" class="panel card add-car-wizard" hidden>
+          <div id="wizardBackdrop" class="wizard-backdrop" hidden></div>
+          <div
+            id="addCarWizard"
+            class="panel card add-car-wizard"
+            hidden
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="wizardTitle"
+          >
             <div class="wizard-header">
-              <strong data-i18n="settings.car.add_title">Add a Car</strong>
+              <div class="wizard-header__text">
+                <strong id="wizardTitle" data-i18n="settings.car.add_title">Add a Car</strong>
+                <div class="subtle" data-i18n="settings.car.wizard_intro">Use the library when it fits, or branch into manual specs without losing your place.</div>
+                <div id="wizardProgressText" class="wizard-progress-text">Step 1 of 5 · Brand</div>
+              </div>
               <button id="wizardCloseBtn" class="btn btn--muted wizard-close" aria-label="Close wizard">&times;</button>
             </div>
-            <div class="wizard-steps">
-              <div class="wizard-step-indicators">
-                <span class="wizard-step-dot active" data-step="0">1</span>
-                <span class="wizard-step-dot" data-step="1">2</span>
-                <span class="wizard-step-dot" data-step="2">3</span>
-                <span class="wizard-step-dot" data-step="3">4</span>
-                <span class="wizard-step-dot" data-step="4">5</span>
-              </div>
-
-              <!-- Step 1: Brand -->
-              <div id="wizardStep0" class="wizard-step active">
-                <h3 data-i18n="settings.car.step_brand">Select Brand</h3>
-                <div class="wizard-options" id="wizardBrandList"></div>
-                <div class="wizard-custom">
-                  <label data-i18n="settings.car.or_custom_brand">Or type a custom brand:</label>
-                  <input id="wizardCustomBrand" type="text" maxlength="32" placeholder="e.g. Mercedes-Benz" />
-                  <button id="wizardCustomBrandBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
-                </div>
-              </div>
-
-              <!-- Step 2: Type -->
-              <div id="wizardStep1" class="wizard-step">
-                <h3 data-i18n="settings.car.step_type">Select Type</h3>
-                <div class="wizard-options" id="wizardTypeList"></div>
-                <div class="wizard-custom">
-                  <label data-i18n="settings.car.or_custom_type">Or type a custom type:</label>
-                  <input id="wizardCustomType" type="text" maxlength="32" placeholder="e.g. Van" />
-                  <button id="wizardCustomTypeBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
-                </div>
-              </div>
-
-              <!-- Step 3: Model -->
-              <div id="wizardStep2" class="wizard-step">
-                <h3 data-i18n="settings.car.step_model">Select Model</h3>
-                <div class="wizard-options wizard-options--list" id="wizardModelList"></div>
-                <div class="wizard-custom">
-                  <label data-i18n="settings.car.or_custom_model">Or type a custom model:</label>
-                  <input id="wizardCustomModel" type="text" maxlength="64" placeholder="e.g. C-Class W205" />
-                  <button id="wizardCustomModelBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
-                </div>
-              </div>
-
-              <!-- Step 4: Variant -->
-              <div id="wizardStep3" class="wizard-step">
-                <h3 data-i18n="settings.car.step_variant">Select Variant</h3>
-                <div class="wizard-options wizard-options--list" id="wizardVariantList"></div>
-              </div>
-
-              <!-- Step 5: Wheels & Gearbox -->
-              <div id="wizardStep4" class="wizard-step">
-                <h3 data-i18n="settings.car.step_wheels">Select Wheels</h3>
-                <div class="wizard-options" id="wizardTireList"></div>
-                <h3 data-i18n="settings.car.step_gearbox" class="wizard-section-title">Select Gearbox</h3>
-                <div class="wizard-options wizard-options--list" id="wizardGearboxList"></div>
-                <div class="wizard-custom-specs">
-                  <strong data-i18n="settings.car.or_manual_specs">Or enter specs manually:</strong>
-                  <div class="settings-subgrid">
-                    <div class="field"><label for="wizTireWidth" data-i18n="settings.tire_width">Tire Width (mm)</label><input id="wizTireWidth" type="number" min="100" step="1" value="225" /></div>
-                    <div class="field"><label for="wizTireAspect" data-i18n="settings.tire_aspect">Tire Aspect (%)</label><input id="wizTireAspect" type="number" min="20" step="1" value="45" /></div>
-                    <div class="field"><label for="wizRim" data-i18n="settings.rim_size">Rim Size (in)</label><input id="wizRim" type="number" min="10" step="0.5" value="18" /></div>
-                    <div class="field"><label for="wizFinalDrive" data-i18n="settings.final_drive_ratio">Final Drive Ratio</label><input id="wizFinalDrive" type="number" step="0.01" min="0.1" value="3.08" /></div>
-                    <div class="field"><label for="wizGearRatio" data-i18n="settings.top_gear_ratio">Top Gear Ratio</label><input id="wizGearRatio" type="number" step="0.01" min="0.1" value="0.64" /></div>
+            <div class="wizard-shell">
+              <div class="wizard-main">
+                <div class="wizard-steps">
+                  <div class="wizard-step-indicators" aria-label="Add car progress">
+                    <span class="wizard-step-dot active" data-step="0">
+                      <span class="wizard-step-dot__number">1</span>
+                      <span class="wizard-step-dot__label" data-i18n="settings.car.step_brand_short">Brand</span>
+                    </span>
+                    <span class="wizard-step-dot" data-step="1">
+                      <span class="wizard-step-dot__number">2</span>
+                      <span class="wizard-step-dot__label" data-i18n="settings.car.step_type_short">Type</span>
+                    </span>
+                    <span class="wizard-step-dot" data-step="2">
+                      <span class="wizard-step-dot__number">3</span>
+                      <span class="wizard-step-dot__label" data-i18n="settings.car.step_model_short">Model</span>
+                    </span>
+                    <span class="wizard-step-dot" data-step="3">
+                      <span class="wizard-step-dot__number">4</span>
+                      <span class="wizard-step-dot__label" data-i18n="settings.car.step_variant_short">Variant</span>
+                    </span>
+                    <span class="wizard-step-dot" data-step="4">
+                      <span class="wizard-step-dot__number">5</span>
+                      <span class="wizard-step-dot__label" data-i18n="settings.car.step_specs_short">Specs</span>
+                    </span>
                   </div>
-                  <button id="wizardManualAddBtn" class="btn btn--success" data-i18n="settings.car.add_with_specs">Add Car with These Specs</button>
+
+                  <!-- Step 1: Brand -->
+                  <div id="wizardStep0" class="wizard-step active">
+                    <h3 data-i18n="settings.car.step_brand">Select Brand</h3>
+                    <div class="wizard-options" id="wizardBrandList"></div>
+                    <div class="wizard-custom">
+                      <label data-i18n="settings.car.or_custom_brand">Or type a custom brand:</label>
+                      <input id="wizardCustomBrand" type="text" maxlength="32" placeholder="e.g. Mercedes-Benz" />
+                      <button id="wizardCustomBrandBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
+                    </div>
+                  </div>
+
+                  <!-- Step 2: Type -->
+                  <div id="wizardStep1" class="wizard-step">
+                    <h3 data-i18n="settings.car.step_type">Select Type</h3>
+                    <div class="wizard-options" id="wizardTypeList"></div>
+                    <div class="wizard-custom">
+                      <label data-i18n="settings.car.or_custom_type">Or type a custom type:</label>
+                      <input id="wizardCustomType" type="text" maxlength="32" placeholder="e.g. Van" />
+                      <button id="wizardCustomTypeBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
+                    </div>
+                  </div>
+
+                  <!-- Step 3: Model -->
+                  <div id="wizardStep2" class="wizard-step">
+                    <h3 data-i18n="settings.car.step_model">Select Model</h3>
+                    <div class="wizard-options wizard-options--list" id="wizardModelList"></div>
+                    <div class="wizard-custom">
+                      <label data-i18n="settings.car.or_custom_model">Or type a custom model:</label>
+                      <input id="wizardCustomModel" type="text" maxlength="64" placeholder="e.g. C-Class W205" />
+                      <button id="wizardCustomModelBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
+                    </div>
+                  </div>
+
+                  <!-- Step 4: Variant -->
+                  <div id="wizardStep3" class="wizard-step">
+                    <h3 data-i18n="settings.car.step_variant">Select Variant</h3>
+                    <div class="wizard-options wizard-options--list" id="wizardVariantList"></div>
+                  </div>
+
+                  <!-- Step 5: Wheels & Gearbox -->
+                  <div id="wizardStep4" class="wizard-step">
+                    <h3 data-i18n="settings.car.step_wheels">Select Wheels</h3>
+                    <div class="wizard-options" id="wizardTireList"></div>
+                    <h3 data-i18n="settings.car.step_gearbox" class="wizard-section-title">Select Gearbox</h3>
+                    <div class="wizard-options wizard-options--list" id="wizardGearboxList"></div>
+                    <div class="wizard-custom-specs">
+                      <strong data-i18n="settings.car.or_manual_specs">Or enter specs manually:</strong>
+                      <div class="subtle wizard-custom-specs__note" data-i18n="settings.car.manual_specs_note">Use this branch when the library stops short or you already know the wheel and gearbox measurements.</div>
+                      <div class="settings-subgrid">
+                        <div class="field"><label for="wizTireWidth" data-i18n="settings.tire_width">Tire Width (mm)</label><input id="wizTireWidth" type="number" min="100" step="1" value="225" /></div>
+                        <div class="field"><label for="wizTireAspect" data-i18n="settings.tire_aspect">Tire Aspect (%)</label><input id="wizTireAspect" type="number" min="20" step="1" value="45" /></div>
+                        <div class="field"><label for="wizRim" data-i18n="settings.rim_size">Rim Size (in)</label><input id="wizRim" type="number" min="10" step="0.5" value="18" /></div>
+                        <div class="field"><label for="wizFinalDrive" data-i18n="settings.final_drive_ratio">Final Drive Ratio</label><input id="wizFinalDrive" type="number" step="0.01" min="0.1" value="3.08" /></div>
+                        <div class="field"><label for="wizGearRatio" data-i18n="settings.top_gear_ratio">Top Gear Ratio</label><input id="wizGearRatio" type="number" step="0.01" min="0.1" value="0.64" /></div>
+                      </div>
+                      <button id="wizardManualAddBtn" class="btn btn--success" data-i18n="settings.car.add_with_specs">Add Car with These Specs</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="wizard-nav">
+                  <button id="wizardBackBtn" class="btn btn--muted" data-i18n="settings.car.back">Back</button>
                 </div>
               </div>
-            </div>
 
-            <div class="wizard-nav">
-              <button id="wizardBackBtn" class="btn btn--muted" data-i18n="settings.car.back">Back</button>
+              <aside class="wizard-summary-card" aria-live="polite">
+                <div class="wizard-summary-card__title" data-i18n="settings.car.wizard_summary_title">Current selection</div>
+                <div class="subtle" data-i18n="settings.car.wizard_summary_intro">Your choices stay visible here while the profile comes together.</div>
+                <div id="wizardSummaryPanel"></div>
+              </aside>
             </div>
           </div>
         </div>
