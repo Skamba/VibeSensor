@@ -135,7 +135,7 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   await page.locator("#speedUncertaintyInput").fill("3");
   await page.locator("#tireDiameterUncertaintyInput").fill("4");
   await page.locator("#finalDriveUncertaintyInput").fill("2");
-  await page.locator("#gearUncertaintyInput").fill("5");
+  await page.locator("#gearUncertaintyInput").fill("4");
   await page.locator("#minAbsBandHzInput").fill("0.7");
   await page.locator("#maxBandHalfWidthInput").fill("12");
   await page.locator("#saveAnalysisBtn").click();
@@ -144,6 +144,145 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
+});
+
+test("analysis tab adds guided helper copy and can reset tuning to defaults", async ({ page }) => {
+  let lastAnalysisPayload: Record<string, number> = {
+    tire_width_mm: 285,
+    tire_aspect_pct: 30,
+    rim_in: 21,
+    final_drive_ratio: 3.08,
+    current_gear_ratio: 0.64,
+    wheel_bandwidth_pct: 11,
+    driveshaft_bandwidth_pct: 10,
+    engine_bandwidth_pct: 9,
+    speed_uncertainty_pct: 3,
+    tire_diameter_uncertainty_pct: 4,
+    final_drive_uncertainty_pct: 1,
+    gear_uncertainty_pct: 2,
+    min_abs_band_hz: 1.2,
+    max_band_half_width_pct: 10,
+    tire_deflection_factor: 0.97,
+  };
+  let analysisPutCalls = 0;
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route).startsWith("/api/settings/cars")) {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/settings/analysis", async (route) => {
+    if (route.request().method() === "PUT") {
+      analysisPutCalls += 1;
+      lastAnalysisPayload = route.request().postDataJSON() as Record<string, number>;
+      await fulfillJson(route, {
+        ...lastAnalysisPayload,
+        tire_width_mm: 285,
+        tire_aspect_pct: 30,
+        rim_in: 21,
+        final_drive_ratio: 3.08,
+        current_gear_ratio: 0.64,
+        tire_deflection_factor: 0.97,
+      });
+      return;
+    }
+    await fulfillJson(route, lastAnalysisPayload);
+  });
+  await installFakeWebSocket(page, { confirmResult: true });
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+
+  await expect(page.locator("#analysisTab")).toContainText("Safe starting point");
+  await expect(page.locator("#analysisTab")).toContainText("Values outside the guided range will ask for confirmation");
+  await expect(page.locator("#wheelBandwidthGuidance")).toContainText("Default 5%");
+  await expect(page.locator("#wheelBandwidthGuidance")).toContainText("Guided range 2% to 12%");
+
+  await page.locator("#resetAnalysisBtn").click();
+  await expect.poll(() => analysisPutCalls).toBe(1);
+  await expect(page.locator("#wheelBandwidthInput")).toHaveValue("5");
+  await expect(page.locator("#maxBandHalfWidthInput")).toHaveValue("6");
+  expect(lastAnalysisPayload.wheel_bandwidth_pct).toBe(5);
+  expect(lastAnalysisPayload.max_band_half_width_pct).toBe(6);
+});
+
+test("analysis settings ask for confirmation before saving risky values", async ({ page }) => {
+  let analysisPutCalls = 0;
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route).startsWith("/api/settings/cars")) {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/settings/analysis", async (route) => {
+    if (route.request().method() === "PUT") {
+      analysisPutCalls += 1;
+      await fulfillJson(route, route.request().postDataJSON());
+      return;
+    }
+    await fulfillJson(route, {});
+  });
+  await installFakeWebSocket(page, { confirmResult: false });
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await page.locator("#wheelBandwidthInput").fill("40");
+  await page.locator("#saveAnalysisBtn").click();
+  await page.waitForTimeout(150);
+  await expect.poll(() => analysisPutCalls).toBe(0);
+
+  await page.evaluate(() => {
+    window.confirm = () => true;
+  });
+  await page.locator("#saveAnalysisBtn").click();
+  await expect.poll(() => analysisPutCalls).toBe(1);
+});
+
+test("analysis settings show a field-specific error when a hard limit is exceeded", async ({ page }) => {
+  let analysisPutCalls = 0;
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route).startsWith("/api/settings/cars")) {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/settings/analysis", async (route) => {
+    if (route.request().method() === "PUT") {
+      analysisPutCalls += 1;
+      await fulfillJson(route, route.request().postDataJSON());
+      return;
+    }
+    await fulfillJson(route, {});
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await page.locator("#wheelBandwidthInput").fill("120");
+  await page.locator("#saveAnalysisBtn").click();
+
+  await expect.poll(() => analysisPutCalls).toBe(0);
+  await expect(page.locator("#appErrorBanner")).toBeVisible();
+  await expect(page.locator("#appErrorBanner")).toContainText("Wheel Bandwidth (%) must stay between 0.1% and 100%");
+  await expect(page.locator("#wheelBandwidthInput")).toHaveAttribute("aria-invalid", "true");
 });
 
 test("assigning a sensor location preserves the original sensor name", async ({ page }) => {
