@@ -123,10 +123,12 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await page.goto("/");
   await page.locator("#tab-history").click();
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
+  await expect(toggle).toContainText("View findings, heatmap, and evidence");
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator(".history-details-row")).toBeVisible();
+  await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
   await expect(page.locator(".mini-car-dot")).toHaveAttribute("title", /20.0 dB$/);
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -233,7 +235,9 @@ test("history loaded insights promote the result summary above supporting eviden
   await page.goto("/");
   await page.locator("#tab-history").click();
   await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
-  await page.locator('[data-run-action="load-insights"]').click();
+  await expect(page.locator(".history-details-header [data-run-action='load-insights']")).toBeVisible();
+  await page.locator(".history-details-header [data-run-action='load-insights']").click();
+  await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
   await expect(page.locator(".history-findings-overview__headline")).toHaveText("Front-right wheel imbalance");
   await expect(page.locator(".history-findings-chip")).toContainText([
     "Most likely origin",
@@ -242,5 +246,5 @@ test("history loaded insights promote the result summary above supporting eviden
     "Confidence",
   ]);
   await expect(page.locator(".history-finding-card")).toHaveCount(2);
-  await expect(page.locator(".history-preview-stats")).toContainText("Sensor statistics");
+  await expect(page.locator(".history-evidence-column .history-preview-stats")).toContainText("Sensor statistics");
 });
