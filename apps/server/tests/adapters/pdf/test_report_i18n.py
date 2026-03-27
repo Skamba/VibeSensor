@@ -250,8 +250,8 @@ def test_dutch_translations_complete() -> None:
     assert ui["status.running"] == "Lopend"
     assert "Handmatig" in ui["speed.override"]
     assert ui["speed.unit"] == "Eenheid"
-    assert "verbinding maken" in ui["ws.connecting"]
-    assert "herverbinden" in ui["ws.reconnecting"]
+    assert ui["ws.connecting"] == "Verbinden"
+    assert ui["ws.reconnecting"] == "Opnieuw verbinden"
     assert "herverbinden" in ui["ws.banner.reconnecting"]
     assert "Verbinding maken met server" in ui["ws.banner.connecting"]
     assert "Gecombineerd" in ui["chart.spectrum_title"]
