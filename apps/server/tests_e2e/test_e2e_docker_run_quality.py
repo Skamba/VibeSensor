@@ -83,7 +83,7 @@ def test_reduced_sensor_count_run_still_reports(e2e_env: dict[str, str]) -> None
 
         pdf_resp = api_bytes(base, f"/api/history/{run_id}/report.pdf")
         text = pdf_text(pdf_resp.body)
-        assert "diagnostic worksheet" in text
+        assert "vibesensor diagnostic report" in text
         _assert_no_placeholders(text)
     finally:
         api_json(base, "/api/recording/stop", method="POST")

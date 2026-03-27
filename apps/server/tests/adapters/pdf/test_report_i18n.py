@@ -223,7 +223,7 @@ def test_dutch_translations_complete() -> None:
     assert "ordelabeling" in _nl("THIS_REPORT_IS_GENERATED_FROM_EXPLICIT_REFERENCES_ONLY")
     assert "dominante frequentiepunten" in _nl("PLOT_DOM_FREQ_SKIPPED")
     assert "referentieopmerking" in _nl("INFORMATIONAL_REFERENCE_NOTE")
-    assert _nl("DIAGNOSTIC_WORKSHEET") == "Diagnostisch werkformulier"
+    assert _nl("DIAGNOSTIC_WORKSHEET") == "VibeSensor-diagnoserapport"
     assert _nl("EVIDENCE_SNAPSHOT") == "Bewijssamenvatting"
     assert _nl("PEAK_DB") == "Piek (dB)"
     assert _nl("SPEED_BINNED_ANALYSIS") == "Analyse per snelheidsband"

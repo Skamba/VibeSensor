@@ -257,7 +257,7 @@ def _build_report_template_data(
         context=context,
         report=report,
         primary=primary,
-        title=tr("DIAGNOSTIC_WORKSHEET"),
+        title=tr("REPORT_FOOTER_TITLE"),
         observed=observed,
         system_cards=system_cards,
         next_steps=next_steps,

@@ -340,8 +340,8 @@
     "nl": "Diagnostische pieken"
   },
   "DIAGNOSTIC_WORKSHEET": {
-    "en": "Diagnostic Worksheet",
-    "nl": "Diagnostisch werkformulier"
+    "en": "VibeSensor Diagnostic Report",
+    "nl": "VibeSensor-diagnoserapport"
   },
   "DIAGRAM_LABEL_FRONT": {
     "en": "FRONT",
