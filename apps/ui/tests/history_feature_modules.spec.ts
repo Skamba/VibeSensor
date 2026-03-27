@@ -8,6 +8,7 @@ import {
 import { createHistoryListModule } from "../src/app/features/history_list_module";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
 import type { UiDomElements } from "../src/app/ui_dom_registry";
+import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
 
 type ButtonStub = HTMLButtonElement & {
   disabled: boolean;
@@ -58,14 +59,6 @@ function createHistoryElements(): {
   };
 }
 
-function jsonResponse(body: unknown, init?: ResponseInit): Response {
-  return new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { "content-type": "application/json" },
-    ...init,
-  });
-}
-
 function historyInsightsPayload(runId: string, sensorCountUsed: number) {
   return {
     run_id: runId,
@@ -107,8 +100,7 @@ function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string
 }
 
 test.beforeEach(() => {
-  (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
-    typeof globalThis;
+  installWindowGlobal();
 });
 
 test("history list module refreshes runs and renders table state", async () => {

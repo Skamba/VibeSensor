@@ -3,21 +3,16 @@ import { expect, test } from "@playwright/test";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import type { UiDomElements } from "../src/app/ui_dom_registry";
-import { createDeferred, flushAsyncWork, installTimerHarness } from "./async_test_helpers";
+import {
+  createDeferred,
+  flushAsyncWork,
+  installTimerHarness,
+  installWindowGlobal,
+  jsonResponse,
+} from "./async_test_helpers";
 import type { TimerHarness } from "./async_test_helpers";
 
 type ClickListener = (() => void) | null;
-
-function jsonResponse(body: unknown): Response {
-  const payload = JSON.stringify(body);
-  return {
-    ok: true,
-    status: 200,
-    statusText: "OK",
-    headers: new Headers({ "content-type": "application/json" }),
-    text: async () => payload,
-  } as unknown as Response;
-}
 
 function pendingPollDelays(timers: TimerHarness): number[] {
   return timers.pendingDelays().filter((delay) => delay !== 10_000);
@@ -219,12 +214,11 @@ function createUpdateDeps() {
   };
 }
 
-test.describe("createEspFlashFeature polling", () => {
-  test.beforeEach(() => {
-    (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
-      typeof globalThis;
-  });
+test.beforeEach(() => {
+  installWindowGlobal();
+});
 
+test.describe("createEspFlashFeature polling", () => {
   test("start replaces the previous poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
     const restoreFetch = installFetchMock(async (url, method) => {
@@ -331,11 +325,6 @@ test.describe("createEspFlashFeature polling", () => {
 });
 
 test.describe("createUpdateFeature polling", () => {
-  test.beforeEach(() => {
-    (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
-      typeof globalThis;
-  });
-
   test("start replaces the previous update poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
     const restoreFetch = installFetchMock(async (url, method) => {
