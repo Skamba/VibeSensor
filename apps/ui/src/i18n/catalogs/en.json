@@ -153,6 +153,7 @@
   "settings.speed.fallback_no": "No",
   "settings.speed.fallback_title": "Fallback Controls",
   "settings.speed.stale_timeout_label": "Stale timeout (s)",
+  "settings.language": "Language",
 
   "settings.group.order_band_widths": "Order Band Widths",
   "settings.group.uncertainty_model": "Uncertainty Model",
