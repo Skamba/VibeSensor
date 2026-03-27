@@ -51,6 +51,18 @@ def _run(command: list[str], cwd: Path) -> None:
     subprocess.run(command, cwd=cwd, check=True)
 
 
+def _git_head_commit(repo_root: Path) -> str:
+    if not (repo_root / ".git").exists():
+        return ""
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Build and sync the UI static assets into the server package."
@@ -100,16 +112,7 @@ def main(argv: list[str] | None = None) -> None:
         ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
     )
     static_assets_hash = _hash_tree(static_dir, ignore_names={UI_BUILD_METADATA_FILE})
-    git_commit = (
-        subprocess.run(
-            ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
-            check=False,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        if (repo_root / ".git").exists()
-        else ""
-    )
+    git_commit = _git_head_commit(repo_root)
     (static_dir / UI_BUILD_METADATA_FILE).write_text(
         json.dumps(
             {
