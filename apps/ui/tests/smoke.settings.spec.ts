@@ -199,8 +199,29 @@ test("analysis tab adds guided helper copy and can reset tuning to defaults", as
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
 
-  await expect(page.locator("#analysisTab")).toContainText("Safe starting point");
-  await expect(page.locator("#analysisTab")).toContainText("Values outside the guided range will ask for confirmation");
+  const analysisGuidance = page.locator("#analysisGuidanceHelp");
+  const analysisGuidanceBody = analysisGuidance.locator(".settings-help-disclosure__body");
+  await expect(analysisGuidance).toContainText("Safe starting point");
+  await expect(analysisGuidanceBody).not.toBeVisible();
+  await analysisGuidance.locator("summary").click();
+  await expect(analysisGuidanceBody).toBeVisible();
+  await expect(analysisGuidanceBody).toContainText("Values outside the guided range will ask for confirmation");
+
+  const orderBandHelp = page.locator("#analysisOrderBandHelp");
+  const orderBandHelpBody = orderBandHelp.locator(".settings-help-disclosure__body");
+  await expect(orderBandHelpBody).not.toBeVisible();
+  await orderBandHelp.locator("summary").click();
+  await expect(orderBandHelpBody).toBeVisible();
+  await expect(orderBandHelpBody).toContainText("These values control how far the app searches around each expected order");
+
+  const uncertaintyHelp = page.locator("#analysisUncertaintyHelp");
+  const uncertaintyHelpBody = uncertaintyHelp.locator(".settings-help-disclosure__body");
+  await expect(uncertaintyHelpBody).not.toBeVisible();
+  await uncertaintyHelp.locator("summary").click();
+  await expect(uncertaintyHelpBody).toBeVisible();
+  await expect(uncertaintyHelpBody).toContainText("Defaults use tire wear from 10/32 in to 2/32 in plus safety margin");
+  await expect(uncertaintyHelpBody).toContainText("Use these only when vehicle data is approximate");
+
   await expect(page.locator("#wheelBandwidthGuidance")).toContainText("Default 5%");
   await expect(page.locator("#wheelBandwidthGuidance")).toContainText("Guided range 2% to 12%");
 
