@@ -34,6 +34,10 @@ const basePayload = {
   speed_mps: 10,
 };
 
+function expectInvalidPayload(payload: unknown): void {
+  expect(() => adaptServerPayload(payload)).toThrow(/Invalid websocket payload/);
+}
+
 function requireSpectra(adapted: ReturnType<typeof adaptServerPayload>) {
   expect(adapted.spectra).not.toBeNull();
   if (!adapted.spectra) throw new Error("Expected adapted spectra");
@@ -52,7 +56,7 @@ test.describe("schema_version handling", () => {
 
   test("rejects payload without schema_version", () => {
     const { schema_version: _, ...noVersion } = basePayload;
-    expect(() => adaptServerPayload(noVersion)).toThrow(/Invalid websocket payload/);
+    expectInvalidPayload(noVersion);
   });
 
   test("accepts unknown schema_version (logs warning, does not throw)", () => {
@@ -64,29 +68,25 @@ test.describe("schema_version handling", () => {
   });
 
   test("rejects invalid field types via AJV validation", () => {
-    expect(() =>
-      adaptServerPayload({
-        ...basePayload,
-        speed_mps: "10",
-      }),
-    ).toThrow(/Invalid websocket payload/);
+    expectInvalidPayload({
+      ...basePayload,
+      speed_mps: "10",
+    });
   });
 
   test("rejects partial strength_metrics instead of defaulting missing fields", () => {
-    expect(() =>
-      adaptServerPayload({
-        ...basePayload,
-        spectra: {
-          freq: [10, 20, 30],
-          clients: {
-            sensor1: {
-              combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-              strength_metrics: { vibration_strength_db: 12 },
-            },
+    expectInvalidPayload({
+      ...basePayload,
+      spectra: {
+        freq: [10, 20, 30],
+        clients: {
+          sensor1: {
+            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            strength_metrics: { vibration_strength_db: 12 },
           },
         },
-      }),
-    ).toThrow(/Invalid websocket payload/);
+      },
+    });
   });
 
   test("EXPECTED_SCHEMA_VERSION is string '1'", () => {
@@ -179,20 +179,18 @@ test.describe("shared freq optimization", () => {
   });
 
   test("rejects malformed per-client freq elements instead of skipping the client", () => {
-    expect(() =>
-      adaptServerPayload({
-        ...basePayload,
-        spectra: {
-          clients: {
-            sensor1: {
-              freq: [10, "bad", 30],
-              combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-              strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
-            },
+    expectInvalidPayload({
+      ...basePayload,
+      spectra: {
+        clients: {
+          sensor1: {
+            freq: [10, "bad", 30],
+            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
           },
         },
-      }),
-    ).toThrow(/Invalid websocket payload/);
+      },
+    });
   });
 
   test("skips client when freq and amplitude bin counts differ", () => {
@@ -238,28 +236,26 @@ test.describe("shared freq optimization", () => {
   });
 
   test("rejects malformed strength metric peaks instead of dropping them", () => {
-    expect(() =>
-      adaptServerPayload({
-        ...basePayload,
-        spectra: {
-          freq: [10, 20, 30],
-          clients: {
-            sensor1: {
-              combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-              strength_metrics: {
-                vibration_strength_db: 12,
-                peak_amp_g: 0.2,
-                noise_floor_amp_g: 0.01,
-                strength_bucket: null,
-                top_peaks: [
-                  { hz: 10, amp: 0.1, vibration_strength_db: 12, strength_bucket: "l2" },
-                  { hz: 20, amp: 0.2 },
-                ],
-              },
+    expectInvalidPayload({
+      ...basePayload,
+      spectra: {
+        freq: [10, 20, 30],
+        clients: {
+          sensor1: {
+            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            strength_metrics: {
+              vibration_strength_db: 12,
+              peak_amp_g: 0.2,
+              noise_floor_amp_g: 0.01,
+              strength_bucket: null,
+              top_peaks: [
+                { hz: 10, amp: 0.1, vibration_strength_db: 12, strength_bucket: "l2" },
+                { hz: 20, amp: 0.2 },
+              ],
             },
           },
         },
-      }),
-    ).toThrow(/Invalid websocket payload/);
+      },
+    });
   });
 });
