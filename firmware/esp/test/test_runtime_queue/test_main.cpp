@@ -15,6 +15,17 @@ FrameQueueState make_queue_state(DataFrame* frames, size_t capacity) {
   return state;
 }
 
+void expect_xyz_sample(const DataFrame& frame,
+                       uint16_t sample_index,
+                       int16_t expected_x,
+                       int16_t expected_y,
+                       int16_t expected_z) {
+  const size_t offset = static_cast<size_t>(sample_index) * vibesensor::runtime::kAxesPerSample;
+  TEST_ASSERT_EQUAL_INT16(expected_x, frame.xyz[offset + 0]);
+  TEST_ASSERT_EQUAL_INT16(expected_y, frame.xyz[offset + 1]);
+  TEST_ASSERT_EQUAL_INT16(expected_z, frame.xyz[offset + 2]);
+}
+
 void append_full_frame(FrameQueueState& state,
                        RuntimeStatus& status,
                        int16_t sample_base,
@@ -46,16 +57,13 @@ void test_append_sample_builds_frame_and_applies_clock_offset() {
   TEST_ASSERT_EQUAL_UINT32(0, frame->seq);
   TEST_ASSERT_EQUAL_UINT64(1050, frame->t0_us);
   TEST_ASSERT_EQUAL_UINT16(vibesensor::runtime::kFrameSamples, frame->sample_count);
-  TEST_ASSERT_EQUAL_INT16(10, frame->xyz[0]);
-  TEST_ASSERT_EQUAL_INT16(11, frame->xyz[1]);
-  TEST_ASSERT_EQUAL_INT16(12, frame->xyz[2]);
-  const size_t tail = static_cast<size_t>(vibesensor::runtime::kFrameSamples - 1) * 3;
-  TEST_ASSERT_EQUAL_INT16(
-      static_cast<int16_t>(10 + vibesensor::runtime::kFrameSamples - 1), frame->xyz[tail + 0]);
-  TEST_ASSERT_EQUAL_INT16(
-      static_cast<int16_t>(11 + vibesensor::runtime::kFrameSamples - 1), frame->xyz[tail + 1]);
-  TEST_ASSERT_EQUAL_INT16(
-      static_cast<int16_t>(12 + vibesensor::runtime::kFrameSamples - 1), frame->xyz[tail + 2]);
+  expect_xyz_sample(*frame, 0, 10, 11, 12);
+  const int16_t last_sample = static_cast<int16_t>(10 + vibesensor::runtime::kFrameSamples - 1);
+  expect_xyz_sample(*frame,
+                    vibesensor::runtime::kFrameSamples - 1,
+                    last_sample,
+                    static_cast<int16_t>(last_sample + 1),
+                    static_cast<int16_t>(last_sample + 2));
   TEST_ASSERT_EQUAL_UINT32(0, status.queue_overflow_drops);
 }
 
@@ -72,7 +80,7 @@ void test_queue_overflow_drops_oldest_frame() {
   TEST_ASSERT_EQUAL_UINT32(1, status.queue_overflow_drops);
   TEST_ASSERT_EQUAL_UINT32(1, frame->seq);
   TEST_ASSERT_EQUAL_UINT64(2000, frame->t0_us);
-  TEST_ASSERT_EQUAL_INT16(500, frame->xyz[0]);
+  expect_xyz_sample(*frame, 0, 500, 501, 502);
 }
 
 void test_ack_data_frames_handles_wraparound_after_partial_drain() {
