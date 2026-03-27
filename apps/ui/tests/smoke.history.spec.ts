@@ -124,7 +124,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await page.goto("/");
   await page.locator("#tab-history").click();
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
-  await expect(toggle).toContainText("View findings, heatmap, and evidence");
+  await expect(toggle).toContainText("View diagnosis and heatmap");
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
@@ -244,8 +244,7 @@ test("history loaded insights promote the result summary above supporting eviden
   await expect(page.locator(".history-diagnosis-card")).toContainText("Front-right wheel imbalance");
   await expect(page.locator(".history-diagnosis-card")).toContainText("1x wheel");
   await expect(page.locator(".history-diagnosis-card")).toContainText("Inspect first");
-  await expect(page.locator(".history-secondary-findings")).toContainText("Secondary candidates");
-  await expect(page.locator(".history-finding-card--secondary")).toHaveCount(1);
-  await expect(page.locator(".history-finding-card--secondary")).toContainText("Secondary driveline contribution");
-  await expect(page.locator(".history-evidence-column .history-preview-stats")).toContainText("Sensor statistics");
+  await expect(page.locator(".history-secondary-findings")).toHaveCount(0);
+  await expect(page.locator(".history-finding-card--secondary")).toHaveCount(0);
+  await expect(page.locator(".history-evidence-column .history-preview-stats")).toHaveCount(0);
 });
