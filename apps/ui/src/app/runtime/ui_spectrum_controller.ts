@@ -67,6 +67,13 @@ type SpectrumSeriesEntry = {
   values: number[];
 };
 
+type SpectrumLegendButton = {
+  button: HTMLButtonElement;
+  label: HTMLSpanElement;
+  meta: HTMLSpanElement | null;
+  swatch: HTMLSpanElement | null;
+};
+
 type UiSpectrumControllerDeps = {
   state: AppState;
   els: UiDomElements;
@@ -83,6 +90,10 @@ export class UiSpectrumController {
   private readonly rootStyle: CSSStyleDeclaration;
 
   private readonly spectrumBandPlugin: uPlot.Plugin;
+
+  private legendResetButton: SpectrumLegendButton | null = null;
+
+  private readonly legendSeriesButtons = new Map<string, SpectrumLegendButton>();
 
   private spectrumTweenRaf: number | null = null;
 
@@ -264,65 +275,124 @@ export class UiSpectrumController {
   }
 
   private renderSensorLegend(entries: SpectrumSeriesEntry[]): void {
-    if (!this.els.legend) return;
-    this.els.legend.innerHTML = "";
-    if (!entries.length) return;
+    const legend = this.els.legend;
+    if (!legend) return;
+    if (!entries.length) {
+      this.legendResetButton?.button.remove();
+      for (const parts of this.legendSeriesButtons.values()) {
+        parts.button.remove();
+      }
+      this.legendSeriesButtons.clear();
+      return;
+    }
 
-    const allButton = document.createElement("button");
-    allButton.type = "button";
+    const allButton = this.ensureLegendResetButton();
     const allActive = this.pinnedSeriesId === null;
-    allButton.className = `legend-item legend-item--interactive legend-item--reset${allActive ? " legend-item--active" : ""}`;
-    allButton.setAttribute("aria-pressed", allActive ? "true" : "false");
-    allButton.title = this.t("spectrum.legend.clear_focus");
-    allButton.addEventListener("click", () => {
+    allButton.button.className = `legend-item legend-item--interactive legend-item--reset${allActive ? " legend-item--active" : ""}`;
+    allButton.button.setAttribute("aria-pressed", allActive ? "true" : "false");
+    allButton.button.title = this.t("spectrum.legend.clear_focus");
+    allButton.label.textContent = this.t("spectrum.legend.all_series");
+    this.placeLegendButton(legend, allButton.button, 0);
+
+    const activeIds = new Set<string>();
+    let nextIndex = 1;
+    for (const entry of entries) {
+      activeIds.add(entry.id);
+      const parts = this.ensureLegendSeriesButton(entry.id);
+      const isActive = this.pinnedSeriesId === entry.id;
+      const isMuted = this.pinnedSeriesId !== null && !isActive;
+      parts.button.className = `legend-item legend-item--interactive${isActive ? " legend-item--active" : ""}${isMuted ? " legend-item--muted" : ""}`;
+      parts.button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      parts.button.title = isActive
+        ? this.t("spectrum.legend.clear_focus")
+        : this.t("spectrum.legend.focus_series", { sensor: entry.label });
+      parts.label.textContent = entry.label;
+      parts.swatch?.style.setProperty("--swatch-color", entry.color);
+      const metric = this.state.spectrum.spectra.clients[entry.id]?.strength_metrics?.vibration_strength_db;
+      if (parts.meta) {
+        parts.meta.textContent = typeof metric === "number" && Number.isFinite(metric)
+          ? `${this.formatDb(metric)} dB`
+          : "";
+      }
+      this.placeLegendButton(legend, parts.button, nextIndex);
+      nextIndex += 1;
+    }
+
+    for (const [entryId, parts] of this.legendSeriesButtons) {
+      if (activeIds.has(entryId)) continue;
+      parts.button.remove();
+      this.legendSeriesButtons.delete(entryId);
+    }
+  }
+
+  private ensureLegendResetButton(): SpectrumLegendButton {
+    if (this.legendResetButton) {
+      return this.legendResetButton;
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.addEventListener("click", () => {
       this.pinnedSeriesId = null;
       this.applyLegendSelection();
     });
-    const allLabel = document.createElement("span");
-    allLabel.className = "legend-item__label";
-    allLabel.textContent = this.t("spectrum.legend.all_series");
-    allButton.appendChild(allLabel);
-    this.els.legend.appendChild(allButton);
+    const label = document.createElement("span");
+    label.className = "legend-item__label";
+    button.appendChild(label);
+    this.legendResetButton = {
+      button,
+      label,
+      meta: null,
+      swatch: null,
+    };
+    return this.legendResetButton;
+  }
 
-    for (const entry of entries) {
-      const button = document.createElement("button");
-      button.type = "button";
-      const isActive = this.pinnedSeriesId === entry.id;
-      const isMuted = this.pinnedSeriesId !== null && !isActive;
-      button.className = `legend-item legend-item--interactive${isActive ? " legend-item--active" : ""}${isMuted ? " legend-item--muted" : ""}`;
-      button.setAttribute("aria-pressed", isActive ? "true" : "false");
-      button.title = isActive
-        ? this.t("spectrum.legend.clear_focus")
-        : this.t("spectrum.legend.focus_series", { sensor: entry.label });
-      button.addEventListener("click", () => {
-        this.pinnedSeriesId = isActive ? null : entry.id;
-        this.applyLegendSelection();
-      });
-
-      const swatch = document.createElement("span");
-      swatch.className = "swatch";
-      swatch.style.setProperty("--swatch-color", entry.color);
-
-      const textGroup = document.createElement("span");
-      textGroup.className = "legend-item__text-group";
-
-      const labelSpan = document.createElement("span");
-      labelSpan.className = "legend-item__label";
-      labelSpan.textContent = entry.label;
-
-      const metric = this.state.spectrum.spectra.clients[entry.id]?.strength_metrics?.vibration_strength_db;
-      const metaSpan = document.createElement("span");
-      metaSpan.className = "legend-item__meta";
-      metaSpan.textContent = typeof metric === "number" && Number.isFinite(metric)
-        ? `${this.formatDb(metric)} dB`
-        : "";
-
-      textGroup.appendChild(labelSpan);
-      textGroup.appendChild(metaSpan);
-      button.appendChild(swatch);
-      button.appendChild(textGroup);
-      this.els.legend.appendChild(button);
+  private ensureLegendSeriesButton(entryId: string): SpectrumLegendButton {
+    const existing = this.legendSeriesButtons.get(entryId);
+    if (existing) {
+      return existing;
     }
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.addEventListener("click", () => {
+      this.pinnedSeriesId = this.pinnedSeriesId === entryId ? null : entryId;
+      this.applyLegendSelection();
+    });
+
+    const swatch = document.createElement("span");
+    swatch.className = "swatch";
+
+    const textGroup = document.createElement("span");
+    textGroup.className = "legend-item__text-group";
+
+    const label = document.createElement("span");
+    label.className = "legend-item__label";
+
+    const meta = document.createElement("span");
+    meta.className = "legend-item__meta";
+
+    textGroup.appendChild(label);
+    textGroup.appendChild(meta);
+    button.appendChild(swatch);
+    button.appendChild(textGroup);
+
+    const created = {
+      button,
+      label,
+      meta,
+      swatch,
+    };
+    this.legendSeriesButtons.set(entryId, created);
+    return created;
+  }
+
+  private placeLegendButton(legend: HTMLElement, button: HTMLButtonElement, index: number): void {
+    const currentChild = legend.children[index];
+    if (currentChild === button) {
+      return;
+    }
+    legend.insertBefore(button, currentChild ?? null);
   }
 
   private renderBandLegend(activeBands: ChartBand[] = []): void {
