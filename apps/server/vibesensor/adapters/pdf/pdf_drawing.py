@@ -84,12 +84,13 @@ def _cert_display(label: str | None, pct: str | None, fallback: str) -> str:
     return value
 
 
-def _draw_footer(c: Canvas, page_num: int, total: int, version: str) -> None:
-    """Draw the report footer with version and page counter."""
+def _draw_footer(c: Canvas, page_num: int, total: int, footer_title: str | None) -> None:
+    """Draw the report footer with production-facing title and page counter."""
     y = MARGIN - 4 * mm
     c.setFont(FONT, FS_SMALL)
     c.setFillColor(_hex(MUTED_CLR))
-    c.drawString(MARGIN, y, version)
+    if footer_title:
+        c.drawString(MARGIN, y, footer_title)
     c.drawRightString(PAGE_W - MARGIN, y, f"{page_num} / {total}")
 
 

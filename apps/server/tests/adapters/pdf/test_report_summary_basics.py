@@ -51,7 +51,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     assert pdf.startswith(b"%PDF")
     for text in (
-        "Diagnostic Worksheet",
+        "VibeSensor Diagnostic Report",
         "Observed Signature",
         "Certainty",
         "Systems with findings",
@@ -267,4 +267,4 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
     assert bool(summary["speed_stats"]["steady_speed"]) is True
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     assert_pdf_contains(pdf, "Certainty")
-    assert_pdf_contains(pdf, "Diagnostic Worksheet")
+    assert_pdf_contains(pdf, "VibeSensor Diagnostic Report")
