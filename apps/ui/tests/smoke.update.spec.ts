@@ -53,7 +53,11 @@ test("settings update tab renders readiness guidance when idle", async ({ page }
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="updateTab"]').click();
   await expect(page.locator("#updateStatusPanel")).toContainText("Ready to start once the Pi has temporary Wi-Fi credentials");
+  await expect(page.locator("#updateStatusPanel")).toContainText("Update journey");
+  await expect(page.locator("#updateStatusPanel")).toContainText("No blockers recorded");
+  await expect(page.locator("#updateStatusPanel")).toContainText("No updater log yet");
   await expect(page.locator("#updateStatusPanel")).toContainText("1.2.3");
   await expect(page.locator("#updateTab")).toContainText("Review before you start");
+  await expect(page.locator("#updateTab")).toContainText("Starting an update temporarily pauses hotspot access");
   await expect(page.locator("#updateTab")).toContainText("The hotspot pauses while the Pi joins the Wi-Fi network you provide.");
 });

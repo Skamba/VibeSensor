@@ -36,6 +36,7 @@ test("opens the add car wizard in a focused task container and restores focus wh
   await expect(page.locator("#addCarWizard")).toBeVisible();
   await expect(page.locator("#wizardProgressText")).toContainText("Step 1 of 5");
   await expect(page.locator(".wizard-step-dot[aria-current='step']")).toContainText("Brand");
+  await expect(page.locator(".wizard-summary-card")).toContainText("Guided setup");
   await expect(page.locator("#wizardSummaryPanel")).toContainText("Not selected yet");
 
   await page.locator("#wizardCloseBtn").click();

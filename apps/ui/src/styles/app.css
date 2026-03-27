@@ -474,6 +474,118 @@ input:focus-visible,
   padding: var(--space-2) var(--space-3);
 }
 
+.maintenance-journey {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.maintenance-journey__title {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.maintenance-stage-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.maintenance-stage {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: start;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.maintenance-stage__marker,
+.maintenance-stage__state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.maintenance-stage__marker {
+  min-width: 1.8rem;
+  min-height: 1.8rem;
+  padding: 0 0.4rem;
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+}
+
+.maintenance-stage__state {
+  min-height: 1.6rem;
+  padding: 0.25rem 0.55rem;
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+}
+
+.maintenance-stage__body {
+  min-width: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.maintenance-stage__title {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.maintenance-stage__detail {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.maintenance-stage--active {
+  border-color: var(--brand-500);
+  background: var(--menu-hover);
+}
+
+.maintenance-stage--active .maintenance-stage__marker,
+.maintenance-stage--active .maintenance-stage__state {
+  background: var(--brand-500);
+  color: var(--on-fill);
+}
+
+.maintenance-stage--done {
+  border-color: rgba(11, 122, 68, 0.18);
+  background: var(--pill-ok-bg);
+}
+
+.maintenance-stage--done .maintenance-stage__marker,
+.maintenance-stage--done .maintenance-stage__state {
+  background: var(--success);
+  color: var(--on-fill);
+}
+
+.maintenance-stage--attention {
+  border-color: #f0c4c4;
+  background: var(--pill-bad-bg);
+}
+
+.maintenance-stage--attention .maintenance-stage__marker,
+.maintenance-stage--attention .maintenance-stage__state {
+  background: var(--danger);
+  color: var(--on-fill);
+}
+
 .maintenance-note--bad {
   background: var(--pill-bad-bg);
   color: var(--pill-bad-text);
@@ -1594,8 +1706,15 @@ body.wizard-open { overflow: hidden; }
   gap: var(--space-1);
 }
 .wizard-progress-text {
-  color: var(--muted);
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(139, 92, 246, 0.08);
+  color: var(--text);
+  font-size: 0.88rem;
   font-weight: 600;
 }
 .wizard-close {
@@ -1626,25 +1745,27 @@ body.wizard-open { overflow: hidden; }
 .wizard-step-indicators {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-3);
   margin-bottom: var(--space-3);
 }
 .wizard-step-dot {
-  min-height: 52px;
+  flex: 1 1 150px;
+  min-height: 58px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0.55rem 0.85rem;
-  font-size: 0.82rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   background: var(--surface-2);
   color: var(--muted);
   border: 1px solid var(--border);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 .wizard-step-dot__number {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.95rem;
+  height: 1.95rem;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -1733,6 +1854,14 @@ body.wizard-open { overflow: hidden; }
   color: var(--muted);
   font-weight: 700;
 }
+.wizard-task-callout {
+  display: grid;
+  gap: 0.35rem;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  background: rgba(139, 92, 246, 0.08);
+}
 .wizard-summary-preview {
   display: grid;
   gap: 0.35rem;
@@ -1802,6 +1931,7 @@ body.wizard-open { overflow: hidden; }
   }
   .wizard-step-dot {
     width: 100%;
+    flex-basis: 100%;
     justify-content: flex-start;
   }
   .wizard-options .wiz-opt,
