@@ -9,7 +9,6 @@ from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
-    DATA_TRUST_LABEL_W,
     FONT,
     FONT_B,
     FS_BODY,
@@ -27,7 +26,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     build_page2_layout,
     observed_signature_row_count,
 )
-from vibesensor.adapters.pdf.pdf_text import _draw_kv, _draw_text, _wrap_lines
+from vibesensor.adapters.pdf.pdf_text import _draw_text, _wrap_lines
 from vibesensor.adapters.pdf.report_data import NextStep, ReportTemplateData
 
 
@@ -45,25 +44,107 @@ def _draw_data_trust_panel(
     _draw_panel(c, x, y, w, h, tr("DATA_TRUST"))
     tx = x + 4 * mm
     ty = y + h - PANEL_HEADER_H
-    trust_val_w = w - 8 * mm - DATA_TRUST_LABEL_W
+    content_w = w - 8 * mm
     if data.data_trust:
-        for item in data.data_trust[:6]:
-            icon = "✓" if item.state == "pass" else "⚠"
-            state_lbl = tr("PASS") if item.state == "pass" else tr("WARN_SHORT")
-            value = f"{icon} {state_lbl}"
-            if item.state != "pass" and item.detail:
-                value = f"{icon} {item.detail}"
-            new_ty = _draw_kv(
+        warn_items = [item for item in data.data_trust if item.state != "pass"]
+        pass_items = [item for item in data.data_trust if item.state == "pass"]
+
+        if data.certainty_tier_key == "A":
+            confidence_level = tr("CONFIDENCE_LOW")
+            confidence_effect = tr("DATA_TRUST_EFFECT_LOW")
+            effect_color = TEXT_CLR
+        elif data.certainty_tier_key == "B" or warn_items:
+            confidence_level = tr("CONFIDENCE_MEDIUM")
+            confidence_effect = tr("DATA_TRUST_EFFECT_MEDIUM")
+            effect_color = TEXT_CLR
+        else:
+            confidence_level = tr("CONFIDENCE_HIGH")
+            confidence_effect = tr("DATA_TRUST_EFFECT_HIGH")
+            effect_color = SUB_CLR
+
+        summary_title = f"{tr('CONFIDENCE_LABEL')}: {confidence_level}"
+        summary_bottom = _draw_text(
+            c,
+            tx,
+            ty,
+            content_w,
+            summary_title,
+            font=FONT_B,
+            size=FS_BODY,
+            color=TEXT_CLR,
+        )
+        ty = (
+            _draw_text(
+                c,
+                tx,
+                summary_bottom - 0.4 * mm,
+                content_w,
+                confidence_effect,
+                font=FONT,
+                size=FS_SMALL,
+                color=effect_color,
+            )
+            - 0.9 * mm
+        )
+
+        if warn_items:
+            ty = (
+                _draw_text(
+                    c,
+                    tx,
+                    ty,
+                    content_w,
+                    tr("DATA_TRUST_CAVEATS"),
+                    font=FONT_B,
+                    size=FS_SMALL,
+                    color=TEXT_CLR,
+                )
+                - 0.5 * mm
+            )
+            visible_warn_items = warn_items[:3]
+            for item in visible_warn_items:
+                detail = item.detail or tr("WARN_SHORT")
+                ty = (
+                    _draw_text(
+                        c,
+                        tx,
+                        ty,
+                        content_w,
+                        f"{item.check}: {detail}",
+                        font=FONT,
+                        size=FS_SMALL,
+                        color=TEXT_CLR,
+                    )
+                    - 0.6 * mm
+                )
+            extra_warn_count = len(warn_items) - len(visible_warn_items)
+            if extra_warn_count > 0:
+                ty = (
+                    _draw_text(
+                        c,
+                        tx,
+                        ty,
+                        content_w,
+                        f"+{extra_warn_count} {tr('DATA_TRUST_MORE_CAVEATS')}",
+                        font=FONT,
+                        size=FS_SMALL,
+                        color=SUB_CLR,
+                    )
+                    - 0.6 * mm
+                )
+
+        if pass_items:
+            passed_checks = ", ".join(item.check for item in pass_items)
+            _draw_text(
                 c,
                 tx,
                 ty,
-                item.check,
-                value,
-                label_w=DATA_TRUST_LABEL_W,
-                fs=FS_SMALL,
-                value_w=trust_val_w,
+                content_w,
+                f"{tr('DATA_TRUST_CHECKS_PASSED')}: {passed_checks}",
+                font=FONT,
+                size=FS_SMALL,
+                color=SUB_CLR,
             )
-            ty = new_ty - 1.0 * mm
     else:
         c.setFillColor(_hex(SUB_CLR))
         c.setFont(FONT, FS_SMALL)
