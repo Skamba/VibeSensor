@@ -662,6 +662,17 @@ input:focus-visible,
 
 .live-overview__stats { margin-bottom: var(--space-3); }
 
+.stat--spotlight {
+  border: 1px solid rgba(124, 58, 237, 0.28);
+  border-radius: var(--radius-sm);
+  background: var(--menu-hover);
+  padding: var(--space-3);
+}
+
+.stat--spotlight .stat__label {
+  color: var(--brand-700);
+}
+
 .live-sensor-roster__header {
   display: flex;
   align-items: center;
@@ -677,6 +688,7 @@ input:focus-visible,
 }
 
 .live-sensor-card {
+  position: relative;
   min-width: 0;
   display: grid;
   gap: var(--space-1);
@@ -697,6 +709,25 @@ input:focus-visible,
   min-width: 0;
   font-size: 0.92rem;
   overflow-wrap: anywhere;
+}
+
+.live-sensor-card--strongest {
+  border-color: rgba(124, 58, 237, 0.35);
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.08), var(--surface-2));
+}
+
+.live-sensor-card--strongest::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--brand-500);
+}
+
+.live-sensor-card--strongest .live-sensor-card__header strong,
+.live-sensor-card--strongest .live-sensor-card__meta {
+  color: var(--brand-700);
 }
 
 .live-sensor-card__meta {
@@ -784,10 +815,22 @@ input:focus-visible,
   justify-content: space-between;
   gap: var(--space-3);
   flex-wrap: wrap;
-  margin-bottom: var(--space-3);
+}
+
+.spectrum-toolbar__hint {
+  flex: 1 1 280px;
 }
 .spectrum-toolbar__toggle {
   flex-shrink: 0;
+}
+.spectrum-controls-panel {
+  margin-top: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: var(--space-3);
 }
 #specChart {
   border: 1px solid var(--border);
@@ -796,14 +839,14 @@ input:focus-visible,
   overflow: hidden;
 }
 .spectrum-inspector {
-  margin-top: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  margin-top: 0;
   color: var(--text);
-  padding: var(--space-2) var(--space-3);
+  padding: 0;
   font-size: 0.88rem;
   line-height: 1.45;
+}
+.spectrum-controls-panel .legend {
+  margin-top: 0;
 }
 
 .empty-state {
@@ -924,10 +967,22 @@ input:focus-visible,
 .logging-row { justify-content: space-between; }
 .logging-row .subtle[hidden] { display: none; }
 .logging-actions {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-2);
+}
+.btn--danger-quiet {
+  background: #fff4f4;
+  border-color: #efc1c1;
+  color: var(--danger-700);
+}
+.btn--danger-quiet:hover {
+  background: #fee2e2;
+  border-color: var(--danger-400);
+  color: var(--danger-700);
+  filter: none;
 }
 .stat-grid--compact {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -942,7 +997,8 @@ input:focus-visible,
 }
 .stat--compact .stat__value { font-size: 1rem; }
 .logging-actions .btn {
-  width: 100%;
+  width: auto;
+  min-width: 10.5rem;
 }
 .logging-actions .btn[hidden] {
   display: none;
@@ -2013,7 +2069,12 @@ input[aria-invalid="true"] {
     width: 100%;
   }
   .logging-actions {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .logging-actions .btn {
+    width: 100%;
+    min-width: 0;
   }
   .stat-grid--compact {
     grid-template-columns: 1fr;
