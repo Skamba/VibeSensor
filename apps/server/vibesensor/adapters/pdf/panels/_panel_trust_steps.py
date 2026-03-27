@@ -84,42 +84,44 @@ def _draw_next_steps_table(
     """Draw ordered next-step rows with a primary action and secondary details."""
     col1_w = 12 * mm
     text_w = w - col1_w - 4
-    min_row_h = 8.0 * mm
-    action_fs = 8
-    action_leading = action_fs + 2
+    min_row_h = 7.2 * mm
+    action_fs = 7.5
+    action_leading = action_fs + 1.5
     detail_fs = FS_SMALL
-    detail_leading = detail_fs + 2
+    detail_leading = detail_fs + 1.5
 
     soft_bg = _hex(SOFT_BG)
     panel_bg = _hex(PANEL_BG)
     line_clr = _hex(LINE_CLR)
     text_clr = _hex(TEXT_CLR)
-    row_pad = 2 * mm
-    number_y_off = 4.4 * mm
-    detail_gap = 0.8 * mm
+    row_pad = 1.5 * mm
+    number_y_off = 4.0 * mm
+    detail_gap = 0.4 * mm
 
     y = y_top
     drawn = 0
     for idx, step in enumerate(steps, start=start_number):
-        detail_lines: list[str] = []
+        detail_parts: list[str] = []
         if step.why:
-            detail_lines.append(f"{tr('WHY')}: {step.why}")
-        confirm_line = f"{tr('CONFIRM')}: {step.confirm}" if step.confirm else ""
+            detail_parts.append(f"{tr('WHY')}: {step.why}")
         if step.eta:
             eta_text = f"{tr('ETA')}: {step.eta}"
-            confirm_line = f"{confirm_line} | {eta_text}" if confirm_line else eta_text
-        if confirm_line:
-            detail_lines.append(confirm_line)
+            if step.confirm:
+                detail_parts.append(f"{tr('CONFIRM')}: {step.confirm}")
+            detail_parts.append(eta_text)
+        elif step.confirm:
+            detail_parts.append(f"{tr('CONFIRM')}: {step.confirm}")
+        detail_text = " | ".join(detail_parts)
 
         action_lines = _wrap_lines(step.action, text_w, action_fs)
-        detail_line_count = sum(len(_wrap_lines(line, text_w, detail_fs)) for line in detail_lines)
+        detail_line_count = len(_wrap_lines(detail_text, text_w, detail_fs)) if detail_text else 0
         detail_h = detail_line_count * detail_leading if detail_line_count else 0.0
         row_h = max(
             min_row_h,
             max(len(action_lines), 1) * action_leading
             + detail_h
             + row_pad
-            + (detail_gap if detail_lines else 0.0),
+            + (detail_gap if detail_text else 0.0),
         )
         if y - row_h < y_bottom:
             break
@@ -142,13 +144,13 @@ def _draw_next_steps_table(
             size=action_fs,
             color=TEXT_CLR,
         )
-        if detail_lines:
+        if detail_text:
             _draw_text(
                 c,
                 x + col1_w,
                 action_bottom - detail_gap,
                 text_w,
-                "\n".join(detail_lines),
+                detail_text,
                 font=FONT,
                 size=detail_fs,
                 color=SUB_CLR,
