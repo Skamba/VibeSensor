@@ -125,52 +125,6 @@ function renderPreviewHeatmap(
     `;
 }
 
-function renderPreviewStats(
-  summary: HistoryInsightsPayload,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "formatInt" | "t">,
-): string {
-  const { escapeHtml, fmt, formatInt, t } = params;
-  const rows = sensorIntensityRows(summary);
-  if (!rows.length) {
-    return `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
-  }
-  const body = rows
-    .map((row) => {
-      const dropped = row.dropped_frames_delta;
-      const overflow = row.queue_overflow_drops_delta;
-      return `
-          <tr>
-            <td>${escapeHtml(row.location || "--")}</td>
-            <td class="numeric">${fmt(Number(row.p50_intensity_db), 1)}</td>
-            <td class="numeric">${fmt(Number(row.p95_intensity_db), 1)}</td>
-            <td class="numeric">${fmt(Number(row.max_intensity_db), 1)}</td>
-            <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>
-            <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>
-            <td class="numeric">${formatInt(Number(row.sample_count))}</td>
-          </tr>`;
-    })
-    .join("");
-  return `
-      <div class="history-preview-stats">
-        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>
-        <table class="history-preview-table">
-          <thead>
-            <tr>
-              <th>${escapeHtml(t("history.table.location"))}</th>
-              <th class="numeric">${escapeHtml(t("history.table.p50_db"))}</th>
-              <th class="numeric">${escapeHtml(t("history.table.p95_db"))}</th>
-              <th class="numeric">${escapeHtml(t("history.table.max_db"))}</th>
-              <th class="numeric">${escapeHtml(t("history.table.dropped_delta"))}</th>
-              <th class="numeric">${escapeHtml(t("history.table.overflow_delta"))}</th>
-              <th class="numeric">${escapeHtml(t("history.table.samples"))}</th>
-            </tr>
-          </thead>
-          <tbody>${body}</tbody>
-        </table>
-      </div>
-    `;
-}
-
 function confidenceText(
   finding: FindingPayload,
   params: Pick<HistoryTableViewParams, "fmt" | "t">,
@@ -340,7 +294,6 @@ function renderInsightsOverview(
   const signature = findingSignatureText(primary, params);
   const confidence = confidenceText(primary, params);
   const tone = findingTone(primary);
-  const findingCount = summary.findings?.length ?? findings.length;
   const nextStep = shouldShowNextStep(primary) && location !== t("report.missing")
     ? t("history.findings_next_step", { location })
     : "";
@@ -348,7 +301,6 @@ function renderInsightsOverview(
       <div class="history-findings-overview">
         <div class="history-findings-overview__header">
           <div class="history-findings-overview__eyebrow">${escapeHtml(t("history.primary_diagnosis"))}</div>
-          <div class="history-findings-overview__count">${escapeHtml(t("history.findings_loaded", { count: findingCount }))}</div>
         </div>
         <div class="history-diagnosis-card history-diagnosis-card--${tone}">
           <div class="history-diagnosis-card__header">
@@ -381,42 +333,6 @@ function renderInsightsOverview(
     `;
 }
 
-function renderSecondaryFindingCard(
-  finding: FindingPayload,
-  summary: HistoryInsightsPayload,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
-): string {
-  const { escapeHtml, t } = params;
-  const source = finding.suspected_source || t("report.missing");
-  const confidence = confidenceText(finding, params);
-  const location = findingLocationText(finding, summary, t);
-  const speedBand = findingSpeedBandText(finding, summary, t);
-  const signature = findingSignatureText(finding, params);
-  const evidenceSummary = String(finding.evidence_summary ?? "");
-  const tone = findingTone(finding);
-  return `
-      <li class="history-finding-card history-finding-card--secondary history-finding-card--${tone}">
-        <div class="history-finding-card__header">
-          <div class="history-finding-card__title-group">
-            <strong class="history-finding-card__title">${escapeHtml(source)}</strong>
-            <span class="history-finding-card__signal">${escapeHtml(signature)}</span>
-          </div>
-          <span class="history-finding-card__confidence history-finding-card__confidence--${tone}">${escapeHtml(confidence)}</span>
-        </div>
-        <div class="history-finding-card__meta">
-          <div class="history-finding-card__meta-item">
-            <span class="history-finding-card__label">${escapeHtml(t("history.findings_location"))}</span>
-            <strong>${escapeHtml(location)}</strong>
-          </div>
-          <div class="history-finding-card__meta-item">
-            <span class="history-finding-card__label">${escapeHtml(t("history.findings_speed_band"))}</span>
-            <strong>${escapeHtml(speedBand)}</strong>
-          </div>
-        </div>
-        <p class="history-finding-card__summary">${escapeHtml(evidenceSummary)}</p>
-      </li>`;
-}
-
 function renderInsightsBlock(
   detail: RunDetail,
   params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
@@ -425,33 +341,8 @@ function renderInsightsBlock(
   const findings = summarizeFindings(detail.insights);
   const loading = detail.insightsLoading;
   const loadedInsights = detail.insights;
-  const secondaryFindings = loadedInsights ? findings.slice(1) : [];
-  const visibleSecondaryFindings = secondaryFindings.slice(0, 2);
-  const hiddenSecondaryFindings = secondaryFindings.slice(2);
   const findingsMarkup = loadedInsights && findings.length
-    ? `
-        ${renderInsightsOverview(loadedInsights, params)}
-        ${secondaryFindings.length
-      ? `
-            <div class="history-secondary-findings">
-              <div class="history-secondary-findings__title">${escapeHtml(t("history.secondary_candidates_title"))}</div>
-              <ul class="history-findings-list history-findings-list--secondary">
-                ${visibleSecondaryFindings.map((finding) => renderSecondaryFindingCard(finding, loadedInsights, params)).join("")}
-              </ul>
-              ${hiddenSecondaryFindings.length
-        ? `
-                  <details class="history-secondary-findings__more">
-                    <summary>${escapeHtml(t("history.show_more_findings", { count: hiddenSecondaryFindings.length }))}</summary>
-                    <ul class="history-findings-list history-findings-list--secondary">
-                      ${hiddenSecondaryFindings.map((finding) => renderSecondaryFindingCard(finding, loadedInsights, params)).join("")}
-                    </ul>
-                  </details>
-                `
-        : ""}
-            </div>
-          `
-      : ""}
-      `
+    ? renderInsightsOverview(loadedInsights, params)
     : `<ul class="history-findings-list history-findings-list--secondary"><li class="history-finding-card history-finding-card--empty">${escapeHtml(t("report.no_findings_for_run"))}</li></ul>`;
   return `
       <div class="history-insights-block">
@@ -511,17 +402,10 @@ function renderRunDetailsRow(
       ].join(" · ")
     : "";
   let heatmapMarkup = "";
-  let statsMarkup = "";
   if (detail.previewLoading) {
     heatmapMarkup = `
       <div class="mini-car-wrap">
         <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
-        <p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>
-      </div>
-    `;
-    statsMarkup = `
-      <div class="history-preview-stats">
-        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>
         <p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>
       </div>
     `;
@@ -532,25 +416,12 @@ function renderRunDetailsRow(
         <p class="history-inline-error">${escapeHtml(detail.previewError)}</p>
       </div>
     `;
-    statsMarkup = `
-      <div class="history-preview-stats">
-        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>
-        <p class="history-inline-error">${escapeHtml(detail.previewError)}</p>
-      </div>
-    `;
   } else if (summary) {
     heatmapMarkup = renderPreviewHeatmap(summary, params);
-    statsMarkup = renderPreviewStats(summary, params);
   } else {
     heatmapMarkup = `
       <div class="mini-car-wrap">
         <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
-        <p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>
-      </div>
-    `;
-    statsMarkup = `
-      <div class="history-preview-stats">
-        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>
         <p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>
       </div>
     `;
@@ -577,7 +448,6 @@ function renderRunDetailsRow(
                 <div class="history-evidence-panel">
                   ${heatmapMarkup}
                 </div>
-                ${statsMarkup}
               </div>
             </div>
           </div>
