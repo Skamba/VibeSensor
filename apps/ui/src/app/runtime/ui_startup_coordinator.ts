@@ -4,7 +4,6 @@ type StartupShell = {
   bindUiEvents(): void;
   hydratePersistedPreferences(): Promise<void>;
   applyLanguage(forceReloadInsights?: boolean): void;
-  renderCarSelectionWarning(): void;
   setActiveView(viewId: string): void;
 };
 
@@ -48,7 +47,6 @@ export class UiStartupCoordinator {
     this.features.settings.syncSettingsInputs();
     this.runAsyncTask("hydrate persisted preferences", () => this.shell.hydratePersistedPreferences());
     this.shell.applyLanguage(false);
-    this.shell.renderCarSelectionWarning();
     this.shell.setActiveView(this.defaultViewId);
     this.startBackgroundActivity();
     this.transport.startTransportMode();
