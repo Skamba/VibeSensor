@@ -968,6 +968,45 @@ input:focus-visible,
 .history-row__run-id {
   font-weight: 600;
 }
+.history-row__summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.history-row__summary-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.18rem 0.6rem;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+.history-row__summary-chip--ok {
+  background: var(--pill-ok-bg);
+  color: var(--pill-ok-text);
+  border-color: transparent;
+}
+.history-row__summary-chip--warn {
+  background: #fff3cd;
+  color: #8a6d1d;
+  border-color: transparent;
+}
+.history-row__summary-chip--bad {
+  background: var(--pill-bad-bg);
+  color: var(--pill-bad-text);
+  border-color: transparent;
+}
+.history-row__summary-chip--muted {
+  color: var(--muted);
+  background: var(--surface-2);
+}
+.history-row__summary-chip--source {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .history-row__detail-affordance {
   display: flex;
   align-items: center;
