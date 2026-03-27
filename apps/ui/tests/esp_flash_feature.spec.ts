@@ -406,8 +406,8 @@ test.describe("createUpdateFeature polling", () => {
 
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_summary.ready");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.journey_title");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.issues_empty_title");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).not.toContain("settings.update.journey_title");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).not.toContain("settings.update.issues_empty_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.log_empty_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("1.2.3");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.health_card_title");
