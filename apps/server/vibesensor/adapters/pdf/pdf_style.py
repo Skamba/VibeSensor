@@ -160,15 +160,15 @@ def build_page1_layout(
     y_after_systems_source: float | None = None,
 ) -> Page1Layout:
     header_columns = build_header_columns_layout(width=width)
-    header_height = max(32 * mm, header_columns.meta_top_pad + header_content_height + 4 * mm)
+    header_height = max(28 * mm, header_columns.meta_top_pad + header_content_height + 4 * mm)
     header = PanelLayout(MARGIN, page_top - header_height, width, header_height)
 
     obs_step = 4.2 * mm
     obs_content_h = observed_rows * obs_step + 6 * mm
-    observed_h = max(32 * mm, PANEL_HEADER_H + obs_content_h + 4 * mm)
+    observed_h = max(44 * mm, PANEL_HEADER_H + obs_content_h + 8 * mm)
     observed = PanelLayout(MARGIN, header.y - GAP - observed_h, width, observed_h)
 
-    systems_h = 58 * mm
+    systems_h = 52 * mm
     systems = PanelLayout(MARGIN, observed.y - GAP - systems_h, width, systems_h)
 
     y_cursor = systems.y - GAP if y_after_systems_source is None else y_after_systems_source
