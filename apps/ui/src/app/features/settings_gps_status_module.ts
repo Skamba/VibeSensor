@@ -44,13 +44,17 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
     return ctx.getSpeedUnit() === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh");
   }
 
+  function formatSpeedValue(speedKmh: number | null, unitLabel: string): string | null {
+    const speed = speedKmhInSelectedUnit(speedKmh);
+    return speed != null ? `${fmt(speed, 1)} ${unitLabel}` : null;
+  }
+
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
     const unitLabel = selectedSpeedUnitLabel();
     if (els.headerGpsStatus) {
       const stateLabel = connectionStateLabel(status.connection_state);
-      const speed = speedKmhInSelectedUnit(status.effective_speed_kmh);
-      const speedText = speed != null ? ` ${fmt(speed, 1)} ${unitLabel}` : "";
-      els.headerGpsStatus.textContent = `GPS ${stateLabel}${speedText}`;
+      const speedText = formatSpeedValue(status.effective_speed_kmh, unitLabel);
+      els.headerGpsStatus.textContent = `GPS ${stateLabel}${speedText ? ` ${speedText}` : ""}`;
       const variant = status.connection_state === "connected"
         ? "ok"
         : (status.connection_state === "stale" ? "warn" : "muted");
@@ -69,14 +73,10 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
         : t("settings.speed.last_update_never");
     }
     if (els.gpsStatusRawSpeed) {
-      const rawSpeed = speedKmhInSelectedUnit(status.raw_speed_kmh);
-      els.gpsStatusRawSpeed.textContent = rawSpeed != null ? `${fmt(rawSpeed, 1)} ${unitLabel}` : "--";
+      els.gpsStatusRawSpeed.textContent = formatSpeedValue(status.raw_speed_kmh, unitLabel) ?? "--";
     }
     if (els.gpsStatusEffectiveSpeed) {
-      const effectiveSpeed = speedKmhInSelectedUnit(status.effective_speed_kmh);
-      els.gpsStatusEffectiveSpeed.textContent = effectiveSpeed != null
-        ? `${fmt(effectiveSpeed, 1)} ${unitLabel}`
-        : "--";
+      els.gpsStatusEffectiveSpeed.textContent = formatSpeedValue(status.effective_speed_kmh, unitLabel) ?? "--";
     }
     if (els.gpsStatusLastError) {
       els.gpsStatusLastError.textContent = status.last_error ?? "--";
