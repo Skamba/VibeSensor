@@ -338,7 +338,9 @@ test("history list rendering promotes loaded findings ahead of supporting statis
 
   module.renderHistoryTable();
 
+  expect(historyTableBody.innerHTML).toContain("history.details_title");
   expect(historyTableBody.innerHTML).toContain("history.findings_title");
+  expect(historyTableBody.innerHTML).toContain("history-evidence-column");
   expect(historyTableBody.innerHTML).toContain("history.findings_loaded");
   expect(historyTableBody.innerHTML).toContain("Front-right wheel imbalance");
   expect(historyTableBody.innerHTML).toContain("history.findings_location");
