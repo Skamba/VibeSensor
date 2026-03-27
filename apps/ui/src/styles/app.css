@@ -1009,28 +1009,28 @@ input:focus-visible,
 }
 .history-row__detail-affordance {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
 }
 .history-row__toggle {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.45rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  gap: 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   background: var(--surface);
-  color: var(--muted);
-  padding: 0.25rem 0.65rem;
+  color: var(--text);
+  padding: 0.45rem 0.75rem;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 600;
+  text-align: left;
   cursor: pointer;
   transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
 }
 .history-row__toggle:hover {
-  border-color: var(--border-strong);
+  border-color: var(--brand-400);
   color: var(--text);
+  background: var(--surface-2);
 }
 .history-row__toggle:focus-visible {
   outline: 2px solid var(--focus);
@@ -1040,6 +1040,20 @@ input:focus-visible,
   border-color: var(--brand-400);
   background: var(--row-hover);
   color: var(--brand-700);
+}
+.history-row__toggle-copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.history-row__toggle-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.history-row__toggle-hint {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 500;
 }
 .history-row__toggle-icon {
   width: 0;
@@ -1052,10 +1066,6 @@ input:focus-visible,
 }
 .history-row__toggle--expanded .history-row__toggle-icon {
   transform: rotate(90deg);
-}
-.history-row__hint {
-  font-size: 0.78rem;
-  color: var(--muted);
 }
 .history-row .table-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .history-row .table-actions .btn { min-width: 100px; }
@@ -1070,9 +1080,38 @@ input:focus-visible,
   display: grid;
   gap: var(--space-4);
 }
+.history-details-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+}
+.history-details-header__copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.history-details-header__eyebrow {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--brand-600);
+}
+.history-details-header__title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.history-details-header__actions {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-2);
+}
 .history-run-summary {
   color: var(--muted);
   font-size: 0.82rem;
+  line-height: 1.45;
 }
 .history-warning-list {
   display: grid;
@@ -1097,8 +1136,13 @@ input:focus-visible,
 .history-results-layout {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 320px);
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 1fr);
   align-items: start;
+}
+.history-evidence-column {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
 }
 .history-evidence-panel,
 .history-insights-block,
@@ -1155,29 +1199,32 @@ input:focus-visible,
   color: var(--danger);
   font-size: 0.82rem;
 }
-.history-insights-actions {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-.history-insights-actions__copy {
+.history-panel-header {
   display: grid;
   gap: 0.3rem;
   min-width: 0;
 }
-.history-insights-actions__title {
+.history-panel-header__eyebrow {
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--brand-600);
 }
-.history-insights-actions__subtitle {
+.history-panel-header__subtitle {
   color: var(--muted);
   font-size: 0.84rem;
   max-width: 34rem;
+}
+.history-panel-state {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 .history-findings-overview {
   display: grid;
@@ -1289,6 +1336,12 @@ input:focus-visible,
   margin-top: 0;
 }
 @media (max-width: 1080px) {
+  .history-details-header {
+    grid-template-columns: 1fr;
+  }
+  .history-details-header__actions {
+    justify-items: start;
+  }
   .history-results-layout {
     grid-template-columns: 1fr;
   }
