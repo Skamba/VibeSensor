@@ -1,5 +1,6 @@
 import { fmt } from "../../format";
 import { deriveCarSelectionState } from "../car_selection_state";
+import { isManualEffectiveSpeedSource } from "../speed_source_state";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { RealtimeState, SettingsState, ShellState, TransportState } from "../ui_app_state";
 
@@ -57,12 +58,10 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
     const unitLabel = selectedSpeedUnitLabel();
     if (typeof realtime.speedMps === "number" && Number.isFinite(realtime.speedMps)) {
       const value = speedValueInSelectedUnit(realtime.speedMps);
-      const isManualSource = settings.speedSource === "manual"
-        && typeof settings.manualSpeedKph === "number"
-        && settings.manualSpeedKph > 0;
-      const isFallbackOverride = settings.gpsFallbackActive
-        || realtime.rotationalSpeeds?.basis_speed_source === "fallback_manual";
-      const isOverride = isManualSource || isFallbackOverride;
+      const isOverride = isManualEffectiveSpeedSource(
+        settings,
+        realtime.rotationalSpeeds?.basis_speed_source ?? null,
+      );
       els.speed.textContent = ctx.t(isOverride ? "speed.override" : "speed.gps", {
         value: fmt(value, 1),
         unit: unitLabel,
