@@ -57,6 +57,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   const realtime = createRealtimeFeature({
     realtime: state.realtime,
     spectrum: state.spectrum,
+    settings: state.settings,
     getLanguage: () => state.shell.lang,
     els,
     t,
@@ -79,6 +80,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     fmt,
     renderSpectrum: deps.renderSpectrum,
     renderSpeedReadout: deps.renderSpeedReadout,
+    renderRealtimeStatus: () => realtime.renderStatus(),
   });
   const carCreation = createUiCarCreationCommand({
     getVehicleSettings: () => state.settings.vehicleSettings,
