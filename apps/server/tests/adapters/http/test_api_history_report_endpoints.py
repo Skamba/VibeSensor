@@ -66,8 +66,8 @@ async def test_report_pdf_respects_lang_query_with_persisted_report_template_dat
 
     nl_text = _pdf_text(nl.body)
     text_from_en_request = _pdf_text(en.body)
-    assert "diagnostisch werkformulier" in nl_text
-    assert "diagnostisch werkformulier" in text_from_en_request
+    assert "vibesensor-diagnoserapport" in nl_text
+    assert "vibesensor-diagnoserapport" in text_from_en_request
     assert "diagnostic worksheet" not in text_from_en_request
 
 
@@ -102,8 +102,8 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     assert en.body.startswith(b"%PDF")
     nl_text = _pdf_text(nl.body)
     text_from_en_request = _pdf_text(en.body)
-    assert "diagnostisch werkformulier" in nl_text
-    assert "diagnostisch werkformulier" in text_from_en_request
+    assert "vibesensor-diagnoserapport" in nl_text
+    assert "vibesensor-diagnoserapport" in text_from_en_request
     assert "diagnostic worksheet" not in text_from_en_request
 
 
