@@ -272,6 +272,100 @@ test.describe("createEspFlashFeature polling", () => {
     }
   });
 
+  test("running state highlights the active stage and marks completed stages done", async () => {
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/esp-flash/ports") {
+        return jsonResponse({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
+      }
+      if (url.pathname === "/api/esp-flash/status") {
+        return jsonResponse({
+          state: "running",
+          phase: "flashing",
+          selected_port: "/dev/ttyUSB0",
+          auto_detect: false,
+          last_success_at: null,
+          error: null,
+          log_count: 0,
+        });
+      }
+      if (url.pathname === "/api/esp-flash/history") {
+        return jsonResponse({ attempts: [] });
+      }
+      if (url.pathname === "/api/esp-flash/logs") {
+        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createDeps();
+      const feature = createEspFlashFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      const html = deps.espFlashReadinessPanel.innerHTML;
+      expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="active" aria-current="step"/);
+      expect(html).toContain("settings.esp_flash.readiness.current_step");
+      expect(html.match(/data-stage-state="done"/g)).toHaveLength(3);
+      expect(html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)).toHaveLength(3);
+    } finally {
+      restoreFetch();
+    }
+  });
+
+  test("failed refresh keeps the last running stage marked as stopped here", async () => {
+    let status = {
+      state: "running",
+      phase: "flashing",
+      selected_port: "/dev/ttyUSB0",
+      auto_detect: false,
+      last_success_at: null,
+      error: null,
+      log_count: 0,
+    };
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/esp-flash/ports") {
+        return jsonResponse({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
+      }
+      if (url.pathname === "/api/esp-flash/status") {
+        return jsonResponse(status);
+      }
+      if (url.pathname === "/api/esp-flash/history") {
+        return jsonResponse({ attempts: [] });
+      }
+      if (url.pathname === "/api/esp-flash/logs") {
+        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createDeps();
+      const feature = createEspFlashFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      status = {
+        ...status,
+        state: "failed",
+        phase: "failed",
+        error: "serial port disconnected",
+      };
+      feature.stopPolling();
+      feature.startPolling();
+      await flushAsyncWork();
+
+      const html = deps.espFlashReadinessPanel.innerHTML;
+      expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="attention"/);
+      expect(html.match(/data-stage-state="done"/g)).toHaveLength(3);
+      expect(html).toContain("serial port disconnected");
+    } finally {
+      restoreFetch();
+    }
+  });
+
   test("start replaces the previous poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
     const restoreFetch = installFetchMock(async (url, method) => {
