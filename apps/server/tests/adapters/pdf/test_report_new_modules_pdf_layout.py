@@ -110,6 +110,20 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
 
     summary = minimal_summary(
         lang="en",
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.82,
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.82,
+            }
+        ],
         run_suitability=[
             {
                 "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
@@ -119,6 +133,144 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
             {
                 "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "state": "pass",
+            },
+        ],
+        samples=[],
+    )
+
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+
+    assert "confidence: medium" in text
+    assert "use the diagnosis directionally until the caveats below are checked." in text
+    assert "confidence caveats" in text
+    assert "saturation and outliers" in text
+    assert "potential saturation samples detected" in text
+    assert "checks passed: frame integrity" in text
+
+
+def test_build_report_pdf_renders_high_confidence_data_trust_summary() -> None:
+    from test_support.report_helpers import minimal_summary
+
+    summary = minimal_summary(
+        lang="en",
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.82,
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.82,
+            }
+        ],
+        run_suitability=[
+            {
+                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "state": "pass",
+            },
+            {
+                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "state": "pass",
+            },
+        ],
+        samples=[],
+    )
+
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+
+    assert "confidence: high" in text
+    assert "current data supports the diagnosis." in text
+    assert "checks passed: frame integrity, speed variation" in text
+
+
+def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_b() -> None:
+    from test_support.report_helpers import minimal_summary
+
+    summary = minimal_summary(
+        lang="en",
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.65,
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.65,
+            }
+        ],
+        run_suitability=[
+            {
+                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "state": "pass",
+            },
+            {
+                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "state": "pass",
+            },
+        ],
+        samples=[],
+    )
+
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+
+    assert "confidence: medium" in text
+    assert "use the diagnosis directionally until the caveats below are checked." in text
+
+
+def test_build_report_pdf_indicates_when_more_confidence_caveats_exist() -> None:
+    from test_support.report_helpers import minimal_summary
+
+    summary = minimal_summary(
+        lang="en",
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.82,
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.82,
+            }
+        ],
+        run_suitability=[
+            {
+                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "state": "warn",
+            },
+            {
+                "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                "state": "warn",
+            },
+            {
+                "check": "SUITABILITY_CHECK_SENSOR_COVERAGE",
+                "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
+                "state": "warn",
+            },
+            {
+                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "warn",
             },
         ],
@@ -126,11 +278,9 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     )
 
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
-    # Domain resolves via i18n with zeroed details (payload details not recovered)
-    assert b"saturation" in pdf
-    assert b"detected" in pdf
-    assert b"dropped frames" in pdf
-    assert b"queue overflows" in pdf
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+
+    assert "+1 more caveats" in text
 
 
 def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:
