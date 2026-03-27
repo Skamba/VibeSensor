@@ -1177,21 +1177,26 @@ input:focus-visible,
 }
 .history-row__detail-affordance {
   display: flex;
+  min-width: 0;
 }
 .history-row__toggle {
-  display: inline-grid;
+  display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 0.6rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
+  width: min(100%, 17rem);
+  max-width: 100%;
+  min-width: 0;
   padding: 0.45rem 0.75rem;
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
   text-align: left;
+  white-space: normal;
   cursor: pointer;
   transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
 }
@@ -1217,11 +1222,14 @@ input:focus-visible,
 .history-row__toggle-title {
   font-size: 0.82rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 .history-row__toggle-hint {
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .history-row__toggle-icon {
   width: 0;
