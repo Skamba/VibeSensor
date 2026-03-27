@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { apiJson } from "../src/api/http";
+import { installWindowGlobal } from "./async_test_helpers";
 
 test.describe("apiJson", () => {
   test.beforeEach(() => {
-    (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
-      typeof globalThis;
+    installWindowGlobal();
   });
 
   test("timeout aborts with and without provided AbortSignal", async () => {

@@ -2,11 +2,11 @@ import { expect, test } from "@playwright/test";
 
 import { runDemoMode } from "../src/app/demo_mode";
 import { adaptServerPayload } from "../src/server_payload";
+import { installWindowGlobal } from "./async_test_helpers";
 
 test.describe("runDemoMode", () => {
   test.beforeEach(() => {
-    (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
-      typeof globalThis;
+    installWindowGlobal();
   });
 
   test("emits a schema-valid websocket payload", () => {
