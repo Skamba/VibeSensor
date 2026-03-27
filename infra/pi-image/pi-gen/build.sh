@@ -11,24 +11,32 @@ source "${SCRIPT_DIR}/lib/pi_gen_repo.sh"
 source "${SCRIPT_DIR}/lib/stage_assembly.sh"
 source "${SCRIPT_DIR}/lib/artifacts.sh"
 
+builds_app_artifacts() {
+  [[ "${BUILD_MODE}" == "app" || "${BUILD_MODE}" == "all" ]]
+}
+
+builds_image_artifacts() {
+  [[ "${BUILD_MODE}" == "image" || "${BUILD_MODE}" == "all" ]]
+}
+
 init_pi_gen_env
 validate_build_mode
 ensure_output_dirs
 apply_fast_mode
 validate_first_user_credentials
 
-if [[ "${BUILD_MODE}" == "app" || "${BUILD_MODE}" == "all" ]]; then
+if builds_app_artifacts; then
   require_app_prereqs
 fi
 
-if [[ "${BUILD_MODE}" == "image" || "${BUILD_MODE}" == "all" ]]; then
+if builds_image_artifacts; then
   require_image_prereqs
   ensure_docker_available
   RASPBIAN_MIRROR="$(select_raspbian_mirror)"
   echo "Using Raspbian mirror: ${RASPBIAN_MIRROR}"
 fi
 
-if [[ "${BUILD_MODE}" == "app" || "${BUILD_MODE}" == "all" ]]; then
+if builds_app_artifacts; then
   build_app_artifacts
 fi
 
