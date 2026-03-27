@@ -9,6 +9,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = resolve(__dirname, '../..');
 const requireFromUi = createRequire(resolve(root, 'apps/ui/package.json'));
+const openapiCliPath = requireFromUi.resolve('openapi-typescript/bin/cli.js');
+const generatorScript = 'tools/config/sync_shared_contracts_to_ui.mjs';
 const httpSchemaSrc = resolve(root, 'apps/ui/src/contracts/http_api_schema.json');
 const httpTypesDst = resolve(root, 'apps/ui/src/generated/http_api_contracts.ts');
 const constantsGeneratorSrc = resolve(root, 'tools/config/generate_ui_shared_constants.py');
@@ -16,6 +18,13 @@ const constantsDst = resolve(root, 'apps/ui/src/constants.ts');
 const wsSchemaSrc = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.json');
 const wsSchemaTsDst = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.generated.ts');
 const wsTypesDst = resolve(root, 'apps/ui/src/contracts/ws_payload_types.ts');
+
+function generatedHeader(sourcePath) {
+	return (
+		`// Generated from ${sourcePath}\n`
+		+ `// Do not edit manually; run ${generatorScript}\n\n`
+	);
+}
 
 function writeGenerated(filePath, content, checkMode) {
 	mkdirSync(dirname(filePath), { recursive: true });
@@ -29,19 +38,19 @@ function writeGenerated(filePath, content, checkMode) {
 	writeFileSync(filePath, content, 'utf8');
 }
 
-async function generateHttpTypes() {
-	const openapiCliPath = requireFromUi.resolve('openapi-typescript/bin/cli.js');
-	const result = spawnSync(process.execPath, [openapiCliPath, httpSchemaSrc], {
+function runOpenApiGenerator(schemaPath, failureMessage) {
+	const result = spawnSync(process.execPath, [openapiCliPath, schemaPath], {
 		encoding: 'utf8',
 	});
 	if (result.status !== 0) {
-		throw new Error(result.stderr || result.stdout || 'openapi-typescript generation failed');
+		throw new Error(result.stderr || result.stdout || failureMessage);
 	}
-	return (
-		'// Generated from apps/ui/src/contracts/http_api_schema.json\n'
-		+ '// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs\n\n'
-		+ result.stdout
-	);
+	return result.stdout;
+}
+
+async function generateHttpTypes() {
+	return generatedHeader('apps/ui/src/contracts/http_api_schema.json')
+		+ runOpenApiGenerator(httpSchemaSrc, 'openapi-typescript generation failed');
 }
 
 function rewriteSchemaRefs(value) {
@@ -107,17 +116,15 @@ async function generateWsTypes() {
 	const tempDir = mkdtempSync(resolve(tmpdir(), 'vibesensor-ws-openapi-'));
 	const tempSchemaPath = resolve(tempDir, 'ws_openapi.json');
 	writeFileSync(tempSchemaPath, `${JSON.stringify(wrapped, null, 2)}\n`, 'utf8');
-	const result = spawnSync(process.execPath, [openapiCliPath, tempSchemaPath], {
-		encoding: 'utf8',
-	});
-	rmSync(tempDir, { recursive: true, force: true });
-	if (result.status !== 0) {
-		throw new Error(result.stderr || result.stdout || 'WS type generation failed');
+	let result;
+	try {
+		result = runOpenApiGenerator(tempSchemaPath, 'WS type generation failed');
+	} finally {
+		rmSync(tempDir, { recursive: true, force: true });
 	}
 	return (
-		'// Generated from apps/ui/src/contracts/ws_payload_schema.json\n'
-		+ '// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs\n\n'
-		+ result.stdout
+		generatedHeader('apps/ui/src/contracts/ws_payload_schema.json')
+		+ result
 		+ wsAliasBlock(String(schemaVersion))
 	);
 }
@@ -125,8 +132,7 @@ async function generateWsTypes() {
 function generateWsSchemaModule() {
 	const wsSchema = JSON.parse(readFileSync(wsSchemaSrc, 'utf8'));
 	return (
-		'// Generated from apps/ui/src/contracts/ws_payload_schema.json\n'
-		+ '// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs\n\n'
+		generatedHeader('apps/ui/src/contracts/ws_payload_schema.json')
 		+ 'export const wsPayloadSchema = '
 		+ `${JSON.stringify(wsSchema, null, 2)}`
 		+ ' as const;\n\n'
