@@ -27,6 +27,26 @@ patch_export_image_boot_size() {
     "${export_prerun}"
 }
 
+set_base_stage_skip_files() {
+  local state="$1"
+  local stage=""
+
+  for stage in 0 1 2; do
+    case "${state}" in
+      present)
+        touch "${PI_GEN_DIR}/stage${stage}/SKIP"
+        ;;
+      absent)
+        rm -f "${PI_GEN_DIR}/stage${stage}/SKIP"
+        ;;
+      *)
+        echo "Unsupported SKIP marker state: ${state}"
+        exit 1
+        ;;
+    esac
+  done
+}
+
 prepare_pi_gen_repo() {
   if [ ! -d "${PI_GEN_DIR}/.git" ]; then
     git clone --depth 1 --branch "${PI_GEN_REF}" https://github.com/RPi-Distro/pi-gen.git "${PI_GEN_DIR}"
@@ -51,13 +71,11 @@ configure_incremental_build() {
       echo "CLEAN=1: removing previous pigen_work container"
       docker rm -v pigen_work >/dev/null
     fi
-    rm -f "${PI_GEN_DIR}/stage0/SKIP" "${PI_GEN_DIR}/stage1/SKIP" "${PI_GEN_DIR}/stage2/SKIP"
+    set_base_stage_skip_files absent
     echo "Full build: rebuilding all stages"
   else
     echo "Incremental build: skipping stage0/1/2 (set CLEAN=1 to rebuild from scratch)"
-    touch "${PI_GEN_DIR}/stage0/SKIP"
-    touch "${PI_GEN_DIR}/stage1/SKIP"
-    touch "${PI_GEN_DIR}/stage2/SKIP"
+    set_base_stage_skip_files present
   fi
 }
 
