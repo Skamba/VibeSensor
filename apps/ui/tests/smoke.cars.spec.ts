@@ -46,6 +46,85 @@ test("hides header warning when a valid selected car exists", async ({ page }) =
   await expect(page.locator("#carSelectionBanner")).toBeHidden();
 });
 
+test("keeps warning UI hidden until active car bootstrap resolves and then marks the car active", async ({ page }) => {
+  let releaseCars: (() => void) | null = null;
+  const waitForCars = new Promise<void>((resolve) => {
+    releaseCars = resolve;
+  });
+  const analysisPayload = {
+    tire_width_mm: 285,
+    tire_aspect_pct: 30,
+    rim_in: 21,
+    final_drive_ratio: 3.08,
+    current_gear_ratio: 0.64,
+    wheel_bandwidth_pct: 7.5,
+    driveshaft_bandwidth_pct: 8.5,
+    engine_bandwidth_pct: 9.5,
+    speed_uncertainty_pct: 3,
+    tire_diameter_uncertainty_pct: 4,
+    final_drive_uncertainty_pct: 2,
+    gear_uncertainty_pct: 5,
+    min_abs_band_hz: 0.7,
+    max_band_half_width_pct: 12,
+    tire_deflection_factor: 0.97,
+  };
+
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      if (path === "/api/settings/cars") {
+        await waitForCars;
+        await fulfillJson(route, {
+          cars: [{
+            id: "car-1",
+            name: "Audit Demo Car",
+            type: "sedan",
+            aspects: {
+              tire_width_mm: 285,
+              tire_aspect_pct: 30,
+              rim_in: 21,
+              final_drive_ratio: 3.08,
+              current_gear_ratio: 0.64,
+            },
+          }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      if (path === "/api/settings/analysis") {
+        await fulfillJson(route, analysisPayload);
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+
+  await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
+  await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
+  await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
+  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+
+  if (!releaseCars) {
+    throw new Error("cars bootstrap gate was not initialized");
+  }
+  releaseCars();
+
+  await expect(page.locator("#saveAnalysisBtn")).toBeEnabled();
+  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+  await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
+
+  await page.locator('[data-settings-tab="carTab"]').click();
+  const activeRow = page.locator('#carListBody tr[data-car-id="car-1"]');
+  await expect(activeRow).toContainText("Audit Demo Car");
+  await expect(activeRow.locator(".car-active-pill")).toHaveClass(/active/);
+});
+
 test("shows warning for invalid persisted selection and after deleting selected car", async ({ page }) => {
   let firstCarsGet = true;
   await installCommonRoutes(page, {
