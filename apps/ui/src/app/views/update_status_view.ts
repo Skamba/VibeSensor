@@ -1,6 +1,6 @@
 import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
 import type { UiDomElements } from "../ui_dom_registry";
-import { renderStatusGridRow } from "./dom_helpers";
+import { formatEpochTimestamp, renderStatusGridRow } from "./dom_helpers";
 
 const STATE_VARIANT: Readonly<Record<string, string>> = {
   idle: "muted",
@@ -31,11 +31,6 @@ export interface UpdateStatusViewDeps {
   escapeHtml: (value: unknown) => string;
 }
 
-function formatTimestamp(epoch: number | null): string {
-  if (epoch === null) return "—";
-  return new Date(epoch * 1000).toLocaleString();
-}
-
 function formatDuration(seconds: number | null | undefined): string {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return "—";
   const rounded = Math.max(0, Math.floor(seconds));
@@ -59,19 +54,40 @@ function formatHealthReason(
   return key ? t(key) : reason;
 }
 
-function renderStateHeaderRow(
+function renderMaintenanceCard(
+  titleHtml: string,
+  subtitleHtml: string,
+  bodyHtml: string,
+  badgeHtml = "",
+): string {
+  return `<section class="maintenance-card"><div class="maintenance-card__header"><div><div class="maintenance-card__title">${titleHtml}</div><div class="subtle">${subtitleHtml}</div></div>${badgeHtml}</div><div class="maintenance-card__body">${bodyHtml}</div></section>`;
+}
+
+function renderStateBadge(
   status: UpdateStatusPayload,
   deps: UpdateStatusViewDeps,
 ): string {
   const { t, escapeHtml } = deps;
-  const pill = `<span class="pill pill--${STATE_VARIANT[status.state] || "muted"}">${escapeHtml(t(`settings.update.state.${status.state}`))}</span>`;
-  const phase = status.state === "idle"
-    ? ""
-    : ` <span class="subtle">${escapeHtml(t(`settings.update.phase.${status.phase}`))}</span>`;
-  return renderStatusGridRow(
-    escapeHtml(t("settings.update.status")),
-    `${pill}${phase}`,
-  );
+  return `<span class="pill pill--${STATE_VARIANT[status.state] || "muted"}">${escapeHtml(t(`settings.update.state.${status.state}`))}</span>`;
+}
+
+function renderStateSummary(
+  status: UpdateStatusPayload,
+  health: HealthStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  const { t, escapeHtml } = deps;
+  let key = "settings.update.current_status_summary.ready";
+  if (status.state === "running") {
+    key = "settings.update.current_status_summary.running";
+  } else if (status.state === "failed") {
+    key = "settings.update.current_status_summary.failed";
+  } else if (status.state === "success") {
+    key = "settings.update.current_status_summary.success";
+  } else if (health.status !== "ok" || health.persistence.write_error) {
+    key = "settings.update.current_status_summary.attention";
+  }
+  return escapeHtml(t(key));
 }
 
 function renderLifecycleRows(
@@ -81,11 +97,12 @@ function renderLifecycleRows(
   const { t, escapeHtml } = deps;
   const rows: string[] = [];
   if (status.ssid) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.ssid_label")), escapeHtml(status.ssid)));
-  if (status.started_at) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.started_at")), escapeHtml(formatTimestamp(status.started_at))));
-  if (status.phase_started_at && status.state !== "idle") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_started_at")), escapeHtml(formatTimestamp(status.phase_started_at))));
+  if (status.state !== "idle") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_label")), escapeHtml(t(`settings.update.phase.${status.phase}`))));
+  if (status.started_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.started_at")), escapeHtml(formatEpochTimestamp(status.started_at))));
+  if (status.phase_started_at != null && status.state !== "idle") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_started_at")), escapeHtml(formatEpochTimestamp(status.phase_started_at))));
   if (status.state !== "idle" && status.phase_elapsed_s != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_elapsed")), escapeHtml(formatDuration(status.phase_elapsed_s))));
-  if (status.finished_at) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.finished_at")), escapeHtml(formatTimestamp(status.finished_at))));
-  if (status.last_success_at) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.last_success")), escapeHtml(formatTimestamp(status.last_success_at))));
+  if (status.finished_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.finished_at")), escapeHtml(formatEpochTimestamp(status.finished_at))));
+  if (status.last_success_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.last_success")), escapeHtml(formatEpochTimestamp(status.last_success_at))));
   return rows.join("");
 }
 
@@ -114,7 +131,11 @@ function renderStateGrid(
   showRuntimeAssetsCheck: boolean,
   deps: UpdateStatusViewDeps,
 ): string {
-  return `<div class="update-status-grid">${renderStateHeaderRow(status, deps)}${renderLifecycleRows(status, deps)}${renderRuntimeRows(status, showRuntimeAssetsCheck, deps)}</div>`;
+  const rows = `${renderLifecycleRows(status, deps)}${renderRuntimeRows(status, showRuntimeAssetsCheck, deps)}`;
+  if (!rows) {
+    return `<div class="maintenance-note">${deps.escapeHtml(deps.t("settings.update.current_status_empty"))}</div>`;
+  }
+  return `<div class="status-grid">${rows}</div>`;
 }
 
 function renderHealthSummaryRows(
@@ -122,11 +143,7 @@ function renderHealthSummaryRows(
   deps: UpdateStatusViewDeps,
 ): string {
   const { t, escapeHtml } = deps;
-  const pill = `<span class="pill pill--${HEALTH_VARIANT[health.status]}${health.persistence.write_error ? " pill--bad" : ""}">${escapeHtml(t(`settings.update.health.state.${health.status}`))}</span>`;
-  const rows = [
-    renderStatusGridRow(escapeHtml(t("settings.update.health.label")), pill),
-    renderStatusGridRow(escapeHtml(t("settings.update.health.processing_state")), escapeHtml(health.processing_state)),
-  ];
+  const rows = [renderStatusGridRow(escapeHtml(t("settings.update.health.processing_state")), escapeHtml(health.processing_state))];
   if (health.processing_failures > 0) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.processing_failures")), escapeHtml(health.processing_failures)));
   if (health.degradation_reasons.length) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.reasons")), escapeHtml(health.degradation_reasons.map((reason) => formatHealthReason(reason, t)).join(", "))));
   return rows.join("");
@@ -167,17 +184,39 @@ function renderHealthPersistenceRows(
   ];
   if (health.persistence.analysis_in_progress) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis")), escapeHtml(t("settings.update.health.analysis_in_progress"))));
   if (health.persistence.analysis_active_run_id) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_run")), escapeHtml(health.persistence.analysis_active_run_id)));
-  if (health.persistence.analysis_started_at) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_started_at")), escapeHtml(formatTimestamp(health.persistence.analysis_started_at))));
+  if (health.persistence.analysis_started_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_started_at")), escapeHtml(formatEpochTimestamp(health.persistence.analysis_started_at))));
   if (health.persistence.analysis_elapsed_s != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_elapsed")), escapeHtml(formatDuration(health.persistence.analysis_elapsed_s))));
   if (analysisQueueDepth > 0) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_queue_depth")), escapeHtml(String(analysisQueueDepth))));
   return rows.join("");
+}
+
+function renderHealthBadge(
+  health: HealthStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  const { t, escapeHtml } = deps;
+  const variant = health.persistence.write_error ? "bad" : HEALTH_VARIANT[health.status];
+  return `<span class="pill pill--${variant}">${escapeHtml(t(`settings.update.health.state.${health.status}`))}</span>`;
+}
+
+function renderHealthSummary(
+  health: HealthStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  const { t, escapeHtml } = deps;
+  const key = health.persistence.write_error || health.status === "degraded"
+    ? "settings.update.health_card_summary.degraded"
+    : health.status === "warn"
+      ? "settings.update.health_card_summary.warn"
+      : "settings.update.health_card_summary.ok";
+  return escapeHtml(t(key));
 }
 
 function renderHealthGrid(
   health: HealthStatusPayload,
   deps: UpdateStatusViewDeps,
 ): string {
-  return `<div class="update-status-grid" style="margin-top:1rem;">${renderHealthSummaryRows(health, deps)}${renderHealthDataLossRows(health, deps)}${renderHealthPersistenceRows(health, deps)}</div>`;
+  return `<div class="status-grid">${renderHealthSummaryRows(health, deps)}${renderHealthDataLossRows(health, deps)}${renderHealthPersistenceRows(health, deps)}</div>`;
 }
 
 function renderIssuesList(
@@ -192,7 +231,11 @@ function renderIssuesList(
       : "";
     return `<li class="issue-item"><span class="issue-phase">[${escapeHtml(issue.phase)}]</span> <span class="issue-message">${escapeHtml(issue.message)}</span>${detail}</li>`;
   }).join("");
-  return `<div class="update-issues" style="margin-top:1rem;"><strong>${escapeHtml(t("settings.update.issues"))}</strong><ul class="issue-list">${items}</ul></div>`;
+  return renderMaintenanceCard(
+    escapeHtml(t("settings.update.issues")),
+    escapeHtml(t("settings.update.issues_intro")),
+    `<ul class="issue-list">${items}</ul>`,
+  );
 }
 
 function renderLogTail(
@@ -202,7 +245,11 @@ function renderLogTail(
   if (!status.log_tail.length) return "";
   const { t, escapeHtml } = deps;
   const logBody = status.log_tail.map((line) => `${escapeHtml(line)}\n`).join("");
-  return `<details class="update-log" style="margin-top:1rem;"><summary>${escapeHtml(t("settings.update.log"))}</summary><pre class="log-pre" style="max-height:15rem;overflow:auto;font-size:0.75rem;background:var(--bg-secondary,#1a1a2e);padding:0.5rem;border-radius:0.25rem;">${logBody}</pre></details>`;
+  return renderMaintenanceCard(
+    escapeHtml(t("settings.update.log")),
+    escapeHtml(t("settings.update.log_intro")),
+    `<pre class="log-pre">${logBody}</pre>`,
+  );
 }
 
 export function syncUpdateControls(
@@ -231,14 +278,20 @@ export function renderUpdateStatusPanel(
     ASSET_ISSUE_RE.test(`${issue.message} ${issue.detail}`),
   );
   const showRuntimeAssetsCheck = status.state !== "failed" || hasAssetRelatedIssue;
-  if (status.state === "idle" && !status.last_success_at && !status.issues.length && health.status === "ok") {
-    panel.innerHTML = "";
-    return;
-  }
   panel.innerHTML = [
-    renderStateGrid(status, showRuntimeAssetsCheck, deps),
-    renderHealthGrid(health, deps),
+    renderMaintenanceCard(
+      deps.escapeHtml(deps.t("settings.update.current_status_title")),
+      renderStateSummary(status, health, deps),
+      renderStateGrid(status, showRuntimeAssetsCheck, deps),
+      renderStateBadge(status, deps),
+    ),
+    renderMaintenanceCard(
+      deps.escapeHtml(deps.t("settings.update.health_card_title")),
+      renderHealthSummary(health, deps),
+      renderHealthGrid(health, deps),
+      renderHealthBadge(health, deps),
+    ),
     renderIssuesList(status, deps),
     renderLogTail(status, deps),
-  ].join("");
+  ].filter(Boolean).join("");
 }

@@ -407,29 +407,84 @@
             <strong data-i18n="settings.update.title">System Update</strong>
             <div class="subtle" data-i18n="settings.update.hint">Connect to a Wi-Fi network to update from GitHub. The hotspot will be temporarily disabled during the update.</div>
             <div class="subtle" data-i18n="settings.update.reconnect_note" style="margin-top:0.25rem;">Note: The page may disconnect while the hotspot is down. It will reconnect automatically.</div>
+            <div class="maintenance-layout maintenance-layout--split">
+              <div class="maintenance-stack">
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.update.controls_title">Update connection</div>
+                      <div class="subtle" data-i18n="settings.update.controls_intro">Enter the Wi-Fi network the Pi should use while it downloads and installs the next release.</div>
+                    </div>
+                  </div>
+                  <div class="update-form">
+                    <div class="form-group">
+                      <label for="updateSsidInput" data-i18n="settings.update.ssid">Wi-Fi SSID</label>
+                      <input type="text" id="updateSsidInput" autocomplete="off" maxlength="64" style="width:100%;max-width:20rem;" />
+                    </div>
+                    <div class="form-group">
+                      <label for="updatePasswordInput" data-i18n="settings.update.password">Wi-Fi Password</label>
+                      <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <input type="password" id="updatePasswordInput" autocomplete="off" maxlength="128" style="width:100%;max-width:20rem;" />
+                        <button type="button" id="updateTogglePasswordBtn" class="btn btn--small">
+                          <span data-i18n="settings.update.show_password">Show</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="maintenance-action-row">
+                      <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
+                      <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
+                    </div>
+                  </div>
+                </section>
 
-            <div class="update-form" style="margin-top:1rem;">
-              <div class="form-group">
-                <label for="updateSsidInput" data-i18n="settings.update.ssid">Wi-Fi SSID</label>
-                <input type="text" id="updateSsidInput" autocomplete="off" maxlength="64" style="width:100%;max-width:20rem;" />
-              </div>
-              <div class="form-group" style="margin-top:0.5rem;">
-                <label for="updatePasswordInput" data-i18n="settings.update.password">Wi-Fi Password</label>
-                <div style="display:flex;gap:0.5rem;align-items:center;">
-                  <input type="password" id="updatePasswordInput" autocomplete="off" maxlength="128" style="width:100%;max-width:20rem;" />
-                  <button type="button" id="updateTogglePasswordBtn" class="btn btn--small">
-                    <span data-i18n="settings.update.show_password">Show</span>
-                  </button>
+                <div id="updateStatusPanel" class="maintenance-stack" aria-live="polite">
+                  <!-- Rendered dynamically by update_feature.ts -->
                 </div>
               </div>
-              <div style="margin-top:1rem;display:flex;gap:0.5rem;">
-                <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
-                <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
-              </div>
-            </div>
 
-            <div id="updateStatusPanel" style="margin-top:1.5rem;">
-              <!-- Rendered dynamically by update_feature.ts -->
+              <aside class="maintenance-stack">
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.update.guidance.prerequisites_title">Review before you start</div>
+                      <div class="subtle" data-i18n="settings.update.guidance.prerequisites_intro">A calm update page should answer the basics before the Pi leaves hotspot mode.</div>
+                    </div>
+                  </div>
+                  <ul class="maintenance-copy-list">
+                    <li data-i18n="settings.update.guidance.prerequisites_1">Use a Wi-Fi network with internet access so the Pi can reach GitHub.</li>
+                    <li data-i18n="settings.update.guidance.prerequisites_2">Make sure you are ready to reconnect after hotspot access pauses for the update.</li>
+                    <li data-i18n="settings.update.guidance.prerequisites_3">Run updates when no critical recording or support session depends on the hotspot.</li>
+                  </ul>
+                </section>
+
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.update.guidance.outcome_title">What happens next</div>
+                      <div class="subtle" data-i18n="settings.update.guidance.outcome_intro">Starting an update triggers a short maintenance sequence on this Pi.</div>
+                    </div>
+                  </div>
+                  <ul class="maintenance-copy-list">
+                    <li data-i18n="settings.update.guidance.outcome_1">The hotspot pauses while the Pi joins the Wi-Fi network you provide.</li>
+                    <li data-i18n="settings.update.guidance.outcome_2">The updater checks GitHub, downloads the release, and installs the new package.</li>
+                    <li data-i18n="settings.update.guidance.outcome_3">The hotspot and web UI return automatically when the update flow finishes.</li>
+                  </ul>
+                </section>
+
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.update.guidance.recovery_title">If something goes wrong</div>
+                      <div class="subtle" data-i18n="settings.update.guidance.recovery_intro">Most update interruptions are recoverable from this page.</div>
+                    </div>
+                  </div>
+                  <ul class="maintenance-copy-list">
+                    <li data-i18n="settings.update.guidance.recovery_1">Use the health and issues panels to see whether the blocker came from Wi-Fi, runtime validation, or package install steps.</li>
+                    <li data-i18n="settings.update.guidance.recovery_2">If the page disconnects, wait for the hotspot to come back before retrying.</li>
+                    <li data-i18n="settings.update.guidance.recovery_3">A successful run records the installed version and last completion time here for the next check.</li>
+                  </ul>
+                </section>
+              </aside>
             </div>
           </div>
         </div>
@@ -438,24 +493,99 @@
           <div class="panel card">
             <strong data-i18n="settings.esp_flash.title">ESP Flash</strong>
             <div class="subtle" data-i18n="settings.esp_flash.hint">Flash ESP firmware from local source on this Pi.</div>
-            <div class="manual-speed-row" style="margin-top:0.75rem;">
-              <label for="espFlashPortSelect" data-i18n="settings.esp_flash.port">Serial Port</label>
-              <select id="espFlashPortSelect">
-                <option value="__auto__" data-i18n="settings.esp_flash.auto_detect">Auto-detect</option>
-              </select>
-              <button type="button" id="espFlashRefreshPortsBtn" class="btn btn--muted" data-i18n="settings.esp_flash.refresh_ports">Refresh</button>
-            </div>
-            <div style="margin-top:1rem;display:flex;gap:0.5rem;">
-              <button type="button" id="espFlashStartBtn" class="btn btn--success" data-i18n="settings.esp_flash.start">Flash latest</button>
-              <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" disabled>Cancel</button>
-            </div>
-            <div style="margin-top:1rem;">
-              <span id="espFlashStatusBanner" class="pill pill--muted" data-i18n="settings.esp_flash.state.idle">Idle</span>
-            </div>
-            <pre id="espFlashLogPanel" class="log-pre" style="margin-top:1rem;max-height:16rem;overflow:auto;"></pre>
-            <div style="margin-top:1rem;">
-              <strong data-i18n="settings.esp_flash.history">Recent attempts</strong>
-              <div id="espFlashHistoryPanel" class="subtle" style="margin-top:0.5rem;"></div>
+            <div class="maintenance-layout maintenance-layout--split">
+              <div class="maintenance-stack">
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.controls_title">Flash target</div>
+                      <div class="subtle" data-i18n="settings.esp_flash.controls_intro">Choose a serial port or leave auto-detect enabled, then start the firmware build and flash flow.</div>
+                    </div>
+                  </div>
+                  <div class="manual-speed-row">
+                    <label for="espFlashPortSelect" data-i18n="settings.esp_flash.port">Serial Port</label>
+                    <select id="espFlashPortSelect">
+                      <option value="__auto__" data-i18n="settings.esp_flash.auto_detect">Auto-detect</option>
+                    </select>
+                    <button type="button" id="espFlashRefreshPortsBtn" class="btn btn--muted" data-i18n="settings.esp_flash.refresh_ports">Refresh</button>
+                  </div>
+                  <div class="maintenance-action-row">
+                    <button type="button" id="espFlashStartBtn" class="btn btn--success" data-i18n="settings.esp_flash.start">Flash latest</button>
+                    <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" disabled>Cancel</button>
+                  </div>
+                  <div class="maintenance-card__header" style="margin-top:1rem;">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.current_status_title">Current readiness</div>
+                    </div>
+                    <span id="espFlashStatusBanner" class="pill pill--muted" data-i18n="settings.esp_flash.state.idle">Idle</span>
+                  </div>
+                  <div id="espFlashReadinessPanel" class="maintenance-stack maintenance-stack--tight" aria-live="polite"></div>
+                </section>
+
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.logs_title">Live flash output</div>
+                      <div class="subtle" data-i18n="settings.esp_flash.logs_intro">Build, erase, and upload output appears here while the toolchain runs.</div>
+                    </div>
+                  </div>
+                  <div id="espFlashLogPanel" class="maintenance-log-slot" aria-live="polite"></div>
+                </section>
+
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.history">Recent attempts</div>
+                      <div class="subtle" data-i18n="settings.esp_flash.history_intro">Recent flashes stay here so the next operator can see what happened last.</div>
+                    </div>
+                  </div>
+                  <div id="espFlashHistoryPanel" class="maintenance-stack maintenance-stack--tight"></div>
+                </section>
+              </div>
+
+              <aside class="maintenance-stack">
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.guidance.prerequisites_title">Before flashing</div>
+                      <div class="subtle" data-i18n="settings.esp_flash.guidance.prerequisites_intro">These checks help the page feel deliberate instead of experimental.</div>
+                    </div>
+                  </div>
+                  <ul class="maintenance-copy-list">
+                    <li data-i18n="settings.esp_flash.guidance.prerequisites_1">Connect the ESP32 over USB, then refresh the port list if it was plugged in after the page loaded.</li>
+                    <li data-i18n="settings.esp_flash.guidance.prerequisites_2">Leave the board powered and avoid unplugging it while erase or upload steps are running.</li>
+                    <li data-i18n="settings.esp_flash.guidance.prerequisites_3">Use recent attempts and live logs to confirm whether the last flash finished cleanly before retrying.</li>
+                  </ul>
+                </section>
+
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.guidance.outcome_title">What flashing will do</div>
+                      <div class="subtle" data-i18n="settings.esp_flash.guidance.outcome_intro">This page builds firmware from the local source on the Pi and then writes it to the selected board.</div>
+                    </div>
+                  </div>
+                  <ul class="maintenance-copy-list">
+                    <li data-i18n="settings.esp_flash.guidance.outcome_1">The Pi compiles the current firmware source and opens the chosen serial connection.</li>
+                    <li data-i18n="settings.esp_flash.guidance.outcome_2">Erase, upload, and verification steps appear live in the flash output panel.</li>
+                    <li data-i18n="settings.esp_flash.guidance.outcome_3">A completed attempt is added to recent history so the next operator can see the outcome.</li>
+                  </ul>
+                </section>
+
+                <section class="maintenance-card">
+                  <div class="maintenance-card__header">
+                    <div>
+                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.guidance.recovery_title">Troubleshooting and recovery</div>
+                      <div class="subtle" data-i18n="settings.esp_flash.guidance.recovery_intro">Most failures can be investigated from this page without leaving the workflow.</div>
+                    </div>
+                  </div>
+                  <ul class="maintenance-copy-list">
+                    <li data-i18n="settings.esp_flash.guidance.recovery_1">If no device appears, reconnect the board, verify the cable, and refresh the port list.</li>
+                    <li data-i18n="settings.esp_flash.guidance.recovery_2">If flashing fails, review the latest attempt and log output before retrying.</li>
+                    <li data-i18n="settings.esp_flash.guidance.recovery_3">A new successful flash updates the last-success timestamp so readiness is easier to confirm next time.</li>
+                  </ul>
+                </section>
+              </aside>
             </div>
           </div>
         </div>
