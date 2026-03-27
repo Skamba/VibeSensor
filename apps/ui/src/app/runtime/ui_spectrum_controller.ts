@@ -63,22 +63,16 @@ function convertToDbInPlace(values: number[]): void {
   }
 }
 
-const bandKeyColors: Record<string, string> = {
-  wheel_1x: orderBandFills.wheel1,
-  wheel_2x: orderBandFills.wheel2,
-  driveshaft_1x: orderBandFills.driveshaft1,
-  engine_1x: orderBandFills.engine1,
-  engine_2x: orderBandFills.engine2,
-  driveshaft_engine_1x: orderBandFills.driveshaftEngine1,
-};
-
-const bandKeyLabels: Record<string, string> = {
-  wheel_1x: "bands.wheel_1x",
-  wheel_2x: "bands.wheel_2x",
-  driveshaft_1x: "bands.driveshaft_1x",
-  engine_1x: "bands.engine_1x",
-  engine_2x: "bands.engine_2x",
-  driveshaft_engine_1x: "bands.driveshaft_engine_1x",
+const bandKeyPresentation: Record<string, { color: string; labelKey: string }> = {
+  wheel_1x: { color: orderBandFills.wheel1, labelKey: "bands.wheel_1x" },
+  wheel_2x: { color: orderBandFills.wheel2, labelKey: "bands.wheel_2x" },
+  driveshaft_1x: { color: orderBandFills.driveshaft1, labelKey: "bands.driveshaft_1x" },
+  engine_1x: { color: orderBandFills.engine1, labelKey: "bands.engine_1x" },
+  engine_2x: { color: orderBandFills.engine2, labelKey: "bands.engine_2x" },
+  driveshaft_engine_1x: {
+    color: orderBandFills.driveshaftEngine1,
+    labelKey: "bands.driveshaft_engine_1x",
+  },
 };
 
 type SpectrumSeriesEntry = {
@@ -112,34 +106,33 @@ export class UiSpectrumController {
   }
 
   updateSpectrumOverlay(): void {
-    if (!this.els.spectrumOverlay) return;
+    const message = this.spectrumOverlayMessage();
+    this.setSpectrumOverlay(message);
+  }
+
+  private spectrumOverlayMessage(): string | null {
     if (this.state.transport.payloadError) {
-      this.els.spectrumOverlay.hidden = false;
-      this.els.spectrumOverlay.textContent = this.state.transport.payloadError;
-      return;
+      return this.state.transport.payloadError;
     }
     if (!this.state.transport.hasReceivedPayload && this.state.transport.wsState === "connecting") {
-      this.els.spectrumOverlay.hidden = false;
-      this.els.spectrumOverlay.textContent = this.t("spectrum.loading");
-      return;
+      return this.t("spectrum.loading");
     }
     if (this.state.transport.wsState === "connecting" || this.state.transport.wsState === "reconnecting") {
-      this.els.spectrumOverlay.hidden = false;
-      this.els.spectrumOverlay.textContent = this.t("ws.connecting");
-      return;
+      return this.t("ws.connecting");
     }
     if (this.state.transport.wsState === "stale") {
-      this.els.spectrumOverlay.hidden = false;
-      this.els.spectrumOverlay.textContent = this.t("spectrum.stale");
-      return;
+      return this.t("spectrum.stale");
     }
     if (!this.state.spectrum.hasSpectrumData) {
-      this.els.spectrumOverlay.hidden = false;
-      this.els.spectrumOverlay.textContent = this.t("spectrum.empty");
-      return;
+      return this.t("spectrum.empty");
     }
-    this.els.spectrumOverlay.hidden = true;
-    this.els.spectrumOverlay.textContent = "";
+    return null;
+  }
+
+  private setSpectrumOverlay(message: string | null): void {
+    if (!this.els.spectrumOverlay) return;
+    this.els.spectrumOverlay.hidden = message === null;
+    this.els.spectrumOverlay.textContent = message ?? "";
   }
 
   renderSpectrum(): void {
@@ -292,13 +285,12 @@ export class UiSpectrumController {
       const center = Number(band.center_hz);
       const tolerance = Number(band.tolerance);
       if (!Number.isFinite(center) || center <= 0 || !Number.isFinite(tolerance)) continue;
-      const color = bandKeyColors[band.key] || orderBandFills.wheel1;
-      const labelKey = bandKeyLabels[band.key] || band.key;
+      const presentation = bandKeyPresentation[band.key];
       out.push({
-        label: this.t(labelKey),
+        label: this.t(presentation?.labelKey ?? band.key),
         min_hz: Math.max(0, center * (1 - tolerance)),
         max_hz: center * (1 + tolerance),
-        color,
+        color: presentation?.color ?? orderBandFills.wheel1,
       });
     }
     return out.length ? out : null;
