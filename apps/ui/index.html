@@ -419,45 +419,73 @@
           <div class="panel card">
             <strong data-i18n="settings.speed.title">Speed Source</strong>
             <div class="subtle" data-i18n="settings.speed.hint">Select how vehicle speed is determined. Manual override is only active when "Manual" is selected.</div>
-            <div class="speed-source-options">
-              <label class="radio-label"><input type="radio" name="speedSourceRadio" value="gps" checked /> <span data-i18n="settings.speed.gps">GPS</span></label>
-              <label class="radio-label"><input type="radio" name="speedSourceRadio" value="manual" /> <span data-i18n="settings.speed.manual">Manual</span></label>
+            <div class="speed-source-summary">
+              <div class="speed-source-summary__eyebrow" data-i18n="settings.speed.summary_title">Active right now</div>
+              <div class="subtle speed-source-summary__caption" data-i18n="settings.speed.summary_caption">This source is currently driving the app. Changes below take effect after save.</div>
+              <div class="speed-source-summary__stats">
+                <div class="speed-source-summary__stat">
+                  <div class="speed-source-summary__label" data-i18n="settings.speed.current_source">Current source</div>
+                  <div id="speedSourceCurrentSource" class="speed-source-summary__value">--</div>
+                </div>
+                <div class="speed-source-summary__stat">
+                  <div class="speed-source-summary__label" data-i18n="settings.speed.effective_speed">Effective speed</div>
+                  <div id="speedSourceEffectiveSpeed" class="speed-source-summary__value">--</div>
+                </div>
+              </div>
             </div>
-            <div class="manual-speed-row">
-              <label for="manualSpeedInput" data-i18n="settings.speed.manual_label">Manual Speed (km/h)</label>
-              <input id="manualSpeedInput" type="number" step="0.1" min="0" />
+            <div class="speed-source-choice-grid">
+              <label id="speedSourceChoiceGps" class="speed-source-choice" data-speed-source-choice="gps">
+                <input class="speed-source-choice__radio" type="radio" name="speedSourceRadio" value="gps" checked />
+                <span class="speed-source-choice__title" data-i18n="settings.speed.gps">GPS</span>
+                <span class="speed-source-choice__caption" data-i18n="settings.speed.gps_caption">Use live GPS speed when it is healthy and available.</span>
+              </label>
+              <label id="speedSourceChoiceManual" class="speed-source-choice" data-speed-source-choice="manual">
+                <input class="speed-source-choice__radio" type="radio" name="speedSourceRadio" value="manual" />
+                <span class="speed-source-choice__title" data-i18n="settings.speed.manual">Manual</span>
+                <span class="speed-source-choice__caption" data-i18n="settings.speed.manual_caption">Use a fixed speed when you need a deliberate override.</span>
+              </label>
+            </div>
+            <div id="manualSpeedConfig" class="speed-source-config" hidden>
+              <div class="subtle" data-i18n="settings.speed.manual_intro">Set a fixed speed for the app to use after you save the Manual source.</div>
+              <div class="manual-speed-row">
+                <label for="manualSpeedInput" data-i18n="settings.speed.manual_label">Manual Speed (km/h)</label>
+                <input id="manualSpeedInput" type="number" step="0.1" min="0" />
+              </div>
+            </div>
+            <div id="gpsFallbackPanel" class="speed-source-config" hidden>
+              <div class="subtle" data-i18n="settings.speed.gps_intro">Use GPS as the primary source and choose how long stale data can remain usable before fallback.</div>
+              <div class="manual-speed-row">
+                <label for="staleTimeoutInput" data-i18n="settings.speed.stale_timeout_label">Stale timeout (s)</label>
+                <input id="staleTimeoutInput" type="number" step="1" min="3" max="120" value="10" />
+              </div>
             </div>
             <div class="settings-actions">
               <button id="saveSpeedSourceBtn" class="btn btn--primary" data-i18n="settings.speed.save">Save Speed Source</button>
             </div>
           </div>
 
-          <!-- GPS Status Panel -->
-          <div class="panel card" id="gpsStatusPanel">
-            <strong data-i18n="settings.speed.status_title">GPS Status</strong>
-            <table class="kv-table">
-              <tbody>
-                <tr><td data-i18n="settings.speed.connection_state">Connection</td><td id="gpsStatusState">--</td></tr>
-                <tr><td data-i18n="settings.speed.device">Device</td><td id="gpsStatusDevice">--</td></tr>
-                <tr><td data-i18n="settings.speed.last_update">Last update</td><td id="gpsStatusLastUpdate">--</td></tr>
-                <tr><td data-i18n="settings.speed.raw_speed">Raw speed</td><td id="gpsStatusRawSpeed">--</td></tr>
-                <tr><td data-i18n="settings.speed.effective_speed">Effective speed</td><td id="gpsStatusEffectiveSpeed">--</td></tr>
-                <tr><td data-i18n="settings.speed.last_error">Last error</td><td id="gpsStatusLastError">--</td></tr>
-                <tr><td data-i18n="settings.speed.reconnect_in">Reconnect in</td><td id="gpsStatusReconnect">--</td></tr>
-                <tr><td data-i18n="settings.speed.fallback_active">Fallback active</td><td id="gpsStatusFallback">--</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Fallback Controls -->
-          <div class="panel card" id="gpsFallbackPanel">
-            <strong data-i18n="settings.speed.fallback_title">Fallback Controls</strong>
-            <div class="manual-speed-row">
-              <label for="staleTimeoutInput" data-i18n="settings.speed.stale_timeout_label">Stale timeout (s)</label>
-              <input id="staleTimeoutInput" type="number" step="1" min="3" max="120" value="10" />
+          <details id="speedSourceDiagnostics" class="settings-help-disclosure speed-source-diagnostics">
+            <summary class="settings-help-disclosure__summary">
+              <span class="settings-help-disclosure__heading">
+                <span class="settings-help-disclosure__title" data-i18n="settings.speed.status_title">GPS Status</span>
+                <span class="settings-help-disclosure__caption" data-i18n="settings.speed.status_caption">Connection, freshness, raw speed, effective speed, and fallback diagnostics.</span>
+              </span>
+            </summary>
+            <div class="settings-help-disclosure__body">
+              <table class="kv-table" id="gpsStatusPanel">
+                <tbody>
+                  <tr><td data-i18n="settings.speed.connection_state">Connection</td><td id="gpsStatusState">--</td></tr>
+                  <tr><td data-i18n="settings.speed.device">Device</td><td id="gpsStatusDevice">--</td></tr>
+                  <tr><td data-i18n="settings.speed.last_update">Last update</td><td id="gpsStatusLastUpdate">--</td></tr>
+                  <tr><td data-i18n="settings.speed.raw_speed">Raw speed</td><td id="gpsStatusRawSpeed">--</td></tr>
+                  <tr><td data-i18n="settings.speed.effective_speed">Effective speed</td><td id="gpsStatusEffectiveSpeed">--</td></tr>
+                  <tr><td data-i18n="settings.speed.last_error">Last error</td><td id="gpsStatusLastError">--</td></tr>
+                  <tr><td data-i18n="settings.speed.reconnect_in">Reconnect in</td><td id="gpsStatusReconnect">--</td></tr>
+                  <tr><td data-i18n="settings.speed.fallback_active">Fallback active</td><td id="gpsStatusFallback">--</td></tr>
+                </tbody>
+              </table>
             </div>
-
-          </div>
+          </details>
         </div>
 
         <!-- Sensors Tab -->
