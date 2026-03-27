@@ -82,6 +82,8 @@ export class UiSpectrumController {
 
   private readonly rootStyle: CSSStyleDeclaration;
 
+  private readonly spectrumBandPlugin: uPlot.Plugin;
+
   private spectrumTweenRaf: number | null = null;
 
   private spectrumLastFrame: SpectrumHeavyFrame | null = null;
@@ -101,6 +103,7 @@ export class UiSpectrumController {
     this.els = deps.els;
     this.t = deps.t;
     this.rootStyle = getComputedStyle(document.documentElement);
+    this.spectrumBandPlugin = this.createBandPlugin();
     this.bindSpectrumControls();
   }
 
@@ -563,7 +566,7 @@ export class UiSpectrumController {
     return this.calculateBandsFromBackend() ?? [];
   }
 
-  private bandPlugin(): uPlot.Plugin {
+  private createBandPlugin(): uPlot.Plugin {
     return {
       hooks: {
         setCursor: [
@@ -645,7 +648,7 @@ export class UiSpectrumController {
   }
 
   private spectrumPlugins(): uPlot.Plugin[] {
-    return [this.bandPlugin()];
+    return [this.spectrumBandPlugin];
   }
 
   private recreateSpectrumPlot(seriesMeta: SpectrumSeriesEntry[]): void {
