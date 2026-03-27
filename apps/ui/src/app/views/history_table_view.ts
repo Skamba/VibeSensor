@@ -11,6 +11,8 @@ import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
 
 type LocationIntensityRow = HistoryInsightsPayload["sensor_intensity_by_location"][number];
 
+const VISIBLE_FINDING_LIMIT = 5;
+
 const EMPTY_RUN_DETAIL: RunDetail = {
   preview: null,
   previewLoading: false,
@@ -40,7 +42,7 @@ export interface HistoryTableAction {
 }
 
 function summarizeFindings(summary: HistoryInsightsPayload | null): FindingPayload[] {
-  return summary?.findings?.slice(0, 3) ?? [];
+  return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
 }
 
 function summarizeWarnings(payload: HistoryInsightsPayload | null): HistoryInsightWarningPayload[] {
@@ -162,6 +164,85 @@ function renderPreviewStats(
     `;
 }
 
+function confidenceText(
+  finding: FindingPayload,
+  params: Pick<HistoryTableViewParams, "fmt" | "t">,
+): string {
+  const { fmt, t } = params;
+  const value = typeof finding.confidence_pct === "string" && finding.confidence_pct.trim()
+    ? finding.confidence_pct
+    : typeof finding.confidence === "number" && Number.isFinite(finding.confidence)
+      ? fmt(finding.confidence, 2)
+      : "--";
+  return t("report.confidence", { value });
+}
+
+function findingLocationText(
+  finding: FindingPayload,
+  summary: HistoryInsightsPayload | null,
+  t: HistoryTableViewParams["t"],
+): string {
+  return finding.strongest_location
+    || summary?.most_likely_origin?.location
+    || t("report.missing");
+}
+
+function findingSpeedBandText(
+  finding: FindingPayload,
+  summary: HistoryInsightsPayload | null,
+  t: HistoryTableViewParams["t"],
+): string {
+  return finding.strongest_speed_band
+    || summary?.most_likely_origin?.speed_band
+    || t("report.missing");
+}
+
+function renderInsightsOverview(
+  summary: HistoryInsightsPayload,
+  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
+): string {
+  const { escapeHtml, fmt, t } = params;
+  const findings = summarizeFindings(summary);
+  const primary = findings[0];
+  const origin = summary.most_likely_origin;
+  const headline = origin?.suspected_source || primary?.suspected_source || t("report.missing");
+  const explanation = String(origin?.explanation ?? primary?.evidence_summary ?? "");
+  const location = primary ? findingLocationText(primary, summary, t) : origin?.location || t("report.missing");
+  const speedBand = primary ? findingSpeedBandText(primary, summary, t) : origin?.speed_band || t("report.missing");
+  const confidence = primary
+    ? confidenceText(primary, params)
+    : t("report.confidence", { value: "--" });
+  const findingCount = summary.findings?.length ?? findings.length;
+  return `
+      <div class="history-findings-overview">
+        <div class="history-findings-overview__header">
+          <div class="history-findings-overview__eyebrow">${escapeHtml(t("history.findings_title"))}</div>
+          <div class="history-findings-overview__count">${escapeHtml(t("history.findings_loaded", { count: findingCount }))}</div>
+        </div>
+        <div class="history-findings-overview__headline">${escapeHtml(headline)}</div>
+        ${explanation ? `<p class="history-findings-overview__explanation">${escapeHtml(explanation)}</p>` : ""}
+        <div class="history-findings-overview__chips">
+          <div class="history-findings-chip">
+            <span class="history-findings-chip__label">${escapeHtml(t("history.findings_origin"))}</span>
+            <strong>${escapeHtml(headline)}</strong>
+          </div>
+          <div class="history-findings-chip">
+            <span class="history-findings-chip__label">${escapeHtml(t("history.findings_location"))}</span>
+            <strong>${escapeHtml(location)}</strong>
+          </div>
+          <div class="history-findings-chip">
+            <span class="history-findings-chip__label">${escapeHtml(t("history.findings_speed_band"))}</span>
+            <strong>${escapeHtml(speedBand)}</strong>
+          </div>
+          <div class="history-findings-chip">
+            <span class="history-findings-chip__label">${escapeHtml(t("history.findings_confidence"))}</span>
+            <strong>${escapeHtml(confidence)}</strong>
+          </div>
+        </div>
+      </div>
+    `;
+}
+
 function renderInsightsBlock(
   detail: RunDetail,
   params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
@@ -174,18 +255,36 @@ function renderInsightsBlock(
     ? findings
         .map((finding) => {
           const source = finding.suspected_source || t("report.missing");
-          const confidence = typeof finding.confidence === "number" ? fmt(finding.confidence, 2) : "--";
+          const confidence = confidenceText(finding, params);
+          const location = findingLocationText(finding, detail.insights, t);
+          const speedBand = findingSpeedBandText(finding, detail.insights, t);
           const evidenceSummary = String(finding.evidence_summary ?? "");
-          return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(evidenceSummary)}</li>`;
+          return `
+            <li class="history-finding-card">
+              <div class="history-finding-card__header">
+                <strong class="history-finding-card__title">${escapeHtml(source)}</strong>
+                <span class="history-finding-card__confidence">${escapeHtml(confidence)}</span>
+              </div>
+              <div class="history-finding-card__meta">
+                <span>${escapeHtml(t("history.findings_location"))}: ${escapeHtml(location)}</span>
+                <span>${escapeHtml(t("history.findings_speed_band"))}: ${escapeHtml(speedBand)}</span>
+              </div>
+              <p class="history-finding-card__summary">${escapeHtml(evidenceSummary)}</p>
+            </li>`;
         })
         .join("")
-    : `<li>${escapeHtml(t("report.no_findings_for_run"))}</li>`;
+    : `<li class="history-finding-card history-finding-card--empty">${escapeHtml(t("report.no_findings_for_run"))}</li>`;
   return `
       <div class="history-insights-block">
         <div class="history-insights-actions">
+          <div class="history-insights-actions__copy">
+            <div class="history-insights-actions__title">${escapeHtml(t("history.findings_title"))}</div>
+            <div class="history-insights-actions__subtitle">${escapeHtml(detail.insights ? t("history.findings_ready") : t("history.findings_pending"))}</div>
+          </div>
           <button class="btn btn--primary" data-run-action="load-insights" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("history.loading_insights") : ctaLabel)}</button>
           ${detail.insightsError ? `<span class="history-inline-error">${escapeHtml(detail.insightsError)}</span>` : ""}
         </div>
+        ${detail.insights ? renderInsightsOverview(detail.insights, params) : ""}
         ${detail.insights ? `<ul class="history-findings-list">${findingsMarkup}</ul>` : ""}
       </div>
     `;
@@ -231,29 +330,36 @@ function renderRunDetailsRow(
         `${t("history.summary_sensor_count")}: ${formatInt(summary.sensor_count_used as number)}`,
       ].join(" · ")
     : "";
-  let previewMarkup = "";
+  let heatmapMarkup = "";
+  let statsMarkup = "";
   if (detail.previewLoading) {
-    previewMarkup = `<p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>`;
+    heatmapMarkup = `<p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>`;
+    statsMarkup = `<p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>`;
   } else if (detail.previewError) {
-    previewMarkup = `<p class="history-inline-error">${escapeHtml(detail.previewError)}</p>`;
+    heatmapMarkup = `<p class="history-inline-error">${escapeHtml(detail.previewError)}</p>`;
+    statsMarkup = `<p class="history-inline-error">${escapeHtml(detail.previewError)}</p>`;
   } else if (summary) {
-    previewMarkup = `
-        <div class="history-details-preview">
-          ${renderPreviewHeatmap(summary, params)}
-          ${renderPreviewStats(summary, params)}
-        </div>
-      `;
+    heatmapMarkup = renderPreviewHeatmap(summary, params);
+    statsMarkup = renderPreviewStats(summary, params);
   } else {
-    previewMarkup = `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
+    heatmapMarkup = `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
+    statsMarkup = `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
   }
   return `
       <tr class="history-details-row">
         <td colspan="4">
           <div class="history-details-card">
             ${runSummary ? `<div class="history-run-summary">${escapeHtml(runSummary)}</div>` : ""}
-            ${previewMarkup}
             ${renderWarningBanners(detail, params)}
-            ${renderInsightsBlock(detail, params)}
+            <div class="history-results-layout">
+              ${renderInsightsBlock(detail, params)}
+              <div class="history-evidence-panel">
+                ${heatmapMarkup}
+              </div>
+            </div>
+            <div class="history-details-secondary">
+              ${statsMarkup}
+            </div>
           </div>
         </td>
       </tr>
