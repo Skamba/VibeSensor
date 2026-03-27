@@ -79,36 +79,50 @@ def _draw_next_steps_table(
     steps: list[NextStep],
     *,
     start_number: int = 1,
+    tr: Callable[[str], str],
 ) -> int:
-    """Draw ordered next-step rows with multi-line wrapping."""
+    """Draw ordered next-step rows with a primary action and secondary details."""
     col1_w = 12 * mm
     text_w = w - col1_w - 4
-    min_row_h = 6.6 * mm
-    fs = 7
-    leading = fs + 2
+    min_row_h = 7.2 * mm
+    action_fs = 7.5
+    action_leading = action_fs + 1.5
+    detail_fs = FS_SMALL
+    detail_leading = detail_fs + 1.5
 
     soft_bg = _hex(SOFT_BG)
     panel_bg = _hex(PANEL_BG)
     line_clr = _hex(LINE_CLR)
     text_clr = _hex(TEXT_CLR)
-    row_pad = 2 * mm
-    number_y_off = 4.4 * mm
+    row_pad = 1.5 * mm
+    number_y_off = 4.0 * mm
+    detail_gap = 0.4 * mm
 
     y = y_top
     drawn = 0
     for idx, step in enumerate(steps, start=start_number):
-        action_text = step.action
+        detail_parts: list[str] = []
         if step.why:
-            action_text += f" — {step.why}"
-        if step.confirm:
-            action_text += f"  ✓ {step.confirm}"
-        if step.falsify:
-            action_text += f"  ✗ {step.falsify}"
+            detail_parts.append(f"{tr('WHY')}: {step.why}")
         if step.eta:
-            action_text += f"  ⏱ {step.eta}"
+            eta_text = f"{tr('ETA')}: {step.eta}"
+            if step.confirm:
+                detail_parts.append(f"{tr('CONFIRM')}: {step.confirm}")
+            detail_parts.append(eta_text)
+        elif step.confirm:
+            detail_parts.append(f"{tr('CONFIRM')}: {step.confirm}")
+        detail_text = " | ".join(detail_parts)
 
-        lines = _wrap_lines(action_text, text_w, fs)
-        row_h = max(min_row_h, max(len(lines), 1) * leading + row_pad)
+        action_lines = _wrap_lines(step.action, text_w, action_fs)
+        detail_line_count = len(_wrap_lines(detail_text, text_w, detail_fs)) if detail_text else 0
+        detail_h = detail_line_count * detail_leading if detail_line_count else 0.0
+        row_h = max(
+            min_row_h,
+            max(len(action_lines), 1) * action_leading
+            + detail_h
+            + row_pad
+            + (detail_gap if detail_text else 0.0),
+        )
         if y - row_h < y_bottom:
             break
 
@@ -117,19 +131,31 @@ def _draw_next_steps_table(
         c.rect(x, y - row_h, w, row_h, stroke=1, fill=1)
 
         c.setFillColor(text_clr)
-        c.setFont(FONT_B, fs)
+        c.setFont(FONT_B, action_fs)
         c.drawString(x + 2, y - number_y_off, f"{idx}.")
 
-        _draw_text(
+        action_bottom = _draw_text(
             c,
             x + col1_w,
             y - 2 * mm,
             text_w,
-            action_text,
-            font=FONT,
-            size=fs,
+            step.action,
+            font=FONT_B,
+            size=action_fs,
             color=TEXT_CLR,
         )
+        if detail_text:
+            _draw_text(
+                c,
+                x + col1_w,
+                action_bottom - detail_gap,
+                text_w,
+                detail_text,
+                font=FONT,
+                size=detail_fs,
+                color=SUB_CLR,
+                leading=detail_leading,
+            )
         y -= row_h
         drawn += 1
     return drawn
@@ -174,6 +200,7 @@ def _draw_bottom_row_panels(
             next_panel.w - 8 * mm,
             next_panel.y + 3 * mm,
             data.next_steps,
+            tr=tr,
         )
         remaining_next_steps = data.next_steps[drawn_steps:]
 
@@ -217,4 +244,5 @@ def _draw_continued_next_steps(
         panel.y + 3 * mm,
         next_steps_continued,
         start_number=start_number,
+        tr=tr,
     )
