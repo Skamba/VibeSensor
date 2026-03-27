@@ -66,7 +66,6 @@ export class UiAppRuntime {
       setStatValue: (container, value) => this.shell.setStatValue(container, value),
       renderSpectrum: () => this.spectrum.renderSpectrum(),
       renderSpeedReadout: () => this.shell.renderSpeedReadout(),
-      renderCarSelectionWarning: () => this.shell.renderCarSelectionWarning(),
       sendSelection: () => this.transport.sendSelection(),
     });
     const shellPorts: UiShellFeaturePorts = {

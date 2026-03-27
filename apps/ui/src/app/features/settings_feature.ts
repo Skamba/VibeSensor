@@ -1,5 +1,6 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
+  type CarSelectionState,
   deriveCarSelectionState,
   hasResolvedActiveCar,
   resolveActiveCar,
@@ -36,7 +37,6 @@ export interface SettingsFeatureDeps extends FeatureDepsBase {
   fmt: (n: number, digits?: number) => string;
   renderSpectrum: () => void;
   renderSpeedReadout: () => void;
-  onCarSelectionStateChange: () => void;
 }
 
 export interface SettingsFeature {
@@ -66,6 +66,22 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     return hasResolvedActiveCar(settings);
   }
 
+  function renderCarSelectionGuidance(carSelectionState: CarSelectionState): void {
+    const guidance = els.carSelectionGuidance;
+    if (!guidance) {
+      return;
+    }
+    if (carSelectionState.kind === "loading" || carSelectionState.kind === "active") {
+      guidance.hidden = true;
+      guidance.textContent = "";
+      return;
+    }
+    guidance.hidden = false;
+    guidance.textContent = carSelectionState.kind === "no_cars"
+      ? t("settings.car.guidance.no_cars")
+      : t("settings.car.guidance.no_active");
+  }
+
   function syncCarDependentUiState(): void {
     const carSelectionState = deriveCarSelectionState(settings);
     const hasActiveCar = carSelectionState.kind === "active";
@@ -75,7 +91,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     if (els.analysisNoCarMessage) {
       els.analysisNoCarMessage.hidden = hasActiveCar || carSelectionState.kind === "loading";
     }
-    ctx.onCarSelectionStateChange();
+    renderCarSelectionGuidance(carSelectionState);
   }
 
   const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
