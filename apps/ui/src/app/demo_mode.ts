@@ -138,7 +138,30 @@ export function runDemoMode(deps: DemoDeps): void {
     clients: demoClients,
     selected_client_id: demoClients[0]?.id ?? null,
     speed_mps: 22.2,
-    rotational_speeds: null,
+    rotational_speeds: {
+      basis_speed_source: "gps",
+      wheel: {
+        rpm: 738,
+        mode: "calculated",
+        reason: null,
+      },
+      driveshaft: {
+        rpm: 1476,
+        mode: "calculated",
+        reason: null,
+      },
+      engine: {
+        rpm: 2208,
+        mode: "calculated",
+        reason: null,
+      },
+      order_bands: [
+        { key: "wheel_1x", center_hz: 12.3, tolerance: 0.08 },
+        { key: "wheel_2x", center_hz: 24.6, tolerance: 0.08 },
+        { key: "driveshaft_1x", center_hz: 24.6, tolerance: 0.08 },
+        { key: "engine_1x", center_hz: 36.8, tolerance: 0.08 },
+      ],
+    },
     spectra: { clients: demoSpectra },
   };
 

@@ -96,13 +96,17 @@
             <div class="card__header">
               <div class="card__title" data-i18n="chart.spectrum_title">Multi-Sensor Blended Spectrum</div>
             </div>
+            <div class="spectrum-toolbar">
+              <div class="card__subtle" data-i18n="spectrum.controls_hint">Use the trace chips to isolate one sensor at a time. Turn on reference bands when you need order context.</div>
+              <button id="spectrumBandToggle" class="btn spectrum-toolbar__toggle" type="button" aria-pressed="false" hidden>Show reference bands</button>
+            </div>
             <div id="specChartWrap" class="spectrum-wrap">
               <div id="specChart"></div>
               <div id="spectrumOverlay" class="empty-state" hidden>Waiting for sensor data...</div>
             </div>
-            <div id="spectrumInspector" class="spectrum-inspector" aria-live="polite">Hover the chart or tap a sensor chip to inspect a trace.</div>
+            <div id="spectrumInspector" class="spectrum-inspector" aria-live="polite">Use the trace chips or hover the chart to inspect the current peak.</div>
+            <div id="bandLegend" class="legend band-legend" hidden></div>
             <div id="legend" class="legend"></div>
-            <div id="bandLegend" class="legend band-legend"></div>
           </div>
 
           <div class="panel card dashboard-grid__controls">
