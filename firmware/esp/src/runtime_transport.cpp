@@ -11,24 +11,34 @@
 namespace vibesensor::runtime {
 namespace {
 
+bool send_control_packet(TransportState& state,
+                         RuntimeStatus& status,
+                         const uint8_t* packet,
+                         size_t len,
+                         uint8_t error_code) {
+  if (state.control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort) != 1) {
+    set_last_error(status, error_code);
+    return false;
+  }
+  state.control_udp.write(packet, len);
+  if (state.control_udp.endPacket() != 1) {
+    set_last_error(status, error_code);
+    return false;
+  }
+  return true;
+}
+
 void send_ack(TransportState& state,
               RuntimeStatus& status,
               uint32_t cmd_seq,
               uint8_t ack_status) {
-  uint8_t packet[16];
+  uint8_t packet[vibesensor::kAckBytes];
   size_t len = vibesensor::pack_ack(
       packet, sizeof(packet), state.client_id, cmd_seq, ack_status);
   if (len == 0) {
     return;
   }
-  if (state.control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort) != 1) {
-    set_last_error(status, 8);
-    return;
-  }
-  state.control_udp.write(packet, len);
-  if (state.control_udp.endPacket() != 1) {
-    set_last_error(status, 8);
-  }
+  send_control_packet(state, status, packet, len, 8);
 }
 
 }  // namespace
@@ -36,7 +46,7 @@ void send_ack(TransportState& state,
 void initialize_transport(TransportState& state) {
   String mac = WiFi.macAddress();
   if (!vibesensor::parse_mac(mac, state.client_id)) {
-    const uint8_t fallback[6] = {0xD0, 0x5A, 0x00, 0x00, 0x00, 0x01};
+    const uint8_t fallback[vibesensor::kClientIdBytes] = {0xD0, 0x5A, 0x00, 0x00, 0x00, 0x01};
     memcpy(state.client_id, fallback, sizeof(state.client_id));
   }
   state.control_port =
@@ -65,17 +75,7 @@ bool send_hello(TransportState& state, RuntimeStatus& status) {
   if (len == 0) {
     return false;
   }
-
-  if (state.control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort) != 1) {
-    set_last_error(status, 4);
-    return false;
-  }
-  state.control_udp.write(packet, len);
-  if (state.control_udp.endPacket() != 1) {
-    set_last_error(status, 4);
-    return false;
-  }
-  return true;
+  return send_control_packet(state, status, packet, len, 4);
 }
 
 void service_hello(TransportState& state, RuntimeStatus& status) {
