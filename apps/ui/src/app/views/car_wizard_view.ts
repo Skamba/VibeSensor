@@ -8,6 +8,7 @@ import type { UiDomElements } from "../ui_dom_registry";
 
 type EscapeHtml = (value: unknown) => string;
 type FormatNumber = (value: number, digits?: number) => string;
+type Translate = (key: string, vars?: Record<string, unknown>) => string;
 
 interface WizardOptionSpec {
   dataAttribute: string;
@@ -15,6 +16,16 @@ interface WizardOptionSpec {
   label: string;
   detail?: string;
   selected?: boolean;
+}
+
+export interface WizardSummaryData {
+  profileName: string | null;
+  brand: string | null;
+  carType: string | null;
+  model: string | null;
+  variant: string | null;
+  tire: string | null;
+  gearbox: string | null;
 }
 
 function renderWizardOptions(
@@ -128,6 +139,36 @@ export function renderWizardGearboxOptions(
   );
 }
 
+export function renderWizardSummary(
+  summary: WizardSummaryData,
+  deps: { t: Translate; escapeHtml: EscapeHtml },
+): string {
+  const { t, escapeHtml } = deps;
+  const pending = t("settings.car.wizard_summary_pending");
+  const rows: Array<[string, string | null]> = [
+    [t("settings.car.wizard_summary_brand"), summary.brand],
+    [t("settings.car.wizard_summary_type"), summary.carType],
+    [t("settings.car.wizard_summary_model"), summary.model],
+    [t("settings.car.wizard_summary_variant"), summary.variant],
+    [t("settings.car.wizard_summary_tire"), summary.tire],
+    [t("settings.car.wizard_summary_gearbox"), summary.gearbox],
+  ];
+  return `
+    <div class="wizard-summary-preview">
+      <div class="wizard-summary-preview__label">${escapeHtml(t("settings.car.wizard_summary_name"))}</div>
+      <div class="wizard-summary-preview__value">${escapeHtml(summary.profileName || pending)}</div>
+    </div>
+    <dl class="wizard-summary-list">
+      ${rows.map(([label, value]) => `
+        <div class="wizard-summary-item">
+          <dt>${escapeHtml(label)}</dt>
+          <dd>${escapeHtml(value || pending)}</dd>
+        </div>
+      `).join("")}
+    </dl>
+  `;
+}
+
 export function syncCarWizardStepState(
   els: Pick<UiDomElements, "wizardSteps" | "wizardStepDots" | "wizardBackBtn">,
   step: number,
@@ -140,6 +181,11 @@ export function syncCarWizardStepState(
     const dotStep = Number(dot.getAttribute("data-step"));
     dot.classList.toggle("active", dotStep === step);
     dot.classList.toggle("done", dotStep < step);
+    if (dotStep === step) {
+      dot.setAttribute("aria-current", "step");
+    } else {
+      dot.removeAttribute("aria-current");
+    }
   });
   if (els.wizardBackBtn) {
     els.wizardBackBtn.style.display = step > 0 ? "" : "none";

@@ -53,11 +53,14 @@ export interface UiDomElements {
   carSelectionGuidance: HTMLElement | null;
   carListBody: HTMLElement | null;
   addCarBtn: HTMLButtonElement | null;
+  wizardBackdrop: HTMLElement | null;
   addCarWizard: HTMLElement | null;
+  wizardProgressText: HTMLElement | null;
   wizardCloseBtn: HTMLButtonElement | null;
   wizardBackBtn: HTMLButtonElement | null;
   wizardSteps: Array<HTMLElement | null>;
   wizardStepDots: HTMLElement[];
+  wizardSummaryPanel: HTMLElement | null;
   wizardBrandList: HTMLElement | null;
   wizardTypeList: HTMLElement | null;
   wizardModelList: HTMLElement | null;
@@ -194,11 +197,14 @@ export function createUiDomRegistry(): UiDomElements {
     carSelectionGuidance: el("carSelectionGuidance"),
     carListBody: el("carListBody"),
     addCarBtn: btnEl("addCarBtn"),
+    wizardBackdrop: el("wizardBackdrop"),
     addCarWizard: el("addCarWizard"),
+    wizardProgressText: el("wizardProgressText"),
     wizardCloseBtn: btnEl("wizardCloseBtn"),
     wizardBackBtn: btnEl("wizardBackBtn"),
     wizardSteps: [0, 1, 2, 3, 4].map((index) => el(`wizardStep${index}`)),
     wizardStepDots: queryAll<HTMLElement>(".wizard-step-dot"),
+    wizardSummaryPanel: el("wizardSummaryPanel"),
     wizardBrandList: el("wizardBrandList"),
     wizardTypeList: el("wizardTypeList"),
     wizardModelList: el("wizardModelList"),
