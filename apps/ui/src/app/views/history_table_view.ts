@@ -343,7 +343,6 @@ function renderInsightsBlock(
 ): string {
   const { escapeHtml, fmt, t } = params;
   const findings = summarizeFindings(detail.insights);
-  const ctaLabel = detail.insights ? t("history.reload_insights") : t("history.load_insights");
   const loading = detail.insightsLoading;
   const findingsMarkup = findings.length
     ? findings
@@ -370,16 +369,13 @@ function renderInsightsBlock(
     : `<li class="history-finding-card history-finding-card--empty">${escapeHtml(t("report.no_findings_for_run"))}</li>`;
   return `
       <div class="history-insights-block">
-        <div class="history-insights-actions">
-          <div class="history-insights-actions__copy">
-            <div class="history-insights-actions__title">${escapeHtml(t("history.findings_title"))}</div>
-            <div class="history-insights-actions__subtitle">${escapeHtml(detail.insights ? t("history.findings_ready") : t("history.findings_pending"))}</div>
-          </div>
-          <button class="btn btn--primary" data-run-action="load-insights" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("history.loading_insights") : ctaLabel)}</button>
-          ${detail.insightsError ? `<span class="history-inline-error">${escapeHtml(detail.insightsError)}</span>` : ""}
+        <div class="history-panel-header">
+          <div class="history-panel-header__eyebrow">${escapeHtml(t("history.findings_title"))}</div>
+          ${detail.insights ? `<div class="history-panel-header__subtitle">${escapeHtml(t("history.findings_ready"))}</div>` : ""}
         </div>
-        ${detail.insights ? renderInsightsOverview(detail.insights, params) : ""}
-        ${detail.insights ? `<ul class="history-findings-list">${findingsMarkup}</ul>` : ""}
+        ${detail.insights
+    ? `${renderInsightsOverview(detail.insights, params)}<ul class="history-findings-list">${findingsMarkup}</ul>`
+    : `<div class="history-panel-state">${escapeHtml(loading ? t("history.loading_insights") : t("history.findings_pending"))}</div>`}
       </div>
     `;
 }
@@ -415,6 +411,10 @@ function renderRunDetailsRow(
 ): string {
   const { escapeHtml, fmt, fmtTs, formatInt, t } = params;
   const summary = detail.preview;
+  const insightsCtaLabel = detail.insights ? t("history.reload_insights") : t("history.load_insights");
+  const insightsError = detail.insightsError
+    ? `<span class="history-inline-error">${escapeHtml(detail.insightsError)}</span>`
+    : "";
   const runSummary = summary
     ? [
         `${t("report.run_id")}: ${run.run_id}`,
@@ -427,32 +427,72 @@ function renderRunDetailsRow(
   let heatmapMarkup = "";
   let statsMarkup = "";
   if (detail.previewLoading) {
-    heatmapMarkup = `<p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>`;
-    statsMarkup = `<p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>`;
+    heatmapMarkup = `
+      <div class="mini-car-wrap">
+        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+        <p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>
+      </div>
+    `;
+    statsMarkup = `
+      <div class="history-preview-stats">
+        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>
+        <p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>
+      </div>
+    `;
   } else if (detail.previewError) {
-    heatmapMarkup = `<p class="history-inline-error">${escapeHtml(detail.previewError)}</p>`;
-    statsMarkup = `<p class="history-inline-error">${escapeHtml(detail.previewError)}</p>`;
+    heatmapMarkup = `
+      <div class="mini-car-wrap">
+        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+        <p class="history-inline-error">${escapeHtml(detail.previewError)}</p>
+      </div>
+    `;
+    statsMarkup = `
+      <div class="history-preview-stats">
+        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>
+        <p class="history-inline-error">${escapeHtml(detail.previewError)}</p>
+      </div>
+    `;
   } else if (summary) {
     heatmapMarkup = renderPreviewHeatmap(summary, params);
     statsMarkup = renderPreviewStats(summary, params);
   } else {
-    heatmapMarkup = `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
-    statsMarkup = `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
+    heatmapMarkup = `
+      <div class="mini-car-wrap">
+        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+        <p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>
+      </div>
+    `;
+    statsMarkup = `
+      <div class="history-preview-stats">
+        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>
+        <p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>
+      </div>
+    `;
   }
   return `
       <tr class="history-details-row">
         <td colspan="4">
           <div class="history-details-card">
-            ${runSummary ? `<div class="history-run-summary">${escapeHtml(runSummary)}</div>` : ""}
+            <div class="history-details-header">
+              <div class="history-details-header__copy">
+                <div class="history-details-header__eyebrow">${escapeHtml(t("history.details_title"))}</div>
+                <div class="history-details-header__title">${escapeHtml(run.run_id)}</div>
+                ${runSummary ? `<div class="history-run-summary">${escapeHtml(runSummary)}</div>` : ""}
+              </div>
+              <div class="history-details-header__actions">
+                <button class="btn btn--primary" data-run-action="load-insights" ${detail.insightsLoading ? "disabled" : ""}>${escapeHtml(detail.insightsLoading ? t("history.loading_insights") : insightsCtaLabel)}</button>
+                ${insightsError}
+              </div>
+            </div>
             ${renderWarningBanners(detail, params)}
             <div class="history-results-layout">
               ${renderInsightsBlock(detail, params)}
-              <div class="history-evidence-panel">
-                ${heatmapMarkup}
+              <div class="history-evidence-column">
+                <div class="history-evidence-panel">
+                  ${heatmapMarkup}
+                </div>
+                ${statsMarkup}
               </div>
-            </div>
-            <div class="history-details-secondary">
-              ${statsMarkup}
             </div>
           </div>
         </td>
@@ -499,9 +539,11 @@ export function renderHistoryTable(
                   title="${escapeHtml(toggleTitle)}"
                 >
                   <span class="history-row__toggle-icon" aria-hidden="true"></span>
-                  <span>${escapeHtml(toggleLabel)}</span>
+                  <span class="history-row__toggle-copy">
+                    <span class="history-row__toggle-title">${escapeHtml(toggleLabel)}</span>
+                    <span class="history-row__toggle-hint">${escapeHtml(t("history.preview_available"))}</span>
+                  </span>
                 </button>
-                <span class="history-row__hint">${escapeHtml(t("history.preview_available"))}</span>
               </div>
             </div>
           </td>
