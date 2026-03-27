@@ -40,6 +40,7 @@ export interface UiDomElements {
   spectrumInspector: HTMLElement | null;
   legend: HTMLElement | null;
   bandLegend: HTMLElement | null;
+  spectrumBandToggle: HTMLButtonElement | null;
   wheelBandwidthInput: HTMLInputElement | null;
   driveshaftBandwidthInput: HTMLInputElement | null;
   engineBandwidthInput: HTMLInputElement | null;
@@ -184,6 +185,7 @@ export function createUiDomRegistry(): UiDomElements {
     spectrumInspector: el("spectrumInspector"),
     legend: el("legend"),
     bandLegend: el("bandLegend"),
+    spectrumBandToggle: btnEl("spectrumBandToggle"),
     wheelBandwidthInput: inputEl("wheelBandwidthInput"),
     driveshaftBandwidthInput: inputEl("driveshaftBandwidthInput"),
     engineBandwidthInput: inputEl("engineBandwidthInput"),

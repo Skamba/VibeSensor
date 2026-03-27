@@ -94,11 +94,14 @@ export class UiSpectrumController {
 
   private cursorDataIdx: number | null = null;
 
+  private bandsVisible = false;
+
   constructor(deps: UiSpectrumControllerDeps) {
     this.state = deps.state;
     this.els = deps.els;
     this.t = deps.t;
     this.rootStyle = getComputedStyle(document.documentElement);
+    this.bindSpectrumControls();
   }
 
   updateSpectrumOverlay(): void {
@@ -219,9 +222,65 @@ export class UiSpectrumController {
     return peak?.freq ?? null;
   }
 
+  private bindSpectrumControls(): void {
+    this.els.spectrumBandToggle?.addEventListener("click", () => {
+      if (!this.state.spectrum.chartBands.length) {
+        this.bandsVisible = false;
+        this.renderBandToggle();
+        return;
+      }
+      this.bandsVisible = !this.bandsVisible;
+      this.refreshSpectrumDecorations();
+    });
+    this.renderBandToggle();
+  }
+
+  private renderBandToggle(): void {
+    const button = this.els.spectrumBandToggle;
+    if (!button) return;
+    const hasBands = this.state.spectrum.chartBands.length > 0 && this.currentEntries.length > 0;
+    if (!hasBands) {
+      this.bandsVisible = false;
+    }
+    button.hidden = !hasBands;
+    button.disabled = !hasBands;
+    button.setAttribute("aria-pressed", hasBands && this.bandsVisible ? "true" : "false");
+    button.textContent = this.t(this.bandsVisible ? "spectrum.bands.hide" : "spectrum.bands.show");
+  }
+
+  private refreshSpectrumDecorations(): void {
+    this.renderBandToggle();
+    this.updateSpectrumInspector();
+    if (!this.currentFreqAxis.length || !this.currentEntries.length) {
+      return;
+    }
+    this.state.spectrum.spectrumPlot?.setData([
+      this.currentFreqAxis,
+      ...this.currentEntries.map((entry) => entry.values),
+    ]);
+  }
+
   private renderSensorLegend(entries: SpectrumSeriesEntry[]): void {
     if (!this.els.legend) return;
     this.els.legend.innerHTML = "";
+    if (!entries.length) return;
+
+    const allButton = document.createElement("button");
+    allButton.type = "button";
+    const allActive = this.pinnedSeriesId === null;
+    allButton.className = `legend-item legend-item--interactive legend-item--reset${allActive ? " legend-item--active" : ""}`;
+    allButton.setAttribute("aria-pressed", allActive ? "true" : "false");
+    allButton.title = this.t("spectrum.legend.clear_focus");
+    allButton.addEventListener("click", () => {
+      this.pinnedSeriesId = null;
+      this.applyLegendSelection();
+    });
+    const allLabel = document.createElement("span");
+    allLabel.className = "legend-item__label";
+    allLabel.textContent = this.t("spectrum.legend.all_series");
+    allButton.appendChild(allLabel);
+    this.els.legend.appendChild(allButton);
+
     for (const entry of entries) {
       const button = document.createElement("button");
       button.type = "button";
@@ -263,21 +322,32 @@ export class UiSpectrumController {
     }
   }
 
-  private renderBandLegend(activeLabels: Set<string> = new Set()): void {
-    if (!this.els.bandLegend) return;
-    this.els.bandLegend.innerHTML = "";
-    for (const band of this.state.spectrum.chartBands) {
+  private renderBandLegend(activeBands: ChartBand[] = []): void {
+    const legend = this.els.bandLegend;
+    if (!legend) return;
+    legend.innerHTML = "";
+    const shouldShow = this.bandsVisible && this.state.spectrum.chartBands.length > 0 && this.currentEntries.length > 0;
+    legend.hidden = !shouldShow;
+    if (!shouldShow) return;
+    if (!activeBands.length) {
       const row = document.createElement("div");
-      row.className = `legend-item legend-item--band${activeLabels.has(band.label) ? " legend-item--band-active" : ""}`;
+      row.className = "legend-item legend-item--band legend-item--band-empty";
+      row.textContent = this.t("spectrum.bands.none");
+      legend.appendChild(row);
+      return;
+    }
+    for (const band of activeBands) {
+      const row = document.createElement("div");
+      row.className = "legend-item legend-item--band legend-item--band-active";
       row.innerHTML = `<span class="swatch" style="--swatch-color:${escapeHtml(band.color)}"></span><span>${escapeHtml(band.label)}</span>`;
-      this.els.bandLegend.appendChild(row);
+      legend.appendChild(row);
     }
   }
 
   private updateSpectrumInspector(): void {
     const activeFreq = this.activeFrequency();
     const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
-    this.renderBandLegend(new Set(activeBands.map((band) => band.label)));
+    this.renderBandLegend(activeBands);
 
     if (!this.els.spectrumInspector) return;
     const focusEntry = this.focusEntry();
@@ -305,12 +375,15 @@ export class UiSpectrumController {
       this.els.spectrumInspector.textContent = this.t("spectrum.inspector_idle");
       return;
     }
-    this.els.spectrumInspector.textContent = this.t("spectrum.inspector_focus", {
-      sensor: focusEntry.label,
-      freq: this.formatHz(peak.freq),
-      value: this.formatDb(peak.value),
-      bands: this.bandSummaryText(this.activeBandsForFrequency(peak.freq)),
-    });
+    this.els.spectrumInspector.textContent = this.t(
+      this.pinnedSeriesId ? "spectrum.inspector_focus_selected" : "spectrum.inspector_focus_strongest",
+      {
+        sensor: focusEntry.label,
+        freq: this.formatHz(peak.freq),
+        value: this.formatDb(peak.value),
+        bands: this.bandSummaryText(this.activeBandsForFrequency(peak.freq)),
+      },
+    );
   }
 
   private applyLegendSelection(): void {
@@ -398,6 +471,7 @@ export class UiSpectrumController {
       this.cursorDataIdx = null;
       this.spectrumLastFrame = null;
       this.state.spectrum.hasSpectrumData = false;
+      this.renderBandToggle();
       this.renderSensorLegend([]);
       this.renderBandLegend();
       this.updateSpectrumInspector();
@@ -418,6 +492,7 @@ export class UiSpectrumController {
     };
     this.currentEntries = entries;
     this.currentFreqAxis = nextFrame.freq;
+    this.renderBandToggle();
     this.applyLegendSelection();
     const canTween = this.state.transport.wsState === "connected"
       && areHeavyFramesCompatible(this.spectrumLastFrame, nextFrame);
@@ -501,20 +576,21 @@ export class UiSpectrumController {
         ],
         draw: [
           (plot: uPlot) => {
-            if (!this.state.spectrum.chartBands.length) return;
             const top = plot.bbox.top;
             const height = plot.bbox.height;
-            for (const band of this.state.spectrum.chartBands) {
-              if (!(band.max_hz > band.min_hz)) continue;
-              const x1 = plot.valToPos(band.min_hz, "x", true);
-              const x2 = plot.valToPos(band.max_hz, "x", true);
-              plot.ctx.save();
-              plot.ctx.fillStyle = band.color;
-              plot.ctx.fillRect(x1, top, Math.max(1, x2 - x1), height);
-              plot.ctx.strokeStyle = band.color;
-              plot.ctx.lineWidth = 1;
-              plot.ctx.strokeRect(x1, top, Math.max(1, x2 - x1), height);
-              plot.ctx.restore();
+            if (this.bandsVisible) {
+              for (const band of this.state.spectrum.chartBands) {
+                if (!(band.max_hz > band.min_hz)) continue;
+                const x1 = plot.valToPos(band.min_hz, "x", true);
+                const x2 = plot.valToPos(band.max_hz, "x", true);
+                plot.ctx.save();
+                plot.ctx.fillStyle = band.color;
+                plot.ctx.fillRect(x1, top, Math.max(1, x2 - x1), height);
+                plot.ctx.strokeStyle = band.color;
+                plot.ctx.lineWidth = 1;
+                plot.ctx.strokeRect(x1, top, Math.max(1, x2 - x1), height);
+                plot.ctx.restore();
+              }
             }
 
             const focusEntry = this.focusEntry();
