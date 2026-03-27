@@ -18,7 +18,6 @@ export interface SettingsSpeedSourceModule {
   syncSpeedSourceInputs(): void;
   loadSpeedSourceFromServer(): Promise<void>;
   saveSpeedSourceFromInputs(): void;
-  saveHeaderManualSpeedFromInput(): void;
 }
 
 export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDeps): SettingsSpeedSourceModule {
@@ -42,18 +41,12 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     els.speedSourceRadios.forEach((radio) => {
       radio.checked = radio.value === displayedMode;
     });
-    if (els.headerManualOverrideGroup) {
-      els.headerManualOverrideGroup.hidden = displayedMode !== "manual";
-    }
   }
 
   function syncSpeedSourceInputs(): void {
     syncSpeedSourceSelectionUi();
     if (els.manualSpeedInput) {
       els.manualSpeedInput.value = settings.manualSpeedKph != null ? String(settings.manualSpeedKph) : "";
-    }
-    if (els.headerManualSpeedInput) {
-      els.headerManualSpeedInput.value = settings.manualSpeedKph != null ? String(settings.manualSpeedKph) : "";
     }
   }
 
@@ -96,23 +89,8 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     void syncSpeedSourceToServer(payload);
   }
 
-  function saveHeaderManualSpeedFromInput(): void {
-    const payload: SpeedSourceRequest = {
-      speed_source: "manual",
-      manual_speed_kph: parseManualSpeedKph(Number(els.headerManualSpeedInput?.value)),
-    };
-    applyStaleTimeoutFromInput(payload);
-    void syncSpeedSourceToServer(payload);
-  }
-
   function bindHandlers(): void {
     els.saveSpeedSourceBtn?.addEventListener("click", saveSpeedSourceFromInputs);
-    els.headerManualSpeedSaveBtn?.addEventListener("click", saveHeaderManualSpeedFromInput);
-    els.headerManualSpeedInput?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        saveHeaderManualSpeedFromInput();
-      }
-    });
   }
 
   return {
@@ -121,6 +99,5 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     syncSpeedSourceInputs,
     loadSpeedSourceFromServer,
     saveSpeedSourceFromInputs,
-    saveHeaderManualSpeedFromInput,
   };
 }

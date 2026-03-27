@@ -153,6 +153,7 @@
   "settings.speed.fallback_no": "Nee",
   "settings.speed.fallback_title": "Terugvalinstellingen",
   "settings.speed.stale_timeout_label": "Time-out voor veroudering (s)",
+  "settings.language": "Taal",
 
   "settings.group.order_band_widths": "Ordebandbreedtes",
   "settings.group.uncertainty_model": "Onzekerheidsmodel",
