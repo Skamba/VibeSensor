@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from pypdf import PdfReader
+from reportlab.lib.units import mm
 from test_support.report_helpers import RUN_END, write_jsonl
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
@@ -18,6 +19,7 @@ from vibesensor.adapters.pdf.panels._panel_diagram import (
     fit_rect_preserve_aspect,
 )
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.adapters.pdf.pdf_style import MARGIN, PAGE_H, PAGE_W, build_page1_layout
 
 
 def _sample(
@@ -123,3 +125,14 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     assert b"detected" in pdf
     assert b"dropped frames" in pdf
     assert b"queue overflows" in pdf
+
+
+def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:
+    layout = build_page1_layout(
+        width=PAGE_W - 2 * MARGIN,
+        page_top=PAGE_H - MARGIN,
+        header_content_height=14 * mm,
+        observed_rows=5,
+    )
+    assert layout.observed.h > layout.header.h
+    assert layout.systems.h < 58 * mm
