@@ -171,7 +171,6 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
   linkState: HTMLElement;
   connectionBanner: HTMLElement;
   appErrorBanner: HTMLElement;
-  carSelectionBanner: HTMLElement;
   appShellWrap: HTMLElement;
 } {
   const dashboardView = createView(DEFAULT_SHELL_VIEW_ID);
@@ -184,7 +183,6 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
   const linkState = createTextElement();
   const connectionBanner = createTextElement();
   const appErrorBanner = createTextElement();
-  const carSelectionBanner = createTextElement();
   const appShellWrap = createTextElement();
 
   const els = {
@@ -196,7 +194,6 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
     linkState,
     connectionBanner,
     appErrorBanner,
-    carSelectionBanner,
     appShellWrap,
     ...overrides,
   } as unknown as UiDomElements;
@@ -213,7 +210,6 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
     linkState,
     connectionBanner,
     appErrorBanner,
-    carSelectionBanner,
     appShellWrap,
   };
 }
@@ -477,7 +473,7 @@ test.describe("createUiShellStatusModule", () => {
     expect(appShellWrap.classList.contains("wrap--stale")).toBe(true);
   });
 
-  test("renders speed override and car-selection warning after car bootstrap resolves", () => {
+  test("renders speed override after car bootstrap resolves", () => {
     const state = createAppState();
     state.realtime.speedMps = 12;
     state.settings.speedSource = "manual";
@@ -486,7 +482,7 @@ test.describe("createUiShellStatusModule", () => {
     state.settings.carsLoaded = true;
     state.settings.cars = [];
     state.settings.activeCarId = null;
-    const { els, speed, carSelectionBanner } = createShellDeps();
+    const { els, speed } = createShellDeps();
     const module = createUiShellStatusModule({
       shell: state.shell,
       transport: state.transport,
@@ -498,12 +494,9 @@ test.describe("createUiShellStatusModule", () => {
     });
 
     module.renderSpeedReadout();
-    module.renderCarSelectionWarning();
 
     expect(speed.textContent).toContain("speed.override");
     expect(speed.textContent).toContain("\"unit\":\"speed.unit.kmh\"");
-    expect(carSelectionBanner.hidden).toBe(false);
-    expect(carSelectionBanner.textContent).toContain("header.no_car_selected");
   });
 });
 
@@ -532,7 +525,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
 
     let renderSpeedReadoutCalls = 0;
     let renderWsStateCalls = 0;
-    let renderCarSelectionWarningCalls = 0;
     let renderSpectrumCalls = 0;
     let updateSpectrumOverlayCalls = 0;
     const portCalls: string[] = [];
@@ -546,9 +538,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
       },
       renderWsState: () => {
         renderWsStateCalls += 1;
-      },
-      renderCarSelectionWarning: () => {
-        renderCarSelectionWarningCalls += 1;
       },
       renderSpectrum: () => {
         renderSpectrumCalls += 1;
@@ -605,7 +594,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
     ]);
     expect(renderSpeedReadoutCalls).toBe(1);
     expect(renderWsStateCalls).toBe(1);
-    expect(renderCarSelectionWarningCalls).toBe(1);
     expect(destroyCalls).toBe(1);
     expect(state.spectrum.spectrumPlot).toBeNull();
     expect(renderSpectrumCalls).toBe(1);
@@ -632,7 +620,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
       t: testTranslation,
       renderSpeedReadout: () => undefined,
       renderWsState: () => undefined,
-      renderCarSelectionWarning: () => undefined,
       renderSpectrum: () => {
         renderSpectrumCalls += 1;
       },

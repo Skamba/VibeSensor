@@ -14,7 +14,6 @@ export interface UiShellLanguageRefreshModuleDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
   renderSpeedReadout: () => void;
   renderWsState: () => void;
-  renderCarSelectionWarning: () => void;
   renderSpectrum: () => void;
   updateSpectrumOverlay: () => void;
 }
@@ -48,7 +47,6 @@ export function createUiShellLanguageRefreshModule(
       features.realtime.renderLoggingStatus();
       features.history.renderHistoryTable();
       deps.renderWsState();
-      deps.renderCarSelectionWarning();
       if (deps.state.spectrum.spectrumPlot) {
         deps.state.spectrum.spectrumPlot.destroy();
         deps.state.spectrum.spectrumPlot = null;

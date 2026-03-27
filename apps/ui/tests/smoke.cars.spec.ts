@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
 
-test("shows header warning and blocks car-dependent analysis save when no car is selected", async ({ page }) => {
+test("keeps live and history clean while showing contextual no-car guidance in Settings", async ({ page }) => {
   let analysisPutCalls = 0;
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -22,7 +22,12 @@ test("shows header warning and blocks car-dependent analysis save when no car is
   });
   await installFakeWebSocket(page);
   await page.goto("/");
-  await expect(page.locator("#carSelectionBanner")).toBeVisible();
+  await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
+  await page.locator("#tab-history").click();
+  await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  await expect(page.locator("#carSelectionGuidance")).toBeVisible();
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
@@ -31,7 +36,7 @@ test("shows header warning and blocks car-dependent analysis save when no car is
   await expect.poll(() => analysisPutCalls).toBe(0);
 });
 
-test("hides header warning when a valid selected car exists", async ({ page }) => {
+test("hides contextual car guidance when a valid selected car exists", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       if (requestPath(route).startsWith("/api/settings/cars")) {
@@ -43,10 +48,14 @@ test("hides header warning when a valid selected car exists", async ({ page }) =
   });
   await installFakeWebSocket(page);
   await page.goto("/");
-  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  await expect(page.locator("#carSelectionGuidance")).toBeHidden();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
 });
 
-test("keeps warning UI hidden until active car bootstrap resolves and then marks the car active", async ({ page }) => {
+test("keeps contextual no-car guidance hidden until active car bootstrap resolves and then marks the car active", async ({ page }) => {
   let releaseCars: (() => void) | null = null;
   const waitForCars = new Promise<void>((resolve) => {
     releaseCars = resolve;
@@ -100,7 +109,7 @@ test("keeps warning UI hidden until active car bootstrap resolves and then marks
   });
   await installFakeWebSocket(page);
   await page.goto("/");
-  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+  await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
 
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
@@ -108,24 +117,26 @@ test("keeps warning UI hidden until active car bootstrap resolves and then marks
   await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
-  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  await expect(page.locator("#carSelectionGuidance")).toBeHidden();
 
   if (!releaseCars) {
     throw new Error("cars bootstrap gate was not initialized");
   }
   releaseCars();
 
+  await page.locator('[data-settings-tab="analysisTab"]').click();
   await expect(page.locator("#saveAnalysisBtn")).toBeEnabled();
-  await expect(page.locator("#carSelectionBanner")).toBeHidden();
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
 
   await page.locator('[data-settings-tab="carTab"]').click();
+  await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   const activeRow = page.locator('#carListBody tr[data-car-id="car-1"]');
   await expect(activeRow).toContainText("Audit Demo Car");
   await expect(activeRow.locator(".car-active-pill")).toHaveClass(/active/);
 });
 
-test("shows warning for invalid persisted selection and after deleting selected car", async ({ page }) => {
+test("shows car-tab guidance for invalid persisted selection and after deleting the selected car", async ({ page }) => {
   let firstCarsGet = true;
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -153,10 +164,10 @@ test("shows warning for invalid persisted selection and after deleting selected 
   });
   await installFakeWebSocket(page, { confirmResult: true });
   await page.goto("/");
-  await expect(page.locator("#carSelectionBanner")).toBeVisible();
   await page.locator("#tab-settings").click();
+  await expect(page.locator("#carSelectionGuidance")).toBeVisible();
   await page.locator("#carListBody .car-activate-btn").last().click();
-  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+  await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   await page.locator('#carListBody tr[data-car-id="car-2"] .car-delete-btn').click();
-  await expect(page.locator("#carSelectionBanner")).toBeVisible();
+  await expect(page.locator("#carSelectionGuidance")).toBeVisible();
 });

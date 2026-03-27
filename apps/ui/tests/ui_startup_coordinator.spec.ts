@@ -42,9 +42,6 @@ function createCoordinatorHarness() {
       applyLanguage(forceReloadInsights = false): void {
         calls.push(`shell.applyLanguage:${String(forceReloadInsights)}`);
       },
-      renderCarSelectionWarning(): void {
-        calls.push("shell.renderCarSelectionWarning");
-      },
       setActiveView(viewId: string): void {
         calls.push(`shell.setActiveView:${viewId}`);
       },
@@ -133,7 +130,6 @@ test.describe("UiStartupCoordinator", () => {
       "settings.syncSettingsInputs",
       "shell.hydratePersistedPreferences",
       "shell.applyLanguage:false",
-      "shell.renderCarSelectionWarning",
       "shell.setActiveView:dashboardView",
       "realtime.refreshLocationOptions",
       "settings.loadSpeedSourceFromServer",

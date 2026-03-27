@@ -90,7 +90,6 @@ export class UiShellController {
       t: (key, vars) => this.t(key, vars),
       renderSpeedReadout: () => this.renderSpeedReadout(),
       renderWsState: () => this.renderWsState(),
-      renderCarSelectionWarning: () => this.renderCarSelectionWarning(),
       renderSpectrum: () => this.renderSpectrumChart?.(),
       updateSpectrumOverlay: () => this.updateSpectrumOverlayState?.(),
     });
@@ -143,10 +142,6 @@ export class UiShellController {
 
   renderWsState(): void {
     this.status.renderWsState();
-  }
-
-  renderCarSelectionWarning(): void {
-    this.status.renderCarSelectionWarning();
   }
 
   setActiveView(viewId: string): void {
