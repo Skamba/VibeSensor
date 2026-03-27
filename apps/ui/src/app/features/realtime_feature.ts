@@ -121,7 +121,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return realtime.clients.filter((client) => locationCodeForClient(client)).length;
   }
 
-  function strongestSignalText(): string {
+  function strongestSignal(): { client: AdaptedClient; db: number } | null {
     let bestClient: AdaptedClient | null = null;
     let bestDb = Number.NEGATIVE_INFINITY;
     for (const client of connectedClients()) {
@@ -133,10 +133,22 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       }
     }
     if (!bestClient) {
+      return null;
+    }
+    return {
+      client: bestClient,
+      db: bestDb,
+    };
+  }
+
+  function strongestSignalText(signal = strongestSignal()): string {
+    if (!signal) {
       return t("dashboard.strongest_signal_none");
     }
-    const primary = locationCodeForClient(bestClient) ? clientLocationText(bestClient) : clientDisplayName(bestClient);
-    return `${primary} (${formatInt(bestDb)} dB)`;
+    const primary = locationCodeForClient(signal.client)
+      ? clientLocationText(signal.client)
+      : clientDisplayName(signal.client);
+    return `${primary} (${formatInt(signal.db)} dB)`;
   }
 
   function activeCarText(): string {
@@ -246,22 +258,26 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   function renderLiveSensorRoster(): void {
     if (!els.liveSensorRoster) return;
+    const signal = strongestSignal();
     renderRealtimeSensorOverview(els.liveSensorRoster, {
       clients: realtime.clients,
       locationOptions: realtime.locationOptions,
       locationCodeForClient,
+      strongestClientId: signal?.client.id ?? null,
       t,
       escapeHtml,
     });
   }
 
   function renderLiveOverviewStats(): void {
+    const signal = strongestSignal();
     const totalClients = realtime.clients.length;
     ctx.setStatValue(els.liveConnectedSensors, `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`);
     ctx.setStatValue(els.liveActiveCar, activeCarText());
     ctx.setStatValue(els.liveRecordingState, computeRecordingPanelState().phaseText);
     ctx.setStatValue(els.liveDataFreshness, dataFreshnessText());
-    ctx.setStatValue(els.liveStrongestSignal, strongestSignalText());
+    ctx.setStatValue(els.liveStrongestSignal, strongestSignalText(signal));
+    els.liveStrongestSignal?.classList.toggle("stat--spotlight", Boolean(signal));
   }
 
   function renderLiveHealth(): void {
