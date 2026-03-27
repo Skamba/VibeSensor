@@ -1,4 +1,4 @@
-"""Page 1 composition for the diagnostic worksheet PDF."""
+"""Page 1 composition for the diagnostic report PDF."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def _page1(
     *,
     ctx: PdfRenderContext | None = None,
 ) -> list[NextStep]:
-    """Render the full page-1 worksheet layout."""
+    """Render the full page-1 report layout."""
     render_ctx = ctx or PdfRenderContext.from_data(data)
     width = render_ctx.width
     page_top = render_ctx.page_top

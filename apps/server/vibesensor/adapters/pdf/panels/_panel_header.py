@@ -19,6 +19,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     FONT,
     FONT_B,
     FS_BODY,
+    FS_H2,
     FS_SMALL,
     FS_TITLE,
     GAP,
@@ -39,6 +40,12 @@ from vibesensor.adapters.pdf.pdf_text import (
     _kv_consumed_height,
 )
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
+
+
+def _first_check_target(data: ReportTemplateData, *, fallback: str) -> str:
+    if data.system_cards and data.system_cards[0].parts:
+        return _safe(data.system_cards[0].parts[0].name, fallback)
+    return _safe(data.observed.strongest_location, fallback)
 
 
 def _label_width(c: Canvas, label: str, *, default_w: float, col_w: float) -> float:
@@ -225,17 +232,30 @@ def _draw_observed_signature_panel(
     obs_y = y_cursor - observed_panel.h
     ox = MARGIN + 4 * mm
     oy = obs_y + observed_panel.h - PANEL_HEADER_H
+    inspect_target = _first_check_target(data, fallback=na)
+    cert_val = _cert_display(data.observed.certainty_label, data.observed.certainty_pct, na)
 
     _draw_panel(c, MARGIN, obs_y, width, observed_panel.h, tr("OBSERVED_SIGNATURE"))
-    _draw_kv(
+    oy = _draw_text(
         c,
         ox,
         oy,
-        tr("PRIMARY_SYSTEM"),
+        width - 8 * mm,
         _safe(data.observed.primary_system, na),
-        label_w=OBSERVED_LABEL_W,
+        font=FONT_B,
+        size=FS_TITLE,
     )
-    oy -= obs_step
+    oy = _draw_kv(
+        c,
+        ox,
+        oy,
+        tr("WHAT_TO_CHECK_FIRST"),
+        inspect_target,
+        label_w=OBSERVED_LABEL_W,
+        fs=FS_H2,
+        value_w=width - 8 * mm - OBSERVED_LABEL_W,
+    )
+    oy -= 1.0 * mm
     _draw_kv(
         c,
         ox,
@@ -244,6 +264,8 @@ def _draw_observed_signature_panel(
         _safe(data.observed.strongest_location, na),
         label_w=OBSERVED_LABEL_W,
     )
+    oy -= obs_step
+    _draw_kv(c, ox, oy, tr("CERTAINTY_LABEL_FULL"), cert_val, label_w=OBSERVED_LABEL_W)
     oy -= obs_step
     _draw_kv(
         c,
@@ -267,9 +289,6 @@ def _draw_observed_signature_panel(
         ),
         label_w=OBSERVED_LABEL_W,
     )
-    oy -= obs_step
-    cert_val = _cert_display(data.observed.certainty_label, data.observed.certainty_pct, na)
-    _draw_kv(c, ox, oy, tr("CERTAINTY_LABEL_FULL"), cert_val, label_w=OBSERVED_LABEL_W)
     oy -= obs_step
     if data.observed.certainty_reason:
         _draw_kv(
