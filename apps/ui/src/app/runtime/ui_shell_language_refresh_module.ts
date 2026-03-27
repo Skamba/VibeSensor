@@ -1,11 +1,13 @@
 import type { HistoryFeature } from "../features/history_feature";
 import type { RealtimeFeature } from "../features/realtime_feature";
+import type { SettingsFeature } from "../features/settings_feature";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState } from "../ui_app_state";
 
 export interface UiShellLanguageRefreshFeaturePorts {
   realtime: Pick<RealtimeFeature, "buildLocationOptions" | "maybeRenderSensorsSettingsList" | "renderLoggingStatus" | "renderStatus">;
   history: Pick<HistoryFeature, "renderHistoryTable" | "reloadExpandedRunOnLanguageChange">;
+  settings: Pick<SettingsFeature, "syncSettingsInputs">;
 }
 
 export interface UiShellLanguageRefreshModuleDeps {
@@ -42,6 +44,7 @@ export function createUiShellLanguageRefreshModule(
       }
       deps.state.realtime.locationOptions = features.realtime.buildLocationOptions(deps.state.realtime.locationCodes);
       deps.state.realtime.sensorsSettingsSignature = "";
+      features.settings.syncSettingsInputs();
       features.realtime.maybeRenderSensorsSettingsList(true);
       deps.renderSpeedReadout();
       features.realtime.renderLoggingStatus();

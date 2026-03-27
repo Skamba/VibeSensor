@@ -32,6 +32,7 @@ test("keeps live and history clean while showing contextual no-car guidance in S
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
+  await expect(page.locator("#resetAnalysisBtn")).toBeDisabled();
   await page.waitForTimeout(150);
   await expect.poll(() => analysisPutCalls).toBe(0);
 });
@@ -53,6 +54,7 @@ test("hides contextual car guidance when a valid selected car exists", async ({ 
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
+  await expect(page.locator("#resetAnalysisBtn")).toBeEnabled();
 });
 
 test("keeps contextual no-car guidance hidden until active car bootstrap resolves and then marks the car active", async ({ page }) => {
@@ -116,6 +118,7 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
 
   await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
+  await expect(page.locator("#resetAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
   await page.locator('[data-settings-tab="carTab"]').click();
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
@@ -127,6 +130,7 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
 
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await expect(page.locator("#saveAnalysisBtn")).toBeEnabled();
+  await expect(page.locator("#resetAnalysisBtn")).toBeEnabled();
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
 
   await page.locator('[data-settings-tab="carTab"]').click();
