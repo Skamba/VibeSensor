@@ -228,7 +228,7 @@ def build_page2_layout(
 
     left_w = width * EVIDENCE_CAR_PANEL_WIDTH_RATIO
     right_w = width - left_w - GAP
-    main_h = 118 * mm
+    main_h = 132 * mm
     left_y = y_cursor - main_h
     car_panel = PanelLayout(MARGIN, left_y, left_w, main_h)
     inner_pad = 5 * mm
@@ -241,14 +241,14 @@ def build_page2_layout(
     )
     pattern_panel = PanelLayout(MARGIN + left_w + GAP, left_y, right_w, main_h)
 
-    table_h = 53 * mm
+    table_h = 58 * mm
     table_y = left_y - GAP - table_h
     peaks_panel = PanelLayout(MARGIN, table_y, width, table_h)
 
     observations_panel = None
     obs_y_anchor = table_y
     if has_transient_findings:
-        obs_h = 24 * mm
+        obs_h = 22 * mm
         obs_y = table_y - GAP - obs_h
         observations_panel = PanelLayout(MARGIN, obs_y, width, obs_h)
         obs_y_anchor = obs_y
