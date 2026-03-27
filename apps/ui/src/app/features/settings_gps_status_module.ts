@@ -85,6 +85,7 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
     poll: async () => {
       const status = await getSpeedSourceStatus();
       settings.gpsFallbackActive = status.fallback_active;
+      settings.gpsEffectiveSpeedKph = status.effective_speed_kmh;
       settings.resolvedSpeedSource = status.speed_source;
       renderGpsStatus(status);
       ctx.syncSpeedSourceSelectionUi();
