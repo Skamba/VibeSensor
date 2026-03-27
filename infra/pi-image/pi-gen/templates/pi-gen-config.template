@@ -8,4 +8,5 @@ DISABLE_FIRST_BOOT_USER_RENAME=1
 WPA_COUNTRY='__VS_WPA_COUNTRY__'
 ENABLE_SSH=1
 PUBKEY_ONLY_SSH=0
+# Run the custom VibeSensor stage after the stock base stages have completed.
 STAGE_LIST="stage0 stage1 stage2 stage-vibesensor"
