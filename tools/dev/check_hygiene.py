@@ -781,7 +781,7 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
 
     e2e_job = jobs.get("e2e") if isinstance(jobs, Mapping) else None
     steps: object = None
-    prebuild_e2e_dockerfile_ok = False
+    e2e_uses_docker_steps = False
     if not isinstance(e2e_job, Mapping):
         errors.append("CI workflow is missing the e2e job.")
     else:
@@ -793,23 +793,16 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
             for step in steps:
                 if not isinstance(step, Mapping):
                     continue
-                if step.get("name") != "Prebuild cached E2E image":
-                    continue
                 uses = step.get("uses")
-                with_data = step.get("with")
-                dockerfile = (
-                    with_data.get("file") if isinstance(with_data, Mapping) else None
-                )
-                if (
-                    isinstance(uses, str)
-                    and uses.startswith("docker/build-push-action@")
-                    and dockerfile == "apps/server/Dockerfile.e2e"
+                if isinstance(uses, str) and (
+                    uses.startswith("docker/setup-buildx-action@")
+                    or uses.startswith("docker/build-push-action@")
                 ):
-                    prebuild_e2e_dockerfile_ok = True
+                    e2e_uses_docker_steps = True
                     break
-    if not prebuild_e2e_dockerfile_ok:
+    if e2e_uses_docker_steps:
         errors.append(
-            "e2e must prebuild its shared image from apps/server/Dockerfile.e2e."
+            "e2e must not depend on Docker buildx or docker image build steps."
         )
 
     e2e_duration_cache_ok = False
