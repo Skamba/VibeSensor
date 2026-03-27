@@ -142,11 +142,44 @@ def test_report_output_matches_template_data() -> None:
             strongest_location="Front Left",
         ),
         lang="en",
+        certainty_tier_key="C",
     )
     pdf_bytes = build_report_pdf(data)
     reader = PdfReader(BytesIO(pdf_bytes))
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    observed_start = text.find("Observed Signature")
+    systems_start = text.find("Systems with findings")
+    next_steps_start = text.find("Next steps")
+    observed_section = text[observed_start:systems_start]
+    systems_section = text[systems_start : next_steps_start if next_steps_start >= 0 else None]
 
     assert "Wheel / Tire" in text
     assert "Front Left" in text
+    assert "Strongest sensor" not in observed_section
+    assert "Strongest sensor: Front Left" in systems_section
     assert "VibeSensor Diagnostic Report" in text
+
+
+def test_report_keeps_strongest_sensor_on_page_one_when_no_system_cards() -> None:
+    """Low-confidence/no-card reports should keep strongest-location context on page 1."""
+    data = ReportTemplateData(
+        title="VibeSensor Diagnostic Report",
+        observed=PatternEvidence(
+            primary_system="Unknown",
+            strongest_location="Rear Right",
+            certainty_label="Low",
+        ),
+        pattern_evidence=PatternEvidence(strongest_location="Rear Right"),
+        lang="en",
+        certainty_tier_key="A",
+    )
+    pdf_bytes = build_report_pdf(data)
+    reader = PdfReader(BytesIO(pdf_bytes))
+    text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    observed_start = text.find("Observed Signature")
+    systems_start = text.find("Systems with findings")
+    observed_section = text[observed_start:systems_start]
+    observed_single_line = " ".join(observed_section.split())
+
+    assert "Strongest sensor: Rear Right" in observed_single_line
+    assert "Confidence is too low to attribute vibration to specific systems." in text
