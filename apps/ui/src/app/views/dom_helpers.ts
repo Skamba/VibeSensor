@@ -5,6 +5,16 @@ export function renderTableEmptyRow(
   return `<tr><td colspan="${colspan}">${textHtml}</td></tr>`;
 }
 
+export function closestFromTarget<T extends Element>(
+  target: EventTarget | null,
+  selector: string,
+): T | null {
+  if (!(target instanceof Element)) {
+    return null;
+  }
+  return target.closest<T>(selector);
+}
+
 export function renderStatusGridRow(
   labelHtml: string,
   valueHtml: string,
