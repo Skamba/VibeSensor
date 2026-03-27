@@ -86,6 +86,9 @@ export class UiAppRuntime {
           renderHistoryTable: () => this.features.history.renderHistoryTable(),
           reloadExpandedRunOnLanguageChange: () => this.features.history.reloadExpandedRunOnLanguageChange(),
         },
+        settings: {
+          syncSettingsInputs: () => this.features.settings.syncSettingsInputs(),
+        },
       },
     };
     this.shell.attachPorts(shellPorts);

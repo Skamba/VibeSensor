@@ -51,6 +51,7 @@ export interface UiDomElements {
   minAbsBandHzInput: HTMLInputElement | null;
   maxBandHalfWidthInput: HTMLInputElement | null;
   saveAnalysisBtn: HTMLButtonElement | null;
+  resetAnalysisBtn: HTMLButtonElement | null;
   analysisNoCarMessage: HTMLElement | null;
   carSelectionGuidance: HTMLElement | null;
   carListBody: HTMLElement | null;
@@ -196,6 +197,7 @@ export function createUiDomRegistry(): UiDomElements {
     minAbsBandHzInput: inputEl("minAbsBandHzInput"),
     maxBandHalfWidthInput: inputEl("maxBandHalfWidthInput"),
     saveAnalysisBtn: btnEl("saveAnalysisBtn"),
+    resetAnalysisBtn: btnEl("resetAnalysisBtn"),
     analysisNoCarMessage: el("analysisNoCarMessage"),
     carSelectionGuidance: el("carSelectionGuidance"),
     carListBody: el("carListBody"),

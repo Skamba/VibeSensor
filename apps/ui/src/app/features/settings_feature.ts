@@ -89,6 +89,9 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     if (els.saveAnalysisBtn) {
       els.saveAnalysisBtn.disabled = !hasActiveCar;
     }
+    if (els.resetAnalysisBtn) {
+      els.resetAnalysisBtn.disabled = !hasActiveCar;
+    }
     if (els.analysisNoCarMessage) {
       els.analysisNoCarMessage.hidden = hasActiveCar || carSelectionState.kind === "loading";
     }

@@ -14,14 +14,14 @@ _SETTINGS_ANALYSIS_MODULE_TS = (
 
 
 def _parse_ui_vehicle_defaults() -> dict[str, float]:
-    """Extract vehicleSettings defaults from ui_app_state.ts."""
+    """Extract defaultVehicleSettings from ui_app_state.ts."""
     text = _UI_APP_STATE_TS.read_text()
     match = re.search(
-        r"vehicleSettings:\s*\{([^}]+)\}",
+        r"defaultVehicleSettings:\s*Readonly<VehicleSettings>\s*=\s*\{([^}]+)\}",
         text,
         re.DOTALL,
     )
-    assert match, "Could not find vehicleSettings block in ui_app_state.ts"
+    assert match, "Could not find defaultVehicleSettings block in ui_app_state.ts"
     block = match.group(1)
     pairs: dict[str, float] = {}
     for line_match in re.finditer(r"(\w+):\s*([0-9.]+)", block):
