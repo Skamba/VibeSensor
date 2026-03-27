@@ -41,6 +41,11 @@ export interface HistoryTableAction {
   runId: string | null;
 }
 
+type HistoryRowStatusBadge = {
+  label: string;
+  variant: "ok" | "warn" | "bad" | "muted";
+};
+
 function summarizeFindings(summary: HistoryInsightsPayload | null): FindingPayload[] {
   return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
 }
@@ -195,6 +200,95 @@ function findingSpeedBandText(
   return finding.strongest_speed_band
     || summary?.most_likely_origin?.speed_band
     || t("report.missing");
+}
+
+function historyRowSummary(detail: RunDetail): HistoryInsightsPayload | null {
+  return detail.insights ?? detail.preview;
+}
+
+function historyRowStatusBadge(
+  run: HistoryEntry,
+  t: HistoryTableViewParams["t"],
+): HistoryRowStatusBadge {
+  switch (run.status) {
+    case "complete":
+      return { label: t("history.row_status.complete"), variant: "ok" };
+    case "analyzing":
+      return { label: t("history.row_status.analyzing"), variant: "warn" };
+    case "recording":
+      return { label: t("history.row_status.recording"), variant: "warn" };
+    case "error":
+      return { label: t("history.row_status.error"), variant: "bad" };
+    default:
+      return { label: run.status || t("report.missing"), variant: "muted" };
+  }
+}
+
+function historyRowDurationSeconds(
+  run: HistoryEntry,
+  detail: RunDetail,
+): number | null {
+  const summary = historyRowSummary(detail);
+  const summaryDuration = Number(summary?.duration_s);
+  if (Number.isFinite(summaryDuration) && summaryDuration >= 0) {
+    return summaryDuration;
+  }
+  const startMs = Date.parse(run.start_time_utc);
+  const endIso = run.end_time_utc ?? summary?.end_time_utc ?? null;
+  const endMs = endIso ? Date.parse(endIso) : Number.NaN;
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) {
+    return null;
+  }
+  return (endMs - startMs) / 1000;
+}
+
+function renderCollapsedRowSummary(
+  run: HistoryEntry,
+  detail: RunDetail,
+  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "formatInt" | "t">,
+): string {
+  const { escapeHtml, fmt, formatInt, t } = params;
+  const summary = historyRowSummary(detail);
+  const primaryFinding = summarizeFindings(summary)[0] ?? null;
+  const statusBadge = historyRowStatusBadge(run, t);
+  const chips: string[] = [
+    `<span class="history-row__summary-chip history-row__summary-chip--${statusBadge.variant}">${escapeHtml(statusBadge.label)}</span>`,
+  ];
+  const durationSeconds = historyRowDurationSeconds(run, detail);
+  if (durationSeconds !== null) {
+    chips.push(
+      `<span class="history-row__summary-chip">${escapeHtml(t("history.summary_size"))}: ${escapeHtml(fmt(durationSeconds, 1))} s</span>`,
+    );
+  }
+  const sensorCount = Number(summary?.sensor_count_used);
+  if (Number.isFinite(sensorCount) && sensorCount > 0) {
+    chips.push(
+      `<span class="history-row__summary-chip">${escapeHtml(t("history.summary_sensor_count"))}: ${escapeHtml(formatInt(sensorCount))}</span>`,
+    );
+  }
+  const source = summary?.most_likely_origin?.suspected_source || primaryFinding?.suspected_source || "";
+  if (source) {
+    chips.push(
+      `<span class="history-row__summary-chip history-row__summary-chip--source">${escapeHtml(source)}</span>`,
+    );
+  }
+  if (primaryFinding) {
+    chips.push(`<span class="history-row__summary-chip">${escapeHtml(confidenceText(primaryFinding, params))}</span>`);
+  } else if (run.status === "complete" && detail.previewLoading) {
+    chips.push(
+      `<span class="history-row__summary-chip history-row__summary-chip--muted">${escapeHtml(t("history.row_summary_loading"))}</span>`,
+    );
+  } else if (run.status === "complete" && summary) {
+    chips.push(
+      `<span class="history-row__summary-chip history-row__summary-chip--muted">${escapeHtml(t("history.row_no_findings"))}</span>`,
+    );
+  }
+  if (run.status === "error" && run.error_message) {
+    chips.push(
+      `<span class="history-row__summary-chip history-row__summary-chip--muted">${escapeHtml(run.error_message)}</span>`,
+    );
+  }
+  return `<div class="history-row__summary-chips">${chips.join("")}</div>`;
 }
 
 function renderInsightsOverview(
@@ -393,6 +487,7 @@ export function renderHistoryTable(
           <td>
             <div class="history-row__run">
               <div class="history-row__run-id">${escapeHtml(run.run_id)}</div>
+              ${renderCollapsedRowSummary(run, detail, params)}
               <div class="history-row__detail-affordance">
                 <button
                   type="button"
