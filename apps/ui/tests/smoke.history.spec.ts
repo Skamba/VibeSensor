@@ -125,6 +125,18 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await page.locator("#tab-history").click();
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
   await expect(toggle).toContainText("View diagnosis and heatmap");
+  const overflowMetrics = await toggle.evaluate((button) => {
+    const hint = button.querySelector<HTMLElement>(".history-row__toggle-hint");
+    return {
+      buttonClientWidth: button.clientWidth,
+      buttonScrollWidth: button.scrollWidth,
+      hintClientWidth: hint?.clientWidth ?? 0,
+      hintScrollWidth: hint?.scrollWidth ?? 0,
+    };
+  });
+  const overflowTolerancePx = 2;
+  expect(overflowMetrics.buttonScrollWidth).toBeLessThanOrEqual(overflowMetrics.buttonClientWidth + overflowTolerancePx);
+  expect(overflowMetrics.hintScrollWidth).toBeLessThanOrEqual(overflowMetrics.hintClientWidth + overflowTolerancePx);
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
