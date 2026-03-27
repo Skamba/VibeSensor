@@ -39,16 +39,20 @@ export interface SettingsAnalysisModule {
 export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): SettingsAnalysisModule {
   const { settings, els, t } = ctx;
 
+  function syncNumericInputValue(input: HTMLInputElement | null, value: number): void {
+    if (input) input.value = String(value);
+  }
+
   function syncSettingsInputs(): void {
-    if (els.wheelBandwidthInput) els.wheelBandwidthInput.value = String(settings.vehicleSettings.wheel_bandwidth_pct);
-    if (els.driveshaftBandwidthInput) els.driveshaftBandwidthInput.value = String(settings.vehicleSettings.driveshaft_bandwidth_pct);
-    if (els.engineBandwidthInput) els.engineBandwidthInput.value = String(settings.vehicleSettings.engine_bandwidth_pct);
-    if (els.speedUncertaintyInput) els.speedUncertaintyInput.value = String(settings.vehicleSettings.speed_uncertainty_pct);
-    if (els.tireDiameterUncertaintyInput) els.tireDiameterUncertaintyInput.value = String(settings.vehicleSettings.tire_diameter_uncertainty_pct);
-    if (els.finalDriveUncertaintyInput) els.finalDriveUncertaintyInput.value = String(settings.vehicleSettings.final_drive_uncertainty_pct);
-    if (els.gearUncertaintyInput) els.gearUncertaintyInput.value = String(settings.vehicleSettings.gear_uncertainty_pct);
-    if (els.minAbsBandHzInput) els.minAbsBandHzInput.value = String(settings.vehicleSettings.min_abs_band_hz);
-    if (els.maxBandHalfWidthInput) els.maxBandHalfWidthInput.value = String(settings.vehicleSettings.max_band_half_width_pct);
+    syncNumericInputValue(els.wheelBandwidthInput, settings.vehicleSettings.wheel_bandwidth_pct);
+    syncNumericInputValue(els.driveshaftBandwidthInput, settings.vehicleSettings.driveshaft_bandwidth_pct);
+    syncNumericInputValue(els.engineBandwidthInput, settings.vehicleSettings.engine_bandwidth_pct);
+    syncNumericInputValue(els.speedUncertaintyInput, settings.vehicleSettings.speed_uncertainty_pct);
+    syncNumericInputValue(els.tireDiameterUncertaintyInput, settings.vehicleSettings.tire_diameter_uncertainty_pct);
+    syncNumericInputValue(els.finalDriveUncertaintyInput, settings.vehicleSettings.final_drive_uncertainty_pct);
+    syncNumericInputValue(els.gearUncertaintyInput, settings.vehicleSettings.gear_uncertainty_pct);
+    syncNumericInputValue(els.minAbsBandHzInput, settings.vehicleSettings.min_abs_band_hz);
+    syncNumericInputValue(els.maxBandHalfWidthInput, settings.vehicleSettings.max_band_half_width_pct);
   }
 
   function applyAnalysisSettingsPayload(serverSettings: AnalysisSettingsPayload): void {
