@@ -38,7 +38,7 @@ void enqueue_frame(FrameQueueState& state,
   frame.last_tx_ms = 0;
   memcpy(frame.xyz,
          state.build_xyz,
-         static_cast<size_t>(state.build_count) * 3 * sizeof(int16_t));
+         static_cast<size_t>(state.build_count) * kAxesPerSample * sizeof(int16_t));
 
   state.head = (state.head + 1) % state.capacity;
   state.size++;
@@ -86,7 +86,7 @@ void append_sample(FrameQueueState& state,
     state.build_t0_us = sample_due_us;
   }
 
-  const size_t idx = static_cast<size_t>(state.build_count) * 3;
+  const size_t idx = static_cast<size_t>(state.build_count) * kAxesPerSample;
   state.build_xyz[idx + 0] = x;
   state.build_xyz[idx + 1] = y;
   state.build_xyz[idx + 2] = z;

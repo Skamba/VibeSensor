@@ -51,6 +51,7 @@ constexpr uint16_t kFrameSamples = (kConfiguredFrameSamples == 0)
 constexpr uint16_t kServerDataPort = static_cast<uint16_t>(VIBESENSOR_SERVER_DATA_PORT);
 constexpr uint16_t kServerControlPort = static_cast<uint16_t>(VIBESENSOR_SERVER_CONTROL_PORT);
 constexpr uint16_t kControlPortBase = static_cast<uint16_t>(VIBESENSOR_CONTROL_PORT_BASE);
+constexpr size_t kAxesPerSample = 3;
 
 #ifndef VIBESENSOR_FRAME_QUEUE_LEN_TARGET
 #define VIBESENSOR_FRAME_QUEUE_LEN_TARGET 128

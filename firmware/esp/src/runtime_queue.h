@@ -11,7 +11,7 @@ struct DataFrame {
   uint32_t seq = 0;
   uint64_t t0_us = 0;
   uint16_t sample_count = 0;
-  int16_t xyz[static_cast<size_t>(kFrameSamples) * 3] = {};
+  int16_t xyz[static_cast<size_t>(kFrameSamples) * kAxesPerSample] = {};
   bool transmitted = false;
   uint32_t last_tx_ms = 0;
 };
@@ -22,7 +22,7 @@ struct FrameQueueState {
   size_t head = 0;
   size_t tail = 0;
   size_t size = 0;
-  int16_t build_xyz[static_cast<size_t>(kFrameSamples) * 3] = {};
+  int16_t build_xyz[static_cast<size_t>(kFrameSamples) * kAxesPerSample] = {};
   uint16_t build_count = 0;
   uint64_t build_t0_us = 0;
   uint32_t next_seq = 0;
