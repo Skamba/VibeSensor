@@ -177,6 +177,7 @@ export interface SettingsState {
   manualSpeedKph: number | null;
   resolvedSpeedSource: SpeedSourceStatusPayload["speed_source"] | null;
   gpsFallbackActive: boolean;
+  gpsEffectiveSpeedKph: number | null;
 }
 
 export interface SpectrumState {
@@ -247,6 +248,7 @@ export function createAppState(): AppState {
       manualSpeedKph: null,
       resolvedSpeedSource: null,
       gpsFallbackActive: false,
+      gpsEffectiveSpeedKph: null,
     },
     spectrum: {
       spectrumPlot: null,

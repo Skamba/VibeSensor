@@ -83,6 +83,11 @@ export interface UiDomElements {
   wizFinalDriveInput: HTMLInputElement | null;
   wizGearRatioInput: HTMLInputElement | null;
   speedSourceRadios: HTMLInputElement[];
+  speedSourceCurrentSource: HTMLElement | null;
+  speedSourceEffectiveSpeed: HTMLElement | null;
+  speedSourceChoiceGps: HTMLElement | null;
+  speedSourceChoiceManual: HTMLElement | null;
+  manualSpeedConfig: HTMLElement | null;
   manualSpeedInput: HTMLInputElement | null;
   saveSpeedSourceBtn: HTMLButtonElement | null;
   settingsTabs: HTMLElement[];
@@ -229,6 +234,11 @@ export function createUiDomRegistry(): UiDomElements {
     wizFinalDriveInput: inputEl("wizFinalDrive"),
     wizGearRatioInput: inputEl("wizGearRatio"),
     speedSourceRadios: queryAll<HTMLInputElement>('input[name="speedSourceRadio"]'),
+    speedSourceCurrentSource: el("speedSourceCurrentSource"),
+    speedSourceEffectiveSpeed: el("speedSourceEffectiveSpeed"),
+    speedSourceChoiceGps: el("speedSourceChoiceGps"),
+    speedSourceChoiceManual: el("speedSourceChoiceManual"),
+    manualSpeedConfig: el("manualSpeedConfig"),
     manualSpeedInput: inputEl("manualSpeedInput"),
     saveSpeedSourceBtn: btnEl("saveSpeedSourceBtn"),
     settingsTabs: queryAll<HTMLElement>(".settings-tab"),
