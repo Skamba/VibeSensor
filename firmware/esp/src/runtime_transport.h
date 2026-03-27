@@ -6,13 +6,14 @@
 #include "runtime_led.h"
 #include "runtime_queue.h"
 #include "runtime_status.h"
+#include "vibesensor_proto.h"
 
 namespace vibesensor::runtime {
 
 struct TransportState {
   WiFiUDP data_udp;
   WiFiUDP control_udp;
-  uint8_t client_id[6] = {};
+  uint8_t client_id[vibesensor::kClientIdBytes] = {};
   uint16_t control_port = 0;
   uint32_t last_hello_ms = 0;
   bool handshake_complete = false;
