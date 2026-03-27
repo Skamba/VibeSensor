@@ -20,6 +20,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     SUB_CLR,
     TEXT_CLR,
     build_page1_layout,
+    observed_signature_row_count,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text
 from vibesensor.adapters.pdf.report_data import ReportTemplateData, SystemFindingCard
@@ -39,7 +40,11 @@ def _draw_systems_panel(
         width=width,
         page_top=PAGE_H - MARGIN,
         header_content_height=0.0,
-        observed_rows=5 + (1 if data.observed.certainty_reason else 0),
+        observed_rows=observed_signature_row_count(
+            certainty_tier_key=data.certainty_tier_key,
+            system_card_count=len(data.system_cards),
+            has_certainty_reason=bool(data.observed.certainty_reason),
+        ),
     )
     cards_h = layout.systems.h
     cards_y = y_cursor - cards_h
