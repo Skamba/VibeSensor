@@ -88,11 +88,24 @@ function historyInsightsWithFindingsPayload(runId: string, sensorCountUsed: numb
         amplitude_metric: "db",
         confidence: 0.92,
         confidence_pct: "92%",
+        confidence_tone: "success",
         evidence_summary: "Consistent wheel-order energy remains strongest at the front-right wheel.",
         frequency_hz_or_order: "1x wheel",
         strongest_location: "Front-right wheel",
         strongest_speed_band: "60-90 km/h",
         suspected_source: "Front-right wheel imbalance",
+      },
+      {
+        finding_id: "finding-2",
+        amplitude_metric: "db",
+        confidence: 0.67,
+        confidence_pct: "67%",
+        confidence_tone: "warn",
+        evidence_summary: "Secondary driveline energy appears at the tunnel but is weaker than the wheel finding.",
+        frequency_hz_or_order: "1x driveshaft",
+        strongest_location: "Driveshaft tunnel",
+        strongest_speed_band: "70-90 km/h",
+        suspected_source: "Secondary driveline contribution",
       },
     ],
     sensor_intensity_by_location: [
@@ -339,11 +352,14 @@ test("history list rendering promotes loaded findings ahead of supporting statis
   module.renderHistoryTable();
 
   expect(historyTableBody.innerHTML).toContain("history.details_title");
-  expect(historyTableBody.innerHTML).toContain("history.findings_title");
+  expect(historyTableBody.innerHTML).toContain("history.primary_diagnosis");
+  expect(historyTableBody.innerHTML).toContain("history.secondary_candidates_title");
+  expect(historyTableBody.innerHTML).toContain("history.findings_next_step_label");
   expect(historyTableBody.innerHTML).toContain("history-evidence-column");
   expect(historyTableBody.innerHTML).toContain("history.findings_loaded");
   expect(historyTableBody.innerHTML).toContain("Front-right wheel imbalance");
-  expect(historyTableBody.innerHTML).toContain("history.findings_location");
+  expect(historyTableBody.innerHTML).toContain("Secondary driveline contribution");
+  expect(historyTableBody.innerHTML).toContain("history.findings_signature");
   expect(historyTableBody.innerHTML).toContain("history.preview_stats_title");
 });
 

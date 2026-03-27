@@ -49,6 +49,7 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
           amplitude_metric: "db",
           confidence: 0.92,
           confidence_pct: "92%",
+          confidence_tone: "success",
           evidence_summary: "Consistent wheel-order energy remains strongest at the front-right wheel.",
           frequency_hz_or_order: "1x wheel",
           strongest_location: "Front-right wheel",
@@ -200,6 +201,7 @@ test("history loaded insights promote the result summary above supporting eviden
           amplitude_metric: "db",
           confidence: 0.92,
           confidence_pct: "92%",
+          confidence_tone: "success",
           evidence_summary: "Consistent wheel-order energy remains strongest at the front-right wheel.",
           frequency_hz_or_order: "1x wheel",
           strongest_location: "Front-right wheel",
@@ -211,6 +213,7 @@ test("history loaded insights promote the result summary above supporting eviden
           amplitude_metric: "db",
           confidence: 0.67,
           confidence_pct: "67%",
+          confidence_tone: "warn",
           evidence_summary: "Secondary driveline energy appears at the tunnel but is weaker than the wheel finding.",
           frequency_hz_or_order: "1x driveshaft",
           strongest_location: "Driveshaft tunnel",
@@ -238,13 +241,11 @@ test("history loaded insights promote the result summary above supporting eviden
   await expect(page.locator(".history-details-header [data-run-action='load-insights']")).toBeVisible();
   await page.locator(".history-details-header [data-run-action='load-insights']").click();
   await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
-  await expect(page.locator(".history-findings-overview__headline")).toHaveText("Front-right wheel imbalance");
-  await expect(page.locator(".history-findings-chip")).toContainText([
-    "Most likely origin",
-    "Strongest location",
-    "Speed band",
-    "Confidence",
-  ]);
-  await expect(page.locator(".history-finding-card")).toHaveCount(2);
+  await expect(page.locator(".history-diagnosis-card")).toContainText("Front-right wheel imbalance");
+  await expect(page.locator(".history-diagnosis-card")).toContainText("1x wheel");
+  await expect(page.locator(".history-diagnosis-card")).toContainText("Inspect first");
+  await expect(page.locator(".history-secondary-findings")).toContainText("Secondary candidates");
+  await expect(page.locator(".history-finding-card--secondary")).toHaveCount(1);
+  await expect(page.locator(".history-finding-card--secondary")).toContainText("Secondary driveline contribution");
   await expect(page.locator(".history-evidence-column .history-preview-stats")).toContainText("Sensor statistics");
 });
