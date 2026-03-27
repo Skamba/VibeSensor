@@ -152,6 +152,7 @@ export interface HistoryState {
 export interface SettingsState {
   vehicleSettings: VehicleSettings;
   cars: CarRecord[];
+  carsLoaded: boolean;
   activeCarId: string | null;
   speedSource: SpeedSourceKind;
   manualSpeedKph: number | null;
@@ -231,6 +232,7 @@ export function createAppState(): AppState {
         tire_deflection_factor: 0.97,
       },
       cars: [],
+      carsLoaded: false,
       activeCarId: null,
       speedSource: "gps",
       manualSpeedKph: null,

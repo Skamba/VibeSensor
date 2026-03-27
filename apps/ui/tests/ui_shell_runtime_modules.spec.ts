@@ -477,12 +477,13 @@ test.describe("createUiShellStatusModule", () => {
     expect(appShellWrap.classList.contains("wrap--stale")).toBe(true);
   });
 
-  test("renders speed override and car-selection warning", () => {
+  test("renders speed override and car-selection warning after car bootstrap resolves", () => {
     const state = createAppState();
     state.realtime.speedMps = 12;
     state.settings.speedSource = "manual";
     state.settings.manualSpeedKph = 43.2;
     state.shell.speedUnit = "kmh";
+    state.settings.carsLoaded = true;
     state.settings.cars = [];
     state.settings.activeCarId = null;
     const { els, speed, carSelectionBanner } = createShellDeps();
