@@ -192,7 +192,7 @@ def build_page1_layout(
     observed_h = max(44 * mm, PANEL_HEADER_H + obs_content_h + 8 * mm)
     observed = PanelLayout(MARGIN, header.y - GAP - observed_h, width, observed_h)
 
-    systems_h = 52 * mm
+    systems_h = 46 * mm
     systems = PanelLayout(MARGIN, observed.y - GAP - systems_h, width, systems_h)
 
     y_cursor = systems.y - GAP if y_after_systems_source is None else y_after_systems_source

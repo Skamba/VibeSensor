@@ -15,6 +15,7 @@ from pypdf import PdfReader
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import (
+    PartSuggestion,
     PatternEvidence,
     ReportTemplateData,
     SystemFindingCard,
@@ -183,3 +184,46 @@ def test_report_keeps_strongest_sensor_on_page_one_when_no_system_cards() -> Non
 
     assert "Strongest sensor: Rear Right" in observed_single_line
     assert "Confidence is too low to attribute vibration to specific systems." in text
+
+
+def test_report_cards_switch_to_check_first_summary_when_parts_exist() -> None:
+    """Actionable cards should spend space on pattern + first checks, not duplicate location."""
+    data = ReportTemplateData(
+        title="VibeSensor Diagnostic Report",
+        observed=PatternEvidence(
+            primary_system="Wheel / Tire",
+            strongest_location="Front Left",
+            certainty_label="High",
+        ),
+        system_cards=[
+            SystemFindingCard(
+                system_name="Wheel / Tire",
+                strongest_location="Front Left",
+                pattern_summary="1x wheel order",
+                parts=[
+                    PartSuggestion(name="Wheel bearing assembly"),
+                    PartSuggestion(name="Tire belt package"),
+                ],
+            ),
+        ],
+        pattern_evidence=PatternEvidence(
+            matched_systems=["Wheel / Tire"],
+            strongest_location="Front Left",
+        ),
+        lang="en",
+        certainty_tier_key="C",
+    )
+    pdf_bytes = build_report_pdf(data)
+    reader = PdfReader(BytesIO(pdf_bytes))
+    text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    observed_start = text.find("Observed Signature")
+    systems_start = text.find("Systems with findings")
+    next_steps_start = text.find("Next steps")
+    observed_section = text[observed_start:systems_start]
+    systems_section = text[systems_start : next_steps_start if next_steps_start >= 0 else None]
+    systems_single_line = " ".join(systems_section.split())
+
+    assert "Strongest sensor: Front Left" not in observed_section
+    assert "Strongest sensor: Front Left" not in systems_section
+    assert "Pattern: 1x wheel order" in systems_single_line
+    assert "What to check first: Wheel bearing assembly, Tire belt package" in systems_single_line

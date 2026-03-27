@@ -9,6 +9,7 @@ from _report_pdf_test_helpers import (
     extract_media_box,
     sample,
 )
+from pypdf import PdfReader
 from reportlab.pdfgen.canvas import Canvas
 from test_support.core import extract_pdf_text
 from test_support.report_helpers import (
@@ -230,7 +231,7 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
     assert "Inspect the relevant wheel/tire assemblies" in text_blob
 
 
-def test_report_pdf_wraps_long_system_card_location() -> None:
+def test_report_pdf_compacts_actionable_system_cards() -> None:
     long_location = (
         "front-left wheel hub housing extended mount with additional bracket and balancing weight"
     )
@@ -247,7 +248,12 @@ def test_report_pdf_wraps_long_system_card_location() -> None:
     canvas = Canvas(buf)
     _draw_system_card(canvas, 40, 120, 160, 130, card, tr=lambda key: key)
     canvas.save()
-    assert long_location.encode("latin-1", errors="ignore") not in buf.getvalue()
+    text = " ".join((PdfReader(BytesIO(buf.getvalue())).pages[0].extract_text() or "").split())
+
+    assert "PATTERN_SUMMARY: 1.02 wheel order harmonic with sideband modulation" in text
+    assert "WHAT_TO_CHECK_FIRST: Front-left wheel bearing assembly with extended descriptor" in text
+    assert "STRONGEST_SENSOR" not in text
+    assert long_location not in text
 
 
 def test_car_diagram_wheel_labels_stay_within_bounds_without_overlap() -> None:
