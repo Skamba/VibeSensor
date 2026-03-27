@@ -40,7 +40,7 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
         text = " ".join(pdf_text(pdf_resp.body).split())
 
         for required in (
-            "diagnostic worksheet",
+            "vibesensor diagnostic report",
             "observed signature",
             "systems with findings",
             "next steps",

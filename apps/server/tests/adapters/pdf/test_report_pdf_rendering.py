@@ -9,7 +9,6 @@ from _report_pdf_test_helpers import (
     extract_media_box,
     sample,
 )
-from pypdf import PdfReader
 from reportlab.pdfgen.canvas import Canvas
 from test_support.core import extract_pdf_text
 from test_support.report_helpers import (
@@ -75,7 +74,10 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
     assert build_report_pdf(map_summary(prepare_report_input(summary))).startswith(b"%PDF")
 
 
-def test_report_pdf_footer_contains_version_marker(tmp_path: Path, monkeypatch) -> None:
+def test_report_pdf_footer_uses_report_title_instead_of_dev_version_marker(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     monkeypatch.setenv("GIT_SHA", "a1b2c3d4e5f6")
     run_path = tmp_path / "run_version_marker.jsonl"
     records = [run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
@@ -94,17 +96,9 @@ def test_report_pdf_footer_contains_version_marker(tmp_path: Path, monkeypatch) 
         map_summary(prepare_report_input(summarize_log(run_path))),
     )
     marker = f"v{__version__} (a1b2c3d4)"
-    reader = PdfReader(BytesIO(pdf))
     text_blob = extract_pdf_text(pdf)
-    meta_blob = " ".join(
-        str(value)
-        for value in (
-            getattr(reader.metadata, "title", None),
-            getattr(reader.metadata, "subject", None),
-        )
-        if value
-    )
-    assert marker in text_blob or marker in meta_blob
+    assert marker not in text_blob
+    assert "VibeSensor Diagnostic Report" in text_blob
 
 
 def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> None:

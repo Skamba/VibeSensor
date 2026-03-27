@@ -195,8 +195,8 @@ def test_report_renders_in_en_and_nl_from_same_analysis() -> None:
     report_en, report_nl = _render_en_nl()
 
     # Both should produce valid report data
-    assert report_en.title == "Diagnostic Worksheet"
-    assert report_nl.title == "Diagnostisch werkformulier"
+    assert report_en.title == "VibeSensor Diagnostic Report"
+    assert report_nl.title == "VibeSensor-diagnoserapport"
 
     # Structural equivalence: same number of sections
     assert len(report_en.next_steps) == len(report_nl.next_steps)

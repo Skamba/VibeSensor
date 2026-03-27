@@ -122,7 +122,7 @@ def test_build_report_pdf_accepts_report_template_data() -> None:
 def test_report_output_matches_template_data() -> None:
     """Key facts from ReportTemplateData appear in the rendered PDF text."""
     data = ReportTemplateData(
-        title="Diagnostic Worksheet",
+        title="VibeSensor Diagnostic Report",
         run_datetime="2026-01-15 10:30:00",
         sensor_count=4,
         observed=PatternEvidence(
@@ -149,4 +149,4 @@ def test_report_output_matches_template_data() -> None:
 
     assert "Wheel / Tire" in text
     assert "Front Left" in text
-    assert "Diagnostic Worksheet" in text
+    assert "VibeSensor Diagnostic Report" in text
