@@ -15,6 +15,9 @@ export interface UiDomElements {
   loggingStatus: HTMLElement | null;
   loggingSummary: HTMLElement | null;
   loggingRunId: HTMLElement | null;
+  loggingPhase: HTMLElement | null;
+  loggingElapsed: HTMLElement | null;
+  loggingSamples: HTMLElement | null;
   startLoggingBtn: HTMLButtonElement | null;
   stopLoggingBtn: HTMLButtonElement | null;
   refreshHistoryBtn: HTMLButtonElement | null;
@@ -22,9 +25,6 @@ export interface UiDomElements {
   historySummary: HTMLElement | null;
   historyTableBody: HTMLElement | null;
   sensorsSettingsBody: HTMLElement | null;
-  lastSeen: HTMLElement | null;
-  dropped: HTMLElement | null;
-  framesTotal: HTMLElement | null;
   liveConnectedSensors: HTMLElement | null;
   liveAssignedLocations: HTMLElement | null;
   liveFocusSensor: HTMLElement | null;
@@ -158,6 +158,9 @@ export function createUiDomRegistry(): UiDomElements {
     loggingStatus: el("loggingStatus"),
     loggingSummary: el("loggingSummary"),
     loggingRunId: el("loggingRunId"),
+    loggingPhase: el("loggingPhase"),
+    loggingElapsed: el("loggingElapsed"),
+    loggingSamples: el("loggingSamples"),
     startLoggingBtn: btnEl("startLoggingBtn"),
     stopLoggingBtn: btnEl("stopLoggingBtn"),
     refreshHistoryBtn: btnEl("refreshHistoryBtn"),
@@ -165,9 +168,6 @@ export function createUiDomRegistry(): UiDomElements {
     historySummary: el("historySummary"),
     historyTableBody: el("historyTableBody"),
     sensorsSettingsBody: el("sensorsSettingsBody"),
-    lastSeen: el("lastSeen"),
-    dropped: el("dropped"),
-    framesTotal: el("framesTotal"),
     liveConnectedSensors: el("liveConnectedSensors"),
     liveAssignedLocations: el("liveAssignedLocations"),
     liveFocusSensor: el("liveFocusSensor"),

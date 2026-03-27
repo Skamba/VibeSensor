@@ -13,6 +13,7 @@ def _make_recording_status_snapshot(
     enabled: bool,
     run_id: str | None,
     samples_written: int,
+    start_time_utc: str | None = None,
     samples_dropped: int = 0,
     write_error: str | None = None,
     analysis_in_progress: bool = False,
@@ -24,6 +25,7 @@ def _make_recording_status_snapshot(
         run_id=run_id,
         write_error=write_error,
         analysis_in_progress=analysis_in_progress,
+        start_time_utc=start_time_utc,
         samples_written=samples_written,
         samples_dropped=samples_dropped,
         last_completed_run_id=last_completed_run_id,
@@ -45,6 +47,7 @@ def test_recording_status_route_returns_serialized_snapshot(recording_client) ->
         enabled=True,
         run_id="run-123",
         samples_written=84,
+        start_time_utc="2026-03-27T12:00:00Z",
         samples_dropped=3,
         analysis_in_progress=True,
         last_completed_run_id="run-122",
@@ -58,6 +61,7 @@ def test_recording_status_route_returns_serialized_snapshot(recording_client) ->
         "run_id": "run-123",
         "write_error": None,
         "analysis_in_progress": True,
+        "start_time_utc": "2026-03-27T12:00:00Z",
         "samples_written": 84,
         "samples_dropped": 3,
         "last_completed_run_id": "run-122",
@@ -70,6 +74,7 @@ def test_recording_start_route_uses_real_http_routing(recording_client) -> None:
     state.run_recorder.start_recording.return_value = _make_recording_status_snapshot(
         enabled=True,
         run_id="run-abc",
+        start_time_utc="2026-03-27T12:01:00Z",
         samples_written=42,
     )
 
@@ -78,6 +83,7 @@ def test_recording_start_route_uses_real_http_routing(recording_client) -> None:
     assert response.status_code == 200
     assert response.json()["enabled"] is True
     assert response.json()["run_id"] == "run-abc"
+    assert response.json()["start_time_utc"] == "2026-03-27T12:01:00Z"
     state.run_recorder.start_recording.assert_called_once_with()
 
 

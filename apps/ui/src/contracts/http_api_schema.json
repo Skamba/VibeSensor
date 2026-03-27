@@ -5112,6 +5112,17 @@
             "title": "Samples Written",
             "type": "integer"
           },
+          "start_time_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time Utc"
+          },
           "write_error": {
             "anyOf": [
               {

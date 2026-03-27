@@ -21,6 +21,7 @@ def _recording_status_response(snapshot: RunRecorderStatusSnapshot) -> Recording
         run_id=snapshot.run_id,
         write_error=snapshot.write_error,
         analysis_in_progress=snapshot.analysis_in_progress,
+        start_time_utc=snapshot.start_time_utc,
         samples_written=snapshot.samples_written,
         samples_dropped=snapshot.samples_dropped,
         last_completed_run_id=snapshot.last_completed_run_id,

@@ -14,6 +14,7 @@ def _make_recording_status_snapshot(
     enabled: bool,
     run_id: str | None,
     samples_written: int,
+    start_time_utc: str | None = None,
     samples_dropped: int = 0,
     write_error: str | None = None,
     analysis_in_progress: bool = False,
@@ -25,6 +26,7 @@ def _make_recording_status_snapshot(
         run_id=run_id,
         write_error=write_error,
         analysis_in_progress=analysis_in_progress,
+        start_time_utc=start_time_utc,
         samples_written=samples_written,
         samples_dropped=samples_dropped,
         last_completed_run_id=last_completed_run_id,
@@ -66,6 +68,7 @@ class TestRecordingStatusEndpoint:
         assert "run_id" in result
         assert "write_error" in result
         assert "analysis_in_progress" in result
+        assert "start_time_utc" in result
         assert "samples_written" in result
         assert "samples_dropped" in result
         assert "last_completed_run_id" in result
@@ -80,6 +83,7 @@ class TestRecordingStatusEndpoint:
 
         assert result["enabled"] is False
         assert result["run_id"] is None
+        assert result["start_time_utc"] is None
         assert result["samples_written"] == 0
 
 
@@ -103,6 +107,7 @@ class TestRecordingStartEndpoint:
         state.run_recorder.start_recording.return_value = _make_recording_status_snapshot(
             enabled=True,
             run_id="run-abc",
+            start_time_utc="2026-03-27T12:01:00Z",
             samples_written=42,
         )
 
@@ -110,6 +115,7 @@ class TestRecordingStartEndpoint:
 
         assert result["enabled"] is True
         assert "run_id" in result
+        assert result["start_time_utc"] == "2026-03-27T12:01:00Z"
 
 
 class TestRecordingStopEndpoint:
