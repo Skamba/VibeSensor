@@ -26,8 +26,9 @@ export interface UiDomElements {
   historyTableBody: HTMLElement | null;
   sensorsSettingsBody: HTMLElement | null;
   liveConnectedSensors: HTMLElement | null;
-  liveAssignedLocations: HTMLElement | null;
-  liveFocusSensor: HTMLElement | null;
+  liveActiveCar: HTMLElement | null;
+  liveRecordingState: HTMLElement | null;
+  liveDataFreshness: HTMLElement | null;
   liveStrongestSignal: HTMLElement | null;
   liveRunHealth: HTMLElement | null;
   liveSensorRoster: HTMLElement | null;
@@ -169,8 +170,9 @@ export function createUiDomRegistry(): UiDomElements {
     historyTableBody: el("historyTableBody"),
     sensorsSettingsBody: el("sensorsSettingsBody"),
     liveConnectedSensors: el("liveConnectedSensors"),
-    liveAssignedLocations: el("liveAssignedLocations"),
-    liveFocusSensor: el("liveFocusSensor"),
+    liveActiveCar: el("liveActiveCar"),
+    liveRecordingState: el("liveRecordingState"),
+    liveDataFreshness: el("liveDataFreshness"),
     liveStrongestSignal: el("liveStrongestSignal"),
     liveRunHealth: el("liveRunHealth"),
     liveSensorRoster: el("liveSensorRoster"),

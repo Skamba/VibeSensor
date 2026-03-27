@@ -1,7 +1,8 @@
 import { EXPECTED_SCHEMA_VERSION } from "../contracts/ws_payload_types";
+import type { AppState } from "./ui_app_state";
 
 type DemoDeps = {
-  state: { transport: { wsState: string; hasReceivedPayload: boolean } };
+  state: Pick<AppState, "transport" | "settings">;
   renderWsState: () => void;
   applyPayload: (payload: unknown) => void;
 };
@@ -141,6 +142,17 @@ export function runDemoMode(deps: DemoDeps): void {
     spectra: { clients: demoSpectra },
   };
 
+  state.settings.carsLoaded = true;
+  state.settings.cars = [
+    {
+      id: "demo-car-1",
+      name: "Demo Hatch",
+      type: "Simulated setup",
+      variant: "Audit baseline",
+      aspects: { ...state.settings.vehicleSettings },
+    },
+  ];
+  state.settings.activeCarId = "demo-car-1";
   state.transport.hasReceivedPayload = true;
   applyPayload(demoPayload);
 
