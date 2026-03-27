@@ -337,6 +337,10 @@
               </div>
 
               <aside class="wizard-summary-card" aria-live="polite">
+                <div class="wizard-task-callout">
+                  <strong data-i18n="settings.car.wizard_task_title">Guided setup</strong>
+                  <div class="subtle" data-i18n="settings.car.wizard_task_intro">This flow pauses the rest of Settings so you can build the next analysis profile step by step without losing your place.</div>
+                </div>
                 <div class="wizard-summary-card__title" data-i18n="settings.car.wizard_summary_title">Current selection</div>
                 <div class="subtle" data-i18n="settings.car.wizard_summary_intro">Your choices stay visible here while the profile comes together.</div>
                 <div id="wizardSummaryPanel"></div>
@@ -477,7 +481,7 @@
                       <label for="updateSsidInput" data-i18n="settings.update.ssid">Wi-Fi SSID</label>
                       <input type="text" id="updateSsidInput" autocomplete="off" maxlength="64" style="width:100%;max-width:20rem;" />
                     </div>
-                    <div class="form-group">
+                   <div class="form-group">
                       <label for="updatePasswordInput" data-i18n="settings.update.password">Wi-Fi Password</label>
                       <div style="display:flex;gap:0.5rem;align-items:center;">
                         <input type="password" id="updatePasswordInput" autocomplete="off" maxlength="128" style="width:100%;max-width:20rem;" />
@@ -486,6 +490,7 @@
                         </button>
                       </div>
                     </div>
+                    <div class="maintenance-note" data-i18n="settings.update.preflight_note">Starting an update temporarily pauses hotspot access while the Pi joins Wi-Fi, downloads the next release, and restores the local web UI when the job is done.</div>
                     <div class="maintenance-action-row">
                       <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
                       <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
@@ -558,17 +563,18 @@
                       <div class="subtle" data-i18n="settings.esp_flash.controls_intro">Choose a serial port or leave auto-detect enabled, then start the firmware build and flash flow.</div>
                     </div>
                   </div>
-                  <div class="manual-speed-row">
-                    <label for="espFlashPortSelect" data-i18n="settings.esp_flash.port">Serial Port</label>
-                    <select id="espFlashPortSelect">
-                      <option value="__auto__" data-i18n="settings.esp_flash.auto_detect">Auto-detect</option>
-                    </select>
-                    <button type="button" id="espFlashRefreshPortsBtn" class="btn btn--muted" data-i18n="settings.esp_flash.refresh_ports">Refresh</button>
-                  </div>
-                  <div class="maintenance-action-row">
-                    <button type="button" id="espFlashStartBtn" class="btn btn--success" data-i18n="settings.esp_flash.start">Flash latest</button>
-                    <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" disabled>Cancel</button>
-                  </div>
+                   <div class="manual-speed-row">
+                     <label for="espFlashPortSelect" data-i18n="settings.esp_flash.port">Serial Port</label>
+                     <select id="espFlashPortSelect">
+                       <option value="__auto__" data-i18n="settings.esp_flash.auto_detect">Auto-detect</option>
+                     </select>
+                     <button type="button" id="espFlashRefreshPortsBtn" class="btn btn--muted" data-i18n="settings.esp_flash.refresh_ports">Refresh</button>
+                   </div>
+                   <div class="maintenance-note" data-i18n="settings.esp_flash.preflight_note">Starting a flash builds the latest firmware on this Pi, erases the selected board, and writes the new image over USB. Keep the board powered until the staged progress reaches Done.</div>
+                   <div class="maintenance-action-row">
+                     <button type="button" id="espFlashStartBtn" class="btn btn--success" data-i18n="settings.esp_flash.start">Flash latest</button>
+                     <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" disabled>Cancel</button>
+                   </div>
                   <div class="maintenance-card__header" style="margin-top:1rem;">
                     <div>
                       <div class="maintenance-card__title" data-i18n="settings.esp_flash.current_status_title">Current readiness</div>

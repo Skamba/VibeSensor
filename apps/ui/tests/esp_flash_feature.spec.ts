@@ -263,6 +263,8 @@ test.describe("createEspFlashFeature polling", () => {
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.summary.ready_ports");
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.one_port");
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.auto_detect");
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.journey_title");
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.phase.validating");
       expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.logs_idle_title");
       expect((deps.els.espFlashHistoryPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.history_empty_title");
     } finally {
@@ -404,6 +406,9 @@ test.describe("createUpdateFeature polling", () => {
 
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_summary.ready");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.journey_title");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.issues_empty_title");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.log_empty_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("1.2.3");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.health_card_title");
     } finally {

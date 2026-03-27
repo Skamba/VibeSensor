@@ -47,6 +47,8 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   logCursor = 2;
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Running");
   await expect(page.locator("#espFlashReadinessPanel")).toContainText("/dev/ttyUSB0");
+  await expect(page.locator("#espFlashReadinessPanel")).toContainText("Expected stages");
+  await expect(page.locator("#espFlashReadinessPanel")).toContainText("Write firmware");
   await expect(page.locator("#espFlashLogPanel")).toContainText("erase ok");
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Success");
   await expect(page.locator("#espFlashHistoryPanel")).toContainText("/dev/ttyUSB0");
@@ -76,6 +78,9 @@ test("settings esp flash status falls back to idle when API omits state", async 
   await page.locator('[data-settings-tab="espFlashTab"]').click();
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Idle");
   await expect(page.locator("#espFlashReadinessPanel")).toContainText("No serial device is detected yet");
+  await expect(page.locator("#espFlashReadinessPanel")).toContainText("Expected stages");
+  await expect(page.locator("#espFlashReadinessPanel")).toContainText("Validate board and bundle");
   await expect(page.locator("#espFlashLogPanel")).toContainText("No active flash log");
   await expect(page.locator("#espFlashHistoryPanel")).toContainText("No recent flash attempts");
+  await expect(page.locator("#espFlashTab")).toContainText("Starting a flash builds the latest firmware");
 });
