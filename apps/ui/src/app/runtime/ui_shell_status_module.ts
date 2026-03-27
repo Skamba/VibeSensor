@@ -1,4 +1,5 @@
 import { fmt } from "../../format";
+import { deriveCarSelectionState } from "../car_selection_state";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { RealtimeState, SettingsState, ShellState, TransportState } from "../ui_app_state";
 
@@ -105,10 +106,8 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
   function renderCarSelectionWarning(): void {
     const banner = els.carSelectionBanner;
     if (!banner) return;
-    const hasValidActiveCar = Boolean(
-      settings.activeCarId && settings.cars.some((car) => car.id === settings.activeCarId),
-    );
-    if (hasValidActiveCar) {
+    const carSelectionState = deriveCarSelectionState(settings);
+    if (carSelectionState.kind === "loading" || carSelectionState.kind === "active") {
       banner.hidden = true;
       banner.textContent = "";
       return;

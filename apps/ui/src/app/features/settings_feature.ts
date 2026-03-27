@@ -1,4 +1,9 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
+import {
+  deriveCarSelectionState,
+  hasResolvedActiveCar,
+  resolveActiveCar,
+} from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
 import type { CarsPayload } from "../../api/types";
 import {
@@ -59,16 +64,17 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function hasValidActiveCar(): boolean {
-    return Boolean(settings.activeCarId && settings.cars.some((car) => car.id === settings.activeCarId));
+    return hasResolvedActiveCar(settings);
   }
 
   function syncCarDependentUiState(): void {
-    const hasActiveCar = hasValidActiveCar();
+    const carSelectionState = deriveCarSelectionState(settings);
+    const hasActiveCar = carSelectionState.kind === "active";
     if (els.saveAnalysisBtn) {
       els.saveAnalysisBtn.disabled = !hasActiveCar;
     }
     if (els.analysisNoCarMessage) {
-      els.analysisNoCarMessage.hidden = hasActiveCar;
+      els.analysisNoCarMessage.hidden = hasActiveCar || carSelectionState.kind === "loading";
     }
     ctx.onCarSelectionStateChange();
   }
@@ -103,9 +109,11 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     fmt,
     renderSpeedReadout: ctx.renderSpeedReadout,
   });
+  syncCarDependentUiState();
 
   function syncCarsPayload(payload: CarsPayload): void {
     settings.cars = payload.cars;
+    settings.carsLoaded = true;
     const requestedActiveCarId = payload.active_car_id;
     const hasRequestedActive = requestedActiveCarId
       ? settings.cars.some((car) => car.id === requestedActiveCarId)
@@ -164,7 +172,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function syncActiveCarToInputs(): void {
-    const car = settings.cars.find((entry) => entry.id === settings.activeCarId);
+    const car = resolveActiveCar(settings);
     if (!car) {
       syncCarDependentUiState();
       return;
