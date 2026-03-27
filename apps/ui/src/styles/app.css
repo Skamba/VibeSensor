@@ -1304,7 +1304,7 @@ input:focus-visible,
 .history-results-layout {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
   align-items: start;
 }
 .history-evidence-column {

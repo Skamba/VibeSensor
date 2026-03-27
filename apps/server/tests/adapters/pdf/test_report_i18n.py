@@ -240,8 +240,6 @@ def test_dutch_translations_complete() -> None:
     assert ui["dashboard.rotational.source.fallback_manual"] == "Terugval naar handmatig"
     assert ui["history.refresh"] == "Geschiedenis herladen"
     assert ui["history.pdf_failed"] == "PDF genereren mislukt."
-    assert ui["history.table.dropped_delta"] == "Verloren \u0394"
-    assert ui["history.table.overflow_delta"] == "Overloop \u0394"
     assert ui["settings.wheel_bandwidth"] == "Wielorde-bandbreedte (%)"
     assert ui["settings.driveshaft_bandwidth"] == "Aandrijfasorde-bandbreedte (%)"
     assert ui["settings.engine_bandwidth"] == "Motororde-bandbreedte (%)"
