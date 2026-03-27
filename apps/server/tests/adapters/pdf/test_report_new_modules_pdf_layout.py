@@ -19,7 +19,13 @@ from vibesensor.adapters.pdf.panels._panel_diagram import (
     fit_rect_preserve_aspect,
 )
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.pdf.pdf_style import MARGIN, PAGE_H, PAGE_W, build_page1_layout
+from vibesensor.adapters.pdf.pdf_style import (
+    MARGIN,
+    PAGE_H,
+    PAGE_W,
+    build_page1_layout,
+    observed_signature_row_count,
+)
 
 
 def _sample(
@@ -136,3 +142,30 @@ def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:
     )
     assert layout.observed.h > layout.header.h
     assert layout.systems.h < 58 * mm
+
+
+def test_observed_signature_row_count_reserves_optional_reason_and_tier_a_warning() -> None:
+    assert (
+        observed_signature_row_count(
+            certainty_tier_key="C",
+            system_card_count=1,
+            has_certainty_reason=False,
+        )
+        == 4
+    )
+    assert (
+        observed_signature_row_count(
+            certainty_tier_key="C",
+            system_card_count=1,
+            has_certainty_reason=True,
+        )
+        == 5
+    )
+    assert (
+        observed_signature_row_count(
+            certainty_tier_key="A",
+            system_card_count=0,
+            has_certainty_reason=False,
+        )
+        == 6
+    )

@@ -32,6 +32,8 @@ from vibesensor.adapters.pdf.pdf_style import (
     TEXT_CLR,
     HeaderColumnsLayout,
     build_page1_layout,
+    observed_signature_row_count,
+    show_observed_signature_location,
 )
 from vibesensor.adapters.pdf.pdf_text import (
     _draw_kv,
@@ -163,11 +165,16 @@ def _draw_header_panel(
     page_top: float,
     na: str,
 ) -> float:
+    obs_rows = observed_signature_row_count(
+        certainty_tier_key=data.certainty_tier_key,
+        system_card_count=len(data.system_cards),
+        has_certainty_reason=bool(data.observed.certainty_reason),
+    )
     header_columns = build_page1_layout(
         width=width,
         page_top=page_top,
         header_content_height=0.0,
-        observed_rows=5,
+        observed_rows=obs_rows,
     ).header_columns
     left_rows, right_rows, left_col_w, right_col_w, meta_right = _build_header_rows(
         c,
@@ -186,7 +193,7 @@ def _draw_header_panel(
         width=width,
         page_top=page_top,
         header_content_height=max(left_h, right_h),
-        observed_rows=5 + (1 if data.observed.certainty_reason else 0),
+        observed_rows=obs_rows,
     )
     _draw_panel(c, layout.header.x, layout.header.y, layout.header.w, layout.header.h, fill=SOFT_BG)
 
@@ -220,7 +227,15 @@ def _draw_observed_signature_panel(
     y_cursor: float,
     na: str,
 ) -> float:
-    obs_rows = 5 + (1 if data.observed.certainty_reason else 0)
+    show_strongest_sensor = show_observed_signature_location(
+        certainty_tier_key=data.certainty_tier_key,
+        system_card_count=len(data.system_cards),
+    )
+    obs_rows = observed_signature_row_count(
+        certainty_tier_key=data.certainty_tier_key,
+        system_card_count=len(data.system_cards),
+        has_certainty_reason=bool(data.observed.certainty_reason),
+    )
     layout = build_page1_layout(
         width=width,
         page_top=PAGE_H - MARGIN,
@@ -256,15 +271,16 @@ def _draw_observed_signature_panel(
         value_w=width - 8 * mm - OBSERVED_LABEL_W,
     )
     oy -= 1.0 * mm
-    _draw_kv(
-        c,
-        ox,
-        oy,
-        tr("STRONGEST_SENSOR"),
-        _safe(data.observed.strongest_location, na),
-        label_w=OBSERVED_LABEL_W,
-    )
-    oy -= obs_step
+    if show_strongest_sensor:
+        _draw_kv(
+            c,
+            ox,
+            oy,
+            tr("STRONGEST_SENSOR"),
+            _safe(data.observed.strongest_location, na),
+            label_w=OBSERVED_LABEL_W,
+        )
+        oy -= obs_step
     _draw_kv(c, ox, oy, tr("CERTAINTY_LABEL_FULL"), cert_val, label_w=OBSERVED_LABEL_W)
     oy -= obs_step
     _draw_kv(

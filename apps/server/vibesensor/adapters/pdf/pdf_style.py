@@ -151,6 +151,30 @@ def build_header_columns_layout(*, width: float) -> HeaderColumnsLayout:
     )
 
 
+def show_observed_signature_location(*, certainty_tier_key: str, system_card_count: int) -> bool:
+    """Keep strongest-sensor context on page 1 when the systems panel cannot show cards."""
+    return certainty_tier_key == "A" or system_card_count == 0
+
+
+def observed_signature_row_count(
+    *,
+    certainty_tier_key: str,
+    system_card_count: int,
+    has_certainty_reason: bool,
+) -> int:
+    return (
+        4
+        + int(
+            show_observed_signature_location(
+                certainty_tier_key=certainty_tier_key,
+                system_card_count=system_card_count,
+            )
+        )
+        + int(has_certainty_reason)
+        + int(certainty_tier_key == "A")
+    )
+
+
 def build_page1_layout(
     *,
     width: float,
