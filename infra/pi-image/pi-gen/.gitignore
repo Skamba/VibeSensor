@@ -1,3 +1,4 @@
 .cache/
+# Keep the placeholder so the output directory exists in fresh clones.
 out/*
 !out/.gitkeep
