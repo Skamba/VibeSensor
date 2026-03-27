@@ -73,8 +73,8 @@ bool next_sensor_sample(SamplingState& state,
       for (size_t i = 0;
            i < read_count && state.sensor_prefetch_count < kSensorPrefetchSamples;
            ++i) {
-        const size_t src = i * 3;
-        const size_t dst = state.sensor_prefetch_head * 3;
+        const size_t src = i * kAxesPerSample;
+        const size_t dst = state.sensor_prefetch_head * kAxesPerSample;
         state.sensor_prefetch_xyz[dst + 0] = state.sensor_batch_xyz[src + 0];
         state.sensor_prefetch_xyz[dst + 1] = state.sensor_batch_xyz[src + 1];
         state.sensor_prefetch_xyz[dst + 2] = state.sensor_batch_xyz[src + 2];
@@ -87,7 +87,7 @@ bool next_sensor_sample(SamplingState& state,
   if (state.sensor_prefetch_count == 0) {
     return false;
   }
-  const size_t offset = state.sensor_prefetch_tail * 3;
+  const size_t offset = state.sensor_prefetch_tail * kAxesPerSample;
   *x = state.sensor_prefetch_xyz[offset + 0];
   *y = state.sensor_prefetch_xyz[offset + 1];
   *z = state.sensor_prefetch_xyz[offset + 2];
