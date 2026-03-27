@@ -17,7 +17,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def build_report_pdf(data: ReportTemplateData) -> bytes:
-    """Build a 2-page diagnostic-worksheet PDF from ReportTemplateData."""
+    """Build a 2-page diagnostic report PDF from ReportTemplateData."""
     if not isinstance(data, ReportTemplateData):
         raise TypeError(f"build_report_pdf expects ReportTemplateData, got {type(data).__name__}")
     valid_tiers = frozenset({"A", "B", "C"})
@@ -42,7 +42,7 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
     canvas = Canvas(buf, pagesize=PAGE_SIZE, pageCompression=0)
 
     remaining_next_steps = _page1(canvas, data, ctx=ctx)
-    _draw_footer(canvas, 1, 2, data.version_marker)
+    _draw_footer(canvas, 1, 2, data.title)
     canvas.showPage()
 
     _page2(
@@ -51,7 +51,7 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
         ctx=ctx,
         next_steps_continued=remaining_next_steps,
     )
-    _draw_footer(canvas, 2, 2, data.version_marker)
+    _draw_footer(canvas, 2, 2, data.title)
     canvas.showPage()
 
     canvas.save()

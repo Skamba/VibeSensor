@@ -167,7 +167,7 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
         page_texts.append("\n".join(lines))
 
     expected_text = [
-        "Diagnostic Worksheet",
+        "VibeSensor Diagnostic Report",
         "Evidence and Hotspots",
         "Pattern Evidence",
         "Diagnostic Peaks",

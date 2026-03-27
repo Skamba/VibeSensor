@@ -188,7 +188,7 @@ def _draw_header_panel(
     c.drawString(
         MARGIN + 4 * mm,
         layout.header.y + layout.header.h - 6 * mm,
-        data.title or tr("DIAGNOSTIC_WORKSHEET"),
+        data.title or tr("REPORT_FOOTER_TITLE"),
     )
 
     meta_y0 = layout.header.y + layout.header.h - header_columns.meta_top_pad
