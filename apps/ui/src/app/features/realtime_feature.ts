@@ -67,6 +67,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return codes.map((code) => ({ code, label: locationLabel(code) }));
   }
 
+  function applyLocationCodes(codes: string[]): void {
+    realtime.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
+    realtime.locationOptions = buildLocationOptions(realtime.locationCodes);
+  }
+
   function locationCodeForClient(client: AdaptedClient): string {
     const explicitCode = String(client.location_code || "").trim();
     if (explicitCode && realtime.locationCodes.includes(explicitCode)) return explicitCode;
@@ -189,11 +194,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       const codes = Array.isArray(payload.locations)
         ? payload.locations.map((row) => row.code).filter((code): code is string => typeof code === "string")
         : [];
-      realtime.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
-      realtime.locationOptions = buildLocationOptions(realtime.locationCodes);
+      applyLocationCodes(codes);
     } catch (_err) {
-      realtime.locationCodes = defaultLocationCodes.slice();
-      realtime.locationOptions = buildLocationOptions(realtime.locationCodes);
+      applyLocationCodes([]);
     }
     maybeRenderSensorsSettingsList(true);
   }
