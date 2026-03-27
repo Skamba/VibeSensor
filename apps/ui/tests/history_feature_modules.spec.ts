@@ -72,6 +72,42 @@ function historyInsightsPayload(runId: string, sensorCountUsed: number) {
   };
 }
 
+function historyInsightsWithFindingsPayload(runId: string, sensorCountUsed: number) {
+  return {
+    ...historyInsightsPayload(runId, sensorCountUsed),
+    most_likely_origin: {
+      suspected_source: "Front-right wheel imbalance",
+      location: "Front-right wheel",
+      speed_band: "60-90 km/h",
+      explanation: "Order content and spatial dominance agree on the front-right wheel.",
+    },
+    findings: [
+      {
+        finding_id: "finding-1",
+        amplitude_metric: "db",
+        confidence: 0.92,
+        confidence_pct: "92%",
+        evidence_summary: "Consistent wheel-order energy remains strongest at the front-right wheel.",
+        frequency_hz_or_order: "1x wheel",
+        strongest_location: "Front-right wheel",
+        strongest_speed_band: "60-90 km/h",
+        suspected_source: "Front-right wheel imbalance",
+      },
+    ],
+    sensor_intensity_by_location: [
+      {
+        location: "Front Right Wheel",
+        p50_intensity_db: 18,
+        p95_intensity_db: 32,
+        max_intensity_db: 40,
+        dropped_frames_delta: 0,
+        queue_overflow_drops_delta: 0,
+        sample_count: 20,
+      },
+    ],
+  };
+}
+
 function historyInsightsAnalyzingPayload(runId: string) {
   return {
     run_id: runId,
@@ -253,6 +289,45 @@ test("history detail module treats analyzing insights responses as not-yet-avail
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=en",
   ]);
+});
+
+test("history list rendering promotes loaded findings ahead of supporting statistics", () => {
+  const state = createAppState();
+  state.history.runs = [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }];
+  state.history.expandedRunId = "run-001";
+  state.history.runDetailsById["run-001"] = {
+    preview: historyInsightsWithFindingsPayload("run-001", 2) as RunDetail["preview"],
+    previewLoading: false,
+    previewError: "",
+    insights: historyInsightsWithFindingsPayload("run-001", 2) as RunDetail["insights"],
+    insightsLoading: false,
+    insightsError: "",
+    pdfLoading: false,
+    pdfError: "",
+  };
+  const { els, historyTableBody } = createHistoryElements();
+
+  const module = createHistoryListModule({
+    history: state.history,
+    els,
+    t: testTranslation,
+    escapeHtml: (value) => String(value ?? ""),
+    fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    fmtTs: (iso) => iso,
+    formatInt: (value) => String(value),
+    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
+    collapseExpandedRun: () => {
+      state.history.expandedRunId = null;
+    },
+  });
+
+  module.renderHistoryTable();
+
+  expect(historyTableBody.innerHTML).toContain("history.findings_title");
+  expect(historyTableBody.innerHTML).toContain("history.findings_loaded");
+  expect(historyTableBody.innerHTML).toContain("Front-right wheel imbalance");
+  expect(historyTableBody.innerHTML).toContain("history.findings_location");
+  expect(historyTableBody.innerHTML).toContain("history.preview_stats_title");
 });
 
 test("downloadBlobFile downloads with decoded filename and revokes the blob URL", async () => {
