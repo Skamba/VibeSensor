@@ -1,6 +1,11 @@
 import uPlot from "uplot";
 
-import { SPECTRUM_DB_MAX, SPECTRUM_DB_MIN } from "./config";
+import {
+  SPECTRUM_DB_MAX,
+  SPECTRUM_DB_MIN,
+  SPECTRUM_DB_REFERENCE_AMP_G,
+  SPECTRUM_MIN_RENDER_AMP_G,
+} from "./config";
 
 export interface SpectrumSeriesMeta {
   label: string;
@@ -13,8 +18,22 @@ export interface SpectrumText {
   axisAmplitude: string;
 }
 
+const SPECTRUM_LOG10_REF = Math.log10(SPECTRUM_DB_REFERENCE_AMP_G);
+
+export function convertSpectrumAmplitudesToDbInPlace(values: number[]): void {
+  for (let i = 0; i < values.length; i += 1) {
+    const amplitude = values[i];
+    const safe = Number.isFinite(amplitude) && amplitude > 0
+      ? Math.max(amplitude, SPECTRUM_MIN_RENDER_AMP_G)
+      : SPECTRUM_MIN_RENDER_AMP_G;
+    const db = 20 * (Math.log10(safe) - SPECTRUM_LOG10_REF);
+    values[i] = Math.max(SPECTRUM_DB_MIN, Math.min(SPECTRUM_DB_MAX, db));
+  }
+}
+
 export class SpectrumChart {
   private static readonly FIXED_Y_RANGE: [number, number] = [SPECTRUM_DB_MIN, SPECTRUM_DB_MAX];
+
   private plot: uPlot | null = null;
   private readonly hostEl: HTMLElement;
   private readonly measureEl: HTMLElement;
@@ -47,6 +66,19 @@ export class SpectrumChart {
         title: "",
         width: this.computeWidth(),
         height: this.height,
+        focus: { alpha: 0.16 },
+        cursor: {
+          x: true,
+          y: true,
+          focus: { prox: 24 },
+          hover: { prox: 18 },
+          points: {
+            one: true,
+            size: 7,
+            width: 2,
+            fill: this.cssVar("--surface", "#f8f9fb"),
+          },
+        },
         scales: {
           x: { time: false },
           y: {
@@ -76,6 +108,16 @@ export class SpectrumChart {
   setData(data: uPlot.AlignedData): void {
     if (!this.plot) return;
     this.plot.setData(data);
+  }
+
+  setSeriesIsolation(seriesIdx: number | null): void {
+    const plot = this.plot;
+    if (!plot) return;
+    plot.batch(() => {
+      for (let index = 1; index < plot.series.length; index += 1) {
+        plot.setSeries(index, { show: seriesIdx === null || index === seriesIdx }, false);
+      }
+    });
   }
 
   resize(): void {
