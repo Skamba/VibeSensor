@@ -225,6 +225,23 @@ function jsonResponse(body: unknown): Response {
   });
 }
 
+function requestUrl(input: string | URL | RequestInfo): string {
+  return String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
+}
+
+async function withMockFetch(
+  mockFetch: typeof fetch,
+  run: () => Promise<void>,
+): Promise<void> {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch;
+  try {
+    await run();
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
 }
@@ -300,19 +317,7 @@ test.describe("createUiShellPreferencesModule", () => {
   test("hydrates persisted language and speed unit without shell navigation", async () => {
     const state = createAppState();
     const { els, speedUnitSelect } = createShellDeps();
-    const originalFetch = globalThis.fetch;
     const requests: string[] = [];
-    globalThis.fetch = (async (input: string | URL | RequestInfo) => {
-      const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-      requests.push(url);
-      if (url.endsWith("/api/settings/language")) {
-        return jsonResponse({ language: "nl" });
-      }
-      if (url.endsWith("/api/settings/speed-unit")) {
-        return jsonResponse({ speed_unit: "mps" });
-      }
-      throw new Error(`Unexpected request: ${url}`);
-    }) as typeof fetch;
 
     const applyLanguageCalls: boolean[] = [];
     let renderSpeedReadoutCalls = 0;
@@ -330,11 +335,19 @@ test.describe("createUiShellPreferencesModule", () => {
       showError: () => {},
     });
 
-    try {
+    await withMockFetch((async (input: string | URL | RequestInfo) => {
+      const url = requestUrl(input);
+      requests.push(url);
+      if (url.endsWith("/api/settings/language")) {
+        return jsonResponse({ language: "nl" });
+      }
+      if (url.endsWith("/api/settings/speed-unit")) {
+        return jsonResponse({ speed_unit: "mps" });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch, async () => {
       await module.hydratePersistedPreferences();
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+    });
 
     expect(requests).toEqual(["/api/settings/language", "/api/settings/speed-unit"]);
     expect(state.shell.lang).toBe("nl");
@@ -347,17 +360,7 @@ test.describe("createUiShellPreferencesModule", () => {
   test("bindHandlers persists speed unit changes independently from navigation", async () => {
     const state = createAppState();
     const { els, speedUnitSelect } = createShellDeps();
-    const originalFetch = globalThis.fetch;
     const requests: Array<{ url: string; method: string; body: string }> = [];
-    globalThis.fetch = (async (input: string | URL | RequestInfo, init?: RequestInit) => {
-      const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-      requests.push({
-        url,
-        method: init?.method ?? "GET",
-        body: String(init?.body ?? ""),
-      });
-      return jsonResponse({ speed_unit: "mps" });
-    }) as typeof fetch;
 
     let renderSpeedReadoutCalls = 0;
     const module = createUiShellPreferencesModule({
@@ -372,14 +375,19 @@ test.describe("createUiShellPreferencesModule", () => {
       showError: () => {},
     });
 
-    try {
+    await withMockFetch((async (input: string | URL | RequestInfo, init?: RequestInit) => {
+      requests.push({
+        url: requestUrl(input),
+        method: init?.method ?? "GET",
+        body: String(init?.body ?? ""),
+      });
+      return jsonResponse({ speed_unit: "mps" });
+    }) as typeof fetch, async () => {
       module.bindHandlers();
       speedUnitSelect.triggerChange("mps");
       await expect.poll(() => state.shell.speedUnit).toBe("mps");
       await expect.poll(() => renderSpeedReadoutCalls).toBe(1);
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+    });
 
     expect(requests).toEqual([
       {
@@ -395,11 +403,7 @@ test.describe("createUiShellPreferencesModule", () => {
   test("save failure restores the previous value and reports via showError", async () => {
     const state = createAppState();
     const { els, speedUnitSelect } = createShellDeps();
-    const originalFetch = globalThis.fetch;
     const errors: string[] = [];
-    globalThis.fetch = (async () => {
-      throw new Error("save failed");
-    }) as typeof fetch;
 
     const module = createUiShellPreferencesModule({
       shell: state.shell,
@@ -413,13 +417,13 @@ test.describe("createUiShellPreferencesModule", () => {
       },
     });
 
-    try {
+    await withMockFetch((async () => {
+      throw new Error("save failed");
+    }) as typeof fetch, async () => {
       module.bindHandlers();
       speedUnitSelect.triggerChange("mps");
       await expect.poll(() => errors).toEqual(["save failed"]);
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+    });
 
     expect(state.shell.speedUnit).toBe("kmh");
     expect(speedUnitSelect.value).toBe("kmh");
