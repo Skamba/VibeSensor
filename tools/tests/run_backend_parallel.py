@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Run duration-balanced backend test shards with cached timing data."""
+
 from __future__ import annotations
 
 import argparse
