@@ -1,4 +1,6 @@
 .pio
 .vscode/*
 !.vscode/extensions.json
+
+# Keep per-developer network overrides out of source control.
 include/vibesensor_network.local.h
