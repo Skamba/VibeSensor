@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import {
   renderWizardGearboxOptions,
   renderWizardModelOptions,
+  renderWizardSummary,
   renderWizardTireOptions,
   syncCarWizardStepState,
   writeCarWizardTireInputs,
@@ -18,6 +19,8 @@ type ClassListStub = {
 type ElementStub = HTMLElement & {
   classList: ClassListStub;
   getAttribute(name: string): string | null;
+  setAttribute(name: string, value: string): void;
+  removeAttribute(name: string): void;
 };
 
 function createClassList(initial: string[] = []): ClassListStub {
@@ -45,10 +48,17 @@ function createClassList(initial: string[] = []): ClassListStub {
 }
 
 function createElement(attributes: Record<string, string> = {}): ElementStub {
+  const activeAttributes = { ...attributes };
   return {
     classList: createClassList(),
     getAttribute(name: string): string | null {
-      return attributes[name] ?? null;
+      return activeAttributes[name] ?? null;
+    },
+    setAttribute(name: string, value: string): void {
+      activeAttributes[name] = value;
+    },
+    removeAttribute(name: string): void {
+      delete activeAttributes[name];
     },
   } as unknown as ElementStub;
 }
@@ -74,13 +84,47 @@ test.describe("car wizard view helpers", () => {
     expect(wizardSteps[2].classList.contains("active")).toBe(false);
     expect(wizardStepDots[3].classList.contains("active")).toBe(true);
     expect(wizardStepDots[2].classList.contains("done")).toBe(true);
+    expect(wizardStepDots[3].getAttribute("aria-current")).toBe("step");
     expect(wizardBackBtn.style.display).toBe("");
 
     syncCarWizardStepState({ wizardSteps, wizardStepDots, wizardBackBtn }, 0);
     expect(wizardSteps[0].classList.contains("active")).toBe(true);
     expect(wizardStepDots[0].classList.contains("active")).toBe(true);
     expect(wizardStepDots[1].classList.contains("done")).toBe(false);
+    expect(wizardStepDots[0].getAttribute("aria-current")).toBe("step");
+    expect(wizardStepDots[3].getAttribute("aria-current")).toBeNull();
     expect(wizardBackBtn.style.display).toBe("none");
+  });
+
+  test("renderWizardSummary keeps the current selection visible with pending placeholders", () => {
+    const escapeHtml = (value: unknown) => String(value ?? "");
+    const labels: Record<string, string> = {
+      "settings.car.wizard_summary_pending": "Not selected yet",
+      "settings.car.wizard_summary_name": "Profile preview",
+      "settings.car.wizard_summary_brand": "Brand",
+      "settings.car.wizard_summary_type": "Type",
+      "settings.car.wizard_summary_model": "Model",
+      "settings.car.wizard_summary_variant": "Variant",
+      "settings.car.wizard_summary_tire": "Tires",
+      "settings.car.wizard_summary_gearbox": "Gearbox",
+    };
+    const t = (key: string) => labels[key] ?? key;
+
+    const html = renderWizardSummary({
+      profileName: "BMW X5 M60i",
+      brand: "BMW",
+      carType: "SUV",
+      model: "X5 M60i",
+      variant: null,
+      tire: null,
+      gearbox: "8-speed",
+    }, { t, escapeHtml });
+
+    expect(html).toContain("Profile preview");
+    expect(html).toContain("BMW X5 M60i");
+    expect(html).toContain("SUV");
+    expect(html).toContain("8-speed");
+    expect(html).toContain("Not selected yet");
   });
 
   test("render helpers produce the expected wizard option markup", () => {
