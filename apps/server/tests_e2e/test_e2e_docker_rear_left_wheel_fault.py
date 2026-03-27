@@ -566,11 +566,15 @@ def test_e2e_docker_localized_wheel_fault(fault_wheel: str) -> None:
         assert pdf_resp.body[:5] == b"%PDF-"
         report_text = pdf_text(pdf_resp.body)
         report_text_normalized = normalize_location(report_text)
-        assert "primary system:" in report_text
-        assert "wheel / tire" in report_text
+        assert "what to check first" in report_text
+        assert re.search(
+            r"observed signature\s+wheel / tire\s+what to check first", report_text
+        )
         assert expected_location in report_text_normalized
-        assert "primary system: driveline" not in report_text
-        assert "primary system: engine" not in report_text
+        assert not re.search(
+            r"observed signature\s+driveline\s+what to check first", report_text
+        )
+        assert not re.search(r"observed signature\s+engine\s+what to check first", report_text)
 
         # ------------------------------------------------------------------
         # Alignment validation: cross-source consistency checks
