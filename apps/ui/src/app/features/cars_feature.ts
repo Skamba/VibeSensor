@@ -15,10 +15,12 @@ import {
   renderWizardGearboxOptions,
   renderWizardMessage,
   renderWizardModelOptions,
+  renderWizardSummary,
   renderWizardTireOptions,
   renderWizardTypeOptions,
   renderWizardVariantOptions,
   syncCarWizardStepState,
+  type WizardSummaryData,
   writeCarWizardTireInputs,
 } from "../views/car_wizard_view";
 
@@ -65,6 +67,14 @@ function resolveTireOptions(
   return model?.tire_options || [];
 }
 
+const WIZARD_STEP_LABEL_KEYS = [
+  "settings.car.step_brand_short",
+  "settings.car.step_type_short",
+  "settings.car.step_model_short",
+  "settings.car.step_variant_short",
+  "settings.car.step_specs_short",
+] as const;
+
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   const { els, escapeHtml, t } = ctx;
   const wizState: WizardState = {
@@ -77,6 +87,8 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     selectedGearbox: null,
     selectedTire: null,
   };
+  let handlersBound = false;
+  let lastWizardFocusTarget: HTMLElement | null = null;
 
   function bindWizardOptionButtons(
     container: HTMLElement,
@@ -87,6 +99,26 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         onSelect(button);
       });
     });
+  }
+
+  function focusWizardElement(target: HTMLElement | null): void {
+    target?.focus();
+  }
+
+  function focusFirstWizardOption(
+    container: ParentNode | null,
+    fallback: HTMLElement | null,
+  ): void {
+    const firstOption = container?.querySelector<HTMLButtonElement>(".wiz-opt");
+    focusWizardElement(firstOption ?? fallback);
+  }
+
+  function formatWizardTireLabel(tire: CarLibraryTireOption | null): string | null {
+    if (!tire) {
+      return null;
+    }
+    const size = `${tire.tire_width_mm}/${tire.tire_aspect_pct}R${tire.rim_in}`;
+    return tire.name ? `${tire.name} · ${size}` : size;
   }
 
   function resetWizardState(): void {
@@ -100,14 +132,74 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     wizState.selectedTire = null;
   }
 
+  function setWizardVisibility(isOpen: boolean): void {
+    if (els.wizardBackdrop) {
+      els.wizardBackdrop.hidden = !isOpen;
+    }
+    if (els.addCarWizard) {
+      els.addCarWizard.hidden = !isOpen;
+      if (isOpen) {
+        els.addCarWizard.scrollTop = 0;
+      }
+    }
+    document.body.classList.toggle("wizard-open", isOpen);
+  }
+
+  function buildWizardSummaryData(): WizardSummaryData {
+    const variantIsImplicit = Boolean(
+      wizState.selectedModel
+      && (wizState.selectedModel.variants?.length ?? 0) === 0
+      && wizState.step >= 4,
+    );
+    return {
+      profileName: wizState.model
+        ? buildWizardCarName(wizState.brand, wizState.model, wizState.selectedVariant)
+        : null,
+      brand: wizState.brand || null,
+      carType: wizState.carType || null,
+      model: wizState.model || null,
+      variant: wizState.selectedVariant?.name
+        || (variantIsImplicit ? t("settings.car.wizard_summary_not_needed") : null),
+      tire: formatWizardTireLabel(wizState.selectedTire),
+      gearbox: wizState.selectedGearbox?.name || null,
+    };
+  }
+
+  function refreshWizardChrome(): void {
+    syncCarWizardStepState(els, wizState.step);
+    if (els.wizardProgressText) {
+      els.wizardProgressText.textContent = t("settings.car.wizard_progress", {
+        current: wizState.step + 1,
+        total: WIZARD_STEP_LABEL_KEYS.length,
+        step: t(WIZARD_STEP_LABEL_KEYS[wizState.step] ?? WIZARD_STEP_LABEL_KEYS[0]),
+      });
+    }
+    if (els.wizardSummaryPanel) {
+      els.wizardSummaryPanel.innerHTML = renderWizardSummary(buildWizardSummaryData(), {
+        t,
+        escapeHtml,
+      });
+    }
+  }
+
   function openWizard(): void {
+    lastWizardFocusTarget = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : els.addCarBtn;
     resetWizardState();
-    if (els.addCarWizard) els.addCarWizard.hidden = false;
+    setWizardVisibility(true);
+    refreshWizardChrome();
+    focusWizardElement(els.wizardCloseBtn);
     loadWizardStep();
   }
 
   function closeWizard(): void {
-    if (els.addCarWizard) els.addCarWizard.hidden = true;
+    setWizardVisibility(false);
+    const focusTarget = lastWizardFocusTarget && document.contains(lastWizardFocusTarget)
+      ? lastWizardFocusTarget
+      : els.addCarBtn;
+    lastWizardFocusTarget = null;
+    focusWizardElement(focusTarget);
   }
 
   function buildWizardCarName(
@@ -121,7 +213,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   }
 
   function loadWizardStep(): void {
-    syncCarWizardStepState(els, wizState.step);
+    refreshWizardChrome();
     if (wizState.step === 0) void loadBrandStep();
     else if (wizState.step === 1) void loadTypeStep();
     else if (wizState.step === 2) void loadModelStep();
@@ -143,8 +235,10 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         wizState.step = 1;
         loadWizardStep();
       });
+      focusFirstWizardOption(container, els.wizardCustomBrandInput);
     } catch {
       container.innerHTML = renderWizardMessage(t("settings.wizard.load_failed_brands"), escapeHtml);
+      focusWizardElement(els.wizardCustomBrandInput);
     }
   }
 
@@ -162,8 +256,10 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         wizState.step = 2;
         loadWizardStep();
       });
+      focusFirstWizardOption(container, els.wizardCustomTypeInput);
     } catch {
       container.innerHTML = renderWizardMessage(t("settings.wizard.load_failed_types"), escapeHtml);
+      focusWizardElement(els.wizardCustomTypeInput);
     }
   }
 
@@ -184,8 +280,10 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         wizState.step = 3;
         loadWizardStep();
       });
+      focusFirstWizardOption(container, els.wizardCustomModelInput);
     } catch {
       container.innerHTML = renderWizardMessage(t("settings.wizard.load_failed_models"), escapeHtml);
+      focusWizardElement(els.wizardCustomModelInput);
     }
   }
 
@@ -206,6 +304,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       wizState.step = 4;
       loadWizardStep();
     });
+    focusFirstWizardOption(container, null);
   }
 
   function loadGearboxStep(): void {
@@ -225,8 +324,11 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
             candidate.classList.remove("selected");
           });
           button.classList.add("selected");
+          refreshWizardChrome();
         });
+        refreshWizardChrome();
       } else {
+        wizState.selectedTire = null;
         tireContainer.innerHTML = "";
       }
     }
@@ -235,7 +337,10 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     if (!container) return;
     const gearboxes = resolveGearboxes(wizState.selectedModel, wizState.selectedVariant);
     if (!gearboxes.length) {
+      wizState.selectedGearbox = null;
       container.innerHTML = renderWizardMessage(t("settings.wizard.no_gearboxes"), escapeHtml);
+      refreshWizardChrome();
+      focusWizardElement(els.wizTireWidthInput);
       return;
     }
     container.innerHTML = renderWizardGearboxOptions(gearboxes, {
@@ -250,6 +355,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         const tire = wizState.selectedTire || wizState.selectedModel;
         if (!tire) return;
         wizState.selectedGearbox = gearbox;
+        refreshWizardChrome();
         const carName = buildWizardCarName(
           wizState.brand,
           wizState.model,
@@ -271,11 +377,23 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         closeWizard();
       })();
     });
+    focusWizardElement(
+      tireContainer?.querySelector<HTMLButtonElement>(".wiz-opt")
+      ?? container.querySelector<HTMLButtonElement>(".wiz-opt")
+      ?? els.wizTireWidthInput,
+    );
   }
 
   function bindWizardHandlers(): void {
+    if (handlersBound) {
+      return;
+    }
+    handlersBound = true;
     if (els.addCarBtn) els.addCarBtn.addEventListener("click", openWizard);
     if (els.wizardCloseBtn) els.wizardCloseBtn.addEventListener("click", closeWizard);
+    if (els.wizardBackdrop) {
+      els.wizardBackdrop.addEventListener("click", closeWizard);
+    }
     if (els.wizardBackBtn) {
       els.wizardBackBtn.addEventListener("click", () => {
         if (wizState.step > 0) {
@@ -290,23 +408,38 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         }
       });
     }
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && els.addCarWizard && !els.addCarWizard.hidden) {
+        event.preventDefault();
+        closeWizard();
+      }
+    });
     els.wizardCustomBrandBtn?.addEventListener("click", () => {
       const value = els.wizardCustomBrandInput?.value?.trim();
-      if (!value) return;
+      if (!value) {
+        els.wizardCustomBrandInput?.focus();
+        return;
+      }
       wizState.brand = value;
       wizState.step = 1;
       loadWizardStep();
     });
     els.wizardCustomTypeBtn?.addEventListener("click", () => {
       const value = els.wizardCustomTypeInput?.value?.trim();
-      if (!value) return;
+      if (!value) {
+        els.wizardCustomTypeInput?.focus();
+        return;
+      }
       wizState.carType = value;
       wizState.step = 2;
       loadWizardStep();
     });
     els.wizardCustomModelBtn?.addEventListener("click", () => {
       const value = els.wizardCustomModelInput?.value?.trim();
-      if (!value) return;
+      if (!value) {
+        els.wizardCustomModelInput?.focus();
+        return;
+      }
       wizState.model = value;
       wizState.selectedModel = null;
       wizState.selectedVariant = null;
@@ -319,7 +452,26 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       const ri = Number(els.wizRimInput?.value);
       const fd = Number(els.wizFinalDriveInput?.value);
       const gr = Number(els.wizGearRatioInput?.value);
-      if (!(tw > 0 && ta > 0 && ri > 0 && fd > 0 && gr > 0)) return;
+      if (!(tw > 0)) {
+        els.wizTireWidthInput?.focus();
+        return;
+      }
+      if (!(ta > 0)) {
+        els.wizTireAspectInput?.focus();
+        return;
+      }
+      if (!(ri > 0)) {
+        els.wizRimInput?.focus();
+        return;
+      }
+      if (!(fd > 0)) {
+        els.wizFinalDriveInput?.focus();
+        return;
+      }
+      if (!(gr > 0)) {
+        els.wizGearRatioInput?.focus();
+        return;
+      }
       const name = buildWizardCarName(
         wizState.brand,
         wizState.model,
