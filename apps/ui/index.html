@@ -54,6 +54,38 @@
 
       <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
         <div class="dashboard-grid">
+          <div class="panel card dashboard-grid__overview">
+            <div class="card__header card__header--stack">
+              <div>
+                <div class="card__title" data-i18n="dashboard.live_overview">Live overview</div>
+                <div class="card__subtle" data-i18n="dashboard.live_overview_hint">Check coverage, recording readiness, and the strongest live signal before reading the chart.</div>
+              </div>
+              <div id="liveRunHealth" class="pill pill--muted" aria-live="polite">No live signal</div>
+            </div>
+            <div class="stat-grid live-overview__stats">
+              <div id="liveConnectedSensors" class="stat">
+                <div class="stat__label" data-i18n="dashboard.connected_sensors">Sensors online</div>
+                <div class="stat__value" data-value>--</div>
+              </div>
+              <div id="liveAssignedLocations" class="stat">
+                <div class="stat__label" data-i18n="dashboard.assigned_locations">Locations assigned</div>
+                <div class="stat__value" data-value>--</div>
+              </div>
+              <div id="liveFocusSensor" class="stat">
+                <div class="stat__label" data-i18n="dashboard.focus_sensor">Focus sensor</div>
+                <div class="stat__value" data-value>--</div>
+              </div>
+              <div id="liveStrongestSignal" class="stat">
+                <div class="stat__label" data-i18n="dashboard.strongest_signal">Strongest signal</div>
+                <div class="stat__value" data-value>--</div>
+              </div>
+            </div>
+            <div class="live-sensor-roster__header">
+              <div class="mini-label" data-i18n="dashboard.sensor_coverage">Sensor coverage</div>
+            </div>
+            <div id="liveSensorRoster" class="live-sensor-roster"></div>
+          </div>
+
           <div class="panel card dashboard-grid__main">
             <div class="card__header">
               <div class="card__title" data-i18n="chart.spectrum_title">Multi-Sensor Blended Spectrum</div>
@@ -67,11 +99,30 @@
           </div>
 
           <div class="panel card dashboard-grid__controls">
-            <div class="card__header">
-              <div class="card__title" data-i18n="dashboard.run_recording">Run Recording</div>
+            <div class="card__header card__header--stack">
+              <div>
+                <div class="card__title" data-i18n="dashboard.run_recording">Run Recording</div>
+                <div id="loggingSummary" class="card__subtle">Connect sensors to begin a trustworthy run.</div>
+              </div>
             </div>
             <div class="logging-row">
               <span id="loggingStatus" class="pill pill--muted" aria-live="polite">Stopped</span>
+              <span id="loggingRunId" class="subtle" hidden></span>
+            </div>
+            <div class="mini-label" data-i18n="dashboard.focus_sensor_metrics">Focus sensor detail</div>
+            <div class="stat-grid stat-grid--compact">
+              <div id="lastSeen" class="stat stat--compact">
+                <div class="stat__label" data-i18n="status.last_seen_label">Last seen</div>
+                <div class="stat__value" data-value>--</div>
+              </div>
+              <div id="dropped" class="stat stat--compact">
+                <div class="stat__label" data-i18n="status.dropped_label">Dropped frames</div>
+                <div class="stat__value" data-value>--</div>
+              </div>
+              <div id="framesTotal" class="stat stat--compact">
+                <div class="stat__label" data-i18n="status.frames_total_label">Frames total</div>
+                <div class="stat__value" data-value>--</div>
+              </div>
             </div>
             <div class="logging-actions">
               <button id="startLoggingBtn" class="btn" data-i18n="dashboard.start_recording">Start Recording</button>

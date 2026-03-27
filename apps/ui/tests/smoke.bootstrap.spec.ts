@@ -72,6 +72,13 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "VibeSensor" })).toBeVisible();
   await expect(page.locator("#linkState")).not.toHaveText(/Connecting/i);
+  await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText("1 / 1");
+  await expect(page.locator("#liveAssignedLocations [data-value]")).toHaveText("1 / 1");
+  await expect(page.locator("#liveRunHealth")).toHaveText("Healthy");
+  await expect(page.locator("#liveFocusSensor [data-value]")).toContainText("Front Left");
+  await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
+  await expect(page.locator("#liveSensorRoster")).toContainText("Front Left Wheel");
+  await expect(page.locator("#loggingSummary")).toHaveText("Ready to record with 1 online sensor(s) and 1 assigned location(s).");
   const dashboardTab = page.locator("#tab-dashboard");
   const historyTab = page.locator("#tab-history");
   const settingsTab = page.locator("#tab-settings");
@@ -91,6 +98,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await dashboardTab.click();
   await page.locator("#startLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toHaveText("Running");
+  await expect(page.locator("#loggingRunId")).toHaveText("Run ID: run-001");
   await expect.poll(() => startCalls).toBe(1);
   await page.locator("#stopLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toHaveText("Stopped");
