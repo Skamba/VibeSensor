@@ -27,6 +27,7 @@ init_pi_gen_env() {
   CLEAN="${CLEAN:-0}"
   RASPBIAN_MIRROR="${RASPBIAN_MIRROR:-}"
   RASPBIAN_MIRROR_FALLBACKS=(
+    "https://archive.raspbian.org/raspbian/"
     "http://raspbian.raspberrypi.com/raspbian/"
     "http://mirror.init7.net/raspbian/raspbian/"
     "http://mirrors.ustc.edu.cn/raspbian/raspbian/"
