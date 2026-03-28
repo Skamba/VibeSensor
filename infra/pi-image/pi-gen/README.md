@@ -176,10 +176,15 @@ The pi-image pipeline now has three explicit ownership layers:
 invokes it automatically when `VALIDATE=1`, and you can rerun it separately
 against an already-built artifact.
 
-During pi-gen repo preparation, the build also patches upstream
-`export-image/prerun.sh` to size the boot partition at `1 GiB`. Current
-Raspberry Pi kernel/security updates overflow the stock `512 MiB` bootfs during
-export-image upgrades.
+During pi-gen repo preparation, the build also patches upstream:
+
+- `export-image/prerun.sh` to size the boot partition at `1 GiB`. Current
+  Raspberry Pi kernel/security updates overflow the stock `512 MiB` bootfs
+  during export-image upgrades.
+- `stage0/files/raspberrypi.gpg` to replace the stale armhf bootstrap keyring
+  that still carries SHA-1 self-signatures in upstream `master`. Trixie
+  debootstrap rejects that key on modern GnuPG policies, so VibeSensor vendors
+  a known-good replacement until upstream ships the refreshed keyring.
 
 ## How It Works
 
