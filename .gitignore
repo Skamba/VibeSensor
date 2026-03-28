@@ -113,6 +113,7 @@ apps/ui/test-results/
 .copilot-work/
 .copilot-worktrees/
 tmp/
+.tmp/
 .ai-temp/
 
 # AI planning artifacts (keep only repo-map.md in docs/ai/)

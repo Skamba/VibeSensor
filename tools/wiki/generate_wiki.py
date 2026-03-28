@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate a GitHub wiki page seed for VibeSensor.
+"""Generate a user-centric GitHub wiki seed for VibeSensor.
 
-The page content is derived from the live repository structure and current
-product surfaces. This script writes markdown pages and expects curated
-screenshots to be present under ``images/`` in the output directory.
+The page content is derived from the live repository docs and current product
+surfaces. This script writes markdown pages and expects curated screenshots to
+be present under ``images/`` in the output directory.
 """
 
 from __future__ import annotations
@@ -45,270 +45,505 @@ def _home_page(repo_url: str, release_note: str) -> str:
 
 _Reviewed against {release_note}._
 
-VibeSensor is an offline-first vehicle vibration diagnostics system: ESP32 sensor
-nodes stream accelerometer data to a Raspberry Pi, the Pi performs FFT/order
-analysis locally, and the browser dashboard turns the result into live views,
-run history, and PDF reports.
+VibeSensor is an offline-first vibration diagnostic kit for cars. A Raspberry Pi
+creates its own Wi-Fi hotspot, wireless sensor nodes stream accelerometer data
+to it, and the browser dashboard turns a road test into live graphs, saved run
+history, and PDF reports. You do not need internet access and you do not need
+to install a phone app.
 
 ## Start here
 
-- [Web UI tour](Web-UI)
-- [System architecture](System-Architecture)
-- [Release and deployment](Release-and-Deployment)
-- [Repo README]({_blob_url(repo_url, "README.md")})
-- [Backend HTTP/WebSocket reference]({_blob_url(repo_url, "apps/server/README.md")}#http-and-websocket-surface)
-- [Frontend architecture]({_blob_url(repo_url, "apps/ui/README.md")})
+1. [Get the hardware](Get-the-Hardware)
+2. [Initial install](Initial-Install)
+3. [Configure VibeSensor](Configure-VibeSensor)
+4. [Run a diagnostic drive](Run-a-Diagnostic-Drive)
+5. [Troubleshooting and maintenance](Troubleshooting-and-Maintenance)
 
-## Product flow
+## What a normal workflow looks like
 
-1. Mount sensors and connect to the Pi hotspot.
-2. Use the **Live** dashboard to confirm signal quality and record a drive.
-3. Review **History** for findings, heatmaps, PDF reports, and exports.
-4. Manage **Cars**, **Analysis**, and **Speed Source** settings from the Settings view.
-5. Ship release artifacts from CI: Python wheel, firmware bundle, and refreshed wiki screenshots.
+1. Assemble a Pi plus one or more wireless sensor nodes.
+2. Flash the Pi image or do the manual Raspberry Pi install once.
+3. Power on the Pi and connect your phone, tablet, or laptop to the
+   `VibeSensor` hotspot.
+4. Open `http://10.4.0.1`, add the car you are testing, assign sensor
+   locations, and choose a speed source.
+5. Use the **Live** view to confirm the sensors are streaming and the graph has
+   real movement.
+6. Record a drive, then open **History** to review the diagnosis and export a
+   PDF report.
 
-## Screenshot tour
+## The main operator screens
 
-### Live dashboard
+### Live view
 
 ![Live dashboard](images/live-dashboard.png)
 
-### History overview
+Use **Live** while mounting sensors, checking signal quality, and recording a
+test drive.
+
+### History
 
 ![History overview](images/history-overview.png)
 
-### Cars and setup
+Use **History** after a run to compare sessions, review the strongest findings,
+and export customer-facing reports.
+
+### Settings
 
 ![Cars tab](images/settings-cars.png)
 
-For the full UI breakdown with page-by-page notes, use [Web UI](Web-UI).
+Use **Settings** to choose the active car, tune analysis inputs when needed, and
+select a speed source.
 
-## Source-of-truth files
+## Good starter kits
 
-- UI feature composition: [`apps/ui/src/app/app_feature_bundle.ts`]({_blob_url(repo_url, "apps/ui/src/app/app_feature_bundle.ts")})
-- UI shell & transport: [`apps/ui/src/app/runtime/`]({_blob_url(repo_url, "apps/ui/src/app/runtime")})
-- UI design system: [`apps/ui/src/styles/app.css`]({_blob_url(repo_url, "apps/ui/src/styles/app.css")}) and [`docs/design_language.md`]({_blob_url(repo_url, "docs/design_language.md")})
-- Backend/report stack: [`apps/server/`]({_blob_url(repo_url, "apps/server")})
-- Release workflow: [`.github/workflows/main-release.yml`]({_blob_url(repo_url, ".github/workflows/main-release.yml")})
+- **Minimum bench kit:** 1 Raspberry Pi, 1 sensor node, and 1 browser device.
+- **Typical road-test kit:** 1 Raspberry Pi plus multiple sensor nodes so you
+  can compare corners of the car during the same run.
+- **Expanded diagnostic kit:** add an engine-bay sensor and a GPS receiver if
+  you want automatic speed instead of manual speed entry.
+
+## Need the deeper technical docs?
+
+- Top-level README: [`README.md`]({_blob_url(repo_url, "README.md")})
+- Hardware BOM: [`hardware/README.md`]({_blob_url(repo_url, "hardware/README.md")})
+- Pi image build/install reference: [`infra/pi-image/pi-gen/README.md`]({_blob_url(repo_url, "infra/pi-image/pi-gen/README.md")})
+- Server config reference: [`docs/configuration_reference.md`]({_blob_url(repo_url, "docs/configuration_reference.md")})
+- Field troubleshooting runbook: [`docs/operational-runbooks.md`]({_blob_url(repo_url, "docs/operational-runbooks.md")})
 """
 
 
-def _web_ui_page(repo_url: str) -> str:
-    return f"""# Web UI
+def _hardware_page(repo_url: str) -> str:
+    return f"""# Get the Hardware
 
-The TypeScript/Vite app is a single-page dashboard with three top-level views:
-**Live**, **History**, and **Settings**. The overall UI architecture is described in
-[`apps/ui/README.md`]({_blob_url(repo_url, "apps/ui/README.md")}), while the feature
-wiring lives in [`apps/ui/src/app/app_feature_bundle.ts`]({_blob_url(repo_url, "apps/ui/src/app/app_feature_bundle.ts")}).
+VibeSensor does not currently ship from this repository as a single boxed kit.
+Today, you build a kit from the prototype bill of materials and then flash the
+Pi and sensor software yourself or through whoever prepares devices for your
+team.
 
-## Main views
+## Core parts you need
 
-| View | What it is for | Key source files |
+| Part | Typical quantity | Why you need it |
 | --- | --- | --- |
-| Live | Real-time spectrum monitoring, event log, recording controls, sensor coverage | [`realtime_feature.ts`]({_blob_url(repo_url, "apps/ui/src/app/features/realtime_feature.ts")}), [`ui_spectrum_controller.ts`]({_blob_url(repo_url, "apps/ui/src/app/runtime/ui_spectrum_controller.ts")}) |
-| History | Recorded runs, diagnosis previews, heatmap/details, PDF and ZIP export | [`history_feature.ts`]({_blob_url(repo_url, "apps/ui/src/app/features/history_feature.ts")}), [`history_table_view.ts`]({_blob_url(repo_url, "apps/ui/src/app/views/history_table_view.ts")}) |
-| Settings | Cars, analysis tuning, speed source, sensors, update, ESP flash | [`settings_feature.ts`]({_blob_url(repo_url, "apps/ui/src/app/features/settings_feature.ts")}), [`views/`]({_blob_url(repo_url, "apps/ui/src/app/views")}) |
+| Raspberry Pi 3 A+ | 1 | Runs the hotspot, server, history database, and browser UI |
+| microSD card | 1 | Holds the Pi image or manual install |
+| Pi power supply | 1 | Powers the Pi during use |
+| M5Stack ATOM Lite ESP32 | 1 per sensor node | Wi-Fi sensor node that streams data to the Pi |
+| M5Stack Accel Unit (ADXL345) | 1 per sensor node | Measures vibration on three axes |
+| M5Stack Atomic Battery Base | 1 per sensor node | Makes each ATOM Lite portable |
+| Phone, tablet, or laptop with Wi-Fi | 1 | Connects to the Pi hotspot and opens the dashboard |
+| GPS receiver supported by `gpsd` | Optional | Lets VibeSensor use live GPS speed instead of manual speed |
 
-## Live dashboard
+The current prototype hardware list in the repo is:
+[`hardware/README.md`]({_blob_url(repo_url, "hardware/README.md")}).
 
-![Live dashboard](images/live-dashboard.png)
+## How many sensor nodes should you buy?
 
-The seeded screenshots use deterministic mocked HTTP and WebSocket data so the
-wiki always shows:
+- **At minimum:** 1 node for bench work, quick checks, or a single suspect area.
+- **Most useful starting point:** multiple nodes so you can compare locations in
+  one drive instead of moving one sensor around between runs.
+- **Common full-car layout:** one sensor near each wheel.
+- **Extra coverage:** add an engine-bay sensor when engine-order vibration is
+  part of the complaint.
 
-- a populated multi-sensor spectrum chart with visible plotted data,
-- the live sensor coverage roster with multiple mounted sensors,
-- live speed/order context,
-- and the status surfaces that matter during a road test.
+Multiple sensor nodes can connect to one Pi at the same time.
 
-Useful code anchors:
+## Assembly
 
-- Screenshot fixture data: [`apps/ui/tests/wiki_screenshot_data.ts`]({_blob_url(repo_url, "apps/ui/tests/wiki_screenshot_data.ts")})
-- Route/WebSocket helpers: [`apps/ui/tests/smoke.helpers.ts`]({_blob_url(repo_url, "apps/ui/tests/smoke.helpers.ts")})
-- Release wiki capture: [`apps/ui/tests/wiki_screenshots.spec.ts`]({_blob_url(repo_url, "apps/ui/tests/wiki_screenshots.spec.ts")})
+Each sensor node is made from:
 
-## History view
+1. an M5Stack ATOM Lite,
+2. an M5Stack Accel Unit,
+3. and an Atomic Battery Base.
 
-![History overview](images/history-overview.png)
+The ATOM Lite connects to the accelerometer through the 4-pin Unit port, so the
+prototype build does not require soldering. The default wiring in this repo is:
 
-The curated wiki scenario shows multiple analyzed runs so the page demonstrates the
-actual workflow: summary rows, preview diagnosis context, and enough data to explain
-why users come back after a drive.
+- `SDA = GPIO26`
+- `SCL = GPIO32`
+- `ADDR = 0x53`
 
-The mocked release screenshot data intentionally includes:
+See the hardware reference and firmware README for the wiring and firmware-side
+network defaults:
 
-- multiple completed runs,
-- different root-cause summaries,
-- speed-band context,
-- confidence labels,
-- and enough sensor intensity evidence for the heatmap/detail entry points.
+- [`hardware/README.md`]({_blob_url(repo_url, "hardware/README.md")})
+- [`firmware/esp/README.md`]({_blob_url(repo_url, "firmware/esp/README.md")})
 
-Useful code anchors:
+## Before you take the kit to a vehicle
 
-- History state/features: [`apps/ui/src/app/features/history_feature.ts`]({_blob_url(repo_url, "apps/ui/src/app/features/history_feature.ts")})
-- History rendering: [`apps/ui/src/app/views/history_table_view.ts`]({_blob_url(repo_url, "apps/ui/src/app/views/history_table_view.ts")})
-- Smoke coverage: [`apps/ui/tests/smoke.history.spec.ts`]({_blob_url(repo_url, "apps/ui/tests/smoke.history.spec.ts")})
+- Charge each Battery Base.
+- Label the physical nodes so you can match them to locations in the UI.
+- Decide how many locations you want to instrument for the first session.
+- If you want automatic speed, prepare a GPS receiver; otherwise plan to use the
+  manual speed option in Settings.
+"""
 
-## Settings: Cars
+
+def _install_page(repo_url: str) -> str:
+    return f"""# Initial Install
+
+There are two supported ways to get VibeSensor onto a Raspberry Pi:
+
+1. a **prebuilt Pi image** (best for repeatable deployments),
+2. or a **manual install** on Raspberry Pi OS Lite.
+
+If someone on your team already prepared the SD card for you, you can skip
+straight to the **First boot** section below.
+
+## Option A: Prebuilt Pi image
+
+This is the easiest path for a workshop or repeat deployment because the image
+already includes the server, the built web UI, and the hotspot services.
+
+### If you are preparing the image yourself
+
+On a Linux machine with Docker:
+
+```bash
+git clone https://github.com/Skamba/VibeSensor.git
+cd VibeSensor
+./infra/pi-image/pi-gen/build.sh
+```
+
+The image artifact is written under:
+
+- `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
+
+Flash that image to a microSD card with Raspberry Pi Imager, insert the card
+into the Pi 3 A+, and power it on.
+
+Detailed image-build notes live here:
+[`infra/pi-image/pi-gen/README.md`]({_blob_url(repo_url, "infra/pi-image/pi-gen/README.md")}).
+
+## Option B: Manual install on Raspberry Pi OS Lite
+
+If you want to start from a stock Raspberry Pi OS Lite card instead of the
+prebuilt image, run the repo install scripts on the Pi:
+
+```bash
+sudo apt-get update && sudo apt-get install -y git
+git clone https://github.com/Skamba/VibeSensor.git
+cd VibeSensor
+sudo ./apps/server/scripts/install_pi.sh
+sudo ./apps/server/scripts/hotspot_nmcli.sh
+```
+
+This path is useful when you want to control the base OS image yourself.
+
+## First boot
+
+After the Pi boots:
+
+1. Look for the Wi-Fi network `VibeSensor`.
+2. Connect a phone, tablet, or laptop to that hotspot.
+3. Open `http://10.4.0.1`.
+4. If the primary listener is not serving, try `http://10.4.0.1:8000`.
+
+Default recovery credentials on generated images are:
+
+- SSH user: `pi`
+- SSH password: `vibesensor`
+
+The default hotspot is intentionally prototype-friendly:
+
+- SSID: `VibeSensor`
+- Password: empty / open hotspot
+
+Change those defaults before field deployment outside a trusted environment.
+
+## Flash and power the sensor nodes
+
+The firmware defaults already match the Pi hotspot in this repo:
+
+- SSID `VibeSensor`
+- empty PSK
+- server IP `10.4.0.1`
+- UDP ports `9000/9001`
+
+To flash a node:
+
+```bash
+cd firmware/esp
+pio run -t upload
+pio device monitor
+```
+
+Once the node is flashed and powered, it should connect to the Pi automatically
+when it is in range.
+
+If you intentionally use a different Wi-Fi name, password, or server IP, create
+`include/vibesensor_network.local.h` from the example file and rebuild the
+firmware. That advanced path is documented in:
+[`firmware/esp/README.md`]({_blob_url(repo_url, "firmware/esp/README.md")}).
+
+## First checks after install
+
+- Open the dashboard and confirm the UI loads.
+- Wait for one or more sensors to appear in the live client list.
+- If you support the device over SSH, you can also verify:
+
+```bash
+curl -sf http://10.4.0.1/api/health || curl -sf http://10.4.0.1:8000/api/health
+curl -sf http://10.4.0.1/api/clients || curl -sf http://10.4.0.1:8000/api/clients
+```
+"""
+
+
+def _config_page(repo_url: str) -> str:
+    return f"""# Configure VibeSensor
+
+Most day-to-day setup happens from the **Settings** view in the browser UI. The
+important operator tasks are:
+
+1. choose the car you are testing,
+2. assign sensor names and locations,
+3. choose the speed source,
+4. and only then adjust analysis settings if the defaults are not enough.
+
+## Cars
 
 ![Cars tab](images/settings-cars.png)
 
-The Cars tab is where the product connects vehicle metadata to the order-analysis
-math. The release screenshot seeds multiple cars so the wiki demonstrates:
+Use the **Cars** tab to store one or more vehicle profiles and pick the active
+car for the next run.
 
-- active-car selection,
-- stored vehicle specs (tire, final drive, gear),
-- and why the product treats car configuration as part of the analysis contract.
+Make sure the active car matches the vehicle on the lift or road test, because
+wheel and drivetrain information feeds the order-tracking analysis.
 
-Useful code anchors:
+The important values to get right are:
 
-- Cars feature: [`apps/ui/src/app/features/cars_feature.ts`]({_blob_url(repo_url, "apps/ui/src/app/features/cars_feature.ts")})
-- Cars table renderer: [`settings_car_list_view.ts`]({_blob_url(repo_url, "apps/ui/src/app/views/settings_car_list_view.ts")})
-- Wizard smoke test: [`smoke.car-wizard.spec.ts`]({_blob_url(repo_url, "apps/ui/tests/smoke.car-wizard.spec.ts")})
+- tire width / aspect / rim size,
+- final drive ratio,
+- and current gear ratio for the gear used during the run.
 
-## Settings: Analysis
+If you test multiple cars, keep separate saved profiles and switch the active
+car before each session.
+
+## Sensor names and locations
+
+Use Settings to give each sensor a clear name and location so the Live view,
+History view, heatmaps, and PDF reports read like the real car instead of
+anonymous device IDs.
+
+Typical location labels include:
+
+- front left wheel,
+- front right wheel,
+- rear left wheel,
+- rear right wheel,
+- engine bay.
+
+If you are unsure which physical node is which, use the identify/blink action to
+match the on-screen entry to the ATOM Lite in your hand.
+
+## Analysis settings
 
 ![Analysis settings](images/settings-analysis.png)
 
-This tab exposes the tuning inputs behind wheel/driveshaft/engine order matching.
-The screenshot uses a valid active car and real response-shape data so the wiki can
-show the same controls CI validates:
+The **Analysis** tab controls how tightly VibeSensor matches wheel, driveshaft,
+and engine orders.
 
-- bandwidth percentages,
-- uncertainty knobs,
-- reset-to-defaults behavior,
-- and the guided helper disclosures added to keep the defaults understandable.
+Recommended operator approach:
 
-Useful code anchors:
+- Start with the defaults.
+- Save a correct car profile first.
+- Change analysis tuning only when you have a specific reason, such as an
+  unusual drivetrain or a known tolerance issue.
+- If experimentation made things worse, use the reset-to-defaults path.
 
-- Analysis settings module: [`settings_analysis_module.ts`]({_blob_url(repo_url, "apps/ui/src/app/features/settings_analysis_module.ts")})
-- Settings smoke coverage: [`smoke.settings.spec.ts`]({_blob_url(repo_url, "apps/ui/tests/smoke.settings.spec.ts")})
-
-## Settings: Speed Source
+## Speed source
 
 ![Speed source](images/settings-speed-source.png)
 
-Speed source is documented separately because it directly affects the order-tracking
-pipeline. The release screenshot keeps GPS connected with live effective speed so the
-wiki always shows the intended happy path for speed-backed analysis.
+The **Speed Source** tab decides how VibeSensor gets vehicle speed for
+speed-aware order tracking.
 
-Useful code anchors:
+- Use **GPS** for normal road tests when you have a receiver connected and good
+  sky view.
+- Use **Manual** speed for indoor work, dyno/bench work, or whenever GPS is not
+  available.
 
-- Speed source module: [`settings_speed_source_module.ts`]({_blob_url(repo_url, "apps/ui/src/app/features/settings_speed_source_module.ts")})
-- GPS diagnostics helpers in tests: [`smoke.helpers.ts`]({_blob_url(repo_url, "apps/ui/tests/smoke.helpers.ts")})
+If GPS has poor signal or no fix, switching to manual speed is usually better
+than retrying the same bad GPS setup.
 
-## Design & visual testing
+## Language, units, and operator preferences
 
-- Design system: [`docs/design_language.md`]({_blob_url(repo_url, "docs/design_language.md")})
-- Visual regression baselines: [`apps/ui/tests/snapshots/visual.spec.ts/`]({_blob_url(repo_url, "apps/ui/tests/snapshots/visual.spec.ts")})
-- Wiki screenshot generator: [`apps/ui/tests/wiki_screenshots.spec.ts`]({_blob_url(repo_url, "apps/ui/tests/wiki_screenshots.spec.ts")}) and [`apps/ui/playwright.wiki.config.ts`]({_blob_url(repo_url, "apps/ui/playwright.wiki.config.ts")})
-"""
+User-facing preferences such as language and speed units are stored with the
+runtime settings, so you can set the device up for the operator who uses it.
 
+## Workshop/admin configuration on the Pi
 
-def _architecture_page(repo_url: str) -> str:
-    return f"""# System Architecture
+For changes that live below the browser UI, edit the Pi config file:
 
-## Runtime pipeline
+- `/etc/vibesensor/config.yaml`
 
-```text
-ESP32 + ADXL345 sensors
-  -> UDP data/control on the Pi hotspot
-  -> FastAPI backend + FFT/order analysis + report generation
-  -> HTTP + WebSocket UI for live monitoring, history, and configuration
+Common admin-level changes include:
+
+- changing the hotspot name (`ap.ssid`),
+- adding a hotspot password (`ap.psk`),
+- changing history retention (`logging.run_retention_days`),
+- or disabling GPS on a bench system (`gps.gps_enabled`).
+
+Validate the file before restarting services:
+
+```bash
+vibesensor-config-preflight /etc/vibesensor/config.yaml
 ```
-
-The repository keeps the product split into four primary runtime areas:
-
-| Area | What it owns | Primary references |
-| --- | --- | --- |
-| `apps/server/` | FastAPI, live processing, persisted runs, PDF reports, updater logic | [`apps/server/README.md`]({_blob_url(repo_url, "apps/server/README.md")}) |
-| `apps/ui/` | Browser dashboard, settings flows, Playwright coverage | [`apps/ui/README.md`]({_blob_url(repo_url, "apps/ui/README.md")}) |
-| `firmware/esp/` | ESP32 sampling and UDP transport | [`firmware/esp/README.md`]({_blob_url(repo_url, "firmware/esp/README.md")}) |
-| `infra/pi-image/` | Pi image build and offline hotspot packaging | [`infra/pi-image/pi-gen/README.md`]({_blob_url(repo_url, "infra/pi-image/pi-gen/README.md")}) |
-
-## Important architectural rules
-
-- The product is **offline first**: hotspot boot and core workflows must not depend on internet access.
-- Persisted report outputs expose vibration intensity in **dB** for the user-facing summary/report surfaces.
-- Shared logic lives in the backend package and is exported into the UI via generated contracts/constants, not duplicated in ad hoc files.
-- The browser UI consumes typed HTTP and WebSocket contracts and validates live WS payloads before rendering.
 
 Key references:
 
-- Repo map: [`docs/ai/repo-map.md`]({_blob_url(repo_url, "docs/ai/repo-map.md")})
-- Domain model: [`docs/domain-model.md`]({_blob_url(repo_url, "docs/domain-model.md")})
-- Protocol details: [`docs/protocol.md`]({_blob_url(repo_url, "docs/protocol.md")})
-- Testing layout: [`docs/testing.md`]({_blob_url(repo_url, "docs/testing.md")})
-
-## Browser contract boundary
-
-The UI depends on generated schemas and runtime validation instead of treating payloads
-as loose records:
-
-- HTTP types: [`apps/ui/src/generated/http_api_contracts.ts`]({_blob_url(repo_url, "apps/ui/src/generated/http_api_contracts.ts")})
-- WS types: [`apps/ui/src/contracts/ws_payload_types.ts`]({_blob_url(repo_url, "apps/ui/src/contracts/ws_payload_types.ts")})
-- WS validator: [`apps/ui/src/ws_payload_validator.ts`]({_blob_url(repo_url, "apps/ui/src/ws_payload_validator.ts")})
-- Payload adaptation: [`apps/ui/src/server_payload.ts`]({_blob_url(repo_url, "apps/ui/src/server_payload.ts")})
+- Config reference: [`docs/configuration_reference.md`]({_blob_url(repo_url, "docs/configuration_reference.md")})
+- Pi/backend operations: [`apps/server/README.md`]({_blob_url(repo_url, "apps/server/README.md")})
 """
 
 
-def _release_page(repo_url: str, release_note: str) -> str:
-    return f"""# Release and Deployment
+def _run_page() -> str:
+    return """# Run a Diagnostic Drive
 
-_Reviewed against {release_note}._
+This is the normal operator workflow once the Pi and sensor nodes are already
+installed.
 
-## Release workflow
+## 1. Mount the sensors
 
-The release automation is defined in [`.github/workflows/main-release.yml`]({_blob_url(repo_url, ".github/workflows/main-release.yml")}).
-The job currently builds:
+- Place the sensors on the areas you want to compare.
+- Keep the sensor locations consistent with the names you assign in Settings.
+- Make sure the Battery Base on each node is charged before the run.
 
-1. the synced UI static bundle,
-2. the version-stamped backend wheel,
-3. the firmware artifacts + flash manifest,
-4. release-smoke validation,
-5. curated UI screenshots for the wiki,
-6. refreshes only the wiki screenshot assets,
-7. and the GitHub Release itself.
+The most useful first pass is usually multiple simultaneous locations so you can
+compare vibration strength across the car in one recording.
 
-## Release outputs
+## 2. Confirm the setup in Live
 
-| Output | Source |
-| --- | --- |
-| Python wheel (`apps/server/dist/*.whl`) | backend build step |
-| Firmware ZIP (`vibesensor-fw-v*.zip`) | PlatformIO build + bundle step |
-| Wiki screenshots | Playwright capture driven by [`apps/ui/tests/wiki_screenshots.spec.ts`]({_blob_url(repo_url, "apps/ui/tests/wiki_screenshots.spec.ts")}) |
+![Live dashboard](images/live-dashboard.png)
 
-## Manual wiki page seed
+Before driving, use the **Live** view to confirm:
 
-The core wiki pages are seeded manually from the repository. This script,
-[`tools/wiki/generate_wiki.py`]({_blob_url(repo_url, "tools/wiki/generate_wiki.py")}),
-is a helper for that one-time or occasional page refresh. Release CI does not
-overwrite the wiki markdown pages; it only refreshes the screenshot assets in
-`images/`.
+- the expected sensors are connected,
+- the active car is correct,
+- the speed source looks sensible,
+- and the spectrum traces are actually moving.
 
-## Deployment modes
+If the screen is static or a sensor is missing, fix that before you start
+recording.
 
-### Native + Vite
+## 3. Record the run
 
-- backend: `python -m pip install -e "./apps/server[dev]"`
-- frontend: `npm --prefix apps/ui ci && npm --prefix apps/ui run dev`
-- simulator: `vibesensor-sim --count 5 --server-host 127.0.0.1 --no-auto-server`
+When everything looks healthy:
 
-### Docker dev stack
+1. press **Start**,
+2. drive through the speed range where the vibration is noticeable,
+3. hold steady speeds long enough for the order-tracking logic to settle,
+4. and press **Stop** once you captured the complaint clearly.
 
-- `make dev` for source-mounted backend + UI development
-- `docker compose up --build` for a product-style local stack
+If you are comparing before/after repairs, try to keep the route, speed range,
+and sensor placement as similar as possible between runs.
 
-### Raspberry Pi image
+## 4. Review the result in History
 
-- Pi image pipeline: [`infra/pi-image/pi-gen/README.md`]({_blob_url(repo_url, "infra/pi-image/pi-gen/README.md")})
-- Installer scripts: [`apps/server/scripts/`]({_blob_url(repo_url, "apps/server/scripts")})
+![History overview](images/history-overview.png)
 
-## Validation references
+Open **History** after the run to:
 
-- Full contributor workflow: [`CONTRIBUTING.md`]({_blob_url(repo_url, "CONTRIBUTING.md")})
-- Test layout and commands: [`docs/testing.md`]({_blob_url(repo_url, "docs/testing.md")})
-- Release smoke script: [`tools/tests/run_release_smoke.py`]({_blob_url(repo_url, "tools/tests/run_release_smoke.py")})
+- compare saved runs,
+- inspect the most likely source,
+- review the heatmap and supporting evidence,
+- and export a PDF report or a ZIP bundle.
+
+Typical examples the current product surfaces well are:
+
+- wheel imbalance,
+- driveshaft-related vibration,
+- engine-order vibration.
+
+## 5. Save or share the evidence
+
+Use the built-in exports when you want to hand findings to a technician,
+customer, or teammate:
+
+- **PDF** for a human-readable report,
+- **ZIP export** when you want the raw samples and run details too.
+
+## Operator tips
+
+- Always check the active car before starting a run.
+- If GPS is unreliable, switch to manual speed instead of forcing a bad capture.
+- Run again after a repair so you can compare the new result against the old one
+  in History.
+"""
+
+
+def _troubleshooting_page(repo_url: str) -> str:
+    return f"""# Troubleshooting and Maintenance
+
+This page is for the most common field problems: no hotspot, no sensors, no
+speed, or an unhealthy Pi.
+
+## Quick checks
+
+- Try `http://10.4.0.1`.
+- If that does not load, try `http://10.4.0.1:8000`.
+- Confirm the Pi hotspot `VibeSensor` is visible.
+- Confirm the sensor nodes are powered and nearby.
+
+## Common problems
+
+| Problem | Check first | What to do next |
+| --- | --- | --- |
+| I cannot see the hotspot | Wait for the Pi to finish booting | Reboot the Pi and check the hotspot service if you have SSH access |
+| The dashboard opens but no sensors appear | Battery charge, firmware flashed, sensor in range | Reflash the node if needed and confirm it still targets `VibeSensor` / `10.4.0.1` |
+| GPS speed is empty or unstable | GPS receiver present, sky view available | Switch to manual speed for indoor or poor-signal work |
+| The run finished but History looks wrong | Active car, sensor names, speed source | Run another capture after correcting setup so the comparison is clean |
+| The Pi was fine before but now behaves strangely | Service health and disk space | Review system status, logs, and the backend health endpoint |
+
+## Service commands for the person supporting the device
+
+If you have SSH access to the Pi:
+
+```bash
+sudo systemctl status vibesensor.service vibesensor-hotspot.service --no-pager
+sudo systemctl restart vibesensor.service
+sudo systemctl restart vibesensor-hotspot.service
+sudo journalctl -u vibesensor.service -u vibesensor-hotspot.service -n 200 --no-pager
+```
+
+The prebuilt image defaults are:
+
+- SSH user: `pi`
+- SSH password: `vibesensor`
+
+## Health and API checks
+
+These are useful when the browser UI is up but you want to confirm the backend
+state directly:
+
+```bash
+curl -sf http://10.4.0.1/api/health || curl -sf http://10.4.0.1:8000/api/health
+curl -sf http://10.4.0.1/api/clients || curl -sf http://10.4.0.1:8000/api/clients
+```
+
+Healthy devices should reach `startup_state: ready`.
+
+## Changing Wi-Fi name, password, or other Pi settings
+
+Edit:
+
+- `/etc/vibesensor/config.yaml`
+
+Then validate and restart the affected service:
+
+```bash
+vibesensor-config-preflight /etc/vibesensor/config.yaml
+sudo systemctl restart vibesensor.service
+sudo systemctl restart vibesensor-hotspot.service
+```
+
+## When you need the deeper references
+
+- Operational runbooks: [`docs/operational-runbooks.md`]({_blob_url(repo_url, "docs/operational-runbooks.md")})
+- Config reference: [`docs/configuration_reference.md`]({_blob_url(repo_url, "docs/configuration_reference.md")})
+- Server/Pi operations: [`apps/server/README.md`]({_blob_url(repo_url, "apps/server/README.md")})
+- Sensor firmware setup: [`firmware/esp/README.md`]({_blob_url(repo_url, "firmware/esp/README.md")})
+- Pi image build/install: [`infra/pi-image/pi-gen/README.md`]({_blob_url(repo_url, "infra/pi-image/pi-gen/README.md")})
 """
 
 
@@ -316,9 +551,11 @@ def _sidebar() -> str:
     return """### VibeSensor Wiki
 
 - [Home](Home)
-- [Web UI](Web-UI)
-- [System Architecture](System-Architecture)
-- [Release and Deployment](Release-and-Deployment)
+- [Get the Hardware](Get-the-Hardware)
+- [Initial Install](Initial-Install)
+- [Configure VibeSensor](Configure-VibeSensor)
+- [Run a Diagnostic Drive](Run-a-Diagnostic-Drive)
+- [Troubleshooting and Maintenance](Troubleshooting-and-Maintenance)
 """
 
 
@@ -361,11 +598,19 @@ def main(argv: list[str] | None = None) -> None:
 
     release_note = _release_label(args.release_version, args.commit_sha)
     _write(output_dir / "Home.md", _home_page(args.repo_url, release_note))
-    _write(output_dir / "Web-UI.md", _web_ui_page(args.repo_url))
-    _write(output_dir / "System-Architecture.md", _architecture_page(args.repo_url))
+    _write(output_dir / "Get-the-Hardware.md", _hardware_page(args.repo_url))
+    _write(output_dir / "Initial-Install.md", _install_page(args.repo_url))
     _write(
-        output_dir / "Release-and-Deployment.md",
-        _release_page(args.repo_url, release_note),
+        output_dir / "Configure-VibeSensor.md",
+        _config_page(args.repo_url),
+    )
+    _write(
+        output_dir / "Run-a-Diagnostic-Drive.md",
+        _run_page(),
+    )
+    _write(
+        output_dir / "Troubleshooting-and-Maintenance.md",
+        _troubleshooting_page(args.repo_url),
     )
     _write(output_dir / "_Sidebar.md", _sidebar())
     print(f"Generated wiki bundle in {output_dir}")
