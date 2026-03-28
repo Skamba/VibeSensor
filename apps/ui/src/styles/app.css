@@ -1384,33 +1384,112 @@ input:focus-visible,
 .history-evidence-panel {
   min-width: 0;
 }
-.mini-car-wrap { min-width: 0; display: grid; gap: var(--space-2); }
-.mini-car-title {
-  margin-bottom: var(--space-2);
+.history-heatmap {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.history-heatmap__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.history-heatmap__title {
   font-weight: 600;
   color: var(--muted);
   font-size: 0.82rem;
 }
-.mini-car {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1.7;
+.history-heatmap__grid {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "front-left engine front-right"
+    "driver driveshaft ."
+    "rear-left trunk rear-right";
+}
+.history-heatmap__zone {
+  --history-heatmap-accent: var(--border);
+  --history-heatmap-fill: 0%;
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
+  min-height: 5.75rem;
+  padding: var(--space-2);
   border: 1px solid var(--border);
-  border-radius: 80px 80px 48px 48px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.history-heatmap__zone::before {
+  content: "";
+  display: block;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--history-heatmap-accent);
+}
+.history-heatmap__zone--empty {
   background: var(--surface-2);
-  max-width: 260px;
-  margin: 0 auto;
+  border-style: dashed;
 }
-.mini-car-dot {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
+.history-heatmap__zone--empty::before {
+  background: var(--border);
+  opacity: 0.7;
 }
-.mini-car-dot--muted { opacity: 0.45; }
+.history-heatmap__zone--strongest {
+  box-shadow:
+    0 0 0 1px var(--history-heatmap-accent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.history-heatmap__zone-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.3;
+}
+.history-heatmap__zone-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.history-heatmap__zone-value--empty {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.history-heatmap__zone-meter {
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.history-heatmap__zone-meter-fill {
+  display: block;
+  height: 100%;
+  width: var(--history-heatmap-fill);
+  border-radius: inherit;
+  background: var(--history-heatmap-accent);
+}
+.history-heatmap__extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.history-heatmap__extra-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
 .history-preview-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .history-preview-table th,
 .history-preview-table td {
@@ -1530,21 +1609,6 @@ input:focus-visible,
 .history-diagnosis-card__confidence--warn {
   background: #fff3cd;
   color: #8a6d1d;
-}
-.history-diagnosis-card__next-step {
-  display: grid;
-  gap: 0.25rem;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-}
-.history-diagnosis-card__next-step-label {
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 .history-findings-overview__explanation {
   margin: 0;
@@ -1707,8 +1771,13 @@ input:focus-visible,
   .history-results-layout {
     grid-template-columns: 1fr;
   }
-  .mini-car {
-    max-width: 220px;
+  .history-heatmap__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "front-left front-right"
+      "engine driver"
+      "driveshaft trunk"
+      "rear-left rear-right";
   }
 }
 
@@ -2403,11 +2472,6 @@ input[aria-invalid="true"] {
 
   .swatch {
     border-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .mini-car-dot {
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
   }
 
   .live-sensor-card__status-dot {
