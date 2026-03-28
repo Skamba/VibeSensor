@@ -248,6 +248,7 @@ test("shows a live warning state until an active car is selected, then clears it
   await expect(page.locator("#loggingSummary")).toHaveText(
     "Recording is blocked until you select or create an active car.",
   );
+  await expect(page.locator("#loggingSummary")).toHaveCSS("text-align", "left");
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#startLoggingBtn")).toBeDisabled();
   await expect.poll(() => startCalls).toBe(0);

@@ -135,9 +135,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator(".spectrum-controls-panel")).toContainText("Use the trace chips to isolate one sensor at a time.");
   await expect(page.locator(".spectrum-controls-panel #spectrumInspector")).toBeVisible();
   await expect(page.locator(".spectrum-controls-panel #legend")).toContainText("Front Left");
-  await expect(page.locator("#loggingSummary")).toHaveText(
-    "Ready to record with 1 online sensor(s) and 1 assigned location(s). Press Start Recording to begin a new run.",
-  );
+  await expect(page.locator("#loggingSummary")).toBeHidden();
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Ready");
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
