@@ -147,23 +147,26 @@ void service_sampling(SamplingState& state,
                       RuntimeStatus& status,
                       int64_t clock_offset_us) {
   const uint64_t step_us = 1000000ULL / kSampleRateHz;
-  uint64_t now = esp_timer_get_time();
-  size_t catch_up_count = 0;
-  while (static_cast<int64_t>(now - state.next_sample_due_us) >= 0 &&
-         catch_up_count < kMaxCatchUpSamplesPerLoop) {
+  const uint64_t loop_started_us = esp_timer_get_time();
+  uint64_t now = loop_started_us;
+  while (vibesensor::reliability::sampling_slots_due(now, state.next_sample_due_us, step_us) > 0) {
+    if (vibesensor::reliability::sampling_catch_up_budget_exhausted(
+            loop_started_us, now, kSamplingCatchUpBudgetUs)) {
+      status.sampling_budget_exhaustions++;
+      break;
+    }
     if (!sample_once(state, queue_state, status, clock_offset_us)) {
       status.sampling_missed_samples++;
       state.next_sample_due_us += step_us;
       break;
     }
     state.next_sample_due_us += step_us;
-    catch_up_count++;
     now = esp_timer_get_time();
   }
 
-  if (static_cast<int64_t>(now - state.next_sample_due_us) >= 0) {
-    uint64_t lag_us = now - state.next_sample_due_us;
-    uint64_t skipped = (lag_us / step_us) + 1;
+  const uint64_t skipped =
+      vibesensor::reliability::sampling_slots_due(now, state.next_sample_due_us, step_us);
+  if (skipped > 0) {
     status.sampling_missed_samples += static_cast<uint32_t>(skipped);
     set_last_error(status, 3);
     state.next_sample_due_us += skipped * step_us;
