@@ -109,9 +109,33 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
       await fulfillJson(route, {});
     },
   });
-  await installFakeWebSocket(page);
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "001122334455",
+          name: "Front Left",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 12,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "front_left_wheel",
+          mac_address: "001122334455",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: { clients: {} },
+    },
+  });
   await page.goto("/");
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Loading active car...");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
+  await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
+  await expect(page.locator("#loggingStatus")).toHaveText("Blocked");
+  await expect(page.locator("#startLoggingBtn")).toBeDisabled();
 
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
@@ -138,6 +162,107 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
   const activeRow = page.locator('#carListBody tr[data-car-id="car-1"]');
   await expect(activeRow).toContainText("Audit Demo Car");
   await expect(activeRow.locator(".car-active-pill")).toHaveClass(/active/);
+
+  await page.locator("#tab-dashboard").click();
+  await expect(page.locator("#liveActiveCar")).not.toHaveClass(/stat--warn/);
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Audit Demo Car");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
+  await expect(page.locator("#loggingStatus")).toBeHidden();
+  await expect(page.locator("#startLoggingBtn")).toBeEnabled();
+});
+
+test("shows a live warning state until an active car is selected, then clears it automatically", async ({ page }) => {
+  let activeCarId: string | null = null;
+  let startCalls = 0;
+
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      const method = route.request().method();
+      if (path === "/api/settings/cars" && method === "GET") {
+        await fulfillJson(route, {
+          cars: [
+            { id: "car-1", name: "Touring", type: "wagon", aspects: {} },
+            { id: "car-2", name: "Coupe", type: "coupe", aspects: {} },
+          ],
+          active_car_id: activeCarId,
+        });
+        return;
+      }
+      if (path === "/api/settings/cars/active" && method === "PUT") {
+        activeCarId = "car-2";
+        await fulfillJson(route, {
+          cars: [
+            { id: "car-1", name: "Touring", type: "wagon", aspects: {} },
+            { id: "car-2", name: "Coupe", type: "coupe", aspects: {} },
+          ],
+          active_car_id: activeCarId,
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/recording/start", async (route) => {
+    startCalls += 1;
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      start_time_utc: null,
+      samples_written: 0,
+      samples_dropped: 0,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+    });
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "001122334455",
+          name: "Front Left",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 12,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "front_left_wheel",
+          mac_address: "001122334455",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: { clients: {} },
+    },
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#liveActiveCar")).toHaveClass(/stat--warn/);
+  await expect(page.locator("#liveActiveCar .stat__value-icon--warn")).toHaveText("!");
+  await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No active car selected");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
+  await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
+  await expect(page.locator("#loggingStatus")).toHaveText("Blocked");
+  await expect(page.locator("#loggingSummary")).toHaveText(
+    "Recording is blocked until you select or create an active car.",
+  );
+  await expect(page.locator("#startLoggingBtn")).toBeVisible();
+  await expect(page.locator("#startLoggingBtn")).toBeDisabled();
+  await expect.poll(() => startCalls).toBe(0);
+
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  await page.locator('#carListBody tr[data-car-id="car-2"] .car-activate-btn').click();
+
+  await page.locator("#tab-dashboard").click();
+  await expect(page.locator("#liveActiveCar")).not.toHaveClass(/stat--warn/);
+  await expect(page.locator("#liveActiveCar .stat__value-icon--warn")).toHaveCount(0);
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Coupe");
+  await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
+  await expect(page.locator("#loggingStatus")).toBeHidden();
+  await expect(page.locator("#startLoggingBtn")).toBeEnabled();
 });
 
 test("shows car-tab guidance for invalid persisted selection and after deleting the selected car", async ({ page }) => {
