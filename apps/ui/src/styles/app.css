@@ -397,6 +397,30 @@ input:focus-visible,
 .stat { min-height: 72px; }
 .stat__label { font-size: 0.76rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .stat__value { margin-top: var(--space-1); font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
+.stat__value--warn { color: #8a6d1d; }
+.stat__value--with-icon {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.stat__value-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 2px;
+}
+.stat__value-icon--warn {
+  border: 1px solid rgba(183, 121, 31, 0.3);
+  background: #fff3cd;
+  color: #8a6d1d;
+}
 
 .maintenance-layout {
   display: grid;
@@ -724,8 +748,19 @@ input:focus-visible,
   padding-inline: var(--space-3);
 }
 
+.stat--warn {
+  border: 1px solid rgba(183, 121, 31, 0.28);
+  border-radius: var(--radius-sm);
+  background: #fff8e5;
+  padding-inline: var(--space-3);
+}
+
 .stat--spotlight .stat__label {
   color: var(--brand-700);
+}
+
+.stat--warn .stat__label {
+  color: #8a6d1d;
 }
 
 .live-sensor-roster__header {

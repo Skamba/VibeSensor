@@ -49,6 +49,11 @@ export interface RealtimeFeature {
   refreshLocationOptions(): Promise<void>;
 }
 
+type ActiveCarDisplayState = {
+  text: string;
+  isWarning: boolean;
+};
+
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
   const { realtime, settings, spectrum, els, t, escapeHtml, formatInt, setPillState } = ctx;
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
@@ -152,15 +157,52 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return `${primary} (${formatInt(signal.db)} dB)`;
   }
 
-  function activeCarText(): string {
+  function activeCarDisplayState(): ActiveCarDisplayState {
     const selection = deriveCarSelectionState(settings);
     if (selection.kind === "loading") {
-      return t("dashboard.active_car_loading");
+      return {
+        text: t("dashboard.active_car_loading"),
+        isWarning: false,
+      };
     }
     if (selection.kind !== "active") {
-      return t("dashboard.active_car_none");
+      return {
+        text: t("dashboard.active_car_none_blocked"),
+        isWarning: true,
+      };
     }
-    return selection.car.name;
+    return {
+      text: selection.car.name,
+      isWarning: false,
+    };
+  }
+
+  function hasActiveCarSelection(): boolean {
+    return deriveCarSelectionState(settings).kind === "active";
+  }
+
+  function renderActiveCarStat(): void {
+    const container = els.liveActiveCar;
+    const valueEl = container?.querySelector<HTMLElement>("[data-value]");
+    if (!container || !valueEl) {
+      return;
+    }
+    const state = activeCarDisplayState();
+    container.classList.toggle("stat--warn", state.isWarning);
+    valueEl.classList.toggle("stat__value--warn", state.isWarning);
+    valueEl.classList.toggle("stat__value--with-icon", state.isWarning);
+    valueEl.replaceChildren();
+    if (state.isWarning) {
+      const iconEl = document.createElement("span");
+      iconEl.className = "stat__value-icon stat__value-icon--warn";
+      iconEl.setAttribute("aria-hidden", "true");
+      iconEl.textContent = "!";
+      const textEl = document.createElement("span");
+      textEl.textContent = state.text;
+      valueEl.append(iconEl, textEl);
+      return;
+    }
+    valueEl.textContent = state.text;
   }
 
   function dataFreshnessText(): string {
@@ -235,6 +277,14 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showOverviewPill: true,
       };
     }
+    if (!hasActiveCarSelection()) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: t("dashboard.logging.active_car_required"),
+        showOverviewPill: true,
+      };
+    }
     const droppedCount = connected.filter((client) => (client.dropped_frames ?? 0) > 0).length;
     if (droppedCount > 0) {
       return {
@@ -297,7 +347,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     const signal = strongestSignal();
     const totalClients = realtime.clients.length;
     ctx.setStatValue(els.liveConnectedSensors, `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`);
-    ctx.setStatValue(els.liveActiveCar, activeCarText());
+    renderActiveCarStat();
     ctx.setStatValue(els.liveRecordingState, computeRecordingPanelState().phaseText);
     ctx.setStatValue(els.liveDataFreshness, dataFreshnessText());
     ctx.setStatValue(els.liveStrongestSignal, strongestSignalText(signal));
@@ -403,6 +453,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     const status = realtime.loggingStatus;
     const on = Boolean(status.enabled);
     const hasActiveClients = realtime.clients.some((client) => Boolean(client?.connected));
+    const hasActiveCar = hasActiveCarSelection();
+    const recordingReady = hasActiveClients && hasActiveCar;
     const connectedCount = formatInt(connectedClients().length);
     const assignedCount = formatInt(assignedClientCount());
     const liveHealth = computeLiveHealth();
@@ -475,7 +527,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         samplesText,
         showStart: true,
         showStop: false,
-        startDisabled: !hasActiveClients,
+        startDisabled: !recordingReady,
         stopDisabled: true,
         showPill: true,
       };
@@ -492,7 +544,24 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         samplesText,
         showStart: true,
         showStop: false,
-        startDisabled: !hasActiveClients,
+        startDisabled: !recordingReady,
+        stopDisabled: true,
+        showPill: true,
+      };
+    }
+
+    if (!hasActiveCar) {
+      return {
+        pillVariant: "warn",
+        pillText: t("dashboard.recording_phase.blocked"),
+        phaseText: t("dashboard.recording_phase.blocked"),
+        summaryText: t("dashboard.logging.active_car_required"),
+        runIdText,
+        elapsedText: "--",
+        samplesText,
+        showStart: true,
+        showStop: false,
+        startDisabled: true,
         stopDisabled: true,
         showPill: true,
       };
@@ -510,7 +579,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       samplesText,
       showStart: true,
       showStop: false,
-      startDisabled: !hasActiveClients,
+      startDisabled: !recordingReady,
       stopDisabled: true,
       showPill: false,
     };
