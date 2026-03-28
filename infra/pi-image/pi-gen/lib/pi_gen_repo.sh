@@ -45,6 +45,20 @@ patch_build_docker_qemu_interpreter() {
     "${build_docker}"
 }
 
+refresh_stage0_bootstrap_keyring() {
+  local vendored_keyring="${TEMPLATE_ROOT}/stage0-bootstrap-raspberrypi.gpg"
+  local upstream_keyring="${PI_GEN_DIR}/stage0/files/raspberrypi.gpg"
+
+  if cmp -s "${vendored_keyring}" "${upstream_keyring}"; then
+    return
+  fi
+
+  # Upstream pi-gen still ships an armhf bootstrap keyring whose Raspbian key
+  # only has SHA-1 self-signatures, which makes trixie debootstrap reject the
+  # InRelease signature on modern GnuPG policies.
+  cp "${vendored_keyring}" "${upstream_keyring}"
+}
+
 set_base_stage_skip_files() {
   local state="$1"
   local stage=""
@@ -77,6 +91,7 @@ prepare_pi_gen_repo() {
   rewrite_pi_gen_mirror_sources
   patch_export_image_boot_size
   patch_build_docker_qemu_interpreter
+  refresh_stage0_bootstrap_keyring
 }
 
 configure_incremental_build() {
