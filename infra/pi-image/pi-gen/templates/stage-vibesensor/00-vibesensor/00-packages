@@ -1,5 +1,5 @@
 network-manager
-dnsmasq
+dnsmasq-base
 rfkill
 iw
 gpsd
