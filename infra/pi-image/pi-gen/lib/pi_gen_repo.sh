@@ -27,6 +27,24 @@ patch_export_image_boot_size() {
     "${export_prerun}"
 }
 
+patch_build_docker_qemu_interpreter() {
+  local build_docker="${PI_GEN_DIR}/build-docker.sh"
+  local stock_check='if ! qemu_arm=$(which qemu-arm) ; then'
+  local patched_check='if ! qemu_arm=$(command -v qemu-arm-static 2>/dev/null) && ! qemu_arm=$(command -v qemu-arm 2>/dev/null) ; then'
+
+  if grep -Fq "${patched_check}" "${build_docker}"; then
+    return
+  fi
+  if ! grep -Fq "${stock_check}" "${build_docker}"; then
+    echo "Unexpected build-docker.sh qemu lookup in ${build_docker}"
+    exit 1
+  fi
+
+  sed -i \
+    's/if ! qemu_arm=$(which qemu-arm) ; then/if ! qemu_arm=$(command -v qemu-arm-static 2>\/dev\/null) \&\& ! qemu_arm=$(command -v qemu-arm 2>\/dev\/null) ; then/' \
+    "${build_docker}"
+}
+
 set_base_stage_skip_files() {
   local state="$1"
   local stage=""
@@ -58,6 +76,7 @@ prepare_pi_gen_repo() {
 
   rewrite_pi_gen_mirror_sources
   patch_export_image_boot_size
+  patch_build_docker_qemu_interpreter
 }
 
 configure_incremental_build() {
