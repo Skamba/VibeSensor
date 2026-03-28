@@ -147,9 +147,17 @@ Playwright snapshot tests capture the UI across 4 viewports:
 npx playwright install chromium   # first time only
 npm run test:visual               # compare against baselines
 npm run test:visual:update        # regenerate after intentional changes
+npm run wiki:screenshots          # capture release/wiki screenshots (build dist first)
 ```
 
 Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic payloads.
+
+The release/wiki screenshot flow is separate from the visual-regression baselines.
+It runs `tests/wiki_screenshots.spec.ts` through `playwright.wiki.config.ts` and
+captures a curated laptop-light set of product screenshots with realistic seeded
+data for Live, History, Cars, Analysis, and Speed Source. Release CI publishes
+only these screenshot assets into the existing GitHub wiki; the wiki markdown
+pages are seeded manually.
 
 ## Design Language
 
