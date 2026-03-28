@@ -1945,7 +1945,7 @@ td.vib-cell[data-severity="l1"] { background: rgba(37, 99, 235, 0.1); }
 .car-list-table .car-active-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
 .car-active-pill.active { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
 .car-active-pill.inactive { background: var(--pill-muted-bg); color: var(--pill-muted-text); }
-.car-list-actions { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.car-list-actions { display: flex; gap: var(--space-1); flex-wrap: wrap; justify-content: flex-end; }
 .car-list-actions .btn { padding: 4px 12px; font-size: 0.82rem; }
 
 /* Add car wizard */
