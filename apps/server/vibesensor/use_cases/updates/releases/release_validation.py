@@ -14,12 +14,6 @@ import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 
-from vibesensor.shared.subprocess_server import (
-    build_isolated_server_config,
-    build_isolated_server_env,
-    start_server_subprocess,
-    terminate_subprocess,
-)
 from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_validation_errors
 
 
@@ -40,6 +34,8 @@ def build_release_smoke_config(
     host: str,
     port: int,
 ) -> Path:
+    from vibesensor.shared.subprocess_server import build_isolated_server_config
+
     udp_data_port = port + 1000
     udp_control_port = port + 1001
     return build_isolated_server_config(
@@ -182,6 +178,12 @@ def run_server_smoke(
     require_packaged_static: bool = True,
     extra_env: dict[str, str] | None = None,
 ) -> None:
+    from vibesensor.shared.subprocess_server import (
+        build_isolated_server_env,
+        start_server_subprocess,
+        terminate_subprocess,
+    )
+
     if require_packaged_static:
         validate_packaged_static_assets()
 
