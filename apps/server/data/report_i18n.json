@@ -463,6 +463,14 @@
     "en": "Evidence snapshot",
     "nl": "Bewijssamenvatting"
   },
+  "HOTSPOT_MARKER_SIZE_HINT": {
+    "en": "Larger markers indicate stronger local intensity.",
+    "nl": "Grotere markeringen duiden op sterkere lokale intensiteit."
+  },
+  "HOTSPOT_SUMMARY": {
+    "en": "Hotspot summary",
+    "nl": "Hotspotsamenvatting"
+  },
   "FALSIFY": {
     "en": "Falsify",
     "nl": "Weerleg"
