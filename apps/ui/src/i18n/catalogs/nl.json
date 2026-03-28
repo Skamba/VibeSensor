@@ -130,8 +130,6 @@
   "history.findings_speed_band": "Snelheidsband",
   "history.findings_confidence": "Betrouwbaarheid",
   "history.findings_signature": "Signatuur",
-  "history.findings_next_step_label": "Controleer eerst",
-  "history.findings_next_step": "{location}",
   "history.summary_created": "Aangemaakt",
   "history.summary_updated": "Bijgewerkt",
   "history.summary_size": "Duur",

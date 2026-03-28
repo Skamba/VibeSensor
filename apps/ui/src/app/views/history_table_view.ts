@@ -83,6 +83,13 @@ function metricFromLocationStat(row: LocationIntensityRow): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+function humanizeHeatmapLocationKey(key: string): string {
+  return key
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 function renderPreviewHeatmap(
   summary: HistoryInsightsPayload,
   params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
@@ -90,37 +97,80 @@ function renderPreviewHeatmap(
   const { escapeHtml, fmt, t } = params;
   const statsRows = sensorIntensityRows(summary);
   const metricByLocation: Record<string, number> = {};
+  const labelByLocation: Record<string, string> = {};
   for (const row of statsRows) {
     const key = normalizeLogLocationKey(row.location);
     const metric = metricFromLocationStat(row);
+    const label = String(row.location ?? "").trim();
     if (key && typeof metric === "number" && Number.isFinite(metric)) {
       metricByLocation[key] = metric;
+    }
+    if (key && label) {
+      labelByLocation[key] = label;
     }
   }
   const values = Object.values(metricByLocation).filter((value) => typeof value === "number");
   const min = values.length ? Math.min(...values) : null;
   const max = values.length ? Math.max(...values) : null;
   const knownPositionKeys = new Set<string>(HISTORY_HEATMAP_POSITIONS.map((point) => point.key));
-  const unmappedLocationKeys = Object.keys(metricByLocation).filter((key) => !knownPositionKeys.has(key));
-  const dots = HISTORY_HEATMAP_POSITIONS
+  const strongestValue = values.length ? Math.max(...values) : null;
+  const zones = HISTORY_HEATMAP_POSITIONS
     .map((point) => {
       const value = metricByLocation[point.key];
+      const label = labelByLocation[point.key] || humanizeHeatmapLocationKey(point.key);
       const hasValue = typeof value === "number" && Number.isFinite(value);
-      if (!hasValue || min === null || max === null) return "";
+      if (!hasValue || min === null || max === null) {
+        return `
+          <div
+            class="history-heatmap__zone history-heatmap__zone--empty"
+            data-location-key="${escapeHtml(point.key)}"
+            style="grid-area:${point.area}"
+            title="${escapeHtml(label)}"
+          >
+            <div class="history-heatmap__zone-label">${escapeHtml(label)}</div>
+            <div class="history-heatmap__zone-value history-heatmap__zone-value--empty">${escapeHtml(t("report.missing"))}</div>
+            <div class="history-heatmap__zone-meter" aria-hidden="true"></div>
+          </div>
+        `;
+      }
       const norm = normalizeUnit(value, min, max);
       const fill = heatColor(norm);
       const valueLabel = `${fmt(value, 1)} dB`;
-      return `<div class="mini-car-dot" style="top:${point.top}%;left:${point.left}%;background:${fill}" title="${escapeHtml(point.key)}: ${escapeHtml(valueLabel)}"></div>`;
+      const isStrongest = strongestValue !== null && value === strongestValue;
+      return `
+        <div
+          class="history-heatmap__zone${isStrongest ? " history-heatmap__zone--strongest" : ""}"
+          data-location-key="${escapeHtml(point.key)}"
+          style="grid-area:${point.area};--history-heatmap-accent:${fill};--history-heatmap-fill:${Math.round(norm * 100)}%;"
+          title="${escapeHtml(label)}: ${escapeHtml(valueLabel)}"
+        >
+          <div class="history-heatmap__zone-label">${escapeHtml(label)}</div>
+          <div class="history-heatmap__zone-value">${escapeHtml(valueLabel)}</div>
+          <div class="history-heatmap__zone-meter" aria-hidden="true">
+            <span class="history-heatmap__zone-meter-fill"></span>
+          </div>
+        </div>
+      `;
     })
     .join("");
-  const unmappedSummary = unmappedLocationKeys.length
-    ? `<div class="subtle">${escapeHtml(unmappedLocationKeys.join(", "))}</div>`
+  const unmappedSummary = Object.keys(metricByLocation)
+    .filter((key) => !knownPositionKeys.has(key))
+    .map((key) => {
+      const label = labelByLocation[key] || humanizeHeatmapLocationKey(key);
+      const value = metricByLocation[key];
+      return `<div class="history-heatmap__extra-chip">${escapeHtml(label)} · ${escapeHtml(`${fmt(value, 1)} dB`)}</div>`;
+    })
+    .join("");
+  const extrasMarkup = unmappedSummary
+    ? `<div class="history-heatmap__extras">${unmappedSummary}</div>`
     : "";
   return `
-      <div class="mini-car-wrap">
-        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
-        <div class="mini-car">${dots}</div>
-        ${unmappedSummary}
+      <div class="history-heatmap">
+        <div class="history-heatmap__header">
+          <div class="history-heatmap__title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+        </div>
+        <div class="history-heatmap__grid">${zones}</div>
+        ${extrasMarkup}
       </div>
     `;
 }
@@ -156,16 +206,6 @@ function findingSignatureText(
   }
   const text = String(raw ?? "").trim();
   return text || "--";
-}
-
-function shouldShowNextStep(finding: FindingPayload | null): boolean {
-  if (!finding) {
-    return false;
-  }
-  if (findingTone(finding) === "success") {
-    return true;
-  }
-  return typeof finding.confidence === "number" && Number.isFinite(finding.confidence) && finding.confidence >= 0.85;
 }
 
 function findingLocationText(
@@ -294,9 +334,6 @@ function renderInsightsOverview(
   const signature = findingSignatureText(primary, params);
   const confidence = confidenceText(primary, params);
   const tone = findingTone(primary);
-  const nextStep = shouldShowNextStep(primary) && location !== t("report.missing")
-    ? t("history.findings_next_step", { location })
-    : "";
   return `
       <div class="history-findings-overview">
         <div class="history-findings-overview__header">
@@ -325,9 +362,6 @@ function renderInsightsOverview(
               <strong>${escapeHtml(signature)}</strong>
             </div>
           </div>
-          ${nextStep
-    ? `<div class="history-diagnosis-card__next-step"><span class="history-diagnosis-card__next-step-label">${escapeHtml(t("history.findings_next_step_label"))}</span><strong>${escapeHtml(nextStep)}</strong></div>`
-    : ""}
         </div>
       </div>
     `;
@@ -404,15 +438,19 @@ function renderRunDetailsRow(
   let heatmapMarkup = "";
   if (detail.previewLoading) {
     heatmapMarkup = `
-      <div class="mini-car-wrap">
-        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+      <div class="history-heatmap">
+        <div class="history-heatmap__header">
+          <div class="history-heatmap__title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+        </div>
         <p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>
       </div>
     `;
   } else if (detail.previewError) {
     heatmapMarkup = `
-      <div class="mini-car-wrap">
-        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+      <div class="history-heatmap">
+        <div class="history-heatmap__header">
+          <div class="history-heatmap__title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+        </div>
         <p class="history-inline-error">${escapeHtml(detail.previewError)}</p>
       </div>
     `;
@@ -420,8 +458,10 @@ function renderRunDetailsRow(
     heatmapMarkup = renderPreviewHeatmap(summary, params);
   } else {
     heatmapMarkup = `
-      <div class="mini-car-wrap">
-        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+      <div class="history-heatmap">
+        <div class="history-heatmap__header">
+          <div class="history-heatmap__title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+        </div>
         <p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>
       </div>
     `;
