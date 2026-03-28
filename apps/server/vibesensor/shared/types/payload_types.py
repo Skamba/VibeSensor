@@ -79,8 +79,10 @@ class ClientApiRow(TypedDict, total=True):
     last_seen_age_ms: int | None
     frames_total: int
     dropped_frames: int
-    # API-only fields — omitted in lightweight WebSocket snapshots:
+    # Light enough for both HTTP and WebSocket snapshots, but still optional for
+    # compatibility with older payload producers.
     frame_samples: NotRequired[int]
+    # API-only fields — omitted in lightweight WebSocket snapshots:
     latest_metrics: NotRequired[ClientMetrics]
     reset_count: NotRequired[int]
     last_reset_time: NotRequired[float | None]

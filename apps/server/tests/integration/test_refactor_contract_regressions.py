@@ -295,6 +295,20 @@ class TestClientApiRow:
         )
         assert set(rows[0].keys()) == set(helper_row.keys())
 
+    def test_lightweight_row_keeps_frame_samples_without_metrics(self) -> None:
+        row = build_client_api_row(
+            ClientSnapshot(
+                client_id="aabbccddeeff",
+                name="sensor",
+                connected=True,
+                sample_rate_hz=400,
+                frame_samples=200,
+            ),
+            include_metrics=False,
+        )
+        assert row["frame_samples"] == 200
+        assert "latest_metrics" not in row
+
 
 # ---------------------------------------------------------------------------
 # Fix 8: Version comparison warning

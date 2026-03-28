@@ -53,9 +53,9 @@ def build_client_api_row(
         "last_seen_age_ms": snapshot.last_seen_age_ms,
         "frames_total": snapshot.frames_total,
         "dropped_frames": snapshot.dropped_frames,
+        "frame_samples": snapshot.frame_samples,
     }
     if include_metrics:
-        row["frame_samples"] = snapshot.frame_samples
         row["latest_metrics"] = (
             snapshot.latest_metrics if snapshot.latest_metrics is not None else ClientMetrics()
         )
