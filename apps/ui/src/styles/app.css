@@ -157,6 +157,19 @@ body {
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+}
+
+.brandmark {
+  display: block;
+  line-height: 0;
+}
+
+.brandmark img {
+  display: block;
+  width: 116px;
+  height: 24px;
 }
 
 select,
