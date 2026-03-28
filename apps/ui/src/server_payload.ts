@@ -19,6 +19,7 @@ export type AdaptedClient = Pick<
   | "last_seen_age_ms"
   | "dropped_frames"
   | "frames_total"
+  | "frame_samples"
   | "sample_rate_hz"
   | "firmware_version"
 >;
