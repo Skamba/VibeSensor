@@ -44,8 +44,6 @@ def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable[..., str]) -> P
     strength_db_val = _as_float(row.get("strength_db"))
     strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "—"
     speed = str(row.get("typical_speed_band") or "—")
-    presence = _as_float(row.get("presence_ratio")) or 0.0
-    score = _as_float(row.get("persistence_score")) or 0.0
     return PeakRow(
         rank=rank,
         system=peak_row_system_label(row, tr=tr),
@@ -54,7 +52,7 @@ def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable[..., str]) -> P
         peak_db=peak_db,
         strength_db=strength_db,
         speed_band=speed,
-        relevance=f"{classification} · {presence:.0%} {tr('PRESENCE')} · {tr('SCORE')} {score:.2f}",
+        relevance=_peak_row_meaning(row, tr=tr),
     )
 
 
@@ -71,3 +69,17 @@ def peak_row_system_label(row: PeakTableRow, *, tr: Callable[..., str]) -> str:
     if i18n_key:
         return str(tr(i18n_key))
     return "—"
+
+
+def _peak_row_meaning(row: PeakTableRow, *, tr: Callable[..., str]) -> str:
+    classification = str(row.get("peak_classification") or "").strip().lower()
+    presence = _as_float(row.get("presence_ratio")) or 0.0
+    if classification == "baseline_noise":
+        return str(tr("PEAK_ROW_NEAR_NOISE_FLOOR"))
+    if classification == "transient" and presence < 0.35:
+        return str(tr("PEAK_ROW_BRIEF_EVENT"))
+    if presence >= 0.7:
+        return str(tr("PEAK_ROW_REPEATED_PATTERN"))
+    if presence >= 0.35:
+        return str(tr("PEAK_ROW_SEEN_MORE_THAN_ONCE"))
+    return str(tr("PEAK_ROW_OCCASIONAL"))

@@ -370,8 +370,8 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     row = data.peak_rows[0]
     assert row.peak_db == "18.4"
     assert row.strength_db == "18.4"
-    assert "patterned" in row.relevance
-    assert "85%" in row.relevance
+    assert row.relevance == "Repeated pattern"
+    assert "%" not in row.relevance
 
 
 def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
@@ -396,7 +396,7 @@ def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
     )
     data = map_summary(prepare_report_input(summary))
     assert data.peak_rows
-    assert "noise floor" in data.peak_rows[0].relevance
+    assert data.peak_rows[0].relevance == "Near noise floor"
 
 
 def test_map_summary_data_trust_keeps_warning_detail() -> None:
