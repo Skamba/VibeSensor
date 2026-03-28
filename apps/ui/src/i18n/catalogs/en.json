@@ -49,7 +49,6 @@
   "dashboard.logging.unassigned": "{count} live sensor(s) still need a location.",
   "dashboard.logging.frame_loss": "Frame loss is being detected on {count} sensor(s).",
   "dashboard.logging.offline": "{count} sensor(s) are offline, so coverage is incomplete.",
-  "dashboard.logging.ready": "Ready to record with {connected} online sensor(s) and {assigned} assigned location(s). Press Start Recording to begin a new run.",
   "dashboard.logging.running": "Recording is active with {connected} online sensor(s) and {assigned} assigned location(s). Press Stop Recording to save the run and start analysis.",
   "dashboard.logging.run_id": "Run ID: {runId}",
   "dashboard.logging.last_run_id": "Last run: {runId}",

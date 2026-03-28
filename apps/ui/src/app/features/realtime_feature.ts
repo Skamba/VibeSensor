@@ -325,7 +325,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return {
       variant: "ok",
       text: t("dashboard.health.ready"),
-      summary: t("dashboard.logging.ready", { connected: connectedCount, assigned: assignedCount }),
+      summary: "",
       showOverviewPill: false,
     };
   }
@@ -571,9 +571,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       pillVariant: hasActiveClients ? "muted" : liveHealth.variant,
       pillText: t("dashboard.recording_phase.ready"),
       phaseText: t("dashboard.recording_phase.ready"),
-      summaryText: hasActiveClients
-        ? t("dashboard.logging.ready", { connected: connectedCount, assigned: assignedCount })
-        : liveHealth.summary,
+      summaryText: liveHealth.summary,
       runIdText,
       elapsedText: "--",
       samplesText,
@@ -595,6 +593,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     ctx.setStatValue(els.loggingElapsed, panelState.elapsedText);
     ctx.setStatValue(els.loggingSamples, panelState.samplesText);
     if (els.loggingSummary) {
+      els.loggingSummary.hidden = panelState.summaryText === "";
       els.loggingSummary.textContent = panelState.summaryText;
     }
     if (els.loggingRunId) {
@@ -626,6 +625,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       clearLoggingElapsedTimer();
       setDashboardPillState(els.loggingStatus, "bad", t("status.unavailable"));
       if (els.loggingSummary) {
+        els.loggingSummary.hidden = false;
         els.loggingSummary.textContent = t("status.unavailable");
       }
       if (els.loggingRunId) {
