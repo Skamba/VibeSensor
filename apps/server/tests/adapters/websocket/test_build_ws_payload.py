@@ -278,11 +278,23 @@ def test_build_ws_payload_returns_required_keys() -> None:
 
 
 def test_build_ws_payload_light_tick_omits_only_spectra() -> None:
-    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
+    state = _make_state(
+        clients=[
+            {
+                "id": "aaaaaaaaaaaa",
+                "name": "front-left",
+                "sample_rate_hz": 400,
+                "frame_samples": 200,
+            },
+        ],
+        ws_include_heavy=False,
+    )
     payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
 
     assert "spectra" not in payload
     assert payload["selected_client_id"] == "aaaaaaaaaaaa"
+    assert payload["clients"][0]["frame_samples"] == 200
+    assert "latest_metrics" not in payload["clients"][0]
 
 
 def test_build_ws_payload_auto_selects_first_client() -> None:

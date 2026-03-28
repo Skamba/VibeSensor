@@ -21,6 +21,7 @@ import {
   renderRealtimeSensorTable,
 } from "../views/realtime_sensor_table_view";
 import { createPollingController } from "./polling_controller";
+import { classifyDataFreshness } from "./data_freshness";
 
 export interface RealtimeFeatureDeps extends FeatureDepsBase {
   realtime: RealtimeState;
@@ -163,7 +164,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function dataFreshnessText(): string {
-    const ages = connectedClients()
+    const connected = connectedClients();
+    const ages = connected
       .map((client) => client.last_seen_age_ms)
       .filter((age): age is number => typeof age === "number" && Number.isFinite(age));
     if (!ages.length) {
@@ -171,10 +173,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     }
     const ageMs = Math.max(...ages.map((age) => Math.max(0, age)));
     const ageText = t("status.age_ms_ago", { value: formatInt(ageMs) });
-    if (ageMs <= 250) {
+    const freshness = classifyDataFreshness(ageMs, connected);
+    if (freshness === "fresh") {
       return t("dashboard.data_freshness_fresh", { age: ageText });
     }
-    if (ageMs <= 1000) {
+    if (freshness === "delayed") {
       return t("dashboard.data_freshness_delayed", { age: ageText });
     }
     return t("dashboard.data_freshness_stale", { age: ageText });
