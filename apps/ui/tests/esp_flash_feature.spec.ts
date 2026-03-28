@@ -109,6 +109,7 @@ function createDeps() {
   const espFlashCancelBtn = createButton();
   const espFlashStatusBanner = createPanel();
   const espFlashReadinessPanel = createPanel();
+  const espFlashJourneyPanel = createPanel();
   const espFlashLogPanel = createPanel();
   const espFlashHistoryPanel = createPanel();
 
@@ -123,6 +124,7 @@ function createDeps() {
     espFlashCancelBtn,
     espFlashStatusBanner,
     espFlashReadinessPanel,
+    espFlashJourneyPanel,
     espFlashLogPanel,
     espFlashHistoryPanel,
   } as unknown as UiDomElements;
@@ -132,6 +134,7 @@ function createDeps() {
     espFlashStartBtn,
     espFlashCancelBtn,
     espFlashReadinessPanel,
+    espFlashJourneyPanel,
     t: (key: string) => key,
     escapeHtml: (value: unknown) => String(value ?? ""),
     showError: () => {},
@@ -263,8 +266,9 @@ test.describe("createEspFlashFeature polling", () => {
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.summary.ready_ports");
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.one_port");
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.auto_detect");
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.journey_title");
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.phase.validating");
+      expect(deps.espFlashReadinessPanel.innerHTML).not.toContain("settings.esp_flash.journey_title");
+      expect(deps.espFlashReadinessPanel.innerHTML).not.toContain("settings.esp_flash.phase.validating");
+      expect(deps.espFlashJourneyPanel.innerHTML).toContain("settings.esp_flash.phase.validating");
       expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.logs_idle_title");
       expect((deps.els.espFlashHistoryPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.history_empty_title");
     } finally {
@@ -304,9 +308,9 @@ test.describe("createEspFlashFeature polling", () => {
       feature.startPolling();
       await flushAsyncWork();
 
-      const html = deps.espFlashReadinessPanel.innerHTML;
+      const html = deps.espFlashJourneyPanel.innerHTML;
       expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="active" aria-current="step"/);
-      expect(html).toContain("settings.esp_flash.readiness.current_step");
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.current_step");
       expect(html.match(/data-stage-state="done"/g)).toHaveLength(3);
       expect(html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)).toHaveLength(3);
     } finally {
@@ -357,10 +361,10 @@ test.describe("createEspFlashFeature polling", () => {
       feature.startPolling();
       await flushAsyncWork();
 
-      const html = deps.espFlashReadinessPanel.innerHTML;
+      const html = deps.espFlashJourneyPanel.innerHTML;
       expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="attention"/);
       expect(html.match(/data-stage-state="done"/g)).toHaveLength(3);
-      expect(html).toContain("serial port disconnected");
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain("serial port disconnected");
     } finally {
       restoreFetch();
     }
