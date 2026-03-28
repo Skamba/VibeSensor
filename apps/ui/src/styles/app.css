@@ -704,7 +704,7 @@ input:focus-visible,
   border: 1px solid rgba(124, 58, 237, 0.28);
   border-radius: var(--radius-sm);
   background: var(--menu-hover);
-  padding: var(--space-3);
+  padding-inline: var(--space-3);
 }
 
 .stat--spotlight .stat__label {
