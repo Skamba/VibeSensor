@@ -39,6 +39,7 @@ require_image_prereqs() {
   require_cmd mount
   require_cmd umount
   require_cmd awk
+  require_cmd qemu-arm
   require_cmd qemu-arm-static
 }
 
