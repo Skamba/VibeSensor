@@ -19,12 +19,14 @@ BMW_LENGTH_MM = 5007.0
 BMW_WIDTH_MM = 1894.0
 
 REPORT_COLORS = {
+    "brand": "#7c3aed",
+    "brand_surface": "#ede9fe",
     "ink": "#1a1c24",
     "border": "#c4c7d0",
     "surface": "#f8f9fb",
     "surface_alt": "#f1f2f6",
     "success": "#0f9d58",
-    "warning": "#b35d00",
+    "warning": "#b7791f",
     "danger": "#c5221f",
     "axis": "#7b8da0",
     "table_row_border": "#dcdfe6",
@@ -64,13 +66,13 @@ WARN_CLR = REPORT_COLORS["warning"]
 
 FONT = "Helvetica"
 FONT_B = "Helvetica-Bold"
-FS_TITLE = 12
-FS_H2 = 9
+FS_TITLE = 13
+FS_H2 = 10
 FS_BODY = 7
 FS_SMALL = 6
-FS_CARD_TITLE = 8.0
+FS_CARD_TITLE = 9.0
 
-R_CARD = 6
+R_CARD = 8
 GAP = 4 * mm
 OBSERVED_LABEL_W = 28 * mm
 DATA_TRUST_WIDTH_RATIO = 0.32
