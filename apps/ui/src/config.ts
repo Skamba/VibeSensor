@@ -12,12 +12,12 @@ export const SPECTRUM_MIN_RENDER_AMP_G = 1e-6;
 export const SPECTRUM_TWEEN_DURATION_MS = 180;
 
 export const HISTORY_HEATMAP_POSITIONS = [
-  { key: "front-left wheel", top: 23, left: 20 },
-  { key: "front-right wheel", top: 23, left: 80 },
-  { key: "rear-left wheel", top: 76, left: 20 },
-  { key: "rear-right wheel", top: 76, left: 80 },
-  { key: "engine bay", top: 30, left: 50 },
-  { key: "driveshaft tunnel", top: 51, left: 50 },
-  { key: "driver seat", top: 43, left: 40 },
-  { key: "trunk", top: 86, left: 50 },
+  { key: "front-left wheel", area: "front-left" },
+  { key: "front-right wheel", area: "front-right" },
+  { key: "rear-left wheel", area: "rear-left" },
+  { key: "rear-right wheel", area: "rear-right" },
+  { key: "engine bay", area: "engine" },
+  { key: "driveshaft tunnel", area: "driveshaft" },
+  { key: "driver seat", area: "driver" },
+  { key: "trunk", area: "trunk" },
 ] as const;

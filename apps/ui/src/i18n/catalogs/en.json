@@ -130,8 +130,6 @@
   "history.findings_speed_band": "Speed band",
   "history.findings_confidence": "Confidence",
   "history.findings_signature": "Signature",
-  "history.findings_next_step_label": "Inspect first",
-  "history.findings_next_step": "{location}",
   "history.summary_created": "Created",
   "history.summary_updated": "Updated",
   "history.summary_size": "Duration",

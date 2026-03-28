@@ -151,7 +151,11 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator(".history-details-row")).toBeVisible();
   await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
-  await expect(page.locator(".mini-car-dot")).toHaveAttribute("title", /20.0 dB$/);
+  const frontLeftZone = page.locator('.history-heatmap__zone[data-location-key="front-left wheel"]');
+  await expect(frontLeftZone).toContainText("Front Left Wheel");
+  await expect(frontLeftZone).toContainText("20.0 dB");
+  await expect(page.locator(".history-heatmap__zone-meter-fill")).toHaveCount(1);
+  await expect(page.locator(".mini-car-dot")).toHaveCount(0);
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator(".history-details-row")).toHaveCount(0);
@@ -264,7 +268,8 @@ test("history loaded insights promote the result summary above supporting eviden
   await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
   await expect(page.locator(".history-diagnosis-card")).toContainText("Front-right wheel imbalance");
   await expect(page.locator(".history-diagnosis-card")).toContainText("1x wheel");
-  await expect(page.locator(".history-diagnosis-card")).toContainText("Inspect first");
+  await expect(page.locator(".history-diagnosis-card")).not.toContainText("Inspect first");
+  await expect(page.locator('.history-heatmap__zone[data-location-key="front-right wheel"]')).toContainText("32.0 dB");
   await expect(page.locator(".history-secondary-findings")).toHaveCount(0);
   await expect(page.locator(".history-finding-card--secondary")).toHaveCount(0);
   await expect(page.locator(".history-evidence-column .history-preview-stats")).toHaveCount(0);

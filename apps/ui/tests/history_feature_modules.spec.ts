@@ -353,14 +353,16 @@ test("history list rendering promotes loaded findings ahead of supporting statis
 
   expect(historyTableBody.innerHTML).toContain("history.details_title");
   expect(historyTableBody.innerHTML).toContain("history.primary_diagnosis");
-  expect(historyTableBody.innerHTML).toContain("history.findings_next_step_label");
   expect(historyTableBody.innerHTML).toContain("history-evidence-column");
+  expect(historyTableBody.innerHTML).toContain('data-location-key="front-right wheel"');
+  expect(historyTableBody.innerHTML).toContain("32.0 dB");
   expect(historyTableBody.innerHTML).toContain("Front-right wheel imbalance");
   expect(historyTableBody.innerHTML).toContain("history.findings_signature");
   expect(historyTableBody.innerHTML).not.toContain("history.secondary_candidates_title");
   expect(historyTableBody.innerHTML).not.toContain("history.findings_loaded");
   expect(historyTableBody.innerHTML).not.toContain("Secondary driveline contribution");
   expect(historyTableBody.innerHTML).not.toContain("history.preview_stats_title");
+  expect(historyTableBody.innerHTML).not.toContain("history.findings_next_step_label");
 });
 
 test("history feature preloads collapsed row context for completed runs", async () => {
