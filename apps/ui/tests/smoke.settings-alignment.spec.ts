@@ -109,3 +109,44 @@ test("manage cars delete button stays in the same visible column across rows", a
 
   expect(Math.abs(activeDeleteRight - inactiveDeleteRight)).toBeLessThanOrEqual(1);
 });
+
+test("live strongest signal stat stays aligned with peer summary metrics", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1280 });
+  await page.goto("/?demo=1");
+
+  const dataFreshnessStat = page.locator("#liveDataFreshness");
+  const strongestSignalStat = page.locator("#liveStrongestSignal");
+  const dataFreshnessLabel = dataFreshnessStat.locator(".stat__label");
+  const strongestSignalLabel = strongestSignalStat.locator(".stat__label");
+  const dataFreshnessValue = dataFreshnessStat.locator("[data-value]");
+  const strongestSignalValue = strongestSignalStat.locator("[data-value]");
+  const speedValue = page.locator("#speed");
+
+  await expect(strongestSignalStat).toHaveClass(/stat--spotlight/);
+  await expect(dataFreshnessValue).toBeVisible();
+  await expect(strongestSignalValue).toBeVisible();
+  await expect(speedValue).toBeVisible();
+
+  const [
+    dataFreshnessLabelTop,
+    strongestSignalLabelTop,
+    speedLabelTop,
+    dataFreshnessValueTop,
+    strongestSignalValueTop,
+    speedValueTop,
+  ] = await Promise.all([
+    dataFreshnessLabel.evaluate((el) => Math.round(el.getBoundingClientRect().top)),
+    strongestSignalLabel.evaluate((el) => Math.round(el.getBoundingClientRect().top)),
+    speedValue.evaluate((el) =>
+      Math.round((el.previousElementSibling as HTMLElement).getBoundingClientRect().top),
+    ),
+    dataFreshnessValue.evaluate((el) => Math.round(el.getBoundingClientRect().top)),
+    strongestSignalValue.evaluate((el) => Math.round(el.getBoundingClientRect().top)),
+    speedValue.evaluate((el) => Math.round(el.getBoundingClientRect().top)),
+  ]);
+
+  expect(Math.abs(dataFreshnessLabelTop - strongestSignalLabelTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(speedLabelTop - strongestSignalLabelTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(dataFreshnessValueTop - strongestSignalValueTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(speedValueTop - strongestSignalValueTop)).toBeLessThanOrEqual(1);
+});
