@@ -47,7 +47,7 @@ run_as_root apt-get install -y \
   python3-pip \
   libopenblas0-pthread \
   network-manager \
-  dnsmasq \
+  dnsmasq-base \
   rfkill \
   iw \
   gpsd \

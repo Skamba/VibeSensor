@@ -13,3 +13,10 @@ if [ -d "${APT_SOURCES_DIR}" ]; then
   find "${APT_SOURCES_DIR}" -type f \( -name '*.list' -o -name '*.sources' \) -print0 \
     | xargs -0 -r sed -i 's#http://raspbian.raspberrypi.com/raspbian/#__RASPBIAN_MIRROR__#g'
 fi
+
+# stage2 may leave package lists cleaned after its last install step, but
+# stage-vibesensor adds new runtime packages in 00-packages. Refresh apt here
+# so those installs resolve against the current rewritten mirrors.
+on_chroot <<'CHROOT_EOF'
+apt-get update
+CHROOT_EOF

@@ -1,9 +1,9 @@
 rewrite_pi_gen_mirror_sources() {
-  while IFS= read -r mirror_file; do
+  while IFS= read -r -d '' mirror_file; do
     sed -i \
       -E "s#http://raspbian\\.raspberrypi\\.com/raspbian/#${RASPBIAN_MIRROR}#g" \
       "${mirror_file}"
-  done < <(rg -l "http://raspbian\\.raspberrypi\\.com/raspbian/" "${PI_GEN_DIR}")
+  done < <(grep -rlZ "http://raspbian\\.raspberrypi\\.com/raspbian/" "${PI_GEN_DIR}" || true)
 }
 
 patch_export_image_boot_size() {
