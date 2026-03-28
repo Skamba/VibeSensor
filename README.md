@@ -201,6 +201,10 @@ Build on a Linux machine with Docker:
 
 Flash the output image from `infra/pi-image/pi-gen/out/` and boot — no manual steps needed.
 
+If you just need a ready-made artifact instead of building locally, GitHub
+Releases also carries the latest automated weekly Pi image snapshot once the
+weekly image workflow has run.
+
 See [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md) for details.
 
 ### Verification
