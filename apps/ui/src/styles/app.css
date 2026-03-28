@@ -749,7 +749,7 @@ input:focus-visible,
 .live-sensor-card__header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--space-2);
 }
 
@@ -791,20 +791,8 @@ input:focus-visible,
   background: var(--brand-500);
 }
 
-.live-sensor-card--strongest .live-sensor-card__header strong,
-.live-sensor-card--strongest .live-sensor-card__meta {
+.live-sensor-card--strongest .live-sensor-card__header strong {
   color: var(--brand-700);
-}
-
-.live-sensor-card__meta {
-  color: var(--text);
-  font-size: 0.88rem;
-}
-
-.live-sensor-card__subtle {
-  color: var(--muted);
-  font-size: 0.76rem;
-  overflow-wrap: anywhere;
 }
 
 /* Spectrum + Car map split */
