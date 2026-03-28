@@ -104,6 +104,7 @@ export interface UiDomElements {
   espFlashCancelBtn: HTMLButtonElement | null;
   espFlashStatusBanner: HTMLElement | null;
   espFlashReadinessPanel: HTMLElement | null;
+  espFlashJourneyPanel: HTMLElement | null;
   espFlashLogPanel: HTMLElement | null;
   espFlashHistoryPanel: HTMLElement | null;
   gpsStatusPanel: HTMLElement | null;
@@ -255,6 +256,7 @@ export function createUiDomRegistry(): UiDomElements {
     espFlashCancelBtn: btnEl("espFlashCancelBtn"),
     espFlashStatusBanner: el("espFlashStatusBanner"),
     espFlashReadinessPanel: el("espFlashReadinessPanel"),
+    espFlashJourneyPanel: el("espFlashJourneyPanel"),
     espFlashLogPanel: el("espFlashLogPanel"),
     espFlashHistoryPanel: el("espFlashHistoryPanel"),
     gpsStatusPanel: el("gpsStatusPanel"),

@@ -45,16 +45,32 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   await page.locator("#espFlashStartBtn").click();
   statusState = "running";
   logCursor = 2;
+  const pairedLayout = await page.evaluate(() => {
+    const readinessCard = document.querySelector("#espFlashReadinessPanel")?.closest(".maintenance-card");
+    const journeyCard = document.querySelector("#espFlashJourneyPanel")?.closest(".maintenance-card");
+    if (!(readinessCard instanceof HTMLElement) || !(journeyCard instanceof HTMLElement)) {
+      return null;
+    }
+    const readinessRect = readinessCard.getBoundingClientRect();
+    const journeyRect = journeyCard.getBoundingClientRect();
+    return {
+      topDelta: Math.abs(readinessRect.top - journeyRect.top),
+      leftDelta: journeyRect.left - readinessRect.left,
+    };
+  });
+  expect(pairedLayout).not.toBeNull();
+  expect(pairedLayout?.topDelta ?? 999).toBeLessThan(8);
+  expect(pairedLayout?.leftDelta ?? 0).toBeGreaterThan(40);
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Running");
   await expect(page.locator("#espFlashReadinessPanel")).toContainText("/dev/ttyUSB0");
-  await expect(page.locator("#espFlashReadinessPanel")).toContainText("Expected stages");
-  await expect(page.locator("#espFlashReadinessPanel")).toContainText("Write firmware");
-  await expect(page.locator('#espFlashReadinessPanel .maintenance-stage[aria-current="step"]')).toHaveAttribute("data-stage-phase", "flashing");
-  await expect(page.locator('#espFlashReadinessPanel .maintenance-stage[data-stage-state="done"]')).toHaveCount(3);
-  await expect(page.locator('#espFlashReadinessPanel .maintenance-stage[data-stage-phase="validating"] .maintenance-stage__marker')).toHaveText("✓");
+  await expect(page.locator("#espFlashReadinessPanel")).not.toContainText("Expected stages");
+  await expect(page.locator("#espFlashJourneyPanel")).toContainText("Write firmware");
+  await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[aria-current="step"]')).toHaveAttribute("data-stage-phase", "flashing");
+  await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[data-stage-state="done"]')).toHaveCount(3);
+  await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[data-stage-phase="validating"] .maintenance-stage__marker')).toHaveText("✓");
   await expect(page.locator("#espFlashLogPanel")).toContainText("erase ok");
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Success");
-  await expect(page.locator('#espFlashReadinessPanel .maintenance-stage[data-stage-state="done"]')).toHaveCount(5);
+  await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[data-stage-state="done"]')).toHaveCount(5);
   await expect(page.locator("#espFlashHistoryPanel")).toContainText("/dev/ttyUSB0");
 });
 
@@ -82,8 +98,8 @@ test("settings esp flash status falls back to idle when API omits state", async 
   await page.locator('[data-settings-tab="espFlashTab"]').click();
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Idle");
   await expect(page.locator("#espFlashReadinessPanel")).toContainText("No serial device is detected yet");
-  await expect(page.locator("#espFlashReadinessPanel")).toContainText("Expected stages");
-  await expect(page.locator("#espFlashReadinessPanel")).toContainText("Validate board and bundle");
+  await expect(page.locator("#espFlashReadinessPanel")).not.toContainText("Expected stages");
+  await expect(page.locator("#espFlashJourneyPanel")).toContainText("Validate board and bundle");
   await expect(page.locator("#espFlashTab")).not.toContainText("Before flashing");
   await expect(page.locator("#espFlashTab")).not.toContainText("What flashing will do");
   await expect(page.locator("#espFlashTab")).not.toContainText("Troubleshooting and recovery");
