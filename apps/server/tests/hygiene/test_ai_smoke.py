@@ -27,7 +27,11 @@ def pi_gen_source_text() -> str:
         pi_gen_root / "build.sh",
         pi_gen_root / "validate-image.sh",
         *sorted((pi_gen_root / "lib").glob("*.sh")),
-        *sorted(path for path in (pi_gen_root / "templates").rglob("*") if path.is_file()),
+        *sorted(
+            path
+            for path in (pi_gen_root / "templates").rglob("*")
+            if path.is_file() and path.suffix != ".gpg"
+        ),
     ]
     return "\n".join(path.read_text(encoding="utf-8") for path in paths)
 
@@ -134,6 +138,7 @@ def test_smoke_pi_gen_pipeline_split_files_exist() -> None:
     assert (pi_gen_root / "lib" / "app_artifacts.sh").is_file()
     assert (pi_gen_root / "lib" / "stage_assembly.sh").is_file()
     assert (pi_gen_root / "lib" / "image_validation.sh").is_file()
+    assert (pi_gen_root / "templates" / "stage0-bootstrap-raspberrypi.gpg").is_file()
     assert (
         pi_gen_root / "templates" / "stage-vibesensor" / "00-vibesensor" / "00-run.sh.template"
     ).is_file()
