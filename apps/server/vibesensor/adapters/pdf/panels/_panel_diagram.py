@@ -13,12 +13,35 @@ from vibesensor.adapters.pdf.pdf_style import BMW_LENGTH_MM as _BMW_LENGTH_MM
 from vibesensor.adapters.pdf.pdf_style import BMW_WIDTH_MM as _BMW_WIDTH_MM
 from vibesensor.adapters.pdf.pdf_style import (
     CAR_PANEL_TITLE_RESERVE,
+    FS_SMALL,
     MARGIN,
     PAGE_H,
+    PANEL_HEADER_H,
+    SUB_CLR,
+    TEXT_CLR,
     build_page2_layout,
 )
+from vibesensor.adapters.pdf.pdf_text import _draw_text
 from vibesensor.adapters.pdf.report_data import FindingPresentation, ReportTemplateData
 from vibesensor.domain import LocationHotspotRow
+
+
+def _hotspot_strength_text(data: ReportTemplateData, *, fallback: str) -> str:
+    peak_db = data.pattern_evidence.strength_peak_db
+    if peak_db is not None:
+        return f"{peak_db:.0f} dB"
+    if data.pattern_evidence.strength_label:
+        return data.pattern_evidence.strength_label
+    return fallback
+
+
+def _hotspot_summary_text(
+    data: ReportTemplateData, *, fallback: str, tr_fn: Callable[..., str]
+) -> str:
+    location = data.pattern_evidence.strongest_location or fallback
+    strength = _hotspot_strength_text(data, fallback=fallback)
+    certainty = data.pattern_evidence.certainty_label or fallback
+    return f"{tr_fn('HOTSPOT_SUMMARY')}: {location} | {strength} | {certainty}"
 
 
 def fit_rect_preserve_aspect(
@@ -84,6 +107,31 @@ def _draw_car_visual_panel(
     content_width: float,
 ) -> None:
     _draw_panel(c, x, y, w, h, tr_fn("EVIDENCE_AND_HOTSPOTS"))
+    caption_x = x + 4 * mm
+    caption_top = y + h - PANEL_HEADER_H - 1.5 * mm
+    caption_w = w - 8 * mm
+    caption_reserve = 11 * mm
+    not_available = tr_fn("NOT_AVAILABLE")
+    caption_bottom = _draw_text(
+        c,
+        caption_x,
+        caption_top,
+        caption_w,
+        _hotspot_summary_text(data, fallback=not_available, tr_fn=tr_fn),
+        size=FS_SMALL,
+        color=TEXT_CLR,
+        max_lines=2,
+    )
+    _draw_text(
+        c,
+        caption_x,
+        caption_bottom - 0.4 * mm,
+        caption_w,
+        tr_fn("HOTSPOT_MARKER_SIZE_HINT"),
+        size=FS_SMALL,
+        color=SUB_CLR,
+        max_lines=2,
+    )
     layout = build_page2_layout(
         width=content_width,
         page_top=PAGE_H - MARGIN,
@@ -95,6 +143,8 @@ def _draw_car_visual_panel(
     box_y = car_layout.box_y if x == MARGIN else y + 5 * mm
     box_w = car_layout.box_w if x == MARGIN else w - 10 * mm
     box_h = car_layout.box_h if x == MARGIN else h - CAR_PANEL_TITLE_RESERVE
+    box_y += caption_reserve
+    box_h -= caption_reserve
 
     src_w = _BMW_WIDTH_MM
     src_h = _BMW_LENGTH_MM

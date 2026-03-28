@@ -163,6 +163,8 @@ def test_dutch_translations_complete() -> None:
     assert "aandrijflijnprobleem" in _nl("ACTION_DRIVELINE_INSPECTION_FALSIFY")
     assert "ordefout" in _nl("FREQUENCY_TRACKS_ENGINE_ORDER_USING_REF_LABEL_BEST")
     assert "ordefout" in _nl("FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND")
+    assert "hotspotsamenvatting" in _nl("HOTSPOT_SUMMARY").lower()
+    assert "lokale intensiteit" in _nl("HOTSPOT_MARKER_SIZE_HINT").lower()
     assert "bedrijfsomstandigheid" in _nl(
         "PEAK_FREQUENCY_SHIFTS_RANDOMLY_WITH_NO_REPEATABLE_OPERATING",
     )
