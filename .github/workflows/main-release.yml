@@ -38,7 +38,8 @@ jobs:
           if [ -z "${existing}" ]; then
             version="${base_ver}"
           else
-            suffix="${existing##server-v${base_ver}}"
+            prefix="server-v${base_ver}"
+            suffix="${existing#"$prefix"}"
             if [ -z "${suffix}" ]; then
               version="${base_ver}.1"
             else
@@ -46,8 +47,10 @@ jobs:
               version="${base_ver}.$((n + 1))"
             fi
           fi
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
-          echo "tag=server-v${version}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "version=${version}"
+            echo "tag=server-v${version}"
+          } >> "${GITHUB_OUTPUT}"
           echo "bundle=vibesensor-fw-v${version}.zip" >> "${GITHUB_OUTPUT}"
 
       - uses: actions/setup-node@v6
@@ -291,15 +294,41 @@ jobs:
           retention-days: 14
 
       - name: Create combined release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Release ${{ steps.version.outputs.version }}
-          body: ${{ steps.changelog.outputs.body }}
-          prerelease: false
-          files: |
-            apps/server/dist/*.whl
-            ${{ steps.bundle.outputs.path }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes_file="$(mktemp)"
+          cat > "${notes_file}" <<EOF
+          ${{ steps.changelog.outputs.body }}
+          EOF
+
+          mapfile -t wheel_files < <(find apps/server/dist -maxdepth 1 -type f -name '*.whl' | sort)
+          if [ "${#wheel_files[@]}" -eq 0 ]; then
+            echo "No server wheel artifacts found under apps/server/dist" >&2
+            exit 1
+          fi
+
+          bundle_path="${{ steps.bundle.outputs.path }}"
+          if [ ! -f "${bundle_path}" ]; then
+            echo "Expected release bundle is missing: ${bundle_path}" >&2
+            exit 1
+          fi
+
+          release_args=()
+          for wheel_file in "${wheel_files[@]}"; do
+            release_args+=(--asset "${wheel_file}")
+          done
+          release_args+=(--asset "${bundle_path}")
+
+          python3 tools/publish_github_release.py \
+            --repo "${GITHUB_REPOSITORY}" \
+            --tag "${{ steps.version.outputs.tag }}" \
+            --target "${GITHUB_SHA}" \
+            --title "Release ${{ steps.version.outputs.version }}" \
+            --notes-file "${notes_file}" \
+            "${release_args[@]}"
 
       - name: Publish GitHub wiki screenshots
         env:
