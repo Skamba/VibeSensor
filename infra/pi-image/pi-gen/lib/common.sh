@@ -27,12 +27,16 @@ init_pi_gen_env() {
   CLEAN="${CLEAN:-0}"
   RASPBIAN_MIRROR="${RASPBIAN_MIRROR:-}"
   RASPBIAN_MIRROR_FALLBACKS=(
-    "https://archive.raspbian.org/raspbian/"
     "http://raspbian.raspberrypi.com/raspbian/"
     "http://mirror.init7.net/raspbian/raspbian/"
     "http://mirrors.ustc.edu.cn/raspbian/raspbian/"
     "http://ftp.halifax.rwth-aachen.de/raspbian/raspbian/"
     "http://mirror.ox.ac.uk/sites/archive.raspbian.org/archive/raspbian/"
+    # The HTTPS archive endpoint is a useful fallback, but recent GitHub-hosted
+    # runner builds have intermittently hit TLS EOFs while fetching large
+    # package sets from it. Prefer the standard HTTP mirrors first and keep the
+    # archive endpoint as the last resort.
+    "https://archive.raspbian.org/raspbian/"
   )
 
   if [ "${USE_QEMU:-0}" = "1" ]; then
