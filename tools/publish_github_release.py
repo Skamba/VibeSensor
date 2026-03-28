@@ -22,14 +22,16 @@ def _run(
     )
 
 
+def _repo_api_endpoint(repo: str, path: str) -> str:
+    return f"repos/{repo}/{path.lstrip('/')}"
+
+
 def _existing_release_id(repo: str, tag: str) -> int | None:
     result = _run(
         [
             "gh",
             "api",
-            "-R",
-            repo,
-            f"repos/{repo}/releases/tags/{tag}",
+            _repo_api_endpoint(repo, f"releases/tags/{tag}"),
         ],
         check=False,
         capture_output=True,
@@ -114,13 +116,11 @@ def main(argv: list[str] | None = None) -> None:
                 [
                     "gh",
                     "api",
-                    "-R",
-                    args.repo,
                     "--method",
                     "POST",
                     "-H",
                     "Accept: application/vnd.github+json",
-                    f"repos/{args.repo}/releases",
+                    _repo_api_endpoint(args.repo, "releases"),
                     "--input",
                     payload_file,
                 ]
@@ -130,13 +130,11 @@ def main(argv: list[str] | None = None) -> None:
                 [
                     "gh",
                     "api",
-                    "-R",
-                    args.repo,
                     "--method",
                     "PATCH",
                     "-H",
                     "Accept: application/vnd.github+json",
-                    f"repos/{args.repo}/releases/{release_id}",
+                    _repo_api_endpoint(args.repo, f"releases/{release_id}"),
                     "--input",
                     payload_file,
                 ]
