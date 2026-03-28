@@ -37,6 +37,41 @@ inline bool sampling_catch_up_budget_exhausted(uint64_t loop_started_us,
   return (now_us - loop_started_us) >= static_cast<uint64_t>(budget_us);
 }
 
+inline size_t sampling_prefetch_refill_count(size_t prefetch_count,
+                                             size_t prefetch_capacity,
+                                             size_t refill_batch_samples) {
+  if (prefetch_capacity <= prefetch_count || refill_batch_samples == 0) {
+    return 0;
+  }
+  const size_t free_slots = prefetch_capacity - prefetch_count;
+  return free_slots < refill_batch_samples ? free_slots : refill_batch_samples;
+}
+
+inline size_t sampling_dithered_batch_target(size_t refill_batch_samples,
+                                             uint32_t refill_cycle) {
+  if (refill_batch_samples <= 1) {
+    return refill_batch_samples;
+  }
+  return (refill_cycle & 0x1U) == 0U ? refill_batch_samples : (refill_batch_samples - 1U);
+}
+
+inline uint32_t sampling_idle_delay_us(uint64_t now_us,
+                                       uint64_t next_due_us,
+                                       uint32_t wake_guard_us,
+                                       uint32_t max_delay_us) {
+  if (next_due_us <= now_us || max_delay_us == 0) {
+    return 0;
+  }
+  const uint64_t time_until_due_us = next_due_us - now_us;
+  if (time_until_due_us <= static_cast<uint64_t>(wake_guard_us)) {
+    return 0;
+  }
+  const uint64_t slack_us = time_until_due_us - static_cast<uint64_t>(wake_guard_us);
+  return static_cast<uint32_t>(slack_us > static_cast<uint64_t>(max_delay_us)
+                                   ? max_delay_us
+                                   : slack_us);
+}
+
 inline uint16_t clamp_frame_samples(uint16_t configured_samples,
                                     size_t max_datagram_bytes,
                                     size_t data_header_bytes) {

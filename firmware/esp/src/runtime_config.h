@@ -88,6 +88,15 @@ constexpr uint8_t kWifiInitialConnectAttempts =
 constexpr uint32_t kSamplingCatchUpBudgetUs =
     static_cast<uint32_t>(VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US);
 
+#ifndef VIBESENSOR_LOOP_IDLE_GUARD_US
+#define VIBESENSOR_LOOP_IDLE_GUARD_US 150
+#endif
+#ifndef VIBESENSOR_LOOP_IDLE_MAX_US
+#define VIBESENSOR_LOOP_IDLE_MAX_US 1000
+#endif
+constexpr uint32_t kLoopIdleGuardUs = static_cast<uint32_t>(VIBESENSOR_LOOP_IDLE_GUARD_US);
+constexpr uint32_t kLoopIdleMaxUs = static_cast<uint32_t>(VIBESENSOR_LOOP_IDLE_MAX_US);
+
 constexpr size_t kSensorReadBatchSamples = 8;
 constexpr size_t kSensorPrefetchSamples = 32;
 constexpr size_t kSensorPrefetchLowWaterSamples = 8;
@@ -113,6 +122,8 @@ static_assert(VIBESENSOR_SAMPLE_RATE_HZ > 0, "VIBESENSOR_SAMPLE_RATE_HZ must be 
 static_assert(VIBESENSOR_FRAME_SAMPLES > 0, "VIBESENSOR_FRAME_SAMPLES must be > 0");
 static_assert(VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US > 0,
               "VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US must be > 0");
+static_assert(VIBESENSOR_LOOP_IDLE_MAX_US > 0,
+              "VIBESENSOR_LOOP_IDLE_MAX_US must be > 0");
 static_assert(VIBESENSOR_FRAME_QUEUE_LEN_MIN > 0,
               "VIBESENSOR_FRAME_QUEUE_LEN_MIN must be > 0");
 static_assert(VIBESENSOR_FRAME_QUEUE_LEN_TARGET >= VIBESENSOR_FRAME_QUEUE_LEN_MIN,
