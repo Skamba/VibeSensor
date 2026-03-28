@@ -77,6 +77,54 @@ def test_peak_classification_text_uses_translations() -> None:
     assert translated == "Persistent"
 
 
+def test_build_peak_row_transient_meaning_uses_brief_event_label() -> None:
+    row = build_peak_row(
+        {
+            "rank": 1,
+            "frequency_hz": 95.0,
+            "order_label": "",
+            "p95_intensity_db": 18.0,
+            "strength_db": 18.0,
+            "presence_ratio": 0.2,
+            "peak_classification": "transient",
+            "typical_speed_band": "any",
+        },
+        lang="en",
+        tr=lambda key, **_kw: {
+            "CLASSIFICATION_TRANSIENT": "Intermittent",
+            "PEAK_ROW_BRIEF_EVENT": "Brief event",
+            "SOURCE_TRANSIENT_IMPACT": "Transient impact",
+            "UNKNOWN": "Unknown",
+        }[key],
+    )
+    assert row.relevance == "Brief event"
+
+
+def test_build_peak_row_high_presence_transient_uses_repeatability_label() -> None:
+    row = build_peak_row(
+        {
+            "rank": 1,
+            "frequency_hz": 95.0,
+            "order_label": "",
+            "p95_intensity_db": 18.0,
+            "strength_db": 18.0,
+            "presence_ratio": 0.8,
+            "peak_classification": "transient",
+            "typical_speed_band": "any",
+        },
+        lang="en",
+        tr=lambda key, **_kw: {
+            "CLASSIFICATION_TRANSIENT": "Intermittent",
+            "PEAK_ROW_BRIEF_EVENT": "Brief event",
+            "PEAK_ROW_REPEATED_PATTERN": "Repeated pattern",
+            "PEAK_ROW_SEEN_MORE_THAN_ONCE": "Seen more than once",
+            "SOURCE_TRANSIENT_IMPACT": "Transient impact",
+            "UNKNOWN": "Unknown",
+        }[key],
+    )
+    assert row.relevance == "Repeated pattern"
+
+
 def test_extracted_pdf_builders_are_importable() -> None:
     assert not hasattr(peak_table, "build_peak_rows_from_plots")
     assert "build_peak_rows_from_plots" not in peak_table.__all__
