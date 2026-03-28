@@ -57,7 +57,7 @@ class TestUpdateManager:
             return await original_run(args, timeout=timeout, env=env)
 
         runner.run = slow_run
-        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3 -c pass", 0)
         manager, _ = self.make_manager(runner=runner)
 
         with patch("shutil.which", mock_which):
@@ -86,7 +86,7 @@ class TestUpdateManager:
             return await original_run(args, timeout=timeout, env=env)
 
         runner.run = slow_run
-        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3 -c pass", 0)
         manager, _ = self.make_manager(runner=runner)
 
         with patch("shutil.which", mock_which):
@@ -98,7 +98,7 @@ class TestUpdateManager:
     @pytest.mark.asyncio
     async def test_status_to_payload_never_leaks_password(self) -> None:
         runner = FakeRunner()
-        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3 -c pass", 0)
         manager, _ = self.make_manager(runner=runner)
 
         with patch("shutil.which", mock_which):
@@ -110,7 +110,7 @@ class TestUpdateManager:
     @pytest.mark.asyncio
     async def test_start_sets_ssid_and_timestamps(self) -> None:
         runner = FakeRunner()
-        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3 -c pass", 0)
         manager, _ = self.make_manager(runner=runner)
 
         before = time.time()

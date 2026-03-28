@@ -86,7 +86,7 @@ class TestUpdateManagerAsync:
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path, sudo_ok=False, rollback=False)
-        runner.set_response("sudo -n true", 1, "", "sudo: a password is required")
+        runner.set_response("python3 -c pass", 1, "", "sudo: a password is required")
         with (
             patch("shutil.which", mock_which),
             patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
