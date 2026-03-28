@@ -11,7 +11,9 @@ import tempfile
 from pathlib import Path
 
 
-def _run(command: list[str], *, check: bool = True, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
+def _run(
+    command: list[str], *, check: bool = True, capture_output: bool = False
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         command,
         check=check,
@@ -37,7 +39,9 @@ def _existing_release_id(repo: str, tag: str) -> int | None:
     payload = json.loads(result.stdout)
     release_id = payload.get("id")
     if not isinstance(release_id, int):
-        raise SystemExit(f"Unexpected release payload for tag {tag!r}: missing integer id")
+        raise SystemExit(
+            f"Unexpected release payload for tag {tag!r}: missing integer id"
+        )
     return release_id
 
 
@@ -56,7 +60,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--tag", required=True, help="Release tag name.")
     parser.add_argument("--target", required=True, help="Target branch or commit SHA.")
     parser.add_argument("--title", required=True, help="Release title.")
-    parser.add_argument("--notes-file", required=True, help="Path to the release notes file.")
+    parser.add_argument(
+        "--notes-file", required=True, help="Path to the release notes file."
+    )
     parser.add_argument(
         "--make-latest",
         choices=("omit", "true", "false", "legacy"),
