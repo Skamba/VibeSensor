@@ -113,6 +113,10 @@ _BUILD_WRAPPER_CHECKS: list[tuple[str, str]] = [
         "Validation failed: sshd first-boot readiness test failed",
         "build wrapper must validate sshd first-boot readiness",
     ),
+    (
+        "Validation failed: first user password hash does not match VS_FIRST_USER_PASS",
+        "build wrapper must validate the configured first user password hash",
+    ),
 ]
 
 
