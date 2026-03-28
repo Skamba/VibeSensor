@@ -165,6 +165,11 @@ def test_dutch_translations_complete() -> None:
     assert "ordefout" in _nl("FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND")
     assert "hotspotsamenvatting" in _nl("HOTSPOT_SUMMARY").lower()
     assert "lokale intensiteit" in _nl("HOTSPOT_MARKER_SIZE_HINT").lower()
+    assert "ondersteunende meetwaarden" in _nl("DIAGNOSTIC_PEAKS").lower()
+    assert "ondersteunende observaties" in _nl("ADDITIONAL_OBSERVATIONS").lower()
+    assert _nl("MEANING") == "Betekenis"
+    assert "herhaald patroon" in _nl("PEAK_ROW_REPEATED_PATTERN").lower()
+    assert "ruisvloer" in _nl("PEAK_ROW_NEAR_NOISE_FLOOR").lower()
     assert "bedrijfsomstandigheid" in _nl(
         "PEAK_FREQUENCY_SHIFTS_RANDOMLY_WITH_NO_REPEATABLE_OPERATING",
     )

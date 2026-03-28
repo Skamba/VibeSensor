@@ -170,7 +170,7 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
         "VibeSensor Diagnostic Report",
         "Evidence and Hotspots",
         "Pattern Evidence",
-        "Diagnostic Peaks",
+        "Supporting Measurements",
         "Diagnosed location source",
         "Wheel/Tire",
         "Driveline",

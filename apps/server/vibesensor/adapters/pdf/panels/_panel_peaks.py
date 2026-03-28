@@ -42,7 +42,7 @@ def _draw_peaks_table(
     ]
     used = sum(col_w for _, col_w in col_defs)
     notes_w = max(20 * mm, w - used)
-    col_defs.append((tr("RELEVANCE"), notes_w))
+    col_defs.append((tr("MEANING"), notes_w))
 
     row_h = 6.2 * mm
     y = y_top

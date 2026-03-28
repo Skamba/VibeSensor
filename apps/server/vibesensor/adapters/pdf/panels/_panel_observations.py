@@ -38,6 +38,5 @@ def _draw_additional_observations(
             order_label = f"{finding.frequency_hz:.1f} Hz"
         if not order_label:
             order_label = tr("SOURCE_TRANSIENT_IMPACT")
-        confidence = finding.effective_confidence
-        c.drawString(x_pad, y_cursor, f"• {order_label} ({confidence * 100.0:.0f}%)")
+        c.drawString(x_pad, y_cursor, f"• {order_label}")
         y_cursor -= step
