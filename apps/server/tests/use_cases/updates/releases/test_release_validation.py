@@ -253,13 +253,15 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
         "validate_packaged_static_assets",
         lambda: tmp_path / "index.html",
     )
+    import vibesensor.shared.subprocess_server as _subprocess_server
+
     monkeypatch.setattr(
-        release_validation,
+        _subprocess_server,
         "start_server_subprocess",
         fake_start_server_subprocess,
     )
     monkeypatch.setattr(
-        release_validation,
+        _subprocess_server,
         "terminate_subprocess",
         lambda process: (process.terminate(), process.wait(timeout=10.0)),
     )
