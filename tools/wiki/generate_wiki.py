@@ -207,7 +207,7 @@ cd VibeSensor
 
 The image artifact is written under:
 
-- `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
+- `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-trixie-lite.img`
 
 Flash that image to a microSD card with Raspberry Pi Imager, insert the card
 into the Pi 3 A+, and power it on.

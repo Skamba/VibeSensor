@@ -6,7 +6,7 @@ normalize_mirror() {
 
 mirror_release_url() {
   local base="$1"
-  printf '%sdists/%s/Release\n' "$(normalize_mirror "${base}")" "${PI_GEN_REF}"
+  printf '%sdists/%s/Release\n' "$(normalize_mirror "${base}")" "${PI_IMAGE_RELEASE}"
 }
 
 probe_mirror() {

@@ -7,7 +7,7 @@ name = "vibesensor"
 dynamic = ["version"]
 description = "Offline Raspberry Pi vibration telemetry server"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
   "fastapi>=0.111,<1",
   "uvicorn[standard]>=0.30,<1",

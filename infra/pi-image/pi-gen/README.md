@@ -1,6 +1,6 @@
 # Prebuilt Raspberry Pi Image
 
-Builds a custom Raspberry Pi OS Lite (Bookworm) image with VibeSensor
+Builds a custom Raspberry Pi OS Lite (Trixie) image with VibeSensor
 pre-installed. After flashing to an SD card and booting, the Pi is ready to use
 with no manual setup.
 
@@ -46,7 +46,7 @@ Standalone validation against an existing image artifact:
 
 Artifacts:
 - app artifacts: `infra/pi-image/pi-gen/out/app-artifacts/`
-- image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
+- image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-trixie-lite.img`
 
 Useful build flags for faster x86 iteration:
 
@@ -115,7 +115,7 @@ When `build.sh` fails, isolate which stage failed before retrying everything:
 
 The image contains:
 
-- Raspberry Pi OS Lite (Bookworm, arm64)
+- Raspberry Pi OS Lite (Trixie, armhf)
 - VibeSensor Python server with all dependencies
 - Built web UI (served from `apps/server/vibesensor/static/`)
 - Preloaded offline ESP build toolchain/packages for `m5stack_atom`
@@ -141,6 +141,9 @@ GitHub Actions:
 - workflow: [`.github/workflows/weekly-pi-image.yml`](../../../.github/workflows/weekly-pi-image.yml)
 - triggers: weekly schedule plus manual `workflow_dispatch`
 - release assets: compressed Pi image, checksum, and version metadata
+- release retention: the workflow deletes older weekly Pi-image prereleases
+  before publishing the newest snapshot, so GitHub Releases only shows the
+  latest weekly Pi image entry
 
 These weekly builds reuse the same `./infra/pi-image/pi-gen/build.sh` pipeline
 documented above, so the GitHub Release artifact follows the same supported
