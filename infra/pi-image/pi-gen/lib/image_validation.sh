@@ -355,13 +355,11 @@ echo "SSHD_FIRST_BOOT_READINESS_OK"
     exit 1
   fi
 
-  if ! python3 - "${VS_FIRST_USER_PASS}" "${SHADOW_HASH}" <<'PY'
-import crypt
-import sys
-plain = sys.argv[1]
-shadow_hash = sys.argv[2]
-sys.exit(0 if crypt.crypt(plain, shadow_hash) == shadow_hash else 1)
-PY
+  require_cmd perl
+  if ! perl -e '
+my ($plain, $shadow_hash) = @ARGV;
+exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
+' "${VS_FIRST_USER_PASS}" "${SHADOW_HASH}"
   then
     echo "Validation failed: first user password hash does not match VS_FIRST_USER_PASS"
     exit 1
