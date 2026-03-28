@@ -31,6 +31,12 @@ reduced to startup wiring and cooperative loop orchestration.
   - when `sample_once()` returns false (sensor unavailable), the code now advances
     `g_next_sample_due_us` before breaking so the post-loop lag detector does not
     re-count the same slot as an additional missed sample
+- Replaced the fixed sampling catch-up ceiling with a time-budgeted catch-up window:
+  - `service_sampling()` now bounds recovery work by wall-clock time per loop pass
+    instead of a hardcoded samples-per-loop ceiling, which makes the 800 Hz path
+    less dependent on one arbitrary catch-up count
+  - budget-exhaustion events are counted separately from missed-sample slots so
+    later hardware analysis can distinguish "fell behind" from "spent full budget"
 - Fixed ignored `beginPacket()` return value in `send_hello()` and `send_ack()`:
   - both functions now check whether `beginPacket()` succeeded before calling
     `write()` / `endPacket()`, preventing writes into an invalid UDP send state
@@ -101,6 +107,7 @@ Key fields:
 - `sensor.trunc`: FIFO truncation events (reader could not consume full FIFO depth in one pass)
 - `sensor.reinit`: `successes/attempts` of ADXL reinitialization after repeated errors
 - `sensor.miss`: missed/skipped sampling slots
+- `sensor.budget`: loop passes that exhausted the time-budgeted sampling catch-up window
 - `wifi_retry.attempts|fail`: reconnect attempts and initial connect failures
 - `parse.ctrl|ack`: invalid control command / DATA_ACK packets
 - `last_error`: latest error code and timestamp (ms)

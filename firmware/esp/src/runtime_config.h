@@ -20,7 +20,7 @@ constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
 constexpr size_t kMaxDatagramBytes = static_cast<size_t>(VIBESENSOR_MAX_UDP_PAYLOAD);
 
 #ifndef VIBESENSOR_SAMPLE_RATE_HZ
-#define VIBESENSOR_SAMPLE_RATE_HZ 400
+#define VIBESENSOR_SAMPLE_RATE_HZ 800
 #endif
 #ifndef VIBESENSOR_FRAME_SAMPLES
 #define VIBESENSOR_FRAME_SAMPLES 200
@@ -82,7 +82,12 @@ constexpr uint32_t kWifiRetryIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_
 constexpr uint8_t kWifiInitialConnectAttempts =
     static_cast<uint8_t>(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS);
 
-constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
+#ifndef VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US
+#define VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US 10000
+#endif
+constexpr uint32_t kSamplingCatchUpBudgetUs =
+    static_cast<uint32_t>(VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US);
+
 constexpr size_t kSensorReadBatchSamples = 8;
 constexpr size_t kSensorPrefetchSamples = 32;
 constexpr size_t kSensorPrefetchLowWaterSamples = 8;
@@ -106,6 +111,8 @@ constexpr uint32_t kWifiScanIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_S
 
 static_assert(VIBESENSOR_SAMPLE_RATE_HZ > 0, "VIBESENSOR_SAMPLE_RATE_HZ must be > 0");
 static_assert(VIBESENSOR_FRAME_SAMPLES > 0, "VIBESENSOR_FRAME_SAMPLES must be > 0");
+static_assert(VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US > 0,
+              "VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US must be > 0");
 static_assert(VIBESENSOR_FRAME_QUEUE_LEN_MIN > 0,
               "VIBESENSOR_FRAME_QUEUE_LEN_MIN must be > 0");
 static_assert(VIBESENSOR_FRAME_QUEUE_LEN_TARGET >= VIBESENSOR_FRAME_QUEUE_LEN_MIN,

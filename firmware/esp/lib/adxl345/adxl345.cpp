@@ -15,7 +15,7 @@ constexpr uint8_t VALUE_POWER_CTL_STANDBY = 0x00;
 constexpr uint8_t VALUE_POWER_CTL_MEASURE = 0x08;
 constexpr uint8_t VALUE_INT_ENABLE_WATERMARK = 0x02;
 constexpr uint8_t VALUE_DATA_FORMAT_FULL_RES_16G = 0x0B;
-constexpr uint8_t VALUE_BW_RATE_400HZ = 0x0C;
+constexpr uint8_t VALUE_BW_RATE_800HZ = 0x0D;
 constexpr uint8_t VALUE_FIFO_STREAM_MODE = 0x80;
 constexpr uint8_t MASK_FIFO_WATERMARK = 0x1F;
 constexpr uint8_t MASK_FIFO_ENTRIES = 0x3F;
@@ -53,8 +53,8 @@ bool ADXL345::begin() {
   if (!write_reg(REG_POWER_CTL, VALUE_POWER_CTL_STANDBY)) { available_ = false; return false; }
   // Full resolution + +/-16g.
   if (!write_reg(REG_DATA_FORMAT, VALUE_DATA_FORMAT_FULL_RES_16G)) { available_ = false; return false; }
-  // 400 Hz output data rate.
-  if (!write_reg(REG_BW_RATE, VALUE_BW_RATE_400HZ)) { available_ = false; return false; }
+  // 800 Hz output data rate.
+  if (!write_reg(REG_BW_RATE, VALUE_BW_RATE_800HZ)) { available_ = false; return false; }
   // FIFO stream mode with configurable watermark.
   if (!write_reg(
           REG_FIFO_CTL,
