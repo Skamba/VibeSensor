@@ -90,7 +90,7 @@ export function renderRealtimeSensorOverview(
       const strongestClass = params.strongestClientId === client.id ? " live-sensor-card--strongest" : "";
       const primaryLabel = escapeHtml(client.name || client.id);
       const locationLabel = escapeHtml(locationLabelForClient(client, params));
-      return `<article class="live-sensor-card${strongestClass}"><div class="live-sensor-card__header"><strong>${primaryLabel}</strong><span class="status-pill ${statusClass}">${escapeHtml(statusText)}</span></div><div class="live-sensor-card__meta">${locationLabel}</div><div class="live-sensor-card__subtle"><code>${escapeHtml(client.id)}</code></div></article>`;
+      return `<article class="live-sensor-card${strongestClass}"><div class="live-sensor-card__header"><strong>${primaryLabel}</strong><span class="live-sensor-card__status-dot live-sensor-card__status-dot--${statusClass}" role="img" aria-label="${escapeHtml(statusText)}" title="${escapeHtml(statusText)}"></span></div><div class="live-sensor-card__meta">${locationLabel}</div><div class="live-sensor-card__subtle"><code>${escapeHtml(client.id)}</code></div></article>`;
     })
     .join("");
 }
