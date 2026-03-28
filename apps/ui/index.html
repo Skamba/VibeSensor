@@ -575,19 +575,33 @@
                      </select>
                      <button type="button" id="espFlashRefreshPortsBtn" class="btn btn--muted" data-i18n="settings.esp_flash.refresh_ports">Refresh</button>
                    </div>
-                   <div class="maintenance-note" data-i18n="settings.esp_flash.preflight_note">Starting a flash builds the latest firmware on this Pi, erases the selected board, and writes the new image over USB. Keep the board powered until the staged progress reaches Done.</div>
-                   <div class="maintenance-action-row">
-                     <button type="button" id="espFlashStartBtn" class="btn btn--success" data-i18n="settings.esp_flash.start">Flash latest</button>
-                     <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" disabled>Cancel</button>
-                   </div>
-                  <div class="maintenance-card__header" style="margin-top:1rem;">
-                    <div>
-                      <div class="maintenance-card__title" data-i18n="settings.esp_flash.current_status_title">Current readiness</div>
+                    <div class="maintenance-note" data-i18n="settings.esp_flash.preflight_note">Starting a flash builds the latest firmware on this Pi, erases the selected board, and writes the new image over USB. Keep the board powered until the staged progress reaches Done.</div>
+                    <div class="maintenance-action-row">
+                      <button type="button" id="espFlashStartBtn" class="btn btn--success" data-i18n="settings.esp_flash.start">Flash latest</button>
+                      <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" disabled>Cancel</button>
                     </div>
-                    <span id="espFlashStatusBanner" class="pill pill--muted" data-i18n="settings.esp_flash.state.idle">Idle</span>
-                  </div>
-                  <div id="espFlashReadinessPanel" class="maintenance-stack maintenance-stack--tight" aria-live="polite"></div>
                 </section>
+
+                <div class="maintenance-pair-grid">
+                  <section class="maintenance-card">
+                    <div class="maintenance-card__header">
+                      <div>
+                        <div class="maintenance-card__title" data-i18n="settings.esp_flash.current_status_title">Current readiness</div>
+                      </div>
+                      <span id="espFlashStatusBanner" class="pill pill--muted" data-i18n="settings.esp_flash.state.idle">Idle</span>
+                    </div>
+                    <div id="espFlashReadinessPanel" class="maintenance-stack maintenance-stack--tight" aria-live="polite"></div>
+                  </section>
+
+                  <section class="maintenance-card">
+                    <div class="maintenance-card__header">
+                      <div>
+                        <div class="maintenance-card__title" data-i18n="settings.esp_flash.journey_title">Expected stages</div>
+                      </div>
+                    </div>
+                    <div id="espFlashJourneyPanel" class="maintenance-stack maintenance-stack--tight" aria-live="polite"></div>
+                  </section>
+                </div>
 
                 <section class="maintenance-card">
                   <div class="maintenance-card__header">
