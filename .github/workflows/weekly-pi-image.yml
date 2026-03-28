@@ -28,9 +28,11 @@ jobs:
         run: |
           set -euo pipefail
           build_label="$(date -u +%Y.%-m.%-d)"
-          echo "build_label=${build_label}" >> "${GITHUB_OUTPUT}"
-          echo "tag=weekly-pi-image" >> "${GITHUB_OUTPUT}"
-          echo "release_name=Weekly Pi Image ${build_label}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "build_label=${build_label}"
+            echo "tag=weekly-pi-image"
+            echo "release_name=Weekly Pi Image ${build_label}"
+          } >> "${GITHUB_OUTPUT}"
 
       - uses: actions/setup-node@v6
         with:
@@ -129,24 +131,40 @@ jobs:
               done
 
       - name: Publish weekly Pi image release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.metadata.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          name: ${{ steps.metadata.outputs.release_name }}
-          prerelease: false
-          make_latest: false
-          body: |
-            Automated weekly Raspberry Pi image snapshot from `main`.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes_file="$(mktemp)"
+          cat > "${notes_file}" <<EOF
+          Automated weekly Raspberry Pi image snapshot from \`main\`.
 
-            - Commit: `${{ github.sha }}`
-            - Build label: `${{ steps.metadata.outputs.build_label }}`
-            - Asset: `${{ steps.assets.outputs.artifact_name }}`
-            - Flash the image with Raspberry Pi Imager after downloading the release asset.
+          - Commit: \`${GITHUB_SHA}\`
+          - Build label: \`${{ steps.metadata.outputs.build_label }}\`
+          - Asset: \`${{ steps.assets.outputs.artifact_name }}\`
+          - Flash the image with Raspberry Pi Imager after downloading the release asset.
 
-            This workflow reuses `infra/pi-image/pi-gen/build.sh` so the weekly image follows the same supported image-build path as local builds.
-            Before publishing, it deletes the previous weekly Pi image release so the Releases overview only shows the latest Pi image snapshot.
-          files: |
-            ${{ steps.assets.outputs.release_dir }}/*
-          fail_on_unmatched_files: true
-          overwrite_files: true
+          This workflow reuses \`infra/pi-image/pi-gen/build.sh\` so the weekly image follows the same supported image-build path as local builds.
+          Before publishing, it deletes the previous weekly Pi image release so the Releases overview only shows the latest Pi image snapshot.
+          EOF
+
+          mapfile -t release_files < <(find "${{ steps.assets.outputs.release_dir }}" -maxdepth 1 -type f | sort)
+          if [ "${#release_files[@]}" -eq 0 ]; then
+            echo "No weekly release assets found under ${{ steps.assets.outputs.release_dir }}" >&2
+            exit 1
+          fi
+
+          release_args=()
+          for release_file in "${release_files[@]}"; do
+            release_args+=(--asset "${release_file}")
+          done
+
+          python3 tools/publish_github_release.py \
+            --repo "${GITHUB_REPOSITORY}" \
+            --tag "${{ steps.metadata.outputs.tag }}" \
+            --target "${GITHUB_SHA}" \
+            --title "${{ steps.metadata.outputs.release_name }}" \
+            --notes-file "${notes_file}" \
+            --make-latest false \
+            "${release_args[@]}"
