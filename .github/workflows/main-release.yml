@@ -293,7 +293,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Create combined release
+      - name: Create combined Wheel / ESP release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -326,7 +326,7 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --tag "${{ steps.version.outputs.tag }}" \
             --target "${GITHUB_SHA}" \
-            --title "Release ${{ steps.version.outputs.version }}" \
+            --title "Wheel / ESP release ${{ steps.version.outputs.version }}" \
             --notes-file "${notes_file}" \
             "${release_args[@]}"
 
@@ -342,14 +342,16 @@ jobs:
             --preserve-existing \
             --commit-message "docs(wiki): refresh screenshots for release ${{ steps.version.outputs.version }}"
 
-      - name: Remove superseded releases
+      - name: Remove superseded Wheel / ESP releases
         uses: actions/github-script@v8
         env:
           CURRENT_TAG: ${{ steps.version.outputs.tag }}
+          WHEEL_ESP_RELEASE_TITLE_PREFIX: Wheel / ESP release
         with:
           script: |
             const currentTag = process.env.CURRENT_TAG;
-            const tagPatterns = [/^server-v/, /^fw-v/];
+            const releaseTitlePrefix = `${process.env.WHEEL_ESP_RELEASE_TITLE_PREFIX} `;
+            const legacyTitlePrefix = "Release ";
             const releases = await github.paginate(github.rest.repos.listReleases, {
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -358,14 +360,22 @@ jobs:
 
             for (const release of releases) {
               const tag = release.tag_name || "";
+              const title = release.name || "";
               if (tag === currentTag) {
                 continue;
               }
-              if (!tagPatterns.some((pattern) => pattern.test(tag))) {
+              if (!tag.startsWith("server-v")) {
+                continue;
+              }
+              if (
+                !title.startsWith(releaseTitlePrefix) &&
+                !title.startsWith(legacyTitlePrefix)
+              ) {
+                core.info(`Skipping ${tag} because it is not a Wheel / ESP release`);
                 continue;
               }
 
-              core.info(`Deleting superseded release ${tag}`);
+              core.info(`Deleting superseded Wheel / ESP release ${tag}`);
               await github.rest.repos.deleteRelease({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
