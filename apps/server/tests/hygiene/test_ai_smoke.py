@@ -202,6 +202,15 @@ def test_smoke_server_pyproject_includes_esptool_for_esp_flash() -> None:
         "Server must expose firmware cache refresh CLI entry point"
     )
     assert "vibesensor-fw-info" in text, "Server must expose firmware cache info CLI entry point"
+    assert "vibesensor.use_cases.updates.firmware.firmware_cache:refresh_cache_cli" in text, (
+        "Firmware cache refresh CLI entry point must target the firmware package module"
+    )
+    assert "vibesensor.use_cases.updates.firmware.firmware_cache:cache_info_cli" in text, (
+        "Firmware cache info CLI entry point must target the firmware package module"
+    )
+    assert "vibesensor.use_cases.updates.releases.release_fetcher:fetch_latest_wheel_cli" in text, (
+        "Server release fetch CLI entry point must target the releases package module"
+    )
 
 
 @pytest.mark.smoke
