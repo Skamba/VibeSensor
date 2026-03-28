@@ -33,6 +33,9 @@ export function createUiShellNavigationModule(
       button.setAttribute("aria-selected", isActive ? "true" : "false");
       button.tabIndex = isActive ? 0 : -1;
     }
+    if (els.appShellWrap) {
+      els.appShellWrap.classList.toggle("wrap--dashboard-view", shell.activeViewId === DEFAULT_SHELL_VIEW_ID);
+    }
     if (shell.activeViewId === DEFAULT_SHELL_VIEW_ID) {
       ctx.onDashboardViewActivated?.();
     }

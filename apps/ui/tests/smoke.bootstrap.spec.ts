@@ -120,16 +120,17 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "VibeSensor" })).toBeVisible();
-  await expect(page.locator("#linkState")).not.toHaveText(/Connecting/i);
-  await expect(page.locator("#shellLiveStatus")).toHaveText("Ready");
+  await expect(page.locator(".site-header__status")).toBeHidden();
   await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText("1 / 1");
   await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Test Hatch");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
   await expect(page.locator("#liveDataFreshness [data-value]")).toHaveText("Fresh - 10 ms ago");
-  await expect(page.locator("#liveRunHealth")).toHaveText("Ready");
+  await expect(page.locator("#liveRunHealth")).toBeHidden();
   await expect(page.locator("#liveStrongestSignal")).toHaveClass(/stat--spotlight/);
   await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveSensorRoster .live-sensor-card--strongest")).toContainText("Front Left Wheel");
+  await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
+  await expect(page.locator("#liveSensorRoster .live-sensor-card__status-dot--online")).toHaveCount(1);
   await expect(page.locator("#liveSensorRoster")).toContainText("Front Left Wheel");
   await expect(page.locator(".spectrum-controls-panel")).toContainText("Use the trace chips to isolate one sensor at a time.");
   await expect(page.locator(".spectrum-controls-panel #spectrumInspector")).toBeVisible();
@@ -137,6 +138,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#loggingSummary")).toHaveText(
     "Ready to record with 1 online sensor(s) and 1 assigned location(s). Press Start Recording to begin a new run.",
   );
+  await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Ready");
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("0");
@@ -149,16 +151,22 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await dashboardTab.focus();
   await dashboardTab.press("ArrowRight");
   await expect(page.locator("#historyView")).toHaveClass(/active/);
+  await expect(page.locator(".site-header__status")).toBeVisible();
   await historyTab.press("ArrowLeft");
   await expect(page.locator("#dashboardView")).toHaveClass(/active/);
+  await expect(page.locator(".site-header__status")).toBeHidden();
   await dashboardTab.press("End");
   await expect(page.locator("#settingsView")).toHaveClass(/active/);
+  await expect(page.locator(".site-header__status")).toBeVisible();
   await settingsTab.press("Home");
   await expect(page.locator("#dashboardView")).toHaveClass(/active/);
+  await expect(page.locator(".site-header__status")).toBeHidden();
   await historyTab.click();
   await expect(page.locator("#historyView")).toHaveClass(/active/);
+  await expect(page.locator(".site-header__status")).toBeVisible();
   await expect(page.locator("#historyTableBody")).toContainText("run-001");
   await dashboardTab.click();
+  await expect(page.locator(".site-header__status")).toBeHidden();
   await page.locator("#startLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toHaveText("Recording");
   await expect(page.locator("#loggingRunId")).toHaveText("Run ID: run-001");
