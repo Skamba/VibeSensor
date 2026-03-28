@@ -10,7 +10,12 @@
       <header class="site-header">
         <div class="site-header__main">
           <div class="site-header__nav">
-            <h1 class="title" data-i18n="title.main">VibeSensor</h1>
+            <h1 class="title" aria-label="VibeSensor">
+              <picture class="brandmark">
+                <source srcset="/branding/vibesensor-logo-header-dark.svg" media="(prefers-color-scheme: dark)" />
+                <img src="/branding/vibesensor-logo-header-light.svg" alt="VibeSensor" width="116" height="24" />
+              </picture>
+            </h1>
             <nav class="menu" aria-label="Primary" role="tablist">
               <button type="button" class="menu-btn active" data-view="dashboardView" id="tab-dashboard" role="tab" aria-controls="dashboardView" aria-selected="true" tabindex="0">
                 <span data-i18n="nav.live">Live</span>
