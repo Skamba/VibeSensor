@@ -57,7 +57,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
         "Systems with findings",
         "Next steps",
         "Evidence",
-        "Diagnostic Peaks",
+        "Supporting Measurements",
     ):
         assert_pdf_contains(pdf, text)
     assert b"Spectrogram" not in pdf

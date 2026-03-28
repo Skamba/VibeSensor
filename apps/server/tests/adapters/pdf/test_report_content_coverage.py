@@ -369,3 +369,4 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
     text = extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text
+    assert "(22%)" not in text

@@ -116,8 +116,8 @@
     "nl": "Wielorde-signaturen worden meestal veroorzaakt door onbalans, slingering of banddeformatie."
   },
   "ADDITIONAL_OBSERVATIONS": {
-    "en": "Additional Observations",
-    "nl": "Aanvullende observaties"
+    "en": "Supporting Observations",
+    "nl": "Ondersteunende observaties"
   },
   "ADD_TEMPORARY_DAMPING_MASS_AND_REPEAT_THE_RUN": {
     "en": "Add temporary damping mass and repeat the run.",
@@ -360,8 +360,8 @@
     "nl": "gedetecteerd op een gemonitorde locatie"
   },
   "DIAGNOSTIC_PEAKS": {
-    "en": "Diagnostic Peaks",
-    "nl": "Diagnostische pieken"
+    "en": "Supporting Measurements",
+    "nl": "Ondersteunende meetwaarden"
   },
   "DIAGNOSTIC_WORKSHEET": {
     "en": "VibeSensor Diagnostic Report",
@@ -1550,5 +1550,29 @@
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
     "nl": "Werkplaatsoverzicht"
+  },
+  "MEANING": {
+    "en": "Meaning",
+    "nl": "Betekenis"
+  },
+  "PEAK_ROW_BRIEF_EVENT": {
+    "en": "Brief event",
+    "nl": "Korte gebeurtenis"
+  },
+  "PEAK_ROW_NEAR_NOISE_FLOOR": {
+    "en": "Near noise floor",
+    "nl": "Dicht bij ruisvloer"
+  },
+  "PEAK_ROW_OCCASIONAL": {
+    "en": "Occasional",
+    "nl": "Af en toe"
+  },
+  "PEAK_ROW_REPEATED_PATTERN": {
+    "en": "Repeated pattern",
+    "nl": "Herhaald patroon"
+  },
+  "PEAK_ROW_SEEN_MORE_THAN_ONCE": {
+    "en": "Seen more than once",
+    "nl": "Meer dan een keer gezien"
   }
 }
