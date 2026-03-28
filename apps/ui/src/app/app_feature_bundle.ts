@@ -81,6 +81,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     renderSpectrum: deps.renderSpectrum,
     renderSpeedReadout: deps.renderSpeedReadout,
     renderRealtimeStatus: () => realtime.renderStatus(),
+    renderRealtimeLoggingStatus: () => realtime.renderLoggingStatus(),
   });
   const carCreation = createUiCarCreationCommand({
     getVehicleSettings: () => state.settings.vehicleSettings,
