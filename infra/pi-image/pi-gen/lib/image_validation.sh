@@ -336,11 +336,8 @@ echo "SSHD_FIRST_BOOT_READINESS_OK"
     exit 1
   fi
 
-  if [ ! -L "${ROOT_MNT}/etc/systemd/system/multi-user.target.wants/regenerate_ssh_host_keys.service" ]; then
-    echo "Validation failed: regenerate_ssh_host_keys.service is not enabled"
-    exit 1
-  fi
-
+  # The supported contract is ssh.service enablement plus the drop-in below.
+  # Trixie no longer guarantees a standalone regenerate_ssh_host_keys symlink.
   if [ ! -f "${ROOT_MNT}/etc/systemd/system/ssh.service.d/10-vibesensor-hostkeys.conf" ]; then
     echo "Validation failed: missing ssh host-key bootstrap drop-in"
     exit 1
