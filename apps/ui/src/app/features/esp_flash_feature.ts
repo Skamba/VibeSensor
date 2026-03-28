@@ -139,7 +139,6 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(t(`settings.esp_flash.journey_terminal.${terminalState}`))}</div>`
       : "";
     return `<div class="maintenance-journey">
-      <div class="maintenance-journey__title">${escapeHtml(t("settings.esp_flash.journey_title"))}</div>
       ${terminalNote}
       <ol class="maintenance-stage-list">${items}</ol>
     </div>`;
@@ -225,7 +224,12 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     const errorHtml = latestStatus.error
       ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(latestStatus.error)}</div>`
       : "";
-    els.espFlashReadinessPanel.innerHTML = `<div class="subtle">${escapeHtml(readinessSummary(latestStatus))}</div><div class="status-grid">${rows.join("")}</div>${renderJourney(latestStatus)}${errorHtml}`;
+    els.espFlashReadinessPanel.innerHTML = `<div class="subtle">${escapeHtml(readinessSummary(latestStatus))}</div><div class="status-grid">${rows.join("")}</div>${errorHtml}`;
+  }
+
+  function renderJourneyPanel(): void {
+    if (!els.espFlashJourneyPanel || !latestStatus) return;
+    els.espFlashJourneyPanel.innerHTML = renderJourney(latestStatus);
   }
 
   function renderLogsEmptyState(status: EspFlashStatusPayload): string {
@@ -307,6 +311,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     if (els.espFlashPortSelect) els.espFlashPortSelect.disabled = status.state === "running";
     if (status.state !== "running") nextLogIndex = status.log_count || 0;
     renderReadinessPanel();
+    renderJourneyPanel();
   }
 
   async function refreshLogs(status: EspFlashStatusPayload): Promise<void> {
