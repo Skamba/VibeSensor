@@ -28,8 +28,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     OBSERVED_LABEL_W,
     PAGE_H,
     PANEL_HEADER_H,
-    SOFT_BG,
-    TEXT_CLR,
+    REPORT_COLORS,
     HeaderColumnsLayout,
     build_page1_layout,
     observed_signature_row_count,
@@ -195,9 +194,16 @@ def _draw_header_panel(
         header_content_height=max(left_h, right_h),
         observed_rows=obs_rows,
     )
-    _draw_panel(c, layout.header.x, layout.header.y, layout.header.w, layout.header.h, fill=SOFT_BG)
+    _draw_panel(
+        c,
+        layout.header.x,
+        layout.header.y,
+        layout.header.w,
+        layout.header.h,
+        fill=REPORT_COLORS["brand_surface"],
+    )
 
-    c.setFillColor(_hex(TEXT_CLR))
+    c.setFillColor(_hex(REPORT_COLORS["brand"]))
     c.setFont(FONT_B, FS_TITLE)
     c.drawString(
         MARGIN + 4 * mm,
