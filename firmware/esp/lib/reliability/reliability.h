@@ -14,13 +14,9 @@ constexpr uint32_t kRetryJitterDivisor = 4U;
 constexpr uint16_t clamp_sample_rate(uint16_t configured_hz,
                                      uint16_t min_hz,
                                      uint16_t max_hz) {
-  if (configured_hz < min_hz) {
-    return min_hz;
-  }
-  if (configured_hz > max_hz) {
-    return max_hz;
-  }
-  return configured_hz;
+  return configured_hz < min_hz
+             ? min_hz
+             : (configured_hz > max_hz ? max_hz : configured_hz);
 }
 
 inline uint16_t clamp_frame_samples(uint16_t configured_samples,
