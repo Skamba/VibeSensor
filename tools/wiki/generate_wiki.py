@@ -455,6 +455,10 @@ Typical examples the current product surfaces well are:
 - driveshaft-related vibration,
 - engine-order vibration.
 
+If you want the plain-language explanation of how the system uses repeated
+frequency patterns plus mounted sensor locations to narrow down a fault, see
+[How VibeSensor Diagnoses Issues](How-VibeSensor-Diagnoses-Issues).
+
 ## 5. Save or share the evidence
 
 Use the built-in exports when you want to hand findings to a technician,
@@ -469,6 +473,84 @@ customer, or teammate:
 - If GPS is unreliable, switch to manual speed instead of forcing a bad capture.
 - Run again after a repair so you can compare the new result against the old one
   in History.
+"""
+
+
+def _diagnosis_page() -> str:
+    return """# How VibeSensor Diagnoses Issues
+
+VibeSensor does not decide from one sensor in isolation. The useful clue is the
+combination of:
+
+- **frequency or order**: the same repeating vibration showing up at a specific
+  Hz value or a wheel / driveshaft / engine order,
+- **location**: which mounted sensor sees that vibration most strongly,
+- **speed context**: whether that vibration grows or repeats in the speed range
+  where the complaint happens.
+
+## Why frequency matters
+
+Many vehicle problems repeat at a predictable rate.
+
+- A wheel-related issue tends to show up at wheel order.
+- A driveshaft issue tends to show up at driveshaft order.
+- An engine-related issue tends to follow engine order.
+
+That means VibeSensor is not only looking for "something is shaking." It is
+looking for **what repeating pattern** is present.
+
+## Why sensor location matters
+
+The same vibration can be visible across more than one sensor, but it is often
+strongest near the source.
+
+Examples:
+
+- If a repeating vibration is strongest at the front-left wheel sensor and much
+  weaker elsewhere, that points more toward that corner than toward the rear of
+  the car.
+- If multiple wheel sensors all show the same pattern strongly, the source may
+  be more central or may be propagating through the chassis.
+- If an engine-bay sensor sees the strongest matching pattern, that shifts the
+  suspicion away from a single wheel corner.
+
+This is why correct sensor naming and correct mounted locations matter so much.
+
+## How the pieces come together
+
+During a run, VibeSensor compares the same vibration event across all connected
+sensors and asks:
+
+1. what repeating frequency or order is present,
+2. where it is strongest,
+3. and whether it appears in the speed range where the complaint happens.
+
+If one repeating frequency is strongest at the front-left wheel and it tracks
+the wheel-related order for the active car, that points much more toward that
+corner than toward the engine bay or rear axle.
+
+If that same pattern matches the expected behavior of a driveshaft or engine
+order instead, VibeSensor ranks those causes higher even if a wheel sensor also
+picked up some of the vibration.
+
+## Why the car profile matters
+
+The active car profile gives VibeSensor the context it needs for order tracking,
+such as tire and drivetrain information.
+
+If the wrong car profile is selected, the system can still show useful raw
+vibration data, but the order-matching part of the diagnosis is less reliable.
+
+## What gives the best results
+
+- Use multiple sensors at the same time when possible.
+- Assign the correct location to each sensor in Settings.
+- Make sure the active car matches the vehicle being tested.
+- Capture the speed range where the vibration is actually noticeable.
+- Compare before/after runs with similar sensor placement and route conditions.
+
+That combination gives VibeSensor the best chance to match both **what
+frequency the issue follows** and **where in the car it is strongest**.
 """
 
 
@@ -555,6 +637,7 @@ def _sidebar() -> str:
 - [Initial Install](Initial-Install)
 - [Configure VibeSensor](Configure-VibeSensor)
 - [Run a Diagnostic Drive](Run-a-Diagnostic-Drive)
+- [How VibeSensor Diagnoses Issues](How-VibeSensor-Diagnoses-Issues)
 - [Troubleshooting and Maintenance](Troubleshooting-and-Maintenance)
 """
 
@@ -607,6 +690,10 @@ def main(argv: list[str] | None = None) -> None:
     _write(
         output_dir / "Run-a-Diagnostic-Drive.md",
         _run_page(),
+    )
+    _write(
+        output_dir / "How-VibeSensor-Diagnoses-Issues.md",
+        _diagnosis_page(),
     )
     _write(
         output_dir / "Troubleshooting-and-Maintenance.md",
