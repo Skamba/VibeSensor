@@ -19,6 +19,24 @@ constexpr uint16_t clamp_sample_rate(uint16_t configured_hz,
              : (configured_hz > max_hz ? max_hz : configured_hz);
 }
 
+inline uint64_t sampling_slots_due(uint64_t now_us,
+                                   uint64_t next_due_us,
+                                   uint64_t step_us) {
+  if (step_us == 0 || now_us < next_due_us) {
+    return 0;
+  }
+  return ((now_us - next_due_us) / step_us) + 1;
+}
+
+inline bool sampling_catch_up_budget_exhausted(uint64_t loop_started_us,
+                                               uint64_t now_us,
+                                               uint32_t budget_us) {
+  if (now_us < loop_started_us) {
+    return false;
+  }
+  return (now_us - loop_started_us) >= static_cast<uint64_t>(budget_us);
+}
+
 inline uint16_t clamp_frame_samples(uint16_t configured_samples,
                                     size_t max_datagram_bytes,
                                     size_t data_header_bytes) {

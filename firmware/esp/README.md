@@ -1,7 +1,7 @@
 # ESP32 Firmware
 
 PlatformIO firmware for M5Stack ATOM Lite (ESP32-PICO) that reads an ADXL345
-accelerometer at 400 Hz and streams samples to the Pi server over UDP.
+accelerometer at 800 Hz and streams samples to the Pi server over UDP.
 
 ## Features
 
@@ -10,9 +10,11 @@ accelerometer at 400 Hz and streams samples to the Pi server over UDP.
 - Buffered frame queue to reduce sample loss during short Wi-Fi stalls
 - UDP command listener for identify blink with ACK response
 - Identify command blinks only the single onboard RGB LED on ATOM Lite
-- ADXL345 I2C driver at 400 Hz with error-checked initialisation
+- ADXL345 I2C driver at 800 Hz with error-checked initialisation
 - Small software prefetch buffer de-correlates ADXL345 FIFO reads from fixed
   batch cadence while keeping output samples uniformly timed
+- Time-budgeted sampling catch-up bounds recovery work by wall-clock time
+  instead of a fixed per-loop sample count
 - No synthetic vibration injection in production builds
 
 Authoritative protocol and port contract: `docs/protocol.md`
@@ -106,6 +108,7 @@ Supported override macros:
 
 - `VIBESENSOR_SAMPLE_RATE_HZ`
 - `VIBESENSOR_FRAME_SAMPLES`
+- `VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US`
 - `VIBESENSOR_MAX_UDP_PAYLOAD`
 - `VIBESENSOR_SERVER_DATA_PORT`
 - `VIBESENSOR_SERVER_CONTROL_PORT`
@@ -137,10 +140,13 @@ Settings that still remain in `src/runtime_config.h`:
 ## Sampling cadence note
 
 The firmware keeps sample emission uniformly spaced at the configured sensor
-rate (for example 400 Hz), but ADXL345 FIFO reads are intentionally opportunistic
+rate (the stock path is 800 Hz), but ADXL345 FIFO reads are intentionally opportunistic
 through a small software-side prefetch ring. This avoids a deterministic
-`sample_rate / read_batch_size` I2C burst pattern (for example `400 / 8 = 50 Hz`)
-that can otherwise imprint a narrowband artifact in idle spectra.
+`sample_rate / read_batch_size` I2C burst pattern (for example `800 / 8 = 100 Hz`)
+that can otherwise imprint a narrowband artifact in idle spectra. When the
+cooperative loop falls behind, catch-up is bounded by a wall-clock budget
+instead of a fixed sample-count ceiling so the firmware can recover lag without
+depending on one hardcoded samples-per-loop cap.
 
 Default ATOM Lite Unit-port mapping used in this repo (4-pin Unit cable):
 
