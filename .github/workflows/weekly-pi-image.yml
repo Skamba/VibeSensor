@@ -121,7 +121,7 @@ jobs:
         run: |
           set -euo pipefail
           gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
-            --jq '.[] | select(.prerelease and (.tag_name == "weekly-pi-image" or (.tag_name | startswith("pi-image-v")))) | .tag_name' \
+            --jq '.[] | select(.tag_name == "weekly-pi-image" or (.tag_name | startswith("pi-image-v"))) | .tag_name' \
             | while IFS= read -r tag; do
                 if [ -n "${tag}" ]; then
                   gh release delete "${tag}" --yes --cleanup-tag
@@ -134,7 +134,8 @@ jobs:
           tag_name: ${{ steps.metadata.outputs.tag }}
           target_commitish: ${{ github.sha }}
           name: ${{ steps.metadata.outputs.release_name }}
-          prerelease: true
+          prerelease: false
+          make_latest: false
           body: |
             Automated weekly Raspberry Pi image snapshot from `main`.
 
@@ -144,7 +145,7 @@ jobs:
             - Flash the image with Raspberry Pi Imager after downloading the release asset.
 
             This workflow reuses `infra/pi-image/pi-gen/build.sh` so the weekly image follows the same supported image-build path as local builds.
-            Before publishing, it deletes the previous weekly Pi image prerelease so the Releases overview only shows the latest Pi image snapshot.
+            Before publishing, it deletes the previous weekly Pi image release so the Releases overview only shows the latest Pi image snapshot.
           files: |
             ${{ steps.assets.outputs.release_dir }}/*
           fail_on_unmatched_files: true
