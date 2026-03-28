@@ -1,0 +1,65 @@
+import { expect, test } from "@playwright/test";
+
+import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
+
+const analysisSettingsPayload = {
+  wheel_bandwidth_pct: 5,
+  driveshaft_bandwidth_pct: 5,
+  engine_bandwidth_pct: 5,
+  min_abs_band_hz: 0.5,
+  max_band_half_width_pct: 6,
+  speed_uncertainty_pct: 3,
+  tire_diameter_uncertainty_pct: 4,
+  final_drive_uncertainty_pct: 1,
+  gear_uncertainty_pct: 2,
+};
+
+test("analysis uncertainty inputs stay aligned when the middle label wraps", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route).startsWith("/api/settings/cars")) {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/settings/analysis", async (route) => {
+    await fulfillJson(route, analysisSettingsPayload);
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+
+  const speedLabel = page.locator('label[for="speedUncertaintyInput"]');
+  const tireLabel = page.locator('label[for="tireDiameterUncertaintyInput"]');
+  const finalDriveLabel = page.locator('label[for="finalDriveUncertaintyInput"]');
+  await expect(speedLabel).toBeVisible();
+  await expect(tireLabel).toBeVisible();
+  await expect(finalDriveLabel).toBeVisible();
+
+  const [speedLabelBox, tireLabelBox, speedTop, tireTop, finalDriveTop] = await Promise.all([
+    speedLabel.boundingBox(),
+    tireLabel.boundingBox(),
+    page.locator("#speedUncertaintyInput").evaluate((el) => Math.round(el.getBoundingClientRect().top)),
+    page.locator("#tireDiameterUncertaintyInput").evaluate((el) =>
+      Math.round(el.getBoundingClientRect().top),
+    ),
+    page.locator("#finalDriveUncertaintyInput").evaluate((el) =>
+      Math.round(el.getBoundingClientRect().top),
+    ),
+  ]);
+
+  if (!speedLabelBox || !tireLabelBox) {
+    throw new Error("Expected uncertainty labels to have layout boxes");
+  }
+
+  expect(tireLabelBox.height).toBeGreaterThan(speedLabelBox.height);
+  expect(Math.abs(speedTop - tireTop)).toBeLessThanOrEqual(1);
+  expect(Math.abs(finalDriveTop - tireTop)).toBeLessThanOrEqual(1);
+});
