@@ -37,6 +37,15 @@ reduced to startup wiring and cooperative loop orchestration.
     less dependent on one arbitrary catch-up count
   - budget-exhaustion events are counted separately from missed-sample slots so
     later hardware analysis can distinguish "fell behind" from "spent full budget"
+- Reduced cooperative-loop timing jitter in code-driven ways:
+  - `loop()` no longer ends every pass with a fixed `delay(1)`; idle time is now
+    computed from the next sample deadline plus a small wake guard, so the loop
+    does not quantize itself to millisecond sleeps when the sample period is
+    only `1250 us`
+  - sensor prefetch refill sizing no longer depends on `esp_random()`; refill
+    targets now alternate deterministically between adjacent batch sizes so
+    burst cost stays bounded and testable without collapsing into one rigid
+    refill cadence
 - Fixed ignored `beginPacket()` return value in `send_hello()` and `send_ack()`:
   - both functions now check whether `beginPacket()` succeeded before calling
     `write()` / `endPacket()`, preventing writes into an invalid UDP send state
