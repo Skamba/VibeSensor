@@ -260,10 +260,35 @@ jobs:
             echo "body<<CHANGELOG_EOF"
             echo "## Changes"
             echo ""
-            git log --oneline --no-decorate --max-count=50 "${range}"
-            echo ""
-            echo "CHANGELOG_EOF"
-          } >> "${GITHUB_OUTPUT}"
+             git log --oneline --no-decorate --max-count=50 "${range}"
+             echo ""
+             echo "CHANGELOG_EOF"
+           } >> "${GITHUB_OUTPUT}"
+
+      - name: Install Playwright browser
+        working-directory: apps/ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install chromium
+
+      - name: Generate wiki screenshots
+        working-directory: apps/ui
+        env:
+          WIKI_SCREENSHOT_DIR: ${{ runner.temp }}/wiki-images/images
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${WIKI_SCREENSHOT_DIR}"
+          npm run wiki:screenshots
+
+      - name: Upload wiki screenshot artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: wiki-screenshots-${{ steps.version.outputs.version }}
+          path: ${{ runner.temp }}/wiki-images/images
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Create combined release
         uses: softprops/action-gh-release@v2
@@ -275,6 +300,18 @@ jobs:
           files: |
             apps/server/dist/*.whl
             ${{ steps.bundle.outputs.path }}
+
+      - name: Publish GitHub wiki screenshots
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/wiki/publish_wiki.py \
+            --source-dir "${{ runner.temp }}/wiki-images" \
+            --repo "${{ github.repository }}" \
+            --preserve-existing \
+            --commit-message "docs(wiki): refresh screenshots for release ${{ steps.version.outputs.version }}"
 
       - name: Remove superseded releases
         uses: actions/github-script@v8
