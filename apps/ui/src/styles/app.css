@@ -141,6 +141,10 @@ body {
   padding: 0;
 }
 
+.wrap--dashboard-view .site-header__status {
+  display: none;
+}
+
 .site-header__status-pills {
   display: flex;
   align-items: center;
@@ -290,6 +294,12 @@ input:focus-visible,
   font-size: 0.8rem;
   font-weight: 700;
   border: 1px solid transparent;
+}
+
+.pill[hidden],
+.badge[hidden],
+.status-pill[hidden] {
+  display: none !important;
 }
 
 .pill--muted { background: var(--pill-muted-bg); color: var(--pill-muted-text); }
@@ -747,6 +757,24 @@ input:focus-visible,
   min-width: 0;
   font-size: 0.92rem;
   overflow-wrap: anywhere;
+}
+
+.live-sensor-card__status-dot {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 1px solid rgba(20, 32, 51, 0.15);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+.live-sensor-card__status-dot--online {
+  background: var(--pill-ok-text);
+}
+
+.live-sensor-card__status-dot--offline {
+  background: var(--pill-bad-text);
 }
 
 .live-sensor-card--strongest {
@@ -2390,6 +2418,11 @@ input[aria-invalid="true"] {
   }
 
   .mini-car-dot {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  }
+
+  .live-sensor-card__status-dot {
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
   }

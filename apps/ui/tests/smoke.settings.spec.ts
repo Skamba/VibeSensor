@@ -103,10 +103,12 @@ test("resolved fallback manual state stays coherent across header status, form, 
   await page.goto("/");
   await expect(page.locator("#speed")).toContainText("80.0 km/h");
   await expect(page.locator("#speed")).toContainText("Manual");
-  await expect(page.locator("#linkState")).toHaveText("Connected");
-  await expect(page.locator("#shellLiveStatus")).toHaveText("No live signal");
+  await expect(page.locator(".site-header__status")).toBeHidden();
 
   await page.locator("#tab-settings").click();
+  await expect(page.locator(".site-header__status")).toBeVisible();
+  await expect(page.locator("#linkState")).toHaveText("Connected");
+  await expect(page.locator("#shellLiveStatus")).toHaveText("No live signal");
   await page.locator('[data-settings-tab="speedSourceTab"]').click();
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText("Manual fallback");
   await expect(page.locator("#speedSourceEffectiveSpeed")).toHaveText("80.0 km/h");

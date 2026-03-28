@@ -14,6 +14,14 @@ const analysisSettingsPayload = {
   gear_uncertainty_pct: 2,
 };
 
+const readyStrengthMetrics = {
+  vibration_strength_db: 12,
+  peak_amp_g: 0.2,
+  noise_floor_amp_g: 0.01,
+  strength_bucket: null,
+  top_peaks: [],
+};
+
 test("analysis uncertainty inputs stay aligned when the middle label wraps", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await installCommonRoutes(page, {
@@ -149,4 +157,62 @@ test("live strongest signal stat stays aligned with peer summary metrics", async
   expect(Math.abs(speedLabelTop - strongestSignalLabelTop)).toBeLessThanOrEqual(1);
   expect(Math.abs(dataFreshnessValueTop - strongestSignalValueTop)).toBeLessThanOrEqual(1);
   expect(Math.abs(speedValueTop - strongestSignalValueTop)).toBeLessThanOrEqual(1);
+});
+
+test("dashboard removes repeated ready and online status badges while keeping status cues", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installCommonRoutes(page, {
+    locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
+    settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Test Hatch", type: "Simulated setup", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "001122334455",
+          name: "Front Left",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "",
+          mac_address: "001122334455",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: {
+        clients: {
+          "001122334455": {
+            freq: [1, 2, 3],
+            combined_spectrum_amp_g: [0.1, 0.2, 0.15],
+            strength_metrics: readyStrengthMetrics,
+          },
+        },
+      },
+    },
+  });
+  await page.goto("/");
+
+  await expect(page.locator(".site-header__status")).toBeHidden();
+  await expect(page.locator("#liveRunHealth")).toBeHidden();
+  await expect(page.locator("#loggingStatus")).toBeHidden();
+  await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
+  await expect(page.locator("#liveSensorRoster .live-sensor-card__status-dot--online")).toHaveCount(1);
+
+  await page.locator("#tab-history").click();
+  await expect(page.locator(".site-header__status")).toBeVisible();
+
+  await page.locator("#tab-dashboard").click();
+  await expect(page.locator(".site-header__status")).toBeHidden();
 });
