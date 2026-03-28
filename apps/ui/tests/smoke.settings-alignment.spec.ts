@@ -63,3 +63,49 @@ test("analysis uncertainty inputs stay aligned when the middle label wraps", asy
   expect(Math.abs(speedTop - tireTop)).toBeLessThanOrEqual(1);
   expect(Math.abs(finalDriveTop - tireTop)).toBeLessThanOrEqual(1);
 });
+
+test("manage cars delete button stays in the same visible column across rows", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route).startsWith("/api/settings/cars")) {
+        await fulfillJson(route, {
+          cars: [
+            { id: "car-1", name: "Active Car", type: "sedan", aspects: {} },
+            { id: "car-2", name: "Inactive Car", type: "suv", aspects: {} },
+          ],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+
+  const activeRow = page.locator('#carListBody tr[data-car-id="car-1"]');
+  const inactiveRow = page.locator('#carListBody tr[data-car-id="car-2"]');
+  const activeDeleteButton = activeRow.locator(".car-delete-btn");
+  const inactiveDeleteButton = inactiveRow.locator(".car-delete-btn");
+
+  await expect(activeDeleteButton).toBeVisible();
+  await expect(inactiveDeleteButton).toBeVisible();
+  await expect(activeRow.locator(".car-activate-btn")).toHaveCount(0);
+  await expect(inactiveRow.locator(".car-activate-btn")).toHaveCount(1);
+
+  const [activeDeleteRight, inactiveDeleteRight] = await Promise.all([
+    activeDeleteButton.evaluate((el) => {
+      const { right } = el.getBoundingClientRect();
+      return Math.round(right);
+    }),
+    inactiveDeleteButton.evaluate((el) => {
+      const { right } = el.getBoundingClientRect();
+      return Math.round(right);
+    }),
+  ]);
+
+  expect(Math.abs(activeDeleteRight - inactiveDeleteRight)).toBeLessThanOrEqual(1);
+});
