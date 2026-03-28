@@ -8,10 +8,10 @@ from reportlab.pdfgen.canvas import Canvas
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT_B,
+    FS_TITLE,
     GAP,
     MARGIN,
-    SOFT_BG,
-    TEXT_CLR,
+    REPORT_COLORS,
     build_page2_layout,
 )
 
@@ -29,9 +29,9 @@ def _draw_title_bar(c: Canvas, *, title: str, width: float, page_top: float) -> 
         layout.title_bar.y,
         layout.title_bar.w,
         layout.title_bar.h,
-        fill=SOFT_BG,
+        fill=REPORT_COLORS["brand_surface"],
     )
-    c.setFillColor(_hex(TEXT_CLR))
-    c.setFont(FONT_B, 11)
+    c.setFillColor(_hex(REPORT_COLORS["brand"]))
+    c.setFont(FONT_B, FS_TITLE)
     c.drawString(MARGIN + 4 * mm, layout.title_bar.y + 3.5 * mm, title)
     return float(layout.title_bar.y - GAP)
