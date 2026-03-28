@@ -9,7 +9,7 @@ with no manual setup.
 - Linux build machine (or WSL2)
 - Docker
 - git, rsync
-- `qemu-user-binfmt` (provides host `qemu-arm` for current upstream `pi-gen`)
+- `qemu-user` (provides host `qemu-arm` for current upstream `pi-gen`)
 - `qemu-user-static` (used by VibeSensor's post-build image validator)
 - ~20 minutes build time (depends on cache and network)
 - For best x86/WSL performance, keep the repo on the Linux filesystem (for example `/home/...`), not on a Windows-mounted path.
@@ -18,8 +18,11 @@ On Debian/Ubuntu hosts you can install the image-build prerequisites with:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y docker.io git qemu-user-binfmt qemu-user-static rsync xz-utils
+sudo apt-get install -y docker.io git qemu-user qemu-user-static rsync xz-utils
 ```
+
+On Ubuntu runners, `qemu-user-binfmt` conflicts with `qemu-user-static`, so use
+`qemu-user` to provide `qemu-arm` instead.
 
 ## Build
 

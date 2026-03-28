@@ -196,7 +196,7 @@ See [apps/server/README.md](apps/server/README.md) for configuration and uplink-
 Build on a Linux machine with Docker:
 
 ```bash
-sudo apt-get update && sudo apt-get install -y docker.io qemu-user-binfmt qemu-user-static rsync xz-utils
+sudo apt-get update && sudo apt-get install -y docker.io qemu-user qemu-user-static rsync xz-utils
 ./infra/pi-image/pi-gen/build.sh
 ```
 
