@@ -65,6 +65,7 @@
   --radius-md: 14px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --header-brandmark-height: 46px;
 }
 
 * { box-sizing: border-box; }
@@ -159,17 +160,21 @@ body {
   letter-spacing: 0.01em;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
 .brandmark {
-  display: block;
+  display: flex;
+  align-items: center;
   line-height: 0;
 }
 
 .brandmark img {
   display: block;
-  width: 116px;
-  height: 24px;
+  width: calc(var(--header-brandmark-height) * 29 / 6);
+  height: var(--header-brandmark-height);
+  max-width: 100%;
 }
 
 select,
