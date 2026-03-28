@@ -38,6 +38,7 @@ export interface SettingsFeatureDeps extends FeatureDepsBase {
   renderSpectrum: () => void;
   renderSpeedReadout: () => void;
   renderRealtimeStatus: () => void;
+  renderRealtimeLoggingStatus: () => void;
 }
 
 export interface SettingsFeature {
@@ -143,6 +144,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     settings.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
     syncCarDependentUiState();
     ctx.renderRealtimeStatus();
+    ctx.renderRealtimeLoggingStatus();
   }
 
   async function loadCarsFromServer(): Promise<void> {
