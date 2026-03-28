@@ -22,28 +22,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Compute weekly image version
-        id: version
+      - name: Compute weekly image metadata
+        id: metadata
         shell: bash
         run: |
           set -euo pipefail
-          base_ver="$(date -u +%Y.%-m.%-d)"
-          existing="$(git tag -l "pi-image-v${base_ver}*" | sort -V | tail -n1 || true)"
-          if [ -z "${existing}" ]; then
-            version="${base_ver}"
-          else
-            suffix="${existing##pi-image-v${base_ver}}"
-            if [ -z "${suffix}" ]; then
-              version="${base_ver}.1"
-            else
-              n="${suffix#.}"
-              version="${base_ver}.$((n + 1))"
-            fi
-          fi
-
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
-          echo "tag=pi-image-v${version}" >> "${GITHUB_OUTPUT}"
-          echo "release_name=Weekly Pi Image ${version}" >> "${GITHUB_OUTPUT}"
+          build_label="$(date -u +%Y.%-m.%-d)"
+          echo "build_label=${build_label}" >> "${GITHUB_OUTPUT}"
+          echo "tag=weekly-pi-image" >> "${GITHUB_OUTPUT}"
+          echo "release_name=Weekly Pi Image ${build_label}" >> "${GITHUB_OUTPUT}"
 
       - uses: actions/setup-node@v6
         with:
@@ -117,25 +104,43 @@ jobs:
       - name: Upload weekly image workflow artifact
         uses: actions/upload-artifact@v7
         with:
-          name: weekly-pi-image-${{ steps.version.outputs.version }}
+          name: weekly-pi-image-${{ steps.metadata.outputs.build_label }}
           path: ${{ steps.assets.outputs.release_dir }}/*
           if-no-files-found: error
           retention-days: 21
 
+      - name: Delete previous weekly Pi image releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
+            --jq '.[] | select(.prerelease and (.tag_name == "weekly-pi-image" or (.tag_name | startswith("pi-image-v")))) | .tag_name' \
+            | while IFS= read -r tag; do
+                if [ -n "${tag}" ]; then
+                  gh release delete "${tag}" --yes --cleanup-tag
+                fi
+              done
+
       - name: Publish weekly Pi image release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.release_name }}
+          tag_name: ${{ steps.metadata.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.metadata.outputs.release_name }}
           prerelease: true
           body: |
-            Automated weekly Raspberry Pi image build from `main`.
+            Automated weekly Raspberry Pi image snapshot from `main`.
 
             - Commit: `${{ github.sha }}`
+            - Build label: `${{ steps.metadata.outputs.build_label }}`
             - Asset: `${{ steps.assets.outputs.artifact_name }}`
             - Flash the image with Raspberry Pi Imager after downloading the release asset.
 
-            This workflow reuses `infra/pi-image/pi-gen/build.sh` so the weekly image follows the same supported image-build path as local and release-prep builds.
+            This workflow reuses `infra/pi-image/pi-gen/build.sh` so the weekly image follows the same supported image-build path as local builds.
+            Before publishing, it deletes the previous weekly Pi image prerelease so the Releases overview only shows the latest Pi image snapshot.
           files: |
             ${{ steps.assets.outputs.release_dir }}/*
           fail_on_unmatched_files: true
+          overwrite_files: true

@@ -1,7 +1,7 @@
 # This image is tuned for Raspberry Pi 3 A+ deployments.
-IMG_NAME='vibesensor-rpi3a-plus-bookworm-lite'
+IMG_NAME='vibesensor-rpi3a-plus-__PI_IMAGE_RELEASE__-lite'
 IMG_SUFFIX='__IMG_SUFFIX__'
-RELEASE='bookworm'
+RELEASE='__PI_IMAGE_RELEASE__'
 FIRST_USER_NAME='__VS_FIRST_USER_NAME__'
 FIRST_USER_PASS='__VS_FIRST_USER_PASS__'
 DISABLE_FIRST_BOOT_USER_RENAME=1

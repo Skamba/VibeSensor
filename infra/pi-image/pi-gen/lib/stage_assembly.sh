@@ -73,6 +73,7 @@ render_stage_templates() {
     "${TEMPLATE_ROOT}/pi-gen-config.template" \
     "${PI_GEN_DIR}/config" \
     "__IMG_SUFFIX__" "${IMG_SUFFIX}" \
+    "__PI_IMAGE_RELEASE__" "${PI_IMAGE_RELEASE}" \
     "__VS_FIRST_USER_NAME__" "${VS_FIRST_USER_NAME}" \
     "__VS_FIRST_USER_PASS__" "${VS_FIRST_USER_PASS}" \
     "__VS_WPA_COUNTRY__" "${VS_WPA_COUNTRY}"

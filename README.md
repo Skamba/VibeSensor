@@ -175,11 +175,11 @@ The simulator supports interactive commands — type `help` to see options like
 
 ## Deploying to Raspberry Pi
 
-Both deployment modes target Raspberry Pi 3 A+ with Bookworm Lite.
+Both deployment modes target Raspberry Pi 3 A+ with Trixie Lite.
 
 ### Mode A: Manual install
 
-Flash official Raspberry Pi OS Lite, then on the Pi:
+Flash official Raspberry Pi OS Lite (Trixie), then on the Pi:
 
 ```bash
 sudo apt-get update && sudo apt-get install -y git
@@ -203,7 +203,8 @@ Flash the output image from `infra/pi-image/pi-gen/out/` and boot — no manual 
 
 If you just need a ready-made artifact instead of building locally, GitHub
 Releases also carries the latest automated weekly Pi image snapshot once the
-weekly image workflow has run.
+weekly image workflow has run. The workflow rotates a single weekly Pi-image
+prerelease, so Releases shows only the newest snapshot.
 
 See [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md) for details.
 
