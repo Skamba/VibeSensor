@@ -140,13 +140,15 @@ Settings that still remain in `src/runtime_config.h`:
 ## Sampling cadence note
 
 The firmware keeps sample emission uniformly spaced at the configured sensor
-rate (the stock path is 800 Hz), but ADXL345 FIFO reads are intentionally opportunistic
-through a small software-side prefetch ring. This avoids a deterministic
-`sample_rate / read_batch_size` I2C burst pattern (for example `800 / 8 = 100 Hz`)
-that can otherwise imprint a narrowband artifact in idle spectra. When the
-cooperative loop falls behind, catch-up is bounded by a wall-clock budget
-instead of a fixed sample-count ceiling so the firmware can recover lag without
-depending on one hardcoded samples-per-loop cap.
+rate (the stock path is 800 Hz), and ADXL345 FIFO reads still flow through a
+small software-side prefetch ring. Refill sizes are now deterministic but
+dithered between adjacent batch targets instead of being fully random, which
+keeps refill work bounded for timing analysis without collapsing into one rigid
+`sample_rate / read_batch_size` I2C burst cadence. The cooperative loop also no
+longer sleeps for a fixed `1 ms` at the end of every pass; it now idles only
+until the next sample deadline, with a small wake guard. When the loop falls
+behind, catch-up is still bounded by a wall-clock budget instead of a fixed
+sample-count ceiling.
 
 Default ATOM Lite Unit-port mapping used in this repo (4-pin Unit cable):
 
