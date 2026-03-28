@@ -8,7 +8,10 @@ import tempfile
 from pathlib import Path
 
 from vibesensor.use_cases.updates.models import UpdateValidationConfig
-from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
+from vibesensor.use_cases.updates.runner import (
+    UpdateCommandExecutor,
+    build_privilege_probe_args,
+)
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
@@ -57,17 +60,17 @@ async def validate_prerequisites(
 
     if os.geteuid() != 0:
         rc, _, _ = await commands.run(
-            ["sudo", "-n", "true"],
+            build_privilege_probe_args(),
             phase="validating",
             timeout=5,
-            sudo=False,
+            sudo=True,
         )
         if rc != 0:
             tracker.fail(
                 "validating",
                 "Insufficient privileges",
-                "Cannot run sudo non-interactively. In dev/Docker "
-                "environments, hotspot management is not available.",
+                "Cannot run updater privileged commands non-interactively. "
+                "In dev/Docker environments, hotspot management is not available.",
             )
             return False
 

@@ -160,6 +160,19 @@ async def test_snapshot_for_rollback_builds_local_wheel_before_package_index_dow
 
 
 @pytest.mark.asyncio
+async def test_snapshot_for_rollback_accepts_normalized_dev_versions(tmp_path: Path) -> None:
+    installer, commands, _tracker = _make_installer(tmp_path)
+    commands.local_wheel_version = "0.0.0.dev0"
+
+    with patch("vibesensor.__version__", "0.0.0-dev"):
+        assert await installer.snapshot_for_rollback() is True
+
+    calls = [" ".join(call[0]) for call in commands.calls]
+    assert any("pip wheel" in call for call in calls)
+    assert not any("pip download" in call for call in calls)
+
+
+@pytest.mark.asyncio
 async def test_snapshot_for_rollback_falls_back_to_package_index_download(
     tmp_path: Path,
 ) -> None:

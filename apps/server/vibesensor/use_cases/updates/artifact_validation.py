@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import canonicalize_name
+from packaging.version import InvalidVersion, Version
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.status import UpdateStatusTracker
@@ -73,6 +74,15 @@ def read_wheel_metadata(wheel_path: Path) -> WheelMetadata:
         return _parse_metadata_message(_metadata_message_from_archive(wheel_zip))
 
 
+def _versions_match(actual_version: str, expected_version: str) -> bool:
+    """Compare versions with PEP 440 normalization when possible."""
+
+    try:
+        return Version(actual_version) == Version(expected_version)
+    except InvalidVersion:
+        return actual_version == expected_version
+
+
 def wheel_metadata_validation_errors(
     wheel_path: Path,
     *,
@@ -94,7 +104,7 @@ def wheel_metadata_validation_errors(
         )
     if not metadata.version:
         errors.append("wheel metadata is missing Version")
-    elif expected_version and metadata.version != expected_version:
+    elif expected_version and not _versions_match(metadata.version, expected_version):
         errors.append(
             "wheel metadata Version "
             f"{metadata.version!r} does not match expected {expected_version!r}",

@@ -143,7 +143,7 @@ def setup_update_env(
 ) -> tuple[UpdateManager, FakeRunner, Path]:
     runner = FakeRunner()
     if sudo_ok:
-        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3 -c pass", 0)
     repo = tmp_path / "repo"
     repo.mkdir()
     kwargs: dict[str, object] = {
