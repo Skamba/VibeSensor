@@ -216,3 +216,92 @@ test("dashboard removes repeated ready and online status badges while keeping st
   await page.locator("#tab-dashboard").click();
   await expect(page.locator(".site-header__status")).toBeHidden();
 });
+
+test("sensor coverage cards keep only location labels and a shared left alignment", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installCommonRoutes(page, {
+    locations: [
+      { code: "front_left_wheel", label: "Front Left Wheel" },
+      { code: "engine_bay", label: "Engine Bay" },
+    ],
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "sensor-alpha",
+          name: "Alpha Probe",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "front_left_wheel",
+          mac_address: "001122334455",
+          firmware_version: "fw-1.0.0",
+        },
+        {
+          id: "sensor-bay",
+          name: "Bay Module",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "engine_bay",
+          mac_address: "66778899aabb",
+          firmware_version: "fw-1.0.0",
+        },
+        {
+          id: "sensor-gamma",
+          name: "Gamma Probe",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "",
+          mac_address: "ccddeeff0011",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: { clients: {} },
+    },
+  });
+  await page.goto("/");
+
+  const frontCard = page.locator("#liveSensorRoster article").nth(0);
+  const engineCard = page.locator("#liveSensorRoster article").nth(1);
+  const unassignedCard = page.locator("#liveSensorRoster article").nth(2);
+  await expect(frontCard).toHaveText("Front Left Wheel");
+  await expect(engineCard).toHaveText("Engine Bay");
+  await expect(unassignedCard).toHaveText("Gamma Probe");
+
+  const [frontOffset, engineOffset, unassignedOffset] = await Promise.all([
+    frontCard.locator(".live-sensor-card__header strong").evaluate((el) => {
+      const card = el.closest(".live-sensor-card");
+      if (!(card instanceof HTMLElement)) {
+        throw new Error("Expected live sensor card container");
+      }
+      return Math.round(el.getBoundingClientRect().left - card.getBoundingClientRect().left);
+    }),
+    engineCard.locator(".live-sensor-card__header strong").evaluate((el) => {
+      const card = el.closest(".live-sensor-card");
+      if (!(card instanceof HTMLElement)) {
+        throw new Error("Expected live sensor card container");
+      }
+      return Math.round(el.getBoundingClientRect().left - card.getBoundingClientRect().left);
+    }),
+    unassignedCard.locator(".live-sensor-card__header strong").evaluate((el) => {
+      const card = el.closest(".live-sensor-card");
+      if (!(card instanceof HTMLElement)) {
+        throw new Error("Expected live sensor card container");
+      }
+      return Math.round(el.getBoundingClientRect().left - card.getBoundingClientRect().left);
+    }),
+  ]);
+
+  expect(Math.abs(frontOffset - engineOffset)).toBeLessThanOrEqual(1);
+  expect(Math.abs(frontOffset - unassignedOffset)).toBeLessThanOrEqual(1);
+});
