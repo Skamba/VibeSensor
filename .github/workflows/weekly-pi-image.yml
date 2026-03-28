@@ -49,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y qemu-user-binfmt qemu-user-static rsync xz-utils
+          sudo apt-get install -y qemu-user qemu-user-static rsync xz-utils
 
       - name: Build Pi image
         shell: bash
