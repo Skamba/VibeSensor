@@ -103,6 +103,29 @@ void test_clamp_sample_rate_above_maximum() {
           UINT16_MAX, kMinSampleRateHz, kMaxSampleRateHz));
 }
 
+void test_sampling_slots_due_when_not_yet_due() {
+  TEST_ASSERT_EQUAL_UINT64(0, vibesensor::reliability::sampling_slots_due(999, 1000, 1250));
+}
+
+void test_sampling_slots_due_counts_current_and_lagged_slots() {
+  TEST_ASSERT_EQUAL_UINT64(1, vibesensor::reliability::sampling_slots_due(1000, 1000, 1250));
+  TEST_ASSERT_EQUAL_UINT64(1, vibesensor::reliability::sampling_slots_due(2249, 1000, 1250));
+  TEST_ASSERT_EQUAL_UINT64(2, vibesensor::reliability::sampling_slots_due(2250, 1000, 1250));
+  TEST_ASSERT_EQUAL_UINT64(4, vibesensor::reliability::sampling_slots_due(5000, 1000, 1250));
+}
+
+void test_sampling_catch_up_budget_exhausted_at_boundary() {
+  TEST_ASSERT_FALSE(
+      vibesensor::reliability::sampling_catch_up_budget_exhausted(1000, 10999, 10000));
+  TEST_ASSERT_TRUE(
+      vibesensor::reliability::sampling_catch_up_budget_exhausted(1000, 11000, 10000));
+}
+
+void test_sampling_catch_up_budget_exhausted_ignores_backwards_time() {
+  TEST_ASSERT_FALSE(
+      vibesensor::reliability::sampling_catch_up_budget_exhausted(1000, 500, 10000));
+}
+
 void test_retry_due_zero_retry_at_always_true() {
   // retry_at_ms == 0 means "fire immediately on first check".
   TEST_ASSERT_TRUE(vibesensor::reliability::retry_due(0, 0));
@@ -304,6 +327,10 @@ int main() {
   RUN_TEST(test_clamp_sample_rate_within_range);
   RUN_TEST(test_clamp_sample_rate_below_minimum);
   RUN_TEST(test_clamp_sample_rate_above_maximum);
+  RUN_TEST(test_sampling_slots_due_when_not_yet_due);
+  RUN_TEST(test_sampling_slots_due_counts_current_and_lagged_slots);
+  RUN_TEST(test_sampling_catch_up_budget_exhausted_at_boundary);
+  RUN_TEST(test_sampling_catch_up_budget_exhausted_ignores_backwards_time);
   RUN_TEST(test_retry_due_zero_retry_at_always_true);
   RUN_TEST(test_retry_due_respects_wall_clock);
   RUN_TEST(test_saturating_inc_u8_does_not_wrap);

@@ -12,6 +12,7 @@ struct RuntimeStatus {
   uint32_t sensor_reinit_attempts = 0;
   uint32_t sensor_reinit_success = 0;
   uint32_t sampling_missed_samples = 0;
+  uint32_t sampling_budget_exhaustions = 0;
   uint32_t tx_pack_failures = 0;
   uint32_t tx_begin_failures = 0;
   uint32_t tx_end_failures = 0;
