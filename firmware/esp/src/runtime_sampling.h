@@ -21,6 +21,7 @@ struct SamplingState {
   size_t sensor_prefetch_head = 0;
   size_t sensor_prefetch_tail = 0;
   size_t sensor_prefetch_count = 0;
+  uint32_t sensor_refill_cycle = 0;
   uint8_t sensor_consecutive_errors = 0;
   uint32_t last_sensor_reinit_ms = 0;
   uint64_t next_sample_due_us = 0;

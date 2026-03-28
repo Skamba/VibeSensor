@@ -2,7 +2,6 @@
 
 #include <math.h>
 
-#include <esp_system.h>
 #include <esp_timer.h>
 
 #include "reliability.h"
@@ -29,14 +28,10 @@ bool next_sensor_sample(SamplingState& state,
   if (state.sensor_prefetch_count <= kSensorPrefetchLowWaterSamples) {
     bool io_error = false;
     bool fifo_truncated = false;
-    size_t max_to_read = kSensorReadBatchSamples;
-    size_t free_slots = kSensorPrefetchSamples - state.sensor_prefetch_count;
-    if (free_slots < max_to_read) {
-      max_to_read = free_slots;
-    }
-    if (max_to_read > 1) {
-      max_to_read = 1 + (esp_random() % max_to_read);
-    }
+    const size_t target_batch = vibesensor::reliability::sampling_dithered_batch_target(
+        kSensorReadBatchSamples, state.sensor_refill_cycle++);
+    const size_t max_to_read = vibesensor::reliability::sampling_prefetch_refill_count(
+        state.sensor_prefetch_count, kSensorPrefetchSamples, target_batch);
     size_t read_count = state.adxl.read_samples(
         state.sensor_batch_xyz, max_to_read, &io_error, &fifo_truncated);
     if (fifo_truncated) {
@@ -64,6 +59,7 @@ bool next_sensor_sample(SamplingState& state,
           state.sensor_prefetch_head = 0;
           state.sensor_prefetch_tail = 0;
           state.sensor_prefetch_count = 0;
+          state.sensor_refill_cycle = 0;
         }
       }
     } else {

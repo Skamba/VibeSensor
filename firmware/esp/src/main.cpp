@@ -120,5 +120,13 @@ void loop() {
                         frame_queue_size(g_runtime.queue),
                         frame_queue_capacity(g_runtime.queue),
                         now_ms);
-  delay(1);
+  const uint64_t idle_started_us = esp_timer_get_time();
+  const uint32_t idle_delay_us = vibesensor::reliability::sampling_idle_delay_us(
+      idle_started_us,
+      g_runtime.sampling.next_sample_due_us,
+      kLoopIdleGuardUs,
+      kLoopIdleMaxUs);
+  if (idle_delay_us > 0) {
+    delayMicroseconds(idle_delay_us);
+  }
 }
