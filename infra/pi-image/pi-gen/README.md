@@ -133,6 +133,19 @@ Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to write the
 Insert the card into a Raspberry Pi 3 A+ and power on. The hotspot and server
 start automatically on first boot.
 
+## Weekly GitHub release builds
+
+The repository also publishes an automated weekly Pi image snapshot through
+GitHub Actions:
+
+- workflow: [`.github/workflows/weekly-pi-image.yml`](../../../.github/workflows/weekly-pi-image.yml)
+- triggers: weekly schedule plus manual `workflow_dispatch`
+- release assets: compressed Pi image, checksum, and version metadata
+
+These weekly builds reuse the same `./infra/pi-image/pi-gen/build.sh` pipeline
+documented above, so the GitHub Release artifact follows the same supported
+image-build path as local builds.
+
 ## Pipeline layout
 
 The pi-image pipeline now has three explicit ownership layers:

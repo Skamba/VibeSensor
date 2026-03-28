@@ -1,0 +1,141 @@
+name: Weekly Pi Image
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-pi-image
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute weekly image version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          base_ver="$(date -u +%Y.%-m.%-d)"
+          existing="$(git tag -l "pi-image-v${base_ver}*" | sort -V | tail -n1 || true)"
+          if [ -z "${existing}" ]; then
+            version="${base_ver}"
+          else
+            suffix="${existing##pi-image-v${base_ver}}"
+            if [ -z "${suffix}" ]; then
+              version="${base_ver}.1"
+            else
+              n="${suffix#.}"
+              version="${base_ver}.$((n + 1))"
+            fi
+          fi
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=pi-image-v${version}" >> "${GITHUB_OUTPUT}"
+          echo "release_name=Weekly Pi Image ${version}" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+          cache: pip
+          cache-dependency-path: apps/server/pyproject.toml
+
+      - name: Install Pi image build prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static rsync xz-utils
+
+      - name: Build Pi image
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./infra/pi-image/pi-gen/build.sh
+
+      - name: Collect weekly release assets
+        id: assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          out_dir="infra/pi-image/pi-gen/out"
+          release_dir="${RUNNER_TEMP}/weekly-pi-image"
+          mkdir -p "${release_dir}"
+
+          artifact="$(find "${out_dir}" -maxdepth 1 -type f \
+            \( -name "image_*-vibesensor-lite*.img" -o -name "image_*-vibesensor-lite*.img.xz" -o -name "image_*-vibesensor-lite*.zip" \) \
+            | sort | tail -n 1 || true)"
+          if [ -z "${artifact}" ]; then
+            echo "No Pi image artifact found in ${out_dir}" >&2
+            exit 1
+          fi
+
+          if [[ "${artifact}" == *.img ]]; then
+            release_artifact="${release_dir}/$(basename "${artifact}").xz"
+            xz -T0 -c "${artifact}" > "${release_artifact}"
+          else
+            release_artifact="${release_dir}/$(basename "${artifact}")"
+            cp "${artifact}" "${release_artifact}"
+          fi
+
+          sha_file="${release_artifact}.sha256"
+          sha256sum "${release_artifact}" > "${sha_file}"
+
+          version_info_source="${out_dir}/$(basename "${artifact}").version.txt"
+          version_info_target="${release_dir}/$(basename "${release_artifact}").version.txt"
+          if [ -f "${version_info_source}" ]; then
+            cp "${version_info_source}" "${version_info_target}"
+          else
+            cat > "${version_info_target}" <<EOF
+          git_sha=${GITHUB_SHA}
+          git_ref=${GITHUB_REF}
+          source_artifact=$(basename "${artifact}")
+          EOF
+          fi
+          echo "published_artifact=$(basename "${release_artifact}")" >> "${version_info_target}"
+
+          echo "release_dir=${release_dir}" >> "${GITHUB_OUTPUT}"
+          echo "artifact_name=$(basename "${release_artifact}")" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload weekly image workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: weekly-pi-image-${{ steps.version.outputs.version }}
+          path: ${{ steps.assets.outputs.release_dir }}/*
+          if-no-files-found: error
+          retention-days: 21
+
+      - name: Publish weekly Pi image release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.release_name }}
+          prerelease: true
+          body: |
+            Automated weekly Raspberry Pi image build from `main`.
+
+            - Commit: `${{ github.sha }}`
+            - Asset: `${{ steps.assets.outputs.artifact_name }}`
+            - Flash the image with Raspberry Pi Imager after downloading the release asset.
+
+            This workflow reuses `infra/pi-image/pi-gen/build.sh` so the weekly image follows the same supported image-build path as local and release-prep builds.
+          files: |
+            ${{ steps.assets.outputs.release_dir }}/*
+          fail_on_unmatched_files: true
