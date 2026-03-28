@@ -15,25 +15,57 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
-__all__ = ["CommandRunner", "UpdateCommandExecutor", "sanitize_log_line"]
+__all__ = [
+    "CommandRunner",
+    "UpdateCommandExecutor",
+    "build_privilege_probe_args",
+    "sanitize_log_line",
+]
 
 # ---------------------------------------------------------------------------
 # sudo wrapper helpers
 # ---------------------------------------------------------------------------
 
-_WRAPPER_SCRIPT = (
+_SOURCE_TREE_WRAPPER_SCRIPT = (
     Path(__file__).resolve().parent.parent.parent / "scripts" / "vibesensor_update_sudo.sh"
 )
+_DEFAULT_INSTALL_REPO = Path("/opt/VibeSensor")
+
+
+def _sudo_wrapper_path() -> Path | None:
+    """Return the first installed wrapper path that exists on disk."""
+
+    configured_wrapper = os.environ.get("VIBESENSOR_UPDATE_SUDO_WRAPPER", "").strip()
+    configured_repo = os.environ.get("VIBESENSOR_REPO_PATH", "").strip()
+    candidate_paths = [
+        Path(configured_wrapper) if configured_wrapper else None,
+        (
+            Path(configured_repo) / "apps" / "server" / "scripts" / "vibesensor_update_sudo.sh"
+            if configured_repo
+            else None
+        ),
+        _DEFAULT_INSTALL_REPO / "apps" / "server" / "scripts" / "vibesensor_update_sudo.sh",
+        _SOURCE_TREE_WRAPPER_SCRIPT,
+    ]
+    for candidate in candidate_paths:
+        if candidate is not None and candidate.is_file():
+            return candidate
+    return None
 
 
 def _sudo_prefix() -> list[str]:
     """Return the sudo prefix for privileged commands."""
     if os.geteuid() == 0:
         return []
-    wrapper = _WRAPPER_SCRIPT
-    if wrapper.is_file():
-        return ["sudo", str(wrapper)]
-    return ["sudo"]
+    wrapper = _sudo_wrapper_path()
+    if wrapper is not None:
+        return ["sudo", "-n", str(wrapper)]
+    return ["sudo", "-n"]
+
+
+def build_privilege_probe_args() -> list[str]:
+    """Return a harmless command that exercises the updater's sudo path."""
+    return ["python3", "-c", "pass"]
 
 
 # ---------------------------------------------------------------------------

@@ -242,7 +242,7 @@ class TestNoSecretsInPersistedFile:
     async def test_password_not_in_persisted_json(self, update_env) -> None:
         """Wi-Fi password must never appear in the persisted status file."""
         state_path, _, runner, make_mgr = update_env
-        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3 -c pass", 0)
         mgr = make_mgr()
 
         secret_password = "SuperSecret!WiFi#Password42"
@@ -411,7 +411,7 @@ class TestPersistenceDuringLifecycle:
     async def test_state_persisted_on_start(self, update_env) -> None:
         """Calling start() persists the initial running status."""
         _, store, runner, make_mgr = update_env
-        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3 -c pass", 0)
         runner.set_response("nmcli", 1, "", "not available")
         mgr = make_mgr()
 
@@ -430,7 +430,7 @@ class TestPersistenceDuringLifecycle:
     async def test_state_persisted_after_job_ends(self, update_env) -> None:
         """After the update job finishes, the final state is persisted."""
         _, store, runner, make_mgr = update_env
-        runner.set_response("sudo -n true", 1, "", "no sudo")
+        runner.set_response("python3 -c pass", 1, "", "no sudo")
         mgr = make_mgr()
 
         with (

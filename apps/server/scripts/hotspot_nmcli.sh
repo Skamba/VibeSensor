@@ -16,6 +16,8 @@ run_as_root() {
 LOG_DIR=/var/log/wifi
 install -d -m 0755 "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/hotspot.log"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SERVER_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 touch "${LOG_FILE}"
 
@@ -117,10 +119,35 @@ ${final_status}
 EOF
 }
 
-trap 'rc=$?; failed_line=${BASH_LINENO[0]:-0}; failed_cmd=${BASH_COMMAND:-unknown}; echo "ERROR rc=${rc} line=${failed_line} cmd=${failed_cmd}"; dump_all error; write_summary FAILED "${rc}"; exit "${rc}"' ERR
+resolve_hotspot_config_cli() {
+  local configured_cli="${VIBESENSOR_HOTSPOT_CONFIG_CLI:-}"
+  local bundled_cli="${SERVER_DIR}/.venv/bin/vibesensor-hotspot-config"
+
+  if [ -n "${configured_cli}" ] && [ -x "${configured_cli}" ]; then
+    printf '%s\n' "${configured_cli}"
+    return 0
+  fi
+  if [ -x "${bundled_cli}" ]; then
+    printf '%s\n' "${bundled_cli}"
+    return 0
+  fi
+  if command -v vibesensor-hotspot-config >/dev/null 2>&1; then
+    command -v vibesensor-hotspot-config
+    return 0
+  fi
+  return 1
+}
+
+trap 'rc=$?; failed_line=${BASH_LINENO[0]:-0}; failed_cmd=${BASH_COMMAND:-unknown}; echo "ERROR rc=${rc} line=${failed_line} cmd=${failed_cmd}" >&2; dump_all error; write_summary FAILED "${rc}"; exit "${rc}"' ERR
 trap 'rc=$?; echo "EXIT rc=${rc}"' EXIT
 
-eval "$(vibesensor-hotspot-config "${CONFIG_PATH}")"
+if ! HOTSPOT_CONFIG_CLI="$(resolve_hotspot_config_cli)"; then
+  echo "Could not find vibesensor-hotspot-config. Expected ${SERVER_DIR}/.venv/bin/vibesensor-hotspot-config or a PATH entry." >&2
+  exit 127
+fi
+
+HOTSPOT_CONFIG_EXPORTS="$("${HOTSPOT_CONFIG_CLI}" "${CONFIG_PATH}")"
+eval "${HOTSPOT_CONFIG_EXPORTS}"
 
 CONFIGURED_IFNAME="${IFNAME}"
 DETECTED_IFNAME=""
