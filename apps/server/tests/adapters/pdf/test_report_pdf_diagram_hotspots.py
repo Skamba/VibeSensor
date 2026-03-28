@@ -72,6 +72,52 @@ def test_marker_colors_follow_diagnostic_highlight_and_use_single_color_markers(
     assert marker_by_name["engine bay"].stroke == marker_by_name["engine bay"].fill
 
 
+def test_marker_radius_grows_with_local_intensity_for_active_locations() -> None:
+    location_points = {
+        "front-left wheel": (40.0, 180.0),
+        "front-right wheel": (160.0, 180.0),
+        "rear-left wheel": (40.0, 80.0),
+    }
+    markers, _, _ = build_sensor_render_plan(
+        location_points=location_points,
+        drawing_width=220.0,
+        drawing_height=252.0,
+        connected_locations=set(location_points.keys()),
+        amp_by_location={
+            "front-left wheel": 12.0,
+            "front-right wheel": 22.0,
+            "rear-left wheel": 32.0,
+        },
+        highlight={},
+        colors=REPORT_COLORS,
+    )
+    marker_by_name = {marker.name: marker for marker in markers}
+
+    assert marker_by_name["front-left wheel"].radius < marker_by_name["front-right wheel"].radius
+    assert marker_by_name["front-right wheel"].radius < marker_by_name["rear-left wheel"].radius
+
+
+def test_highlighted_location_without_intensity_keeps_diagnostic_color() -> None:
+    location_points = {
+        "front-left wheel": (40.0, 180.0),
+        "front-right wheel": (160.0, 180.0),
+    }
+    markers, _, _ = build_sensor_render_plan(
+        location_points=location_points,
+        drawing_width=220.0,
+        drawing_height=252.0,
+        connected_locations=set(location_points.keys()),
+        amp_by_location={"front-right wheel": 22.0},
+        highlight={"front-left wheel": REPORT_COLORS["danger"]},
+        colors=REPORT_COLORS,
+    )
+    marker_by_name = {marker.name: marker for marker in markers}
+
+    assert marker_by_name["front-left wheel"].state == "connected-inactive"
+    assert marker_by_name["front-left wheel"].fill == REPORT_COLORS["danger"]
+    assert marker_by_name["front-left wheel"].stroke == REPORT_COLORS["danger"]
+
+
 def test_label_placement_stays_in_bounds_and_avoids_overlap_for_dense_layout() -> None:
     location_points = {
         "front-left wheel": (36.0, 198.0),
@@ -241,6 +287,48 @@ def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs()
     marker_by_name = {marker.name: marker for marker in markers}
     assert marker_by_name["front-left wheel"].fill == REPORT_COLORS["text_secondary"]
     assert marker_by_name["rear-left wheel"].fill == REPORT_COLORS["danger"]
+
+
+def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> None:
+    from io import BytesIO
+
+    from pypdf import PdfReader
+    from test_support.report_helpers import minimal_summary
+
+    from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
+    from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+
+    summary = minimal_summary(
+        lang="en",
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.82,
+                "strongest_location": "front-left wheel",
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.82,
+                "strongest_location": "front-left wheel",
+            }
+        ],
+        sensor_locations=["front-left wheel", "front-right wheel"],
+        sensor_intensity_by_location=[
+            LocationIntensitySummary(location="front-left wheel", p95_intensity_db=32.0),
+            LocationIntensitySummary(location="front-right wheel", p95_intensity_db=18.0),
+        ],
+        samples=[],
+    )
+
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[1].extract_text() or "").split()).lower()
+
+    assert "hotspot summary:" in text
+    assert "larger markers indicate stronger local intensity." in text
 
 
 def test_choose_label_plan_raises_value_error_when_no_candidates(

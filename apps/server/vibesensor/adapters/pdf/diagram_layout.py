@@ -203,6 +203,17 @@ def build_sensor_render_plan(
     active_count = sum(1 for value in states.values() if value == "connected-active")
     single_sensor = active_count == 1 and (min_amp is None or min_amp == max_amp)
 
+    def active_radius(name: str, *, highlighted: bool) -> float:
+        if min_amp is None or max_amp is None or min_amp == max_amp:
+            return 6.2 if highlighted else 5.0
+        amp = amp_by_location.get(name)
+        if amp is None:
+            return 6.2 if highlighted else 5.0
+        normalized = (amp - min_amp) / (max_amp - min_amp)
+        if highlighted:
+            return 5.8 + (normalized * 0.6)
+        return 4.4 + normalized
+
     markers: list[MarkerRenderPlan] = []
     occupied_boxes: list[tuple[float, float, float, float]] = []
     for name, (px, py) in location_points.items():
@@ -210,13 +221,13 @@ def build_sensor_render_plan(
         if state == "connected-active":
             if name in highlight:
                 fill = highlight[name]
-                radius = 6.2
+                radius = active_radius(name, highlighted=True)
             else:
                 fill = colors["text_secondary"]
-                radius = 5.0
+                radius = active_radius(name, highlighted=False)
             stroke_width = 0.8
         elif state == "connected-inactive":
-            fill = colors["surface_alt"]
+            fill = highlight.get(name, colors["surface_alt"])
             radius = 4.8
             stroke_width = 0.8
         else:
