@@ -183,7 +183,11 @@ test.describe("wiki screenshots", () => {
     await page.goto("/");
     await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText("5 / 5");
     await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("BMW 330d Touring");
-    await expect(page.locator("#liveRunHealth")).toHaveText("Ready");
+    await expect(page.locator(".site-header__status")).toBeHidden();
+    await expect(page.locator("#liveRunHealth")).toBeHidden();
+    await expect(page.locator("#loggingStatus")).toBeHidden();
+    await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
+    await expect(page.locator("#liveSensorRoster .live-sensor-card__status-dot--online")).toHaveCount(5);
     await expect(page.locator("#liveSensorRoster article")).toHaveCount(5);
     await assertSpectrumHasData(page);
     await page.screenshot({ fullPage: true, path: screenshotPath("live-dashboard.png") });

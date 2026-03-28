@@ -187,6 +187,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     variant: "muted" | "ok" | "warn" | "bad";
     text: string;
     summary: string;
+    showOverviewPill: boolean;
   };
 
   type RecordingPanelState = {
@@ -201,7 +202,20 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     showStop: boolean;
     startDisabled: boolean;
     stopDisabled: boolean;
+    showPill: boolean;
   };
+
+  function setDashboardPillState(
+    el: HTMLElement | null,
+    variant: "muted" | "ok" | "warn" | "bad",
+    text: string,
+    { hidden = false }: { hidden?: boolean } = {},
+  ): void {
+    setPillState(el, variant, text);
+    if (el) {
+      el.hidden = hidden;
+    }
+  }
 
   function computeLiveHealth(): LiveHealth {
     if (realtime.loggingStatus.write_error) {
@@ -209,6 +223,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         variant: "bad",
         text: t("dashboard.health.write_error"),
         summary: realtime.loggingStatus.write_error,
+        showOverviewPill: true,
       };
     }
     const connected = connectedClients();
@@ -217,6 +232,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         variant: "muted",
         text: t("dashboard.health.no_signal"),
         summary: t("dashboard.logging.waiting"),
+        showOverviewPill: true,
       };
     }
     const droppedCount = connected.filter((client) => (client.dropped_frames ?? 0) > 0).length;
@@ -225,6 +241,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         variant: "warn",
         text: t("dashboard.health.attention"),
         summary: t("dashboard.logging.frame_loss", { count: formatInt(droppedCount) }),
+        showOverviewPill: true,
       };
     }
     const unassignedConnectedCount = connected.filter((client) => !locationCodeForClient(client)).length;
@@ -233,6 +250,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         variant: "warn",
         text: t("dashboard.health.attention"),
         summary: t("dashboard.logging.unassigned", { count: formatInt(unassignedConnectedCount) }),
+        showOverviewPill: true,
       };
     }
     const offlineCount = realtime.clients.filter((client) => !client.connected).length;
@@ -241,6 +259,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         variant: "warn",
         text: t("dashboard.health.attention"),
         summary: t("dashboard.logging.offline", { count: formatInt(offlineCount) }),
+        showOverviewPill: true,
       };
     }
     const connectedCount = formatInt(connected.length);
@@ -250,12 +269,14 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         variant: "ok",
         text: t("dashboard.health.recording"),
         summary: t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount }),
+        showOverviewPill: true,
       };
     }
     return {
       variant: "ok",
       text: t("dashboard.health.ready"),
       summary: t("dashboard.logging.ready", { connected: connectedCount, assigned: assignedCount }),
+      showOverviewPill: false,
     };
   }
 
@@ -285,7 +306,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   function renderLiveHealth(): void {
     const health = computeLiveHealth();
-    setPillState(els.liveRunHealth, health.variant, health.text);
+    setDashboardPillState(els.liveRunHealth, health.variant, health.text, { hidden: !health.showOverviewPill });
     setPillState(els.shellLiveStatus, health.variant, health.text);
   }
 
@@ -402,6 +423,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showStop: false,
         startDisabled: true,
         stopDisabled: true,
+        showPill: true,
       };
     }
 
@@ -418,6 +440,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showStop: true,
         startDisabled: true,
         stopDisabled: true,
+        showPill: true,
       };
     }
 
@@ -436,6 +459,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showStop: true,
         startDisabled: true,
         stopDisabled: false,
+        showPill: true,
       };
     }
 
@@ -453,6 +477,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showStop: false,
         startDisabled: !hasActiveClients,
         stopDisabled: true,
+        showPill: true,
       };
     }
 
@@ -469,6 +494,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showStop: false,
         startDisabled: !hasActiveClients,
         stopDisabled: true,
+        showPill: true,
       };
     }
 
@@ -486,13 +512,16 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       showStop: false,
       startDisabled: !hasActiveClients,
       stopDisabled: true,
+      showPill: false,
     };
   }
 
   function renderLoggingStatus(): void {
     const panelState = computeRecordingPanelState();
     renderLiveOverviewStats();
-    setPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText);
+    setDashboardPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText, {
+      hidden: !panelState.showPill,
+    });
     ctx.setStatValue(els.loggingPhase, panelState.phaseText);
     ctx.setStatValue(els.loggingElapsed, panelState.elapsedText);
     ctx.setStatValue(els.loggingSamples, panelState.samplesText);
@@ -526,7 +555,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     } catch (_err) {
       pendingLoggingAction = null;
       clearLoggingElapsedTimer();
-      setPillState(els.loggingStatus, "bad", t("status.unavailable"));
+      setDashboardPillState(els.loggingStatus, "bad", t("status.unavailable"));
       if (els.loggingSummary) {
         els.loggingSummary.textContent = t("status.unavailable");
       }
@@ -559,7 +588,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       pendingLoggingAction = null;
-      setPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
+      setDashboardPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
       if (els.loggingSummary) {
         els.loggingSummary.textContent = msg || t("status.unavailable");
       }
@@ -580,7 +609,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       pendingLoggingAction = null;
-      setPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
+      setDashboardPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
       if (els.loggingSummary) {
         els.loggingSummary.textContent = msg || t("status.unavailable");
       }

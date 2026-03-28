@@ -261,7 +261,7 @@ function installShellDocument(elements: Element[]) {
 test.describe("createUiShellNavigationModule", () => {
   test("setActiveView toggles views and falls back to dashboard", () => {
     const state = createAppState();
-    const { els, dashboardView, historyView, dashboardButton, historyButton } = createShellDeps();
+    const { els, dashboardView, historyView, dashboardButton, historyButton, appShellWrap } = createShellDeps();
     let resizeCalls = 0;
     const module = createUiShellNavigationModule({
       shell: state.shell,
@@ -278,12 +278,14 @@ test.describe("createUiShellNavigationModule", () => {
     expect(historyButton.classList.contains("active")).toBe(true);
     expect(historyButton.ariaSelected).toBe("true");
     expect(dashboardButton.tabIndex).toBe(-1);
+    expect(appShellWrap.classList.contains("wrap--dashboard-view")).toBe(false);
     expect(resizeCalls).toBe(0);
 
     module.setActiveView("missingView");
     expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(dashboardView.hidden).toBe(false);
     expect(dashboardButton.classList.contains("active")).toBe(true);
+    expect(appShellWrap.classList.contains("wrap--dashboard-view")).toBe(true);
     expect(resizeCalls).toBe(1);
   });
 
