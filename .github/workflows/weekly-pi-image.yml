@@ -44,6 +44,11 @@ jobs:
           cache: pip
           cache-dependency-path: apps/server/pyproject.toml
 
+      - name: Set up arm emulation
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: arm
+
       - name: Install Pi image build prerequisites
         shell: bash
         run: |
