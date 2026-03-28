@@ -16,6 +16,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     MARGIN,
     PAGE_H,
     PANEL_HEADER_H,
+    R_CARD,
     REPORT_COLORS,
     SUB_CLR,
     TEXT_CLR,
@@ -97,7 +98,7 @@ def _draw_system_card(
     )
     c.setFillColor(_hex(tone_bg))
     c.setStrokeColor(_hex(tone_border))
-    c.roundRect(x, y, w, h, 4, stroke=1, fill=1)
+    c.roundRect(x, y, w, h, R_CARD, stroke=1, fill=1)
 
     cx = x + 3 * mm
     cy = y + h - 4 * mm
