@@ -11,10 +11,16 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
 import vibesensor.adapters.pdf.panels._panel_header as panel_header
+import vibesensor.adapters.pdf.panels._panel_systems as panel_systems
 import vibesensor.adapters.pdf.panels._panel_trust_steps as panel_trust_steps
 from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_next_steps_table
 from vibesensor.adapters.pdf.pdf_style import FONT, FS_H2, PdfRenderContext
-from vibesensor.adapters.pdf.report_data import NextStep, PatternEvidence, ReportTemplateData
+from vibesensor.adapters.pdf.report_data import (
+    NextStep,
+    PatternEvidence,
+    ReportTemplateData,
+    SystemFindingCard,
+)
 from vibesensor.report_i18n import tr as report_tr
 
 
@@ -240,3 +246,57 @@ class TestObservedSignatureLayout:
 
         assert value_text
         assert value_x >= label_end_x + (0.8 * mm)
+
+
+class TestSystemCardStatusLabelLayout:
+    """Regression: Tier B system cards should render a separate status label line."""
+
+    def test_status_label_renders_between_title_and_body_lines(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        canvas = _make_canvas()
+        draw_calls: list[tuple[float, float, str]] = []
+        original_draw_string = canvas.drawString
+
+        def capture_draw_string(x: float, y: float, text: str, *args, **kwargs):
+            draw_calls.append((float(x), float(y), str(text)))
+            return original_draw_string(x, y, text, *args, **kwargs)
+
+        monkeypatch.setattr(canvas, "drawString", capture_draw_string)
+
+        panel_systems._draw_system_card(
+            canvas,
+            40.0,
+            120.0,
+            160.0,
+            90.0,
+            SystemFindingCard(
+                system_name="Wheel / Tire",
+                status_label="Possible source",
+                strongest_location="Rear-right wheel",
+                pattern_summary="1.0x wheel order harmonic",
+                parts=[],
+            ),
+            tr=lambda key: {
+                "NOT_AVAILABLE": "N/A",
+                "STRONGEST_SENSOR": "Strongest sensor",
+                "PATTERN_SUMMARY": "Pattern summary",
+            }[key],
+        )
+
+        title_x, title_y, title_text = next(
+            (x, y, text) for x, y, text in draw_calls if text == "Wheel / Tire"
+        )
+        status_x, status_y, status_text = next(
+            (x, y, text) for x, y, text in draw_calls if text == "Possible source"
+        )
+        body_x, body_y, body_text = next(
+            (x, y, text) for x, y, text in draw_calls if text.startswith("Strongest sensor:")
+        )
+
+        assert title_text
+        assert status_text
+        assert body_text
+        assert title_x == status_x == body_x
+        assert title_y > status_y > body_y
