@@ -37,7 +37,7 @@ void report_runtime_status(RuntimeStatus& status,
 
   Serial.printf(
       "status wifi=%d q=%u/%u drop=%lu tx_fail={pack:%lu begin:%lu end:%lu} "
-      "sensor={err:%lu trunc:%lu reinit:%lu/%lu miss:%lu late:%lu handoff:%lu "
+      "sensor={err:%lu stat:%lu data:%lu trunc:%lu bus:%lu/%lu reinit:%lu/%lu miss:%lu late:%lu handoff:%lu "
       "sq:%u/%u prefetch:%u refill:%u/%u} "
       "wifi_retry={attempts:%lu fail:%lu} "
       "parse={ctrl:%lu ack:%lu} last_error=%u@%lu\n",
@@ -49,7 +49,11 @@ void report_runtime_status(RuntimeStatus& status,
       static_cast<unsigned long>(status.tx_begin_failures),
       static_cast<unsigned long>(status.tx_end_failures),
       static_cast<unsigned long>(sampling.sensor_read_errors),
+      static_cast<unsigned long>(sampling.sensor_fifo_status_failures),
+      static_cast<unsigned long>(sampling.sensor_fifo_data_failures),
       static_cast<unsigned long>(sampling.sensor_fifo_truncated),
+      static_cast<unsigned long>(sampling.sensor_bus_recovery_success),
+      static_cast<unsigned long>(sampling.sensor_bus_recovery_attempts),
       static_cast<unsigned long>(sampling.sensor_reinit_success),
       static_cast<unsigned long>(sampling.sensor_reinit_attempts),
       static_cast<unsigned long>(sampling.sampling_missed_samples),

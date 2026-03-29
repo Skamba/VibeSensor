@@ -20,6 +20,15 @@ constexpr uint8_t kSamplingErrorFifoTruncated = 2;
 constexpr uint8_t kSamplingErrorMissedSample = 3;
 constexpr uint8_t kSamplingErrorHandoffOverflow = 14;
 
+using SensorFailureClass = vibesensor::reliability::SensorFailureClass;
+
+struct SensorRefillAttempt {
+  size_t recovered_samples = 0;
+  bool fifo_truncated = false;
+  ADXL345::FailureKind failure_kind = ADXL345::FailureKind::kNone;
+  SensorFailureClass failure_class = SensorFailureClass::kNone;
+};
+
 TaskHandle_t g_sampling_task_handle = nullptr;
 esp_timer_handle_t g_sampling_timer_handle = nullptr;
 portMUX_TYPE g_sampling_lock = portMUX_INITIALIZER_UNLOCKED;
@@ -81,12 +90,31 @@ void note_sensor_reinit_success(SamplingState& state) {
   portEXIT_CRITICAL(&g_sampling_lock);
 }
 
-void note_sensor_read_error(SamplingState& state) {
+void note_sensor_bus_recovery_attempt(SamplingState& state) {
+  portENTER_CRITICAL(&g_sampling_lock);
+  state.status.sensor_bus_recovery_attempts++;
+  sync_sampling_snapshot_locked(state);
+  portEXIT_CRITICAL(&g_sampling_lock);
+}
+
+void note_sensor_bus_recovery_success(SamplingState& state) {
+  portENTER_CRITICAL(&g_sampling_lock);
+  state.status.sensor_bus_recovery_success++;
+  sync_sampling_snapshot_locked(state);
+  portEXIT_CRITICAL(&g_sampling_lock);
+}
+
+void note_sensor_read_error(SamplingState& state, ADXL345::FailureKind failure_kind) {
   const uint32_t now_ms = millis();
   state.sensor_consecutive_errors =
       vibesensor::reliability::saturating_inc_u8(state.sensor_consecutive_errors);
   portENTER_CRITICAL(&g_sampling_lock);
   state.status.sensor_read_errors++;
+  if (failure_kind == ADXL345::FailureKind::kFifoStatusRead) {
+    state.status.sensor_fifo_status_failures++;
+  } else if (failure_kind == ADXL345::FailureKind::kFifoDataRead) {
+    state.status.sensor_fifo_data_failures++;
+  }
   record_sampling_error_locked(state, kSamplingErrorSensorRead, now_ms);
   sync_sampling_snapshot_locked(state);
   portEXIT_CRITICAL(&g_sampling_lock);
@@ -120,10 +148,87 @@ bool publish_sample(SamplingState& state, const PendingSample& sample) {
   return ok;
 }
 
-bool maybe_reinit_sensor(SamplingState& state) {
+SensorFailureClass classify_sensor_failure(ADXL345::FailureKind failure_kind,
+                                           size_t recovered_samples,
+                                           bool fifo_truncated) {
+  switch (failure_kind) {
+    case ADXL345::FailureKind::kNone:
+      return fifo_truncated ? SensorFailureClass::kPartialFifoDrain
+                            : SensorFailureClass::kNone;
+    case ADXL345::FailureKind::kFifoStatusRead:
+      return SensorFailureClass::kRegisterAccess;
+    case ADXL345::FailureKind::kFifoDataRead:
+      return (recovered_samples > 0 || fifo_truncated)
+                 ? SensorFailureClass::kPartialFifoDrain
+                 : SensorFailureClass::kFifoData;
+    case ADXL345::FailureKind::kDeviceIdRead:
+      return SensorFailureClass::kRepeatedCommunication;
+    case ADXL345::FailureKind::kDeviceIdMismatch:
+      return SensorFailureClass::kSensorIdentity;
+    case ADXL345::FailureKind::kConfigWrite:
+      return SensorFailureClass::kSensorConfiguration;
+  }
+  return SensorFailureClass::kNone;
+}
+
+size_t append_sensor_prefetch_samples(SamplingState& state,
+                                      const int16_t* batch_xyz,
+                                      size_t read_count) {
+  size_t appended = 0;
+  for (; appended < read_count && state.sensor_prefetch_count < kSensorPrefetchSamples; ++appended) {
+    const size_t src = appended * kAxesPerSample;
+    const size_t dst = state.sensor_prefetch_head * kAxesPerSample;
+    state.sensor_prefetch_xyz[dst + 0] = batch_xyz[src + 0];
+    state.sensor_prefetch_xyz[dst + 1] = batch_xyz[src + 1];
+    state.sensor_prefetch_xyz[dst + 2] = batch_xyz[src + 2];
+    state.sensor_prefetch_head = (state.sensor_prefetch_head + 1) % kSensorPrefetchSamples;
+    state.sensor_prefetch_count++;
+  }
+  return appended;
+}
+
+SensorRefillAttempt refill_sensor_prefetch_once(SamplingState& state, size_t request_samples) {
+  SensorRefillAttempt attempt{};
+  if (request_samples == 0) {
+    return attempt;
+  }
+
+  ADXL345::FailureKind failure_kind = ADXL345::FailureKind::kNone;
+  bool fifo_truncated = false;
+  const size_t read_count = state.adxl.read_samples(
+      state.sensor_batch_xyz, request_samples, &failure_kind, &fifo_truncated);
+  attempt.recovered_samples =
+      append_sensor_prefetch_samples(state, state.sensor_batch_xyz, read_count);
+  attempt.fifo_truncated = fifo_truncated;
+  attempt.failure_kind = failure_kind;
+  attempt.failure_class =
+      classify_sensor_failure(failure_kind, attempt.recovered_samples, fifo_truncated);
+  if (fifo_truncated) {
+    note_fifo_truncated(state);
+  }
+  return attempt;
+}
+
+bool recover_sensor_bus(SamplingState& state, ADXL345::FailureKind* failure_kind) {
+  note_sensor_bus_recovery_attempt(state);
+  const bool recovered = state.adxl.recover_bus(failure_kind);
+  if (recovered) {
+    note_sensor_bus_recovery_success(state);
+  }
+  return recovered;
+}
+
+bool maybe_reinit_sensor(SamplingState& state, bool force = false) {
   const uint32_t now_ms = millis();
   const bool initial_retry = state.last_sensor_reinit_ms == 0;
-  if (!initial_retry &&
+  const bool cooldown_ready =
+      initial_retry ||
+      static_cast<int32_t>(now_ms - state.last_sensor_reinit_ms) >=
+          static_cast<int32_t>(kSensorReinitCooldownMs);
+  if (!cooldown_ready) {
+    return false;
+  }
+  if (!force && !initial_retry &&
       !vibesensor::reliability::sensor_should_reinit(state.sensor_consecutive_errors,
                                                      kSensorReinitErrorThreshold,
                                                      now_ms,
@@ -147,7 +252,7 @@ bool maybe_reinit_sensor(SamplingState& state) {
 }
 
 bool ensure_sensor_ready(SamplingState& state) {
-  return state.sensor_ok || maybe_reinit_sensor(state);
+  return state.sensor_ok || maybe_reinit_sensor(state, true);
 }
 
 void maybe_refill_sensor_prefetch(SamplingState& state, size_t due_slots) {
@@ -174,38 +279,57 @@ void maybe_refill_sensor_prefetch(SamplingState& state, size_t due_slots) {
     return;
   }
 
-  bool io_error = false;
-  bool fifo_truncated = false;
   state.last_refill_request = plan.request_samples;
-  const size_t read_count = state.adxl.read_samples(
-      state.sensor_batch_xyz, plan.request_samples, &io_error, &fifo_truncated);
-  state.last_refill_count = read_count;
-  state.recent_refill_shortfall = read_count < plan.request_samples;
+  size_t recovered_samples = 0;
+  ADXL345::FailureKind final_failure_kind = ADXL345::FailureKind::kNone;
+  SensorFailureClass final_failure_class = SensorFailureClass::kNone;
+  uint8_t exhausted_failures = 0;
 
-  if (fifo_truncated) {
-    note_fifo_truncated(state);
+  while (recovered_samples < plan.request_samples) {
+    const SensorRefillAttempt attempt =
+        refill_sensor_prefetch_once(state, plan.request_samples - recovered_samples);
+    recovered_samples += attempt.recovered_samples;
+    final_failure_kind = attempt.failure_kind;
+    final_failure_class = attempt.failure_class;
+
+    if (attempt.failure_kind == ADXL345::FailureKind::kNone) {
+      final_failure_class = SensorFailureClass::kNone;
+      break;
+    }
+
+    const vibesensor::reliability::SamplingRefillRetryStep retry_step =
+        vibesensor::reliability::sampling_refill_retry_step(
+            exhausted_failures, final_failure_class, plan.request_samples, recovered_samples);
+    if (!retry_step.retry_read) {
+      break;
+    }
+
+    exhausted_failures++;
+    if (retry_step.recover_bus) {
+      ADXL345::FailureKind recovery_failure = ADXL345::FailureKind::kNone;
+      if (!recover_sensor_bus(state, &recovery_failure)) {
+        final_failure_kind = recovery_failure;
+        final_failure_class =
+            classify_sensor_failure(recovery_failure, recovered_samples, false);
+        break;
+      }
+    }
   }
 
-  for (size_t i = 0;
-       i < read_count && state.sensor_prefetch_count < kSensorPrefetchSamples;
-       ++i) {
-    const size_t src = i * kAxesPerSample;
-    const size_t dst = state.sensor_prefetch_head * kAxesPerSample;
-    state.sensor_prefetch_xyz[dst + 0] = state.sensor_batch_xyz[src + 0];
-    state.sensor_prefetch_xyz[dst + 1] = state.sensor_batch_xyz[src + 1];
-    state.sensor_prefetch_xyz[dst + 2] = state.sensor_batch_xyz[src + 2];
-    state.sensor_prefetch_head =
-        (state.sensor_prefetch_head + 1) % kSensorPrefetchSamples;
-    state.sensor_prefetch_count++;
-  }
+  state.last_refill_count = recovered_samples;
+  state.recent_refill_shortfall = recovered_samples < plan.request_samples;
 
-  if (io_error) {
-    note_sensor_read_error(state);
-    if (vibesensor::reliability::sensor_should_reinit(state.sensor_consecutive_errors,
-                                                      kSensorReinitErrorThreshold,
-                                                      millis(),
-                                                      state.last_sensor_reinit_ms,
-                                                      kSensorReinitCooldownMs)) {
+  if (final_failure_class != SensorFailureClass::kNone &&
+      recovered_samples < plan.request_samples) {
+    note_sensor_read_error(state, final_failure_kind);
+    if (vibesensor::reliability::sensor_failure_requires_forced_reinit(final_failure_class)) {
+      state.sensor_ok = false;
+      (void)maybe_reinit_sensor(state, true);
+    } else if (vibesensor::reliability::sensor_should_reinit(state.sensor_consecutive_errors,
+                                                             kSensorReinitErrorThreshold,
+                                                             millis(),
+                                                             state.last_sensor_reinit_ms,
+                                                             kSensorReinitCooldownMs)) {
       state.sensor_ok = false;
       (void)maybe_reinit_sensor(state);
     }

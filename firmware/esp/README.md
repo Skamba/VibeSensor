@@ -62,11 +62,16 @@ firmware/esp/
 ## Error Handling
 
 - **I2C init**: Every register write during `ADXL345::begin()` is validated;
-  if any write fails the sensor is marked unavailable and production firmware
-  skips that sampling slot instead of injecting held or synthetic samples.
-- **I2C reads**: `read_reg()` and `read_multi()` return zeros on bus errors.
-  This is safe because the caller (`read_samples()`) only processes FIFO
-  entries reported by the hardware status register.
+  if any write fails the sensor is marked unavailable and the sampling task
+  falls back to bounded reinit attempts instead of injecting held or synthetic
+  samples.
+- **I2C reads**: FIFO status reads and FIFO data reads are classified
+  separately. The sampling task now tries one immediate bounded refill retry,
+  then one fast bus-recovery + retry step, before escalating to the heavier
+  ADXL reinit path.
+- **Partial FIFO progress**: samples completed before a burst-read failure are
+  preserved and appended into the software prefetch ring before miss accounting
+  is considered.
 - **Wi-Fi**: Automatic reconnect with configurable retry interval
   (`kWifiRetryIntervalMs`).
 
@@ -155,6 +160,16 @@ steady-state refills target `24` buffered samples, while late or refill-shortfal
 conditions target the full `32`-sample buffer. Late handling is now based on
 real recovery context (prefetch occupancy, handoff headroom, and recent refill
 progress) instead of a fixed loop-time budget.
+
+The ADXL345/I2C path now uses bounded staged recovery inside the sampling task:
+- one immediate retry after a transient refill/read failure
+- one fast bus reinitialization + retry step before heavier recovery
+- full ADXL reinit only after the lighter path is exhausted or the failure class
+  points at deeper sensor-state loss
+
+This is still a software-only resilience improvement: the code now gives
+transient bus faults a bounded chance to recover before declaring missed
+samples, but the real on-device benefit still needs hardware to prove.
 
 On ESP32 dual-core builds, the sampling task is now pinned explicitly instead of
 inheriting the startup core. By default it targets the opposite core from the
