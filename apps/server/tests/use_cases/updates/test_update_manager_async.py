@@ -322,6 +322,15 @@ class TestUpdateManagerAsync:
         details = collect_runtime_details(repo)
         assert details.assets_verified is False
 
+    async def test_runtime_details_report_current_package_version(self, tmp_path) -> None:
+        manager, _runner, repo = setup_update_env(tmp_path)
+        seed_runtime_artifacts(repo, manager)
+
+        with patch("vibesensor.__version__", "2026.3.29"):
+            details = collect_runtime_details(repo)
+
+        assert details.version == "2026.3.29"
+
     async def test_usb_internet_happy_path_skips_hotspot_handover(self, tmp_path) -> None:
         usb_service = _StaticUsbInternetService(
             UsbInternetStatus(
