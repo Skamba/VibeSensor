@@ -13,9 +13,11 @@ from reportlab.pdfgen.canvas import Canvas
 import vibesensor.adapters.pdf.panels._panel_header as panel_header
 import vibesensor.adapters.pdf.panels._panel_systems as panel_systems
 import vibesensor.adapters.pdf.panels._panel_trust_steps as panel_trust_steps
+from vibesensor.adapters.pdf.panels._panel_observations import _draw_additional_observations
 from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_next_steps_table
 from vibesensor.adapters.pdf.pdf_style import FONT, FS_H2, PdfRenderContext
 from vibesensor.adapters.pdf.report_data import (
+    FindingPresentation,
     NextStep,
     PatternEvidence,
     ReportTemplateData,
@@ -162,6 +164,44 @@ class TestNextStepCardPadding:
         assert number_x - row_x >= 1.8 * mm
         assert detail_x == action_x
         assert row_top - action_y >= 2.5 * mm
+
+
+class TestAdditionalObservationsContext:
+    """Regression: additional observations should include useful source/location context."""
+
+    def test_transient_observation_lists_source_location_and_signature(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        canvas = _make_canvas()
+        captured: list[str] = []
+        original_draw_string = canvas.drawString
+
+        def capture_draw_string(x: float, y: float, text: str, *args, **kwargs):
+            captured.append(str(text))
+            return original_draw_string(x, y, text, *args, **kwargs)
+
+        monkeypatch.setattr(canvas, "drawString", capture_draw_string)
+        _draw_additional_observations(
+            canvas,
+            0,
+            80,
+            120,
+            50,
+            [
+                FindingPresentation(
+                    suspected_source="transient_impact",
+                    strongest_location="rear-right wheel",
+                    order="1x wheel",
+                )
+            ],
+            lambda key: {
+                "ADDITIONAL_OBSERVATIONS": "Supporting Observations",
+                "SOURCE_TRANSIENT_IMPACT": "Transient impact",
+            }[key],
+        )
+
+        assert any(text == "• Transient impact | rear-right wheel | 1x wheel" for text in captured)
 
 
 class TestOrphanI18nKeysRemoved:

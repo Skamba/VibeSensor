@@ -10,6 +10,7 @@ from reportlab.pdfgen.canvas import Canvas
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import FONT, MUTED_CLR, SOFT_BG
 from vibesensor.adapters.pdf.report_data import FindingPresentation
+from vibesensor.report_i18n import human_source
 
 
 def _draw_additional_observations(
@@ -33,10 +34,23 @@ def _draw_additional_observations(
     for finding in transient_findings[:3]:
         if y_cursor < y_min:
             break
-        order_label = finding.order.strip()
-        if not order_label and finding.frequency_hz is not None:
-            order_label = f"{finding.frequency_hz:.1f} Hz"
-        if not order_label:
-            order_label = tr("SOURCE_TRANSIENT_IMPACT")
-        c.drawString(x_pad, y_cursor, f"• {order_label}")
+        c.drawString(x_pad, y_cursor, f"• {_observation_text(finding, tr=tr)}")
         y_cursor -= step
+
+
+def _observation_text(
+    finding: FindingPresentation,
+    *,
+    tr: Callable[[str], str],
+) -> str:
+    """Return a compact, human-readable transient observation summary."""
+    source = str(finding.suspected_source or "").strip()
+    parts = [human_source(source, tr=tr) if source else tr("SOURCE_TRANSIENT_IMPACT")]
+    if finding.strongest_location:
+        parts.append(str(finding.strongest_location))
+    order_label = str(finding.order or "").strip()
+    if order_label:
+        parts.append(order_label)
+    elif finding.frequency_hz is not None:
+        parts.append(f"{finding.frequency_hz:.1f} Hz")
+    return " | ".join(part for part in parts if part)
