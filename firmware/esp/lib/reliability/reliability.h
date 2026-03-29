@@ -70,6 +70,10 @@ struct SamplingRecoveryPlan {
   size_t missed_slots = 0;
 };
 
+inline bool sampling_recovery_abandoned(size_t missed_slots) {
+  return missed_slots > 1U;
+}
+
 inline SamplingRecoveryPlan sampling_recovery_plan(size_t due_slots,
                                                    size_t handoff_headroom,
                                                    size_t prefetch_count,
