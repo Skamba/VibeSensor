@@ -118,6 +118,7 @@ def _finding_presentation_payload_from_domain(
     if finding.confidence_assessment is not None:
         ca = finding.confidence_assessment
         payload["confidence_label_key"] = ca.label_key
+        payload["confidence_reason"] = ca.reason
         payload["confidence_tone"] = ca.tone
         payload["confidence_pct"] = ca.pct_text
     if finding.origin is not None:

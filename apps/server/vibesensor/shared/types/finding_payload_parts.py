@@ -61,6 +61,7 @@ class FindingPresentationPayload(TypedDict, total=False):
     frequency_hz_or_order: Required[float | str]
     amplitude_metric: Required[AmplitudeMetric]
     confidence_label_key: str | None
+    confidence_reason: str | None
     confidence_tone: str | None
     confidence_pct: str | None
 

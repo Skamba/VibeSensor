@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import replace
 
 from vibesensor.domain import Finding, LocationHotspot, VibrationOrigin, coerce_int
@@ -73,6 +73,15 @@ def _segments_from_summary(summary: Mapping[str, object]) -> tuple[DrivingSegmen
             )
         )
     return tuple(segments)
+
+
+def _summary_sensor_locations(summary: Mapping[str, object]) -> list[str]:
+    raw_locations = summary.get("sensor_locations")
+    if isinstance(raw_locations, (str, bytes, bytearray)) or not isinstance(
+        raw_locations, Sequence
+    ):
+        return []
+    return [str(location).strip() for location in raw_locations if str(location).strip()]
 
 
 def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
@@ -247,8 +256,8 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     )
 
     _steady = speed_profile.steady_speed if speed_profile is not None else True
-    _raw_locs = summary.get("sensor_locations")
-    _sensor_count = max(len(_raw_locs) if isinstance(_raw_locs, Mapping) else 0, 1)
+    sensor_loc_list = _summary_sensor_locations(summary)
+    _sensor_count = max(len(sensor_loc_list), 1)
     _amp_summary = summary.get("amplitude_summary")
     _band_key = (
         _amp_summary.get("overall_band", "moderate")
@@ -258,7 +267,15 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     _has_ref_gaps = suitability.has_reference_gaps if suitability else False
 
     findings = tuple(
-        f
+        replace(
+            f,
+            confidence_assessment=replace(
+                f.confidence_assessment,
+                steady_speed=_steady,
+                has_reference_gaps=_has_ref_gaps,
+                weak_spatial=f.weak_spatial_separation,
+            ),
+        )
         if f.confidence_assessment is not None
         else f.with_confidence_assessment(
             strength_band_key=_band_key,
@@ -269,7 +286,15 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         for f in findings
     )
     top_causes = tuple(
-        f
+        replace(
+            f,
+            confidence_assessment=replace(
+                f.confidence_assessment,
+                steady_speed=_steady,
+                has_reference_gaps=_has_ref_gaps,
+                weak_spatial=f.weak_spatial_separation,
+            ),
+        )
         if f.confidence_assessment is not None
         else f.with_confidence_assessment(
             strength_band_key=_band_key,
@@ -280,8 +305,6 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         for f in top_causes
     )
 
-    sensor_locs = summary.get("sensor_locations")
-    sensor_loc_list = list(sensor_locs) if isinstance(sensor_locs, Mapping) else []
     setup = RunSetup(
         sensors=Sensor.from_location_codes(sensor_loc_list) if sensor_loc_list else (),
         speed_source=SpeedSource(),
