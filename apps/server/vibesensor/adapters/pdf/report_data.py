@@ -64,6 +64,7 @@ class SystemFindingCard:
     """A per-system diagnostic finding card for the report, with location and parts."""
 
     system_name: str = ""
+    status_label: str | None = None
     strongest_location: str | None = None
     pattern_summary: str | None = None
     parts: list[PartSuggestion] = field(default_factory=list)

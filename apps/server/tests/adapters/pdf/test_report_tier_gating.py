@@ -163,11 +163,11 @@ class TestTierBReportOutput:
         assert tier_b_data.certainty_tier_key == "B"
         assert len(tier_b_data.system_cards) > 0
 
-    def test_tier_b_cards_labeled_hypothesis(self, tier_b_data):
+    def test_tier_b_cards_use_possible_source_status_label(self, tier_b_data):
         for card in tier_b_data.system_cards:
-            assert (
-                "hypothesis" in card.system_name.lower() or "hypothese" in card.system_name.lower()
-            )
+            assert card.system_name
+            assert "hypothesis" not in card.system_name.lower()
+            assert card.status_label == "Possible source"
 
     def test_tier_b_no_repair_parts(self, tier_b_data):
         for card in tier_b_data.system_cards:
@@ -202,6 +202,7 @@ class TestTierCReportOutput:
     def test_tier_c_cards_no_hypothesis_label(self, tier_c_data):
         for card in tier_c_data.system_cards:
             assert "hypothesis" not in card.system_name.lower()
+            assert card.status_label is None
 
     def test_tier_c_next_steps_from_test_plan(self, tier_c_data):
         assert len(tier_c_data.next_steps) > 0
@@ -257,9 +258,8 @@ class TestCertaintyTierNL:
         actions_text = " ".join(s.action for s in data.next_steps)
         assert "snelheidsvariatie" in actions_text or "sensorlocaties" in actions_text
 
-    def test_tier_b_nl_hypothesis_label(self):
+    def test_tier_b_nl_status_label(self):
         data = map_summary(prepare_report_input(_make_summary(confidence=0.50, lang="nl")))
         for card in data.system_cards:
-            assert (
-                "hypothese" in card.system_name.lower() or "hypothesis" in card.system_name.lower()
-            )
+            assert "hypothese" not in card.system_name.lower()
+            assert card.status_label == "Mogelijke bron"

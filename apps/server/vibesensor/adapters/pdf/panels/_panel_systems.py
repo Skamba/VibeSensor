@@ -113,12 +113,27 @@ def _draw_system_card(
         color=TEXT_CLR,
         max_lines=2,
     )
+    details_top = title_bottom - 1.2 * mm
+    if card.status_label:
+        details_top = (
+            _draw_text(
+                c,
+                cx,
+                title_bottom - 0.8 * mm,
+                content_w,
+                card.status_label,
+                size=FS_BODY,
+                color=SUB_CLR,
+                max_lines=1,
+            )
+            - 1.0 * mm
+        )
 
     if card.parts:
         pattern_bottom = _draw_text(
             c,
             cx,
-            title_bottom - 1.2 * mm,
+            details_top,
             content_w,
             f"{tr('PATTERN_SUMMARY')}: {_safe(card.pattern_summary, na)}",
             size=FS_BODY,
@@ -140,7 +155,7 @@ def _draw_system_card(
     strongest_bottom = _draw_text(
         c,
         cx,
-        title_bottom - 1.2 * mm,
+        details_top,
         content_w,
         f"{tr('STRONGEST_SENSOR')}: {_safe(card.strongest_location, na)}",
         size=FS_BODY,
