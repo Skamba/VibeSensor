@@ -60,7 +60,7 @@ def check_entrypoints() -> tuple[bool, list[str]]:
         ROOT / "apps/server/vibesensor/app/bootstrap.py",
         ROOT / "apps/ui/src/main.ts",
         ROOT / "firmware/esp/src/main.cpp",
-        ROOT / "infra/pi-image/pi-gen/build.sh",
+        ROOT / "infra/pi-image/yocto/build.sh",
         ROOT / "docs/ai/repo-map.md",
     ]
     missing = [str(p.relative_to(ROOT)) for p in required if not p.exists()]
