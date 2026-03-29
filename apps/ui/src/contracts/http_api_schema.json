@@ -4219,6 +4219,318 @@
         "title": "MatchedPoint",
         "type": "object"
       },
+      "ObdDeviceResponse": {
+        "description": "Single discovered or configured Bluetooth OBD adapter.",
+        "properties": {
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "mac_address": {
+            "title": "Mac Address",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "paired": {
+            "title": "Paired",
+            "type": "boolean"
+          },
+          "rfcomm_channel": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfcomm Channel"
+          },
+          "trusted": {
+            "title": "Trusted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mac_address",
+          "name",
+          "paired",
+          "trusted",
+          "connected",
+          "rfcomm_channel"
+        ],
+        "title": "ObdDeviceResponse",
+        "type": "object"
+      },
+      "ObdPairRequest": {
+        "description": "Request body for pairing and selecting a Bluetooth OBD adapter.",
+        "properties": {
+          "mac_address": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Mac Address",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mac_address"
+        ],
+        "title": "ObdPairRequest",
+        "type": "object"
+      },
+      "ObdPairResponse": {
+        "description": "Response body after pairing and persisting a Bluetooth OBD adapter.",
+        "properties": {
+          "configured_device_mac": {
+            "title": "Configured Device Mac",
+            "type": "string"
+          },
+          "configured_device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configured Device Name"
+          },
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "paired": {
+            "title": "Paired",
+            "type": "boolean"
+          },
+          "rfcomm_channel": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfcomm Channel"
+          },
+          "trusted": {
+            "title": "Trusted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "configured_device_mac",
+          "configured_device_name",
+          "paired",
+          "trusted",
+          "connected",
+          "rfcomm_channel"
+        ],
+        "title": "ObdPairResponse",
+        "type": "object"
+      },
+      "ObdScanResponse": {
+        "description": "Response body for a Bluetooth OBD discovery scan.",
+        "properties": {
+          "devices": {
+            "items": {
+              "$ref": "#/components/schemas/ObdDeviceResponse"
+            },
+            "title": "Devices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "devices"
+        ],
+        "title": "ObdScanResponse",
+        "type": "object"
+      },
+      "ObdStatusResponse": {
+        "description": "Detailed Bluetooth OBD runtime status for diagnostics and field recovery.",
+        "properties": {
+          "configured_device_mac": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configured Device Mac"
+          },
+          "configured_device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configured Device Name"
+          },
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "connection_state": {
+            "title": "Connection State",
+            "type": "string"
+          },
+          "debug_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debug Hint"
+          },
+          "device_mac": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Mac"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_raw_response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Raw Response"
+          },
+          "last_rpm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Rpm"
+          },
+          "last_sample_age_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sample Age S"
+          },
+          "last_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Speed Kmh"
+          },
+          "paired": {
+            "title": "Paired",
+            "type": "boolean"
+          },
+          "reconnect_delay_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reconnect Delay S"
+          },
+          "rfcomm_channel": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfcomm Channel"
+          },
+          "trusted": {
+            "title": "Trusted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "configured_device_mac",
+          "configured_device_name",
+          "connection_state",
+          "device_mac",
+          "device_name",
+          "paired",
+          "trusted",
+          "connected",
+          "rfcomm_channel",
+          "last_sample_age_s",
+          "last_speed_kmh",
+          "last_rpm",
+          "last_error",
+          "last_raw_response",
+          "reconnect_delay_s",
+          "debug_hint"
+        ],
+        "title": "ObdStatusResponse",
+        "type": "object"
+      },
       "OutlierSummaryResponse": {
         "description": "Response body for an outlier-summary bucket.",
         "properties": {
@@ -5166,6 +5478,7 @@
       "ResolvedSpeedSource": {
         "enum": [
           "gps",
+          "obd2",
           "manual",
           "fallback_manual",
           "none"
@@ -5455,6 +5768,32 @@
             ],
             "title": "Manual Speed Kph"
           },
+          "obd_device_mac": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obd Device Mac"
+          },
+          "obd_device_name": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obd Device Name"
+          },
           "speed_source": {
             "anyOf": [
               {
@@ -5495,6 +5834,28 @@
               }
             ],
             "title": "Manual Speed Kph"
+          },
+          "obd_device_mac": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obd Device Mac"
+          },
+          "obd_device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obd Device Name"
           },
           "speed_source": {
             "$ref": "#/components/schemas/SpeedSourceKind"
@@ -7927,6 +8288,101 @@
         ]
       }
     },
+    "/api/settings/obd/pair": {
+      "post": {
+        "description": "Pair, trust, connect, and persist the selected Bluetooth OBD adapter.",
+        "operationId": "pair_obd_device_api_settings_obd_pair_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObdPairRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObdPairResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Invalid Bluetooth MAC address."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "Bluetooth OBD helper unavailable or the requested action failed."
+          }
+        },
+        "summary": "Pair Obd Device",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/settings/obd/scan": {
+      "post": {
+        "description": "Scan nearby Bluetooth OBD adapters using the privileged helper.",
+        "operationId": "scan_obd_devices_api_settings_obd_scan_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObdScanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "Bluetooth OBD helper unavailable or the requested action failed."
+          }
+        },
+        "summary": "Scan Obd Devices",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/settings/obd/status": {
+      "get": {
+        "description": "Return detailed Bluetooth OBD runtime/admin status for diagnostics.",
+        "operationId": "get_obd_status_api_settings_obd_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObdStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Obd Status",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
     "/api/settings/sensors": {
       "get": {
         "description": "List persisted per-sensor settings keyed by normalized MAC address.",
@@ -8122,7 +8578,7 @@
     },
     "/api/settings/speed-source/status": {
       "get": {
-        "description": "Return the live GPS connection state and effective speed-source status.",
+        "description": "Return the live selected-speed-source connection state and effective speed status.",
         "operationId": "get_speed_source_status_api_settings_speed_source_status_get",
         "responses": {
           "200": {

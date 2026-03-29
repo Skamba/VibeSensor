@@ -175,6 +175,8 @@ export interface SettingsState {
   activeCarId: string | null;
   speedSource: SpeedSourceKind;
   manualSpeedKph: number | null;
+  obdDeviceMac: string | null;
+  obdDeviceName: string | null;
   resolvedSpeedSource: SpeedSourceStatusPayload["speed_source"] | null;
   gpsFallbackActive: boolean;
   gpsEffectiveSpeedKph: number | null;
@@ -246,6 +248,8 @@ export function createAppState(): AppState {
       activeCarId: null,
       speedSource: "gps",
       manualSpeedKph: null,
+      obdDeviceMac: null,
+      obdDeviceName: null,
       resolvedSpeedSource: null,
       gpsFallbackActive: false,
       gpsEffectiveSpeedKph: null,

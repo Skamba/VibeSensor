@@ -92,6 +92,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             ws_broadcast=runtime.lifecycle.ws_broadcast,
             run_recorder=runtime.lifecycle.run_recorder,
             gps_monitor=runtime.lifecycle.gps_monitor,
+            obd_monitor=runtime.lifecycle.obd_monitor,
             update_manager=runtime.lifecycle.update_manager,
             esp_flash_manager=runtime.lifecycle.esp_flash_manager,
             worker_pool=runtime.lifecycle.worker_pool,

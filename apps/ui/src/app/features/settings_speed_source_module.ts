@@ -1,7 +1,18 @@
-import type { SpeedSourceKind, SpeedSourcePayload, SpeedSourceRequest } from "../../api/types";
-import { getSettingsSpeedSource, updateSettingsSpeedSource } from "../../api";
+import type {
+  ObdDevicePayload,
+  SpeedSourceKind,
+  SpeedSourcePayload,
+  SpeedSourceRequest,
+} from "../../api/types";
+import {
+  getSettingsSpeedSource,
+  pairSettingsObdDevice,
+  scanSettingsObdDevices,
+  updateSettingsSpeedSource,
+} from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
+  type DisplayedSpeedSourceMode,
   deriveDisplayedSpeedSourceMode,
   isManualLikeSpeedSource,
   resolveEffectiveSpeedSource,
@@ -27,8 +38,12 @@ export interface SettingsSpeedSourceModule {
 }
 
 export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDeps): SettingsSpeedSourceModule {
-  const { settings, els, t } = ctx;
+  const { settings, els, t, escapeHtml } = ctx;
   let speedSourceDraftDirty = false;
+  let obdScanStatusMessage: string | null = null;
+  let scannedDevices: ObdDevicePayload[] = [];
+  let scanInFlight = false;
+  let pairInFlightMac: string | null = null;
 
   function isSpeedSourceKind(value: string): value is SpeedSourceKind {
     return SPEED_SOURCE_KINDS.some((kind) => kind === value);
@@ -57,6 +72,13 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     return speed != null ? `${ctx.fmt(speed, 1)} ${selectedSpeedUnitLabel()}` : "--";
   }
 
+  function formatConfiguredObdDevice(): string {
+    if (settings.obdDeviceName && settings.obdDeviceMac) {
+      return `${settings.obdDeviceName} (${settings.obdDeviceMac})`;
+    }
+    return settings.obdDeviceName ?? settings.obdDeviceMac ?? t("settings.speed.obd_not_configured");
+  }
+
   function activeSourceLabel(): string {
     const effectiveSource = resolveEffectiveSpeedSource(settings);
     if (effectiveSource === "fallback_manual") {
@@ -80,14 +102,15 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
       : settings.gpsEffectiveSpeedKph;
   }
 
-  function applyDisplayedModeToRadios(displayedMode: "gps" | "manual"): void {
+  function applyDisplayedModeToRadios(displayedMode: DisplayedSpeedSourceMode): void {
     els.speedSourceRadios.forEach((radio) => {
       radio.checked = radio.value === displayedMode;
     });
   }
 
-  function selectedSpeedSourceMode(): "gps" | "manual" {
+  function selectedSpeedSourceMode(): DisplayedSpeedSourceMode {
     const checkedRadio = els.speedSourceRadios.find((radio) => radio.checked);
+    if (checkedRadio?.value === "obd2") return "obd2";
     if (checkedRadio?.value === "manual") return "manual";
     if (checkedRadio?.value === "gps") return "gps";
     return deriveDisplayedSpeedSourceMode(settings);
@@ -102,6 +125,83 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     }
   }
 
+  function obdBoolLabel(value: boolean): string {
+    return value ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
+  }
+
+  function mergeScannedDevice(device: ObdDevicePayload): void {
+    scannedDevices = [
+      device,
+      ...scannedDevices.filter((entry) => entry.mac_address !== device.mac_address),
+    ];
+  }
+
+  function renderObdDeviceList(): void {
+    if (!els.obdDeviceList) {
+      return;
+    }
+    if (scannedDevices.length === 0) {
+      els.obdDeviceList.innerHTML = "";
+      return;
+    }
+    els.obdDeviceList.innerHTML = scannedDevices.map((device) => {
+      const badges: string[] = [];
+      if (device.mac_address === settings.obdDeviceMac) {
+        badges.push(
+          `<span class="speed-source-device__badge speed-source-device__badge--active">${escapeHtml(t("settings.speed.obd_configured_badge"))}</span>`,
+        );
+      }
+      if (device.paired) {
+        badges.push(`<span class="speed-source-device__badge">${escapeHtml(t("settings.speed.obd_paired_badge"))}</span>`);
+      }
+      if (device.trusted) {
+        badges.push(`<span class="speed-source-device__badge">${escapeHtml(t("settings.speed.obd_trusted_badge"))}</span>`);
+      }
+      if (device.connected) {
+        badges.push(
+          `<span class="speed-source-device__badge speed-source-device__badge--active">${escapeHtml(t("settings.speed.obd_connected_badge"))}</span>`,
+        );
+      }
+      const actionLabel = pairInFlightMac === device.mac_address
+        ? t("settings.speed.obd_pairing")
+        : device.paired && device.trusted
+          ? t("settings.speed.obd_use")
+          : t("settings.speed.obd_pair_and_use");
+      return `
+        <div class="speed-source-device">
+          <div class="speed-source-device__header">
+            <div class="speed-source-device__identity">
+              <div class="speed-source-device__name">${escapeHtml(device.name ?? t("settings.speed.obd_unknown_name"))}</div>
+              <div class="speed-source-device__mac">${escapeHtml(device.mac_address)}</div>
+            </div>
+            <div class="speed-source-device__badges">${badges.join("")}</div>
+          </div>
+          <div class="speed-source-device__actions">
+            <button
+              class="btn btn--secondary"
+              type="button"
+              data-obd-pair-mac="${escapeHtml(device.mac_address)}"
+              ${scanInFlight || pairInFlightMac !== null ? "disabled" : ""}
+            >${escapeHtml(actionLabel)}</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderObdControls(): void {
+    if (els.obdConfiguredDevice) {
+      els.obdConfiguredDevice.textContent = formatConfiguredObdDevice();
+    }
+    if (els.scanObdDevicesBtn) {
+      els.scanObdDevicesBtn.disabled = scanInFlight || pairInFlightMac !== null;
+    }
+    if (els.obdDeviceScanStatus) {
+      els.obdDeviceScanStatus.textContent = obdScanStatusMessage ?? t("settings.speed.obd_scan_idle");
+    }
+    renderObdDeviceList();
+  }
+
   function syncSpeedSourceSelectionUi(): void {
     const displayedMode = deriveDisplayedSpeedSourceMode(settings);
     if (!speedSourceDraftDirty) {
@@ -109,14 +209,19 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     }
     const selectedMode = selectedSpeedSourceMode();
     els.speedSourceChoiceGps?.classList.toggle("speed-source-choice--selected", selectedMode === "gps");
+    els.speedSourceChoiceObd?.classList.toggle("speed-source-choice--selected", selectedMode === "obd2");
     els.speedSourceChoiceManual?.classList.toggle("speed-source-choice--selected", selectedMode === "manual");
     if (els.manualSpeedConfig) {
       els.manualSpeedConfig.hidden = selectedMode !== "manual";
     }
+    if (els.obdSpeedConfig) {
+      els.obdSpeedConfig.hidden = selectedMode !== "obd2";
+    }
     if (els.gpsFallbackPanel) {
-      els.gpsFallbackPanel.hidden = selectedMode !== "gps";
+      els.gpsFallbackPanel.hidden = selectedMode === "manual";
     }
     updateSpeedSourceSummary();
+    renderObdControls();
   }
 
   function syncSpeedSourceInputs(): void {
@@ -131,6 +236,8 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
   function applySpeedSourcePayload(payload: SpeedSourcePayload): void {
     settings.speedSource = payload.speed_source;
     settings.manualSpeedKph = payload.manual_speed_kph;
+    settings.obdDeviceMac = payload.obd_device_mac ?? null;
+    settings.obdDeviceName = payload.obd_device_name ?? null;
     settings.resolvedSpeedSource = null;
     if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.stale_timeout_s);
     syncSpeedSourceInputs();
@@ -154,11 +261,64 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     } catch (_err) { /* ignore */ }
   }
 
+  async function scanObdDevices(): Promise<void> {
+    scanInFlight = true;
+    obdScanStatusMessage = t("settings.speed.obd_scanning");
+    renderObdControls();
+    try {
+      const payload = await scanSettingsObdDevices();
+      scannedDevices = payload.devices;
+      obdScanStatusMessage = payload.devices.length > 0
+        ? t("settings.speed.obd_scan_found", { count: payload.devices.length })
+        : t("settings.speed.obd_scan_empty");
+      renderObdControls();
+    } catch (error) {
+      obdScanStatusMessage = t("settings.speed.obd_scan_failed");
+      renderObdControls();
+      ctx.showError(error instanceof Error ? error.message : t("settings.speed.obd_scan_failed"));
+    } finally {
+      scanInFlight = false;
+      renderObdControls();
+    }
+  }
+
+  async function pairObdDevice(macAddress: string): Promise<void> {
+    pairInFlightMac = macAddress;
+    obdScanStatusMessage = t("settings.speed.obd_pairing");
+    renderObdControls();
+    try {
+      const payload = await pairSettingsObdDevice(macAddress);
+      settings.obdDeviceMac = payload.configured_device_mac ?? null;
+      settings.obdDeviceName = payload.configured_device_name ?? null;
+      mergeScannedDevice({
+        mac_address: payload.configured_device_mac ?? macAddress,
+        name: payload.configured_device_name ?? null,
+        paired: payload.paired,
+        trusted: payload.trusted,
+        connected: payload.connected,
+        rfcomm_channel: payload.rfcomm_channel,
+      });
+      obdScanStatusMessage = t("settings.speed.obd_pair_success");
+      syncSpeedSourceSelectionUi();
+    } catch (error) {
+      obdScanStatusMessage = t("settings.speed.obd_pair_failed");
+      renderObdControls();
+      ctx.showError(error instanceof Error ? error.message : t("settings.speed.obd_pair_failed"));
+    } finally {
+      pairInFlightMac = null;
+      renderObdControls();
+    }
+  }
+
   function saveSpeedSourceFromInputs(): void {
-    let src: SpeedSourceKind = "gps";
-    els.speedSourceRadios.forEach((radio) => {
-      if (radio.checked && isSpeedSourceKind(radio.value)) src = radio.value;
-    });
+    const checkedRadio = els.speedSourceRadios.find((radio) => radio.checked);
+    const src: SpeedSourceKind = speedSourceDraftDirty && checkedRadio && isSpeedSourceKind(checkedRadio.value)
+      ? checkedRadio.value
+      : settings.speedSource;
+    if (src === "obd2" && !settings.obdDeviceMac) {
+      ctx.showError(t("settings.speed.obd_missing_device_error"));
+      return;
+    }
     const payload: SpeedSourceRequest = {
       speed_source: src,
       manual_speed_kph: parseManualSpeedKph(Number(els.manualSpeedInput?.value)),
@@ -175,6 +335,21 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
       });
     });
     els.saveSpeedSourceBtn?.addEventListener("click", saveSpeedSourceFromInputs);
+    els.scanObdDevicesBtn?.addEventListener("click", () => {
+      void scanObdDevices();
+    });
+    els.obdDeviceList?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const button = target.closest<HTMLButtonElement>("[data-obd-pair-mac]");
+      const macAddress = button?.dataset.obdPairMac;
+      if (!macAddress) {
+        return;
+      }
+      void pairObdDevice(macAddress);
+    });
   }
 
   return {

@@ -680,7 +680,9 @@ class TestResolveSpeedContext:
     """Tests for _resolve_speed_context via a minimal RunRecorder setup."""
 
     @staticmethod
-    def _resolve_from_logger(logger) -> tuple[float | None, float | None, str, float | None]:
+    def _resolve_from_logger(
+        logger,
+    ) -> tuple[float | None, float | None, str, float | None, str]:
         resolution = logger.gps_monitor.resolve_speed()
         return resolve_speed_context(
             gps_speed_mps=logger.gps_monitor.speed_mps,
@@ -691,25 +693,29 @@ class TestResolveSpeedContext:
 
     def test_no_speed_available(self) -> None:
         logger, _ = _make_run_recorder()
-        speed_kmh, gps_speed, source, rpm = self._resolve_from_logger(logger)
+        speed_kmh, gps_speed, source, rpm, rpm_source = self._resolve_from_logger(logger)
         assert speed_kmh is None
+        assert gps_speed is None
+        assert source == "none"
         assert rpm is None
+        assert rpm_source == "missing"
 
     def test_gps_speed_available(self) -> None:
         logger, gps_mock = _make_run_recorder()
         gps_mock.speed_mps = 10.0  # 36 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
-        speed_kmh, gps_speed, source, rpm = self._resolve_from_logger(logger)
+        speed_kmh, gps_speed, source, rpm, rpm_source = self._resolve_from_logger(logger)
         assert speed_kmh == pytest.approx(36.0, rel=0.01)
         assert gps_speed == pytest.approx(36.0, rel=0.01)
         assert source == "gps"
         assert rpm is not None and rpm > 0
+        assert rpm_source == "estimated_from_speed_and_ratios"
 
     def test_manual_override(self) -> None:
         logger, gps_mock = _make_run_recorder()
         gps_mock.override_speed_mps = 20.0  # 72 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
-        speed_kmh, _, source, _ = self._resolve_from_logger(logger)
+        speed_kmh, _, source, _, _ = self._resolve_from_logger(logger)
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "manual"
 
@@ -724,8 +730,9 @@ class TestResolveSpeedContext:
             rim_in=16,
             final_drive_ratio=3.73,
         )
-        _, _, _, rpm = self._resolve_from_logger(logger)
+        _, _, _, rpm, rpm_source = self._resolve_from_logger(logger)
         assert rpm is None, "Without gear_ratio, RPM should not be estimated"
+        assert rpm_source == "missing"
 
     def test_uses_order_reference_spec_for_engine_rpm(
         self,
@@ -744,10 +751,11 @@ class TestResolveSpeedContext:
         gps_mock.speed_mps = 10.0
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
 
-        speed, _, _, rpm = self._resolve_from_logger(logger)
+        speed, _, _, rpm, rpm_source = self._resolve_from_logger(logger)
 
         assert speed == pytest.approx(36.0, rel=0.01)
         assert rpm == 1234.5
+        assert rpm_source == "estimated_from_speed_and_ratios"
 
 
 class TestSummarizeRunDataEdgeCases:

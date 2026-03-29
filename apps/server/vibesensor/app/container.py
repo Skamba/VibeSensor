@@ -16,10 +16,12 @@ from vibesensor.adapters.http.dependencies import (
     TelemetryDeps,
     UpdateDeps,
 )
+from vibesensor.adapters.obd import ObdAdminClient, OBDSpeedMonitor
 from vibesensor.adapters.persistence.history_db import (
     HistoryPersistenceAdapters,
     create_history_persistence_adapters,
 )
+from vibesensor.adapters.speed import SpeedSourceCoordinator
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.runtime_state import AppRuntime, RuntimeState
@@ -126,13 +128,19 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     history_db = history.run_repository
     history_lifecycle = history.lifecycle
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
+    obd_admin_client = ObdAdminClient()
+    obd_monitor = OBDSpeedMonitor(admin_client=obd_admin_client)
+    speed_monitor = SpeedSourceCoordinator(
+        gps_monitor=gps_monitor,
+        obd_monitor=obd_monitor,
+    )
     settings_store = SettingsStore(db=history.settings_snapshot_repository)
     settings_reader = SettingsDerivationService(
         active_car_aspects=settings_store.active_car_aspects,
         active_car_snapshot=settings_store.active_car_snapshot,
     )
     settings_runtime_applier = SettingsRuntimeApplier(
-        gps_monitor=gps_monitor,
+        gps_monitor=speed_monitor,
         speed_source_reader=settings_store,
     )
     settings_store.bind_speed_source_sync(settings_runtime_applier.apply_speed_source)
@@ -196,7 +204,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
         registry=registry,
         processor=processor,
-        gps_monitor=gps_monitor,
+        gps_monitor=speed_monitor,
         gps_enabled=config.gps.gps_enabled,
         settings_reader=settings_reader,
         speed_source_reader=settings_store,
@@ -215,7 +223,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             persist_history_db=config.logging.persist_history_db,
         ),
         registry=registry,
-        gps_monitor=gps_monitor,
+        gps_monitor=speed_monitor,
         processor=processor,
         history_db=history_db,
         settings_store=settings_reader,
@@ -248,6 +256,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         worker_pool=worker_pool,
         settings_store=settings_reader,
         gps_monitor=gps_monitor,
+        obd_monitor=obd_monitor,
         history_db=history_lifecycle,
         processing_loop_state=processing_loop_state,
         health_state=health_state,
@@ -270,7 +279,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         ),
         settings=SettingsDeps(
             settings_store=settings_store,
-            gps_monitor=gps_monitor,
+            gps_monitor=speed_monitor,
         ),
         history=HistoryDeps(
             run_service=run_service,

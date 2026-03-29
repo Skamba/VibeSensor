@@ -88,6 +88,7 @@ class _StubGPS:
     effective_speed_mps: float | None = 12.5
     gps_enabled: bool = True
     fallback_active: bool = False
+    engine_rpm: float | None = None
 
     def __init__(self) -> None:
         self.resolve_calls = 0
@@ -191,6 +192,7 @@ def _make_state(
         worker_pool=_SENTINEL,
         settings_store=settings_store,
         gps_monitor=gps_monitor,
+        obd_monitor=_SENTINEL,
         history_db=_SENTINEL,
         processing_loop_state=processing_state,
         health_state=health_state,

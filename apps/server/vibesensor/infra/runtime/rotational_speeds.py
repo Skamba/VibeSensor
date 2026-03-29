@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.speed_source import SpeedSource
+from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import SECONDS_PER_MINUTE
 from vibesensor.shared.order_bands import build_order_bands, vehicle_orders_hz
 from vibesensor.shared.types.payload_types import (
@@ -33,9 +34,18 @@ def build_rotational_speeds_payload(
     *,
     basis_speed_source: str,
     speed_mps: float | None,
+    measured_engine_rpm: float | None = None,
     analysis_settings: AnalysisSettingsSnapshot,
 ) -> RotationalSpeedsPayload:
     """Assemble the ``rotational_speeds`` sub-dict for the WS payload."""
+    measured_engine_available = isinstance(measured_engine_rpm, NUMERIC_TYPES) and not isinstance(
+        measured_engine_rpm, bool
+    )
+    measured_engine_value = (
+        float(measured_engine_rpm)
+        if measured_engine_available and measured_engine_rpm is not None
+        else None
+    )
     if speed_mps is None or speed_mps <= 0:
         reason: str | None = "speed_unavailable"
         orders_hz = None
@@ -53,7 +63,15 @@ def build_rotational_speeds_payload(
             "basis_speed_source": basis_speed_source,
             "wheel": {**_component},
             "driveshaft": {**_component},
-            "engine": {**_component},
+            "engine": (
+                {
+                    "rpm": measured_engine_value,
+                    "mode": "measured",
+                    "reason": None,
+                }
+                if measured_engine_available
+                else {**_component}
+            ),
             "order_bands": None,
         }
 
@@ -66,6 +84,14 @@ def build_rotational_speeds_payload(
         "basis_speed_source": basis_speed_source,
         "wheel": {"rpm": wheel_rpm, "mode": "calculated", "reason": None},
         "driveshaft": {"rpm": drive_rpm, "mode": "calculated", "reason": None},
-        "engine": {"rpm": engine_rpm, "mode": "calculated", "reason": None},
+        "engine": (
+            {
+                "rpm": measured_engine_value,
+                "mode": "measured",
+                "reason": None,
+            }
+            if measured_engine_available
+            else {"rpm": engine_rpm, "mode": "calculated", "reason": None}
+        ),
         "order_bands": build_order_bands(orders_hz, analysis_settings),
     }

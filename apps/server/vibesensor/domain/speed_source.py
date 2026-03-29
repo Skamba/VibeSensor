@@ -98,13 +98,13 @@ class SpeedSource:
         Pure decision logic extracted from infra — no I/O or runtime objects.
         """
         src = selected_source.strip().lower()
+        if resolution_source == "fallback_manual":
+            return "fallback_manual"
         if src == "manual":
             return "manual"
         if src == "obd2":
             return "obd2"
         if resolution_source is not None:
-            if resolution_source == "fallback_manual":
-                return "fallback_manual"
             if gps_enabled:
                 return "gps"
         else:

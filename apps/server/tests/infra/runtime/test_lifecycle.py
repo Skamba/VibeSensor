@@ -36,6 +36,7 @@ def _make_lifecycle(db_path: str | None) -> tuple[LifecycleManager, RuntimeHealt
         ws_broadcast=MagicMock(),
         run_recorder=MagicMock(),
         gps_monitor=MagicMock(),
+        obd_monitor=MagicMock(),
         update_manager=MagicMock(job_task=None),
         esp_flash_manager=MagicMock(job_task=None),
         worker_pool=MagicMock(),
