@@ -189,3 +189,44 @@ class TestSelectTopCauses:
         domain_findings = select_top_causes(findings, max_causes=2)
 
         assert [finding.finding_id for finding in domain_findings] == ["F_WHEEL", "F_ENGINE"]
+
+    def test_wheel_driveline_overlap_adds_explicit_reason_when_both_surface(self) -> None:
+        wheel = finding_from_payload(
+            make_finding_payload(
+                finding_id="F_WHEEL",
+                suspected_source="wheel/tire",
+                confidence=0.66,
+                strongest_location="front-left",
+            ),
+        ).with_confidence_assessment(
+            strength_band_key="moderate",
+            steady_speed=True,
+            has_reference_gaps=False,
+            sensor_count=4,
+        )
+        driveline = finding_from_payload(
+            make_finding_payload(
+                finding_id="F_DRIVELINE",
+                suspected_source="driveline",
+                confidence=0.61,
+                strongest_location="front-left",
+            ),
+        ).with_confidence_assessment(
+            strength_band_key="moderate",
+            steady_speed=True,
+            has_reference_gaps=False,
+            sensor_count=4,
+        )
+
+        domain_findings = select_top_causes((wheel, driveline))
+
+        assert [finding.finding_id for finding in domain_findings] == [
+            "F_WHEEL",
+            "F_DRIVELINE",
+        ]
+        for finding in domain_findings:
+            assert finding.confidence_assessment is not None
+            reason = finding.confidence_assessment.reason.lower()
+            assert "wheel and driveline evidence overlap" in reason
+            assert "could not strongly differentiate" in reason
+            assert "inspect both areas" in reason

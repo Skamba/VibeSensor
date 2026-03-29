@@ -15,6 +15,11 @@ from dataclasses import replace as _dc_replace
 
 from vibesensor.domain import Finding, Signature, VibrationSource
 
+_WHEEL_DRIVELINE_OVERLAP_REASON = (
+    "Wheel and driveline evidence overlap, so the system could not strongly "
+    "differentiate between them; inspect both areas."
+)
+
 # ---------------------------------------------------------------------------
 # Source grouping (domain-first)
 # ---------------------------------------------------------------------------
@@ -98,4 +103,43 @@ def select_top_causes(
         if len(selected) >= max_causes:
             break
 
-    return tuple(selected)
+    return tuple(_annotate_wheel_driveline_overlap(selected))
+
+
+def _annotate_wheel_driveline_overlap(
+    selected: Sequence[Finding],
+) -> list[Finding]:
+    sources = {finding.source_normalized for finding in selected}
+    if VibrationSource.WHEEL_TIRE not in sources or VibrationSource.DRIVELINE not in sources:
+        return list(selected)
+    return [
+        _append_confidence_reason(finding, _WHEEL_DRIVELINE_OVERLAP_REASON)
+        if finding.source_normalized in (VibrationSource.WHEEL_TIRE, VibrationSource.DRIVELINE)
+        else finding
+        for finding in selected
+    ]
+
+
+def _append_confidence_reason(
+    finding: Finding,
+    reason: str,
+) -> Finding:
+    assessment = finding.confidence_assessment
+    if assessment is None:
+        return finding
+    normalized_reason = reason.strip()
+    if not normalized_reason:
+        return finding
+    existing_reason = assessment.reason.strip()
+    if normalized_reason in existing_reason:
+        return finding
+    combined_reason = (
+        f"{existing_reason}; {normalized_reason}" if existing_reason else normalized_reason
+    )
+    return _dc_replace(
+        finding,
+        confidence_assessment=_dc_replace(
+            assessment,
+            reason=combined_reason,
+        ),
+    )

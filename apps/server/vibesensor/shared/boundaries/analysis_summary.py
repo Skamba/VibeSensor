@@ -12,6 +12,7 @@ from vibesensor.domain import (
     RunSuitability,
     TestRun,
 )
+from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
@@ -133,6 +134,17 @@ def _amp_metric_values(accel_stats: AccelStatisticsLike) -> list[float]:
     return [float(value) for value in raw_values if isinstance(value, (int, float))]
 
 
+def _serialized_top_causes(result: AnalysisResultLike) -> tuple[DomainFinding, ...]:
+    actionable = tuple(
+        finding
+        for finding in result.test_run.top_causes
+        if not finding.is_reference and finding.is_actionable
+    )
+    if actionable:
+        return actionable
+    return tuple(finding for finding in result.test_run.top_causes if not finding.is_reference)
+
+
 def analysis_summary_with_warnings(
     summary: AnalysisSummary,
     warnings: RunContextWarningsInput,
@@ -160,7 +172,7 @@ def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
         run_noise_baseline_g=result.prepared.run_noise_baseline_g,
         speed_breakdown_skipped_reason=result.prepared.speed_breakdown_skipped_reason,
         findings=result.test_run.findings,
-        top_causes=result.test_run.top_causes,
+        top_causes=_serialized_top_causes(result),
         most_likely_origin=result.most_likely_origin,
         test_plan=step_payloads_from_plan(result.test_run.test_plan),
         phase_timeline=list(result.phase_timeline),

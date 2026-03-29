@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import Finding, FindingEvidence, Signature, coerce_float
+from vibesensor.domain import (
+    ConfidenceAssessment,
+    Finding,
+    FindingEvidence,
+    Signature,
+    coerce_float,
+)
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
@@ -26,8 +32,10 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
       domain objects at the end of ``finalize_findings()``.
 
     Extracts the domain-owned fields plus the persisted public-field fallbacks
-    still needed to reconstruct origin/order semantics, while ignoring pure
-    presentation hints such as ``amplitude_metric`` and ``confidence_*``.
+    still needed to reconstruct origin/order semantics. Pure presentation-only
+    hints such as ``amplitude_metric`` are ignored, while serialized
+    confidence-assessment fields are restored because downstream report and
+    history consumers treat them as domain meaning.
     """
 
     def _str(key: str) -> str:
@@ -50,6 +58,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
     ranking_score = _as_float(payload.get("ranking_score")) or 0.0
     dominance_ratio = _as_float(payload.get("dominance_ratio"))
+    weak_spatial_separation = bool(payload.get("weak_spatial_separation", False))
 
     phase_ev = payload.get("phase_evidence")
     cruise_fraction = 0.0
@@ -111,6 +120,21 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         if isinstance(raw_signatures, list)
         else ()
     )
+    label_key = payload.get("confidence_label_key")
+    tone = payload.get("confidence_tone")
+    pct_text = payload.get("confidence_pct")
+    confidence_assessment = (
+        ConfidenceAssessment(
+            raw_confidence=confidence or 0.0,
+            label_key=label_key,
+            tone=tone,
+            pct_text=pct_text,
+            reason=str(payload.get("confidence_reason") or ""),
+            weak_spatial=weak_spatial_separation,
+        )
+        if isinstance(label_key, str) and isinstance(tone, str) and isinstance(pct_text, str)
+        else None
+    )
     return Finding(
         finding_id=finding_id,
         finding_key=_str("finding_key"),
@@ -127,13 +151,14 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         ranking_score=ranking_score,
         dominance_ratio=dominance_ratio,
         diffuse_excitation=bool(payload.get("diffuse_excitation", False)),
-        weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
+        weak_spatial_separation=weak_spatial_separation,
         vibration_strength_db=vib_db,
         cruise_fraction=cruise_fraction,
         phases_detected=phases_detected,
         matched_points=matched_points,
         evidence=evidence,
         location=location,
+        confidence_assessment=confidence_assessment,
         origin=origin,
         signatures=signatures,
     )
