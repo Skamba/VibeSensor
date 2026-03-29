@@ -251,7 +251,16 @@ def _build_report_template_data(
         lang,
         tr,
     )
-    peak_rows = build_peak_rows(prepared.renderer_payload.peak_table_rows, lang=lang, tr=tr)
+    findings = [_finding_to_presentation(f) for f in context.domain_aggregate.findings]
+    top_causes = [
+        _finding_to_presentation(f) for f in context.domain_aggregate.effective_top_causes()
+    ]
+    peak_rows = build_peak_rows(
+        prepared.renderer_payload.peak_table_rows,
+        findings=findings,
+        lang=lang,
+        tr=tr,
+    )
     version_marker = build_version_marker()
 
     return build_template_data(
@@ -266,10 +275,8 @@ def _build_report_template_data(
         pattern_evidence=pattern_evidence,
         peak_rows=peak_rows,
         version_marker=version_marker,
-        findings=[_finding_to_presentation(f) for f in context.domain_aggregate.findings],
-        top_causes=[
-            _finding_to_presentation(f) for f in context.domain_aggregate.effective_top_causes()
-        ],
+        findings=findings,
+        top_causes=top_causes,
         sensor_intensity=raw_sensor_intensity,
         hotspot_rows=list(report_facts.location_hotspot_rows),
     )
