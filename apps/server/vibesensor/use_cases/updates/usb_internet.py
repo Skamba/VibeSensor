@@ -4,13 +4,19 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vibesensor.use_cases.updates.models import UpdatePhase, UsbInternetStatus
-from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
+from vibesensor.use_cases.updates.runner import (
+    CommandRunner,
+    UpdateCommandExecutor,
+    build_sudo_args,
+)
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
 
 _SYS_CLASS_NET = Path("/sys/class/net")
 _USB_NETWORK_DRIVERS = frozenset({"cdc_ether", "cdc_ncm", "ipheth", "rndis_host"})
+_USB_ACTIVATION_STATES = frozenset({"disconnected", "unavailable", "unknown"})
+_USB_ACTIVATION_WAIT_S = 15
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +33,7 @@ class _UsbCandidateStatus:
     state: str
     connection_name: str | None
     driver: str | None
+    carrier_on: bool | None
     ipv4_addresses: tuple[str, ...]
     gateway: str | None
     has_default_route: bool
@@ -48,6 +55,19 @@ def _driver_name(interface_name: str, *, sys_class_net: Path = _SYS_CLASS_NET) -
     driver_link = sys_class_net / interface_name / "device" / "driver"
     resolved = _safe_resolve(driver_link)
     return resolved.name if resolved is not None else None
+
+
+def _carrier_on(interface_name: str, *, sys_class_net: Path = _SYS_CLASS_NET) -> bool | None:
+    carrier_path = sys_class_net / interface_name / "carrier"
+    try:
+        raw_value = carrier_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if raw_value == "1":
+        return True
+    if raw_value == "0":
+        return False
+    return None
 
 
 def _is_usb_backed_interface(interface_name: str, *, sys_class_net: Path = _SYS_CLASS_NET) -> bool:
@@ -142,6 +162,7 @@ def _candidate_diagnostic(
     interface_name: str,
     *,
     state: str,
+    carrier_on: bool | None,
     nmcli_error: str,
     addr_error: str,
     route_error: str,
@@ -151,6 +172,11 @@ def _candidate_diagnostic(
     if nmcli_error:
         return f"Could not query NetworkManager device status ({nmcli_error})."
     if state != "connected":
+        if carrier_on is False:
+            return (
+                f"USB interface '{interface_name}' is detected, but link carrier is off. "
+                "Enable USB tethering/personal hotspot and trust this Pi on the phone."
+            )
         return (
             f"USB interface '{interface_name}' is detected, but NetworkManager reports "
             f"state '{state or 'unknown'}'."
@@ -176,6 +202,24 @@ def _candidate_diagnostic(
     return f"USB internet is ready on '{interface_name}'."
 
 
+def _status_from_candidate(
+    candidate: _UsbCandidateStatus,
+    *,
+    diagnostic: str | None = None,
+) -> UsbInternetStatus:
+    return UsbInternetStatus(
+        detected=True,
+        usable=candidate.usable,
+        interface_name=candidate.interface_name,
+        connection_name=candidate.connection_name,
+        driver=candidate.driver,
+        ipv4_addresses=candidate.ipv4_addresses,
+        gateway=candidate.gateway,
+        has_default_route=candidate.has_default_route,
+        diagnostic=diagnostic if diagnostic is not None else candidate.diagnostic,
+    )
+
+
 class UsbInternetStatusService:
     """Inspect live Linux/NM state to determine whether USB internet is available."""
 
@@ -190,14 +234,10 @@ class UsbInternetStatusService:
         self._runner = runner or CommandRunner()
         self._sys_class_net = sys_class_net
 
-    async def snapshot(self) -> UsbInternetStatus:
+    async def _collect_candidate_statuses(self) -> list[_UsbCandidateStatus]:
         candidates = _candidate_interfaces(sys_class_net=self._sys_class_net)
         if not candidates:
-            return UsbInternetStatus(
-                detected=False,
-                usable=False,
-                diagnostic="No USB network interface is currently detected.",
-            )
+            return []
 
         nmcli_error = ""
         rc, stdout, stderr = await self._runner.run(
@@ -214,6 +254,7 @@ class UsbInternetStatusService:
             state = row.state if row is not None else "unknown"
             connection_name = row.connection_name if row is not None else None
             driver = _driver_name(interface_name, sys_class_net=self._sys_class_net)
+            carrier_on = _carrier_on(interface_name, sys_class_net=self._sys_class_net)
 
             addr_rc, addr_stdout, addr_stderr = await self._runner.run(
                 ["ip", "-4", "-o", "addr", "show", "dev", interface_name, "scope", "global"],
@@ -243,12 +284,14 @@ class UsbInternetStatusService:
                     state=state,
                     connection_name=connection_name,
                     driver=driver,
+                    carrier_on=carrier_on,
                     ipv4_addresses=ipv4_addresses,
                     gateway=gateway,
                     has_default_route=has_default_route,
                     diagnostic=_candidate_diagnostic(
                         interface_name,
                         state=state,
+                        carrier_on=carrier_on,
                         nmcli_error=nmcli_error,
                         addr_error=addr_error,
                         route_error=route_error,
@@ -258,18 +301,62 @@ class UsbInternetStatusService:
                 ),
             )
 
-        best = max(candidate_statuses, key=_candidate_rank)
-        return UsbInternetStatus(
-            detected=True,
-            usable=best.usable,
-            interface_name=best.interface_name,
-            connection_name=best.connection_name,
-            driver=best.driver,
-            ipv4_addresses=best.ipv4_addresses,
-            gateway=best.gateway,
-            has_default_route=best.has_default_route,
-            diagnostic=best.diagnostic,
+        return candidate_statuses
+
+    @staticmethod
+    def _should_attempt_activation(candidate: _UsbCandidateStatus) -> bool:
+        return (
+            not candidate.usable
+            and candidate.state in _USB_ACTIVATION_STATES
+            and candidate.carrier_on is not False
         )
+
+    async def _activate_interface(self, interface_name: str) -> str:
+        rc, stdout, stderr = await self._runner.run(
+            build_sudo_args(
+                [
+                    "nmcli",
+                    "--wait",
+                    str(_USB_ACTIVATION_WAIT_S),
+                    "device",
+                    "up",
+                    interface_name,
+                ]
+            ),
+            timeout=float(_USB_ACTIVATION_WAIT_S + 5),
+        )
+        if rc == 0:
+            return ""
+        return (stderr or stdout or f"exit {rc}").strip()
+
+    async def snapshot(self, *, activate: bool = False) -> UsbInternetStatus:
+        candidate_statuses = await self._collect_candidate_statuses()
+        if not candidate_statuses:
+            return UsbInternetStatus(
+                detected=False,
+                usable=False,
+                diagnostic="No USB network interface is currently detected.",
+            )
+
+        best = max(candidate_statuses, key=_candidate_rank)
+        if not activate or not self._should_attempt_activation(best):
+            return _status_from_candidate(best)
+
+        activation_error = await self._activate_interface(best.interface_name)
+        candidate_statuses = await self._collect_candidate_statuses()
+        if not candidate_statuses:
+            diagnostic = "USB network interface disappeared while attempting activation."
+            if activation_error:
+                diagnostic = f"{diagnostic} Auto-activation failed ({activation_error})."
+            return UsbInternetStatus(detected=False, usable=False, diagnostic=diagnostic)
+
+        best = max(candidate_statuses, key=_candidate_rank)
+        if activation_error and not best.usable:
+            return _status_from_candidate(
+                best,
+                diagnostic=f"{best.diagnostic} Auto-activation failed ({activation_error}).",
+            )
+        return _status_from_candidate(best)
 
 
 class UpdateUsbInternetOrchestrator:
@@ -294,7 +381,10 @@ class UpdateUsbInternetOrchestrator:
         )
 
     async def ensure_uplink_ready(self) -> bool:
-        status = await self._status_service.snapshot()
+        if isinstance(self._status_service, UsbInternetStatusService):
+            status = await self._status_service.snapshot(activate=True)
+        else:
+            status = await self._status_service.snapshot()
         if not status.detected:
             self._tracker.fail(
                 UpdatePhase.connecting_usb_internet,

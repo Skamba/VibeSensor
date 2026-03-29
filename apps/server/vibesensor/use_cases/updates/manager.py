@@ -198,6 +198,8 @@ class UpdateManager:
         return self._executor.job_task
 
     async def get_usb_internet_status(self) -> UsbInternetStatus:
+        if isinstance(self._usb_internet_service, UsbInternetStatusService):
+            return await self._usb_internet_service.snapshot(activate=True)
         return await self._usb_internet_service.snapshot()
 
     def start(

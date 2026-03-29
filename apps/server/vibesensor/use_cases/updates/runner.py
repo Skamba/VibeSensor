@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
+    "build_sudo_args",
     "CommandRunner",
     "UpdateCommandExecutor",
     "build_privilege_probe_args",
@@ -61,6 +62,12 @@ def _sudo_prefix() -> list[str]:
     if wrapper is not None:
         return ["sudo", "-n", str(wrapper)]
     return ["sudo", "-n"]
+
+
+def build_sudo_args(args: list[str]) -> list[str]:
+    """Return *args* prefixed for restricted privileged execution."""
+
+    return [*_sudo_prefix(), *args]
 
 
 def build_privilege_probe_args() -> list[str]:
@@ -168,7 +175,7 @@ class UpdateCommandExecutor:
         sudo: bool = False,
         env: dict[str, str] | None = None,
     ) -> tuple[int, str, str]:
-        full_args = [*_sudo_prefix(), *args] if sudo else list(args)
+        full_args = build_sudo_args(args) if sudo else list(args)
         command = " ".join(self._tracker.redacted_args(full_args, set(_SENSITIVE_KEYS)))
         if len(command) > 500:
             command = f"{command[:497]}..."
