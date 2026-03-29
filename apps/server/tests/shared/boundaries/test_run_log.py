@@ -14,7 +14,7 @@ from vibesensor.shared.boundaries.run_log import (
 )
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.sampling import bounded_sample
-from vibesensor.shared.time_utils import parse_iso8601, utc_now_iso
+from vibesensor.shared.time_utils import format_utc_timestamp, parse_iso8601, utc_now_iso
 from vibesensor.use_cases.run.sample_builder import create_run_metadata
 
 # -- Helpers -------------------------------------------------------------------
@@ -71,6 +71,21 @@ def test_parse_iso8601_z_suffix() -> None:
 )
 def test_parse_iso8601_returns_none_for_bad_input(value: object) -> None:
     assert parse_iso8601(value) is None
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("2025-01-15T10:30:00Z", "2025-01-15 10:30:00 UTC"),
+        ("2025-01-15T12:30:00+02:00", "2025-01-15 10:30:00 UTC"),
+        ("2025-01-15 10:30:00", "2025-01-15 10:30:00 UTC"),
+        ("not-a-date", "not-a-date"),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_format_utc_timestamp(value: object, expected: str | None) -> None:
+    assert format_utc_timestamp(value) == expected
 
 
 # -- as_float_or_none ---------------------------------------------------------
