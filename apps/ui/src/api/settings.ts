@@ -17,8 +17,10 @@ import type {
   SpeedSourceStatusPayload,
   SpeedUnitPayload,
   UpdateCancelPayload,
+  UpdateStartRequestPayload,
   UpdateStartPayload,
   UpdateStatusPayload,
+  UsbInternetStatusPayload,
 } from "./types";
 
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
@@ -113,15 +115,19 @@ export async function getUpdateStatus(): Promise<UpdateStatusPayload> {
   return apiJson("/api/update/status");
 }
 
+export async function getUpdateInternetStatus(): Promise<UsbInternetStatusPayload> {
+  return apiJson("/api/update/internet-status");
+}
+
 export async function getHealthStatus(): Promise<HealthStatusPayload> {
   return apiJson("/api/health");
 }
 
-export async function startUpdate(ssid: string, password: string): Promise<UpdateStartPayload> {
+export async function startUpdate(payload: UpdateStartRequestPayload): Promise<UpdateStartPayload> {
   return apiJson("/api/update/start", {
     method: "POST",
     headers: JSON_HEADERS,
-    body: JSON.stringify({ ssid, password }),
+    body: JSON.stringify(payload),
   });
 }
 

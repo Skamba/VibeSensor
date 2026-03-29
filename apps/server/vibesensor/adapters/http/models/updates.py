@@ -4,14 +4,29 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, model_validator
 
+from vibesensor.use_cases.updates.models import UpdateTransport
+
 from .base import _FrozenBase
 
 
 class UpdateStartRequest(_FrozenBase):
     """Request body to start an OTA software update (provides Wi-Fi credentials)."""
 
-    ssid: str = Field(min_length=1, max_length=64)
+    transport: UpdateTransport = UpdateTransport.wifi
+    ssid: str | None = Field(default=None, min_length=1, max_length=64)
     password: str = Field(default="", max_length=128)
+
+    @model_validator(mode="after")
+    def _validate_transport_fields(self) -> UpdateStartRequest:
+        if self.transport == UpdateTransport.wifi:
+            if not self.ssid:
+                raise ValueError("ssid is required when transport is wifi")
+            return self
+        if self.ssid:
+            raise ValueError("ssid must be omitted when transport is usb_internet")
+        if self.password:
+            raise ValueError("password must be omitted when transport is usb_internet")
+        return self
 
 
 class EspFlashStartRequest(_FrozenBase):
@@ -54,13 +69,15 @@ class UpdateStatusResponse(BaseModel):
 
     state: str
     phase: str
+    transport: str
     started_at: float | None = None
     finished_at: float | None = None
     last_success_at: float | None = None
     phase_started_at: float | None = None
     phase_elapsed_s: float | None = None
     updated_at: float | None = None
-    ssid: str
+    ssid: str | None = None
+    uplink_interface: str | None = None
     issues: list[UpdateIssueResponse]
     log_tail: list[str]
     exit_code: int | None = None
@@ -71,7 +88,22 @@ class UpdateStartResponse(BaseModel):
     """Response body confirming that an OTA update job has started."""
 
     status: str
-    ssid: str
+    transport: str
+    ssid: str | None = None
+
+
+class UsbInternetStatusResponse(BaseModel):
+    """Response body describing the current USB internet detection state."""
+
+    detected: bool
+    usable: bool
+    interface_name: str | None = None
+    connection_name: str | None = None
+    driver: str | None = None
+    ipv4_addresses: list[str]
+    gateway: str | None = None
+    has_default_route: bool
+    diagnostic: str
 
 
 class UpdateCancelResponse(BaseModel):

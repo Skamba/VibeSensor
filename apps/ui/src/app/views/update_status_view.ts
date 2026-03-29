@@ -127,7 +127,24 @@ function renderLifecycleRows(
 ): string {
   const { t, escapeHtml } = deps;
   const rows: string[] = [];
-  if (status.ssid) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.ssid_label")), escapeHtml(status.ssid)));
+  if (status.transport === "usb_internet" || status.ssid) {
+    let transportValue = t("settings.update.transport_value.wifi");
+    if (status.transport === "usb_internet") {
+      transportValue = status.uplink_interface
+        ? t("settings.update.transport_value.usb_interface", {
+          interface: status.uplink_interface,
+        })
+        : t("settings.update.transport_value.usb");
+    } else if (status.ssid) {
+      transportValue = t("settings.update.transport_value.wifi_ssid", { ssid: status.ssid });
+    }
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.transport_label")),
+        escapeHtml(transportValue),
+      ),
+    );
+  }
   if (status.state !== "idle") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_label")), escapeHtml(formatUpdatePhase(status.phase, t))));
   if (status.started_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.started_at")), escapeHtml(formatEpochTimestamp(status.started_at))));
   if (status.phase_started_at != null && status.state !== "idle") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_started_at")), escapeHtml(formatEpochTimestamp(status.phase_started_at))));
@@ -275,7 +292,15 @@ function renderLogTail(
 }
 
 export function syncUpdateControls(
-  els: Pick<UiDomElements, "updateStartBtn" | "updateCancelBtn" | "updateSsidInput" | "updatePasswordInput">,
+  els: Pick<
+    UiDomElements,
+    | "updateStartBtn"
+    | "updateCancelBtn"
+    | "updateSsidInput"
+    | "updatePasswordInput"
+    | "updateTransportWifiRadio"
+    | "updateTransportUsbRadio"
+  >,
   status: UpdateStatusPayload,
 ): void {
   const isRunning = status.state === "running";
@@ -288,6 +313,8 @@ export function syncUpdateControls(
   }
   if (els.updateSsidInput) els.updateSsidInput.disabled = isRunning;
   if (els.updatePasswordInput) els.updatePasswordInput.disabled = isRunning;
+  if (els.updateTransportWifiRadio) els.updateTransportWifiRadio.disabled = isRunning;
+  if (els.updateTransportUsbRadio) els.updateTransportUsbRadio.disabled = isRunning;
 }
 
 export function renderUpdateStatusPanel(

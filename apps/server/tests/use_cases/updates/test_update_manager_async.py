@@ -16,8 +16,16 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
-from vibesensor.use_cases.updates.models import UpdateState
+from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
 from vibesensor.use_cases.updates.status import collect_runtime_details
+
+
+class _StaticUsbInternetService:
+    def __init__(self, status: UsbInternetStatus) -> None:
+        self._status = status
+
+    async def snapshot(self) -> UsbInternetStatus:
+        return self._status
 
 
 def _build_fake_wheel(path, *, version: str) -> bytes:
@@ -313,6 +321,73 @@ class TestUpdateManagerAsync:
         seed_runtime_artifacts(repo, manager, valid=False)
         details = collect_runtime_details(repo)
         assert details.assets_verified is False
+
+    async def test_usb_internet_happy_path_skips_hotspot_handover(self, tmp_path) -> None:
+        usb_service = _StaticUsbInternetService(
+            UsbInternetStatus(
+                detected=True,
+                usable=True,
+                interface_name="usb0",
+                connection_name="iPhone USB",
+                driver="ipheth",
+                ipv4_addresses=("172.20.10.2/28",),
+                gateway="172.20.10.1",
+                has_default_route=True,
+                diagnostic="USB internet is ready on 'usb0'.",
+            )
+        )
+        manager, runner, _repo = setup_update_env(
+            tmp_path,
+            seed_artifacts=True,
+            usb_internet_service=usb_service,
+        )
+        with patch_release_fetcher() as mock_fetcher:
+            fetcher = mock_fetcher.return_value
+            fetcher.check_update_available.return_value = None
+            latest_release = type("Latest", (), {"tag": "server-v2025.6.15"})()
+            fetcher.find_latest_release.return_value = latest_release
+            await run_update(manager, transport=UpdateTransport.usb_internet)
+
+        assert manager.status.state == UpdateState.success
+        assert manager.status.transport == UpdateTransport.usb_internet
+        assert manager.status.uplink_interface == "usb0"
+        commands = [" ".join(call[0]) for call in runner.calls]
+        assert not any("VibeSensor-AP" in command for command in commands)
+        assert not any("VibeSensor-Uplink" in command for command in commands)
+
+    async def test_usb_internet_unusable_fails_before_release_check(self, tmp_path) -> None:
+        usb_service = _StaticUsbInternetService(
+            UsbInternetStatus(
+                detected=True,
+                usable=False,
+                interface_name="usb0",
+                connection_name="iPhone USB",
+                driver="ipheth",
+                ipv4_addresses=("172.20.10.2/28",),
+                gateway=None,
+                has_default_route=False,
+                diagnostic=(
+                    "USB interface 'usb0' is connected, but no default IPv4 route is active."
+                ),
+            )
+        )
+        manager, runner, _repo = setup_update_env(
+            tmp_path,
+            usb_internet_service=usb_service,
+        )
+        with patch_release_fetcher() as mock_fetcher:
+            await run_update(manager, transport=UpdateTransport.usb_internet)
+            mock_fetcher.assert_not_called()
+
+        assert manager.status.state == UpdateState.failed
+        assert manager.status.transport == UpdateTransport.usb_internet
+        assert any(
+            issue.message == "USB internet detected but not usable"
+            for issue in manager.status.issues
+        )
+        commands = [" ".join(call[0]) for call in runner.calls]
+        assert not any("VibeSensor-AP" in command for command in commands)
+        assert not any("VibeSensor-Uplink" in command for command in commands)
 
     async def test_timeout_handling(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)

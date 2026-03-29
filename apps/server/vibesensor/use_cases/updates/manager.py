@@ -15,7 +15,9 @@ from vibesensor.use_cases.updates.job_lifecycle import UpdateJobLifecycleHandler
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdateRequest,
+    UpdateTransport,
     UpdateValidationConfig,
+    UsbInternetStatus,
     validate_update_request,
 )
 from vibesensor.use_cases.updates.recovery import InterruptedUpdateRecovery
@@ -24,6 +26,10 @@ from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
     UpdateStatusTracker,
     collect_runtime_details,
+)
+from vibesensor.use_cases.updates.usb_internet import (
+    UpdateUsbInternetOrchestrator,
+    UsbInternetStatusService,
 )
 from vibesensor.use_cases.updates.validation import (
     MIN_FREE_DISK_BYTES,
@@ -60,6 +66,10 @@ FirmwareRefresherFactory = Callable[
     [UpdateCommandExecutor, UpdateStatusTracker, Path, float],
     FirmwareRefresher,
 ]
+UsbInternetOrchestratorFactory = Callable[
+    [UsbInternetStatusService, UpdateCommandExecutor, UpdateStatusTracker, UpdateWifiConfig],
+    UpdateUsbInternetOrchestrator,
+]
 
 
 def _default_command_executor(
@@ -94,6 +104,20 @@ def _default_firmware_refresher(
     return FirmwareRefresher(commands=commands, tracker=tracker, repo=repo, timeout_s=timeout_s)
 
 
+def _default_usb_internet_orchestrator(
+    status_service: UsbInternetStatusService,
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateWifiConfig,
+) -> UpdateUsbInternetOrchestrator:
+    return UpdateUsbInternetOrchestrator(
+        status_service=status_service,
+        commands=commands,
+        tracker=tracker,
+        config=config,
+    )
+
+
 class UpdateManager:
     """Public update API used by routes and runtime lifecycle."""
 
@@ -110,6 +134,10 @@ class UpdateManager:
         wifi_orchestrator_factory: WifiOrchestratorFactory = _default_wifi_orchestrator,
         installer_factory: InstallerFactory = _default_installer,
         firmware_refresher_factory: FirmwareRefresherFactory = _default_firmware_refresher,
+        usb_internet_service: UsbInternetStatusService | None = None,
+        usb_internet_orchestrator_factory: UsbInternetOrchestratorFactory = (
+            _default_usb_internet_orchestrator
+        ),
     ) -> None:
         self._runner = runner or CommandRunner()
         self._repo_path = repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor")
@@ -133,6 +161,10 @@ class UpdateManager:
         self._wifi_orchestrator_factory = wifi_orchestrator_factory
         self._installer_factory = installer_factory
         self._firmware_refresher_factory = firmware_refresher_factory
+        self._usb_internet_service = usb_internet_service or UsbInternetStatusService(
+            runner=self._runner
+        )
+        self._usb_internet_orchestrator_factory = usb_internet_orchestrator_factory
 
         self._lifecycle = UpdateJobLifecycleHandler(
             tracker=self._tracker,
@@ -165,8 +197,17 @@ class UpdateManager:
     def job_task(self) -> asyncio.Task[None] | None:
         return self._executor.job_task
 
-    def start(self, ssid: str, password: str) -> None:
-        request = validate_update_request(ssid, password)
+    async def get_usb_internet_status(self) -> UsbInternetStatus:
+        return await self._usb_internet_service.snapshot()
+
+    def start(
+        self,
+        ssid: str | None = None,
+        password: str = "",
+        *,
+        transport: UpdateTransport = UpdateTransport.wifi,
+    ) -> None:
+        request = validate_update_request(ssid, password, transport=transport)
         self._executor.start(
             lambda: self._run_update(request),
             before_start=lambda: self._lifecycle.prepare_start(request),
@@ -202,13 +243,18 @@ class UpdateManager:
         request = (
             request_or_ssid
             if isinstance(request_or_ssid, UpdateRequest)
-            else UpdateRequest(ssid=request_or_ssid, password=password or "")
+            else UpdateRequest(
+                transport=UpdateTransport.wifi,
+                ssid=request_or_ssid,
+                password=password or "",
+            )
         )
         commands = self._build_command_executor()
         workflow = UpdateWorkflow(
             tracker=self._tracker,
             commands=commands,
             wifi=self._build_wifi_orchestrator(commands=commands),
+            usb_internet=self._build_usb_internet_orchestrator(commands=commands),
             installer=self._build_installer(commands),
             firmware_refresher=self._build_firmware_refresher(commands=commands),
             cancel_requested=self._executor.cancel_requested,
@@ -227,14 +273,29 @@ class UpdateManager:
         *,
         commands: UpdateCommandExecutor | None = None,
     ) -> UpdateWifiOrchestrator:
-        wifi_config = build_default_wifi_config(
-            ap_con_name=self._ap_con_name,
-            wifi_ifname=self._wifi_ifname,
-        )
+        wifi_config = self._build_wifi_config()
         return self._wifi_orchestrator_factory(
             commands or self._build_command_executor(),
             self._tracker,
             wifi_config,
+        )
+
+    def _build_wifi_config(self) -> UpdateWifiConfig:
+        return build_default_wifi_config(
+            ap_con_name=self._ap_con_name,
+            wifi_ifname=self._wifi_ifname,
+        )
+
+    def _build_usb_internet_orchestrator(
+        self,
+        *,
+        commands: UpdateCommandExecutor | None = None,
+    ) -> UpdateUsbInternetOrchestrator:
+        return self._usb_internet_orchestrator_factory(
+            self._usb_internet_service,
+            commands or self._build_command_executor(),
+            self._tracker,
+            self._build_wifi_config(),
         )
 
     def _build_installer(

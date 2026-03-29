@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.models import UpdateTransport
 from vibesensor.use_cases.updates.runner import CommandRunner
 from vibesensor.use_cases.updates.status import UpdateStateStore, collect_runtime_details
 
@@ -113,9 +114,13 @@ async def run_update(
     ssid: str = "TestNet",
     password: str = "pass123",
     *,
+    transport: UpdateTransport = UpdateTransport.wifi,
     timeout: float = 10,
 ) -> None:
-    mgr.start(ssid, password)
+    if transport == UpdateTransport.usb_internet:
+        mgr.start(transport=transport)
+    else:
+        mgr.start(ssid, password, transport=transport)
     task = mgr.job_task
     assert task is not None
     await asyncio.wait_for(task, timeout=timeout)
@@ -140,6 +145,7 @@ def setup_update_env(
     sudo_ok: bool = True,
     rollback: bool = True,
     seed_artifacts: bool = False,
+    usb_internet_service: object | None = None,
 ) -> tuple[UpdateManager, FakeRunner, Path]:
     runner = FakeRunner()
     if sudo_ok:
@@ -153,6 +159,8 @@ def setup_update_env(
     }
     if rollback:
         kwargs["rollback_dir"] = str(tmp_path / "rollback")
+    if usb_internet_service is not None:
+        kwargs["usb_internet_service"] = usb_internet_service
     mgr = UpdateManager(**kwargs)
     if seed_artifacts:
         seed_runtime_artifacts(repo, mgr, valid=True)

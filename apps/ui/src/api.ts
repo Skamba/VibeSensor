@@ -16,6 +16,7 @@ export {
   updateSettingsSpeedSource,
   getSpeedSourceStatus,
   getHealthStatus,
+  getUpdateInternetStatus,
   getEspFlashPorts,
   startEspFlash,
   getEspFlashStatus,
@@ -39,9 +40,11 @@ export { getClientLocations, setClientLocation, identifyClient, removeClient } f
 export { getLoggingStatus, startLoggingRun, stopLoggingRun } from "./api/logging";
 export type {
   HealthStatusPayload,
+  UpdateStartRequestPayload,
   UpdateStatusPayload,
   UpdateIssue,
   SpeedSourceStatusPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
+  UsbInternetStatusPayload,
 } from "./api/types";
