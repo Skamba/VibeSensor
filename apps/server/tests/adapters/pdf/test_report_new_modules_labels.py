@@ -16,6 +16,7 @@ from vibesensor.adapters.pdf.presentation import (
     strength_label,
     strength_text,
 )
+from vibesensor.adapters.pdf.report_data import FindingPresentation
 from vibesensor.adapters.pdf.report_sections import (
     build_data_trust,
     build_next_steps,
@@ -123,6 +124,27 @@ def test_build_peak_row_high_presence_transient_uses_repeatability_label() -> No
         }[key],
     )
     assert row.relevance == "Repeated pattern"
+
+
+def test_peak_row_system_label_falls_back_to_matching_finding_order() -> None:
+    label = peak_row_system_label(
+        {
+            "frequency_hz": 11.0,
+            "order_label": "1x wheel",
+            "suspected_source": "",
+        },
+        findings=[
+            FindingPresentation(
+                suspected_source="wheel/tire",
+                order="1x wheel",
+                frequency_hz=10.9,
+            )
+        ],
+        tr=lambda key, **_kw: {
+            "SOURCE_WHEEL_TIRE": "Wheel / Tire",
+        }[key],
+    )
+    assert label == "Wheel / Tire"
 
 
 def test_extracted_pdf_builders_are_importable() -> None:
