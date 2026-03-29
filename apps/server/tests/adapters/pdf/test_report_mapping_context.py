@@ -219,6 +219,8 @@ class TestPrepareReportMappingContext:
         assert context.car_name == "Track Car"
         assert context.car_type == "coupe"
         assert context.date_str == "2026-03-25 10:00:00 UTC"
+        assert context.start_time_utc == "2026-03-25 09:55:00 UTC"
+        assert context.end_time_utc == "2026-03-25 10:00:00 UTC"
         assert context.origin is prepared.report_facts.origin
         assert context.origin_location == prepared.report_facts.origin_location
         assert context.sensor_locations_active == ["rear-right"]

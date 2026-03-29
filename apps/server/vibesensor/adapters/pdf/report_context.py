@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf.report_data import PatternEvidence
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.time_utils import format_utc_timestamp, utc_now_iso
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportInput,
     ValidatedPreparedReportInput,
@@ -89,7 +89,7 @@ def prepare_report_mapping_context(
     validated = validate_prepared_report_input(prepared)
     report_facts = validated.report_facts
     report_date = validated.renderer_payload.report_date or utc_now_iso()
-    date_str = str(report_date)[:19].replace("T", " ") + " UTC"
+    date_str = format_utc_timestamp(report_date) or str(report_date)
     return ReportMappingContext(
         car_name=validated.renderer_payload.car_name,
         car_type=validated.renderer_payload.car_type,
@@ -98,8 +98,8 @@ def prepare_report_mapping_context(
         origin_location=report_facts.origin_location,
         sensor_locations_active=list(report_facts.sensor_locations_active),
         duration_text=report_facts.duration_text,
-        start_time_utc=report_facts.start_time_utc,
-        end_time_utc=report_facts.end_time_utc,
+        start_time_utc=format_utc_timestamp(report_facts.start_time_utc),
+        end_time_utc=format_utc_timestamp(report_facts.end_time_utc),
         sample_rate_hz=report_facts.sample_rate_hz,
         tire_spec_text=report_facts.tire_spec_text,
         sample_count=report_facts.sample_count,
