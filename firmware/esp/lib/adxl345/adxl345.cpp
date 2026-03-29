@@ -21,6 +21,17 @@ constexpr uint8_t MASK_FIFO_WATERMARK = 0x1F;
 constexpr uint8_t MASK_FIFO_ENTRIES = 0x3F;
 constexpr uint32_t kI2cClockHz = 400000;
 constexpr unsigned int kFifoPopDelayUs = 5;
+
+void set_failure(ADXL345::FailureKind* out, ADXL345::FailureKind failure) {
+  if (out != nullptr) {
+    *out = failure;
+  }
+}
+
+void configure_bus(TwoWire& wire, int sda_pin, int scl_pin) {
+  wire.begin(sda_pin, scl_pin);
+  wire.setClock(kI2cClockHz);
+}
 }  // namespace
 
 ADXL345::ADXL345(TwoWire& wire,
@@ -35,36 +46,78 @@ ADXL345::ADXL345(TwoWire& wire,
       fifo_watermark_(fifo_watermark),
       available_(false) {}
 
-bool ADXL345::begin() {
-  wire_.begin(sda_pin_, scl_pin_);
-  wire_.setClock(kI2cClockHz);
+bool ADXL345::begin(FailureKind* failure_kind) {
+  set_failure(failure_kind, FailureKind::kNone);
+  configure_bus(wire_, sda_pin_, scl_pin_);
 
   uint8_t devid = 0;
   if (!read_reg(REG_DEVID, &devid)) {
+    set_failure(failure_kind, FailureKind::kDeviceIdRead);
     available_ = false;
     return false;
   }
   if (devid != VALUE_DEVID) {
+    set_failure(failure_kind, FailureKind::kDeviceIdMismatch);
     available_ = false;
     return false;
   }
 
   // Standby while configuring.
-  if (!write_reg(REG_POWER_CTL, VALUE_POWER_CTL_STANDBY)) { available_ = false; return false; }
+  if (!write_reg(REG_POWER_CTL, VALUE_POWER_CTL_STANDBY)) {
+    set_failure(failure_kind, FailureKind::kConfigWrite);
+    available_ = false;
+    return false;
+  }
   // Full resolution + +/-16g.
-  if (!write_reg(REG_DATA_FORMAT, VALUE_DATA_FORMAT_FULL_RES_16G)) { available_ = false; return false; }
+  if (!write_reg(REG_DATA_FORMAT, VALUE_DATA_FORMAT_FULL_RES_16G)) {
+    set_failure(failure_kind, FailureKind::kConfigWrite);
+    available_ = false;
+    return false;
+  }
   // 800 Hz output data rate.
-  if (!write_reg(REG_BW_RATE, VALUE_BW_RATE_800HZ)) { available_ = false; return false; }
+  if (!write_reg(REG_BW_RATE, VALUE_BW_RATE_800HZ)) {
+    set_failure(failure_kind, FailureKind::kConfigWrite);
+    available_ = false;
+    return false;
+  }
   // FIFO stream mode with configurable watermark.
   if (!write_reg(
           REG_FIFO_CTL,
           static_cast<uint8_t>(VALUE_FIFO_STREAM_MODE | (fifo_watermark_ & MASK_FIFO_WATERMARK)))) {
-    available_ = false; return false;
+    set_failure(failure_kind, FailureKind::kConfigWrite);
+    available_ = false;
+    return false;
   }
   // Enable watermark interrupt bit (optional, polled in this prototype).
-  if (!write_reg(REG_INT_ENABLE, VALUE_INT_ENABLE_WATERMARK)) { available_ = false; return false; }
+  if (!write_reg(REG_INT_ENABLE, VALUE_INT_ENABLE_WATERMARK)) {
+    set_failure(failure_kind, FailureKind::kConfigWrite);
+    available_ = false;
+    return false;
+  }
   // Measurement mode.
-  if (!write_reg(REG_POWER_CTL, VALUE_POWER_CTL_MEASURE)) { available_ = false; return false; }
+  if (!write_reg(REG_POWER_CTL, VALUE_POWER_CTL_MEASURE)) {
+    set_failure(failure_kind, FailureKind::kConfigWrite);
+    available_ = false;
+    return false;
+  }
+
+  available_ = true;
+  return true;
+}
+
+bool ADXL345::recover_bus(FailureKind* failure_kind) {
+  set_failure(failure_kind, FailureKind::kNone);
+  configure_bus(wire_, sda_pin_, scl_pin_);
+
+  uint8_t devid = 0;
+  if (!read_reg(REG_DEVID, &devid)) {
+    set_failure(failure_kind, FailureKind::kDeviceIdRead);
+    return false;
+  }
+  if (devid != VALUE_DEVID) {
+    set_failure(failure_kind, FailureKind::kDeviceIdMismatch);
+    return false;
+  }
 
   available_ = true;
   return true;
@@ -76,11 +129,9 @@ bool ADXL345::available() const {
 
 size_t ADXL345::read_samples(int16_t* xyz_interleaved,
                              size_t max_samples,
-                             bool* had_io_error,
+                             FailureKind* failure_kind,
                              bool* fifo_truncated) {
-  if (had_io_error != nullptr) {
-    *had_io_error = false;
-  }
+  set_failure(failure_kind, FailureKind::kNone);
   if (fifo_truncated != nullptr) {
     *fifo_truncated = false;
   }
@@ -90,9 +141,7 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved,
 
   uint8_t fifo_status = 0;
   if (!read_reg(REG_FIFO_STATUS, &fifo_status)) {
-    if (had_io_error != nullptr) {
-      *had_io_error = true;
-    }
+    set_failure(failure_kind, FailureKind::kFifoStatusRead);
     return 0;
   }
   size_t entries = static_cast<size_t>(fifo_status & MASK_FIFO_ENTRIES);
@@ -120,9 +169,7 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved,
       delayMicroseconds(kFifoPopDelayUs);
     }
     if (!read_multi(REG_DATAX0, raw, 6)) {
-      if (had_io_error != nullptr) {
-        *had_io_error = true;
-      }
+      set_failure(failure_kind, FailureKind::kFifoDataRead);
       return i;
     }
     const size_t out = i * 3;

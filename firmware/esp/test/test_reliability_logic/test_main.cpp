@@ -147,6 +147,51 @@ void test_sampling_prefetch_refill_plan_uses_late_target_at_trigger_threshold() 
   TEST_ASSERT_EQUAL_UINT64(8, plan.request_samples);
 }
 
+void test_sampling_refill_retry_step_stages_bounded_recovery() {
+  const vibesensor::reliability::SamplingRefillRetryStep immediate =
+      vibesensor::reliability::sampling_refill_retry_step(
+          0, vibesensor::reliability::SensorFailureClass::kRegisterAccess, 8, 0);
+  TEST_ASSERT_TRUE(immediate.retry_read);
+  TEST_ASSERT_FALSE(immediate.recover_bus);
+
+  const vibesensor::reliability::SamplingRefillRetryStep bus_recovery =
+      vibesensor::reliability::sampling_refill_retry_step(
+          1, vibesensor::reliability::SensorFailureClass::kPartialFifoDrain, 8, 3);
+  TEST_ASSERT_TRUE(bus_recovery.retry_read);
+  TEST_ASSERT_TRUE(bus_recovery.recover_bus);
+
+  const vibesensor::reliability::SamplingRefillRetryStep exhausted =
+      vibesensor::reliability::sampling_refill_retry_step(
+          2, vibesensor::reliability::SensorFailureClass::kFifoData, 8, 3);
+  TEST_ASSERT_FALSE(exhausted.retry_read);
+  TEST_ASSERT_FALSE(exhausted.recover_bus);
+}
+
+void test_sampling_refill_retry_step_stops_for_terminal_or_satisfied_cases() {
+  const vibesensor::reliability::SamplingRefillRetryStep satisfied =
+      vibesensor::reliability::sampling_refill_retry_step(
+          0, vibesensor::reliability::SensorFailureClass::kRegisterAccess, 8, 8);
+  TEST_ASSERT_FALSE(satisfied.retry_read);
+  TEST_ASSERT_FALSE(satisfied.recover_bus);
+
+  const vibesensor::reliability::SamplingRefillRetryStep terminal =
+      vibesensor::reliability::sampling_refill_retry_step(
+          0, vibesensor::reliability::SensorFailureClass::kSensorIdentity, 8, 0);
+  TEST_ASSERT_FALSE(terminal.retry_read);
+  TEST_ASSERT_FALSE(terminal.recover_bus);
+}
+
+void test_sensor_failure_requires_forced_reinit_only_for_sensor_state_loss() {
+  TEST_ASSERT_FALSE(vibesensor::reliability::sensor_failure_requires_forced_reinit(
+      vibesensor::reliability::SensorFailureClass::kRegisterAccess));
+  TEST_ASSERT_FALSE(vibesensor::reliability::sensor_failure_requires_forced_reinit(
+      vibesensor::reliability::SensorFailureClass::kRepeatedCommunication));
+  TEST_ASSERT_TRUE(vibesensor::reliability::sensor_failure_requires_forced_reinit(
+      vibesensor::reliability::SensorFailureClass::kSensorIdentity));
+  TEST_ASSERT_TRUE(vibesensor::reliability::sensor_failure_requires_forced_reinit(
+      vibesensor::reliability::SensorFailureClass::kSensorConfiguration));
+}
+
 void test_sampling_recovery_plan_uses_handoff_headroom_and_prefetch() {
   const vibesensor::reliability::SamplingRecoveryPlan limited =
       vibesensor::reliability::sampling_recovery_plan(4, 3, 4, 8, 8);
@@ -166,9 +211,16 @@ void test_sampling_recovery_plan_declares_misses_when_progress_is_not_credible()
   TEST_ASSERT_EQUAL_UINT64(4, empty.missed_slots);
 
   const vibesensor::reliability::SamplingRecoveryPlan shortfall =
+      vibesensor::reliability::sampling_recovery_plan(5, 5, 0, 12, 4);
+  TEST_ASSERT_EQUAL_UINT64(0, shortfall.attempt_slots);
+  TEST_ASSERT_EQUAL_UINT64(5, shortfall.missed_slots);
+}
+
+void test_sampling_recovery_plan_keeps_trying_after_partial_progress() {
+  const vibesensor::reliability::SamplingRecoveryPlan partial =
       vibesensor::reliability::sampling_recovery_plan(5, 5, 1, 12, 4);
-  TEST_ASSERT_EQUAL_UINT64(1, shortfall.attempt_slots);
-  TEST_ASSERT_EQUAL_UINT64(4, shortfall.missed_slots);
+  TEST_ASSERT_EQUAL_UINT64(5, partial.attempt_slots);
+  TEST_ASSERT_EQUAL_UINT64(0, partial.missed_slots);
 }
 
 void test_sampling_recovery_abandoned_only_for_multi_slot_backlog() {
@@ -383,8 +435,12 @@ int main() {
   RUN_TEST(test_sampling_prefetch_refill_plan_steady_state_refills_to_steady_target);
   RUN_TEST(test_sampling_prefetch_refill_plan_switches_to_late_target_when_behind);
   RUN_TEST(test_sampling_prefetch_refill_plan_uses_late_target_at_trigger_threshold);
+  RUN_TEST(test_sampling_refill_retry_step_stages_bounded_recovery);
+  RUN_TEST(test_sampling_refill_retry_step_stops_for_terminal_or_satisfied_cases);
+  RUN_TEST(test_sensor_failure_requires_forced_reinit_only_for_sensor_state_loss);
   RUN_TEST(test_sampling_recovery_plan_uses_handoff_headroom_and_prefetch);
   RUN_TEST(test_sampling_recovery_plan_declares_misses_when_progress_is_not_credible);
+  RUN_TEST(test_sampling_recovery_plan_keeps_trying_after_partial_progress);
   RUN_TEST(test_sampling_recovery_abandoned_only_for_multi_slot_backlog);
   RUN_TEST(test_retry_due_zero_retry_at_always_true);
   RUN_TEST(test_retry_due_respects_wall_clock);
