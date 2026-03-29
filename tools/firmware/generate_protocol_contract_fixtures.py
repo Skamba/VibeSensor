@@ -45,7 +45,7 @@ def render_header() -> str:
     hello_client_id = bytes.fromhex("a1b2c3d4e5f6")
     hello_control_port = 9123
     hello_sample_rate_hz = 800
-    hello_frame_samples = 200
+    hello_frame_samples = 80
     hello_name = "front-left"
     hello_firmware_version = "fw-test"
     hello_queue_overflow_drops = 7
