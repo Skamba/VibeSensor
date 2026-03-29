@@ -251,8 +251,7 @@ async def test_usb_internet_snapshot_reports_no_carrier_hint_without_activation(
     assert snapshot.usable is False
     assert snapshot.interface_name == "eth0"
     assert (
-        snapshot.diagnostic
-        == "USB interface 'eth0' is detected, but link carrier is off. "
+        snapshot.diagnostic == "USB interface 'eth0' is detected, but link carrier is off. "
         "Enable USB tethering/personal hotspot and trust this Pi on the phone."
     )
     assert not any("device up eth0" in " ".join(call[0]) for call in runner.calls)
