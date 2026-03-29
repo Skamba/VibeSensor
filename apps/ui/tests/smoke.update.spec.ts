@@ -63,13 +63,16 @@ test("settings update tab renders readiness guidance when idle", async ({ page }
   await expect(page.locator("#updateStatusPanel")).toContainText(
     "Ready to start once the Pi has either temporary Wi-Fi credentials or a usable USB internet uplink.",
   );
-  await expect(page.locator("#updateStatusPanel")).not.toContainText("Update journey");
+  await expect(page.locator("#updateStatusPanel")).toContainText("Update journey");
+  await expect(page.locator("#updateStatusPanel")).toContainText("Validating...");
   await expect(page.locator("#updateStatusPanel")).not.toContainText("No blockers recorded");
   await expect(page.locator("#updateStatusPanel")).toContainText("No updater log yet");
   await expect(page.locator("#updateStatusPanel")).toContainText("1.2.3");
   await expect(page.locator("#updateStatusPanel")).toContainText("Background service health");
-  await expect(page.locator("#updateTransportOptions")).toHaveJSProperty("hidden", true);
-  await expect(page.locator("#updateUsbTransportOption")).toHaveJSProperty("hidden", true);
+  await expect(page.locator("#updateTransportOptions")).toHaveJSProperty("hidden", false);
+  await expect(page.locator("#updateTransportChoiceWifi")).toHaveClass(/speed-source-choice--selected/);
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveClass(/speed-source-choice--disabled/);
+  await expect(page.locator("#updateTransportChoiceUsb")).toContainText("USB internet is not ready yet.");
   await expect(page.locator("#updateTab")).not.toContainText("Review before you start");
   await expect(page.locator("#updateTab")).not.toContainText("What happens next");
   await expect(page.locator("#updateTab")).not.toContainText("If something goes wrong");
@@ -155,6 +158,11 @@ test("settings internet tab and updater show USB internet when usable", async ({
   await expect(page.locator("#internetStatusPanel")).toContainText("Usable");
   await page.locator('[data-settings-tab="updateTab"]').click();
   await expect(page.locator("#updateTransportOptions")).toHaveJSProperty("hidden", false);
-  await expect(page.locator("#updateUsbTransportOption")).toHaveJSProperty("hidden", false);
-  await expect(page.locator("#updateUsbTransportOption")).toContainText("Existing USB internet");
+  await expect(page.locator("#updateTransportChoiceUsb")).toContainText("Existing USB internet");
+  await page.locator("#updateTransportChoiceUsb").click();
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveClass(/speed-source-choice--selected/);
+  await expect(page.locator("#updateWifiFields")).toHaveJSProperty("hidden", true);
+  await expect(page.locator("#updateTransportNote")).toContainText(
+    "Starting a USB-internet update keeps the hotspot up",
+  );
 });
