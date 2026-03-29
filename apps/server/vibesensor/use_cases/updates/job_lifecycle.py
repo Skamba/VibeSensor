@@ -31,7 +31,7 @@ class UpdateJobLifecycleHandler:
         self._logger = logger
 
     def prepare_start(self, request: UpdateRequest) -> None:
-        self._tracker.start_job(request.ssid)
+        self._tracker.start_job(request)
         self._tracker.track_secret(request.password)
 
     def handle_timeout(self, timeout_s: float) -> None:

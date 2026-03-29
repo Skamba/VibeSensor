@@ -42,7 +42,7 @@ from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.firmware.esp_flash_types import EspFlashStatus
 from vibesensor.use_cases.updates.manager import UpdateManager
-from vibesensor.use_cases.updates.models import UpdateJobStatus
+from vibesensor.use_cases.updates.models import UpdateJobStatus, UsbInternetStatus
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
@@ -53,6 +53,13 @@ def _update_manager_mock() -> UpdateManager:
     manager = create_autospec(UpdateManager, instance=True, spec_set=True)
     manager.status = UpdateJobStatus()
     manager.cancel.return_value = False
+    manager.get_usb_internet_status = AsyncMock(
+        return_value=UsbInternetStatus(
+            detected=False,
+            usable=False,
+            diagnostic="No USB network interface is currently detected.",
+        )
+    )
     return manager
 
 

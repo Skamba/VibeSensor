@@ -20,6 +20,8 @@ from vibesensor.use_cases.updates.models import (
     UpdatePhase,
     UpdateRuntimeDetails,
     UpdateState,
+    UpdateTransport,
+    UsbInternetStatus,
 )
 
 
@@ -27,15 +29,19 @@ def _make_update_status(
     *,
     state: UpdateState = UpdateState.idle,
     phase: UpdatePhase = UpdatePhase.idle,
-    ssid: str = "",
+    transport: UpdateTransport = UpdateTransport.wifi,
+    ssid: str | None = None,
+    uplink_interface: str | None = None,
 ) -> UpdateJobStatus:
     return UpdateJobStatus(
         state=state,
         phase=phase,
+        transport=transport,
         started_at=10.0 if state != UpdateState.idle else None,
         phase_started_at=12.0 if state == UpdateState.running else None,
         updated_at=15.0,
         ssid=ssid,
+        uplink_interface=uplink_interface,
         issues=[UpdateIssue(phase="restore", message="warning", detail="detail")],
         log_tail=["line-1", "line-2"],
         runtime=UpdateRuntimeDetails(
@@ -75,26 +81,93 @@ def test_get_update_status_returns_serialized_status(update_client) -> None:
     payload = response.json()
     assert payload["state"] == "running"
     assert payload["phase"] == "checking"
+    assert payload["transport"] == "wifi"
     assert payload["ssid"] == "GarageNet"
     assert payload["runtime"]["assets_verified"] is True
     assert payload["issues"][0]["phase"] == "restore"
 
 
+def test_get_update_internet_status_returns_serialized_snapshot(update_client) -> None:
+    client, state = update_client
+    state.update_manager.get_usb_internet_status.return_value = UsbInternetStatus(
+        detected=True,
+        usable=True,
+        interface_name="usb0",
+        connection_name="iPhone USB",
+        driver="ipheth",
+        ipv4_addresses=("172.20.10.2/28",),
+        gateway="172.20.10.1",
+        has_default_route=True,
+        diagnostic="USB internet is ready on 'usb0'.",
+    )
+
+    response = client.get("/api/update/internet-status")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "detected": True,
+        "usable": True,
+        "interface_name": "usb0",
+        "connection_name": "iPhone USB",
+        "driver": "ipheth",
+        "ipv4_addresses": ["172.20.10.2/28"],
+        "gateway": "172.20.10.1",
+        "has_default_route": True,
+        "diagnostic": "USB internet is ready on 'usb0'.",
+    }
+
+
 def test_start_update_returns_started_response(update_client) -> None:
     client, state = update_client
 
-    response = client.post("/api/update/start", json={"ssid": "GarageNet", "password": "secret123"})
+    response = client.post(
+        "/api/update/start",
+        json={
+            "transport": "wifi",
+            "ssid": "GarageNet",
+            "password": "secret123",
+        },
+    )
 
     assert response.status_code == 200
-    assert response.json() == {"status": "started", "ssid": "GarageNet"}
-    state.update_manager.start.assert_called_once_with("GarageNet", "secret123")
+    assert response.json() == {
+        "status": "started",
+        "transport": "wifi",
+        "ssid": "GarageNet",
+    }
+    state.update_manager.start.assert_called_once_with(
+        ssid="GarageNet",
+        password="secret123",
+        transport=UpdateTransport.wifi,
+    )
+
+
+def test_start_update_with_usb_internet_returns_started_response(update_client) -> None:
+    client, state = update_client
+
+    response = client.post("/api/update/start", json={"transport": "usb_internet"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "started",
+        "transport": "usb_internet",
+        "ssid": None,
+    }
+    state.update_manager.start.assert_called_once_with(
+        ssid=None,
+        password="",
+        transport=UpdateTransport.usb_internet,
+    )
 
 
 def test_start_update_maps_configuration_error_to_400(update_client) -> None:
     client, state = update_client
     state.update_manager.start.side_effect = ConfigurationError("SSID must be 1-64 characters")
 
-    response = client.post("/api/update/start", json={"ssid": "x", "password": ""})
+    response = client.post(
+        "/api/update/start",
+        json={"transport": "wifi", "ssid": "x", "password": ""},
+    )
 
     assert response.status_code == 400
     assert response.json()["detail"] == "SSID must be 1-64 characters"
@@ -107,7 +180,10 @@ def test_start_update_maps_update_conflict_to_409(update_client) -> None:
         status="conflict",
     )
 
-    response = client.post("/api/update/start", json={"ssid": "GarageNet", "password": ""})
+    response = client.post(
+        "/api/update/start",
+        json={"transport": "wifi", "ssid": "GarageNet", "password": ""},
+    )
 
     assert response.status_code == 409
     assert response.json()["detail"] == "Update already in progress"

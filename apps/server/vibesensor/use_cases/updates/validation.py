@@ -7,7 +7,11 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from vibesensor.use_cases.updates.models import UpdateValidationConfig
+from vibesensor.use_cases.updates.models import (
+    UpdateRequest,
+    UpdateTransport,
+    UpdateValidationConfig,
+)
 from vibesensor.use_cases.updates.runner import (
     UpdateCommandExecutor,
     build_privilege_probe_args,
@@ -49,10 +53,13 @@ async def validate_prerequisites(
     commands: UpdateCommandExecutor,
     tracker: UpdateStatusTracker,
     config: UpdateValidationConfig,
-    ssid: str,
+    request: UpdateRequest,
 ) -> bool:
     """Validate tool availability, privilege access, and disk space."""
-    tracker.log(f"Starting update with SSID: {ssid}")
+    if request.transport == UpdateTransport.wifi:
+        tracker.log(f"Starting update with SSID: {request.ssid}")
+    else:
+        tracker.log("Starting update using existing USB internet")
     for tool in ("nmcli", "python3"):
         if not shutil.which(tool):
             tracker.fail("validating", f"Required tool not found: {tool}")

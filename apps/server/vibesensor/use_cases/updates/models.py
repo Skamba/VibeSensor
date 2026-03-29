@@ -62,11 +62,19 @@ class UpdatePhase(enum.StrEnum):
     validating = "validating"
     stopping_hotspot = "stopping_hotspot"
     connecting_wifi = "connecting_wifi"
+    connecting_usb_internet = "connecting_usb_internet"
     checking = "checking"
     downloading = "downloading"
     installing = "installing"
     restoring_hotspot = "restoring_hotspot"
     done = "done"
+
+
+class UpdateTransport(enum.StrEnum):
+    """Network path used by a single OTA update run."""
+
+    wifi = "wifi"
+    usb_internet = "usb_internet"
 
 
 _LOG_TAIL_LIMIT: int = 50
@@ -85,22 +93,53 @@ class UpdateIssue:
 class UpdateRequest:
     """Immutable request parameters for a single update run."""
 
-    ssid: str
+    transport: UpdateTransport
+    ssid: str | None
     password: str
 
 
-def validate_update_request(ssid: str, password: str) -> UpdateRequest:
+def validate_update_request(
+    ssid: str | None,
+    password: str,
+    *,
+    transport: UpdateTransport = UpdateTransport.wifi,
+) -> UpdateRequest:
     """Validate raw SSID/password inputs and return an ``UpdateRequest``.
 
     Raises :class:`~vibesensor.shared.exceptions.ConfigurationError` when the
     request shape is invalid.
     """
-    ssid = ssid.strip()
-    if not ssid or len(ssid) > _SSID_MAX_LEN:
-        raise ConfigurationError(f"SSID must be 1-{_SSID_MAX_LEN} characters")
     if password and len(password) > _PASSWORD_MAX_LEN:
         raise ConfigurationError(f"Password must be at most {_PASSWORD_MAX_LEN} characters")
-    return UpdateRequest(ssid=ssid, password=password)
+    normalized_ssid = (ssid or "").strip()
+    if transport == UpdateTransport.wifi:
+        if not normalized_ssid or len(normalized_ssid) > _SSID_MAX_LEN:
+            raise ConfigurationError(f"SSID must be 1-{_SSID_MAX_LEN} characters")
+        return UpdateRequest(
+            transport=transport,
+            ssid=normalized_ssid,
+            password=password,
+        )
+    if normalized_ssid:
+        raise ConfigurationError("SSID must be empty when transport is usb_internet")
+    if password:
+        raise ConfigurationError("Password must be empty when transport is usb_internet")
+    return UpdateRequest(transport=transport, ssid=None, password="")
+
+
+@dataclass(frozen=True, slots=True)
+class UsbInternetStatus:
+    """Current USB-backed upstream detection snapshot for the Pi."""
+
+    detected: bool
+    usable: bool
+    interface_name: str | None = None
+    connection_name: str | None = None
+    driver: str | None = None
+    ipv4_addresses: tuple[str, ...] = ()
+    gateway: str | None = None
+    has_default_route: bool = False
+    diagnostic: str = ""
 
 
 class UpdateIssuePayload(TypedDict):
@@ -123,17 +162,30 @@ class UpdateRuntimeDetailsPayload(TypedDict):
 class UpdateJobStatusPayload(TypedDict):
     state: str
     phase: str
+    transport: str
     started_at: float | None
     finished_at: float | None
     last_success_at: float | None
     phase_started_at: float | None
     phase_elapsed_s: float | None
     updated_at: float | None
-    ssid: str
+    ssid: str | None
+    uplink_interface: str | None
     issues: list[UpdateIssuePayload]
     log_tail: list[str]
     exit_code: int | None
     runtime: UpdateRuntimeDetailsPayload
+
+
+def _coerce_update_transport(value: object) -> UpdateTransport:
+    """Best-effort decode of persisted transport values, defaulting to Wi-Fi."""
+
+    if not isinstance(value, str):
+        return UpdateTransport.wifi
+    try:
+        return UpdateTransport(value)
+    except ValueError:
+        return UpdateTransport.wifi
 
 
 def _coerce_bool(value: object) -> bool:
@@ -155,12 +207,14 @@ class UpdateJobStatus:
 
     state: UpdateState = UpdateState.idle
     phase: UpdatePhase = UpdatePhase.idle
+    transport: UpdateTransport = UpdateTransport.wifi
     started_at: float | None = None
     finished_at: float | None = None
     last_success_at: float | None = None
     phase_started_at: float | None = None
     updated_at: float | None = None
-    ssid: str = ""
+    ssid: str | None = None
+    uplink_interface: str | None = None
     issues: list[UpdateIssue] = field(default_factory=list)
     log_tail: list[str] = field(default_factory=list)
     exit_code: int | None = None
@@ -173,6 +227,7 @@ class UpdateJobStatus:
         return {
             "state": self.state.value,
             "phase": self.phase.value,
+            "transport": self.transport.value,
             "started_at": self.started_at,
             "finished_at": self.finished_at,
             "last_success_at": self.last_success_at,
@@ -180,6 +235,7 @@ class UpdateJobStatus:
             "phase_elapsed_s": phase_elapsed_s,
             "updated_at": self.updated_at,
             "ssid": self.ssid,
+            "uplink_interface": self.uplink_interface,
             "issues": [
                 {"phase": i.phase, "message": i.message, "detail": i.detail} for i in self.issues
             ],
@@ -211,15 +267,21 @@ class UpdateJobStatus:
             else []
         )
         runtime_raw = data.get("runtime")
+        ssid_raw = data.get("ssid")
+        uplink_interface_raw = data.get("uplink_interface")
         return cls(
             state=_coerce_update_state(data.get("state", "idle")),
             phase=_coerce_update_phase(data.get("phase", "idle")),
+            transport=_coerce_update_transport(data.get("transport", UpdateTransport.wifi.value)),
             started_at=as_float_or_none(data.get("started_at")),
             finished_at=as_float_or_none(data.get("finished_at")),
             last_success_at=as_float_or_none(data.get("last_success_at")),
             phase_started_at=as_float_or_none(data.get("phase_started_at")),
             updated_at=as_float_or_none(data.get("updated_at")),
-            ssid=str(data.get("ssid") or ""),
+            ssid=ssid_raw if isinstance(ssid_raw, str) else None,
+            uplink_interface=(
+                uplink_interface_raw if isinstance(uplink_interface_raw, str) else None
+            ),
             issues=issues,
             log_tail=log_tail,
             exit_code=as_int_or_none(data.get("exit_code")),

@@ -7,7 +7,13 @@ from unittest.mock import patch
 import pytest
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
-from vibesensor.use_cases.updates.models import UpdateIssue, UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.models import (
+    UpdateIssue,
+    UpdatePhase,
+    UpdateRequest,
+    UpdateState,
+    UpdateTransport,
+)
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi import UpdateWifiOrchestrator, build_default_wifi_config
@@ -33,6 +39,14 @@ def _build_orchestrator(
         config=config,
     )
     return orchestrator, runner, tracker
+
+
+def _wifi_request(ssid: str = "TestNet") -> UpdateRequest:
+    return UpdateRequest(
+        transport=UpdateTransport.wifi,
+        ssid=ssid,
+        password="",
+    )
 
 
 @pytest.mark.asyncio
@@ -111,7 +125,7 @@ async def test_collect_cleanup_diagnostics_returns_parsed_issues(tmp_path: Path)
 @pytest.mark.asyncio
 async def test_complete_update_success_restores_hotspot_and_marks_success(tmp_path: Path) -> None:
     orchestrator, _runner, tracker = _build_orchestrator(tmp_path)
-    tracker.start_job("TestNet")
+    tracker.start_job(_wifi_request())
 
     assert await orchestrator.complete_update_success("Update completed successfully") is True
 
@@ -127,7 +141,7 @@ async def test_complete_update_success_marks_failed_when_restore_fails(tmp_path:
         restore_retries=1,
         restore_delay_s=0,
     )
-    tracker.start_job("TestNet")
+    tracker.start_job(_wifi_request())
     runner.set_response("connection up VibeSensor-AP", 10, "", "failed")
 
     assert await orchestrator.complete_update_success("Update completed successfully") is False
@@ -138,7 +152,7 @@ async def test_complete_update_success_marks_failed_when_restore_fails(tmp_path:
 @pytest.mark.asyncio
 async def test_cleanup_restore_orchestration_restores_hotspot_when_needed(tmp_path: Path) -> None:
     orchestrator, _runner, tracker = _build_orchestrator(tmp_path)
-    tracker.start_job("TestNet")
+    tracker.start_job(_wifi_request())
     tracker.transition(UpdatePhase.installing)
 
     await orchestrator.maybe_restore_hotspot_during_cleanup()
@@ -152,7 +166,7 @@ async def test_cleanup_restore_orchestration_skips_restore_when_no_longer_needed
     tmp_path: Path,
 ) -> None:
     orchestrator, runner, tracker = _build_orchestrator(tmp_path)
-    tracker.start_job("TestNet")
+    tracker.start_job(_wifi_request())
     tracker.mark_success("done")
 
     await orchestrator.maybe_restore_hotspot_during_cleanup()

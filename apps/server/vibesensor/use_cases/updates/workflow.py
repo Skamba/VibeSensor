@@ -14,7 +14,7 @@ from pathlib import Path
 
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller
-from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest
+from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.releases import (
     UpdateReleaseCheck,
     check_for_update,
@@ -23,6 +23,7 @@ from vibesensor.use_cases.updates.releases import (
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.usb_internet import UpdateUsbInternetOrchestrator
 from vibesensor.use_cases.updates.validation import UpdateValidationConfig, validate_prerequisites
 from vibesensor.use_cases.updates.wifi import UpdateWifiOrchestrator
 
@@ -39,6 +40,7 @@ class UpdateWorkflow:
         "_rollback_dir",
         "_service_name",
         "_tracker",
+        "_usb_internet",
         "_validation_config",
         "_wifi",
     )
@@ -49,6 +51,7 @@ class UpdateWorkflow:
         tracker: UpdateStatusTracker,
         commands: UpdateCommandExecutor,
         wifi: UpdateWifiOrchestrator,
+        usb_internet: UpdateUsbInternetOrchestrator,
         installer: UpdateInstaller,
         firmware_refresher: FirmwareRefresher,
         cancel_requested: Callable[[], bool],
@@ -60,6 +63,7 @@ class UpdateWorkflow:
         self._tracker = tracker
         self._commands = commands
         self._wifi = wifi
+        self._usb_internet = usb_internet
         self._installer = installer
         self._firmware_refresher = firmware_refresher
         self._cancel_requested = cancel_requested
@@ -76,10 +80,14 @@ class UpdateWorkflow:
         """Run the full update workflow."""
         if not await self._validate(request):
             return
-        if not await self._stop_hotspot():
-            return
-        if not await self._connect_wifi(request):
-            return
+        if request.transport == UpdateTransport.wifi:
+            if not await self._stop_hotspot():
+                return
+            if not await self._connect_wifi(request):
+                return
+        else:
+            if not await self._connect_usb_internet():
+                return
         await self._check_and_apply(request)
 
     # ------------------------------------------------------------------
@@ -93,7 +101,7 @@ class UpdateWorkflow:
             commands=self._commands,
             tracker=self._tracker,
             config=self._validation_config,
-            ssid=request.ssid,
+            request=request,
         ):
             return False
         return not self._cancelled()
@@ -106,7 +114,14 @@ class UpdateWorkflow:
 
     async def _connect_wifi(self, request: UpdateRequest) -> bool:
         self._tracker.transition(UpdatePhase.connecting_wifi)
+        assert request.ssid is not None  # noqa: S101
         if not await self._wifi.connect_uplink(request.ssid, request.password):
+            return False
+        return not self._cancelled()
+
+    async def _connect_usb_internet(self) -> bool:
+        self._tracker.transition(UpdatePhase.connecting_usb_internet)
+        if not await self._usb_internet.ensure_uplink_ready():
             return False
         return not self._cancelled()
 
@@ -123,7 +138,11 @@ class UpdateWorkflow:
         if release_check.failed:
             return
         if release_check.release is None:
-            await self._handle_already_up_to_date(current_version, release_check.latest_tag)
+            await self._handle_already_up_to_date(
+                current_version,
+                release_check.latest_tag,
+                transport=request.transport,
+            )
             return
 
         self._tracker.log(
@@ -131,12 +150,14 @@ class UpdateWorkflow:
         )
         if self._cancelled():
             return
-        await self._download_and_install(release_check)
+        await self._download_and_install(release_check, transport=request.transport)
 
     async def _handle_already_up_to_date(
         self,
         current_version: str,
         latest_tag: str,
+        *,
+        transport: UpdateTransport,
     ) -> None:
         """Finish successfully when only the ESP firmware refresh still matters."""
 
@@ -144,11 +165,19 @@ class UpdateWorkflow:
         await self._firmware_refresher.refresh_esp_firmware(pinned_tag=latest_tag)
         if self._cancelled():
             return
-        await self._wifi.complete_update_success(
-            "No server update needed; ESP firmware checked",
-        )
+        if transport == UpdateTransport.wifi:
+            await self._wifi.complete_update_success(
+                "No server update needed; ESP firmware checked",
+            )
+            return
+        self._tracker.mark_success("No server update needed; ESP firmware checked")
 
-    async def _download_and_install(self, release_check: UpdateReleaseCheck) -> None:
+    async def _download_and_install(
+        self,
+        release_check: UpdateReleaseCheck,
+        *,
+        transport: UpdateTransport,
+    ) -> None:
         """Download, verify, and install a newly discovered server release."""
 
         release = release_check.release
@@ -180,7 +209,7 @@ class UpdateWorkflow:
 
         if self._cancelled():
             return
-        await self._finalize()
+        await self._finalize(transport=transport)
 
     async def _install(self, wheel_path: Path, version: str) -> bool:
         """Create rollback state before mutating the live server environment."""
@@ -196,11 +225,14 @@ class UpdateWorkflow:
             return False
         return await self._installer.install_release(wheel_path, version)
 
-    async def _finalize(self) -> None:
+    async def _finalize(self, *, transport: UpdateTransport) -> None:
         """Restore normal runtime state and schedule the backend restart."""
 
-        if not await self._wifi.complete_update_success("Update completed successfully"):
-            return
+        if transport == UpdateTransport.wifi:
+            if not await self._wifi.complete_update_success("Update completed successfully"):
+                return
+        else:
+            self._tracker.mark_success("Update completed successfully")
         if await schedule_service_restart(
             commands=self._commands,
             tracker=self._tracker,

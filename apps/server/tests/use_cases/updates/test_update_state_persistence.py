@@ -16,8 +16,10 @@ from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
     UpdatePhase,
+    UpdateRequest,
     UpdateRuntimeDetails,
     UpdateState,
+    UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import CommandRunner
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
@@ -119,17 +121,22 @@ class TestUpdateJobStatusRoundTrip:
         assert restored.log_tail == []
         assert restored.phase_started_at is None
         assert restored.updated_at is None
+        assert restored.transport == UpdateTransport.wifi
+        assert restored.ssid is None
+        assert restored.uplink_interface is None
 
     def test_full_status_round_trip(self) -> None:
         status = UpdateJobStatus(
             state=UpdateState.failed,
             phase=UpdatePhase.installing,
+            transport=UpdateTransport.usb_internet,
             started_at=1700000000.0,
             finished_at=1700000120.0,
             last_success_at=1699999000.0,
             phase_started_at=1700000005.0,
             updated_at=1700000060.0,
-            ssid="MyNetwork",
+            ssid=None,
+            uplink_interface="usb0",
             issues=[
                 UpdateIssue(phase="installing", message="Wheel failed", detail="rc=1"),
                 UpdateIssue(phase="restoring_hotspot", message="No AP"),
@@ -146,7 +153,9 @@ class TestUpdateJobStatusRoundTrip:
         assert restored.last_success_at == 1699999000.0
         assert restored.phase_started_at == 1700000005.0
         assert restored.updated_at == 1700000060.0
-        assert restored.ssid == "MyNetwork"
+        assert restored.transport == UpdateTransport.usb_internet
+        assert restored.ssid is None
+        assert restored.uplink_interface == "usb0"
         assert len(restored.issues) == 2
         assert restored.issues[0].phase == "installing"
         assert restored.issues[0].message == "Wheel failed"
@@ -170,6 +179,7 @@ class TestUpdateStateStore:
         status = UpdateJobStatus(
             state=UpdateState.running,
             phase=UpdatePhase.downloading,
+            transport=UpdateTransport.wifi,
             started_at=1700000000.0,
             ssid="TestWifi",
             issues=[UpdateIssue(phase="validating", message="ok")],
@@ -182,6 +192,7 @@ class TestUpdateStateStore:
         assert loaded is not None
         assert loaded.state == UpdateState.running
         assert loaded.phase == UpdatePhase.downloading
+        assert loaded.transport == UpdateTransport.wifi
         assert loaded.ssid == "TestWifi"
         assert loaded.phase_started_at is None
         assert len(loaded.issues) == 1
@@ -357,7 +368,13 @@ class TestPersistenceDuringLifecycle:
         store = UpdateStateStore(path=state_path)
         tracker = UpdateStatusTracker(state_store=store)
 
-        tracker.start_job("TestNet")
+        tracker.start_job(
+            UpdateRequest(
+                transport=UpdateTransport.wifi,
+                ssid="TestNet",
+                password="",
+            )
+        )
         started_phase_at = tracker.status.phase_started_at
         started_updated_at = tracker.status.updated_at
         assert started_phase_at is not None
@@ -380,7 +397,13 @@ class TestPersistenceDuringLifecycle:
         store = UpdateStateStore(path=state_path)
         tracker = UpdateStatusTracker(state_store=store)
 
-        tracker.start_job("TestNet")
+        tracker.start_job(
+            UpdateRequest(
+                transport=UpdateTransport.wifi,
+                ssid="TestNet",
+                password="",
+            )
+        )
         tracker.set_runtime(UpdateRuntimeDetails(version="1.2.3"))
         tracker.log("runtime collected")
         tracker.extend_issues(

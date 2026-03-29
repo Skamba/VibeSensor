@@ -90,6 +90,7 @@ from .updates import (
     UpdateStartRequest,
     UpdateStartResponse,
     UpdateStatusResponse,
+    UsbInternetStatusResponse,
 )
 
 __all__ = [
@@ -153,6 +154,7 @@ __all__ = [
     "DeleteHistoryRunResponse",
     "UpdateRuntimeResponse",
     "UpdateIssueResponse",
+    "UsbInternetStatusResponse",
     "UpdateStatusResponse",
     "UpdateStartResponse",
     "UpdateCancelResponse",

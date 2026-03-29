@@ -5,13 +5,26 @@ from unittest.mock import patch
 import pytest
 from _update_manager_test_helpers import setup_update_env
 
-from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateState
+from vibesensor.use_cases.updates.models import (
+    UpdatePhase,
+    UpdateRequest,
+    UpdateState,
+    UpdateTransport,
+)
+
+
+def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateRequest:
+    return UpdateRequest(
+        transport=UpdateTransport.wifi,
+        ssid=ssid,
+        password=password,
+    )
 
 
 @pytest.mark.asyncio
 async def test_prepare_start_marks_job_running_and_tracks_secret(tmp_path) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
-    request = UpdateRequest(ssid="TestNet", password="pass123")
+    request = _wifi_request()
 
     manager._lifecycle.prepare_start(request)
 
@@ -22,7 +35,7 @@ async def test_prepare_start_marks_job_running_and_tracks_secret(tmp_path) -> No
 
 def test_handle_timeout_marks_failed_and_logs(tmp_path) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
-    manager._tracker.start_job("TestNet")
+    manager._tracker.start_job(_wifi_request("TestNet", ""))
 
     manager._lifecycle.handle_timeout(12.5)
 
@@ -33,7 +46,7 @@ def test_handle_timeout_marks_failed_and_logs(tmp_path) -> None:
 
 def test_handle_unexpected_marks_failed_and_logs_exception(tmp_path, caplog) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
-    manager._tracker.start_job("TestNet")
+    manager._tracker.start_job(_wifi_request("TestNet", ""))
 
     with caplog.at_level("ERROR"):
         manager._lifecycle.handle_unexpected(RuntimeError("boom"))

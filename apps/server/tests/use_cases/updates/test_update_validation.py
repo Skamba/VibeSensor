@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.use_cases.updates.models import UpdateValidationConfig
+from vibesensor.use_cases.updates.models import (
+    UpdateRequest,
+    UpdateTransport,
+    UpdateValidationConfig,
+)
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 from vibesensor.use_cases.updates.validation import validate_prerequisites
 
@@ -41,7 +45,11 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
             rollback_dir=tmp_path / "rollback",
             min_free_disk_bytes=1,
         ),
-        ssid="TestNet",
+        request=UpdateRequest(
+            transport=UpdateTransport.wifi,
+            ssid="TestNet",
+            password="",
+        ),
     )
 
     assert result is False

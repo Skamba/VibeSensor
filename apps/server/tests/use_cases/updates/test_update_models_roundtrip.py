@@ -13,6 +13,7 @@ from vibesensor.use_cases.updates.models import (
     UpdatePhase,
     UpdateRuntimeDetails,
     UpdateState,
+    UpdateTransport,
 )
 
 
@@ -57,7 +58,8 @@ class TestUpdateJobStatusRoundTrip:
         assert status.started_at is None
         assert status.finished_at is None
         assert status.last_success_at is None
-        assert status.ssid == ""
+        assert status.transport == UpdateTransport.wifi
+        assert status.ssid is None
         assert status.issues == []
         assert status.log_tail == []
         assert status.exit_code is None
