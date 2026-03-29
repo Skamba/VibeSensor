@@ -184,6 +184,7 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
                 "finding_id": "F001",
                 "suspected_source": "wheel/tire",
                 "confidence": 0.74,
+                "strongest_location": "front-left wheel",
             }
         ],
         top_causes=[
@@ -191,6 +192,7 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
                 "finding_id": "F001",
                 "suspected_source": "wheel/tire",
                 "confidence": 0.74,
+                "strongest_location": "front-left wheel",
             }
         ],
         test_plan=[
@@ -227,8 +229,14 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
     assert "{speed_hint}" not in text_blob
     assert "{location_hint}" not in text_blob
     assert "{driveline_focus}" not in text_blob
-    assert "Inspect propshaft runout/balance" in text_blob
-    assert "Inspect the relevant wheel/tire assemblies" in text_blob
+    assert "Check front-left wheel for imbalance or radial/lateral runout." in text_blob
+    assert (
+        "Check front-left wheel for tire damage, flat spots, belt shift, uneven wear, or"
+        in text_blob
+    )
+    assert "pressure mismatch." in text_blob
+    assert "Inspect propshaft runout/balance" not in text_blob
+    assert "ETA:" not in text_blob
 
 
 def test_report_pdf_compacts_actionable_system_cards() -> None:
