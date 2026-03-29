@@ -92,11 +92,15 @@ function createPanel(): HTMLElement {
 
   const classList = {
     add(...tokens: string[]) {
-      tokens.forEach((token) => classes.add(token));
+      for (const token of tokens) {
+        classes.add(token);
+      }
       syncClassName();
     },
     remove(...tokens: string[]) {
-      tokens.forEach((token) => classes.delete(token));
+      for (const token of tokens) {
+        classes.delete(token);
+      }
       syncClassName();
     },
     toggle(token: string, force?: boolean) {
@@ -134,10 +138,9 @@ function createPanel(): HTMLElement {
     },
     set className(value: string) {
       classes.clear();
-      value
-        .split(/\s+/)
-        .filter(Boolean)
-        .forEach((token) => classes.add(token));
+      for (const token of value.split(/\s+/).filter(Boolean)) {
+        classes.add(token);
+      }
       syncClassName();
     },
     classList,
