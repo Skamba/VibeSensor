@@ -1143,6 +1143,8 @@ export interface components {
       confidence_label_key?: string | null;
       /** Confidence Pct */
       confidence_pct?: string | null;
+      /** Confidence Reason */
+      confidence_reason?: string | null;
       /** Confidence Tone */
       confidence_tone?: string | null;
       /** Diffuse Excitation */
