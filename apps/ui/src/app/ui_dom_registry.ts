@@ -92,6 +92,14 @@ export interface UiDomElements {
   saveSpeedSourceBtn: HTMLButtonElement | null;
   settingsTabs: HTMLElement[];
   settingsTabPanels: HTMLElement[];
+  internetStatusPanel: HTMLElement | null;
+  updateTransportOptions: HTMLElement | null;
+  updateWifiFields: HTMLElement | null;
+  updateTransportNote: HTMLElement | null;
+  updateTransportWifiRadio: HTMLInputElement | null;
+  updateTransportUsbRadio: HTMLInputElement | null;
+  updateUsbTransportOption: HTMLElement | null;
+  updateUsbTransportSummary: HTMLElement | null;
   updateSsidInput: HTMLInputElement | null;
   updatePasswordInput: HTMLInputElement | null;
   updateTogglePasswordBtn: HTMLButtonElement | null;
@@ -244,6 +252,14 @@ export function createUiDomRegistry(): UiDomElements {
     saveSpeedSourceBtn: btnEl("saveSpeedSourceBtn"),
     settingsTabs: queryAll<HTMLElement>(".settings-tab"),
     settingsTabPanels: queryAll<HTMLElement>(".settings-tab-panel"),
+    internetStatusPanel: el("internetStatusPanel"),
+    updateTransportOptions: el("updateTransportOptions"),
+    updateWifiFields: el("updateWifiFields"),
+    updateTransportNote: el("updateTransportNote"),
+    updateTransportWifiRadio: inputEl("updateTransportWifiRadio"),
+    updateTransportUsbRadio: inputEl("updateTransportUsbRadio"),
+    updateUsbTransportOption: el("updateUsbTransportOption"),
+    updateUsbTransportSummary: el("updateUsbTransportSummary"),
     updateSsidInput: inputEl("updateSsidInput"),
     updatePasswordInput: inputEl("updatePasswordInput"),
     updateTogglePasswordBtn: btnEl("updateTogglePasswordBtn"),

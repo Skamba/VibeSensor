@@ -17,6 +17,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
     UpdatePhase,
+    UpdateRequest,
     UpdateRuntimeDetails,
     UpdateState,
 )
@@ -67,16 +68,18 @@ class UpdateStatusTracker:
             self._status.phase_started_at = now
         return now
 
-    def start_job(self, ssid: str) -> None:
+    def start_job(self, request: UpdateRequest) -> None:
         previous_runtime = self._status.runtime
         now = time.time()
         self._status = UpdateJobStatus(
             state=UpdateState.running,
             phase=UpdatePhase.validating,
+            transport=request.transport,
             started_at=now,
             phase_started_at=now,
             updated_at=now,
-            ssid=ssid,
+            ssid=request.ssid,
+            uplink_interface=None,
             last_success_at=self._status.last_success_at,
             runtime=previous_runtime,
         )
@@ -90,6 +93,11 @@ class UpdateStatusTracker:
     def set_runtime(self, runtime: UpdateRuntimeDetails) -> None:
         self._status.runtime = runtime
         self._touch()
+
+    def set_uplink_interface(self, interface_name: str | None) -> None:
+        self._status.uplink_interface = interface_name
+        self._touch()
+        self.persist()
 
     def track_secret(self, secret: str) -> None:
         self._redact_secrets = {secret} if secret else set()

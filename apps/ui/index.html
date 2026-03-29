@@ -199,6 +199,9 @@
           <button type="button" class="settings-tab" data-settings-tab="sensorsTab" role="tab" aria-controls="sensorsTab" aria-selected="false" tabindex="-1">
             <span data-i18n="settings.tab.sensors">Sensors</span>
           </button>
+          <button type="button" class="settings-tab" data-settings-tab="internetTab" role="tab" aria-controls="internetTab" aria-selected="false" tabindex="-1">
+            <span data-i18n="settings.tab.internet">Internet</span>
+          </button>
           <button type="button" class="settings-tab" data-settings-tab="updateTab" role="tab" aria-controls="updateTab" aria-selected="false" tabindex="-1">
             <span data-i18n="settings.tab.update">Update</span>
           </button>
@@ -517,35 +520,64 @@
           </div>
         </div>
 
+        <div id="internetTab" class="settings-tab-panel" role="tabpanel" hidden>
+          <div class="panel card">
+            <strong data-i18n="settings.internet.title">Internet</strong>
+            <div class="subtle" data-i18n="settings.internet.hint">USB internet is optional. When a compatible phone or USB network device is detected, the Pi can keep its hotspot active while using USB as the upstream connection.</div>
+            <div id="internetStatusPanel" class="maintenance-stack" aria-live="polite" style="margin-top:1rem;">
+              <!-- Rendered dynamically by update_feature.ts -->
+            </div>
+          </div>
+        </div>
+
         <!-- Update Tab -->
         <div id="updateTab" class="settings-tab-panel" role="tabpanel" hidden>
           <div class="panel card">
             <strong data-i18n="settings.update.title">System Update</strong>
-            <div class="subtle" data-i18n="settings.update.hint">Connect to a Wi-Fi network to update from GitHub. The hotspot will be temporarily disabled during the update.</div>
-            <div class="subtle" data-i18n="settings.update.reconnect_note" style="margin-top:0.25rem;">Note: The page may disconnect while the hotspot is down. It will reconnect automatically.</div>
+            <div class="subtle" data-i18n="settings.update.hint">Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.</div>
+            <div class="subtle" data-i18n="settings.update.reconnect_note" style="margin-top:0.25rem;">Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.</div>
             <div class="maintenance-stack" style="margin-top:1rem;">
               <section class="maintenance-card">
                 <div class="maintenance-card__header">
                   <div>
                     <div class="maintenance-card__title" data-i18n="settings.update.controls_title">Update connection</div>
-                    <div class="subtle" data-i18n="settings.update.controls_intro">Enter the Wi-Fi network the Pi should use while it downloads and installs the next release.</div>
+                    <div class="subtle" data-i18n="settings.update.controls_intro">Use Wi-Fi credentials as before, or choose the existing USB internet uplink when the Pi detects one.</div>
                   </div>
                 </div>
                 <div class="update-form">
-                  <div class="form-group">
-                    <label for="updateSsidInput" data-i18n="settings.update.ssid">Wi-Fi SSID</label>
-                    <input type="text" id="updateSsidInput" autocomplete="off" maxlength="64" style="width:100%;max-width:20rem;" />
+                  <div id="updateTransportOptions" class="maintenance-stack maintenance-stack--tight" hidden>
+                    <div class="subtle" data-i18n="settings.update.transport_label">Internet source</div>
+                    <label style="display:flex;gap:0.75rem;align-items:flex-start;">
+                      <input type="radio" id="updateTransportWifiRadio" name="updateTransport" value="wifi" checked />
+                      <span>
+                        <strong data-i18n="settings.update.transport.wifi_title">Temporary Wi-Fi</strong>
+                        <span class="subtle" style="display:block;" data-i18n="settings.update.transport.wifi_summary">Pause the hotspot, join a Wi-Fi network, install, then restore the hotspot.</span>
+                      </span>
+                    </label>
+                    <label id="updateUsbTransportOption" style="display:flex;gap:0.75rem;align-items:flex-start;" hidden>
+                      <input type="radio" id="updateTransportUsbRadio" name="updateTransport" value="usb_internet" />
+                      <span>
+                        <strong data-i18n="settings.update.transport.usb_title">Existing USB internet</strong>
+                        <span id="updateUsbTransportSummary" class="subtle" style="display:block;"></span>
+                      </span>
+                    </label>
                   </div>
-                 <div class="form-group">
-                    <label for="updatePasswordInput" data-i18n="settings.update.password">Wi-Fi Password</label>
-                    <div style="display:flex;gap:0.5rem;align-items:center;">
-                      <input type="password" id="updatePasswordInput" autocomplete="off" maxlength="128" style="width:100%;max-width:20rem;" />
-                      <button type="button" id="updateTogglePasswordBtn" class="btn btn--small">
-                        <span data-i18n="settings.update.show_password">Show</span>
-                      </button>
+                  <div id="updateWifiFields">
+                    <div class="form-group">
+                      <label for="updateSsidInput" data-i18n="settings.update.ssid">Wi-Fi SSID</label>
+                      <input type="text" id="updateSsidInput" autocomplete="off" maxlength="64" style="width:100%;max-width:20rem;" />
+                    </div>
+                    <div class="form-group">
+                      <label for="updatePasswordInput" data-i18n="settings.update.password">Wi-Fi Password</label>
+                      <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <input type="password" id="updatePasswordInput" autocomplete="off" maxlength="128" style="width:100%;max-width:20rem;" />
+                        <button type="button" id="updateTogglePasswordBtn" class="btn btn--small">
+                          <span data-i18n="settings.update.show_password">Show</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div class="maintenance-note" data-i18n="settings.update.preflight_note">Starting an update temporarily pauses hotspot access while the Pi joins Wi-Fi, downloads the next release, and restores the local web UI when the job is done.</div>
+                  <div id="updateTransportNote" class="maintenance-note" data-i18n="settings.update.preflight_note_wifi">Starting a Wi-Fi update temporarily pauses hotspot access while the Pi joins Wi-Fi, downloads the next release, and restores the local web UI when the job is done.</div>
                   <div class="maintenance-action-row">
                     <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
                     <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>

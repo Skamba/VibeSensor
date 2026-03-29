@@ -6167,15 +6167,23 @@
             "type": "string"
           },
           "ssid": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Ssid",
-            "type": "string"
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ssid"
+          },
+          "transport": {
+            "$ref": "#/components/schemas/UpdateTransport",
+            "default": "wifi"
           }
         },
-        "required": [
-          "ssid"
-        ],
         "title": "UpdateStartRequest",
         "type": "object"
       },
@@ -6183,17 +6191,28 @@
         "description": "Response body confirming that an OTA update job has started.",
         "properties": {
           "ssid": {
-            "title": "Ssid",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ssid"
           },
           "status": {
             "title": "Status",
+            "type": "string"
+          },
+          "transport": {
+            "title": "Transport",
             "type": "string"
           }
         },
         "required": [
           "status",
-          "ssid"
+          "transport"
         ],
         "title": "UpdateStartResponse",
         "type": "object"
@@ -6278,8 +6297,15 @@
             "$ref": "#/components/schemas/UpdateRuntimeResponse"
           },
           "ssid": {
-            "title": "Ssid",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ssid"
           },
           "started_at": {
             "anyOf": [
@@ -6296,6 +6322,10 @@
             "title": "State",
             "type": "string"
           },
+          "transport": {
+            "title": "Transport",
+            "type": "string"
+          },
           "updated_at": {
             "anyOf": [
               {
@@ -6306,17 +6336,118 @@
               }
             ],
             "title": "Updated At"
+          },
+          "uplink_interface": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uplink Interface"
           }
         },
         "required": [
           "state",
           "phase",
-          "ssid",
+          "transport",
           "issues",
           "log_tail",
           "runtime"
         ],
         "title": "UpdateStatusResponse",
+        "type": "object"
+      },
+      "UpdateTransport": {
+        "description": "Network path used by a single OTA update run.",
+        "enum": [
+          "wifi",
+          "usb_internet"
+        ],
+        "title": "UpdateTransport",
+        "type": "string"
+      },
+      "UsbInternetStatusResponse": {
+        "description": "Response body describing the current USB internet detection state.",
+        "properties": {
+          "connection_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Name"
+          },
+          "detected": {
+            "title": "Detected",
+            "type": "boolean"
+          },
+          "diagnostic": {
+            "title": "Diagnostic",
+            "type": "string"
+          },
+          "driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver"
+          },
+          "gateway": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gateway"
+          },
+          "has_default_route": {
+            "title": "Has Default Route",
+            "type": "boolean"
+          },
+          "interface_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interface Name"
+          },
+          "ipv4_addresses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ipv4 Addresses",
+            "type": "array"
+          },
+          "usable": {
+            "title": "Usable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "detected",
+          "usable",
+          "ipv4_addresses",
+          "has_default_route",
+          "diagnostic"
+        ],
+        "title": "UsbInternetStatusResponse",
         "type": "object"
       },
       "ValidationError": {
@@ -8093,6 +8224,28 @@
           }
         },
         "summary": "Cancel Update",
+        "tags": [
+          "updates"
+        ]
+      }
+    },
+    "/api/update/internet-status": {
+      "get": {
+        "description": "Return the current USB internet detection and usability snapshot.",
+        "operationId": "get_usb_internet_status_api_update_internet_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsbInternetStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Usb Internet Status",
         "tags": [
           "updates"
         ]
