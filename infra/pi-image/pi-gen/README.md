@@ -1,9 +1,4 @@
-# Legacy pi-gen Raspberry Pi Image (deprecated)
-
-> The supported Raspberry Pi image pipeline now lives in
-> [`../yocto/README.md`](../yocto/README.md). This `pi-gen` directory is kept as
-> migration reference material only and is no longer the CI-backed image build
-> path.
+# Prebuilt Raspberry Pi Image
 
 Builds a custom Raspberry Pi OS Lite (Trixie) image with VibeSensor
 pre-installed. After flashing to an SD card and booting, the Pi is ready to use
@@ -152,9 +147,8 @@ start automatically on first boot.
 
 ## Weekly GitHub release builds
 
-The repository previously published an automated weekly Pi image snapshot
-through GitHub Actions from this path. That CI now builds via the Yocto/KAS
-pipeline instead:
+The repository also publishes an automated weekly Pi image snapshot through
+GitHub Actions:
 
 - workflow: [`.github/workflows/weekly-pi-image.yml`](../../../.github/workflows/weekly-pi-image.yml)
 - triggers: weekly schedule plus manual `workflow_dispatch`
@@ -163,11 +157,11 @@ pipeline instead:
   before publishing the newest snapshot, so GitHub Releases only shows the
   latest weekly Pi image entry
 
-Use [`../yocto/README.md`](../yocto/README.md) for the supported local and CI
-image-build path.
+These weekly builds reuse the same `./infra/pi-image/pi-gen/build.sh` pipeline
+documented above, so the GitHub Release artifact follows the same supported
+image-build path as local builds.
 
-The repository also provides a manual ARM-hosted validation workflow, but it now
-targets the Yocto pipeline rather than this legacy `pi-gen` path:
+The repository also provides a manual ARM-hosted validation workflow:
 
 - workflow: [`.github/workflows/manual-pi-image-arm.yml`](../../../.github/workflows/manual-pi-image-arm.yml)
 - trigger: manual `workflow_dispatch` only

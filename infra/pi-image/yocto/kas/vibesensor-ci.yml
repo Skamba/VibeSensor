@@ -1,9 +1,0 @@
-header:
-  version: 14
-local_conf_header:
-  vibesensor-ci: |
-    DL_DIR = "${TOPDIR}/../downloads"
-    SSTATE_DIR = "${TOPDIR}/../sstate-cache"
-    BB_GENERATE_MIRROR_TARBALLS = "1"
-    BB_NUMBER_THREADS ?= "${@oe.utils.cpu_count()}"
-    PARALLEL_MAKE ?= "-j ${@oe.utils.cpu_count()}"

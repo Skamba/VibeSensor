@@ -193,24 +193,21 @@ See [apps/server/README.md](apps/server/README.md) for configuration and uplink-
 
 ### Mode B: Prebuilt image
 
-Build on a Linux ARM64 machine (or use the GitHub-hosted ARM workflow path):
+Build on a Linux machine with Docker:
 
 ```bash
-sudo apt-get update && sudo apt-get install -y \
-  bzip2 file gawk git iproute2 locales mount npm python3 python3-pip \
-  qemu-user-static rsync sudo unzip wget xz-utils zstd
-python3 -m pip install --user kas
-./infra/pi-image/yocto/build.sh
+sudo apt-get update && sudo apt-get install -y docker.io qemu-user qemu-user-static rsync xz-utils
+./infra/pi-image/pi-gen/build.sh
 ```
 
-Flash the output image from `infra/pi-image/yocto/out/` and boot — no manual steps needed.
+Flash the output image from `infra/pi-image/pi-gen/out/` and boot — no manual steps needed.
 
 If you just need a ready-made artifact instead of building locally, GitHub
 Releases also carries the latest automated weekly Pi image snapshot once the
 weekly image workflow has run. The workflow rotates a single weekly Pi-image
 prerelease, so Releases shows only the newest snapshot.
 
-See [infra/pi-image/yocto/README.md](infra/pi-image/yocto/README.md) for details.
+See [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md) for details.
 
 ### Verification
 

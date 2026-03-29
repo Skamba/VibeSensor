@@ -13,7 +13,7 @@ concurrency:
 jobs:
   build-image:
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 360
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v6
@@ -44,85 +44,58 @@ jobs:
           cache: pip
           cache-dependency-path: apps/server/pyproject.toml
 
-      - name: Restore Yocto downloads cache
-        uses: actions/cache@v4
-        with:
-          path: infra/pi-image/yocto/.build/downloads
-          key: yocto-downloads-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('infra/pi-image/yocto/kas/*.yml', 'infra/pi-image/yocto/meta-vibesensor/**', 'infra/pi-image/yocto/build.sh', 'apps/server/pyproject.toml', 'apps/ui/package-lock.json') }}
-          restore-keys: |
-            yocto-downloads-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Restore Yocto sstate cache
-        uses: actions/cache@v4
-        with:
-          path: infra/pi-image/yocto/.build/sstate-cache
-          key: yocto-sstate-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('infra/pi-image/yocto/kas/*.yml', 'infra/pi-image/yocto/meta-vibesensor/**', 'infra/pi-image/yocto/build.sh', 'apps/server/pyproject.toml', 'apps/ui/package-lock.json') }}
-          restore-keys: |
-            yocto-sstate-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Install Yocto build prerequisites
+      - name: Install Pi image build prerequisites
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y \
-            bzip2 chrpath cpio diffstat dosfstools file gawk git iproute2 \
-            iputils-ping locales mtools openssl parted rsync sudo texinfo \
-            unzip wget xz-utils zstd
-          sudo locale-gen en_US.UTF-8
-          {
-            echo "LANG=en_US.UTF-8"
-            echo "LC_ALL=en_US.UTF-8"
-          } >> "${GITHUB_ENV}"
-          python3 -m pip install --upgrade pip
-          python3 -m pip install "kas>=4,<5" "build>=1,<2"
+          sudo apt-get install -y qemu-user qemu-user-static rsync xz-utils
 
       - name: Build Pi image
         shell: bash
         run: |
           set -euo pipefail
-          BUILD_LABEL="${{ steps.metadata.outputs.build_label }}" ./infra/pi-image/yocto/build.sh
+          ./infra/pi-image/pi-gen/build.sh
 
       - name: Collect ARM workflow artifacts
         id: assets
         shell: bash
         run: |
           set -euo pipefail
-          out_dir="infra/pi-image/yocto/out"
+          out_dir="infra/pi-image/pi-gen/out"
           release_dir="${RUNNER_TEMP}/manual-pi-image-arm"
           mkdir -p "${release_dir}"
 
           artifact="$(find "${out_dir}" -maxdepth 1 -type f \
-            -name "image_*vibesensor-rpi-universal.wic.bz2" \
+            -name "image_*-vibesensor-lite*.zip" \
             | sort | tail -n 1 || true)"
           if [ -z "${artifact}" ]; then
             echo "No Pi image artifact found in ${out_dir}" >&2
             exit 1
           fi
 
-          release_artifact="${release_dir}/${{ steps.metadata.outputs.artifact_prefix }}.img.bz2"
+          release_artifact="${release_dir}/${{ steps.metadata.outputs.artifact_prefix }}.img.zip"
           cp "${artifact}" "${release_artifact}"
 
           sha_file="${release_artifact}.sha256"
           sha256sum "${release_artifact}" > "${sha_file}"
 
-          version_info_target="${release_dir}/${{ steps.metadata.outputs.artifact_prefix }}.img.bz2.version.txt"
-          printf 'git_sha=%s\ngit_ref=%s\nsource_artifact=%s\nbuild_path=%s\n' \
-            "${GITHUB_SHA}" \
-            "${GITHUB_REF}" \
-            "$(basename "${artifact}")" \
-            "infra/pi-image/yocto/build.sh" \
-            > "${version_info_target}"
+          version_info_source="${out_dir}/$(basename "${artifact}").version.txt"
+          version_info_target="${release_dir}/${{ steps.metadata.outputs.artifact_prefix }}.img.zip.version.txt"
+          if [ -f "${version_info_source}" ]; then
+            cp "${version_info_source}" "${version_info_target}"
+          else
+            printf 'git_sha=%s\ngit_ref=%s\nsource_artifact=%s\n' \
+              "${GITHUB_SHA}" \
+              "${GITHUB_REF}" \
+              "$(basename "${artifact}")" \
+              > "${version_info_target}"
+          fi
           {
             echo "workflow_name=${GITHUB_WORKFLOW}"
             echo "runner_label=ubuntu-24.04-arm"
             echo "run_id=${GITHUB_RUN_ID}"
           } >> "${version_info_target}"
-
-          manifest_source="${artifact}.manifest.json"
-          if [ -f "${manifest_source}" ]; then
-            cp "${manifest_source}" "${release_dir}/${{ steps.metadata.outputs.artifact_prefix }}.img.bz2.manifest.json"
-          fi
 
           echo "release_dir=${release_dir}" >> "${GITHUB_OUTPUT}"
 

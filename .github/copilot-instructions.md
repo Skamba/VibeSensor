@@ -57,4 +57,4 @@ Pi access defaults (prebuilt image)
 - SSH password: `vibesensor`
 - Remote simulator quick run: `vibesensor-sim --count 5 --duration 60 --server-host 10.4.0.1 --server-http-port 80 --speed-kmh 0 --no-interactive --no-auto-server`
 - Use `--speed-kmh 0` when you only need UDP traffic or the Pi HTTP API is not answering; non-zero speed override performs an HTTP POST before streaming.
-- Source: `infra/pi-image/yocto/README.md` (values may be overridden at image build time via `VS_FIRST_USER_NAME` and `VS_FIRST_USER_PASS`).
+- Source: `infra/pi-image/pi-gen/README.md` (values may be overridden at image build time via `VS_FIRST_USER_NAME` and `VS_FIRST_USER_PASS`).
