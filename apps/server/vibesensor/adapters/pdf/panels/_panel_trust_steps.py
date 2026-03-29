@@ -176,12 +176,20 @@ def _draw_next_steps_table(
     line_clr = _hex(LINE_CLR)
     text_clr = _hex(TEXT_CLR)
     row_pad = 1.5 * mm
-    number_y_off = 4.0 * mm
+    first_row_extra_pad = 1.0 * mm
+    first_row_number_pad_x = 2.0 * mm
+    default_number_pad_x = 2.0
+    first_row_top_pad = 3.0 * mm
+    default_top_pad = 2.0 * mm
     detail_gap = 0.4 * mm
 
     y = y_top
     drawn = 0
     for idx, step in enumerate(steps, start=start_number):
+        is_first_row = drawn == 0
+        number_pad_x = first_row_number_pad_x if is_first_row else default_number_pad_x
+        row_top_pad = first_row_top_pad if is_first_row else default_top_pad
+        number_y_off = row_top_pad + (2.0 * mm)
         detail_parts: list[str] = []
         if step.why:
             detail_parts.append(f"{tr('WHY')}: {step.why}")
@@ -202,6 +210,7 @@ def _draw_next_steps_table(
             max(len(action_lines), 1) * action_leading
             + detail_h
             + row_pad
+            + (first_row_extra_pad if is_first_row else 0.0)
             + (detail_gap if detail_text else 0.0),
         )
         if y - row_h < y_bottom:
@@ -213,12 +222,12 @@ def _draw_next_steps_table(
 
         c.setFillColor(text_clr)
         c.setFont(FONT_B, action_fs)
-        c.drawString(x + 2, y - number_y_off, f"{idx}.")
+        c.drawString(x + number_pad_x, y - number_y_off, f"{idx}.")
 
         action_bottom = _draw_text(
             c,
             x + col1_w,
-            y - 2 * mm,
+            y - row_top_pad,
             text_w,
             step.action,
             font=FONT_B,
