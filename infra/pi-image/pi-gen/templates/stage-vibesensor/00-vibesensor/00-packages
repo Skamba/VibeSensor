@@ -2,6 +2,8 @@ network-manager
 usbmuxd
 dnsmasq-base
 rfkill
+bluez
+pi-bluetooth
 iw
 gpsd
 python3-venv

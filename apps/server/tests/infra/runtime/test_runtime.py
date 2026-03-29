@@ -134,6 +134,9 @@ def _make_runtime(**overrides: Any):
     worker_pool = overrides.pop("worker_pool", MagicMock())
     settings_store = overrides.pop("settings_store", MagicMock())
     gps_monitor = overrides.pop("gps_monitor", MagicMock())
+    obd_monitor = overrides.pop("obd_monitor", MagicMock())
+    if not isinstance(getattr(obd_monitor, "run", None), AsyncMock):
+        obd_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
     history_db = overrides.pop("history_db", MagicMock())
     diagnostics = overrides.pop("run_recorder", MagicMock())
     update_manager = overrides.pop("update_manager", MagicMock())
@@ -148,6 +151,7 @@ def _make_runtime(**overrides: Any):
         worker_pool=worker_pool,
         settings_store=settings_store,
         gps_monitor=gps_monitor,
+        obd_monitor=obd_monitor,
         history_db=history_db,
         processing_loop_state=processing_state,
         health_state=health_state,
@@ -192,6 +196,7 @@ def _make_runtime(**overrides: Any):
         ws_broadcast=rt.ws_broadcast,
         run_recorder=diagnostics,
         gps_monitor=gps_monitor,
+        obd_monitor=obd_monitor,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
         worker_pool=worker_pool,
@@ -309,7 +314,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
-    assert len(lifecycle.tasks) == 5
+    assert len(lifecycle.tasks) == 6
     control_plane.start.assert_called_once()
     assert rt.health_state.startup_state == "ready"
     assert rt.health_state.startup_phase == "ready"
@@ -365,6 +370,7 @@ async def test_start_follows_declared_startup_phase_order(monkeypatch) -> None:
         "ws-broadcast",
         "metrics-log",
         "gps-speed",
+        "obd-speed",
         "update-startup-recover",
     ]
     assert rt.health_state.startup_state == "ready"
@@ -583,6 +589,7 @@ def test_runtime_state_has_public_attribute(attr: str) -> None:
 def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None:
     """RuntimeState should expose existing shared ports for read-side services."""
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.adapters.obd.monitor import OBDSpeedMonitor
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.app import runtime_state as runtime_state_module
@@ -597,6 +604,7 @@ def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None
             **vars(runtime_state_module),
             "AppConfig": AppConfig,
             "GPSSpeedMonitor": GPSSpeedMonitor,
+            "OBDSpeedMonitor": OBDSpeedMonitor,
             "LifecycleHistoryDb": LifecycleHistoryDb,
             "UDPControlPlane": UDPControlPlane,
             "WebSocketHub": WebSocketHub,

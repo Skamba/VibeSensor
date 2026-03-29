@@ -178,6 +178,18 @@ class GPSSpeedMonitor:
         return self.resolve_speed().speed_mps
 
     @property
+    def gps_speed_mps(self) -> float | None:
+        return self.speed_mps
+
+    @property
+    def engine_rpm(self) -> float | None:
+        return None
+
+    @property
+    def engine_rpm_source(self) -> str | None:
+        return None
+
+    @property
     def fallback_active(self) -> bool:
         return self.resolve_speed().fallback_active
 

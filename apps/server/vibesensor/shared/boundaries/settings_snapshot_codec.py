@@ -66,6 +66,8 @@ def settings_snapshot_from_payload(payload: Mapping[str, object]) -> SettingsSna
             "speedSource": payload.get("speedSource"),
             "manualSpeedKph": payload.get("manualSpeedKph"),
             "staleTimeoutS": payload.get("staleTimeoutS"),
+            "obdDeviceMac": payload.get("obdDeviceMac"),
+            "obdDeviceName": payload.get("obdDeviceName"),
         },
     )
 

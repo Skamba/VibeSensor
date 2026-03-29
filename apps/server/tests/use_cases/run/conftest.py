@@ -114,10 +114,24 @@ class _NoActiveRegistry(_FakeRegistry):
         return []
 
 
+_RAW_GPS_SPEED_UNSET = object()
+
+
 class _FakeGPSMonitor:
     speed_mps: float | None = None
     effective_speed_mps: float | None = None
     override_speed_mps: float | None = None
+    raw_gps_speed_mps: object | float | None = _RAW_GPS_SPEED_UNSET
+    resolved_source: str | None = None
+    fallback_active: bool = False
+    engine_rpm: float | None = None
+    engine_rpm_source: str | None = None
+
+    @property
+    def gps_speed_mps(self) -> float | None:
+        if self.raw_gps_speed_mps is _RAW_GPS_SPEED_UNSET:
+            return self.speed_mps
+        return self.raw_gps_speed_mps if isinstance(self.raw_gps_speed_mps, (int, float)) else None
 
     def resolve_speed(self):
         from vibesensor.adapters.gps.gps_speed import SpeedResolution
@@ -125,16 +139,16 @@ class _FakeGPSMonitor:
         if isinstance(self.override_speed_mps, (int, float)):
             return SpeedResolution(
                 speed_mps=float(self.override_speed_mps),
-                fallback_active=False,
+                fallback_active=self.fallback_active,
                 source="manual",
             )
         if isinstance(self.speed_mps, (int, float)):
             return SpeedResolution(
                 speed_mps=float(self.speed_mps),
-                fallback_active=False,
-                source="gps",
+                fallback_active=self.fallback_active,
+                source=str(self.resolved_source or "gps"),
             )
-        return SpeedResolution(speed_mps=None, fallback_active=False, source="none")
+        return SpeedResolution(speed_mps=None, fallback_active=self.fallback_active, source="none")
 
 
 class _FakeProcessor:

@@ -7,6 +7,8 @@ validate_image_artifact() {
   local ROOT_MNT="${MOUNT_DIR}/root"
   local LOOP_DEV=""
   local RFKILL_PATH=""
+  local BLUETOOTHCTL_PATH=""
+  local SDPTOOL_PATH=""
   local IW_PATH=""
   local DNSMASQ_PATH=""
   local GPSD_PATH=""
@@ -105,6 +107,8 @@ validate_image_artifact() {
   }
 
   RFKILL_PATH="$(assert_rootfs_binary rfkill)"
+  BLUETOOTHCTL_PATH="$(assert_rootfs_binary bluetoothctl)"
+  SDPTOOL_PATH="$(assert_rootfs_binary sdptool)"
   IW_PATH="$(assert_rootfs_binary iw)"
   DNSMASQ_PATH="$(assert_rootfs_binary dnsmasq)"
   GPSD_PATH="$(assert_rootfs_binary gpsd)"
@@ -117,6 +121,38 @@ validate_image_artifact() {
 
   if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service"
+    exit 1
+  fi
+
+  if [ ! -f "${ROOT_MNT}/usr/lib/systemd/system/bluetooth.service" ] && \
+    [ ! -f "${ROOT_MNT}/lib/systemd/system/bluetooth.service" ]; then
+    echo "Validation failed: missing bluetooth.service systemd unit in the image rootfs"
+    exit 1
+  fi
+
+  if [ ! -x "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py" ]; then
+    echo "Validation failed: missing executable ${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py"
+    exit 1
+  fi
+
+  if [ ! -f "${ROOT_MNT}/etc/sudoers.d/vibesensor-update" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
+    exit 1
+  fi
+
+  if ! grep -Fq '/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py' \
+    "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"; then
+    echo "Validation failed: OBD helper sudoers entry missing from ${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
+    exit 1
+  fi
+
+  if ! grep -Fq 'rfkill unblock bluetooth' "${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service"; then
+    echo "Validation failed: rfkill unblock service does not explicitly unblock Bluetooth"
+    exit 1
+  fi
+
+  if [ ! -L "${ROOT_MNT}/etc/systemd/system/bluetooth.service.wants/vibesensor-rfkill-unblock.service" ]; then
+    echo "Validation failed: bluetooth.service is not wired to start vibesensor-rfkill-unblock.service"
     exit 1
   fi
 
@@ -183,6 +219,8 @@ validate_image_artifact() {
   fi
 
   assert_rootfs_package gpsd
+  assert_rootfs_package bluez
+  assert_rootfs_package pi-bluetooth
   assert_rootfs_package openssh-server
   assert_rootfs_package libopenblas0-pthread
   assert_rootfs_package libgfortran5
@@ -386,11 +424,15 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
   echo "=== Validation: /opt/VibeSensor exists ==="
   ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
 
-  echo "=== Validation: nmcli + rfkill + iw + dnsmasq + gpsd + usbmuxd binaries ==="
-  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}" "${ROOT_MNT}${USBMUXD_PATH}"
+  echo "=== Validation: nmcli + rfkill + bluetoothctl + sdptool + iw + dnsmasq + gpsd + usbmuxd binaries ==="
+  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${BLUETOOTHCTL_PATH}" "${ROOT_MNT}${SDPTOOL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}" "${ROOT_MNT}${USBMUXD_PATH}"
 
   echo "=== Validation: usbmuxd service + udev rule ==="
   ls -l "${ROOT_MNT}/usr/lib/systemd/system/usbmuxd.service" "${ROOT_MNT}/usr/lib/udev/rules.d/39-usbmuxd.rules"
+
+  echo "=== Validation: Bluetooth helper + sudoers ==="
+  ls -l "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py" "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
+  grep -n 'vibesensor_.*sudo\|vibesensor_obd_admin.py' "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
 
   echo "=== Validation: vibesensor systemd units ==="
   ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true

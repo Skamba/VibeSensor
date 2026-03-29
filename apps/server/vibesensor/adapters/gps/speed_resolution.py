@@ -1,4 +1,4 @@
-"""Speed-resolution policy for GPS and manual overrides."""
+"""Speed-resolution policy for live speed sources and manual overrides."""
 
 from __future__ import annotations
 
@@ -145,6 +145,7 @@ class SpeedResolutionPolicy:
         connection_state: str,
         speed_snapshot: tuple[float | None, float | None],
         snapshot: SpeedResolutionPolicySnapshot | None = None,
+        live_source: ResolvedSpeedSource = "gps",
     ) -> SpeedResolution:
         policy = self._snapshot if snapshot is None else snapshot
         if policy.manual_source_selected and isinstance(policy.override_speed_mps, NUMERIC_TYPES):
@@ -161,7 +162,7 @@ class SpeedResolutionPolicy:
                     True,
                     "fallback_manual" if fallback_speed is not None else "none",
                 )
-            return SpeedResolution(float(gps_speed), False, "gps")
+            return SpeedResolution(float(gps_speed), False, live_source)
 
         effective_connection = self.effective_connection_state(
             gps_enabled=gps_enabled,

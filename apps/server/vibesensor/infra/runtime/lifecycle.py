@@ -79,6 +79,10 @@ class LifecycleGpsMonitor(Protocol):
     async def run(self, *, host: str, port: int) -> object: ...
 
 
+class LifecycleObdMonitor(Protocol):
+    async def run(self) -> object: ...
+
+
 class LifecycleManagedJobs(Protocol):
     @property
     def job_task(self) -> asyncio.Task[None] | None: ...
@@ -116,6 +120,7 @@ class LifecycleRuntime:
     ws_broadcast: LifecycleWsBroadcast
     run_recorder: LifecycleRunRecorder
     gps_monitor: LifecycleGpsMonitor
+    obd_monitor: LifecycleObdMonitor
     update_manager: LifecycleUpdateManager
     esp_flash_manager: LifecycleManagedJobs
     worker_pool: LifecycleWorkerPool

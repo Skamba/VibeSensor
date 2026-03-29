@@ -120,6 +120,7 @@ class WsBroadcastService:
             "rotational_speeds": build_rotational_speeds_payload(
                 basis_speed_source=basis,
                 speed_mps=speed_mps,
+                measured_engine_rpm=self._gps_monitor.engine_rpm,
                 analysis_settings=analysis_settings_snapshot,
             ),
         }

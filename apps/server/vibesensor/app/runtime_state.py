@@ -22,6 +22,7 @@ from vibesensor.use_cases.updates.manager import UpdateManager
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.adapters.obd.monitor import OBDSpeedMonitor
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.app.settings import AppConfig
@@ -39,6 +40,7 @@ class RuntimeState:
     worker_pool: WorkerPool
     settings_store: SettingsReader
     gps_monitor: GPSSpeedMonitor
+    obd_monitor: OBDSpeedMonitor
     history_db: LifecycleHistoryDb
     processing_loop_state: ProcessingLoopState
     health_state: RuntimeHealthState

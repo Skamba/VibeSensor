@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 _SPEED_SOURCE_MAP = {
     "manual": "manual",
     "gps": "gps",
+    "obd2": "obd2",
     "fallback_manual": "manual",
     "none": "none",
 }
@@ -67,7 +68,8 @@ class SpeedContext(NamedTuple):
     speed_kmh: float | None
     gps_speed_kmh: float | None
     speed_source: str
-    engine_rpm_estimated: float | None
+    engine_rpm: float | None
+    engine_rpm_source: str
 
 
 def resolve_speed_context(
@@ -76,6 +78,8 @@ def resolve_speed_context(
     resolved_speed_mps: float | None,
     resolved_speed_source: str,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
+    measured_engine_rpm: float | None = None,
+    measured_engine_rpm_source: str | None = None,
 ) -> SpeedContext:
     """Resolve a concrete speed snapshot into sample-record values."""
     order_reference_spec = analysis_settings_snapshot.order_reference_spec
@@ -91,12 +95,30 @@ def resolve_speed_context(
     engine_rpm_estimated = None
     if speed_kmh is not None and order_reference_spec is not None:
         engine_rpm_estimated = order_reference_spec.engine_rpm_from_speed_kmh(speed_kmh)
+    measured_rpm = (
+        float(measured_engine_rpm)
+        if (
+            isinstance(measured_engine_rpm, NUMERIC_TYPES)
+            and not isinstance(measured_engine_rpm, bool)
+        )
+        else None
+    )
+    if measured_rpm is not None:
+        engine_rpm = measured_rpm
+        engine_rpm_source = str(measured_engine_rpm_source or "obd2")
+    elif engine_rpm_estimated is not None:
+        engine_rpm = engine_rpm_estimated
+        engine_rpm_source = "estimated_from_speed_and_ratios"
+    else:
+        engine_rpm = None
+        engine_rpm_source = "missing"
 
     return SpeedContext(
         speed_kmh=speed_kmh,
         gps_speed_kmh=gps_speed_kmh,
         speed_source=speed_source,
-        engine_rpm_estimated=engine_rpm_estimated,
+        engine_rpm=engine_rpm,
+        engine_rpm_source=engine_rpm_source,
     )
 
 
@@ -137,7 +159,8 @@ def build_sample_records(
         speed_kmh,
         gps_speed_kmh,
         speed_source,
-        engine_rpm_estimated,
+        engine_rpm,
+        engine_rpm_source,
     ) = speed_context
     order_reference_spec = analysis_settings_snapshot.order_reference_spec
     final_drive_ratio = (
@@ -205,10 +228,8 @@ def build_sample_records(
             speed_kmh=speed_kmh,
             gps_speed_kmh=gps_speed_kmh,
             speed_source=speed_source,
-            engine_rpm=engine_rpm_estimated,
-            engine_rpm_source=(
-                "estimated_from_speed_and_ratios" if engine_rpm_estimated is not None else "missing"
-            ),
+            engine_rpm=engine_rpm,
+            engine_rpm_source=engine_rpm_source,
             gear=gear_ratio if isinstance(gear_ratio, float) else None,
             final_drive_ratio=final_drive_ratio if isinstance(final_drive_ratio, float) else None,
             accel_x_g=accel_x_g,
