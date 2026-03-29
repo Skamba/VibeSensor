@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, replace
@@ -17,6 +18,7 @@ __all__ = [
     "main",
     "parse_bluetooth_device_info",
     "parse_bluetooth_devices",
+    "parse_bluetooth_scan_events",
     "parse_rfcomm_channel",
 ]
 
@@ -26,6 +28,7 @@ class _HelperFailure(RuntimeError):
 
 
 CommandRunner = Callable[[list[str], int, bool], tuple[int, str, str]]
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def _coerce_text(raw: str | bytes | None) -> str:
@@ -34,6 +37,10 @@ def _coerce_text(raw: str | bytes | None) -> str:
     if isinstance(raw, bytes):
         return raw.decode("utf-8", errors="ignore")
     return raw
+
+
+def _strip_ansi(raw: str) -> str:
+    return _ANSI_ESCAPE_RE.sub("", raw)
 
 
 def _clean_bluetooth_name(raw: str | None) -> str | None:
@@ -90,8 +97,8 @@ def _default_runner(argv: list[str], timeout_s: int, allow_timeout: bool) -> tup
 def parse_bluetooth_devices(output: str) -> list[ObdDeviceSnapshot]:
     """Parse ``bluetoothctl devices``-style output."""
     devices: dict[str, ObdDeviceSnapshot] = {}
-    for line in output.splitlines():
-        line = line.strip()
+    for raw_line in output.splitlines():
+        line = _strip_ansi(raw_line).strip()
         if not line.startswith("Device "):
             continue
         _, raw_mac, *name_parts = line.split()
@@ -103,6 +110,31 @@ def parse_bluetooth_devices(output: str) -> list[ObdDeviceSnapshot]:
         devices[mac_address] = ObdDeviceSnapshot(
             mac_address=mac_address,
             name=name,
+            paired=False,
+            trusted=False,
+            connected=False,
+            rfcomm_channel=None,
+        )
+    return list(devices.values())
+
+
+def parse_bluetooth_scan_events(output: str) -> list[ObdDeviceSnapshot]:
+    """Parse discovery lines from ``bluetoothctl --timeout N scan on`` output."""
+    devices: dict[str, ObdDeviceSnapshot] = {}
+    for raw_line in output.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if line.startswith("[NEW] Device "):
+            line = line.removeprefix("[NEW] ").strip()
+        elif not line.startswith("Device "):
+            continue
+        _, raw_mac, *name_parts = line.split()
+        try:
+            mac_address = normalize_obd_mac(raw_mac)
+        except ValueError:
+            continue
+        devices[mac_address] = ObdDeviceSnapshot(
+            mac_address=mac_address,
+            name=_clean_bluetooth_name(" ".join(name_parts)),
             paired=False,
             trusted=False,
             connected=False,
@@ -224,20 +256,38 @@ class BluetoothObdAdminHelper:
 
     def scan_devices(self, *, timeout_s: int) -> list[ObdDeviceSnapshot]:
         self._prepare_controller()
-        self._bluetoothctl("scan", "on", timeout_s=max(3, timeout_s), allow_timeout=True)
+        scan_timeout_s = max(3, int(timeout_s))
+        scan_output = self._run(
+            ["bluetoothctl", "--timeout", str(scan_timeout_s), "scan", "on"],
+            timeout_s=scan_timeout_s + 2,
+            allow_timeout=False,
+        )
         try:
             devices = {
-                device.mac_address: device
-                for device in parse_bluetooth_devices(
-                    self._bluetoothctl("devices", timeout_s=5, ignore_errors=True)
-                )
+                device.mac_address: device for device in parse_bluetooth_scan_events(scan_output)
             }
+            devices.update(
+                {
+                    device.mac_address: device
+                    for device in parse_bluetooth_devices(
+                        self._bluetoothctl("devices", timeout_s=5, ignore_errors=True)
+                    )
+                }
+            )
             paired_devices = {
                 device.mac_address
                 for device in parse_bluetooth_devices(
-                    self._bluetoothctl("paired-devices", timeout_s=5, ignore_errors=True)
+                    self._bluetoothctl("devices", "Paired", timeout_s=5, ignore_errors=True)
                 )
             }
+            paired_devices.update(
+                {
+                    device.mac_address
+                    for device in parse_bluetooth_devices(
+                        self._bluetoothctl("paired-devices", timeout_s=5, ignore_errors=True)
+                    )
+                }
+            )
         finally:
             self._bluetoothctl("scan", "off", timeout_s=5, ignore_errors=True)
         resolved: list[ObdDeviceSnapshot] = []
