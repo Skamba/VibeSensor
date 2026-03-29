@@ -11,6 +11,7 @@ import {
   updateSettingsSpeedSource,
 } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
+import { createPollingController } from "./polling_controller";
 import {
   type DisplayedSpeedSourceMode,
   deriveDisplayedSpeedSourceMode,
@@ -20,6 +21,8 @@ import {
 import type { SettingsState } from "../ui_app_state";
 
 const SPEED_SOURCE_KINDS = ["gps", "manual", "obd2"] as const satisfies readonly SpeedSourceKind[];
+const OBD_BACKGROUND_RESCAN_DELAY_MS = 2_000;
+const TAB_NAVIGATION_KEYS = new Set(["Enter", " ", "ArrowRight", "ArrowLeft", "Home", "End"]);
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
   settings: SettingsState;
@@ -44,6 +47,7 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
   let scannedDevices: ObdDevicePayload[] = [];
   let scanInFlight = false;
   let pairInFlightMac: string | null = null;
+  let backgroundRescanRequested = false;
 
   function isSpeedSourceKind(value: string): value is SpeedSourceKind {
     return SPEED_SOURCE_KINDS.some((kind) => kind === value);
@@ -129,11 +133,79 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     return value ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
   }
 
-  function mergeScannedDevice(device: ObdDevicePayload): void {
-    scannedDevices = [
-      device,
-      ...scannedDevices.filter((entry) => entry.mac_address !== device.mac_address),
-    ];
+  function looksLikeMacAlias(rawValue: string | null | undefined): boolean {
+    const value = rawValue?.trim();
+    return value != null && /^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$/i.test(value);
+  }
+
+  function hasHumanReadableDeviceName(device: ObdDevicePayload): boolean {
+    const value = device.name?.trim();
+    return Boolean(value) && !looksLikeMacAlias(value);
+  }
+
+  function compareScannedDevices(left: ObdDevicePayload, right: ObdDevicePayload): number {
+    const leftConnectedRank = Number(!left.connected);
+    const rightConnectedRank = Number(!right.connected);
+    if (leftConnectedRank !== rightConnectedRank) {
+      return leftConnectedRank - rightConnectedRank;
+    }
+    const leftPairedRank = Number(!left.paired);
+    const rightPairedRank = Number(!right.paired);
+    if (leftPairedRank !== rightPairedRank) {
+      return leftPairedRank - rightPairedRank;
+    }
+    const leftNamedRank = Number(!hasHumanReadableDeviceName(left));
+    const rightNamedRank = Number(!hasHumanReadableDeviceName(right));
+    if (leftNamedRank !== rightNamedRank) {
+      return leftNamedRank - rightNamedRank;
+    }
+    const labelCompare = (left.name?.trim() || left.mac_address).localeCompare(
+      right.name?.trim() || right.mac_address,
+    );
+    if (labelCompare !== 0) {
+      return labelCompare;
+    }
+    return left.mac_address.localeCompare(right.mac_address);
+  }
+
+  function setScannedDevices(devices: readonly ObdDevicePayload[]): void {
+    scannedDevices = [...devices].sort(compareScannedDevices);
+  }
+
+  function mergeScannedDevices(devices: readonly ObdDevicePayload[]): void {
+    const merged = new Map(scannedDevices.map((device) => [device.mac_address, device]));
+    devices.forEach((device) => {
+      merged.set(device.mac_address, device);
+    });
+    setScannedDevices(Array.from(merged.values()));
+  }
+
+  function isObdConfigVisible(): boolean {
+    if (!els.obdSpeedConfig || els.obdSpeedConfig.hidden) {
+      return false;
+    }
+    const activePanel = els.obdSpeedConfig.closest<HTMLElement>(".settings-tab-panel");
+    if (!activePanel || activePanel.hidden) {
+      return false;
+    }
+    const activeView = activePanel.closest<HTMLElement>(".view");
+    return activeView == null || !activeView.hidden;
+  }
+
+  function shouldRunBackgroundRescan(): boolean {
+    return backgroundRescanRequested && isObdConfigVisible();
+  }
+
+  function syncObdBackgroundRescan(): void {
+    if (shouldRunBackgroundRescan()) {
+      obdBackgroundRescan.start();
+      return;
+    }
+    obdBackgroundRescan.stop();
+  }
+
+  function scheduleObdBackgroundRescanSync(): void {
+    queueMicrotask(syncObdBackgroundRescan);
   }
 
   function obdDevicePrimaryLabel(device: ObdDevicePayload): string {
@@ -211,6 +283,17 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     renderObdDeviceList();
   }
 
+  const obdBackgroundRescan = createPollingController({
+    poll: async () => {
+      if (!shouldRunBackgroundRescan() || scanInFlight || pairInFlightMac !== null) {
+        return OBD_BACKGROUND_RESCAN_DELAY_MS;
+      }
+      await scanObdDevices("background");
+      return OBD_BACKGROUND_RESCAN_DELAY_MS;
+    },
+    onErrorDelayMs: OBD_BACKGROUND_RESCAN_DELAY_MS,
+  });
+
   function syncSpeedSourceSelectionUi(): void {
     const displayedMode = deriveDisplayedSpeedSourceMode(settings);
     if (!speedSourceDraftDirty) {
@@ -231,6 +314,7 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     }
     updateSpeedSourceSummary();
     renderObdControls();
+    syncObdBackgroundRescan();
   }
 
   function syncSpeedSourceInputs(): void {
@@ -270,24 +354,37 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     } catch (_err) { /* ignore */ }
   }
 
-  async function scanObdDevices(): Promise<void> {
+  async function scanObdDevices(mode: "manual" | "background" = "manual"): Promise<void> {
+    if (scanInFlight || pairInFlightMac !== null) {
+      return;
+    }
     scanInFlight = true;
-    obdScanStatusMessage = t("settings.speed.obd_scanning");
+    if (mode === "manual") {
+      obdScanStatusMessage = t("settings.speed.obd_scanning");
+    }
     renderObdControls();
     try {
       const payload = await scanSettingsObdDevices();
-      scannedDevices = payload.devices;
-      obdScanStatusMessage = payload.devices.length > 0
-        ? t("settings.speed.obd_scan_found", { count: payload.devices.length })
-        : t("settings.speed.obd_scan_empty");
+      if (mode === "manual") {
+        setScannedDevices(payload.devices);
+        backgroundRescanRequested = true;
+        obdScanStatusMessage = payload.devices.length > 0
+          ? t("settings.speed.obd_scan_found", { count: payload.devices.length })
+          : t("settings.speed.obd_scan_empty");
+      } else {
+        mergeScannedDevices(payload.devices);
+      }
       renderObdControls();
     } catch (error) {
-      obdScanStatusMessage = t("settings.speed.obd_scan_failed");
-      renderObdControls();
-      ctx.showError(error instanceof Error ? error.message : t("settings.speed.obd_scan_failed"));
+      if (mode === "manual") {
+        obdScanStatusMessage = t("settings.speed.obd_scan_failed");
+        renderObdControls();
+        ctx.showError(error instanceof Error ? error.message : t("settings.speed.obd_scan_failed"));
+      }
     } finally {
       scanInFlight = false;
       renderObdControls();
+      syncObdBackgroundRescan();
     }
   }
 
@@ -299,14 +396,14 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
       const payload = await pairSettingsObdDevice(macAddress);
       settings.obdDeviceMac = payload.configured_device_mac ?? null;
       settings.obdDeviceName = payload.configured_device_name ?? null;
-      mergeScannedDevice({
+      mergeScannedDevices([{
         mac_address: payload.configured_device_mac ?? macAddress,
         name: payload.configured_device_name ?? null,
         paired: payload.paired,
         trusted: payload.trusted,
         connected: payload.connected,
         rfcomm_channel: payload.rfcomm_channel,
-      });
+      }]);
       obdScanStatusMessage = t("settings.speed.obd_pair_success");
       syncSpeedSourceSelectionUi();
     } catch (error) {
@@ -316,6 +413,7 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     } finally {
       pairInFlightMac = null;
       renderObdControls();
+      syncObdBackgroundRescan();
     }
   }
 
@@ -346,6 +444,22 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     els.saveSpeedSourceBtn?.addEventListener("click", saveSpeedSourceFromInputs);
     els.scanObdDevicesBtn?.addEventListener("click", () => {
       void scanObdDevices();
+    });
+    els.settingsTabs.forEach((tab) => {
+      tab.addEventListener("click", scheduleObdBackgroundRescanSync);
+      tab.addEventListener("keydown", (event) => {
+        if (TAB_NAVIGATION_KEYS.has(event.key)) {
+          scheduleObdBackgroundRescanSync();
+        }
+      });
+    });
+    els.menuButtons.forEach((button) => {
+      button.addEventListener("click", scheduleObdBackgroundRescanSync);
+      button.addEventListener("keydown", (event) => {
+        if (TAB_NAVIGATION_KEYS.has(event.key)) {
+          scheduleObdBackgroundRescanSync();
+        }
+      });
     });
     els.obdDeviceList?.addEventListener("click", (event) => {
       const target = event.target;
