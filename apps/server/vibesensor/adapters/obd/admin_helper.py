@@ -264,8 +264,7 @@ class BluetoothObdAdminHelper:
         )
         try:
             devices = {
-                device.mac_address: device
-                for device in parse_bluetooth_scan_events(scan_output)
+                device.mac_address: device for device in parse_bluetooth_scan_events(scan_output)
             }
             devices.update(
                 {
