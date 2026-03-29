@@ -135,7 +135,7 @@ print("setuptools>=68,<83")
 print("wheel>=0.45,<1")
 PY
   )
-  "${HOST_VENV_DIR}/bin/python" -m pip wheel --wheel-dir "${WHEELHOUSE_DIR}" --prefer-binary "${runtime_reqs[@]}"
+  "${HOST_VENV_DIR}/bin/python" -m pip download --dest "${WHEELHOUSE_DIR}" --only-binary=:all: --prefer-binary "${runtime_reqs[@]}"
 }
 
 prepare_firmware_cache() {
