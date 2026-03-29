@@ -58,3 +58,40 @@ def test_pair_device_raises_runtime_error_from_helper_json(tmp_path: Path) -> No
 
     with pytest.raises(RuntimeError, match="Bluetooth OBD pairing failed"):
         client.pair_device("00043e5a4a4d")
+
+
+def test_scan_devices_reports_noninteractive_sudo_failure_cleanly(tmp_path: Path) -> None:
+    helper_script = tmp_path / "vibesensor_obd_admin.py"
+
+    def runner(argv: list[str], timeout_s: int) -> CommandResult:
+        del argv, timeout_s
+        return CommandResult(
+            returncode=1,
+            stdout="",
+            stderr="sudo: a password is required",
+        )
+
+    client = ObdAdminClient(helper_script=helper_script, runner=runner)
+
+    with pytest.raises(
+        RuntimeError,
+        match="Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry",
+    ):
+        client.scan_devices()
+
+
+def test_scan_devices_still_reports_invalid_json_when_stdout_is_malformed(tmp_path: Path) -> None:
+    helper_script = tmp_path / "vibesensor_obd_admin.py"
+
+    def runner(argv: list[str], timeout_s: int) -> CommandResult:
+        del argv, timeout_s
+        return CommandResult(
+            returncode=0,
+            stdout="sudo: a password is required",
+            stderr="",
+        )
+
+    client = ObdAdminClient(helper_script=helper_script, runner=runner)
+
+    with pytest.raises(RuntimeError, match="Bluetooth OBD helper returned invalid JSON"):
+        client.scan_devices()
