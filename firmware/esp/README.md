@@ -1,7 +1,8 @@
 # ESP32 Firmware
 
 PlatformIO firmware for M5Stack ATOM Lite (ESP32-PICO) that reads an ADXL345
-accelerometer at 800 Hz and streams samples to the Pi server over UDP.
+accelerometer at 800 Hz and streams 100 ms sample frames to the Pi server over
+UDP.
 
 ## Features
 
@@ -137,7 +138,7 @@ build_flags =
   -D CORE_DEBUG_LEVEL=0
   -D VIBESENSOR_ATOM_ESP32_PICO=1
   -D VIBESENSOR_SAMPLE_RATE_HZ=1000
-  -D VIBESENSOR_FRAME_SAMPLES=250
+  -D VIBESENSOR_FRAME_SAMPLES=80
   -D VIBESENSOR_WIFI_RETRY_INTERVAL_MS=2500
 ```
 
