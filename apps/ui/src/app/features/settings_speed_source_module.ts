@@ -136,6 +136,14 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     ];
   }
 
+  function obdDevicePrimaryLabel(device: ObdDevicePayload): string {
+    return device.name?.trim() || device.mac_address;
+  }
+
+  function obdDeviceSecondaryLabel(device: ObdDevicePayload): string | null {
+    return device.name?.trim() ? device.mac_address : null;
+  }
+
   function renderObdDeviceList(): void {
     if (!els.obdDeviceList) {
       return;
@@ -167,12 +175,13 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
         : device.paired && device.trusted
           ? t("settings.speed.obd_use")
           : t("settings.speed.obd_pair_and_use");
+      const secondaryLabel = obdDeviceSecondaryLabel(device);
       return `
         <div class="speed-source-device">
           <div class="speed-source-device__header">
             <div class="speed-source-device__identity">
-              <div class="speed-source-device__name">${escapeHtml(device.name ?? t("settings.speed.obd_unknown_name"))}</div>
-              <div class="speed-source-device__mac">${escapeHtml(device.mac_address)}</div>
+              <div class="speed-source-device__name">${escapeHtml(obdDevicePrimaryLabel(device))}</div>
+              ${secondaryLabel ? `<div class="speed-source-device__mac">${escapeHtml(secondaryLabel)}</div>` : ""}
             </div>
             <div class="speed-source-device__badges">${badges.join("")}</div>
           </div>
