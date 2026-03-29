@@ -45,6 +45,46 @@ patch_build_docker_qemu_interpreter() {
     "${build_docker}"
 }
 
+patch_build_docker_base_image() {
+  local build_docker="${PI_GEN_DIR}/build-docker.sh"
+  local stock_block='case "$(uname -m)" in
+  x86_64|aarch64)
+    BASE_IMAGE=i386/debian:trixie
+    ;;
+  *)
+    BASE_IMAGE=debian:trixie
+    ;;
+esac'
+  local patched_block='case "$(uname -m)" in
+  x86_64)
+    BASE_IMAGE=i386/debian:trixie
+    ;;
+  *)
+    BASE_IMAGE=debian:trixie
+    ;;
+esac'
+
+  BUILD_DOCKER="${build_docker}" STOCK_BLOCK="${stock_block}" PATCHED_BLOCK="${patched_block}" python3 - <<'PY'
+from pathlib import Path
+import os
+import sys
+
+path = Path(os.environ["BUILD_DOCKER"])
+stock = os.environ["STOCK_BLOCK"]
+patched = os.environ["PATCHED_BLOCK"]
+text = path.read_text(encoding="utf-8")
+
+if patched in text:
+    raise SystemExit(0)
+if stock not in text:
+    raise SystemExit(
+        f"Unexpected build-docker.sh base-image selection in {path}"
+    )
+
+path.write_text(text.replace(stock, patched), encoding="utf-8")
+PY
+}
+
 refresh_stage0_bootstrap_keyring() {
   local vendored_keyring="${TEMPLATE_ROOT}/stage0-bootstrap-raspberrypi.gpg"
   local upstream_keyring="${PI_GEN_DIR}/stage0/files/raspberrypi.gpg"
@@ -90,6 +130,7 @@ prepare_pi_gen_repo() {
 
   rewrite_pi_gen_mirror_sources
   patch_export_image_boot_size
+  patch_build_docker_base_image
   patch_build_docker_qemu_interpreter
   refresh_stage0_bootstrap_keyring
 }
