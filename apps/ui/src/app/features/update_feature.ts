@@ -80,6 +80,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
   let passwordVisible = false;
   let latestInternetStatus: UsbInternetStatusPayload = fallbackInternetStatus(t);
+  let latestUpdateState: UpdateStatusPayload["state"] = "idle";
 
   function selectedTransport(): UpdateStartRequestPayload["transport"] {
     if (latestInternetStatus.usable && els.updateTransportUsbRadio?.checked) {
@@ -90,16 +91,16 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
   function syncTransportUi(): void {
     const usbAvailable = latestInternetStatus.usable;
+    const controlsLocked = latestUpdateState === "running";
     if (els.updateTransportOptions) {
-      els.updateTransportOptions.hidden = !usbAvailable;
-    }
-    if (els.updateUsbTransportOption) {
-      els.updateUsbTransportOption.hidden = !usbAvailable;
+      els.updateTransportOptions.hidden = false;
     }
     if (els.updateUsbTransportSummary) {
-      els.updateUsbTransportSummary.textContent = formatUsbInternetSummary(latestInternetStatus, t);
+      els.updateUsbTransportSummary.textContent = usbAvailable
+        ? formatUsbInternetSummary(latestInternetStatus, t)
+        : t("settings.update.transport.usb_summary_unavailable");
     }
-    if (!usbAvailable) {
+    if (!usbAvailable && !controlsLocked) {
       if (els.updateTransportWifiRadio) {
         els.updateTransportWifiRadio.checked = true;
       }
@@ -107,7 +108,19 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
         els.updateTransportUsbRadio.checked = false;
       }
     }
-    const usingUsb = usbAvailable && els.updateTransportUsbRadio?.checked === true;
+    if (els.updateTransportWifiRadio) {
+      els.updateTransportWifiRadio.disabled = controlsLocked;
+    }
+    if (els.updateTransportUsbRadio) {
+      els.updateTransportUsbRadio.disabled = controlsLocked || !usbAvailable;
+    }
+    const usingUsb = els.updateTransportUsbRadio?.checked === true && (usbAvailable || controlsLocked);
+    els.updateTransportChoiceWifi?.classList.toggle("speed-source-choice--selected", !usingUsb);
+    els.updateTransportChoiceUsb?.classList.toggle("speed-source-choice--selected", usingUsb);
+    els.updateTransportChoiceUsb?.classList.toggle(
+      "speed-source-choice--disabled",
+      !usbAvailable && !controlsLocked,
+    );
     if (els.updateWifiFields) {
       els.updateWifiFields.hidden = usingUsb;
     }
@@ -126,11 +139,16 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     internet: UsbInternetStatusPayload,
   ): void {
     latestInternetStatus = internet;
+    latestUpdateState = status.state;
     const panel = els.updateStatusPanel;
     syncUpdateControls(els, status);
     syncTransportUi();
     if (panel) {
-      renderUpdateStatusPanel(panel, status, health, { t, escapeHtml });
+      renderUpdateStatusPanel(panel, status, health, {
+        t,
+        escapeHtml,
+        selectedTransport: selectedTransport(),
+      });
     }
     if (els.internetStatusPanel) {
       renderInternetStatusPanel(els.internetStatusPanel, internet, {
