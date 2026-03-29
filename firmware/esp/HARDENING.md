@@ -38,6 +38,9 @@ dedicated sampling task.
   - the main loop only drains produced samples, builds frames, and services
     transport, Wi-Fi, LED, and periodic logging
   - a bounded sample handoff queue now forms the producer/consumer boundary
+  - the sampling task is pinned with an explicit core selection policy instead
+    of inheriting whatever core happened to run startup; startup logging now
+    prints the loop/current/sampling core choice once for validation
 - Replaced the old fixed catch-up budget with backlog-aware late handling:
   - recovery now depends on real context like prefetch occupancy, recent refill
     outcome, and handoff headroom instead of one wall-clock budget constant

@@ -345,12 +345,16 @@ bool begin_sampling(SamplingState& state) {
                                                      &state,
                                                      sampling_priority,
                                                      &g_sampling_task_handle,
-                                                     xPortGetCoreID());
+                                                     static_cast<BaseType_t>(kSamplingTaskCore));
   if (created != pdPASS) {
     Serial.printf("WARN: failed to create sampling task\n");
     g_sampling_task_handle = nullptr;
     return false;
   }
+  Serial.printf("task cores: loop=%d current=%d sampling=%d\n",
+                kArduinoLoopTaskCore,
+                static_cast<int>(xPortGetCoreID()),
+                kSamplingTaskCore);
 
   const uint64_t step_us = 1000000ULL / kSampleRateHz;
   state.next_sample_due_us = esp_timer_get_time() + step_us;
