@@ -206,6 +206,25 @@ class TestBuildRunMetadata:
 
         assert meta["tire_circumference_m"] == 2.345
 
+    def test_uses_default_simulator_car_when_active_car_missing(self) -> None:
+        meta = build_run_metadata(
+            **_default_run_metadata_kwargs(
+                firmware_version="sim-0.2",
+                active_car_snapshot=None,
+            ),
+        )
+
+        assert meta["car_name"] == "VibeSensor Simulator"
+        assert meta["car_type"] == "sedan"
+        assert meta["active_car_id"] == "simulator-default"
+        assert meta["active_car_snapshot"] == {
+            "id": "simulator-default",
+            "name": "VibeSensor Simulator",
+            "type": "sedan",
+            "variant": None,
+            "aspects": {},
+        }
+
 
 # ---------------------------------------------------------------------------
 # build_sample_records
