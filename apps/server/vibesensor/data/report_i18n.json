@@ -1360,8 +1360,8 @@
     "nl": "Betrouwbaarheid is te laag om trillingen aan specifieke systemen toe te schrijven. Verbeter datakwaliteit en run opnieuw."
   },
   "TIER_B_HYPOTHESIS_LABEL": {
-    "en": "Hypothesis (unconfirmed)",
-    "nl": "Hypothese (onbevestigd)"
+    "en": "Possible source",
+    "nl": "Mogelijke bron"
   },
   "TIER_B_VERIFICATION_HEADER": {
     "en": "Verification steps (not repair recommendations)",
