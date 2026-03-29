@@ -223,7 +223,7 @@ class TestBuildSampleRecords:
             timestamp_utc="2026-01-01T00:00:00Z",
             registry=reg,
             processor=proc,
-            speed_context=SpeedContext(None, None, "none", None),
+            speed_context=SpeedContext(None, None, "none", None, "missing"),
             analysis_settings_snapshot=AnalysisSettingsSnapshot(),
             default_sample_rate_hz=800,
         )
@@ -277,7 +277,7 @@ class TestBuildSampleRecords:
             timestamp_utc="2026-01-01T00:00:00Z",
             registry=reg,
             processor=proc,
-            speed_context=SpeedContext(None, None, "none", None),
+            speed_context=SpeedContext(None, None, "none", None, "missing"),
             analysis_settings_snapshot=AnalysisSettingsSnapshot(),
             default_sample_rate_hz=800,
         )
@@ -333,7 +333,7 @@ class TestBuildSampleRecords:
             timestamp_utc="2026-01-01T00:00:00Z",
             registry=reg,
             processor=proc,
-            speed_context=SpeedContext(None, None, "none", None),
+            speed_context=SpeedContext(None, None, "none", None, "missing"),
             analysis_settings_snapshot=AnalysisSettingsSnapshot(),
             default_sample_rate_hz=800,
             sensor_metadata_reader=_Reader(),

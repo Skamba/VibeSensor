@@ -312,7 +312,7 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
 
   function saveSpeedSourceFromInputs(): void {
     const checkedRadio = els.speedSourceRadios.find((radio) => radio.checked);
-    const src: SpeedSourceKind = checkedRadio && isSpeedSourceKind(checkedRadio.value)
+    const src: SpeedSourceKind = speedSourceDraftDirty && checkedRadio && isSpeedSourceKind(checkedRadio.value)
       ? checkedRadio.value
       : settings.speedSource;
     if (src === "obd2" && !settings.obdDeviceMac) {
