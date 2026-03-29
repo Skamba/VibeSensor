@@ -11,10 +11,12 @@ accelerometer at 800 Hz and streams samples to the Pi server over UDP.
 - UDP command listener for identify blink with ACK response
 - Identify command blinks only the single onboard RGB LED on ATOM Lite
 - ADXL345 I2C driver at 800 Hz with error-checked initialisation
-- Small software prefetch buffer de-correlates ADXL345 FIFO reads from fixed
-  batch cadence while keeping output samples uniformly timed
-- Time-budgeted sampling catch-up bounds recovery work by wall-clock time
-  instead of a fixed per-loop sample count
+- Dedicated high-priority sampling task owns `Wire`, ADXL345 access, sample cadence,
+  and the software prefetch ring
+- Deterministic deeper prefetch targets keep a materially larger software cushion
+  before samples are declared missed
+- Bounded sample handoff queue decouples sensor acquisition from Wi-Fi, ACK, LED,
+  and status/reporting work in the main loop
 - No synthetic vibration injection in production builds
 
 Authoritative protocol and port contract: `docs/protocol.md`
@@ -44,11 +46,13 @@ firmware/esp/
 
 ## Runtime module layout
 
-- `main.cpp` owns only startup wiring and the cooperative scheduler order.
+- `main.cpp` owns startup wiring and the non-sampling service order.
 - `runtime_queue.*` owns buffered frame state, enqueue/drop behavior, and ACK
   compaction.
-- `runtime_sampling.*` owns the ADXL345 runtime, prefetch ring, sensor re-init,
-  and sample scheduling.
+- `runtime_sample_handoff.*` owns the bounded raw-sample handoff queue between
+  the sampling task and the main loop.
+- `runtime_sampling.*` owns the dedicated sampling task, ADXL345 runtime,
+  prefetch ring, sensor re-init, and late-handling policy.
 - `runtime_transport.*` owns HELLO, DATA, ACK, and control-packet handling.
 - `runtime_wifi.*` owns target AP discovery plus reconnect/backoff behavior.
 - `runtime_led.*` owns identify blinking for the single onboard RGB LED.
@@ -108,7 +112,6 @@ Supported override macros:
 
 - `VIBESENSOR_SAMPLE_RATE_HZ`
 - `VIBESENSOR_FRAME_SAMPLES`
-- `VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US`
 - `VIBESENSOR_MAX_UDP_PAYLOAD`
 - `VIBESENSOR_SERVER_DATA_PORT`
 - `VIBESENSOR_SERVER_CONTROL_PORT`
@@ -139,16 +142,18 @@ Settings that still remain in `src/runtime_config.h`:
 
 ## Sampling cadence note
 
-The firmware keeps sample emission uniformly spaced at the configured sensor
-rate (the stock path is 800 Hz), and ADXL345 FIFO reads still flow through a
-small software-side prefetch ring. Refill sizes are now deterministic but
-dithered between adjacent batch targets instead of being fully random, which
-keeps refill work bounded for timing analysis without collapsing into one rigid
-`sample_rate / read_batch_size` I2C burst cadence. The cooperative loop also no
-longer sleeps for a fixed `1 ms` at the end of every pass; it now idles only
-until the next sample deadline, with a small wake guard. When the loop falls
-behind, catch-up is still bounded by a wall-clock budget instead of a fixed
-sample-count ceiling.
+Sampling now runs in a dedicated high-priority task released at the target
+sample cadence (the stock path is 800 Hz / `1250 us`). That task is the sole
+owner of `Wire`, ADXL345 access, the software prefetch ring, and the due-time
+schedule. The main loop no longer sits in front of sensor acquisition; it drains
+already-produced samples from a bounded handoff queue, builds frames, and then
+handles transport, Wi-Fi, LED, and status work.
+
+The software prefetch policy now maintains a deeper deterministic cushion:
+steady-state refills target `24` buffered samples, while late or refill-shortfall
+conditions target the full `32`-sample buffer. Late handling is now based on
+real recovery context (prefetch occupancy, handoff headroom, and recent refill
+progress) instead of a fixed loop-time budget.
 
 Default ATOM Lite Unit-port mapping used in this repo (4-pin Unit cable):
 

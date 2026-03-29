@@ -82,24 +82,11 @@ constexpr uint32_t kWifiRetryIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_
 constexpr uint8_t kWifiInitialConnectAttempts =
     static_cast<uint8_t>(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS);
 
-#ifndef VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US
-#define VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US 10000
-#endif
-constexpr uint32_t kSamplingCatchUpBudgetUs =
-    static_cast<uint32_t>(VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US);
-
-#ifndef VIBESENSOR_LOOP_IDLE_GUARD_US
-#define VIBESENSOR_LOOP_IDLE_GUARD_US 150
-#endif
-#ifndef VIBESENSOR_LOOP_IDLE_MAX_US
-#define VIBESENSOR_LOOP_IDLE_MAX_US 1000
-#endif
-constexpr uint32_t kLoopIdleGuardUs = static_cast<uint32_t>(VIBESENSOR_LOOP_IDLE_GUARD_US);
-constexpr uint32_t kLoopIdleMaxUs = static_cast<uint32_t>(VIBESENSOR_LOOP_IDLE_MAX_US);
-
-constexpr size_t kSensorReadBatchSamples = 8;
 constexpr size_t kSensorPrefetchSamples = 32;
-constexpr size_t kSensorPrefetchLowWaterSamples = 8;
+constexpr size_t kSensorPrefetchLowWaterSamples = 16;
+constexpr size_t kSensorPrefetchSteadyTargetSamples = 24;
+constexpr size_t kSensorPrefetchLateTargetSamples = 32;
+constexpr size_t kSampleHandoffQueueSamples = static_cast<size_t>(kFrameSamples) * 2U;
 constexpr size_t kMaxTxFramesPerLoop = 2;
 constexpr size_t kMaxDataAckPacketsPerLoop = 8;
 constexpr uint32_t kDataRetransmitIntervalMs = 120;
@@ -120,10 +107,6 @@ constexpr uint32_t kWifiScanIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_S
 
 static_assert(VIBESENSOR_SAMPLE_RATE_HZ > 0, "VIBESENSOR_SAMPLE_RATE_HZ must be > 0");
 static_assert(VIBESENSOR_FRAME_SAMPLES > 0, "VIBESENSOR_FRAME_SAMPLES must be > 0");
-static_assert(VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US > 0,
-              "VIBESENSOR_SAMPLING_CATCHUP_BUDGET_US must be > 0");
-static_assert(VIBESENSOR_LOOP_IDLE_MAX_US > 0,
-              "VIBESENSOR_LOOP_IDLE_MAX_US must be > 0");
 static_assert(VIBESENSOR_FRAME_QUEUE_LEN_MIN > 0,
               "VIBESENSOR_FRAME_QUEUE_LEN_MIN must be > 0");
 static_assert(VIBESENSOR_FRAME_QUEUE_LEN_TARGET >= VIBESENSOR_FRAME_QUEUE_LEN_MIN,
@@ -133,6 +116,16 @@ static_assert(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS > 0,
 static_assert(kFrameSamplesMaxByDatagram > 0, "kMaxDatagramBytes too small for protocol");
 static_assert(kSensorPrefetchLowWaterSamples < kSensorPrefetchSamples,
               "sensor prefetch low-water must be below prefetch capacity");
+static_assert(kSensorPrefetchSteadyTargetSamples <= kSensorPrefetchSamples,
+              "steady prefetch target must fit inside capacity");
+static_assert(kSensorPrefetchLateTargetSamples <= kSensorPrefetchSamples,
+              "late prefetch target must fit inside capacity");
+static_assert(kSensorPrefetchLowWaterSamples < kSensorPrefetchSteadyTargetSamples,
+              "steady prefetch target must exceed low-water");
+static_assert(kSensorPrefetchSteadyTargetSamples <= kSensorPrefetchLateTargetSamples,
+              "late prefetch target must be at least the steady target");
+static_assert(kSampleHandoffQueueSamples >= static_cast<size_t>(kFrameSamples),
+              "sample handoff queue must hold at least one frame of samples");
 
 constexpr int kI2cSdaPin = 26;
 constexpr int kI2cSclPin = 32;
