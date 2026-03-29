@@ -82,9 +82,7 @@ class ObdAdminClient:
         runner: CommandRunner | None = None,
     ) -> None:
         self._helper_script = (
-            _default_helper_script()
-            if helper_script is None
-            else Path(helper_script)
+            _default_helper_script() if helper_script is None else Path(helper_script)
         )
         self._sudo_path = sudo_path
         self._runner = _default_runner if runner is None else runner

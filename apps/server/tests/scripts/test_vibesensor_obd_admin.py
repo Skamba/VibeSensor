@@ -6,9 +6,7 @@ from types import ModuleType
 
 import pytest
 
-_SCRIPT_PATH = (
-    Path(__file__).resolve().parents[2] / "scripts" / "vibesensor_obd_admin.py"
-)
+_SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "vibesensor_obd_admin.py"
 
 
 def _load_script_module() -> ModuleType:
