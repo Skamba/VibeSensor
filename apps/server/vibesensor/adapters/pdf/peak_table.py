@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 
 from vibesensor.adapters.pdf.presentation import order_label_human, peak_classification_text
-from vibesensor.adapters.pdf.report_data import PeakRow
+from vibesensor.adapters.pdf.report_data import FindingPresentation, PeakRow
 from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.domain import VibrationSource
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -16,10 +16,19 @@ __all__ = [
     "peak_row_system_label",
 ]
 
+_SOURCE_I18N_KEYS: dict[str, str] = {
+    VibrationSource.WHEEL_TIRE: "SOURCE_WHEEL_TIRE",
+    VibrationSource.ENGINE: "SOURCE_ENGINE",
+    VibrationSource.DRIVELINE: "SOURCE_DRIVELINE",
+    VibrationSource.TRANSIENT_IMPACT: "SOURCE_TRANSIENT_IMPACT",
+}
+_PEAK_FINDING_TOLERANCE_HZ = 2.0
+
 
 def build_peak_rows(
     rows: Sequence[PeakTableRow],
     *,
+    findings: Sequence[FindingPresentation] = (),
     lang: str,
     tr: Callable[..., str],
 ) -> list[PeakRow]:
@@ -27,10 +36,16 @@ def build_peak_rows(
     raw_peaks = [row for row in rows if isinstance(row, Mapping)]
     above_noise = [row for row in raw_peaks if (_as_float(row.get("strength_db")) or 0.0) > 0]
     ranked = above_noise or raw_peaks
-    return [build_peak_row(row, lang=lang, tr=tr) for row in ranked[:8]]
+    return [build_peak_row(row, findings=findings, lang=lang, tr=tr) for row in ranked[:8]]
 
 
-def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable[..., str]) -> PeakRow:
+def build_peak_row(
+    row: PeakTableRow,
+    *,
+    findings: Sequence[FindingPresentation] = (),
+    lang: str,
+    tr: Callable[..., str],
+) -> PeakRow:
     """Build one report peak row from a plot peak-table row."""
     rank_val = _as_float(row.get("rank"))
     rank = str(int(rank_val)) if rank_val is not None else "—"
@@ -46,7 +61,7 @@ def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable[..., str]) -> P
     speed = str(row.get("typical_speed_band") or "—")
     return PeakRow(
         rank=rank,
-        system=peak_row_system_label(row, tr=tr),
+        system=peak_row_system_label(row, findings=findings, tr=tr),
         freq_hz=freq,
         order=order,
         peak_db=peak_db,
@@ -56,19 +71,79 @@ def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable[..., str]) -> P
     )
 
 
-def peak_row_system_label(row: PeakTableRow, *, tr: Callable[..., str]) -> str:
+def peak_row_system_label(
+    row: PeakTableRow,
+    *,
+    findings: Sequence[FindingPresentation] = (),
+    tr: Callable[..., str],
+) -> str:
     """Resolve the system label shown for one peak row."""
-    source_hint = str(row.get("suspected_source") or "").strip().lower()
-    source_map: dict[str, str] = {
-        VibrationSource.WHEEL_TIRE: "SOURCE_WHEEL_TIRE",
-        VibrationSource.ENGINE: "SOURCE_ENGINE",
-        VibrationSource.DRIVELINE: "SOURCE_DRIVELINE",
-        VibrationSource.TRANSIENT_IMPACT: "SOURCE_TRANSIENT_IMPACT",
-    }
-    i18n_key = source_map.get(source_hint)
+    source_hint = _peak_row_source_hint(row, findings=findings)
+    i18n_key = _SOURCE_I18N_KEYS.get(source_hint)
     if i18n_key:
         return str(tr(i18n_key))
     return "—"
+
+
+def _peak_row_source_hint(
+    row: PeakTableRow,
+    *,
+    findings: Sequence[FindingPresentation],
+) -> str:
+    """Return the best available source hint for a peak row."""
+    source_hint = str(row.get("suspected_source") or "").strip().lower()
+    if source_hint in _SOURCE_I18N_KEYS:
+        return source_hint
+    order_source = _source_hint_for_order(row, findings=findings)
+    if order_source is not None:
+        return order_source
+    frequency_source = _source_hint_for_frequency(row, findings=findings)
+    if frequency_source is not None:
+        return frequency_source
+    return source_hint
+
+
+def _source_hint_for_order(
+    row: PeakTableRow,
+    *,
+    findings: Sequence[FindingPresentation],
+) -> str | None:
+    """Match peak rows to findings by shared order label before frequency fallback."""
+    order_label = str(row.get("order_label") or "").strip().lower()
+    if not order_label:
+        return None
+    for finding in findings:
+        candidate_source = str(finding.suspected_source or "").strip().lower()
+        if candidate_source not in _SOURCE_I18N_KEYS:
+            continue
+        if str(finding.order or "").strip().lower() == order_label:
+            return candidate_source
+    return None
+
+
+def _source_hint_for_frequency(
+    row: PeakTableRow,
+    *,
+    findings: Sequence[FindingPresentation],
+) -> str | None:
+    """Match peak rows to the closest recognized finding frequency."""
+    frequency_hz = _as_float(row.get("frequency_hz"))
+    if frequency_hz is None:
+        return None
+    best_source: str | None = None
+    best_score: tuple[float, float] | None = None
+    for finding in findings:
+        candidate_source = str(finding.suspected_source or "").strip().lower()
+        if candidate_source not in _SOURCE_I18N_KEYS or finding.frequency_hz is None:
+            continue
+        distance = abs(finding.frequency_hz - frequency_hz)
+        if distance > _PEAK_FINDING_TOLERANCE_HZ:
+            continue
+        score = (distance, -finding.effective_confidence)
+        if best_score is None or score < best_score:
+            best_score = score
+            best_source = candidate_source
+    return best_source
 
 
 def _peak_row_meaning(row: PeakTableRow, *, tr: Callable[..., str]) -> str:

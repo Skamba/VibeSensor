@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from test_support.findings import make_finding_payload
 from test_support.report_helpers import RUN_END, minimal_summary, write_jsonl
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
@@ -189,6 +190,51 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
     assert "{driveline_focus}" not in rendered
     assert "{" not in rendered
     assert "}" not in rendered
+
+
+def test_map_summary_backfills_peak_system_from_matching_finding() -> None:
+    summary = minimal_summary(
+        findings=[
+            make_finding_payload(
+                finding_id="F_PEAK",
+                suspected_source="wheel/tire",
+                confidence=0.82,
+                strongest_location="front-left wheel",
+                frequency_hz=41.0,
+                frequency_hz_or_order="41.0 Hz",
+            )
+        ],
+        top_causes=[
+            make_finding_payload(
+                finding_id="F_PEAK",
+                suspected_source="wheel/tire",
+                confidence=0.82,
+                strongest_location="front-left wheel",
+                frequency_hz=41.0,
+                frequency_hz_or_order="41.0 Hz",
+            )
+        ],
+        plots={
+            "peaks_table": [
+                {
+                    "rank": 1,
+                    "frequency_hz": 41.0,
+                    "order_label": "",
+                    "suspected_source": "",
+                    "p95_intensity_db": 18.0,
+                    "strength_db": 18.0,
+                    "presence_ratio": 0.8,
+                    "peak_classification": "persistent",
+                    "typical_speed_band": "50-80 km/h",
+                }
+            ]
+        },
+    )
+
+    data = map_summary(prepare_report_input(summary))
+
+    assert len(data.peak_rows) == 1
+    assert data.peak_rows[0].system == "Wheel / Tire"
 
 
 def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
