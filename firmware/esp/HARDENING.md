@@ -13,6 +13,9 @@ dedicated sampling task.
   - I2C register and burst reads now return explicit success/failure
   - FIFO truncation and I2C errors are detected and counted
   - repeated sensor read errors trigger bounded sensor re-init attempts
+  - staged refill recovery now does one immediate retry, then one fast
+    bus-level recovery + retry, before escalating to the heavier reinit path
+  - FIFO status-read failures and FIFO data-read failures are tracked separately
 - Hardened Wi-Fi reconnect behavior:
   - reconnect now uses exponential backoff with jitter and an upper cap (`60s`)
   - retry failure counter uses saturating increment (prevents wrap-around)
@@ -118,7 +121,9 @@ Key fields:
 - `drop`: queue overflow drops
 - `tx_fail.pack|begin|end`: packet encoding / UDP begin / UDP send failures
 - `sensor.err`: sensor I2C read failures
+- `sensor.stat|data`: FIFO status-register failures vs FIFO data-read failures
 - `sensor.trunc`: FIFO truncation events (reader could not consume full FIFO depth in one pass)
+- `sensor.bus`: successful fast bus recoveries / attempted bus recoveries
 - `sensor.reinit`: `successes/attempts` of ADXL reinitialization after repeated errors
 - `sensor.miss`: missed/skipped sampling slots
 - `sensor.late`: backlog-abandon events where recovery was judged no longer credible
