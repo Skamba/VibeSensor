@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build-and-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 180
 
     steps:
@@ -45,11 +45,6 @@ jobs:
           python-version-file: ".python-version"
           cache: pip
           cache-dependency-path: apps/server/pyproject.toml
-
-      - name: Set up arm emulation
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: arm
 
       - name: Install Pi image build prerequisites
         shell: bash
@@ -100,6 +95,11 @@ jobs:
           EOF
           fi
           echo "published_artifact=VibeSensor-${short_date}.img.zip" >> "${version_info_target}"
+          {
+            echo "workflow_name=${GITHUB_WORKFLOW}"
+            echo "runner_label=ubuntu-24.04-arm"
+            echo "run_id=${GITHUB_RUN_ID}"
+          } >> "${version_info_target}"
 
           echo "release_dir=${release_dir}" >> "${GITHUB_OUTPUT}"
           echo "artifact_name=VibeSensor-${short_date}.img.zip" >> "${GITHUB_OUTPUT}"
