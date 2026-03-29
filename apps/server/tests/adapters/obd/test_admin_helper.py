@@ -144,3 +144,86 @@ def test_scan_devices_uses_timed_scan_output_when_devices_list_is_empty() -> Non
         "scan",
         "on",
     ) in calls
+
+
+def test_scan_devices_sorts_human_readable_names_ahead_of_mac_aliases() -> None:
+    responses = {
+        ("rfkill", "unblock", "bluetooth"): (0, "", ""),
+        ("systemctl", "start", "bluetooth"): (0, "", ""),
+        ("bluetoothctl", "power", "on"): (0, "", ""),
+        (
+            "bluetoothctl",
+            "--timeout",
+            "8",
+            "scan",
+            "on",
+        ): (
+            0,
+            "\n".join(
+                [
+                    "[NEW] Device 53:40:AC:57:11:77 53-40-AC-57-11-77",
+                    "[NEW] Device 00:22:D9:00:1B:B1 Audioengine HD6",
+                    "[NEW] Device 11:22:33:44:55:66",
+                ]
+            ),
+            "",
+        ),
+        (
+            "bluetoothctl",
+            "devices",
+        ): (
+            0,
+            "\n".join(
+                [
+                    "Device 53:40:AC:57:11:77 53-40-AC-57-11-77",
+                    "Device 00:22:D9:00:1B:B1 Audioengine HD6",
+                    "Device 11:22:33:44:55:66",
+                ]
+            ),
+            "",
+        ),
+        ("bluetoothctl", "devices", "Paired"): (0, "", ""),
+        ("bluetoothctl", "paired-devices"): (0, "", ""),
+        ("bluetoothctl", "scan", "off"): (0, "", ""),
+        (
+            "bluetoothctl",
+            "info",
+            "53:40:AC:57:11:77",
+        ): (
+            0,
+            """
+            Device 53:40:AC:57:11:77
+            Alias: 53-40-AC-57-11-77
+            Paired: no
+            Trusted: no
+            Connected: no
+            """,
+            "",
+        ),
+        (
+            "bluetoothctl",
+            "info",
+            "11:22:33:44:55:66",
+        ): (
+            0,
+            """
+            Device 11:22:33:44:55:66
+            Paired: no
+            Trusted: no
+            Connected: no
+            """,
+            "",
+        ),
+    }
+
+    def runner(argv: list[str], timeout_s: int, allow_timeout: bool) -> tuple[int, str, str]:
+        del timeout_s, allow_timeout
+        return responses[tuple(argv)]
+
+    devices = BluetoothObdAdminHelper(runner=runner).scan_devices(timeout_s=8)
+
+    assert [device.mac_address for device in devices] == [
+        "0022d9001bb1",
+        "112233445566",
+        "5340ac571177",
+    ]
