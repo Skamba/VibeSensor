@@ -64,6 +64,11 @@ def _looks_like_mac_alias(raw: str | None) -> bool:
     return True
 
 
+def _has_human_readable_bluetooth_name(raw: str | None) -> bool:
+    value = _clean_bluetooth_name(raw)
+    return value is not None and not _looks_like_mac_alias(value)
+
+
 def _preferred_bluetooth_name(*candidates: str | None) -> str | None:
     cleaned = [
         value for value in (_clean_bluetooth_name(candidate) for candidate in candidates) if value
@@ -320,6 +325,7 @@ class BluetoothObdAdminHelper:
             key=lambda device: (
                 not device.connected,
                 not device.paired,
+                not _has_human_readable_bluetooth_name(device.name),
                 (device.name or device.mac_address).lower(),
             ),
         )

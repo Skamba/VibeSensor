@@ -397,6 +397,150 @@ test("failed speed-source save reverts the UI and shows an error", async ({ page
   await expect(page.locator("#manualSpeedInput")).toHaveValue("");
 });
 
+test("manual OBD scan sorts named devices first and background rescans progressively improve the list", async ({ page }) => {
+  let scanCalls = 0;
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/language": { language: "en" },
+      "GET /api/settings/speed-unit": { speed_unit: "kmh" },
+      "GET /api/settings/speed-source": {
+        speed_source: "obd2",
+        manual_speed_kph: null,
+        stale_timeout_s: 5,
+        obd_device_mac: null,
+        obd_device_name: null,
+      },
+      "GET /api/settings/speed-source/status": gpsStatus({
+        speed_source: "obd2",
+        connection_state: "disconnected",
+      }),
+      "GET /api/settings/obd/status": {
+        configured_device_mac: null,
+        configured_device_name: null,
+        paired: false,
+        trusted: false,
+        connected: false,
+        rfcomm_channel: null,
+        last_rpm: null,
+        last_raw_response: null,
+        debug_hint: null,
+      },
+      "POST /api/settings/obd/scan": async () => {
+        scanCalls += 1;
+        if (scanCalls === 1) {
+          return {
+            devices: [
+              {
+                mac_address: "5340ac571177",
+                name: "53-40-AC-57-11-77",
+                paired: false,
+                trusted: false,
+                connected: false,
+                rfcomm_channel: null,
+              },
+              {
+                mac_address: "0022d9001bb1",
+                name: "Audioengine HD6",
+                paired: false,
+                trusted: false,
+                connected: false,
+                rfcomm_channel: null,
+              },
+            ],
+          };
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2_500));
+        return {
+          devices: [
+            {
+              mac_address: "5340ac571177",
+              name: "Pim's iPhone",
+              paired: false,
+              trusted: false,
+              connected: false,
+              rfcomm_channel: null,
+            },
+          ],
+        };
+      },
+    }),
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await page.locator("#scanObdDevicesBtn").click();
+
+  const deviceNames = page.locator(".speed-source-device__name");
+  await expect(deviceNames.nth(0)).toHaveText("Audioengine HD6");
+  await expect(deviceNames.nth(1)).toHaveText("53-40-AC-57-11-77");
+  await expect(page.locator(".speed-source-device__mac").nth(0)).toHaveText("0022d9001bb1");
+
+  await expect.poll(() => scanCalls, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
+  await expect(deviceNames.nth(1)).toHaveText("Pim's iPhone");
+});
+
+test("background OBD rescans stop when the Speed Source OBD panel is no longer visible", async ({ page }) => {
+  let scanCalls = 0;
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/language": { language: "en" },
+      "GET /api/settings/speed-unit": { speed_unit: "kmh" },
+      "GET /api/settings/speed-source": {
+        speed_source: "obd2",
+        manual_speed_kph: null,
+        stale_timeout_s: 5,
+        obd_device_mac: null,
+        obd_device_name: null,
+      },
+      "GET /api/settings/speed-source/status": gpsStatus({
+        speed_source: "obd2",
+        connection_state: "disconnected",
+      }),
+      "GET /api/settings/obd/status": {
+        configured_device_mac: null,
+        configured_device_name: null,
+        paired: false,
+        trusted: false,
+        connected: false,
+        rfcomm_channel: null,
+        last_rpm: null,
+        last_raw_response: null,
+        debug_hint: null,
+      },
+      "POST /api/settings/obd/scan": async () => {
+        scanCalls += 1;
+        return {
+          devices: [
+            {
+              mac_address: "0022d9001bb1",
+              name: "OBDLink CX",
+              paired: false,
+              trusted: false,
+              connected: false,
+              rfcomm_channel: null,
+            },
+          ],
+        };
+      },
+    }),
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await page.locator("#scanObdDevicesBtn").click();
+
+  await expect.poll(() => scanCalls, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
+  await page.locator('[data-speed-source-choice="gps"]').click();
+
+  const stoppedAt = scanCalls;
+  await page.waitForTimeout(2_500);
+  expect(scanCalls).toBe(stoppedAt);
+});
+
 test("failed language save reverts the selector and shows an error", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
