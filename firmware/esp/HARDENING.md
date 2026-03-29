@@ -1,7 +1,8 @@
 # ESP Firmware hardening notes
 
 Runtime ownership now lives in `src/runtime_*.{h,cpp}`, with `src/main.cpp`
-reduced to startup wiring and cooperative loop orchestration.
+reduced to startup wiring plus non-sampling service orchestration around the
+dedicated sampling task.
 
 ## What was fixed
 
@@ -31,21 +32,22 @@ reduced to startup wiring and cooperative loop orchestration.
   - when `sample_once()` returns false (sensor unavailable), the code now advances
     `g_next_sample_due_us` before breaking so the post-loop lag detector does not
     re-count the same slot as an additional missed sample
-- Replaced the fixed sampling catch-up ceiling with a time-budgeted catch-up window:
-  - `service_sampling()` now bounds recovery work by wall-clock time per loop pass
-    instead of a hardcoded samples-per-loop ceiling, which makes the 800 Hz path
-    less dependent on one arbitrary catch-up count
-  - budget-exhaustion events are counted separately from missed-sample slots so
-    later hardware analysis can distinguish "fell behind" from "spent full budget"
-- Reduced cooperative-loop timing jitter in code-driven ways:
-  - `loop()` no longer ends every pass with a fixed `delay(1)`; idle time is now
-    computed from the next sample deadline plus a small wake guard, so the loop
-    does not quantize itself to millisecond sleeps when the sample period is
-    only `1250 us`
-  - sensor prefetch refill sizing no longer depends on `esp_random()`; refill
-    targets now alternate deterministically between adjacent batch sizes so
-    burst cost stays bounded and testable without collapsing into one rigid
-    refill cadence
+- Moved sampling onto a dedicated periodic task with explicit ownership:
+  - the sampling task is now the sole owner of `Wire`, ADXL345 access, the
+    prefetch ring, and the sample cadence state
+  - the main loop only drains produced samples, builds frames, and services
+    transport, Wi-Fi, LED, and periodic logging
+  - a bounded sample handoff queue now forms the producer/consumer boundary
+- Replaced the old fixed catch-up budget with backlog-aware late handling:
+  - recovery now depends on real context like prefetch occupancy, recent refill
+    outcome, and handoff headroom instead of one wall-clock budget constant
+  - missed samples are declared only after the code decides recovery is no
+    longer credible for the current backlog
+- Deepened deterministic prefetch behaviour:
+  - steady-state refills target `24` buffered samples instead of riding the low
+    end of the `32`-sample software buffer
+  - late or refill-shortfall conditions target the full `32`-sample buffer to
+    preserve recovery margin when the sensor path is under pressure
 - Fixed ignored `beginPacket()` return value in `send_hello()` and `send_ack()`:
   - both functions now check whether `beginPacket()` succeeded before calling
     `write()` / `endPacket()`, preventing writes into an invalid UDP send state
@@ -116,7 +118,11 @@ Key fields:
 - `sensor.trunc`: FIFO truncation events (reader could not consume full FIFO depth in one pass)
 - `sensor.reinit`: `successes/attempts` of ADXL reinitialization after repeated errors
 - `sensor.miss`: missed/skipped sampling slots
-- `sensor.budget`: loop passes that exhausted the time-budgeted sampling catch-up window
+- `sensor.late`: backlog-abandon events where recovery was judged no longer credible
+- `sensor.handoff`: samples dropped because the sample handoff queue was already full
+- `sensor.sq`: current handoff-queue fill / capacity
+- `sensor.prefetch`: current software prefetch occupancy
+- `sensor.refill`: `granted/requested` samples from the most recent refill attempt
 - `wifi_retry.attempts|fail`: reconnect attempts and initial connect failures
 - `parse.ctrl|ack`: invalid control command / DATA_ACK packets
 - `last_error`: latest error code and timestamp (ms)

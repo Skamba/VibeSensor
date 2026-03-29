@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <esp_system.h>
 #include <esp_task_wdt.h>
-#include <esp_timer.h>
 
 #include "runtime_config.h"
 #include "runtime_led.h"
@@ -96,8 +95,9 @@ void setup() {
   begin_leds(g_runtime.led);
   connect_wifi(g_runtime.wifi, g_runtime.status);
   initialize_transport(g_runtime.transport);
-  begin_sensor(g_runtime.sampling);
-  reset_sampling_schedule(g_runtime.sampling, esp_timer_get_time());
+  if (!begin_sampling(g_runtime.sampling)) {
+    Serial.printf("WARN: sampling task startup failed\n");
+  }
   if (send_hello(g_runtime.transport, g_runtime.status)) {
     g_runtime.transport.last_hello_ms = millis();
   }
@@ -107,26 +107,18 @@ void setup() {
 void loop() {
   using namespace vibesensor::runtime;
 
-  uint32_t now_ms = millis();
-  service_wifi(g_runtime.wifi, g_runtime.status);
   service_data_rx(g_runtime.transport, g_runtime.queue, g_runtime.status);
-  service_sampling(
+  service_control_rx(g_runtime.transport, g_runtime.queue, g_runtime.led, g_runtime.status);
+  service_sample_handoff(
       g_runtime.sampling, g_runtime.queue, g_runtime.status, g_runtime.transport.clock_offset_us);
   service_tx(g_runtime.transport, g_runtime.queue, g_runtime.status);
   service_hello(g_runtime.transport, g_runtime.status);
-  service_control_rx(g_runtime.transport, g_runtime.queue, g_runtime.led, g_runtime.status);
+  service_wifi(g_runtime.wifi, g_runtime.status);
+
+  const uint32_t now_ms = millis();
   service_blink(g_runtime.led, now_ms);
-  report_runtime_status(g_runtime.status,
-                        frame_queue_size(g_runtime.queue),
-                        frame_queue_capacity(g_runtime.queue),
-                        now_ms);
-  const uint64_t idle_started_us = esp_timer_get_time();
-  const uint32_t idle_delay_us = vibesensor::reliability::sampling_idle_delay_us(
-      idle_started_us,
-      g_runtime.sampling.next_sample_due_us,
-      kLoopIdleGuardUs,
-      kLoopIdleMaxUs);
-  if (idle_delay_us > 0) {
-    delayMicroseconds(idle_delay_us);
-  }
+  const SamplingStatusSnapshot sampling_status = snapshot_sampling_status(g_runtime.sampling);
+  report_runtime_status(
+      g_runtime.status, sampling_status, frame_queue_size(g_runtime.queue), frame_queue_capacity(g_runtime.queue), now_ms);
+  delay(0);
 }

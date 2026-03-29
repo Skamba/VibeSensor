@@ -28,48 +28,87 @@ inline uint64_t sampling_slots_due(uint64_t now_us,
   return ((now_us - next_due_us) / step_us) + 1;
 }
 
-inline bool sampling_catch_up_budget_exhausted(uint64_t loop_started_us,
-                                               uint64_t now_us,
-                                               uint32_t budget_us) {
-  if (now_us < loop_started_us) {
-    return false;
+struct SamplingRefillPlan {
+  size_t request_samples = 0;
+  size_t target_prefetch = 0;
+  bool aggressive = false;
+};
+
+inline SamplingRefillPlan sampling_prefetch_refill_plan(size_t prefetch_count,
+                                                        size_t prefetch_capacity,
+                                                        size_t low_water_samples,
+                                                        size_t steady_target_samples,
+                                                        size_t late_target_samples,
+                                                        size_t due_slots,
+                                                        bool recent_refill_shortfall) {
+  SamplingRefillPlan plan{};
+  if (prefetch_capacity <= prefetch_count) {
+    return plan;
   }
-  return (now_us - loop_started_us) >= static_cast<uint64_t>(budget_us);
+
+  const bool late = due_slots > 1 || recent_refill_shortfall;
+  const size_t trigger = late ? steady_target_samples : low_water_samples;
+  if (prefetch_count > trigger) {
+    return plan;
+  }
+
+  const size_t desired_target = late ? late_target_samples : steady_target_samples;
+  const size_t capped_target =
+      desired_target > prefetch_capacity ? prefetch_capacity : desired_target;
+  if (capped_target <= prefetch_count) {
+    return plan;
+  }
+
+  plan.target_prefetch = capped_target;
+  plan.request_samples = capped_target - prefetch_count;
+  plan.aggressive = late;
+  return plan;
 }
 
-inline size_t sampling_prefetch_refill_count(size_t prefetch_count,
-                                             size_t prefetch_capacity,
-                                             size_t refill_batch_samples) {
-  if (prefetch_capacity <= prefetch_count || refill_batch_samples == 0) {
-    return 0;
-  }
-  const size_t free_slots = prefetch_capacity - prefetch_count;
-  return free_slots < refill_batch_samples ? free_slots : refill_batch_samples;
-}
+struct SamplingRecoveryPlan {
+  size_t attempt_slots = 0;
+  size_t missed_slots = 0;
+};
 
-inline size_t sampling_dithered_batch_target(size_t refill_batch_samples,
-                                             uint32_t refill_cycle) {
-  if (refill_batch_samples <= 1) {
-    return refill_batch_samples;
+inline SamplingRecoveryPlan sampling_recovery_plan(size_t due_slots,
+                                                   size_t handoff_headroom,
+                                                   size_t prefetch_count,
+                                                   size_t last_refill_request,
+                                                   size_t last_refill_count) {
+  SamplingRecoveryPlan plan{};
+  if (due_slots == 0) {
+    return plan;
   }
-  return (refill_cycle & 0x1U) == 0U ? refill_batch_samples : (refill_batch_samples - 1U);
-}
+  if (handoff_headroom == 0) {
+    plan.missed_slots = due_slots;
+    return plan;
+  }
 
-inline uint32_t sampling_idle_delay_us(uint64_t now_us,
-                                       uint64_t next_due_us,
-                                       uint32_t wake_guard_us,
-                                       uint32_t max_delay_us) {
-  if (next_due_us <= now_us || max_delay_us == 0) {
-    return 0;
+  const size_t deliverable_slots = due_slots < handoff_headroom ? due_slots : handoff_headroom;
+  if (due_slots == 1) {
+    plan.attempt_slots = deliverable_slots;
+    plan.missed_slots = due_slots - deliverable_slots;
+    return plan;
   }
-  const uint64_t time_until_due_us = next_due_us - now_us;
-  if (time_until_due_us <= static_cast<uint64_t>(wake_guard_us)) {
-    return 0;
+  if (prefetch_count >= deliverable_slots) {
+    plan.attempt_slots = deliverable_slots;
+    plan.missed_slots = due_slots - deliverable_slots;
+    return plan;
   }
-  const uint64_t slack_us = time_until_due_us - static_cast<uint64_t>(wake_guard_us);
-  return static_cast<uint32_t>(slack_us > static_cast<uint64_t>(max_delay_us)
-                                   ? max_delay_us
-                                   : slack_us);
+  if (last_refill_count == 0) {
+    plan.attempt_slots = prefetch_count > 0 ? 1U : 0U;
+    plan.missed_slots = due_slots - plan.attempt_slots;
+    return plan;
+  }
+  if (last_refill_count < last_refill_request && prefetch_count < 2U) {
+    plan.attempt_slots = 1U;
+    plan.missed_slots = due_slots - 1U;
+    return plan;
+  }
+
+  plan.attempt_slots = deliverable_slots;
+  plan.missed_slots = due_slots - deliverable_slots;
+  return plan;
 }
 
 inline uint16_t clamp_frame_samples(uint16_t configured_samples,
