@@ -163,7 +163,8 @@ GitHub Actions:
 
 These weekly builds reuse the same `./infra/pi-image/pi-gen/build.sh` pipeline
 documented above, so the GitHub Release artifact follows the same supported
-image-build path as local builds.
+image-build path as local builds. The weekly workflow now runs natively on the
+GitHub-hosted `ubuntu-24.04-arm` runner instead of using x64-host emulation.
 
 The repository also provides a manual ARM-hosted validation workflow:
 
@@ -171,7 +172,7 @@ The repository also provides a manual ARM-hosted validation workflow:
 - trigger: manual `workflow_dispatch` only
 - runner: GitHub-hosted `ubuntu-24.04-arm`
 - output: workflow artifacts only; it does not replace the `weekly-pi-image`
-  GitHub Release
+  GitHub Release, which now uses the same native ARM build path
 
 ## Pipeline layout
 
