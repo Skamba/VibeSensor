@@ -49,10 +49,51 @@ def _first_check_target(data: ReportTemplateData, *, fallback: str) -> str:
     return _safe(data.observed.strongest_location, fallback)
 
 
-def _label_width(c: Canvas, label: str, *, default_w: float, col_w: float) -> float:
-    measured = c.stringWidth(f"{label}:", FONT, FS_BODY) + 1.2 * mm
+def _label_width(
+    c: Canvas,
+    label: str,
+    *,
+    default_w: float,
+    col_w: float,
+    font_size: float = FS_BODY,
+) -> float:
+    measured = c.stringWidth(f"{label}:", FONT, font_size) + 1.2 * mm
     max_allowed = max(default_w, col_w - 20 * mm)
     return float(min(max(default_w, measured), max_allowed))
+
+
+def _observed_label_width(
+    c: Canvas,
+    *,
+    tr: Callable[[str], str],
+    available_w: float,
+    show_strongest_sensor: bool,
+    has_certainty_reason: bool,
+) -> float:
+    labels = [
+        tr("WHAT_TO_CHECK_FIRST"),
+        tr("CERTAINTY_LABEL_FULL"),
+        tr("SPEED_BAND"),
+        tr("STRENGTH"),
+    ]
+    if show_strongest_sensor:
+        labels.append(tr("STRONGEST_SENSOR"))
+    if has_certainty_reason:
+        labels.append(tr("CERTAINTY_REASON"))
+
+    label_w = OBSERVED_LABEL_W
+    for label in labels:
+        label_w = max(
+            label_w,
+            _label_width(
+                c,
+                label,
+                default_w=OBSERVED_LABEL_W,
+                col_w=available_w,
+                font_size=FS_H2,
+            ),
+        )
+    return float(label_w)
 
 
 def _column_height(
@@ -255,6 +296,14 @@ def _draw_observed_signature_panel(
     oy = obs_y + observed_panel.h - PANEL_HEADER_H
     inspect_target = _first_check_target(data, fallback=na)
     cert_val = _cert_display(data.observed.certainty_label, data.observed.certainty_pct, na)
+    observed_label_w = _observed_label_width(
+        c,
+        tr=tr,
+        available_w=width - 8 * mm,
+        show_strongest_sensor=show_strongest_sensor,
+        has_certainty_reason=bool(data.observed.certainty_reason),
+    )
+    observed_value_w = width - 8 * mm - observed_label_w
 
     _draw_panel(c, MARGIN, obs_y, width, observed_panel.h, tr("OBSERVED_SIGNATURE"))
     oy = _draw_text(
@@ -272,9 +321,9 @@ def _draw_observed_signature_panel(
         oy,
         tr("WHAT_TO_CHECK_FIRST"),
         inspect_target,
-        label_w=OBSERVED_LABEL_W,
+        label_w=observed_label_w,
         fs=FS_H2,
-        value_w=width - 8 * mm - OBSERVED_LABEL_W,
+        value_w=observed_value_w,
     )
     oy -= 1.0 * mm
     if show_strongest_sensor:
@@ -284,10 +333,10 @@ def _draw_observed_signature_panel(
             oy,
             tr("STRONGEST_SENSOR"),
             _safe(data.observed.strongest_location, na),
-            label_w=OBSERVED_LABEL_W,
+            label_w=observed_label_w,
         )
         oy -= obs_step
-    _draw_kv(c, ox, oy, tr("CERTAINTY_LABEL_FULL"), cert_val, label_w=OBSERVED_LABEL_W)
+    _draw_kv(c, ox, oy, tr("CERTAINTY_LABEL_FULL"), cert_val, label_w=observed_label_w)
     oy -= obs_step
     _draw_kv(
         c,
@@ -295,7 +344,7 @@ def _draw_observed_signature_panel(
         oy,
         tr("SPEED_BAND"),
         _safe(data.observed.speed_band, na),
-        label_w=OBSERVED_LABEL_W,
+        label_w=observed_label_w,
     )
     oy -= obs_step
     _draw_kv(
@@ -309,7 +358,7 @@ def _draw_observed_signature_panel(
             fallback=na,
             peak_suffix=tr("STRENGTH_PEAK_SUFFIX"),
         ),
-        label_w=OBSERVED_LABEL_W,
+        label_w=observed_label_w,
     )
     oy -= obs_step
     if data.observed.certainty_reason:
@@ -319,8 +368,8 @@ def _draw_observed_signature_panel(
             oy,
             tr("CERTAINTY_REASON"),
             data.observed.certainty_reason,
-            label_w=OBSERVED_LABEL_W,
-            value_w=width - 8 * mm - OBSERVED_LABEL_W,
+            label_w=observed_label_w,
+            value_w=observed_value_w,
         )
     if data.certainty_tier_key == "A":
         oy -= obs_step

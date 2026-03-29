@@ -7,11 +7,15 @@ from io import BytesIO
 
 import pytest
 from _paths import SERVER_ROOT
+from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+import vibesensor.adapters.pdf.panels._panel_header as panel_header
 import vibesensor.adapters.pdf.panels._panel_trust_steps as panel_trust_steps
 from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_next_steps_table
-from vibesensor.adapters.pdf.report_data import NextStep
+from vibesensor.adapters.pdf.pdf_style import FONT, FS_H2, PdfRenderContext
+from vibesensor.adapters.pdf.report_data import NextStep, PatternEvidence, ReportTemplateData
+from vibesensor.report_i18n import tr as report_tr
 
 
 def _make_canvas() -> Canvas:
@@ -107,3 +111,67 @@ class TestOrphanI18nKeysRemoved:
         data = json.loads(i18n_path.read_text())
         for key in self.ORPHAN_KEYS:
             assert key not in data, f"Orphan key {key!r} should have been removed"
+
+
+class TestObservedSignatureLayout:
+    """Regression: long observed-signature values must not start inside the label."""
+
+    def test_check_first_value_starts_after_rendered_label_width(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        canvas = _make_canvas()
+        draw_calls: list[tuple[float, float, str]] = []
+        original_draw_string = canvas.drawString
+
+        def capture_draw_string(x: float, y: float, text: str, *args, **kwargs):
+            draw_calls.append((float(x), float(y), str(text)))
+            return original_draw_string(x, y, text, *args, **kwargs)
+
+        monkeypatch.setattr(canvas, "drawString", capture_draw_string)
+
+        data = ReportTemplateData(
+            observed=PatternEvidence(
+                primary_system="Wheel / Tire",
+                strongest_location="Rear-Right / Front-Left",
+                speed_band="50-60 km/h",
+                strength_label="Moderate",
+                certainty_label="High",
+            ),
+            lang="en",
+            certainty_tier_key="C",
+        )
+        render_ctx = PdfRenderContext.from_data(data)
+
+        def tr(key: str) -> str:
+            return report_tr("en", key)
+
+        y_cursor = panel_header._draw_header_panel(
+            canvas,
+            data,
+            tr=tr,
+            width=render_ctx.width,
+            page_top=render_ctx.page_top,
+            na=tr("UNKNOWN"),
+        )
+        panel_header._draw_observed_signature_panel(
+            canvas,
+            data,
+            tr=tr,
+            width=render_ctx.width,
+            y_cursor=y_cursor,
+            na=tr("UNKNOWN"),
+        )
+
+        label_text = f"{tr('WHAT_TO_CHECK_FIRST')}:"
+        label_index = next(
+            index for index, (_x, _y, text) in enumerate(draw_calls) if text == label_text
+        )
+        label_x, _label_y, _ = draw_calls[label_index]
+        value_x, _value_y, value_text = next(
+            (x, y, text) for x, y, text in draw_calls[label_index + 1 :] if "Rear-Right" in text
+        )
+        label_end_x = label_x + canvas.stringWidth(label_text, FONT, FS_H2)
+
+        assert value_text
+        assert value_x >= label_end_x + (0.8 * mm)
