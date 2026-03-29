@@ -161,6 +161,14 @@ These weekly builds reuse the same `./infra/pi-image/pi-gen/build.sh` pipeline
 documented above, so the GitHub Release artifact follows the same supported
 image-build path as local builds.
 
+The repository also provides a manual ARM-hosted validation workflow:
+
+- workflow: [`.github/workflows/manual-pi-image-arm.yml`](../../../.github/workflows/manual-pi-image-arm.yml)
+- trigger: manual `workflow_dispatch` only
+- runner: GitHub-hosted `ubuntu-24.04-arm`
+- output: workflow artifacts only; it does not replace the `weekly-pi-image`
+  GitHub Release
+
 ## Pipeline layout
 
 The pi-image pipeline now has three explicit ownership layers:
