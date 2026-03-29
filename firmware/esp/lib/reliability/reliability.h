@@ -28,6 +28,53 @@ inline uint64_t sampling_slots_due(uint64_t now_us,
   return ((now_us - next_due_us) / step_us) + 1;
 }
 
+enum class SensorFailureClass : uint8_t {
+  kNone = 0,
+  kRegisterAccess = 1,
+  kFifoData = 2,
+  kPartialFifoDrain = 3,
+  kRepeatedCommunication = 4,
+  kSensorIdentity = 5,
+  kSensorConfiguration = 6,
+};
+
+inline bool sensor_failure_is_communication(SensorFailureClass failure_class) {
+  return failure_class == SensorFailureClass::kRegisterAccess ||
+         failure_class == SensorFailureClass::kFifoData ||
+         failure_class == SensorFailureClass::kPartialFifoDrain ||
+         failure_class == SensorFailureClass::kRepeatedCommunication;
+}
+
+inline bool sensor_failure_requires_forced_reinit(SensorFailureClass failure_class) {
+  return failure_class == SensorFailureClass::kSensorIdentity ||
+         failure_class == SensorFailureClass::kSensorConfiguration;
+}
+
+struct SamplingRefillRetryStep {
+  bool retry_read = false;
+  bool recover_bus = false;
+};
+
+inline SamplingRefillRetryStep sampling_refill_retry_step(uint8_t exhausted_failures,
+                                                          SensorFailureClass failure_class,
+                                                          size_t requested_samples,
+                                                          size_t recovered_samples) {
+  SamplingRefillRetryStep step{};
+  if (requested_samples == 0 || recovered_samples >= requested_samples ||
+      !sensor_failure_is_communication(failure_class)) {
+    return step;
+  }
+  if (exhausted_failures == 0U) {
+    step.retry_read = true;
+    return step;
+  }
+  if (exhausted_failures == 1U) {
+    step.retry_read = true;
+    step.recover_bus = true;
+  }
+  return step;
+}
+
 struct SamplingRefillPlan {
   size_t request_samples = 0;
   size_t target_prefetch = 0;
@@ -104,9 +151,8 @@ inline SamplingRecoveryPlan sampling_recovery_plan(size_t due_slots,
     plan.missed_slots = due_slots - plan.attempt_slots;
     return plan;
   }
-  if (last_refill_count < last_refill_request && prefetch_count < 2U) {
-    plan.attempt_slots = 1U;
-    plan.missed_slots = due_slots - 1U;
+  if (last_refill_count < last_refill_request && prefetch_count == 0) {
+    plan.missed_slots = due_slots;
     return plan;
   }
 

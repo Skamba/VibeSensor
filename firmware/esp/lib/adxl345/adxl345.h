@@ -5,20 +5,30 @@
 
 class ADXL345 {
  public:
+  enum class FailureKind : uint8_t {
+    kNone = 0,
+    kFifoStatusRead = 1,
+    kFifoDataRead = 2,
+    kDeviceIdRead = 3,
+    kDeviceIdMismatch = 4,
+    kConfigWrite = 5,
+  };
+
   ADXL345(TwoWire& wire,
           uint8_t i2c_addr,
           int sda_pin,
           int scl_pin,
           uint8_t fifo_watermark = 16);
 
-  bool begin();
+  bool begin(FailureKind* failure_kind = nullptr);
+  bool recover_bus(FailureKind* failure_kind = nullptr);
   bool available() const;
 
   // Reads up to max_samples from FIFO and writes XYZ triples into xyz_interleaved.
   // Returns number of samples written.
   size_t read_samples(int16_t* xyz_interleaved,
                       size_t max_samples,
-                      bool* had_io_error = nullptr,
+                      FailureKind* failure_kind = nullptr,
                       bool* fifo_truncated = nullptr);
 
  private:

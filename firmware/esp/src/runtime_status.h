@@ -20,7 +20,11 @@ struct RuntimeStatus {
 
 struct SamplingStatusSnapshot {
   uint32_t sensor_read_errors = 0;
+  uint32_t sensor_fifo_status_failures = 0;
+  uint32_t sensor_fifo_data_failures = 0;
   uint32_t sensor_fifo_truncated = 0;
+  uint32_t sensor_bus_recovery_attempts = 0;
+  uint32_t sensor_bus_recovery_success = 0;
   uint32_t sensor_reinit_attempts = 0;
   uint32_t sensor_reinit_success = 0;
   uint32_t sampling_missed_samples = 0;
