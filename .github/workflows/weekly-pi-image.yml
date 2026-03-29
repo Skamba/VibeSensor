@@ -14,8 +14,8 @@ concurrency:
 
 jobs:
   build-and-release:
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 360
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v6
@@ -32,7 +32,6 @@ jobs:
             echo "build_label=${build_label}"
             echo "tag=weekly-pi-image"
             echo "release_name=Weekly Pi Image ${build_label}"
-            echo "published_artifact=VibeSensor-${build_label}.img.bz2"
           } >> "${GITHUB_OUTPUT}"
 
       - uses: actions/setup-node@v6
@@ -47,85 +46,63 @@ jobs:
           cache: pip
           cache-dependency-path: apps/server/pyproject.toml
 
-      - name: Restore Yocto downloads cache
-        uses: actions/cache@v4
+      - name: Set up arm emulation
+        uses: docker/setup-qemu-action@v4
         with:
-          path: infra/pi-image/yocto/.build/downloads
-          key: yocto-downloads-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('infra/pi-image/yocto/kas/*.yml', 'infra/pi-image/yocto/meta-vibesensor/**', 'infra/pi-image/yocto/build.sh', 'apps/server/pyproject.toml', 'apps/ui/package-lock.json') }}
-          restore-keys: |
-            yocto-downloads-${{ runner.os }}-${{ runner.arch }}-
+          platforms: arm
 
-      - name: Restore Yocto sstate cache
-        uses: actions/cache@v4
-        with:
-          path: infra/pi-image/yocto/.build/sstate-cache
-          key: yocto-sstate-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('infra/pi-image/yocto/kas/*.yml', 'infra/pi-image/yocto/meta-vibesensor/**', 'infra/pi-image/yocto/build.sh', 'apps/server/pyproject.toml', 'apps/ui/package-lock.json') }}
-          restore-keys: |
-            yocto-sstate-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Install Yocto build prerequisites
+      - name: Install Pi image build prerequisites
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y \
-            bzip2 chrpath cpio diffstat dosfstools file gawk git iproute2 \
-            iputils-ping locales mtools openssl parted rsync sudo texinfo \
-            unzip wget xz-utils zstd
-          sudo locale-gen en_US.UTF-8
-          {
-            echo "LANG=en_US.UTF-8"
-            echo "LC_ALL=en_US.UTF-8"
-          } >> "${GITHUB_ENV}"
-          python3 -m pip install --upgrade pip
-          python3 -m pip install "kas>=4,<5" "build>=1,<2"
+          sudo apt-get install -y qemu-user qemu-user-static rsync xz-utils
 
       - name: Build Pi image
         shell: bash
         run: |
           set -euo pipefail
-          BUILD_LABEL="${{ steps.metadata.outputs.build_label }}" ./infra/pi-image/yocto/build.sh
+          ./infra/pi-image/pi-gen/build.sh
 
       - name: Collect weekly release assets
         id: assets
         shell: bash
         run: |
           set -euo pipefail
-          out_dir="infra/pi-image/yocto/out"
+          out_dir="infra/pi-image/pi-gen/out"
           release_dir="${RUNNER_TEMP}/weekly-pi-image"
           mkdir -p "${release_dir}"
 
           artifact="$(find "${out_dir}" -maxdepth 1 -type f \
-            -name "image_*vibesensor-rpi-universal.wic.bz2" \
+            -name "image_*-vibesensor-lite*.zip" \
             | sort | tail -n 1 || true)"
           if [ -z "${artifact}" ]; then
             echo "No Pi image artifact found in ${out_dir}" >&2
             exit 1
           fi
 
-          short_date="${{ steps.metadata.outputs.build_label }}"
-          release_artifact="${release_dir}/VibeSensor-${short_date}.img.bz2"
+          short_date="$(date -u +%y-%m-%d)"
+          release_artifact="${release_dir}/VibeSensor-${short_date}.img.zip"
           cp "${artifact}" "${release_artifact}"
 
           sha_file="${release_artifact}.sha256"
           sha256sum "${release_artifact}" > "${sha_file}"
 
-          version_info_target="${release_dir}/VibeSensor-${short_date}.img.bz2.version.txt"
-          cat > "${version_info_target}" <<EOF
+          version_info_source="${out_dir}/$(basename "${artifact}").version.txt"
+          version_info_target="${release_dir}/VibeSensor-${short_date}.img.zip.version.txt"
+          if [ -f "${version_info_source}" ]; then
+            cp "${version_info_source}" "${version_info_target}"
+          else
+            cat > "${version_info_target}" <<EOF
           git_sha=${GITHUB_SHA}
           git_ref=${GITHUB_REF}
           source_artifact=$(basename "${artifact}")
           EOF
-          echo "published_artifact=VibeSensor-${short_date}.img.bz2" >> "${version_info_target}"
-          echo "build_path=infra/pi-image/yocto/build.sh" >> "${version_info_target}"
-
-          manifest_source="${artifact}.manifest.json"
-          if [ -f "${manifest_source}" ]; then
-            cp "${manifest_source}" "${release_dir}/VibeSensor-${short_date}.img.bz2.manifest.json"
           fi
+          echo "published_artifact=VibeSensor-${short_date}.img.zip" >> "${version_info_target}"
 
           echo "release_dir=${release_dir}" >> "${GITHUB_OUTPUT}"
-          echo "artifact_name=VibeSensor-${short_date}.img.bz2" >> "${GITHUB_OUTPUT}"
+          echo "artifact_name=VibeSensor-${short_date}.img.zip" >> "${GITHUB_OUTPUT}"
 
       - name: Upload weekly image workflow artifact
         uses: actions/upload-artifact@v7
@@ -164,7 +141,7 @@ jobs:
           - Asset: \`${{ steps.assets.outputs.artifact_name }}\`
           - Flash the image with Raspberry Pi Imager after downloading the release asset.
 
-          This workflow uses the supported Yocto/KAS image pipeline at \`infra/pi-image/yocto/build.sh\` to produce the universal 64-bit Raspberry Pi image for Pi 3 / 4 / 5.
+          This workflow reuses \`infra/pi-image/pi-gen/build.sh\` so the weekly image follows the same supported image-build path as local builds.
           Before publishing, it deletes the previous weekly Pi image release so the Releases overview only shows the latest Pi image snapshot.
           EOF
 

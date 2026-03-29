@@ -210,8 +210,8 @@ is on the device, this README owns the backend-side service and config path.
 Use [docs/configuration_reference.md](../../docs/configuration_reference.md) for
 config tuning, [docs/operational-runbooks.md](../../docs/operational-runbooks.md)
 for incident response, and
-[infra/pi-image/yocto/README.md](../../infra/pi-image/yocto/README.md) for the
-supported image-build path and artifact validation.
+[infra/pi-image/pi-gen/README.md](../../infra/pi-image/pi-gen/README.md) for the
+image-build path and artifact validation.
 
 ## Observability
 

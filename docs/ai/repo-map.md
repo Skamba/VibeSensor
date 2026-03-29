@@ -13,7 +13,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - UI runtime owners: `apps/ui/src/app/runtime/`
 - Simulator CLI: `apps/server/vibesensor/adapters/simulator/sim_sender.py` (thin CLI/orchestrator over `sim_client.py`, `sim_scene.py`, and `sim_runtime.py`)
 - Firmware app: `firmware/esp/src/main.cpp` (thin orchestrator) plus `firmware/esp/src/runtime_*.{h,cpp}`
-- Pi image build: `infra/pi-image/yocto/build.sh`, `infra/pi-image/yocto/kas/`, `infra/pi-image/yocto/meta-vibesensor/`, and `infra/pi-image/yocto/validate-image.sh` (legacy reference material remains under `infra/pi-image/pi-gen/`)
+- Pi image build: `infra/pi-image/pi-gen/build.sh` (thin entrypoint), `infra/pi-image/pi-gen/lib/`, `infra/pi-image/pi-gen/templates/`, and `infra/pi-image/pi-gen/validate-image.sh`
 - Local stack entry point: `docker-compose.yml`
 
 ## Top-level layout
@@ -24,8 +24,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `cli/`: CLI entry points — `server.py` (main server), `report.py` (report generation), `preflight.py` (config preflight), `hotspot_config.py` (hotspot config export for shell scripts), `http_api_schema_export.py`, `ws_schema_export.py`.
 - `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic. Hot-path functions accept numpy arrays; scalar functions remain pure Python.
 - `vibesensor/report_i18n.py`: canonical report-string/i18n helpers shared by boundary shaping and PDF rendering.
-- `infra/pi-image/yocto/`: supported Raspberry Pi image build pipeline. `build.sh` prepares the UI bundle, server wheelhouse, firmware cache, and launches the pinned KAS/Yocto build; `kas/` pins the layer stack; `meta-vibesensor/` owns the image/package/runtime recipes and WIC layout; and `validate-image.sh` reruns the post-build mount/chroot validator against an existing artifact.
-- `infra/pi-image/pi-gen/`: deprecated migration reference for the former Raspberry Pi OS + pi-gen image path. It is kept for inspection during the migration window but is no longer the supported CI-backed build flow.
+- `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline. `build.sh` is the thin entrypoint for `BUILD_MODE=app|image|all`; `lib/` owns focused host-side helpers (prereqs, mirror selection, app artifacts, pi-gen repo prep, stage assembly, artifact selection, validation helpers); `templates/` owns tracked stage/config source files copied into `.cache/pi-gen/`; and `validate-image.sh` reruns the post-build mount/chroot/QEMU validator against an existing artifact.
 - `docs/`: human-facing docs plus AI repo maps and runbooks.
 
 ## Backend package layout
