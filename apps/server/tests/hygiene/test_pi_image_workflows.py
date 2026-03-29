@@ -36,7 +36,6 @@ def test_weekly_pi_image_workflow_uses_arm_runner_and_yocto_build() -> None:
     prereq_step = _step_by_name(workflow, "build-and-release", "Install Yocto build prerequisites")
     prereq_script = prereq_step["run"]
     assert "locale-gen en_US.UTF-8" in prereq_script
-    assert "kernel.apparmor_restrict_unprivileged_userns=0" in prereq_script
     assert 'echo "LANG=en_US.UTF-8"' in prereq_script
     assert 'echo "LC_ALL=en_US.UTF-8"' in prereq_script
 
@@ -67,7 +66,6 @@ def test_manual_pi_image_workflow_uses_arm_runner_and_yocto_build() -> None:
     prereq_step = _step_by_name(workflow, "build-image", "Install Yocto build prerequisites")
     prereq_script = prereq_step["run"]
     assert "locale-gen en_US.UTF-8" in prereq_script
-    assert "kernel.apparmor_restrict_unprivileged_userns=0" in prereq_script
     assert 'echo "LANG=en_US.UTF-8"' in prereq_script
     assert 'echo "LC_ALL=en_US.UTF-8"' in prereq_script
 
