@@ -93,6 +93,71 @@ class TestNextStepFieldsRendered:
         assert "mount remains rigid" not in captured[1]
 
 
+class TestNextStepCardPadding:
+    """Regression: next-step row content should not crowd the row border."""
+
+    def test_first_row_uses_comfortable_top_and_left_insets(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        canvas = _make_canvas()
+        rect_calls: list[tuple[float, float, float, float]] = []
+        draw_calls: list[tuple[float, float, str]] = []
+        original_rect = canvas.rect
+        original_draw_string = canvas.drawString
+
+        def capture_rect(x: float, y: float, w: float, h: float, *args, **kwargs):
+            rect_calls.append((float(x), float(y), float(w), float(h)))
+            return original_rect(x, y, w, h, *args, **kwargs)
+
+        def capture_draw_string(x: float, y: float, text: str, *args, **kwargs):
+            draw_calls.append((float(x), float(y), str(text)))
+            return original_draw_string(x, y, text, *args, **kwargs)
+
+        monkeypatch.setattr(canvas, "rect", capture_rect)
+        monkeypatch.setattr(canvas, "drawString", capture_draw_string)
+
+        drawn = _draw_next_steps_table(
+            canvas,
+            20.0,
+            220.0,
+            180.0,
+            0.0,
+            [
+                NextStep(
+                    action=(
+                        "Inspect the rear-right wheel bearing preload and confirm "
+                        "whether the vibration changes with steering input"
+                    ),
+                    why="reproduce the strongest signature under the same load window",
+                    confirm="tone and vibration strength drop after the adjustment",
+                    eta="15 min",
+                ),
+            ],
+            tr=lambda key: {"WHY": "Why", "CONFIRM": "Confirm", "ETA": "ETA"}[key],
+        )
+
+        assert drawn == 1
+        row_x, row_y, _row_w, row_h = rect_calls[0]
+        row_top = row_y + row_h
+
+        number_x, _number_y, _number_text = next(
+            (x, y, text) for x, y, text in draw_calls if text == "1."
+        )
+        action_x, action_y, action_text = next(
+            (x, y, text) for x, y, text in draw_calls if text.startswith("Inspect the")
+        )
+        detail_x, _detail_y, detail_text = next(
+            (x, y, text) for x, y, text in draw_calls if text.startswith("Why:")
+        )
+
+        assert action_text
+        assert detail_text
+        assert number_x - row_x >= 1.8 * mm
+        assert detail_x == action_x
+        assert row_top - action_y >= 2.5 * mm
+
+
 class TestOrphanI18nKeysRemoved:
     """Regression: orphan g-unit i18n keys must not exist."""
 
