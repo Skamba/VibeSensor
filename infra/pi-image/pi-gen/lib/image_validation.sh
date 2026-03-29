@@ -140,7 +140,7 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if ! grep -Fq '/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py' \
+  if ! sudo grep -Fq '/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py' \
     "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"; then
     echo "Validation failed: OBD helper sudoers entry missing from ${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
     exit 1
@@ -432,7 +432,7 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
 
   echo "=== Validation: Bluetooth helper + sudoers ==="
   ls -l "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py" "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
-  grep -n 'vibesensor_.*sudo\|vibesensor_obd_admin.py' "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
+  sudo grep -n 'vibesensor_.*sudo\|vibesensor_obd_admin.py' "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
 
   echo "=== Validation: vibesensor systemd units ==="
   ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true
