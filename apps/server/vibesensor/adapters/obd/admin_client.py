@@ -35,6 +35,14 @@ class CommandResult:
 CommandRunner = Callable[[list[str], int], CommandResult]
 
 
+def _default_helper_script() -> Path:
+    for root in Path(__file__).resolve().parents:
+        candidate = root / "scripts" / "vibesensor_obd_admin.py"
+        if candidate.is_file():
+            return candidate
+    return Path(__file__).resolve().parents[3] / "scripts" / "vibesensor_obd_admin.py"
+
+
 def _default_runner(argv: list[str], timeout_s: int) -> CommandResult:
     try:
         completed = subprocess.run(
@@ -74,7 +82,7 @@ class ObdAdminClient:
         runner: CommandRunner | None = None,
     ) -> None:
         self._helper_script = (
-            Path(__file__).resolve().parents[3] / "scripts" / "vibesensor_obd_admin.py"
+            _default_helper_script()
             if helper_script is None
             else Path(helper_script)
         )

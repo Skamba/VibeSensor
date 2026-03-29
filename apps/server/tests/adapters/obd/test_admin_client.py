@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.adapters.obd import admin_client as admin_client_module
 from vibesensor.adapters.obd.admin_client import CommandResult, ObdAdminClient
 
 
@@ -95,3 +96,29 @@ def test_scan_devices_still_reports_invalid_json_when_stdout_is_malformed(tmp_pa
 
     with pytest.raises(RuntimeError, match="Bluetooth OBD helper returned invalid JSON"):
         client.scan_devices()
+
+
+def test_default_helper_script_walks_up_to_repo_scripts_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    package_file = (
+        tmp_path
+        / ".venv"
+        / "lib"
+        / "python3.13"
+        / "site-packages"
+        / "vibesensor"
+        / "adapters"
+        / "obd"
+        / "admin_client.py"
+    )
+    package_file.parent.mkdir(parents=True)
+    package_file.write_text("", encoding="utf-8")
+
+    helper_script = tmp_path / "scripts" / "vibesensor_obd_admin.py"
+    helper_script.parent.mkdir(parents=True)
+    helper_script.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(admin_client_module, "__file__", str(package_file))
+
+    assert admin_client_module._default_helper_script() == helper_script
