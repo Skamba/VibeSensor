@@ -193,12 +193,7 @@ def _draw_next_steps_table(
         detail_parts: list[str] = []
         if step.why:
             detail_parts.append(f"{tr('WHY')}: {step.why}")
-        if step.eta:
-            eta_text = f"{tr('ETA')}: {step.eta}"
-            if step.confirm:
-                detail_parts.append(f"{tr('CONFIRM')}: {step.confirm}")
-            detail_parts.append(eta_text)
-        elif step.confirm:
+        if step.confirm:
             detail_parts.append(f"{tr('CONFIRM')}: {step.confirm}")
         detail_text = " | ".join(detail_parts)
 

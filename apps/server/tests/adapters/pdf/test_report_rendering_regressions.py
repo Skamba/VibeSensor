@@ -60,7 +60,7 @@ class TestNextStepNumberingContinuation:
 
 
 class TestNextStepFieldsRendered:
-    """Regression: action renders separately from compact why/confirm/eta details."""
+    """Regression: action renders separately from compact why/confirm details."""
 
     def test_optional_fields_are_included_in_rendered_text(
         self,
@@ -88,14 +88,14 @@ class TestNextStepFieldsRendered:
                     eta="15 min",
                 ),
             ],
-            tr=lambda key: {"WHY": "Why", "CONFIRM": "Confirm", "ETA": "ETA"}[key],
+            tr=lambda key: {"WHY": "Why", "CONFIRM": "Confirm"}[key],
         )
 
         assert len(captured) == 2
         assert captured[0] == "Inspect mount"
         assert "Why: verify looseness" in captured[1]
         assert "Confirm: movement increases" in captured[1]
-        assert "ETA: 15 min" in captured[1]
+        assert "ETA:" not in captured[1]
         assert "mount remains rigid" not in captured[1]
 
 
