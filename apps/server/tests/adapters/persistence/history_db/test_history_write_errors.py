@@ -78,6 +78,12 @@ class _FakeGPSMonitor:
     speed_mps = None
     effective_speed_mps = None
     override_speed_mps = None
+    engine_rpm = None
+    engine_rpm_source = None
+
+    @property
+    def gps_speed_mps(self) -> float | None:
+        return self.speed_mps
 
     def resolve_speed(self) -> SpeedResolution:
         return SpeedResolution(speed_mps=None, fallback_active=False, source="none")

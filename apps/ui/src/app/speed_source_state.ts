@@ -15,6 +15,13 @@ export function isManualLikeSpeedSource(source: string | null | undefined): bool
 export function deriveDisplayedSpeedSourceMode(
   settings: SpeedSourceStateSource,
 ): DisplayedSpeedSourceMode {
+  const effectiveSource = resolveEffectiveSpeedSource(settings);
+  if (effectiveSource === "obd2") {
+    return "obd2";
+  }
+  if (isManualLikeSpeedSource(effectiveSource)) {
+    return "manual";
+  }
   return settings.speedSource;
 }
 
