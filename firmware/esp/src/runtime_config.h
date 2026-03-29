@@ -82,6 +82,38 @@ constexpr uint32_t kWifiRetryIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_
 constexpr uint8_t kWifiInitialConnectAttempts =
     static_cast<uint8_t>(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS);
 
+#if defined(CONFIG_FREERTOS_UNICORE) && CONFIG_FREERTOS_UNICORE
+constexpr int kRuntimeCoreCount = 1;
+#else
+constexpr int kRuntimeCoreCount = 2;
+#endif
+
+#if defined(CONFIG_ARDUINO_RUNNING_CORE)
+constexpr int kArduinoLoopTaskCore = CONFIG_ARDUINO_RUNNING_CORE;
+#elif defined(ARDUINO_RUNNING_CORE)
+constexpr int kArduinoLoopTaskCore = ARDUINO_RUNNING_CORE;
+#else
+constexpr int kArduinoLoopTaskCore = 1;
+#endif
+
+constexpr int kSamplingTaskFallbackCore = 0;
+
+constexpr int preferred_sampling_task_core(int loop_task_core,
+                                           int runtime_core_count,
+                                           int fallback_core = kSamplingTaskFallbackCore) {
+  return (runtime_core_count <= 1)
+             ? ((loop_task_core >= 0) ? loop_task_core : 0)
+             : ((loop_task_core == 0) ? 1 : ((loop_task_core == 1) ? 0 : fallback_core));
+}
+
+constexpr int kDefaultSamplingTaskCore =
+    preferred_sampling_task_core(kArduinoLoopTaskCore, kRuntimeCoreCount);
+
+#ifndef VIBESENSOR_SAMPLING_TASK_CORE
+#define VIBESENSOR_SAMPLING_TASK_CORE kDefaultSamplingTaskCore
+#endif
+constexpr int kSamplingTaskCore = VIBESENSOR_SAMPLING_TASK_CORE;
+
 constexpr size_t kSensorPrefetchSamples = 32;
 constexpr size_t kSensorPrefetchLowWaterSamples = 16;
 constexpr size_t kSensorPrefetchSteadyTargetSamples = 24;
@@ -114,6 +146,13 @@ static_assert(VIBESENSOR_FRAME_QUEUE_LEN_TARGET >= VIBESENSOR_FRAME_QUEUE_LEN_MI
 static_assert(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS > 0,
               "VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS must be > 0");
 static_assert(kFrameSamplesMaxByDatagram > 0, "kMaxDatagramBytes too small for protocol");
+static_assert(kRuntimeCoreCount > 0, "runtime must expose at least one core");
+static_assert(kArduinoLoopTaskCore >= -1 && kArduinoLoopTaskCore < kRuntimeCoreCount,
+              "Arduino loop task core must be -1 (no affinity) or within the runtime core range");
+static_assert(kSamplingTaskCore >= 0 && kSamplingTaskCore < kRuntimeCoreCount,
+              "sampling task core must be inside the runtime core range");
+static_assert(kDefaultSamplingTaskCore >= 0 && kDefaultSamplingTaskCore < kRuntimeCoreCount,
+              "default sampling task core must be inside the runtime core range");
 static_assert(kSensorPrefetchLowWaterSamples < kSensorPrefetchSamples,
               "sensor prefetch low-water must be below prefetch capacity");
 static_assert(kSensorPrefetchSteadyTargetSamples <= kSensorPrefetchSamples,
