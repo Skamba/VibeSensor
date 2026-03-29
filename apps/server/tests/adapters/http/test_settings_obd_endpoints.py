@@ -57,6 +57,24 @@ def test_scan_obd_devices_endpoint_returns_serialized_devices() -> None:
     speed_service.scan_obd_devices.assert_called_once_with()
 
 
+def test_scan_obd_devices_endpoint_returns_structured_runtime_error_detail() -> None:
+    client, _, speed_service = _build_client()
+    speed_service.scan_obd_devices.side_effect = RuntimeError(
+        "Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry "
+        "to run non-interactively."
+    )
+
+    response = client.post("/api/settings/obd/scan")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": (
+            "Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry "
+            "to run non-interactively."
+        )
+    }
+
+
 def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
     client, settings_store, speed_service = _build_client()
     speed_service.pair_obd_device.return_value = ObdDeviceSnapshot(

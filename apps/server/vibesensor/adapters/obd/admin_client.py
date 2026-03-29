@@ -13,6 +13,15 @@ from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 
 __all__ = ["CommandResult", "ObdAdminClient"]
 
+_OBD_SUDO_HELPER_ERROR = (
+    "Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry "
+    "to run non-interactively."
+)
+_OBD_HELPER_LAUNCH_ERROR = (
+    "Bluetooth OBD helper failed before returning structured output. "
+    "Verify the helper installation on the Pi and try again."
+)
+
 
 @dataclass(frozen=True, slots=True)
 class CommandResult:
@@ -75,6 +84,9 @@ class ObdAdminClient:
     def _run_helper(self, args: list[str], *, timeout_s: int) -> dict[str, Any]:
         argv = [self._sudo_path, "-n", str(self._helper_script), *args]
         result = self._runner(argv, timeout_s)
+        launch_error = self._pre_json_failure(result)
+        if launch_error is not None:
+            raise RuntimeError(launch_error)
         raw_output = result.stdout or result.stderr or ""
         try:
             payload_raw = json.loads(raw_output or "{}")
@@ -95,6 +107,23 @@ class ObdAdminClient:
             )
             raise RuntimeError(error)
         return payload
+
+    @staticmethod
+    def _pre_json_failure(result: CommandResult) -> str | None:
+        if result.returncode == 0 or result.stdout:
+            return None
+        stderr = result.stderr.strip()
+        if not stderr or stderr.lstrip().startswith("{"):
+            return None
+        lowered = stderr.lower()
+        if (
+            "sudo:" in lowered
+            or "password is required" in lowered
+            or "a terminal is required" in lowered
+            or "no tty present" in lowered
+        ):
+            return _OBD_SUDO_HELPER_ERROR
+        return _OBD_HELPER_LAUNCH_ERROR
 
     @staticmethod
     def _device_from_payload(raw: object) -> ObdDeviceSnapshot:
