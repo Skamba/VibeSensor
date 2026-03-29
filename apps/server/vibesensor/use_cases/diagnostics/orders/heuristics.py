@@ -7,6 +7,7 @@ from dataclasses import replace
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import OrderMatchObservation, VibrationSource
 from vibesensor.shared.constants.analysis import ORDER_MIN_CONFIDENCE, ORDER_MIN_MATCH_POINTS
+from vibesensor.shared.locations import is_wheel_location
 from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.orders.settings import ORDER_HEURISTIC_SETTINGS
 
@@ -113,6 +114,7 @@ def suppress_engine_aliases(
 
 def apply_localization_override(
     *,
+    suspected_source: VibrationSource,
     per_location_dominant: bool,
     unique_match_locations: set[str],
     connected_locations: set[str],
@@ -124,8 +126,29 @@ def apply_localization_override(
 ) -> tuple[float, bool]:
     """Adjust localization confidence when only one connected sensor matched."""
     settings = ORDER_HEURISTIC_SETTINGS
+    wheel_sensor_count = sum(1 for location in connected_locations if is_wheel_location(location))
     if (
-        per_location_dominant
+        suspected_source == VibrationSource.WHEEL_TIRE
+        and per_location_dominant
+        and wheel_sensor_count >= 4
+        and not no_wheel_override
+    ):
+        localization_confidence = min(
+            1.0,
+            settings.dominant_single_location_base
+            + settings.dominant_single_location_step * (wheel_sensor_count - 1),
+        )
+        return localization_confidence, False
+    if (
+        suspected_source == VibrationSource.DRIVELINE
+        and per_location_dominant
+        and wheel_sensor_count >= 4
+        and matched >= min_match_points
+    ):
+        return localization_confidence, True
+    if (
+        suspected_source == VibrationSource.WHEEL_TIRE
+        and per_location_dominant
         and len(unique_match_locations) == 1
         and len(connected_locations) >= 2
         and not no_wheel_override
@@ -137,7 +160,8 @@ def apply_localization_override(
         )
         weak_spatial_separation = False
     elif (
-        len(unique_match_locations) == 1
+        suspected_source == VibrationSource.WHEEL_TIRE
+        and len(unique_match_locations) == 1
         and len(connected_locations) >= 2
         and matched >= min_match_points
         and not no_wheel_override

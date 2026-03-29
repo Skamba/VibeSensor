@@ -214,6 +214,18 @@ class TestSimulatorIngestion:
             f"Expected front-left localization for injected fault, got {strongest_location!r}"
         )
 
+    def test_wheel_overlap_is_demoted_or_explicitly_explained(self) -> None:
+        """Single-wheel simulator runs should not surface opaque wheel/driveline ties."""
+        causes = self.insights.get("top_causes") or []
+        assert causes, "Expected at least one top cause"
+        sources = [str(cause.get("suspected_source") or "").lower() for cause in causes]
+        assert sources[0] == "wheel/tire"
+        if "driveline" in sources:
+            reason = str(causes[0].get("confidence_reason") or "").lower()
+            assert "wheel and driveline evidence overlap" in reason
+            assert "could not strongly differentiate" in reason
+            assert "inspect both areas" in reason
+
     def test_findings_nonempty(self) -> None:
         """Findings list should be non-empty for a fault scenario."""
         findings = self.insights.get("findings") or []

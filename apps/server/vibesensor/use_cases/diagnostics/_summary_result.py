@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 from vibesensor.domain import (
     DiagnosticCase,
@@ -70,19 +70,19 @@ def _final_top_causes(
     domain_findings: tuple[DomainFinding, ...],
     domain_top_causes: tuple[DomainFinding, ...],
 ) -> tuple[DomainFinding, ...]:
-    top_cause_ids = {finding.finding_id for finding in domain_top_causes if finding.finding_id}
-    top_cause_signatures = {
-        finding.finding_id: finding.signatures
-        for finding in domain_top_causes
-        if finding.finding_id and finding.signatures
+    if not domain_top_causes:
+        return ()
+    top_causes_by_id = {
+        finding.finding_id: finding for finding in domain_top_causes if finding.finding_id
     }
-    result: list[DomainFinding] = []
-    for finding in domain_findings:
-        if finding.finding_id not in top_cause_ids:
-            continue
-        signatures = top_cause_signatures.get(finding.finding_id)
-        result.append(replace(finding, signatures=signatures) if signatures else finding)
-    return tuple(result)
+    if top_causes_by_id:
+        return tuple(
+            top_causes_by_id[finding.finding_id]
+            for finding in domain_findings
+            if finding.finding_id in top_causes_by_id
+        )
+    domain_findings_set = set(domain_findings)
+    return tuple(finding for finding in domain_top_causes if finding in domain_findings_set)
 
 
 def build_analysis_result(

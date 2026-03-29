@@ -126,6 +126,7 @@ def score_order_finding(
     unique_match_locations = match.unique_match_locations
     no_wheel_override = loc_result.no_wheel_sensors if loc_result is not None else False
     localization_confidence, weak_spatial_separation = apply_localization_override(
+        suspected_source=hypothesis.suspected_source,
         per_location_dominant=context.per_location_dominant,
         unique_match_locations=unique_match_locations,
         connected_locations=context.connected_locations,
@@ -134,6 +135,12 @@ def score_order_finding(
         localization_confidence=localization_confidence,
         weak_spatial_separation=weak_spatial_separation,
     )
+    if domain_hotspot is not None:
+        domain_hotspot = replace(
+            domain_hotspot,
+            localization_confidence=localization_confidence,
+            weak_spatial_separation=weak_spatial_separation,
+        )
 
     corroborating_locations = len(unique_match_locations)
     error_denominator = 0.25 * match.compliance

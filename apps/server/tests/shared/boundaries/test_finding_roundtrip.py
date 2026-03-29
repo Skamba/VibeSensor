@@ -162,10 +162,32 @@ class TestFindingRoundtrip:
         assert restored.origin is not None
         assert restored.origin.reason == "Strong 1x wheel order detected"
 
+    def test_confidence_assessment_preserved(self) -> None:
+        original = Finding(
+            finding_id="F007",
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            confidence=0.7,
+            weak_spatial_separation=True,
+        ).with_confidence_assessment(
+            strength_band_key="moderate",
+            steady_speed=True,
+            has_reference_gaps=False,
+            sensor_count=4,
+        )
+
+        restored = _roundtrip(original)
+
+        assert restored.confidence_assessment is not None
+        assert original.confidence_assessment is not None
+        assert restored.confidence_assessment.label_key == original.confidence_assessment.label_key
+        assert restored.confidence_assessment.tone == original.confidence_assessment.tone
+        assert restored.confidence_assessment.pct_text == original.confidence_assessment.pct_text
+        assert restored.confidence_assessment.reason == original.confidence_assessment.reason
+
     def test_decode_ignores_pure_presentation_hints(self) -> None:
         baseline_payload = finding_payload_from_domain(
             Finding(
-                finding_id="F007",
+                finding_id="F008",
                 suspected_source=VibrationSource.WHEEL_TIRE,
                 confidence=0.7,
                 order="1x wheel",
@@ -179,8 +201,5 @@ class TestFindingRoundtrip:
             "units": "g",
             "definition": {"_i18n_key": "IGNORED"},
         }
-        noisy_payload["confidence_label_key"] = "CONFIDENCE_LOW"
-        noisy_payload["confidence_tone"] = "neutral"
-        noisy_payload["confidence_pct"] = "999%"
 
         assert finding_from_payload(noisy_payload) == finding_from_payload(baseline_payload)

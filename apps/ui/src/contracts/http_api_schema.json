@@ -2537,6 +2537,17 @@
             ],
             "title": "Confidence Pct"
           },
+          "confidence_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Reason"
+          },
           "confidence_tone": {
             "anyOf": [
               {
