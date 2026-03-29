@@ -36,6 +36,39 @@ def _coerce_text(raw: str | bytes | None) -> str:
     return raw
 
 
+def _clean_bluetooth_name(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+    value = raw.strip()
+    return value or None
+
+
+def _looks_like_mac_alias(raw: str | None) -> bool:
+    value = _clean_bluetooth_name(raw)
+    if value is None:
+        return False
+    compact = value.replace(":", "").replace("-", "")
+    if len(compact) != 12:
+        return False
+    try:
+        bytes.fromhex(compact)
+    except ValueError:
+        return False
+    return True
+
+
+def _preferred_bluetooth_name(*candidates: str | None) -> str | None:
+    cleaned = [
+        value for value in (_clean_bluetooth_name(candidate) for candidate in candidates) if value
+    ]
+    if not cleaned:
+        return None
+    for candidate in cleaned:
+        if not _looks_like_mac_alias(candidate):
+            return candidate
+    return cleaned[0]
+
+
 def _default_runner(argv: list[str], timeout_s: int, allow_timeout: bool) -> tuple[int, str, str]:
     try:
         completed = subprocess.run(
@@ -66,7 +99,7 @@ def parse_bluetooth_devices(output: str) -> list[ObdDeviceSnapshot]:
             mac_address = normalize_obd_mac(raw_mac)
         except ValueError:
             continue
-        name = " ".join(name_parts).strip() or None
+        name = _clean_bluetooth_name(" ".join(name_parts))
         devices[mac_address] = ObdDeviceSnapshot(
             mac_address=mac_address,
             name=name,
@@ -81,15 +114,19 @@ def parse_bluetooth_devices(output: str) -> list[ObdDeviceSnapshot]:
 def parse_bluetooth_device_info(output: str, mac_address: str) -> ObdDeviceSnapshot:
     """Parse ``bluetoothctl info`` output into an ``ObdDeviceSnapshot``."""
     name: str | None = None
+    local_name: str | None = None
+    alias: str | None = None
     paired = False
     trusted = False
     connected = False
     for raw_line in output.splitlines():
         line = raw_line.strip()
         if line.startswith("Name:"):
-            name = line.partition(":")[2].strip() or name
-        elif line.startswith("Alias:") and name is None:
-            name = line.partition(":")[2].strip() or None
+            name = _clean_bluetooth_name(line.partition(":")[2]) or name
+        elif line.startswith("LocalName:"):
+            local_name = _clean_bluetooth_name(line.partition(":")[2]) or local_name
+        elif line.startswith("Alias:"):
+            alias = _clean_bluetooth_name(line.partition(":")[2]) or alias
         elif line.startswith("Paired:"):
             paired = line.partition(":")[2].strip().lower() == "yes"
         elif line.startswith("Trusted:"):
@@ -98,7 +135,7 @@ def parse_bluetooth_device_info(output: str, mac_address: str) -> ObdDeviceSnaps
             connected = line.partition(":")[2].strip().lower() == "yes"
     return ObdDeviceSnapshot(
         mac_address=normalize_obd_mac(mac_address),
-        name=name,
+        name=_preferred_bluetooth_name(name, local_name, alias),
         paired=paired,
         trusted=trusted,
         connected=connected,
@@ -158,13 +195,21 @@ class BluetoothObdAdminHelper:
         self._run(["systemctl", "start", "bluetooth"], timeout_s=10, allow_timeout=False)
         self._bluetoothctl("power", "on", timeout_s=10)
 
-    def device_info(self, mac_address: str, *, ensure_ready: bool = True) -> ObdDeviceSnapshot:
+    def device_info(
+        self,
+        mac_address: str,
+        *,
+        ensure_ready: bool = True,
+        resolve_rfcomm: bool = True,
+    ) -> ObdDeviceSnapshot:
         normalized = normalize_obd_mac(mac_address)
         if ensure_ready:
             self._prepare_controller()
         bt_mac = bluetooth_mac_address(normalized)
         info_output = self._bluetoothctl("info", bt_mac, timeout_s=8, ignore_errors=True)
         device = parse_bluetooth_device_info(info_output, normalized)
+        if not resolve_rfcomm:
+            return device
         try:
             channel_output = self._run(
                 ["sdptool", "browse", bt_mac],
@@ -197,14 +242,26 @@ class BluetoothObdAdminHelper:
             self._bluetoothctl("scan", "off", timeout_s=5, ignore_errors=True)
         resolved: list[ObdDeviceSnapshot] = []
         for device in devices.values():
-            if device.mac_address in paired_devices:
+            needs_detailed_info = (
+                device.mac_address in paired_devices
+                or device.name is None
+                or _looks_like_mac_alias(device.name)
+            )
+            if needs_detailed_info:
                 try:
-                    detailed = self.device_info(device.mac_address, ensure_ready=False)
+                    detailed = self.device_info(
+                        device.mac_address,
+                        ensure_ready=False,
+                        resolve_rfcomm=False,
+                    )
                 except _HelperFailure:
-                    detailed = replace(device, paired=True)
+                    detailed = replace(device, paired=device.mac_address in paired_devices)
                 else:
-                    if detailed.name is None and device.name is not None:
-                        detailed = replace(detailed, name=device.name)
+                    detailed = replace(
+                        detailed,
+                        name=_preferred_bluetooth_name(detailed.name, device.name),
+                        paired=detailed.paired or device.mac_address in paired_devices,
+                    )
                 resolved.append(detailed)
             else:
                 resolved.append(device)
