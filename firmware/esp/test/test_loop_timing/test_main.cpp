@@ -4,350 +4,285 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "../../src/runtime_queue.cpp"
+#include "reliability.h"
+#include "../../src/runtime_config.h"
+#include "../../src/runtime_sample_handoff.cpp"
 
 namespace {
 
-using vibesensor::runtime::DataFrame;
-using vibesensor::runtime::FrameQueueState;
-using vibesensor::runtime::RuntimeStatus;
+using vibesensor::runtime::PendingSample;
+using vibesensor::runtime::SampleHandoffState;
 
 constexpr uint64_t kStepUs = 1000000ULL / vibesensor::runtime::kSampleRateHz;
 constexpr uint64_t kRunDurationUs = 12000000ULL;
-constexpr uint64_t kFrameIntervalUs =
-    static_cast<uint64_t>(vibesensor::runtime::kFrameSamples) * kStepUs;
-constexpr uint64_t kAckPauseStartUs = 2000000ULL;
-constexpr uint64_t kAckPauseDurationUs = 750000ULL;
 constexpr uint64_t kStatusSpikeIntervalUs = 10000000ULL;
-constexpr uint32_t kPreSamplingWorkUs = 120;
-constexpr uint32_t kPostSamplingWorkUs = 90;
+constexpr uint32_t kPreLoopWorkUs = 120;
+constexpr uint32_t kPostLoopWorkUs = 90;
 constexpr uint32_t kStatusSpikeCostUs = 2200;
 constexpr uint32_t kRefillFixedUs = 70;
-constexpr uint32_t kRefillPerSampleUs = 105;
-constexpr uint32_t kAppendSampleCostUs = 10;
-constexpr uint32_t kLegacyIdleDelayUs = 1000;
-constexpr uint32_t kIdleWakeGuardUs = 150;
-constexpr uint32_t kIdleDelayCapUs = 1000;
-constexpr size_t kSimulationQueueCapacity = 8;
-constexpr uint32_t kLegacyRandomSeed = 0x12345678U;
-
-enum class IdlePolicy {
-  kLegacyDelay1Ms,
-  kDeterministicSleep,
-};
-
-enum class RefillPolicy {
-  kLegacyRandomized,
-  kDeterministicDithered,
-};
+constexpr uint32_t kRefillPerSampleUs = 90;
+constexpr uint32_t kProduceSampleCostUs = 10;
+constexpr size_t kSimulationHandoffCapacity = 96;
 
 struct SimulationMetrics {
-  uint64_t loops = 0;
-  uint64_t samples_emitted = 0;
-  uint64_t catch_up_loops = 0;
-  uint64_t catch_up_iterations = 0;
-  uint64_t max_samples_per_loop = 0;
-  uint64_t budget_exhaustions = 0;
+  uint64_t loop_iterations = 0;
+  uint64_t samples_produced = 0;
+  uint64_t samples_consumed = 0;
   uint64_t missed_samples = 0;
+  uint64_t total_lateness_us = 0;
+  uint64_t max_lateness_us = 0;
   uint64_t refill_events = 0;
-  uint64_t refill_samples = 0;
   uint64_t refill_duration_min_us = std::numeric_limits<uint64_t>::max();
   uint64_t refill_duration_max_us = 0;
-  uint64_t queue_peak = 0;
-  uint64_t frames_drained = 0;
-  uint64_t loop_interval_min_us = std::numeric_limits<uint64_t>::max();
-  uint64_t loop_interval_max_us = 0;
-  uint64_t max_sample_lateness_us = 0;
-  uint64_t total_sample_lateness_us = 0;
-  uint64_t idle_total_us = 0;
-  RuntimeStatus status = {};
+  uint64_t handoff_peak = 0;
+  uint64_t handoff_overflow_drops = 0;
 };
 
-struct SimulationState {
-  DataFrame frames[kSimulationQueueCapacity] = {};
-  FrameQueueState queue = {};
+struct ProducerState {
+  PendingSample handoff_storage[kSimulationHandoffCapacity] = {};
+  SampleHandoffState handoff = {};
   size_t prefetch_count = 0;
-  uint64_t now_us = 0;
-  uint64_t next_sample_due_us = 0;
-  uint64_t next_ack_us = kFrameIntervalUs;
-  uint64_t next_status_spike_us = kStatusSpikeIntervalUs;
-  uint32_t random_state = kLegacyRandomSeed;
-  uint32_t refill_cycle = 0;
-  int16_t next_sample_value = 0;
+  size_t last_refill_request = 0;
+  size_t last_refill_count = 0;
+  bool recent_refill_shortfall = false;
+  uint64_t next_due_us = kStepUs;
+  uint64_t producer_now_us = 0;
 };
 
-FrameQueueState make_queue_state(DataFrame* frames, size_t capacity) {
-  FrameQueueState state{};
-  state.queue = frames;
-  state.capacity = capacity;
-  return state;
-}
-
-uint32_t advance_legacy_random(uint32_t& state) {
-  state = (state * 1664525U) + 1013904223U;
-  return state;
-}
-
-size_t legacy_randomized_refill_count(size_t prefetch_count, uint32_t& random_state) {
-  size_t max_to_read = vibesensor::runtime::kSensorReadBatchSamples;
-  const size_t free_slots = vibesensor::runtime::kSensorPrefetchSamples - prefetch_count;
-  if (free_slots < max_to_read) {
-    max_to_read = free_slots;
+void update_refill_metrics(SimulationMetrics& metrics, size_t refill_count) {
+  if (refill_count == 0) {
+    return;
   }
-  if (max_to_read > 1) {
-    max_to_read = 1 + (advance_legacy_random(random_state) % max_to_read);
+  const uint64_t refill_duration_us =
+      kRefillFixedUs + (static_cast<uint64_t>(refill_count) * kRefillPerSampleUs);
+  metrics.refill_events++;
+  if (refill_duration_us < metrics.refill_duration_min_us) {
+    metrics.refill_duration_min_us = refill_duration_us;
   }
-  return max_to_read;
-}
-
-bool in_ack_pause_window(uint64_t ack_slot_us) {
-  return ack_slot_us >= kAckPauseStartUs &&
-         ack_slot_us < (kAckPauseStartUs + kAckPauseDurationUs);
-}
-
-void update_queue_peak(SimulationMetrics& metrics, const FrameQueueState& queue_state) {
-  const uint64_t size = static_cast<uint64_t>(vibesensor::runtime::frame_queue_size(queue_state));
-  if (size > metrics.queue_peak) {
-    metrics.queue_peak = size;
+  if (refill_duration_us > metrics.refill_duration_max_us) {
+    metrics.refill_duration_max_us = refill_duration_us;
   }
 }
 
-void drain_acked_frames(SimulationState& state, SimulationMetrics& metrics) {
-  while (state.now_us >= state.next_ack_us) {
-    if (!in_ack_pause_window(state.next_ack_us)) {
-      DataFrame* frame = vibesensor::runtime::peek_frame(state.queue);
-      if (frame != nullptr) {
-        vibesensor::runtime::ack_data_frames(state.queue, frame->seq);
-        metrics.frames_drained++;
+void maybe_refill(ProducerState& state, size_t due_slots, SimulationMetrics& metrics) {
+  state.last_refill_request = 0;
+  state.last_refill_count = 0;
+  const vibesensor::reliability::SamplingRefillPlan plan =
+      vibesensor::reliability::sampling_prefetch_refill_plan(
+          state.prefetch_count,
+          vibesensor::runtime::kSensorPrefetchSamples,
+          vibesensor::runtime::kSensorPrefetchLowWaterSamples,
+          vibesensor::runtime::kSensorPrefetchSteadyTargetSamples,
+          vibesensor::runtime::kSensorPrefetchLateTargetSamples,
+          due_slots,
+          state.recent_refill_shortfall);
+  if (plan.request_samples == 0) {
+    return;
+  }
+
+  state.last_refill_request = plan.request_samples;
+  state.last_refill_count = plan.request_samples;
+  state.recent_refill_shortfall = false;
+  state.prefetch_count += plan.request_samples;
+  state.producer_now_us +=
+      kRefillFixedUs + (static_cast<uint64_t>(plan.request_samples) * kRefillPerSampleUs);
+  update_refill_metrics(metrics, plan.request_samples);
+}
+
+void update_lateness_metrics(SimulationMetrics& metrics,
+                             uint64_t produced_at_us,
+                             uint64_t due_us) {
+  const uint64_t lateness_us = produced_at_us > due_us ? (produced_at_us - due_us) : 0;
+  metrics.total_lateness_us += lateness_us;
+  if (lateness_us > metrics.max_lateness_us) {
+    metrics.max_lateness_us = lateness_us;
+  }
+}
+
+void produce_due_slots(ProducerState& state,
+                       size_t due_slots,
+                       bool publish_to_handoff,
+                       SimulationMetrics& metrics) {
+  if (due_slots == 0) {
+    return;
+  }
+
+  maybe_refill(state, due_slots, metrics);
+  const size_t headroom = publish_to_handoff ? vibesensor::runtime::sample_handoff_free_slots(state.handoff)
+                                             : due_slots;
+  const vibesensor::reliability::SamplingRecoveryPlan recovery =
+      vibesensor::reliability::sampling_recovery_plan(
+          due_slots, headroom, state.prefetch_count, state.last_refill_request, state.last_refill_count);
+
+  size_t produced = 0;
+  while (produced < recovery.attempt_slots) {
+    const size_t remaining_due = due_slots - produced;
+    maybe_refill(state, remaining_due, metrics);
+    if (state.prefetch_count == 0) {
+      break;
+    }
+
+    update_lateness_metrics(metrics, state.producer_now_us, state.next_due_us);
+    state.prefetch_count--;
+
+    if (publish_to_handoff) {
+      PendingSample sample{};
+      sample.due_us = state.next_due_us;
+      sample.x = static_cast<int16_t>(metrics.samples_produced);
+      sample.y = static_cast<int16_t>(metrics.samples_produced + 1);
+      sample.z = static_cast<int16_t>(metrics.samples_produced + 2);
+      if (!vibesensor::runtime::enqueue_pending_sample(state.handoff, sample)) {
+        metrics.handoff_overflow_drops = state.handoff.overflow_drops;
+        break;
+      }
+      if (state.handoff.high_watermark > metrics.handoff_peak) {
+        metrics.handoff_peak = state.handoff.high_watermark;
       }
     }
-    state.next_ack_us += kFrameIntervalUs;
+
+    metrics.samples_produced++;
+    state.producer_now_us += kProduceSampleCostUs;
+    state.next_due_us += kStepUs;
+    produced++;
   }
-  update_queue_peak(metrics, state.queue);
+
+  const size_t missed_slots = due_slots - produced;
+  if (missed_slots > 0) {
+    metrics.missed_samples += missed_slots;
+    state.next_due_us += static_cast<uint64_t>(missed_slots) * kStepUs;
+  }
+  metrics.handoff_overflow_drops = state.handoff.overflow_drops;
 }
 
-SimulationMetrics run_simulation(IdlePolicy idle_policy, RefillPolicy refill_policy) {
-  SimulationState state{};
+void advance_dedicated_producer_to(uint64_t wall_time_us,
+                                   ProducerState& state,
+                                   SimulationMetrics& metrics) {
+  while (state.next_due_us <= wall_time_us) {
+    if (state.producer_now_us < state.next_due_us) {
+      state.producer_now_us = state.next_due_us;
+    }
+    const size_t due_slots = static_cast<size_t>(vibesensor::reliability::sampling_slots_due(
+        state.producer_now_us,
+        state.next_due_us,
+        kStepUs));
+    produce_due_slots(state, due_slots, true, metrics);
+  }
+}
+
+void drain_handoff(ProducerState& state, SimulationMetrics& metrics) {
+  PendingSample sample{};
+  while (vibesensor::runtime::dequeue_pending_sample(state.handoff, &sample)) {
+    metrics.samples_consumed++;
+  }
+}
+
+SimulationMetrics run_cooperative_simulation() {
+  ProducerState state{};
   SimulationMetrics metrics{};
-  state.queue = make_queue_state(state.frames, kSimulationQueueCapacity);
+  uint64_t loop_now_us = 0;
+  uint64_t next_status_spike_us = kStatusSpikeIntervalUs;
 
-  uint64_t previous_loop_start_us = 0;
-  bool have_previous_loop_start = false;
-
-  while (state.now_us < kRunDurationUs) {
-    const uint64_t loop_start_us = state.now_us;
-    metrics.loops++;
-    if (have_previous_loop_start) {
-      const uint64_t loop_interval_us = loop_start_us - previous_loop_start_us;
-      if (loop_interval_us < metrics.loop_interval_min_us) {
-        metrics.loop_interval_min_us = loop_interval_us;
-      }
-      if (loop_interval_us > metrics.loop_interval_max_us) {
-        metrics.loop_interval_max_us = loop_interval_us;
-      }
+  while (loop_now_us < kRunDurationUs) {
+    metrics.loop_iterations++;
+    loop_now_us += kPreLoopWorkUs;
+    state.producer_now_us = loop_now_us;
+    if (state.next_due_us <= state.producer_now_us) {
+      const size_t due_slots = static_cast<size_t>(vibesensor::reliability::sampling_slots_due(
+          state.producer_now_us,
+          state.next_due_us,
+          kStepUs));
+      produce_due_slots(state, due_slots, false, metrics);
+      loop_now_us = state.producer_now_us;
     }
-    previous_loop_start_us = loop_start_us;
-    have_previous_loop_start = true;
-
-    state.now_us += kPreSamplingWorkUs;
-    const uint64_t sampling_loop_started_us = state.now_us;
-    uint64_t now_us = state.now_us;
-    uint64_t samples_this_loop = 0;
-
-    while (vibesensor::reliability::sampling_slots_due(now_us,
-                                                       state.next_sample_due_us,
-                                                       kStepUs) > 0) {
-      if (vibesensor::reliability::sampling_catch_up_budget_exhausted(
-              sampling_loop_started_us,
-              now_us,
-              vibesensor::runtime::kSamplingCatchUpBudgetUs)) {
-        metrics.budget_exhaustions++;
-        break;
-      }
-
-      if (state.prefetch_count <= vibesensor::runtime::kSensorPrefetchLowWaterSamples) {
-        const size_t refill_count =
-            refill_policy == RefillPolicy::kLegacyRandomized
-                ? legacy_randomized_refill_count(state.prefetch_count, state.random_state)
-                : vibesensor::reliability::sampling_prefetch_refill_count(
-                      state.prefetch_count,
-                      vibesensor::runtime::kSensorPrefetchSamples,
-                      vibesensor::reliability::sampling_dithered_batch_target(
-                          vibesensor::runtime::kSensorReadBatchSamples,
-                          state.refill_cycle++));
-        if (refill_count > 0) {
-          const uint64_t refill_duration_us =
-              kRefillFixedUs + (static_cast<uint64_t>(refill_count) * kRefillPerSampleUs);
-          metrics.refill_events++;
-          metrics.refill_samples += refill_count;
-          if (refill_duration_us < metrics.refill_duration_min_us) {
-            metrics.refill_duration_min_us = refill_duration_us;
-          }
-          if (refill_duration_us > metrics.refill_duration_max_us) {
-            metrics.refill_duration_max_us = refill_duration_us;
-          }
-          state.prefetch_count += refill_count;
-          now_us += refill_duration_us;
-        }
-      }
-
-      if (state.prefetch_count == 0) {
-        metrics.missed_samples++;
-        state.next_sample_due_us += kStepUs;
-        break;
-      }
-
-      const uint64_t sample_lateness_us =
-          now_us > state.next_sample_due_us ? (now_us - state.next_sample_due_us) : 0;
-      metrics.total_sample_lateness_us += sample_lateness_us;
-      if (sample_lateness_us > metrics.max_sample_lateness_us) {
-        metrics.max_sample_lateness_us = sample_lateness_us;
-      }
-
-      state.prefetch_count--;
-      vibesensor::runtime::append_sample(state.queue,
-                                         metrics.status,
-                                         state.next_sample_value,
-                                         static_cast<int16_t>(state.next_sample_value + 1),
-                                         static_cast<int16_t>(state.next_sample_value + 2),
-                                         state.next_sample_due_us,
-                                         0);
-      state.next_sample_value = static_cast<int16_t>(state.next_sample_value + 1);
-      samples_this_loop++;
-      metrics.samples_emitted++;
-      now_us += kAppendSampleCostUs;
-      state.next_sample_due_us += kStepUs;
-      update_queue_peak(metrics, state.queue);
+    loop_now_us += kPostLoopWorkUs;
+    if (loop_now_us >= next_status_spike_us) {
+      loop_now_us += kStatusSpikeCostUs;
+      next_status_spike_us += kStatusSpikeIntervalUs;
     }
-
-    const uint64_t skipped_slots =
-        vibesensor::reliability::sampling_slots_due(now_us,
-                                                    state.next_sample_due_us,
-                                                    kStepUs);
-    if (skipped_slots > 0) {
-      metrics.missed_samples += skipped_slots;
-      state.next_sample_due_us += skipped_slots * kStepUs;
-    }
-
-    if (samples_this_loop > 1) {
-      metrics.catch_up_loops++;
-      metrics.catch_up_iterations += (samples_this_loop - 1);
-    }
-    if (samples_this_loop > metrics.max_samples_per_loop) {
-      metrics.max_samples_per_loop = samples_this_loop;
-    }
-
-    state.now_us = now_us;
-    drain_acked_frames(state, metrics);
-
-    state.now_us += kPostSamplingWorkUs;
-    if (state.now_us >= state.next_status_spike_us) {
-      state.now_us += kStatusSpikeCostUs;
-      state.next_status_spike_us += kStatusSpikeIntervalUs;
-    }
-    drain_acked_frames(state, metrics);
-
-    const uint32_t idle_delay_us =
-        idle_policy == IdlePolicy::kLegacyDelay1Ms
-            ? kLegacyIdleDelayUs
-            : vibesensor::reliability::sampling_idle_delay_us(state.now_us,
-                                                              state.next_sample_due_us,
-                                                              kIdleWakeGuardUs,
-                                                              kIdleDelayCapUs);
-    metrics.idle_total_us += idle_delay_us;
-    state.now_us += idle_delay_us;
   }
 
-  if (metrics.loop_interval_min_us == std::numeric_limits<uint64_t>::max()) {
-    metrics.loop_interval_min_us = 0;
-  }
   if (metrics.refill_duration_min_us == std::numeric_limits<uint64_t>::max()) {
     metrics.refill_duration_min_us = 0;
   }
-  metrics.status.sampling_missed_samples = static_cast<uint32_t>(metrics.missed_samples);
-  metrics.status.sampling_budget_exhaustions = static_cast<uint32_t>(metrics.budget_exhaustions);
+  return metrics;
+}
+
+SimulationMetrics run_dedicated_simulation() {
+  ProducerState state{};
+  SimulationMetrics metrics{};
+  uint64_t loop_now_us = 0;
+  uint64_t next_status_spike_us = kStatusSpikeIntervalUs;
+  vibesensor::runtime::initialize_sample_handoff(
+      state.handoff, state.handoff_storage, kSimulationHandoffCapacity);
+
+  while (loop_now_us < kRunDurationUs) {
+    metrics.loop_iterations++;
+    advance_dedicated_producer_to(loop_now_us, state, metrics);
+    loop_now_us += kPreLoopWorkUs;
+    advance_dedicated_producer_to(loop_now_us, state, metrics);
+    drain_handoff(state, metrics);
+    loop_now_us += kPostLoopWorkUs;
+    if (loop_now_us >= next_status_spike_us) {
+      loop_now_us += kStatusSpikeCostUs;
+      next_status_spike_us += kStatusSpikeIntervalUs;
+    }
+    advance_dedicated_producer_to(loop_now_us, state, metrics);
+  }
+
+  drain_handoff(state, metrics);
+  if (metrics.refill_duration_min_us == std::numeric_limits<uint64_t>::max()) {
+    metrics.refill_duration_min_us = 0;
+  }
   return metrics;
 }
 
 void print_metrics(const char* label, const SimulationMetrics& metrics) {
   const uint64_t average_lateness_us =
-      metrics.samples_emitted == 0 ? 0 : (metrics.total_sample_lateness_us / metrics.samples_emitted);
+      metrics.samples_produced == 0 ? 0 : (metrics.total_lateness_us / metrics.samples_produced);
   printf(
-      "%s loops=%llu samples=%llu avg_late_us=%llu max_late_us=%llu catch_up_loops=%llu "
-      "catch_up_iterations=%llu max_samples_per_loop=%llu refill_events=%llu "
-      "refill_samples=%llu refill_span_us=%llu..%llu queue_peak=%llu drained=%llu "
-      "missed=%llu budget=%llu loop_interval_us=%llu..%llu idle_total_us=%llu\n",
+      "%s loops=%llu produced=%llu consumed=%llu missed=%llu avg_late_us=%llu max_late_us=%llu "
+      "refill_events=%llu refill_span_us=%llu..%llu handoff_peak=%llu handoff_drops=%llu\n",
       label,
-      static_cast<unsigned long long>(metrics.loops),
-      static_cast<unsigned long long>(metrics.samples_emitted),
+      static_cast<unsigned long long>(metrics.loop_iterations),
+      static_cast<unsigned long long>(metrics.samples_produced),
+      static_cast<unsigned long long>(metrics.samples_consumed),
+      static_cast<unsigned long long>(metrics.missed_samples),
       static_cast<unsigned long long>(average_lateness_us),
-      static_cast<unsigned long long>(metrics.max_sample_lateness_us),
-      static_cast<unsigned long long>(metrics.catch_up_loops),
-      static_cast<unsigned long long>(metrics.catch_up_iterations),
-      static_cast<unsigned long long>(metrics.max_samples_per_loop),
+      static_cast<unsigned long long>(metrics.max_lateness_us),
       static_cast<unsigned long long>(metrics.refill_events),
-      static_cast<unsigned long long>(metrics.refill_samples),
       static_cast<unsigned long long>(metrics.refill_duration_min_us),
       static_cast<unsigned long long>(metrics.refill_duration_max_us),
-      static_cast<unsigned long long>(metrics.queue_peak),
-      static_cast<unsigned long long>(metrics.frames_drained),
-      static_cast<unsigned long long>(metrics.missed_samples),
-      static_cast<unsigned long long>(metrics.budget_exhaustions),
-      static_cast<unsigned long long>(metrics.loop_interval_min_us),
-      static_cast<unsigned long long>(metrics.loop_interval_max_us),
-      static_cast<unsigned long long>(metrics.idle_total_us));
+      static_cast<unsigned long long>(metrics.handoff_peak),
+      static_cast<unsigned long long>(metrics.handoff_overflow_drops));
 }
 
-void test_deterministic_idle_strategy_reduces_lateness_and_catch_up() {
-  const SimulationMetrics legacy =
-      run_simulation(IdlePolicy::kLegacyDelay1Ms, RefillPolicy::kLegacyRandomized);
-  const SimulationMetrics candidate =
-      run_simulation(IdlePolicy::kDeterministicSleep, RefillPolicy::kLegacyRandomized);
+void test_dedicated_sampling_task_isolates_cadence_from_loop_spikes() {
+  const SimulationMetrics cooperative = run_cooperative_simulation();
+  const SimulationMetrics dedicated = run_dedicated_simulation();
 
-  print_metrics("legacy_idle_random_refill", legacy);
-  print_metrics("deterministic_idle_random_refill", candidate);
+  print_metrics("cooperative_sampling", cooperative);
+  print_metrics("dedicated_sampling_task", dedicated);
 
-  TEST_ASSERT_TRUE(candidate.max_sample_lateness_us < legacy.max_sample_lateness_us);
-  TEST_ASSERT_TRUE(candidate.catch_up_loops < legacy.catch_up_loops);
-  TEST_ASSERT_TRUE(candidate.catch_up_iterations < legacy.catch_up_iterations);
-  TEST_ASSERT_TRUE(candidate.loop_interval_max_us < legacy.loop_interval_max_us);
+  TEST_ASSERT_TRUE(dedicated.max_lateness_us < cooperative.max_lateness_us);
+  TEST_ASSERT_TRUE(dedicated.total_lateness_us < cooperative.total_lateness_us);
+  TEST_ASSERT_TRUE(dedicated.missed_samples <= cooperative.missed_samples);
 }
 
-void test_deterministic_refill_eliminates_refill_size_variance() {
-  const SimulationMetrics legacy =
-      run_simulation(IdlePolicy::kDeterministicSleep, RefillPolicy::kLegacyRandomized);
-  const SimulationMetrics candidate =
-      run_simulation(IdlePolicy::kDeterministicSleep, RefillPolicy::kDeterministicDithered);
+void test_dedicated_sampling_keeps_handoff_bounded_and_ordered() {
+  const SimulationMetrics dedicated = run_dedicated_simulation();
 
-  print_metrics("deterministic_idle_random_refill", legacy);
-  print_metrics("deterministic_idle_dithered_refill", candidate);
+  print_metrics("dedicated_sampling_task", dedicated);
 
-  TEST_ASSERT_TRUE(legacy.refill_duration_max_us > legacy.refill_duration_min_us);
-  TEST_ASSERT_TRUE(candidate.refill_duration_max_us > candidate.refill_duration_min_us);
-  TEST_ASSERT_TRUE((candidate.refill_duration_max_us - candidate.refill_duration_min_us) <=
-                   kRefillPerSampleUs);
-  TEST_ASSERT_TRUE(candidate.refill_events <= legacy.refill_events);
-  TEST_ASSERT_TRUE(candidate.total_sample_lateness_us < legacy.total_sample_lateness_us);
-}
-
-void test_candidate_policy_keeps_queue_stable_through_ack_pause() {
-  const SimulationMetrics candidate =
-      run_simulation(IdlePolicy::kDeterministicSleep, RefillPolicy::kDeterministicDithered);
-
-  print_metrics("candidate_policy", candidate);
-
-  TEST_ASSERT_EQUAL_UINT32(0, candidate.status.queue_overflow_drops);
-  TEST_ASSERT_TRUE(candidate.queue_peak > 0);
-  TEST_ASSERT_TRUE(candidate.frames_drained > 0);
-  TEST_ASSERT_TRUE(candidate.max_samples_per_loop <= 3);
+  TEST_ASSERT_TRUE(dedicated.handoff_peak > 0);
+  TEST_ASSERT_EQUAL_UINT64(0, dedicated.handoff_overflow_drops);
+  TEST_ASSERT_EQUAL_UINT64(dedicated.samples_produced, dedicated.samples_consumed);
 }
 
 }  // namespace
 
 int main(int argc, char** argv) {
   UNITY_BEGIN();
-  RUN_TEST(test_deterministic_idle_strategy_reduces_lateness_and_catch_up);
-  RUN_TEST(test_deterministic_refill_eliminates_refill_size_variance);
-  RUN_TEST(test_candidate_policy_keeps_queue_stable_through_ack_pause);
+  RUN_TEST(test_dedicated_sampling_task_isolates_cadence_from_loop_spikes);
+  RUN_TEST(test_dedicated_sampling_keeps_handoff_bounded_and_ordered);
   return UNITY_END();
 }

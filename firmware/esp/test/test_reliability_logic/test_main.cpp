@@ -114,41 +114,61 @@ void test_sampling_slots_due_counts_current_and_lagged_slots() {
   TEST_ASSERT_EQUAL_UINT64(4, vibesensor::reliability::sampling_slots_due(5000, 1000, 1250));
 }
 
-void test_sampling_catch_up_budget_exhausted_at_boundary() {
-  TEST_ASSERT_FALSE(
-      vibesensor::reliability::sampling_catch_up_budget_exhausted(1000, 10999, 10000));
-  TEST_ASSERT_TRUE(
-      vibesensor::reliability::sampling_catch_up_budget_exhausted(1000, 11000, 10000));
+void test_sampling_prefetch_refill_plan_steady_state_refills_to_steady_target() {
+  const vibesensor::reliability::SamplingRefillPlan plan =
+      vibesensor::reliability::sampling_prefetch_refill_plan(16, 32, 16, 24, 32, 1, false);
+  TEST_ASSERT_EQUAL_UINT64(24, plan.target_prefetch);
+  TEST_ASSERT_EQUAL_UINT64(8, plan.request_samples);
+  TEST_ASSERT_FALSE(plan.aggressive);
+
+  const vibesensor::reliability::SamplingRefillPlan no_refill =
+      vibesensor::reliability::sampling_prefetch_refill_plan(17, 32, 16, 24, 32, 1, false);
+  TEST_ASSERT_EQUAL_UINT64(0, no_refill.request_samples);
 }
 
-void test_sampling_catch_up_budget_exhausted_ignores_backwards_time() {
-  TEST_ASSERT_FALSE(
-      vibesensor::reliability::sampling_catch_up_budget_exhausted(1000, 500, 10000));
+void test_sampling_prefetch_refill_plan_switches_to_late_target_when_behind() {
+  const vibesensor::reliability::SamplingRefillPlan lagged =
+      vibesensor::reliability::sampling_prefetch_refill_plan(23, 32, 16, 24, 32, 2, false);
+  TEST_ASSERT_TRUE(lagged.aggressive);
+  TEST_ASSERT_EQUAL_UINT64(32, lagged.target_prefetch);
+  TEST_ASSERT_EQUAL_UINT64(9, lagged.request_samples);
+
+  const vibesensor::reliability::SamplingRefillPlan shortfall =
+      vibesensor::reliability::sampling_prefetch_refill_plan(20, 32, 16, 24, 32, 1, true);
+  TEST_ASSERT_TRUE(shortfall.aggressive);
+  TEST_ASSERT_EQUAL_UINT64(12, shortfall.request_samples);
 }
 
-void test_sampling_prefetch_refill_count_uses_batch_until_near_capacity() {
-  TEST_ASSERT_EQUAL_UINT64(8, vibesensor::reliability::sampling_prefetch_refill_count(0, 32, 8));
-  TEST_ASSERT_EQUAL_UINT64(8, vibesensor::reliability::sampling_prefetch_refill_count(7, 32, 8));
-  TEST_ASSERT_EQUAL_UINT64(2, vibesensor::reliability::sampling_prefetch_refill_count(30, 32, 8));
+void test_sampling_prefetch_refill_plan_uses_late_target_at_trigger_threshold() {
+  const vibesensor::reliability::SamplingRefillPlan plan =
+      vibesensor::reliability::sampling_prefetch_refill_plan(24, 32, 16, 24, 32, 4, false);
+  TEST_ASSERT_TRUE(plan.aggressive);
+  TEST_ASSERT_EQUAL_UINT64(32, plan.target_prefetch);
+  TEST_ASSERT_EQUAL_UINT64(8, plan.request_samples);
 }
 
-void test_sampling_prefetch_refill_count_returns_zero_when_full_or_disabled() {
-  TEST_ASSERT_EQUAL_UINT64(0, vibesensor::reliability::sampling_prefetch_refill_count(32, 32, 8));
-  TEST_ASSERT_EQUAL_UINT64(0, vibesensor::reliability::sampling_prefetch_refill_count(8, 32, 0));
+void test_sampling_recovery_plan_uses_handoff_headroom_and_prefetch() {
+  const vibesensor::reliability::SamplingRecoveryPlan limited =
+      vibesensor::reliability::sampling_recovery_plan(4, 3, 4, 8, 8);
+  TEST_ASSERT_EQUAL_UINT64(3, limited.attempt_slots);
+  TEST_ASSERT_EQUAL_UINT64(1, limited.missed_slots);
+
+  const vibesensor::reliability::SamplingRecoveryPlan healthy =
+      vibesensor::reliability::sampling_recovery_plan(2, 2, 2, 8, 8);
+  TEST_ASSERT_EQUAL_UINT64(2, healthy.attempt_slots);
+  TEST_ASSERT_EQUAL_UINT64(0, healthy.missed_slots);
 }
 
-void test_sampling_dithered_batch_target_alternates_between_adjacent_sizes() {
-  TEST_ASSERT_EQUAL_UINT64(8, vibesensor::reliability::sampling_dithered_batch_target(8, 0));
-  TEST_ASSERT_EQUAL_UINT64(7, vibesensor::reliability::sampling_dithered_batch_target(8, 1));
-  TEST_ASSERT_EQUAL_UINT64(8, vibesensor::reliability::sampling_dithered_batch_target(8, 2));
-  TEST_ASSERT_EQUAL_UINT64(1, vibesensor::reliability::sampling_dithered_batch_target(1, 9));
-}
+void test_sampling_recovery_plan_declares_misses_when_progress_is_not_credible() {
+  const vibesensor::reliability::SamplingRecoveryPlan empty =
+      vibesensor::reliability::sampling_recovery_plan(4, 4, 0, 8, 0);
+  TEST_ASSERT_EQUAL_UINT64(0, empty.attempt_slots);
+  TEST_ASSERT_EQUAL_UINT64(4, empty.missed_slots);
 
-void test_sampling_idle_delay_us_respects_guard_and_cap() {
-  TEST_ASSERT_EQUAL_UINT32(0, vibesensor::reliability::sampling_idle_delay_us(1000, 1000, 150, 1000));
-  TEST_ASSERT_EQUAL_UINT32(0, vibesensor::reliability::sampling_idle_delay_us(1100, 1200, 150, 1000));
-  TEST_ASSERT_EQUAL_UINT32(850, vibesensor::reliability::sampling_idle_delay_us(1000, 2000, 150, 1000));
-  TEST_ASSERT_EQUAL_UINT32(1000, vibesensor::reliability::sampling_idle_delay_us(1000, 5000, 150, 1000));
+  const vibesensor::reliability::SamplingRecoveryPlan shortfall =
+      vibesensor::reliability::sampling_recovery_plan(5, 5, 1, 12, 4);
+  TEST_ASSERT_EQUAL_UINT64(1, shortfall.attempt_slots);
+  TEST_ASSERT_EQUAL_UINT64(4, shortfall.missed_slots);
 }
 
 void test_retry_due_zero_retry_at_always_true() {
@@ -354,12 +374,11 @@ int main() {
   RUN_TEST(test_clamp_sample_rate_above_maximum);
   RUN_TEST(test_sampling_slots_due_when_not_yet_due);
   RUN_TEST(test_sampling_slots_due_counts_current_and_lagged_slots);
-  RUN_TEST(test_sampling_catch_up_budget_exhausted_at_boundary);
-  RUN_TEST(test_sampling_catch_up_budget_exhausted_ignores_backwards_time);
-  RUN_TEST(test_sampling_prefetch_refill_count_uses_batch_until_near_capacity);
-  RUN_TEST(test_sampling_prefetch_refill_count_returns_zero_when_full_or_disabled);
-  RUN_TEST(test_sampling_dithered_batch_target_alternates_between_adjacent_sizes);
-  RUN_TEST(test_sampling_idle_delay_us_respects_guard_and_cap);
+  RUN_TEST(test_sampling_prefetch_refill_plan_steady_state_refills_to_steady_target);
+  RUN_TEST(test_sampling_prefetch_refill_plan_switches_to_late_target_when_behind);
+  RUN_TEST(test_sampling_prefetch_refill_plan_uses_late_target_at_trigger_threshold);
+  RUN_TEST(test_sampling_recovery_plan_uses_handoff_headroom_and_prefetch);
+  RUN_TEST(test_sampling_recovery_plan_declares_misses_when_progress_is_not_credible);
   RUN_TEST(test_retry_due_zero_retry_at_always_true);
   RUN_TEST(test_retry_due_respects_wall_clock);
   RUN_TEST(test_saturating_inc_u8_does_not_wrap);
