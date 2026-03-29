@@ -189,6 +189,10 @@ During pi-gen repo preparation, the build also patches upstream:
 - `export-image/prerun.sh` to size the boot partition at `1 GiB`. Current
   Raspberry Pi kernel/security updates overflow the stock `512 MiB` bootfs
   during export-image upgrades.
+- `build-docker.sh` to keep `x86_64` hosts on the upstream `i386/debian:trixie`
+  base image but let `aarch64` hosts use the native `debian:trixie` image.
+  GitHub-hosted ARM runners cannot resolve the upstream `i386/debian:trixie`
+  manifest, so the ARM-hosted manual workflow needs the native Debian base.
 - `stage0/files/raspberrypi.gpg` to replace the stale armhf bootstrap keyring
   that still carries SHA-1 self-signatures in upstream `master`. Trixie
   debootstrap rejects that key on modern GnuPG policies, so VibeSensor vendors
