@@ -119,10 +119,11 @@ def test_map_summary_uses_domain_action_render_queries_for_next_steps() -> None:
     data = map_summary(prepare_report_input(summary))
 
     assert data.next_steps[0].action
+    assert "engine mount" in data.next_steps[0].action.lower()
     assert data.next_steps[0].why
     assert data.next_steps[0].confirm
     assert data.next_steps[0].falsify is None
-    assert data.next_steps[0].eta == "15-30 min"
+    assert data.next_steps[0].eta is None
 
 
 def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
@@ -132,6 +133,7 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
                 "finding_id": "F001",
                 "suspected_source": "wheel/tire",
                 "confidence": 0.74,
+                "strongest_location": "front-left wheel",
             }
         ],
         top_causes=[
@@ -139,6 +141,7 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
                 "finding_id": "F001",
                 "suspected_source": "wheel/tire",
                 "confidence": 0.74,
+                "strongest_location": "front-left wheel",
             }
         ],
         test_plan=[
@@ -170,6 +173,9 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
     )
 
     data = map_summary(prepare_report_input(summary))
+    assert len(data.next_steps) == 2
+    assert all(step.eta is None for step in data.next_steps)
+    assert all("front-left wheel" in step.action.lower() for step in data.next_steps)
     rendered = " ".join(
         part
         for step in data.next_steps

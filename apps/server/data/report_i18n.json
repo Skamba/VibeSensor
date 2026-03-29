@@ -1047,6 +1047,34 @@
     "en": "VibeSensor Diagnostic Report",
     "nl": "VibeSensor-diagnoserapport"
   },
+  "REPORT_NEXT_STEP_DRIVELINE_INSPECTION_WHAT": {
+    "en": "Check driveline components near {location} for play, runout, or bad bearings.",
+    "nl": "Controleer aandrijflijncomponenten bij {location} op speling, slingering of slechte lagers."
+  },
+  "REPORT_NEXT_STEP_DRIVELINE_MOUNTS_WHAT": {
+    "en": "Check driveline mounts and couplings near {location} for looseness or cracked rubber.",
+    "nl": "Controleer aandrijflijnsteunen en koppelingen bij {location} op losheid of gescheurd rubber."
+  },
+  "REPORT_NEXT_STEP_ENGINE_COMBUSTION_WHAT": {
+    "en": "Check misfire counters and fuel/ignition corrections for cylinders contributing to the vibration.",
+    "nl": "Controleer misfire-tellers en brandstof-/ontstekingscorrecties op cilinders die aan de trilling bijdragen."
+  },
+  "REPORT_NEXT_STEP_ENGINE_MOUNTS_WHAT": {
+    "en": "Check engine mounts and accessory drive for play or resonance.",
+    "nl": "Controleer motorsteunen en hulpaandrijving op speling of resonantie."
+  },
+  "REPORT_NEXT_STEP_GENERAL_INSPECTION_WHAT": {
+    "en": "Check the hotspot near {location} for loose fasteners, worn bushings, bearing play, or mount movement.",
+    "nl": "Controleer de hotspot bij {location} op losse bevestigingen, versleten rubbers, lagerspeling of bewegende steunen."
+  },
+  "REPORT_NEXT_STEP_TIRE_CONDITION_WHAT": {
+    "en": "Check {location} for tire damage, flat spots, belt shift, uneven wear, or pressure mismatch.",
+    "nl": "Controleer {location} op bandschade, vlakke plekken, gordelverschuiving, ongelijk slijtagebeeld of drukverschil."
+  },
+  "REPORT_NEXT_STEP_WHEEL_BALANCE_WHAT": {
+    "en": "Check {location} for imbalance or radial/lateral runout.",
+    "nl": "Controleer {location} op onbalans of radiale/laterale slingering."
+  },
   "REQUIRED_COLUMN": {
     "en": "Required Column",
     "nl": "Verplicht veld"

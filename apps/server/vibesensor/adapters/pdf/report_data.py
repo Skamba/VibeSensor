@@ -73,7 +73,7 @@ class SystemFindingCard:
 
 @dataclass
 class NextStep:
-    """A recommended diagnostic next step (action, rationale, ETA)."""
+    """A recommended diagnostic next step and its supporting detail."""
 
     action: str = ""
     why: str | None = None

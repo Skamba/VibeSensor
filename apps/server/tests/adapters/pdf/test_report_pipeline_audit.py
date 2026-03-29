@@ -118,14 +118,8 @@ class TestPeakDbEqualsStrengthDb:
         assert pr.strength_db == "15.1"
 
 
-class TestNextStepFieldsNotRendered:
-    """NextStep dataclass has confirm, falsify, eta, speed_band fields
-    that are populated by the builder but the PDF renderer only reads
-    step.action and step.why.
-
-    Evidence: `panels/_panel_trust_steps.py` is the panel-level next-steps renderer.
-    Impact: actionable diagnostic guidance is lost in PDF output.
-    """
+class TestNextStepFieldProjection:
+    """Report projection keeps useful diagnostic detail and drops ETA text."""
 
     def test_nextstep_fields_populated_by_builder(self) -> None:
         """Verify the builder does populate these fields."""
@@ -170,7 +164,7 @@ class TestNextStepFieldsNotRendered:
         ns = matching[0]
         assert ns.confirm == "Noise disappears at low speed"
         assert ns.falsify == "Noise persists with new bearing"
-        assert ns.eta == "30 min"
+        assert ns.eta is None
 
 
 class TestTopCausesFallbackBypassesPersistenceRanking:

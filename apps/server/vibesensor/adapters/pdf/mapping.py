@@ -233,6 +233,7 @@ def _build_report_template_data(
     )
     next_steps = build_next_steps(
         recommended_actions=report_facts.recommended_actions,
+        primary_location=primary.primary_location,
         tier=primary.tier,
         cert_reason=primary.certainty_reason,
         lang=lang,
