@@ -25,6 +25,19 @@ def parse_iso8601(value: object) -> datetime | None:
         return None
 
 
+def format_utc_timestamp(value: object) -> str | None:
+    """Format a timestamp as ``YYYY-MM-DD HH:MM:SS UTC`` for human-facing UTC display."""
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    dt = parse_iso8601(raw)
+    if dt is None:
+        return raw
+    return dt.astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
 def format_duration_mm_ss(seconds: float) -> str:
     """Format a duration as ``MM:SS.s`` while clamping invalid inputs to zero."""
     total = max(0.0, round(float(seconds), 1)) if isfinite(seconds) else 0.0

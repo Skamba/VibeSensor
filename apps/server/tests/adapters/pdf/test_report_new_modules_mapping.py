@@ -192,6 +192,20 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
     assert "}" not in rendered
 
 
+def test_map_summary_formats_report_timestamps_for_header() -> None:
+    summary = minimal_summary(
+        report_date="2026-03-25T10:00:00Z",
+        start_time_utc="2026-03-25T09:55:00.536855+00:00",
+        end_time_utc="2026-03-25T10:00:11.901770+00:00",
+    )
+
+    data = map_summary(prepare_report_input(summary))
+
+    assert data.run_datetime == "2026-03-25 10:00:00 UTC"
+    assert data.start_time_utc == "2026-03-25 09:55:00 UTC"
+    assert data.end_time_utc == "2026-03-25 10:00:11 UTC"
+
+
 def test_map_summary_backfills_peak_system_from_matching_finding() -> None:
     summary = minimal_summary(
         findings=[
