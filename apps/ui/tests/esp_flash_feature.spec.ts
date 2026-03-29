@@ -83,6 +83,37 @@ function createInput(value = "", type = "text"): HTMLInputElement {
 function createPanel(): HTMLElement {
   let textContent = "";
   let innerHTML = "";
+  let className = "";
+  const classes = new Set<string>();
+
+  function syncClassName(): void {
+    className = Array.from(classes).join(" ");
+  }
+
+  const classList = {
+    add(...tokens: string[]) {
+      tokens.forEach((token) => classes.add(token));
+      syncClassName();
+    },
+    remove(...tokens: string[]) {
+      tokens.forEach((token) => classes.delete(token));
+      syncClassName();
+    },
+    toggle(token: string, force?: boolean) {
+      const shouldAdd = force ?? !classes.has(token);
+      if (shouldAdd) {
+        classes.add(token);
+      } else {
+        classes.delete(token);
+      }
+      syncClassName();
+      return classes.has(token);
+    },
+    contains(token: string) {
+      return classes.has(token);
+    },
+  };
+
   return {
     get textContent() {
       return textContent;
@@ -98,7 +129,19 @@ function createPanel(): HTMLElement {
       innerHTML = value;
       textContent = value;
     },
-    className: "",
+    get className() {
+      return className;
+    },
+    set className(value: string) {
+      classes.clear();
+      value
+        .split(/\s+/)
+        .filter(Boolean)
+        .forEach((token) => classes.add(token));
+      syncClassName();
+    },
+    classList,
+    hidden: false,
     scrollTop: 0,
     scrollHeight: 0,
   } as unknown as HTMLElement;
@@ -220,9 +263,10 @@ function createHealthyUpdateStatus() {
 function createUpdateDeps() {
   const internetStatusPanel = createPanel();
   const updateTransportOptions = createPanel();
+  const updateTransportChoiceWifi = createPanel();
+  const updateTransportChoiceUsb = createPanel();
   const updateWifiFields = createPanel();
   const updateTransportNote = createPanel();
-  const updateUsbTransportOption = createPanel();
   const updateUsbTransportSummary = createPanel();
   const updateTransportWifiRadio = createInput("", "radio");
   updateTransportWifiRadio.checked = true;
@@ -242,11 +286,12 @@ function createUpdateDeps() {
     settingsTabPanels: [],
     internetStatusPanel,
     updateTransportOptions,
+    updateTransportChoiceWifi,
+    updateTransportChoiceUsb,
     updateWifiFields,
     updateTransportNote,
     updateTransportWifiRadio,
     updateTransportUsbRadio,
-    updateUsbTransportOption,
     updateUsbTransportSummary,
     updateSsidInput,
     updatePasswordInput,
@@ -260,11 +305,12 @@ function createUpdateDeps() {
     els,
     internetStatusPanel,
     updateTransportOptions,
+    updateTransportChoiceWifi,
+    updateTransportChoiceUsb,
     updateWifiFields,
     updateTransportNote,
     updateTransportWifiRadio,
     updateTransportUsbRadio,
-    updateUsbTransportOption,
     updateUsbTransportSummary,
     updatePasswordInput,
     updateStartBtn,
@@ -532,7 +578,7 @@ test.describe("createEspFlashFeature polling", () => {
 });
 
 test.describe("createUpdateFeature polling", () => {
-  test("idle update status renders readiness instead of clearing the panel", async () => {
+  test("idle update status renders readiness and the expected journey", async () => {
     const restoreFetch = installFetchMock(async (url) => {
       if (url.pathname === "/api/update/status") {
         return jsonResponse(createIdleUpdateStatus());
@@ -555,15 +601,100 @@ test.describe("createUpdateFeature polling", () => {
 
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_summary.ready");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).not.toContain("settings.update.journey_title");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.journey_title");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.phase.validating");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).not.toContain("settings.update.issues_empty_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.log_empty_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("1.2.3");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.health_card_title");
       expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("settings.internet.card_title");
       expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("settings.internet.summary.not_detected");
-      expect(deps.updateTransportOptions.hidden).toBe(true);
-      expect(deps.updateUsbTransportOption.hidden).toBe(true);
+      expect(deps.updateTransportOptions.hidden).toBe(false);
+      expect(deps.updateTransportChoiceWifi.classList.contains("speed-source-choice--selected")).toBe(true);
+      expect(deps.updateTransportChoiceUsb.classList.contains("speed-source-choice--disabled")).toBe(true);
+      expect(deps.updateTransportUsbRadio.disabled).toBe(true);
+      expect(deps.updateUsbTransportSummary.textContent).toBe(
+        "settings.update.transport.usb_summary_unavailable",
+      );
+    } finally {
+      restoreFetch();
+    }
+  });
+
+  test("running update state highlights the active journey stage", async () => {
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse({
+          ...createIdleUpdateStatus(),
+          state: "running",
+          phase: "installing",
+          transport: "wifi",
+          ssid: "MyWiFi",
+        });
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      const feature = createUpdateFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      const html = (deps.els.updateStatusPanel as HTMLElement).innerHTML;
+      expect(html).toMatch(/data-stage-phase="installing" data-stage-state="active" aria-current="step"/);
+      expect(html.match(/data-stage-state="done"/g)).toHaveLength(5);
+      expect(html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)).toHaveLength(5);
+    } finally {
+      restoreFetch();
+    }
+  });
+
+  test("failed update state surfaces the failed stage and issue details", async () => {
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse({
+          ...createIdleUpdateStatus(),
+          state: "failed",
+          phase: "restoring_hotspot",
+          transport: "wifi",
+          issues: [
+            {
+              phase: "restoring_hotspot",
+              message: "Hotspot restart timed out",
+              detail: "NetworkManager is still reconnecting to the uplink.",
+            },
+          ],
+        });
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      const feature = createUpdateFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      const html = (deps.els.updateStatusPanel as HTMLElement).innerHTML;
+      expect(html).toContain("settings.update.issues");
+      expect(html).toContain("Hotspot restart timed out");
+      expect(html).toContain("NetworkManager is still reconnecting to the uplink.");
+      expect(html).toMatch(/data-stage-phase="restoring_hotspot" data-stage-state="attention"/);
     } finally {
       restoreFetch();
     }
@@ -653,12 +784,14 @@ test.describe("createUpdateFeature polling", () => {
       await flushAsyncWork();
 
       expect(deps.updateTransportOptions.hidden).toBe(false);
-      expect(deps.updateUsbTransportOption.hidden).toBe(false);
       expect(deps.updateWifiFields.hidden).toBe(true);
       expect(deps.updateTransportNote.textContent).toBe("settings.update.preflight_note_usb");
       expect(deps.updateUsbTransportSummary.textContent).toBe(
         "settings.update.transport.usb_summary_interface",
       );
+      expect(deps.updateTransportChoiceWifi.classList.contains("speed-source-choice--selected")).toBe(false);
+      expect(deps.updateTransportChoiceUsb.classList.contains("speed-source-choice--selected")).toBe(true);
+      expect(deps.updateTransportChoiceUsb.classList.contains("speed-source-choice--disabled")).toBe(false);
       expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("usb0");
 
       deps.updateStartBtn.click();
