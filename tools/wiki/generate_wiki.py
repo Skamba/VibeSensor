@@ -107,7 +107,7 @@ select a speed source.
 
 - Top-level README: [`README.md`]({_blob_url(repo_url, "README.md")})
 - Hardware BOM: [`hardware/README.md`]({_blob_url(repo_url, "hardware/README.md")})
-- Pi image build/install reference: [`infra/pi-image/pi-gen/README.md`]({_blob_url(repo_url, "infra/pi-image/pi-gen/README.md")})
+- Pi image build/install reference: [`infra/pi-image/yocto/README.md`]({_blob_url(repo_url, "infra/pi-image/yocto/README.md")})
 - Server config reference: [`docs/configuration_reference.md`]({_blob_url(repo_url, "docs/configuration_reference.md")})
 - Field troubleshooting runbook: [`docs/operational-runbooks.md`]({_blob_url(repo_url, "docs/operational-runbooks.md")})
 """
@@ -197,23 +197,24 @@ already includes the server, the built web UI, and the hotspot services.
 
 ### If you are preparing the image yourself
 
-On a Linux machine with Docker:
+On a Linux ARM64 machine:
 
 ```bash
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
-./infra/pi-image/pi-gen/build.sh
+python3 -m pip install --user kas
+./infra/pi-image/yocto/build.sh
 ```
 
 The image artifact is written under:
 
-- `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-trixie-lite.img`
+- `infra/pi-image/yocto/out/image_<timestamp>-vibesensor-rpi-universal.wic.bz2`
 
 Flash that image to a microSD card with Raspberry Pi Imager, insert the card
 into the Pi 3 A+, and power it on.
 
 Detailed image-build notes live here:
-[`infra/pi-image/pi-gen/README.md`]({_blob_url(repo_url, "infra/pi-image/pi-gen/README.md")}).
+[`infra/pi-image/yocto/README.md`]({_blob_url(repo_url, "infra/pi-image/yocto/README.md")}).
 
 ## Option B: Manual install on Raspberry Pi OS Lite
 
@@ -625,7 +626,7 @@ sudo systemctl restart vibesensor-hotspot.service
 - Config reference: [`docs/configuration_reference.md`]({_blob_url(repo_url, "docs/configuration_reference.md")})
 - Server/Pi operations: [`apps/server/README.md`]({_blob_url(repo_url, "apps/server/README.md")})
 - Sensor firmware setup: [`firmware/esp/README.md`]({_blob_url(repo_url, "firmware/esp/README.md")})
-- Pi image build/install: [`infra/pi-image/pi-gen/README.md`]({_blob_url(repo_url, "infra/pi-image/pi-gen/README.md")})
+- Pi image build/install: [`infra/pi-image/yocto/README.md`]({_blob_url(repo_url, "infra/pi-image/yocto/README.md")})
 """
 
 

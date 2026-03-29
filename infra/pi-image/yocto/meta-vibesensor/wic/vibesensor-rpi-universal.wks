@@ -1,0 +1,8 @@
+# short-description: Create VibeSensor universal Raspberry Pi SD card image
+# long-description: Universal 64-bit Raspberry Pi image for Pi 3/4/5.
+# Boot files live in the first VFAT partition; keep it larger than the upstream
+# default so kernel/firmware growth for the universal multi-board artifact has
+# headroom.
+
+part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4096 --size 1024
+part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label root --align 4096

@@ -1,5 +1,5 @@
 # Pi deployment config overlay.
-# Copied to /etc/vibesensor/config.yaml during install_pi.sh and pi-gen image build.
+# Copied to /etc/vibesensor/config.yaml during install_pi.sh and image builds.
 # Overrides paths from defaults to use system directories.
 
 ap:
