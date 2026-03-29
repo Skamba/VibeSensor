@@ -6,6 +6,7 @@
 #include "adxl345.h"
 #include "runtime_config.h"
 #include "runtime_queue.h"
+#include "runtime_sample_handoff.h"
 #include "runtime_status.h"
 
 namespace vibesensor::runtime {
@@ -16,26 +17,27 @@ struct SamplingState {
   TwoWire& i2c;
   ADXL345 adxl;
   bool sensor_ok = false;
-  int16_t sensor_batch_xyz[kSensorReadBatchSamples * kAxesPerSample] = {};
+  int16_t sensor_batch_xyz[kSensorPrefetchSamples * kAxesPerSample] = {};
   int16_t sensor_prefetch_xyz[kSensorPrefetchSamples * kAxesPerSample] = {};
   size_t sensor_prefetch_head = 0;
   size_t sensor_prefetch_tail = 0;
   size_t sensor_prefetch_count = 0;
-  uint32_t sensor_refill_cycle = 0;
   uint8_t sensor_consecutive_errors = 0;
   uint32_t last_sensor_reinit_ms = 0;
   uint64_t next_sample_due_us = 0;
-  bool has_last_real_sample = false;
-  int16_t last_real_x = 0;
-  int16_t last_real_y = 0;
-  int16_t last_real_z = 0;
+  size_t last_refill_request = 0;
+  size_t last_refill_count = 0;
+  bool recent_refill_shortfall = false;
+  PendingSample handoff_storage[kSampleHandoffQueueSamples] = {};
+  SampleHandoffState handoff;
+  SamplingStatusSnapshot status = {};
 };
 
-bool begin_sensor(SamplingState& state);
-void reset_sampling_schedule(SamplingState& state, uint64_t now_us);
-void service_sampling(SamplingState& state,
-                      FrameQueueState& queue_state,
-                      RuntimeStatus& status,
-                      int64_t clock_offset_us);
+bool begin_sampling(SamplingState& state);
+void service_sample_handoff(SamplingState& state,
+                            FrameQueueState& queue_state,
+                            RuntimeStatus& status,
+                            int64_t clock_offset_us);
+SamplingStatusSnapshot snapshot_sampling_status(SamplingState& state);
 
 }  // namespace vibesensor::runtime
