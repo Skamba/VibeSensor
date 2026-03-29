@@ -49,5 +49,7 @@ export type SpeedSourceStatusPayload = Schema<"SpeedSourceStatusResponse">;
 export type SpeedUnitPayload = Schema<"SpeedUnitResponse">;
 export type UpdateCancelPayload = Schema<"UpdateCancelResponse">;
 export type UpdateIssue = Schema<"UpdateIssueResponse">;
+export type UpdateStartRequestPayload = Schema<"UpdateStartRequest">;
 export type UpdateStartPayload = Schema<"UpdateStartResponse">;
 export type UpdateStatusPayload = Schema<"UpdateStatusResponse">;
+export type UsbInternetStatusPayload = Schema<"UsbInternetStatusResponse">;

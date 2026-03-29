@@ -9,6 +9,7 @@ from vibesensor.use_cases.updates.models import (
     UpdatePhase,
     UpdateRuntimeDetails,
     UpdateState,
+    UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line as sanitize_log_line
 from vibesensor.use_cases.updates.venv_paths import (
@@ -26,7 +27,8 @@ class TestUpdateJobStatus:
         assert data["started_at"] is None
         assert data["finished_at"] is None
         assert data["last_success_at"] is None
-        assert data["ssid"] == ""
+        assert data["transport"] == UpdateTransport.wifi.value
+        assert data["ssid"] is None
         assert data["issues"] == []
         assert data["log_tail"] == []
         assert data["exit_code"] is None

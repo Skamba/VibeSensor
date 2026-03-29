@@ -300,6 +300,13 @@ export interface paths {
      */
     post: operations["cancel_update_api_update_cancel_post"];
   };
+  "/api/update/internet-status": {
+    /**
+     * Get Usb Internet Status
+     * @description Return the current USB internet detection and usability snapshot.
+     */
+    get: operations["get_usb_internet_status_api_update_internet_status_get"];
+  };
   "/api/update/start": {
     /**
      * Start Update
@@ -2284,7 +2291,9 @@ export interface components {
        */
       password?: string;
       /** Ssid */
-      ssid: string;
+      ssid?: string | null;
+      /** @default wifi */
+      transport?: components["schemas"]["UpdateTransport"];
     };
     /**
      * UpdateStartResponse
@@ -2292,9 +2301,11 @@ export interface components {
      */
     UpdateStartResponse: {
       /** Ssid */
-      ssid: string;
+      ssid?: string | null;
       /** Status */
       status: string;
+      /** Transport */
+      transport: string;
     };
     /**
      * UpdateStatusResponse
@@ -2319,13 +2330,47 @@ export interface components {
       phase_started_at?: number | null;
       runtime: components["schemas"]["UpdateRuntimeResponse"];
       /** Ssid */
-      ssid: string;
+      ssid?: string | null;
       /** Started At */
       started_at?: number | null;
       /** State */
       state: string;
+      /** Transport */
+      transport: string;
       /** Updated At */
       updated_at?: number | null;
+      /** Uplink Interface */
+      uplink_interface?: string | null;
+    };
+    /**
+     * UpdateTransport
+     * @description Network path used by a single OTA update run.
+     * @enum {string}
+     */
+    UpdateTransport: "wifi" | "usb_internet";
+    /**
+     * UsbInternetStatusResponse
+     * @description Response body describing the current USB internet detection state.
+     */
+    UsbInternetStatusResponse: {
+      /** Connection Name */
+      connection_name?: string | null;
+      /** Detected */
+      detected: boolean;
+      /** Diagnostic */
+      diagnostic: string;
+      /** Driver */
+      driver?: string | null;
+      /** Gateway */
+      gateway?: string | null;
+      /** Has Default Route */
+      has_default_route: boolean;
+      /** Interface Name */
+      interface_name?: string | null;
+      /** Ipv4 Addresses */
+      ipv4_addresses: string[];
+      /** Usable */
+      usable: boolean;
     };
     /** ValidationError */
     ValidationError: {
@@ -3464,6 +3509,20 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["UpdateCancelResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Usb Internet Status
+   * @description Return the current USB internet detection and usability snapshot.
+   */
+  get_usb_internet_status_api_update_internet_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UsbInternetStatusResponse"];
         };
       };
     };

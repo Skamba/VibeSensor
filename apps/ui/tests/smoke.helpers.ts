@@ -131,6 +131,19 @@ export async function installCommonRoutes(page: Page, options: CommonRouteOption
     }
     await fulfillJson(route, {});
   });
+  await page.route("**/api/update/internet-status", async (route) => {
+    await fulfillJson(route, {
+      detected: false,
+      usable: false,
+      interface_name: null,
+      connection_name: null,
+      driver: null,
+      ipv4_addresses: [],
+      gateway: null,
+      has_default_route: false,
+      diagnostic: "No USB network interface is currently detected.",
+    });
+  });
 }
 
 export function createSettingsHandlerFromMap(settingsMap: Record<string, SettingsRouteValue>) {

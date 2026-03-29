@@ -3,7 +3,12 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from vibesensor.use_cases.updates.models import UpdateIssue, UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.models import (
+    UpdateIssue,
+    UpdatePhase,
+    UpdateState,
+    UpdateTransport,
+)
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi.wifi import UpdateWifiController
@@ -60,6 +65,9 @@ class UpdateWifiOrchestrator:
     async def recover_interrupted_update(self) -> None:
         """Recover updater Wi-Fi state after a previously interrupted job."""
 
+        if self._tracker.status.transport != UpdateTransport.wifi:
+            self._tracker.log("startup_recover: no Wi-Fi uplink cleanup required")
+            return
         self._tracker.log("startup_recover: cleaning up uplink connection")
         try:
             await self._controller.cleanup_uplink()
@@ -112,6 +120,9 @@ class UpdateWifiOrchestrator:
     async def complete_update_success(self, message: str) -> bool:
         """Restore the hotspot and then finalize the job as successful."""
 
+        if self._tracker.status.transport != UpdateTransport.wifi:
+            self._tracker.mark_success(message)
+            return True
         self._tracker.transition(UpdatePhase.restoring_hotspot)
         self._tracker.log("Restoring hotspot...")
         restored = await self.restore_hotspot()
@@ -125,6 +136,8 @@ class UpdateWifiOrchestrator:
     async def maybe_restore_hotspot_during_cleanup(self) -> None:
         """Restore the hotspot if cleanup begins while the updater still owns Wi-Fi state."""
 
+        if self._tracker.status.transport != UpdateTransport.wifi:
+            return
         status = self._tracker.status
         if status.state == UpdateState.running or status.phase in _HOTSPOT_RESTORE_PHASES:
             self._tracker.transition(UpdatePhase.restoring_hotspot)

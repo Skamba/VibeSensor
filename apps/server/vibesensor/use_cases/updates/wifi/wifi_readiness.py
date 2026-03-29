@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import time
 
+from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
@@ -76,11 +77,17 @@ class UpdateWifiReadiness:
         )
         return False
 
-    async def wait_for_dns_ready(self) -> bool:
+    async def wait_for_dns_ready(
+        self,
+        *,
+        phase: UpdatePhase | str = UpdatePhase.connecting_wifi,
+        readiness_subject: str = "uplink",
+        failure_message: str = "Connected to Wi-Fi, but internet/DNS is not ready",
+    ) -> bool:
         """Wait for DNS resolution to succeed before download work begins."""
 
         self._tracker.log(
-            "Validating uplink internet/DNS readiness for at least "
+            f"Validating {readiness_subject} internet/DNS readiness for at least "
             f"{int(self._config.dns_ready_min_wait_s)}s...",
         )
         deadline = time.monotonic() + self._config.dns_ready_min_wait_s
@@ -99,7 +106,7 @@ class UpdateWifiReadiness:
             attempt += 1
             rc, stdout, stderr = await self._commands.run(
                 probe_cmd,
-                phase="connecting_wifi",
+                phase=str(phase),
                 timeout=5,
                 sudo=False,
             )
@@ -111,8 +118,8 @@ class UpdateWifiReadiness:
                 break
             await asyncio.sleep(self._config.dns_retry_interval_s)
         self._tracker.fail(
-            "connecting_wifi",
-            "Connected to Wi-Fi, but internet/DNS is not ready",
+            phase,
+            failure_message,
             (
                 "Waited at least "
                 f"{int(self._config.dns_ready_min_wait_s)} seconds for DNS resolution "

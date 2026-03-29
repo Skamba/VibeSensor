@@ -108,6 +108,7 @@ validate_image_artifact() {
   IW_PATH="$(assert_rootfs_binary iw)"
   DNSMASQ_PATH="$(assert_rootfs_binary dnsmasq)"
   GPSD_PATH="$(assert_rootfs_binary gpsd)"
+  USBMUXD_PATH="$(assert_rootfs_binary usbmuxd)"
 
   if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"
@@ -121,6 +122,16 @@ validate_image_artifact() {
 
   if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service"
+    exit 1
+  fi
+
+  if [ ! -f "${ROOT_MNT}/usr/lib/systemd/system/usbmuxd.service" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/usr/lib/systemd/system/usbmuxd.service"
+    exit 1
+  fi
+
+  if [ ! -f "${ROOT_MNT}/usr/lib/udev/rules.d/39-usbmuxd.rules" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/usr/lib/udev/rules.d/39-usbmuxd.rules"
     exit 1
   fi
 
@@ -175,6 +186,13 @@ validate_image_artifact() {
   assert_rootfs_package openssh-server
   assert_rootfs_package libopenblas0-pthread
   assert_rootfs_package libgfortran5
+  assert_rootfs_package usbmuxd
+  assert_rootfs_package libimobiledevice-1.0-6
+
+  if ! grep -R -n "ipheth" "${ROOT_MNT}/lib/modules"/*/modules.alias* "${ROOT_MNT}/lib/modules"/*/modules.builtin* >/dev/null 2>&1; then
+    echo "Validation failed: kernel metadata does not advertise ipheth support"
+    exit 1
+  fi
 
   OPENBLAS_LIB="$(find "${ROOT_MNT}/usr/lib" -type f -name 'libopenblas*.so*' | head -n 1 || true)"
   if [ -z "${OPENBLAS_LIB}" ]; then
@@ -368,8 +386,11 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
   echo "=== Validation: /opt/VibeSensor exists ==="
   ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
 
-  echo "=== Validation: nmcli + rfkill + iw + dnsmasq + gpsd binaries ==="
-  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}"
+  echo "=== Validation: nmcli + rfkill + iw + dnsmasq + gpsd + usbmuxd binaries ==="
+  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}" "${ROOT_MNT}${USBMUXD_PATH}"
+
+  echo "=== Validation: usbmuxd service + udev rule ==="
+  ls -l "${ROOT_MNT}/usr/lib/systemd/system/usbmuxd.service" "${ROOT_MNT}/usr/lib/udev/rules.d/39-usbmuxd.rules"
 
   echo "=== Validation: vibesensor systemd units ==="
   ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true

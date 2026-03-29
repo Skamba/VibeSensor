@@ -19,6 +19,7 @@ from vibesensor.adapters.http.models import (
     UpdateStartRequest,
     UpdateStartResponse,
     UpdateStatusResponse,
+    UsbInternetStatusResponse,
 )
 
 if TYPE_CHECKING:
@@ -54,6 +55,24 @@ def create_update_routes(
         """Return the current OTA software update job state, logs, and runtime details."""
         return UpdateStatusResponse.model_validate(update_manager.status.to_payload())
 
+    @router.get("/api/update/internet-status", response_model=UsbInternetStatusResponse)
+    async def get_usb_internet_status() -> UsbInternetStatusResponse:
+        """Return the current USB internet detection and usability snapshot."""
+        status = await update_manager.get_usb_internet_status()
+        return UsbInternetStatusResponse.model_validate(
+            {
+                "detected": status.detected,
+                "usable": status.usable,
+                "interface_name": status.interface_name,
+                "connection_name": status.connection_name,
+                "driver": status.driver,
+                "ipv4_addresses": list(status.ipv4_addresses),
+                "gateway": status.gateway,
+                "has_default_route": status.has_default_route,
+                "diagnostic": status.diagnostic,
+            }
+        )
+
     @router.post(
         "/api/update/start",
         response_model=UpdateStartResponse,
@@ -62,8 +81,16 @@ def create_update_routes(
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
         """Start an OTA software update using the supplied uplink Wi-Fi credentials."""
         with domain_errors_to_http():
-            update_manager.start(req.ssid, req.password)
-        return UpdateStartResponse(status="started", ssid=req.ssid)
+            update_manager.start(
+                ssid=req.ssid,
+                password=req.password,
+                transport=req.transport,
+            )
+        return UpdateStartResponse(
+            status="started",
+            transport=req.transport.value,
+            ssid=req.ssid,
+        )
 
     @router.post("/api/update/cancel", response_model=UpdateCancelResponse)
     async def cancel_update() -> UpdateCancelResponse:

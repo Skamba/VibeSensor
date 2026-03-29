@@ -19,7 +19,7 @@ function pendingPollDelays(timers: TimerHarness): number[] {
 }
 
 function installFetchMock(
-  handler: (url: URL, method: string) => Promise<Response> | Response,
+  handler: (url: URL, method: string, body: string) => Promise<Response> | Response,
 ): () => void {
   const originalFetch = globalThis.fetch;
 
@@ -27,7 +27,8 @@ function installFetchMock(
     const requestUrl =
       typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     const requestMethod = init?.method ?? (input instanceof Request ? input.method : "GET");
-    return handler(new URL(requestUrl, "http://vibesensor.test"), requestMethod);
+    const requestBody = typeof init?.body === "string" ? init.body : "";
+    return handler(new URL(requestUrl, "http://vibesensor.test"), requestMethod, requestBody);
   }) as typeof fetch;
 
   return () => {
@@ -75,6 +76,7 @@ function createInput(value = "", type = "text"): HTMLInputElement {
     type,
     disabled: false,
     focus() {},
+    addEventListener() {},
   } as unknown as HTMLInputElement;
 }
 
@@ -165,15 +167,28 @@ function createIdleUpdateStatus() {
   return {
     state: "idle",
     phase: "idle",
+    transport: "wifi",
     ssid: null,
+    uplink_interface: null,
     started_at: null,
     phase_started_at: null,
     phase_elapsed_s: null,
     finished_at: null,
     last_success_at: null,
+    updated_at: null,
     issues: [],
     log_tail: [],
-    runtime: null,
+    exit_code: null,
+    runtime: {
+      version: "1.2.3",
+      commit: "abcdef1234567890",
+      ui_source_hash: "ui-hash",
+      static_assets_hash: "feedfacecafebeef",
+      static_build_source_hash: "build-hash",
+      static_build_commit: "build-commit",
+      assets_verified: true,
+      has_packaged_static: true,
+    },
   };
 }
 
@@ -203,6 +218,16 @@ function createHealthyUpdateStatus() {
 }
 
 function createUpdateDeps() {
+  const internetStatusPanel = createPanel();
+  const updateTransportOptions = createPanel();
+  const updateWifiFields = createPanel();
+  const updateTransportNote = createPanel();
+  const updateUsbTransportOption = createPanel();
+  const updateUsbTransportSummary = createPanel();
+  const updateTransportWifiRadio = createInput("", "radio");
+  updateTransportWifiRadio.checked = true;
+  const updateTransportUsbRadio = createInput("", "radio");
+  updateTransportUsbRadio.checked = false;
   const updateSsidInput = createInput("MyWiFi");
   const updatePasswordInput = createInput("secret", "password");
   const updateTogglePasswordBtn = createButton();
@@ -215,6 +240,14 @@ function createUpdateDeps() {
     views: [],
     settingsTabs: [],
     settingsTabPanels: [],
+    internetStatusPanel,
+    updateTransportOptions,
+    updateWifiFields,
+    updateTransportNote,
+    updateTransportWifiRadio,
+    updateTransportUsbRadio,
+    updateUsbTransportOption,
+    updateUsbTransportSummary,
     updateSsidInput,
     updatePasswordInput,
     updateTogglePasswordBtn,
@@ -225,12 +258,35 @@ function createUpdateDeps() {
 
   return {
     els,
+    internetStatusPanel,
+    updateTransportOptions,
+    updateWifiFields,
+    updateTransportNote,
+    updateTransportWifiRadio,
+    updateTransportUsbRadio,
+    updateUsbTransportOption,
+    updateUsbTransportSummary,
     updatePasswordInput,
     updateStartBtn,
     updateCancelBtn,
     t: (key: string) => key,
     escapeHtml: (value: unknown) => String(value ?? ""),
     showError: () => {},
+  };
+}
+
+function createUsbInternetStatus(overrides: Record<string, unknown> = {}) {
+  return {
+    detected: false,
+    usable: false,
+    interface_name: null,
+    connection_name: null,
+    driver: null,
+    ipv4_addresses: [],
+    gateway: null,
+    has_default_route: false,
+    diagnostic: "No USB network interface is currently detected.",
+    ...overrides,
   };
 }
 
@@ -479,18 +535,13 @@ test.describe("createUpdateFeature polling", () => {
   test("idle update status renders readiness instead of clearing the panel", async () => {
     const restoreFetch = installFetchMock(async (url) => {
       if (url.pathname === "/api/update/status") {
-        return jsonResponse({
-          ...createIdleUpdateStatus(),
-          runtime: {
-            version: "1.2.3",
-            commit: "abcdef1234567890",
-            static_assets_hash: "feedfacecafebeef",
-            assets_verified: true,
-          },
-        });
+        return jsonResponse(createIdleUpdateStatus());
       }
       if (url.pathname === "/api/health") {
         return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
       }
       return jsonResponse({});
     });
@@ -509,6 +560,10 @@ test.describe("createUpdateFeature polling", () => {
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.log_empty_title");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("1.2.3");
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.health_card_title");
+      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("settings.internet.card_title");
+      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("settings.internet.summary.not_detected");
+      expect(deps.updateTransportOptions.hidden).toBe(true);
+      expect(deps.updateUsbTransportOption.hidden).toBe(true);
     } finally {
       restoreFetch();
     }
@@ -516,15 +571,20 @@ test.describe("createUpdateFeature polling", () => {
 
   test("start replaces the previous update poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
-    const restoreFetch = installFetchMock(async (url, method) => {
+    let startBody = "";
+    const restoreFetch = installFetchMock(async (url, method, body) => {
       if (url.pathname === "/api/update/start" && method === "POST") {
-        return jsonResponse({ status: "started" });
+        startBody = body;
+        return jsonResponse({ status: "started", transport: "wifi", ssid: "MyWiFi" });
       }
       if (url.pathname === "/api/update/status") {
         return jsonResponse(createIdleUpdateStatus());
       }
       if (url.pathname === "/api/health") {
         return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
       }
       return jsonResponse({});
     });
@@ -540,9 +600,73 @@ test.describe("createUpdateFeature polling", () => {
       deps.updateStartBtn.click();
       await expectTimerDelays(timers, [10_000]);
       expect(deps.updatePasswordInput.value).toBe("");
+      expect(JSON.parse(startBody)).toEqual({
+        transport: "wifi",
+        ssid: "MyWiFi",
+        password: "secret",
+      });
     } finally {
       restoreFetch();
       timers.restore();
+    }
+  });
+
+  test("usable USB internet shows the USB option and starts with the USB transport payload", async () => {
+    let startBody = "";
+    const restoreFetch = installFetchMock(async (url, method, body) => {
+      if (url.pathname === "/api/update/start" && method === "POST") {
+        startBody = body;
+        return jsonResponse({ status: "started", transport: "usb_internet", ssid: null });
+      }
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse(createIdleUpdateStatus());
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(
+          createUsbInternetStatus({
+            detected: true,
+            usable: true,
+            interface_name: "usb0",
+            connection_name: "iPhone USB",
+            driver: "ipheth",
+            ipv4_addresses: ["172.20.10.2/28"],
+            gateway: "172.20.10.1",
+            has_default_route: true,
+            diagnostic: "USB internet is ready on 'usb0'.",
+          }),
+        );
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      deps.updateTransportWifiRadio.checked = false;
+      deps.updateTransportUsbRadio.checked = true;
+      const feature = createUpdateFeature(deps);
+
+      feature.bindUpdateHandlers();
+      feature.startPolling();
+      await flushAsyncWork();
+
+      expect(deps.updateTransportOptions.hidden).toBe(false);
+      expect(deps.updateUsbTransportOption.hidden).toBe(false);
+      expect(deps.updateWifiFields.hidden).toBe(true);
+      expect(deps.updateTransportNote.textContent).toBe("settings.update.preflight_note_usb");
+      expect(deps.updateUsbTransportSummary.textContent).toBe(
+        "settings.update.transport.usb_summary_interface",
+      );
+      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("usb0");
+
+      deps.updateStartBtn.click();
+      await flushAsyncWork();
+
+      expect(JSON.parse(startBody)).toEqual({ transport: "usb_internet" });
+    } finally {
+      restoreFetch();
     }
   });
 
@@ -557,6 +681,9 @@ test.describe("createUpdateFeature polling", () => {
       }
       if (url.pathname === "/api/health") {
         return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
       }
       return jsonResponse({});
     });
@@ -584,6 +711,9 @@ test.describe("createUpdateFeature polling", () => {
       if (url.pathname === "/api/update/status") return deferredStatus.promise;
       if (url.pathname === "/api/health") {
         return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
       }
       return jsonResponse({});
     });

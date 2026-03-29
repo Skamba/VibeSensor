@@ -1,4 +1,5 @@
 network-manager
+usbmuxd
 dnsmasq-base
 rfkill
 iw
