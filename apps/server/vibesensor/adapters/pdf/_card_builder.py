@@ -65,14 +65,16 @@ def build_system_cards(
         parts_list = parts_for_pattern(source, order_label, lang=lang)
 
         card_system_name = source_human
+        card_status_label: str | None = None
         card_parts = [PartSuggestion(name=part) for part in parts_list]
         if tier == "B":
-            card_system_name = f"{source_human} — {tr('TIER_B_HYPOTHESIS_LABEL')}"
+            card_status_label = tr("TIER_B_HYPOTHESIS_LABEL")
             card_parts = []
 
         cards.append(
             SystemFindingCard(
                 system_name=card_system_name,
+                status_label=card_status_label,
                 strongest_location=location,
                 pattern_summary=pattern_text,
                 parts=card_parts,
