@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import yaml
-
 from _paths import REPO_ROOT
 
 
@@ -14,11 +13,7 @@ def _load_workflow(name: str) -> dict[str, object]:
 
 def _step_by_name(workflow: dict[str, object], job_name: str, step_name: str) -> dict[str, object]:
     steps = workflow["jobs"][job_name]["steps"]
-    return next(
-        step
-        for step in steps
-        if isinstance(step, dict) and step.get("name") == step_name
-    )
+    return next(step for step in steps if isinstance(step, dict) and step.get("name") == step_name)
 
 
 def test_weekly_pi_image_workflow_uses_arm_runner_and_yocto_build() -> None:
