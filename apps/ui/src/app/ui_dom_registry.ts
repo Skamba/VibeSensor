@@ -100,11 +100,12 @@ export interface UiDomElements {
   settingsTabPanels: HTMLElement[];
   internetStatusPanel: HTMLElement | null;
   updateTransportOptions: HTMLElement | null;
+  updateTransportChoiceWifi: HTMLElement | null;
+  updateTransportChoiceUsb: HTMLElement | null;
   updateWifiFields: HTMLElement | null;
   updateTransportNote: HTMLElement | null;
   updateTransportWifiRadio: HTMLInputElement | null;
   updateTransportUsbRadio: HTMLInputElement | null;
-  updateUsbTransportOption: HTMLElement | null;
   updateUsbTransportSummary: HTMLElement | null;
   updateSsidInput: HTMLInputElement | null;
   updatePasswordInput: HTMLInputElement | null;
@@ -275,11 +276,12 @@ export function createUiDomRegistry(): UiDomElements {
     settingsTabPanels: queryAll<HTMLElement>(".settings-tab-panel"),
     internetStatusPanel: el("internetStatusPanel"),
     updateTransportOptions: el("updateTransportOptions"),
+    updateTransportChoiceWifi: el("updateTransportChoiceWifi"),
+    updateTransportChoiceUsb: el("updateTransportChoiceUsb"),
     updateWifiFields: el("updateWifiFields"),
     updateTransportNote: el("updateTransportNote"),
     updateTransportWifiRadio: inputEl("updateTransportWifiRadio"),
     updateTransportUsbRadio: inputEl("updateTransportUsbRadio"),
-    updateUsbTransportOption: el("updateUsbTransportOption"),
     updateUsbTransportSummary: el("updateUsbTransportSummary"),
     updateSsidInput: inputEl("updateSsidInput"),
     updatePasswordInput: inputEl("updatePasswordInput"),

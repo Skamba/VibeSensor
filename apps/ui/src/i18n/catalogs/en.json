@@ -472,6 +472,7 @@
   "settings.update.journey.detail.validating": "Checks the request and current updater state before the Pi leaves hotspot mode.",
   "settings.update.journey.detail.stopping_hotspot": "Pauses hotspot access so the Pi can switch over to the temporary Wi-Fi network.",
   "settings.update.journey.detail.connecting_wifi": "Brings up the provided Wi-Fi link and confirms that the Pi can reach the network it needs.",
+  "settings.update.journey.detail.connecting_usb_internet": "Confirms that the detected USB uplink is ready before the Pi checks GitHub for the next release.",
   "settings.update.journey.detail.checking": "Contacts GitHub and verifies which release should be installed next.",
   "settings.update.journey.detail.downloading": "Fetches the release package and related assets needed for the install.",
   "settings.update.journey.detail.installing": "Installs the new package, verifies the runtime, and records any issues that need attention.",

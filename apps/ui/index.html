@@ -574,22 +574,20 @@
                   </div>
                 </div>
                 <div class="update-form">
-                  <div id="updateTransportOptions" class="maintenance-stack maintenance-stack--tight" hidden>
+                  <div id="updateTransportOptions" class="maintenance-stack maintenance-stack--tight">
                     <div class="subtle" data-i18n="settings.update.transport_label">Internet source</div>
-                    <label style="display:flex;gap:0.75rem;align-items:flex-start;">
-                      <input type="radio" id="updateTransportWifiRadio" name="updateTransport" value="wifi" checked />
-                      <span>
-                        <strong data-i18n="settings.update.transport.wifi_title">Temporary Wi-Fi</strong>
-                        <span class="subtle" style="display:block;" data-i18n="settings.update.transport.wifi_summary">Pause the hotspot, join a Wi-Fi network, install, then restore the hotspot.</span>
-                      </span>
-                    </label>
-                    <label id="updateUsbTransportOption" style="display:flex;gap:0.75rem;align-items:flex-start;" hidden>
-                      <input type="radio" id="updateTransportUsbRadio" name="updateTransport" value="usb_internet" />
-                      <span>
-                        <strong data-i18n="settings.update.transport.usb_title">Existing USB internet</strong>
-                        <span id="updateUsbTransportSummary" class="subtle" style="display:block;"></span>
-                      </span>
-                    </label>
+                    <div class="speed-source-choice-grid">
+                      <label id="updateTransportChoiceWifi" class="speed-source-choice" data-update-transport-choice="wifi">
+                        <input class="speed-source-choice__radio" type="radio" id="updateTransportWifiRadio" name="updateTransport" value="wifi" checked />
+                        <span class="speed-source-choice__title" data-i18n="settings.update.transport.wifi_title">Temporary Wi-Fi</span>
+                        <span class="speed-source-choice__caption" data-i18n="settings.update.transport.wifi_summary">Pause the hotspot, join a Wi-Fi network, install, then restore the hotspot.</span>
+                      </label>
+                      <label id="updateTransportChoiceUsb" class="speed-source-choice" data-update-transport-choice="usb_internet">
+                        <input class="speed-source-choice__radio" type="radio" id="updateTransportUsbRadio" name="updateTransport" value="usb_internet" />
+                        <span class="speed-source-choice__title" data-i18n="settings.update.transport.usb_title">Existing USB internet</span>
+                        <span id="updateUsbTransportSummary" class="speed-source-choice__caption"></span>
+                      </label>
+                    </div>
                   </div>
                   <div id="updateWifiFields">
                     <div class="form-group">

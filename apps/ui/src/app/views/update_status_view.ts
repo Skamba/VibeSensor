@@ -1,4 +1,9 @@
-import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
+import type {
+  HealthStatusPayload,
+  UpdateIssue,
+  UpdateStartRequestPayload,
+  UpdateStatusPayload,
+} from "../../api/types";
 import type { UiDomElements } from "../ui_dom_registry";
 import { formatEpochTimestamp, renderStatusGridRow } from "./dom_helpers";
 
@@ -26,9 +31,95 @@ const HEALTH_REASON_KEYS: Readonly<Record<string, string>> = {
 
 const ASSET_ISSUE_RE = /asset|artifacts|stale|hash|missing/i;
 
+type JourneyStageState = "upcoming" | "active" | "done" | "attention";
+type UpdateJourneyTransport = UpdateStartRequestPayload["transport"];
+
+type UpdateJourneyStage = {
+  phase: string;
+  titleKey: string;
+  detailKey: string;
+};
+
+const WIFI_JOURNEY_STAGES: readonly UpdateJourneyStage[] = [
+  {
+    phase: "validating",
+    titleKey: "settings.update.phase.validating",
+    detailKey: "settings.update.journey.detail.validating",
+  },
+  {
+    phase: "stopping_hotspot",
+    titleKey: "settings.update.phase.stopping_hotspot",
+    detailKey: "settings.update.journey.detail.stopping_hotspot",
+  },
+  {
+    phase: "connecting_wifi",
+    titleKey: "settings.update.phase.connecting_wifi",
+    detailKey: "settings.update.journey.detail.connecting_wifi",
+  },
+  {
+    phase: "checking",
+    titleKey: "settings.update.phase.checking",
+    detailKey: "settings.update.journey.detail.checking",
+  },
+  {
+    phase: "downloading",
+    titleKey: "settings.update.phase.downloading",
+    detailKey: "settings.update.journey.detail.downloading",
+  },
+  {
+    phase: "installing",
+    titleKey: "settings.update.phase.installing",
+    detailKey: "settings.update.journey.detail.installing",
+  },
+  {
+    phase: "restoring_hotspot",
+    titleKey: "settings.update.phase.restoring_hotspot",
+    detailKey: "settings.update.journey.detail.restoring_hotspot",
+  },
+  {
+    phase: "done",
+    titleKey: "settings.update.phase.done",
+    detailKey: "settings.update.journey.detail.done",
+  },
+] as const;
+
+const USB_JOURNEY_STAGES: readonly UpdateJourneyStage[] = [
+  {
+    phase: "validating",
+    titleKey: "settings.update.phase.validating",
+    detailKey: "settings.update.journey.detail.validating",
+  },
+  {
+    phase: "connecting_usb_internet",
+    titleKey: "settings.update.phase.connecting_usb_internet",
+    detailKey: "settings.update.journey.detail.connecting_usb_internet",
+  },
+  {
+    phase: "checking",
+    titleKey: "settings.update.phase.checking",
+    detailKey: "settings.update.journey.detail.checking",
+  },
+  {
+    phase: "downloading",
+    titleKey: "settings.update.phase.downloading",
+    detailKey: "settings.update.journey.detail.downloading",
+  },
+  {
+    phase: "installing",
+    titleKey: "settings.update.phase.installing",
+    detailKey: "settings.update.journey.detail.installing",
+  },
+  {
+    phase: "done",
+    titleKey: "settings.update.phase.done",
+    detailKey: "settings.update.journey.detail.done",
+  },
+] as const;
+
 export interface UpdateStatusViewDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
+  selectedTransport: UpdateJourneyTransport;
 }
 
 function formatDuration(seconds: number | null | undefined): string {
@@ -145,12 +236,54 @@ function renderLifecycleRows(
       ),
     );
   }
-  if (status.state !== "idle") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_label")), escapeHtml(formatUpdatePhase(status.phase, t))));
-  if (status.started_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.started_at")), escapeHtml(formatEpochTimestamp(status.started_at))));
-  if (status.phase_started_at != null && status.state !== "idle") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_started_at")), escapeHtml(formatEpochTimestamp(status.phase_started_at))));
-  if (status.state !== "idle" && status.phase_elapsed_s != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.phase_elapsed")), escapeHtml(formatDuration(status.phase_elapsed_s))));
-  if (status.finished_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.finished_at")), escapeHtml(formatEpochTimestamp(status.finished_at))));
-  if (status.last_success_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.last_success")), escapeHtml(formatEpochTimestamp(status.last_success_at))));
+  if (status.state !== "idle") {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.phase_label")),
+        escapeHtml(formatUpdatePhase(status.phase, t)),
+      ),
+    );
+  }
+  if (status.started_at != null) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.started_at")),
+        escapeHtml(formatEpochTimestamp(status.started_at)),
+      ),
+    );
+  }
+  if (status.phase_started_at != null && status.state !== "idle") {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.phase_started_at")),
+        escapeHtml(formatEpochTimestamp(status.phase_started_at)),
+      ),
+    );
+  }
+  if (status.state !== "idle" && status.phase_elapsed_s != null) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.phase_elapsed")),
+        escapeHtml(formatDuration(status.phase_elapsed_s)),
+      ),
+    );
+  }
+  if (status.finished_at != null) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.finished_at")),
+        escapeHtml(formatEpochTimestamp(status.finished_at)),
+      ),
+    );
+  }
+  if (status.last_success_at != null) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.last_success")),
+        escapeHtml(formatEpochTimestamp(status.last_success_at)),
+      ),
+    );
+  }
   return rows.join("");
 }
 
@@ -161,15 +294,42 @@ function renderRuntimeRows(
 ): string {
   const { t, escapeHtml } = deps;
   const rows: string[] = [];
-  if (status.runtime?.version && status.runtime.version !== "unknown") rows.push(renderStatusGridRow(escapeHtml(t("settings.update.runtime_version")), escapeHtml(status.runtime.version)));
-  if (status.runtime?.commit) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.runtime_commit")), escapeHtml(status.runtime.commit.slice(0, 12))));
+  if (status.runtime?.version && status.runtime.version !== "unknown") {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.runtime_version")),
+        escapeHtml(status.runtime.version),
+      ),
+    );
+  }
+  if (status.runtime?.commit) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.runtime_commit")),
+        escapeHtml(status.runtime.commit.slice(0, 12)),
+      ),
+    );
+  }
   if (!status.runtime?.static_assets_hash) return rows.join("");
-  rows.push(renderStatusGridRow(escapeHtml(t("settings.update.runtime_assets")), escapeHtml(status.runtime.static_assets_hash.slice(0, 12))));
+  rows.push(
+    renderStatusGridRow(
+      escapeHtml(t("settings.update.runtime_assets")),
+      escapeHtml(status.runtime.static_assets_hash.slice(0, 12)),
+    ),
+  );
   if (showRuntimeAssetsCheck) {
-    rows.push(renderStatusGridRow(
-      escapeHtml(t("settings.update.runtime_assets_check")),
-      escapeHtml(t(status.runtime.assets_verified ? "settings.update.runtime_assets_ok" : "settings.update.runtime_assets_bad")),
-    ));
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.runtime_assets_check")),
+        escapeHtml(
+          t(
+            status.runtime.assets_verified
+              ? "settings.update.runtime_assets_ok"
+              : "settings.update.runtime_assets_bad",
+          ),
+        ),
+      ),
+    );
   }
   return rows.join("");
 }
@@ -186,14 +346,157 @@ function renderStateGrid(
   return `<div class="status-grid">${rows}</div>`;
 }
 
+function journeyStageLabel(
+  state: JourneyStageState,
+  t: (key: string, vars?: Record<string, unknown>) => string,
+): string {
+  return t(`maintenance.stage_state.${state}`);
+}
+
+function journeyStages(transport: UpdateJourneyTransport): readonly UpdateJourneyStage[] {
+  return transport === "usb_internet" ? USB_JOURNEY_STAGES : WIFI_JOURNEY_STAGES;
+}
+
+function resolvedJourneyTransport(
+  status: UpdateStatusPayload,
+  selectedTransport: UpdateJourneyTransport,
+): UpdateJourneyTransport {
+  if (status.state === "idle") {
+    return selectedTransport;
+  }
+  return status.transport === "usb_internet" ? "usb_internet" : "wifi";
+}
+
+function journeyStageIndex(
+  phase: string | null | undefined,
+  stages: readonly UpdateJourneyStage[],
+): number {
+  const normalized = normalizeUpdatePhase(phase);
+  return stages.findIndex((stage) => stage.phase === normalized);
+}
+
+function resolveJourneyStageState(
+  status: UpdateStatusPayload,
+  stages: readonly UpdateJourneyStage[],
+  stageIndex: number,
+): JourneyStageState {
+  if (status.state === "success") return "done";
+  if (status.state === "idle") return "upcoming";
+  const currentIndex = journeyStageIndex(status.phase, stages);
+  if (currentIndex === -1) {
+    return "upcoming";
+  }
+  if (stageIndex < currentIndex) return "done";
+  if (stageIndex === currentIndex) {
+    return status.state === "failed" ? "attention" : "active";
+  }
+  return "upcoming";
+}
+
+function primaryJourneyIssue(status: UpdateStatusPayload): UpdateIssue | null {
+  const currentPhase = normalizeUpdatePhase(status.phase);
+  for (let index = status.issues.length - 1; index >= 0; index -= 1) {
+    const issue = status.issues[index];
+    if (normalizeUpdatePhase(issue.phase) === currentPhase) {
+      return issue;
+    }
+  }
+  return status.issues.length > 0 ? status.issues[status.issues.length - 1] : null;
+}
+
+function renderJourneyFailureNote(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  if (status.state !== "failed") {
+    return "";
+  }
+  const issue = primaryJourneyIssue(status);
+  const phaseLabel = formatUpdatePhase(issue?.phase ?? status.phase, deps.t);
+  const summary = issue?.message ? `${phaseLabel} — ${issue.message}` : phaseLabel;
+  return `<div class="maintenance-note maintenance-note--bad"><strong>${deps.escapeHtml(summary)}</strong>${issue?.detail ? `<div class="issue-detail">${deps.escapeHtml(issue.detail)}</div>` : ""}</div>`;
+}
+
+function renderJourney(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  const { t, escapeHtml } = deps;
+  const stages = journeyStages(resolvedJourneyTransport(status, deps.selectedTransport));
+  const items = stages.map((stage, index) => {
+    const stageState = resolveJourneyStageState(status, stages, index);
+    const markerLabel = stageState === "done" ? "✓" : `${index + 1}`;
+    const currentStepAttr = stageState === "active" ? ' aria-current="step"' : "";
+    return `<li class="maintenance-stage maintenance-stage--${stageState}" data-stage-phase="${stage.phase}" data-stage-state="${stageState}"${currentStepAttr}>
+      <span class="maintenance-stage__marker">${markerLabel}</span>
+      <div class="maintenance-stage__body">
+        <div class="maintenance-stage__title">${escapeHtml(t(stage.titleKey))}</div>
+        <div class="maintenance-stage__detail">${escapeHtml(t(stage.detailKey))}</div>
+      </div>
+      <span class="maintenance-stage__state">${escapeHtml(journeyStageLabel(stageState, t))}</span>
+    </li>`;
+  }).join("");
+  return `<div class="maintenance-journey">
+    ${renderJourneyFailureNote(status, deps)}
+    <ol class="maintenance-stage-list">${items}</ol>
+  </div>`;
+}
+
+function renderIssuesCard(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  if (status.issues.length === 0) {
+    return "";
+  }
+  const { t, escapeHtml } = deps;
+  const items = status.issues.map((issue) => `
+    <li class="issue-item">
+      <div class="issue-phase">${escapeHtml(formatUpdatePhase(issue.phase, t))}</div>
+      <div>
+        <strong>${escapeHtml(issue.message)}</strong>
+        ${issue.detail ? `<div class="issue-detail">${escapeHtml(issue.detail)}</div>` : ""}
+      </div>
+    </li>
+  `).join("");
+  return renderMaintenanceCard(
+    escapeHtml(t("settings.update.issues")),
+    escapeHtml(t("settings.update.issues_intro")),
+    `<ul class="issue-list">${items}</ul>`,
+  );
+}
+
 function renderHealthSummaryRows(
   health: HealthStatusPayload,
   deps: UpdateStatusViewDeps,
 ): string {
   const { t, escapeHtml } = deps;
-  const rows = [renderStatusGridRow(escapeHtml(t("settings.update.health.processing_state")), escapeHtml(health.processing_state))];
-  if (health.processing_failures > 0) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.processing_failures")), escapeHtml(health.processing_failures)));
-  if (health.degradation_reasons.length) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.reasons")), escapeHtml(health.degradation_reasons.map((reason) => formatHealthReason(reason, t)).join(", "))));
+  const rows = [
+    renderStatusGridRow(
+      escapeHtml(t("settings.update.health.processing_state")),
+      escapeHtml(health.processing_state),
+    ),
+  ];
+  if (health.processing_failures > 0) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.health.processing_failures")),
+        escapeHtml(health.processing_failures),
+      ),
+    );
+  }
+  if (health.degradation_reasons.length) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.health.reasons")),
+        escapeHtml(
+          health.degradation_reasons
+            .map((reason) => formatHealthReason(reason, t))
+            .join(", "),
+        ),
+      ),
+    );
+  }
   return rows.join("");
 }
 
@@ -204,7 +507,10 @@ function renderHealthDataLossRows(
   if (health.data_loss.affected_clients <= 0) return "";
   const { t, escapeHtml } = deps;
   return [
-    renderStatusGridRow(escapeHtml(t("settings.update.health.affected_clients")), escapeHtml(`${health.data_loss.affected_clients}/${health.data_loss.tracked_clients}`)),
+    renderStatusGridRow(
+      escapeHtml(t("settings.update.health.affected_clients")),
+      escapeHtml(`${health.data_loss.affected_clients}/${health.data_loss.tracked_clients}`),
+    ),
     renderStatusGridRow(
       escapeHtml(t("settings.update.health.data_loss")),
       escapeHtml([
@@ -222,7 +528,13 @@ function renderHealthPersistenceRows(
   deps: UpdateStatusViewDeps,
 ): string {
   const analysisQueueDepth = health.persistence.analysis_queue_depth ?? 0;
-  if (!health.persistence.analysis_in_progress && !health.persistence.write_error && analysisQueueDepth <= 0) return "";
+  if (
+    !health.persistence.analysis_in_progress
+    && !health.persistence.write_error
+    && analysisQueueDepth <= 0
+  ) {
+    return "";
+  }
   const { t, escapeHtml } = deps;
   const rows = [
     renderStatusGridRow(
@@ -230,11 +542,46 @@ function renderHealthPersistenceRows(
       escapeHtml(health.persistence.write_error || t("settings.update.health.persistence_ok")),
     ),
   ];
-  if (health.persistence.analysis_in_progress) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis")), escapeHtml(t("settings.update.health.analysis_in_progress"))));
-  if (health.persistence.analysis_active_run_id) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_run")), escapeHtml(health.persistence.analysis_active_run_id)));
-  if (health.persistence.analysis_started_at != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_started_at")), escapeHtml(formatEpochTimestamp(health.persistence.analysis_started_at))));
-  if (health.persistence.analysis_elapsed_s != null) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_elapsed")), escapeHtml(formatDuration(health.persistence.analysis_elapsed_s))));
-  if (analysisQueueDepth > 0) rows.push(renderStatusGridRow(escapeHtml(t("settings.update.health.analysis_queue_depth")), escapeHtml(String(analysisQueueDepth))));
+  if (health.persistence.analysis_in_progress) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.health.analysis")),
+        escapeHtml(t("settings.update.health.analysis_in_progress")),
+      ),
+    );
+  }
+  if (health.persistence.analysis_active_run_id) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.health.analysis_run")),
+        escapeHtml(health.persistence.analysis_active_run_id),
+      ),
+    );
+  }
+  if (health.persistence.analysis_started_at != null) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.health.analysis_started_at")),
+        escapeHtml(formatEpochTimestamp(health.persistence.analysis_started_at)),
+      ),
+    );
+  }
+  if (health.persistence.analysis_elapsed_s != null) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.health.analysis_elapsed")),
+        escapeHtml(formatDuration(health.persistence.analysis_elapsed_s)),
+      ),
+    );
+  }
+  if (analysisQueueDepth > 0) {
+    rows.push(
+      renderStatusGridRow(
+        escapeHtml(t("settings.update.health.analysis_queue_depth")),
+        escapeHtml(String(analysisQueueDepth)),
+      ),
+    );
+  }
   return rows.join("");
 }
 
@@ -298,8 +645,6 @@ export function syncUpdateControls(
     | "updateCancelBtn"
     | "updateSsidInput"
     | "updatePasswordInput"
-    | "updateTransportWifiRadio"
-    | "updateTransportUsbRadio"
   >,
   status: UpdateStatusPayload,
 ): void {
@@ -313,8 +658,6 @@ export function syncUpdateControls(
   }
   if (els.updateSsidInput) els.updateSsidInput.disabled = isRunning;
   if (els.updatePasswordInput) els.updatePasswordInput.disabled = isRunning;
-  if (els.updateTransportWifiRadio) els.updateTransportWifiRadio.disabled = isRunning;
-  if (els.updateTransportUsbRadio) els.updateTransportUsbRadio.disabled = isRunning;
 }
 
 export function renderUpdateStatusPanel(
@@ -328,12 +671,20 @@ export function renderUpdateStatusPanel(
   );
   const showRuntimeAssetsCheck = status.state !== "failed" || hasAssetRelatedIssue;
   panel.innerHTML = [
-    renderMaintenanceCard(
-      deps.escapeHtml(deps.t("settings.update.current_status_title")),
-      renderStateSummary(status, health, deps),
-      renderStateGrid(status, showRuntimeAssetsCheck, deps),
-      renderStateBadge(status, deps),
-    ),
+    `<div class="maintenance-pair-grid">${[
+      renderMaintenanceCard(
+        deps.escapeHtml(deps.t("settings.update.current_status_title")),
+        renderStateSummary(status, health, deps),
+        renderStateGrid(status, showRuntimeAssetsCheck, deps),
+        renderStateBadge(status, deps),
+      ),
+      renderMaintenanceCard(
+        deps.escapeHtml(deps.t("settings.update.journey_title")),
+        deps.escapeHtml(deps.t("settings.update.journey_intro")),
+        renderJourney(status, deps),
+      ),
+    ].join("")}</div>`,
+    renderIssuesCard(status, deps),
     renderMaintenanceCard(
       deps.escapeHtml(deps.t("settings.update.health_card_title")),
       renderHealthSummary(health, deps),
