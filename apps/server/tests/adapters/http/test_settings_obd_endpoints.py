@@ -1,0 +1,121 @@
+from __future__ import annotations
+
+from unittest.mock import MagicMock
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
+from vibesensor.adapters.http.settings import create_settings_routes
+from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+
+
+def _build_client() -> tuple[TestClient, MagicMock, MagicMock]:
+    settings_store = MagicMock()
+    speed_service = MagicMock()
+    speed_service.status_snapshot.return_value = SpeedSourceStatusSnapshot(
+        gps_enabled=True,
+        connection_state="connected",
+        device="/dev/ttyUSB0",
+        fix_mode=3,
+        fix_dimension="3d",
+        speed_confidence="high",
+        epx_m=1.0,
+        epy_m=1.0,
+        epv_m=1.0,
+        last_update_age_s=0.5,
+        raw_speed_kmh=48.0,
+        effective_speed_kmh=48.0,
+        last_error=None,
+        reconnect_delay_s=None,
+        fallback_active=False,
+        speed_source="gps",
+        stale_timeout_s=8.0,
+    )
+    app = FastAPI()
+    app.include_router(create_settings_routes(settings_store, speed_service))
+    return TestClient(app), settings_store, speed_service
+
+
+def test_scan_obd_devices_endpoint_returns_serialized_devices() -> None:
+    client, _, speed_service = _build_client()
+    speed_service.scan_obd_devices.return_value = [
+        ObdDeviceSnapshot(
+            mac_address="00043e5a4a4d",
+            name="OBDLink MX+",
+            paired=True,
+            trusted=True,
+            connected=False,
+            rfcomm_channel=1,
+        )
+    ]
+
+    response = client.post("/api/settings/obd/scan")
+
+    assert response.status_code == 200
+    assert response.json()["devices"][0]["mac_address"] == "00043e5a4a4d"
+    speed_service.scan_obd_devices.assert_called_once_with()
+
+
+def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
+    client, settings_store, speed_service = _build_client()
+    speed_service.pair_obd_device.return_value = ObdDeviceSnapshot(
+        mac_address="00043e5a4a4d",
+        name="OBDLink MX+",
+        paired=True,
+        trusted=True,
+        connected=True,
+        rfcomm_channel=1,
+    )
+    settings_store.update_speed_source.return_value = {
+        "speedSource": "gps",
+        "manualSpeedKph": None,
+        "staleTimeoutS": 8.0,
+        "obdDeviceMac": "00043e5a4a4d",
+        "obdDeviceName": "OBDLink MX+",
+    }
+
+    response = client.post(
+        "/api/settings/obd/pair",
+        json={"mac_address": "00:04:3E:5A:4A:4D"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["configured_device_mac"] == "00043e5a4a4d"
+    speed_service.pair_obd_device.assert_called_once_with("00043e5a4a4d")
+    settings_store.update_speed_source.assert_called_once_with(
+        {
+            "obdDeviceMac": "00043e5a4a4d",
+            "obdDeviceName": "OBDLink MX+",
+        }
+    )
+
+
+def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
+    client, _, speed_service = _build_client()
+    speed_service.obd_status.return_value = ObdStatusSnapshot(
+        configured_device_mac="00043e5a4a4d",
+        configured_device_name="OBDLink MX+",
+        connection_state="connected",
+        device_mac="00043e5a4a4d",
+        device_name="OBDLink MX+",
+        paired=True,
+        trusted=True,
+        connected=True,
+        rfcomm_channel=1,
+        last_sample_age_s=0.2,
+        last_speed_kmh=43.2,
+        last_rpm=2100.0,
+        last_error=None,
+        last_raw_response="410D0C",
+        reconnect_delay_s=None,
+        debug_hint=None,
+    )
+
+    response = client.get("/api/settings/obd/status")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["configured_device_mac"] == "00043e5a4a4d"
+    assert body["last_rpm"] == 2100.0
+    speed_service.obd_status.assert_called_once_with()

@@ -6,7 +6,7 @@ export interface SpeedSourceStateSource {
   resolvedSpeedSource: SettingsState["resolvedSpeedSource"];
 }
 
-export type DisplayedSpeedSourceMode = "gps" | "manual";
+export type DisplayedSpeedSourceMode = "gps" | "manual" | "obd2";
 
 export function isManualLikeSpeedSource(source: string | null | undefined): boolean {
   return source === "manual" || source === "fallback_manual";
@@ -15,10 +15,7 @@ export function isManualLikeSpeedSource(source: string | null | undefined): bool
 export function deriveDisplayedSpeedSourceMode(
   settings: SpeedSourceStateSource,
 ): DisplayedSpeedSourceMode {
-  if (isManualLikeSpeedSource(settings.resolvedSpeedSource) || settings.speedSource === "manual") {
-    return "manual";
-  }
-  return "gps";
+  return settings.speedSource;
 }
 
 export function resolveEffectiveSpeedSource(

@@ -86,9 +86,15 @@ export interface UiDomElements {
   speedSourceCurrentSource: HTMLElement | null;
   speedSourceEffectiveSpeed: HTMLElement | null;
   speedSourceChoiceGps: HTMLElement | null;
+  speedSourceChoiceObd: HTMLElement | null;
   speedSourceChoiceManual: HTMLElement | null;
   manualSpeedConfig: HTMLElement | null;
   manualSpeedInput: HTMLInputElement | null;
+  obdSpeedConfig: HTMLElement | null;
+  obdConfiguredDevice: HTMLElement | null;
+  scanObdDevicesBtn: HTMLButtonElement | null;
+  obdDeviceScanStatus: HTMLElement | null;
+  obdDeviceList: HTMLElement | null;
   saveSpeedSourceBtn: HTMLButtonElement | null;
   settingsTabs: HTMLElement[];
   settingsTabPanels: HTMLElement[];
@@ -124,6 +130,15 @@ export interface UiDomElements {
   gpsStatusLastError: HTMLElement | null;
   gpsStatusReconnect: HTMLElement | null;
   gpsStatusFallback: HTMLElement | null;
+  obdStatusPanel: HTMLElement | null;
+  obdStatusConfiguredDevice: HTMLElement | null;
+  obdStatusPairing: HTMLElement | null;
+  obdStatusTrusted: HTMLElement | null;
+  obdStatusConnected: HTMLElement | null;
+  obdStatusRfcommChannel: HTMLElement | null;
+  obdStatusLastRpm: HTMLElement | null;
+  obdStatusRawResponse: HTMLElement | null;
+  obdStatusDebugHint: HTMLElement | null;
   gpsFallbackPanel: HTMLElement | null;
   staleTimeoutInput: HTMLInputElement | null;
 
@@ -246,9 +261,15 @@ export function createUiDomRegistry(): UiDomElements {
     speedSourceCurrentSource: el("speedSourceCurrentSource"),
     speedSourceEffectiveSpeed: el("speedSourceEffectiveSpeed"),
     speedSourceChoiceGps: el("speedSourceChoiceGps"),
+    speedSourceChoiceObd: el("speedSourceChoiceObd"),
     speedSourceChoiceManual: el("speedSourceChoiceManual"),
     manualSpeedConfig: el("manualSpeedConfig"),
     manualSpeedInput: inputEl("manualSpeedInput"),
+    obdSpeedConfig: el("obdSpeedConfig"),
+    obdConfiguredDevice: el("obdConfiguredDevice"),
+    scanObdDevicesBtn: btnEl("scanObdDevicesBtn"),
+    obdDeviceScanStatus: el("obdDeviceScanStatus"),
+    obdDeviceList: el("obdDeviceList"),
     saveSpeedSourceBtn: btnEl("saveSpeedSourceBtn"),
     settingsTabs: queryAll<HTMLElement>(".settings-tab"),
     settingsTabPanels: queryAll<HTMLElement>(".settings-tab-panel"),
@@ -284,6 +305,15 @@ export function createUiDomRegistry(): UiDomElements {
     gpsStatusLastError: el("gpsStatusLastError"),
     gpsStatusReconnect: el("gpsStatusReconnect"),
     gpsStatusFallback: el("gpsStatusFallback"),
+    obdStatusPanel: el("obdStatusPanel"),
+    obdStatusConfiguredDevice: el("obdStatusConfiguredDevice"),
+    obdStatusPairing: el("obdStatusPairing"),
+    obdStatusTrusted: el("obdStatusTrusted"),
+    obdStatusConnected: el("obdStatusConnected"),
+    obdStatusRfcommChannel: el("obdStatusRfcommChannel"),
+    obdStatusLastRpm: el("obdStatusLastRpm"),
+    obdStatusRawResponse: el("obdStatusRawResponse"),
+    obdStatusDebugHint: el("obdStatusDebugHint"),
     gpsFallbackPanel: el("gpsFallbackPanel"),
     staleTimeoutInput: inputEl("staleTimeoutInput"),
     appErrorBanner: el("appErrorBanner"),

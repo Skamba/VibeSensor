@@ -134,8 +134,12 @@ The image contains:
 - systemd services enabled at boot:
   - `vibesensor.service` — FastAPI server
   - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager
-  - `vibesensor-rfkill-unblock.service` — unblocks Wi-Fi before NetworkManager starts
+  - `vibesensor-rfkill-unblock.service` — unblocks Wi-Fi and Bluetooth before NetworkManager/Bluetooth start
   - `vibesensor-hotspot-self-heal.timer` — periodic AP health check (every 2 min)
+- Bluetooth OBD support prerequisites:
+  - `bluez` / `pi-bluetooth` userspace packages in the image
+  - privileged helper `apps/server/scripts/vibesensor_obd_admin.py`
+  - NOPASSWD sudoers entry for the `pi` service user so the local UI can scan/pair adapters without SSH
 
 ## Flash
 

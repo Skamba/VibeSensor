@@ -12,6 +12,9 @@ import type {
   EspFlashStatusPayload,
   HealthStatusPayload,
   LanguagePayload,
+  ObdPairPayload,
+  ObdScanPayload,
+  ObdStatusPayload,
   SpeedSourceRequest,
   SpeedSourcePayload,
   SpeedSourceStatusPayload,
@@ -109,6 +112,24 @@ export async function updateSettingsSpeedSource(data: SpeedSourceRequest): Promi
 
 export async function getSpeedSourceStatus(): Promise<SpeedSourceStatusPayload> {
   return apiJson("/api/settings/speed-source/status");
+}
+
+export async function scanSettingsObdDevices(): Promise<ObdScanPayload> {
+  return apiJson("/api/settings/obd/scan", {
+    method: "POST",
+  });
+}
+
+export async function pairSettingsObdDevice(macAddress: string): Promise<ObdPairPayload> {
+  return apiJson("/api/settings/obd/pair", {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ mac_address: macAddress }),
+  });
+}
+
+export async function getSettingsObdStatus(): Promise<ObdStatusPayload> {
+  return apiJson("/api/settings/obd/status");
 }
 
 export async function getUpdateStatus(): Promise<UpdateStatusPayload> {

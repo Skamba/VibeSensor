@@ -307,10 +307,22 @@ def test_export_schema_uses_snake_case_settings_contract_fields(
     assert "activeCarId" not in cars_response["properties"]
     assert "sensors_by_mac" in sensors_response["properties"]
     assert "sensorsByMac" not in sensors_response["properties"]
-    assert {"speed_source", "manual_speed_kph", "stale_timeout_s"} == set(
+    assert {
+        "speed_source",
+        "manual_speed_kph",
+        "stale_timeout_s",
+        "obd_device_mac",
+        "obd_device_name",
+    } == set(
         speed_source_request["properties"],
     )
-    assert {"speed_source", "manual_speed_kph", "stale_timeout_s"} == set(
+    assert {
+        "speed_source",
+        "manual_speed_kph",
+        "stale_timeout_s",
+        "obd_device_mac",
+        "obd_device_name",
+    } == set(
         speed_source_response["properties"],
     )
     assert "speed_unit" in speed_unit_request["properties"]

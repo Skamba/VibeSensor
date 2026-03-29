@@ -27,10 +27,15 @@ class SettingsRuntimeApplier:
             return
         speed_source = self._speed_source_reader.speed_source()
         raw = self._speed_source_reader.get_speed_source()
+        # The configured manual speed doubles as the live-source fallback speed,
+        # so runtime policy needs it even when GPS/OBD is selected.
         self._gps_monitor.apply_speed_source_settings(
-            effective_speed_kmh=speed_source.effective_speed_kmh,
+            effective_speed_kmh=speed_source.manual_speed_kmh,
             manual_source_selected=speed_source.is_manual,
             stale_timeout_s=raw.get("staleTimeoutS"),
+            selected_source=speed_source.kind,
+            obd_device_mac=raw.get("obdDeviceMac"),
+            obd_device_name=raw.get("obdDeviceName"),
         )
 
     def sync_all(self) -> None:

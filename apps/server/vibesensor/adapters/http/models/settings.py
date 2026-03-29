@@ -70,6 +70,8 @@ class SpeedSourceRequest(_FrozenBase):
     speed_source: SpeedSourceKind | None = None
     manual_speed_kph: float | None = Field(default=None, ge=0, le=500)
     stale_timeout_s: float | None = Field(default=None, ge=3, le=120)
+    obd_device_mac: str | None = Field(default=None, min_length=1, max_length=64)
+    obd_device_name: str | None = Field(default=None, min_length=1, max_length=128)
 
 
 class SensorRequest(_FrozenBase):
@@ -102,6 +104,8 @@ class SpeedSourceResponse(BaseModel):
     speed_source: SpeedSourceKind
     manual_speed_kph: float | None
     stale_timeout_s: float
+    obd_device_mac: str | None = None
+    obd_device_name: str | None = None
 
 
 class SpeedSourceStatusResponse(BaseModel):
@@ -124,6 +128,61 @@ class SpeedSourceStatusResponse(BaseModel):
     fallback_active: bool
     speed_source: ResolvedSpeedSource
     stale_timeout_s: float
+
+
+class ObdPairRequest(_FrozenBase):
+    """Request body for pairing and selecting a Bluetooth OBD adapter."""
+
+    mac_address: str = Field(min_length=1, max_length=64)
+
+
+class ObdDeviceResponse(BaseModel):
+    """Single discovered or configured Bluetooth OBD adapter."""
+
+    mac_address: str
+    name: str | None
+    paired: bool
+    trusted: bool
+    connected: bool
+    rfcomm_channel: int | None
+
+
+class ObdScanResponse(BaseModel):
+    """Response body for a Bluetooth OBD discovery scan."""
+
+    devices: list[ObdDeviceResponse]
+
+
+class ObdPairResponse(BaseModel):
+    """Response body after pairing and persisting a Bluetooth OBD adapter."""
+
+    configured_device_mac: str
+    configured_device_name: str | None
+    paired: bool
+    trusted: bool
+    connected: bool
+    rfcomm_channel: int | None
+
+
+class ObdStatusResponse(BaseModel):
+    """Detailed Bluetooth OBD runtime status for diagnostics and field recovery."""
+
+    configured_device_mac: str | None
+    configured_device_name: str | None
+    connection_state: str
+    device_mac: str | None
+    device_name: str | None
+    paired: bool
+    trusted: bool
+    connected: bool
+    rfcomm_channel: int | None
+    last_sample_age_s: float | None
+    last_speed_kmh: float | None
+    last_rpm: float | None
+    last_error: str | None
+    last_raw_response: str | None
+    reconnect_delay_s: float | None
+    debug_hint: str | None
 
 
 class SensorConfigResponse(BaseModel):
