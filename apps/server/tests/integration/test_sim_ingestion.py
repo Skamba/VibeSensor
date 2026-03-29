@@ -224,6 +224,13 @@ class TestSimulatorIngestion:
         sb = self.insights.get("speed_breakdown") or []
         assert len(sb) > 0, "Speed breakdown is empty"
 
+    def test_history_run_has_known_simulator_car(self) -> None:
+        """Simulator runs should persist a deterministic known car profile."""
+        history_run = _api_json(f"/api/history/{self.run_id}")
+        metadata = history_run.get("metadata") or {}
+        assert metadata.get("car_name") == "VibeSensor Simulator"
+        assert metadata.get("car_type") == "sedan"
+
     def test_report_pdf_accessible(self) -> None:
         """PDF report should be downloadable and valid."""
         pdf_bytes = _api_bytes(f"/api/history/{self.run_id}/report.pdf")
@@ -232,5 +239,5 @@ class TestSimulatorIngestion:
         reader = PdfReader(io.BytesIO(pdf_bytes))
         assert len(reader.pages) >= 2, f"PDF has only {len(reader.pages)} page(s)"
         pdf_text = "\n".join((page.extract_text() or "") for page in reader.pages).lower()
-        for token in ("next steps", "evidence", "front-left"):
+        for token in ("next steps", "evidence", "front-left", "vibesensor simulator"):
             assert token in pdf_text, f"Missing expected report content token: {token!r}"
