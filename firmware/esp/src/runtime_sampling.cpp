@@ -295,7 +295,9 @@ void process_due_samples(SamplingState& state, uint32_t due_slots) {
 
   if (recovery.missed_slots > 0) {
     note_missed_samples(
-        state, static_cast<uint32_t>(recovery.missed_slots), recovery.missed_slots > 0);
+        state,
+        static_cast<uint32_t>(recovery.missed_slots),
+        vibesensor::reliability::sampling_recovery_abandoned(recovery.missed_slots));
     state.next_sample_due_us += static_cast<uint64_t>(recovery.missed_slots) * step_us;
   }
 }

@@ -171,6 +171,12 @@ void test_sampling_recovery_plan_declares_misses_when_progress_is_not_credible()
   TEST_ASSERT_EQUAL_UINT64(4, shortfall.missed_slots);
 }
 
+void test_sampling_recovery_abandoned_only_for_multi_slot_backlog() {
+  TEST_ASSERT_FALSE(vibesensor::reliability::sampling_recovery_abandoned(0));
+  TEST_ASSERT_FALSE(vibesensor::reliability::sampling_recovery_abandoned(1));
+  TEST_ASSERT_TRUE(vibesensor::reliability::sampling_recovery_abandoned(2));
+}
+
 void test_retry_due_zero_retry_at_always_true() {
   // retry_at_ms == 0 means "fire immediately on first check".
   TEST_ASSERT_TRUE(vibesensor::reliability::retry_due(0, 0));
@@ -379,6 +385,7 @@ int main() {
   RUN_TEST(test_sampling_prefetch_refill_plan_uses_late_target_at_trigger_threshold);
   RUN_TEST(test_sampling_recovery_plan_uses_handoff_headroom_and_prefetch);
   RUN_TEST(test_sampling_recovery_plan_declares_misses_when_progress_is_not_credible);
+  RUN_TEST(test_sampling_recovery_abandoned_only_for_multi_slot_backlog);
   RUN_TEST(test_retry_due_zero_retry_at_always_true);
   RUN_TEST(test_retry_due_respects_wall_clock);
   RUN_TEST(test_saturating_inc_u8_does_not_wrap);
