@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Protocol
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSource
+from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSource, SpeedSourceKind
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
@@ -257,7 +257,17 @@ class ResolvedSpeedSnapshot(Protocol):
 class SpeedProvider(Protocol):
     """Speed access needed by recording flows."""
 
-    speed_mps: float | None
+    @property
+    def speed_mps(self) -> float | None: ...
+
+    @property
+    def gps_speed_mps(self) -> float | None: ...
+
+    @property
+    def engine_rpm(self) -> float | None: ...
+
+    @property
+    def engine_rpm_source(self) -> str | None: ...
 
     def resolve_speed(self) -> ResolvedSpeedSnapshot: ...
 
@@ -271,6 +281,9 @@ class SpeedSourceSync(Protocol):
         effective_speed_kmh: float | None,
         manual_source_selected: bool,
         stale_timeout_s: float | None = None,
+        selected_source: SpeedSourceKind | str | None = None,
+        obd_device_mac: str | None = None,
+        obd_device_name: str | None = None,
     ) -> float | None: ...
 
     def set_manual_source_selected(self, selected: bool) -> None: ...

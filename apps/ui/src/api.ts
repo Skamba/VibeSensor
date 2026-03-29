@@ -15,6 +15,9 @@ export {
   getSettingsSpeedSource,
   updateSettingsSpeedSource,
   getSpeedSourceStatus,
+  scanSettingsObdDevices,
+  pairSettingsObdDevice,
+  getSettingsObdStatus,
   getHealthStatus,
   getUpdateInternetStatus,
   getEspFlashPorts,
@@ -40,6 +43,10 @@ export { getClientLocations, setClientLocation, identifyClient, removeClient } f
 export { getLoggingStatus, startLoggingRun, stopLoggingRun } from "./api/logging";
 export type {
   HealthStatusPayload,
+  ObdDevicePayload,
+  ObdPairPayload,
+  ObdScanPayload,
+  ObdStatusPayload,
   UpdateStartRequestPayload,
   UpdateStatusPayload,
   UpdateIssue,

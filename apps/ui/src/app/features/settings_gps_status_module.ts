@@ -1,5 +1,5 @@
-import type { SpeedSourceStatusPayload } from "../../api/types";
-import { getSpeedSourceStatus } from "../../api";
+import type { ObdStatusPayload, SpeedSourceStatusPayload } from "../../api/types";
+import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
 import {
   GPS_POLL_FAST_MS,
   GPS_POLL_SLOW_MS,
@@ -50,6 +50,10 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
     return speed != null ? `${fmt(speed, 1)} ${unitLabel}` : null;
   }
 
+  function boolLabel(value: boolean): string {
+    return value ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
+  }
+
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
     const unitLabel = selectedSpeedUnitLabel();
     if (els.gpsStatusState) els.gpsStatusState.textContent = connectionStateLabel(status.connection_state);
@@ -81,13 +85,66 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
     }
   }
 
+  function formatConfiguredDevice(status: ObdStatusPayload): string {
+    if (status.configured_device_name && status.configured_device_mac) {
+      return `${status.configured_device_name} (${status.configured_device_mac})`;
+    }
+    return status.configured_device_name ?? status.configured_device_mac ?? t("settings.speed.obd_not_configured");
+  }
+
+  function renderObdStatus(status: ObdStatusPayload | null): void {
+    if (els.obdStatusPanel) {
+      els.obdStatusPanel.hidden = status === null;
+    }
+    if (status === null) {
+      if (els.obdStatusConfiguredDevice) els.obdStatusConfiguredDevice.textContent = "--";
+      if (els.obdStatusPairing) els.obdStatusPairing.textContent = "--";
+      if (els.obdStatusTrusted) els.obdStatusTrusted.textContent = "--";
+      if (els.obdStatusConnected) els.obdStatusConnected.textContent = "--";
+      if (els.obdStatusRfcommChannel) els.obdStatusRfcommChannel.textContent = "--";
+      if (els.obdStatusLastRpm) els.obdStatusLastRpm.textContent = "--";
+      if (els.obdStatusRawResponse) els.obdStatusRawResponse.textContent = "--";
+      if (els.obdStatusDebugHint) els.obdStatusDebugHint.textContent = "--";
+      return;
+    }
+    if (els.obdStatusConfiguredDevice) {
+      els.obdStatusConfiguredDevice.textContent = formatConfiguredDevice(status);
+    }
+    if (els.obdStatusPairing) {
+      els.obdStatusPairing.textContent = boolLabel(status.paired);
+    }
+    if (els.obdStatusTrusted) {
+      els.obdStatusTrusted.textContent = boolLabel(status.trusted);
+    }
+    if (els.obdStatusConnected) {
+      els.obdStatusConnected.textContent = boolLabel(status.connected);
+    }
+    if (els.obdStatusRfcommChannel) {
+      els.obdStatusRfcommChannel.textContent = status.rfcomm_channel != null ? String(status.rfcomm_channel) : "--";
+    }
+    if (els.obdStatusLastRpm) {
+      els.obdStatusLastRpm.textContent = status.last_rpm != null ? fmt(status.last_rpm, 0) : "--";
+    }
+    if (els.obdStatusRawResponse) {
+      els.obdStatusRawResponse.textContent = status.last_raw_response ?? "--";
+    }
+    if (els.obdStatusDebugHint) {
+      els.obdStatusDebugHint.textContent = status.debug_hint ?? "--";
+    }
+  }
+
   const polling = createPollingController({
     poll: async () => {
-      const status = await getSpeedSourceStatus();
+      const shouldLoadObdStatus = settings.speedSource === "obd2" || settings.obdDeviceMac != null;
+      const [status, obdStatus] = await Promise.all([
+        getSpeedSourceStatus(),
+        shouldLoadObdStatus ? getSettingsObdStatus() : Promise.resolve(null),
+      ]);
       settings.gpsFallbackActive = status.fallback_active;
       settings.gpsEffectiveSpeedKph = status.effective_speed_kmh;
       settings.resolvedSpeedSource = status.speed_source;
       renderGpsStatus(status);
+      renderObdStatus(obdStatus);
       ctx.syncSpeedSourceSelectionUi();
       ctx.renderSpeedReadout();
       return status.connection_state === "connected"

@@ -26,6 +26,11 @@ from vibesensor.adapters.http.models import (
     CarUpsertRequest,
     LanguageRequest,
     LanguageResponse,
+    ObdDeviceResponse,
+    ObdPairRequest,
+    ObdPairResponse,
+    ObdScanResponse,
+    ObdStatusResponse,
     SensorRequest,
     SensorsResponse,
     SpeedSourceRequest,
@@ -46,8 +51,9 @@ from vibesensor.shared.types.speed_source_config import (
 from vibesensor.shared.types.speed_source_config import SpeedSourceUpdatePayload
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
+    from vibesensor.adapters.http.dependencies import SettingsSpeedServiceProtocol
+    from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
     from vibesensor.infra.config.settings_store import SettingsStore
 
 _CAR_NOT_FOUND_RESPONSES: OpenAPIResponses = {
@@ -91,10 +97,14 @@ _SET_ANALYSIS_SETTINGS_RESPONSES: OpenAPIResponses = {
     400: {"description": "Analysis settings are invalid or no active car is configured."},
 }
 
+_OBD_ADMIN_RESPONSES: OpenAPIResponses = {
+    503: {"description": "Bluetooth OBD helper unavailable or the requested action failed."},
+}
+
 
 def create_settings_routes(
     settings_store: SettingsStore,
-    gps_monitor: GPSSpeedMonitor,
+    gps_monitor: SettingsSpeedServiceProtocol,
 ) -> APIRouter:
     """Create and return the device-settings API routes."""
     router = APIRouter(tags=["settings"])
@@ -119,6 +129,8 @@ def create_settings_routes(
             speed_source=payload["speedSource"],
             manual_speed_kph=payload["manualSpeedKph"],
             stale_timeout_s=payload["staleTimeoutS"],
+            obd_device_mac=payload.get("obdDeviceMac"),
+            obd_device_name=payload.get("obdDeviceName"),
         )
 
     def _speed_source_status_response(
@@ -144,6 +156,51 @@ def create_settings_routes(
             stale_timeout_s=snapshot.stale_timeout_s,
         )
 
+    def _obd_device_response(snapshot: ObdDeviceSnapshot) -> ObdDeviceResponse:
+        return ObdDeviceResponse(
+            mac_address=snapshot.mac_address,
+            name=snapshot.name,
+            paired=snapshot.paired,
+            trusted=snapshot.trusted,
+            connected=snapshot.connected,
+            rfcomm_channel=snapshot.rfcomm_channel,
+        )
+
+    def _obd_pair_response(
+        *,
+        configured_device_mac: str,
+        configured_device_name: str | None,
+        snapshot: ObdDeviceSnapshot,
+    ) -> ObdPairResponse:
+        return ObdPairResponse(
+            configured_device_mac=configured_device_mac,
+            configured_device_name=configured_device_name,
+            paired=snapshot.paired,
+            trusted=snapshot.trusted,
+            connected=snapshot.connected,
+            rfcomm_channel=snapshot.rfcomm_channel,
+        )
+
+    def _obd_status_response(snapshot: ObdStatusSnapshot) -> ObdStatusResponse:
+        return ObdStatusResponse(
+            configured_device_mac=snapshot.configured_device_mac,
+            configured_device_name=snapshot.configured_device_name,
+            connection_state=snapshot.connection_state,
+            device_mac=snapshot.device_mac,
+            device_name=snapshot.device_name,
+            paired=snapshot.paired,
+            trusted=snapshot.trusted,
+            connected=snapshot.connected,
+            rfcomm_channel=snapshot.rfcomm_channel,
+            last_sample_age_s=snapshot.last_sample_age_s,
+            last_speed_kmh=snapshot.last_speed_kmh,
+            last_rpm=snapshot.last_rpm,
+            last_error=snapshot.last_error,
+            last_raw_response=snapshot.last_raw_response,
+            reconnect_delay_s=snapshot.reconnect_delay_s,
+            debug_hint=snapshot.debug_hint,
+        )
+
     def _car_upsert_payload(req: CarUpsertRequest) -> CarConfigUpdatePayload:
         payload: CarConfigUpdatePayload = {}
         if req.name is not None:
@@ -164,6 +221,10 @@ def create_settings_routes(
             payload["manualSpeedKph"] = req.manual_speed_kph
         if req.stale_timeout_s is not None:
             payload["staleTimeoutS"] = req.stale_timeout_s
+        if req.obd_device_mac is not None:
+            payload["obdDeviceMac"] = req.obd_device_mac
+        if req.obd_device_name is not None:
+            payload["obdDeviceName"] = req.obd_device_name
         return payload
 
     def _sensor_update_payload(req: SensorRequest) -> SensorConfigUpdatePayload:
@@ -263,8 +324,55 @@ def create_settings_routes(
 
     @router.get("/api/settings/speed-source/status", response_model=SpeedSourceStatusResponse)
     async def get_speed_source_status() -> SpeedSourceStatusResponse:
-        """Return the live GPS connection state and effective speed-source status."""
+        """Return the live selected-speed-source connection state and effective speed status."""
         return _speed_source_status_response(gps_monitor.status_snapshot())
+
+    @router.post(
+        "/api/settings/obd/scan",
+        response_model=ObdScanResponse,
+        responses=_OBD_ADMIN_RESPONSES,
+    )
+    async def scan_obd_devices() -> ObdScanResponse:
+        """Scan nearby Bluetooth OBD adapters using the privileged helper."""
+        try:
+            devices = await asyncio.to_thread(gps_monitor.scan_obd_devices)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return ObdScanResponse(devices=[_obd_device_response(device) for device in devices])
+
+    @router.post(
+        "/api/settings/obd/pair",
+        response_model=ObdPairResponse,
+        responses={400: {"description": "Invalid Bluetooth MAC address."}, **_OBD_ADMIN_RESPONSES},
+    )
+    async def pair_obd_device(req: ObdPairRequest) -> ObdPairResponse:
+        """Pair, trust, connect, and persist the selected Bluetooth OBD adapter."""
+        normalized_mac = normalize_mac_or_400(req.mac_address)
+        try:
+            device = await asyncio.to_thread(gps_monitor.pair_obd_device, normalized_mac)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        persisted = await asyncio.to_thread(
+            settings_store.update_speed_source,
+            {
+                "obdDeviceMac": device.mac_address,
+                "obdDeviceName": device.name,
+            },
+        )
+        return _obd_pair_response(
+            configured_device_mac=str(persisted.get("obdDeviceMac") or device.mac_address),
+            configured_device_name=(
+                str(persisted.get("obdDeviceName"))
+                if persisted.get("obdDeviceName") not in (None, "")
+                else device.name
+            ),
+            snapshot=device,
+        )
+
+    @router.get("/api/settings/obd/status", response_model=ObdStatusResponse)
+    async def get_obd_status() -> ObdStatusResponse:
+        """Return detailed Bluetooth OBD runtime/admin status for diagnostics."""
+        return _obd_status_response(await asyncio.to_thread(gps_monitor.obd_status))
 
     # -- sensors ---------------------------------------------------------------
 

@@ -12,9 +12,10 @@ install -d "${ROOTFS_DIR}/etc/tmpfiles.d"
 install -d "${ROOTFS_DIR}/etc/ssh/sshd_config.d"
 install -d "${ROOTFS_DIR}/etc/systemd/system/ssh.service.d"
 install -d "${ROOTFS_DIR}/etc/sudoers.d"
-# Updater runs as pi and uses a restricted sudo wrapper for privileged ops.
+# Updater and Bluetooth OBD admin run as pi and use restricted privileged helpers.
 cat >"${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update" <<'SUDOERS'
 pi ALL=(root) NOPASSWD: /opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh
+pi ALL=(root) NOPASSWD: /opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py
 SUDOERS
 chmod 0440 "${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update"
 
@@ -232,6 +233,9 @@ ln -sf /etc/systemd/system/vibesensor-hotspot.service \
 mkdir -p "${ROOTFS_DIR}/etc/systemd/system/NetworkManager.service.wants"
 ln -sf /etc/systemd/system/vibesensor-rfkill-unblock.service \
   "${ROOTFS_DIR}/etc/systemd/system/NetworkManager.service.wants/vibesensor-rfkill-unblock.service"
+mkdir -p "${ROOTFS_DIR}/etc/systemd/system/bluetooth.service.wants"
+ln -sf /etc/systemd/system/vibesensor-rfkill-unblock.service \
+  "${ROOTFS_DIR}/etc/systemd/system/bluetooth.service.wants/vibesensor-rfkill-unblock.service"
 mkdir -p "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants"
 ln -sf /etc/systemd/system/vibesensor-hotspot-self-heal.timer \
   "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants/vibesensor-hotspot-self-heal.timer"

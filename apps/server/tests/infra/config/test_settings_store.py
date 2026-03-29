@@ -38,6 +38,9 @@ class FakeSpeedSourceSync:
         self.manual_selected: bool | None = None
         self.override_kmh: float | None = None
         self.stale_timeout_s: float | None = None
+        self.selected_source: str | None = None
+        self.obd_device_mac: str | None = None
+        self.obd_device_name: str | None = None
         self.calls: list[str] = []
 
     def apply_speed_source_settings(
@@ -46,11 +49,20 @@ class FakeSpeedSourceSync:
         effective_speed_kmh: float | None,
         manual_source_selected: bool,
         stale_timeout_s: float | None = None,
+        selected_source=None,
+        obd_device_mac: str | None = None,
+        obd_device_name: str | None = None,
     ) -> float | None:
         self.calls.append("apply")
         self.manual_selected = manual_source_selected
         self.override_kmh = effective_speed_kmh
         self.stale_timeout_s = stale_timeout_s
+        assert selected_source is not None
+        self.selected_source = str(selected_source)
+        self.obd_device_mac = obd_device_mac
+        self.obd_device_name = obd_device_name
+        if obd_device_mac is None:
+            assert obd_device_name is None
         return effective_speed_kmh
 
     def set_manual_source_selected(self, selected: bool) -> None:
@@ -141,6 +153,8 @@ def test_store_default_has_no_cars() -> None:
     assert snap["activeCarId"] is None
     assert snap["speedSource"] == "gps"
     assert snap["manualSpeedKph"] is None
+    assert "obdDeviceMac" not in snap
+    assert "obdDeviceName" not in snap
 
 
 def test_store_add_and_delete_car() -> None:
@@ -242,6 +256,20 @@ def test_store_invalid_speed_source_defaults_to_gps() -> None:
     assert result["speedSource"] == "gps"
 
 
+def test_store_update_speed_source_persists_obd_device_config() -> None:
+    store = SettingsStore()
+    result = store.update_speed_source(
+        {
+            "speedSource": "obd2",
+            "obdDeviceMac": "00:04:3E:5A:4A:4D",
+            "obdDeviceName": "OBDLink MX+ 80163",
+        }
+    )
+    assert result["speedSource"] == "obd2"
+    assert result["obdDeviceMac"] == "00043e5a4a4d"
+    assert result["obdDeviceName"] == "OBDLink MX+ 80163"
+
+
 # -- sensors -------------------------------------------------------------------
 
 
@@ -294,7 +322,14 @@ def test_store_persists_and_loads(tmp_path: Path) -> None:
     store1 = SettingsStore(db=db)
     added = store1.add_car({"name": "Persisted Car", "type": "suv"})
     store1.set_active_car(added.cars[0]["id"])
-    store1.update_speed_source({"speedSource": "manual", "manualSpeedKph": 60})
+    store1.update_speed_source(
+        {
+            "speedSource": "obd2",
+            "manualSpeedKph": 60,
+            "obdDeviceMac": "00:04:3E:5A:4A:4D",
+            "obdDeviceName": "OBDLink MX+ 80163",
+        }
+    )
     store1.set_sensor("11:22:33:44:55:66", {"name": "Rear", "location_code": "rear_left_wheel"})
 
     store2 = SettingsStore(db=db)
@@ -302,8 +337,10 @@ def test_store_persists_and_loads(tmp_path: Path) -> None:
     assert len(snap["cars"]) == 1
     assert snap["cars"][0]["name"] == "Persisted Car"
     assert snap["activeCarId"] == snap["cars"][0]["id"]
-    assert snap["speedSource"] == "manual"
+    assert snap["speedSource"] == "obd2"
     assert snap["manualSpeedKph"] == 60.0
+    assert snap["obdDeviceMac"] == "00043e5a4a4d"
+    assert snap["obdDeviceName"] == "OBDLink MX+ 80163"
     assert snap["sensorsByMac"]["112233445566"]["name"] == "Rear"
 
 
@@ -348,6 +385,35 @@ def test_store_syncs_speed_source_with_protocol_shaped_monitor() -> None:
     assert gps_monitor.manual_selected is True
     assert gps_monitor.override_kmh == pytest.approx(80.0)
     assert gps_monitor.stale_timeout_s == pytest.approx(17.0)
+    assert gps_monitor.calls == ["apply"]
+
+
+def test_store_syncs_live_speed_source_fallback_and_obd_device() -> None:
+    gps_monitor = FakeSpeedSourceSync()
+    store = SettingsStore()
+    store.bind_speed_source_sync(
+        SettingsRuntimeApplier(
+            gps_monitor=gps_monitor,
+            speed_source_reader=store,
+        ).apply_speed_source
+    )
+
+    store.update_speed_source(
+        {
+            "speedSource": "obd2",
+            "manualSpeedKph": 61,
+            "staleTimeoutS": 14,
+            "obdDeviceMac": "00043e5a4a4d",
+            "obdDeviceName": "OBDLink MX+",
+        }
+    )
+
+    assert gps_monitor.manual_selected is False
+    assert gps_monitor.override_kmh == pytest.approx(61.0)
+    assert gps_monitor.stale_timeout_s == pytest.approx(14.0)
+    assert gps_monitor.selected_source == "obd2"
+    assert gps_monitor.obd_device_mac == "00043e5a4a4d"
+    assert gps_monitor.obd_device_name == "OBDLink MX+"
     assert gps_monitor.calls == ["apply"]
 
 

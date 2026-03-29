@@ -243,6 +243,27 @@ export interface paths {
      */
     put: operations["set_language_api_settings_language_put"];
   };
+  "/api/settings/obd/pair": {
+    /**
+     * Pair Obd Device
+     * @description Pair, trust, connect, and persist the selected Bluetooth OBD adapter.
+     */
+    post: operations["pair_obd_device_api_settings_obd_pair_post"];
+  };
+  "/api/settings/obd/scan": {
+    /**
+     * Scan Obd Devices
+     * @description Scan nearby Bluetooth OBD adapters using the privileged helper.
+     */
+    post: operations["scan_obd_devices_api_settings_obd_scan_post"];
+  };
+  "/api/settings/obd/status": {
+    /**
+     * Get Obd Status
+     * @description Return detailed Bluetooth OBD runtime/admin status for diagnostics.
+     */
+    get: operations["get_obd_status_api_settings_obd_status_get"];
+  };
   "/api/settings/sensors": {
     /**
      * Get Sensors
@@ -277,7 +298,7 @@ export interface paths {
   "/api/settings/speed-source/status": {
     /**
      * Get Speed Source Status
-     * @description Return the live GPS connection state and effective speed-source status.
+     * @description Return the live selected-speed-source connection state and effective speed status.
      */
     get: operations["get_speed_source_status_api_settings_speed_source_status_get"];
   };
@@ -1653,6 +1674,96 @@ export interface components {
       t_s?: number | null;
     };
     /**
+     * ObdDeviceResponse
+     * @description Single discovered or configured Bluetooth OBD adapter.
+     */
+    ObdDeviceResponse: {
+      /** Connected */
+      connected: boolean;
+      /** Mac Address */
+      mac_address: string;
+      /** Name */
+      name: string | null;
+      /** Paired */
+      paired: boolean;
+      /** Rfcomm Channel */
+      rfcomm_channel: number | null;
+      /** Trusted */
+      trusted: boolean;
+    };
+    /**
+     * ObdPairRequest
+     * @description Request body for pairing and selecting a Bluetooth OBD adapter.
+     */
+    ObdPairRequest: {
+      /** Mac Address */
+      mac_address: string;
+    };
+    /**
+     * ObdPairResponse
+     * @description Response body after pairing and persisting a Bluetooth OBD adapter.
+     */
+    ObdPairResponse: {
+      /** Configured Device Mac */
+      configured_device_mac: string;
+      /** Configured Device Name */
+      configured_device_name: string | null;
+      /** Connected */
+      connected: boolean;
+      /** Paired */
+      paired: boolean;
+      /** Rfcomm Channel */
+      rfcomm_channel: number | null;
+      /** Trusted */
+      trusted: boolean;
+    };
+    /**
+     * ObdScanResponse
+     * @description Response body for a Bluetooth OBD discovery scan.
+     */
+    ObdScanResponse: {
+      /** Devices */
+      devices: components["schemas"]["ObdDeviceResponse"][];
+    };
+    /**
+     * ObdStatusResponse
+     * @description Detailed Bluetooth OBD runtime status for diagnostics and field recovery.
+     */
+    ObdStatusResponse: {
+      /** Configured Device Mac */
+      configured_device_mac: string | null;
+      /** Configured Device Name */
+      configured_device_name: string | null;
+      /** Connected */
+      connected: boolean;
+      /** Connection State */
+      connection_state: string;
+      /** Debug Hint */
+      debug_hint: string | null;
+      /** Device Mac */
+      device_mac: string | null;
+      /** Device Name */
+      device_name: string | null;
+      /** Last Error */
+      last_error: string | null;
+      /** Last Raw Response */
+      last_raw_response: string | null;
+      /** Last Rpm */
+      last_rpm: number | null;
+      /** Last Sample Age S */
+      last_sample_age_s: number | null;
+      /** Last Speed Kmh */
+      last_speed_kmh: number | null;
+      /** Paired */
+      paired: boolean;
+      /** Reconnect Delay S */
+      reconnect_delay_s: number | null;
+      /** Rfcomm Channel */
+      rfcomm_channel: number | null;
+      /** Trusted */
+      trusted: boolean;
+    };
+    /**
      * OutlierSummaryResponse
      * @description Response body for an outlier-summary bucket.
      */
@@ -1936,7 +2047,7 @@ export interface components {
       status: string;
     };
     /** @enum {string} */
-    ResolvedSpeedSource: "gps" | "manual" | "fallback_manual" | "none";
+    ResolvedSpeedSource: "gps" | "obd2" | "manual" | "fallback_manual" | "none";
     /**
      * RunSuitabilityCheck
      * @description Typed HTTP contract for one run-suitability diagnostic check.
@@ -2051,6 +2162,10 @@ export interface components {
     SpeedSourceRequest: {
       /** Manual Speed Kph */
       manual_speed_kph?: number | null;
+      /** Obd Device Mac */
+      obd_device_mac?: string | null;
+      /** Obd Device Name */
+      obd_device_name?: string | null;
       speed_source?: components["schemas"]["SpeedSourceKind"] | null;
       /** Stale Timeout S */
       stale_timeout_s?: number | null;
@@ -2062,6 +2177,10 @@ export interface components {
     SpeedSourceResponse: {
       /** Manual Speed Kph */
       manual_speed_kph: number | null;
+      /** Obd Device Mac */
+      obd_device_mac?: string | null;
+      /** Obd Device Name */
+      obd_device_name?: string | null;
       speed_source: components["schemas"]["SpeedSourceKind"];
       /** Stale Timeout S */
       stale_timeout_s: number;
@@ -3315,6 +3434,71 @@ export interface operations {
     };
   };
   /**
+   * Pair Obd Device
+   * @description Pair, trust, connect, and persist the selected Bluetooth OBD adapter.
+   */
+  pair_obd_device_api_settings_obd_pair_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ObdPairRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ObdPairResponse"];
+        };
+      };
+      /** @description Invalid Bluetooth MAC address. */
+      400: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+      /** @description Bluetooth OBD helper unavailable or the requested action failed. */
+      503: {
+        content: never;
+      };
+    };
+  };
+  /**
+   * Scan Obd Devices
+   * @description Scan nearby Bluetooth OBD adapters using the privileged helper.
+   */
+  scan_obd_devices_api_settings_obd_scan_post: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ObdScanResponse"];
+        };
+      };
+      /** @description Bluetooth OBD helper unavailable or the requested action failed. */
+      503: {
+        content: never;
+      };
+    };
+  };
+  /**
+   * Get Obd Status
+   * @description Return detailed Bluetooth OBD runtime/admin status for diagnostics.
+   */
+  get_obd_status_api_settings_obd_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ObdStatusResponse"];
+        };
+      };
+    };
+  };
+  /**
    * Get Sensors
    * @description List persisted per-sensor settings keyed by normalized MAC address.
    */
@@ -3444,7 +3628,7 @@ export interface operations {
   };
   /**
    * Get Speed Source Status
-   * @description Return the live GPS connection state and effective speed-source status.
+   * @description Return the live selected-speed-source connection state and effective speed status.
    */
   get_speed_source_status_api_settings_speed_source_status_get: {
     responses: {

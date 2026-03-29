@@ -100,10 +100,12 @@ class SampleFlushOrchestrator:
             registry=self._registry,
             processor=self._processor,
             speed_context=resolve_speed_context(
-                gps_speed_mps=self._gps_monitor.speed_mps,
+                gps_speed_mps=self._gps_monitor.gps_speed_mps,
                 resolved_speed_mps=speed_resolution.speed_mps,
                 resolved_speed_source=speed_resolution.source,
                 analysis_settings_snapshot=analysis_settings_snapshot,
+                measured_engine_rpm=self._gps_monitor.engine_rpm,
+                measured_engine_rpm_source=self._gps_monitor.engine_rpm_source,
             ),
             analysis_settings_snapshot=analysis_settings_snapshot,
             default_sample_rate_hz=self._default_sample_rate_hz,

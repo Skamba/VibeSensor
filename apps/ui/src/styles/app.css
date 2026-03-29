@@ -2079,6 +2079,70 @@ td.vib-cell[data-severity="l1"] { background: rgba(37, 99, 235, 0.1); }
 .speed-source-diagnostics .kv-table {
   width: 100%;
 }
+.speed-source-obd-toolbar {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.speed-source-obd-toolbar__summary {
+  display: grid;
+  gap: 0.3rem;
+}
+.speed-source-device-list {
+  display: grid;
+  gap: var(--space-2);
+}
+.speed-source-device {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.speed-source-device__header {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+  align-items: start;
+  flex-wrap: wrap;
+}
+.speed-source-device__identity {
+  display: grid;
+  gap: 0.25rem;
+}
+.speed-source-device__name {
+  font-weight: 700;
+}
+.speed-source-device__mac {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+.speed-source-device__badges {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.speed-source-device__badge {
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.speed-source-device__badge--active {
+  background: var(--pill-ok-bg);
+  color: var(--pill-ok-text);
+}
+.speed-source-device__actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
 .manual-speed-row { display: flex; gap: var(--space-2); align-items: flex-end; margin: var(--space-2) 0; flex-wrap: wrap; }
 .manual-speed-row label { min-width: 140px; }
 .manual-speed-row input { max-width: 150px; }

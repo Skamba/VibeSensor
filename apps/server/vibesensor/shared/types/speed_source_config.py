@@ -5,8 +5,9 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, TypedDict
+from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
 
+from vibesensor.domain import normalize_sensor_id
 from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 
@@ -24,7 +25,7 @@ __all__ = [
 
 _isfinite = math.isfinite
 
-type ResolvedSpeedSource = Literal["gps", "manual", "fallback_manual", "none"]
+type ResolvedSpeedSource = Literal["gps", "obd2", "manual", "fallback_manual", "none"]
 VALID_SPEED_SOURCES: tuple[str, ...] = tuple(kind.value for kind in SpeedSourceKind)
 
 
@@ -32,12 +33,16 @@ class SpeedSourceUpdatePayload(TypedDict, total=False):
     speedSource: SpeedSourceKind
     manualSpeedKph: float | None
     staleTimeoutS: float
+    obdDeviceMac: str | None
+    obdDeviceName: str | None
 
 
 class SpeedSourcePayload(TypedDict):
     speedSource: SpeedSourceKind
     manualSpeedKph: float | None
     staleTimeoutS: float
+    obdDeviceMac: NotRequired[str | None]
+    obdDeviceName: NotRequired[str | None]
 
 
 def _parse_manual_speed(value: object) -> float | None:
@@ -65,6 +70,31 @@ def _coerce_speed_source(value: object) -> SpeedSourceKind:
     return SpeedSourceKind.GPS
 
 
+def _parse_obd_device_mac(value: object) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        candidate = value.strip()
+        if not candidate:
+            return None
+        try:
+            return normalize_sensor_id(candidate)
+        except ValueError:
+            return None
+    return None
+
+
+def _parse_obd_device_name(value: object) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        name = value.strip()
+        if not name:
+            return None
+        return name[:128]
+    return None
+
+
 @dataclass(slots=True)
 class SpeedSourceConfig:
     """Speed source settings (GPS, OBD2, or manual) with fallback policy."""
@@ -72,6 +102,8 @@ class SpeedSourceConfig:
     speed_source: SpeedSourceKind
     manual_speed_kph: float | None
     stale_timeout_s: float
+    obd_device_mac: str | None = None
+    obd_device_name: str | None = None
 
     @classmethod
     def default(cls) -> SpeedSourceConfig:
@@ -80,6 +112,8 @@ class SpeedSourceConfig:
             speed_source=SpeedSourceKind.GPS,
             manual_speed_kph=None,
             stale_timeout_s=10.0,
+            obd_device_mac=None,
+            obd_device_name=None,
         )
 
     @classmethod
@@ -92,15 +126,22 @@ class SpeedSourceConfig:
             speed_source=speed_source,
             manual_speed_kph=manual_speed_kph,
             stale_timeout_s=stale_timeout_s,
+            obd_device_mac=_parse_obd_device_mac(data.get("obdDeviceMac")),
+            obd_device_name=_parse_obd_device_name(data.get("obdDeviceName")),
         )
 
     def to_dict(self) -> SpeedSourcePayload:
         """Serialize this speed source config to a plain dict for JSON persistence."""
-        return {
+        payload: SpeedSourcePayload = {
             "speedSource": self.speed_source,
             "manualSpeedKph": self.manual_speed_kph,
             "staleTimeoutS": self.stale_timeout_s,
         }
+        if self.obd_device_mac is not None:
+            payload["obdDeviceMac"] = self.obd_device_mac
+        if self.obd_device_name is not None:
+            payload["obdDeviceName"] = self.obd_device_name
+        return payload
 
     def apply_update(self, data: SpeedSourceUpdatePayload) -> None:
         """Mutate in-place from an API update payload."""
@@ -116,6 +157,14 @@ class SpeedSourceConfig:
         stale_timeout = data.get("staleTimeoutS")
         if stale_timeout is not None:
             self.stale_timeout_s = _parse_stale_timeout(stale_timeout)
+        if "obdDeviceMac" in data:
+            self.obd_device_mac = _parse_obd_device_mac(data["obdDeviceMac"])
+            if self.obd_device_mac is None:
+                self.obd_device_name = None
+        if "obdDeviceName" in data:
+            self.obd_device_name = _parse_obd_device_name(data["obdDeviceName"])
+        if self.obd_device_mac is None:
+            self.obd_device_name = None
         if self.speed_source == SpeedSourceKind.MANUAL and self.manual_speed_kph is None:
             raise ValueError("SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph")
 

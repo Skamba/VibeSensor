@@ -178,6 +178,19 @@ class TestSpeedSourceConfig:
         d = ssc.to_dict()
         assert d["speedSource"] == "gps"
 
+    def test_roundtrip_with_obd_device_config(self) -> None:
+        ssc = SpeedSourceConfig.from_dict(
+            {
+                "speedSource": "obd2",
+                "obdDeviceMac": "00:04:3E:5A:4A:4D",
+                "obdDeviceName": "OBDLink MX+ 80163",
+            }
+        )
+        d = ssc.to_dict()
+        assert d["speedSource"] == "obd2"
+        assert d["obdDeviceMac"] == "00043e5a4a4d"
+        assert d["obdDeviceName"] == "OBDLink MX+ 80163"
+
     def test_apply_update(self) -> None:
         ssc = SpeedSourceConfig.default()
         ssc.apply_update({"speedSource": "manual", "manualSpeedKph": 50.0})
@@ -208,6 +221,18 @@ class TestSpeedSourceConfig:
         assert ssc.manual_speed_kph == 80.0
         ssc.apply_update({"manualSpeedKph": None})
         assert ssc.manual_speed_kph is None
+
+    def test_apply_update_clears_obd_name_when_mac_clears(self) -> None:
+        ssc = SpeedSourceConfig.from_dict(
+            {
+                "speedSource": "obd2",
+                "obdDeviceMac": "00:04:3E:5A:4A:4D",
+                "obdDeviceName": "OBDLink MX+ 80163",
+            }
+        )
+        ssc.apply_update({"obdDeviceMac": None})
+        assert ssc.obd_device_mac is None
+        assert ssc.obd_device_name is None
 
 
 # ---------------------------------------------------------------------------

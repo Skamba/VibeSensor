@@ -23,7 +23,8 @@ from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashMana
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
+    from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
 
@@ -50,6 +51,16 @@ class HistoryExportServiceProtocol(Protocol):
     async def build_export(self, run_id: str) -> HistoryExportDownload: ...
 
 
+class SettingsSpeedServiceProtocol(Protocol):
+    def status_snapshot(self) -> SpeedSourceStatusSnapshot: ...
+
+    def scan_obd_devices(self, *, timeout_s: int = ...) -> list[ObdDeviceSnapshot]: ...
+
+    def pair_obd_device(self, mac_address: str) -> ObdDeviceSnapshot: ...
+
+    def obd_status(self) -> ObdStatusSnapshot: ...
+
+
 @dataclass(slots=True)
 class TelemetryDeps:
     processing_loop_state: ProcessingLoopState
@@ -64,7 +75,7 @@ class TelemetryDeps:
 @dataclass(slots=True)
 class SettingsDeps:
     settings_store: SettingsStore
-    gps_monitor: GPSSpeedMonitor
+    gps_monitor: SettingsSpeedServiceProtocol
 
 
 @dataclass(slots=True)
