@@ -123,6 +123,7 @@ Supported override macros:
 - `VIBESENSOR_WIFI_RETRY_INTERVAL_MS`
 - `VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS`
 - `VIBESENSOR_WIFI_SCAN_INTERVAL_MS`
+- `VIBESENSOR_SAMPLING_TASK_CORE`
 
 Example:
 
@@ -154,6 +155,13 @@ steady-state refills target `24` buffered samples, while late or refill-shortfal
 conditions target the full `32`-sample buffer. Late handling is now based on
 real recovery context (prefetch occupancy, handoff headroom, and recent refill
 progress) instead of a fixed loop-time budget.
+
+On ESP32 dual-core builds, the sampling task is now pinned explicitly instead of
+inheriting the startup core. By default it targets the opposite core from the
+configured Arduino loop task (`CONFIG_ARDUINO_RUNNING_CORE` / `ARDUINO_RUNNING_CORE`);
+if the loop task is configured with no affinity, the firmware falls back to core
+`0`. Override with `VIBESENSOR_SAMPLING_TASK_CORE=<core>` when you need a
+different placement.
 
 Default ATOM Lite Unit-port mapping used in this repo (4-pin Unit cable):
 
