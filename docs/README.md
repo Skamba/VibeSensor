@@ -69,7 +69,8 @@ HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
 | `firmware/esp/HARDENING.md` | Firmware security hardening notes. |
 | `hardware/README.md` | Hardware components and wiring. |
 | `infra/ci/README.md` | CI pipeline overview. |
-| `infra/pi-image/pi-gen/README.md` | Raspberry Pi image build flow. |
+| `infra/pi-image/yocto/README.md` | Supported Raspberry Pi image build flow. |
+| `infra/pi-image/pi-gen/README.md` | Legacy Raspberry Pi image build reference. |
 
 ## Data & reference
 

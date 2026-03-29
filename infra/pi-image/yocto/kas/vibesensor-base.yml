@@ -1,0 +1,48 @@
+header:
+  version: 14
+build_system: oe
+machine: raspberrypi-armv8
+distro: poky
+repos:
+  vibesensor:
+    layers:
+      infra/pi-image/yocto/meta-vibesensor:
+  poky:
+    url: https://github.com/yoctoproject/poky.git
+    branch: styhead
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+  meta-openembedded:
+    url: https://github.com/openembedded/meta-openembedded.git
+    branch: styhead
+    layers:
+      meta-oe:
+      meta-python:
+      meta-networking:
+  meta-raspberrypi:
+    url: https://github.com/agherzan/meta-raspberrypi.git
+    branch: styhead
+    layers:
+      .:
+local_conf_header:
+  vibesensor-base: |
+    CONF_VERSION = "2"
+    PACKAGE_CLASSES = "package_ipk"
+    INIT_MANAGER = "systemd"
+    DISTRO_FEATURES:append = " systemd wifi pam"
+    DISTRO_FEATURES:remove = " x11 wayland sysvinit"
+    VIRTUAL-RUNTIME_init_manager = "systemd"
+    VIRTUAL-RUNTIME_initscripts = ""
+    ENABLE_UART = "1"
+    IMAGE_FSTYPES = "wic.bz2"
+    WKS_FILE = "vibesensor-rpi-universal.wks"
+    BB_ENV_PASSTHROUGH_ADDITIONS .= " VIBESENSOR_SOURCE_TREE VIBESENSOR_WHEELHOUSE_DIR VIBESENSOR_FIRMWARE_CACHE_DIR VIBESENSOR_ARTIFACTS_MANIFEST VIBESENSOR_BUILD_LABEL VIBESENSOR_FIRST_USER_NAME VIBESENSOR_FIRST_USER_PASS_HASH"
+    VIBESENSOR_SOURCE_TREE ??= ""
+    VIBESENSOR_WHEELHOUSE_DIR ??= ""
+    VIBESENSOR_FIRMWARE_CACHE_DIR ??= ""
+    VIBESENSOR_ARTIFACTS_MANIFEST ??= ""
+    VIBESENSOR_BUILD_LABEL ??= "local"
+    VIBESENSOR_FIRST_USER_NAME ??= "pi"
+    VIBESENSOR_FIRST_USER_PASS_HASH ??= "$6\$vibesensor\$YKs0hKZ3G8A9mN.GylGyDwVvejM8/OyqnE9ZcVXvteO.cjE6orpbMa6lOHlGLwHHXyB3U9iJAqk5qCSwljy6J."
