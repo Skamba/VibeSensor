@@ -298,6 +298,10 @@ def build_run_metadata(
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
     raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
     incomplete = raw_sample_rate_hz is None
+    run_car_snapshot = _car_snapshot_for_run(
+        active_car_snapshot=active_car_snapshot,
+        firmware_version=firmware_version,
+    )
     metadata: JsonObject = create_run_metadata(
         run_id=run_id,
         start_time_utc=start_time_utc,
@@ -316,9 +320,30 @@ def build_run_metadata(
     apply_run_context_snapshot(
         metadata,
         analysis_settings_snapshot=analysis_settings_snapshot,
-        active_car_snapshot=active_car_snapshot,
+        active_car_snapshot=run_car_snapshot,
     )
     metadata["incomplete_for_order_analysis"] = not order_reference_context_complete(metadata)
     if language_provider is not None:
         metadata["language"] = str(language_provider()).strip().lower() or "en"
     return dict(metadata)
+
+
+_SIMULATOR_DEFAULT_CAR = CarSnapshot(
+    car_id="simulator-default",
+    name="VibeSensor Simulator",
+    car_type="sedan",
+)
+
+
+def _car_snapshot_for_run(
+    *,
+    active_car_snapshot: CarSnapshot | None,
+    firmware_version: str | None,
+) -> CarSnapshot | None:
+    """Return the car snapshot to persist for a run."""
+    if active_car_snapshot is not None:
+        return active_car_snapshot
+    tokens = [token.strip().lower() for token in str(firmware_version or "").split(",")]
+    if any(token.startswith("sim-") for token in tokens if token):
+        return _SIMULATOR_DEFAULT_CAR
+    return None
