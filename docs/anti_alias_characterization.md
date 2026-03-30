@@ -12,7 +12,7 @@ Use the characterization tool to see which out-of-band tones fold back into the
 current analysis band:
 
 ```bash
-python3 tools/dev/characterize_aliasing.py
+python3 -m vibesensor.cli.characterize_aliasing
 ```
 
 The tool reports:

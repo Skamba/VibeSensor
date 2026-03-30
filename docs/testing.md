@@ -157,12 +157,12 @@ interactivity. `--threads` remains accepted as a compatibility alias.
 
 ## Characterization
 
-Use `tools/dev/characterize_aliasing.py` to inspect which out-of-band tones can
-fold into the current live-analysis band for the configured sample rate and FFT
-setup:
+Use `python3 -m vibesensor.cli.characterize_aliasing` to inspect which
+out-of-band tones can fold into the current live-analysis band for the
+configured sample rate and FFT setup:
 
 ```bash
-python3 tools/dev/characterize_aliasing.py
+python3 -m vibesensor.cli.characterize_aliasing
 ```
 
 The tool characterizes the current **digital** chain only. It does not replace
