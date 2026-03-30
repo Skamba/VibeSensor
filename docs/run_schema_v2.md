@@ -19,7 +19,7 @@ Required fields:
 - `end_time_utc` (may be `null` while active)
 - `sensor_model`
 - `raw_sample_rate_hz`
-- `feature_interval_s`
+- `feature_interval_s` (used by time-aware order-evidence gating to convert logged match samples into durations)
 - `fft_window_size_samples`
 - `fft_window_type`
 - `peak_picker_method`

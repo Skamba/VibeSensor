@@ -186,7 +186,10 @@ class OrderAnalysisSession:
             self._per_sample_phases,
             self._lang,
         )
-        if not match.is_eligible():
+        if not match.is_eligible(
+            feature_interval_s=self._context.feature_interval_s,
+            steady_speed=self._steady_speed,
+        ):
             return None
 
         constant_speed = (
