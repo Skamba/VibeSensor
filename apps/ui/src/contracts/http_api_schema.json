@@ -4383,6 +4383,10 @@
       "ObdStatusResponse": {
         "description": "Detailed Bluetooth OBD runtime status for diagnostics and field recovery.",
         "properties": {
+          "backoff_active": {
+            "title": "Backoff Active",
+            "type": "boolean"
+          },
           "configured_device_mac": {
             "anyOf": [
               {
@@ -4446,6 +4450,10 @@
             ],
             "title": "Device Name"
           },
+          "error_count": {
+            "title": "Error Count",
+            "type": "integer"
+          },
           "last_error": {
             "anyOf": [
               {
@@ -4505,6 +4513,17 @@
             "title": "Paired",
             "type": "boolean"
           },
+          "poll_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poll Mode"
+          },
           "reconnect_delay_s": {
             "anyOf": [
               {
@@ -4516,6 +4535,17 @@
             ],
             "title": "Reconnect Delay S"
           },
+          "request_rtt_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Rtt Ms"
+          },
           "rfcomm_channel": {
             "anyOf": [
               {
@@ -4526,6 +4556,43 @@
               }
             ],
             "title": "Rfcomm Channel"
+          },
+          "rpm_effective_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rpm Effective Hz"
+          },
+          "rpm_sample_age_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rpm Sample Age S"
+          },
+          "rpm_target_interval_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rpm Target Interval Ms"
+          },
+          "timeout_count": {
+            "title": "Timeout Count",
+            "type": "integer"
           },
           "trusted": {
             "title": "Trusted",
@@ -4545,6 +4612,14 @@
           "last_sample_age_s",
           "last_speed_kmh",
           "last_rpm",
+          "rpm_sample_age_s",
+          "rpm_target_interval_ms",
+          "rpm_effective_hz",
+          "request_rtt_ms",
+          "timeout_count",
+          "error_count",
+          "poll_mode",
+          "backoff_active",
           "last_error",
           "last_raw_response",
           "reconnect_delay_s",

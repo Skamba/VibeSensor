@@ -15,6 +15,13 @@ const CONNECTION_STATE_I18N: Record<string, string> = {
   stale: "settings.speed.state_stale",
 };
 
+const OBD_POLL_MODE_I18N: Record<string, string> = {
+  rpm_priority: "settings.speed.obd_mode_rpm_priority",
+  rpm_priority_backoff: "settings.speed.obd_mode_rpm_priority_backoff",
+  rpm_only: "settings.speed.obd_mode_rpm_only",
+  rpm_only_backoff: "settings.speed.obd_mode_rpm_only_backoff",
+};
+
 export interface SettingsGpsStatusModuleDeps extends FeatureDepsBase {
   settings: SettingsState;
   getSpeedUnit: () => string;
@@ -52,6 +59,36 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
 
   function boolLabel(value: boolean): string {
     return value ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
+  }
+
+  function formatAgeSeconds(ageSeconds: number | null): string | null {
+    return ageSeconds != null
+      ? t("settings.speed.last_update_value", {
+        value: {
+          number: ageSeconds,
+          options: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+        },
+      })
+      : null;
+  }
+
+  function formatCadenceFromTarget(intervalMs: number | null): string | null {
+    if (intervalMs == null || intervalMs <= 0) return null;
+    return `${fmt(1000 / intervalMs, 1)} Hz (${fmt(intervalMs, 0)} ms)`;
+  }
+
+  function formatCadenceHz(hz: number | null): string | null {
+    return hz != null ? `${fmt(hz, 1)} Hz` : null;
+  }
+
+  function formatMilliseconds(ms: number | null): string | null {
+    return ms != null ? `${fmt(ms, 0)} ms` : null;
+  }
+
+  function obdPollModeLabel(mode: string | null): string | null {
+    if (mode == null) return null;
+    const key = OBD_POLL_MODE_I18N[mode];
+    return key ? t(key) : mode;
   }
 
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
@@ -103,6 +140,14 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
       if (els.obdStatusConnected) els.obdStatusConnected.textContent = "--";
       if (els.obdStatusRfcommChannel) els.obdStatusRfcommChannel.textContent = "--";
       if (els.obdStatusLastRpm) els.obdStatusLastRpm.textContent = "--";
+      if (els.obdStatusRpmAge) els.obdStatusRpmAge.textContent = "--";
+      if (els.obdStatusTargetCadence) els.obdStatusTargetCadence.textContent = "--";
+      if (els.obdStatusEffectiveCadence) els.obdStatusEffectiveCadence.textContent = "--";
+      if (els.obdStatusRequestRtt) els.obdStatusRequestRtt.textContent = "--";
+      if (els.obdStatusTimeouts) els.obdStatusTimeouts.textContent = "--";
+      if (els.obdStatusErrors) els.obdStatusErrors.textContent = "--";
+      if (els.obdStatusMode) els.obdStatusMode.textContent = "--";
+      if (els.obdStatusBackoff) els.obdStatusBackoff.textContent = "--";
       if (els.obdStatusRawResponse) els.obdStatusRawResponse.textContent = "--";
       if (els.obdStatusDebugHint) els.obdStatusDebugHint.textContent = "--";
       return;
@@ -124,6 +169,30 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
     }
     if (els.obdStatusLastRpm) {
       els.obdStatusLastRpm.textContent = status.last_rpm != null ? fmt(status.last_rpm, 0) : "--";
+    }
+    if (els.obdStatusRpmAge) {
+      els.obdStatusRpmAge.textContent = formatAgeSeconds(status.rpm_sample_age_s) ?? "--";
+    }
+    if (els.obdStatusTargetCadence) {
+      els.obdStatusTargetCadence.textContent = formatCadenceFromTarget(status.rpm_target_interval_ms) ?? "--";
+    }
+    if (els.obdStatusEffectiveCadence) {
+      els.obdStatusEffectiveCadence.textContent = formatCadenceHz(status.rpm_effective_hz) ?? "--";
+    }
+    if (els.obdStatusRequestRtt) {
+      els.obdStatusRequestRtt.textContent = formatMilliseconds(status.request_rtt_ms) ?? "--";
+    }
+    if (els.obdStatusTimeouts) {
+      els.obdStatusTimeouts.textContent = String(status.timeout_count);
+    }
+    if (els.obdStatusErrors) {
+      els.obdStatusErrors.textContent = String(status.error_count);
+    }
+    if (els.obdStatusMode) {
+      els.obdStatusMode.textContent = obdPollModeLabel(status.poll_mode) ?? "--";
+    }
+    if (els.obdStatusBackoff) {
+      els.obdStatusBackoff.textContent = boolLabel(status.backoff_active);
     }
     if (els.obdStatusRawResponse) {
       els.obdStatusRawResponse.textContent = status.last_raw_response ?? "--";

@@ -1734,6 +1734,8 @@ export interface components {
      * @description Detailed Bluetooth OBD runtime status for diagnostics and field recovery.
      */
     ObdStatusResponse: {
+      /** Backoff Active */
+      backoff_active: boolean;
       /** Configured Device Mac */
       configured_device_mac: string | null;
       /** Configured Device Name */
@@ -1748,6 +1750,8 @@ export interface components {
       device_mac: string | null;
       /** Device Name */
       device_name: string | null;
+      /** Error Count */
+      error_count: number;
       /** Last Error */
       last_error: string | null;
       /** Last Raw Response */
@@ -1760,10 +1764,22 @@ export interface components {
       last_speed_kmh: number | null;
       /** Paired */
       paired: boolean;
+      /** Poll Mode */
+      poll_mode: string | null;
       /** Reconnect Delay S */
       reconnect_delay_s: number | null;
+      /** Request Rtt Ms */
+      request_rtt_ms: number | null;
       /** Rfcomm Channel */
       rfcomm_channel: number | null;
+      /** Rpm Effective Hz */
+      rpm_effective_hz: number | null;
+      /** Rpm Sample Age S */
+      rpm_sample_age_s: number | null;
+      /** Rpm Target Interval Ms */
+      rpm_target_interval_ms: number | null;
+      /** Timeout Count */
+      timeout_count: number;
       /** Trusted */
       trusted: boolean;
     };
