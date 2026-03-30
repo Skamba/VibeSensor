@@ -153,6 +153,7 @@ def build_sample_records(
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
     sensor_metadata_reader: SensorMetadataReader | None = None,
+    live_sample_window_s: float | None = _LIVE_SAMPLE_WINDOW_S,
 ) -> list[SensorFrame]:
     """Build one batch of typed sample records from all active clients."""
     (
@@ -172,14 +173,18 @@ def build_sample_records(
     sensors_by_mac = sensor_metadata_reader.get_sensors() if sensor_metadata_reader else {}
 
     records: list[SensorFrame] = []
-    active_client_ids = sorted(
-        set(
-            processor.clients_with_recent_data(
-                registry.active_client_ids(),
-                max_age_s=_LIVE_SAMPLE_WINDOW_S,
+    registry_client_ids = registry.active_client_ids()
+    if live_sample_window_s is None:
+        active_client_ids = sorted(set(registry_client_ids))
+    else:
+        active_client_ids = sorted(
+            set(
+                processor.clients_with_recent_data(
+                    registry_client_ids,
+                    max_age_s=live_sample_window_s,
+                ),
             ),
-        ),
-    )
+        )
     for client_id in active_client_ids:
         record = registry.get(client_id)
         if record is None:

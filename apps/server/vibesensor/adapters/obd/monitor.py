@@ -172,7 +172,10 @@ class OBDSpeedMonitor:
         self._monotonic = monotonic
         self._poll_interval_s = _normalized_poll_interval_s(poll_interval_s)
         self._adaptive_interval_steps = _adaptive_interval_steps(self._poll_interval_s)
-        self._policy = SpeedResolutionPolicy(manual_source_selected=False)
+        self._policy = SpeedResolutionPolicy(
+            manual_source_selected=False,
+            monotonic=monotonic,
+        )
         self._lock = RLock()
         self._selected_source = SpeedSourceKind.GPS
         self._configured_device_mac: str | None = None

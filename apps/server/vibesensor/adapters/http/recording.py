@@ -6,13 +6,37 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-from vibesensor.adapters.http.models import RecordingStatusResponse
+from vibesensor.adapters.http.models import (
+    RecordingCaptureReadinessCheckResponse,
+    RecordingCaptureReadinessResponse,
+    RecordingStatusResponse,
+)
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.run import RunRecorder
     from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
 
 __all__ = ["create_recording_routes"]
+
+
+def _capture_readiness_response(
+    snapshot: RunRecorderStatusSnapshot,
+) -> RecordingCaptureReadinessResponse | None:
+    readiness = snapshot.capture_readiness
+    if readiness is None:
+        return None
+    return RecordingCaptureReadinessResponse(
+        is_ready=readiness.is_ready,
+        checks=[
+            RecordingCaptureReadinessCheckResponse(
+                check_key=check.check_key,
+                state=check.state,
+                reason_key=check.reason_key,
+                details=check.details_dict,
+            )
+            for check in readiness.checks
+        ],
+    )
 
 
 def _recording_status_response(snapshot: RunRecorderStatusSnapshot) -> RecordingStatusResponse:
@@ -26,6 +50,7 @@ def _recording_status_response(snapshot: RunRecorderStatusSnapshot) -> Recording
         samples_dropped=snapshot.samples_dropped,
         last_completed_run_id=snapshot.last_completed_run_id,
         last_completed_run_error=snapshot.last_completed_run_error,
+        capture_readiness=_capture_readiness_response(snapshot),
     )
 
 

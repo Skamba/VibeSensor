@@ -55,7 +55,11 @@ from .history import (
     SpeedBreakdownRow,
     SuspectedVibrationOriginPayload,
 )
-from .recording import RecordingStatusResponse
+from .recording import (
+    RecordingCaptureReadinessCheckResponse,
+    RecordingCaptureReadinessResponse,
+    RecordingStatusResponse,
+)
 from .settings import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
@@ -137,6 +141,8 @@ __all__ = [
     "SetClientLocationResponse",
     "RemoveClientResponse",
     "RecordingStatusResponse",
+    "RecordingCaptureReadinessCheckResponse",
+    "RecordingCaptureReadinessResponse",
     "HistoryListEntryResponse",
     "HistoryListResponse",
     "HistoryRunResponse",

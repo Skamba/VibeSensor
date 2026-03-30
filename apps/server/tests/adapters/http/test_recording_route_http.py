@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.adapters.http.recording import create_recording_routes
+from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck
 from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
 
 
@@ -19,6 +20,7 @@ def _make_recording_status_snapshot(
     analysis_in_progress: bool = False,
     last_completed_run_id: str | None = None,
     last_completed_run_error: str | None = None,
+    capture_readiness: CaptureReadiness | None = None,
 ) -> RunRecorderStatusSnapshot:
     return RunRecorderStatusSnapshot(
         enabled=enabled,
@@ -30,6 +32,7 @@ def _make_recording_status_snapshot(
         samples_dropped=samples_dropped,
         last_completed_run_id=last_completed_run_id,
         last_completed_run_error=last_completed_run_error,
+        capture_readiness=capture_readiness,
     )
 
 
@@ -66,6 +69,54 @@ def test_recording_status_route_returns_serialized_snapshot(recording_client) ->
         "samples_dropped": 3,
         "last_completed_run_id": "run-122",
         "last_completed_run_error": None,
+        "capture_readiness": None,
+    }
+
+
+def test_recording_status_route_serializes_capture_readiness(recording_client) -> None:
+    client, state = recording_client
+    state.run_recorder.status.return_value = _make_recording_status_snapshot(
+        enabled=False,
+        run_id=None,
+        samples_written=0,
+        capture_readiness=CaptureReadiness(
+            is_ready=True,
+            checks=(
+                CaptureReadinessCheck(
+                    check_key="sensors_ready",
+                    state="warn",
+                    reason_key="limited_sensor_coverage",
+                    details=(("live_sensor_count", 1),),
+                ),
+                CaptureReadinessCheck(
+                    check_key="capture_ready",
+                    state="warn",
+                    reason_key="ready_with_warnings",
+                    details=(("warning_check", "sensors_ready"),),
+                ),
+            ),
+        ),
+    )
+
+    response = client.get("/api/recording/status")
+
+    assert response.status_code == 200
+    assert response.json()["capture_readiness"] == {
+        "is_ready": True,
+        "checks": [
+            {
+                "check_key": "sensors_ready",
+                "state": "warn",
+                "reason_key": "limited_sensor_coverage",
+                "details": {"live_sensor_count": 1},
+            },
+            {
+                "check_key": "capture_ready",
+                "state": "warn",
+                "reason_key": "ready_with_warnings",
+                "details": {"warning_check": "sensors_ready"},
+            },
+        ],
     }
 
 

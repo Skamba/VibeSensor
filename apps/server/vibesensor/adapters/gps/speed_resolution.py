@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import math
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from typing import Any, NamedTuple, cast
 
@@ -46,12 +47,14 @@ class SpeedResolutionPolicy:
         override_speed_mps: float | None = None,
         manual_source_selected: bool = True,
         stale_timeout_s: float = DEFAULT_STALE_TIMEOUT_S,
+        monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self._snapshot = SpeedResolutionPolicySnapshot(
             override_speed_mps=self._normalized_override_speed_mps(override_speed_mps),
             manual_source_selected=bool(manual_source_selected),
             stale_timeout_s=self._normalized_stale_timeout(stale_timeout_s),
         )
+        self._monotonic = monotonic
 
     def snapshot(self) -> SpeedResolutionPolicySnapshot:
         return self._snapshot
@@ -207,7 +210,7 @@ class SpeedResolutionPolicy:
         _, timestamp = speed_snapshot
         if timestamp is None:
             return True
-        age = time.monotonic() - timestamp
+        age = self._monotonic() - timestamp
         return age > policy.stale_timeout_s
 
     def fallback_speed_value(

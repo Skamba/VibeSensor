@@ -36,6 +36,7 @@ RunSuitability
 
 from ._numeric import coerce_float, coerce_int
 from .analysis_settings import AnalysisSettingsSnapshot
+from .capture_readiness import CaptureReadiness, CaptureReadinessCheck
 from .car import Car, CarSnapshot
 from .confidence_assessment import ConfidenceAssessment
 from .diagnostic_case import DiagnosticCase, Symptom
@@ -72,6 +73,8 @@ from .vibration_origin import VibrationOrigin
 __all__ = [
     # Aggregates and entities
     "Car",
+    "CaptureReadiness",
+    "CaptureReadinessCheck",
     "DiagnosticCase",
     "Run",
     "TestRun",

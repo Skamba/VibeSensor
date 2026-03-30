@@ -526,7 +526,10 @@ def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data()
             {
                 "check": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "pass",
-                "explanation": "Wide enough speed sweep for order tracking.",
+                "explanation": (
+                    "Speed range stayed in a usable diagnostic band for steady-state diagnosis "
+                    "and order tracking."
+                ),
             },
         ],
     )

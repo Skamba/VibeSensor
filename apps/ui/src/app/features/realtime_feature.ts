@@ -1,7 +1,7 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { deriveCarSelectionState } from "../car_selection_state";
 import type { RealtimeState, SettingsState, SpectrumState } from "../ui_app_state";
-import type { LocationOption } from "../../api/types";
+import type { LocationOption, LoggingStatusPayload } from "../../api/types";
 import type { AdaptedClient } from "../../server_payload";
 import * as I18N from "../../i18n";
 import {
@@ -59,10 +59,13 @@ type ActiveCarDisplayState = {
   isWarning: boolean;
 };
 
+type CaptureReadinessPayload = NonNullable<LoggingStatusPayload["capture_readiness"]>;
+type CaptureReadinessCheckPayload = CaptureReadinessPayload["checks"][number];
+
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
   const { realtime, settings, spectrum, els, t, escapeHtml, formatInt, setPillState } = ctx;
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
-  const LOGGING_STATUS_IDLE_POLL_MS = 15_000;
+  const LOGGING_STATUS_IDLE_POLL_MS = 2_000;
   const LOGGING_STATUS_ACTIVE_POLL_MS = 2_000;
   const LOGGING_STATUS_ERROR_POLL_MS = 5_000;
   let handlersBound = false;
@@ -70,6 +73,15 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
   let lastCompletedElapsedText = "--";
   let renderedLoggingSummarySignature: string | null = null;
+  let idleCaptureReadinessRefreshInFlight = false;
+  let lastIdleCaptureReadinessSignature: string | null = null;
+
+  const CAPTURE_READINESS_ORDER = [
+    "sensors_ready",
+    "reference_ready",
+    "speed_stable",
+    "capture_ready",
+  ] as const;
 
   const SHORTHAND_LOCATION_MAP: Record<string, string> = {
     "front left": "front_left_wheel",
@@ -255,6 +267,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     startDisabled: boolean;
     stopDisabled: boolean;
     showPill: boolean;
+    captureReadiness: CaptureReadinessPayload | null;
+    showCaptureChecklist: boolean;
   };
 
   type RecordingSummaryAction = {
@@ -580,18 +594,233 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     };
   }
 
+  function captureReadinessCheck(
+    readiness: CaptureReadinessPayload | null,
+    checkKey: CaptureReadinessCheckPayload["check_key"],
+  ): CaptureReadinessCheckPayload | null {
+    return readiness?.checks.find((check) => check.check_key === checkKey) ?? null;
+  }
+
+  function captureReadinessDetailNumber(
+    check: CaptureReadinessCheckPayload | null,
+    key: string,
+  ): number | null {
+    const value = check?.details?.[key];
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+  }
+
+  function captureReadinessStateText(state: CaptureReadinessCheckPayload["state"]): string {
+    return t(`dashboard.capture_readiness.state.${state}`);
+  }
+
+  function captureReadinessCheckLabel(checkKey: CaptureReadinessCheckPayload["check_key"]): string {
+    return t(`dashboard.capture_readiness.${checkKey}.label`);
+  }
+
+  function captureReadinessDetailText(check: CaptureReadinessCheckPayload): string {
+    if (check.check_key === "sensors_ready") {
+      const liveSensorCount = Math.max(
+        0,
+        Math.ceil(captureReadinessDetailNumber(check, "live_sensor_count") ?? 0),
+      );
+      const unassignedSensorCount = Math.max(
+        0,
+        Math.ceil(captureReadinessDetailNumber(check, "unassigned_sensor_count") ?? 0),
+      );
+      const quietPeriodRemaining = Math.max(
+        0,
+        Math.ceil(captureReadinessDetailNumber(check, "quiet_period_remaining_s") ?? 0),
+      );
+      if (check.reason_key === "no_live_sensors") {
+        return t("dashboard.capture_readiness.sensors_ready.no_live_sensors");
+      }
+      if (check.reason_key === "sensor_locations_missing") {
+        return t("dashboard.capture_readiness.sensors_ready.sensor_locations_missing", {
+          count: formatInt(unassignedSensorCount),
+        });
+      }
+      if (check.reason_key === "recent_integrity_events") {
+        return t("dashboard.capture_readiness.sensors_ready.recent_integrity_events", {
+          seconds: formatInt(quietPeriodRemaining),
+        });
+      }
+      if (check.reason_key === "limited_sensor_coverage") {
+        return t("dashboard.capture_readiness.sensors_ready.limited_sensor_coverage", {
+          count: formatInt(liveSensorCount),
+        });
+      }
+      return t("dashboard.capture_readiness.sensors_ready.ready", {
+        count: formatInt(liveSensorCount),
+      });
+    }
+
+    if (check.check_key === "reference_ready") {
+      if (check.reason_key === "active_car_missing") {
+        return t("dashboard.capture_readiness.reference_ready.active_car_missing");
+      }
+      if (check.reason_key === "order_reference_incomplete") {
+        return t("dashboard.capture_readiness.reference_ready.order_reference_incomplete");
+      }
+      if (check.reason_key === "speed_source_missing") {
+        return t("dashboard.capture_readiness.reference_ready.speed_source_missing");
+      }
+      if (check.reason_key === "speed_source_not_live") {
+        return t("dashboard.capture_readiness.reference_ready.speed_source_not_live");
+      }
+      if (check.reason_key === "speed_source_fallback_active") {
+        return t("dashboard.capture_readiness.reference_ready.speed_source_fallback_active");
+      }
+      if (check.reason_key === "speed_sample_stale") {
+        return t("dashboard.capture_readiness.reference_ready.speed_sample_stale");
+      }
+      if (check.reason_key === "speed_sample_missing") {
+        return t("dashboard.capture_readiness.reference_ready.speed_sample_missing");
+      }
+      if (check.reason_key === "obd_rpm_missing") {
+        return t("dashboard.capture_readiness.reference_ready.obd_rpm_missing");
+      }
+      if (check.reason_key === "obd_rpm_stale") {
+        return t("dashboard.capture_readiness.reference_ready.obd_rpm_stale");
+      }
+      return t("dashboard.capture_readiness.reference_ready.ready");
+    }
+
+    if (check.check_key === "speed_stable") {
+      const dwellRemaining = Math.max(
+        0,
+        Math.ceil(captureReadinessDetailNumber(check, "dwell_remaining_s") ?? 0),
+      );
+      const minimumSpeed = Math.max(
+        0,
+        Math.ceil(captureReadinessDetailNumber(check, "minimum_speed_kmh") ?? 20),
+      );
+      if (check.reason_key === "speed_sample_missing") {
+        return t("dashboard.capture_readiness.speed_stable.speed_sample_missing");
+      }
+      if (check.reason_key === "speed_too_low") {
+        return t("dashboard.capture_readiness.speed_stable.speed_too_low", {
+          minimumSpeed: formatInt(minimumSpeed),
+        });
+      }
+      if (check.reason_key === "speed_stabilizing") {
+        return t("dashboard.capture_readiness.speed_stable.speed_stabilizing", {
+          seconds: formatInt(dwellRemaining),
+        });
+      }
+      if (check.reason_key === "speed_variation_high") {
+        return t("dashboard.capture_readiness.speed_stable.speed_variation_high");
+      }
+      return t("dashboard.capture_readiness.speed_stable.ready");
+    }
+
+    if (check.check_key === "capture_ready") {
+      if (check.reason_key === "capture_blocked") {
+        return t("dashboard.capture_readiness.capture_ready.capture_blocked");
+      }
+      if (check.reason_key === "ready_with_warnings") {
+        return t("dashboard.capture_readiness.capture_ready.ready_with_warnings");
+      }
+      return t("dashboard.capture_readiness.capture_ready.ready");
+    }
+
+    return captureReadinessCheckLabel(check.check_key);
+  }
+
+  function captureReadinessSummaryText(readiness: CaptureReadinessPayload | null): string {
+    if (!readiness) {
+      return "";
+    }
+    const primaryCheck = readiness.is_ready
+      ? readiness.checks.find((check) => check.state === "warn" && check.check_key !== "capture_ready")
+      : readiness.checks.find((check) => check.state === "fail" && check.check_key !== "capture_ready");
+    if (primaryCheck) {
+      return captureReadinessDetailText(primaryCheck);
+    }
+    if (readiness.is_ready) {
+      return "";
+    }
+    const overallCheck = captureReadinessCheck(readiness, "capture_ready");
+    return overallCheck ? captureReadinessDetailText(overallCheck) : "";
+  }
+
+  function idleCaptureReadinessSignature(): string {
+    const clientsSignature = realtime.clients
+      .map((client) => [
+        client.id,
+        client.connected ? "1" : "0",
+        locationCodeForClient(client),
+      ].join(":"))
+      .sort()
+      .join("|");
+    return `${settings.activeCarId ?? ""}##${clientsSignature}`;
+  }
+
+  function requestIdleCaptureReadinessRefresh(): void {
+    if (!handlersBound || isDemoMode || pendingLoggingAction !== null) {
+      return;
+    }
+    if (
+      realtime.loggingStatus.enabled
+      || realtime.loggingStatus.analysis_in_progress
+      || Boolean(realtime.loggingStatus.last_completed_run_id)
+    ) {
+      return;
+    }
+    const signature = idleCaptureReadinessSignature();
+    if (idleCaptureReadinessRefreshInFlight || lastIdleCaptureReadinessSignature === signature) {
+      return;
+    }
+    lastIdleCaptureReadinessSignature = signature;
+    idleCaptureReadinessRefreshInFlight = true;
+    void refreshLoggingStatus().finally(() => {
+      idleCaptureReadinessRefreshInFlight = false;
+    });
+  }
+
+  function renderCaptureReadinessChecklist(panelState: RecordingPanelState): void {
+    if (!els.loggingChecklist) {
+      return;
+    }
+    const { captureReadiness, showCaptureChecklist } = panelState;
+    els.loggingChecklist.hidden = !showCaptureChecklist || captureReadiness === null;
+    if (!showCaptureChecklist || captureReadiness === null) {
+      els.loggingChecklist.innerHTML = "";
+      return;
+    }
+    const rows = CAPTURE_READINESS_ORDER.map((checkKey) => {
+      const check = captureReadinessCheck(captureReadiness, checkKey);
+      if (!check) {
+        return "";
+      }
+      return `
+        <div class="capture-readiness__item capture-readiness__item--${check.state}">
+          <div class="capture-readiness__row">
+            <span class="capture-readiness__label">${escapeHtml(captureReadinessCheckLabel(check.check_key))}</span>
+            <span class="capture-readiness__state">${escapeHtml(captureReadinessStateText(check.state))}</span>
+          </div>
+          <div class="capture-readiness__detail">${escapeHtml(captureReadinessDetailText(check))}</div>
+        </div>
+      `;
+    }).join("");
+    els.loggingChecklist.innerHTML = `
+      <div class="capture-readiness__title">${escapeHtml(t("dashboard.capture_readiness.title"))}</div>
+      <div class="capture-readiness__list">${rows}</div>
+    `;
+  }
+
   function computeRecordingPanelState(): RecordingPanelState {
     const status = realtime.loggingStatus;
     const on = Boolean(status.enabled);
-    const hasActiveClients = realtime.clients.some((client) => Boolean(client?.connected));
+    const captureReadiness = status.capture_readiness ?? null;
+    const recordingReady = Boolean(captureReadiness?.is_ready);
     const hasActiveCar = hasActiveCarSelection();
-    const recordingReady = hasActiveClients && hasActiveCar;
     const connectedCount = formatInt(connectedClients().length);
     const assignedCount = formatInt(assignedClientCount());
     const liveHealth = computeLiveHealth();
     const runIdText = recordingRunIdText(status);
     const elapsedText = on ? formatElapsed(status.start_time_utc) : "--";
     const samplesText = formatInt(status.samples_written ?? 0);
+    const readinessSummary = captureReadinessSummaryText(captureReadiness);
 
     if (on) {
       lastCompletedElapsedText = elapsedText;
@@ -614,6 +843,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         startDisabled: true,
         stopDisabled: true,
         showPill: true,
+        captureReadiness: null,
+        showCaptureChecklist: false,
       };
     }
 
@@ -632,6 +863,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         startDisabled: true,
         stopDisabled: true,
         showPill: true,
+        captureReadiness: null,
+        showCaptureChecklist: false,
       };
     }
 
@@ -652,6 +885,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         startDisabled: true,
         stopDisabled: false,
         showPill: Boolean(status.write_error),
+        captureReadiness: null,
+        showCaptureChecklist: false,
       };
     }
 
@@ -671,6 +906,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         startDisabled: !recordingReady,
         stopDisabled: true,
         showPill: false,
+        captureReadiness: null,
+        showCaptureChecklist: false,
       };
     }
 
@@ -689,6 +926,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         startDisabled: !recordingReady,
         stopDisabled: true,
         showPill: false,
+        captureReadiness: null,
+        showCaptureChecklist: false,
       };
     }
 
@@ -697,7 +936,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         pillVariant: "warn",
         pillText: t("dashboard.recording_phase.blocked"),
         phaseText: t("dashboard.recording_phase.blocked"),
-        summaryText: "",
+        summaryText: readinessSummary,
         summaryPanel: blockedRecordingPanel(),
         runIdText,
         elapsedText: "--",
@@ -707,14 +946,21 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         startDisabled: true,
         stopDisabled: true,
         showPill: false,
+        captureReadiness,
+        showCaptureChecklist: captureReadiness !== null,
       };
     }
 
+    const waitingOnReadiness = captureReadiness !== null && !captureReadiness.is_ready;
     return {
-      pillVariant: hasActiveClients ? "muted" : liveHealth.variant,
-      pillText: t("dashboard.recording_phase.ready"),
-      phaseText: t("dashboard.recording_phase.ready"),
-      summaryText: liveHealth.summary,
+      pillVariant: waitingOnReadiness ? "muted" : "ok",
+      pillText: waitingOnReadiness
+        ? t("dashboard.recording_phase.preparing")
+        : t("dashboard.recording_phase.ready"),
+      phaseText: waitingOnReadiness
+        ? t("dashboard.recording_phase.preparing")
+        : t("dashboard.recording_phase.ready"),
+      summaryText: readinessSummary || liveHealth.summary,
       summaryPanel: null,
       runIdText,
       elapsedText: "--",
@@ -724,6 +970,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       startDisabled: !recordingReady,
       stopDisabled: true,
       showPill: false,
+      captureReadiness,
+      showCaptureChecklist: captureReadiness !== null,
     };
   }
 
@@ -740,6 +988,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       els.loggingPhase.hidden = true;
     }
     renderLoggingSummaryContent(panelState.summaryText, panelState.summaryPanel);
+    renderCaptureReadinessChecklist(panelState);
     if (els.loggingRunId) {
       els.loggingRunId.hidden = panelState.runIdText === "";
       els.loggingRunId.textContent = panelState.runIdText;
@@ -758,6 +1007,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     }
     syncLoggingElapsedTimer();
     renderLiveHealth();
+    requestIdleCaptureReadinessRefresh();
   }
 
   async function refreshLoggingStatus(): Promise<void> {
@@ -773,6 +1023,10 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       clearLoggingElapsedTimer();
       setDashboardPillState(els.loggingStatus, "bad", t("status.unavailable"));
       renderLoggingSummaryContent(t("status.unavailable"), null);
+      if (els.loggingChecklist) {
+        els.loggingChecklist.hidden = true;
+        els.loggingChecklist.innerHTML = "";
+      }
       if (els.loggingRunId) {
         els.loggingRunId.hidden = true;
         els.loggingRunId.textContent = "";

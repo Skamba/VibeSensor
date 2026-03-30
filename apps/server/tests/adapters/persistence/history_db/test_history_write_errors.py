@@ -25,6 +25,7 @@ from vibesensor.use_cases.run.logger import _MAX_HISTORY_CREATE_RETRIES
 class _FakeRecord:
     client_id: str
     name: str
+    location_code: str
     sample_rate_hz: int
     latest_metrics: ClientMetrics
     frames_total: int = 0
@@ -62,6 +63,7 @@ class _FakeRegistry:
             "active": _FakeRecord(
                 client_id="active",
                 name="front-left",
+                location_code="front_left_wheel",
                 sample_rate_hz=800,
                 latest_metrics=_FAKE_LATEST_METRICS,
             ),

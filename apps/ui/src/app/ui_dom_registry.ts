@@ -16,6 +16,7 @@ export interface UiDomElements {
   rotationalEngineMode: HTMLElement | null;
   loggingStatus: HTMLElement | null;
   loggingSummary: HTMLElement | null;
+  loggingChecklist: HTMLElement | null;
   loggingRunId: HTMLElement | null;
   loggingPhase: HTMLElement | null;
   loggingElapsed: HTMLElement | null;
@@ -212,6 +213,7 @@ export function createUiDomRegistry(): UiDomElements {
     rotationalEngineMode: el("rotationalEngineMode"),
     loggingStatus: el("loggingStatus"),
     loggingSummary: el("loggingSummary"),
+    loggingChecklist: el("loggingChecklist"),
     loggingRunId: el("loggingRunId"),
     loggingPhase: el("loggingPhase"),
     loggingElapsed: el("loggingElapsed"),

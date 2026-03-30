@@ -2027,12 +2027,42 @@ export interface components {
       z: number[];
     };
     /**
+     * RecordingCaptureReadinessCheckResponse
+     * @description One capture-readiness checklist item returned by the recording status route.
+     */
+    RecordingCaptureReadinessCheckResponse: {
+      /** Check Key */
+      check_key: string;
+      /** Details */
+      details?: {
+        [key: string]: number | string;
+      };
+      /** Reason Key */
+      reason_key?: string | null;
+      /**
+       * State
+       * @enum {string}
+       */
+      state: "pass" | "warn" | "fail";
+    };
+    /**
+     * RecordingCaptureReadinessResponse
+     * @description Backend-owned live capture-readiness summary for idle/pre-record states.
+     */
+    RecordingCaptureReadinessResponse: {
+      /** Checks */
+      checks: components["schemas"]["RecordingCaptureReadinessCheckResponse"][];
+      /** Is Ready */
+      is_ready: boolean;
+    };
+    /**
      * RecordingStatusResponse
      * @description Response body with the current recording (run-logging) status.
      */
     RecordingStatusResponse: {
       /** Analysis In Progress */
       analysis_in_progress: boolean;
+      capture_readiness?: components["schemas"]["RecordingCaptureReadinessResponse"] | null;
       /** Enabled */
       enabled: boolean;
       /** Last Completed Run Error */

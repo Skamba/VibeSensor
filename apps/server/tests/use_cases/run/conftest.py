@@ -33,10 +33,13 @@ class _FakeRecord:
     name: str
     sample_rate_hz: int
     latest_metrics: ClientMetrics
+    firmware_version: str = "1.0.0"
     location_code: str = ""
     frames_total: int = 0
     frames_dropped: int = 0
     queue_overflow_drops: int = 0
+    server_queue_drops: int = 0
+    parse_errors: int = 0
 
 
 class _FakeRegistry:
@@ -126,6 +129,8 @@ class _FakeGPSMonitor:
     fallback_active: bool = False
     engine_rpm: float | None = None
     engine_rpm_source: str | None = None
+    speed_status_override: Any = None
+    obd_status_override: Any = None
 
     @property
     def gps_speed_mps(self) -> float | None:
@@ -149,6 +154,71 @@ class _FakeGPSMonitor:
                 source=str(self.resolved_source or "gps"),
             )
         return SpeedResolution(speed_mps=None, fallback_active=self.fallback_active, source="none")
+
+    def status_snapshot(self):
+        from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
+
+        if self.speed_status_override is not None:
+            return self.speed_status_override
+
+        speed_mps = self.effective_speed_mps
+        if speed_mps is None and isinstance(self.speed_mps, (int, float)):
+            speed_mps = float(self.speed_mps)
+        effective_speed_kmh = round(float(speed_mps) * 3.6, 2) if speed_mps is not None else None
+        return SpeedSourceStatusSnapshot(
+            gps_enabled=True,
+            connection_state="connected",
+            device="gps0",
+            fix_mode=3,
+            fix_dimension="3d",
+            speed_confidence="high",
+            epx_m=0.6,
+            epy_m=0.6,
+            epv_m=1.2,
+            last_update_age_s=0.2 if effective_speed_kmh is not None else None,
+            raw_speed_kmh=effective_speed_kmh,
+            effective_speed_kmh=effective_speed_kmh,
+            last_error=None,
+            reconnect_delay_s=None,
+            fallback_active=self.fallback_active,
+            speed_source=str(self.resolved_source or "gps"),
+            stale_timeout_s=8.0,
+        )
+
+    def obd_status(self):
+        from vibesensor.adapters.obd.models import ObdStatusSnapshot
+
+        if self.obd_status_override is not None:
+            return self.obd_status_override
+
+        return ObdStatusSnapshot(
+            configured_device_mac="AA:BB:CC:DD:EE:FF",
+            configured_device_name="Test OBD",
+            connection_state="connected",
+            device_mac="AA:BB:CC:DD:EE:FF",
+            device_name="Test OBD",
+            paired=True,
+            trusted=True,
+            connected=True,
+            rfcomm_channel=1,
+            last_sample_age_s=0.2,
+            last_speed_kmh=round(float(self.speed_mps) * 3.6, 2)
+            if isinstance(self.speed_mps, (int, float))
+            else None,
+            last_rpm=float(self.engine_rpm) if isinstance(self.engine_rpm, (int, float)) else None,
+            rpm_sample_age_s=0.2 if isinstance(self.engine_rpm, (int, float)) else None,
+            rpm_target_interval_ms=250,
+            rpm_effective_hz=4.0 if isinstance(self.engine_rpm, (int, float)) else None,
+            request_rtt_ms=85.0,
+            timeout_count=0,
+            error_count=0,
+            poll_mode="rpm_priority",
+            backoff_active=False,
+            last_error=None,
+            last_raw_response=None,
+            reconnect_delay_s=None,
+            debug_hint=None,
+        )
 
 
 class _FakeProcessor:
@@ -184,6 +254,8 @@ class _FakeProcessor:
 
 
 class _FakeAnalysisSettings:
+    active_car: CarSnapshot | None = None
+
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         return AnalysisSettingsSnapshot(
             tire_width_mm=285.0,
@@ -194,7 +266,7 @@ class _FakeAnalysisSettings:
         )
 
     def active_car_snapshot(self) -> CarSnapshot | None:
-        return None
+        return self.active_car
 
 
 class _MutableFakeAnalysisSettings(_FakeAnalysisSettings):
@@ -206,6 +278,7 @@ class _MutableFakeAnalysisSettings(_FakeAnalysisSettings):
             "final_drive_ratio": 3.08,
             "current_gear_ratio": 0.64,
         }
+        self.active_car: CarSnapshot | None = None
 
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         return AnalysisSettingsSnapshot.from_dict(self.values)
