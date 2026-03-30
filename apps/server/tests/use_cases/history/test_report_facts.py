@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from test_support.findings import make_finding_payload
 
-from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
+from vibesensor.shared.boundaries.test_run_reconstruction import (
+    test_run_from_summary as build_test_run_from_summary,
+)
 from vibesensor.use_cases.history.report_facts import prepare_report_facts
 
 
@@ -17,8 +19,9 @@ def _summary() -> dict[str, object]:
         "lang": "en",
         "metadata": {
             "car_info": {"tire_spec": "205/55R16"},
-            "device": {"sensor_model": "VS-1", "firmware_version": "1.2.3"},
-            "sampling": {"raw_sample_rate_hz": 400},
+            "sensor_model": "VS-1",
+            "firmware_version": "1.2.3",
+            "raw_sample_rate_hz": 400,
         },
         "report_date": "",
         "record_length": "12.5 s",
@@ -42,7 +45,7 @@ def _summary() -> dict[str, object]:
 
 def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
     summary = _summary()
-    test_run = test_run_from_summary(summary)
+    test_run = build_test_run_from_summary(summary)
     assert test_run is not None
 
     facts = prepare_report_facts(summary, test_run=test_run)
@@ -56,7 +59,7 @@ def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
 
 def test_prepare_report_facts_shapes_warning_payloads() -> None:
     summary = _summary()
-    test_run = test_run_from_summary(summary)
+    test_run = build_test_run_from_summary(summary)
     assert test_run is not None
 
     facts = prepare_report_facts(
