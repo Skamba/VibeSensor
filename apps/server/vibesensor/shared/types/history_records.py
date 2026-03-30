@@ -26,6 +26,7 @@ class HistoryRunListEntry:
     end_time_utc: str | None
     created_at: str
     sample_count: int
+    car_name: str | None = None
     error_message: str | None = None
 
     def to_json_object(self) -> JsonObject:
@@ -38,6 +39,8 @@ class HistoryRunListEntry:
             "created_at": self.created_at,
             "sample_count": self.sample_count,
         }
+        if self.car_name is not None:
+            payload["car_name"] = self.car_name
         if self.error_message is not None:
             payload["error_message"] = self.error_message
         return payload

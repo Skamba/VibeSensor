@@ -3610,6 +3610,17 @@
       "HistoryListEntryResponse": {
         "description": "Response body for a single history-run list row.",
         "properties": {
+          "car_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Car Name"
+          },
           "created_at": {
             "title": "Created At",
             "type": "string"

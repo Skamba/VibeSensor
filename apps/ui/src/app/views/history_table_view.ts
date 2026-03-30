@@ -282,6 +282,14 @@ function historyRowDurationSeconds(
   return (endMs - startMs) / 1000;
 }
 
+function historyRowCarName(
+  run: HistoryEntry,
+  t: HistoryTableViewParams["t"],
+): string {
+  const value = typeof run.car_name === "string" ? run.car_name.trim() : "";
+  return value || t("history.car_missing");
+}
+
 function renderCollapsedRowSummary(
   run: HistoryEntry,
   detail: RunDetail,
@@ -646,11 +654,19 @@ export function renderHistoryTable(
     const toggleTitle = isExpanded
       ? t("history.close_diagnosis_for_run", { runId: run.run_id })
       : t("history.open_diagnosis_for_run", { runId: run.run_id });
+    const startedAtText = fmtTs(run.start_time_utc);
+    const carName = historyRowCarName(run, t);
     rows.push(`
         <tr class="history-row${isExpanded ? " history-row--expanded" : ""}" data-run-row="1" data-run="${escapeHtml(run.run_id)}">
-          <td>
+          <td class="history-row__primary-cell">
             <div class="history-row__run">
-              <div class="history-row__run-id">${escapeHtml(run.run_id)}</div>
+              <div class="history-row__run-heading">
+                <div class="history-row__car-context">
+                  <span class="history-row__car-label">${escapeHtml(t("history.car_label"))}</span>
+                  <span class="history-row__car-name">${escapeHtml(carName)}</span>
+                </div>
+                <div class="history-row__run-id">${escapeHtml(run.run_id)}</div>
+              </div>
               ${renderCollapsedRowSummary(run, detail, params)}
               <div class="history-row__detail-affordance">
                 <button
@@ -671,9 +687,16 @@ export function renderHistoryTable(
               </div>
             </div>
           </td>
-          <td>${fmtTs(run.start_time_utc)}</td>
-          <td class="numeric">${formatInt(run.sample_count)}</td>
-          <td>
+          <td class="history-row__meta-cell history-row__meta-cell--started">
+            <span class="history-row__meta-label">${escapeHtml(t("history.table.updated"))}</span>
+            <span class="history-row__meta-value">${escapeHtml(startedAtText)}</span>
+          </td>
+          <td class="history-row__meta-cell history-row__meta-cell--samples numeric">
+            <span class="history-row__meta-label">${escapeHtml(t("history.table.size"))}</span>
+            <span class="history-row__meta-value">${escapeHtml(formatInt(run.sample_count))}</span>
+          </td>
+          <td class="history-row__meta-cell history-row__meta-cell--actions">
+            <span class="history-row__meta-label">${escapeHtml(t("history.quick_report"))}</span>
             ${renderCollapsedRowActions(run.run_id, detail, params)}
             ${rowError}
           </td>
