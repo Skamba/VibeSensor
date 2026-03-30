@@ -6,6 +6,7 @@ import {
 } from "../../api/settings";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { ShellState } from "../ui_app_state";
+import { setSettingsFeedback } from "../views/settings_feedback";
 
 export interface UiShellPreferencesModuleDeps {
   shell: ShellState;
@@ -37,6 +38,38 @@ export function createUiShellPreferencesModule(
     if (select) {
       select.value = value;
     }
+  }
+
+  function optionLabel(select: HTMLSelectElement | null, value: string): string {
+    return Array.from(select?.options ?? []).find((option) => option.value === value)?.textContent?.trim() ?? value;
+  }
+
+  function clearPreferenceFeedback(select: HTMLSelectElement | null, feedback: HTMLElement | null): void {
+    select?.removeAttribute("aria-invalid");
+    select?.removeAttribute("aria-describedby");
+    setSettingsFeedback(feedback, null);
+  }
+
+  function showPreferenceFeedback(
+    select: HTMLSelectElement | null,
+    feedback: HTMLElement | null,
+    label: string,
+    activeValue: string,
+    error: unknown,
+  ): void {
+    if (feedback?.id) {
+      select?.setAttribute("aria-describedby", feedback.id);
+    }
+    select?.setAttribute("aria-invalid", "true");
+    setSettingsFeedback(feedback, {
+      tone: "error",
+      body: ctx.t("settings.preference.save_failed_active", {
+        label,
+        value: activeValue,
+      }),
+      detail: error instanceof Error ? error.message : ctx.t("settings.save_failed"),
+      compact: true,
+    });
   }
 
   function applyLanguageValue(rawLanguage: string): void {
@@ -73,26 +106,40 @@ export function createUiShellPreferencesModule(
   async function saveLanguage(lang: string): Promise<void> {
     const previousLang = shell.lang;
     const nextLang = ctx.normalizeLanguage(lang);
+    clearPreferenceFeedback(els.languageSelect, els.languageFeedback);
     try {
       const payload = await setSettingsLanguage(nextLang);
       applyLanguageValue(payload?.language || nextLang);
       ctx.applyLanguage(true);
     } catch (error) {
       syncSelectValue(els.languageSelect, previousLang);
-      ctx.showError(error instanceof Error ? error.message : ctx.t("settings.save_failed"));
+      showPreferenceFeedback(
+        els.languageSelect,
+        els.languageFeedback,
+        ctx.t("settings.language"),
+        optionLabel(els.languageSelect, previousLang),
+        error,
+      );
     }
   }
 
   async function saveSpeedUnit(unit: string): Promise<void> {
     const previousUnit = shell.speedUnit;
     const nextUnit = normalizeSpeedUnit(unit);
+    clearPreferenceFeedback(els.speedUnitSelect, els.speedUnitFeedback);
     try {
       const payload = await setSettingsSpeedUnit(nextUnit);
       applySpeedUnitValue(payload?.speed_unit || nextUnit);
       ctx.renderSpeedReadout();
     } catch (error) {
       syncSelectValue(els.speedUnitSelect, previousUnit);
-      ctx.showError(error instanceof Error ? error.message : ctx.t("settings.save_failed"));
+      showPreferenceFeedback(
+        els.speedUnitSelect,
+        els.speedUnitFeedback,
+        ctx.t("speed.unit"),
+        optionLabel(els.speedUnitSelect, previousUnit),
+        error,
+      );
     }
   }
 
@@ -101,6 +148,7 @@ export function createUiShellPreferencesModule(
     if (languageSelect) {
       languageSelect.value = shell.lang;
       languageSelect.addEventListener("change", () => {
+        clearPreferenceFeedback(els.languageSelect, els.languageFeedback);
         void saveLanguage(languageSelect.value);
       });
     }
@@ -109,6 +157,7 @@ export function createUiShellPreferencesModule(
     if (speedUnitSelect) {
       speedUnitSelect.value = shell.speedUnit;
       speedUnitSelect.addEventListener("change", () => {
+        clearPreferenceFeedback(els.speedUnitSelect, els.speedUnitFeedback);
         void saveSpeedUnit(speedUnitSelect.value);
       });
     }
