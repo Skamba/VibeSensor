@@ -103,10 +103,23 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
   await page.locator("#tab-history").click();
   const row = page.locator('[data-run-row="1"][data-run="run-001"]');
   await expect(row).toContainText("Analysis ready");
-  await expect(row).toContainText("Duration: 12.3 s");
-  await expect(row).toContainText("Sensors: 2");
   await expect(row).toContainText("Front-right wheel imbalance");
   await expect(row).toContainText("confidence 92%");
+  await expect(row).toContainText("Duration: 12.3 s");
+  await expect(row).toContainText("Sensors: 2");
+  const chipTexts = await row.locator(".history-row__summary-chip").allTextContents();
+  const sourceIndex = chipTexts.findIndex((text) => text.includes("Front-right wheel imbalance"));
+  const confidenceIndex = chipTexts.findIndex((text) => text.includes("92%"));
+  const durationIndex = chipTexts.findIndex((text) => text.includes("Duration: 12.3 s"));
+  const sensorIndex = chipTexts.findIndex((text) => text.includes("Sensors: 2"));
+  expect(sourceIndex).toBeGreaterThan(-1);
+  expect(confidenceIndex).toBeGreaterThan(-1);
+  expect(durationIndex).toBeGreaterThan(-1);
+  expect(sensorIndex).toBeGreaterThan(-1);
+  expect(sourceIndex).toBeLessThan(durationIndex);
+  expect(confidenceIndex).toBeLessThan(sensorIndex);
+  await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toContainText("Open diagnosis");
+  await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toContainText("Review findings and heatmap");
   await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toHaveAttribute("aria-expanded", "false");
 });
 
@@ -152,7 +165,8 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await page.goto("/");
   await page.locator("#tab-history").click();
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
-  await expect(toggle).toContainText("View diagnosis and heatmap");
+  await expect(toggle).toContainText("Open diagnosis");
+  await expect(toggle).toContainText("Review findings and heatmap");
   const overflowMetrics = await toggle.evaluate((button) => {
     const title = button.querySelector<HTMLElement>(".history-row__toggle-title");
     const hint = button.querySelector<HTMLElement>(".history-row__toggle-hint");
@@ -177,6 +191,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(toggle).toContainText("Close diagnosis");
   await expect(page.locator(".history-details-row")).toBeVisible();
   await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
   const frontLeftZone = page.locator('.history-heatmap__zone[data-location-key="front-left wheel"]');
@@ -187,6 +202,25 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator(".history-details-row")).toHaveCount(0);
+});
+
+test("history keeps destructive actions inside the expanded management footer", async ({ page }) => {
+  await installCommonRoutes(page, { runs: [historyListRun] });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-history").click();
+  const row = page.locator('[data-run-row="1"][data-run="run-001"]');
+  const actionCell = row.locator("td").nth(3);
+  await expect(actionCell).toContainText("Generate PDF");
+  await expect(actionCell).not.toContainText("Export");
+  await expect(actionCell).not.toContainText("Delete");
+  await row.locator('[data-run-toggle="details"]').click();
+  const footer = page.locator(".history-details-footer");
+  await expect(footer).toContainText("Reports and data");
+  await expect(footer.locator('[data-run-action="download-raw"][data-run="run-001"]')).toContainText("Export");
+  const deleteButton = footer.locator('[data-run-action="delete-run"][data-run="run-001"]');
+  await expect(deleteButton).toContainText("Delete");
+  await expect(deleteButton).toHaveClass(/btn--danger-quiet/);
 });
 
 test("history PDF download revokes object URL with safe delay", async ({ page }) => {
