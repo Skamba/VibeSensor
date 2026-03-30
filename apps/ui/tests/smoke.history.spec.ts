@@ -9,6 +9,7 @@ const historyListRun = {
   end_time_utc: "2026-01-01T00:00:12Z",
   created_at: "2026-01-01T00:00:00Z",
   sample_count: 42,
+  car_name: "Track Car",
   error_message: null,
 };
 

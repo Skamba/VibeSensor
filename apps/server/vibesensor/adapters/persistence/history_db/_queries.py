@@ -41,34 +41,80 @@ class _HistoryDBQueryMixin:
             }
         )
 
+    def _coerce_run_metadata(
+        self,
+        *,
+        run_id: str,
+        start_time_utc: str,
+        end_time_utc: str | None,
+        metadata_json: str | None,
+        source: str,
+        allow_fallback: bool,
+    ) -> RunMetadata | None:
+        parsed = safe_json_loads(metadata_json, context=f"run {run_id} metadata")
+        if not is_json_object(parsed):
+            if parsed is not None:
+                LOGGER.warning(
+                    "%s: run %s metadata_json parsed to %s, expected dict; %s",
+                    source,
+                    run_id,
+                    type(parsed).__name__,
+                    "using fallback metadata object" if allow_fallback else "returning None",
+                )
+            if allow_fallback:
+                return self._fallback_run_metadata(
+                    run_id=run_id,
+                    start_time_utc=start_time_utc,
+                    end_time_utc=end_time_utc,
+                )
+            return None
+        if "start_time_utc" not in parsed:
+            parsed["start_time_utc"] = start_time_utc
+        if end_time_utc and "end_time_utc" not in parsed:
+            parsed["end_time_utc"] = end_time_utc
+        return RunMetadata.from_dict(parsed)
+
     def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         with self._cursor(commit=False) as cur:
             limit = max(limit, 0)
             if limit > 0:
                 cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                    "r.created_at, r.error_message, r.sample_count "
+                    "r.created_at, r.error_message, r.sample_count, r.metadata_json "
                     "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
                     (limit,),
                 )
             else:
                 cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                    "r.created_at, r.error_message, r.sample_count "
+                    "r.created_at, r.error_message, r.sample_count, r.metadata_json "
                     "FROM runs r ORDER BY r.created_at DESC",
                 )
             rows = cur.fetchall()
         result: list[HistoryRunListEntry] = []
         for row in rows:
-            run_id, status_raw, start, end, created, error, sample_count = row
+            run_id, status_raw, start, end, created, error, sample_count, metadata_json = row
+            normalized_run_id = str(run_id)
+            normalized_start = str(start)
+            normalized_end = str(end) if end is not None else None
+            normalized_metadata_json = str(metadata_json) if metadata_json is not None else None
+            metadata = self._coerce_run_metadata(
+                run_id=normalized_run_id,
+                start_time_utc=normalized_start,
+                end_time_utc=normalized_end,
+                metadata_json=normalized_metadata_json,
+                source="list_runs",
+                allow_fallback=True,
+            )
             result.append(
                 HistoryRunListEntry(
-                    run_id=str(run_id),
+                    run_id=normalized_run_id,
                     status=RunStatus(status_raw),
-                    start_time_utc=str(start),
-                    end_time_utc=str(end) if end is not None else None,
+                    start_time_utc=normalized_start,
+                    end_time_utc=normalized_end,
                     created_at=str(created),
                     sample_count=int(sample_count or 0),
+                    car_name=metadata.car_name if metadata is not None else None,
                     error_message=str(error) if error else None,
                 )
             )
@@ -101,21 +147,15 @@ class _HistoryDBQueryMixin:
             analysis_completed,
         ) = row
         status = RunStatus(status_raw)
-        parsed_metadata = safe_json_loads(meta_json, context=f"run {run_id} metadata")
-        if is_json_object(parsed_metadata):
-            metadata = RunMetadata.from_dict(parsed_metadata)
-        else:
-            if parsed_metadata is not None:
-                LOGGER.warning(
-                    "get_run: metadata for run %s parsed to %s; using fallback metadata object",
-                    run_id,
-                    type(parsed_metadata).__name__,
-                )
-            metadata = self._fallback_run_metadata(
-                run_id=str(rid),
-                start_time_utc=str(start),
-                end_time_utc=str(end) if end is not None else None,
-            )
+        metadata = self._coerce_run_metadata(
+            run_id=str(rid),
+            start_time_utc=str(start),
+            end_time_utc=str(end) if end is not None else None,
+            metadata_json=str(meta_json) if meta_json is not None else None,
+            source="get_run",
+            allow_fallback=True,
+        )
+        assert metadata is not None
         analysis: PersistedAnalysis | None = None
         analysis_corrupt = False
         if analysis_json:
@@ -158,21 +198,14 @@ class _HistoryDBQueryMixin:
         if row is None:
             return None
         start_time_utc, end_time_utc, metadata_json = row
-        parsed = safe_json_loads(metadata_json, context=f"run {run_id} metadata")
-        if not is_json_object(parsed):
-            if parsed is not None:
-                LOGGER.warning(
-                    "get_run_metadata: run %s metadata_json parsed to %s, expected dict; "
-                    "returning None",
-                    run_id,
-                    type(parsed).__name__,
-                )
-            return None
-        if "start_time_utc" not in parsed:
-            parsed["start_time_utc"] = str(start_time_utc)
-        if end_time_utc and "end_time_utc" not in parsed:
-            parsed["end_time_utc"] = str(end_time_utc)
-        return RunMetadata.from_dict(parsed)
+        return self._coerce_run_metadata(
+            run_id=run_id,
+            start_time_utc=str(start_time_utc),
+            end_time_utc=str(end_time_utc) if end_time_utc is not None else None,
+            metadata_json=str(metadata_json) if metadata_json is not None else None,
+            source="get_run_metadata",
+            allow_fallback=False,
+        )
 
     def get_active_run_id(self) -> str | None:
         with self._cursor(commit=False) as cur:

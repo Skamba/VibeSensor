@@ -200,6 +200,18 @@ async def test_history_run_includes_sample_count() -> None:
 
 
 @pytest.mark.asyncio
+async def test_history_list_includes_recorded_car_name() -> None:
+    metadata = make_metadata(car_name="Track Car")
+    samples = [sample(i) for i in range(3)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+
+    payload = response_payload(await route_endpoint(router, "/api/history")())
+
+    assert payload["runs"][0]["car_name"] == "Track Car"
+
+
+@pytest.mark.asyncio
 async def test_history_run_includes_error_message_for_error_status() -> None:
     router = make_status_router(
         status="error",

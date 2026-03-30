@@ -9,10 +9,11 @@ const historyListRun = {
   end_time_utc: "2026-01-01T00:00:12Z",
   created_at: "2026-01-01T00:00:00Z",
   sample_count: 42,
+  car_name: "Track Car",
   error_message: null,
 };
 
-test("history detail toggle stays readable on narrow screens", async ({ page }) => {
+test("history uses mobile run cards and keeps the primary action readable on narrow screens", async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 1300 });
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -48,8 +49,14 @@ test("history detail toggle stays readable on narrow screens", async ({ page }) 
   await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-history").click();
+  await expect(page.locator(".history-table thead")).toBeHidden();
+  const row = page.locator('[data-run-row="1"][data-run="run-001"]');
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
   await expect(toggle).toBeVisible();
+  await expect(row).toContainText("Track Car");
+  await expect(row).toContainText("Started");
+  await expect(row).toContainText("Samples");
+  await expect(row).toContainText("Quick report");
 
   const metrics = await toggle.evaluate((button) => {
     const title = button.querySelector<HTMLElement>(".history-row__toggle-title");
@@ -75,6 +82,28 @@ test("history detail toggle stays readable on narrow screens", async ({ page }) 
   expect(metrics.buttonWidth).toBeGreaterThanOrEqual(140);
   expect(metrics.titleLines).toBeLessThanOrEqual(2);
   expect(metrics.hintLines).toBeLessThanOrEqual(3);
+  const rowDisplay = await row.evaluate((element) => getComputedStyle(element).display);
+  expect(rowDisplay).toBe("grid");
   await expect(toggle).toContainText("Open diagnosis");
   await expect(toggle).toContainText("Review findings and heatmap");
+});
+
+test("history empty state stays action-oriented on narrow screens", async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 1300 });
+  await installCommonRoutes(page, {
+    historyHandler: async (route) => {
+      const pathname = requestPath(route);
+      if (!pathname.startsWith("/api/history")) {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, { runs: [] });
+    },
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-history").click();
+  const emptyState = page.locator("#historyTableBody .empty-state");
+  await expect(emptyState).toContainText("Capture the first run from Live.");
+  await expect(emptyState).toContainText("Go to Live");
 });

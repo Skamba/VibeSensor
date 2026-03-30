@@ -105,6 +105,7 @@ class HistoryListEntryResponse(BaseModel):
     end_time_utc: str | None = None
     created_at: str
     sample_count: int
+    car_name: str | None = None
     error_message: str | None = None
 
 
