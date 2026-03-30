@@ -63,20 +63,53 @@ function createButton(): HTMLButtonElement {
 }
 
 function createSelect(value: string): HTMLSelectElement {
+  const listeners = new Map<string, Array<EventListenerOrEventListenerObject>>();
   return {
     value,
     disabled: false,
     innerHTML: "",
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+      const typeListeners = listeners.get(type) ?? [];
+      typeListeners.push(listener);
+      listeners.set(type, typeListeners);
+    },
+    dispatchEvent(event: Event) {
+      const typeListeners = listeners.get(event.type) ?? [];
+      for (const listener of typeListeners) {
+        if (typeof listener === "function") {
+          listener(event);
+          continue;
+        }
+        listener.handleEvent(event);
+      }
+      return true;
+    },
   } as unknown as HTMLSelectElement;
 }
 
 function createInput(value = "", type = "text"): HTMLInputElement {
+  const listeners = new Map<string, Array<EventListenerOrEventListenerObject>>();
   return {
     value,
     type,
     disabled: false,
     focus() {},
-    addEventListener() {},
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+      const typeListeners = listeners.get(type) ?? [];
+      typeListeners.push(listener);
+      listeners.set(type, typeListeners);
+    },
+    dispatchEvent(event: Event) {
+      const typeListeners = listeners.get(event.type) ?? [];
+      for (const listener of typeListeners) {
+        if (typeof listener === "function") {
+          listener(event);
+          continue;
+        }
+        listener.handleEvent(event);
+      }
+      return true;
+    },
   } as unknown as HTMLInputElement;
 }
 
@@ -155,6 +188,7 @@ function createDeps() {
   const espFlashRefreshPortsBtn = createButton();
   const espFlashStartBtn = createButton();
   const espFlashCancelBtn = createButton();
+  const espFlashStartSummary = createPanel();
   const espFlashStatusBanner = createPanel();
   const espFlashReadinessPanel = createPanel();
   const espFlashJourneyPanel = createPanel();
@@ -170,6 +204,7 @@ function createDeps() {
     espFlashRefreshPortsBtn,
     espFlashStartBtn,
     espFlashCancelBtn,
+    espFlashStartSummary,
     espFlashStatusBanner,
     espFlashReadinessPanel,
     espFlashJourneyPanel,
@@ -181,6 +216,7 @@ function createDeps() {
     els,
     espFlashStartBtn,
     espFlashCancelBtn,
+    espFlashStartSummary,
     espFlashReadinessPanel,
     espFlashJourneyPanel,
     t: (key: string) => key,
@@ -269,6 +305,8 @@ function createUpdateDeps() {
   const updateTransportChoiceWifi = createPanel();
   const updateTransportChoiceUsb = createPanel();
   const updateWifiFields = createPanel();
+  const updateReadinessSummary = createPanel();
+  const updateDetailsCaption = createPanel();
   const updateTransportNote = createPanel();
   const updateUsbTransportSummary = createPanel();
   const updateTransportWifiRadio = createInput("", "radio");
@@ -292,6 +330,8 @@ function createUpdateDeps() {
     updateTransportChoiceWifi,
     updateTransportChoiceUsb,
     updateWifiFields,
+    updateReadinessSummary,
+    updateDetailsCaption,
     updateTransportNote,
     updateTransportWifiRadio,
     updateTransportUsbRadio,
@@ -311,6 +351,8 @@ function createUpdateDeps() {
     updateTransportChoiceWifi,
     updateTransportChoiceUsb,
     updateWifiFields,
+    updateReadinessSummary,
+    updateDetailsCaption,
     updateTransportNote,
     updateTransportWifiRadio,
     updateTransportUsbRadio,
@@ -368,6 +410,14 @@ test.describe("createEspFlashFeature polling", () => {
       feature.startPolling();
       await flushAsyncWork();
 
+      expect(deps.espFlashStartSummary.innerHTML).toContain(
+        "settings.esp_flash.start_readiness.summary_ready",
+      );
+      expect(deps.espFlashStartSummary.innerHTML).toContain(
+        "settings.esp_flash.start_readiness.item.connection_ready",
+      );
+      expect(deps.espFlashStartBtn.disabled).toBe(false);
+      expect(deps.espFlashCancelBtn.hidden).toBe(true);
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.summary.ready_ports");
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.one_port");
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.auto_detect");
@@ -376,6 +426,43 @@ test.describe("createEspFlashFeature polling", () => {
       expect(deps.espFlashJourneyPanel.innerHTML).toContain("settings.esp_flash.phase.validating");
       expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.logs_idle_title");
       expect((deps.els.espFlashHistoryPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.history_empty_title");
+    } finally {
+      restoreFetch();
+    }
+  });
+
+  test("no detected ports keep the flash action blocked until hardware is present", async () => {
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/esp-flash/ports") {
+        return jsonResponse({ ports: [] });
+      }
+      if (url.pathname === "/api/esp-flash/status") {
+        return jsonResponse({ state: "idle", phase: "idle", selected_port: null, auto_detect: true, last_success_at: null, error: null, log_count: 0 });
+      }
+      if (url.pathname === "/api/esp-flash/history") {
+        return jsonResponse({ attempts: [] });
+      }
+      if (url.pathname === "/api/esp-flash/logs") {
+        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createDeps();
+      const feature = createEspFlashFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      expect(deps.espFlashStartSummary.innerHTML).toContain(
+        "settings.esp_flash.start_readiness.summary_blocked",
+      );
+      expect(deps.espFlashStartSummary.innerHTML).toContain(
+        "settings.esp_flash.start_readiness.item.connection_blocked",
+      );
+      expect(deps.espFlashStartBtn.disabled).toBe(true);
+      expect(deps.espFlashCancelBtn.hidden).toBe(true);
     } finally {
       restoreFetch();
     }
@@ -413,6 +500,11 @@ test.describe("createEspFlashFeature polling", () => {
       feature.startPolling();
       await flushAsyncWork();
 
+      expect(deps.espFlashStartSummary.innerHTML).toContain(
+        "settings.esp_flash.start_readiness.summary_running",
+      );
+      expect(deps.espFlashStartBtn.hidden).toBe(true);
+      expect(deps.espFlashCancelBtn.hidden).toBe(false);
       const html = deps.espFlashJourneyPanel.innerHTML;
       expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="active" aria-current="step"/);
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.current_step");
@@ -478,7 +570,9 @@ test.describe("createEspFlashFeature polling", () => {
   test("start replaces the previous poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
     const restoreFetch = installFetchMock(async (url, method) => {
-      if (url.pathname === "/api/esp-flash/ports") return jsonResponse({ ports: [] });
+      if (url.pathname === "/api/esp-flash/ports") {
+        return jsonResponse({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
+      }
       if (url.pathname === "/api/esp-flash/start" && method === "POST") {
         return jsonResponse({ status: "started", job_id: 1 });
       }
@@ -616,9 +710,54 @@ test.describe("createUpdateFeature polling", () => {
       expect(deps.updateTransportChoiceWifi.classList.contains("speed-source-choice--selected")).toBe(true);
       expect(deps.updateTransportChoiceUsb.classList.contains("speed-source-choice--disabled")).toBe(true);
       expect(deps.updateTransportUsbRadio.disabled).toBe(true);
+      expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.readiness.summary_ready");
+      expect(deps.updateReadinessSummary.innerHTML).toContain(
+        "settings.update.readiness.item.connection_wifi_ready",
+      );
+      expect(deps.updateDetailsCaption.textContent).toBe("settings.update.details_caption_wifi");
+      expect(deps.updateStartBtn.disabled).toBe(false);
       expect(deps.updateUsbTransportSummary.textContent).toBe(
         "settings.update.transport.usb_summary_unavailable",
       );
+    } finally {
+      restoreFetch();
+    }
+  });
+
+  test("degraded health blocks update start until maintenance issues are resolved", async () => {
+    const healthy = createHealthyUpdateStatus();
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse(createIdleUpdateStatus());
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse({
+          ...healthy,
+          status: "degraded",
+          degradation_reasons: ["persistence_write_error"],
+          persistence: {
+            ...healthy.persistence,
+            write_error: "database locked",
+          },
+        });
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      const feature = createUpdateFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      expect(deps.updateReadinessSummary.innerHTML).toContain(
+        "settings.update.readiness.item.health_blocked",
+      );
+      expect(deps.updateStartBtn.disabled).toBe(true);
     } finally {
       restoreFetch();
     }
@@ -785,9 +924,17 @@ test.describe("createUpdateFeature polling", () => {
       feature.bindUpdateHandlers();
       feature.startPolling();
       await flushAsyncWork();
+      deps.updateTransportWifiRadio.checked = false;
+      deps.updateTransportUsbRadio.checked = true;
+      deps.updateTransportUsbRadio.dispatchEvent(new Event("change"));
 
       expect(deps.updateTransportOptions.hidden).toBe(false);
       expect(deps.updateWifiFields.hidden).toBe(true);
+      expect(deps.updateStartBtn.disabled).toBe(false);
+      expect(deps.updateReadinessSummary.innerHTML).toContain(
+        "settings.update.readiness.item.connection_usb_ready",
+      );
+      expect(deps.updateDetailsCaption.textContent).toBe("settings.update.details_caption_usb");
       expect(deps.updateTransportNote.textContent).toBe("settings.update.preflight_note_usb");
       expect(deps.updateUsbTransportSummary.textContent).toBe(
         "settings.update.transport.usb_summary_interface",

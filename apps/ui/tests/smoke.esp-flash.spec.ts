@@ -42,6 +42,15 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="espFlashTab"]').click();
+  await expect(page.locator("#espFlashStartBtn")).toBeEnabled();
+  await expect(page.locator("#espFlashCancelBtn")).toBeHidden();
+  await expect(page.locator("#espFlashStartSummary")).toContainText(
+    "A flash target is ready and the job can start.",
+  );
+  await expect(page.locator("#espFlashStartSummary")).toContainText(
+    "/dev/ttyUSB0 — USB UART detected and ready for flashing.",
+  );
+  await expect(page.locator("#espFlashTab")).toContainText("What happens next");
   await page.locator("#espFlashStartBtn").click();
   statusState = "running";
   logCursor = 2;
@@ -62,6 +71,8 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   expect(pairedLayout?.topDelta ?? 999).toBeLessThan(8);
   expect(pairedLayout?.leftDelta ?? 0).toBeGreaterThan(40);
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Running");
+  await expect(page.locator("#espFlashStartBtn")).toBeHidden();
+  await expect(page.locator("#espFlashCancelBtn")).toBeVisible();
   await expect(page.locator("#espFlashReadinessPanel")).toContainText("/dev/ttyUSB0");
   await expect(page.locator("#espFlashReadinessPanel")).not.toContainText("Expected stages");
   await expect(page.locator("#espFlashJourneyPanel")).toContainText("Write firmware");
@@ -97,12 +108,18 @@ test("settings esp flash status falls back to idle when API omits state", async 
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="espFlashTab"]').click();
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Idle");
+  await expect(page.locator("#espFlashStartBtn")).toBeDisabled();
+  await expect(page.locator("#espFlashCancelBtn")).toBeHidden();
+  await expect(page.locator("#espFlashStartSummary")).toContainText(
+    "Connect the board and clear the blocked item before flashing.",
+  );
+  await expect(page.locator("#espFlashStartSummary")).toContainText(
+    "Connect the ESP board over USB and refresh the port list.",
+  );
   await expect(page.locator("#espFlashReadinessPanel")).toContainText("No serial device is detected yet");
   await expect(page.locator("#espFlashReadinessPanel")).not.toContainText("Expected stages");
   await expect(page.locator("#espFlashJourneyPanel")).toContainText("Validate board and bundle");
-  await expect(page.locator("#espFlashTab")).not.toContainText("Before flashing");
-  await expect(page.locator("#espFlashTab")).not.toContainText("What flashing will do");
-  await expect(page.locator("#espFlashTab")).not.toContainText("Troubleshooting and recovery");
+  await expect(page.locator("#espFlashTab")).toContainText("What happens next");
   await expect(page.locator("#espFlashLogPanel")).toContainText("No active flash log");
   await expect(page.locator("#espFlashHistoryPanel")).toContainText("No recent flash attempts");
   await expect(page.locator("#espFlashTab")).toContainText("Starting a flash builds the latest firmware");
