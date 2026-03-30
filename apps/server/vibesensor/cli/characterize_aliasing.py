@@ -1,34 +1,16 @@
-#!/usr/bin/env python3
-"""Characterize alias-fold risk for the current VibeSensor FFT chain.
-
-This tool characterizes the *digital* portion of the current measurement chain:
-sample rate, analysis band, FFT window, and the observed dominant in-band FFT
-peak for representative pure tones.
-
-It does not replace lab measurement of the physical front end. If there is
-analog anti-alias filtering or sensor-side bandwidth limiting ahead of the ADC,
-that must still be measured separately on hardware.
-"""
-
 from __future__ import annotations
 
 import argparse
 import math
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 import numpy as np
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-SERVER_ROOT = REPO_ROOT / "apps" / "server"
-if str(SERVER_ROOT) not in sys.path:
-    sys.path.insert(0, str(SERVER_ROOT))
 
 from vibesensor.app.config_defaults import documented_default_config
 from vibesensor.infra.processing.compute import SignalMetricsComputer
 from vibesensor.infra.processing.models import ProcessorConfig
 from vibesensor.shared.constants.dsp import FFT_N, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
+from vibesensor.shared.types.json_types import JsonObject
 
 DEFAULT_MAX_INPUT_HZ = 2400.0
 DEFAULT_INTERVAL_STEP_HZ = 1.0
@@ -69,8 +51,12 @@ class ExampleResult:
     detected_peak_amp_g: float
 
 
-def _parse_args() -> argparse.Namespace:
-    defaults = documented_default_config()
+def _default_config() -> JsonObject:
+    return documented_default_config()
+
+
+def parse_args() -> argparse.Namespace:
+    defaults = _default_config()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--sample-rate-hz",
@@ -241,8 +227,8 @@ def _fmt_hz(value: float | None) -> str:
     return f"{value:.3f}".rstrip("0").rstrip(".")
 
 
-def main() -> None:
-    args = _parse_args()
+def main() -> int:
+    args = parse_args()
     nyquist_hz = args.sample_rate_hz * 0.5
     bin_spacing_hz = args.sample_rate_hz / args.fft_n
     alias_intervals = find_alias_intervals(
@@ -317,7 +303,8 @@ def main() -> None:
         "This tool characterizes the digital chain only. Confirm the real front-end with "
         "hardware sweep tests before claiming anti-alias performance.",
     )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
