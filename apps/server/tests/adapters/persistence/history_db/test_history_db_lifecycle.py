@@ -90,6 +90,15 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
     assert len(calls) >= 3
 
 
+def test_list_runs_includes_recorded_car_name(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-car", "2026-01-01T00:00:00Z", _metadata("run-car", car_name="Track Car"))
+
+    run = db.list_runs()[0]
+
+    assert run.car_name == "Track Car"
+
+
 def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-2", "2026-01-01T00:00:00Z", _metadata("run-2"))

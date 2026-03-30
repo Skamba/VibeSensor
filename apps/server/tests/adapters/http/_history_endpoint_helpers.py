@@ -158,6 +158,7 @@ class FakeHistoryDB:
                 end_time_utc=metadata.end_time_utc,
                 created_at=metadata.start_time_utc,
                 sample_count=len(self.samples),
+                car_name=metadata.car_name,
             )
         ]
 

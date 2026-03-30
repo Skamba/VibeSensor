@@ -1317,8 +1317,33 @@ button[hidden],
   display: grid;
   gap: 0.35rem;
 }
+.history-row__primary-cell,
+.history-row__meta-cell {
+  min-width: 0;
+}
+.history-row__run-heading {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
 .history-row__run-id {
   font-weight: 600;
+}
+.history-row__car-context {
+  display: none;
+}
+.history-row__car-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.history-row__car-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  overflow-wrap: anywhere;
 }
 .history-row__summary-chips {
   display: flex;
@@ -1446,6 +1471,16 @@ button[hidden],
 }
 .history-row__actions .btn {
   min-width: 0;
+}
+.history-row__meta-label {
+  display: none;
+}
+.history-row__meta-value {
+  display: block;
+}
+.history-row__meta-cell--actions .history-inline-error {
+  display: block;
+  margin-top: var(--space-2);
 }
 .history-row--expanded td { background: var(--surface-2) !important; }
 .history-details-row td { padding: 0 !important; background: transparent !important; border-bottom: 0; }
@@ -2655,32 +2690,122 @@ input[aria-invalid="true"] {
 }
 
 @media (max-width: 720px) {
-  .history-table {
-    table-layout: fixed;
+  .history-table,
+  .history-table tbody {
+    display: block;
+    width: 100%;
   }
-  .history-table th,
-  .history-table td {
-    padding: 0.6rem 0.5rem;
+  .history-table thead {
+    display: none;
   }
-  .history-table th:first-child,
-  .history-table td:first-child {
-    width: 48%;
+  .history-table tbody {
+    display: grid;
+    gap: var(--space-3);
   }
-  .history-table th:nth-child(2),
-  .history-table td:nth-child(2) {
-    width: 18%;
+  .history-table tbody tr:nth-child(even) td,
+  .history-table tbody tr:hover td {
+    background: transparent;
   }
-  .history-table th:nth-child(3),
-  .history-table td:nth-child(3) {
-    width: 10%;
+  .history-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "primary primary"
+      "started samples"
+      "actions actions";
+    gap: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    padding: var(--space-3);
+    cursor: default;
   }
-  .history-table th:nth-child(4),
-  .history-table td:nth-child(4) {
-    width: 24%;
+  .history-row td {
+    width: auto !important;
+    padding: 0;
+    border: 0;
+    background: transparent !important;
+  }
+  .history-row td:first-child {
+    grid-area: primary;
+  }
+  .history-row td:nth-child(2) {
+    grid-area: started;
+  }
+  .history-row td:nth-child(3) {
+    grid-area: samples;
+  }
+  .history-row td:nth-child(4) {
+    grid-area: actions;
+  }
+  .history-row__car-context {
+    display: grid;
+    gap: 0.15rem;
+  }
+  .history-row__run-id {
+    font-size: 0.76rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .history-row__summary-chip {
+    font-size: 0.74rem;
+  }
+  .history-row__detail-affordance {
+    width: 100%;
+  }
+  .history-row__toggle {
+    width: 100%;
+    min-height: 44px;
+  }
+  .history-row__meta-cell {
+    display: grid;
+    gap: 0.35rem;
+    align-content: start;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+  }
+  .history-row__meta-cell.numeric {
+    text-align: left !important;
+  }
+  .history-row__meta-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .history-row__meta-value {
+    overflow-wrap: anywhere;
   }
   .history-row .table-actions .btn {
     min-width: 0;
     width: 100%;
+  }
+  .history-details-row {
+    display: block;
+  }
+  .history-details-row td {
+    display: block;
+    padding: 0 !important;
+  }
+  .history-details-card {
+    margin: 0 0 var(--space-3);
+    padding: var(--space-3);
+  }
+  .history-details-header {
+    grid-template-columns: 1fr;
+  }
+  .history-details-header__actions {
+    justify-items: stretch;
+  }
+  .history-details-header__actions .btn {
+    width: 100%;
+  }
+  .history-results-layout {
+    grid-template-columns: 1fr;
   }
   .history-details-footer {
     grid-template-columns: 1fr;

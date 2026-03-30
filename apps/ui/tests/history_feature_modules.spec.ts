@@ -137,6 +137,7 @@ function historyListRun(runId: string) {
     end_time_utc: "2026-01-01T00:00:12Z",
     created_at: "2026-01-01T00:00:00Z",
     sample_count: 42,
+    car_name: "Track Car",
     error_message: null,
   };
 }
@@ -206,6 +207,8 @@ test("history list module refreshes runs and renders table state", async () => {
   expect(historyTableBody.innerHTML).toContain('aria-expanded="false"');
   expect(historyTableBody.innerHTML).toContain("history.row_status.complete");
   expect(historyTableBody.innerHTML).toContain("history.summary_size");
+  expect(historyTableBody.innerHTML).toContain("Track Car");
+  expect(historyTableBody.innerHTML).toContain("history.car_label");
   expect(historyTableBody.innerHTML).toContain("history.preview_available");
   expect(historyTableBody.innerHTML).toContain("history.open_diagnosis");
   expect(historyTableBody.innerHTML).not.toContain('data-run-action="delete-run"');
