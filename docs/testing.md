@@ -155,6 +155,19 @@ Both fuzzers default to 16 concurrent worker processes. Use `--processes` to
 tune parallelism if you need to trade off CPU saturation against local
 interactivity. `--threads` remains accepted as a compatibility alias.
 
+## Characterization
+
+Use `python3 -m vibesensor.cli.characterize_aliasing` to inspect which
+out-of-band tones can fold into the current live-analysis band for the
+configured sample rate and FFT setup:
+
+```bash
+python3 -m vibesensor.cli.characterize_aliasing
+```
+
+The tool characterizes the current **digital** chain only. It does not replace
+hardware sweep tests of the physical sensor/front-end.
+
 ## Local CI with `act`
 
 [`act`](https://nektosact.com/) runs the real `.github/workflows/ci.yml` locally
