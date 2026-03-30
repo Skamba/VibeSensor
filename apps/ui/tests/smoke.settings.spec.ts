@@ -138,7 +138,7 @@ test("resolved OBD2 state stays coherent across header status, form, and device 
       },
       "GET /api/settings/speed-source/status": gpsStatus({
         gps_enabled: false,
-        connection_state: "disabled",
+        connection_state: "connected",
         device: null,
         raw_speed_kmh: null,
         effective_speed_kmh: 81,
@@ -153,6 +153,14 @@ test("resolved OBD2 state stays coherent across header status, form, and device 
         connected: true,
         rfcomm_channel: 1,
         last_rpm: 2200,
+        rpm_sample_age_s: 0.1,
+        rpm_target_interval_ms: 75,
+        rpm_effective_hz: 13.3,
+        request_rtt_ms: 61.4,
+        timeout_count: 1,
+        error_count: 2,
+        poll_mode: "rpm_only_backoff",
+        backoff_active: true,
         last_raw_response: "41 0C 1B 58",
         debug_hint: null,
       },
@@ -178,6 +186,13 @@ test("resolved OBD2 state stays coherent across header status, form, and device 
   await expect(page.locator('input[name="speedSourceRadio"][value="obd2"]')).toBeChecked();
   await expect(page.locator('input[name="speedSourceRadio"][value="gps"]')).not.toBeChecked();
   await expect(page.locator("#obdConfiguredDevice")).toHaveText("OBDLink CX (0022d9001bb1)");
+  await expect(page.locator("#obdStatusTargetCadence")).toHaveText("13.3 Hz (75 ms)");
+  await expect(page.locator("#obdStatusEffectiveCadence")).toHaveText("13.3 Hz");
+  await expect(page.locator("#obdStatusRequestRtt")).toHaveText("61 ms");
+  await expect(page.locator("#obdStatusTimeouts")).toHaveText("1");
+  await expect(page.locator("#obdStatusErrors")).toHaveText("2");
+  await expect(page.locator("#obdStatusMode")).toHaveText("RPM priority only (backed off)");
+  await expect(page.locator("#obdStatusBackoff")).toHaveText("Yes");
 });
 
 test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {
@@ -537,6 +552,14 @@ test("manual OBD scan sorts named devices first and background rescans progressi
         connected: false,
         rfcomm_channel: null,
         last_rpm: null,
+        rpm_sample_age_s: null,
+        rpm_target_interval_ms: 50,
+        rpm_effective_hz: null,
+        request_rtt_ms: null,
+        timeout_count: 0,
+        error_count: 0,
+        poll_mode: null,
+        backoff_active: false,
         last_raw_response: null,
         debug_hint: null,
       },
@@ -621,6 +644,14 @@ test("background OBD rescans stop when the Speed Source OBD panel is no longer v
         connected: false,
         rfcomm_channel: null,
         last_rpm: null,
+        rpm_sample_age_s: null,
+        rpm_target_interval_ms: 50,
+        rpm_effective_hz: null,
+        request_rtt_ms: null,
+        timeout_count: 0,
+        error_count: 0,
+        poll_mode: null,
+        backoff_active: false,
         last_raw_response: null,
         debug_hint: null,
       },
