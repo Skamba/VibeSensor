@@ -15,6 +15,11 @@ import {
 } from "../../api";
 import { defaultLocationCodes } from "../../constants";
 import {
+  getInlineStateAction,
+  renderInlineStatePanel,
+  type InlineStateActionVariant,
+} from "../views/dom_helpers";
+import {
   getRealtimeSensorTableClickAction,
   getRealtimeSensorTableLocationChange,
   renderRealtimeSensorOverview,
@@ -168,7 +173,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     }
     if (selection.kind !== "active") {
       return {
-        text: t("dashboard.active_car_none_blocked"),
+        text: selection.kind === "no_cars"
+          ? t("dashboard.active_car_none_no_cars")
+          : t("dashboard.active_car_none_blocked"),
         isWarning: true,
       };
     }
@@ -238,6 +245,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     pillText: string;
     phaseText: string;
     summaryText: string;
+    summaryPanel: RecordingSummaryPanel | null;
     runIdText: string;
     elapsedText: string;
     samplesText: string;
@@ -246,6 +254,19 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     startDisabled: boolean;
     stopDisabled: boolean;
     showPill: boolean;
+  };
+
+  type RecordingSummaryAction = {
+    action: "open-history" | "open-cars" | "open-add-car";
+    label: string;
+    variant?: InlineStateActionVariant;
+  };
+
+  type RecordingSummaryPanel = {
+    title: string;
+    body: string;
+    detail?: string;
+    action?: RecordingSummaryAction;
   };
 
   function setDashboardPillState(
@@ -450,6 +471,85 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return "";
   }
 
+  function activatePrimaryView(viewId: string): void {
+    els.menuButtons.find((button) => button.dataset.view === viewId)?.click();
+  }
+
+  function activateSettingsTab(tabId: string): void {
+    els.settingsTabs.find((button) => button.getAttribute("data-settings-tab") === tabId)?.click();
+  }
+
+  function openCarsView({ openWizard = false }: { openWizard?: boolean } = {}): void {
+    activatePrimaryView("settingsView");
+    activateSettingsTab("carTab");
+    if (openWizard) {
+      els.addCarBtn?.click();
+    }
+  }
+
+  function renderRecordingSummaryPanel(panel: RecordingSummaryPanel): string {
+    return renderInlineStatePanel({
+      titleHtml: escapeHtml(panel.title),
+      bodyHtml: escapeHtml(panel.body),
+      detailHtml: panel.detail ? escapeHtml(panel.detail) : undefined,
+      action: panel.action
+        ? {
+          action: panel.action.action,
+          labelHtml: escapeHtml(panel.action.label),
+          variant: panel.action.variant,
+        }
+        : undefined,
+    });
+  }
+
+  function blockedRecordingPanel(): RecordingSummaryPanel {
+    const selection = deriveCarSelectionState(settings);
+    if (selection.kind === "no_cars") {
+      return {
+        title: t("dashboard.logging.blocked.no_cars.title"),
+        body: t("dashboard.logging.blocked.no_cars.body"),
+        detail: t("dashboard.logging.blocked.no_cars.detail"),
+        action: {
+          action: "open-add-car",
+          label: t("dashboard.logging.blocked.no_cars.action"),
+          variant: "success",
+        },
+      };
+    }
+    return {
+      title: t("dashboard.logging.blocked.no_active.title"),
+      body: t("dashboard.logging.blocked.no_active.body"),
+      detail: t("dashboard.logging.blocked.no_active.detail"),
+      action: {
+        action: "open-cars",
+        label: t("dashboard.logging.blocked.no_active.action"),
+      },
+    };
+  }
+
+  function postRunSummaryPanel(kind: "processing" | "saved", runId: string): RecordingSummaryPanel {
+    if (kind === "processing") {
+      return {
+        title: t("dashboard.logging.processing.title", { runId }),
+        body: t("dashboard.logging.processing.body"),
+        detail: t("dashboard.logging.processing.detail"),
+        action: {
+          action: "open-history",
+          label: t("dashboard.logging.processing.action"),
+        },
+      };
+    }
+    return {
+      title: t("dashboard.logging.saved.title", { runId }),
+      body: t("dashboard.logging.saved.body"),
+      detail: t("dashboard.logging.saved.detail"),
+      action: {
+        action: "open-history",
+        label: t("dashboard.logging.saved.action"),
+      },
+    };
+  }
+
   function computeRecordingPanelState(): RecordingPanelState {
     const status = realtime.loggingStatus;
     const on = Boolean(status.enabled);
@@ -475,6 +575,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         pillText: t("dashboard.recording_phase.starting"),
         phaseText: t("dashboard.recording_phase.starting"),
         summaryText: t("dashboard.logging.starting"),
+        summaryPanel: null,
         runIdText,
         elapsedText: "--",
         samplesText,
@@ -492,6 +593,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         pillText: t("dashboard.recording_phase.stopping"),
         phaseText: t("dashboard.recording_phase.stopping"),
         summaryText: t("dashboard.logging.stopping"),
+        summaryPanel: null,
         runIdText,
         elapsedText,
         samplesText,
@@ -511,6 +613,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         summaryText: liveHealth.variant === "ok"
           ? t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount })
           : liveHealth.summary,
+        summaryPanel: null,
         runIdText,
         elapsedText,
         samplesText,
@@ -528,7 +631,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         pillVariant: "warn",
         pillText: t("dashboard.recording_phase.processing"),
         phaseText: t("dashboard.recording_phase.processing"),
-        summaryText: t("dashboard.logging.processing", { runId }),
+        summaryText: "",
+        summaryPanel: postRunSummaryPanel("processing", runId),
         runIdText,
         elapsedText: lastCompletedElapsedText,
         samplesText,
@@ -545,7 +649,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         pillVariant: "ok",
         pillText: t("dashboard.recording_phase.saved"),
         phaseText: t("dashboard.recording_phase.saved"),
-        summaryText: t("dashboard.logging.saved", { runId: status.last_completed_run_id }),
+        summaryText: "",
+        summaryPanel: postRunSummaryPanel("saved", status.last_completed_run_id),
         runIdText,
         elapsedText: lastCompletedElapsedText,
         samplesText,
@@ -562,7 +667,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         pillVariant: "warn",
         pillText: t("dashboard.recording_phase.blocked"),
         phaseText: t("dashboard.recording_phase.blocked"),
-        summaryText: t("dashboard.logging.active_car_required"),
+        summaryText: "",
+        summaryPanel: blockedRecordingPanel(),
         runIdText,
         elapsedText: "--",
         samplesText,
@@ -579,6 +685,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       pillText: t("dashboard.recording_phase.ready"),
       phaseText: t("dashboard.recording_phase.ready"),
       summaryText: liveHealth.summary,
+      summaryPanel: null,
       runIdText,
       elapsedText: "--",
       samplesText,
@@ -603,8 +710,13 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       els.loggingPhase.hidden = true;
     }
     if (els.loggingSummary) {
-      els.loggingSummary.hidden = panelState.summaryText === "";
-      els.loggingSummary.textContent = panelState.summaryText;
+      els.loggingSummary.hidden = panelState.summaryText === "" && panelState.summaryPanel === null;
+      els.loggingSummary.classList.toggle("logging-summary--panel", panelState.summaryPanel !== null);
+      if (panelState.summaryPanel) {
+        els.loggingSummary.innerHTML = renderRecordingSummaryPanel(panelState.summaryPanel);
+      } else {
+        els.loggingSummary.textContent = panelState.summaryText;
+      }
     }
     if (els.loggingRunId) {
       els.loggingRunId.hidden = panelState.runIdText === "";
@@ -640,6 +752,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       setDashboardPillState(els.loggingStatus, "bad", t("status.unavailable"));
       if (els.loggingSummary) {
         els.loggingSummary.hidden = false;
+        els.loggingSummary.classList.remove("logging-summary--panel");
         els.loggingSummary.textContent = t("status.unavailable");
       }
       if (els.loggingRunId) {
@@ -789,6 +902,25 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     syncLoggingElapsedTimer();
     els.startLoggingBtn?.addEventListener("click", () => void startLogging());
     els.stopLoggingBtn?.addEventListener("click", () => void stopLogging());
+    els.loggingSummary?.addEventListener("click", (event) => {
+      const action = getInlineStateAction(event.target);
+      if (!action) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      if (action === "open-history") {
+        activatePrimaryView("historyView");
+        return;
+      }
+      if (action === "open-add-car") {
+        openCarsView({ openWizard: true });
+        return;
+      }
+      if (action === "open-cars") {
+        openCarsView();
+      }
+    });
     els.sensorsSettingsBody?.addEventListener("change", (event) => {
       const change = getRealtimeSensorTableLocationChange(event.target);
       if (!change) {
