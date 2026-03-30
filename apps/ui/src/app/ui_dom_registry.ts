@@ -2,7 +2,9 @@ export interface UiDomElements {
   menuButtons: HTMLElement[];
   views: HTMLElement[];
   languageSelect: HTMLSelectElement | null;
+  languageFeedback: HTMLElement | null;
   speedUnitSelect: HTMLSelectElement | null;
+  speedUnitFeedback: HTMLElement | null;
   speed: HTMLElement | null;
   rotationalBasisSource: HTMLElement | null;
   rotationalReason: HTMLElement | null;
@@ -52,6 +54,8 @@ export interface UiDomElements {
   maxBandHalfWidthInput: HTMLInputElement | null;
   saveAnalysisBtn: HTMLButtonElement | null;
   resetAnalysisBtn: HTMLButtonElement | null;
+  analysisGuidanceHelp: HTMLDetailsElement | null;
+  analysisSaveFeedback: HTMLElement | null;
   analysisNoCarMessage: HTMLElement | null;
   carSelectionGuidance: HTMLElement | null;
   carListBody: HTMLElement | null;
@@ -91,12 +95,15 @@ export interface UiDomElements {
   speedSourceChoiceManual: HTMLElement | null;
   manualSpeedConfig: HTMLElement | null;
   manualSpeedInput: HTMLInputElement | null;
+  manualSpeedFeedback: HTMLElement | null;
   obdSpeedConfig: HTMLElement | null;
   obdConfiguredDevice: HTMLElement | null;
   scanObdDevicesBtn: HTMLButtonElement | null;
   obdDeviceScanStatus: HTMLElement | null;
   obdDeviceList: HTMLElement | null;
   saveSpeedSourceBtn: HTMLButtonElement | null;
+  speedSourceSaveFeedback: HTMLElement | null;
+  speedSourceDiagnostics: HTMLDetailsElement | null;
   settingsTabs: HTMLElement[];
   settingsTabPanels: HTMLElement[];
   internetStatusPanel: HTMLElement | null;
@@ -143,6 +150,7 @@ export interface UiDomElements {
   obdStatusDebugHint: HTMLElement | null;
   gpsFallbackPanel: HTMLElement | null;
   staleTimeoutInput: HTMLInputElement | null;
+  staleTimeoutFeedback: HTMLElement | null;
 
   appErrorBanner: HTMLElement | null;
   appShellWrap: HTMLElement | null;
@@ -179,7 +187,9 @@ export function createUiDomRegistry(): UiDomElements {
     menuButtons: queryAll<HTMLElement>(".menu-btn"),
     views: queryAll<HTMLElement>(".view"),
     languageSelect: selectEl("languageSelect"),
+    languageFeedback: el("languageFeedback"),
     speedUnitSelect: selectEl("speedUnitSelect"),
+    speedUnitFeedback: el("speedUnitFeedback"),
     speed: el("speed"),
     rotationalBasisSource: el("rotationalBasisSource"),
     rotationalReason: el("rotationalReason"),
@@ -229,6 +239,8 @@ export function createUiDomRegistry(): UiDomElements {
     maxBandHalfWidthInput: inputEl("maxBandHalfWidthInput"),
     saveAnalysisBtn: btnEl("saveAnalysisBtn"),
     resetAnalysisBtn: btnEl("resetAnalysisBtn"),
+    analysisGuidanceHelp: getById<HTMLDetailsElement>("analysisGuidanceHelp"),
+    analysisSaveFeedback: el("analysisSaveFeedback"),
     analysisNoCarMessage: el("analysisNoCarMessage"),
     carSelectionGuidance: el("carSelectionGuidance"),
     carListBody: el("carListBody"),
@@ -268,12 +280,15 @@ export function createUiDomRegistry(): UiDomElements {
     speedSourceChoiceManual: el("speedSourceChoiceManual"),
     manualSpeedConfig: el("manualSpeedConfig"),
     manualSpeedInput: inputEl("manualSpeedInput"),
+    manualSpeedFeedback: el("manualSpeedFeedback"),
     obdSpeedConfig: el("obdSpeedConfig"),
     obdConfiguredDevice: el("obdConfiguredDevice"),
     scanObdDevicesBtn: btnEl("scanObdDevicesBtn"),
     obdDeviceScanStatus: el("obdDeviceScanStatus"),
     obdDeviceList: el("obdDeviceList"),
     saveSpeedSourceBtn: btnEl("saveSpeedSourceBtn"),
+    speedSourceSaveFeedback: el("speedSourceSaveFeedback"),
+    speedSourceDiagnostics: getById<HTMLDetailsElement>("speedSourceDiagnostics"),
     settingsTabs: queryAll<HTMLElement>(".settings-tab"),
     settingsTabPanels: queryAll<HTMLElement>(".settings-tab-panel"),
     internetStatusPanel: el("internetStatusPanel"),
@@ -320,6 +335,7 @@ export function createUiDomRegistry(): UiDomElements {
     obdStatusDebugHint: el("obdStatusDebugHint"),
     gpsFallbackPanel: el("gpsFallbackPanel"),
     staleTimeoutInput: inputEl("staleTimeoutInput"),
+    staleTimeoutFeedback: el("staleTimeoutFeedback"),
     appErrorBanner: el("appErrorBanner"),
     appShellWrap: document.querySelector<HTMLElement>(".wrap"),
 
