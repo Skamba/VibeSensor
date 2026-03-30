@@ -194,6 +194,66 @@ def test_stop_recording_flushes_first_pending_sample_batch(
     assert fake_history_db.finalize_calls == [run_id]
 
 
+def test_stop_recording_salvages_final_batch_when_recent_window_is_too_strict(
+    make_logger,
+    fake_history_db,
+    fake_registry,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _LateMetricsProcessor:
+        def __init__(self) -> None:
+            self._refreshed = False
+
+        def flush_client_buffer(self, client_id: str, *, reason: str = "sensor reset") -> None:
+            return None
+
+        def latest_sample_xyz(self, client_id: str):
+            return (0.01, 0.02, 0.03)
+
+        def latest_sample_rate_hz(self, client_id: str):
+            return 800
+
+        def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None):
+            self._refreshed = True
+            return self.latest_metrics(client_id)
+
+        def latest_metrics(self, client_id: str):
+            record = fake_registry.get(client_id)
+            if record is None:
+                return {}
+            if not self._refreshed:
+                return {"combined": {"peaks": []}}
+            return record.latest_metrics
+
+        def clients_with_recent_data(
+            self,
+            client_ids: list[str],
+            max_age_s: float = 3.0,
+        ) -> list[str]:
+            if max_age_s <= 2.0:
+                return []
+            return list(client_ids)
+
+    logger = make_logger(
+        history_db=fake_history_db,
+        registry=fake_registry,
+        processor=_LateMetricsProcessor(),
+    )
+    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+
+    logger.start_recording()
+    active = logger.registry.get("active")
+    assert active is not None
+    active.frames_total = 1
+
+    logger.stop_recording()
+
+    run_id, start_time_utc = fake_history_db.create_calls[-1]
+    assert fake_history_db.create_calls == [(run_id, start_time_utc)]
+    assert fake_history_db.append_calls == [(run_id, 1)]
+    assert fake_history_db.finalize_calls == [run_id]
+
+
 def test_start_recording_rollover_flushes_first_pending_sample_batch(
     make_logger,
     fake_history_db,

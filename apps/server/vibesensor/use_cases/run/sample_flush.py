@@ -59,17 +59,24 @@ class SampleFlushOrchestrator:
         self._monotonic = monotonic
         self._timestamp_utc = timestamp_utc
 
-    def _refresh_recent_client_metrics(self) -> None:
+    def _refresh_recent_client_metrics(
+        self,
+        *,
+        max_age_s: float | None = _LIVE_SAMPLE_WINDOW_S,
+    ) -> None:
         """Refresh metrics only for clients that still have recent live samples."""
         active_client_ids = self._registry.active_client_ids()
-        recent_client_ids = sorted(
-            set(
-                self._processor.clients_with_recent_data(
-                    active_client_ids,
-                    max_age_s=_LIVE_SAMPLE_WINDOW_S,
+        if max_age_s is None:
+            recent_client_ids = sorted(set(active_client_ids))
+        else:
+            recent_client_ids = sorted(
+                set(
+                    self._processor.clients_with_recent_data(
+                        active_client_ids,
+                        max_age_s=max_age_s,
+                    ),
                 ),
-            ),
-        )
+            )
         for client_id in recent_client_ids:
             record = self._registry.get(client_id)
             record_rate_hz = int(record.sample_rate_hz or 0) if record is not None else 0
@@ -90,6 +97,7 @@ class SampleFlushOrchestrator:
         run_id: str,
         t_s: float,
         timestamp_utc: str,
+        live_sample_window_s: float | None = _LIVE_SAMPLE_WINDOW_S,
     ) -> list[SensorFrame]:
         analysis_settings_snapshot = self._analysis_settings_snapshot()
         speed_resolution = self._gps_monitor.resolve_speed()
@@ -110,6 +118,7 @@ class SampleFlushOrchestrator:
             analysis_settings_snapshot=analysis_settings_snapshot,
             default_sample_rate_hz=self._default_sample_rate_hz,
             sensor_metadata_reader=self._sensor_metadata_reader,
+            live_sample_window_s=live_sample_window_s,
         )
 
     def build_live_sample_records(
@@ -168,6 +177,18 @@ class SampleFlushOrchestrator:
                 t_s=t_s,
                 timestamp_utc=current_timestamp,
             )
+            if refresh_metrics and (
+                not rows or not any(row.vibration_strength_db is not None for row in rows)
+            ):
+                # CI-short runs can land just beyond the normal recent-data window
+                # after the simulator stops; salvage one final FFT-complete batch.
+                self._refresh_recent_client_metrics(max_age_s=None)
+                rows = self.build_sample_records(
+                    run_id=run_id,
+                    t_s=t_s,
+                    timestamp_utc=current_timestamp,
+                    live_sample_window_s=None,
+                )
 
         if (
             prebuilt_rows is not None
