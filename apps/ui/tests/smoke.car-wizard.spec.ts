@@ -130,8 +130,15 @@ test("keeps the manual branch deliberate while summarizing selections and activa
 
   await expect(page.locator("#wizardProgressText")).toContainText("Step 5 of 5");
   await expect(page.locator("#wizardSummaryPanel")).toContainText("BMW X5 M60i");
+  await expect(page.locator("#wizardSummaryPanel")).toContainText("225/45R18");
+  await expect(page.locator("#wizardSummaryPanel")).toContainText("Final drive 3.08");
+  await expect(page.locator("#wizardSummaryPanel")).toContainText("Top gear 0.64");
   await expect(page.locator(".wizard-custom-specs__note")).toBeVisible();
   await expect(page.locator("#wizardGearboxList")).toContainText("Enter specs manually below.");
+  await page.locator("#wizTireWidth").fill("245");
+  await page.locator("#wizGearRatio").fill("0.68");
+  await expect(page.locator("#wizardSummaryPanel")).toContainText("245/45R18");
+  await expect(page.locator("#wizardSummaryPanel")).toContainText("Top gear 0.68");
 
   await page.locator("#wizardManualAddBtn").click();
 
@@ -140,5 +147,8 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await expect(page.locator("#wizardBackdrop")).toBeHidden();
   const newRow = page.locator('#carListBody tr[data-car-id="car-2"]');
   await expect(newRow).toContainText("BMW X5 M60i");
+  await expect(newRow).toContainText("245/45R18");
+  await expect(newRow).toContainText("3.08");
+  await expect(newRow).toContainText("0.68");
   await expect(newRow.locator(".car-active-pill")).toHaveClass(/active/);
 });

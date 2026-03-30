@@ -196,6 +196,8 @@
   "settings.car.wizard_summary_variant": "Variant",
   "settings.car.wizard_summary_tire": "Tires",
   "settings.car.wizard_summary_gearbox": "Gearbox",
+  "settings.car.wizard_summary_manual_tire": "{width}/{aspect}R{rim}",
+  "settings.car.wizard_summary_manual_gearbox": "Final drive {finalDrive} · Top gear {topGear}",
   "settings.car.or_custom_brand": "Or type a custom brand:",
   "settings.car.or_custom_type": "Or type a custom type:",
   "settings.car.or_custom_model": "Or type a custom model:",
