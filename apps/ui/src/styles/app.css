@@ -314,6 +314,8 @@ input:focus-visible,
   border: 1px solid transparent;
 }
 
+button[hidden],
+.btn[hidden],
 .pill[hidden],
 .badge[hidden],
 .status-pill[hidden] {
