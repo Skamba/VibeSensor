@@ -2,6 +2,7 @@ import type { AnalysisSettingsRequest, AnalysisSettingsPayload } from "../../api
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
+import { renderSettingsFeedback, setSettingsFeedback } from "../views/settings_feedback";
 
 export const ANALYSIS_SETTING_KEYS = [
   "tire_width_mm",
@@ -177,20 +178,42 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     rawValue: string;
     numericValue: number;
   }
+  const fieldErrorMessages = new Map<EditableAnalysisKey, string>();
 
   function formatSettingValue(value: number): string {
     return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(1)));
   }
 
   function clearFieldValidationState(): void {
+    fieldErrorMessages.clear();
     for (const field of analysisFields) {
       field.input()?.removeAttribute("aria-invalid");
     }
+    renderFieldGuidance();
   }
 
-  function markFieldInvalid(field: AnalysisFieldConfig): void {
+  function openAnalysisGuidance(): void {
+    els.analysisGuidanceHelp?.setAttribute("open", "");
+  }
+
+  function formatRange(min: number, max: number, unit: UnitSuffix): string {
+    return t("settings.analysis.range_value", {
+      min: formatSettingValue(min),
+      max: formatSettingValue(max),
+      unit,
+    });
+  }
+
+  function renderGuidanceLine(label: string, value: string): string {
+    return `<span class="settings-field-guidance__line"><span class="settings-field-guidance__label">${ctx.escapeHtml(label)}</span> ${ctx.escapeHtml(value)}</span>`;
+  }
+
+  function markFieldInvalid(field: AnalysisFieldConfig, message: string): void {
+    fieldErrorMessages.set(field.key, message);
+    renderFieldGuidance();
     field.input()?.setAttribute("aria-invalid", "true");
     field.input()?.focus();
+    openAnalysisGuidance();
   }
 
   function renderFieldGuidance(): void {
@@ -199,12 +222,29 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       if (!help) {
         continue;
       }
-      help.textContent = t("settings.analysis.field_guidance", {
-        defaultValue: formatSettingValue(field.defaultValue),
-        min: formatSettingValue(field.guidedMin),
-        max: formatSettingValue(field.guidedMax),
-        unit: field.unit,
-      });
+      const errorMessage = fieldErrorMessages.get(field.key);
+      const guidanceHtml = [
+        renderGuidanceLine(
+          t("settings.analysis.recommended_range_label"),
+          formatRange(field.guidedMin, field.guidedMax, field.unit),
+        ),
+        renderGuidanceLine(
+          t("settings.analysis.allowed_range_label"),
+          formatRange(field.hardMin, field.hardMax, field.unit),
+        ),
+        renderGuidanceLine(
+          t("settings.analysis.default_label"),
+          `${formatSettingValue(field.defaultValue)}${field.unit}`,
+        ),
+      ].join("");
+      const errorHtml = errorMessage
+        ? renderSettingsFeedback({
+          tone: "error",
+          body: errorMessage,
+          compact: true,
+        })
+        : "";
+      help.innerHTML = `<span class="settings-field-guidance__stack">${guidanceHtml}</span>${errorHtml}`;
     }
   }
 
@@ -217,6 +257,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       input.min = String(field.hardMin);
       input.max = String(field.hardMax);
       input.step = "0.1";
+      input.setAttribute("aria-describedby", field.guidanceId);
     }
   }
 
@@ -248,6 +289,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       return;
     }
     clearFieldValidationState();
+    setSettingsFeedback(els.analysisSaveFeedback, null);
     void syncAnalysisSettingsToServer({
       wheel_bandwidth_pct: defaultVehicleSettings.wheel_bandwidth_pct,
       driveshaft_bandwidth_pct: defaultVehicleSettings.driveshaft_bandwidth_pct,
@@ -268,7 +310,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
   function syncSettingsInputs(): void {
     applyInputConstraints();
     clearFieldValidationState();
-    renderFieldGuidance();
+    setSettingsFeedback(els.analysisSaveFeedback, null);
     syncNumericInputValue(els.wheelBandwidthInput, settings.vehicleSettings.wheel_bandwidth_pct);
     syncNumericInputValue(els.driveshaftBandwidthInput, settings.vehicleSettings.driveshaft_bandwidth_pct);
     syncNumericInputValue(els.engineBandwidthInput, settings.vehicleSettings.engine_bandwidth_pct);
@@ -294,8 +336,13 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       const saved = await setAnalysisSettings(payload);
       applyAnalysisSettingsPayload(saved);
     } catch (error) {
-      syncSettingsInputs();
-      ctx.onSaveError(error);
+      openAnalysisGuidance();
+      setSettingsFeedback(els.analysisSaveFeedback, {
+        tone: "error",
+        title: t("settings.analysis.save_failed_title"),
+        body: error instanceof Error ? error.message : t("settings.save_failed"),
+        detail: t("settings.analysis.save_failed_detail"),
+      });
     }
   }
 
@@ -317,14 +364,15 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     const fieldStates = collectFieldStates();
     const missingField = fieldStates.find((field) => field.rawValue === "" || Number.isNaN(field.numericValue) || !Number.isFinite(field.numericValue));
     if (missingField) {
-      markFieldInvalid(missingField.config);
-      ctx.showError(t("settings.analysis.invalid_number", { field: t(missingField.config.labelKey) }));
+      markFieldInvalid(
+        missingField.config,
+        t("settings.analysis.invalid_number", { field: t(missingField.config.labelKey) }),
+      );
       return;
     }
     const outOfBoundsField = fieldStates.find((field) => field.numericValue < field.config.hardMin || field.numericValue > field.config.hardMax);
     if (outOfBoundsField) {
-      markFieldInvalid(outOfBoundsField.config);
-      ctx.showError(t("settings.analysis.invalid_value", {
+      markFieldInvalid(outOfBoundsField.config, t("settings.analysis.invalid_value", {
         field: t(outOfBoundsField.config.labelKey),
         min: formatSettingValue(outOfBoundsField.config.hardMin),
         max: formatSettingValue(outOfBoundsField.config.hardMax),
@@ -366,6 +414,9 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     for (const field of analysisFields) {
       field.input()?.addEventListener("input", () => {
         field.input()?.removeAttribute("aria-invalid");
+        fieldErrorMessages.delete(field.key);
+        renderFieldGuidance();
+        setSettingsFeedback(els.analysisSaveFeedback, null);
       });
     }
   }
