@@ -230,6 +230,7 @@ export function createAppState(): AppState {
         samples_dropped: 0,
         last_completed_run_id: null,
         last_completed_run_error: null,
+        capture_readiness: null,
       },
       locationOptions: [],
       locationCodes: defaultLocationCodes.slice(),

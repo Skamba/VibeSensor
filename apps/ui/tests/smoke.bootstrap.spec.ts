@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
+import {
+  buildCaptureReadiness,
+  fulfillJson,
+  installCommonRoutes,
+  installFakeWebSocket,
+  requestPath,
+} from "./smoke.helpers";
 
 const strengthMetrics = {
   vibration_strength_db: 12,
@@ -29,6 +35,12 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
     samples_dropped: 0,
     last_completed_run_id: null,
     last_completed_run_error: null,
+    capture_readiness: buildCaptureReadiness({
+      isReady: true,
+      sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+      reference: { state: "pass", reasonKey: "reference_ready" },
+      speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+    }),
   };
 
   await installCommonRoutes(page, {
@@ -142,6 +154,8 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator(".spectrum-controls-panel #spectrumInspector")).toBeVisible();
   await expect(page.locator(".spectrum-controls-panel #legend")).toContainText("Front Left");
   await expect(page.locator("#loggingSummary")).toBeHidden();
+  await expect(page.locator("#loggingChecklist")).toBeVisible();
+  await expect(page.locator("#loggingChecklist")).toContainText("Capture readiness checklist");
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingPhase")).toBeHidden();
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
@@ -213,6 +227,12 @@ test("saved run state points directly to History", async ({ page }) => {
     samples_dropped: 0,
     last_completed_run_id: "run-002",
     last_completed_run_error: null,
+    capture_readiness: buildCaptureReadiness({
+      isReady: true,
+      sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+      reference: { state: "pass", reasonKey: "reference_ready" },
+      speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+    }),
   };
 
   await installCommonRoutes(page, {

@@ -340,7 +340,7 @@ class TestRunSuitability:
         )
         states = {check.check_key: check.state for check in rs.checks}
         assert states == {
-            "SUITABILITY_CHECK_SPEED_VARIATION": "warn",
+            "SUITABILITY_CHECK_SPEED_VARIATION": "pass",
             "SUITABILITY_CHECK_SENSOR_COVERAGE": "warn",
             "SUITABILITY_CHECK_REFERENCE_COMPLETENESS": "warn",
             "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS": "warn",

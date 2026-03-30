@@ -389,11 +389,6 @@ class TestBuildRunSuitabilityChecks:
         ("overrides", "check_key"),
         [
             pytest.param(
-                {"steady_speed": True},
-                "SUITABILITY_CHECK_SPEED_VARIATION",
-                id="speed_variation_steady",
-            ),
-            pytest.param(
                 {"sensor_count": 1},
                 "SUITABILITY_CHECK_SENSOR_COVERAGE",
                 id="sensor_coverage_below_3",
@@ -419,6 +414,11 @@ class TestBuildRunSuitabilityChecks:
         checks = _suitability_checks(**overrides)
         check = next(c for c in checks if c["check_key"] == check_key)
         assert check["state"] == "warn"
+
+    def test_steady_speed_marks_speed_variation_as_pass(self) -> None:
+        checks = _suitability_checks(steady_speed=True)
+        check = next(c for c in checks if c["check_key"] == "SUITABILITY_CHECK_SPEED_VARIATION")
+        assert check["state"] == "pass"
 
 
 class TestBuildPhaseTimeline:

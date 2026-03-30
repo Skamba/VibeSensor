@@ -149,7 +149,7 @@ class RunSuitability:
         total_overflow: int,
     ) -> RunSuitability:
         """Evaluate run suitability from typed analysis inputs."""
-        speed_variation_ok = speed_sufficient and not steady_speed
+        speed_variation_ok = speed_sufficient
         frame_issues = total_dropped + total_overflow
         return cls(
             checks=(

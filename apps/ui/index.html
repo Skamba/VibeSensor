@@ -131,8 +131,8 @@
               <span id="loggingStatus" class="pill pill--muted" aria-live="polite">Stopped</span>
               <span id="loggingRunId" class="subtle" hidden></span>
             </div>
-            <div class="mini-label" data-i18n="dashboard.recording_progress">Run progress</div>
-            <div class="stat-grid stat-grid--compact">
+              <div class="mini-label" data-i18n="dashboard.recording_progress">Run progress</div>
+              <div class="stat-grid stat-grid--compact">
               <div id="loggingPhase" class="stat stat--compact" hidden>
                 <div class="stat__label" data-i18n="dashboard.recording_phase">Run phase</div>
                 <div class="stat__value" data-value>--</div>
@@ -144,11 +144,12 @@
               <div id="loggingSamples" class="stat stat--compact">
                 <div class="stat__label" data-i18n="dashboard.recording_samples">Samples recorded</div>
                 <div class="stat__value" data-value>0</div>
+                </div>
               </div>
-            </div>
-            <div class="logging-actions">
-              <button id="startLoggingBtn" class="btn btn--primary" data-i18n="dashboard.start_recording">Start Recording</button>
-              <button id="stopLoggingBtn" class="btn btn--danger-quiet" data-i18n="dashboard.stop_recording" hidden>Stop Recording</button>
+              <div id="loggingChecklist" class="capture-readiness" hidden></div>
+              <div class="logging-actions">
+                <button id="startLoggingBtn" class="btn btn--primary" data-i18n="dashboard.start_recording">Start Recording</button>
+                <button id="stopLoggingBtn" class="btn btn--danger-quiet" data-i18n="dashboard.stop_recording" hidden>Stop Recording</button>
             </div>
           </div>
 

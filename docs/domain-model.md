@@ -65,7 +65,7 @@ The model uses explicit scope boundaries:
 - car-scoped interpretive context: `OrderReferenceSpec`
 - run diagnostic scope: `TestRun`, `Finding`, `DrivingSegment`,
   `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
-  `TestPlan`
+  `TestPlan`, `CaptureReadiness`, `CaptureReadinessCheck`
 - finding scope: `ConfidenceAssessment`, `FindingEvidence`, `LocationHotspot`,
   `VibrationOrigin`
 - capture lifecycle scope: `Run`, `RunStatus`

@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
+import {
+  buildCaptureReadiness,
+  fulfillJson,
+  installCommonRoutes,
+  installFakeWebSocket,
+  requestPath,
+} from "./smoke.helpers";
 
 test("routes no-car blockers to the add-car flow from Live and Cars", async ({ page }) => {
   let analysisPutCalls = 0;
@@ -73,6 +79,7 @@ test("hides contextual car guidance when a valid selected car exists", async ({ 
 
 test("keeps contextual no-car guidance hidden until active car bootstrap resolves and then marks the car active", async ({ page }) => {
   let releaseCars: (() => void) | null = null;
+  let captureReady = false;
   const waitForCars = new Promise<void>((resolve) => {
     releaseCars = resolve;
   });
@@ -143,6 +150,37 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
       spectra: { clients: {} },
     },
   });
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      start_time_utc: null,
+      samples_written: 0,
+      samples_dropped: 0,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+      capture_readiness: captureReady
+        ? buildCaptureReadiness({
+          isReady: true,
+          sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+          reference: { state: "pass", reasonKey: "reference_ready" },
+          speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+        })
+        : buildCaptureReadiness({
+          isReady: false,
+          sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+          reference: { state: "fail", reasonKey: "active_car_missing" },
+          speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+          overall: {
+            state: "fail",
+            reasonKey: "capture_blocked",
+            details: { blocking_check: "reference_ready" },
+          },
+        }),
+    });
+  });
   await page.goto("/");
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
   await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Loading active car...");
@@ -164,6 +202,7 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
   if (!releaseCars) {
     throw new Error("cars bootstrap gate was not initialized");
   }
+  captureReady = true;
   releaseCars();
 
   await page.locator('[data-settings-tab="analysisTab"]').click();
@@ -223,6 +262,37 @@ test("shows a live warning state until an active car is selected, then clears it
       }
       await fulfillJson(route, {});
     },
+  });
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      start_time_utc: null,
+      samples_written: 0,
+      samples_dropped: 0,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+      capture_readiness: activeCarId
+        ? buildCaptureReadiness({
+          isReady: true,
+          sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+          reference: { state: "pass", reasonKey: "reference_ready" },
+          speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+        })
+        : buildCaptureReadiness({
+          isReady: false,
+          sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+          reference: { state: "fail", reasonKey: "active_car_missing" },
+          speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+          overall: {
+            state: "fail",
+            reasonKey: "capture_blocked",
+            details: { blocking_check: "reference_ready" },
+          },
+        }),
+    });
   });
   await page.route("**/api/recording/start", async (route) => {
     startCalls += 1;
