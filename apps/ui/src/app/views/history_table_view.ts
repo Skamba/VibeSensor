@@ -7,7 +7,11 @@ import type {
 import { HISTORY_HEATMAP_POSITIONS } from "../../config";
 import type { RunDetail } from "../ui_app_state";
 import { heatColor, normalizeUnit } from "../features/heat_utils";
-import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
+import {
+  closestFromTarget,
+  renderInlineStatePanel,
+  renderTableEmptyRow,
+} from "./dom_helpers";
 
 type LocationIntensityRow = HistoryInsightsPayload["sensor_intensity_by_location"][number];
 
@@ -577,9 +581,21 @@ function renderRunDetailsRow(
 
 export function renderHistoryEmptyState(
   container: HTMLElement,
-  text: string,
+  params: Pick<HistoryTableViewParams, "escapeHtml" | "t">,
 ): void {
-  container.innerHTML = renderTableEmptyRow(text, 4);
+  const { escapeHtml, t } = params;
+  container.innerHTML = renderTableEmptyRow(
+    renderInlineStatePanel({
+      titleHtml: escapeHtml(t("history.empty.title")),
+      bodyHtml: escapeHtml(t("history.empty.body")),
+      detailHtml: escapeHtml(t("history.empty.detail")),
+      action: {
+        action: "open-live",
+        labelHtml: escapeHtml(t("history.empty.action")),
+      },
+    }),
+    4,
+  );
 }
 
 export function renderHistoryTable(

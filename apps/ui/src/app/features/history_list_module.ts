@@ -32,7 +32,10 @@ export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryList
         els.historySummary.textContent = t("history.none");
       }
       if (els.historyTableBody) {
-        renderHistoryEmptyState(els.historyTableBody, escapeHtml(t("history.none_found")));
+        renderHistoryEmptyState(els.historyTableBody, {
+          t,
+          escapeHtml,
+        });
       }
       ctx.collapseExpandedRun();
       return;

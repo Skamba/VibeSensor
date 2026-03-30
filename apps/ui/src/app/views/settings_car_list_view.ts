@@ -1,5 +1,9 @@
 import type { CarRecord } from "../../api/types";
-import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
+import {
+  closestFromTarget,
+  renderInlineStatePanel,
+  renderTableEmptyRow,
+} from "./dom_helpers";
 
 export interface SettingsCarListViewParams {
   cars: CarRecord[];
@@ -10,8 +14,8 @@ export interface SettingsCarListViewParams {
 }
 
 export interface SettingsCarListAction {
-  type: "activate" | "delete";
-  carId: string;
+  type: "activate" | "delete" | "add";
+  carId: string | null;
 }
 
 export function renderSettingsCarList(
@@ -21,7 +25,16 @@ export function renderSettingsCarList(
   const { cars, activeCarId, t, escapeHtml, fmt } = params;
   if (!cars.length) {
     container.innerHTML = renderTableEmptyRow(
-      escapeHtml(t("settings.car.no_cars")),
+      renderInlineStatePanel({
+        titleHtml: escapeHtml(t("settings.car.empty.title")),
+        bodyHtml: escapeHtml(t("settings.car.empty.body")),
+        detailHtml: escapeHtml(t("settings.car.empty.detail")),
+        action: {
+          action: "add-car",
+          labelHtml: escapeHtml(t("settings.car.empty.action")),
+          variant: "success",
+        },
+      }),
       7,
     );
     return;
@@ -42,6 +55,13 @@ export function renderSettingsCarList(
 export function getSettingsCarListAction(
   target: EventTarget | null,
 ): SettingsCarListAction | null {
+  const inlineAction = closestFromTarget<HTMLElement>(target, '[data-inline-state-action="add-car"]');
+  if (inlineAction) {
+    return {
+      type: "add",
+      carId: null,
+    };
+  }
   const button = closestFromTarget<HTMLButtonElement>(target, ".car-activate-btn, .car-delete-btn");
   if (!button) {
     return null;
