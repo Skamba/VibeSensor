@@ -505,6 +505,9 @@ test.describe("createEspFlashFeature polling", () => {
       );
       expect(deps.espFlashStartBtn.hidden).toBe(true);
       expect(deps.espFlashCancelBtn.hidden).toBe(false);
+      expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain(
+        "settings.esp_flash.logs_running_title",
+      );
       const html = deps.espFlashJourneyPanel.innerHTML;
       expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="active" aria-current="step"/);
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.current_step");
@@ -560,6 +563,17 @@ test.describe("createEspFlashFeature polling", () => {
 
       const html = deps.espFlashJourneyPanel.innerHTML;
       expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="attention"/);
+      expect(deps.espFlashStartSummary.innerHTML).toContain("settings.esp_flash.recovery.title");
+      expect(deps.espFlashStartSummary.innerHTML).toContain(
+        "settings.esp_flash.recovery.flashing.detail",
+      );
+      expect(deps.espFlashStartBtn.textContent).toBe("settings.esp_flash.retry");
+      expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain(
+        "settings.esp_flash.logs_failed_title",
+      );
+      expect((deps.els.espFlashHistoryPanel as HTMLElement).innerHTML).toContain(
+        "serial port disconnected",
+      );
       expect(html.match(/data-stage-state="done"/g)).toHaveLength(3);
       expect(deps.espFlashReadinessPanel.innerHTML).toContain("serial port disconnected");
     } finally {
@@ -791,6 +805,7 @@ test.describe("createUpdateFeature polling", () => {
       await flushAsyncWork();
 
       const html = (deps.els.updateStatusPanel as HTMLElement).innerHTML;
+      expect(html).toContain("settings.update.log_running_title");
       expect(html).toMatch(/data-stage-phase="installing" data-stage-state="active" aria-current="step"/);
       expect(html.match(/data-stage-state="done"/g)).toHaveLength(5);
       expect(html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)).toHaveLength(5);
@@ -833,7 +848,13 @@ test.describe("createUpdateFeature polling", () => {
       await flushAsyncWork();
 
       const html = (deps.els.updateStatusPanel as HTMLElement).innerHTML;
+      expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.recovery.title");
+      expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.recovery.wifi.title");
+      expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.recovery.wifi.detail");
+      expect(deps.updateStartBtn.textContent).toBe("settings.update.retry");
       expect(html).toContain("settings.update.issues");
+      expect(html).toContain("settings.update.attempt_title");
+      expect(html).toContain("settings.update.log_failed_title");
       expect(html).toContain("Hotspot restart timed out");
       expect(html).toContain("NetworkManager is still reconnecting to the uplink.");
       expect(html).toMatch(/data-stage-phase="restoring_hotspot" data-stage-state="attention"/);

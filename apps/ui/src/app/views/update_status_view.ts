@@ -34,6 +34,14 @@ const ASSET_ISSUE_RE = /asset|artifacts|stale|hash|missing/i;
 type JourneyStageState = "upcoming" | "active" | "done" | "attention";
 type UpdateJourneyTransport = UpdateStartRequestPayload["transport"];
 
+export interface UpdateFailureSummary {
+  detail: string | null;
+  message: string | null;
+  phaseLabel: string;
+  recoveryDetail: string;
+  recoveryTitle: string;
+}
+
 type UpdateJourneyStage = {
   phase: string;
   titleKey: string;
@@ -160,7 +168,7 @@ function normalizeUpdatePhase(phase: string | null | undefined): string {
   return phase;
 }
 
-function formatUpdatePhase(
+export function formatUpdatePhase(
   phase: string | null | undefined,
   t: (key: string, vars?: Record<string, unknown>) => string,
 ): string {
@@ -393,7 +401,7 @@ function resolveJourneyStageState(
   return "upcoming";
 }
 
-function primaryJourneyIssue(status: UpdateStatusPayload): UpdateIssue | null {
+export function primaryJourneyIssue(status: UpdateStatusPayload): UpdateIssue | null {
   const currentPhase = normalizeUpdatePhase(status.phase);
   for (let index = status.issues.length - 1; index >= 0; index -= 1) {
     const issue = status.issues[index];
@@ -404,17 +412,62 @@ function primaryJourneyIssue(status: UpdateStatusPayload): UpdateIssue | null {
   return status.issues.length > 0 ? status.issues[status.issues.length - 1] : null;
 }
 
+function recoveryGuidanceKey(phase: string): string {
+  switch (normalizeUpdatePhase(phase)) {
+    case "stopping_hotspot":
+    case "connecting_wifi":
+    case "restoring_hotspot":
+      return "settings.update.recovery.wifi";
+    case "connecting_usb_internet":
+      return "settings.update.recovery.usb";
+    case "checking":
+    case "downloading":
+      return "settings.update.recovery.network";
+    case "installing":
+      return "settings.update.recovery.install";
+    default:
+      return "settings.update.recovery.generic";
+  }
+}
+
+export function getUpdateFailureSummary(
+  status: UpdateStatusPayload,
+  t: (key: string, vars?: Record<string, unknown>) => string,
+): UpdateFailureSummary | null {
+  if (status.state !== "failed") {
+    return null;
+  }
+  const issue = primaryJourneyIssue(status);
+  const phase = issue?.phase ?? status.phase;
+  const keyBase = recoveryGuidanceKey(phase);
+  return {
+    detail: issue?.detail ?? null,
+    message: issue?.message ?? null,
+    phaseLabel: formatUpdatePhase(phase, t),
+    recoveryTitle: t(`${keyBase}.title`),
+    recoveryDetail: t(`${keyBase}.detail`),
+  };
+}
+
 function renderJourneyFailureNote(
   status: UpdateStatusPayload,
   deps: UpdateStatusViewDeps,
 ): string {
-  if (status.state !== "failed") {
+  const failure = getUpdateFailureSummary(status, deps.t);
+  if (!failure) {
     return "";
   }
-  const issue = primaryJourneyIssue(status);
-  const phaseLabel = formatUpdatePhase(issue?.phase ?? status.phase, deps.t);
-  const summary = issue?.message ? `${phaseLabel} — ${issue.message}` : phaseLabel;
-  return `<div class="maintenance-note maintenance-note--bad"><strong>${deps.escapeHtml(summary)}</strong>${issue?.detail ? `<div class="issue-detail">${deps.escapeHtml(issue.detail)}</div>` : ""}</div>`;
+  const summary = failure.message ? `${failure.phaseLabel} — ${failure.message}` : failure.phaseLabel;
+  return `<div class="maintenance-stack maintenance-stack--tight">
+    <div class="maintenance-note maintenance-note--bad">
+      <strong>${deps.escapeHtml(summary)}</strong>
+      ${failure.detail ? `<div class="issue-detail">${deps.escapeHtml(failure.detail)}</div>` : ""}
+    </div>
+    <div class="maintenance-note">
+      <strong>${deps.escapeHtml(failure.recoveryTitle)}</strong>
+      <div class="issue-detail">${deps.escapeHtml(failure.recoveryDetail)}</div>
+    </div>
+  </div>`;
 }
 
 function renderJourney(
@@ -463,6 +516,63 @@ function renderIssuesCard(
     escapeHtml(t("settings.update.issues")),
     escapeHtml(t("settings.update.issues_intro")),
     `<ul class="issue-list">${items}</ul>`,
+  );
+}
+
+function renderLatestAttemptCard(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): string {
+  if (status.state === "idle" || status.state === "running") {
+    return "";
+  }
+  const { t, escapeHtml } = deps;
+  const rows = [
+    status.started_at != null
+      ? renderStatusGridRow(
+          escapeHtml(t("settings.update.started_at")),
+          escapeHtml(formatEpochTimestamp(status.started_at)),
+        )
+      : "",
+    status.finished_at != null
+      ? renderStatusGridRow(
+          escapeHtml(t("settings.update.finished_at")),
+          escapeHtml(formatEpochTimestamp(status.finished_at)),
+        )
+      : "",
+    renderStatusGridRow(
+      escapeHtml(t("settings.update.transport_label")),
+      escapeHtml(
+        status.transport === "usb_internet"
+          ? status.uplink_interface
+            ? t("settings.update.transport_value.usb_interface", {
+                interface: status.uplink_interface,
+              })
+            : t("settings.update.transport_value.usb")
+          : status.ssid
+            ? t("settings.update.transport_value.wifi_ssid", { ssid: status.ssid })
+            : t("settings.update.transport_value.wifi"),
+      ),
+    ),
+    status.exit_code != null
+      ? renderStatusGridRow(
+          escapeHtml(t("settings.update.exit_code")),
+          escapeHtml(String(status.exit_code)),
+        )
+      : "",
+  ].filter(Boolean).join("");
+  const failure = getUpdateFailureSummary(status, t);
+  const noteHtml = failure
+    ? `<div class="maintenance-note maintenance-note--bad">
+        <strong>${escapeHtml(failure.message ?? failure.phaseLabel)}</strong>
+        ${failure.detail ? `<div class="issue-detail">${escapeHtml(failure.detail)}</div>` : ""}
+      </div>`
+    : "";
+  return renderMaintenanceCard(
+    escapeHtml(t("settings.update.attempt_title")),
+    escapeHtml(t("settings.update.attempt_intro")),
+    `<div class="status-grid">${rows}</div>${noteHtml}`,
+    renderStateBadge(status, deps),
   );
 }
 
@@ -619,13 +729,24 @@ function renderLogTail(
   deps: UpdateStatusViewDeps,
 ): string {
   const { t, escapeHtml } = deps;
+  const isRunning = status.state === "running";
   if (!status.log_tail.length) {
+    const emptyTitle = isRunning
+      ? t("settings.update.log_running_title")
+      : status.state === "failed"
+        ? t("settings.update.log_failed_title")
+        : t("settings.update.log_empty_title");
+    const emptyBody = isRunning
+      ? t("settings.update.log_running_body")
+      : status.state === "failed"
+        ? t("settings.update.log_failed_body")
+        : t("settings.update.log_empty_body");
     return renderMaintenanceCard(
       escapeHtml(t("settings.update.log")),
-      escapeHtml(t("settings.update.log_intro")),
+      escapeHtml(t(isRunning ? "settings.update.log_intro_running" : "settings.update.log_intro")),
       renderInlineEmptyState(
-        t("settings.update.log_empty_title"),
-        t("settings.update.log_empty_body"),
+        emptyTitle,
+        emptyBody,
         escapeHtml,
       ),
     );
@@ -633,8 +754,8 @@ function renderLogTail(
   const logBody = status.log_tail.map((line) => `${escapeHtml(line)}\n`).join("");
   return renderMaintenanceCard(
     escapeHtml(t("settings.update.log")),
-    escapeHtml(t("settings.update.log_intro")),
-    `<pre class="log-pre">${logBody}</pre>`,
+    escapeHtml(t(isRunning ? "settings.update.log_intro_running" : "settings.update.log_intro")),
+    `${isRunning ? `<div class="maintenance-note">${escapeHtml(t("settings.update.log_running_note"))}</div>` : ""}<pre class="log-pre">${logBody}</pre>`,
   );
 }
 
@@ -685,6 +806,7 @@ export function renderUpdateStatusPanel(
       ),
     ].join("")}</div>`,
     renderIssuesCard(status, deps),
+    renderLatestAttemptCard(status, deps),
     renderMaintenanceCard(
       deps.escapeHtml(deps.t("settings.update.health_card_title")),
       renderHealthSummary(health, deps),

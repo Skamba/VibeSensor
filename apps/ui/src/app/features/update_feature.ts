@@ -22,7 +22,10 @@ import {
   renderInternetStatusPanel,
 } from "../views/internet_status_view";
 import { renderMaintenanceReadinessPanel } from "../views/maintenance_readiness_view";
-import { renderUpdateStatusPanel } from "../views/update_status_view";
+import {
+  getUpdateFailureSummary,
+  renderUpdateStatusPanel,
+} from "../views/update_status_view";
 
 export interface UpdateFeatureDeps extends FeatureDepsBase {}
 
@@ -32,10 +35,11 @@ export interface UpdateFeature {
   stopPolling(): void;
 }
 
-interface UpdateStartReadiness {
+interface UpdateActionSummary {
   canStart: boolean;
   detailsCaption: string;
   html: string;
+  startLabel: string;
 }
 
 function fallbackInternetStatus(
@@ -85,12 +89,19 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   let passwordVisible = false;
   let latestInternetStatus: UsbInternetStatusPayload = fallbackInternetStatus(t);
   let latestHealthStatus: HealthStatusPayload | null = null;
+  let latestUpdateStatus: UpdateStatusPayload | null = null;
   let latestUpdateState: UpdateStatusPayload["state"] = "idle";
-  let latestUpdateTransport: UpdateStatusPayload["transport"] = "wifi";
+  let latestUpdateTransport: UpdateStartRequestPayload["transport"] = "wifi";
+
+  function safeUpdateTransport(
+    transport: string | null | undefined,
+  ): UpdateStartRequestPayload["transport"] {
+    return transport === "usb_internet" ? "usb_internet" : "wifi";
+  }
 
   function selectedTransport(): UpdateStartRequestPayload["transport"] {
-    if (latestUpdateState === "running" && latestUpdateTransport === "usb_internet") {
-      return "usb_internet";
+    if (latestUpdateState === "running") {
+      return latestUpdateTransport;
     }
     if (latestInternetStatus.usable && els.updateTransportUsbRadio?.checked) {
       return "usb_internet";
@@ -109,13 +120,13 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     );
   }
 
-  function buildUpdateReadiness(): UpdateStartReadiness {
+  function buildUpdateActionSummary(): UpdateActionSummary {
     const transport = selectedTransport();
     const usingUsb = transport === "usb_internet";
     const isRunning = latestUpdateState === "running";
     const ssid = els.updateSsidInput?.value.trim() ?? "";
     const usbInterface = latestInternetStatus.interface_name;
-    const items = [
+    const readinessItems = [
       {
         label: t("settings.update.readiness.item.source"),
         detail: usingUsb
@@ -142,19 +153,49 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
           },
     ];
     if (hasBlockingHealthIssue()) {
-      items.push({
+      readinessItems.push({
         label: t("settings.update.readiness.item.health"),
         detail: t("settings.update.readiness.item.health_blocked"),
-        state: "blocked" as const,
+        state: "blocked",
       });
     }
-    const hasBlockedItem = items.some((item) => item.state === "blocked");
-    const stateLabel = isRunning
-      ? t("maintenance.readiness.running")
-      : hasBlockedItem
+    const hasBlockedItem = readinessItems.some((item) => item.state === "blocked");
+    const failure = latestUpdateStatus ? getUpdateFailureSummary(latestUpdateStatus, t) : null;
+    const isRecoveryState = failure !== null;
+    const stateLabel = isRecoveryState
+      ? hasBlockedItem
         ? t("maintenance.readiness.blocked")
-        : t("maintenance.readiness.ready");
-    const stateVariant = isRunning ? "warn" : hasBlockedItem ? "bad" : "ok";
+        : t("settings.update.state.failed")
+      : isRunning
+        ? t("maintenance.readiness.running")
+        : hasBlockedItem
+          ? t("maintenance.readiness.blocked")
+          : t("maintenance.readiness.ready");
+    const items = failure
+      ? [
+          {
+            label: t("settings.update.recovery.item.failed_step"),
+            detail: failure.phaseLabel,
+            state: "attention" as const,
+          },
+          {
+            label: t("settings.update.recovery.item.captured_detail"),
+            detail: failure.message
+              ? failure.detail
+                ? `${failure.message} — ${failure.detail}`
+                : failure.message
+              : failure.detail || failure.phaseLabel,
+            state: "attention" as const,
+          },
+           {
+             label: t("settings.update.recovery.item.next_step"),
+             detail: hasBlockedItem
+               ? t("settings.update.recovery.item.next_step_blocked")
+               : `${failure.recoveryTitle} — ${failure.recoveryDetail}`,
+             state: hasBlockedItem ? ("blocked" as const) : ("attention" as const),
+           },
+        ]
+      : readinessItems;
     return {
       canStart: !isRunning && !hasBlockedItem,
       detailsCaption: t(
@@ -162,18 +203,27 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
           ? "settings.update.details_caption_usb"
           : "settings.update.details_caption_wifi",
       ),
+      startLabel: t(isRecoveryState ? "settings.update.retry" : "settings.update.start"),
       html: renderMaintenanceReadinessPanel(
         {
-          title: t("settings.update.readiness.title"),
+          title: t(
+            isRecoveryState
+              ? "settings.update.recovery.title"
+              : "settings.update.readiness.title",
+          ),
           summary: t(
-            isRunning
-              ? "settings.update.readiness.summary_running"
-              : hasBlockedItem
-                ? "settings.update.readiness.summary_blocked"
-                : "settings.update.readiness.summary_ready",
+            isRecoveryState
+              ? hasBlockedItem
+                ? "settings.update.recovery.summary_blocked"
+                : "settings.update.recovery.summary_retry"
+              : isRunning
+                ? "settings.update.readiness.summary_running"
+                : hasBlockedItem
+                  ? "settings.update.readiness.summary_blocked"
+                  : "settings.update.readiness.summary_ready",
           ),
           stateLabel,
-          stateVariant,
+          stateVariant: isRecoveryState ? "bad" : isRunning ? "warn" : hasBlockedItem ? "bad" : "ok",
           items,
         },
         escapeHtml,
@@ -181,9 +231,10 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     };
   }
 
-  function syncUpdateControls(readiness: UpdateStartReadiness): void {
+  function syncUpdateControls(readiness: UpdateActionSummary): void {
     const isRunning = latestUpdateState === "running";
     if (els.updateStartBtn) {
+      els.updateStartBtn.textContent = readiness.startLabel;
       els.updateStartBtn.hidden = isRunning;
       els.updateStartBtn.disabled = isRunning || !readiness.canStart;
     }
@@ -261,8 +312,8 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     }
   }
 
-  function syncUpdateReadinessUi(): UpdateStartReadiness {
-    const readiness = buildUpdateReadiness();
+  function syncUpdateReadinessUi(): UpdateActionSummary {
+    const readiness = buildUpdateActionSummary();
     if (els.updateReadinessSummary) {
       els.updateReadinessSummary.innerHTML = readiness.html;
     }
@@ -274,10 +325,11 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     health: HealthStatusPayload,
     internet: UsbInternetStatusPayload,
   ): void {
+    latestUpdateStatus = status;
     latestInternetStatus = internet;
     latestHealthStatus = health;
     latestUpdateState = status.state;
-    latestUpdateTransport = status.transport;
+    latestUpdateTransport = safeUpdateTransport(status.transport);
     const panel = els.updateStatusPanel;
     syncTransportUi();
     syncUpdateControls(syncUpdateReadinessUi());
