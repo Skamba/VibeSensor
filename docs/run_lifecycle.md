@@ -11,6 +11,8 @@ one big state-machine class:
   finalization.
 - `PostAnalysisWorker` owns the background queue and retry policy after a run
   stops.
+- `CaptureReadinessTracker` owns the backend pre-record readiness checklist for
+  idle/live states.
 - `RunRecorder` coordinates those helpers without re-owning their internals.
 
 ## Owning components
@@ -20,6 +22,7 @@ one big state-machine class:
 | `RunLifecycleState` | `use_cases/run/lifecycle_state.py` | Active run identity, start timing, frame-progress tracking, and auto-stop gating. |
 | `SampleFlushOrchestrator` | `use_cases/run/sample_flush.py` | Build `SensorFrame` rows, refresh recent metrics, and decide when to flush or auto-stop. |
 | `RunPersistenceWriter` | `use_cases/run/persistence_writer.py` | Create the persisted run, append sample rows with retries, and finalize the run metadata. |
+| `CaptureReadinessTracker` | `use_cases/run/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed dwell, and recent integrity quiet windows for the idle recording gate. |
 | `RunRecorder` | `use_cases/run/logger.py` | Start/stop entrypoint and coordinator for lifecycle, persistence, and post-analysis. |
 | `PostAnalysisWorker` | `use_cases/run/post_analysis.py` | Non-evicting queue and single daemon thread for completed runs. |
 | `execute_post_analysis()` | `use_cases/run/post_analysis_executor.py` | Load metadata/samples, build the persisted analysis, and store success or failure. |
@@ -45,6 +48,9 @@ No active run is recording:
 - `RunLifecycleState.current_run is None`
 - no active run ID is exposed
 - `PostAnalysisWorker` may still be busy with an older run
+- `RunRecorder.status()` includes a backend-owned `CaptureReadiness` checklist
+  so `/api/recording/status` and the Live dashboard can explain whether
+  steady-state capture is ready to start
 
 ### 2. Recording active
 

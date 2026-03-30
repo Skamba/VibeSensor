@@ -7,6 +7,7 @@ import sqlite3
 import time
 from dataclasses import dataclass
 
+from vibesensor.domain import CaptureReadiness
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
 from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter
@@ -30,6 +31,7 @@ class RunRecorderStatusSnapshot:
     samples_dropped: int = 0
     last_completed_run_id: str | None = None
     last_completed_run_error: str | None = None
+    capture_readiness: CaptureReadiness | None = None
 
 
 def build_run_recorder_status(
@@ -39,6 +41,7 @@ def build_run_recorder_status(
     start_time_utc: str | None,
     persistence: RunPersistenceWriter,
     post_analysis: PostAnalysisWorker,
+    capture_readiness: CaptureReadiness | None = None,
 ) -> RunRecorderStatusSnapshot:
     """Build the compact status snapshot exposed by recorder-facing APIs."""
     post_snapshot = post_analysis.snapshot()
@@ -53,6 +56,7 @@ def build_run_recorder_status(
         samples_dropped=persist.dropped_sample_count,
         last_completed_run_id=post_snapshot.last_completed_run_id,
         last_completed_run_error=post_snapshot.last_completed_error,
+        capture_readiness=capture_readiness,
     )
 
 

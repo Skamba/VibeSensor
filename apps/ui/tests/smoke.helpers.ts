@@ -96,6 +96,55 @@ export async function fulfillJson(route: Route, body: unknown): Promise<void> {
   await route.fulfill(jsonOk(body));
 }
 
+type CaptureReadinessState = "pass" | "warn" | "fail";
+
+type CaptureReadinessCheckInput = {
+  state: CaptureReadinessState;
+  reasonKey: string;
+  details?: Record<string, unknown>;
+};
+
+type CaptureReadinessInput = {
+  isReady: boolean;
+  sensors: CaptureReadinessCheckInput;
+  reference: CaptureReadinessCheckInput;
+  speed: CaptureReadinessCheckInput;
+  overall?: CaptureReadinessCheckInput;
+};
+
+function readinessCheck(
+  checkKey: string,
+  input: CaptureReadinessCheckInput,
+): Record<string, unknown> {
+  return {
+    check_key: checkKey,
+    state: input.state,
+    reason_key: input.reasonKey,
+    details: input.details ?? {},
+  };
+}
+
+export function buildCaptureReadiness(input: CaptureReadinessInput): Record<string, unknown> {
+  const overall = input.overall ?? (
+    input.isReady
+      ? { state: "pass", reasonKey: "capture_ready", details: {} }
+      : {
+        state: "fail",
+        reasonKey: "capture_blocked",
+        details: { blocking_check: "reference_ready" },
+      }
+  );
+  return {
+    is_ready: input.isReady,
+    checks: [
+      readinessCheck("sensors_ready", input.sensors),
+      readinessCheck("reference_ready", input.reference),
+      readinessCheck("speed_stable", input.speed),
+      readinessCheck("capture_ready", overall),
+    ],
+  };
+}
+
 export async function installCommonRoutes(page: Page, options: CommonRouteOptions = {}): Promise<void> {
   await page.route("**/api/recording/status", async (route) => {
     await fulfillJson(route, {
@@ -108,6 +157,17 @@ export async function installCommonRoutes(page: Page, options: CommonRouteOption
       samples_dropped: 0,
       last_completed_run_id: null,
       last_completed_run_error: null,
+      capture_readiness: buildCaptureReadiness({
+        isReady: false,
+        sensors: { state: "fail", reasonKey: "no_live_sensors" },
+        reference: { state: "fail", reasonKey: "active_car_missing" },
+        speed: { state: "fail", reasonKey: "speed_sample_missing" },
+        overall: {
+          state: "fail",
+          reasonKey: "capture_blocked",
+          details: { blocking_check: "sensors_ready" },
+        },
+      }),
     });
   });
   await page.route("**/api/history**", async (route) => {
