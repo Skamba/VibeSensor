@@ -5467,12 +5467,96 @@
         "title": "RawSamplesPayload",
         "type": "object"
       },
+      "RecordingCaptureReadinessCheckResponse": {
+        "description": "One capture-readiness checklist item returned by the recording status route.",
+        "properties": {
+          "check_key": {
+            "title": "Check Key",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Details",
+            "type": "object"
+          },
+          "reason_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Key"
+          },
+          "state": {
+            "enum": [
+              "pass",
+              "warn",
+              "fail"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_key",
+          "state"
+        ],
+        "title": "RecordingCaptureReadinessCheckResponse",
+        "type": "object"
+      },
+      "RecordingCaptureReadinessResponse": {
+        "description": "Backend-owned live capture-readiness summary for idle/pre-record states.",
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/RecordingCaptureReadinessCheckResponse"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "is_ready": {
+            "title": "Is Ready",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_ready",
+          "checks"
+        ],
+        "title": "RecordingCaptureReadinessResponse",
+        "type": "object"
+      },
       "RecordingStatusResponse": {
         "description": "Response body with the current recording (run-logging) status.",
         "properties": {
           "analysis_in_progress": {
             "title": "Analysis In Progress",
             "type": "boolean"
+          },
+          "capture_readiness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecordingCaptureReadinessResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "enabled": {
             "title": "Enabled",
