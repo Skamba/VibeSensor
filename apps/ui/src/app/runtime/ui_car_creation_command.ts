@@ -5,6 +5,7 @@ export interface UiCarCreationCommandDeps {
   getVehicleSettings: () => Record<string, number>;
   syncCarsPayload: (payload: CarsPayload) => void;
   syncActiveCarToInputs: () => void;
+  showCarCreationSuccess?: (carId: string, carName: string) => void;
   renderCarList: () => void;
   renderSpectrum: () => void;
   addSettingsCar?: (payload: CarUpsertRequest) => Promise<CarsPayload>;
@@ -50,6 +51,9 @@ export function createUiCarCreationCommand(
           deps.syncCarsPayload(setResult);
         }
         deps.syncActiveCarToInputs();
+        if (newCar) {
+          deps.showCarCreationSuccess?.(newCar.id, newCar.name);
+        }
         deps.renderCarList();
         deps.renderSpectrum();
       } catch (_err) {

@@ -2317,9 +2317,57 @@ td.vib-cell[data-severity="l1"] { background: rgba(37, 99, 235, 0.1); }
 .car-list-table th { text-align: left; padding: var(--space-2); border-bottom: 2px solid var(--border); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 .car-list-table td { padding: var(--space-2); border-bottom: 1px solid var(--border); vertical-align: middle; }
 .car-list-table tr:last-child td { border-bottom: none; }
-.car-list-table .car-active-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
+.car-list-row--highlighted td {
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.08), rgba(22, 163, 74, 0.02));
+}
+.car-status-stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+.car-list-table .car-active-pill,
+.car-readiness-pill,
+.car-created-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
 .car-active-pill.active { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
 .car-active-pill.inactive { background: var(--pill-muted-bg); color: var(--pill-muted-text); }
+.car-readiness-pill.ready {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.car-readiness-pill.incomplete {
+  background: #fff3cd;
+  color: #8a6d1d;
+}
+.car-created-pill {
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+.car-row__identity {
+  display: grid;
+  gap: 0.2rem;
+}
+.car-row__variant,
+.car-row__detail {
+  line-height: 1.4;
+}
+.car-row__detail {
+  max-width: 30rem;
+}
+.car-selection-feedback--success {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.08), var(--surface-2));
+}
+.car-selection-feedback--success::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23166534' stroke-width='1.8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+}
 .car-list-actions { display: flex; gap: var(--space-1); flex-wrap: wrap; justify-content: flex-end; }
 .car-list-actions .btn { padding: 4px 12px; font-size: 0.82rem; }
 

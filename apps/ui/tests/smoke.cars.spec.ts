@@ -188,6 +188,13 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
 test("shows a live warning state until an active car is selected, then clears it automatically", async ({ page }) => {
   let activeCarId: string | null = null;
   let startCalls = 0;
+  const completeAspects = {
+    tire_width_mm: 245,
+    tire_aspect_pct: 40,
+    rim_in: 18,
+    final_drive_ratio: 3.91,
+    current_gear_ratio: 0.82,
+  };
 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -196,8 +203,8 @@ test("shows a live warning state until an active car is selected, then clears it
       if (path === "/api/settings/cars" && method === "GET") {
         await fulfillJson(route, {
           cars: [
-            { id: "car-1", name: "Touring", type: "wagon", aspects: {} },
-            { id: "car-2", name: "Coupe", type: "coupe", aspects: {} },
+            { id: "car-1", name: "Touring", type: "wagon", aspects: completeAspects },
+            { id: "car-2", name: "Coupe", type: "coupe", aspects: completeAspects },
           ],
           active_car_id: activeCarId,
         });
@@ -207,8 +214,8 @@ test("shows a live warning state until an active car is selected, then clears it
         activeCarId = "car-2";
         await fulfillJson(route, {
           cars: [
-            { id: "car-1", name: "Touring", type: "wagon", aspects: {} },
-            { id: "car-2", name: "Coupe", type: "coupe", aspects: {} },
+            { id: "car-1", name: "Touring", type: "wagon", aspects: completeAspects },
+            { id: "car-2", name: "Coupe", type: "coupe", aspects: completeAspects },
           ],
           active_car_id: activeCarId,
         });
@@ -283,6 +290,13 @@ test("shows a live warning state until an active car is selected, then clears it
 
 test("shows car-tab guidance for invalid persisted selection and after deleting the selected car", async ({ page }) => {
   let firstCarsGet = true;
+  const completeAspects = {
+    tire_width_mm: 245,
+    tire_aspect_pct: 40,
+    rim_in: 18,
+    final_drive_ratio: 3.91,
+    current_gear_ratio: 0.82,
+  };
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       const path = requestPath(route);
@@ -290,18 +304,39 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
       if (path === "/api/settings/cars" && method === "GET") {
         if (firstCarsGet) {
           firstCarsGet = false;
-          await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], active_car_id: "missing-car" });
+          await fulfillJson(route, {
+            cars: [
+              { id: "car-1", name: "One", type: "sedan", aspects: completeAspects },
+              { id: "car-2", name: "Two", type: "suv", aspects: completeAspects },
+            ],
+            active_car_id: "missing-car",
+          });
           return;
         }
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], active_car_id: "car-2" });
+        await fulfillJson(route, {
+          cars: [
+            { id: "car-1", name: "One", type: "sedan", aspects: completeAspects },
+            { id: "car-2", name: "Two", type: "suv", aspects: completeAspects },
+          ],
+          active_car_id: "car-2",
+        });
         return;
       }
       if (path === "/api/settings/cars/active" && method === "PUT") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], active_car_id: "car-2" });
+        await fulfillJson(route, {
+          cars: [
+            { id: "car-1", name: "One", type: "sedan", aspects: completeAspects },
+            { id: "car-2", name: "Two", type: "suv", aspects: completeAspects },
+          ],
+          active_car_id: "car-2",
+        });
         return;
       }
       if (path === "/api/settings/cars/car-2" && method === "DELETE") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }], active_car_id: null });
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "One", type: "sedan", aspects: completeAspects }],
+          active_car_id: null,
+        });
         return;
       }
       await fulfillJson(route, {});
@@ -315,4 +350,152 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   await page.locator('#carListBody tr[data-car-id="car-2"] .car-delete-btn').click();
   await expect(page.locator("#carSelectionGuidance")).toBeVisible();
+});
+
+test("routes incomplete cars through Finish setup instead of generic activation", async ({ page }) => {
+  let activateCalls = 0;
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      const method = route.request().method();
+      if (path === "/api/settings/cars" && method === "GET") {
+        await fulfillJson(route, {
+          cars: [
+            {
+              id: "car-1",
+              name: "Ready Car",
+              type: "sedan",
+              aspects: {
+                tire_width_mm: 245,
+                tire_aspect_pct: 40,
+                rim_in: 18,
+                final_drive_ratio: 3.91,
+                current_gear_ratio: 0.82,
+              },
+            },
+            {
+              id: "car-2",
+              name: "Needs Work",
+              type: "coupe",
+              aspects: {
+                tire_width_mm: 245,
+              },
+            },
+          ],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      if (path === "/api/settings/cars/active" && method === "PUT") {
+        activateCalls += 1;
+        await fulfillJson(route, {
+          cars: [
+            {
+              id: "car-1",
+              name: "Ready Car",
+              type: "sedan",
+              aspects: {
+                tire_width_mm: 245,
+                tire_aspect_pct: 40,
+                rim_in: 18,
+                final_drive_ratio: 3.91,
+                current_gear_ratio: 0.82,
+              },
+            },
+            {
+              id: "car-2",
+              name: "Needs Work",
+              type: "coupe",
+              aspects: {
+                tire_width_mm: 245,
+              },
+            },
+          ],
+          active_car_id: "car-2",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+
+  const incompleteRow = page.locator('#carListBody tr[data-car-id="car-2"]');
+  await expect(incompleteRow).toContainText("Inactive");
+  await expect(incompleteRow).toContainText("Needs specs");
+  await expect(incompleteRow).toContainText("Tire size not set");
+  await expect(incompleteRow).toContainText("Not set");
+  await expect(incompleteRow.locator(".car-activate-btn")).toHaveCount(0);
+  await expect(incompleteRow.getByRole("button", { name: "Finish setup" })).toBeVisible();
+  await incompleteRow.getByRole("button", { name: "Finish setup" }).click();
+
+  await expect.poll(() => activateCalls).toBe(1);
+  await expect(page.locator("#analysisTab")).toHaveClass(/active/);
+});
+
+test("returns from the add-car flow with visible success feedback and row highlighting", async ({ page }) => {
+  let cars = [] as Array<Record<string, unknown>>;
+  let activeCarId: string | null = null;
+
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      const method = route.request().method();
+      if (path === "/api/settings/cars" && method === "GET") {
+        await fulfillJson(route, { cars, active_car_id: activeCarId });
+        return;
+      }
+      if (path === "/api/settings/cars" && method === "POST") {
+        cars = [{
+          id: "car-1",
+          name: "Track Demo",
+          type: "Coupe",
+          aspects: {
+            tire_width_mm: 225,
+            tire_aspect_pct: 45,
+            rim_in: 18,
+            final_drive_ratio: 3.08,
+            current_gear_ratio: 0.64,
+          },
+        }];
+        await fulfillJson(route, { cars, active_car_id: activeCarId });
+        return;
+      }
+      if (path === "/api/settings/cars/active" && method === "PUT") {
+        activeCarId = "car-1";
+        await fulfillJson(route, { cars, active_car_id: activeCarId });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  await page.getByRole("button", { name: "+ Add Car" }).click();
+  await page.locator("#wizardCustomBrand").fill("Track");
+  await page.locator("#wizardCustomBrandBtn").click();
+  await page.locator("#wizardCustomType").fill("Coupe");
+  await page.locator("#wizardCustomTypeBtn").click();
+  await page.locator("#wizardCustomModel").fill("Demo");
+  await page.locator("#wizardCustomModelBtn").click();
+  await page.locator("#wizTireWidth").fill("225");
+  await page.locator("#wizTireAspect").fill("45");
+  await page.locator("#wizRim").fill("18");
+  await page.locator("#wizFinalDrive").fill("3.08");
+  await page.locator("#wizGearRatio").fill("0.64");
+  await page.locator("#wizardManualAddBtn").click();
+
+  await expect(page.locator("#wizardBackdrop")).toBeHidden();
+  await expect(page.locator("#carSelectionGuidance")).toContainText("Car added");
+  await expect(page.locator("#carSelectionGuidance")).toContainText("Track Demo was added and selected for this setup.");
+  const createdRow = page.locator('#carListBody tr[data-car-id="car-1"]');
+  await expect(createdRow).toHaveClass(/car-list-row--highlighted/);
+  await expect(createdRow).toContainText("Active");
+  await expect(createdRow).toContainText("Ready");
+  await expect(createdRow).toContainText("New");
 });

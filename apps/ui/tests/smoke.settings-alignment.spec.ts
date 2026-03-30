@@ -74,13 +74,20 @@ test("analysis uncertainty inputs stay aligned when the middle label wraps", asy
 
 test("manage cars delete button stays in the same visible column across rows", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
+  const readyAspects = {
+    tire_width_mm: 245,
+    tire_aspect_pct: 40,
+    rim_in: 19,
+    final_drive_ratio: 3.3,
+    current_gear_ratio: 0.84,
+  };
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       if (requestPath(route).startsWith("/api/settings/cars")) {
         await fulfillJson(route, {
           cars: [
-            { id: "car-1", name: "Active Car", type: "sedan", aspects: {} },
-            { id: "car-2", name: "Inactive Car", type: "suv", aspects: {} },
+            { id: "car-1", name: "Active Car", type: "sedan", aspects: readyAspects },
+            { id: "car-2", name: "Inactive Car", type: "suv", aspects: readyAspects },
           ],
           active_car_id: "car-1",
         });
