@@ -10,7 +10,7 @@ from vibesensor.app.config_defaults import documented_default_config
 from vibesensor.infra.processing.compute import SignalMetricsComputer
 from vibesensor.infra.processing.models import ProcessorConfig
 from vibesensor.shared.constants.dsp import FFT_N, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 DEFAULT_MAX_INPUT_HZ = 2400.0
 DEFAULT_INTERVAL_STEP_HZ = 1.0
@@ -55,13 +55,23 @@ def _default_config() -> JsonObject:
     return documented_default_config()
 
 
-def parse_args() -> argparse.Namespace:
+def _default_sample_rate_hz() -> int:
     defaults = _default_config()
+    processing = defaults.get("processing")
+    if not is_json_object(processing):
+        raise ValueError("documented default config is missing the processing object")
+    sample_rate_hz = processing.get("sample_rate_hz")
+    if not isinstance(sample_rate_hz, int):
+        raise ValueError("documented default config has a non-integer processing.sample_rate_hz")
+    return sample_rate_hz
+
+
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--sample-rate-hz",
         type=int,
-        default=int(defaults["processing"]["sample_rate_hz"]),
+        default=_default_sample_rate_hz(),
         help="Input sample rate to characterize (default: current runtime default).",
     )
     parser.add_argument(
