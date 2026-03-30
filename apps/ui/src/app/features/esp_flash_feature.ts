@@ -39,6 +39,16 @@ const STATE_TO_VARIANT: Readonly<Record<string, string>> = {
 
 type JourneyStageState = "upcoming" | "active" | "done" | "attention";
 
+interface FlashAttemptSummary {
+  autoDetect: boolean;
+  error: string | null;
+  exitCode: number | null;
+  finishedAt: number | null;
+  selectedPort: string | null;
+  startedAt: number | null;
+  state: string;
+}
+
 const ESP_FLASH_JOURNEY_STAGES = [
   {
     phase: "validating",
@@ -85,6 +95,24 @@ function createIdleStatus(): EspFlashStatusPayload {
     started_at: null,
     state: "idle",
   };
+}
+
+function recoveryGuidanceKey(state: string, phase: string): string {
+  if (state === "cancelled") {
+    return "settings.esp_flash.recovery.cancelled";
+  }
+  switch (phase) {
+    case "preparing":
+      return "settings.esp_flash.recovery.preparing";
+    case "erasing":
+      return "settings.esp_flash.recovery.erasing";
+    case "flashing":
+      return "settings.esp_flash.recovery.flashing";
+    case "validating":
+      return "settings.esp_flash.recovery.validating";
+    default:
+      return "settings.esp_flash.recovery.generic";
+  }
 }
 
 export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature {
@@ -195,20 +223,68 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     }
   }
 
-  function latestAttemptSummary(attempt: EspFlashHistoryAttemptPayload): string {
+  function latestAttemptSummary(attempt: FlashAttemptSummary): string {
     const stateLabel = t(`settings.esp_flash.state.${safeEspFlashState(attempt.state)}`);
-    const when = formatEpochTimestamp(attempt.finished_at ?? attempt.started_at);
+    const when = formatEpochTimestamp(attempt.finishedAt ?? attempt.startedAt);
     return t("settings.esp_flash.last_result_value", { state: stateLabel, when });
   }
 
-  function buildStartReadiness(status: EspFlashStatusPayload): {
+  function currentAttemptSummaries(status: EspFlashStatusPayload): FlashAttemptSummary[] {
+    if (latestAttempts.length > 0) {
+      return latestAttempts.map((attempt) => ({
+        autoDetect: attempt.auto_detect,
+        error: attempt.error ?? null,
+        exitCode: attempt.exit_code ?? null,
+        finishedAt: attempt.finished_at ?? null,
+        selectedPort: attempt.selected_port ?? null,
+        startedAt: attempt.started_at ?? null,
+        state: safeEspFlashState(attempt.state),
+      }));
+    }
+    const safeState = safeEspFlashState(status.state);
+    if (safeState === "idle" || safeState === "running") {
+      return [];
+    }
+    return [{
+      autoDetect: status.auto_detect,
+      error: status.error ?? null,
+      exitCode: status.exit_code ?? null,
+      finishedAt: status.finished_at ?? null,
+      selectedPort: status.selected_port ?? null,
+      startedAt: status.started_at ?? null,
+      state: safeState,
+    }];
+  }
+
+  function recoverySummary(status: EspFlashStatusPayload): {
+    message: string;
+    phaseLabel: string;
+    recoveryDetail: string;
+    recoveryTitle: string;
+  } | null {
+    const safeState = safeEspFlashState(status.state);
+    if (safeState !== "failed" && safeState !== "cancelled") {
+      return null;
+    }
+    const phase = resolvedJourneyPhase(status) ?? status.phase ?? "idle";
+    const keyBase = recoveryGuidanceKey(safeState, phase);
+    return {
+      message: status.error || t("settings.esp_flash.recovery.fallback_error"),
+      phaseLabel: formatEspFlashPhase(phase),
+      recoveryTitle: t(`${keyBase}.title`),
+      recoveryDetail: t(`${keyBase}.detail`),
+    };
+  }
+
+  function buildActionSummary(status: EspFlashStatusPayload): {
     canStart: boolean;
     html: string;
+    startLabel: string;
   } {
     const safeState = safeEspFlashState(status.state);
     const portsDetected = availablePorts.length > 0;
     const selectedTarget = selectedTargetLabel(status);
-    const items = [
+    const readinessItems = [
       {
         label: t("settings.esp_flash.start_readiness.item.connection"),
         detail: portsDetected
@@ -226,26 +302,63 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
         state: portsDetected ? ("ready" as const) : ("blocked" as const),
       },
     ];
-    const stateLabel = safeState === "running"
-      ? t("maintenance.readiness.running")
-      : portsDetected
-        ? t("maintenance.readiness.ready")
-        : t("maintenance.readiness.blocked");
+    const recovery = recoverySummary(status);
+    const isRecoveryState = recovery !== null;
+    const stateLabel = isRecoveryState
+      ? portsDetected
+        ? t(`settings.esp_flash.state.${safeState}`)
+        : t("maintenance.readiness.blocked")
+      : safeState === "running"
+        ? t("maintenance.readiness.running")
+        : portsDetected
+          ? t("maintenance.readiness.ready")
+          : t("maintenance.readiness.blocked");
     return {
       canStart: safeState !== "running" && portsDetected,
+      startLabel: t(
+        isRecoveryState ? "settings.esp_flash.retry" : "settings.esp_flash.start",
+      ),
       html: renderMaintenanceReadinessPanel(
         {
-          title: t("settings.esp_flash.start_readiness.title"),
+          title: t(
+            isRecoveryState
+              ? "settings.esp_flash.recovery.title"
+              : "settings.esp_flash.start_readiness.title",
+          ),
           summary: t(
-            safeState === "running"
-              ? "settings.esp_flash.start_readiness.summary_running"
-              : portsDetected
-                ? "settings.esp_flash.start_readiness.summary_ready"
-                : "settings.esp_flash.start_readiness.summary_blocked",
+            isRecoveryState
+              ? portsDetected
+                ? "settings.esp_flash.recovery.summary_retry"
+                : "settings.esp_flash.recovery.summary_blocked"
+              : safeState === "running"
+                ? "settings.esp_flash.start_readiness.summary_running"
+                : portsDetected
+                  ? "settings.esp_flash.start_readiness.summary_ready"
+                  : "settings.esp_flash.start_readiness.summary_blocked",
           ),
           stateLabel,
-          stateVariant: safeState === "running" ? "warn" : portsDetected ? "ok" : "bad",
-          items,
+          stateVariant: isRecoveryState ? "bad" : safeState === "running" ? "warn" : portsDetected ? "ok" : "bad",
+          items: recovery
+            ? [
+                {
+                  label: t("settings.esp_flash.recovery.item.failed_step"),
+                  detail: recovery.phaseLabel,
+                  state: "attention" as const,
+                },
+                {
+                  label: t("settings.esp_flash.recovery.item.captured_detail"),
+                  detail: recovery.message,
+                  state: "attention" as const,
+                },
+                {
+                  label: t("settings.esp_flash.recovery.item.next_step"),
+                  detail: portsDetected
+                    ? `${recovery.recoveryTitle} — ${recovery.recoveryDetail}`
+                    : t("settings.esp_flash.recovery.item.next_step_blocked"),
+                  state: portsDetected ? ("attention" as const) : ("blocked" as const),
+                },
+              ]
+            : readinessItems,
         },
         escapeHtml,
       ),
@@ -254,11 +367,12 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
 
   function syncFlashControls(status: EspFlashStatusPayload): { canStart: boolean } {
     const safeState = safeEspFlashState(status.state);
-    const readiness = buildStartReadiness(status);
+    const readiness = buildActionSummary(status);
     if (els.espFlashStartSummary) {
       els.espFlashStartSummary.innerHTML = readiness.html;
     }
     if (els.espFlashStartBtn) {
+      els.espFlashStartBtn.textContent = readiness.startLabel;
       els.espFlashStartBtn.hidden = safeState === "running";
       els.espFlashStartBtn.disabled = safeState === "running" || !readiness.canStart;
     }
@@ -304,11 +418,12 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
         ),
       );
     }
-    if (latestAttempts.length > 0) {
+    const attempts = currentAttemptSummaries(latestStatus);
+    if (attempts.length > 0) {
       rows.push(
         renderStatusGridRow(
           escapeHtml(t("settings.esp_flash.readiness.last_result")),
-          escapeHtml(latestAttemptSummary(latestAttempts[0])),
+          escapeHtml(latestAttemptSummary(attempts[0])),
         ),
       );
     }
@@ -327,14 +442,18 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     const safeState = safeEspFlashState(status.state);
     const titleKey = safeState === "running"
       ? "settings.esp_flash.logs_running_title"
-      : "settings.esp_flash.logs_idle_title";
+      : safeState === "failed" || safeState === "cancelled"
+        ? "settings.esp_flash.logs_failed_title"
+        : "settings.esp_flash.logs_idle_title";
     const bodyKey = safeState === "running"
       ? "settings.esp_flash.logs_running_body"
-      : "settings.esp_flash.logs_idle_body";
+      : safeState === "failed" || safeState === "cancelled"
+        ? "settings.esp_flash.logs_failed_body"
+        : "settings.esp_flash.logs_idle_body";
     return `<div class="empty-state empty-state--inline"><strong>${escapeHtml(t(titleKey))}</strong><span>${escapeHtml(t(bodyKey))}</span></div>`;
   }
 
-  function renderHistoryPanel(attempts: EspFlashHistoryAttemptPayload[]): void {
+  function renderHistoryPanel(attempts: FlashAttemptSummary[]): void {
     if (!els.espFlashHistoryPanel) return;
     if (!attempts.length) {
       els.espFlashHistoryPanel.innerHTML = `<div class="empty-state empty-state--inline"><strong>${escapeHtml(t("settings.esp_flash.history_empty_title"))}</strong><span>${escapeHtml(t("settings.esp_flash.history_empty_body"))}</span></div>`;
@@ -344,17 +463,17 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       const safeState = safeEspFlashState(attempt.state);
       const stateLabel = t(`settings.esp_flash.state.${safeState}`);
       const variant = STATE_TO_VARIANT[safeState] || "muted";
-      const port = attempt.selected_port || t("settings.esp_flash.auto_detect");
+      const port = attempt.selectedPort || t("settings.esp_flash.auto_detect");
       const meta = [
-        attempt.finished_at != null
-          ? t("settings.esp_flash.history_finished_at", { value: formatEpochTimestamp(attempt.finished_at) })
-          : t("settings.esp_flash.history_started_at", { value: formatEpochTimestamp(attempt.started_at) }),
-        attempt.auto_detect
+        attempt.finishedAt != null
+          ? t("settings.esp_flash.history_finished_at", { value: formatEpochTimestamp(attempt.finishedAt) })
+          : t("settings.esp_flash.history_started_at", { value: formatEpochTimestamp(attempt.startedAt) }),
+        attempt.autoDetect
           ? t("settings.esp_flash.history_auto_detect_used")
           : t("settings.esp_flash.history_manual_target_used"),
       ];
-      if (attempt.exit_code != null) {
-        meta.push(t("settings.esp_flash.history_exit_code", { code: attempt.exit_code }));
+      if (attempt.exitCode != null) {
+        meta.push(t("settings.esp_flash.history_exit_code", { code: attempt.exitCode }));
       }
       const errorHtml = attempt.error
         ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(attempt.error)}</div>`
@@ -405,6 +524,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     if (status.state !== "running") nextLogIndex = status.log_count || 0;
     syncFlashControls(status);
     renderReadinessPanel();
+    renderHistoryPanel(currentAttemptSummaries(status));
     renderJourneyPanel();
   }
 
@@ -439,7 +559,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       return;
     }
     latestAttempts = payload.attempts || [];
-    renderHistoryPanel(latestAttempts);
+    renderHistoryPanel(currentAttemptSummaries(latestStatus));
     renderReadinessPanel();
   }
 

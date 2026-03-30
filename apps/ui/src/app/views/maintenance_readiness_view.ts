@@ -1,4 +1,4 @@
-export type MaintenanceReadinessItemState = "blocked" | "ready";
+export type MaintenanceReadinessItemState = "attention" | "blocked" | "ready";
 
 export interface MaintenanceReadinessItem {
   label: string;

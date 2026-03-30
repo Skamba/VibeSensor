@@ -188,3 +188,97 @@ test("settings internet tab and updater show USB internet when usable", async ({
     "Starting a USB-internet update keeps the hotspot up",
   );
 });
+
+test("settings update failure shows retry guidance, failed-stage retention, and latest attempt context", async ({ page }) => {
+  await installCommonRoutes(page);
+  await page.route("**/api/update/status", async (route) => {
+    await fulfillJson(route, {
+      state: "failed",
+      phase: "downloading",
+      transport: "usb_internet",
+      ssid: null,
+      uplink_interface: "usb0",
+      started_at: 1,
+      phase_started_at: 1,
+      phase_elapsed_s: 42,
+      finished_at: 2,
+      last_success_at: null,
+      updated_at: 2,
+      issues: [
+        {
+          phase: "downloading",
+          message: "GitHub release download timed out",
+          detail: "The upstream connection dropped while fetching the release package.",
+        },
+      ],
+      log_tail: [],
+      exit_code: 28,
+      runtime: {
+        version: "1.2.3",
+        commit: "abcdef1234567890",
+        ui_source_hash: "ui-hash",
+        static_assets_hash: "feedfacecafebeef",
+        static_build_source_hash: "build-hash",
+        static_build_commit: "build-commit",
+        assets_verified: true,
+        has_packaged_static: true,
+      },
+    });
+  });
+  await page.route("**/api/health", async (route) => {
+    await fulfillJson(route, {
+      status: "ok",
+      processing_state: "idle",
+      processing_failures: 0,
+      degradation_reasons: [],
+      data_loss: {
+        affected_clients: 0,
+        tracked_clients: 0,
+        frames_dropped: 0,
+        queue_overflow_drops: 0,
+        server_queue_drops: 0,
+        parse_errors: 0,
+      },
+      persistence: {
+        analysis_in_progress: false,
+        analysis_queue_depth: 0,
+        write_error: null,
+        analysis_active_run_id: null,
+        analysis_started_at: null,
+        analysis_elapsed_s: null,
+      },
+    });
+  });
+  await page.route("**/api/update/internet-status", async (route) => {
+    await fulfillJson(route, {
+      detected: true,
+      usable: true,
+      interface_name: "usb0",
+      connection_name: "iPhone USB",
+      driver: "ipheth",
+      ipv4_addresses: ["172.20.10.2/28"],
+      gateway: "172.20.10.1",
+      has_default_route: true,
+      diagnostic: "USB internet is ready on 'usb0'.",
+    });
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="updateTab"]').click();
+  await page.locator("#updateTransportChoiceUsb").click();
+  await expect(page.locator("#updateStartBtn")).toHaveText("Retry Update");
+  await expect(page.locator("#updateStartBtn")).toBeEnabled();
+  await expect(page.locator("#updateReadinessSummary")).toContainText("Recovery guidance");
+  await expect(page.locator("#updateReadinessSummary")).toContainText("Failed step");
+  await expect(page.locator("#updateReadinessSummary")).toContainText("Downloading update");
+  await expect(page.locator("#updateReadinessSummary")).toContainText("Check upstream connectivity");
+  await expect(page.locator("#updateStatusPanel")).toContainText("GitHub release download timed out");
+  await expect(page.locator("#updateStatusPanel")).toContainText("Latest attempt");
+  await expect(page.locator("#updateStatusPanel")).toContainText("Exit code");
+  await expect(page.locator("#updateStatusPanel")).toContainText("No failure log was captured");
+  await expect(page.locator('#updateStatusPanel .maintenance-stage[data-stage-phase="downloading"]')).toHaveAttribute(
+    "data-stage-state",
+    "attention",
+  );
+});
