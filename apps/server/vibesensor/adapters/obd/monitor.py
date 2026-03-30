@@ -613,9 +613,7 @@ class OBDSpeedMonitor:
             return
         faster_interval_s = self._adaptive_interval_steps[self._rpm_interval_index - 1]
         reference_rtt_s = (
-            self._avg_request_rtt_s
-            if self._avg_request_rtt_s is not None
-            else result.duration_s
+            self._avg_request_rtt_s if self._avg_request_rtt_s is not None else result.duration_s
         )
         if reference_rtt_s is not None and reference_rtt_s <= (faster_interval_s * 0.9):
             self._rpm_interval_index -= 1
@@ -718,9 +716,7 @@ class OBDSpeedMonitor:
     def _next_poll_wait_s(self) -> float:
         with self._lock:
             due_times = [
-                due
-                for due in (self._rpm_next_poll_at, self._speed_next_poll_at)
-                if due is not None
+                due for due in (self._rpm_next_poll_at, self._speed_next_poll_at) if due is not None
             ]
             if not due_times:
                 return 0.0
