@@ -2,11 +2,12 @@ import type { FeatureDepsBase } from "../feature_deps_base";
 import {
   type CarSelectionState,
   deriveCarSelectionState,
+  getCarCompleteness,
   hasResolvedActiveCar,
   resolveActiveCar,
 } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
-import type { CarsPayload } from "../../api/types";
+import type { CarRecord, CarsPayload } from "../../api/types";
 import {
   deleteSettingsCar,
   getSettingsCars,
@@ -51,6 +52,7 @@ export interface SettingsFeature {
   renderCarList(): void;
   syncCarsPayload(payload: CarsPayload): void;
   syncActiveCarToInputs(): void;
+  showCarCreationSuccess(carId: string, carName: string): void;
   saveAnalysisFromInputs(): void;
   saveSpeedSourceFromInputs(): void;
   startGpsStatusPolling(): void;
@@ -60,6 +62,7 @@ export interface SettingsFeature {
 export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature {
   const { settings, els, t, escapeHtml, fmt } = ctx;
   let handlersBound = false;
+  let highlightedCarFeedback: { carId: string; carName: string } | null = null;
 
   function showSettingsSaveError(error: unknown): void {
     ctx.showError(error instanceof Error ? error.message : t("settings.save_failed"));
@@ -69,12 +72,36 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     return hasResolvedActiveCar(settings);
   }
 
+  function openSettingsTab(tabId: string): void {
+    els.settingsTabs.find((button) => button.getAttribute("data-settings-tab") === tabId)?.click();
+  }
+
+  function clearHighlightedCarFeedback(): void {
+    highlightedCarFeedback = null;
+  }
+
   function renderCarSelectionGuidance(carSelectionState: CarSelectionState): void {
     const guidance = els.carSelectionGuidance;
     if (!guidance) {
       return;
     }
-    if (carSelectionState.kind === "loading" || carSelectionState.kind === "active" || carSelectionState.kind === "no_cars") {
+    if (carSelectionState.kind === "loading" || carSelectionState.kind === "no_cars") {
+      guidance.hidden = true;
+      guidance.replaceChildren();
+      return;
+    }
+    if (carSelectionState.kind === "active" && highlightedCarFeedback) {
+      guidance.hidden = false;
+      guidance.innerHTML = `
+        <div class="empty-state empty-state--inline car-selection-feedback car-selection-feedback--success" role="status">
+          <strong class="empty-state__title">${escapeHtml(t("settings.car.created_title"))}</strong>
+          <span class="empty-state__body">${escapeHtml(t("settings.car.created_body", { name: highlightedCarFeedback.carName }))}</span>
+          <span class="empty-state__detail">${escapeHtml(t("settings.car.created_detail"))}</span>
+        </div>
+      `;
+      return;
+    }
+    if (carSelectionState.kind === "active") {
       guidance.hidden = true;
       guidance.replaceChildren();
       return;
@@ -145,6 +172,9 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       ? settings.cars.some((car) => car.id === requestedActiveCarId)
       : false;
     settings.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
+    if (highlightedCarFeedback && !settings.cars.some((car) => car.id === highlightedCarFeedback?.carId)) {
+      highlightedCarFeedback = null;
+    }
     syncCarDependentUiState();
     ctx.renderRealtimeStatus();
     ctx.renderRealtimeLoggingStatus();
@@ -159,14 +189,57 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     } catch (_err) { /* ignore */ }
   }
 
+  function findCar(carId: string): CarRecord | null {
+    return settings.cars.find((entry) => entry.id === carId) ?? null;
+  }
+
   async function handleActivateCar(carId: string): Promise<void> {
     if (!carId) return;
+    const car = findCar(carId);
+    if (!car) {
+      return;
+    }
+    if (!getCarCompleteness(car).isComplete) {
+      ctx.showError(t("settings.car.activate_incomplete"));
+      return;
+    }
     try {
       const result = await setActiveSettingsCar(carId);
       syncCarsPayload(result);
       syncActiveCarToInputs();
+      clearHighlightedCarFeedback();
+      syncCarDependentUiState();
       renderCarList();
       ctx.renderSpectrum();
+    } catch (_err) {
+      ctx.showError(t("settings.car.activate_failed"));
+    }
+  }
+
+  async function handleCompleteCar(carId: string): Promise<void> {
+    if (!carId) {
+      return;
+    }
+    const car = findCar(carId);
+    if (!car) {
+      return;
+    }
+    try {
+      let didSyncSelection = false;
+      if (car.id !== settings.activeCarId) {
+        const result = await setActiveSettingsCar(carId);
+        syncCarsPayload(result);
+        syncActiveCarToInputs();
+        ctx.renderSpectrum();
+        didSyncSelection = true;
+      }
+      const hadFeedback = highlightedCarFeedback !== null;
+      clearHighlightedCarFeedback();
+      if (didSyncSelection || hadFeedback) {
+        syncCarDependentUiState();
+        renderCarList();
+      }
+      openSettingsTab("analysisTab");
     } catch (_err) {
       ctx.showError(t("settings.car.activate_failed"));
     }
@@ -181,6 +254,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       const result = await deleteSettingsCar(carId);
       syncCarsPayload(result);
       syncActiveCarToInputs();
+      clearHighlightedCarFeedback();
+      syncCarDependentUiState();
       renderCarList();
       ctx.renderSpectrum();
     } catch (_err) {
@@ -193,6 +268,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     renderSettingsCarList(els.carListBody, {
       cars: settings.cars,
       activeCarId: settings.activeCarId,
+      highlightedCarId: highlightedCarFeedback?.carId ?? null,
       t,
       escapeHtml,
       fmt,
@@ -234,6 +310,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         }
         return;
       }
+      if (action.type === "complete") {
+        if (action.carId) {
+          void handleCompleteCar(action.carId);
+        }
+        return;
+      }
       if (action.carId) {
         void handleDeleteCar(action.carId);
       }
@@ -260,6 +342,10 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     renderCarList,
     syncCarsPayload,
     syncActiveCarToInputs,
+    showCarCreationSuccess(carId: string, carName: string): void {
+      highlightedCarFeedback = { carId, carName };
+      syncCarDependentUiState();
+    },
     saveAnalysisFromInputs: analysisModule.saveAnalysisFromInputs,
     saveSpeedSourceFromInputs: speedSourceModule.saveSpeedSourceFromInputs,
     startGpsStatusPolling: gpsStatusModule.startGpsStatusPolling,
