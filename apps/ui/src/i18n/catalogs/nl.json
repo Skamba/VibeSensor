@@ -322,6 +322,7 @@
   "status.stopped": "Gestopt",
   "status.unavailable": "Niet beschikbaar",
   "speed.gps": "{value} {unit} · GPS",
+  "speed.obd2": "{value} {unit} · OBD2",
   "speed.override": "{value} {unit} · Handmatig",
   "speed.none": "-- {unit}",
   "speed.unit": "Eenheid",
