@@ -21,10 +21,8 @@ import {
   formatUsbInternetSummary,
   renderInternetStatusPanel,
 } from "../views/internet_status_view";
-import {
-  renderUpdateStatusPanel,
-  syncUpdateControls,
-} from "../views/update_status_view";
+import { renderMaintenanceReadinessPanel } from "../views/maintenance_readiness_view";
+import { renderUpdateStatusPanel } from "../views/update_status_view";
 
 export interface UpdateFeatureDeps extends FeatureDepsBase {}
 
@@ -32,6 +30,12 @@ export interface UpdateFeature {
   bindUpdateHandlers(): void;
   startPolling(): void;
   stopPolling(): void;
+}
+
+interface UpdateStartReadiness {
+  canStart: boolean;
+  detailsCaption: string;
+  html: string;
 }
 
 function fallbackInternetStatus(
@@ -80,18 +84,128 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
   let passwordVisible = false;
   let latestInternetStatus: UsbInternetStatusPayload = fallbackInternetStatus(t);
+  let latestHealthStatus: HealthStatusPayload | null = null;
   let latestUpdateState: UpdateStatusPayload["state"] = "idle";
+  let latestUpdateTransport: UpdateStatusPayload["transport"] = "wifi";
 
   function selectedTransport(): UpdateStartRequestPayload["transport"] {
+    if (latestUpdateState === "running" && latestUpdateTransport === "usb_internet") {
+      return "usb_internet";
+    }
     if (latestInternetStatus.usable && els.updateTransportUsbRadio?.checked) {
       return "usb_internet";
     }
     return "wifi";
   }
 
+  function hasBlockingHealthIssue(): boolean {
+    const health = latestHealthStatus;
+    if (!health) return false;
+    return (
+      health.status === "degraded" ||
+      health.persistence.write_error != null ||
+      health.startup_error != null ||
+      health.db_corruption_detected === true
+    );
+  }
+
+  function buildUpdateReadiness(): UpdateStartReadiness {
+    const transport = selectedTransport();
+    const usingUsb = transport === "usb_internet";
+    const isRunning = latestUpdateState === "running";
+    const ssid = els.updateSsidInput?.value.trim() ?? "";
+    const usbInterface = latestInternetStatus.interface_name;
+    const items = [
+      {
+        label: t("settings.update.readiness.item.source"),
+        detail: usingUsb
+          ? t("settings.update.readiness.item.source_usb")
+          : t("settings.update.readiness.item.source_wifi"),
+        state: "ready" as const,
+      },
+      usingUsb
+        ? {
+            label: t("settings.update.readiness.item.connection"),
+            detail: latestInternetStatus.usable
+              ? t("settings.update.readiness.item.connection_usb_ready", {
+                  interface: usbInterface || t("settings.update.transport.usb_title"),
+                })
+              : t("settings.update.readiness.item.connection_usb_blocked"),
+            state: latestInternetStatus.usable ? ("ready" as const) : ("blocked" as const),
+          }
+        : {
+            label: t("settings.update.readiness.item.connection"),
+            detail: ssid
+              ? t("settings.update.readiness.item.connection_wifi_ready")
+              : t("settings.update.readiness.item.connection_wifi_blocked"),
+            state: ssid ? ("ready" as const) : ("blocked" as const),
+          },
+    ];
+    if (hasBlockingHealthIssue()) {
+      items.push({
+        label: t("settings.update.readiness.item.health"),
+        detail: t("settings.update.readiness.item.health_blocked"),
+        state: "blocked" as const,
+      });
+    }
+    const hasBlockedItem = items.some((item) => item.state === "blocked");
+    const stateLabel = isRunning
+      ? t("maintenance.readiness.running")
+      : hasBlockedItem
+        ? t("maintenance.readiness.blocked")
+        : t("maintenance.readiness.ready");
+    const stateVariant = isRunning ? "warn" : hasBlockedItem ? "bad" : "ok";
+    return {
+      canStart: !isRunning && !hasBlockedItem,
+      detailsCaption: t(
+        usingUsb
+          ? "settings.update.details_caption_usb"
+          : "settings.update.details_caption_wifi",
+      ),
+      html: renderMaintenanceReadinessPanel(
+        {
+          title: t("settings.update.readiness.title"),
+          summary: t(
+            isRunning
+              ? "settings.update.readiness.summary_running"
+              : hasBlockedItem
+                ? "settings.update.readiness.summary_blocked"
+                : "settings.update.readiness.summary_ready",
+          ),
+          stateLabel,
+          stateVariant,
+          items,
+        },
+        escapeHtml,
+      ),
+    };
+  }
+
+  function syncUpdateControls(readiness: UpdateStartReadiness): void {
+    const isRunning = latestUpdateState === "running";
+    if (els.updateStartBtn) {
+      els.updateStartBtn.hidden = isRunning;
+      els.updateStartBtn.disabled = isRunning || !readiness.canStart;
+    }
+    if (els.updateCancelBtn) {
+      els.updateCancelBtn.hidden = !isRunning;
+      els.updateCancelBtn.disabled = !isRunning;
+    }
+    if (els.updateSsidInput) {
+      els.updateSsidInput.disabled = isRunning;
+    }
+    if (els.updatePasswordInput) {
+      els.updatePasswordInput.disabled = isRunning;
+    }
+    if (els.updateTogglePasswordBtn) {
+      els.updateTogglePasswordBtn.disabled = isRunning;
+    }
+  }
+
   function syncTransportUi(): void {
     const usbAvailable = latestInternetStatus.usable;
     const controlsLocked = latestUpdateState === "running";
+    const usingUsb = selectedTransport() === "usb_internet";
     if (els.updateTransportOptions) {
       els.updateTransportOptions.hidden = false;
     }
@@ -114,7 +228,14 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     if (els.updateTransportUsbRadio) {
       els.updateTransportUsbRadio.disabled = controlsLocked || !usbAvailable;
     }
-    const usingUsb = els.updateTransportUsbRadio?.checked === true && (usbAvailable || controlsLocked);
+    if (controlsLocked) {
+      if (els.updateTransportWifiRadio) {
+        els.updateTransportWifiRadio.checked = !usingUsb;
+      }
+      if (els.updateTransportUsbRadio) {
+        els.updateTransportUsbRadio.checked = usingUsb;
+      }
+    }
     els.updateTransportChoiceWifi?.classList.toggle("speed-source-choice--selected", !usingUsb);
     els.updateTransportChoiceUsb?.classList.toggle("speed-source-choice--selected", usingUsb);
     els.updateTransportChoiceUsb?.classList.toggle(
@@ -131,6 +252,21 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
           : "settings.update.preflight_note_wifi",
       );
     }
+    if (els.updateDetailsCaption) {
+      els.updateDetailsCaption.textContent = t(
+        usingUsb
+          ? "settings.update.details_caption_usb"
+          : "settings.update.details_caption_wifi",
+      );
+    }
+  }
+
+  function syncUpdateReadinessUi(): UpdateStartReadiness {
+    const readiness = buildUpdateReadiness();
+    if (els.updateReadinessSummary) {
+      els.updateReadinessSummary.innerHTML = readiness.html;
+    }
+    return readiness;
   }
 
   function renderStatus(
@@ -139,10 +275,12 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     internet: UsbInternetStatusPayload,
   ): void {
     latestInternetStatus = internet;
+    latestHealthStatus = health;
     latestUpdateState = status.state;
+    latestUpdateTransport = status.transport;
     const panel = els.updateStatusPanel;
-    syncUpdateControls(els, status);
     syncTransportUi();
+    syncUpdateControls(syncUpdateReadinessUi());
     if (panel) {
       renderUpdateStatusPanel(panel, status, health, {
         t,
@@ -177,6 +315,14 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
   async function handleStart(): Promise<void> {
     const transport = selectedTransport();
+    const readiness = syncUpdateReadinessUi();
+    syncUpdateControls(readiness);
+    if (!readiness.canStart) {
+      if (transport === "wifi" && !(els.updateSsidInput?.value?.trim() ?? "")) {
+        els.updateSsidInput?.focus();
+      }
+      return;
+    }
     let payload: UpdateStartRequestPayload;
     if (transport === "wifi") {
       const ssid = els.updateSsidInput?.value?.trim() ?? "";
@@ -240,8 +386,19 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     els.updateStartBtn?.addEventListener("click", () => void handleStart());
     els.updateCancelBtn?.addEventListener("click", () => void handleCancel());
     els.updateTogglePasswordBtn?.addEventListener("click", togglePassword);
-    els.updateTransportWifiRadio?.addEventListener("change", syncTransportUi);
-    els.updateTransportUsbRadio?.addEventListener("change", syncTransportUi);
+    els.updateTransportWifiRadio?.addEventListener("change", () => {
+      syncTransportUi();
+      syncUpdateControls(syncUpdateReadinessUi());
+    });
+    els.updateTransportUsbRadio?.addEventListener("change", () => {
+      syncTransportUi();
+      syncUpdateControls(syncUpdateReadinessUi());
+    });
+    els.updateSsidInput?.addEventListener("input", () => {
+      syncUpdateControls(syncUpdateReadinessUi());
+    });
+    syncTransportUi();
+    syncUpdateControls(syncUpdateReadinessUi());
   }
 
   function startPolling(): void {
