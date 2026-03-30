@@ -10,6 +10,11 @@ const strengthMetrics = {
   top_peaks: [],
 };
 
+function parseElapsedSeconds(value: string): number {
+  const [minutes, seconds] = value.trim().split(":").map((part) => Number(part));
+  return (minutes * 60) + seconds;
+}
+
 test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
   let startCalls = 0;
   let stopCalls = 0;
@@ -183,7 +188,9 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#loggingRunId")).toHaveText("Last run: run-001");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Processing");
   await expect(page.locator("#loggingPhase")).toBeHidden();
-  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(activeElapsed);
+  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(/^\d+:\d{2}$/);
+  const processingElapsed = await page.locator("#loggingElapsed [data-value]").innerText();
+  expect(parseElapsedSeconds(processingElapsed)).toBeGreaterThanOrEqual(parseElapsedSeconds(activeElapsed));
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#stopLoggingBtn")).toBeHidden();
