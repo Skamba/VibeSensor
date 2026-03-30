@@ -80,6 +80,98 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     highlightedCarFeedback = null;
   }
 
+  function dismissHighlightedCarFeedback(): void {
+    if (highlightedCarFeedback === null) {
+      return;
+    }
+    clearHighlightedCarFeedback();
+    syncCarDependentUiState();
+    renderCarList();
+  }
+
+  function settingsTabIdAt(index: number): string | null {
+    if (!els.settingsTabs.length) {
+      return null;
+    }
+    const safeIndex = ((index % els.settingsTabs.length) + els.settingsTabs.length) % els.settingsTabs.length;
+    return els.settingsTabs[safeIndex].getAttribute("data-settings-tab");
+  }
+
+  function primaryViewIdAt(index: number): string | undefined {
+    if (!els.menuButtons.length) {
+      return undefined;
+    }
+    const safeIndex = ((index % els.menuButtons.length) + els.menuButtons.length) % els.menuButtons.length;
+    return els.menuButtons[safeIndex].dataset.view;
+  }
+
+  function bindHighlightedCarFeedbackResetEvents(): void {
+    const dismissForSettingsTab = (tabId: string | null): void => {
+      if (tabId && tabId !== "carTab") {
+        dismissHighlightedCarFeedback();
+      }
+    };
+    const dismissForPrimaryView = (viewId: string | undefined): void => {
+      if (viewId && viewId !== "settingsView") {
+        dismissHighlightedCarFeedback();
+      }
+    };
+
+    els.settingsTabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => {
+        dismissForSettingsTab(tab.getAttribute("data-settings-tab"));
+      });
+      tab.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          dismissForSettingsTab(tab.getAttribute("data-settings-tab"));
+          return;
+        }
+        if (event.key === "ArrowRight") {
+          dismissForSettingsTab(settingsTabIdAt(index + 1));
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          dismissForSettingsTab(settingsTabIdAt(index - 1));
+          return;
+        }
+        if (event.key === "Home") {
+          dismissForSettingsTab(settingsTabIdAt(0));
+          return;
+        }
+        if (event.key === "End") {
+          dismissForSettingsTab(settingsTabIdAt(els.settingsTabs.length - 1));
+        }
+      });
+    });
+
+    els.menuButtons.forEach((button, index) => {
+      button.addEventListener("click", () => {
+        dismissForPrimaryView(button.dataset.view);
+      });
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          dismissForPrimaryView(button.dataset.view);
+          return;
+        }
+        if (event.key === "ArrowRight") {
+          dismissForPrimaryView(primaryViewIdAt(index + 1));
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          dismissForPrimaryView(primaryViewIdAt(index - 1));
+          return;
+        }
+        if (event.key === "Home") {
+          dismissForPrimaryView(primaryViewIdAt(0));
+          return;
+        }
+        if (event.key === "End") {
+          dismissForPrimaryView(primaryViewIdAt(els.menuButtons.length - 1));
+        }
+      });
+    });
+  }
+
   function renderCarSelectionGuidance(carSelectionState: CarSelectionState): void {
     const guidance = els.carSelectionGuidance;
     if (!guidance) {
@@ -328,6 +420,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     }
     handlersBound = true;
     bindSettingsTabs(els);
+    bindHighlightedCarFeedbackResetEvents();
     bindCarListEvents();
     analysisModule.bindHandlers();
     speedSourceModule.bindHandlers();
