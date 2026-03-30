@@ -29,7 +29,9 @@ via `asyncio.to_thread()` so the event loop never performs FFT work directly.
 
 `SignalProcessor` is now a facade over three explicit subsystems:
 
-- `processing/buffer_store.py`: buffer lifecycle, locking, ingest, and immutable snapshots
+- `processing/buffer_store.py`: coordinator over ingest, snapshot capture, stats, and shared buffer queries
+- `processing/buffer_registry.py`: per-client buffers, epochs, eviction, and lock ordering
+- `processing/buffer_mutations.py` + `processing/ingest_preparation.py`: buffer mutation policy plus chunk normalization/overflow trimming
 - `processing/compute.py`: FFT cache ownership plus metric computation from snapshots
 - `processing/processor.py`: facade class with payload shaping, debug output, and time-alignment views
 

@@ -2,39 +2,22 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
-import logging
-import math
 import time
-from collections.abc import Callable
 from dataclasses import dataclass, replace
 from typing import Any, cast
 
-from vibesensor.adapters.gps.gpsd_message_handler import (
-    GpsdVersionInfo,
-    NormalizedTpvData,
-    classify_gpsd_message,
-    read_non_negative_metric,
-    read_tpv_mode,
-)
-from vibesensor.adapters.gps.speed_validation import (
-    DEFAULT_SPEED_VALIDATION_CONFIG,
-    evaluate_speed_sample,
-    is_speed_plausible,
-)
+from vibesensor.adapters.gps import gps_transport_updates as _transport_updates
+from vibesensor.adapters.gps.gps_transport_runner import GPSTransportRunner
+from vibesensor.adapters.gps.gpsd_message_handler import GpsdVersionInfo, NormalizedTpvData
+from vibesensor.adapters.gps.speed_validation import DEFAULT_SPEED_VALIDATION_CONFIG
 from vibesensor.adapters.gps.transport_lifecycle import (
     GPS_CONNECT_TIMEOUT_S,
     GPS_DISABLED_POLL_S,
     GPS_READ_TIMEOUT_S,
     GPS_RECONNECT_DELAY_S,
     GPS_RECONNECT_MAX_DELAY_S,
-    TransportLifecycle,
 )
-from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
-
-LOGGER = logging.getLogger(__name__)
+from vibesensor.shared.types.json_types import JsonObject
 
 # Backward-compatible aliases for constants that consumers import from here.
 _GPS_DISABLED_POLL_S: float = GPS_DISABLED_POLL_S
@@ -46,8 +29,8 @@ _GPS_RECONNECT_MAX_DELAY_S: float = GPS_RECONNECT_MAX_DELAY_S
 # Re-export for consumers that import from this module.
 _GPS_MAX_SPEED_MPS: float = DEFAULT_SPEED_VALIDATION_CONFIG.max_speed_mps
 
-TpvModeReader = Callable[[JsonObject], int | None]
-MetricReader = Callable[[JsonObject, str], float | None]
+TpvModeReader = _transport_updates.TpvModeReader
+MetricReader = _transport_updates.MetricReader
 
 
 @dataclass(frozen=True, slots=True)
@@ -139,35 +122,6 @@ class GPSTransportState:
             ),
         )
 
-    @staticmethod
-    def _normalize_optional_float(value: object) -> float | None:
-        if value is None or isinstance(value, bool) or not isinstance(value, NUMERIC_TYPES):
-            return None
-        numeric_value = float(value)
-        return numeric_value if math.isfinite(numeric_value) else None
-
-    @staticmethod
-    def _normalize_speed_snapshot(
-        value: tuple[float | None, float | None],
-    ) -> tuple[float | None, float | None]:
-        speed, timestamp = value
-        return (
-            GPSTransportState._normalize_optional_float(speed),
-            GPSTransportState._normalize_optional_float(timestamp),
-        )
-
-    @staticmethod
-    def _evaluate_speed_sample(
-        snapshot: GPSTransportSnapshot,
-        speed_mps: float,
-    ) -> tuple[bool, int]:
-        verdict = evaluate_speed_sample(
-            speed_mps,
-            snapshot.speed_snapshot[0],
-            snapshot.zero_speed_streak,
-        )
-        return verdict.accepted, verdict.zero_speed_streak
-
     def _apply_transition_changes(self, changes: dict[str, object]) -> None:
         transport_changes = {k: v for k, v in changes.items() if k not in _LIFECYCLE_FIELD_NAMES}
         lifecycle_changes = {k: v for k, v in changes.items() if k in _LIFECYCLE_FIELD_NAMES}
@@ -216,11 +170,8 @@ class GPSTransportState:
 
     @speed_mps.setter
     def speed_mps(self, value: float | None) -> None:
-        if value is None or isinstance(value, bool) or not isinstance(value, NUMERIC_TYPES):
-            self._replace_transport(speed_snapshot=(None, None))
-            return
-        speed_f = float(value)
-        if not math.isfinite(speed_f):
+        speed_f = _transport_updates.normalize_optional_float(value)
+        if speed_f is None:
             self._replace_transport(speed_snapshot=(None, None))
             return
         self._replace_transport(speed_snapshot=(speed_f, time.monotonic()))
@@ -231,7 +182,7 @@ class GPSTransportState:
 
     @_speed_snapshot.setter
     def _speed_snapshot(self, value: tuple[float | None, float | None]) -> None:
-        self._replace_transport(speed_snapshot=self._normalize_speed_snapshot(value))
+        self._replace_transport(speed_snapshot=_transport_updates.normalize_speed_snapshot(value))
 
     @property
     def last_update_ts(self) -> float | None:
@@ -277,7 +228,7 @@ class GPSTransportState:
 
     @last_epx_m.setter
     def last_epx_m(self, value: float | None) -> None:
-        self._replace_transport(last_epx_m=self._normalize_optional_float(value))
+        self._replace_transport(last_epx_m=_transport_updates.normalize_optional_float(value))
 
     @property
     def last_epy_m(self) -> float | None:
@@ -285,7 +236,7 @@ class GPSTransportState:
 
     @last_epy_m.setter
     def last_epy_m(self, value: float | None) -> None:
-        self._replace_transport(last_epy_m=self._normalize_optional_float(value))
+        self._replace_transport(last_epy_m=_transport_updates.normalize_optional_float(value))
 
     @property
     def last_epv_m(self) -> float | None:
@@ -293,7 +244,7 @@ class GPSTransportState:
 
     @last_epv_m.setter
     def last_epv_m(self, value: float | None) -> None:
-        self._replace_transport(last_epv_m=self._normalize_optional_float(value))
+        self._replace_transport(last_epv_m=_transport_updates.normalize_optional_float(value))
 
     @property
     def _zero_speed_streak(self) -> int:
@@ -303,30 +254,11 @@ class GPSTransportState:
     def _zero_speed_streak(self, value: int) -> None:
         self._replace_transport(zero_speed_streak=max(0, int(value)))
 
-    @staticmethod
-    def _read_non_negative_metric(payload: JsonObject, field: str) -> float | None:
-        return read_non_negative_metric(payload, field)
-
-    @staticmethod
-    def _tpv_mode(payload: JsonObject) -> int | None:
-        return read_tpv_mode(payload)
-
     def _accept_speed_sample(self, speed_mps: float) -> bool:
-        transport_snapshot = self._state.transport
-        accepted, zero_speed_streak = self._evaluate_speed_sample(transport_snapshot, speed_mps)
-        self._replace_transport(zero_speed_streak=zero_speed_streak)
-        return accepted
+        return _transport_updates.accept_speed_sample(self, speed_mps)
 
     def _reset_fix_metadata(self) -> None:
-        self._replace_transport(
-            last_fix_mode=None,
-            last_epx_m=None,
-            last_epy_m=None,
-            last_epv_m=None,
-            zero_speed_streak=0,
-            speed_snapshot=(None, None),
-            device_info=None,
-        )
+        _transport_updates.reset_fix_metadata(self)
 
     def ingest_message(
         self,
@@ -335,7 +267,11 @@ class GPSTransportState:
         tpv_mode: TpvModeReader | None = None,
         read_metric: MetricReader | None = None,
     ) -> None:
-        message = classify_gpsd_message(payload)
+        message = _transport_updates.classify_transport_message(
+            payload,
+            tpv_mode=tpv_mode,
+            read_metric=read_metric,
+        )
         if message is None:
             return
         if isinstance(message, GpsdVersionInfo):
@@ -344,58 +280,10 @@ class GPSTransportState:
         self._apply_tpv(message)
 
     def _apply_tpv(self, tpv: NormalizedTpvData) -> None:
-        """Apply normalized TPV data to the transport snapshot."""
-        snapshot = self._state.transport
-        speed_snapshot = snapshot.speed_snapshot
-        zero_speed_streak = snapshot.zero_speed_streak
-
-        if isinstance(tpv.mode, int) and tpv.mode >= 2 and tpv.speed is not None:
-            if is_speed_plausible(tpv.speed):
-                accepted, zero_speed_streak = self._evaluate_speed_sample(snapshot, tpv.speed)
-                if accepted:
-                    speed_snapshot = (tpv.speed, time.monotonic())
-            else:
-                zero_speed_streak = 0
-        else:
-            zero_speed_streak = 0
-
-        device_info = tpv.device if tpv.device else snapshot.device_info
-        self._replace_transport(
-            last_fix_mode=tpv.mode,
-            last_epx_m=tpv.epx,
-            last_epy_m=tpv.epy,
-            last_epv_m=tpv.epv,
-            speed_snapshot=speed_snapshot,
-            zero_speed_streak=zero_speed_streak,
-            device_info=device_info,
-        )
-
-    def _normalize_tpv_payload(
-        self,
-        payload: JsonObject,
-        *,
-        tpv_mode: TpvModeReader | None = None,
-        read_metric: MetricReader | None = None,
-    ) -> NormalizedTpvData:
-        read_mode = self._tpv_mode if tpv_mode is None else tpv_mode
-        metric_reader = self._read_non_negative_metric if read_metric is None else read_metric
-
-        speed = payload.get("speed")
-        normalized_speed: float | None = None
-        if isinstance(speed, NUMERIC_TYPES) and not isinstance(speed, bool):
-            speed_f = float(speed)
-            if math.isfinite(speed_f):
-                normalized_speed = speed_f
-
-        device = payload.get("device")
-        normalized_device = device if isinstance(device, str) and device else None
-        return NormalizedTpvData(
-            mode=read_mode(payload),
-            speed=normalized_speed,
-            epx=metric_reader(payload, "epx"),
-            epy=metric_reader(payload, "epy"),
-            epv=metric_reader(payload, "epv"),
-            device=normalized_device,
+        _transport_updates.apply_tpv(
+            self,
+            tpv,
+            monotonic=time.monotonic,
         )
 
     def ingest_tpv(
@@ -406,7 +294,7 @@ class GPSTransportState:
         read_metric: MetricReader | None = None,
     ) -> None:
         self._apply_tpv(
-            self._normalize_tpv_payload(
+            _transport_updates.normalize_tpv_payload(
                 payload,
                 tpv_mode=tpv_mode,
                 read_metric=read_metric,
@@ -421,73 +309,17 @@ class GPSTransportState:
         tpv_mode: TpvModeReader | None = None,
         read_metric: MetricReader | None = None,
     ) -> None:
-        loads = json.loads
-        lifecycle = TransportLifecycle(
-            initial_delay=_GPS_RECONNECT_DELAY_S,
-            max_delay=_GPS_RECONNECT_MAX_DELAY_S,
+        runner = GPSTransportRunner(
+            disabled_poll_s=_GPS_DISABLED_POLL_S,
+            reconnect_delay_s=_GPS_RECONNECT_DELAY_S,
+            connect_timeout_s=_GPS_CONNECT_TIMEOUT_S,
+            read_timeout_s=_GPS_READ_TIMEOUT_S,
+            reconnect_max_delay_s=_GPS_RECONNECT_MAX_DELAY_S,
         )
-        while True:
-            if not self.gps_enabled:
-                self.set_enabled(False)
-                await asyncio.sleep(_GPS_DISABLED_POLL_S)
-                continue
-
-            writer: asyncio.StreamWriter | None = None
-            writer_closed = False
-            try:
-                self.connection_state = "disconnected"
-                reader, connected_writer = await asyncio.wait_for(
-                    asyncio.open_connection(host, port),
-                    timeout=_GPS_CONNECT_TIMEOUT_S,
-                )
-                writer = connected_writer
-                writer.write(b'?WATCH={"enable":true,"json":true};\n')
-                await writer.drain()
-                transition = lifecycle.on_connected()
-                self._apply_transition_changes(transition.changes)
-                while True:
-                    if not self.gps_enabled:
-                        self.set_enabled(False)
-                        break
-                    line = await asyncio.wait_for(reader.readline(), timeout=_GPS_READ_TIMEOUT_S)
-                    if not line:
-                        transition = lifecycle.on_stream_disconnected()
-                        self._apply_transition_changes(transition.changes)
-                        break
-                    try:
-                        parsed = loads(line.decode("utf-8", errors="replace"))
-                    except json.JSONDecodeError:
-                        LOGGER.debug("Ignoring malformed GPS JSON line")
-                        continue
-                    if not is_json_object(parsed):
-                        LOGGER.debug("Ignoring non-object GPS JSON line")
-                        continue
-                    self.ingest_message(parsed, tpv_mode=tpv_mode, read_metric=read_metric)
-                lifecycle.reset_delay()
-            except asyncio.CancelledError:
-                if writer is not None:
-                    writer.close()
-                    await writer.wait_closed()
-                    writer_closed = True
-                self.speed_mps = None
-                raise
-            except (
-                OSError,
-                TimeoutError,
-                ConnectionError,
-                EOFError,
-                json.JSONDecodeError,
-            ) as exc:
-                transition = lifecycle.on_connection_error(exc)
-                self._apply_transition_changes(transition.changes)
-                LOGGER.warning(
-                    "GPS connection lost, retrying in %gs: %s",
-                    transition.sleep_before_retry,
-                    exc,
-                    exc_info=True,
-                )
-                await asyncio.sleep(transition.sleep_before_retry)  # type: ignore[arg-type]
-            finally:
-                if writer is not None and not writer_closed:
-                    writer.close()
-                    await writer.wait_closed()
+        await runner.run(
+            self,
+            host=host,
+            port=port,
+            tpv_mode=tpv_mode,
+            read_metric=read_metric,
+        )
