@@ -124,3 +124,54 @@ test("settings esp flash status falls back to idle when API omits state", async 
   await expect(page.locator("#espFlashHistoryPanel")).toContainText("No recent flash attempts");
   await expect(page.locator("#espFlashTab")).toContainText("Starting a flash builds the latest firmware");
 });
+
+test("settings esp flash failure shows retry guidance, retained failed stage, and fallback attempt history", async ({ page }) => {
+  await installCommonRoutes(page, {
+    espFlashHandler: async (route) => {
+      const path = requestPath(route);
+      if (path === "/api/esp-flash/ports") {
+        await fulfillJson(route, {
+          ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }],
+        });
+        return;
+      }
+      if (path === "/api/esp-flash/status") {
+        await fulfillJson(route, {
+          state: "failed",
+          phase: "flashing",
+          selected_port: "/dev/ttyUSB0",
+          auto_detect: false,
+          started_at: 1,
+          finished_at: 2,
+          last_success_at: null,
+          exit_code: 2,
+          error: "serial port disconnected",
+          log_count: 0,
+        });
+        return;
+      }
+      if (path === "/api/esp-flash/history") {
+        await fulfillJson(route, { attempts: [] });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="espFlashTab"]').click();
+  await expect(page.locator("#espFlashStartBtn")).toHaveText("Retry flash");
+  await expect(page.locator("#espFlashStartBtn")).toBeEnabled();
+  await expect(page.locator("#espFlashStartSummary")).toContainText("Recovery guidance");
+  await expect(page.locator("#espFlashStartSummary")).toContainText("Failed step");
+  await expect(page.locator("#espFlashStartSummary")).toContainText("Write firmware");
+  await expect(page.locator("#espFlashStartSummary")).toContainText("Reconnect and retry the upload");
+  await expect(page.locator("#espFlashStartSummary")).toContainText("serial port disconnected");
+  await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[data-stage-phase="flashing"]')).toHaveAttribute(
+    "data-stage-state",
+    "attention",
+  );
+  await expect(page.locator("#espFlashLogPanel")).toContainText("No failure log was captured");
+  await expect(page.locator("#espFlashHistoryPanel")).toContainText("/dev/ttyUSB0");
+  await expect(page.locator("#espFlashHistoryPanel")).toContainText("serial port disconnected");
+});
