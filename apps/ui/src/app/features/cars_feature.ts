@@ -76,7 +76,7 @@ const WIZARD_STEP_LABEL_KEYS = [
 ] as const;
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
-  const { els, escapeHtml, t } = ctx;
+  const { els, escapeHtml, fmt, t } = ctx;
   const wizState: WizardState = {
     step: 0,
     brand: "",
@@ -121,6 +121,89 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     return tire.name ? `${tire.name} · ${size}` : size;
   }
 
+  function readPositiveWizardNumber(input: HTMLInputElement | null | undefined): number | null {
+    const value = Number(input?.value);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  function formatWizardRimSize(rim: number): string {
+    return fmt(rim, Number.isInteger(rim) ? 0 : 1);
+  }
+
+  function readManualTireValues(): {
+    width: number;
+    aspect: number;
+    rim: number;
+  } | null {
+    if (wizState.step < 4) {
+      return null;
+    }
+    const width = readPositiveWizardNumber(els.wizTireWidthInput);
+    const aspect = readPositiveWizardNumber(els.wizTireAspectInput);
+    const rim = readPositiveWizardNumber(els.wizRimInput);
+    if (width == null || aspect == null || rim == null) {
+      return null;
+    }
+    return { width, aspect, rim };
+  }
+
+  function readManualGearboxValues(): {
+    finalDrive: number;
+    topGear: number;
+  } | null {
+    if (wizState.step < 4) {
+      return null;
+    }
+    const finalDrive = readPositiveWizardNumber(els.wizFinalDriveInput);
+    const topGear = readPositiveWizardNumber(els.wizGearRatioInput);
+    if (finalDrive == null || topGear == null) {
+      return null;
+    }
+    return { finalDrive, topGear };
+  }
+
+  function formatManualTireSummary(
+    manualTire: {
+      width: number;
+      aspect: number;
+      rim: number;
+    },
+  ): string {
+    return t("settings.car.wizard_summary_manual_tire", {
+      width: fmt(manualTire.width, 0),
+      aspect: fmt(manualTire.aspect, 0),
+      rim: formatWizardRimSize(manualTire.rim),
+    });
+  }
+
+  function formatManualGearboxSummary(
+    manualGearbox: {
+      finalDrive: number;
+      topGear: number;
+    },
+  ): string {
+    return t("settings.car.wizard_summary_manual_gearbox", {
+      finalDrive: fmt(manualGearbox.finalDrive, 2),
+      topGear: fmt(manualGearbox.topGear, 2),
+    });
+  }
+
+  function selectedTireMatchesManualValues(
+    tire: CarLibraryTireOption | null,
+    manualTire: {
+      width: number;
+      aspect: number;
+      rim: number;
+    } | null,
+  ): boolean {
+    if (!tire || !manualTire) {
+      return false;
+    }
+    return tire.tire_width_mm === manualTire.width
+      && tire.tire_aspect_pct === manualTire.aspect
+      && tire.rim_in === manualTire.rim;
+  }
+
   function resetWizardState(): void {
     wizState.step = 0;
     wizState.brand = "";
@@ -151,6 +234,9 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       && (wizState.selectedModel.variants?.length ?? 0) === 0
       && wizState.step >= 4,
     );
+    const manualTire = readManualTireValues();
+    const manualGearbox = readManualGearboxValues();
+    const selectedTireLabel = formatWizardTireLabel(wizState.selectedTire);
     return {
       profileName: wizState.model
         ? buildWizardCarName(wizState.brand, wizState.model, wizState.selectedVariant)
@@ -160,8 +246,11 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       model: wizState.model || null,
       variant: wizState.selectedVariant?.name
         || (variantIsImplicit ? t("settings.car.wizard_summary_not_needed") : null),
-      tire: formatWizardTireLabel(wizState.selectedTire),
-      gearbox: wizState.selectedGearbox?.name || null,
+      tire: selectedTireMatchesManualValues(wizState.selectedTire, manualTire)
+        ? selectedTireLabel
+        : (manualTire ? formatManualTireSummary(manualTire) : selectedTireLabel),
+      gearbox: wizState.selectedGearbox?.name
+        || (manualGearbox ? formatManualGearboxSummary(manualGearbox) : null),
     };
   }
 
@@ -400,7 +489,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
           wizState.step -= 1;
           if (
             wizState.step === 3
-            && (!wizState.selectedModel || !(wizState.selectedModel.variants?.length))
+            && !(wizState.selectedModel?.variants?.length)
           ) {
             wizState.step = 2;
           }
@@ -491,6 +580,19 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         variantName,
       );
       closeWizard();
+    });
+    [
+      els.wizTireWidthInput,
+      els.wizTireAspectInput,
+      els.wizRimInput,
+      els.wizFinalDriveInput,
+      els.wizGearRatioInput,
+    ].forEach((input) => {
+      input?.addEventListener("input", () => {
+        if (!els.addCarWizard?.hidden && wizState.step === 4) {
+          refreshWizardChrome();
+        }
+      });
     });
   }
 
