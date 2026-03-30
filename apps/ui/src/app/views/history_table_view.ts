@@ -208,6 +208,16 @@ function findingSignatureText(
   return text || "--";
 }
 
+function shouldShowNextStep(finding: FindingPayload | null): boolean {
+  if (!finding) {
+    return false;
+  }
+  if (findingTone(finding) === "success") {
+    return true;
+  }
+  return typeof finding.confidence === "number" && Number.isFinite(finding.confidence) && finding.confidence >= 0.85;
+}
+
 function findingLocationText(
   finding: FindingPayload,
   summary: HistoryInsightsPayload | null,
@@ -334,10 +344,15 @@ function renderInsightsOverview(
   const signature = findingSignatureText(primary, params);
   const confidence = confidenceText(primary, params);
   const tone = findingTone(primary);
+  const findingCount = summary.findings?.length ?? findings.length;
+  const nextStep = shouldShowNextStep(primary) && location !== t("report.missing")
+    ? t("history.findings_next_step", { location })
+    : "";
   return `
       <div class="history-findings-overview">
         <div class="history-findings-overview__header">
           <div class="history-findings-overview__eyebrow">${escapeHtml(t("history.primary_diagnosis"))}</div>
+          <div class="history-findings-overview__count">${escapeHtml(t("history.findings_loaded", { count: findingCount }))}</div>
         </div>
         <div class="history-diagnosis-card history-diagnosis-card--${tone}">
           <div class="history-diagnosis-card__header">
@@ -362,9 +377,48 @@ function renderInsightsOverview(
               <strong>${escapeHtml(signature)}</strong>
             </div>
           </div>
+          ${nextStep
+    ? `<div class="history-diagnosis-card__next-step"><span class="history-diagnosis-card__next-step-label">${escapeHtml(t("history.findings_next_step_label"))}</span><strong>${escapeHtml(nextStep)}</strong></div>`
+    : ""}
         </div>
       </div>
     `;
+}
+
+function renderSecondaryFindingCard(
+  finding: FindingPayload,
+  summary: HistoryInsightsPayload,
+  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
+): string {
+  const { escapeHtml, t } = params;
+  const source = finding.suspected_source || t("report.missing");
+  const confidence = confidenceText(finding, params);
+  const location = findingLocationText(finding, summary, t);
+  const speedBand = findingSpeedBandText(finding, summary, t);
+  const signature = findingSignatureText(finding, params);
+  const evidenceSummary = String(finding.evidence_summary ?? "");
+  const tone = findingTone(finding);
+  return `
+      <li class="history-finding-card history-finding-card--secondary history-finding-card--${tone}">
+        <div class="history-finding-card__header">
+          <div class="history-finding-card__title-group">
+            <strong class="history-finding-card__title">${escapeHtml(source)}</strong>
+            <span class="history-finding-card__signal">${escapeHtml(signature)}</span>
+          </div>
+          <span class="history-finding-card__confidence history-finding-card__confidence--${tone}">${escapeHtml(confidence)}</span>
+        </div>
+        <div class="history-finding-card__meta">
+          <div class="history-finding-card__meta-item">
+            <span class="history-finding-card__label">${escapeHtml(t("history.findings_location"))}</span>
+            <strong>${escapeHtml(location)}</strong>
+          </div>
+          <div class="history-finding-card__meta-item">
+            <span class="history-finding-card__label">${escapeHtml(t("history.findings_speed_band"))}</span>
+            <strong>${escapeHtml(speedBand)}</strong>
+          </div>
+        </div>
+        <p class="history-finding-card__summary">${escapeHtml(evidenceSummary)}</p>
+      </li>`;
 }
 
 function renderInsightsBlock(
@@ -375,8 +429,33 @@ function renderInsightsBlock(
   const findings = summarizeFindings(detail.insights);
   const loading = detail.insightsLoading;
   const loadedInsights = detail.insights;
+  const secondaryFindings = loadedInsights ? findings.slice(1) : [];
+  const visibleSecondaryFindings = secondaryFindings.slice(0, 2);
+  const hiddenSecondaryFindings = secondaryFindings.slice(2);
   const findingsMarkup = loadedInsights && findings.length
-    ? renderInsightsOverview(loadedInsights, params)
+    ? `
+        ${renderInsightsOverview(loadedInsights, params)}
+        ${secondaryFindings.length
+      ? `
+            <div class="history-secondary-findings">
+              <div class="history-secondary-findings__title">${escapeHtml(t("history.secondary_candidates_title"))}</div>
+              <ul class="history-findings-list history-findings-list--secondary">
+                ${visibleSecondaryFindings.map((finding) => renderSecondaryFindingCard(finding, loadedInsights, params)).join("")}
+              </ul>
+              ${hiddenSecondaryFindings.length
+        ? `
+                  <details class="history-secondary-findings__more">
+                    <summary>${escapeHtml(t("history.show_more_findings", { count: hiddenSecondaryFindings.length }))}</summary>
+                    <ul class="history-findings-list history-findings-list--secondary">
+                      ${hiddenSecondaryFindings.map((finding) => renderSecondaryFindingCard(finding, loadedInsights, params)).join("")}
+                    </ul>
+                  </details>
+                `
+        : ""}
+            </div>
+          `
+      : ""}
+      `
     : `<ul class="history-findings-list history-findings-list--secondary"><li class="history-finding-card history-finding-card--empty">${escapeHtml(t("report.no_findings_for_run"))}</li></ul>`;
   return `
       <div class="history-insights-block">

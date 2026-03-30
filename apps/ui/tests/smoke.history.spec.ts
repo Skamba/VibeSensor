@@ -268,9 +268,10 @@ test("history loaded insights promote the result summary above supporting eviden
   await expect(page.locator(".history-details-header")).toContainText("Diagnostic panel");
   await expect(page.locator(".history-diagnosis-card")).toContainText("Front-right wheel imbalance");
   await expect(page.locator(".history-diagnosis-card")).toContainText("1x wheel");
-  await expect(page.locator(".history-diagnosis-card")).not.toContainText("Inspect first");
+  await expect(page.locator(".history-diagnosis-card")).toContainText("Inspect first");
   await expect(page.locator('.history-heatmap__zone[data-location-key="front-right wheel"]')).toContainText("32.0 dB");
-  await expect(page.locator(".history-secondary-findings")).toHaveCount(0);
-  await expect(page.locator(".history-finding-card--secondary")).toHaveCount(0);
+  await expect(page.locator(".history-secondary-findings")).toContainText("Secondary candidates");
+  await expect(page.locator(".history-finding-card--secondary")).toHaveCount(1);
+  await expect(page.locator(".history-finding-card--secondary")).toContainText("Secondary driveline contribution");
   await expect(page.locator(".history-evidence-column .history-preview-stats")).toHaveCount(0);
 });
