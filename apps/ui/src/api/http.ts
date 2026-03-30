@@ -1,6 +1,7 @@
 const DEFAULT_TIMEOUT_MS = 10000;
 const NOOP = () => {};
 const WHITESPACE_RE = /\s+/g;
+const DEFAULT_TIMEOUT_MESSAGE = "Request timed out.";
 
 function composeSignal(
   timeoutSignal: AbortSignal,
@@ -37,14 +38,22 @@ export interface ApiJsonResponse<T> {
   body: T | undefined;
 }
 
+export interface ApiJsonInit extends RequestInit {
+  timeoutMs?: number;
+}
+
 export async function apiJsonResponse<T = unknown>(
   path: string,
-  init?: RequestInit,
+  init?: ApiJsonInit,
 ): Promise<ApiJsonResponse<T>> {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, signal: externalSignal, ...requestInit } = init ?? {};
   const timeoutController = new AbortController();
-  const timeoutId = window.setTimeout(() => timeoutController.abort(), DEFAULT_TIMEOUT_MS);
-  const { signal, cleanup } = composeSignal(timeoutController.signal, init?.signal ?? undefined);
-  const response = await fetch(path, { ...init, signal }).finally(() => {
+  const timeoutId = window.setTimeout(
+    () => timeoutController.abort(new DOMException(DEFAULT_TIMEOUT_MESSAGE, "AbortError")),
+    timeoutMs,
+  );
+  const { signal, cleanup } = composeSignal(timeoutController.signal, externalSignal ?? undefined);
+  const response = await fetch(path, { ...requestInit, signal }).finally(() => {
     window.clearTimeout(timeoutId);
     cleanup();
   });
@@ -78,7 +87,7 @@ export async function apiJsonResponse<T = unknown>(
   }
 }
 
-export async function apiJson<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+export async function apiJson<T = unknown>(path: string, init?: ApiJsonInit): Promise<T> {
   const response = await apiJsonResponse<T>(path, init);
   return response.body as T;
 }
