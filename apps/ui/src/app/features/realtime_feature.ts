@@ -736,7 +736,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     if (primaryCheck) {
       return captureReadinessDetailText(primaryCheck);
     }
-    return readiness.is_ready ? "" : t("dashboard.capture_readiness.summary.ready");
+    if (readiness.is_ready) {
+      return "";
+    }
+    const overallCheck = captureReadinessCheck(readiness, "capture_ready");
+    return overallCheck ? captureReadinessDetailText(overallCheck) : "";
   }
 
   function idleCaptureReadinessSignature(): string {
