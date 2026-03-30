@@ -75,6 +75,6 @@ test("history detail toggle stays readable on narrow screens", async ({ page }) 
   expect(metrics.buttonWidth).toBeGreaterThanOrEqual(140);
   expect(metrics.titleLines).toBeLessThanOrEqual(2);
   expect(metrics.hintLines).toBeLessThanOrEqual(3);
-  await expect(toggle).toContainText("Expand details");
-  await expect(toggle).toContainText("View diagnosis and heatmap");
+  await expect(toggle).toContainText("Open diagnosis");
+  await expect(toggle).toContainText("Review findings and heatmap");
 });
