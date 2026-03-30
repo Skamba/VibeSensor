@@ -96,7 +96,7 @@ test.describe("car wizard view helpers", () => {
     expect(wizardBackBtn.style.display).toBe("none");
   });
 
-  test("renderWizardSummary keeps the current selection visible with pending placeholders", () => {
+  test("renderWizardSummary stages summary rows until they become relevant", () => {
     const escapeHtml = (value: unknown) => String(value ?? "");
     const labels: Record<string, string> = {
       "settings.car.wizard_summary_pending": "Not selected yet",
@@ -110,7 +110,22 @@ test.describe("car wizard view helpers", () => {
     };
     const t = (key: string) => labels[key] ?? key;
 
+    const earlyHtml = renderWizardSummary({
+      currentStep: 1,
+      profileName: null,
+      brand: "BMW",
+      carType: null,
+      model: null,
+      variant: null,
+      tire: null,
+      gearbox: null,
+    }, { t, escapeHtml });
+    expect(earlyHtml).toContain("BMW");
+    expect(earlyHtml).not.toContain("Gearbox");
+    expect(earlyHtml).not.toContain("Tires");
+
     const html = renderWizardSummary({
+      currentStep: 4,
       profileName: "BMW X5 M60i",
       brand: "BMW",
       carType: "SUV",
@@ -154,8 +169,9 @@ test.describe("car wizard view helpers", () => {
     expect(renderWizardModelOptions(models, escapeHtml)).toContain('data-idx="0"');
     expect(renderWizardModelOptions(models, escapeHtml)).toContain("245/40R18");
     expect(renderWizardTireOptions(tireOptions, escapeHtml)).toContain("selected");
-    expect(renderWizardGearboxOptions(gearboxes, { escapeHtml, fmt })).toContain("FD: 3.91");
-    expect(renderWizardGearboxOptions(gearboxes, { escapeHtml, fmt })).toContain("Top Gear: 0.82");
+    expect(renderWizardGearboxOptions(gearboxes, { escapeHtml, fmt }, 0)).toContain("selected");
+    expect(renderWizardGearboxOptions(gearboxes, { escapeHtml, fmt }, 0)).toContain("FD: 3.91");
+    expect(renderWizardGearboxOptions(gearboxes, { escapeHtml, fmt }, 0)).toContain("Top Gear: 0.82");
   });
 
   test("writeCarWizardTireInputs syncs the selected tire dimensions into manual inputs", () => {
