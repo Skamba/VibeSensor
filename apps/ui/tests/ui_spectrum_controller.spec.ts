@@ -215,7 +215,12 @@ test.describe("UiSpectrumController", () => {
           spectrumInspector: inspector,
           spectrumBandToggle: bandToggle,
         } as unknown as UiDomElements,
-        t: (key, vars) => vars?.sensor ? `${key}:${String(vars.sensor)}` : key,
+        t: (key, vars) => {
+          if (key === "spectrum.legend.sensor_level") {
+            return `Sensor level: ${String(vars?.value)} dB`;
+          }
+          return vars?.sensor ? `${key}:${String(vars.sensor)}` : key;
+        },
       });
 
       const internals = controller as unknown as {
@@ -235,7 +240,7 @@ test.describe("UiSpectrumController", () => {
       const allButton = legend.children[0];
       const sensorButton = legend.children[1];
       const sensorMeta = sensorButton.children[1].children[1];
-      expect(sensorMeta.textContent).toBe("12.0 dB");
+      expect(sensorMeta.textContent).toBe("Sensor level: 12.0 dB");
 
       sensorButton.click();
       expect(legend.children[0]).toBe(allButton);
@@ -253,7 +258,7 @@ test.describe("UiSpectrumController", () => {
 
       expect(legend.children[0]).toBe(allButton);
       expect(legend.children[1]).toBe(sensorButton);
-      expect(sensorMeta.textContent).toBe("13.0 dB");
+      expect(sensorMeta.textContent).toBe("Sensor level: 13.0 dB");
       expect(sensorButton.getAttribute("aria-pressed")).toBe("true");
 
       sensorButton.click();

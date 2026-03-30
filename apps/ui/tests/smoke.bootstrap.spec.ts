@@ -10,6 +10,11 @@ const strengthMetrics = {
   top_peaks: [],
 };
 
+function parseElapsedSeconds(value: string): number {
+  const [minutes, seconds] = value.trim().split(":").map((part) => Number(part));
+  return (minutes * 60) + seconds;
+}
+
 test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
   let startCalls = 0;
   let stopCalls = 0;
@@ -126,7 +131,8 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
   await expect(page.locator("#liveDataFreshness [data-value]")).toHaveText("Fresh - 10 ms ago");
   await expect(page.locator("#liveRunHealth")).toBeHidden();
-  await expect(page.locator("#liveStrongestSignal")).toHaveClass(/stat--spotlight/);
+  await expect(page.locator("#liveStrongestSignal")).not.toHaveClass(/stat--spotlight/);
+  await expect(page.locator("#liveStrongestSignal .stat__label")).toHaveText("Strongest sensor level");
   await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveSensorRoster .live-sensor-card--strongest")).toHaveText("Front Left Wheel");
   await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
@@ -137,7 +143,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator(".spectrum-controls-panel #legend")).toContainText("Front Left");
   await expect(page.locator("#loggingSummary")).toBeHidden();
   await expect(page.locator("#loggingStatus")).toBeHidden();
-  await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Ready");
+  await expect(page.locator("#loggingPhase")).toBeHidden();
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("0");
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
@@ -166,22 +172,25 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await dashboardTab.click();
   await expect(page.locator(".site-header__status")).toBeHidden();
   await page.locator("#startLoggingBtn").click();
-  await expect(page.locator("#loggingStatus")).toHaveText("Recording");
+  await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingRunId")).toHaveText("Run ID: run-001");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Recording");
-  await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Recording");
+  await expect(page.locator("#loggingPhase")).toBeHidden();
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(/^\d+:\d{2}$/);
+  const activeElapsed = await page.locator("#loggingElapsed [data-value]").innerText();
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
   await expect(page.locator("#startLoggingBtn")).toBeHidden();
   await expect(page.locator("#stopLoggingBtn")).toBeVisible();
   await expect(page.locator("#stopLoggingBtn")).toHaveClass(/btn--danger-quiet/);
   await expect.poll(() => startCalls).toBe(1);
   await page.locator("#stopLoggingBtn").click();
-  await expect(page.locator("#loggingStatus")).toHaveText("Processing");
+  await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingRunId")).toHaveText("Last run: run-001");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Processing");
-  await expect(page.locator("#loggingPhase [data-value]")).toHaveText("Processing");
-  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText("--");
+  await expect(page.locator("#loggingPhase")).toBeHidden();
+  await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(/^\d+:\d{2}$/);
+  const processingElapsed = await page.locator("#loggingElapsed [data-value]").innerText();
+  expect(parseElapsedSeconds(processingElapsed)).toBeGreaterThanOrEqual(parseElapsedSeconds(activeElapsed));
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#stopLoggingBtn")).toBeHidden();

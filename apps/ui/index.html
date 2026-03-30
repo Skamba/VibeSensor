@@ -61,7 +61,7 @@
             <div class="card__header card__header--stack">
               <div>
                 <div class="card__title" data-i18n="dashboard.live_overview">Live overview</div>
-                <div class="card__subtle" data-i18n="dashboard.live_overview_hint">Check coverage, recording readiness, and the strongest live signal before reading the chart.</div>
+                <div class="card__subtle" data-i18n="dashboard.live_overview_hint">Check readiness, current run state, and the strongest sensor level before reading the chart.</div>
               </div>
               <div id="liveRunHealth" class="pill pill--muted" aria-live="polite">No live signal</div>
             </div>
@@ -75,7 +75,7 @@
                 <div class="stat__value" data-value>--</div>
               </div>
               <div id="liveRecordingState" class="stat">
-                <div class="stat__label" data-i18n="dashboard.recording_state">Recording state</div>
+                <div class="stat__label" data-i18n="dashboard.recording_state">Run state</div>
                 <div class="stat__value" data-value>--</div>
               </div>
               <div id="liveDataFreshness" class="stat">
@@ -83,7 +83,7 @@
                 <div class="stat__value" data-value>--</div>
               </div>
               <div id="liveStrongestSignal" class="stat">
-                <div class="stat__label" data-i18n="dashboard.strongest_signal">Strongest signal</div>
+                <div class="stat__label" data-i18n="dashboard.strongest_signal">Strongest sensor level</div>
                 <div class="stat__value" data-value>--</div>
               </div>
               <div class="stat">
@@ -129,7 +129,7 @@
             </div>
             <div class="mini-label" data-i18n="dashboard.recording_progress">Run progress</div>
             <div class="stat-grid stat-grid--compact">
-              <div id="loggingPhase" class="stat stat--compact">
+              <div id="loggingPhase" class="stat stat--compact" hidden>
                 <div class="stat__label" data-i18n="dashboard.recording_phase">Run phase</div>
                 <div class="stat__value" data-value>--</div>
               </div>
