@@ -294,18 +294,6 @@ function renderCollapsedRowSummary(
   const chips: string[] = [
     `<span class="history-row__summary-chip history-row__summary-chip--${statusBadge.variant}">${escapeHtml(statusBadge.label)}</span>`,
   ];
-  const durationSeconds = historyRowDurationSeconds(run, detail);
-  if (durationSeconds !== null) {
-    chips.push(
-      `<span class="history-row__summary-chip">${escapeHtml(t("history.summary_size"))}: ${escapeHtml(fmt(durationSeconds, 1))} s</span>`,
-    );
-  }
-  const sensorCount = Number(summary?.sensor_count_used);
-  if (Number.isFinite(sensorCount) && sensorCount > 0) {
-    chips.push(
-      `<span class="history-row__summary-chip">${escapeHtml(t("history.summary_sensor_count"))}: ${escapeHtml(formatInt(sensorCount))}</span>`,
-    );
-  }
   const source = summary?.most_likely_origin?.suspected_source || primaryFinding?.suspected_source || "";
   if (source) {
     chips.push(
@@ -328,7 +316,52 @@ function renderCollapsedRowSummary(
       `<span class="history-row__summary-chip history-row__summary-chip--muted">${escapeHtml(run.error_message)}</span>`,
     );
   }
+  const durationSeconds = historyRowDurationSeconds(run, detail);
+  if (durationSeconds !== null) {
+    chips.push(
+      `<span class="history-row__summary-chip">${escapeHtml(t("history.summary_size"))}: ${escapeHtml(fmt(durationSeconds, 1))} s</span>`,
+    );
+  }
+  const sensorCount = Number(summary?.sensor_count_used);
+  if (Number.isFinite(sensorCount) && sensorCount > 0) {
+    chips.push(
+      `<span class="history-row__summary-chip">${escapeHtml(t("history.summary_sensor_count"))}: ${escapeHtml(formatInt(sensorCount))}</span>`,
+    );
+  }
   return `<div class="history-row__summary-chips">${chips.join("")}</div>`;
+}
+
+function renderCollapsedRowActions(
+  runId: string,
+  detail: RunDetail,
+  params: Pick<HistoryTableViewParams, "escapeHtml" | "t">,
+): string {
+  const { escapeHtml, t } = params;
+  const pdfLabel = detail.pdfLoading ? t("history.generating_pdf") : t("history.generate_pdf");
+  return `
+      <div class="table-actions history-row__actions">
+        <button class="btn" data-run-action="download-pdf" data-run="${escapeHtml(runId)}" ${detail.pdfLoading ? "disabled" : ""}>${escapeHtml(pdfLabel)}</button>
+      </div>
+    `;
+}
+
+function renderDetailManagementFooter(
+  runId: string,
+  params: Pick<HistoryTableViewParams, "escapeHtml" | "historyExportUrl" | "t">,
+): string {
+  const { escapeHtml, historyExportUrl, t } = params;
+  return `
+      <div class="history-details-footer">
+        <div class="history-details-footer__copy">
+          <div class="history-details-footer__eyebrow">${escapeHtml(t("history.run_actions_title"))}</div>
+          <div class="history-details-footer__body">${escapeHtml(t("history.run_actions_body"))}</div>
+        </div>
+        <div class="history-details-footer__actions">
+          <a class="btn btn--muted" href="${historyExportUrl(runId)}" download="${escapeHtml(runId)}.zip" data-run-action="download-raw" data-run="${escapeHtml(runId)}">${escapeHtml(t("history.export"))}</a>
+          <button class="btn btn--danger-quiet" data-run-action="delete-run" data-run="${escapeHtml(runId)}">${escapeHtml(t("history.delete"))}</button>
+        </div>
+      </div>
+    `;
 }
 
 function renderInsightsOverview(
@@ -573,6 +606,7 @@ function renderRunDetailsRow(
                 </div>
               </div>
             </div>
+            ${renderDetailManagementFooter(run.run_id, params)}
           </div>
         </td>
       </tr>
@@ -602,17 +636,16 @@ export function renderHistoryTable(
   container: HTMLElement,
   params: HistoryTableViewParams,
 ): void {
-  const { runs, expandedRunId, runDetailsById, escapeHtml, fmtTs, formatInt, t, historyExportUrl } = params;
+  const { runs, expandedRunId, runDetailsById, escapeHtml, fmtTs, formatInt, t } = params;
   const rows: string[] = [];
   for (const run of runs) {
     const detail = runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL;
-    const pdfLabel = detail.pdfLoading ? t("history.generating_pdf") : t("history.generate_pdf");
     const rowError = detail.pdfError ? `<div class="history-inline-error">${escapeHtml(detail.pdfError)}</div>` : "";
     const isExpanded = expandedRunId === run.run_id;
-    const toggleLabel = isExpanded ? t("history.collapse_details") : t("history.expand_details");
+    const toggleLabel = isExpanded ? t("history.close_diagnosis") : t("history.open_diagnosis");
     const toggleTitle = isExpanded
-      ? t("history.collapse_details_for_run", { runId: run.run_id })
-      : t("history.expand_details_for_run", { runId: run.run_id });
+      ? t("history.close_diagnosis_for_run", { runId: run.run_id })
+      : t("history.open_diagnosis_for_run", { runId: run.run_id });
     rows.push(`
         <tr class="history-row${isExpanded ? " history-row--expanded" : ""}" data-run-row="1" data-run="${escapeHtml(run.run_id)}">
           <td>
@@ -641,11 +674,7 @@ export function renderHistoryTable(
           <td>${fmtTs(run.start_time_utc)}</td>
           <td class="numeric">${formatInt(run.sample_count)}</td>
           <td>
-            <div class="table-actions">
-              <button class="btn btn--success" data-run-action="download-pdf" data-run="${escapeHtml(run.run_id)}" ${detail.pdfLoading ? "disabled" : ""}>${escapeHtml(pdfLabel)}</button>
-              <a class="btn btn--muted" href="${historyExportUrl(run.run_id)}" download="${escapeHtml(run.run_id)}.zip" data-run-action="download-raw" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.export"))}</a>
-              <button class="btn btn--danger" data-run-action="delete-run" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.delete"))}</button>
-            </div>
+            ${renderCollapsedRowActions(run.run_id, detail, params)}
             ${rowError}
           </td>
         </tr>`);
