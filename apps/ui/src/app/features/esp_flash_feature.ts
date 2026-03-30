@@ -19,6 +19,7 @@ import {
   startEspFlash,
 } from "../../api/settings";
 import { formatEpochTimestamp, renderStatusGridRow } from "../views/dom_helpers";
+import { renderMaintenanceReadinessPanel } from "../views/maintenance_readiness_view";
 
 export interface EspFlashFeatureDeps extends FeatureDepsBase {}
 
@@ -70,10 +71,26 @@ function safeEspFlashState(state: string | null | undefined): string {
   return state || "idle";
 }
 
+function createIdleStatus(): EspFlashStatusPayload {
+  return {
+    auto_detect: true,
+    error: null,
+    exit_code: null,
+    finished_at: null,
+    job_id: null,
+    last_success_at: null,
+    log_count: 0,
+    phase: "idle",
+    selected_port: null,
+    started_at: null,
+    state: "idle",
+  };
+}
+
 export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature {
   const { els, t, escapeHtml } = ctx;
   let nextLogIndex = 0;
-  let latestStatus: EspFlashStatusPayload | null = null;
+  let latestStatus: EspFlashStatusPayload = createIdleStatus();
   let latestJourneyPhase: string | null = null;
   let availablePorts: EspSerialPortPayload[] = [];
   let latestAttempts: EspFlashHistoryAttemptPayload[] = [];
@@ -184,8 +201,82 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     return t("settings.esp_flash.last_result_value", { state: stateLabel, when });
   }
 
+  function buildStartReadiness(status: EspFlashStatusPayload): {
+    canStart: boolean;
+    html: string;
+  } {
+    const safeState = safeEspFlashState(status.state);
+    const portsDetected = availablePorts.length > 0;
+    const selectedTarget = selectedTargetLabel(status);
+    const items = [
+      {
+        label: t("settings.esp_flash.start_readiness.item.connection"),
+        detail: portsDetected
+          ? t("settings.esp_flash.start_readiness.item.connection_ready", {
+              ports: detectedPortsLabel(),
+            })
+          : t("settings.esp_flash.start_readiness.item.connection_blocked"),
+        state: portsDetected ? ("ready" as const) : ("blocked" as const),
+      },
+      {
+        label: t("settings.esp_flash.start_readiness.item.target"),
+        detail: portsDetected
+          ? t("settings.esp_flash.start_readiness.item.target_ready", { target: selectedTarget })
+          : t("settings.esp_flash.start_readiness.item.target_blocked"),
+        state: portsDetected ? ("ready" as const) : ("blocked" as const),
+      },
+    ];
+    const stateLabel = safeState === "running"
+      ? t("maintenance.readiness.running")
+      : portsDetected
+        ? t("maintenance.readiness.ready")
+        : t("maintenance.readiness.blocked");
+    return {
+      canStart: safeState !== "running" && portsDetected,
+      html: renderMaintenanceReadinessPanel(
+        {
+          title: t("settings.esp_flash.start_readiness.title"),
+          summary: t(
+            safeState === "running"
+              ? "settings.esp_flash.start_readiness.summary_running"
+              : portsDetected
+                ? "settings.esp_flash.start_readiness.summary_ready"
+                : "settings.esp_flash.start_readiness.summary_blocked",
+          ),
+          stateLabel,
+          stateVariant: safeState === "running" ? "warn" : portsDetected ? "ok" : "bad",
+          items,
+        },
+        escapeHtml,
+      ),
+    };
+  }
+
+  function syncFlashControls(status: EspFlashStatusPayload): { canStart: boolean } {
+    const safeState = safeEspFlashState(status.state);
+    const readiness = buildStartReadiness(status);
+    if (els.espFlashStartSummary) {
+      els.espFlashStartSummary.innerHTML = readiness.html;
+    }
+    if (els.espFlashStartBtn) {
+      els.espFlashStartBtn.hidden = safeState === "running";
+      els.espFlashStartBtn.disabled = safeState === "running" || !readiness.canStart;
+    }
+    if (els.espFlashCancelBtn) {
+      els.espFlashCancelBtn.hidden = safeState !== "running";
+      els.espFlashCancelBtn.disabled = safeState !== "running";
+    }
+    if (els.espFlashPortSelect) {
+      els.espFlashPortSelect.disabled = safeState === "running";
+    }
+    if (els.espFlashRefreshPortsBtn) {
+      els.espFlashRefreshPortsBtn.disabled = safeState === "running";
+    }
+    return readiness;
+  }
+
   function renderReadinessPanel(): void {
-    if (!els.espFlashReadinessPanel || !latestStatus) return;
+    if (!els.espFlashReadinessPanel) return;
     const safeState = safeEspFlashState(latestStatus.state);
     const rows = [
       renderStatusGridRow(
@@ -228,7 +319,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   }
 
   function renderJourneyPanel(): void {
-    if (!els.espFlashJourneyPanel || !latestStatus) return;
+    if (!els.espFlashJourneyPanel) return;
     els.espFlashJourneyPanel.innerHTML = renderJourney(latestStatus);
   }
 
@@ -276,6 +367,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   async function refreshPorts(): Promise<void> {
     if (!els.espFlashPortSelect) return;
     try {
+      const previousValue = els.espFlashPortSelect.value || "__auto__";
       const payload = await getEspFlashPorts();
       availablePorts = payload.ports || [];
       const options = [`<option value="__auto__">${escapeHtml(t("settings.esp_flash.auto_detect"))}</option>`];
@@ -284,6 +376,10 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
         options.push(`<option value="${escapeHtml(port.port)}">${escapeHtml(label)}</option>`);
       }
       els.espFlashPortSelect.innerHTML = options.join("");
+      els.espFlashPortSelect.value = availablePorts.some((port) => port.port === previousValue)
+        ? previousValue
+        : "__auto__";
+      syncFlashControls(latestStatus);
       renderReadinessPanel();
     } catch {
       // Port list unavailable — keep existing options
@@ -306,10 +402,8 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       const variant = STATE_TO_VARIANT[safeState] || "muted";
       els.espFlashStatusBanner.className = `pill pill--${variant}`;
     }
-    if (els.espFlashStartBtn) els.espFlashStartBtn.disabled = status.state === "running";
-    if (els.espFlashCancelBtn) els.espFlashCancelBtn.disabled = status.state !== "running";
-    if (els.espFlashPortSelect) els.espFlashPortSelect.disabled = status.state === "running";
     if (status.state !== "running") nextLogIndex = status.log_count || 0;
+    syncFlashControls(status);
     renderReadinessPanel();
     renderJourneyPanel();
   }
@@ -363,6 +457,10 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   });
 
   async function onStart(): Promise<void> {
+    const readiness = syncFlashControls(latestStatus);
+    if (!readiness.canStart) {
+      return;
+    }
     const selected = els.espFlashPortSelect?.value || "__auto__";
     const autoDetect = selected === "__auto__";
     const port = autoDetect ? null : selected;
@@ -392,6 +490,11 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     els.espFlashStartBtn?.addEventListener("click", () => void onStart());
     els.espFlashCancelBtn?.addEventListener("click", () => void onCancel());
     els.espFlashRefreshPortsBtn?.addEventListener("click", () => void refreshPorts());
+    els.espFlashPortSelect?.addEventListener("change", () => {
+      syncFlashControls(latestStatus);
+      renderReadinessPanel();
+    });
+    syncFlashControls(latestStatus);
   }
 
   function startPolling(): void {

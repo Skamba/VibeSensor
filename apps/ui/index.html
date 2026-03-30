@@ -628,7 +628,18 @@
                       </div>
                     </div>
                   </div>
-                  <div id="updateTransportNote" class="maintenance-note" data-i18n="settings.update.preflight_note_wifi">Starting a Wi-Fi update temporarily pauses hotspot access while the Pi joins Wi-Fi, downloads the next release, and restores the local web UI when the job is done.</div>
+                  <div id="updateReadinessSummary" class="maintenance-stack maintenance-stack--tight" aria-live="polite"></div>
+                  <details class="settings-help-disclosure settings-help-disclosure--inline">
+                    <summary class="settings-help-disclosure__summary">
+                      <span class="settings-help-disclosure__heading">
+                        <span class="settings-help-disclosure__title" data-i18n="settings.update.details_title">What happens next</span>
+                        <span id="updateDetailsCaption" class="settings-help-disclosure__caption"></span>
+                      </span>
+                    </summary>
+                    <div class="settings-help-disclosure__body">
+                      <div id="updateTransportNote" class="maintenance-note" data-i18n="settings.update.preflight_note_wifi">Starting a Wi-Fi update temporarily pauses hotspot access while the Pi joins Wi-Fi, downloads the next release, and restores the local web UI when the job is done.</div>
+                    </div>
+                  </details>
                   <div class="maintenance-action-row">
                     <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
                     <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
@@ -656,17 +667,28 @@
                       <div class="subtle" data-i18n="settings.esp_flash.controls_intro">Choose a serial port or leave auto-detect enabled, then start the firmware build and flash flow.</div>
                     </div>
                   </div>
-                   <div class="manual-speed-row">
-                     <label for="espFlashPortSelect" data-i18n="settings.esp_flash.port">Serial Port</label>
-                     <select id="espFlashPortSelect">
-                       <option value="__auto__" data-i18n="settings.esp_flash.auto_detect">Auto-detect</option>
-                     </select>
-                     <button type="button" id="espFlashRefreshPortsBtn" class="btn btn--muted" data-i18n="settings.esp_flash.refresh_ports">Refresh</button>
-                   </div>
-                    <div class="maintenance-note" data-i18n="settings.esp_flash.preflight_note">Starting a flash builds the latest firmware on this Pi, erases the selected board, and writes the new image over USB. Keep the board powered until the staged progress reaches Done.</div>
+                    <div class="manual-speed-row">
+                      <label for="espFlashPortSelect" data-i18n="settings.esp_flash.port">Serial Port</label>
+                      <select id="espFlashPortSelect">
+                        <option value="__auto__" data-i18n="settings.esp_flash.auto_detect">Auto-detect</option>
+                      </select>
+                      <button type="button" id="espFlashRefreshPortsBtn" class="btn btn--muted" data-i18n="settings.esp_flash.refresh_ports">Refresh</button>
+                    </div>
+                    <div id="espFlashStartSummary" class="maintenance-stack maintenance-stack--tight" aria-live="polite"></div>
+                    <details class="settings-help-disclosure settings-help-disclosure--inline">
+                      <summary class="settings-help-disclosure__summary">
+                        <span class="settings-help-disclosure__heading">
+                          <span class="settings-help-disclosure__title" data-i18n="settings.esp_flash.details_title">What happens next</span>
+                          <span class="settings-help-disclosure__caption" data-i18n="settings.esp_flash.details_caption">Build, erase, and write the current firmware over USB.</span>
+                        </span>
+                      </summary>
+                      <div class="settings-help-disclosure__body">
+                        <div class="maintenance-note" data-i18n="settings.esp_flash.preflight_note">Starting a flash builds the latest firmware on this Pi, erases the selected board, and writes the new image over USB. Keep the board powered until the staged progress reaches Done.</div>
+                      </div>
+                    </details>
                     <div class="maintenance-action-row">
                       <button type="button" id="espFlashStartBtn" class="btn btn--success" data-i18n="settings.esp_flash.start">Flash latest</button>
-                      <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" disabled>Cancel</button>
+                      <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" hidden disabled>Cancel</button>
                     </div>
                 </section>
 
