@@ -16,6 +16,7 @@ import {
   getSettingsCarListAction,
   renderSettingsCarList,
 } from "../views/settings_car_list_view";
+import { renderInlineStatePanel } from "../views/dom_helpers";
 import {
   ANALYSIS_SETTING_KEYS,
   createSettingsAnalysisModule,
@@ -73,15 +74,17 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     if (!guidance) {
       return;
     }
-    if (carSelectionState.kind === "loading" || carSelectionState.kind === "active") {
+    if (carSelectionState.kind === "loading" || carSelectionState.kind === "active" || carSelectionState.kind === "no_cars") {
       guidance.hidden = true;
-      guidance.textContent = "";
+      guidance.replaceChildren();
       return;
     }
     guidance.hidden = false;
-    guidance.textContent = carSelectionState.kind === "no_cars"
-      ? t("settings.car.guidance.no_cars")
-      : t("settings.car.guidance.no_active");
+    guidance.innerHTML = renderInlineStatePanel({
+      titleHtml: escapeHtml(t("settings.car.guidance.no_active_title")),
+      bodyHtml: escapeHtml(t("settings.car.guidance.no_active")),
+      detailHtml: escapeHtml(t("settings.car.guidance.no_active_detail")),
+    });
   }
 
   function syncCarDependentUiState(): void {
@@ -221,11 +224,19 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       if (!action) {
         return;
       }
-      if (action.type === "activate") {
-        void handleActivateCar(action.carId);
+      if (action.type === "add") {
+        els.addCarBtn?.click();
         return;
       }
-      void handleDeleteCar(action.carId);
+      if (action.type === "activate") {
+        if (action.carId) {
+          void handleActivateCar(action.carId);
+        }
+        return;
+      }
+      if (action.carId) {
+        void handleDeleteCar(action.carId);
+      }
     });
   }
 

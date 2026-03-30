@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
 
-test("keeps live and history clean while showing contextual no-car guidance in Settings", async ({ page }) => {
+test("routes no-car blockers to the add-car flow from Live and Cars", async ({ page }) => {
   let analysisPutCalls = 0;
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
@@ -22,12 +22,26 @@ test("keeps live and history clean while showing contextual no-car guidance in S
   });
   await installFakeWebSocket(page);
   await page.goto("/");
+  await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No cars added yet");
+  const liveSummary = page.locator("#loggingSummary");
+  await expect(liveSummary).toContainText("Add a car before recording.");
+  await expect(liveSummary).toContainText("Runs need an active car");
+  await liveSummary.getByRole("button", { name: "Add a car" }).click();
+  await expect(page.locator("#settingsView")).toHaveClass(/active/);
+  await expect(page.locator("#wizardBackdrop")).toBeVisible();
+  await page.locator("#wizardCloseBtn").click();
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
   await page.locator("#tab-history").click();
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="carTab"]').click();
-  await expect(page.locator("#carSelectionGuidance")).toBeVisible();
+  await expect(page.locator("#carSelectionGuidance")).toBeHidden();
+  const carEmptyState = page.locator("#carListBody .empty-state");
+  await expect(carEmptyState).toContainText("Add the first car profile.");
+  await expect(carEmptyState).toContainText("Cars define the setup used for recording");
+  await carEmptyState.getByRole("button", { name: "Add a car" }).click();
+  await expect(page.locator("#wizardBackdrop")).toBeVisible();
+  await page.locator("#wizardCloseBtn").click();
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
@@ -245,16 +259,17 @@ test("shows a live warning state until an active car is selected, then clears it
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
   await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
   await expect(page.locator("#loggingStatus")).toBeHidden();
-  await expect(page.locator("#loggingSummary")).toHaveText(
-    "Recording is blocked until you select or create an active car.",
-  );
+  const liveSummary = page.locator("#loggingSummary");
+  await expect(liveSummary).toContainText("Choose the active car before recording.");
+  await expect(liveSummary).toContainText("none is active for the next run");
   await expect(page.locator("#loggingSummary")).toHaveCSS("text-align", "left");
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#startLoggingBtn")).toBeDisabled();
   await expect.poll(() => startCalls).toBe(0);
 
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await liveSummary.getByRole("button", { name: "Choose active car" }).click();
+  await expect(page.locator("#settingsView")).toHaveClass(/active/);
+  await expect(page.locator("#carTab")).toHaveClass(/active/);
   await page.locator('#carListBody tr[data-car-id="car-2"] .car-activate-btn').click();
 
   await page.locator("#tab-dashboard").click();

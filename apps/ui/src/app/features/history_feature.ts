@@ -1,5 +1,6 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { HistoryState, RunDetail } from "../ui_app_state";
+import { getInlineStateAction } from "../views/dom_helpers";
 import {
   getHistoryTableAction,
   getHistoryTableRowRunId,
@@ -39,6 +40,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   const { history, els } = ctx;
   let handlersBound = false;
   let previewPrefetchToken = 0;
+
+  function activatePrimaryView(viewId: string): void {
+    els.menuButtons.find((button) => button.dataset.view === viewId)?.click();
+  }
 
   function ensureRunDetail(runId: string): RunDetail {
     if (!history.runDetailsById[runId]) {
@@ -118,6 +123,13 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     els.refreshHistoryBtn?.addEventListener("click", () => void refreshHistory());
     els.deleteAllRunsBtn?.addEventListener("click", () => void downloadDeleteModule.deleteAllRuns());
     els.historyTableBody?.addEventListener("click", (event) => {
+      const inlineAction = getInlineStateAction(event.target);
+      if (inlineAction === "open-live") {
+        event.preventDefault();
+        event.stopPropagation();
+        activatePrimaryView("dashboardView");
+        return;
+      }
       const action = getHistoryTableAction(event.target);
       if (action) {
         if (action.action !== "download-raw") {
