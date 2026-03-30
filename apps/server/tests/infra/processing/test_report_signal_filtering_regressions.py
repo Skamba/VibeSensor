@@ -79,7 +79,7 @@ class TestResizeBuffer:
         proc = _make_processor(sample_rate_hz=100, waveform_seconds=1)
         store = proc._store
         with store.lock:
-            buf = store._get_or_create_unlocked("test-client")
+            buf = store._registry._get_or_create_unlocked("test-client")
         samples = np.random.default_rng(42).standard_normal((10, 3)).astype(np.float32)
         proc.ingest("test-client", samples)
         return store, buf
@@ -88,7 +88,7 @@ class TestResizeBuffer:
         store, buf = self._make_proc_with_buffer()
         count_before = buf.count
         with store.lock:
-            store._resize_buffer_unlocked(buf, 100)
+            store._buffer_mutator.resize(buf, 100)
         assert buf.count == count_before
         assert buf.capacity == 100
 
@@ -96,14 +96,14 @@ class TestResizeBuffer:
         store, buf = self._make_proc_with_buffer()
         old_count = buf.count
         with store.lock:
-            store._resize_buffer_unlocked(buf, 200)
+            store._buffer_mutator.resize(buf, 200)
         assert buf.capacity == 200
         assert buf.count == old_count
 
     def test_shrink_caps_count(self) -> None:
         store, buf = self._make_proc_with_buffer()
         with store.lock:
-            store._resize_buffer_unlocked(buf, 5)
+            store._buffer_mutator.resize(buf, 5)
         assert buf.capacity == 5
         assert buf.count <= 5
 
@@ -111,6 +111,6 @@ class TestResizeBuffer:
     def test_non_positive_clamped_to_one(self, new_cap: int) -> None:
         store, buf = self._make_proc_with_buffer()
         with store.lock:
-            store._resize_buffer_unlocked(buf, new_cap)
+            store._buffer_mutator.resize(buf, new_cap)
         assert buf.capacity == 1
         assert buf.count <= 1

@@ -27,14 +27,14 @@ def test_apply_overflow_policy_keeps_full_chunk_when_it_fits(caplog) -> None:
     store = SignalBufferStore(_config())
     chunk = np.arange(12, dtype=np.float32).reshape(4, 3)
 
-    trimmed, overflow = store._apply_overflow_policy_unlocked(
+    prepared = store._ingest_preparer.apply_overflow_policy(
         "sensor-fit",
         chunk,
         capacity=4,
     )
 
-    assert overflow == OverflowResult(keep_count=4, drop_count=0, start_offset=0)
-    np.testing.assert_array_equal(trimmed, chunk)
+    assert prepared.overflow == OverflowResult(keep_count=4, drop_count=0, start_offset=0)
+    np.testing.assert_array_equal(prepared.chunk, chunk)
     assert caplog.text == ""
 
 
@@ -42,14 +42,14 @@ def test_apply_overflow_policy_trims_oldest_samples_and_warns(caplog) -> None:
     store = SignalBufferStore(_config())
     chunk = np.arange(18, dtype=np.float32).reshape(6, 3)
 
-    with caplog.at_level("WARNING", logger="vibesensor.infra.processing.buffer_store"):
-        trimmed, overflow = store._apply_overflow_policy_unlocked(
+    with caplog.at_level("WARNING", logger="vibesensor.infra.processing.ingest_preparation"):
+        prepared = store._ingest_preparer.apply_overflow_policy(
             "sensor-overflow",
             chunk,
             capacity=4,
         )
 
-    assert overflow == OverflowResult(keep_count=4, drop_count=2, start_offset=2)
-    np.testing.assert_array_equal(trimmed, chunk[-4:])
+    assert prepared.overflow == OverflowResult(keep_count=4, drop_count=2, start_offset=2)
+    np.testing.assert_array_equal(prepared.chunk, chunk[-4:])
     assert "exceeds buffer capacity 4" in caplog.text
     assert "discarding 2 oldest samples" in caplog.text

@@ -193,9 +193,10 @@ explicit advisory overlay at the history delivery boundary, not a hidden input
 to the persisted projection or the default report cache path. Report endpoints
 rebuild `ReportTemplateData` from the persisted summary on demand via
 `use_cases/history/report_preparation.py:prepare_report_input()`, which
-reconstructs the domain aggregate and precomputes semantic report facts, and
-`adapters/pdf/mapping.py:map_summary()`, which stays focused on adapter-local
-mapping and rendering data assembly.
+reconstructs the domain aggregate and assembles the prepared report handoff,
+`use_cases/history/report_facts.py:prepare_report_facts()`, which precomputes
+semantic report facts, and `adapters/pdf/mapping.py:map_summary()`, which
+stays focused on adapter-local mapping and rendering data assembly.
 
 Persisted post-stop analysis strength/intensity outputs are dB-only.
 Raw ingest/sample acceleration fields may still be expressed in g.
@@ -207,7 +208,8 @@ Raw ingest/sample acceleration fields may still be expressed in g.
 2. Call it from `RunAnalysis.summarize()` at the correct point in the
    pipeline.
 3. If the new output is needed by the renderer, add any report-facing shaping
-   in `use_cases/history/report_preparation.py`, then update
+   in `use_cases/history/report_facts.py` or
+   `use_cases/history/report_preparation.py`, then update
    `adapters/pdf/mapping.py:map_summary()` and `ReportTemplateData`. Keep
    semantic interpretation on the history/preparation side rather than in
    `adapters/pdf/*`.

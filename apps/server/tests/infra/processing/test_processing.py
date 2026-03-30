@@ -130,7 +130,7 @@ def test_ingest_waits_while_same_client_buffer_lock_is_held() -> None:
 
     processor.ingest("c-lock", samples, sample_rate_hz=800)
     with processor._store.lock:
-        client_lock = processor._store._client_locks["c-lock"]
+        client_lock = processor._store._registry._client_locks["c-lock"]
     client_lock.acquire()
     worker = Thread(target=_ingest)
     worker.start()
@@ -155,7 +155,7 @@ def test_ingest_other_client_not_blocked_by_unrelated_client_lock() -> None:
 
     processor.ingest("c-lock", samples, sample_rate_hz=800)
     with processor._store.lock:
-        client_lock = processor._store._client_locks["c-lock"]
+        client_lock = processor._store._registry._client_locks["c-lock"]
     client_lock.acquire()
 
     def _ingest() -> None:
@@ -186,7 +186,7 @@ def test_evict_clients_does_not_wait_on_stale_client_lock() -> None:
     processor.ingest("keep", samples, sample_rate_hz=800)
     processor.ingest("stale", samples, sample_rate_hz=800)
     with processor._store.lock:
-        stale_lock = processor._store._client_locks["stale"]
+        stale_lock = processor._store._registry._client_locks["stale"]
     stale_lock.acquire()
 
     def _evict() -> None:
@@ -204,7 +204,7 @@ def test_evict_clients_does_not_wait_on_stale_client_lock() -> None:
     assert evicted.is_set()
     assert "keep" in processor._store.buffers
     assert "stale" not in processor._store.buffers
-    assert "stale" not in processor._store._client_locks
+    assert "stale" not in processor._store._registry._client_locks
 
 
 def test_ingest_not_blocked_during_compute() -> None:

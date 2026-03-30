@@ -40,7 +40,7 @@ class TestFlushBumpsGeneration:
             fft_n=512,
         )
         with proc._store.lock:
-            buf = proc._store._get_or_create_unlocked("sensor-1")
+            buf = proc._store._registry._get_or_create_unlocked("sensor-1")
         buf.ingest_generation = 5
         buf.count = 10  # pretend some data
         proc.flush_client_buffer("sensor-1")
