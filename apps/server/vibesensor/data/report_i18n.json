@@ -1336,12 +1336,12 @@
     "nl": "Weinig actieve sensoren; locatievergelijking is minder betrouwbaar."
   },
   "SUITABILITY_SPEED_VARIATION_PASS": {
-    "en": "Wide enough speed sweep for order tracking.",
-    "nl": "Snelheidsbereik is breed genoeg voor ordetracking."
+    "en": "Speed range stayed in a usable diagnostic band for steady-state diagnosis and order tracking.",
+    "nl": "Snelheidsbereik bleef tijdens deze run binnen een bruikbaar diagnostisch bereik voor steady-state diagnose en ordetracking."
   },
   "SUITABILITY_SPEED_VARIATION_WARN": {
-    "en": "Speed sweep is narrow; repeat with +20 to +30 km/h span.",
-    "nl": "Snelheidsbereik is te smal; herhaal met +20 tot +30 km/u extra bereik."
+    "en": "Speed range never settled into a usable diagnostic band; repeat at a steady cruise above 20 km/h.",
+    "nl": "Snelheidsbereik kwam niet in een bruikbaar diagnostisch bereik; herhaal bij een constante kruissnelheid boven 20 km/u."
   },
   "SUMMARY": {
     "en": "Summary",
