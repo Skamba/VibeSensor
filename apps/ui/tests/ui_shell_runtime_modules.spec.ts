@@ -494,6 +494,29 @@ test.describe("createUiShellStatusModule", () => {
     expect(speed.textContent).toContain("speed.override");
     expect(speed.textContent).toContain("\"unit\":\"speed.unit.kmh\"");
   });
+
+  test("renders OBD2 when OBD2 is the resolved speed source", () => {
+    const state = createAppState();
+    state.realtime.speedMps = 22.5;
+    state.settings.speedSource = "obd2";
+    state.settings.resolvedSpeedSource = "obd2";
+    state.shell.speedUnit = "kmh";
+    const { els, speed } = createShellDeps();
+    const module = createUiShellStatusModule({
+      shell: state.shell,
+      transport: state.transport,
+      realtime: state.realtime,
+      settings: state.settings,
+      els,
+      t: testTranslation,
+      setPillState: () => {},
+    });
+
+    module.renderSpeedReadout();
+
+    expect(speed.textContent).toContain("speed.obd2");
+    expect(speed.textContent).toContain("\"unit\":\"speed.unit.kmh\"");
+  });
 });
 
 test.describe("createUiShellLanguageRefreshModule", () => {
