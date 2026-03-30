@@ -2,19 +2,14 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable, Iterable, Iterator
-from contextlib import contextmanager
+from collections.abc import Callable, Iterable
+from contextlib import AbstractContextManager
 from threading import RLock
 
-import numpy as np
-
-from vibesensor.infra.processing.buffer_capacity import (
-    OverflowResult,
-    clamp_sample_rate,
-    compute_resize_capacity,
-    evaluate_overflow,
-)
+from vibesensor.infra.processing.buffer_mutations import ClientBufferMutator
+from vibesensor.infra.processing.buffer_registry import ClientBufferRegistry
 from vibesensor.infra.processing.buffers import ClientBuffer
+from vibesensor.infra.processing.ingest_preparation import IngestChunkPreparer
 from vibesensor.infra.processing.models import (
     CachedMetricsHit,
     ClientMetrics,
@@ -32,21 +27,27 @@ from vibesensor.infra.processing.snapshot_builder import (
 from vibesensor.shared.types.payload_types import (
     IntakeStatsPayload,
 )
-from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 LOGGER = logging.getLogger(__name__)
 
 
 class SignalBufferStore:
-    """Own shared client buffer state, lifecycle, and per-client locked snapshots."""
+    """Coordinate shared processing buffers across registry, mutation, and snapshot seams."""
 
     def __init__(self, config: ProcessorConfig) -> None:
         self.config = config
-        self.buffers: dict[str, ClientBuffer] = {}
-        self._client_locks: dict[str, RLock] = {}
-        self._next_buffer_epoch = 0
-        self.lock = RLock()
+        self._registry = ClientBufferRegistry(config)
+        self._buffer_mutator = ClientBufferMutator(config)
+        self._ingest_preparer = IngestChunkPreparer(config)
         self.stats = ProcessorStats()
+
+    @property
+    def buffers(self) -> dict[str, ClientBuffer]:
+        return self._registry.buffers
+
+    @property
+    def lock(self) -> RLock:
+        return self._registry.lock
 
     def flush_client_buffer(
         self,
@@ -58,16 +59,7 @@ class SignalBufferStore:
         with self.locked_client_buffer(client_id) as buf:
             if buf is None:
                 return
-            buf.data[:] = 0.0
-            buf.write_idx = 0
-            buf.count = 0
-            buf.last_t0_us = 0
-            buf.samples_since_t0 = 0
-            buf.latest_metrics = {}
-            buf.latest_spectrum = {}
-            buf.latest_strength_metrics = empty_vibration_strength_metrics()
-            self._invalidate_cached_payloads_unlocked(buf)
-            buf.ingest_generation += 1
+            self._buffer_mutator.reset(buf)
         LOGGER.info("Flushed signal buffer for client %s (%s)", client_id, reason)
 
     def ingest(
@@ -82,23 +74,16 @@ class SignalBufferStore:
         t_start = clock()
         if samples.size == 0:
             return
+        chunk = self._ingest_preparer.normalize_chunk(client_id, samples)
+        if chunk is None:
+            return
 
         ingested_samples = 0
         dropped_samples = 0
         with self.locked_client_buffer(client_id, create=True) as buf:
             assert buf is not None
-            chunk: FloatArray = np.asarray(samples, dtype=np.float32)
-            if self.config.accel_scale_g_per_lsb is not None:
-                chunk = chunk * np.float32(self.config.accel_scale_g_per_lsb)
-            if chunk.ndim != 2 or chunk.shape[1] != 3:
-                LOGGER.warning(
-                    "Dropping malformed sample chunk for %s with shape %s",
-                    client_id,
-                    chunk.shape,
-                )
-                return
             if sample_rate_hz is not None and sample_rate_hz > 0:
-                self._apply_sample_rate_override_unlocked(
+                self._buffer_mutator.apply_sample_rate_override(
                     buf,
                     sample_rate_hz,
                     resize_buffer=True,
@@ -106,14 +91,14 @@ class SignalBufferStore:
             now_mono = clock()
             buf.last_ingest_mono_s = now_mono
 
-            chunk, overflow = self._apply_overflow_policy_unlocked(
+            prepared = self._ingest_preparer.apply_overflow_policy(
                 client_id,
                 chunk,
                 capacity=buf.capacity,
             )
-            dropped_samples = overflow.drop_count
-            ingested_samples = apply_ring_buffer_ingest(buf, chunk, t0_us=t0_us)
-            self._invalidate_cached_payloads_unlocked(buf)
+            dropped_samples = prepared.overflow.drop_count
+            ingested_samples = apply_ring_buffer_ingest(buf, prepared.chunk, t0_us=t0_us)
+            self._buffer_mutator.invalidate_cached_payloads(buf)
         with self.lock:
             self.stats.total_ingested_samples += ingested_samples
             self.stats.buffer_overflow_drops += dropped_samples
@@ -130,7 +115,7 @@ class SignalBufferStore:
             if buf is None or buf.count == 0:
                 return None
             if sample_rate_hz is not None and sample_rate_hz > 0:
-                self._apply_sample_rate_override_unlocked(
+                self._buffer_mutator.apply_sample_rate_override(
                     buf,
                     sample_rate_hz,
                     resize_buffer=False,
@@ -157,10 +142,10 @@ class SignalBufferStore:
 
             fft_block: FloatArray | None = None
             if window.needs_separate_fft_block:
-                fft_block = self.copy_latest(buf, self.config.fft_n)
+                fft_block = self._buffer_mutator.copy_latest(buf, self.config.fft_n)
                 time_window = fft_block[:, -window.n_time :]
             else:
-                time_window = self.copy_latest(buf, window.n_time)
+                time_window = self._buffer_mutator.copy_latest(buf, window.n_time)
                 if buf.count >= self.config.fft_n:
                     fft_block = time_window[:, -self.config.fft_n :]
             return MetricsSnapshot(
@@ -175,22 +160,8 @@ class SignalBufferStore:
     def store_metrics_result(self, result: MetricsComputationResult) -> ClientMetrics:
         """Commit a compute result back into shared state and update stats."""
         with self.locked_client_buffer(result.client_id) as buf:
-            if (
-                buf is not None
-                and result.buffer_epoch == buf.buffer_epoch
-                and result.ingest_generation >= buf.compute_generation
-            ):
-                buf.latest_metrics = result.metrics
-                buf.compute_generation = result.ingest_generation
-                buf.compute_sample_rate_hz = result.sample_rate_hz
-                if result.has_fft_data:
-                    buf.latest_spectrum = result.spectrum_by_axis
-                    buf.latest_strength_metrics = result.strength_metrics
-                else:
-                    buf.latest_spectrum = {}
-                    buf.latest_strength_metrics = empty_vibration_strength_metrics()
-                buf.spectrum_generation += 1
-                self._invalidate_cached_payloads_unlocked(buf)
+            if buf is not None:
+                self._buffer_mutator.commit_metrics_result(buf, result)
         with self.lock:
             self.stats.last_compute_duration_s = result.duration_s
             self.stats.total_compute_calls += 1
@@ -254,18 +225,7 @@ class SignalBufferStore:
             return result
 
     def evict_clients(self, keep_client_ids: set[str]) -> None:
-        with self.lock:
-            stale_ids = [
-                client_id for client_id in self.buffers if client_id not in keep_client_ids
-            ]
-            for client_id in stale_ids:
-                # Detach stale client state under the store lock only. Threads
-                # already working with a stale client's buffer can finish
-                # against the detached objects, while new lookups will either
-                # see no buffer or create a fresh one without being blocked by
-                # eviction waiting on that stale client's lock.
-                self.buffers.pop(client_id, None)
-                self._client_locks.pop(client_id, None)
+        self._registry.evict_clients(keep_client_ids)
 
     def intake_stats(self) -> IntakeStatsPayload:
         with self.lock:
@@ -281,139 +241,16 @@ class SignalBufferStore:
         with self.lock:
             return self.stats.buffer_overflow_drops
 
-    def _get_or_create_unlocked(self, client_id: str) -> ClientBuffer:
-        buf = self.buffers.get(client_id)
-        if buf is None:
-            data: FloatArray = np.zeros((3, self.config.max_samples), dtype=np.float32)
-            buf = ClientBuffer(
-                data=data,
-                capacity=self.config.max_samples,
-                buffer_epoch=self._next_buffer_epoch,
-            )
-            self._next_buffer_epoch += 1
-            self.buffers[client_id] = buf
-            self._client_locks[client_id] = RLock()
-        return buf
-
-    def _client_lock_unlocked(self, client_id: str) -> RLock:
-        client_lock = self._client_locks.get(client_id)
-        if client_lock is None:
-            client_lock = RLock()
-            self._client_locks[client_id] = client_lock
-        return client_lock
-
-    @contextmanager
     def locked_client_buffer(
         self,
         client_id: str,
         *,
         create: bool = False,
-    ) -> Iterator[ClientBuffer | None]:
-        """Yield a single client buffer while holding only that client's lock.
+    ) -> AbstractContextManager[ClientBuffer | None]:
+        return self._registry.locked_client_buffer(client_id, create=create)
 
-        Lock acquisition always follows ``self.lock`` → per-client lock so
-        callers that take multiple client locks share a consistent order.
-        """
-        client_lock: RLock | None = None
-        buf: ClientBuffer | None = None
-        with self.lock:
-            if create:
-                buf = self._get_or_create_unlocked(client_id)
-            else:
-                buf = self.buffers.get(client_id)
-            if buf is not None:
-                client_lock = self._client_lock_unlocked(client_id)
-                client_lock.acquire()
-        try:
-            yield buf
-        finally:
-            if client_lock is not None:
-                client_lock.release()
-
-    @contextmanager
-    def locked_client_buffers(self, client_ids: Iterable[str]) -> Iterator[dict[str, ClientBuffer]]:
-        """Yield the requested existing client buffers while holding their locks."""
-        locked_buffers: dict[str, ClientBuffer] = {}
-        acquired_locks: list[RLock] = []
-        with self.lock:
-            for client_id in dict.fromkeys(client_ids):
-                buf = self.buffers.get(client_id)
-                if buf is None:
-                    continue
-                client_lock = self._client_lock_unlocked(client_id)
-                client_lock.acquire()
-                acquired_locks.append(client_lock)
-                locked_buffers[client_id] = buf
-        try:
-            yield locked_buffers
-        finally:
-            for client_lock in reversed(acquired_locks):
-                client_lock.release()
-
-    def _resize_buffer_unlocked(self, buf: ClientBuffer, new_capacity: int) -> None:
-        new_capacity = max(1, int(new_capacity))
-        if new_capacity == buf.capacity:
-            return
-        latest = self.copy_latest(buf, min(buf.count, new_capacity))
-        resized: FloatArray = np.zeros((3, new_capacity), dtype=np.float32)
-        if latest.size:
-            resized[:, : latest.shape[1]] = latest
-        buf.data = resized
-        buf.capacity = new_capacity
-        buf.write_idx = latest.shape[1] % new_capacity
-        buf.count = min(latest.shape[1], new_capacity)
-
-    def _invalidate_cached_payloads_unlocked(self, buf: ClientBuffer) -> None:
-        buf.invalidate_caches()
-
-    def _apply_overflow_policy_unlocked(
+    def locked_client_buffers(
         self,
-        client_id: str,
-        chunk: FloatArray,
-        *,
-        capacity: int,
-    ) -> tuple[FloatArray, OverflowResult]:
-        overflow = evaluate_overflow(int(chunk.shape[0]), capacity)
-        if overflow.drop_count:
-            LOGGER.warning(
-                "Sample chunk for %s exceeds buffer capacity %d; discarding %d oldest samples "
-                "from the incoming batch",
-                client_id,
-                capacity,
-                overflow.drop_count,
-            )
-            chunk = chunk[overflow.start_offset :]
-        return chunk, overflow
-
-    def _apply_sample_rate_override_unlocked(
-        self,
-        buf: ClientBuffer,
-        sample_rate_hz: int,
-        *,
-        resize_buffer: bool,
-    ) -> None:
-        result = clamp_sample_rate(int(sample_rate_hz))
-        if result.was_clamped:
-            LOGGER.warning(
-                "Clamped client sample_rate_hz from %d to %d to bound buffer growth",
-                int(sample_rate_hz),
-                result.rate_hz,
-            )
-        if result.rate_hz == buf.sample_rate_hz:
-            return
-        buf.sample_rate_hz = result.rate_hz
-        if resize_buffer:
-            self._resize_buffer_unlocked(
-                buf,
-                compute_resize_capacity(result.rate_hz, self.config.waveform_seconds),
-            )
-
-    def copy_latest(self, buf: ClientBuffer, n: int) -> FloatArray:
-        if n <= 0 or buf.count == 0:
-            return np.empty((3, 0), dtype=np.float32)
-        n = min(n, buf.count)
-        start = (buf.write_idx - n) % buf.capacity
-        if start + n <= buf.capacity:
-            return buf.data[:, start : start + n].copy()
-        first = buf.capacity - start
-        return np.concatenate((buf.data[:, start:], buf.data[:, : n - first]), axis=1)
+        client_ids: Iterable[str],
+    ) -> AbstractContextManager[dict[str, ClientBuffer]]:
+        return self._registry.locked_client_buffers(client_ids)

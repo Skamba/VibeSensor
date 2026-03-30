@@ -6,32 +6,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import (
-    LocationHotspotRow,
-    LocationIntensitySummary,
-    RecommendedAction,
-    VibrationOrigin,
-)
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.report_facts_projection import (
-    report_suitability_checks,
-    report_warning_payloads,
-)
 from vibesensor.shared.boundaries.report_interpretation import (
     PrimaryReportFacts,
-    compute_location_hotspot_rows,
-    filter_active_sensor_intensity,
-    normalize_origin_location,
-    resolve_primary_report_facts,
-    resolve_report_origin,
-    tire_spec_text,
 )
 from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
-from vibesensor.shared.boundaries.report_payload_projection import (
-    active_sensor_locations,
-    sensor_intensity_payload,
-    summary_metadata,
-)
 from vibesensor.shared.boundaries.report_renderer_payload import (
     PreparedReportRendererPayload,
     build_report_renderer_payload,
@@ -40,46 +19,34 @@ from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_s
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary,
-    RunSuitabilityCheck,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    SummaryWarningResponse as SummaryWarningPayload,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.helpers import safe_filename
 from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey
+from vibesensor.use_cases.history.report_facts import (
+    PreparedReportFacts,
+    prepare_report_facts,
+)
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
+
+__all__ = [
+    "PreparedReportFacts",
+    "PreparedReportInput",
+    "PreparedReportRendererPayload",
+    "PrimaryReportFacts",
+    "ValidatedPreparedReportInput",
+    "prepare_persisted_report_input",
+    "prepare_report_input",
+    "validate_prepared_report_input",
+]
 
 
 def _default_report_filename(payload: Mapping[str, object]) -> str:
     """Derive the default PDF filename from stable report-identifying payload fields."""
     run_id = str(payload.get("run_id") or payload.get("file_name") or "report")
     return f"{safe_filename(run_id)}_report.pdf"
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedReportFacts:
-    """History-prepared semantic report facts consumed by the PDF adapter."""
-
-    origin: VibrationOrigin | None
-    origin_location: str
-    sensor_locations_active: tuple[str, ...]
-    duration_text: str | None
-    start_time_utc: str | None
-    end_time_utc: str | None
-    sample_rate_hz: str | None
-    tire_spec_text: str | None
-    sample_count: int
-    sensor_model: str | None
-    firmware_version: str | None
-    active_sensor_intensity: tuple[LocationIntensitySummary, ...]
-    location_hotspot_rows: tuple[LocationHotspotRow, ...]
-    primary_candidate_facts: PrimaryReportFacts
-    recommended_actions: tuple[RecommendedAction, ...]
-    suitability_checks: tuple[RunSuitabilityCheck, ...]
-    warnings: tuple[SummaryWarningPayload, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,55 +125,6 @@ def _reconstruct_report_test_run(payload: Mapping[str, object]) -> TestRun | Non
     return test_run_from_summary(payload)
 
 
-def _prepare_report_facts(
-    payload: Mapping[str, object],
-    *,
-    test_run: TestRun,
-    warnings: RunContextWarningsInput = None,
-) -> PreparedReportFacts:
-    """Resolve the semantic report facts shared by downstream PDF mapping."""
-    metadata = summary_metadata(payload)
-    sensor_locations_active = active_sensor_locations(payload)
-    origin = resolve_report_origin(test_run)
-    origin_location = normalize_origin_location(origin)
-    config_snap = test_run.capture.setup.configuration_snapshot
-    active_sensor_intensity = tuple(
-        filter_active_sensor_intensity(
-            sensor_intensity_payload(payload),
-            sensor_locations_active,
-        )
-    )
-    primary_candidate_facts = resolve_primary_report_facts(
-        aggregate=test_run,
-        origin_location=origin_location,
-        sensor_locations_active=sensor_locations_active,
-        sensor_intensity=active_sensor_intensity,
-    )
-    return PreparedReportFacts(
-        origin=origin,
-        origin_location=origin_location,
-        sensor_locations_active=sensor_locations_active,
-        duration_text=str(payload.get("record_length") or "").strip() or None,
-        start_time_utc=str(payload.get("start_time_utc") or "").strip() or None,
-        end_time_utc=str(payload.get("end_time_utc") or "").strip() or None,
-        sample_rate_hz=(
-            f"{config_snap.raw_sample_rate_hz:g}"
-            if config_snap.raw_sample_rate_hz is not None
-            else None
-        ),
-        tire_spec_text=tire_spec_text(metadata),
-        sample_count=test_run.capture.sample_count,
-        sensor_model=config_snap.sensor_model,
-        firmware_version=config_snap.firmware_version,
-        active_sensor_intensity=active_sensor_intensity,
-        location_hotspot_rows=tuple(compute_location_hotspot_rows(active_sensor_intensity)),
-        primary_candidate_facts=primary_candidate_facts,
-        recommended_actions=test_run.recommended_actions,
-        suitability_checks=report_suitability_checks(test_run.suitability),
-        warnings=report_warning_payloads(payload, warnings=warnings),
-    )
-
-
 def _build_prepared_report_input(
     payload: Mapping[str, object],
     *,
@@ -220,7 +138,7 @@ def _build_prepared_report_input(
     prepared_language = str(normalize_lang(language or payload.get("lang")))
     renderer_payload = build_report_renderer_payload(payload)
     report_facts = (
-        _prepare_report_facts(payload, test_run=domain_test_run, warnings=warnings)
+        prepare_report_facts(payload, test_run=domain_test_run, warnings=warnings)
         if domain_test_run is not None
         else None
     )

@@ -73,13 +73,15 @@ enforces this.
 
 History-side report preparation now lives in
 `vibesensor.use_cases.history.report_preparation`, which owns the explicit
-`PreparedReportInput` seam passed into the PDF adapter, reconstructs the
-authoritative domain aggregate exactly once, and precomputes the semantic
-report facts the adapter needs (origin, active sensor intensity, hotspot rows,
-primary-candidate facts, next-step inputs, and data-trust inputs). Pure
-report-domain interpretation that reads domain findings/test runs but does not
-perform i18n or PDF dataclass assembly still lives in
-`vibesensor.use_cases.history.report_interpretation`, but it is now consumed by
+`PreparedReportInput` seam passed into the PDF adapter, projectability gating,
+domain reconstruction, filename/language normalization, and final prepared-input
+assembly. Semantic report-facts shaping now lives in the dedicated
+`vibesensor.use_cases.history.report_facts` module, which precomputes the
+origin, active sensor intensity, hotspot rows, primary-candidate facts,
+next-step inputs, and data-trust inputs the adapter needs. Pure report-domain
+interpretation that reads domain findings/test runs but does not perform i18n
+or PDF dataclass assembly still lives in
+`vibesensor.shared.boundaries.report_interpretation`, but it is consumed by
 history-side preparation rather than imported directly by `adapters.pdf`
 modules.
 
@@ -119,13 +121,15 @@ needs:
 2. Add a corresponding field to `ReportTemplateData` in
    `vibesensor.adapters.pdf.report_data`.
 3. If the new section needs report-specific shaping, add it to
-   `PreparedReportInput` preparation in
-   `vibesensor.use_cases.history.report_preparation`, then populate the final
-   renderer field in `map_summary()` in `vibesensor.adapters.pdf.mapping`.
+   `vibesensor.use_cases.history.report_facts` (for semantic report facts) or
+   `vibesensor.use_cases.history.report_preparation` (for the outer prepared
+   handoff), then populate the final renderer field in `map_summary()` in
+   `vibesensor.adapters.pdf.mapping`.
    Keep the default report-request/cache path driven only by persisted run data
    and persisted analysis. If a feature needs to compare a historical run
    against current mutable settings, model that as an explicit advisory overlay
    instead of threading live settings into the base report request.
 4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.adapters.pdf`.
 5. Never add history/report semantic interpretation logic to the renderer
-   package — always pre-compute it in `report_preparation.py`.
+   package — always pre-compute it on the history side in `report_facts.py`
+   and `report_preparation.py`.
