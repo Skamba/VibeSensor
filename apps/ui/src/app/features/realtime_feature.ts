@@ -63,6 +63,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   let handlersBound = false;
   let pendingLoggingAction: "starting" | "stopping" | null = null;
   let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
+  let lastCompletedElapsedText = "--";
 
   const SHORTHAND_LOCATION_MAP: Record<string, string> = {
     "front left": "front_left_wheel",
@@ -319,7 +320,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         variant: "ok",
         text: t("dashboard.health.recording"),
         summary: t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount }),
-        showOverviewPill: true,
+        showOverviewPill: false,
       };
     }
     return {
@@ -351,7 +352,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     ctx.setStatValue(els.liveRecordingState, computeRecordingPanelState().phaseText);
     ctx.setStatValue(els.liveDataFreshness, dataFreshnessText());
     ctx.setStatValue(els.liveStrongestSignal, strongestSignalText(signal));
-    els.liveStrongestSignal?.classList.toggle("stat--spotlight", Boolean(signal));
+    els.liveStrongestSignal?.classList.remove("stat--spotlight");
   }
 
   function renderLiveHealth(): void {
@@ -462,6 +463,12 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     const elapsedText = on ? formatElapsed(status.start_time_utc) : "--";
     const samplesText = formatInt(status.samples_written ?? 0);
 
+    if (on) {
+      lastCompletedElapsedText = elapsedText;
+    } else if (!status.analysis_in_progress && !status.last_completed_run_id) {
+      lastCompletedElapsedText = "--";
+    }
+
     if (pendingLoggingAction === "starting") {
       return {
         pillVariant: "muted",
@@ -511,7 +518,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showStop: true,
         startDisabled: true,
         stopDisabled: false,
-        showPill: true,
+        showPill: Boolean(status.write_error),
       };
     }
 
@@ -523,13 +530,13 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         phaseText: t("dashboard.recording_phase.processing"),
         summaryText: t("dashboard.logging.processing", { runId }),
         runIdText,
-        elapsedText: "--",
+        elapsedText: lastCompletedElapsedText,
         samplesText,
         showStart: true,
         showStop: false,
         startDisabled: !recordingReady,
         stopDisabled: true,
-        showPill: true,
+        showPill: false,
       };
     }
 
@@ -540,13 +547,13 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         phaseText: t("dashboard.recording_phase.saved"),
         summaryText: t("dashboard.logging.saved", { runId: status.last_completed_run_id }),
         runIdText,
-        elapsedText: "--",
+        elapsedText: lastCompletedElapsedText,
         samplesText,
         showStart: true,
         showStop: false,
         startDisabled: !recordingReady,
         stopDisabled: true,
-        showPill: true,
+        showPill: false,
       };
     }
 
@@ -563,7 +570,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showStop: false,
         startDisabled: true,
         stopDisabled: true,
-        showPill: true,
+        showPill: false,
       };
     }
 
@@ -592,6 +599,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     ctx.setStatValue(els.loggingPhase, panelState.phaseText);
     ctx.setStatValue(els.loggingElapsed, panelState.elapsedText);
     ctx.setStatValue(els.loggingSamples, panelState.samplesText);
+    if (els.loggingPhase) {
+      els.loggingPhase.hidden = true;
+    }
     if (els.loggingSummary) {
       els.loggingSummary.hidden = panelState.summaryText === "";
       els.loggingSummary.textContent = panelState.summaryText;
@@ -599,6 +609,10 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     if (els.loggingRunId) {
       els.loggingRunId.hidden = panelState.runIdText === "";
       els.loggingRunId.textContent = panelState.runIdText;
+    }
+    const loggingRow = els.loggingStatus?.parentElement;
+    if (loggingRow) {
+      loggingRow.hidden = !panelState.showPill && panelState.runIdText === "";
     }
     if (els.startLoggingBtn) {
       els.startLoggingBtn.hidden = !panelState.showStart;
@@ -635,6 +649,13 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       ctx.setStatValue(els.loggingPhase, t("status.unavailable"));
       ctx.setStatValue(els.loggingElapsed, "--");
       ctx.setStatValue(els.loggingSamples, "--");
+      if (els.loggingPhase) {
+        els.loggingPhase.hidden = true;
+      }
+      const loggingRow = els.loggingStatus?.parentElement;
+      if (loggingRow) {
+        loggingRow.hidden = false;
+      }
       if (els.startLoggingBtn) {
         els.startLoggingBtn.hidden = false;
         els.startLoggingBtn.disabled = true;

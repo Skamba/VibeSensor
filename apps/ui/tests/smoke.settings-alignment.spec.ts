@@ -130,7 +130,8 @@ test("live strongest signal stat stays aligned with peer summary metrics", async
   const strongestSignalValue = strongestSignalStat.locator("[data-value]");
   const speedValue = page.locator("#speed");
 
-  await expect(strongestSignalStat).toHaveClass(/stat--spotlight/);
+  await expect(strongestSignalStat).not.toHaveClass(/stat--spotlight/);
+  await expect(strongestSignalLabel).toHaveText("Strongest sensor level");
   await expect(dataFreshnessValue).toBeVisible();
   await expect(strongestSignalValue).toBeVisible();
   await expect(speedValue).toBeVisible();
