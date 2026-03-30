@@ -12,6 +12,7 @@ import {
 } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createPollingController } from "./polling_controller";
+import { setSettingsFeedback } from "../views/settings_feedback";
 import {
   type DisplayedSpeedSourceMode,
   deriveDisplayedSpeedSourceMode,
@@ -60,6 +61,49 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
   function applyStaleTimeoutFromInput(payload: SpeedSourceRequest): void {
     const staleVal = Number(els.staleTimeoutInput?.value);
     if (staleVal >= 3 && staleVal <= 120) payload.stale_timeout_s = staleVal;
+  }
+
+  function clearInputFeedback(input: HTMLInputElement | null, feedback: HTMLElement | null): void {
+    input?.removeAttribute("aria-invalid");
+    input?.removeAttribute("aria-describedby");
+    setSettingsFeedback(feedback, null);
+  }
+
+  function showInputFeedback(input: HTMLInputElement | null, feedback: HTMLElement | null, message: string): void {
+    if (feedback?.id) {
+      input?.setAttribute("aria-describedby", feedback.id);
+    }
+    input?.setAttribute("aria-invalid", "true");
+    setSettingsFeedback(feedback, {
+      tone: "error",
+      body: message,
+      compact: true,
+    });
+    input?.focus();
+  }
+
+  function clearSpeedSourceFeedback(): void {
+    clearInputFeedback(els.manualSpeedInput, els.manualSpeedFeedback);
+    clearInputFeedback(els.staleTimeoutInput, els.staleTimeoutFeedback);
+    els.speedSourceChoiceObd?.classList.remove("speed-source-choice--error");
+    els.speedSourceRadios.forEach((radio) => {
+      radio.removeAttribute("aria-invalid");
+    });
+    setSettingsFeedback(els.speedSourceSaveFeedback, null);
+  }
+
+  function openSpeedSourceDiagnostics(): void {
+    els.speedSourceDiagnostics?.setAttribute("open", "");
+  }
+
+  function showSpeedSourceSaveFeedback(message: string, detail: string): void {
+    setSettingsFeedback(els.speedSourceSaveFeedback, {
+      tone: "error",
+      title: t("settings.speed.save_failed_title"),
+      body: message,
+      detail,
+    });
+    openSpeedSourceDiagnostics();
   }
 
   function selectedSpeedUnitLabel(): string {
@@ -127,10 +171,6 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     if (els.speedSourceEffectiveSpeed) {
       els.speedSourceEffectiveSpeed.textContent = formatSpeedValue(activeEffectiveSpeedKph());
     }
-  }
-
-  function obdBoolLabel(value: boolean): string {
-    return value ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
   }
 
   function looksLikeMacAlias(rawValue: string | null | undefined): boolean {
@@ -319,6 +359,7 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
 
   function syncSpeedSourceInputs(): void {
     speedSourceDraftDirty = false;
+    clearSpeedSourceFeedback();
     applyDisplayedModeToRadios(deriveDisplayedSpeedSourceMode(settings));
     if (els.manualSpeedInput) {
       els.manualSpeedInput.value = settings.manualSpeedKph != null ? String(settings.manualSpeedKph) : "";
@@ -342,8 +383,10 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
       const saved = await updateSettingsSpeedSource(payload);
       applySpeedSourcePayload(saved);
     } catch (error) {
-      void loadSpeedSourceFromServer();
-      ctx.onSaveError(error);
+      showSpeedSourceSaveFeedback(
+        error instanceof Error ? error.message : t("settings.save_failed"),
+        t("settings.speed.save_failed_detail", { source: activeSourceLabel() }),
+      );
     }
   }
 
@@ -418,17 +461,50 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
   }
 
   function saveSpeedSourceFromInputs(): void {
+    clearSpeedSourceFeedback();
     const checkedRadio = els.speedSourceRadios.find((radio) => radio.checked);
     const src: SpeedSourceKind = speedSourceDraftDirty && checkedRadio && isSpeedSourceKind(checkedRadio.value)
       ? checkedRadio.value
       : settings.speedSource;
+    const manualInputValue = els.manualSpeedInput?.value.trim() ?? "";
+    const manualSpeedKph = parseManualSpeedKph(Number(manualInputValue));
+    const staleValueRaw = els.staleTimeoutInput?.value.trim() ?? "";
+    const staleValue = Number(staleValueRaw);
+    const staleTimeoutInvalid = src !== "manual" && (
+      staleValueRaw === ""
+      || Number.isNaN(staleValue)
+      || !Number.isFinite(staleValue)
+      || staleValue < 3
+      || staleValue > 120
+    );
+    const manualSpeedInvalid = (src === "manual" && manualSpeedKph == null)
+      || (manualInputValue !== "" && manualSpeedKph == null);
+    if (manualSpeedInvalid) {
+      showInputFeedback(els.manualSpeedInput, els.manualSpeedFeedback, t("settings.speed.manual_invalid"));
+      showSpeedSourceSaveFeedback(t("settings.speed.manual_invalid"), t("settings.speed.validation_active_detail", {
+        source: activeSourceLabel(),
+      }));
+      return;
+    }
+    if (staleTimeoutInvalid) {
+      showInputFeedback(els.staleTimeoutInput, els.staleTimeoutFeedback, t("settings.speed.stale_timeout_invalid"));
+      showSpeedSourceSaveFeedback(t("settings.speed.stale_timeout_invalid"), t("settings.speed.validation_active_detail", {
+        source: activeSourceLabel(),
+      }));
+      return;
+    }
     if (src === "obd2" && !settings.obdDeviceMac) {
-      ctx.showError(t("settings.speed.obd_missing_device_error"));
+      els.speedSourceChoiceObd?.classList.add("speed-source-choice--error");
+      els.speedSourceRadios.find((radio) => radio.value === "obd2")?.setAttribute("aria-invalid", "true");
+      showSpeedSourceSaveFeedback(t("settings.speed.obd_missing_device_error"), t("settings.speed.validation_active_detail", {
+        source: activeSourceLabel(),
+      }));
+      els.scanObdDevicesBtn?.focus();
       return;
     }
     const payload: SpeedSourceRequest = {
       speed_source: src,
-      manual_speed_kph: parseManualSpeedKph(Number(els.manualSpeedInput?.value)),
+      manual_speed_kph: manualSpeedKph,
     };
     applyStaleTimeoutFromInput(payload);
     void syncSpeedSourceToServer(payload);
@@ -438,11 +514,23 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     els.speedSourceRadios.forEach((radio) => {
       radio.addEventListener("change", () => {
         speedSourceDraftDirty = true;
+        clearSpeedSourceFeedback();
         syncSpeedSourceSelectionUi();
       });
     });
+    els.manualSpeedInput?.addEventListener("input", () => {
+      clearInputFeedback(els.manualSpeedInput, els.manualSpeedFeedback);
+      setSettingsFeedback(els.speedSourceSaveFeedback, null);
+    });
+    els.staleTimeoutInput?.addEventListener("input", () => {
+      clearInputFeedback(els.staleTimeoutInput, els.staleTimeoutFeedback);
+      setSettingsFeedback(els.speedSourceSaveFeedback, null);
+    });
     els.saveSpeedSourceBtn?.addEventListener("click", saveSpeedSourceFromInputs);
     els.scanObdDevicesBtn?.addEventListener("click", () => {
+      els.speedSourceChoiceObd?.classList.remove("speed-source-choice--error");
+      els.speedSourceRadios.find((radio) => radio.value === "obd2")?.removeAttribute("aria-invalid");
+      setSettingsFeedback(els.speedSourceSaveFeedback, null);
       void scanObdDevices();
     });
     els.settingsTabs.forEach((tab) => {
@@ -471,6 +559,9 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
       if (!macAddress) {
         return;
       }
+      els.speedSourceChoiceObd?.classList.remove("speed-source-choice--error");
+      els.speedSourceRadios.find((radio) => radio.value === "obd2")?.removeAttribute("aria-invalid");
+      setSettingsFeedback(els.speedSourceSaveFeedback, null);
       void pairObdDevice(macAddress);
     });
   }
