@@ -126,6 +126,60 @@ test("resolved fallback manual state stays coherent across header status, form, 
   await expect(page.locator("#manualSpeedInput")).toHaveValue("80");
 });
 
+test("resolved OBD2 state stays coherent across header status, form, and device summary", async ({ page }) => {
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/speed-source": {
+        speed_source: "obd2",
+        manual_speed_kph: null,
+        stale_timeout_s: 5,
+        obd_device_mac: "0022d9001bb1",
+        obd_device_name: "OBDLink CX",
+      },
+      "GET /api/settings/speed-source/status": gpsStatus({
+        gps_enabled: false,
+        connection_state: "disabled",
+        device: null,
+        raw_speed_kmh: null,
+        effective_speed_kmh: 81,
+        fallback_active: false,
+        speed_source: "obd2",
+      }),
+      "GET /api/settings/obd/status": {
+        configured_device_mac: "0022d9001bb1",
+        configured_device_name: "OBDLink CX",
+        paired: true,
+        trusted: true,
+        connected: true,
+        rfcomm_channel: 1,
+        last_rpm: 2200,
+        last_raw_response: "41 0C 1B 58",
+        debug_hint: null,
+      },
+    }),
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      speed_mps: 81 / 3.6,
+      clients: [],
+      spectra: { clients: {} },
+    },
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#speed")).toContainText("81.0 km/h");
+  await expect(page.locator("#speed")).toContainText("OBD2");
+
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await expect(page.locator("#speedSourceCurrentSource")).toHaveText("OBD2");
+  await expect(page.locator("#speedSourceEffectiveSpeed")).toHaveText("81.0 km/h");
+  await expect(page.locator('input[name="speedSourceRadio"][value="obd2"]')).toBeChecked();
+  await expect(page.locator('input[name="speedSourceRadio"][value="gps"]')).not.toBeChecked();
+  await expect(page.locator("#obdConfiguredDevice")).toHaveText("OBDLink CX (0022d9001bb1)");
+});
+
 test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {
   let persistedAnalysisSettings: Record<string, number> = {};
   let analysisPutCalls = 0;
