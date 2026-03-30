@@ -47,6 +47,9 @@ test.describe("createUiCarCreationCommand", () => {
       syncActiveCarToInputs: () => {
         lifecycleCalls.push("syncActiveCarToInputs");
       },
+      showCarCreationSuccess: (carId, carName) => {
+        lifecycleCalls.push(`showCarCreationSuccess:${carId}:${carName}`);
+      },
       renderCarList: () => {
         lifecycleCalls.push("renderCarList");
       },
@@ -89,13 +92,14 @@ test.describe("createUiCarCreationCommand", () => {
           current_gear_ratio: 0.71,
         },
       },
-    ]);
+      ]);
     expect(setActiveRequests).toEqual(["car-2"]);
     expect(payloadCalls).toEqual([createdCarsPayload, activatedCarsPayload]);
     expect(lifecycleCalls).toEqual([
       "syncCarsPayload:car-1",
       "syncCarsPayload:car-2",
       "syncActiveCarToInputs",
+      "showCarCreationSuccess:car-2:Volvo XC40 Recharge",
       "renderCarList",
       "renderSpectrum",
     ]);

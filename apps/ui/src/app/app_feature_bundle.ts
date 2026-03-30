@@ -87,6 +87,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     getVehicleSettings: () => state.settings.vehicleSettings,
     syncCarsPayload: (payload) => settings.syncCarsPayload(payload),
     syncActiveCarToInputs: () => settings.syncActiveCarToInputs(),
+    showCarCreationSuccess: (carId, carName) => settings.showCarCreationSuccess(carId, carName),
     renderCarList: () => settings.renderCarList(),
     renderSpectrum: deps.renderSpectrum,
   });
