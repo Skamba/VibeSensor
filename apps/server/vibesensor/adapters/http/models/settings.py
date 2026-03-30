@@ -179,6 +179,14 @@ class ObdStatusResponse(BaseModel):
     last_sample_age_s: float | None
     last_speed_kmh: float | None
     last_rpm: float | None
+    rpm_sample_age_s: float | None
+    rpm_target_interval_ms: int | None
+    rpm_effective_hz: float | None
+    request_rtt_ms: float | None
+    timeout_count: int
+    error_count: int
+    poll_mode: str | None
+    backoff_active: bool
     last_error: str | None
     last_raw_response: str | None
     reconnect_delay_s: float | None

@@ -149,6 +149,14 @@ export interface UiDomElements {
   obdStatusConnected: HTMLElement | null;
   obdStatusRfcommChannel: HTMLElement | null;
   obdStatusLastRpm: HTMLElement | null;
+  obdStatusRpmAge: HTMLElement | null;
+  obdStatusTargetCadence: HTMLElement | null;
+  obdStatusEffectiveCadence: HTMLElement | null;
+  obdStatusRequestRtt: HTMLElement | null;
+  obdStatusTimeouts: HTMLElement | null;
+  obdStatusErrors: HTMLElement | null;
+  obdStatusMode: HTMLElement | null;
+  obdStatusBackoff: HTMLElement | null;
   obdStatusRawResponse: HTMLElement | null;
   obdStatusDebugHint: HTMLElement | null;
   gpsFallbackPanel: HTMLElement | null;
@@ -337,6 +345,14 @@ export function createUiDomRegistry(): UiDomElements {
     obdStatusConnected: el("obdStatusConnected"),
     obdStatusRfcommChannel: el("obdStatusRfcommChannel"),
     obdStatusLastRpm: el("obdStatusLastRpm"),
+    obdStatusRpmAge: el("obdStatusRpmAge"),
+    obdStatusTargetCadence: el("obdStatusTargetCadence"),
+    obdStatusEffectiveCadence: el("obdStatusEffectiveCadence"),
+    obdStatusRequestRtt: el("obdStatusRequestRtt"),
+    obdStatusTimeouts: el("obdStatusTimeouts"),
+    obdStatusErrors: el("obdStatusErrors"),
+    obdStatusMode: el("obdStatusMode"),
+    obdStatusBackoff: el("obdStatusBackoff"),
     obdStatusRawResponse: el("obdStatusRawResponse"),
     obdStatusDebugHint: el("obdStatusDebugHint"),
     gpsFallbackPanel: el("gpsFallbackPanel"),

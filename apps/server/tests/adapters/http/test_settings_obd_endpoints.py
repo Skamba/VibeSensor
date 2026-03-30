@@ -124,6 +124,14 @@ def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
         last_sample_age_s=0.2,
         last_speed_kmh=43.2,
         last_rpm=2100.0,
+        rpm_sample_age_s=0.1,
+        rpm_target_interval_ms=75,
+        rpm_effective_hz=13.3,
+        request_rtt_ms=61.4,
+        timeout_count=1,
+        error_count=2,
+        poll_mode="rpm_only_backoff",
+        backoff_active=True,
         last_error=None,
         last_raw_response="410D0C",
         reconnect_delay_s=None,
@@ -136,4 +144,7 @@ def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
     body = response.json()
     assert body["configured_device_mac"] == "00043e5a4a4d"
     assert body["last_rpm"] == 2100.0
+    assert body["rpm_target_interval_ms"] == 75
+    assert body["poll_mode"] == "rpm_only_backoff"
+    assert body["backoff_active"] is True
     speed_service.obd_status.assert_called_once_with()
