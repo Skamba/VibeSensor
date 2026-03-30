@@ -9,26 +9,39 @@ test("spectrum controls simplify the chart and update the inspector", async ({ p
   const bandToggle = page.locator("#spectrumBandToggle");
   const bandLegend = page.locator("#bandLegend");
   const allTracesChip = page.getByRole("button", { name: /All sensor traces/i });
+  const adjacentChip = page.getByRole("button", { name: /Front Left Wheel/i });
   const sensorChip = page.getByRole("button", { name: /Front Right Wheel/i });
 
   await expect(bandToggle).toBeVisible();
+  await expect(bandToggle).toHaveAttribute("aria-controls", "bandLegend");
   await expect(bandToggle).toHaveAttribute("aria-pressed", "false");
+  await expect(bandToggle).toHaveAttribute("aria-expanded", "false");
   await expect(bandLegend).toBeHidden();
   await expect(inspector).toContainText("Strongest trace:");
+  await expect(sensorChip).toContainText("Visible");
   await sensorChip.click();
   await expect(sensorChip).toHaveAttribute("aria-pressed", "true");
+  await expect(sensorChip).toContainText("Isolated");
+  await expect(adjacentChip).toContainText("Inactive");
   await expect(inspector).toContainText("Focused trace:");
   await expect(inspector).toContainText("Front Right Wheel");
 
   await bandToggle.click();
   await expect(bandToggle).toHaveAttribute("aria-pressed", "true");
+  await expect(bandToggle).toHaveAttribute("aria-expanded", "true");
   await expect(bandToggle).toHaveText("Hide reference bands");
+  await expect(page.locator(".spectrum-toolbar__bands")).toContainText("Hide reference bands");
+  await expect(page.locator(".spectrum-toolbar__bands")).toContainText("Wheel 1x");
   await expect(bandLegend).toBeVisible();
   await expect(bandLegend).toContainText("Wheel 1x");
+  const headerBottom = await page.locator(".site-header").evaluate((el) => el.getBoundingClientRect().bottom);
+  const controlsTop = await page.locator(".spectrum-controls-panel").evaluate((el) => el.getBoundingClientRect().top);
+  expect(controlsTop).toBeGreaterThanOrEqual(headerBottom - 1);
 
   await allTracesChip.click();
   await expect(allTracesChip).toHaveAttribute("aria-pressed", "true");
   await expect(sensorChip).toHaveAttribute("aria-pressed", "false");
+  await expect(sensorChip).toContainText("Visible");
   await expect(inspector).toContainText("Strongest trace:");
 });
 
