@@ -311,7 +311,7 @@ export class UiSpectrumController {
       const metric = this.state.spectrum.spectra.clients[entry.id]?.strength_metrics?.vibration_strength_db;
       if (parts.meta) {
         parts.meta.textContent = typeof metric === "number" && Number.isFinite(metric)
-          ? `${this.formatDb(metric)} dB`
+          ? this.t("spectrum.legend.sensor_level", { value: this.formatDb(metric) })
           : "";
       }
       this.placeLegendButton(legend, parts.button, nextIndex);
