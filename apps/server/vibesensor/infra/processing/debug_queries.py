@@ -36,7 +36,10 @@ class DebugQueryReader:
                 client_id=client_id,
                 sample_rate_hz=sample_rate_hz,
                 count=buf.count,
-                fft_block=self._store.copy_latest(buf, self._store.config.fft_n),
+                fft_block=self._store._buffer_mutator.copy_latest(
+                    buf,
+                    self._store.config.fft_n,
+                ),
             )
 
     def raw_samples(
@@ -50,7 +53,7 @@ class DebugQueryReader:
                 return {"error": "no data", "count": 0}
             sample_rate_hz = buf.sample_rate_hz or self._store.config.sample_rate_hz
             count = min(n_samples, buf.count)
-            block = self._store.copy_latest(buf, count)
+            block = self._store._buffer_mutator.copy_latest(buf, count)
         return {
             "client_id": client_id,
             "sample_rate_hz": sample_rate_hz,
