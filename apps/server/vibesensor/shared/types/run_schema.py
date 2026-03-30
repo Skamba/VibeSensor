@@ -154,6 +154,15 @@ class RunMetadata:
             return normalized or None
         return None
 
+    @property
+    def car_name(self) -> str | None:
+        """Return the normalized persisted car name from metadata extras."""
+        value = self.extras.get("car_name") or self.extras.get("name")
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or None
+        return None
+
     def to_dict(self) -> JsonObject:
         """Serialize typed run metadata back to the canonical JSONL header shape."""
         payload: JsonObject = {

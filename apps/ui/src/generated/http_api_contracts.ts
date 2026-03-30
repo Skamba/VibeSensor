@@ -1493,6 +1493,8 @@ export interface components {
      * @description Response body for a single history-run list row.
      */
     HistoryListEntryResponse: {
+      /** Car Name */
+      car_name?: string | null;
       /** Created At */
       created_at: string;
       /** End Time Utc */
