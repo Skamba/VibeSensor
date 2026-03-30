@@ -111,6 +111,8 @@ export interface UiDomElements {
   updateTransportChoiceWifi: HTMLElement | null;
   updateTransportChoiceUsb: HTMLElement | null;
   updateWifiFields: HTMLElement | null;
+  updateReadinessSummary: HTMLElement | null;
+  updateDetailsCaption: HTMLElement | null;
   updateTransportNote: HTMLElement | null;
   updateTransportWifiRadio: HTMLInputElement | null;
   updateTransportUsbRadio: HTMLInputElement | null;
@@ -125,6 +127,7 @@ export interface UiDomElements {
   espFlashRefreshPortsBtn: HTMLButtonElement | null;
   espFlashStartBtn: HTMLButtonElement | null;
   espFlashCancelBtn: HTMLButtonElement | null;
+  espFlashStartSummary: HTMLElement | null;
   espFlashStatusBanner: HTMLElement | null;
   espFlashReadinessPanel: HTMLElement | null;
   espFlashJourneyPanel: HTMLElement | null;
@@ -296,6 +299,8 @@ export function createUiDomRegistry(): UiDomElements {
     updateTransportChoiceWifi: el("updateTransportChoiceWifi"),
     updateTransportChoiceUsb: el("updateTransportChoiceUsb"),
     updateWifiFields: el("updateWifiFields"),
+    updateReadinessSummary: el("updateReadinessSummary"),
+    updateDetailsCaption: el("updateDetailsCaption"),
     updateTransportNote: el("updateTransportNote"),
     updateTransportWifiRadio: inputEl("updateTransportWifiRadio"),
     updateTransportUsbRadio: inputEl("updateTransportUsbRadio"),
@@ -310,6 +315,7 @@ export function createUiDomRegistry(): UiDomElements {
     espFlashRefreshPortsBtn: btnEl("espFlashRefreshPortsBtn"),
     espFlashStartBtn: btnEl("espFlashStartBtn"),
     espFlashCancelBtn: btnEl("espFlashCancelBtn"),
+    espFlashStartSummary: el("espFlashStartSummary"),
     espFlashStatusBanner: el("espFlashStatusBanner"),
     espFlashReadinessPanel: el("espFlashReadinessPanel"),
     espFlashJourneyPanel: el("espFlashJourneyPanel"),
