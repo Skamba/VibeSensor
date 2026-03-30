@@ -27,6 +27,7 @@ import type {
 } from "./types";
 
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
+const OBD_SCAN_TIMEOUT_MS = 20_000;
 
 export async function getSettingsLanguage(): Promise<LanguagePayload> {
   return apiJson("/api/settings/language");
@@ -117,6 +118,7 @@ export async function getSpeedSourceStatus(): Promise<SpeedSourceStatusPayload> 
 export async function scanSettingsObdDevices(): Promise<ObdScanPayload> {
   return apiJson("/api/settings/obd/scan", {
     method: "POST",
+    timeoutMs: OBD_SCAN_TIMEOUT_MS,
   });
 }
 
