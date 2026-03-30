@@ -196,6 +196,8 @@
   "settings.car.wizard_summary_variant": "Variant",
   "settings.car.wizard_summary_tire": "Banden",
   "settings.car.wizard_summary_gearbox": "Versnellingsbak",
+  "settings.car.wizard_summary_manual_tire": "{width}/{aspect}R{rim}",
+  "settings.car.wizard_summary_manual_gearbox": "Eindreductie {finalDrive} · Hoogste versnelling {topGear}",
   "settings.car.or_custom_brand": "Of typ een eigen merk:",
   "settings.car.or_custom_type": "Of typ een eigen type:",
   "settings.car.or_custom_model": "Of typ een eigen model:",
