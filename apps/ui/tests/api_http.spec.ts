@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { apiJson } from "../src/api/http";
-import { installWindowGlobal } from "./async_test_helpers";
+import { createDeferred, installTimerHarness, installWindowGlobal, jsonResponse } from "./async_test_helpers";
 
 test.describe("apiJson", () => {
   test.beforeEach(() => {
@@ -41,6 +41,37 @@ test.describe("apiJson", () => {
       globalThis.fetch = originalFetch;
       globalThis.setTimeout = originalSetTimeout;
       globalThis.clearTimeout = originalClearTimeout;
+    }
+  });
+
+  test("supports custom timeout overrides and clears their timers after a successful response", async () => {
+    const originalFetch = globalThis.fetch;
+    const timerHarness = installTimerHarness();
+    const response = createDeferred<Response>();
+    let requestedPath = "";
+    let requestedMethod = "";
+    globalThis.fetch = ((path: string | URL | RequestInfo, init?: RequestInit) => {
+      requestedPath = String(path);
+      requestedMethod = init?.method ?? "GET";
+      return response.promise;
+    }) as typeof fetch;
+
+    try {
+      const request = apiJson<{ ok: boolean }>("/timeout/custom", {
+        method: "POST",
+        timeoutMs: 20_000,
+      });
+
+      expect(timerHarness.pendingDelays()).toEqual([20_000]);
+      expect(requestedPath).toContain("/timeout/custom");
+      expect(requestedMethod).toBe("POST");
+
+      response.resolve(jsonResponse({ ok: true }));
+      await expect(request).resolves.toEqual({ ok: true });
+      expect(timerHarness.pendingDelays()).toEqual([]);
+    } finally {
+      globalThis.fetch = originalFetch;
+      timerHarness.restore();
     }
   });
 
