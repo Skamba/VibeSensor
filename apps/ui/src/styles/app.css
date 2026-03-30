@@ -649,6 +649,20 @@ button[hidden],
   color: var(--pill-ok-text);
 }
 
+.maintenance-readiness__item--attention {
+  border-color: rgba(170, 108, 26, 0.28);
+  background: var(--pill-warn-bg);
+}
+
+.maintenance-readiness__item--attention .maintenance-readiness__marker {
+  background: var(--warning);
+  color: var(--text);
+}
+
+.maintenance-readiness__item--attention .maintenance-readiness__label {
+  color: var(--pill-warn-text);
+}
+
 .maintenance-readiness__item--blocked {
   border-color: #f0c4c4;
   background: var(--pill-bad-bg);
