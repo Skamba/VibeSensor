@@ -207,6 +207,8 @@ test("history list module refreshes runs and renders table state", async () => {
   expect(historyTableBody.innerHTML).toContain("history.row_status.complete");
   expect(historyTableBody.innerHTML).toContain("history.summary_size");
   expect(historyTableBody.innerHTML).toContain("history.preview_available");
+  expect(historyTableBody.innerHTML).toContain("history.open_diagnosis");
+  expect(historyTableBody.innerHTML).not.toContain('data-run-action="delete-run"');
   expect(deleteAllRunsBtn.disabled).toBe(false);
 });
 
@@ -363,6 +365,8 @@ test("history list rendering promotes loaded findings ahead of supporting statis
   expect(historyTableBody.innerHTML).toContain("Secondary driveline contribution");
   expect(historyTableBody.innerHTML).not.toContain("history.preview_stats_title");
   expect(historyTableBody.innerHTML).toContain("history.findings_next_step_label");
+  expect(historyTableBody.innerHTML).toContain("history.run_actions_title");
+  expect(historyTableBody.innerHTML).toContain('data-run-action="delete-run"');
 });
 
 test("history feature preloads collapsed row context for completed runs", async () => {
