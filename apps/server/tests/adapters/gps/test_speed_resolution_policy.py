@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import time
-
 from vibesensor.adapters.gps.speed_resolution import (
     MAX_STALE_TIMEOUT_S,
     MIN_STALE_TIMEOUT_S,
@@ -14,12 +12,13 @@ def test_policy_resolves_stale_gps_to_manual_fallback() -> None:
         override_speed_mps=25.0,
         manual_source_selected=False,
         stale_timeout_s=5.0,
+        monotonic=lambda: 100.0,
     )
 
     resolution = policy.resolve(
         gps_enabled=True,
         connection_state="connected",
-        speed_snapshot=(10.0, time.monotonic() - 30.0),
+        speed_snapshot=(10.0, 90.0),
     )
 
     assert resolution.speed_mps == 25.0
