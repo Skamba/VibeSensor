@@ -194,5 +194,77 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#loggingSamples [data-value]")).toHaveText("24");
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#stopLoggingBtn")).toBeHidden();
+  const processingSummary = page.locator("#loggingSummary");
+  await expect(processingSummary).toContainText("Run run-001 is being analyzed.");
+  await expect(processingSummary).toContainText("Results will appear in History");
+  await processingSummary.getByRole("button", { name: "Open History" }).click();
+  await expect(page.locator("#historyView")).toHaveClass(/active/);
   await expect.poll(() => stopCalls).toBe(1);
+});
+
+test("saved run state points directly to History", async ({ page }) => {
+  const recordingStatus = {
+    enabled: false,
+    run_id: null,
+    write_error: null,
+    analysis_in_progress: false,
+    start_time_utc: null,
+    samples_written: 24,
+    samples_dropped: 0,
+    last_completed_run_id: "run-002",
+    last_completed_run_error: null,
+  };
+
+  await installCommonRoutes(page, {
+    runs: [{ run_id: "run-002", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 24 }],
+    settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Test Hatch", type: "Simulated setup", variant: null, aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, recordingStatus);
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "001122334455",
+          name: "Front Left",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "front_left_wheel",
+          mac_address: "001122334455",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: {
+        clients: {
+          "001122334455": {
+            freq: [1, 2, 3],
+            combined_spectrum_amp_g: [0.1, 0.2, 0.15],
+            strength_metrics: strengthMetrics,
+          },
+        },
+      },
+    },
+  });
+
+  await page.goto("/");
+  const savedSummary = page.locator("#loggingSummary");
+  await expect(page.locator("#loggingRunId")).toHaveText("Last run: run-002");
+  await expect(savedSummary).toContainText("Run run-002 is ready in History.");
+  await expect(savedSummary).toContainText("Open History to review the diagnosis");
+  await savedSummary.getByRole("button", { name: "Open History" }).click();
+  await expect(page.locator("#historyView")).toHaveClass(/active/);
 });
