@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import {
   deriveDisplayedSpeedSourceMode,
+  deriveSpeedReadoutLabelKey,
   isManualEffectiveSpeedSource,
   resolveEffectiveSpeedSource,
 } from "../src/app/speed_source_state";
@@ -15,6 +16,7 @@ test.describe("speed source state helpers", () => {
     };
 
     expect(deriveDisplayedSpeedSourceMode(settings)).toBe("manual");
+    expect(deriveSpeedReadoutLabelKey(settings)).toBe("speed.override");
     expect(resolveEffectiveSpeedSource(settings)).toBe("fallback_manual");
     expect(isManualEffectiveSpeedSource(settings)).toBe(true);
   });
@@ -27,6 +29,7 @@ test.describe("speed source state helpers", () => {
     };
 
     expect(deriveDisplayedSpeedSourceMode(settings)).toBe("gps");
+    expect(deriveSpeedReadoutLabelKey(settings)).toBe("speed.gps");
     expect(resolveEffectiveSpeedSource(settings)).toBe("gps");
     expect(isManualEffectiveSpeedSource(settings)).toBe(false);
   });
@@ -39,6 +42,7 @@ test.describe("speed source state helpers", () => {
     };
 
     expect(deriveDisplayedSpeedSourceMode(settings)).toBe("manual");
+    expect(deriveSpeedReadoutLabelKey(settings)).toBe("speed.override");
     expect(resolveEffectiveSpeedSource(settings)).toBe("manual");
     expect(isManualEffectiveSpeedSource(settings)).toBe(true);
   });
@@ -51,7 +55,21 @@ test.describe("speed source state helpers", () => {
     };
 
     expect(deriveDisplayedSpeedSourceMode(settings)).toBe("gps");
+    expect(deriveSpeedReadoutLabelKey(settings)).toBe("speed.gps");
     expect(resolveEffectiveSpeedSource(settings)).toBe("none");
+    expect(isManualEffectiveSpeedSource(settings)).toBe(false);
+  });
+
+  test("renders an OBD2 header label when OBD2 is the resolved effective source", () => {
+    const settings = {
+      speedSource: "obd2" as const,
+      manualSpeedKph: null,
+      resolvedSpeedSource: "obd2" as const,
+    };
+
+    expect(deriveDisplayedSpeedSourceMode(settings)).toBe("obd2");
+    expect(deriveSpeedReadoutLabelKey(settings)).toBe("speed.obd2");
+    expect(resolveEffectiveSpeedSource(settings)).toBe("obd2");
     expect(isManualEffectiveSpeedSource(settings)).toBe(false);
   });
 });

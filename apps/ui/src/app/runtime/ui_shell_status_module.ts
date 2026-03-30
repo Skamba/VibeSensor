@@ -1,5 +1,5 @@
 import { fmt } from "../../format";
-import { isManualEffectiveSpeedSource } from "../speed_source_state";
+import { deriveSpeedReadoutLabelKey } from "../speed_source_state";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { RealtimeState, SettingsState, ShellState, TransportState } from "../ui_app_state";
 
@@ -50,11 +50,11 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
     const unitLabel = selectedSpeedUnitLabel();
     if (typeof realtime.speedMps === "number" && Number.isFinite(realtime.speedMps)) {
       const value = speedValueInSelectedUnit(realtime.speedMps);
-      const isOverride = isManualEffectiveSpeedSource(
+      const labelKey = deriveSpeedReadoutLabelKey(
         settings,
         realtime.rotationalSpeeds?.basis_speed_source ?? null,
       );
-      els.speed.textContent = ctx.t(isOverride ? "speed.override" : "speed.gps", {
+      els.speed.textContent = ctx.t(labelKey, {
         value: fmt(value, 1),
         unit: unitLabel,
       });

@@ -7,6 +7,7 @@ export interface SpeedSourceStateSource {
 }
 
 export type DisplayedSpeedSourceMode = "gps" | "manual" | "obd2";
+export type SpeedReadoutLabelKey = "speed.gps" | "speed.override" | "speed.obd2";
 
 export function isManualLikeSpeedSource(source: string | null | undefined): boolean {
   return source === "manual" || source === "fallback_manual";
@@ -43,4 +44,15 @@ export function isManualEffectiveSpeedSource(
   runtimeSpeedSource?: string | null,
 ): boolean {
   return isManualLikeSpeedSource(resolveEffectiveSpeedSource(settings, runtimeSpeedSource));
+}
+
+export function deriveSpeedReadoutLabelKey(
+  settings: SpeedSourceStateSource,
+  runtimeSpeedSource?: string | null,
+): SpeedReadoutLabelKey {
+  const effectiveSource = resolveEffectiveSpeedSource(settings, runtimeSpeedSource);
+  if (effectiveSource === "obd2") {
+    return "speed.obd2";
+  }
+  return isManualLikeSpeedSource(effectiveSource) ? "speed.override" : "speed.gps";
 }

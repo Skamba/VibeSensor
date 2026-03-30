@@ -322,6 +322,7 @@
   "status.stopped": "Stopped",
   "status.unavailable": "Unavailable",
   "speed.gps": "{value} {unit} · GPS",
+  "speed.obd2": "{value} {unit} · OBD2",
   "speed.override": "{value} {unit} · Manual",
   "speed.none": "-- {unit}",
   "speed.unit": "Unit",
