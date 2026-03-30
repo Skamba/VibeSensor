@@ -64,6 +64,7 @@ export interface UiDomElements {
   wizardSteps: Array<HTMLElement | null>;
   wizardStepDots: HTMLElement[];
   wizardSummaryPanel: HTMLElement | null;
+  wizardActionHint: HTMLElement | null;
   wizardBrandList: HTMLElement | null;
   wizardTypeList: HTMLElement | null;
   wizardModelList: HTMLElement | null;
@@ -240,6 +241,7 @@ export function createUiDomRegistry(): UiDomElements {
     wizardSteps: [0, 1, 2, 3, 4].map((index) => el(`wizardStep${index}`)),
     wizardStepDots: queryAll<HTMLElement>(".wizard-step-dot"),
     wizardSummaryPanel: el("wizardSummaryPanel"),
+    wizardActionHint: el("wizardActionHint"),
     wizardBrandList: el("wizardBrandList"),
     wizardTypeList: el("wizardTypeList"),
     wizardModelList: el("wizardModelList"),

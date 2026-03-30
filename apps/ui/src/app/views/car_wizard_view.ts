@@ -19,6 +19,7 @@ interface WizardOptionSpec {
 }
 
 export interface WizardSummaryData {
+  currentStep: number;
   profileName: string | null;
   brand: string | null;
   carType: string | null;
@@ -110,6 +111,7 @@ export function renderWizardVariantOptions(
 export function renderWizardTireOptions(
   tireOptions: CarLibraryTireOption[],
   escapeHtml: EscapeHtml,
+  selectedIndex = 0,
 ): string {
   return renderWizardOptions(
     tireOptions.map((tireOption, index) => ({
@@ -117,7 +119,7 @@ export function renderWizardTireOptions(
       value: String(index),
       label: tireOption.name,
       detail: `${tireOption.tire_width_mm}/${tireOption.tire_aspect_pct}R${tireOption.rim_in}`,
-      selected: index === 0,
+      selected: index === selectedIndex,
     })),
     escapeHtml,
   );
@@ -126,6 +128,7 @@ export function renderWizardTireOptions(
 export function renderWizardGearboxOptions(
   gearboxes: CarLibraryGearbox[],
   deps: { escapeHtml: EscapeHtml; fmt: FormatNumber },
+  selectedIndex = -1,
 ): string {
   const { escapeHtml, fmt } = deps;
   return renderWizardOptions(
@@ -134,6 +137,7 @@ export function renderWizardGearboxOptions(
       value: String(index),
       label: gearbox.name,
       detail: `FD: ${fmt(gearbox.final_drive_ratio, 2)} · Top Gear: ${fmt(gearbox.top_gear_ratio, 2)}`,
+      selected: index === selectedIndex,
     })),
     escapeHtml,
   );
@@ -145,21 +149,21 @@ export function renderWizardSummary(
 ): string {
   const { t, escapeHtml } = deps;
   const pending = t("settings.car.wizard_summary_pending");
-  const rows: Array<[string, string | null]> = [
-    [t("settings.car.wizard_summary_brand"), summary.brand],
-    [t("settings.car.wizard_summary_type"), summary.carType],
-    [t("settings.car.wizard_summary_model"), summary.model],
-    [t("settings.car.wizard_summary_variant"), summary.variant],
-    [t("settings.car.wizard_summary_tire"), summary.tire],
-    [t("settings.car.wizard_summary_gearbox"), summary.gearbox],
-  ];
+  const rows = [
+    { label: t("settings.car.wizard_summary_brand"), value: summary.brand, visibleFromStep: 1 },
+    { label: t("settings.car.wizard_summary_type"), value: summary.carType, visibleFromStep: 2 },
+    { label: t("settings.car.wizard_summary_model"), value: summary.model, visibleFromStep: 3 },
+    { label: t("settings.car.wizard_summary_variant"), value: summary.variant, visibleFromStep: 4 },
+    { label: t("settings.car.wizard_summary_tire"), value: summary.tire, visibleFromStep: 4 },
+    { label: t("settings.car.wizard_summary_gearbox"), value: summary.gearbox, visibleFromStep: 4 },
+  ].filter((row) => row.value || summary.currentStep >= row.visibleFromStep);
   return `
     <div class="wizard-summary-preview">
       <div class="wizard-summary-preview__label">${escapeHtml(t("settings.car.wizard_summary_name"))}</div>
       <div class="wizard-summary-preview__value">${escapeHtml(summary.profileName || pending)}</div>
     </div>
     <dl class="wizard-summary-list">
-      ${rows.map(([label, value]) => `
+      ${rows.map(({ label, value }) => `
         <div class="wizard-summary-item">
           <dt>${escapeHtml(label)}</dt>
           <dd>${escapeHtml(value || pending)}</dd>
