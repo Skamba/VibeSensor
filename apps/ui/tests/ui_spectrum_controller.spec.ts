@@ -64,7 +64,11 @@ function createElementStub(tagName = "div"): ElementStub {
     },
     insertBefore(child: ElementStub, before: ElementStub | null): ElementStub {
       child.remove();
-      childState.get(child)!.parent = element;
+      const childRecord = childState.get(child);
+      if (!childRecord) {
+        throw new Error("child stub is not registered");
+      }
+      childRecord.parent = element;
       const index = before ? state.children.indexOf(before) : -1;
       if (index >= 0) {
         state.children.splice(index, 0, child);
@@ -75,7 +79,12 @@ function createElementStub(tagName = "div"): ElementStub {
     },
     remove(): void {
       if (!state.parent) return;
-      const siblings = childState.get(state.parent)!.children;
+      const parentRecord = childState.get(state.parent);
+      if (!parentRecord) {
+        state.parent = null;
+        return;
+      }
+      const siblings = parentRecord.children;
       const index = siblings.indexOf(element);
       if (index >= 0) {
         siblings.splice(index, 1);
