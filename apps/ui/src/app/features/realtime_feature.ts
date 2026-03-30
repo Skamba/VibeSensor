@@ -69,6 +69,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   let pendingLoggingAction: "starting" | "stopping" | null = null;
   let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
   let lastCompletedElapsedText = "--";
+  let renderedLoggingSummarySignature: string | null = null;
 
   const SHORTHAND_LOCATION_MAP: Record<string, string> = {
     "front left": "front_left_wheel",
@@ -502,6 +503,35 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     });
   }
 
+  function loggingSummarySignature(summaryText: string, summaryPanel: RecordingSummaryPanel | null): string {
+    if (summaryPanel === null) {
+      return `text:${summaryText}`;
+    }
+    const actionSignature = summaryPanel.action
+      ? `${summaryPanel.action.action}|${summaryPanel.action.label}|${summaryPanel.action.variant ?? ""}`
+      : "";
+    return `panel:${summaryPanel.title}|${summaryPanel.body}|${summaryPanel.detail ?? ""}|${actionSignature}`;
+  }
+
+  function renderLoggingSummaryContent(summaryText: string, summaryPanel: RecordingSummaryPanel | null): void {
+    if (!els.loggingSummary) {
+      return;
+    }
+    const loggingSummary = els.loggingSummary;
+    const nextSignature = loggingSummarySignature(summaryText, summaryPanel);
+
+    loggingSummary.hidden = summaryText === "" && summaryPanel === null;
+    if (renderedLoggingSummarySignature !== nextSignature) {
+      if (summaryPanel) {
+        loggingSummary.innerHTML = renderRecordingSummaryPanel(summaryPanel);
+      } else {
+        loggingSummary.textContent = summaryText;
+      }
+      renderedLoggingSummarySignature = nextSignature;
+    }
+    loggingSummary.classList.toggle("logging-summary--panel", summaryPanel !== null);
+  }
+
   function blockedRecordingPanel(): RecordingSummaryPanel {
     const selection = deriveCarSelectionState(settings);
     if (selection.kind === "no_cars") {
@@ -709,15 +739,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     if (els.loggingPhase) {
       els.loggingPhase.hidden = true;
     }
-    if (els.loggingSummary) {
-      els.loggingSummary.hidden = panelState.summaryText === "" && panelState.summaryPanel === null;
-      els.loggingSummary.classList.toggle("logging-summary--panel", panelState.summaryPanel !== null);
-      if (panelState.summaryPanel) {
-        els.loggingSummary.innerHTML = renderRecordingSummaryPanel(panelState.summaryPanel);
-      } else {
-        els.loggingSummary.textContent = panelState.summaryText;
-      }
-    }
+    renderLoggingSummaryContent(panelState.summaryText, panelState.summaryPanel);
     if (els.loggingRunId) {
       els.loggingRunId.hidden = panelState.runIdText === "";
       els.loggingRunId.textContent = panelState.runIdText;
@@ -750,11 +772,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       pendingLoggingAction = null;
       clearLoggingElapsedTimer();
       setDashboardPillState(els.loggingStatus, "bad", t("status.unavailable"));
-      if (els.loggingSummary) {
-        els.loggingSummary.hidden = false;
-        els.loggingSummary.classList.remove("logging-summary--panel");
-        els.loggingSummary.textContent = t("status.unavailable");
-      }
+      renderLoggingSummaryContent(t("status.unavailable"), null);
       if (els.loggingRunId) {
         els.loggingRunId.hidden = true;
         els.loggingRunId.textContent = "";
@@ -792,9 +810,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       const msg = err instanceof Error ? err.message : String(err);
       pendingLoggingAction = null;
       setDashboardPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
-      if (els.loggingSummary) {
-        els.loggingSummary.textContent = msg || t("status.unavailable");
-      }
+      renderLoggingSummaryContent(msg || t("status.unavailable"), null);
       return;
     }
     pendingLoggingAction = null;
@@ -813,9 +829,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       const msg = err instanceof Error ? err.message : String(err);
       pendingLoggingAction = null;
       setDashboardPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
-      if (els.loggingSummary) {
-        els.loggingSummary.textContent = msg || t("status.unavailable");
-      }
+      renderLoggingSummaryContent(msg || t("status.unavailable"), null);
       return;
     }
     pendingLoggingAction = null;

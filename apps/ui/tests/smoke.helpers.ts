@@ -4,10 +4,12 @@ import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 export type FakeWebSocketOptions = {
   payload?: Record<string, unknown>;
   confirmResult?: boolean;
+  repeatPayloadCount?: number;
+  repeatPayloadIntervalMs?: number;
 };
 
 export async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = {}): Promise<void> {
-  await page.addInitScript(({ payload, confirmResult, schemaVersion }) => {
+  await page.addInitScript(({ payload, confirmResult, schemaVersion, repeatPayloadCount, repeatPayloadIntervalMs }) => {
     const mergedPayload = payload
       ? {
           schema_version: schemaVersion,
@@ -26,16 +28,37 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
       onmessage: ((event: MessageEvent<string>) => void) | null = null;
       onclose: ((event: CloseEvent) => void) | null = null;
       onerror: ((event: Event) => void) | null = null;
+      repeatTimer = 0;
       constructor() {
         queueMicrotask(() => this.onopen?.(new Event("open")));
         if (mergedPayload) {
-          queueMicrotask(() =>
-            this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(mergedPayload) })),
-          );
+          const emitPayload = () =>
+            this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(mergedPayload) }));
+          queueMicrotask(emitPayload);
+          if ((repeatPayloadCount ?? 0) > 0) {
+            let remainingRepeats = repeatPayloadCount ?? 0;
+            this.repeatTimer = window.setInterval(() => {
+              if (this.readyState !== FakeWebSocket.OPEN) {
+                window.clearInterval(this.repeatTimer);
+                this.repeatTimer = 0;
+                return;
+              }
+              emitPayload();
+              remainingRepeats -= 1;
+              if (remainingRepeats <= 0) {
+                window.clearInterval(this.repeatTimer);
+                this.repeatTimer = 0;
+              }
+            }, repeatPayloadIntervalMs ?? 50);
+          }
         }
       }
       send() {}
       close() {
+        if (this.repeatTimer) {
+          window.clearInterval(this.repeatTimer);
+          this.repeatTimer = 0;
+        }
         this.readyState = 3;
         this.onclose?.(new CloseEvent("close"));
       }
