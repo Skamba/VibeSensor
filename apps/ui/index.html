@@ -108,11 +108,13 @@
             <div class="spectrum-controls-panel">
               <div class="spectrum-toolbar">
                 <div class="card__subtle spectrum-toolbar__hint" data-i18n="spectrum.controls_hint">Use the trace chips to isolate one sensor at a time. Turn on reference bands when you need order context.</div>
-                <button id="spectrumBandToggle" class="btn spectrum-toolbar__toggle" type="button" aria-pressed="false" hidden>Show reference bands</button>
+                <div class="spectrum-toolbar__bands">
+                  <button id="spectrumBandToggle" class="btn spectrum-toolbar__toggle" type="button" aria-pressed="false" hidden>Show reference bands</button>
+                  <div id="bandLegend" class="legend band-legend" hidden></div>
+                </div>
               </div>
               <div id="spectrumInspector" class="spectrum-inspector" aria-live="polite">Use the trace chips or hover the chart to inspect the current peak.</div>
               <div id="legend" class="legend"></div>
-              <div id="bandLegend" class="legend band-legend" hidden></div>
             </div>
           </div>
 

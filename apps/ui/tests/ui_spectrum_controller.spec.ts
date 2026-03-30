@@ -216,6 +216,10 @@ test.describe("UiSpectrumController", () => {
           spectrumBandToggle: bandToggle,
         } as unknown as UiDomElements,
         t: (key, vars) => {
+          if (key === "spectrum.legend.state_all_visible") return "All visible";
+          if (key === "spectrum.legend.state_visible") return "Visible";
+          if (key === "spectrum.legend.state_isolated") return "Isolated";
+          if (key === "spectrum.legend.state_inactive") return "Inactive";
           if (key === "spectrum.legend.sensor_level") {
             return `Sensor level: ${String(vars?.value)} dB`;
           }
@@ -240,12 +244,13 @@ test.describe("UiSpectrumController", () => {
       const allButton = legend.children[0];
       const sensorButton = legend.children[1];
       const sensorMeta = sensorButton.children[1].children[1];
-      expect(sensorMeta.textContent).toBe("Sensor level: 12.0 dB");
+      expect(sensorMeta.textContent).toBe("Visible · Sensor level: 12.0 dB");
 
       sensorButton.click();
       expect(legend.children[0]).toBe(allButton);
       expect(legend.children[1]).toBe(sensorButton);
       expect(sensorButton.getAttribute("aria-pressed")).toBe("true");
+      expect(sensorMeta.textContent).toBe("Isolated · Sensor level: 12.0 dB");
 
       state.spectrum.spectra.clients["sensor-a"].strength_metrics.vibration_strength_db = 13;
       state.spectrum.spectra.clients["sensor-a"].strength_metrics.top_peaks[0].vibration_strength_db = 13;
@@ -258,13 +263,14 @@ test.describe("UiSpectrumController", () => {
 
       expect(legend.children[0]).toBe(allButton);
       expect(legend.children[1]).toBe(sensorButton);
-      expect(sensorMeta.textContent).toBe("Sensor level: 13.0 dB");
+      expect(sensorMeta.textContent).toBe("Isolated · Sensor level: 13.0 dB");
       expect(sensorButton.getAttribute("aria-pressed")).toBe("true");
 
       sensorButton.click();
       expect(legend.children[0]).toBe(allButton);
       expect(legend.children[1]).toBe(sensorButton);
       expect(sensorButton.getAttribute("aria-pressed")).toBe("false");
+      expect(sensorMeta.textContent).toBe("Visible · Sensor level: 13.0 dB");
     } finally {
       restoreDocument();
     }

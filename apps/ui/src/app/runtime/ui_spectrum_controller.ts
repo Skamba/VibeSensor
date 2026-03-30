@@ -1,8 +1,6 @@
 import type uPlot from "uplot";
 
 import {
-  SPECTRUM_DB_MAX,
-  SPECTRUM_DB_MIN,
   SPECTRUM_TWEEN_DURATION_MS,
 } from "../../config";
 import { escapeHtml } from "../../format";
@@ -73,6 +71,8 @@ type SpectrumLegendButton = {
   meta: HTMLSpanElement | null;
   swatch: HTMLSpanElement | null;
 };
+
+type SpectrumLegendState = "all-visible" | "visible" | "isolated" | "inactive";
 
 type UiSpectrumControllerDeps = {
   state: AppState;
@@ -253,12 +253,14 @@ export class UiSpectrumController {
     const button = this.els.spectrumBandToggle;
     if (!button) return;
     const hasBands = this.state.spectrum.chartBands.length > 0 && this.currentEntries.length > 0;
+    button.setAttribute("aria-controls", "bandLegend");
     if (!hasBands) {
       this.bandsVisible = false;
     }
     button.hidden = !hasBands;
     button.disabled = !hasBands;
     button.setAttribute("aria-pressed", hasBands && this.bandsVisible ? "true" : "false");
+    button.setAttribute("aria-expanded", hasBands && this.bandsVisible ? "true" : "false");
     button.textContent = this.t(this.bandsVisible ? "spectrum.bands.hide" : "spectrum.bands.show");
   }
 
@@ -292,6 +294,10 @@ export class UiSpectrumController {
     allButton.button.setAttribute("aria-pressed", allActive ? "true" : "false");
     allButton.button.title = this.t("spectrum.legend.clear_focus");
     allButton.label.textContent = this.t("spectrum.legend.all_series");
+    allButton.button.setAttribute("aria-label", [
+      this.t("spectrum.legend.all_series"),
+      allActive ? this.legendStateText("all-visible") : null,
+    ].filter((value): value is string => Boolean(value)).join(". "));
     this.placeLegendButton(legend, allButton.button, 0);
 
     const activeIds = new Set<string>();
@@ -301,6 +307,11 @@ export class UiSpectrumController {
       const parts = this.ensureLegendSeriesButton(entry.id);
       const isActive = this.pinnedSeriesId === entry.id;
       const isMuted = this.pinnedSeriesId !== null && !isActive;
+      const legendState: SpectrumLegendState = isActive
+        ? "isolated"
+        : isMuted
+          ? "inactive"
+          : "visible";
       parts.button.className = `legend-item legend-item--interactive${isActive ? " legend-item--active" : ""}${isMuted ? " legend-item--muted" : ""}`;
       parts.button.setAttribute("aria-pressed", isActive ? "true" : "false");
       parts.button.title = isActive
@@ -310,10 +321,19 @@ export class UiSpectrumController {
       parts.swatch?.style.setProperty("--swatch-color", entry.color);
       const metric = this.state.spectrum.spectra.clients[entry.id]?.strength_metrics?.vibration_strength_db;
       if (parts.meta) {
-        parts.meta.textContent = typeof metric === "number" && Number.isFinite(metric)
-          ? this.t("spectrum.legend.sensor_level", { value: this.formatDb(metric) })
-          : "";
+        const detailParts = [this.legendStateText(legendState)];
+        if (typeof metric === "number" && Number.isFinite(metric)) {
+          detailParts.push(this.t("spectrum.legend.sensor_level", { value: this.formatDb(metric) }));
+        }
+        parts.meta.textContent = detailParts.join(" · ");
       }
+      parts.button.setAttribute("aria-label", [
+        entry.label,
+        this.legendStateText(legendState),
+        typeof metric === "number" && Number.isFinite(metric)
+          ? this.t("spectrum.legend.sensor_level", { value: this.formatDb(metric) })
+          : null,
+      ].filter((value): value is string => Boolean(value)).join(". "));
       this.placeLegendButton(legend, parts.button, nextIndex);
       nextIndex += 1;
     }
@@ -387,6 +407,19 @@ export class UiSpectrumController {
     return created;
   }
 
+  private legendStateText(state: SpectrumLegendState): string {
+    switch (state) {
+      case "all-visible":
+        return this.t("spectrum.legend.state_all_visible");
+      case "visible":
+        return this.t("spectrum.legend.state_visible");
+      case "isolated":
+        return this.t("spectrum.legend.state_isolated");
+      case "inactive":
+        return this.t("spectrum.legend.state_inactive");
+    }
+  }
+
   private placeLegendButton(legend: HTMLElement, button: HTMLButtonElement, index: number): void {
     const currentChild = legend.children[index];
     if (currentChild === button) {
@@ -412,6 +445,7 @@ export class UiSpectrumController {
     for (const band of activeBands) {
       const row = document.createElement("div");
       row.className = "legend-item legend-item--band legend-item--band-active";
+      row.style.setProperty("--band-color", band.color);
       row.innerHTML = `<span class="swatch" style="--swatch-color:${escapeHtml(band.color)}"></span><span>${escapeHtml(band.label)}</span>`;
       legend.appendChild(row);
     }
