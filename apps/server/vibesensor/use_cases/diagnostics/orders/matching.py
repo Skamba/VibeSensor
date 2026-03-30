@@ -8,10 +8,15 @@ from dataclasses import dataclass
 
 from vibesensor.domain import OrderMatchObservation, speed_bin_label
 from vibesensor.shared.constants.analysis import (
+    ORDER_MIN_CONTIGUOUS_MATCH_DURATION_S,
+    ORDER_MIN_COVERAGE_DURATION_S,
     ORDER_MIN_COVERAGE_POINTS,
+    ORDER_MIN_MATCH_DURATION_S,
     ORDER_MIN_MATCH_POINTS,
     ORDER_TOLERANCE_MIN_HZ,
     ORDER_TOLERANCE_REL,
+    ORDER_VARIABLE_MIN_CORRELATION,
+    ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS,
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
@@ -26,6 +31,7 @@ from vibesensor.use_cases.diagnostics._types import (
     PhaseLabels,
     ensure_analysis_sample,
 )
+from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
 
@@ -51,6 +57,7 @@ class OrderMatchAccumulator:
     matched_by_location: dict[str, int]
     has_phases: bool
     compliance: float
+    matched_sample_indices: tuple[int, ...] = ()
 
     @property
     def match_rate(self) -> float:
@@ -65,11 +72,54 @@ class OrderMatchAccumulator:
     def is_eligible(
         self,
         *,
+        feature_interval_s: float | None = None,
+        steady_speed: bool = False,
         min_coverage: int = ORDER_MIN_COVERAGE_POINTS,
         min_matched: int = ORDER_MIN_MATCH_POINTS,
     ) -> bool:
         """Whether this match has enough data to produce a finding."""
-        return self.possible >= min_coverage and self.matched >= min_matched
+        if self.possible < min_coverage or self.matched < min_matched:
+            return False
+        if feature_interval_s is None or feature_interval_s <= 0:
+            return True
+
+        possible_duration_s = self.possible * feature_interval_s
+        matched_duration_s = self.matched * feature_interval_s
+        contiguous_match_duration_s = self.longest_contiguous_match_points * feature_interval_s
+        if (
+            possible_duration_s < ORDER_MIN_COVERAGE_DURATION_S
+            or matched_duration_s < ORDER_MIN_MATCH_DURATION_S
+            or contiguous_match_duration_s < ORDER_MIN_CONTIGUOUS_MATCH_DURATION_S
+        ):
+            return False
+        if steady_speed:
+            return True
+
+        matched_speed_bins = sum(1 for count in self.matched_by_speed_bin.values() if count > 0)
+        if matched_speed_bins >= ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS:
+            return True
+        corr = _corr_abs_clamped(self.predicted_vals, self.measured_vals)
+        return corr is not None and corr >= ORDER_VARIABLE_MIN_CORRELATION
+
+    @property
+    def longest_contiguous_match_points(self) -> int:
+        """Largest streak of adjacent matched samples in acquisition order."""
+        if not self.matched_sample_indices:
+            return self.matched
+
+        longest = 1
+        current = 1
+        for prev_idx, sample_idx in zip(
+            self.matched_sample_indices,
+            self.matched_sample_indices[1:],
+            strict=False,
+        ):
+            if sample_idx == prev_idx + 1:
+                current += 1
+            else:
+                longest = max(longest, current)
+                current = 1
+        return max(longest, current)
 
 
 def match_samples_for_hypothesis(
@@ -90,6 +140,7 @@ def match_samples_for_hypothesis(
     predicted_vals: list[float] = []
     measured_vals: list[float] = []
     matched_points: list[OrderMatchObservation] = []
+    matched_sample_indices: list[int] = []
     ref_sources: set[str] = set()
     possible_by_speed_bin: dict[str, int] = defaultdict(int)
     matched_by_speed_bin: dict[str, int] = defaultdict(int)
@@ -141,6 +192,7 @@ def match_samples_for_hypothesis(
             continue
 
         matched += 1
+        matched_sample_indices.append(sample_idx)
         if sample_location:
             matched_by_location[sample_location] += 1
         if sample_speed_bin is not None:
@@ -189,4 +241,5 @@ def match_samples_for_hypothesis(
         matched_by_location=dict(matched_by_location),
         has_phases=has_phases,
         compliance=compliance,
+        matched_sample_indices=tuple(matched_sample_indices),
     )
