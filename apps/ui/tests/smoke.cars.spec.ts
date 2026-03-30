@@ -134,7 +134,7 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
   await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Loading active car...");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
   await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
-  await expect(page.locator("#loggingStatus")).toHaveText("Blocked");
+  await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#startLoggingBtn")).toBeDisabled();
 
   await page.locator("#tab-settings").click();
@@ -244,7 +244,7 @@ test("shows a live warning state until an active car is selected, then clears it
   await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No active car selected");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
   await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
-  await expect(page.locator("#loggingStatus")).toHaveText("Blocked");
+  await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#loggingSummary")).toHaveText(
     "Recording is blocked until you select or create an active car.",
   );

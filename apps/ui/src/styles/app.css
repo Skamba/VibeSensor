@@ -1103,7 +1103,7 @@ button[hidden],
   filter: none;
 }
 .stat-grid--compact {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   margin: var(--space-3) 0 0;
 }
 .stat--compact {
