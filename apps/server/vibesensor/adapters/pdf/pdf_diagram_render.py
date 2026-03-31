@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any
 
 from vibesensor.adapters.pdf.diagram_layout import (
     build_sensor_render_plan,
-    estimate_text_width,
     extract_amp_by_location,
     highlight_map,
 )
@@ -26,7 +25,6 @@ from vibesensor.adapters.pdf.pdf_style import (
     BMW_WIDTH_MM as _BMW_WIDTH_MM,
 )
 from vibesensor.adapters.pdf.pdf_style import (
-    FINDING_SOURCE_COLORS,
     REPORT_COLORS,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -38,6 +36,15 @@ if TYPE_CHECKING:
     from vibesensor.domain import LocationHotspotRow
 
 __all__ = ["car_location_diagram"]
+
+
+_DIAGRAM_HIGHLIGHT_COLORS = {
+    "wheel/tire": REPORT_COLORS["brand"],
+    "driveline": REPORT_COLORS["brand"],
+    "engine": REPORT_COLORS["brand"],
+    "unknown": REPORT_COLORS["brand"],
+    "unknown_resonance": REPORT_COLORS["brand"],
+}
 
 
 def _build_sensor_render_plan(
@@ -193,77 +200,6 @@ def _draw_markers_and_labels(
         )
 
 
-def _draw_source_legend(
-    drawing: Any,
-    *,
-    diagram_width: float,
-    single_sensor: bool,
-    tr: Callable[..., str],
-    color_text_primary: Any,
-    hex_color: Any,
-) -> None:
-    from reportlab.graphics.shapes import Circle, String
-
-    legend_items = [
-        (tr("SOURCE_WHEEL_TIRE"), FINDING_SOURCE_COLORS["wheel/tire"]),
-        (tr("SOURCE_DRIVELINE"), FINDING_SOURCE_COLORS["driveline"]),
-        (tr("SOURCE_ENGINE"), FINDING_SOURCE_COLORS["engine"]),
-    ]
-    legend_x = 8.0
-    title_y = 30.0
-    swatch_y = title_y - 8
-    drawing.add(
-        String(
-            legend_x,
-            title_y,
-            tr("SOURCE_LEGEND_TITLE"),
-            fontName="Helvetica-Bold",
-            fontSize=6,
-            fillColor=color_text_primary,
-        ),
-    )
-    if single_sensor:
-        drawing.add(
-            String(
-                legend_x,
-                title_y + 8.0,
-                tr("ONE_SENSOR_NOTE"),
-                fontName="Helvetica",
-                fontSize=6,
-                fillColor=hex_color(REPORT_COLORS["text_muted"]),
-            ),
-        )
-    max_x = diagram_width - 8.0
-    item_gap = 5.0
-    row_gap = 9.0
-    cursor_x = legend_x
-    row = 0
-    for label, color_hex in legend_items:
-        item_w = 10.0 + estimate_text_width(label, font_size=5.5) + item_gap
-        if cursor_x > legend_x and (cursor_x + item_w) > max_x:
-            row += 1
-            cursor_x = legend_x
-        lx = cursor_x
-        ly = swatch_y - (row * row_gap)
-        swatch_color = hex_color(color_hex)
-        drawing.add(
-            Circle(
-                lx + 4, ly, 3, fillColor=swatch_color, strokeColor=swatch_color, strokeWidth=0.8
-            ),
-        )
-        drawing.add(
-            String(
-                lx + 10,
-                ly - 2,
-                label,
-                fontName="Helvetica",
-                fontSize=5.5,
-                fillColor=hex_color(REPORT_COLORS["text_secondary"]),
-            ),
-        )
-        cursor_x += item_w
-
-
 # ── Public entry point ───────────────────────────────────────────────────────
 
 
@@ -321,8 +257,8 @@ def car_location_diagram(
         location_rows,
         as_float=_as_float,
     )
-    highlight = highlight_map(top_findings, source_colors=FINDING_SOURCE_COLORS)
-    markers, labels, single_sensor = _build_sensor_render_plan(
+    highlight = highlight_map(top_findings, source_colors=_DIAGRAM_HIGHLIGHT_COLORS)
+    markers, labels, _single_sensor = _build_sensor_render_plan(
         location_points=loc_points,
         drawing_width=drawing_w,
         drawing_height=drawing_h,
@@ -331,14 +267,6 @@ def car_location_diagram(
         highlight=highlight,
     )
     _draw_markers_and_labels(drawing, markers=markers, labels=labels, hex_color=hex_color)
-    _draw_source_legend(
-        drawing,
-        diagram_width=drawing_w,
-        single_sensor=single_sensor,
-        tr=tr,
-        color_text_primary=color_text_primary,
-        hex_color=hex_color,
-    )
 
     front_label = tr("DIAGRAM_LABEL_FRONT")
     rear_label = tr("DIAGRAM_LABEL_REAR")

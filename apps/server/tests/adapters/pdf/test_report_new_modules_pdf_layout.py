@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 from reportlab.lib.units import mm
+from test_support.core import extract_pdf_text
 from test_support.report_helpers import RUN_END, write_jsonl
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
@@ -26,6 +27,11 @@ from vibesensor.adapters.pdf.pdf_style import (
     build_page1_layout,
     build_page2_layout,
     observed_signature_row_count,
+)
+from vibesensor.adapters.pdf.report_data import (
+    NextStep,
+    ReportTemplateData,
+    VerdictPageData,
 )
 
 
@@ -57,7 +63,7 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     assert pdf.startswith(b"%PDF")
 
     reader = PdfReader(BytesIO(pdf))
-    assert len(reader.pages) == 2
+    assert len(reader.pages) == 4
 
 
 def test_report_pdf_two_pages(tmp_path: Path) -> None:
@@ -75,7 +81,7 @@ def test_report_pdf_two_pages(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     reader = PdfReader(BytesIO(pdf))
-    assert len(reader.pages) == 2
+    assert len(reader.pages) == 4
 
 
 def test_fit_rect_preserve_aspect_wider_box() -> None:
@@ -141,56 +147,55 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     )
 
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+    page_one_text = " ".join(
+        (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
+    )
+    text = extract_pdf_text(pdf).lower()
 
-    assert "confidence: medium" in text
-    assert "use the diagnosis directionally until the caveats below are checked." in text
-    assert "confidence caveats" in text
+    assert "action-ready with caution" in page_one_text
+    assert "what to do next" in page_one_text
+    assert "suitability detail" in text
     assert "saturation and outliers" in text
     assert "potential saturation samples detected" in text
-    assert "checks passed: frame integrity" in text
+    assert "frame integrity" in text
 
 
-def test_build_report_pdf_renders_high_confidence_data_trust_summary() -> None:
-    from test_support.report_helpers import minimal_summary
-
-    summary = minimal_summary(
-        lang="en",
-        findings=[
-            {
-                "finding_id": "F001",
-                "suspected_source": "wheel/tire",
-                "confidence": 0.82,
-            }
-        ],
-        top_causes=[
-            {
-                "finding_id": "F001",
-                "suspected_source": "wheel/tire",
-                "confidence": 0.82,
-            }
-        ],
-        run_suitability=[
-            {
-                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
-                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
-                "state": "pass",
-            },
-            {
-                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
-                "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
-                "state": "pass",
-            },
-        ],
-        samples=[],
+def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
+    pdf = build_report_pdf(
+        ReportTemplateData(
+            title="VibeSensor Diagnostic Report",
+            verdict_page=VerdictPageData(
+                suspected_source="Wheel / Tire",
+                inspect_first="Front-Left",
+                action_status="Action-ready",
+                reason_sentence=(
+                    "Wheel / Tire remains the strongest source because the repeated "
+                    "pattern stayed strongest near Front-Left."
+                ),
+                dominant_corner="Front-Left",
+                location_confidence="Strong",
+                coverage_label="4 of 4 expected positions stayed connected.",
+                proof_summary=(
+                    "Front-Left outranked the next location by 2.1x on the p95 intensity map."
+                ),
+            ),
+            next_steps=[
+                NextStep(
+                    action="Check wheel balance and runout",
+                    why="The strongest repeated pattern stayed near the front-left wheel path.",
+                    confirm=(
+                        "If imbalance is the driver, the repeated pattern should "
+                        "reduce after correction."
+                    ),
+                )
+            ],
+        )
     )
-
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
 
-    assert "confidence: high" in text
-    assert "current data supports the diagnosis." in text
-    assert "checks passed: frame integrity, speed variation" in text
+    assert "action-ready" in text
+    assert "location confidence strong" in text
+    assert "what to do next" in text
 
 
 def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_b() -> None:
@@ -230,11 +235,11 @@ def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
 
-    assert "confidence: medium" in text
-    assert "use the diagnosis directionally until the caveats below are checked." in text
+    assert "action-ready with caution" in text
+    assert "recapture before acting" not in text
 
 
-def test_build_report_pdf_indicates_when_more_confidence_caveats_exist() -> None:
+def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> None:
     from test_support.report_helpers import minimal_summary
 
     summary = minimal_summary(
@@ -279,9 +284,14 @@ def test_build_report_pdf_indicates_when_more_confidence_caveats_exist() -> None
     )
 
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+    page_one_text = " ".join(
+        (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
+    )
+    text = extract_pdf_text(pdf).lower()
 
-    assert "+1 more caveats" in text
+    assert "recapture before acting" in page_one_text
+    assert "what was insufficient in this run" in text
+    assert "conditions needed for a stronger result" in text
 
 
 def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:

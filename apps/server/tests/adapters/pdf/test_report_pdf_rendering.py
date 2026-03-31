@@ -98,8 +98,10 @@ def test_report_pdf_footer_uses_report_title_instead_of_dev_version_marker(
     )
     marker = f"v{__version__} (a1b2c3d4)"
     text_blob = extract_pdf_text(pdf)
-    assert marker not in text_blob
-    assert "VibeSensor Diagnostic Report" in text_blob
+    page1_text = PdfReader(BytesIO(pdf)).pages[0].extract_text() or ""
+    assert marker not in page1_text
+    assert marker in text_blob
+    assert "VibeSensor Diagnostic Report" in page1_text
 
 
 def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> None:
@@ -123,7 +125,7 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
             map_summary(prepare_report_input(summarize_log(run_path))),
         ),
     )
-    assert text_blob.count("Next steps") == 1
+    assert text_blob.count("What to do next") == 1
 
 
 def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
@@ -145,10 +147,10 @@ def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
             map_summary(prepare_report_input(summarize_log(run_path, lang="nl"))),
         ),
     )
-    assert "Duur:" in text_blob
-    assert "Sensoren:" in text_blob
-    assert "Aantal metingen:" in text_blob
-    assert "Bemonsteringsfrequentie (Hz):" in text_blob
+    assert "Duur" in text_blob
+    assert "Sensoren" in text_blob
+    assert "Aantal metingen" in text_blob
+    assert "Bemonsteringsfrequentie (Hz)" in text_blob
 
 
 def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
@@ -229,11 +231,9 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
     assert "{speed_hint}" not in text_blob
     assert "{location_hint}" not in text_blob
     assert "{driveline_focus}" not in text_blob
-    assert "Check front-left wheel for imbalance or radial/lateral runout." in text_blob
-    assert (
-        "Check front-left wheel for tire damage, flat spots, belt shift, uneven wear, or"
-        in text_blob
-    )
+    assert "Check front-left wheel for imbalance or" in text_blob
+    assert "runout" in text_blob
+    assert "Check front-left wheel for tire damage," in text_blob
     assert "pressure mismatch." in text_blob
     assert "Inspect propshaft runout/balance" not in text_blob
     assert "ETA:" not in text_blob

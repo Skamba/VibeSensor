@@ -52,12 +52,12 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     assert pdf.startswith(b"%PDF")
     for text in (
         "VibeSensor Diagnostic Report",
-        "Observed Signature",
-        "Certainty",
-        "Systems with findings",
-        "Next steps",
-        "Evidence",
-        "Supporting Measurements",
+        "Suspected source",
+        "Action status",
+        "What to do next",
+        "Appendix B: Sensor Topology",
+        "Appendix C: Evidence Detail",
+        "Supporting measurements",
     ):
         assert_pdf_contains(pdf, text)
     assert b"Spectrogram" not in pdf
@@ -266,5 +266,5 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     assert bool(summary["speed_stats"]["steady_speed"]) is True
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
-    assert_pdf_contains(pdf, "Certainty")
+    assert_pdf_contains(pdf, "Speed Band")
     assert_pdf_contains(pdf, "VibeSensor Diagnostic Report")

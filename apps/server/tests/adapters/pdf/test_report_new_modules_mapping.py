@@ -174,7 +174,7 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
     )
 
     data = map_summary(prepare_report_input(summary))
-    assert len(data.next_steps) == 2
+    assert len(data.next_steps) == 3
     assert all(step.eta is None for step in data.next_steps)
     assert all("front-left wheel" in step.action.lower() for step in data.next_steps)
     rendered = " ".join(

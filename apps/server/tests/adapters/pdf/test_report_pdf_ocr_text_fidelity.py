@@ -168,12 +168,12 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
 
     expected_text = [
         "VibeSensor Diagnostic Report",
-        "Evidence and Hotspots",
-        "Pattern Evidence",
+        "Suspected source",
+        "Action status",
+        "Dominance summary",
+        "Evidence chain",
         "Supporting Measurements",
-        "Diagnosed location source",
         "Wheel/Tire",
-        "Driveline",
         "Engine",
         "front-left wheel",
         "rear-right wheel",
