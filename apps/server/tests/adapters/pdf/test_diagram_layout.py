@@ -135,6 +135,29 @@ def test_choose_label_plan_avoids_occupied_boxes() -> None:
     assert isinstance(label, LabelRenderPlan)
 
 
+def test_choose_label_plan_prefers_inward_offset_before_outward_overflow() -> None:
+    blocked_inward_box = label_bbox(
+        x=74.3,
+        y=188.0,
+        text="front-right wheel",
+        anchor="end",
+        font_size=6.8,
+    )
+    label = choose_label_plan(
+        name="front-right wheel",
+        px=84.3,
+        py=190.0,
+        width=124.0,
+        height=252.0,
+        occupied_boxes=[blocked_inward_box],
+        font_size=6.8,
+        color="#000",
+    )
+    assert label.anchor == "end"
+    assert label.bbox[0] >= 2.0
+    assert label.bbox[2] <= 122.0
+
+
 # ── build_sensor_render_plan ─────────────────────────────────────────────────
 
 _COLORS = {
