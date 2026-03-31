@@ -20,8 +20,8 @@ from vibesensor.adapters.pdf.report_data import (
     RankedCandidateRow,
     ReportLabelValueRow,
     ReportTemplateData,
+    VerdictPageData,
 )
-from vibesensor.adapters.pdf.report_data import VerdictPageData
 from vibesensor.report_i18n import tr as i18n_tr
 
 
@@ -57,12 +57,25 @@ def test_estimate_appendix_c_lower_panels_shrink_for_short_content() -> None:
             observations=["Single repeatable observation."],
             limits_summary="Run quality was acceptable.",
             suitability_items=[
-                DataTrustItem(check="Frame integrity", detail="Passed cleanly.", state="pass"),
-                DataTrustItem(check="Speed stability", detail="Within expected range.", state="pass"),
+                DataTrustItem(
+                    check="Frame integrity",
+                    detail="Passed cleanly.",
+                    state="pass",
+                ),
+                DataTrustItem(
+                    check="Speed stability",
+                    detail="Within expected range.",
+                    state="pass",
+                ),
             ],
         ),
         appendix_d=AppendixDData(
-            rows=[ReportLabelValueRow(label="Evidence", value="One short traceability note.")],
+            rows=[
+                ReportLabelValueRow(
+                    label="Evidence",
+                    value="One short traceability note.",
+                ),
+            ],
         ),
     )
 
@@ -82,9 +95,21 @@ def test_estimate_worksheet_summary_panels_shrink_for_short_content() -> None:
         why_alternative_next="Backup reason.",
         next_if_clean="Move to the alternative path.",
         ranked_candidates=[
-            RankedCandidateRow(source_name="Wheel / Tire", inspect_first="Front-left wheel", path_role="Primary"),
-            RankedCandidateRow(source_name="Driveline", inspect_first="Propshaft", path_role="Alternative"),
-            RankedCandidateRow(source_name="Engine", inspect_first="Accessory drive", path_role="Third"),
+            RankedCandidateRow(
+                source_name="Wheel / Tire",
+                inspect_first="Front-left wheel",
+                path_role="Primary",
+            ),
+            RankedCandidateRow(
+                source_name="Driveline",
+                inspect_first="Propshaft",
+                path_role="Alternative",
+            ),
+            RankedCandidateRow(
+                source_name="Engine",
+                inspect_first="Accessory drive",
+                path_role="Third",
+            ),
         ],
     )
 

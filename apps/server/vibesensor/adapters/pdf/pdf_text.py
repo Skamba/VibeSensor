@@ -171,7 +171,5 @@ def _measure_section_block_height(
 ) -> float:
     """Estimate vertical space consumed by a section block body."""
     return float(
-        title_gap
-        + _measure_text_height(body, w=w, size=FS_SMALL, max_lines=max_lines)
-        + body_gap
+        title_gap + _measure_text_height(body, w=w, size=FS_SMALL, max_lines=max_lines) + body_gap
     )

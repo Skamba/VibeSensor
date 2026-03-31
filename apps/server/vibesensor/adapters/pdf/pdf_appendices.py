@@ -79,7 +79,9 @@ def _appendix_a_page(
         )
 
 
-def worksheet_step_pages(appendix: AppendixAData, steps: list[NextStep], *, lang: str) -> list[list[NextStep]]:
+def worksheet_step_pages(
+    appendix: AppendixAData, steps: list[NextStep], *, lang: str
+) -> list[list[NextStep]]:
     if not steps:
         return [[]]
 
@@ -105,7 +107,9 @@ def worksheet_step_pages(appendix: AppendixAData, steps: list[NextStep], *, lang
     return pages
 
 
-def _estimate_appendix_c_traceability_row_height(row: ReportLabelValueRow, *, width: float) -> float:
+def _estimate_appendix_c_traceability_row_height(
+    row: ReportLabelValueRow, *, width: float
+) -> float:
     return float(
         4.2 * mm
         + _measure_text_height(
@@ -119,18 +123,23 @@ def _estimate_appendix_c_traceability_row_height(row: ReportLabelValueRow, *, wi
     )
 
 
-def _estimate_appendix_c_context_panel_height(appendix: ReportTemplateData, *, width: float) -> float:
+def _estimate_appendix_c_context_panel_height(
+    appendix: ReportTemplateData, *, width: float
+) -> float:
     appendix_c = appendix.appendix_c
     content_w = width - 8 * mm
     total = PANEL_HEADER_H + 2 * mm
     if appendix_c.context_summary:
-        total += _measure_text_height(
-            appendix_c.context_summary,
-            w=content_w,
-            size=FS_SMALL,
-            leading=FS_SMALL + 1.0,
-            max_lines=4,
-        ) + 1.2 * mm
+        total += (
+            _measure_text_height(
+                appendix_c.context_summary,
+                w=content_w,
+                size=FS_SMALL,
+                leading=FS_SMALL + 1.0,
+                max_lines=4,
+            )
+            + 1.2 * mm
+        )
     total += _measure_section_block_height(
         appendix_c.speed_band_summary or _tr(appendix.lang, "UNKNOWN"),
         w=content_w,
@@ -147,37 +156,49 @@ def _estimate_appendix_c_context_panel_height(appendix: ReportTemplateData, *, w
     return float(max(34 * mm, total + 3 * mm))
 
 
-def _estimate_appendix_c_suitability_panel_height(appendix: ReportTemplateData, *, width: float) -> float:
+def _estimate_appendix_c_suitability_panel_height(
+    appendix: ReportTemplateData, *, width: float
+) -> float:
     appendix_c = appendix.appendix_c
     content_w = width - 8 * mm
     total = PANEL_HEADER_H + 2 * mm
     if appendix_c.limits_summary:
-        total += _measure_text_height(
-            appendix_c.limits_summary,
-            w=content_w,
-            size=FS_SMALL,
-            leading=FS_SMALL + 1.0,
-            max_lines=4,
-        ) + 1.0 * mm
+        total += (
+            _measure_text_height(
+                appendix_c.limits_summary,
+                w=content_w,
+                size=FS_SMALL,
+                leading=FS_SMALL + 1.0,
+                max_lines=4,
+            )
+            + 1.0 * mm
+        )
     filtered_suitability_items = [
         item
         for item in appendix_c.suitability_items
         if item.detail != appendix.verdict_page.action_status_note
     ]
     for item in filtered_suitability_items[:5]:
-        total += _measure_text_height(item.check, w=content_w, size=FS_SMALL, max_lines=1) + 0.4 * mm
+        total += (
+            _measure_text_height(item.check, w=content_w, size=FS_SMALL, max_lines=1) + 0.4 * mm
+        )
         if item.detail:
-            total += _measure_text_height(
-                item.detail,
-                w=content_w,
-                size=FS_SMALL,
-                leading=FS_SMALL + 1.0,
-                max_lines=2,
-            ) + 0.8 * mm
+            total += (
+                _measure_text_height(
+                    item.detail,
+                    w=content_w,
+                    size=FS_SMALL,
+                    leading=FS_SMALL + 1.0,
+                    max_lines=2,
+                )
+                + 0.8 * mm
+            )
     return float(max(34 * mm, total + 3 * mm))
 
 
-def _estimate_appendix_c_trace_panel_height(appendix_d: ReportTemplateData, *, width: float) -> float:
+def _estimate_appendix_c_trace_panel_height(
+    appendix_d: ReportTemplateData, *, width: float
+) -> float:
     content_w = width - 8 * mm
     total = PANEL_HEADER_H + 2 * mm
     for row in appendix_d.appendix_d.rows:
@@ -217,22 +238,29 @@ def _estimate_worksheet_top_panel_height(appendix: AppendixAData, *, lang: str) 
     left_col_w = (width - 8 * mm - col_gap) * 0.58
     right_col_w = width - 8 * mm - col_gap - left_col_w
     total = PANEL_HEADER_H + 2 * mm
-    total += _measure_text_height(
-        _tr(lang, "REPORT_SOURCE_CONFIDENCE_NOTE"),
-        w=width - 8 * mm,
-        size=FS_SMALL,
-        leading=FS_SMALL + 1.0,
-        max_lines=2,
-    ) + 1.2 * mm
+    total += (
+        _measure_text_height(
+            _tr(lang, "REPORT_SOURCE_CONFIDENCE_NOTE"),
+            w=width - 8 * mm,
+            size=FS_SMALL,
+            leading=FS_SMALL + 1.0,
+            max_lines=2,
+        )
+        + 1.2 * mm
+    )
 
     left_height = _measure_section_block_height(
         appendix.primary_source or _tr(lang, "UNKNOWN"),
         w=left_col_w,
         max_lines=2,
     )
-    primary_inspect_first = appendix.ranked_candidates[0].inspect_first if appendix.ranked_candidates else None
+    primary_inspect_first = (
+        appendix.ranked_candidates[0].inspect_first if appendix.ranked_candidates else None
+    )
     if primary_inspect_first:
-        left_height += _measure_section_block_height(primary_inspect_first, w=left_col_w, max_lines=2)
+        left_height += _measure_section_block_height(
+            primary_inspect_first, w=left_col_w, max_lines=2
+        )
     if appendix.why_primary_first:
         left_height += _measure_section_block_height(
             appendix.why_primary_first,
