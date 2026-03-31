@@ -52,7 +52,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     assert pdf.startswith(b"%PDF")
     for text in (
         "VibeSensor Diagnostic Report",
-        "Suspected source",
+        "Most likely source",
         "Action status",
         "What to do next",
         "Recapture Guidance",

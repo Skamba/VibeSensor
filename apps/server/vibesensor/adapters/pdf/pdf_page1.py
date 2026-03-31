@@ -186,7 +186,7 @@ def _draw_hero_block(
     _draw_panel(c, x, y, w, h, fill="#ffffff")
     inner_x = x + 5 * mm
     inner_y = y + h - 6.0 * mm
-    left_w = w * 0.52
+    left_w = w * 0.58
     left_content_w = left_w - 10 * mm
     right_x = x + left_w + 8 * mm
     right_w = w - (left_w + 13 * mm)
@@ -215,6 +215,18 @@ def _draw_hero_block(
             )
             - 0.8 * mm
         )
+    if verdict.reason_sentence:
+        _draw_text(
+            c,
+            inner_x,
+            next_y - 0.2 * mm,
+            left_content_w,
+            verdict.reason_sentence,
+            size=FS_SMALL,
+            color=SUB_CLR,
+            leading=FS_SMALL + 1.1,
+            max_lines=4,
+        )
 
     c.setFillColor(_hex(SUB_CLR))
     c.setFont(FONT, FS_SMALL)
@@ -228,7 +240,7 @@ def _draw_hero_block(
     )
     if verdict.action_status_note:
         note_fill, note_border = _status_palette(verdict.action_status or tr("UNKNOWN"), tr=tr)
-        note_lines = _wrap_lines(verdict.action_status_note, right_w - 6 * mm, FS_SMALL)[:3]
+        note_lines = _wrap_lines(verdict.action_status_note, right_w - 6 * mm, FS_SMALL)[:4]
         note_h = max(10 * mm, 4 * mm + (len(note_lines) * (FS_SMALL + 1.1)))
         note_top = inner_y - 9.0 * mm
         c.setFillColor(_hex(note_fill))
@@ -251,7 +263,7 @@ def _draw_hero_block(
             size=FS_SMALL,
             color=TEXT_CLR,
             leading=FS_SMALL + 1.1,
-            max_lines=3,
+            max_lines=4,
         )
 
 
@@ -269,7 +281,7 @@ def _draw_proof_block(
     _draw_panel(c, x, y, w, h, verdict.proof_panel_title or tr("REPORT_PROOF_PANEL_TITLE"))
     inner_x = x + 4 * mm
     inner_y = y + h - PANEL_HEADER_H - 2 * mm
-    diagram_w = w * 0.55
+    diagram_w = w * 0.42
     diagram_h = h - 20 * mm
     diagram = car_location_diagram(
         data.top_causes or data.findings,
@@ -286,8 +298,8 @@ def _draw_proof_block(
     )
     diagram.drawOn(c, inner_x, y + 7 * mm)
 
-    text_x = x + diagram_w + 4 * mm
-    text_w = w - diagram_w - 8 * mm
+    text_x = x + diagram_w + 5 * mm
+    text_w = w - diagram_w - 9 * mm
     text_y = inner_y
     text_y = (
         _draw_text(
@@ -313,6 +325,16 @@ def _draw_proof_block(
         value=verdict.dominant_corner or tr("UNKNOWN"),
         value_size=FS_H2,
     )
+    if verdict.runner_up_corner:
+        text_y = _draw_label_value(
+            c,
+            x=text_x,
+            y=text_y,
+            width=text_w,
+            label=tr("REPORT_RUNNER_UP_CORNER_LABEL"),
+            value=verdict.runner_up_corner,
+            value_size=FS_BODY,
+        )
     text_y = _draw_label_value(
         c,
         x=text_x,
@@ -369,7 +391,13 @@ def _draw_action_row(
 ) -> float:
     text_w = w - 14 * mm
     title_lines = _wrap_lines(title, text_w, FS_BODY)[:2]
-    row_h = max(16 * mm, 8.5 * mm + (len(title_lines) * (FS_BODY + 1.2)))
+    why_lines = _wrap_lines(why or "", text_w, FS_SMALL)[:2] if why else []
+    row_h = max(
+        18 * mm,
+        8.5 * mm
+        + (len(title_lines) * (FS_BODY + 1.2))
+        + (0 if not why_lines else 1.2 * mm + (len(why_lines) * (FS_SMALL + 1.0))),
+    )
     c.setFillColor(_hex(REPORT_COLORS["surface"]))
     c.setStrokeColor(_hex(REPORT_COLORS["border"]))
     c.roundRect(x, y_top - row_h, w, row_h, 3 * mm, stroke=1, fill=1)
@@ -385,6 +413,13 @@ def _draw_action_row(
     for line in title_lines:
         c.drawString(x + 12 * mm, title_y, line)
         title_y -= FS_BODY + 1.2
+    if why_lines:
+        c.setFillColor(_hex(SUB_CLR))
+        c.setFont(FONT, FS_SMALL)
+        title_y -= 0.6 * mm
+        for line in why_lines:
+            c.drawString(x + 12 * mm, title_y, line)
+            title_y -= FS_SMALL + 1.0
     return float(y_top - row_h - 2.5 * mm)
 
 
@@ -407,7 +442,8 @@ def _draw_actions_block(
         )
         return
     row_y = inner_y
-    for index, step in enumerate(data.next_steps[:3], start=1):
+    shown_steps = data.next_steps[:2]
+    for index, step in enumerate(shown_steps, start=1):
         title_lines = _wrap_lines(step.action, (w - 22 * mm), FS_BODY)[:2]
         estimated_h = max(16 * mm, 8.5 * mm + (len(title_lines) * (FS_BODY + 1.2)))
         if row_y - estimated_h < y + 4 * mm:
@@ -422,6 +458,18 @@ def _draw_actions_block(
             title=step.action,
             why=None,
             confirm=None,
+        )
+    if len(data.next_steps) > len(shown_steps) and row_y > y + 10 * mm:
+        _draw_text(
+            c,
+            inner_x,
+            row_y - 0.5 * mm,
+            w - 8 * mm,
+            tr("REPORT_ACTIONS_PAGE1_MORE"),
+            size=FS_SMALL,
+            color=SUB_CLR,
+            leading=FS_SMALL + 1.0,
+            max_lines=2,
         )
 
 

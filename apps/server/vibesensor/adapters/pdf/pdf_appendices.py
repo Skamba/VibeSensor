@@ -25,13 +25,21 @@ from vibesensor.adapters.pdf.pdf_style import (
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text, _wrap_lines
 from vibesensor.adapters.pdf.report_data import (
     AppendixAData,
+    NextStep,
     ReportLabelValueRow,
     ReportTemplateData,
 )
 from vibesensor.report_i18n import tr as _tr
 
 
-def _appendix_a_page(c: Canvas, data: ReportTemplateData) -> None:
+def _appendix_a_page(
+    c: Canvas,
+    data: ReportTemplateData,
+    *,
+    steps: list[NextStep] | None = None,
+    start_number: int = 1,
+    continued: bool = False,
+) -> None:
     title_key = (
         "REPORT_RECAPTURE_GUIDANCE_TITLE"
         if data.appendix_a.mode == "recapture"
@@ -45,8 +53,50 @@ def _appendix_a_page(c: Canvas, data: ReportTemplateData) -> None:
     )
     if data.appendix_a.mode == "recapture":
         _draw_capture_guidance_page(c, data, title_y)
+    elif continued:
+        _draw_action_steps_continuation_page(
+            c,
+            steps=steps or [],
+            lang=data.lang,
+            title_y=title_y,
+            start_number=start_number,
+        )
     else:
-        _draw_worksheet_page(c, data.appendix_a, data, data.lang, title_y)
+        _draw_worksheet_page(
+            c,
+            data.appendix_a,
+            data,
+            data.lang,
+            title_y,
+            steps=steps or data.next_steps,
+            start_number=start_number,
+        )
+
+
+def worksheet_step_pages(appendix: AppendixAData, steps: list[NextStep]) -> list[list[NextStep]]:
+    if not steps:
+        return [[]]
+
+    width = PAGE_W - 2 * MARGIN
+    first_panel_h = _worksheet_first_actions_panel_height(appendix)
+    continuation_panel_h = _worksheet_continuation_panel_height()
+
+    pages: list[list[NextStep]] = []
+    remaining = list(steps)
+
+    first_count = _fit_action_steps(remaining, panel_w=width, panel_h=first_panel_h)
+    if first_count <= 0:
+        first_count = 1
+    pages.append(remaining[:first_count])
+    remaining = remaining[first_count:]
+
+    while remaining:
+        count = _fit_action_steps(remaining, panel_w=width, panel_h=continuation_panel_h)
+        if count <= 0:
+            count = 1
+        pages.append(remaining[:count])
+        remaining = remaining[count:]
+    return pages
 
 
 def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
@@ -198,7 +248,7 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
     appendix_d = data.appendix_d
     width = PAGE_W - 2 * MARGIN
 
-    chain_h = 38 * mm
+    chain_h = 58 * mm
     chain_y = title_y - chain_h
     _draw_panel(c, MARGIN, chain_y, width, chain_h, _tr(data.lang, "REPORT_EVIDENCE_CHAIN_TITLE"))
     chain_top = (
@@ -207,15 +257,17 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
             MARGIN + 4 * mm,
             chain_y + chain_h - PANEL_HEADER_H - 2 * mm,
             width - 8 * mm,
-            _tr(data.lang, "REPORT_EVIDENCE_CHAIN_NOTE"),
+            appendix.evidence_summary or _tr(data.lang, "REPORT_EVIDENCE_CHAIN_NOTE"),
             size=FS_SMALL,
             color=SUB_CLR,
             leading=FS_SMALL + 1.0,
-            max_lines=1,
+            max_lines=3,
         )
         - 1.0 * mm
     )
-    show_ambiguity = any(bool(row.ambiguity_note) for row in appendix.evidence_chain_rows)
+    show_ambiguity = len(appendix.evidence_chain_rows) > 1 and any(
+        bool(row.ambiguity_note) for row in appendix.evidence_chain_rows
+    )
     chain_headers = [
         _tr(data.lang, "REPORT_SOURCE_COLUMN"),
         _tr(data.lang, "REPORT_SIGNAL_COLUMN"),
@@ -250,10 +302,10 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         headers=chain_headers,
         rows=chain_rows,
         col_widths=chain_widths,
-        max_body_lines=3 if show_ambiguity else 2,
+        max_body_lines=2,
     )
 
-    measurement_h = 74 * mm
+    measurement_h = 72 * mm
     measurement_y = chain_y - GAP - measurement_h
     _draw_panel(
         c,
@@ -304,21 +356,38 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
             )
             - 0.8 * mm
         )
+    if appendix.measurement_guide:
+        measurement_top = (
+            _draw_text(
+                c,
+                MARGIN + 4 * mm,
+                measurement_top,
+                width - 8 * mm,
+                appendix.measurement_guide,
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=2,
+            )
+            - 0.8 * mm
+        )
     if shared_measurement_context:
         measurement_headers = [
             _tr(data.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
+            _tr(data.lang, "FREQUENCY_HZ"),
             _tr(data.lang, "REPORT_PEAK_DB_COLUMN"),
             _tr(data.lang, "REPORT_STRENGTH_DB_COLUMN"),
         ]
         measurement_rows = [
             [
                 row.measurement_id,
+                _fmt_hz(row.frequency_hz),
                 _fmt_db(row.peak_db),
                 _fmt_db(row.strength_db),
             ]
             for row in appendix.measurement_rows
         ]
-        measurement_widths = [0.22, 0.39, 0.39]
+        measurement_widths = [0.18, 0.22, 0.30, 0.30]
     else:
         measurement_headers = [
             _tr(data.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
@@ -364,6 +433,21 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
     )
     block_x = MARGIN + 4 * mm
     block_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
+    if appendix.context_summary:
+        block_y = (
+            _draw_text(
+                c,
+                block_x,
+                block_y,
+                context_w - 8 * mm,
+                appendix.context_summary,
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=4,
+            )
+            - 1.2 * mm
+        )
     block_y = _draw_section_block(
         c,
         block_x,
@@ -410,6 +494,21 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         for item in appendix.suitability_items
         if item.detail != data.verdict_page.action_status_note
     ]
+    if appendix.limits_summary:
+        trust_y = (
+            _draw_text(
+                c,
+                trust_x,
+                trust_y,
+                suitability_w - 8 * mm,
+                appendix.limits_summary,
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=4,
+            )
+            - 1.0 * mm
+        )
     for item in filtered_suitability_items[:5]:
         trust_y = (
             _draw_text(
@@ -447,21 +546,6 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         c, trace_x, lower_y, trace_w, lower_h, _tr(data.lang, "REPORT_TRACEABILITY_PANEL_TITLE")
     )
     trace_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
-    trace_y = (
-        _draw_text(
-            c,
-            trace_x + 4 * mm,
-            trace_y,
-            trace_w - 8 * mm,
-            _tr(data.lang, "REPORT_APPENDIX_D_TITLE"),
-            font=FONT_B,
-            size=FS_SMALL,
-            color=TEXT_CLR,
-            leading=FS_SMALL + 1.0,
-            max_lines=2,
-        )
-        - 1.0 * mm
-    )
     for trace_row in appendix_d.rows:
         trace_y = (
             _draw_traceability_row(
@@ -562,19 +646,43 @@ def _draw_capture_guidance_page(c: Canvas, data: ReportTemplateData, title_y: fl
 
 
 def _draw_worksheet_page(
-    c: Canvas, appendix: AppendixAData, data: ReportTemplateData, lang: str, title_y: float
+    c: Canvas,
+    appendix: AppendixAData,
+    data: ReportTemplateData,
+    lang: str,
+    title_y: float,
+    *,
+    steps: list[NextStep],
+    start_number: int,
 ) -> None:
     width = PAGE_W - 2 * MARGIN
-    top_h = 40 * mm
+    top_h = 56 * mm
     top_y = title_y - top_h
     _draw_panel(c, MARGIN, top_y, width, top_h, _tr(lang, "REPORT_PRIMARY_VS_ALTERNATIVE_TITLE"))
     block_x = MARGIN + 4 * mm
     block_y = top_y + top_h - PANEL_HEADER_H - 2 * mm
-    block_y = _draw_section_block(
+    col_gap = 6 * mm
+    note_y = (
+        _draw_text(
+            c,
+            block_x,
+            block_y,
+            width - 8 * mm,
+            _tr(lang, "REPORT_SOURCE_CONFIDENCE_NOTE"),
+            size=FS_SMALL,
+            color=SUB_CLR,
+            leading=FS_SMALL + 1.0,
+            max_lines=2,
+        )
+        - 1.2 * mm
+    )
+    left_col_w = (width - 8 * mm - col_gap) * 0.58
+    right_col_w = width - 8 * mm - col_gap - left_col_w
+    left_y = _draw_section_block(
         c,
         block_x,
-        block_y,
-        width - 8 * mm,
+        note_y,
+        left_col_w,
         _tr(lang, "REPORT_PRIMARY_SOURCE_LABEL"),
         appendix.primary_source or _tr(lang, "UNKNOWN"),
         max_lines=2,
@@ -583,31 +691,54 @@ def _draw_worksheet_page(
         appendix.ranked_candidates[0].inspect_first if appendix.ranked_candidates else None
     )
     if primary_inspect_first:
-        block_y = _draw_section_block(
+        left_y = _draw_section_block(
             c,
             block_x,
-            block_y,
-            width - 8 * mm,
+            left_y,
+            left_col_w,
             _tr(lang, "REPORT_INSPECT_FIRST_LABEL"),
             primary_inspect_first,
             max_lines=2,
         )
-    if appendix.alternative_source:
-        block_y = _draw_section_block(
+    if appendix.why_primary_first:
+        _draw_section_block(
             c,
             block_x,
-            block_y,
-            width - 8 * mm,
+            left_y,
+            left_col_w,
+            _tr(lang, "REPORT_WHY_PRIMARY_FIRST_LABEL"),
+            appendix.why_primary_first,
+            max_lines=3,
+        )
+
+    right_x = block_x + left_col_w + col_gap
+    right_y = note_y
+    if appendix.alternative_source:
+        right_y = _draw_section_block(
+            c,
+            right_x,
+            right_y,
+            right_col_w,
             _tr(lang, "REPORT_ALTERNATIVE_SOURCE_LABEL"),
             appendix.alternative_source,
             max_lines=2,
         )
+    if appendix.why_alternative_next:
+        right_y = _draw_section_block(
+            c,
+            right_x,
+            right_y,
+            right_col_w,
+            _tr(lang, "REPORT_WHY_ALTERNATIVE_NEXT_LABEL"),
+            appendix.why_alternative_next,
+            max_lines=3,
+        )
     if appendix.next_if_clean:
         _draw_section_block(
             c,
-            block_x,
-            block_y,
-            width - 8 * mm,
+            right_x,
+            right_y,
+            right_col_w,
             _tr(lang, "REPORT_IF_PRIMARY_CLEAN_LABEL"),
             appendix.next_if_clean,
             max_lines=3,
@@ -650,27 +781,197 @@ def _draw_worksheet_page(
         matrix_h = top_y - GAP - (MARGIN + 8 * mm)
 
     matrix_y = MARGIN + 8 * mm
-    _draw_panel(c, MARGIN, matrix_y, width, matrix_h, _tr(lang, "REPORT_ACTION_MATRIX_TITLE"))
-    action_rows = [
-        [step.action, step.why or "", step.confirm or "", step.falsify or ""]
-        for step in data.next_steps
-    ]
-    _draw_table(
+    _draw_action_steps_panel(
         c,
-        x=MARGIN + 4 * mm,
-        y=matrix_y + matrix_h - 13 * mm,
-        w=width - 8 * mm,
-        y_bottom=matrix_y + 4 * mm,
-        headers=[
-            _tr(lang, "REPORT_ACTION_COLUMN"),
-            _tr(lang, "WHY"),
-            _tr(lang, "CONFIRM"),
-            _tr(lang, "REPORT_FALSIFY_COLUMN"),
-        ],
-        rows=action_rows,
-        col_widths=[0.27, 0.21, 0.24, 0.28],
-        max_body_lines=4,
+        steps=steps,
+        lang=lang,
+        x=MARGIN,
+        y=matrix_y,
+        w=width,
+        h=matrix_h,
+        start_number=start_number,
+        title=_tr(lang, "REPORT_ACTION_MATRIX_TITLE"),
     )
+
+
+def _worksheet_first_actions_panel_height(appendix: AppendixAData) -> float:
+    title_y = PAGE_H - MARGIN - (12 * mm) - GAP
+    top_h = 56 * mm
+    top_y = title_y - top_h
+    if len(appendix.ranked_candidates) > 2:
+        stack_h = 48 * mm
+        stack_y = top_y - GAP - stack_h
+        return float(stack_y - (MARGIN + 8 * mm))
+    return float(top_y - GAP - (MARGIN + 8 * mm))
+
+
+def _worksheet_continuation_panel_height() -> float:
+    title_y = PAGE_H - MARGIN - (12 * mm) - GAP
+    return float(title_y - (MARGIN + 8 * mm))
+
+
+def _fit_action_steps(steps: list[NextStep], *, panel_w: float, panel_h: float) -> int:
+    inner_w = panel_w - 8 * mm
+    row_y = panel_h - PANEL_HEADER_H - 2 * mm
+    count = 0
+    for step in steps:
+        estimated_h = _estimate_action_step_card_height(step, width=inner_w)
+        if row_y - estimated_h < 4 * mm:
+            break
+        row_y = row_y - estimated_h - 2.5 * mm
+        count += 1
+    return count
+
+
+def _draw_action_steps_continuation_page(
+    c: Canvas,
+    *,
+    steps: list[NextStep],
+    lang: str,
+    title_y: float,
+    start_number: int,
+) -> None:
+    width = PAGE_W - 2 * MARGIN
+    panel_h = title_y - (MARGIN + 8 * mm)
+    _draw_action_steps_panel(
+        c,
+        steps=steps,
+        lang=lang,
+        x=MARGIN,
+        y=MARGIN + 8 * mm,
+        w=width,
+        h=panel_h,
+        start_number=start_number,
+        title=_tr(lang, "REPORT_ACTION_MATRIX_TITLE"),
+    )
+
+
+def _draw_action_steps_panel(
+    c: Canvas,
+    *,
+    steps: list[NextStep],
+    lang: str,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    start_number: int,
+    title: str,
+) -> None:
+    _draw_panel(c, x, y, w, h, title)
+    row_y = y + h - PANEL_HEADER_H - 2 * mm
+    for index, step in enumerate(steps, start=start_number):
+        estimated_h = _estimate_action_step_card_height(step, width=w - 8 * mm)
+        if row_y - estimated_h < y + 4 * mm:
+            break
+        row_y = _draw_action_step_card(
+            c,
+            lang=lang,
+            step=step,
+            index=index,
+            x=x + 4 * mm,
+            y_top=row_y,
+            w=w - 8 * mm,
+        )
+
+
+def _estimate_action_step_card_height(step: NextStep, *, width: float) -> float:
+    title_lines = _wrap_lines(step.action, width - 18 * mm, FS_BODY)[:2]
+    why_lines = _wrap_lines(step.why or "", width - 12 * mm, FS_SMALL)[:3] if step.why else []
+    detail_w = (width - 18 * mm) / 2
+    confirm_lines = _wrap_lines(step.confirm or "", detail_w, FS_SMALL)[:3] if step.confirm else []
+    clean_lines = _wrap_lines(step.falsify or "", detail_w, FS_SMALL)[:3] if step.falsify else []
+    bottom_lines = max(len(confirm_lines), len(clean_lines), 1)
+    return float(
+        max(
+            28 * mm,
+            10 * mm
+            + (len(title_lines) * (FS_BODY + 1.2))
+            + (len(why_lines) * (FS_SMALL + 1.0))
+            + 8 * mm
+            + (bottom_lines * (FS_SMALL + 1.0)),
+        )
+    )
+
+
+def _draw_action_step_card(
+    c: Canvas,
+    *,
+    lang: str,
+    step: NextStep,
+    index: int,
+    x: float,
+    y_top: float,
+    w: float,
+) -> float:
+    card_h = _estimate_action_step_card_height(step, width=w)
+    c.setFillColor(_hex(REPORT_COLORS["surface"]))
+    c.setStrokeColor(_hex(REPORT_COLORS["border"]))
+    c.roundRect(x, y_top - card_h, w, card_h, 3 * mm, stroke=1, fill=1)
+
+    c.setFillColor(_hex(REPORT_COLORS["brand_surface"]))
+    c.setStrokeColor(_hex(REPORT_COLORS["brand_surface"]))
+    c.roundRect(x + 2 * mm, y_top - 9.5 * mm, 7 * mm, 7 * mm, 2 * mm, stroke=1, fill=1)
+    c.setFillColor(_hex(REPORT_COLORS["brand"]))
+    c.setFont(FONT_B, FS_SMALL)
+    c.drawCentredString(x + 5.5 * mm, y_top - 6.4 * mm, str(index))
+
+    content_x = x + 12 * mm
+    content_w = w - 16 * mm
+    cursor_y = y_top - 4.8 * mm
+    cursor_y = _draw_text(
+        c,
+        content_x,
+        cursor_y,
+        content_w,
+        step.action,
+        font=FONT_B,
+        size=FS_BODY,
+        color=TEXT_CLR,
+        leading=FS_BODY + 1.2,
+        max_lines=2,
+    )
+    if step.why:
+        cursor_y = (
+            _draw_text(
+                c,
+                content_x,
+                cursor_y - 0.2 * mm,
+                content_w,
+                step.why,
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=3,
+            )
+            - 1.0 * mm
+        )
+
+    divider_y = cursor_y - 0.4 * mm
+    c.setStrokeColor(_hex(REPORT_COLORS["table_row_border"]))
+    c.line(content_x, divider_y, x + w - 4 * mm, divider_y)
+
+    col_gap = 4 * mm
+    detail_w = (content_w - col_gap) / 2
+    _draw_section_block(
+        c,
+        content_x,
+        divider_y - 3.2 * mm,
+        detail_w,
+        _tr(lang, "CONFIRM"),
+        step.confirm or "—",
+        max_lines=3,
+    )
+    _draw_section_block(
+        c,
+        content_x + detail_w + col_gap,
+        divider_y - 3.2 * mm,
+        detail_w,
+        _tr(lang, "REPORT_FALSIFY_COLUMN"),
+        step.falsify or "—",
+        max_lines=3,
+    )
+    return float(y_top - card_h - 2.5 * mm)
 
 
 def _draw_traceability_row(
@@ -697,6 +998,12 @@ def _fmt_db(value: float | None) -> str:
     if value is None:
         return "—"
     return f"{value:.1f} dB"
+
+
+def _fmt_hz(value: float | None) -> str:
+    if value is None:
+        return "—"
+    return f"{value:.1f} Hz"
 
 
 def _draw_table(
