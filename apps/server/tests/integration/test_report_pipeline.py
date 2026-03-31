@@ -355,7 +355,7 @@ class TestPdfReportValidation:
 
     def test_pdf_contains_diagnostic_sections(self) -> None:
         """PDF text includes major report section keywords."""
-        for keyword in ["diagnostic", "evidence", "finding"]:
+        for keyword in ["diagnostic", "evidence", "inspection"]:
             assert keyword in self.pdf_text, f"Missing section keyword: '{keyword}'"
 
     def test_pdf_mentions_wheel_tire_source(self) -> None:
@@ -399,7 +399,7 @@ class TestPdfReportValidation:
                     assert token in self.pdf_text, f"Source token '{token}' not found in PDF text"
 
     def test_pdf_topology_page_uses_new_spatial_proof_sections(self) -> None:
-        """Topology appendix should use the redesigned proof sections without a source legend."""
+        """Location proof should use the redesigned page-one proof sections."""
         summary = deepcopy(self.summary)
         rows = summary.get("sensor_intensity_by_location") or []
         assert isinstance(rows, list) and rows, "Scenario should provide intensity rows"
@@ -410,9 +410,9 @@ class TestPdfReportValidation:
             rows[1]["mean_intensity_db"] = 35.0
 
         pdf_text = _extract_pdf_text(_build_pdf_from_summary(summary))
-        assert "sensor map" in pdf_text
-        assert "dominance summary" in pdf_text
-        assert "location snapshot" in pdf_text
+        assert "why this corner wins" in pdf_text
+        assert "dominant corner" in pdf_text
+        assert "location confidence" in pdf_text
         assert "diagnosed location source" not in pdf_text
 
     def test_pdf_keeps_long_next_steps_without_ellipsis(self) -> None:

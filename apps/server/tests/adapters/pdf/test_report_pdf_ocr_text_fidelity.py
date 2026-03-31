@@ -173,7 +173,7 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
         "Best available location signal",
         "Dominant corner",
         "What to do next",
-        "Appendix A: Technician Worksheet",
+        "Recapture Guidance",
         "Traceability",
         "Recapture before acting",
         "Insufficient evidence",

@@ -251,5 +251,5 @@ class TestSimulatorIngestion:
         reader = PdfReader(io.BytesIO(pdf_bytes))
         assert len(reader.pages) >= 2, f"PDF has only {len(reader.pages)} page(s)"
         pdf_text = "\n".join((page.extract_text() or "") for page in reader.pages).lower()
-        for token in ("next steps", "evidence", "front-left", "vibesensor simulator"):
+        for token in ("what to do next", "evidence", "front-left", "vibesensor simulator"):
             assert token in pdf_text, f"Missing expected report content token: {token!r}"
