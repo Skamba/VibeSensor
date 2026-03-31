@@ -10,6 +10,7 @@ from reportlab.pdfgen.canvas import Canvas
 from vibesensor.adapters.pdf.pdf_appendices import (
     _appendix_a_page,
     _appendix_c_page,
+    worksheet_step_pages,
 )
 from vibesensor.adapters.pdf.pdf_drawing import _draw_footer
 from vibesensor.adapters.pdf.pdf_page1 import _page1
@@ -48,7 +49,10 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
     canvas.setCreator("VibeSensor")
     canvas.setSubject("Vehicle vibration diagnostic report")
     recapture_mode = data.appendix_a.mode == "recapture"
-    total_pages = 2 if recapture_mode else 3
+    appendix_a_pages = (
+        [[]] if recapture_mode else worksheet_step_pages(data.appendix_a, list(data.next_steps))
+    )
+    total_pages = 2 if recapture_mode else 2 + len(appendix_a_pages)
 
     _page1(canvas, data, ctx=ctx)
     _draw_footer(canvas, 1, total_pages, data.title)
@@ -60,10 +64,18 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
     else:
         _appendix_c_page(canvas, data)
         _draw_footer(canvas, 2, total_pages, data.title)
-        canvas.showPage()
-
-        _appendix_a_page(canvas, data)
-        _draw_footer(canvas, 3, total_pages, data.title)
+        rendered_steps = 0
+        for page_number, page_steps in enumerate(appendix_a_pages, start=3):
+            canvas.showPage()
+            _appendix_a_page(
+                canvas,
+                data,
+                steps=page_steps,
+                start_number=rendered_steps + 1,
+                continued=page_number > 3,
+            )
+            _draw_footer(canvas, page_number, total_pages, data.title)
+            rendered_steps += len(page_steps)
 
     canvas.save()
     return buf.getvalue()

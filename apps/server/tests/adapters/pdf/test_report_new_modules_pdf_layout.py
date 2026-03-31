@@ -152,10 +152,10 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     )
     text = extract_pdf_text(pdf).lower()
 
-    assert "inspect with caution" in page_one_text
+    assert "inspect first — moderate confidence" in page_one_text
     assert "what to do next" in page_one_text
     assert "potential saturation samples detected" in page_one_text
-    assert "suitability detail" in text
+    assert "run quality and limits" in text
     assert "frame integrity" in text
 
 
@@ -234,7 +234,7 @@ def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
 
-    assert "inspect with caution" in text
+    assert "inspect first — moderate confidence" in text
     assert "recapture before acting" not in text
 
 
