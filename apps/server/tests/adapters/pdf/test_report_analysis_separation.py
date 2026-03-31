@@ -179,7 +179,7 @@ def test_report_output_matches_template_data() -> None:
     assert "Wheel / Tire" in text
     assert "Front-Left" in text
     assert "Action-ready" in text
-    assert "Appendix A: Technician Worksheet" in text
+    assert "Inspection Path" in text
     assert "VibeSensor Diagnostic Report" in text
 
 
@@ -272,10 +272,12 @@ def test_report_cards_switch_to_check_first_summary_when_parts_exist() -> None:
     pdf_bytes = build_report_pdf(data)
     reader = PdfReader(BytesIO(pdf_bytes))
     page_two = reader.pages[1].extract_text() or ""
-    page_two_single_line = " ".join(page_two.split())
+    page_three = reader.pages[2].extract_text() or ""
+    page_three_single_line = " ".join(page_three.split())
 
-    assert "Primary vs alternative source" in page_two
-    assert "Front-Left" in page_two
-    assert "Primary path" in page_two
-    assert "Check wheel bearing assembly" in page_two_single_line
-    assert "Inspect tire belt package" in page_two_single_line
+    assert "Evidence and Run Context" in page_two
+    assert "Inspection Path" in page_three
+    assert "Primary vs alternative source" in page_three
+    assert "Front-Left" in page_three
+    assert "Check wheel bearing assembly" in page_three_single_line
+    assert "Inspect tire belt package" in page_three_single_line

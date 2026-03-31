@@ -184,10 +184,20 @@ def _action_status_text(action_status_key: str, *, tr: Callable[..., str]) -> st
 def _location_confidence_text(location_confidence_key: str, *, tr: Callable[..., str]) -> str:
     keys = {
         "strong": "REPORT_LOCATION_CONFIDENCE_STRONG",
+        "limited": "REPORT_LOCATION_CONFIDENCE_LIMITED",
         "mixed": "REPORT_LOCATION_CONFIDENCE_MIXED",
         "weak": "REPORT_LOCATION_CONFIDENCE_WEAK",
     }
     return tr(keys.get(location_confidence_key, "REPORT_LOCATION_CONFIDENCE_MIXED"))
+
+
+def _presented_location_confidence_key(report_facts: PreparedReportFacts) -> str:
+    if (
+        report_facts.action_status_key == "action_ready_caution"
+        and report_facts.location_confidence_key != "weak"
+    ):
+        return "limited"
+    return report_facts.location_confidence_key
 
 
 def _display_location(value: object, *, short: bool = True, tr: Callable[..., str]) -> str:
@@ -484,6 +494,8 @@ def _evidence_chain_rows(
     for finding in aggregate.effective_top_causes()[:3]:
         source_name = human_source(finding.suspected_source, tr=tr)
         refs = refs_by_source.get(source_name.strip().lower(), [])
+        if not refs:
+            continue
         ambiguity_note = (
             tr("REPORT_EVIDENCE_NOTE_NO_REFS")
             if not refs
@@ -601,7 +613,7 @@ def _build_verdict_page_data(
         ),
         dominant_corner=_display_location(primary.primary_location, tr=tr),
         location_confidence=_location_confidence_text(
-            report_facts.location_confidence_key,
+            _presented_location_confidence_key(report_facts),
             tr=tr,
         ),
         coverage_label=_coverage_label(report_facts, tr=tr),
@@ -700,7 +712,7 @@ def _build_appendix_b_data(
             else tr("REPORT_DOMINANCE_RATIO_UNKNOWN")
         ),
         location_confidence=_location_confidence_text(
-            report_facts.location_confidence_key,
+            _presented_location_confidence_key(report_facts),
             tr=tr,
         ),
         coverage_label=_coverage_label(report_facts, tr=tr),
@@ -741,36 +753,16 @@ def _build_appendix_d_data(
     version_marker: str,
     tr: Callable[..., str],
 ) -> AppendixDData:
-    sensor_locations = (
-        ", ".join(context.sensor_locations_active)
-        if context.sensor_locations_active
-        else tr("UNKNOWN")
-    )
     rows = [
         ReportLabelValueRow(label=tr("RUN_ID"), value=report.run_id),
         ReportLabelValueRow(label=tr("RUN_DATE"), value=context.date_str),
-        ReportLabelValueRow(
-            label=tr("START_TIME_UTC"), value=context.start_time_utc or tr("UNKNOWN")
-        ),
-        ReportLabelValueRow(label=tr("END_TIME_UTC"), value=context.end_time_utc or tr("UNKNOWN")),
-        ReportLabelValueRow(
-            label=tr("CAR_LABEL"),
-            value=" — ".join(
-                part
-                for part in (
-                    report.car_name or context.car_name,
-                    report.car_type or context.car_type,
-                )
-                if part
-            )
-            or tr("UNKNOWN"),
-        ),
-        ReportLabelValueRow(label=tr("SENSORS_LABEL"), value=sensor_locations),
         ReportLabelValueRow(label=tr("SENSOR_MODEL"), value=context.sensor_model or tr("UNKNOWN")),
         ReportLabelValueRow(
             label=tr("FIRMWARE_VERSION"), value=context.firmware_version or tr("UNKNOWN")
         ),
-        ReportLabelValueRow(label=tr("SAMPLE_COUNT_LABEL"), value=str(context.sample_count)),
+        ReportLabelValueRow(
+            label=tr("REPORT_ANALYSIS_ROWS_LABEL"), value=str(context.sample_count)
+        ),
         ReportLabelValueRow(
             label=tr("RAW_SAMPLE_RATE_HZ_LABEL"), value=context.sample_rate_hz or tr("UNKNOWN")
         ),
