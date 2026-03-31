@@ -50,7 +50,9 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
     canvas.setSubject("Vehicle vibration diagnostic report")
     recapture_mode = data.appendix_a.mode == "recapture"
     appendix_a_pages = (
-        [[]] if recapture_mode else worksheet_step_pages(data.appendix_a, list(data.next_steps))
+        [[]]
+        if recapture_mode
+        else worksheet_step_pages(data.appendix_a, list(data.next_steps), lang=data.lang)
     )
     total_pages = 2 if recapture_mode else 2 + len(appendix_a_pages)
 

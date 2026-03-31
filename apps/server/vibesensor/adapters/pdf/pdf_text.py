@@ -29,6 +29,23 @@ def _wrap_lines(text: str, width_pt: float, font_size: float) -> list[str]:
     return lines
 
 
+def _measure_text_height(
+    text: str,
+    *,
+    w: float,
+    size: float = FS_BODY,
+    leading: float | None = None,
+    max_lines: int | None = None,
+) -> float:
+    """Estimate vertical space consumed by wrapped text."""
+    if leading is None:
+        leading = size + 2
+    lines = _wrap_lines(text, w, size)
+    if max_lines is not None and len(lines) > max_lines:
+        lines = lines[:max_lines]
+    return float(max(len(lines), 1) * leading)
+
+
 def _draw_text(
     c: Canvas,
     x: float,
@@ -142,3 +159,17 @@ def _draw_section_block(
     y = _draw_text(c, x, y, w, body, size=FS_SMALL, color=SUB_CLR, max_lines=max_lines)
     y -= body_gap
     return y
+
+
+def _measure_section_block_height(
+    body: str,
+    *,
+    w: float,
+    title_gap: float = 3.2 * mm,
+    body_gap: float = 1.5 * mm,
+    max_lines: int = 4,
+) -> float:
+    """Estimate vertical space consumed by a section block body."""
+    return float(
+        title_gap + _measure_text_height(body, w=w, size=FS_SMALL, max_lines=max_lines) + body_gap
+    )
