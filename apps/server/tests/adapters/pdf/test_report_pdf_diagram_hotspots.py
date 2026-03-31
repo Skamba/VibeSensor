@@ -325,10 +325,10 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
     )
 
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[2].extract_text() or "").split()).lower()
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split()).lower()
 
-    assert "dominance summary" in text
-    assert "location snapshot" in text
+    assert "why this corner wins" in text
+    assert "dominant corner" in text
     assert "location confidence" in text
 
 

@@ -1624,8 +1624,8 @@
     "nl": "Klaar om te volgen"
   },
   "REPORT_ACTION_STATUS_READY_CAUTION": {
-    "en": "Action-ready with caution",
-    "nl": "Voorzichtig opvolgen"
+    "en": "Inspect with caution",
+    "nl": "Voorzichtig inspecteren"
   },
   "REPORT_ACTION_STATUS_RECAPTURE": {
     "en": "Recapture before acting",
@@ -1644,20 +1644,28 @@
     "nl": "Onduidelijkheid"
   },
   "REPORT_APPENDIX_A_TITLE": {
-    "en": "Appendix A: Technician Worksheet",
-    "nl": "Bijlage A: Werkblad voor monteur"
+    "en": "Inspection Path",
+    "nl": "Inspectiepad"
+  },
+  "REPORT_RECAPTURE_GUIDANCE_TITLE": {
+    "en": "Recapture Guidance",
+    "nl": "Hermeetplan"
   },
   "REPORT_APPENDIX_B_TITLE": {
     "en": "Appendix B: Sensor Topology",
     "nl": "Bijlage B: Sensortopologie"
   },
   "REPORT_APPENDIX_C_TITLE": {
-    "en": "Appendix C: Evidence Detail",
-    "nl": "Bijlage C: Bewijsdetail"
+    "en": "Evidence and Run Context",
+    "nl": "Bewijs en runcontext"
   },
   "REPORT_APPENDIX_D_TITLE": {
-    "en": "Appendix C: Run Context",
-    "nl": "Bijlage C: Runcontext"
+    "en": "Run context",
+    "nl": "Runcontext"
+  },
+  "REPORT_ANALYSIS_ROWS_LABEL": {
+    "en": "Analysis rows",
+    "nl": "Analyserijen"
   },
   "REPORT_CANDIDATE_REASON_STRONG": {
     "en": "{signal} stayed strongest near {location} in the {speed} window.",
@@ -1767,6 +1775,10 @@
     "en": "Evidence chain",
     "nl": "Bewijsketen"
   },
+  "REPORT_EVIDENCE_CHAIN_NOTE": {
+    "en": "Sensor matches count matches across all connected sensors.",
+    "nl": "Sensormatches tellen matches over alle verbonden sensoren."
+  },
   "REPORT_EVIDENCE_NOTE_WEAK": {
     "en": "Spatial separation stayed weak.",
     "nl": "Ruimtelijke scheiding bleef zwak."
@@ -1776,8 +1788,8 @@
     "nl": "Exportpakket"
   },
   "REPORT_FALSIFY_COLUMN": {
-    "en": "Falsify",
-    "nl": "Ontkracht"
+    "en": "Rule out",
+    "nl": "Sluit uit"
   },
   "REPORT_IF_PRIMARY_CLEAN_LABEL": {
     "en": "If the primary path is clean",
@@ -1807,6 +1819,10 @@
     "en": "Mixed",
     "nl": "Gemengd"
   },
+  "REPORT_LOCATION_CONFIDENCE_LIMITED": {
+    "en": "Limited by run context",
+    "nl": "Beperkt door runcontext"
+  },
   "REPORT_LOCATION_CONFIDENCE_STRONG": {
     "en": "Strong",
     "nl": "Sterk"
@@ -1816,8 +1832,8 @@
     "nl": "Zwak"
   },
   "REPORT_MATCHED_WINDOWS_COLUMN": {
-    "en": "Matched windows",
-    "nl": "Gematchte vensters"
+    "en": "Sensor matches",
+    "nl": "Sensormatches"
   },
   "REPORT_MEASUREMENT_ID_COLUMN": {
     "en": "Measurement",
@@ -1826,6 +1842,10 @@
   "REPORT_MEASUREMENT_REFS_COLUMN": {
     "en": "Measurement refs",
     "nl": "Meetverwijzingen"
+  },
+  "REPORT_MEASUREMENT_REFS_NONE": {
+    "en": "No row below",
+    "nl": "Geen regel hieronder"
   },
   "REPORT_OBSERVATION_TRANSIENT": {
     "en": "Transient impact evidence was also seen near {location}.",
@@ -1982,6 +2002,14 @@
   "REPORT_SUPPORTING_MEASUREMENTS_TITLE": {
     "en": "Supporting measurements",
     "nl": "Ondersteunende meetwaarden"
+  },
+  "REPORT_SUPPORTING_MEASUREMENTS_NOTE": {
+    "en": "M01-M04 are ranked peak rows from this run, not one row per sensor.",
+    "nl": "M01-M04 zijn gerangschikte piekregels uit deze run, niet één regel per sensor."
+  },
+  "REPORT_SUPPORTING_MEASUREMENTS_SHARED_CONTEXT": {
+    "en": "Ranked peak rows: {source} · {signal} · {location} · {speed}",
+    "nl": "Gerangschikte piekregels: {source} · {signal} · {location} · {speed}"
   },
   "REPORT_SUSPECTED_SOURCE_LABEL": {
     "en": "Suspected source",
