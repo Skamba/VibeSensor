@@ -161,6 +161,7 @@ class VerdictPageData:
     action_status_note: str | None = None
     reason_sentence: str | None = None
     dominant_corner: str | None = None
+    runner_up_corner: str | None = None
     location_confidence: str | None = None
     coverage_label: str | None = None
     also_consider: str | None = None
@@ -175,6 +176,7 @@ class RankedCandidateRow:
     """One ranked source row used in the worksheet appendix."""
 
     source_name: str = ""
+    confidence_pct: str | None = None
     inspect_first: str | None = None
     path_role: str | None = None
     reason: str | None = None
@@ -196,6 +198,7 @@ class MeasurementRow:
     measurement_id: str = ""
     source_name: str = ""
     signal_label: str = ""
+    frequency_hz: float | None = None
     peak_db: float | None = None
     strength_db: float | None = None
     speed_window: str | None = None
@@ -224,6 +227,7 @@ class AppendixAData:
     primary_source: str | None = None
     alternative_source: str | None = None
     why_primary_first: str | None = None
+    why_alternative_next: str | None = None
     next_if_clean: str | None = None
     ranked_candidates: list[RankedCandidateRow] = field(default_factory=list)
     capture_issues: list[str] = field(default_factory=list)
@@ -250,6 +254,10 @@ class AppendixCData:
 
     evidence_chain_rows: list[EvidenceChainRow] = field(default_factory=list)
     measurement_rows: list[MeasurementRow] = field(default_factory=list)
+    evidence_summary: str | None = None
+    measurement_guide: str | None = None
+    context_summary: str | None = None
+    limits_summary: str | None = None
     speed_band_summary: str | None = None
     phase_summary: str | None = None
     observations: list[str] = field(default_factory=list)
