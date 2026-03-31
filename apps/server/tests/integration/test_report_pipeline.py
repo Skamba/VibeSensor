@@ -398,8 +398,8 @@ class TestPdfReportValidation:
                 if token and len(token) > 2:
                     assert token in self.pdf_text, f"Source token '{token}' not found in PDF text"
 
-    def test_pdf_legend_uses_source_categories_not_heat_scale(self) -> None:
-        """Map legend should list diagnosed-source categories, not heat-scale endpoints."""
+    def test_pdf_topology_page_uses_new_spatial_proof_sections(self) -> None:
+        """Topology appendix should use the redesigned proof sections without a source legend."""
         summary = deepcopy(self.summary)
         rows = summary.get("sensor_intensity_by_location") or []
         assert isinstance(rows, list) and rows, "Scenario should provide intensity rows"
@@ -410,12 +410,10 @@ class TestPdfReportValidation:
             rows[1]["mean_intensity_db"] = 35.0
 
         pdf_text = _extract_pdf_text(_build_pdf_from_summary(summary))
-        assert "diagnosed location source" in pdf_text
-        assert "wheel" in pdf_text
-        assert "driveline" in pdf_text
-        assert "engine" in pdf_text
-        assert "21.5 db" not in pdf_text
-        assert "37.2 db" not in pdf_text
+        assert "sensor map" in pdf_text
+        assert "dominance summary" in pdf_text
+        assert "location snapshot" in pdf_text
+        assert "diagnosed location source" not in pdf_text
 
     def test_pdf_keeps_long_next_steps_without_ellipsis(self) -> None:
         """Critical next-steps content should remain readable when long."""

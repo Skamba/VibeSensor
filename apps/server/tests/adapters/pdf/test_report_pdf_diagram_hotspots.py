@@ -205,7 +205,7 @@ def test_single_sensor_uses_diagnostic_highlight_color() -> None:
     assert markers[0].stroke == markers[0].fill
 
 
-def test_legend_shows_diagnostic_source_only_and_source_labels_do_not_overlap() -> None:
+def test_diagram_omits_source_legend_and_keeps_text_within_bounds() -> None:
     summary = {
         "sensor_locations": [
             "front-left wheel",
@@ -246,7 +246,7 @@ def test_legend_shows_diagnostic_source_only_and_source_labels_do_not_overlap() 
             "SOURCE_ENGINE",
         }
     ]
-    assert len(source_labels) == 3
+    assert source_labels == []
 
     boxes: list[tuple[float, float, float, float]] = []
     for item in source_labels:
@@ -325,10 +325,11 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
     )
 
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
-    text = " ".join((PdfReader(BytesIO(pdf)).pages[1].extract_text() or "").split()).lower()
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[2].extract_text() or "").split()).lower()
 
-    assert "hotspot summary:" in text
-    assert "larger markers indicate stronger local intensity." in text
+    assert "dominance summary" in text
+    assert "location snapshot" in text
+    assert "location confidence" in text
 
 
 def test_choose_label_plan_raises_value_error_when_no_candidates(

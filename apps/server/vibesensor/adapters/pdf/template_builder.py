@@ -10,6 +10,10 @@ from __future__ import annotations
 from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
 from vibesensor.adapters.pdf.report_context import ReportMappingContext
 from vibesensor.adapters.pdf.report_data import (
+    AppendixAData,
+    AppendixBData,
+    AppendixCData,
+    AppendixDData,
     DataTrustItem,
     FindingPresentation,
     NextStep,
@@ -18,6 +22,7 @@ from vibesensor.adapters.pdf.report_data import (
     Report,
     ReportTemplateData,
     SystemFindingCard,
+    VerdictPageData,
 )
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
@@ -39,6 +44,11 @@ def build_template_data(
     top_causes: list[FindingPresentation],
     sensor_intensity: list[LocationIntensitySummary],
     hotspot_rows: list[LocationHotspotRow],
+    verdict_page: VerdictPageData | None = None,
+    appendix_a: AppendixAData | None = None,
+    appendix_b: AppendixBData | None = None,
+    appendix_c: AppendixCData | None = None,
+    appendix_d: AppendixDData | None = None,
 ) -> ReportTemplateData:
     """Map resolved report sections into ``ReportTemplateData``.
 
@@ -75,4 +85,9 @@ def build_template_data(
         top_causes=top_causes,
         sensor_intensity_by_location=sensor_intensity,
         location_hotspot_rows=hotspot_rows,
+        verdict_page=verdict_page or VerdictPageData(),
+        appendix_a=appendix_a or AppendixAData(),
+        appendix_b=appendix_b or AppendixBData(),
+        appendix_c=appendix_c or AppendixCData(),
+        appendix_d=appendix_d or AppendixDData(),
     )
