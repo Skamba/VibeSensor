@@ -28,6 +28,22 @@ def _assert_no_pairwise_overlap(boxes: list[tuple[float, float, float, float]]) 
             assert not _rectangles_overlap(boxes[idx], boxes[jdx])
 
 
+def _text_item_box(item: object) -> tuple[float, float, float, float]:
+    text = str(getattr(item, "text", ""))
+    x = float(getattr(item, "x", 0.0))
+    y = float(getattr(item, "y", 0.0))
+    size = float(getattr(item, "fontSize", 5.5))
+    anchor = str(getattr(item, "textAnchor", "start"))
+    width = estimate_text_width(text, font_size=size)
+    if anchor == "end":
+        x0 = x - width
+    elif anchor == "middle":
+        x0 = x - (width / 2.0)
+    else:
+        x0 = x
+    return (x0, y - 1.0, x0 + width, y + size + 1.0)
+
+
 def test_sensor_state_mapping_connected_active_inactive_and_disconnected() -> None:
     states = resolve_marker_states(
         ["front-left wheel", "front-right wheel", "engine bay"],
@@ -250,16 +266,58 @@ def test_diagram_omits_source_legend_and_keeps_text_within_bounds() -> None:
 
     boxes: list[tuple[float, float, float, float]] = []
     for item in source_labels:
-        text = str(getattr(item, "text", ""))
-        x = float(getattr(item, "x", 0.0))
-        y = float(getattr(item, "y", 0.0))
-        size = float(getattr(item, "fontSize", 5.5))
-        width = estimate_text_width(text, font_size=size)
-        box = (x, y - 1.0, x + width, y + size + 1.0)
-        boxes.append(box)
+        box = _text_item_box(item)
         assert box[0] >= 0.0
         assert box[2] <= float(diagram.width) + 0.1
 
+    _assert_no_pairwise_overlap(boxes)
+
+
+def test_diagram_keeps_right_wheel_labels_inside_narrow_page1_bounds() -> None:
+    summary = {
+        "sensor_locations": [
+            "front-left wheel",
+            "front-right wheel",
+            "rear-left wheel",
+            "rear-right wheel",
+        ],
+        "sensor_intensity_by_location": [
+            LocationIntensitySummary(location="front-left wheel", p95_intensity_db=31.1),
+            LocationIntensitySummary(location="front-right wheel", p95_intensity_db=34.9),
+            LocationIntensitySummary(location="rear-left wheel", p95_intensity_db=30.9),
+            LocationIntensitySummary(location="rear-right wheel", p95_intensity_db=31.4),
+        ],
+    }
+    diagram = car_location_diagram(
+        [{"strongest_location": "front-right wheel", "suspected_source": "wheel/tire"}],
+        summary,
+        [],
+        content_width=300.0,
+        tr=lambda key, **kwargs: key,
+        text_fn=lambda en, nl: en,
+        diagram_width=124.0,
+        diagram_height=252.0,
+    )
+
+    wheel_labels = [
+        item
+        for item in diagram.contents
+        if hasattr(item, "text") and str(getattr(item, "text", "")).endswith("wheel")
+    ]
+
+    assert {str(item.text) for item in wheel_labels} == {
+        "front-left wheel",
+        "front-right wheel",
+        "rear-left wheel",
+        "rear-right wheel",
+    }
+
+    box_by_label = {str(item.text): _text_item_box(item) for item in wheel_labels}
+    for label in ("front-right wheel", "rear-right wheel"):
+        box = box_by_label[label]
+        assert box[2] <= float(diagram.width) + 0.1
+
+    boxes = list(box_by_label.values())
     _assert_no_pairwise_overlap(boxes)
 
 

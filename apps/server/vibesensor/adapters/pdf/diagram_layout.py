@@ -127,6 +127,8 @@ _LABEL_CANDIDATES_RIGHT: tuple[tuple[float, float, str], ...] = (
 )
 _LABEL_CANDIDATES_LEFT: tuple[tuple[float, float, str], ...] = (
     (-10.0, -2.0, "end"),
+    (-10.0, 18.0, "end"),
+    (-10.0, -20.0, "end"),
     (10.0, -2.0, "start"),
     (0.0, 9.0, "middle"),
     (0.0, -11.0, "middle"),
