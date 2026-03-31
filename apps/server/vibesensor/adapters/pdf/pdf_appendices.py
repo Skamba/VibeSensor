@@ -22,7 +22,13 @@ from vibesensor.adapters.pdf.pdf_style import (
     SUB_CLR,
     TEXT_CLR,
 )
-from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text, _wrap_lines
+from vibesensor.adapters.pdf.pdf_text import (
+    _draw_section_block,
+    _draw_text,
+    _measure_section_block_height,
+    _measure_text_height,
+    _wrap_lines,
+)
 from vibesensor.adapters.pdf.report_data import (
     AppendixAData,
     NextStep,
@@ -73,12 +79,12 @@ def _appendix_a_page(
         )
 
 
-def worksheet_step_pages(appendix: AppendixAData, steps: list[NextStep]) -> list[list[NextStep]]:
+def worksheet_step_pages(appendix: AppendixAData, steps: list[NextStep], *, lang: str) -> list[list[NextStep]]:
     if not steps:
         return [[]]
 
     width = PAGE_W - 2 * MARGIN
-    first_panel_h = _worksheet_first_actions_panel_height(appendix)
+    first_panel_h = _worksheet_first_actions_panel_height(appendix, lang=lang)
     continuation_panel_h = _worksheet_continuation_panel_height()
 
     pages: list[list[NextStep]] = []
@@ -97,6 +103,191 @@ def worksheet_step_pages(appendix: AppendixAData, steps: list[NextStep]) -> list
         pages.append(remaining[:count])
         remaining = remaining[count:]
     return pages
+
+
+def _estimate_appendix_c_traceability_row_height(row: ReportLabelValueRow, *, width: float) -> float:
+    return float(
+        4.2 * mm
+        + _measure_text_height(
+            row.value,
+            w=width,
+            size=FS_BODY,
+            leading=FS_BODY + 1.2,
+            max_lines=3,
+        )
+        + 0.8 * mm
+    )
+
+
+def _estimate_appendix_c_context_panel_height(appendix: ReportTemplateData, *, width: float) -> float:
+    appendix_c = appendix.appendix_c
+    content_w = width - 8 * mm
+    total = PANEL_HEADER_H + 2 * mm
+    if appendix_c.context_summary:
+        total += _measure_text_height(
+            appendix_c.context_summary,
+            w=content_w,
+            size=FS_SMALL,
+            leading=FS_SMALL + 1.0,
+            max_lines=4,
+        ) + 1.2 * mm
+    total += _measure_section_block_height(
+        appendix_c.speed_band_summary or _tr(appendix.lang, "UNKNOWN"),
+        w=content_w,
+        max_lines=3,
+    )
+    total += _measure_section_block_height(
+        appendix_c.phase_summary or _tr(appendix.lang, "UNKNOWN"),
+        w=content_w,
+        max_lines=3,
+    )
+    if appendix_c.observations:
+        observations_text = "\n".join(f"- {item}" for item in appendix_c.observations[:2])
+        total += _measure_section_block_height(observations_text, w=content_w, max_lines=6)
+    return float(max(34 * mm, total + 3 * mm))
+
+
+def _estimate_appendix_c_suitability_panel_height(appendix: ReportTemplateData, *, width: float) -> float:
+    appendix_c = appendix.appendix_c
+    content_w = width - 8 * mm
+    total = PANEL_HEADER_H + 2 * mm
+    if appendix_c.limits_summary:
+        total += _measure_text_height(
+            appendix_c.limits_summary,
+            w=content_w,
+            size=FS_SMALL,
+            leading=FS_SMALL + 1.0,
+            max_lines=4,
+        ) + 1.0 * mm
+    filtered_suitability_items = [
+        item
+        for item in appendix_c.suitability_items
+        if item.detail != appendix.verdict_page.action_status_note
+    ]
+    for item in filtered_suitability_items[:5]:
+        total += _measure_text_height(item.check, w=content_w, size=FS_SMALL, max_lines=1) + 0.4 * mm
+        if item.detail:
+            total += _measure_text_height(
+                item.detail,
+                w=content_w,
+                size=FS_SMALL,
+                leading=FS_SMALL + 1.0,
+                max_lines=2,
+            ) + 0.8 * mm
+    return float(max(34 * mm, total + 3 * mm))
+
+
+def _estimate_appendix_c_trace_panel_height(appendix_d: ReportTemplateData, *, width: float) -> float:
+    content_w = width - 8 * mm
+    total = PANEL_HEADER_H + 2 * mm
+    for row in appendix_d.appendix_d.rows:
+        total += _estimate_appendix_c_traceability_row_height(row, width=content_w)
+    return float(max(34 * mm, total + 3 * mm))
+
+
+def _estimate_table_height(
+    *,
+    width: float,
+    headers: list[str],
+    rows: list[list[str]],
+    col_widths: list[float],
+    max_body_lines: int = 2,
+) -> float:
+    total_ratio = sum(col_widths)
+    widths = [width * (ratio / total_ratio) for ratio in col_widths]
+    header_lines = [
+        _wrap_lines(header, width_part - 3 * mm, FS_SMALL)
+        for width_part, header in zip(widths, headers, strict=False)
+    ]
+    header_line_count = max((len(lines) for lines in header_lines), default=1)
+    header_h = max(8 * mm, (header_line_count * (FS_SMALL + 1.0)) + 3.5 * mm)
+    total = header_h
+    for row in rows:
+        line_counts = [
+            max(1, len(_wrap_lines(str(cell), width_part - 3 * mm, FS_SMALL)))
+            for cell, width_part in zip(row, widths, strict=False)
+        ]
+        total += max(9 * mm, min(max_body_lines, max(line_counts)) * (FS_SMALL + 1.2) + 3.5 * mm)
+    return float(total)
+
+
+def _estimate_worksheet_top_panel_height(appendix: AppendixAData, *, lang: str) -> float:
+    width = PAGE_W - 2 * MARGIN
+    col_gap = 6 * mm
+    left_col_w = (width - 8 * mm - col_gap) * 0.58
+    right_col_w = width - 8 * mm - col_gap - left_col_w
+    total = PANEL_HEADER_H + 2 * mm
+    total += _measure_text_height(
+        _tr(lang, "REPORT_SOURCE_CONFIDENCE_NOTE"),
+        w=width - 8 * mm,
+        size=FS_SMALL,
+        leading=FS_SMALL + 1.0,
+        max_lines=2,
+    ) + 1.2 * mm
+
+    left_height = _measure_section_block_height(
+        appendix.primary_source or _tr(lang, "UNKNOWN"),
+        w=left_col_w,
+        max_lines=2,
+    )
+    primary_inspect_first = appendix.ranked_candidates[0].inspect_first if appendix.ranked_candidates else None
+    if primary_inspect_first:
+        left_height += _measure_section_block_height(primary_inspect_first, w=left_col_w, max_lines=2)
+    if appendix.why_primary_first:
+        left_height += _measure_section_block_height(
+            appendix.why_primary_first,
+            w=left_col_w,
+            max_lines=3,
+        )
+
+    right_height = 0.0
+    if appendix.alternative_source:
+        right_height += _measure_section_block_height(
+            appendix.alternative_source,
+            w=right_col_w,
+            max_lines=2,
+        )
+    if appendix.why_alternative_next:
+        right_height += _measure_section_block_height(
+            appendix.why_alternative_next,
+            w=right_col_w,
+            max_lines=3,
+        )
+    if appendix.next_if_clean:
+        right_height += _measure_section_block_height(
+            appendix.next_if_clean,
+            w=right_col_w,
+            max_lines=3,
+        )
+    return float(min(56 * mm, max(42 * mm, total + max(left_height, right_height) + 3 * mm)))
+
+
+def _estimate_worksheet_ranked_stack_height(appendix: AppendixAData, *, lang: str) -> float:
+    if len(appendix.ranked_candidates) <= 2:
+        return 0.0
+    width = PAGE_W - 2 * MARGIN
+    stack_rows = [
+        [
+            row.source_name,
+            row.inspect_first or _tr(lang, "UNKNOWN"),
+            row.path_role or _tr(lang, "UNKNOWN"),
+            row.reason or "",
+        ]
+        for row in appendix.ranked_candidates
+    ]
+    table_height = _estimate_table_height(
+        width=width - 8 * mm,
+        headers=[
+            _tr(lang, "REPORT_SOURCE_COLUMN"),
+            _tr(lang, "REPORT_INSPECT_FIRST_LABEL"),
+            _tr(lang, "REPORT_PATH_ROLE_COLUMN"),
+            _tr(lang, "REPORT_REASON_COLUMN"),
+        ],
+        rows=stack_rows,
+        col_widths=[0.20, 0.20, 0.18, 0.42],
+        max_body_lines=2,
+    )
+    return float(min(48 * mm, max(34 * mm, table_height + 17 * mm)))
 
 
 def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
@@ -423,11 +614,19 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         max_body_lines=2,
     )
 
-    lower_h = measurement_y - (MARGIN + 8 * mm)
-    lower_y = MARGIN + 8 * mm
     context_w = width * 0.24
     suitability_w = width * 0.31
     trace_w = width - context_w - suitability_w - (2 * GAP)
+    max_lower_h = measurement_y - GAP - (MARGIN + 8 * mm)
+    lower_h = min(
+        max_lower_h,
+        max(
+            _estimate_appendix_c_context_panel_height(data, width=context_w),
+            _estimate_appendix_c_suitability_panel_height(data, width=suitability_w),
+            _estimate_appendix_c_trace_panel_height(data, width=trace_w),
+        ),
+    )
+    lower_y = measurement_y - GAP - lower_h
     _draw_panel(
         c, MARGIN, lower_y, context_w, lower_h, _tr(data.lang, "REPORT_SUPPORTING_CONTEXT_TITLE")
     )
@@ -656,7 +855,7 @@ def _draw_worksheet_page(
     start_number: int,
 ) -> None:
     width = PAGE_W - 2 * MARGIN
-    top_h = 56 * mm
+    top_h = _estimate_worksheet_top_panel_height(appendix, lang=lang)
     top_y = title_y - top_h
     _draw_panel(c, MARGIN, top_y, width, top_h, _tr(lang, "REPORT_PRIMARY_VS_ALTERNATIVE_TITLE"))
     block_x = MARGIN + 4 * mm
@@ -744,9 +943,9 @@ def _draw_worksheet_page(
             max_lines=3,
         )
 
-    show_ranked_stack = len(appendix.ranked_candidates) > 2
+    stack_h = _estimate_worksheet_ranked_stack_height(appendix, lang=lang)
+    show_ranked_stack = stack_h > 0.0
     if show_ranked_stack:
-        stack_h = 48 * mm
         stack_y = top_y - GAP - stack_h
         _draw_panel(
             c, MARGIN, stack_y, width, stack_h, _tr(lang, "REPORT_RANKED_SOURCE_STACK_TITLE")
@@ -794,12 +993,12 @@ def _draw_worksheet_page(
     )
 
 
-def _worksheet_first_actions_panel_height(appendix: AppendixAData) -> float:
+def _worksheet_first_actions_panel_height(appendix: AppendixAData, *, lang: str) -> float:
     title_y = PAGE_H - MARGIN - (12 * mm) - GAP
-    top_h = 56 * mm
+    top_h = _estimate_worksheet_top_panel_height(appendix, lang=lang)
     top_y = title_y - top_h
-    if len(appendix.ranked_candidates) > 2:
-        stack_h = 48 * mm
+    stack_h = _estimate_worksheet_ranked_stack_height(appendix, lang=lang)
+    if stack_h > 0.0:
         stack_y = top_y - GAP - stack_h
         return float(stack_y - (MARGIN + 8 * mm))
     return float(top_y - GAP - (MARGIN + 8 * mm))
