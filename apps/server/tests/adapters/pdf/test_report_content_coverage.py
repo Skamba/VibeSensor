@@ -388,9 +388,7 @@ def test_full_report_template_contains_peak_db_column_labels() -> None:
             ],
             speed_band_summary="Repeated energy stayed strongest in the 50-60 km/h window.",
         ),
-        appendix_d=AppendixDData(
-            rows=[ReportLabelValueRow(label="Run ID", value="run-1")]
-        ),
+        appendix_d=AppendixDData(rows=[ReportLabelValueRow(label="Run ID", value="run-1")]),
         next_steps=[NextStep(action="Check wheel balance")],
     )
 
