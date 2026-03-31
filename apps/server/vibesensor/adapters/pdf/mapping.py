@@ -256,24 +256,70 @@ def _coverage_notes(
     return notes
 
 
+def _first_nonpass_detail(data_trust: list[DataTrustItem]) -> str | None:
+    for item in data_trust:
+        if item.state != "pass":
+            detail = str(item.detail or item.check).strip()
+            if detail:
+                return detail
+    return None
+
+
+def _confidence_pct_text(finding: Finding) -> str:
+    if finding.confidence_assessment is not None:
+        return finding.confidence_assessment.pct_text
+    return finding.confidence_pct_text
+
+
+def _source_with_confidence(finding: Finding, *, tr: Callable[..., str]) -> str:
+    return tr(
+        "REPORT_SOURCE_WITH_CONFIDENCE",
+        source=human_source(finding.suspected_source, tr=tr),
+        confidence=_confidence_pct_text(finding),
+    )
+
+
+def _runner_up_corner(
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    ranked_rows = sorted(
+        report_facts.active_sensor_intensity,
+        key=lambda row: (
+            row.p95_intensity_db if row.p95_intensity_db is not None else float("-inf"),
+            row.mean_intensity_db if row.mean_intensity_db is not None else float("-inf"),
+        ),
+        reverse=True,
+    )
+    if len(ranked_rows) < 2:
+        return None
+    return _display_location(ranked_rows[1].location, tr=tr)
+
+
 def _build_primary_reason_sentence(
     primary: PrimaryCandidateContext,
     *,
+    report_facts: PreparedReportFacts,
     tr: Callable[..., str],
 ) -> str:
     location = _display_location(primary.primary_location, tr=tr)
+    duration = str(report_facts.duration_text or "").strip() or tr("UNKNOWN")
+    sensor_count = len(report_facts.coverage_summary.active_locations) or primary.sensor_count
     speed_window = str(primary.primary_speed or "").strip()
     if speed_window and speed_window != tr("UNKNOWN"):
         return tr(
-            "REPORT_REASON_SOURCE_LOCATION_SPEED",
-            source=primary.primary_system,
+            "REPORT_REASON_RUN_SUMMARY",
+            duration=duration,
             location=location,
             speed=speed_window,
+            sensors=sensor_count,
         )
     return tr(
-        "REPORT_REASON_SOURCE_LOCATION",
-        source=primary.primary_system,
+        "REPORT_REASON_RUN_SUMMARY_NO_SPEED",
+        duration=duration,
         location=location,
+        sensors=sensor_count,
     )
 
 
@@ -285,16 +331,38 @@ def _proof_summary_text(
 ) -> str:
     ratio = report_facts.primary_candidate_facts.dominance_ratio
     location = _display_location(primary.primary_location, tr=tr)
+    runner_up = _runner_up_corner(report_facts, tr=tr)
     if ratio is not None:
-        return tr("REPORT_PROOF_SUMMARY_RATIO", location=location, ratio=f"{ratio:.2f}")
-    return tr("REPORT_PROOF_SUMMARY_SIMPLE", location=location)
+        if runner_up is not None:
+            return tr(
+                "REPORT_PROOF_SUMMARY_RATIO_RUNNER_UP",
+                location=location,
+                runner_up=runner_up,
+                ratio=f"{ratio:.1f}",
+            )
+        return tr(
+            "REPORT_PROOF_SUMMARY_RATIO_NO_RUNNER_UP",
+            location=location,
+            ratio=f"{ratio:.1f}",
+        )
+    return tr("REPORT_PROOF_SUMMARY_SIMPLE_PLAIN", location=location)
 
 
 def _proof_caveat_text(
+    primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
     *,
     tr: Callable[..., str],
 ) -> str | None:
+    if report_facts.action_status_key == "action_ready_caution":
+        return None
+    reason = (
+        str(primary.certainty_reason or "").strip()
+        if report_facts.action_status_key != "action_ready"
+        else ""
+    )
+    if reason:
+        return reason
     key = report_facts.location_confidence_key
     if key == "weak":
         return tr("REPORT_PROOF_CAVEAT_WEAK")
@@ -305,16 +373,59 @@ def _proof_caveat_text(
 
 def _action_status_note_text(
     *,
+    aggregate: TestRun,
+    primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
     data_trust: list[DataTrustItem],
     tr: Callable[..., str],
 ) -> str | None:
     if report_facts.action_status_key not in {"action_ready_caution", "recapture_before_acting"}:
         return None
-    for item in data_trust:
-        if item.state != "pass":
-            return item.detail or item.check
-    return _proof_caveat_text(report_facts, tr=tr)
+    issue = _first_nonpass_detail(data_trust)
+    score_note: str | None = None
+    if (
+        report_facts.action_status_key == "action_ready_caution"
+        and report_facts.alternative_source_visible
+    ):
+        ranked_candidates = list(aggregate.effective_top_causes()[:2])
+        if len(ranked_candidates) > 1:
+            score_note = tr(
+                "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_SCORES",
+                primary=human_source(ranked_candidates[0].suspected_source, tr=tr),
+                primary_confidence=_confidence_pct_text(ranked_candidates[0]),
+                alternative=human_source(ranked_candidates[1].suspected_source, tr=tr),
+                alternative_confidence=_confidence_pct_text(ranked_candidates[1]),
+            )
+        else:
+            score_note = tr("REPORT_ACTION_STATUS_NOTE_GATE_CAUTION")
+    reason = score_note or _proof_caveat_text(primary, report_facts, tr=tr)
+    if issue and reason:
+        issue_norm = issue.rstrip(".")
+        reason_norm = reason.rstrip(".")
+        if reason_norm.casefold() not in issue_norm.casefold():
+            return tr(
+                "REPORT_ACTION_STATUS_NOTE_COMBINED",
+                issue=issue_norm,
+                reason=reason_norm,
+            )
+        return issue
+    return issue or reason
+
+
+def _run_limits_summary_text(
+    primary: PrimaryCandidateContext,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
+    if (
+        report_facts.action_status_key == "action_ready_caution"
+        and report_facts.alternative_source_visible
+    ):
+        return tr("REPORT_RUN_LIMITS_RECAPTURE_RECIPE", speed=speed_window)
+    note = _proof_caveat_text(primary, report_facts, tr=tr)
+    return note or tr("REPORT_CAPTURE_ISSUE_GENERIC")
 
 
 def _candidate_signal_text(finding: Finding, *, tr: Callable[..., str]) -> str:
@@ -371,12 +482,107 @@ def _ranked_candidates(
         rows.append(
             RankedCandidateRow(
                 source_name=human_source(finding.suspected_source, tr=tr),
+                confidence_pct=_confidence_pct_text(finding),
                 inspect_first=_display_location(finding.strongest_location, tr=tr),
                 path_role=f"{index + 1}. {_path_role_text(index, tr=tr)}",
                 reason=_candidate_reason_text(finding, tr=tr),
             ),
         )
     return rows
+
+
+def _evidence_summary_text(
+    aggregate: TestRun,
+    primary: PrimaryCandidateContext,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    matched_windows = report_facts.primary_candidate_facts.matched_evidence_window_count
+    speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
+    source = primary.primary_system
+    location = _display_location(primary.primary_location, tr=tr)
+    alternative = (
+        human_source(report_facts.alternative_source, tr=tr)
+        if report_facts.alternative_source_visible and report_facts.alternative_source is not None
+        else None
+    )
+    alternative_finding = (
+        aggregate.effective_top_causes()[1]
+        if report_facts.alternative_source_visible and len(aggregate.effective_top_causes()) > 1
+        else None
+    )
+    if alternative is not None and matched_windows is not None:
+        if alternative_finding is not None:
+            alternative_signal = _candidate_signal_text(alternative_finding, tr=tr)
+            alternative_location = _display_location(alternative_finding.strongest_location, tr=tr)
+            alternative_speed = (
+                str(
+                    alternative_finding.evidence.focused_speed_band
+                    if alternative_finding.evidence
+                    and alternative_finding.evidence.focused_speed_band
+                    else alternative_finding.strongest_speed_band or speed_window
+                ).strip()
+                or speed_window
+            )
+            return tr(
+                "REPORT_EVIDENCE_SUMMARY_ALT_DETAILED",
+                source=source,
+                matches=matched_windows,
+                speed=speed_window,
+                location=location,
+                alternative=alternative,
+                alternative_signal=alternative_signal,
+                alternative_location=alternative_location,
+                alternative_speed=alternative_speed,
+            )
+        return tr(
+            "REPORT_EVIDENCE_SUMMARY_ALT",
+            source=source,
+            matches=matched_windows,
+            speed=speed_window,
+            location=location,
+            alternative=alternative,
+        )
+    if matched_windows is not None:
+        return tr(
+            "REPORT_EVIDENCE_SUMMARY_SIMPLE",
+            source=source,
+            matches=matched_windows,
+            speed=speed_window,
+            location=location,
+        )
+    return tr(
+        "REPORT_PROOF_SUMMARY_SIMPLE_PLAIN",
+        location=location,
+    )
+
+
+def _context_summary_text(
+    primary: PrimaryCandidateContext,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
+    coverage = report_facts.coverage_summary
+    expected = (
+        len(coverage.expected_locations) or len(coverage.active_locations) or primary.sensor_count
+    )
+    active = len(coverage.active_locations) or primary.sensor_count
+    if not coverage.missing_locations and not coverage.partial_locations:
+        return tr(
+            "REPORT_CONTEXT_SUMMARY_COMPLETE",
+            speed=speed_window,
+            active=active,
+            expected=expected,
+        )
+    return tr(
+        "REPORT_CONTEXT_SUMMARY_PARTIAL",
+        speed=speed_window,
+        active=active,
+        expected=expected,
+    )
 
 
 def _next_if_primary_clean(
@@ -446,6 +652,11 @@ def _measurement_rows(
                     tr=tr,
                 ),
                 signal_label=signal_label,
+                frequency_hz=(
+                    float(row.get("frequency_hz"))
+                    if isinstance(row.get("frequency_hz"), (int, float))
+                    else None
+                ),
                 peak_db=float(peak_db_value) if isinstance(peak_db_value, (int, float)) else None,
                 strength_db=(
                     float(strength_db_value)
@@ -494,8 +705,6 @@ def _evidence_chain_rows(
     for finding in aggregate.effective_top_causes()[:3]:
         source_name = human_source(finding.suspected_source, tr=tr)
         refs = refs_by_source.get(source_name.strip().lower(), [])
-        if not refs:
-            continue
         ambiguity_note = (
             tr("REPORT_EVIDENCE_NOTE_NO_REFS")
             if not refs
@@ -505,7 +714,7 @@ def _evidence_chain_rows(
         )
         rows.append(
             EvidenceChainRow(
-                source_name=source_name,
+                source_name=_source_with_confidence(finding, tr=tr),
                 supporting_signal_label=_candidate_signal_text(finding, tr=tr),
                 measurement_refs=refs,
                 matched_evidence_window_count=_matched_evidence_window_count(finding),
@@ -586,12 +795,14 @@ def _capture_condition_lines(
 
 def _build_verdict_page_data(
     *,
+    aggregate: TestRun,
     primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
     data_trust: list[DataTrustItem],
     tr: Callable[..., str],
 ) -> VerdictPageData:
     recapture_before_acting = report_facts.action_status_key == "recapture_before_acting"
+    ranked_candidates = list(aggregate.effective_top_causes()[:2])
     return VerdictPageData(
         speed_window_label=str(primary.primary_speed or "").strip() or None,
         suspected_source=(
@@ -602,6 +813,8 @@ def _build_verdict_page_data(
         ),
         action_status=_action_status_text(report_facts.action_status_key, tr=tr),
         action_status_note=_action_status_note_text(
+            aggregate=aggregate,
+            primary=primary,
             report_facts=report_facts,
             data_trust=data_trust,
             tr=tr,
@@ -609,23 +822,24 @@ def _build_verdict_page_data(
         reason_sentence=(
             tr("REPORT_REASON_RECAPTURE_GENERIC")
             if recapture_before_acting
-            else _build_primary_reason_sentence(primary, tr=tr)
+            else _build_primary_reason_sentence(primary, report_facts=report_facts, tr=tr)
         ),
         dominant_corner=_display_location(primary.primary_location, tr=tr),
+        runner_up_corner=_runner_up_corner(report_facts, tr=tr),
         location_confidence=_location_confidence_text(
             _presented_location_confidence_key(report_facts),
             tr=tr,
         ),
         coverage_label=_coverage_label(report_facts, tr=tr),
         also_consider=(
-            human_source(report_facts.alternative_source, tr=tr)
+            _source_with_confidence(ranked_candidates[1], tr=tr)
             if not recapture_before_acting
             and report_facts.alternative_source_visible
-            and report_facts.alternative_source is not None
+            and len(ranked_candidates) > 1
             else None
         ),
         proof_summary=_proof_summary_text(primary, report_facts, tr=tr),
-        proof_caveat=_proof_caveat_text(report_facts, tr=tr),
+        proof_caveat=_proof_caveat_text(primary, report_facts, tr=tr),
         proof_panel_title=(
             tr("REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE")
             if recapture_before_acting
@@ -661,15 +875,36 @@ def _build_appendix_a_data(
             capture_conditions=_capture_condition_lines(report_facts, tr=tr),
         )
     alternative_source = (
-        ranked[1].source_name
+        tr(
+            "REPORT_SOURCE_WITH_CONFIDENCE",
+            source=ranked[1].source_name,
+            confidence=ranked[1].confidence_pct,
+        )
+        if report_facts.alternative_source_visible and len(ranked) > 1 and ranked[1].confidence_pct
+        else ranked[1].source_name
         if report_facts.alternative_source_visible and len(ranked) > 1
         else None
     )
     return AppendixAData(
         mode="workflow",
-        primary_source=ranked[0].source_name if ranked else None,
+        primary_source=(
+            tr(
+                "REPORT_SOURCE_WITH_CONFIDENCE",
+                source=ranked[0].source_name,
+                confidence=ranked[0].confidence_pct,
+            )
+            if ranked and ranked[0].confidence_pct
+            else ranked[0].source_name
+            if ranked
+            else None
+        ),
         alternative_source=alternative_source,
         why_primary_first=(ranked[0].reason if ranked else None),
+        why_alternative_next=(
+            ranked[1].reason
+            if report_facts.alternative_source_visible and len(ranked) > 1
+            else None
+        ),
         next_if_clean=_next_if_primary_clean(aggregate, tr=tr),
         ranked_candidates=ranked,
     )
@@ -723,9 +958,10 @@ def _build_appendix_b_data(
 
 def _build_appendix_c_data(
     *,
-    prepared: ValidatedPreparedReportInput,
+    primary: PrimaryCandidateContext,
     aggregate: TestRun,
     measurements: list[MeasurementRow],
+    report_facts: PreparedReportFacts,
     data_trust: list[DataTrustItem],
     tr: Callable[..., str],
 ) -> AppendixCData:
@@ -739,6 +975,10 @@ def _build_appendix_c_data(
     return AppendixCData(
         evidence_chain_rows=evidence_rows,
         measurement_rows=measurements,
+        evidence_summary=_evidence_summary_text(aggregate, primary, report_facts, tr=tr),
+        measurement_guide=tr("REPORT_MEASUREMENT_GUIDE"),
+        context_summary=_context_summary_text(primary, report_facts, tr=tr),
+        limits_summary=_run_limits_summary_text(primary, report_facts, tr=tr),
         speed_band_summary=speed_summary,
         phase_summary=_phase_summary_text(aggregate, tr=tr),
         observations=_observation_texts(aggregate, tr=tr),
@@ -754,24 +994,29 @@ def _build_appendix_d_data(
     tr: Callable[..., str],
 ) -> AppendixDData:
     rows = [
-        ReportLabelValueRow(label=tr("RUN_ID"), value=report.run_id),
         ReportLabelValueRow(label=tr("RUN_DATE"), value=context.date_str),
-        ReportLabelValueRow(label=tr("SENSOR_MODEL"), value=context.sensor_model or tr("UNKNOWN")),
-        ReportLabelValueRow(
-            label=tr("FIRMWARE_VERSION"), value=context.firmware_version or tr("UNKNOWN")
-        ),
-        ReportLabelValueRow(
-            label=tr("REPORT_ANALYSIS_ROWS_LABEL"), value=str(context.sample_count)
-        ),
-        ReportLabelValueRow(
-            label=tr("RAW_SAMPLE_RATE_HZ_LABEL"), value=context.sample_rate_hz or tr("UNKNOWN")
-        ),
+        ReportLabelValueRow(label=tr("RUN_ID"), value=report.run_id),
         ReportLabelValueRow(label=tr("TIRE_SIZE"), value=context.tire_spec_text or tr("UNKNOWN")),
-        ReportLabelValueRow(
-            label=tr("REPORT_EXPORT_REFERENCE"), value=f"{report.run_id}_export.zip"
-        ),
-        ReportLabelValueRow(label=tr("REPORT_VERSION"), value=version_marker),
     ]
+    sensor_model = str(context.sensor_model or "").strip()
+    if sensor_model and sensor_model.casefold() != tr("UNKNOWN").casefold():
+        rows.append(ReportLabelValueRow(label=tr("SENSOR_MODEL"), value=sensor_model))
+    firmware_version = str(context.firmware_version or "").strip()
+    if firmware_version and firmware_version.casefold() not in {"none", tr("UNKNOWN").casefold()}:
+        rows.append(ReportLabelValueRow(label=tr("FIRMWARE_VERSION"), value=firmware_version))
+    rows.extend(
+        [
+            ReportLabelValueRow(
+                label=tr("REPORT_ANALYSIS_ROWS_LABEL"),
+                value=str(context.sample_count),
+            ),
+            ReportLabelValueRow(
+                label=tr("RAW_SAMPLE_RATE_HZ_LABEL"),
+                value=context.sample_rate_hz or tr("UNKNOWN"),
+            ),
+            ReportLabelValueRow(label=tr("REPORT_VERSION"), value=version_marker),
+        ]
+    )
     return AppendixDData(rows=rows)
 
 
@@ -886,6 +1131,7 @@ def _build_report_template_data(
         tr=tr,
     )
     verdict_page = _build_verdict_page_data(
+        aggregate=context.domain_aggregate,
         primary=primary,
         report_facts=report_facts,
         data_trust=data_trust,
@@ -905,9 +1151,10 @@ def _build_report_template_data(
         tr=tr,
     )
     appendix_c = _build_appendix_c_data(
-        prepared=prepared,
+        primary=primary,
         aggregate=context.domain_aggregate,
         measurements=measurements,
+        report_facts=report_facts,
         data_trust=data_trust,
         tr=tr,
     )

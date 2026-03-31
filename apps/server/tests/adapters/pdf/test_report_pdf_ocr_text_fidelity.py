@@ -168,7 +168,7 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
 
     expected_text = [
         "VibeSensor Diagnostic Report",
-        "Suspected source",
+        "Most likely source",
         "Action status",
         "Best available location signal",
         "Dominant corner",

@@ -1052,8 +1052,8 @@
     "nl": "Controleer aandrijflijncomponenten bij {location} op speling, slingering of slechte lagers."
   },
   "REPORT_NEXT_STEP_DRIVELINE_MOUNTS_WHAT": {
-    "en": "Check driveline mounts and couplings near {location} for looseness or cracked rubber.",
-    "nl": "Controleer aandrijflijnsteunen en koppelingen bij {location} op losheid of gescheurd rubber."
+    "en": "Check driveline supports, couplings, and nearby fasteners near {location} for looseness, play, or cracked rubber.",
+    "nl": "Controleer aandrijflijnsteunen, koppelingen en bevestigingen bij {location} op losheid, speling of gescheurd rubber."
   },
   "REPORT_NEXT_STEP_ENGINE_COMBUSTION_WHAT": {
     "en": "Check misfire counters and fuel/ignition corrections for cylinders contributing to the vibration.",
@@ -1612,8 +1612,12 @@
     "nl": "Actie"
   },
   "REPORT_ACTION_MATRIX_TITLE": {
-    "en": "Action matrix",
-    "nl": "Actiematrix"
+    "en": "Next inspection steps",
+    "nl": "Volgende inspectiestappen"
+  },
+  "REPORT_ACTIONS_PAGE1_MORE": {
+    "en": "Page 3 expands the fallback path if those first wheel checks are clean.",
+    "nl": "Pagina 3 werkt het vervolgpad uit als die eerste wielcontroles niets opleveren."
   },
   "REPORT_ACTION_STATUS_LABEL": {
     "en": "Action status",
@@ -1624,8 +1628,20 @@
     "nl": "Klaar om te volgen"
   },
   "REPORT_ACTION_STATUS_READY_CAUTION": {
-    "en": "Inspect with caution",
-    "nl": "Voorzichtig inspecteren"
+    "en": "Inspect first — moderate confidence",
+    "nl": "Eerst inspecteren — gematigde zekerheid"
+  },
+  "REPORT_ACTION_STATUS_NOTE_COMBINED": {
+    "en": "{issue}. {reason}.",
+    "nl": "{issue}. {reason}."
+  },
+  "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION": {
+    "en": "This run gives a sensible first inspection, but the source scores stayed close. If the primary path is clean, move to the alternative path rather than treating this as a final call.",
+    "nl": "Deze run geeft een zinvolle eerste inspectie, maar de bronscores bleven dicht bij elkaar. Als het primaire pad niets oplevert, ga dan naar het alternatieve pad in plaats van dit als definitieve conclusie te zien."
+  },
+  "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_SCORES": {
+    "en": "This run is a close call: {primary} {primary_confidence} vs {alternative} {alternative_confidence}. Start with the first path, but keep the alternative live if the primary check is clean.",
+    "nl": "Deze run is een close call: {primary} {primary_confidence} versus {alternative} {alternative_confidence}. Begin met het eerste pad, maar houd het alternatief actief als de eerste controle niets oplevert."
   },
   "REPORT_ACTION_STATUS_RECAPTURE": {
     "en": "Recapture before acting",
@@ -1776,8 +1792,20 @@
     "nl": "Bewijsketen"
   },
   "REPORT_EVIDENCE_CHAIN_NOTE": {
-    "en": "Sensor matches count matches across all connected sensors.",
-    "nl": "Sensormatches tellen matches over alle verbonden sensoren."
+    "en": "Each row shows which source matched, how many evidence windows supported it, and where that evidence stayed strongest.",
+    "nl": "Elke regel toont welke bron matchte, hoeveel bewijsvensters die bron ondersteunden en waar dat bewijs het sterkst bleef."
+  },
+  "REPORT_EVIDENCE_SUMMARY_ALT": {
+    "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}. {alternative} remained close enough to inspect next if the primary path is clean.",
+    "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. {alternative} bleef dichtbij genoeg om als volgende te inspecteren als het primaire pad niets oplevert."
+  },
+  "REPORT_EVIDENCE_SUMMARY_ALT_DETAILED": {
+    "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}. {alternative_signal} also stayed strongest near {alternative_location} in the {alternative_speed} band, so {alternative} remains the next path if the primary inspection is clean.",
+    "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. {alternative_signal} bleef ook het sterkst bij {alternative_location} in de band {alternative_speed}, dus {alternative} blijft het volgende pad als de eerste inspectie niets oplevert."
+  },
+  "REPORT_EVIDENCE_SUMMARY_SIMPLE": {
+    "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}.",
+    "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}."
   },
   "REPORT_EVIDENCE_NOTE_WEAK": {
     "en": "Spatial separation stayed weak.",
@@ -1788,8 +1816,8 @@
     "nl": "Exportpakket"
   },
   "REPORT_FALSIFY_COLUMN": {
-    "en": "Rule out",
-    "nl": "Sluit uit"
+    "en": "If still clean",
+    "nl": "Als het nog schoon is"
   },
   "REPORT_IF_PRIMARY_CLEAN_LABEL": {
     "en": "If the primary path is clean",
@@ -1899,6 +1927,10 @@
     "en": "Primary vs alternative source",
     "nl": "Primaire versus alternatieve bron"
   },
+  "REPORT_SOURCE_CONFIDENCE_NOTE": {
+    "en": "The percentages below rank how strongly each source fits this run. They are source-confidence scores for this report, not repair probabilities.",
+    "nl": "De percentages hieronder rangschikken hoe sterk elke bron bij deze run past. Het zijn bron-zekerheidsscores voor dit rapport, geen reparatiekansen."
+  },
   "REPORT_PROOF_CAVEAT_MIXED": {
     "en": "Localization is mixed because either dominance or coverage was not fully clean.",
     "nl": "De lokalisatie is gemengd omdat dominantie of dekking niet volledig schoon was."
@@ -1910,6 +1942,18 @@
   "REPORT_PROOF_PANEL_TITLE": {
     "en": "Why this corner wins",
     "nl": "Waarom deze hoek wint"
+  },
+  "REPORT_PROOF_SUMMARY_RATIO_NO_RUNNER_UP": {
+    "en": "{location} stayed strongest across the connected sensors, with matched-window evidence about {ratio}x higher than the next location.",
+    "nl": "{location} bleef het sterkst over de verbonden sensoren, met matched-window bewijs dat ongeveer {ratio}x hoger lag dan op de volgende locatie."
+  },
+  "REPORT_PROOF_SUMMARY_RATIO_RUNNER_UP": {
+    "en": "{location} stayed strongest across the connected sensors, with matched-window evidence about {ratio}x higher than {runner_up}.",
+    "nl": "{location} bleef het sterkst over de verbonden sensoren, met matched-window bewijs dat ongeveer {ratio}x hoger lag dan bij {runner_up}."
+  },
+  "REPORT_PROOF_SUMMARY_SIMPLE_PLAIN": {
+    "en": "{location} remained the strongest connected location on the evidence map for this run.",
+    "nl": "{location} bleef de sterkste verbonden locatie op de bewijskaart van deze run."
   },
   "REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE": {
     "en": "Best available location signal",
@@ -1943,6 +1987,14 @@
     "en": "This run showed vibration activity, but the combined speed, reference, and location evidence stayed too weak for an inspection-first verdict.",
     "nl": "Deze run liet trillingsactiviteit zien, maar het gecombineerde snelheids-, referentie- en locatiebewijs bleef te zwak voor een inspectieklare conclusie."
   },
+  "REPORT_REASON_RUN_SUMMARY": {
+    "en": "This {duration} run showed the clearest repeatable vibration pattern near {location} in the {speed} window, with {sensors} connected wheel positions contributing comparison data.",
+    "nl": "Deze run van {duration} liet het duidelijkste herhaalbare trillingspatroon zien bij {location} in het venster {speed}, met vergelijkingsdata van {sensors} verbonden wielposities."
+  },
+  "REPORT_REASON_RUN_SUMMARY_NO_SPEED": {
+    "en": "This {duration} run showed the clearest repeatable vibration pattern near {location}, with {sensors} connected wheel positions contributing comparison data.",
+    "nl": "Deze run van {duration} liet het duidelijkste herhaalbare trillingspatroon zien bij {location}, met vergelijkingsdata van {sensors} verbonden wielposities."
+  },
   "REPORT_ROUTE_APPENDIX_A": {
     "en": "Need the inspection sequence? See A.",
     "nl": "Inspectievolgorde nodig? Zie A."
@@ -1975,6 +2027,10 @@
     "en": "Source",
     "nl": "Bron"
   },
+  "REPORT_SOURCE_WITH_CONFIDENCE": {
+    "en": "{source} ({confidence})",
+    "nl": "{source} ({confidence})"
+  },
   "REPORT_SPEED_BAND_SUMMARY_LABEL": {
     "en": "Speed-band summary",
     "nl": "Snelheidsband-overzicht"
@@ -1992,12 +2048,24 @@
     "nl": "Sterkte dB"
   },
   "REPORT_SUITABILITY_DETAIL_TITLE": {
-    "en": "Suitability detail",
-    "nl": "Geschiktheidsdetail"
+    "en": "Run quality and limits",
+    "nl": "Runkwaliteit en beperkingen"
   },
   "REPORT_SUPPORTING_CONTEXT_TITLE": {
     "en": "Supporting context",
     "nl": "Ondersteunende context"
+  },
+  "REPORT_CONTEXT_SUMMARY_COMPLETE": {
+    "en": "A steady {speed} capture with {active} of {expected} expected wheel positions connected makes this run usable for source comparison.",
+    "nl": "Een stabiele opname bij {speed} met {active} van {expected} verwachte wielposities verbonden maakt deze run bruikbaar voor bronvergelijking."
+  },
+  "REPORT_CONTEXT_SUMMARY_PARTIAL": {
+    "en": "This {speed} capture still points directionally at the leading source, but coverage or continuity limits how cleanly the comparison separates alternatives.",
+    "nl": "Deze opname bij {speed} wijst nog steeds richting de leidende bron, maar dekking of continuïteit beperkt hoe schoon de vergelijking alternatieven scheidt."
+  },
+  "REPORT_MEASUREMENT_GUIDE": {
+    "en": "M01-M04 are ranked peak rows from this run, not sensor IDs. Frequency shows where the peak sat; peak dB is the strongest single peak in that row; strength dB is the sustained ranking value used by the report.",
+    "nl": "M01-M04 zijn gerangschikte piekregels uit deze run, geen sensor-ID's. Frequentie toont waar de piek lag; piek dB is de sterkste enkele piek in die regel; sterkte dB is de blijvende rangschikkingswaarde die het rapport gebruikt."
   },
   "REPORT_SUPPORTING_MEASUREMENTS_TITLE": {
     "en": "Supporting measurements",
@@ -2012,8 +2080,8 @@
     "nl": "Gerangschikte piekregels: {source} · {signal} · {location} · {speed}"
   },
   "REPORT_SUSPECTED_SOURCE_LABEL": {
-    "en": "Suspected source",
-    "nl": "Verdachte bron"
+    "en": "Most likely source",
+    "nl": "Meest waarschijnlijke bron"
   },
   "REPORT_TOPOLOGY_MAP_TITLE": {
     "en": "Sensor map",
@@ -2031,6 +2099,10 @@
     "en": "Why the primary source is first",
     "nl": "Waarom de primaire bron eerst komt"
   },
+  "REPORT_WHY_ALTERNATIVE_NEXT_LABEL": {
+    "en": "Why it still stays in scope",
+    "nl": "Waarom het nog in beeld blijft"
+  },
   "REPORT_WHY_THIS_IS_FIRST_LABEL": {
     "en": "Why this is first",
     "nl": "Waarom dit eerst komt"
@@ -2038,5 +2110,9 @@
   "REPORT_EVIDENCE_NOTE_NO_REFS": {
     "en": "Still in scope; no representative measurement appears below.",
     "nl": "Blijft in beeld; er staat hieronder geen representatieve meting."
+  },
+  "REPORT_RUN_LIMITS_RECAPTURE_RECIPE": {
+    "en": "Treat this run as directional, not final. If the first inspection is clean, rerun with a longer steady hold plus accel/decel and drive/coast comparison through the {speed} band.",
+    "nl": "Behandel deze run als richtinggevend, niet als definitief. Als de eerste inspectie niets oplevert, meet dan opnieuw met een langere stabiele fase plus accel/decel en een aangedreven/uitrollende vergelijking door de band {speed}."
   }
 }
