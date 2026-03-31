@@ -55,7 +55,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
         "Suspected source",
         "Action status",
         "What to do next",
-        "Appendix A: Technician Worksheet",
+        "Recapture Guidance",
         "Traceability",
         "Change for the next capture",
     ):
