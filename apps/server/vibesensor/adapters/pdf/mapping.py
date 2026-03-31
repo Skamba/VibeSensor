@@ -579,17 +579,26 @@ def _build_verdict_page_data(
     data_trust: list[DataTrustItem],
     tr: Callable[..., str],
 ) -> VerdictPageData:
+    recapture_before_acting = report_facts.action_status_key == "recapture_before_acting"
     return VerdictPageData(
         speed_window_label=str(primary.primary_speed or "").strip() or None,
-        suspected_source=primary.primary_system,
-        inspect_first=_display_location(primary.primary_location, tr=tr),
+        suspected_source=(
+            tr("REPORT_INCONCLUSIVE_SOURCE") if recapture_before_acting else primary.primary_system
+        ),
+        inspect_first=(
+            None if recapture_before_acting else _display_location(primary.primary_location, tr=tr)
+        ),
         action_status=_action_status_text(report_facts.action_status_key, tr=tr),
         action_status_note=_action_status_note_text(
             report_facts=report_facts,
             data_trust=data_trust,
             tr=tr,
         ),
-        reason_sentence=_build_primary_reason_sentence(primary, tr=tr),
+        reason_sentence=(
+            tr("REPORT_REASON_RECAPTURE_GENERIC")
+            if recapture_before_acting
+            else _build_primary_reason_sentence(primary, tr=tr)
+        ),
         dominant_corner=_display_location(primary.primary_location, tr=tr),
         location_confidence=_location_confidence_text(
             report_facts.location_confidence_key,
@@ -598,17 +607,27 @@ def _build_verdict_page_data(
         coverage_label=_coverage_label(report_facts, tr=tr),
         also_consider=(
             human_source(report_facts.alternative_source, tr=tr)
-            if report_facts.alternative_source_visible
+            if not recapture_before_acting
+            and report_facts.alternative_source_visible
             and report_facts.alternative_source is not None
             else None
         ),
         proof_summary=_proof_summary_text(primary, report_facts, tr=tr),
         proof_caveat=_proof_caveat_text(report_facts, tr=tr),
+        proof_panel_title=(
+            tr("REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE")
+            if recapture_before_acting
+            else tr("REPORT_PROOF_PANEL_TITLE")
+        ),
         footer_routes=(
-            tr("REPORT_ROUTE_APPENDIX_A"),
-            tr("REPORT_ROUTE_APPENDIX_B"),
-            tr("REPORT_ROUTE_APPENDIX_C"),
-            tr("REPORT_ROUTE_APPENDIX_D"),
+            (tr("REPORT_ROUTE_APPENDIX_A"),)
+            if recapture_before_acting
+            else (
+                tr("REPORT_ROUTE_APPENDIX_A"),
+                tr("REPORT_ROUTE_APPENDIX_B"),
+                tr("REPORT_ROUTE_APPENDIX_C"),
+                tr("REPORT_ROUTE_APPENDIX_D"),
+            )
         ),
     )
 

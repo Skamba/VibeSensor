@@ -495,6 +495,41 @@ test("assigning a sensor location preserves the original sensor name", async ({ 
   await expect(row.locator("strong")).toHaveText("Chassis Sensor A");
 });
 
+test("settings keep inferred sensor names unassigned until an explicit location is saved", async ({ page }) => {
+  await installCommonRoutes(page, {
+    locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "sensor-1",
+          name: "Front Left Wheel",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "",
+          mac_address: "sensor-1",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: { clients: {} },
+    },
+  });
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="sensorsTab"]').click();
+
+  const row = page.locator('#sensorsSettingsBody tr[data-client-id="sensor-1"]');
+  const locationSelect = row.locator("select.row-location-select");
+
+  await expect(locationSelect).toHaveValue("");
+});
+
 test("failed speed-source save keeps the draft and explains which source remains active", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({

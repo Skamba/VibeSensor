@@ -55,9 +55,9 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
         "Suspected source",
         "Action status",
         "What to do next",
-        "Appendix B: Sensor Topology",
-        "Appendix C: Evidence Detail",
-        "Supporting measurements",
+        "Appendix A: Technician Worksheet",
+        "Traceability",
+        "Change for the next capture",
     ):
         assert_pdf_contains(pdf, text)
     assert b"Spectrogram" not in pdf
