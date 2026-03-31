@@ -73,7 +73,7 @@ export function renderRealtimeSensorTable(
 
   container.innerHTML = clients
     .map((client) => {
-      const selectedCode = locationCodeForClient(client);
+      const selectedCode = String(client.location_code || "").trim();
       const connected = Boolean(client.connected);
       const statusText = connected ? t("status.online") : t("status.offline");
       const statusClass = connected ? "online" : "offline";

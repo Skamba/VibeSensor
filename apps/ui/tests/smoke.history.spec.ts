@@ -120,7 +120,7 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
   expect(sourceIndex).toBeLessThan(durationIndex);
   expect(confidenceIndex).toBeLessThan(sensorIndex);
   await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toContainText("Open diagnosis");
-  await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toContainText("Review findings and heatmap");
+  await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toContainText("Open diagnosis and evidence");
   await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toHaveAttribute("aria-expanded", "false");
 });
 
@@ -167,7 +167,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await page.locator("#tab-history").click();
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
   await expect(toggle).toContainText("Open diagnosis");
-  await expect(toggle).toContainText("Review findings and heatmap");
+  await expect(toggle).toContainText("Open diagnosis and evidence");
   const overflowMetrics = await toggle.evaluate((button) => {
     const title = button.querySelector<HTMLElement>(".history-row__toggle-title");
     const hint = button.querySelector<HTMLElement>(".history-row__toggle-hint");
@@ -212,7 +212,7 @@ test("history keeps destructive actions inside the expanded management footer", 
   await page.locator("#tab-history").click();
   const row = page.locator('[data-run-row="1"][data-run="run-001"]');
   const actionCell = row.locator("td").nth(3);
-  await expect(actionCell).toContainText("Generate PDF");
+  await expect(actionCell).toContainText("PDF unlocks once the diagnosis preview is ready.");
   await expect(actionCell).not.toContainText("Export");
   await expect(actionCell).not.toContainText("Delete");
   await row.locator('[data-run-toggle="details"]').click();
@@ -229,6 +229,17 @@ test("history PDF download revokes object URL with safe delay", async ({ page })
   const revokeCallCount = () =>
     page.evaluate(() => (window as typeof window & { __revokeCallCount?: number }).__revokeCallCount ?? 0);
   await installCommonRoutes(page, { runs: [historyListRun] });
+  await page.route("**/api/history/**/insights**", async (route) => {
+    await fulfillJson(route, {
+      run_id: "run-001",
+      status: "complete",
+      start_time_utc: "2026-01-01T00:00:00Z",
+      duration_s: 12.3,
+      sensor_count_used: 1,
+      findings: [],
+      sensor_intensity_by_location: [],
+    });
+  });
   await page.route("**/api/history/**/report.pdf**", async (route) => {
     reportPdfCalls += 1;
     await route.fulfill({ status: 200, headers: { "content-type": "application/pdf", "content-disposition": 'attachment; filename="run-001_report.pdf"' }, body: "PDF" });
@@ -244,7 +255,9 @@ test("history PDF download revokes object URL with safe delay", async ({ page })
   await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-history").click();
-  await page.locator('[data-run-action="download-pdf"][data-run="run-001"]').click();
+  const pdfButton = page.locator('[data-run-action="download-pdf"][data-run="run-001"]');
+  await expect(pdfButton).toBeVisible();
+  await pdfButton.click();
   await expect.poll(() => reportPdfCalls).toBe(1);
   await page.waitForTimeout(200);
   expect(await revokeCallCount()).toBe(0);

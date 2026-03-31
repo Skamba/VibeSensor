@@ -184,9 +184,19 @@ async def test_set_client_location_persists_canonical_name_and_location() -> Non
     class KnownRegistry:
         def __init__(self) -> None:
             self.cleared: list[str] = []
+            self.locations: list[tuple[str, str]] = []
+            self.names: list[tuple[str, str]] = []
 
         def get(self, _client_id: str):
             return type("Rec", (), {"name": "legacy-name"})()
+
+        def set_location(self, client_id: str, location_code: str):
+            self.locations.append((client_id, location_code))
+            return type("Rec", (), {"name": "legacy-name", "location_code": location_code})()
+
+        def set_name(self, client_id: str, name: str):
+            self.names.append((client_id, name))
+            return type("Rec", (), {"name": name, "location_code": "front_left_wheel"})()
 
         def clear_name(self, client_id: str):
             self.cleared.append(client_id)
@@ -211,6 +221,8 @@ async def test_set_client_location_persists_canonical_name_and_location() -> Non
         "aa:bb:cc:dd:ee:ff",
         {"name": "Front Left Wheel", "location_code": "front_left_wheel"},
     )
+    assert registry.locations == [("aabbccddeeff", "front_left_wheel")]
+    assert registry.names == [("aabbccddeeff", "Front Left Wheel")]
     assert registry.cleared == []
     assert resp["name"] == "Front Left Wheel"
     assert resp["location_code"] == "front_left_wheel"

@@ -85,7 +85,7 @@ test("history uses mobile run cards and keeps the primary action readable on nar
   const rowDisplay = await row.evaluate((element) => getComputedStyle(element).display);
   expect(rowDisplay).toBe("grid");
   await expect(toggle).toContainText("Open diagnosis");
-  await expect(toggle).toContainText("Review findings and heatmap");
+  await expect(toggle).toContainText("Open diagnosis and evidence");
 });
 
 test("history empty state stays action-oriented on narrow screens", async ({ page }) => {

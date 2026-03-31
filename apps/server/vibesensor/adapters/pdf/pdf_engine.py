@@ -44,7 +44,8 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
 
     buf = BytesIO()
     canvas = Canvas(buf, pagesize=PAGE_SIZE, pageCompression=0)
-    total_pages = 4
+    recapture_mode = data.appendix_a.mode == "recapture"
+    total_pages = 2 if recapture_mode else 4
 
     _page1(canvas, data, ctx=ctx)
     _draw_footer(canvas, 1, total_pages, data.title)
@@ -52,15 +53,18 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
 
     _appendix_a_page(canvas, data)
     _draw_footer(canvas, 2, total_pages, data.title)
-    canvas.showPage()
+    if recapture_mode:
+        canvas.showPage()
+    else:
+        canvas.showPage()
 
-    _appendix_b_page(canvas, data)
-    _draw_footer(canvas, 3, total_pages, data.title)
-    canvas.showPage()
+        _appendix_b_page(canvas, data)
+        _draw_footer(canvas, 3, total_pages, data.title)
+        canvas.showPage()
 
-    _appendix_c_page(canvas, data)
-    _draw_footer(canvas, 4, total_pages, data.title)
-    canvas.showPage()
+        _appendix_c_page(canvas, data)
+        _draw_footer(canvas, 4, total_pages, data.title)
+        canvas.showPage()
 
     canvas.save()
     return buf.getvalue()

@@ -39,7 +39,7 @@ def _appendix_a_page(c: Canvas, data: ReportTemplateData) -> None:
         page_top=PAGE_H - MARGIN,
     )
     if data.appendix_a.mode == "recapture":
-        _draw_capture_guidance_page(c, data.appendix_a, data.lang, title_y)
+        _draw_capture_guidance_page(c, data, title_y)
     else:
         _draw_worksheet_page(c, data.appendix_a, data, data.lang, title_y)
 
@@ -408,11 +408,12 @@ def _appendix_d_page(c: Canvas, data: ReportTemplateData) -> None:
         )
 
 
-def _draw_capture_guidance_page(
-    c: Canvas, appendix: AppendixAData, lang: str, title_y: float
-) -> None:
+def _draw_capture_guidance_page(c: Canvas, data: ReportTemplateData, title_y: float) -> None:
+    appendix = data.appendix_a
+    appendix_d = data.appendix_d
+    lang = data.lang
     width = PAGE_W - 2 * MARGIN
-    panel_h = 60 * mm
+    panel_h = 40 * mm
     top_y = title_y - panel_h
     labels = [
         (_tr(lang, "REPORT_CAPTURE_ISSUES_TITLE"), appendix.capture_issues),
@@ -432,9 +433,34 @@ def _draw_capture_guidance_page(
             size=FS_BODY,
             color=TEXT_CLR,
             leading=FS_BODY + 1.4,
-            max_lines=12,
+            max_lines=8,
         )
         current_y -= panel_h + GAP
+    trace_panel_y = MARGIN + 8 * mm
+    trace_panel_h = current_y - trace_panel_y
+    if trace_panel_h <= 20 * mm or not appendix_d.rows:
+        return
+    _draw_panel(
+        c,
+        MARGIN,
+        trace_panel_y,
+        width,
+        trace_panel_h,
+        _tr(lang, "REPORT_TRACEABILITY_PANEL_TITLE"),
+    )
+    left_x = MARGIN + 4 * mm
+    right_x = MARGIN + (width / 2) + 2 * mm
+    left_y = trace_panel_y + trace_panel_h - PANEL_HEADER_H - 2 * mm
+    right_y = left_y
+    mid = (len(appendix_d.rows) + 1) // 2
+    for row in appendix_d.rows[:mid]:
+        left_y = (
+            _draw_traceability_row(c, row, x=left_x, y=left_y, w=(width / 2) - 8 * mm) - 1.0 * mm
+        )
+    for row in appendix_d.rows[mid:]:
+        right_y = (
+            _draw_traceability_row(c, row, x=right_x, y=right_y, w=(width / 2) - 8 * mm) - 1.0 * mm
+        )
 
 
 def _draw_worksheet_page(

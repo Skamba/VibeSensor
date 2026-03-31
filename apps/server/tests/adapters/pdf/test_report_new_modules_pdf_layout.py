@@ -63,7 +63,7 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     assert pdf.startswith(b"%PDF")
 
     reader = PdfReader(BytesIO(pdf))
-    assert len(reader.pages) == 4
+    assert len(reader.pages) == 2
 
 
 def test_report_pdf_two_pages(tmp_path: Path) -> None:
@@ -81,7 +81,7 @@ def test_report_pdf_two_pages(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     reader = PdfReader(BytesIO(pdf))
-    assert len(reader.pages) == 4
+    assert len(reader.pages) == 2
 
 
 def test_fit_rect_preserve_aspect_wider_box() -> None:
