@@ -462,7 +462,7 @@ def _validate_pdf_report(pdf_bytes: bytes, primary_finding: dict) -> None:
     """
     pdf = _pdf_normalized(pdf_bytes)
 
-    # --- suspected source ---
+    # --- most likely source ---
     assert "wheel / tire" in pdf or "wheel/tire" in pdf, (
         "[pdf] primary suspected_source ('wheel / tire') not found in PDF"
     )
@@ -567,10 +567,10 @@ def test_e2e_docker_localized_wheel_fault(fault_wheel: str) -> None:
         report_text = pdf_text(pdf_resp.body)
         report_text_normalized = normalize_location(report_text)
         assert "what to do next" in report_text
-        assert re.search(r"suspected source\s+wheel / tire", report_text)
+        assert re.search(r"most likely source\s+wheel / tire", report_text)
         assert expected_location in report_text_normalized
-        assert not re.search(r"suspected source\s+driveline", report_text)
-        assert not re.search(r"suspected source\s+engine", report_text)
+        assert not re.search(r"most likely source\s+driveline", report_text)
+        assert not re.search(r"most likely source\s+engine", report_text)
 
         # ------------------------------------------------------------------
         # Alignment validation: cross-source consistency checks

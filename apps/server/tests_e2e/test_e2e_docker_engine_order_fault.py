@@ -100,8 +100,8 @@ def test_e2e_docker_engine_order_fault() -> None:
         report_text = pdf_text(pdf_resp.body)
         assert "what to do next" in report_text
         assert "recapture before acting" in report_text
-        assert re.search(r"suspected source\s+insufficient evidence", report_text)
-        assert not re.search(r"suspected source\s+wheel / tire", report_text)
+        assert re.search(r"most likely source\s+insufficient evidence", report_text)
+        assert not re.search(r"most likely source\s+wheel / tire", report_text)
     finally:
         cleanup_steps = [
             ("stop recording", lambda: api_json(base_url, "/api/recording/stop", method="POST")),
