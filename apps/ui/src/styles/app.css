@@ -944,6 +944,22 @@ button[hidden],
 .dashboard-grid__controls .card__header > :first-child { width: 100%; }
 .dashboard-grid__controls .card__subtle { text-align: left; }
 
+.dashboard-grid--setup {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "overview"
+    "controls";
+}
+
+.dashboard-grid--setup .dashboard-grid__main {
+  display: none;
+}
+
+.dashboard-grid--setup .stat-grid--compact,
+.dashboard-grid--setup .logging-actions {
+  display: none;
+}
+
 .live-overview__stats { margin-bottom: var(--space-3); }
 
 .stat--spotlight {
@@ -1575,10 +1591,14 @@ button[hidden],
   min-width: 0;
 }
 .history-row__run-id {
+  font-size: 0.78rem;
+  color: var(--muted);
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .history-row__car-context {
-  display: none;
+  display: grid;
+  gap: 0.15rem;
 }
 .history-row__car-label {
   font-size: 0.72rem;
@@ -1720,6 +1740,11 @@ button[hidden],
 .history-row__actions .btn {
   min-width: 0;
 }
+.history-row__action-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
 .history-row__meta-label {
   display: none;
 }
@@ -1768,6 +1793,12 @@ button[hidden],
   display: grid;
   justify-items: end;
   gap: var(--space-2);
+}
+.history-details-header__status {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: right;
 }
 .history-run-summary {
   color: var(--muted);
@@ -2266,6 +2297,29 @@ td.vib-cell[data-severity="l1"] { background: rgba(37, 99, 235, 0.1); }
 .settings-groups { display: grid; gap: var(--space-3); }
 .controls,
 .log-actions { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.history-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.history-toolbar__copy {
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+.history-toolbar__summary {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.history-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
 .settings-layout { display: grid; gap: var(--space-4); }
 .settings-help-disclosure {
   border: 1px solid var(--border);
@@ -2470,6 +2524,31 @@ td.vib-cell[data-severity="l1"] { background: rgba(37, 99, 235, 0.1); }
   border-color: var(--brand-500);
   background: var(--menu-hover);
   box-shadow: inset 0 0 0 1px var(--brand-500);
+}
+.speed-source-choice--active::after,
+.speed-source-choice--draft::after {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.4;
+  content: attr(data-choice-badge);
+}
+.speed-source-choice--active::after {
+  background: var(--menu-hover);
+  color: var(--brand-500);
+}
+.speed-source-choice--draft {
+  border-color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface-2));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 60%, transparent);
+}
+.speed-source-choice--draft::after {
+  background: color-mix(in srgb, var(--warning) 16%, white);
+  color: var(--warning);
 }
 .speed-source-choice--error {
   border-color: var(--danger);
@@ -3101,6 +3180,12 @@ select[aria-invalid="true"] {
     min-width: 0;
   }
   .history-details-preview { grid-template-columns: 1fr; }
+  .history-toolbar {
+    align-items: flex-start;
+  }
+  .history-toolbar__actions {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 720px) {
@@ -3198,6 +3283,15 @@ select[aria-invalid="true"] {
     min-width: 0;
     width: 100%;
   }
+  .history-toolbar {
+    align-items: stretch;
+  }
+  .history-toolbar__actions {
+    width: 100%;
+  }
+  .history-toolbar__actions .btn {
+    flex: 1 1 11rem;
+  }
   .history-details-row {
     display: block;
   }
@@ -3214,6 +3308,9 @@ select[aria-invalid="true"] {
   }
   .history-details-header__actions {
     justify-items: stretch;
+  }
+  .history-details-header__status {
+    text-align: left;
   }
   .history-details-header__actions .btn {
     width: 100%;

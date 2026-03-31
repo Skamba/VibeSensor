@@ -166,6 +166,7 @@ class VerdictPageData:
     also_consider: str | None = None
     proof_summary: str | None = None
     proof_caveat: str | None = None
+    proof_panel_title: str | None = None
     footer_routes: tuple[str, ...] = ()
 
 
