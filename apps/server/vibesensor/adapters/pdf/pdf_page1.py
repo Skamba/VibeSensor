@@ -25,7 +25,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     SUB_CLR,
     TEXT_CLR,
 )
-from vibesensor.adapters.pdf.pdf_text import _draw_text, _wrap_lines
+from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height, _wrap_lines
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.types.json_types import JsonValue
@@ -56,10 +56,21 @@ def _page1(
     hero_y = header_y - GAP - hero_h
     middle_y = content_bottom
 
+    actions_h = min(main_h, _estimate_actions_block_height(data, tr=tr, w=actions_w))
+    actions_y = middle_y + main_h - actions_h
+
     _draw_header_strip(c, data, tr=tr, x=MARGIN, y=header_y, w=width, h=header_h)
     _draw_hero_block(c, data, tr=tr, x=MARGIN, y=hero_y, w=width, h=hero_h)
     _draw_proof_block(c, data, tr=tr, x=MARGIN, y=middle_y, w=proof_w, h=main_h)
-    _draw_actions_block(c, data, tr=tr, x=MARGIN + proof_w + GAP, y=middle_y, w=actions_w, h=main_h)
+    _draw_actions_block(
+        c,
+        data,
+        tr=tr,
+        x=MARGIN + proof_w + GAP,
+        y=actions_y,
+        w=actions_w,
+        h=actions_h,
+    )
 
 
 def _draw_header_strip(
@@ -421,6 +432,37 @@ def _draw_action_row(
             c.drawString(x + 12 * mm, title_y, line)
             title_y -= FS_SMALL + 1.0
     return float(y_top - row_h - 2.5 * mm)
+
+
+def _estimate_action_row_height(*, title: str, w: float) -> float:
+    text_w = w - 14 * mm
+    title_lines = _wrap_lines(title, text_w, FS_BODY)[:2]
+    return float(max(18 * mm, 8.5 * mm + (len(title_lines) * (FS_BODY + 1.2))))
+
+
+def _estimate_actions_block_height(
+    data: ReportTemplateData,
+    *,
+    tr: Callable[..., str],
+    w: float,
+) -> float:
+    content_w = w - 8 * mm
+    content_h = 0.0
+    if not data.next_steps:
+        content_h += _measure_text_height(tr("NO_NEXT_STEPS"), w=content_w, size=FS_BODY)
+    else:
+        shown_steps = data.next_steps[:2]
+        for step in shown_steps:
+            content_h += _estimate_action_row_height(title=step.action, w=content_w) + 2.5 * mm
+        if len(data.next_steps) > len(shown_steps):
+            content_h += 0.5 * mm + _measure_text_height(
+                tr("REPORT_ACTIONS_PAGE1_MORE"),
+                w=content_w,
+                size=FS_SMALL,
+                leading=FS_SMALL + 1.0,
+                max_lines=2,
+            )
+    return float(max(38 * mm, PANEL_HEADER_H + 2 * mm + content_h + 4 * mm))
 
 
 def _draw_actions_block(
