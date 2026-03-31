@@ -171,13 +171,14 @@ def _draw_hero_block(
         label=tr("REPORT_SUSPECTED_SOURCE_LABEL"),
         value=verdict.suspected_source or tr("UNKNOWN"),
     )
-    next_y = _draw_label_value(
-        c,
-        x=inner_x,
-        y=next_y,
-        label=tr("REPORT_INSPECT_FIRST_LABEL"),
-        value=verdict.inspect_first or tr("UNKNOWN"),
-    )
+    if verdict.inspect_first:
+        next_y = _draw_label_value(
+            c,
+            x=inner_x,
+            y=next_y,
+            label=tr("REPORT_INSPECT_FIRST_LABEL"),
+            value=verdict.inspect_first,
+        )
 
     status_x = x + left_w + 8 * mm
     c.setFillColor(_hex(SUB_CLR))
@@ -226,7 +227,7 @@ def _draw_proof_block(
     h: float,
 ) -> None:
     verdict = data.verdict_page
-    _draw_panel(c, x, y, w, h, tr("REPORT_PROOF_PANEL_TITLE"))
+    _draw_panel(c, x, y, w, h, verdict.proof_panel_title or tr("REPORT_PROOF_PANEL_TITLE"))
     inner_x = x + 4 * mm
     inner_y = y + h - PANEL_HEADER_H - 2 * mm
     diagram_w = w * 0.55

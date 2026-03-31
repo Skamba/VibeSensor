@@ -234,6 +234,22 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     if (!ages.length) {
       return t("dashboard.data_freshness_none");
     }
+    const captureReadiness = realtime.loggingStatus.capture_readiness ?? null;
+    const referenceCheck = captureReadinessCheck(captureReadiness, "reference_ready");
+    const referenceReason = referenceCheck?.reason_key ?? "";
+    if (
+      referenceCheck
+      && referenceCheck.state !== "pass"
+      && [
+        "speed_source_missing",
+        "speed_source_not_live",
+        "speed_source_fallback_active",
+        "speed_sample_missing",
+        "speed_sample_stale",
+      ].includes(referenceReason)
+    ) {
+      return t("dashboard.data_freshness_sensors_only");
+    }
     const ageMs = Math.max(...ages.map((age) => Math.max(0, age)));
     const ageText = t("status.age_ms_ago", { value: formatInt(ageMs) });
     const freshness = classifyDataFreshness(ageMs, connected);
@@ -269,10 +285,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     showPill: boolean;
     captureReadiness: CaptureReadinessPayload | null;
     showCaptureChecklist: boolean;
+    setupMode: boolean;
   };
 
   type RecordingSummaryAction = {
-    action: "open-history" | "open-cars" | "open-add-car";
+    action: "open-history" | "open-cars" | "open-add-car" | "open-sensors" | "open-speed-source";
     label: string;
     variant?: InlineStateActionVariant;
   };
@@ -357,6 +374,15 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         text: t("dashboard.health.recording"),
         summary: t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount }),
         showOverviewPill: false,
+      };
+    }
+    const captureReadiness = realtime.loggingStatus.capture_readiness ?? null;
+    if (captureReadiness && !captureReadiness.is_ready) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: captureReadinessSummaryText(captureReadiness),
+        showOverviewPill: true,
       };
     }
     return {
@@ -494,9 +520,13 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     els.settingsTabs.find((button) => button.getAttribute("data-settings-tab") === tabId)?.click();
   }
 
-  function openCarsView({ openWizard = false }: { openWizard?: boolean } = {}): void {
+  function openSettingsView(tabId: string): void {
     activatePrimaryView("settingsView");
-    activateSettingsTab("carTab");
+    activateSettingsTab(tabId);
+  }
+
+  function openCarsView({ openWizard = false }: { openWizard?: boolean } = {}): void {
+    openSettingsView("carTab");
     if (openWizard) {
       els.addCarBtn?.click();
     }
@@ -568,6 +598,52 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         action: "open-cars",
         label: t("dashboard.logging.blocked.no_active.action"),
       },
+    };
+  }
+
+  function setupRecordingAction(check: CaptureReadinessCheckPayload): RecordingSummaryAction | undefined {
+    if (check.check_key === "sensors_ready") {
+      return {
+        action: "open-sensors",
+        label: t("dashboard.logging.blocked.setup.action.sensors"),
+      };
+    }
+    if (check.check_key === "reference_ready") {
+      if (check.reason_key === "active_car_missing" || check.reason_key === "order_reference_incomplete") {
+        return {
+          action: "open-cars",
+          label: t("dashboard.logging.blocked.setup.action.cars"),
+        };
+      }
+      return {
+        action: "open-speed-source",
+        label: t("dashboard.logging.blocked.setup.action.speed_source"),
+      };
+    }
+    if (check.check_key === "speed_stable" && check.reason_key === "speed_sample_missing") {
+      return {
+        action: "open-speed-source",
+        label: t("dashboard.logging.blocked.setup.action.speed_source"),
+      };
+    }
+    return undefined;
+  }
+
+  function setupRecordingPanel(readiness: CaptureReadinessPayload | null): RecordingSummaryPanel | null {
+    if (!readiness || readiness.is_ready) {
+      return null;
+    }
+    const primaryCheck = readiness.checks.find((check) => (
+      check.state === "fail" && check.check_key !== "capture_ready"
+    )) ?? captureReadinessCheck(readiness, "capture_ready");
+    if (!primaryCheck) {
+      return null;
+    }
+    return {
+      title: t("dashboard.logging.blocked.setup.title"),
+      body: captureReadinessDetailText(primaryCheck),
+      detail: undefined,
+      action: setupRecordingAction(primaryCheck),
     };
   }
 
@@ -787,11 +863,18 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       els.loggingChecklist.innerHTML = "";
       return;
     }
-    const rows = CAPTURE_READINESS_ORDER.map((checkKey) => {
-      const check = captureReadinessCheck(captureReadiness, checkKey);
-      if (!check) {
-        return "";
-      }
+    const relevantChecks = CAPTURE_READINESS_ORDER
+      .filter((checkKey) => checkKey !== "capture_ready")
+      .map((checkKey) => captureReadinessCheck(captureReadiness, checkKey))
+      .filter((check): check is CaptureReadinessCheckPayload => (
+        check !== null && (!panelState.setupMode || check.state !== "pass")
+      ));
+    if (!relevantChecks.length) {
+      els.loggingChecklist.hidden = true;
+      els.loggingChecklist.innerHTML = "";
+      return;
+    }
+    const rows = relevantChecks.map((check) => {
       return `
         <div class="capture-readiness__item capture-readiness__item--${check.state}">
           <div class="capture-readiness__row">
@@ -845,6 +928,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showPill: true,
         captureReadiness: null,
         showCaptureChecklist: false,
+        setupMode: false,
       };
     }
 
@@ -865,6 +949,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showPill: true,
         captureReadiness: null,
         showCaptureChecklist: false,
+        setupMode: false,
       };
     }
 
@@ -887,6 +972,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showPill: Boolean(status.write_error),
         captureReadiness: null,
         showCaptureChecklist: false,
+        setupMode: false,
       };
     }
 
@@ -908,6 +994,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showPill: false,
         captureReadiness: null,
         showCaptureChecklist: false,
+        setupMode: false,
       };
     }
 
@@ -928,6 +1015,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showPill: false,
         captureReadiness: null,
         showCaptureChecklist: false,
+        setupMode: false,
       };
     }
 
@@ -948,6 +1036,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         showPill: false,
         captureReadiness,
         showCaptureChecklist: captureReadiness !== null,
+        setupMode: true,
       };
     }
 
@@ -960,8 +1049,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       phaseText: waitingOnReadiness
         ? t("dashboard.recording_phase.preparing")
         : t("dashboard.recording_phase.ready"),
-      summaryText: readinessSummary || liveHealth.summary,
-      summaryPanel: null,
+      summaryText: waitingOnReadiness ? "" : readinessSummary || liveHealth.summary,
+      summaryPanel: waitingOnReadiness ? setupRecordingPanel(captureReadiness) : null,
       runIdText,
       elapsedText: "--",
       samplesText,
@@ -972,11 +1061,14 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       showPill: false,
       captureReadiness,
       showCaptureChecklist: captureReadiness !== null,
+      setupMode: waitingOnReadiness,
     };
   }
 
   function renderLoggingStatus(): void {
     const panelState = computeRecordingPanelState();
+    const dashboardGrid = els.loggingSummary?.closest<HTMLElement>(".dashboard-grid");
+    dashboardGrid?.classList.toggle("dashboard-grid--setup", panelState.setupMode);
     renderLiveOverviewStats();
     setDashboardPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText, {
       hidden: !panelState.showPill,
@@ -1049,6 +1141,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         els.stopLoggingBtn.hidden = true;
         els.stopLoggingBtn.disabled = true;
       }
+      const dashboardGrid = els.loggingSummary?.closest<HTMLElement>(".dashboard-grid");
+      dashboardGrid?.classList.remove("dashboard-grid--setup");
     }
   }
 
@@ -1118,7 +1212,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
     if (!clientId) return;
     const existing = realtime.clients.find((c) => c.id === clientId);
-    if (existing && locationCodeForClient(existing) === locationCode) return;
+    const existingLocationCode = String(existing?.location_code || "").trim();
+    if (existing && existingLocationCode === locationCode) return;
     try {
       await setClientLocationApi(clientId, locationCode);
     } catch (err) {
@@ -1130,7 +1225,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       client.location_code = locationCode;
       maybeRenderSensorsSettingsList();
       renderStatus();
-      renderLoggingStatus();
+      await refreshLoggingStatus();
     }
   }
 
@@ -1187,6 +1282,14 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       }
       if (action === "open-cars") {
         openCarsView();
+        return;
+      }
+      if (action === "open-sensors") {
+        openSettingsView("sensorsTab");
+        return;
+      }
+      if (action === "open-speed-source") {
+        openSettingsView("speedSourceTab");
       }
     });
     els.sensorsSettingsBody?.addEventListener("change", (event) => {

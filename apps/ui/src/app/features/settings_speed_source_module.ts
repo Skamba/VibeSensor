@@ -133,7 +133,7 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
       return t("settings.speed.current_source_fallback_manual");
     }
     if (effectiveSource === "manual") {
-      return t("settings.speed.manual");
+      return t("settings.speed.current_source_manual_override");
     }
     if (effectiveSource === "gps" || effectiveSource == null) {
       return t("settings.speed.gps");
@@ -154,6 +154,27 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     els.speedSourceRadios.forEach((radio) => {
       radio.checked = radio.value === displayedMode;
     });
+  }
+
+  function syncChoiceState(
+    element: HTMLElement | null,
+    { active, pending }: { active: boolean; pending: boolean },
+  ): void {
+    if (!element) {
+      return;
+    }
+    element.classList.toggle("speed-source-choice--active", active);
+    element.classList.toggle("speed-source-choice--selected", active);
+    element.classList.toggle("speed-source-choice--draft", pending);
+    if (pending) {
+      element.setAttribute("data-choice-badge", t("settings.speed.choice_pending"));
+      return;
+    }
+    if (active) {
+      element.setAttribute("data-choice-badge", t("settings.speed.choice_active"));
+      return;
+    }
+    element.removeAttribute("data-choice-badge");
   }
 
   function selectedSpeedSourceMode(): DisplayedSpeedSourceMode {
@@ -340,9 +361,19 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
       applyDisplayedModeToRadios(displayedMode);
     }
     const selectedMode = selectedSpeedSourceMode();
-    els.speedSourceChoiceGps?.classList.toggle("speed-source-choice--selected", selectedMode === "gps");
-    els.speedSourceChoiceObd?.classList.toggle("speed-source-choice--selected", selectedMode === "obd2");
-    els.speedSourceChoiceManual?.classList.toggle("speed-source-choice--selected", selectedMode === "manual");
+    const hasPendingSelection = speedSourceDraftDirty && selectedMode !== displayedMode;
+    syncChoiceState(els.speedSourceChoiceGps, {
+      active: displayedMode === "gps",
+      pending: hasPendingSelection && selectedMode === "gps",
+    });
+    syncChoiceState(els.speedSourceChoiceObd, {
+      active: displayedMode === "obd2",
+      pending: hasPendingSelection && selectedMode === "obd2",
+    });
+    syncChoiceState(els.speedSourceChoiceManual, {
+      active: displayedMode === "manual",
+      pending: hasPendingSelection && selectedMode === "manual",
+    });
     if (els.manualSpeedConfig) {
       els.manualSpeedConfig.hidden = selectedMode !== "manual";
     }

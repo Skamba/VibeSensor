@@ -25,10 +25,14 @@ from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import (
     AppendixAData,
     AppendixCData,
+    AppendixDData,
+    MeasurementRow,
     NextStep,
     PatternEvidence,
     RankedCandidateRow,
+    ReportLabelValueRow,
     ReportTemplateData,
+    VerdictPageData,
 )
 from vibesensor.domain import Finding
 from vibesensor.shared.boundaries.finding import finding_from_payload
@@ -301,33 +305,22 @@ def test_confidence_label_non_negligible_allows_high() -> None:
 
 # -- PDF section heading coverage --------------------------------------------
 
-_SECTION_HEADING_KEYS = [
+_RECAPTURE_SECTION_HEADING_KEYS = [
     "REPORT_ACTIONS_PANEL_TITLE",
-    "REPORT_PROOF_PANEL_TITLE",
+    "REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE",
     "REPORT_APPENDIX_A_TITLE",
-    "REPORT_APPENDIX_B_TITLE",
-    "REPORT_TOPOLOGY_MAP_TITLE",
-    "REPORT_INTENSITY_LADDER_TITLE",
-    "REPORT_APPENDIX_C_TITLE",
-    "REPORT_EVIDENCE_CHAIN_TITLE",
-    "REPORT_SUPPORTING_MEASUREMENTS_TITLE",
-    "REPORT_SUITABILITY_DETAIL_TITLE",
-    "REPORT_APPENDIX_D_TITLE",
+    "REPORT_CAPTURE_ISSUES_TITLE",
+    "REPORT_CAPTURE_CHANGES_TITLE",
+    "REPORT_CAPTURE_CONDITIONS_TITLE",
     "REPORT_TRACEABILITY_PANEL_TITLE",
-]
-
-_PEAK_TABLE_COLUMN_KEYS = [
-    "REPORT_PEAK_DB_COLUMN",
-    "REPORT_STRENGTH_DB_COLUMN",
 ]
 
 
 @pytest.mark.parametrize(
     ("lang", "i18n_keys"),
     [
-        pytest.param("en", _SECTION_HEADING_KEYS, id="en_section_headings"),
-        pytest.param("nl", _SECTION_HEADING_KEYS, id="nl_section_headings"),
-        pytest.param("en", _PEAK_TABLE_COLUMN_KEYS, id="en_peak_table_columns"),
+        pytest.param("en", _RECAPTURE_SECTION_HEADING_KEYS, id="en_recapture_section_headings"),
+        pytest.param("nl", _RECAPTURE_SECTION_HEADING_KEYS, id="nl_recapture_section_headings"),
     ],
 )
 def test_pdf_contains_i18n_labels(
@@ -346,6 +339,64 @@ def test_pdf_contains_i18n_labels(
         if label not in text:
             missing.append(f"{key} ({label!r})")
     assert missing == [], f"Missing {lang} labels in PDF: {missing}"
+
+
+def test_full_report_template_contains_peak_db_column_labels() -> None:
+    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+    data = ReportTemplateData(
+        title="Diagnostic worksheet",
+        lang="en",
+        verdict_page=VerdictPageData(
+            suspected_source="Wheel / Tire",
+            inspect_first="Front-Left",
+            action_status="Action-ready",
+            reason_sentence=(
+                "Wheel / Tire remains the strongest source because the repeated pattern "
+                "stayed strongest near Front-Left."
+            ),
+            dominant_corner="Front-Left",
+            location_confidence="Strong",
+            coverage_label="4 of 4 expected positions stayed connected.",
+            proof_summary=(
+                "Front-Left outranked the next location by 2.1x on "
+                "matched-window linear intensity evidence."
+            ),
+        ),
+        appendix_a=AppendixAData(
+            mode="workflow",
+            primary_source="Wheel / Tire",
+            why_primary_first="Wheel / Tire stayed strongest near Front-Left.",
+            ranked_candidates=[
+                RankedCandidateRow(
+                    source_name="Wheel / Tire",
+                    inspect_first="Front-Left",
+                    path_role="Primary path",
+                    reason="Wheel / Tire stayed strongest near Front-Left.",
+                )
+            ],
+        ),
+        appendix_c=AppendixCData(
+            measurement_rows=[
+                MeasurementRow(
+                    measurement_id="M-01",
+                    source_name="Wheel / Tire",
+                    signal_label="1x wheel order",
+                    peak_db=32.0,
+                    strength_db=24.0,
+                    speed_window="50-60 km/h",
+                    dominant_location="Front-Left",
+                )
+            ],
+            speed_band_summary="Repeated energy stayed strongest in the 50-60 km/h window.",
+        ),
+        appendix_d=AppendixDData(rows=[ReportLabelValueRow(label="Run ID", value="run-1")]),
+        next_steps=[NextStep(action="Check wheel balance")],
+    )
+
+    text = extract_pdf_text(build_report_pdf(data))
+
+    assert i18n["REPORT_PEAK_DB_COLUMN"]["en"] in text
+    assert i18n["REPORT_STRENGTH_DB_COLUMN"]["en"] in text
 
 
 def test_pdf_additional_observations_heading_for_transient_findings() -> None:

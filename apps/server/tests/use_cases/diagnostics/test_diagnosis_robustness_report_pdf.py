@@ -17,7 +17,7 @@ from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 
 
 class TestPdfContentForDiagnosedScenario:
-    def test_pdf_contains_diagnosis_content(self) -> None:
+    def test_pdf_contains_recapture_content_when_reference_context_is_incomplete(self) -> None:
         whz = wheel_hz(100.0)
         samples: list[dict[str, Any]] = []
         for i in range(40):
@@ -51,10 +51,10 @@ class TestPdfContentForDiagnosedScenario:
         text_lower = extract_pdf_text(pdf_bytes).lower()
         assert "vibesensor diagnostic report" in text_lower
         assert "what to do next" in text_lower
-        assert "wheel" in text_lower or "tire" in text_lower
+        assert "insufficient evidence" in text_lower
+        assert "recapture before acting" in text_lower
         assert "front" in text_lower
         assert "km/h" in text_lower
-        assert "db" in text_lower
         assert len(PdfReader(BytesIO(pdf_bytes)).pages) >= 1
 
     def test_pdf_nl_contains_dutch_diagnosis(self) -> None:
