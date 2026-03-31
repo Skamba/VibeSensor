@@ -358,7 +358,8 @@ def test_full_report_template_contains_peak_db_column_labels() -> None:
             location_confidence="Strong",
             coverage_label="4 of 4 expected positions stayed connected.",
             proof_summary=(
-                "Front-Left outranked the next location by 2.1x on matched-window linear intensity evidence."
+                "Front-Left outranked the next location by 2.1x on "
+                "matched-window linear intensity evidence."
             ),
         ),
         appendix_a=AppendixAData(
