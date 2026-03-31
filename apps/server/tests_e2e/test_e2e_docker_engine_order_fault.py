@@ -99,7 +99,8 @@ def test_e2e_docker_engine_order_fault() -> None:
         assert pdf_resp.body[:5] == b"%PDF-"
         report_text = pdf_text(pdf_resp.body)
         assert "what to do next" in report_text
-        assert re.search(r"suspected source\s+engine", report_text)
+        assert "recapture before acting" in report_text
+        assert re.search(r"suspected source\s+insufficient evidence", report_text)
         assert not re.search(r"suspected source\s+wheel / tire", report_text)
     finally:
         cleanup_steps = [
