@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { installCommonRoutes, installFakeWebSocket } from "./smoke.helpers";
+import {
+  buildCaptureReadiness,
+  fulfillJson,
+  installCommonRoutes,
+  installFakeWebSocket,
+  requestPath,
+} from "./smoke.helpers";
 
 test("spectrum controls simplify the chart and update the inspector", async ({ page }) => {
   await page.goto("/?demo=1");
@@ -46,7 +52,37 @@ test("spectrum controls simplify the chart and update the inspector", async ({ p
 });
 
 test("spectrum band toggle stays hidden when no spectrum data is available", async ({ page }) => {
-  await installCommonRoutes(page);
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      start_time_utc: null,
+      samples_written: 0,
+      samples_dropped: 0,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+      capture_readiness: buildCaptureReadiness({
+        isReady: true,
+        sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+        reference: { state: "pass", reasonKey: "reference_ready" },
+        speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+      }),
+    });
+  });
   await installFakeWebSocket(page, {
     payload: {
       server_time: new Date().toISOString(),

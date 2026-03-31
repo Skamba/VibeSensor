@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
+import {
+  buildCaptureReadiness,
+  fulfillJson,
+  installCommonRoutes,
+  installFakeWebSocket,
+  requestPath,
+} from "./smoke.helpers";
 
 const analysisSettingsPayload = {
   wheel_bandwidth_pct: 5,
@@ -182,6 +188,25 @@ test("dashboard removes repeated ready and online status badges while keeping st
       await fulfillJson(route, {});
     },
   });
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      start_time_utc: null,
+      samples_written: 0,
+      samples_dropped: 0,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+      capture_readiness: buildCaptureReadiness({
+        isReady: true,
+        sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+        reference: { state: "pass", reasonKey: "reference_ready" },
+        speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+      }),
+    });
+  });
   await installFakeWebSocket(page, {
     payload: {
       server_time: new Date().toISOString(),
@@ -194,7 +219,7 @@ test("dashboard removes repeated ready and online status badges while keeping st
           last_seen_age_ms: 10,
           dropped_frames: 0,
           frames_total: 100,
-          location_code: "",
+          location_code: "front_left_wheel",
           mac_address: "001122334455",
           firmware_version: "fw-1.0.0",
         },

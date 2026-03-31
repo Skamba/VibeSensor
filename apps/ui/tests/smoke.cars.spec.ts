@@ -340,7 +340,7 @@ test("shows a live warning state until an active car is selected, then clears it
   await expect(liveSummary).toContainText("Choose the active car before recording.");
   await expect(liveSummary).toContainText("none is active for the next run");
   await expect(page.locator("#loggingSummary")).toHaveCSS("text-align", "left");
-  await expect(page.locator("#startLoggingBtn")).toBeVisible();
+  await expect(page.locator("#startLoggingBtn")).toBeHidden();
   await expect(page.locator("#startLoggingBtn")).toBeDisabled();
   await expect.poll(() => startCalls).toBe(0);
 
@@ -355,6 +355,7 @@ test("shows a live warning state until an active car is selected, then clears it
   await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Coupe");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
   await expect(page.locator("#loggingStatus")).toBeHidden();
+  await expect(page.locator("#startLoggingBtn")).toBeVisible();
   await expect(page.locator("#startLoggingBtn")).toBeEnabled();
 });
 
