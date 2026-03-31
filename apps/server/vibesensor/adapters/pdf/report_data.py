@@ -9,16 +9,26 @@ Canvas-based renderer.
 from __future__ import annotations
 
 __all__ = [
+    "AppendixAData",
+    "AppendixBData",
+    "AppendixCData",
+    "AppendixDData",
     "build_report_from_renderer_payload",
     "DataTrustItem",
+    "EvidenceChainRow",
     "FindingPresentation",
+    "MeasurementRow",
     "NextStep",
     "PartSuggestion",
     "PatternEvidence",
     "PeakRow",
     "Report",
+    "ReportLabelValueRow",
     "ReportTemplateData",
+    "RankedCandidateRow",
     "SystemFindingCard",
+    "TopologyIntensityRow",
+    "VerdictPageData",
 ]
 
 from dataclasses import dataclass, field
@@ -132,6 +142,126 @@ class PeakRow:
     relevance: str = ""
 
 
+@dataclass
+class ReportLabelValueRow:
+    """A simple label/value row used in appendix metadata blocks."""
+
+    label: str = ""
+    value: str = ""
+
+
+@dataclass
+class VerdictPageData:
+    """Presentation-ready page-1 decision surface content."""
+
+    speed_window_label: str | None = None
+    suspected_source: str | None = None
+    inspect_first: str | None = None
+    action_status: str | None = None
+    action_status_note: str | None = None
+    reason_sentence: str | None = None
+    dominant_corner: str | None = None
+    location_confidence: str | None = None
+    coverage_label: str | None = None
+    also_consider: str | None = None
+    proof_summary: str | None = None
+    proof_caveat: str | None = None
+    footer_routes: tuple[str, ...] = ()
+
+
+@dataclass
+class RankedCandidateRow:
+    """One ranked source row used in the worksheet appendix."""
+
+    source_name: str = ""
+    inspect_first: str | None = None
+    path_role: str | None = None
+    reason: str | None = None
+
+
+@dataclass
+class TopologyIntensityRow:
+    """One topology/intensity row for the sensor-topology appendix."""
+
+    location: str = ""
+    p95_db: float | None = None
+    coverage_state: str | None = None
+
+
+@dataclass
+class MeasurementRow:
+    """One supporting-measurement row in the evidence appendix."""
+
+    measurement_id: str = ""
+    source_name: str = ""
+    signal_label: str = ""
+    peak_db: float | None = None
+    strength_db: float | None = None
+    speed_window: str | None = None
+    dominant_location: str | None = None
+    classification: str | None = None
+
+
+@dataclass
+class EvidenceChainRow:
+    """One evidence-chain row tying a candidate to concrete measurements."""
+
+    source_name: str = ""
+    supporting_signal_label: str = ""
+    measurement_refs: list[str] = field(default_factory=list)
+    matched_evidence_window_count: int | None = None
+    speed_window: str | None = None
+    dominant_location: str | None = None
+    ambiguity_note: str | None = None
+
+
+@dataclass
+class AppendixAData:
+    """Technician worksheet or capture-guidance appendix data."""
+
+    mode: str = "workflow"
+    primary_source: str | None = None
+    alternative_source: str | None = None
+    why_primary_first: str | None = None
+    next_if_clean: str | None = None
+    ranked_candidates: list[RankedCandidateRow] = field(default_factory=list)
+    capture_issues: list[str] = field(default_factory=list)
+    capture_changes: list[str] = field(default_factory=list)
+    capture_conditions: list[str] = field(default_factory=list)
+
+
+@dataclass
+class AppendixBData:
+    """Spatial-proof appendix content."""
+
+    dominant_corner: str | None = None
+    runner_up_corner: str | None = None
+    dominance_ratio_text: str | None = None
+    location_confidence: str | None = None
+    coverage_label: str | None = None
+    coverage_notes: list[str] = field(default_factory=list)
+    intensity_rows: list[TopologyIntensityRow] = field(default_factory=list)
+
+
+@dataclass
+class AppendixCData:
+    """Evidence appendix content."""
+
+    evidence_chain_rows: list[EvidenceChainRow] = field(default_factory=list)
+    measurement_rows: list[MeasurementRow] = field(default_factory=list)
+    speed_band_summary: str | None = None
+    phase_summary: str | None = None
+    observations: list[str] = field(default_factory=list)
+    suitability_items: list[DataTrustItem] = field(default_factory=list)
+
+
+@dataclass
+class AppendixDData:
+    """Traceability appendix content."""
+
+    rows: list[ReportLabelValueRow] = field(default_factory=list)
+
+
 @dataclass(frozen=True)
 class FindingPresentation:
     """Presentation-ready snapshot of a domain Finding for the PDF renderer.
@@ -184,6 +314,11 @@ class ReportTemplateData:
     top_causes: list[FindingPresentation] = field(default_factory=list)
     sensor_intensity_by_location: list[LocationIntensitySummary] = field(default_factory=list)
     location_hotspot_rows: list[LocationHotspotRow] = field(default_factory=list)
+    verdict_page: VerdictPageData = field(default_factory=VerdictPageData)
+    appendix_a: AppendixAData = field(default_factory=AppendixAData)
+    appendix_b: AppendixBData = field(default_factory=AppendixBData)
+    appendix_c: AppendixCData = field(default_factory=AppendixCData)
+    appendix_d: AppendixDData = field(default_factory=AppendixDData)
 
 
 def build_report_from_renderer_payload(

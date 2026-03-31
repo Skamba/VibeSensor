@@ -19,7 +19,7 @@ __all__ = [
     "build_next_steps",
 ]
 
-_REPORT_FOCUSED_ACTION_LIMIT = 2
+_REPORT_FOCUSED_ACTION_LIMIT = 3
 _REPORT_FOCUSED_ACTION_SPECS: dict[str, tuple[str, bool]] = {
     "driveline_inspection": ("REPORT_NEXT_STEP_DRIVELINE_INSPECTION_WHAT", True),
     "driveline_mounts_and_fasteners": ("REPORT_NEXT_STEP_DRIVELINE_MOUNTS_WHAT", True),
@@ -37,11 +37,12 @@ def build_next_steps(
     primary_location: str | None = None,
     tier: str,
     cert_reason: str,
+    recapture_mode: bool = False,
     lang: str,
     tr: Callable[..., str],
 ) -> list[NextStep]:
     """Build next-step actions from prepared report facts."""
-    if tier == "A":
+    if tier == "A" or recapture_mode:
         return [
             NextStep(action=action, why=cert_reason)
             for action in (

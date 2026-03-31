@@ -15,10 +15,12 @@ from pypdf import PdfReader
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import (
-    PartSuggestion,
+    AppendixAData,
+    NextStep,
     PatternEvidence,
+    RankedCandidateRow,
     ReportTemplateData,
-    SystemFindingCard,
+    VerdictPageData,
 )
 
 # ---------------------------------------------------------------------------
@@ -126,104 +128,154 @@ def test_report_output_matches_template_data() -> None:
         title="VibeSensor Diagnostic Report",
         run_datetime="2026-01-15 10:30:00",
         sensor_count=4,
-        observed=PatternEvidence(
-            primary_system="Wheel / Tire",
-            strongest_location="Front Left",
-            certainty_label="High",
-        ),
-        system_cards=[
-            SystemFindingCard(
-                system_name="Wheel / Tire",
-                strongest_location="Front Left",
-                pattern_summary="1x wheel order",
+        verdict_page=VerdictPageData(
+            suspected_source="Wheel / Tire",
+            inspect_first="Front-Left",
+            action_status="Action-ready",
+            reason_sentence=(
+                "Wheel / Tire remains the strongest source because the repeated pattern "
+                "stayed strongest near Front-Left."
             ),
-        ],
-        pattern_evidence=PatternEvidence(
-            matched_systems=["Wheel / Tire"],
-            strongest_location="Front Left",
+            dominant_corner="Front-Left",
+            location_confidence="Strong",
+            coverage_label="4 of 4 expected positions stayed connected.",
+            proof_summary=(
+                "Front-Left outranked the next location by 2.1x on the p95 intensity map."
+            ),
         ),
+        appendix_a=AppendixAData(
+            mode="workflow",
+            primary_source="Wheel / Tire",
+            why_primary_first=(
+                "Supporting signal stayed strongest near Front-Left in the 50-60 km/h window."
+            ),
+            ranked_candidates=[
+                RankedCandidateRow(
+                    source_name="Wheel / Tire",
+                    inspect_first="Front-Left",
+                    path_role="Primary path",
+                    reason=(
+                        "Supporting signal stayed strongest near Front-Left in the "
+                        "50-60 km/h window."
+                    ),
+                )
+            ],
+        ),
+        next_steps=[
+            NextStep(
+                action="Check wheel balance",
+                why="The repeated pattern stayed strongest near the front-left wheel path.",
+                confirm=(
+                    "If balance is the driver, the repeated pattern should reduce after correction."
+                ),
+            )
+        ],
         lang="en",
-        certainty_tier_key="C",
     )
     pdf_bytes = build_report_pdf(data)
     reader = PdfReader(BytesIO(pdf_bytes))
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
-    observed_start = text.find("Observed Signature")
-    systems_start = text.find("Systems with findings")
-    next_steps_start = text.find("Next steps")
-    observed_section = text[observed_start:systems_start]
-    systems_section = text[systems_start : next_steps_start if next_steps_start >= 0 else None]
 
     assert "Wheel / Tire" in text
-    assert "Front Left" in text
-    assert "Strongest sensor" not in observed_section
-    assert "Strongest sensor: Front Left" in systems_section
+    assert "Front-Left" in text
+    assert "Action-ready" in text
+    assert "Appendix A: Technician Worksheet" in text
     assert "VibeSensor Diagnostic Report" in text
 
 
 def test_report_keeps_strongest_sensor_on_page_one_when_no_system_cards() -> None:
-    """Low-confidence/no-card reports should keep strongest-location context on page 1."""
+    """Page one keeps the dominant corner visible even without worksheet rows."""
     data = ReportTemplateData(
         title="VibeSensor Diagnostic Report",
-        observed=PatternEvidence(
-            primary_system="Unknown",
-            strongest_location="Rear Right",
-            certainty_label="Low",
+        verdict_page=VerdictPageData(
+            suspected_source="Unknown resonance",
+            inspect_first="Rear-Right",
+            action_status="Recapture before acting",
+            reason_sentence=(
+                "Unknown resonance remained strongest near Rear-Right during the captured window."
+            ),
+            dominant_corner="Rear-Right",
+            location_confidence="Weak",
+            coverage_label="1 of 1 expected positions stayed connected.",
+            proof_summary=(
+                "Rear-Right remained the strongest connected location on the p95 intensity map."
+            ),
+            proof_caveat=(
+                "Localization is weak; capture another run before treating this corner as final."
+            ),
         ),
-        pattern_evidence=PatternEvidence(strongest_location="Rear Right"),
+        next_steps=[
+            NextStep(action="Repeat the run with a broader speed sweep."),
+            NextStep(action="Add more sensor locations for spatial separation."),
+        ],
         lang="en",
-        certainty_tier_key="A",
     )
     pdf_bytes = build_report_pdf(data)
     reader = PdfReader(BytesIO(pdf_bytes))
-    text = "\n".join(page.extract_text() or "" for page in reader.pages)
-    observed_start = text.find("Observed Signature")
-    systems_start = text.find("Systems with findings")
-    observed_section = text[observed_start:systems_start]
-    observed_single_line = " ".join(observed_section.split())
+    page_one = reader.pages[0].extract_text() or ""
+    page_one_single_line = " ".join(page_one.split())
 
-    assert "Strongest sensor: Rear Right" in observed_single_line
-    assert "Confidence is too low to attribute vibration to specific systems." in text
+    assert "Rear-Right" in page_one_single_line
+    assert "Recapture before acting" in page_one_single_line
+    assert "Why this corner wins" in page_one
 
 
 def test_report_cards_switch_to_check_first_summary_when_parts_exist() -> None:
-    """Actionable cards should spend space on pattern + first checks, not duplicate location."""
+    """Workflow appendix surfaces primary path context and concrete action rows."""
     data = ReportTemplateData(
         title="VibeSensor Diagnostic Report",
-        observed=PatternEvidence(
-            primary_system="Wheel / Tire",
-            strongest_location="Front Left",
-            certainty_label="High",
+        verdict_page=VerdictPageData(
+            suspected_source="Wheel / Tire",
+            inspect_first="Front-Left",
+            action_status="Action-ready",
+            reason_sentence=(
+                "Wheel / Tire remains the strongest source because the repeated pattern "
+                "stayed strongest near Front-Left."
+            ),
         ),
-        system_cards=[
-            SystemFindingCard(
-                system_name="Wheel / Tire",
-                strongest_location="Front Left",
-                pattern_summary="1x wheel order",
-                parts=[
-                    PartSuggestion(name="Wheel bearing assembly"),
-                    PartSuggestion(name="Tire belt package"),
-                ],
+        appendix_a=AppendixAData(
+            mode="workflow",
+            primary_source="Wheel / Tire",
+            alternative_source="Driveline",
+            why_primary_first="Pattern stayed strongest near Front-Left.",
+            next_if_clean="Move to the driveline path next and inspect Front-Right.",
+            ranked_candidates=[
+                RankedCandidateRow(
+                    source_name="Wheel / Tire",
+                    inspect_first="Front-Left",
+                    path_role="Primary path",
+                    reason="Pattern stayed strongest near Front-Left.",
+                )
+            ],
+        ),
+        next_steps=[
+            NextStep(
+                action="Check wheel bearing assembly",
+                why="The strongest repeated pattern stayed near the front-left wheel path.",
+                confirm=(
+                    "If the bearing is the driver, the repeated pattern should reduce "
+                    "after correction."
+                ),
+                falsify="If the bearing is clean, move to the driveline path.",
+            ),
+            NextStep(
+                action="Inspect tire belt package",
+                why="The wheel/tire path remained the strongest ranked source.",
+                confirm=(
+                    "If tire condition is the driver, the repeated pattern should "
+                    "reduce after correction."
+                ),
             ),
         ],
-        pattern_evidence=PatternEvidence(
-            matched_systems=["Wheel / Tire"],
-            strongest_location="Front Left",
-        ),
         lang="en",
-        certainty_tier_key="C",
     )
     pdf_bytes = build_report_pdf(data)
     reader = PdfReader(BytesIO(pdf_bytes))
-    text = "\n".join(page.extract_text() or "" for page in reader.pages)
-    observed_start = text.find("Observed Signature")
-    systems_start = text.find("Systems with findings")
-    next_steps_start = text.find("Next steps")
-    observed_section = text[observed_start:systems_start]
-    systems_section = text[systems_start : next_steps_start if next_steps_start >= 0 else None]
-    systems_single_line = " ".join(systems_section.split())
+    page_two = reader.pages[1].extract_text() or ""
+    page_two_single_line = " ".join(page_two.split())
 
-    assert "Strongest sensor: Front Left" not in observed_section
-    assert "Strongest sensor: Front Left" not in systems_section
-    assert "Pattern: 1x wheel order" in systems_single_line
-    assert "What to check first: Wheel bearing assembly, Tire belt package" in systems_single_line
+    assert "Primary vs alternative source" in page_two
+    assert "Front-Left" in page_two
+    assert "Primary path" in page_two
+    assert "Check wheel bearing assembly" in page_two_single_line
+    assert "Inspect tire belt package" in page_two_single_line

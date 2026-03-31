@@ -22,7 +22,14 @@ from test_support.report_helpers import (
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.pdf.report_data import PatternEvidence, ReportTemplateData
+from vibesensor.adapters.pdf.report_data import (
+    AppendixAData,
+    AppendixCData,
+    NextStep,
+    PatternEvidence,
+    RankedCandidateRow,
+    ReportTemplateData,
+)
 from vibesensor.domain import Finding
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants.units import KMH_TO_MPS
@@ -295,19 +302,23 @@ def test_confidence_label_non_negligible_allows_high() -> None:
 # -- PDF section heading coverage --------------------------------------------
 
 _SECTION_HEADING_KEYS = [
-    "DIAGNOSTIC_WORKSHEET",
-    "OBSERVED_SIGNATURE",
-    "SYSTEMS_WITH_FINDINGS",
-    "NEXT_STEPS",
-    "DATA_TRUST",
-    "EVIDENCE_DIAGNOSTICS",
-    "PATTERN_EVIDENCE",
-    "DIAGNOSTIC_PEAKS",
+    "REPORT_ACTIONS_PANEL_TITLE",
+    "REPORT_PROOF_PANEL_TITLE",
+    "REPORT_APPENDIX_A_TITLE",
+    "REPORT_APPENDIX_B_TITLE",
+    "REPORT_TOPOLOGY_MAP_TITLE",
+    "REPORT_INTENSITY_LADDER_TITLE",
+    "REPORT_APPENDIX_C_TITLE",
+    "REPORT_EVIDENCE_CHAIN_TITLE",
+    "REPORT_SUPPORTING_MEASUREMENTS_TITLE",
+    "REPORT_SUITABILITY_DETAIL_TITLE",
+    "REPORT_APPENDIX_D_TITLE",
+    "REPORT_TRACEABILITY_PANEL_TITLE",
 ]
 
 _PEAK_TABLE_COLUMN_KEYS = [
-    "PEAK_DB",
-    "STRENGTH_DB",
+    "REPORT_PEAK_DB_COLUMN",
+    "REPORT_STRENGTH_DB_COLUMN",
 ]
 
 
@@ -342,27 +353,9 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
         title="Diagnostic worksheet",
         pattern_evidence=PatternEvidence(),
         lang="en",
-        findings=[
-            finding_from_payload(
-                {
-                    "finding_id": "F001",
-                    "severity": "diagnostic",
-                    "suspected_source": "wheel/tire",
-                    "confidence": 0.55,
-                    "frequency_hz_or_order": "1x wheel order",
-                }
-            ),
-            finding_from_payload(
-                {
-                    "finding_id": "F002",
-                    "severity": "info",
-                    "suspected_source": "transient_impact",
-                    "peak_classification": "transient",
-                    "confidence": 0.22,
-                    "frequency_hz_or_order": "95.0 Hz",
-                }
-            ),
-        ],
+        appendix_c=AppendixCData(
+            observations=["Transient impact evidence was also seen near Front-Left."]
+        ),
     )
 
     pdf = build_report_pdf(data)
@@ -370,3 +363,40 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text
     assert "(22%)" not in text
+
+
+@pytest.mark.parametrize("lang", ["en", "nl"])
+def test_pdf_workflow_appendix_a_headings_render(lang: str) -> None:
+    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+    data = ReportTemplateData(
+        title="Diagnostic worksheet",
+        lang=lang,
+        appendix_a=AppendixAData(
+            mode="workflow",
+            primary_source="Wheel / Tire",
+            alternative_source="Driveline",
+            why_primary_first="Wheel / Tire stayed strongest near Front-Left.",
+            next_if_clean="Move to the driveline path next and inspect Front-Right.",
+            ranked_candidates=[
+                RankedCandidateRow(
+                    source_name="Wheel / Tire",
+                    inspect_first="Front-Left",
+                    path_role="Primary path",
+                    reason="Wheel / Tire stayed strongest near Front-Left.",
+                )
+            ],
+        ),
+        next_steps=[
+            NextStep(
+                action="Check wheel balance",
+                why="The strongest repeated pattern stayed near Front-Left.",
+                confirm="If confirmed, repeat the run to confirm the reduction.",
+                falsify="If balance is clean, move to the driveline path.",
+            )
+        ],
+    )
+
+    text = extract_pdf_text(build_report_pdf(data))
+
+    assert i18n["REPORT_PRIMARY_VS_ALTERNATIVE_TITLE"][lang] in text
+    assert i18n["REPORT_ACTION_MATRIX_TITLE"][lang] in text

@@ -1602,5 +1602,401 @@
   "PEAK_ROW_SEEN_MORE_THAN_ONCE": {
     "en": "Seen more than once",
     "nl": "Meer dan een keer gezien"
+  },
+  "REPORT_ACTIONS_PANEL_TITLE": {
+    "en": "What to do next",
+    "nl": "Wat nu te doen"
+  },
+  "REPORT_ACTION_COLUMN": {
+    "en": "Action",
+    "nl": "Actie"
+  },
+  "REPORT_ACTION_MATRIX_TITLE": {
+    "en": "Action matrix",
+    "nl": "Actiematrix"
+  },
+  "REPORT_ACTION_STATUS_LABEL": {
+    "en": "Action status",
+    "nl": "Actiestatus"
+  },
+  "REPORT_ACTION_STATUS_READY": {
+    "en": "Action-ready",
+    "nl": "Klaar om te volgen"
+  },
+  "REPORT_ACTION_STATUS_READY_CAUTION": {
+    "en": "Action-ready with caution",
+    "nl": "Voorzichtig opvolgen"
+  },
+  "REPORT_ACTION_STATUS_RECAPTURE": {
+    "en": "Recapture before acting",
+    "nl": "Eerst opnieuw meten"
+  },
+  "REPORT_ALSO_CONSIDER_LABEL": {
+    "en": "Also consider",
+    "nl": "Overweeg ook"
+  },
+  "REPORT_ALTERNATIVE_SOURCE_LABEL": {
+    "en": "Alternative source",
+    "nl": "Alternatieve bron"
+  },
+  "REPORT_AMBIGUITY_COLUMN": {
+    "en": "Ambiguity",
+    "nl": "Onduidelijkheid"
+  },
+  "REPORT_APPENDIX_A_TITLE": {
+    "en": "Appendix A: Technician Worksheet",
+    "nl": "Bijlage A: Werkblad voor monteur"
+  },
+  "REPORT_APPENDIX_B_TITLE": {
+    "en": "Appendix B: Sensor Topology",
+    "nl": "Bijlage B: Sensortopologie"
+  },
+  "REPORT_APPENDIX_C_TITLE": {
+    "en": "Appendix C: Evidence Detail",
+    "nl": "Bijlage C: Bewijsdetail"
+  },
+  "REPORT_APPENDIX_D_TITLE": {
+    "en": "Appendix C: Run Context",
+    "nl": "Bijlage C: Runcontext"
+  },
+  "REPORT_CANDIDATE_REASON_STRONG": {
+    "en": "{signal} stayed strongest near {location} in the {speed} window.",
+    "nl": "{signal} bleef het sterkst bij {location} in het venster {speed}."
+  },
+  "REPORT_CANDIDATE_REASON_WEAK": {
+    "en": "{signal} is still in scope, but spatial separation stayed weak in the {speed} window.",
+    "nl": "{signal} blijft relevant, maar de ruimtelijke scheiding bleef zwak in het venster {speed}."
+  },
+  "REPORT_CAPTURE_CHANGES_TITLE": {
+    "en": "Change for the next capture",
+    "nl": "Pas dit aan voor de volgende meting"
+  },
+  "REPORT_CAPTURE_CONDITIONS_TITLE": {
+    "en": "Conditions needed for a stronger result",
+    "nl": "Voorwaarden voor een sterker resultaat"
+  },
+  "REPORT_CAPTURE_CONDITION_FULL_COVERAGE": {
+    "en": "Keep all {expected} expected positions connected throughout the run.",
+    "nl": "Houd alle {expected} verwachte posities gedurende de hele run verbonden."
+  },
+  "REPORT_CAPTURE_CONDITION_REFERENCE": {
+    "en": "Capture the same speed range with reference-quality speed input when possible.",
+    "nl": "Meet hetzelfde snelheidsbereik met referentie-kwaliteit van de snelheidsinput waar mogelijk."
+  },
+  "REPORT_CAPTURE_CONDITION_STEADY": {
+    "en": "Capture a longer steady-speed window before treating the corner call as final.",
+    "nl": "Leg eerst een langere stabiele snelheidsperiode vast voordat je de hoekindicatie als definitief ziet."
+  },
+  "REPORT_CAPTURE_ISSUES_TITLE": {
+    "en": "What was insufficient in this run",
+    "nl": "Wat onvoldoende was in deze run"
+  },
+  "REPORT_CAPTURE_ISSUE_GENERIC": {
+    "en": "Current evidence is not strong enough to support an action-ready verdict.",
+    "nl": "Het huidige bewijs is niet sterk genoeg voor een direct bruikbaar oordeel."
+  },
+  "REPORT_COVERAGE_ACTIVE_OF_EXPECTED": {
+    "en": "{active} of {expected} expected positions stayed connected.",
+    "nl": "{active} van {expected} verwachte posities bleven verbonden."
+  },
+  "REPORT_COVERAGE_ALL_SEEN": {
+    "en": "{active} of {expected} wheel positions seen throughout run.",
+    "nl": "{active} van {expected} wielposities waren de hele run zichtbaar."
+  },
+  "REPORT_COVERAGE_LABEL": {
+    "en": "Coverage",
+    "nl": "Dekking"
+  },
+  "REPORT_COVERAGE_NOTE_COMPLETE": {
+    "en": "All expected positions remained connected throughout the run.",
+    "nl": "Alle verwachte posities bleven gedurende de hele run verbonden."
+  },
+  "REPORT_COVERAGE_NOTE_MISSING": {
+    "en": "Missing throughout run: {locations}.",
+    "nl": "Ontbraken gedurende de run: {locations}."
+  },
+  "REPORT_COVERAGE_NOTE_PARTIAL": {
+    "en": "Lost full coverage during the run: {locations}.",
+    "nl": "Verloren volledige dekking tijdens de run: {locations}."
+  },
+  "REPORT_COVERAGE_PARTIAL": {
+    "en": "{active} of {expected} positions stayed connected; some coverage was partial.",
+    "nl": "{active} van {expected} posities bleven verbonden; een deel van de dekking was onvolledig."
+  },
+  "REPORT_COVERAGE_STATE_COLUMN": {
+    "en": "Coverage state",
+    "nl": "Dekkingsstatus"
+  },
+  "REPORT_COVERAGE_STATE_COMPLETE": {
+    "en": "Complete",
+    "nl": "Compleet"
+  },
+  "REPORT_COVERAGE_STATE_PARTIAL": {
+    "en": "Partial",
+    "nl": "Gedeeltelijk"
+  },
+  "REPORT_COVERAGE_UNKNOWN": {
+    "en": "Coverage unavailable",
+    "nl": "Dekking niet beschikbaar"
+  },
+  "REPORT_DOMINANCE_RATIO_LABEL": {
+    "en": "Dominance ratio",
+    "nl": "Dominantieratio"
+  },
+  "REPORT_DOMINANCE_RATIO_TEXT": {
+    "en": "{ratio}x matched-window linear intensity (not raw dB delta)",
+    "nl": "{ratio}x matched-window lineaire intensiteit (geen ruwe dB-delta)"
+  },
+  "REPORT_DOMINANCE_RATIO_NOTE": {
+    "en": "Computed from matched-window evidence; compare separately from the p95 dB snapshot below.",
+    "nl": "Berekend uit matched-window bewijs; vergelijk dit los van de p95 dB-snapshot hieronder."
+  },
+  "REPORT_DOMINANCE_RATIO_UNKNOWN": {
+    "en": "Not enough location-separation data",
+    "nl": "Onvoldoende locatie-scheidingsdata"
+  },
+  "REPORT_DOMINANCE_SUMMARY_TITLE": {
+    "en": "Dominance summary",
+    "nl": "Dominantie-overzicht"
+  },
+  "REPORT_DOMINANT_CORNER_LABEL": {
+    "en": "Dominant corner",
+    "nl": "Dominante hoek"
+  },
+  "REPORT_EVIDENCE_CHAIN_TITLE": {
+    "en": "Evidence chain",
+    "nl": "Bewijsketen"
+  },
+  "REPORT_EVIDENCE_NOTE_WEAK": {
+    "en": "Spatial separation stayed weak.",
+    "nl": "Ruimtelijke scheiding bleef zwak."
+  },
+  "REPORT_EXPORT_REFERENCE": {
+    "en": "Export package",
+    "nl": "Exportpakket"
+  },
+  "REPORT_FALSIFY_COLUMN": {
+    "en": "Falsify",
+    "nl": "Ontkracht"
+  },
+  "REPORT_IF_PRIMARY_CLEAN_LABEL": {
+    "en": "If the primary path is clean",
+    "nl": "Als het primaire pad niets oplevert"
+  },
+  "REPORT_INSPECT_FIRST_LABEL": {
+    "en": "Inspect first",
+    "nl": "Controleer eerst"
+  },
+  "REPORT_INTENSITY_LADDER_TITLE": {
+    "en": "Location snapshot (context p95 dB)",
+    "nl": "Locatiesnapshot (context p95 dB)"
+  },
+  "REPORT_LOCATION_COLUMN": {
+    "en": "Location",
+    "nl": "Locatie"
+  },
+  "REPORT_LOCATION_CONFIDENCE_LABEL": {
+    "en": "Location confidence",
+    "nl": "Locatievertrouwen"
+  },
+  "REPORT_LOCATION_CONFIDENCE_MIXED": {
+    "en": "Mixed",
+    "nl": "Gemengd"
+  },
+  "REPORT_LOCATION_CONFIDENCE_STRONG": {
+    "en": "Strong",
+    "nl": "Sterk"
+  },
+  "REPORT_LOCATION_CONFIDENCE_WEAK": {
+    "en": "Weak",
+    "nl": "Zwak"
+  },
+  "REPORT_MATCHED_WINDOWS_COLUMN": {
+    "en": "Matched windows",
+    "nl": "Gematchte vensters"
+  },
+  "REPORT_MEASUREMENT_ID_COLUMN": {
+    "en": "Measurement",
+    "nl": "Meting"
+  },
+  "REPORT_MEASUREMENT_REFS_COLUMN": {
+    "en": "Measurement refs",
+    "nl": "Meetverwijzingen"
+  },
+  "REPORT_OBSERVATION_TRANSIENT": {
+    "en": "Transient impact evidence was also seen near {location}.",
+    "nl": "Er werd ook voorbijgaande impact gezien bij {location}."
+  },
+  "REPORT_P95_DB_COLUMN": {
+    "en": "p95 dB",
+    "nl": "p95 dB"
+  },
+  "REPORT_PATH_ROLE_ALTERNATIVE": {
+    "en": "Alternative path",
+    "nl": "Alternatief pad"
+  },
+  "REPORT_PATH_ROLE_COLUMN": {
+    "en": "Path role",
+    "nl": "Padrol"
+  },
+  "REPORT_PATH_ROLE_LOW_CONFIDENCE": {
+    "en": "Low-confidence path",
+    "nl": "Pad met lage zekerheid"
+  },
+  "REPORT_PATH_ROLE_PRIMARY": {
+    "en": "Primary path",
+    "nl": "Primair pad"
+  },
+  "REPORT_PEAK_DB_COLUMN": {
+    "en": "Peak dB",
+    "nl": "Piek dB"
+  },
+  "REPORT_PHASE_SUMMARY_LABEL": {
+    "en": "Phase summary",
+    "nl": "Fase-overzicht"
+  },
+  "REPORT_PHASE_SUMMARY_NONE": {
+    "en": "No dominant phase breakdown available.",
+    "nl": "Geen dominante faseverdeling beschikbaar."
+  },
+  "REPORT_PRIMARY_CLEAN_ALT": {
+    "en": "Move to the {source} path next and inspect {location}.",
+    "nl": "Ga daarna naar het pad {source} en controleer {location}."
+  },
+  "REPORT_PRIMARY_CLEAN_GENERIC": {
+    "en": "Continue with the next ranked source if the primary path is clean.",
+    "nl": "Ga verder met de volgende gerangschikte bron als het primaire pad niets oplevert."
+  },
+  "REPORT_PRIMARY_SOURCE_LABEL": {
+    "en": "Primary source",
+    "nl": "Primaire bron"
+  },
+  "REPORT_PRIMARY_VS_ALTERNATIVE_TITLE": {
+    "en": "Primary vs alternative source",
+    "nl": "Primaire versus alternatieve bron"
+  },
+  "REPORT_PROOF_CAVEAT_MIXED": {
+    "en": "Localization is mixed because either dominance or coverage was not fully clean.",
+    "nl": "De lokalisatie is gemengd omdat dominantie of dekking niet volledig schoon was."
+  },
+  "REPORT_PROOF_CAVEAT_WEAK": {
+    "en": "Localization is weak; capture another run before treating this corner as final.",
+    "nl": "De lokalisatie is zwak; meet opnieuw voordat je deze hoek als definitief ziet."
+  },
+  "REPORT_PROOF_PANEL_TITLE": {
+    "en": "Why this corner wins",
+    "nl": "Waarom deze hoek wint"
+  },
+  "REPORT_PROOF_SUMMARY_RATIO": {
+    "en": "{location} outranked the next location by {ratio}x on matched-window linear intensity evidence.",
+    "nl": "{location} was {ratio}x sterker dan de volgende locatie op basis van matched-window lineaire intensiteitsbewijzen."
+  },
+  "REPORT_PROOF_SUMMARY_SIMPLE": {
+    "en": "{location} remained the strongest connected location on the p95 intensity map.",
+    "nl": "{location} bleef de sterkste verbonden locatie op de p95-intensiteitskaart."
+  },
+  "REPORT_RANKED_SOURCE_STACK_TITLE": {
+    "en": "Ranked source stack",
+    "nl": "Gerangschikte bronstapel"
+  },
+  "REPORT_REASON_COLUMN": {
+    "en": "Reason",
+    "nl": "Reden"
+  },
+  "REPORT_REASON_SOURCE_LOCATION": {
+    "en": "{source} remains the strongest source because the repeated pattern stayed strongest near {location}.",
+    "nl": "{source} blijft de sterkste bron omdat het herhaalde patroon het sterkst bleef bij {location}."
+  },
+  "REPORT_REASON_SOURCE_LOCATION_SPEED": {
+    "en": "{source} remains the strongest source because the repeated pattern matched that source and stayed strongest near {location} in the {speed} window.",
+    "nl": "{source} blijft de sterkste bron omdat het herhaalde patroon bij die bron past en het sterkst bleef bij {location} in het venster {speed}."
+  },
+  "REPORT_ROUTE_APPENDIX_A": {
+    "en": "Need the inspection sequence? See A.",
+    "nl": "Inspectievolgorde nodig? Zie A."
+  },
+  "REPORT_ROUTE_APPENDIX_B": {
+    "en": "Need the location proof? See B.",
+    "nl": "Locatiebewijs nodig? Zie B."
+  },
+  "REPORT_ROUTE_APPENDIX_C": {
+    "en": "Need the evidence rows? See C.",
+    "nl": "Bewijsregels nodig? Zie C."
+  },
+  "REPORT_ROUTE_APPENDIX_D": {
+    "en": "Need run details? See C.",
+    "nl": "Run-details nodig? Zie C."
+  },
+  "REPORT_RUNNER_UP_CORNER_LABEL": {
+    "en": "Next strongest corner",
+    "nl": "Volgende sterkste hoek"
+  },
+  "REPORT_SIGNAL_COLUMN": {
+    "en": "Signal",
+    "nl": "Signaal"
+  },
+  "REPORT_SIGNAL_FALLBACK": {
+    "en": "Supporting signal",
+    "nl": "Ondersteunend signaal"
+  },
+  "REPORT_SOURCE_COLUMN": {
+    "en": "Source",
+    "nl": "Bron"
+  },
+  "REPORT_SPEED_BAND_SUMMARY_LABEL": {
+    "en": "Speed-band summary",
+    "nl": "Snelheidsband-overzicht"
+  },
+  "REPORT_SPEED_SUMMARY_NONE": {
+    "en": "No focused speed-band summary available.",
+    "nl": "Geen gericht snelheidsband-overzicht beschikbaar."
+  },
+  "REPORT_SPEED_WINDOW_COLUMN": {
+    "en": "Speed window",
+    "nl": "Snelheidsvenster"
+  },
+  "REPORT_STRENGTH_DB_COLUMN": {
+    "en": "Strength dB",
+    "nl": "Sterkte dB"
+  },
+  "REPORT_SUITABILITY_DETAIL_TITLE": {
+    "en": "Suitability detail",
+    "nl": "Geschiktheidsdetail"
+  },
+  "REPORT_SUPPORTING_CONTEXT_TITLE": {
+    "en": "Supporting context",
+    "nl": "Ondersteunende context"
+  },
+  "REPORT_SUPPORTING_MEASUREMENTS_TITLE": {
+    "en": "Supporting measurements",
+    "nl": "Ondersteunende meetwaarden"
+  },
+  "REPORT_SUSPECTED_SOURCE_LABEL": {
+    "en": "Suspected source",
+    "nl": "Verdachte bron"
+  },
+  "REPORT_TOPOLOGY_MAP_TITLE": {
+    "en": "Sensor map",
+    "nl": "Sensorkaart"
+  },
+  "REPORT_TRACEABILITY_PANEL_TITLE": {
+    "en": "Traceability",
+    "nl": "Herleidbaarheid"
+  },
+  "REPORT_VERSION": {
+    "en": "Report version",
+    "nl": "Reportversie"
+  },
+  "REPORT_WHY_PRIMARY_FIRST_LABEL": {
+    "en": "Why the primary source is first",
+    "nl": "Waarom de primaire bron eerst komt"
+  },
+  "REPORT_WHY_THIS_IS_FIRST_LABEL": {
+    "en": "Why this is first",
+    "nl": "Waarom dit eerst komt"
+  },
+  "REPORT_EVIDENCE_NOTE_NO_REFS": {
+    "en": "Still in scope; no representative measurement appears below.",
+    "nl": "Blijft in beeld; er staat hieronder geen representatieve meting."
   }
 }

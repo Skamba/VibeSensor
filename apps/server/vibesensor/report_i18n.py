@@ -27,6 +27,33 @@ _SOURCE_I18N_KEYS: dict[VibrationSource, str] = {
     VibrationSource.UNKNOWN: "UNKNOWN",
 }
 
+_SHORT_LOCATION_LABELS: dict[str, str] = {
+    "front left": "Front-Left",
+    "front left wheel": "Front-Left",
+    "front_left": "Front-Left",
+    "front_left_wheel": "Front-Left",
+    "front-left": "Front-Left",
+    "front-left wheel": "Front-Left",
+    "front right": "Front-Right",
+    "front right wheel": "Front-Right",
+    "front_right": "Front-Right",
+    "front_right_wheel": "Front-Right",
+    "front-right": "Front-Right",
+    "front-right wheel": "Front-Right",
+    "rear left": "Rear-Left",
+    "rear left wheel": "Rear-Left",
+    "rear_left": "Rear-Left",
+    "rear_left_wheel": "Rear-Left",
+    "rear-left": "Rear-Left",
+    "rear-left wheel": "Rear-Left",
+    "rear right": "Rear-Right",
+    "rear right wheel": "Rear-Right",
+    "rear_right": "Rear-Right",
+    "rear_right_wheel": "Rear-Right",
+    "rear-right": "Rear-Right",
+    "rear-right wheel": "Rear-Right",
+}
+
 
 @lru_cache(maxsize=1)
 def _load_translations() -> dict[str, dict[str, str]]:
@@ -81,6 +108,20 @@ def human_source(source: object, *, tr: Callable[[str], str]) -> str:
         )
         return raw.replace("_", " ").title() if raw else tr("UNKNOWN")
     return tr(_SOURCE_I18N_KEYS.get(key, "UNKNOWN"))
+
+
+def human_location(location: object, *, short: bool = True) -> str:
+    """Resolve a location value to a stable human-facing label."""
+    raw = str(location or "").strip()
+    if not raw:
+        return "Unknown"
+    normalized = raw.lower().replace("_", " ").replace("-", " ")
+    if short:
+        short_label = _SHORT_LOCATION_LABELS.get(normalized)
+        if short_label is not None:
+            return short_label
+    title = " ".join(part for part in normalized.split() if part)
+    return title.title() if title else "Unknown"
 
 
 def resolve_i18n(
