@@ -9,6 +9,8 @@ from statistics import mean as _mean
 
 from vibesensor.domain import (
     Finding,
+    FindingEvidence,
+    LocationHotspot,
     LocationHotspotRow,
     LocationIntensitySummary,
     TestRun,
@@ -30,6 +32,10 @@ class PrimaryReportFacts:
     weak_spatial: bool
     has_reference_gaps: bool
     strength_db: float | None
+    dominance_ratio: float | None
+    location_hotspot: LocationHotspot | None
+    evidence: FindingEvidence | None
+    matched_evidence_window_count: int | None
 
 
 def resolve_report_origin(
@@ -182,4 +188,16 @@ def resolve_primary_report_facts(
             str(primary_source) if primary_source else "unknown",
         ),
         strength_db=strength_db,
+        dominance_ratio=domain_primary.dominance_ratio if domain_primary else None,
+        location_hotspot=domain_primary.location if domain_primary else None,
+        evidence=domain_primary.evidence if domain_primary else None,
+        matched_evidence_window_count=(
+            len(domain_primary.matched_points)
+            if domain_primary and domain_primary.matched_points
+            else (
+                domain_primary.evidence.matched_samples
+                if domain_primary and domain_primary.evidence is not None
+                else None
+            )
+        ),
     )

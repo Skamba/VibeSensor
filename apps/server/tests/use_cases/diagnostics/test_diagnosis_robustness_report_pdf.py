@@ -50,7 +50,7 @@ class TestPdfContentForDiagnosedScenario:
         pdf_bytes = build_report_pdf(map_summary(prepare_report_input(summary)))
         text_lower = extract_pdf_text(pdf_bytes).lower()
         assert "vibesensor diagnostic report" in text_lower
-        assert "what to check first" in text_lower
+        assert "what to do next" in text_lower
         assert "wheel" in text_lower or "tire" in text_lower
         assert "front" in text_lower
         assert "km/h" in text_lower
@@ -91,5 +91,5 @@ class TestPdfContentForDiagnosedScenario:
             build_report_pdf(map_summary(prepare_report_input(summary)))
         ).lower()
         assert "vibesensor-diagnoserapport" in text_lower
-        assert "wat eerst controleren" in text_lower
+        assert "wat nu te doen" in text_lower
         assert "km/h" in text_lower

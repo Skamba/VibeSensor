@@ -1,9 +1,11 @@
-"""Shared PDF test helpers for sample generation and byte-level assertions."""
+"""Shared PDF test helpers for sample generation and rendered-text assertions."""
 
 from __future__ import annotations
 
 import re
+from io import BytesIO
 
+from pypdf import PdfReader
 from test_support.report_helpers import report_sample as base_sample
 
 __all__ = [
@@ -31,7 +33,8 @@ def sample(
 
 
 def assert_pdf_contains(pdf_bytes: bytes, text: str) -> None:
-    assert text.encode("latin-1", errors="ignore") in pdf_bytes
+    extracted = "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(pdf_bytes)).pages)
+    assert text in extracted
 
 
 def extract_media_box(pdf_bytes: bytes) -> tuple[float, float, float, float]:

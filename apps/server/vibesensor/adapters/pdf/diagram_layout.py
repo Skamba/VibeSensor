@@ -205,14 +205,14 @@ def build_sensor_render_plan(
 
     def active_radius(name: str, *, highlighted: bool) -> float:
         if min_amp is None or max_amp is None or min_amp == max_amp:
-            return 6.2 if highlighted else 5.0
+            return 6.8 if highlighted else 5.2
         amp = amp_by_location.get(name)
         if amp is None:
-            return 6.2 if highlighted else 5.0
+            return 6.8 if highlighted else 5.2
         normalized = (amp - min_amp) / (max_amp - min_amp)
         if highlighted:
-            return 5.8 + (normalized * 0.6)
-        return 4.4 + normalized
+            return 6.2 + (normalized * 0.9)
+        return 4.8 + (normalized * 1.1)
 
     markers: list[MarkerRenderPlan] = []
     occupied_boxes: list[tuple[float, float, float, float]] = []
@@ -278,7 +278,7 @@ def build_sensor_render_plan(
             width=drawing_width,
             height=drawing_height,
             occupied_boxes=occupied_boxes,
-            font_size=6.0,
+            font_size=6.8,
             color=color,
         )
         labels.append(label)
