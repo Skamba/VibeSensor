@@ -1959,6 +1959,18 @@
     "en": "Best available location signal",
     "nl": "Best beschikbare locatiesignaal"
   },
+  "REPORT_TIMELINE_TITLE": {
+    "en": "Run timeline",
+    "nl": "Tijdlijn van de rit"
+  },
+  "REPORT_TIMELINE_SPEED_LABEL": {
+    "en": "Speed",
+    "nl": "Snelheid"
+  },
+  "REPORT_TIMELINE_DETECTIONS_LABEL": {
+    "en": "Detections",
+    "nl": "Detecties"
+  },
   "REPORT_PROOF_SUMMARY_RATIO": {
     "en": "{location} outranked the next location by {ratio}x on matched-window linear intensity evidence.",
     "nl": "{location} was {ratio}x sterker dan de volgende locatie op basis van matched-window lineaire intensiteitsbewijzen."

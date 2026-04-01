@@ -585,3 +585,58 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
     )
     data = map_summary(prepare_report_input(summary))
     assert "Missing reference data" in data.observed.certainty_reason
+
+
+def test_map_summary_builds_verdict_timeline_graph_from_phase_timeline() -> None:
+    finding = make_finding_payload(
+        finding_id="F_TIMELINE",
+        suspected_source="wheel/tire",
+        strongest_location="Front Left wheel",
+        strongest_speed_band="60-80 km/h",
+        confidence=0.82,
+    )
+    summary = minimal_summary(
+        lang="en",
+        duration_s=12.0,
+        findings=[finding],
+        top_causes=[finding],
+        phase_timeline=[
+            {
+                "phase": "cruise",
+                "start_t_s": 0.0,
+                "end_t_s": 4.0,
+                "speed_min_kmh": 58.0,
+                "speed_max_kmh": 63.0,
+                "has_fault_evidence": False,
+            },
+            {
+                "phase": "cruise",
+                "start_t_s": 4.0,
+                "end_t_s": 9.0,
+                "speed_min_kmh": 64.0,
+                "speed_max_kmh": 72.0,
+                "has_fault_evidence": True,
+            },
+            {
+                "phase": "decel",
+                "start_t_s": 9.0,
+                "end_t_s": 12.0,
+                "speed_min_kmh": 48.0,
+                "speed_max_kmh": 62.0,
+                "has_fault_evidence": False,
+            },
+        ],
+    )
+
+    data = map_summary(prepare_report_input(summary))
+
+    timeline = data.verdict_page.timeline_graph
+    assert timeline is not None
+    assert timeline.duration_s == 12.0
+    assert timeline.speed_ceiling_kmh >= 72.0
+    assert [(interval.start_t_s, interval.end_t_s) for interval in timeline.intervals] == [
+        (0.0, 4.0),
+        (4.0, 9.0),
+        (9.0, 12.0),
+    ]
+    assert [interval.has_fault_evidence for interval in timeline.intervals] == [False, True, False]
