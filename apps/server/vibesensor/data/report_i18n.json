@@ -1996,8 +1996,8 @@
     "nl": "Snelheid"
   },
   "REPORT_TIMELINE_DETECTIONS_LABEL": {
-    "en": "Detections",
-    "nl": "Detecties"
+    "en": "Detection windows",
+    "nl": "Detectievensters"
   },
   "REPORT_PROOF_SUMMARY_RATIO": {
     "en": "{location} outranked the next location by {ratio}x on matched-window linear intensity evidence.",
