@@ -5,9 +5,7 @@ import {
   getCarLibraryTypes,
 } from "../../api";
 import type {
-  CarLibraryGearbox,
   CarLibraryModel,
-  CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../api";
 import {
@@ -23,6 +21,20 @@ import {
   type WizardSummaryData,
   writeCarWizardTireInputs,
 } from "../views/car_wizard_view";
+import {
+  buildWizardCarName,
+  buildWizardSummaryData,
+  canFinishWizard,
+  createInitialWizardState,
+  getResolvedWizardSpecBranch,
+  getWizardActionHint,
+  readWizardManualGearboxValues,
+  readWizardManualTireValues,
+  resetWizardState,
+  resolveGearboxes,
+  resolveTireOptions,
+  type WizardState,
+} from "./cars_wizard_state";
 
 export interface CarsFeatureDeps extends FeatureDepsBase {
   fmt: (n: number, digits?: number) => string;
@@ -38,38 +50,6 @@ export interface CarsFeature {
   bindWizardHandlers(): void;
 }
 
-type WizardSpecBranch = "library" | "manual" | null;
-
-interface WizardState {
-  step: number;
-  brand: string;
-  carType: string;
-  model: string;
-  selectedModel: CarLibraryModel | null;
-  selectedVariant: CarLibraryVariant | null;
-  selectedGearbox: CarLibraryGearbox | null;
-  selectedTire: CarLibraryTireOption | null;
-  specBranch: WizardSpecBranch;
-}
-
-/** Resolve effective gearboxes for the selected variant (or base model fallback). */
-function resolveGearboxes(
-  model: CarLibraryModel | null,
-  variant: CarLibraryVariant | null,
-): CarLibraryGearbox[] {
-  if (variant?.gearboxes && variant.gearboxes.length > 0) return variant.gearboxes;
-  return model?.gearboxes || [];
-}
-
-/** Resolve effective tire options for the selected variant (or base model fallback). */
-function resolveTireOptions(
-  model: CarLibraryModel | null,
-  variant: CarLibraryVariant | null,
-): CarLibraryTireOption[] {
-  if (variant?.tire_options && variant.tire_options.length > 0) return variant.tire_options;
-  return model?.tire_options || [];
-}
-
 const WIZARD_STEP_LABEL_KEYS = [
   "settings.car.step_brand_short",
   "settings.car.step_type_short",
@@ -80,17 +60,7 @@ const WIZARD_STEP_LABEL_KEYS = [
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   const { els, escapeHtml, fmt, t } = ctx;
-  const wizState: WizardState = {
-    step: 0,
-    brand: "",
-    carType: "",
-    model: "",
-    selectedModel: null,
-    selectedVariant: null,
-    selectedGearbox: null,
-    selectedTire: null,
-    specBranch: null,
-  };
+  const wizState: WizardState = createInitialWizardState();
   let handlersBound = false;
   let lastWizardFocusTarget: HTMLElement | null = null;
 
@@ -117,91 +87,36 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     focusWizardElement(firstOption ?? fallback);
   }
 
-  function formatWizardTireLabel(tire: CarLibraryTireOption | null): string | null {
-    if (!tire) {
-      return null;
-    }
-    const size = `${tire.tire_width_mm}/${tire.tire_aspect_pct}R${tire.rim_in}`;
-    return tire.name ? `${tire.name} · ${size}` : size;
-  }
-
-  function readPositiveWizardNumber(input: HTMLInputElement | null | undefined): number | null {
-    const value = Number(input?.value);
-    return Number.isFinite(value) && value > 0 ? value : null;
-  }
-
-  function formatWizardRimSize(rim: number): string {
-    return fmt(rim, Number.isInteger(rim) ? 0 : 1);
-  }
-
   function readManualTireValues(): {
     width: number;
     aspect: number;
     rim: number;
   } | null {
-    if (wizState.step < 4) {
-      return null;
-    }
-    const width = readPositiveWizardNumber(els.wizTireWidthInput);
-    const aspect = readPositiveWizardNumber(els.wizTireAspectInput);
-    const rim = readPositiveWizardNumber(els.wizRimInput);
-    if (width == null || aspect == null || rim == null) {
-      return null;
-    }
-    return { width, aspect, rim };
+    return readWizardManualTireValues(wizState.step, {
+      width: els.wizTireWidthInput?.value,
+      aspect: els.wizTireAspectInput?.value,
+      rim: els.wizRimInput?.value,
+    });
   }
 
   function readManualGearboxValues(): {
     finalDrive: number;
     topGear: number;
   } | null {
-    if (wizState.step < 4) {
-      return null;
-    }
-    const finalDrive = readPositiveWizardNumber(els.wizFinalDriveInput);
-    const topGear = readPositiveWizardNumber(els.wizGearRatioInput);
-    if (finalDrive == null || topGear == null) {
-      return null;
-    }
-    return { finalDrive, topGear };
-  }
-
-  function formatManualTireSummary(
-    manualTire: {
-      width: number;
-      aspect: number;
-      rim: number;
-    },
-  ): string {
-    return t("settings.car.wizard_summary_manual_tire", {
-      width: fmt(manualTire.width, 0),
-      aspect: fmt(manualTire.aspect, 0),
-      rim: formatWizardRimSize(manualTire.rim),
+    return readWizardManualGearboxValues(wizState.step, {
+      finalDrive: els.wizFinalDriveInput?.value,
+      topGear: els.wizGearRatioInput?.value,
     });
   }
 
-  function formatManualGearboxSummary(
-    manualGearbox: {
-      finalDrive: number;
-      topGear: number;
-    },
-  ): string {
-    return t("settings.car.wizard_summary_manual_gearbox", {
-      finalDrive: fmt(manualGearbox.finalDrive, 2),
-      topGear: fmt(manualGearbox.topGear, 2),
-    });
-  }
-
-  function resetWizardState(): void {
-    wizState.step = 0;
-    wizState.brand = "";
-    wizState.carType = "";
-    wizState.model = "";
-    wizState.selectedModel = null;
-    wizState.selectedVariant = null;
-    wizState.selectedGearbox = null;
-    wizState.selectedTire = null;
-    wizState.specBranch = null;
+  function currentManualWizardValues(): {
+    manualTire: ReturnType<typeof readManualTireValues>;
+    manualGearbox: ReturnType<typeof readManualGearboxValues>;
+  } {
+    return {
+      manualTire: readManualTireValues(),
+      manualGearbox: readManualGearboxValues(),
+    };
   }
 
   function setWizardVisibility(isOpen: boolean): void {
@@ -217,106 +132,30 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     document.body.classList.toggle("wizard-open", isOpen);
   }
 
-  function getResolvedWizardSpecBranch(): WizardSpecBranch {
-    if (wizState.step !== 4) {
-      return null;
-    }
-    const tireOptions = resolveTireOptions(wizState.selectedModel, wizState.selectedVariant);
-    const gearboxes = resolveGearboxes(wizState.selectedModel, wizState.selectedVariant);
-    if (!tireOptions.length || !gearboxes.length) {
-      return "manual";
-    }
-    return wizState.specBranch;
-  }
-
-  function canFinishWithLibrarySpecs(): boolean {
-    return Boolean(wizState.selectedTire && wizState.selectedGearbox);
-  }
-
-  function canFinishWithManualSpecs(): boolean {
-    return Boolean(readManualTireValues() && readManualGearboxValues());
-  }
-
-  function canFinishWizard(): boolean {
-    const branch = getResolvedWizardSpecBranch();
-    if (branch === "library") {
-      return canFinishWithLibrarySpecs();
-    }
-    if (branch === "manual") {
-      return canFinishWithManualSpecs();
-    }
-    return false;
-  }
-
-  function getWizardActionHint(): string {
-    const branch = getResolvedWizardSpecBranch();
-    if (branch === "library") {
-      return canFinishWithLibrarySpecs()
-        ? t("settings.car.finish_library_ready")
-        : t("settings.car.finish_choose_path");
-    }
-    if (branch === "manual") {
-      return canFinishWithManualSpecs()
-        ? t("settings.car.finish_manual_ready")
-        : t("settings.car.finish_manual_missing");
-    }
-    return t("settings.car.finish_choose_path");
-  }
-
   function syncWizardFinishAction(): void {
+    const { manualGearbox, manualTire } = currentManualWizardValues();
     const actionButton = els.wizardManualAddBtn;
     if (els.addCarWizard) {
       if (wizState.step === 4) {
-        els.addCarWizard.dataset.specBranch = getResolvedWizardSpecBranch() ?? "pending";
+        els.addCarWizard.dataset.specBranch = getResolvedWizardSpecBranch(wizState) ?? "pending";
       } else {
         delete els.addCarWizard.dataset.specBranch;
       }
     }
     if (els.wizardActionHint) {
-      els.wizardActionHint.textContent = wizState.step === 4 ? getWizardActionHint() : "";
+      els.wizardActionHint.textContent = wizState.step === 4
+        ? getWizardActionHint(wizState, { manualGearbox, manualTire, fmt, t })
+        : "";
     }
     if (!actionButton) {
       return;
     }
     actionButton.hidden = wizState.step !== 4;
-    actionButton.disabled = wizState.step !== 4 || !canFinishWizard();
-  }
-
-  function buildWizardSummaryData(): WizardSummaryData {
-    const variantIsImplicit = Boolean(
-      wizState.step >= 4
-      && (
-        (!wizState.selectedModel && wizState.model)
-        || (
-          wizState.selectedModel
-          && (wizState.selectedModel.variants?.length ?? 0) === 0
-        )
-      ),
-    );
-    const specBranch = getResolvedWizardSpecBranch();
-    const manualTire = readManualTireValues();
-    const manualGearbox = readManualGearboxValues();
-    const selectedTireLabel = formatWizardTireLabel(wizState.selectedTire);
-    return {
-      currentStep: wizState.step,
-      profileName: wizState.model
-        ? buildWizardCarName(wizState.brand, wizState.model, wizState.selectedVariant)
-        : null,
-      brand: wizState.brand || null,
-      carType: wizState.carType || null,
-      model: wizState.model || null,
-      variant: wizState.selectedVariant?.name
-        || (variantIsImplicit ? t("settings.car.wizard_summary_not_needed") : null),
-      tire: specBranch === "manual"
-        ? (manualTire ? formatManualTireSummary(manualTire) : selectedTireLabel)
-        : selectedTireLabel,
-      gearbox: specBranch === "manual"
-        ? (manualGearbox ? formatManualGearboxSummary(manualGearbox) : null)
-        : (wizState.selectedGearbox?.name ?? null),
-    };
+    actionButton.disabled = wizState.step !== 4 || !canFinishWizard(wizState, manualTire, manualGearbox);
   }
 
   function refreshWizardChrome(): void {
+    const { manualGearbox, manualTire } = currentManualWizardValues();
     syncCarWizardStepState(els, wizState.step);
     if (els.wizardProgressText) {
       els.wizardProgressText.textContent = t("settings.car.wizard_progress", {
@@ -326,7 +165,13 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       });
     }
     if (els.wizardSummaryPanel) {
-      els.wizardSummaryPanel.innerHTML = renderWizardSummary(buildWizardSummaryData(), {
+      const summaryData: WizardSummaryData = buildWizardSummaryData(wizState, {
+        manualGearbox,
+        manualTire,
+        fmt,
+        t,
+      });
+      els.wizardSummaryPanel.innerHTML = renderWizardSummary(summaryData, {
         t,
         escapeHtml,
       });
@@ -338,7 +183,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     lastWizardFocusTarget = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : els.addCarBtn;
-    resetWizardState();
+    resetWizardState(wizState);
     setWizardVisibility(true);
     refreshWizardChrome();
     focusWizardElement(els.wizardCloseBtn);
@@ -352,16 +197,6 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       : els.addCarBtn;
     lastWizardFocusTarget = null;
     focusWizardElement(focusTarget);
-  }
-
-  function buildWizardCarName(
-    brand: string,
-    model: string,
-    variant: CarLibraryVariant | null,
-  ): string {
-    const variantSuffix = variant ? ` ${variant.name}` : "";
-    if (brand) return `${brand} ${model || "Custom"}${variantSuffix}`;
-    return (model || "Custom Car") + variantSuffix;
   }
 
   function loadWizardStep(): void {
@@ -678,7 +513,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     }
 
     els.wizardManualAddBtn?.addEventListener("click", async () => {
-      if (getResolvedWizardSpecBranch() === "library") {
+      if (getResolvedWizardSpecBranch(wizState) === "library") {
         await finishWizardWithLibrarySpecs();
         return;
       }
