@@ -5,6 +5,7 @@ from test_support.sample_scenarios import make_analysis_sample, make_sample
 from vibesensor.domain import StrengthPeak
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSample,
+    analysis_samples_to_json_objects,
     normalize_analysis_samples,
 )
 
@@ -27,7 +28,7 @@ def test_analysis_sample_from_dict_types_top_peaks() -> None:
     assert sample.top_peaks == (StrengthPeak.from_dict({"hz": 31.0, "amp": 0.11}),)
 
 
-def test_normalize_analysis_samples_preserves_raw_rows_and_typed_rows() -> None:
+def test_normalize_analysis_samples_returns_typed_rows_and_explicit_json_projection() -> None:
     raw = make_sample(
         t_s=0.0,
         speed_kmh=60.0,
@@ -41,9 +42,12 @@ def test_normalize_analysis_samples_preserves_raw_rows_and_typed_rows() -> None:
         top_peaks=[{"hz": 27.0, "amp": 0.09}],
     )
 
-    raw_rows, typed_rows = normalize_analysis_samples([raw, typed])
+    typed_rows = normalize_analysis_samples([raw, typed])
+    raw_rows = analysis_samples_to_json_objects(typed_rows)
 
-    assert raw_rows[0] == raw
+    assert raw_rows[0]["client_name"] == raw["client_name"]
+    assert raw_rows[0]["speed_kmh"] == raw["speed_kmh"]
+    assert raw_rows[0]["top_peaks"] == raw["top_peaks"]
     assert raw_rows[1]["client_name"] == "RL"
     assert raw_rows[1]["top_peaks"] == [
         {

@@ -57,3 +57,19 @@ def test_summary_serialization_package_hides_internal_build_context() -> None:
     assert callable(summary_serialization.build_analysis_summary)
     assert not hasattr(summary_serialization, "AnalysisSummaryBuildContext")
     assert not hasattr(summary_serialization, "build_summary_payload")
+
+
+def test_diagnostics_modules_do_not_import_analysis_view_contracts() -> None:
+    from tests._paths import SERVER_ROOT
+
+    diagnostics_dir = SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics"
+    offenders: list[str] = []
+    for path in diagnostics_dir.rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        if "vibesensor.shared.types.analysis_views" in source:
+            offenders.append(str(path.relative_to(SERVER_ROOT)))
+
+    assert not offenders, (
+        "Diagnostics internals should keep using local view dataclasses and boundary "
+        f"serializers instead of importing shared analysis_views contracts directly: {offenders}"
+    )

@@ -138,26 +138,18 @@ type Sample = AnalysisSample
 type AnalysisSampleInput = AnalysisSample | SensorFrame | JsonObject
 
 
+def analysis_samples_to_json_objects(samples: Sequence[Sample]) -> list[JsonObject]:
+    """Project typed diagnostics samples into JSON-safe boundary rows."""
+
+    return [sample.to_json_object() for sample in samples]
+
+
 def normalize_analysis_samples(
     samples: Sequence[AnalysisSampleInput],
-) -> tuple[list[JsonObject], list[AnalysisSample]]:
-    """Return raw+typed sample views while normalizing typed access once."""
+) -> list[AnalysisSample]:
+    """Normalize arbitrary input rows once to typed diagnostics samples."""
 
-    raw_samples: list[JsonObject] = []
-    analysis_samples: list[AnalysisSample] = []
-    for sample in samples:
-        if isinstance(sample, AnalysisSample):
-            raw_samples.append(sample.to_json_object())
-            analysis_samples.append(sample)
-            continue
-        if isinstance(sample, SensorFrame):
-            raw_samples.append(sample.to_dict())
-            analysis_samples.append(AnalysisSample.from_sensor_frame(sample))
-            continue
-        raw_sample = cast(JsonObject, dict(sample))
-        raw_samples.append(raw_sample)
-        analysis_samples.append(AnalysisSample.from_dict(raw_sample))
-    return raw_samples, analysis_samples
+    return [ensure_analysis_sample(sample) for sample in samples]
 
 
 def ensure_analysis_sample(sample: AnalysisSampleInput) -> AnalysisSample:
@@ -173,7 +165,7 @@ def ensure_analysis_sample(sample: AnalysisSampleInput) -> AnalysisSample:
 def ensure_analysis_samples(samples: Sequence[AnalysisSampleInput]) -> list[AnalysisSample]:
     """Normalize arbitrary sample rows to typed diagnostics samples."""
 
-    return normalize_analysis_samples(samples)[1]
+    return normalize_analysis_samples(samples)
 
 
 class AccelStatistics(TypedDict):
