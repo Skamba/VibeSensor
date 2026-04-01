@@ -253,3 +253,18 @@ class TestSimulatorIngestion:
         pdf_text = "\n".join((page.extract_text() or "") for page in reader.pages).lower()
         for token in ("what to do next", "evidence", "front-left", "vibesensor simulator"):
             assert token in pdf_text, f"Missing expected report content token: {token!r}"
+
+    def test_report_pdf_softens_wheel_driveline_overlap_wording(self) -> None:
+        """Wheel/driveline overlaps should not read like a localized driveline diagnosis."""
+        pdf_text = "\n".join(
+            page.extract_text() or ""
+            for page in PdfReader(
+                io.BytesIO(_api_bytes(f"/api/history/{self.run_id}/report.pdf")),
+            ).pages
+        ).lower()
+        causes = self.insights.get("top_causes") or []
+        sources = {str(cause.get("suspected_source") or "").lower() for cause in causes}
+
+        assert "1x driveshaft stayed strongest near front-left" not in pdf_text
+        if {"wheel/tire", "driveline"}.issubset(sources):
+            assert "wheel and driveline evidence overlap" in pdf_text

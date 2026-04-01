@@ -58,6 +58,7 @@ from vibesensor.domain import (
     LocationIntensitySummary,
     TestRun,
     VibrationOrigin,
+    VibrationSource,
 )
 from vibesensor.report_i18n import human_location, human_source, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
@@ -432,7 +433,40 @@ def _candidate_signal_text(finding: Finding, *, tr: Callable[..., str]) -> str:
     return tr("REPORT_SIGNAL_FALLBACK")
 
 
-def _candidate_reason_text(finding: Finding, *, tr: Callable[..., str]) -> str:
+def _uses_shared_overlap_wording(
+    primary_finding: Finding,
+    alternative_finding: Finding,
+    *,
+    tr: Callable[..., str],
+) -> bool:
+    sources = {
+        primary_finding.source_normalized,
+        alternative_finding.source_normalized,
+    }
+    if sources != {VibrationSource.WHEEL_TIRE, VibrationSource.DRIVELINE}:
+        return False
+    primary_location = str(primary_finding.strongest_location or "").strip()
+    alternative_location = str(alternative_finding.strongest_location or "").strip()
+    if not primary_location or not alternative_location:
+        return False
+    return (
+        _display_location(primary_location, short=False, tr=tr).strip().lower()
+        == _display_location(
+            alternative_location,
+            short=False,
+            tr=tr,
+        )
+        .strip()
+        .lower()
+    )
+
+
+def _candidate_reason_text(
+    finding: Finding,
+    *,
+    tr: Callable[..., str],
+    use_shared_overlap_wording: bool = False,
+) -> str:
     speed_window = (
         str(
             finding.evidence.focused_speed_band
@@ -443,6 +477,12 @@ def _candidate_reason_text(finding: Finding, *, tr: Callable[..., str]) -> str:
     )
     location = _display_location(finding.strongest_location, tr=tr)
     signal = _candidate_signal_text(finding, tr=tr)
+    if use_shared_overlap_wording:
+        return tr(
+            "REPORT_CANDIDATE_REASON_OVERLAP",
+            signal=signal,
+            speed=speed_window or tr("UNKNOWN"),
+        )
     if finding.weak_spatial_separation:
         return tr(
             "REPORT_CANDIDATE_REASON_WEAK",
@@ -472,14 +512,24 @@ def _ranked_candidates(
 ) -> list[RankedCandidateRow]:
     candidates = list(aggregate.effective_top_causes()[:3])
     rows: list[RankedCandidateRow] = []
+    primary_finding = candidates[0] if candidates else None
     for index, finding in enumerate(candidates):
+        use_shared_overlap_wording = (
+            index > 0
+            and primary_finding is not None
+            and _uses_shared_overlap_wording(primary_finding, finding, tr=tr)
+        )
         rows.append(
             RankedCandidateRow(
                 source_name=human_source(finding.suspected_source, tr=tr),
                 confidence_pct=_confidence_pct_text(finding),
                 inspect_first=_display_location(finding.strongest_location, tr=tr),
                 path_role=f"{index + 1}. {_path_role_text(index, tr=tr)}",
-                reason=_candidate_reason_text(finding, tr=tr),
+                reason=_candidate_reason_text(
+                    finding,
+                    tr=tr,
+                    use_shared_overlap_wording=use_shared_overlap_wording,
+                ),
             ),
         )
     return rows
@@ -492,6 +542,7 @@ def _evidence_summary_text(
     *,
     tr: Callable[..., str],
 ) -> str:
+    effective_causes = aggregate.effective_top_causes()
     matched_windows = report_facts.primary_candidate_facts.matched_evidence_window_count
     speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
     source = primary.primary_system
@@ -502,12 +553,21 @@ def _evidence_summary_text(
         else None
     )
     alternative_finding = (
-        aggregate.effective_top_causes()[1]
-        if report_facts.alternative_source_visible and len(aggregate.effective_top_causes()) > 1
+        effective_causes[1]
+        if report_facts.alternative_source_visible and len(effective_causes) > 1
         else None
     )
     if alternative is not None and matched_windows is not None:
         if alternative_finding is not None:
+            if _uses_shared_overlap_wording(effective_causes[0], alternative_finding, tr=tr):
+                return tr(
+                    "REPORT_EVIDENCE_SUMMARY_ALT_OVERLAP",
+                    source=source,
+                    matches=matched_windows,
+                    speed=speed_window,
+                    location=location,
+                    alternative=alternative,
+                )
             alternative_signal = _candidate_signal_text(alternative_finding, tr=tr)
             alternative_location = _display_location(alternative_finding.strongest_location, tr=tr)
             alternative_speed = (
