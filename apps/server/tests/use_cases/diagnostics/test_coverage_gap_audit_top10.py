@@ -436,10 +436,24 @@ class TestBuildPhaseTimeline:
         entries = _build_phase_timeline(segs, findings, min_confidence=0.25)
         assert len(entries) == 2
         assert entries[0].phase == DrivingPhase.CRUISE
-        # has_fault_evidence is always False: phases_detected is not preserved
-        # on the domain Finding (only cruise_fraction survives decode).
         assert entries[0].has_fault_evidence is False
         assert entries[1].has_fault_evidence is False
+
+    def test_matching_findings_mark_matching_phases(self) -> None:
+        segs = [
+            _FakeSeg(DrivingPhase.CRUISE, 0.0, 30.0, speed_min=40.0, speed_max=80.0),
+            _FakeSeg(DrivingPhase.ACCELERATION, 30.0, 45.0, speed_min=40.0, speed_max=80.0),
+            _FakeSeg(DrivingPhase.DECELERATION, 45.0, 55.0, speed_min=30.0, speed_max=50.0),
+        ]
+        finding = Finding(
+            finding_id="F001",
+            confidence=0.60,
+            phases_detected=("acceleration", "cruise"),
+        )
+
+        entries = _build_phase_timeline(segs, [finding], min_confidence=0.25)
+
+        assert [entry.has_fault_evidence for entry in entries] == [True, True, False]
 
     @pytest.mark.parametrize(
         "finding",
