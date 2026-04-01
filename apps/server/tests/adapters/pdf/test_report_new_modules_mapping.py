@@ -640,3 +640,99 @@ def test_map_summary_builds_verdict_timeline_graph_from_phase_timeline() -> None
         (9.0, 12.0),
     ]
     assert [interval.has_fault_evidence for interval in timeline.intervals] == [False, True, False]
+
+
+def test_map_summary_softens_same_corner_wheel_driveline_overlap_wording() -> None:
+    overlap_reason = (
+        "Wheel and driveline evidence overlap, so the system could not strongly "
+        "differentiate between them; inspect both areas."
+    )
+    wheel = make_finding_payload(
+        finding_id="F_WHEEL",
+        suspected_source="wheel/tire",
+        confidence=0.66,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        frequency_hz_or_order="1x wheel order",
+        signatures_observed=["1x wheel order"],
+        matched_points=[
+            {
+                "speed_kmh": 62.0,
+                "predicted_hz": 13.2,
+                "matched_hz": 13.4,
+                "location": "Front Left",
+            },
+            {
+                "speed_kmh": 68.0,
+                "predicted_hz": 14.0,
+                "matched_hz": 14.1,
+                "location": "Front Left",
+            },
+        ],
+        confidence_label_key="CONFIDENCE_MEDIUM",
+        confidence_tone="warn",
+        confidence_pct="66%",
+        confidence_reason=overlap_reason,
+    )
+    driveline = make_finding_payload(
+        finding_id="F_DRIVELINE",
+        suspected_source="driveline",
+        confidence=0.61,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        frequency_hz_or_order="1x driveshaft",
+        signatures_observed=["1x driveshaft"],
+        matched_points=[
+            {
+                "speed_kmh": 62.0,
+                "predicted_hz": 26.4,
+                "matched_hz": 26.8,
+                "location": "Front Left",
+            },
+            {
+                "speed_kmh": 68.0,
+                "predicted_hz": 28.0,
+                "matched_hz": 28.2,
+                "location": "Front Left",
+            },
+        ],
+        confidence_label_key="CONFIDENCE_MEDIUM",
+        confidence_tone="warn",
+        confidence_pct="61%",
+        confidence_reason=overlap_reason,
+    )
+    summary = minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=[
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        speed_stats={"steady_speed": True},
+        findings=[wheel, driveline],
+        top_causes=[wheel, driveline],
+        test_plan=[
+            {
+                "action_id": "wheel_balance_and_runout",
+                "what": "ACTION_WHEEL_BALANCE_WHAT",
+                "why": "ACTION_WHEEL_BALANCE_WHY",
+                "confirm": "ACTION_WHEEL_BALANCE_CONFIRM",
+            }
+        ],
+    )
+
+    data = map_summary(prepare_report_input(summary))
+
+    assert data.verdict_page.also_consider is not None
+    assert "Driveline" in data.verdict_page.also_consider
+    assert data.appendix_a.why_alternative_next is not None
+    alternative_reason = data.appendix_a.why_alternative_next.lower()
+    assert "wheel and driveline evidence overlap" in alternative_reason
+    assert "stayed strongest near front-left" not in alternative_reason
+    assert data.appendix_c.evidence_summary is not None
+    evidence_summary = data.appendix_c.evidence_summary.lower()
+    assert "wheel and driveline evidence overlap" in evidence_summary
+    assert "1x driveshaft also stayed strongest near front-left" not in evidence_summary
