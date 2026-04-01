@@ -1815,6 +1815,14 @@
     "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}.",
     "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}."
   },
+  "REPORT_EVIDENCE_SUMMARY_SEQUENTIAL_PHASES": {
+    "en": "{source} evidence did not stay on one corner: {first_location} led during {first_phase}, then {second_location} became strongest during {second_phase}.",
+    "nl": "Het {source}-bewijs bleef niet op één hoek: {first_location} leidde tijdens {first_phase}, daarna werd {second_location} het sterkst tijdens {second_phase}."
+  },
+  "REPORT_EVIDENCE_SUMMARY_SEQUENTIAL_GENERIC": {
+    "en": "{source} evidence shifted between {first_location} and {second_location} across the run.",
+    "nl": "Het {source}-bewijs verschoof tijdens de run tussen {first_location} en {second_location}."
+  },
   "REPORT_EVIDENCE_NOTE_WEAK": {
     "en": "Spatial separation stayed weak.",
     "nl": "Ruimtelijke scheiding bleef zwak."
@@ -1939,6 +1947,14 @@
     "en": "No dominant phase breakdown available.",
     "nl": "Geen dominante faseverdeling beschikbaar."
   },
+  "REPORT_PHASE_SUMMARY_SEQUENTIAL_PHASES": {
+    "en": "{first_location} during {first_phase}, then {second_location} during {second_phase}.",
+    "nl": "{first_location} tijdens {first_phase}, daarna {second_location} tijdens {second_phase}."
+  },
+  "REPORT_PHASE_SUMMARY_SEQUENTIAL_GENERIC": {
+    "en": "Strongest locations shifted between {first_location} and {second_location} across the run.",
+    "nl": "De sterkste locaties verschoven tijdens de run tussen {first_location} en {second_location}."
+  },
   "REPORT_PRIMARY_CLEAN_ALT": {
     "en": "Move to the {source} path next and inspect {location}.",
     "nl": "Ga daarna naar het pad {source} en controleer {location}."
@@ -1982,6 +1998,14 @@
   "REPORT_PROOF_SUMMARY_SIMPLE_PLAIN": {
     "en": "{location} remained the strongest connected location on the evidence map for this run.",
     "nl": "{location} bleef de sterkste verbonden locatie op de bewijskaart van deze run."
+  },
+  "REPORT_PROOF_SUMMARY_SEQUENTIAL_PHASES": {
+    "en": "No single corner stayed dominant through the whole run: {first_location} was strongest during {first_phase}, then {second_location} took over during {second_phase}.",
+    "nl": "Geen enkele hoek bleef de hele run dominant: {first_location} was het sterkst tijdens {first_phase}, daarna nam {second_location} het over tijdens {second_phase}."
+  },
+  "REPORT_PROOF_SUMMARY_SEQUENTIAL_GENERIC": {
+    "en": "No single corner stayed dominant through the whole run; strongest evidence shifted between {first_location} and {second_location}.",
+    "nl": "Geen enkele hoek bleef de hele run dominant; het sterkste bewijs verschoof tussen {first_location} en {second_location}."
   },
   "REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE": {
     "en": "Best available location signal",
