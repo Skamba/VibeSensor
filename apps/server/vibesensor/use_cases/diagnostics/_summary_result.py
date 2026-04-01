@@ -29,9 +29,9 @@ from ._context_projection import (
     context_to_metadata_dict,
     context_to_symptom,
 )
-from ._types import AccelStatistics
+from ._types import AccelStatistics, analysis_samples_to_json_objects
 from ._view_types import PlotDataResultData
-from .plots import _plot_data
+from .plots import _plot_data_for_samples
 from .run_data_preparation import (
     PreparedRunData,
     build_domain_driving_segments,
@@ -94,7 +94,7 @@ def build_analysis_result(
     summary_speed_stats = _speed_stats(request.prepared.speed_values)
     summary_phase_info = build_phase_summary(request.prepared.phase_segments)
     domain_test_plan = plan_test_actions(findings_bundle.domain_findings)
-    plot_data = _plot_data(
+    plot_data = _plot_data_for_samples(
         samples=list(request.samples),
         speed_breakdown=request.prepared.speed_breakdown,
         phase_speed_breakdown=request.prepared.phase_speed_breakdown,
@@ -119,7 +119,7 @@ def build_analysis_result(
                 configuration_snapshot=context_to_configuration_snapshot(request.context),
             ),
             analysis_settings=request.context.scalar_analysis_settings,
-            sample_count=len(request.raw_samples),
+            sample_count=len(request.samples),
             duration_s=request.prepared.duration_s,
         ),
         driving_segments=build_domain_driving_segments(request.prepared.phase_segments),
@@ -142,7 +142,7 @@ def build_analysis_result(
     return AnalysisResult(
         file_name=request.file_name,
         metadata=context_metadata,
-        samples=tuple(request.raw_samples),
+        samples=tuple(analysis_samples_to_json_objects(request.samples)),
         language=request.language,
         include_samples=request.include_samples,
         prepared=request.prepared,

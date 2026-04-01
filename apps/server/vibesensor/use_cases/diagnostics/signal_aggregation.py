@@ -21,6 +21,7 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
 )
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
+    Sample,
     ensure_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics._view_types import (
@@ -51,12 +52,11 @@ def _counter_delta(counter_values: Sequence[tuple[float | None, float]]) -> int:
 _EMPTY_BUCKET_COUNTS: dict[str, int] = {f"l{idx}": 0 for idx in range(6)}
 
 
-def _phase_speed_breakdown(
-    samples: Sequence[AnalysisSampleInput],
+def _phase_speed_breakdown_samples(
+    samples: Sequence[Sample],
     per_sample_phases: Sequence[DrivingPhase],
 ) -> list[PhaseSpeedBreakdownRowData]:
     """Group vibration statistics by driving phase (temporal context)."""
-    typed_samples = ensure_analysis_samples(samples)
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     grouped_speeds: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
@@ -64,7 +64,7 @@ def _phase_speed_breakdown(
     _as_float_local = _as_float
     _vib_db = _primary_vibration_strength_db
     n_phases = len(per_sample_phases)
-    for idx, sample in enumerate(typed_samples):
+    for idx, sample in enumerate(samples):
         phase = per_sample_phases[idx] if idx < n_phases else "unknown"
         phase_key = _phase_to_str(phase) or "unknown"
         counts[phase_key] += 1
@@ -96,14 +96,22 @@ def _phase_speed_breakdown(
     return rows
 
 
-def _speed_breakdown(samples: Sequence[AnalysisSampleInput]) -> list[SpeedBreakdownRowData]:
-    typed_samples = ensure_analysis_samples(samples)
+def _phase_speed_breakdown(
+    samples: Sequence[AnalysisSampleInput],
+    per_sample_phases: Sequence[DrivingPhase],
+) -> list[PhaseSpeedBreakdownRowData]:
+    """Group vibration statistics by driving phase (temporal context)."""
+
+    return _phase_speed_breakdown_samples(ensure_analysis_samples(samples), per_sample_phases)
+
+
+def _speed_breakdown_samples(samples: Sequence[Sample]) -> list[SpeedBreakdownRowData]:
     grouped: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
     _as_float_local = _as_float
     _vib_db = _primary_vibration_strength_db
     _bin_label = speed_bin_label
-    for sample in typed_samples:
+    for sample in samples:
         speed = sample.speed_kmh
         if speed is None or speed <= 0:
             continue
@@ -127,8 +135,12 @@ def _speed_breakdown(samples: Sequence[AnalysisSampleInput]) -> list[SpeedBreakd
     return rows
 
 
-def _sensor_intensity_by_location(
-    samples: Sequence[AnalysisSampleInput],
+def _speed_breakdown(samples: Sequence[AnalysisSampleInput]) -> list[SpeedBreakdownRowData]:
+    return _speed_breakdown_samples(ensure_analysis_samples(samples))
+
+
+def _sensor_intensity_by_location_samples(
+    samples: Sequence[Sample],
     include_locations: Sequence[str] | set[str] | None = None,
     *,
     lang: str = "en",
@@ -136,7 +148,6 @@ def _sensor_intensity_by_location(
     per_sample_phases: Sequence[DrivingPhase] | None = None,
 ) -> list[LocationIntensitySummary]:
     """Compute per-location vibration intensity statistics."""
-    typed_samples = ensure_analysis_samples(samples)
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     sample_counts: dict[str, int] = defaultdict(int)
     dropped_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
@@ -144,12 +155,12 @@ def _sensor_intensity_by_location(
     strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(_EMPTY_BUCKET_COUNTS.copy)
     strength_bucket_totals: dict[str, int] = defaultdict(int)
     phase_amp: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
-    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(typed_samples)
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
     _as_float_local = _as_float
     _vib_db = _primary_vibration_strength_db
     _loc_label = _location_label
-    for i, sample in enumerate(typed_samples):
+    for i, sample in enumerate(samples):
         location = _loc_label(sample, lang=lang)
         if not location:
             continue
@@ -265,3 +276,22 @@ def _sensor_intensity_by_location(
         reverse=True,
     )
     return rows
+
+
+def _sensor_intensity_by_location(
+    samples: Sequence[AnalysisSampleInput],
+    include_locations: Sequence[str] | set[str] | None = None,
+    *,
+    lang: str = "en",
+    connected_locations: Sequence[str] | set[str] | None = None,
+    per_sample_phases: Sequence[DrivingPhase] | None = None,
+) -> list[LocationIntensitySummary]:
+    """Compute per-location vibration intensity statistics."""
+
+    return _sensor_intensity_by_location_samples(
+        ensure_analysis_samples(samples),
+        include_locations=include_locations,
+        lang=lang,
+        connected_locations=connected_locations,
+        per_sample_phases=per_sample_phases,
+    )

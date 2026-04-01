@@ -35,11 +35,14 @@ from vibesensor.use_cases.diagnostics.peaks.table import (
     annotate_peak_rows_with_order_labels,
     top_peaks_table_rows,
 )
-from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, PhaseSegment
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
-    segment_run_phases as _segment_run_phases,
+    DrivingPhase,
+    PhaseSegment,
+    _segment_run_phases,
 )
 from vibesensor.use_cases.diagnostics.spectrogram import (
+    PeakSampleScan,
+    _scan_peak_samples,
     aggregate_fft_spectrum,
     aggregate_fft_spectrum_raw,
     scan_peak_samples,
@@ -239,18 +242,46 @@ def _plot_data(
     phase_segments: Sequence[PhaseSegment] | None = None,
 ) -> PlotDataResultData:
     typed_samples = ensure_analysis_samples(samples)
+    peak_scan = scan_peak_samples(typed_samples)
+    return _plot_data_for_samples(
+        samples=typed_samples,
+        speed_breakdown=speed_breakdown,
+        phase_speed_breakdown=phase_speed_breakdown,
+        findings=findings,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        steady_speed=steady_speed,
+        run_noise_baseline_g=run_noise_baseline_g,
+        per_sample_phases=per_sample_phases,
+        phase_segments=phase_segments,
+        peak_scan=peak_scan,
+    )
+
+
+def _plot_data_for_samples(
+    *,
+    samples: Sequence[Sample],
+    speed_breakdown: Sequence[SpeedBreakdownRowData],
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowData],
+    findings: Sequence[DomainFinding],
+    raw_sample_rate_hz: float | None,
+    steady_speed: bool,
+    run_noise_baseline_g: float | None = None,
+    per_sample_phases: Sequence[DrivingPhase] | None = None,
+    phase_segments: Sequence[PhaseSegment] | None = None,
+    peak_scan: PeakSampleScan | None = None,
+) -> PlotDataResultData:
     if run_noise_baseline_g is None:
-        run_noise_baseline_g = _run_noise_baseline_g(typed_samples)
+        run_noise_baseline_g = _run_noise_baseline_g(samples)
 
     if per_sample_phases is not None and phase_segments is not None:
         resolved_phases = per_sample_phases
         resolved_phase_segments = phase_segments
     else:
-        resolved_phases, resolved_phase_segments = _segment_run_phases(typed_samples)
+        resolved_phases, resolved_phase_segments = _segment_run_phases(samples)
 
-    peak_scan = scan_peak_samples(typed_samples)
+    resolved_peak_scan = peak_scan or _scan_peak_samples(samples)
     series = build_plot_series(
-        samples=typed_samples,
+        samples=samples,
         speed_breakdown=speed_breakdown,
         phase_speed_breakdown=phase_speed_breakdown,
         findings=findings,
@@ -261,9 +292,9 @@ def _plot_data(
     )
     peaks_table = annotate_peak_rows_with_order_labels(
         top_peaks_table_rows(
-            samples=typed_samples,
+            samples=list(samples),
             run_noise_baseline_g=run_noise_baseline_g,
-            peak_scan=peak_scan,
+            peak_scan=resolved_peak_scan,
         ),
         findings,
     )
@@ -276,24 +307,24 @@ def _plot_data(
         freq_vs_speed_by_finding=series.freq_vs_speed_by_finding,
         steady_speed_distribution=series.steady_speed_distribution,
         fft_spectrum=aggregate_fft_spectrum(
-            typed_samples,
+            samples,
             run_noise_baseline_g=run_noise_baseline_g,
-            peak_scan=peak_scan,
+            peak_scan=resolved_peak_scan,
         ),
         fft_spectrum_raw=aggregate_fft_spectrum_raw(
-            typed_samples,
+            samples,
             run_noise_baseline_g=run_noise_baseline_g,
-            peak_scan=peak_scan,
+            peak_scan=resolved_peak_scan,
         ),
         peaks_spectrogram=spectrogram_from_peaks(
-            typed_samples,
+            samples,
             run_noise_baseline_g=run_noise_baseline_g,
-            peak_scan=peak_scan,
+            peak_scan=resolved_peak_scan,
         ),
         peaks_spectrogram_raw=spectrogram_from_peaks_raw(
-            typed_samples,
+            samples,
             run_noise_baseline_g=run_noise_baseline_g,
-            peak_scan=peak_scan,
+            peak_scan=resolved_peak_scan,
         ),
         peaks_table=peaks_table,
         phase_segments=series.phase_segments_out,

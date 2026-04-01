@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 import pytest
 from pydantic import TypeAdapter
+from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.adapters.analysis_summary import (
     analysis_result_to_summary,
@@ -183,6 +184,28 @@ class TestRunAnalysis:
         analysis = RunAnalysis(metadata, samples, include_samples=False)
         result = analysis.summarize()
         assert "samples" not in analysis_result_to_summary(result)
+
+    def test_typed_samples_serialize_at_summary_boundary(self) -> None:
+        metadata = {"raw_sample_rate_hz": 100.0}
+        samples = [
+            make_analysis_sample(
+                t_s=0.0,
+                speed_kmh=60.0,
+                client_name="FL",
+                top_peaks=[{"hz": 14.0, "amp": 0.05}],
+                vibration_strength_db=10.0,
+                accel_x_g=0.01,
+                accel_y_g=0.01,
+                accel_z_g=0.01,
+            ),
+        ]
+
+        summary = analysis_result_to_summary(
+            RunAnalysis(metadata, samples, file_name="typed-run").summarize(),
+        )
+
+        assert summary["samples"][0]["client_name"] == "FL"
+        assert summary["samples"][0]["top_peaks"] == [{"hz": 14.0, "amp": 0.05}]
 
     def test_summary_matches_typed_boundary_contract(self) -> None:
         metadata = {

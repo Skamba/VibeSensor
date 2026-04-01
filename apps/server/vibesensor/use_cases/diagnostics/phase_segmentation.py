@@ -21,7 +21,11 @@ from dataclasses import dataclass
 from vibesensor.domain import DrivingPhase
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhaseSegment
-from vibesensor.use_cases.diagnostics._types import AnalysisSampleInput, ensure_analysis_samples
+from vibesensor.use_cases.diagnostics._types import (
+    AnalysisSampleInput,
+    Sample,
+    ensure_analysis_samples,
+)
 
 # Thresholds (tuneable)
 _IDLE_SPEED_KMH = 3.0  # below this → IDLE
@@ -199,8 +203,8 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
         i = j
 
 
-def segment_run_phases(
-    samples: Sequence[AnalysisSampleInput],
+def _segment_run_phases(
+    samples: Sequence[Sample],
 ) -> tuple[list[DrivingPhase], list[PhaseSegment]]:
     """Classify every sample into a driving phase and return contiguous segments.
 
@@ -212,14 +216,13 @@ def segment_run_phases(
         Contiguous segments of identical phase, sorted by time.
 
     """
-    typed_samples = ensure_analysis_samples(samples)
-    n = len(typed_samples)
+    n = len(samples)
     if n == 0:
         return [], []
 
     # Extract speeds and times (preserve order)
-    speeds: list[float | None] = [sample.speed_kmh for sample in typed_samples]
-    times: list[float | None] = [sample.t_s for sample in typed_samples]
+    speeds: list[float | None] = [sample.speed_kmh for sample in samples]
+    times: list[float | None] = [sample.t_s for sample in samples]
 
     # Classify each sample
     per_sample: list[DrivingPhase] = []
@@ -273,6 +276,14 @@ def segment_run_phases(
         seg_start = i
 
     return per_sample, segments
+
+
+def segment_run_phases(
+    samples: Sequence[AnalysisSampleInput],
+) -> tuple[list[DrivingPhase], list[PhaseSegment]]:
+    """Normalize input rows once, then classify every sample into a driving phase."""
+
+    return _segment_run_phases(ensure_analysis_samples(samples))
 
 
 def phase_summary(segments: list[PhaseSegment]) -> DrivingPhaseSummary:

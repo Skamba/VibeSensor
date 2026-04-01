@@ -57,9 +57,8 @@ class PeakSampleScan:
     total_speed_bin_counts: dict[str, int]
 
 
-def scan_peak_samples(samples: Sequence[AnalysisSampleInput]) -> PeakSampleScan:
-    """Scan raw samples once and cache the peak-facing data needed by plot builders."""
-    typed_samples = ensure_analysis_samples(samples)
+def _scan_peak_samples(samples: Sequence[Sample]) -> PeakSampleScan:
+    """Scan typed samples once and cache the peak-facing data needed by plot builders."""
     rows: list[PeakSampleScanRow] = []
     time_values: list[float] = []
     speed_values: list[float] = []
@@ -67,7 +66,7 @@ def scan_peak_samples(samples: Sequence[AnalysisSampleInput]) -> PeakSampleScan:
     total_speed_bin_counts: dict[str, int] = defaultdict(int)
     sample_count = 0
 
-    for sample in typed_samples:
+    for sample in samples:
         sample_count += 1
         t_s = sample.t_s
         speed = sample.speed_kmh
@@ -104,6 +103,12 @@ def scan_peak_samples(samples: Sequence[AnalysisSampleInput]) -> PeakSampleScan:
         total_locations=total_locations,
         total_speed_bin_counts=dict(total_speed_bin_counts),
     )
+
+
+def scan_peak_samples(samples: Sequence[AnalysisSampleInput]) -> PeakSampleScan:
+    """Scan samples once and cache the peak-facing data needed by plot builders."""
+
+    return _scan_peak_samples(ensure_analysis_samples(samples))
 
 
 def safe_percentile(sorted_vals: Sequence[float], q: float, *, default: float = 0.0) -> float:

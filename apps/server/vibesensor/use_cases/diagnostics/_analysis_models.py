@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.types.json_types import JsonObject
 
 from ._context import DiagnosticsContext
 from ._types import AccelStatistics, PhaseLabels, Sample
@@ -62,7 +61,6 @@ class AnalysisResultBuildRequest:
     file_name: str
     context: DiagnosticsContext
     samples: Sequence[Sample]
-    raw_samples: Sequence[JsonObject]
     language: str
     include_samples: bool
     prepared: PreparedRunData

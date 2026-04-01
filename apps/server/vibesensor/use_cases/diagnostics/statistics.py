@@ -26,12 +26,13 @@ from vibesensor.use_cases.diagnostics._sample_metrics import (
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSampleInput,
+    Sample,
     ensure_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
-    segment_run_phases,
+    _segment_run_phases,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
 
@@ -63,12 +64,11 @@ def _strength_band_key(db_value: float | None) -> str | None:
 # ── Acceleration statistics ──────────────────────────────────────────────
 
 
-def compute_accel_statistics(
-    samples: Sequence[AnalysisSampleInput],
+def _compute_accel_statistics(
+    samples: Sequence[Sample],
     sensor_model: object,
 ) -> AccelStatistics:
     """Compute per-axis values, aggregate amplitude metrics, and saturation counts."""
-    typed_samples = ensure_analysis_samples(samples)
     sensor_limit = _sensor_limit_g(sensor_model)
     sat_threshold = sensor_limit * _SATURATION_FRACTION if sensor_limit is not None else None
 
@@ -79,7 +79,7 @@ def compute_accel_statistics(
     amp_metric_values: list[float] = []
     sat_count = 0
 
-    for sample in typed_samples:
+    for sample in samples:
         x = sample.accel_x_g
         y = sample.accel_y_g
         z = sample.accel_z_g
@@ -119,15 +119,23 @@ def compute_accel_statistics(
     }
 
 
+def compute_accel_statistics(
+    samples: Sequence[AnalysisSampleInput],
+    sensor_model: object,
+) -> AccelStatistics:
+    """Compute acceleration statistics after normalizing the input sample rows once."""
+
+    return _compute_accel_statistics(ensure_analysis_samples(samples), sensor_model)
+
+
 # ── Frame integrity ──────────────────────────────────────────────────────
 
 
-def compute_frame_integrity_counts(samples: Sequence[AnalysisSampleInput]) -> tuple[int, int]:
+def _compute_frame_integrity_counts(samples: Sequence[Sample]) -> tuple[int, int]:
     """Compute ``(total_dropped, total_overflow)`` across all client sensors."""
-    typed_samples = ensure_analysis_samples(samples)
     per_client_dropped: dict[str, list[float]] = defaultdict(list)
     per_client_overflow: dict[str, list[float]] = defaultdict(list)
-    for sample in typed_samples:
+    for sample in samples:
         client_id = sample.client_id
         if not client_id:
             continue
@@ -142,6 +150,12 @@ def compute_frame_integrity_counts(samples: Sequence[AnalysisSampleInput]) -> tu
     return total_dropped, total_overflow
 
 
+def compute_frame_integrity_counts(samples: Sequence[AnalysisSampleInput]) -> tuple[int, int]:
+    """Compute frame-integrity totals after normalizing the input rows once."""
+
+    return _compute_frame_integrity_counts(ensure_analysis_samples(samples))
+
+
 # ── Reference completeness ───────────────────────────────────────────────
 
 
@@ -153,22 +167,21 @@ def compute_reference_completeness(context: DiagnosticsContext) -> bool:
 # ── Speed and phase preparation ──────────────────────────────────────────
 
 
-def prepare_speed_and_phases(
-    samples: Sequence[AnalysisSampleInput],
+def _prepare_speed_and_phases(
+    samples: Sequence[Sample],
 ) -> tuple[list[float], SpeedProfileSummary, float, bool, list[DrivingPhase], list[PhaseSegment]]:
     """Compute speed stats and phase segmentation shared by multiple entry points."""
-    typed_samples = ensure_analysis_samples(samples)
     speed_values = [
         speed
-        for speed in (sample.speed_kmh for sample in typed_samples)
+        for speed in (sample.speed_kmh for sample in samples)
         if speed is not None and speed > 0
     ]
     speed_stats = _speed_stats(speed_values)
-    speed_non_null_pct = (len(speed_values) / len(typed_samples) * 100.0) if typed_samples else 0.0
+    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
     speed_sufficient = (
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
     )
-    per_sample_phases, phase_segments = segment_run_phases(typed_samples)
+    per_sample_phases, phase_segments = _segment_run_phases(samples)
     return (
         speed_values,
         speed_stats,
@@ -179,27 +192,43 @@ def prepare_speed_and_phases(
     )
 
 
+def prepare_speed_and_phases(
+    samples: Sequence[AnalysisSampleInput],
+) -> tuple[list[float], SpeedProfileSummary, float, bool, list[DrivingPhase], list[PhaseSegment]]:
+    """Compute speed stats and phase segmentation after normalizing rows once."""
+
+    return _prepare_speed_and_phases(ensure_analysis_samples(samples))
+
+
 # ── Run timing ───────────────────────────────────────────────────────────
+
+
+def _compute_run_timing(
+    context: DiagnosticsContext,
+    samples: Sequence[Sample],
+) -> tuple[str, datetime | None, datetime | None, float]:
+    """Extract run_id, start/end timestamps and duration from context+samples."""
+    run_id = context.run_id
+    start_ts = parse_iso8601(context.start_time_utc)
+    end_ts = parse_iso8601(context.end_time_utc)
+
+    if end_ts is None and samples:
+        sample_max_t = max((sample.t_s or 0.0) for sample in samples)
+        if start_ts is not None:
+            end_ts = start_ts + timedelta(seconds=sample_max_t)
+    duration_s = 0.0
+    if start_ts is not None and end_ts is not None:
+        duration_s = max(0.0, (end_ts - start_ts).total_seconds())
+    elif samples:
+        duration_s = max((sample.t_s or 0.0) for sample in samples)
+
+    return run_id, start_ts, end_ts, duration_s
 
 
 def compute_run_timing(
     context: DiagnosticsContext,
     samples: Sequence[AnalysisSampleInput],
 ) -> tuple[str, datetime | None, datetime | None, float]:
-    """Extract run_id, start/end timestamps and duration from context+samples."""
-    typed_samples = ensure_analysis_samples(samples)
-    run_id = context.run_id
-    start_ts = parse_iso8601(context.start_time_utc)
-    end_ts = parse_iso8601(context.end_time_utc)
+    """Extract run timing after normalizing the input rows once."""
 
-    if end_ts is None and typed_samples:
-        sample_max_t = max((sample.t_s or 0.0) for sample in typed_samples)
-        if start_ts is not None:
-            end_ts = start_ts + timedelta(seconds=sample_max_t)
-    duration_s = 0.0
-    if start_ts is not None and end_ts is not None:
-        duration_s = max(0.0, (end_ts - start_ts).total_seconds())
-    elif typed_samples:
-        duration_s = max((sample.t_s or 0.0) for sample in typed_samples)
-
-    return run_id, start_ts, end_ts, duration_s
+    return _compute_run_timing(context, ensure_analysis_samples(samples))
