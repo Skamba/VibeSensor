@@ -241,7 +241,7 @@ def _draw_hero_block(
 
     c.setFillColor(_hex(SUB_CLR))
     c.setFont(FONT, FS_SMALL)
-    c.drawString(right_x, inner_y, tr("REPORT_ACTION_STATUS_LABEL"))
+    c.drawString(right_x, inner_y + 1.2 * mm, tr("REPORT_ACTION_STATUS_LABEL"))
     _draw_status_pill(
         c,
         text=verdict.action_status or tr("UNKNOWN"),
@@ -404,10 +404,10 @@ def _draw_action_row(
     title_lines = _wrap_lines(title, text_w, FS_BODY)[:2]
     why_lines = _wrap_lines(why or "", text_w, FS_SMALL)[:2] if why else []
     row_h = max(
-        18 * mm,
-        8.5 * mm
-        + (len(title_lines) * (FS_BODY + 1.2))
-        + (0 if not why_lines else 1.2 * mm + (len(why_lines) * (FS_SMALL + 1.0))),
+        16 * mm,
+        7.0 * mm
+        + (len(title_lines) * (FS_BODY + 1.0))
+        + (0 if not why_lines else 1.0 * mm + (len(why_lines) * (FS_SMALL + 1.0))),
     )
     c.setFillColor(_hex(REPORT_COLORS["surface"]))
     c.setStrokeColor(_hex(REPORT_COLORS["border"]))
@@ -420,7 +420,7 @@ def _draw_action_row(
     c.drawCentredString(x + 5.5 * mm, y_top - 6.4 * mm, str(index))
     c.setFillColor(_hex(TEXT_CLR))
     c.setFont(FONT_B, FS_BODY)
-    title_y = y_top - 5.4 * mm
+    title_y = y_top - 4.8 * mm
     for line in title_lines:
         c.drawString(x + 12 * mm, title_y, line)
         title_y -= FS_BODY + 1.2
@@ -437,7 +437,7 @@ def _draw_action_row(
 def _estimate_action_row_height(*, title: str, w: float) -> float:
     text_w = w - 14 * mm
     title_lines = _wrap_lines(title, text_w, FS_BODY)[:2]
-    return float(max(18 * mm, 8.5 * mm + (len(title_lines) * (FS_BODY + 1.2))))
+    return float(max(16 * mm, 7.0 * mm + (len(title_lines) * (FS_BODY + 1.0))))
 
 
 def _estimate_actions_block_height(
@@ -452,8 +452,10 @@ def _estimate_actions_block_height(
         content_h += _measure_text_height(tr("NO_NEXT_STEPS"), w=content_w, size=FS_BODY)
     else:
         shown_steps = data.next_steps[:2]
-        for step in shown_steps:
-            content_h += _estimate_action_row_height(title=step.action, w=content_w) + 2.5 * mm
+        for index, step in enumerate(shown_steps):
+            content_h += _estimate_action_row_height(title=step.action, w=content_w)
+            if index < len(shown_steps) - 1:
+                content_h += 2.5 * mm
         if len(data.next_steps) > len(shown_steps):
             content_h += 0.5 * mm + _measure_text_height(
                 tr("REPORT_ACTIONS_PAGE1_MORE"),
