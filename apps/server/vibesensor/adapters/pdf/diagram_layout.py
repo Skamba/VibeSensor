@@ -121,6 +121,12 @@ def _blend_hex(base: str, target: str, *, target_weight: float) -> str:
     return f"#{mixed[0]:02x}{mixed[1]:02x}{mixed[2]:02x}"
 
 
+def _intensity_fill(*, normalized: float, colors: Mapping[str, str]) -> str:
+    low = colors.get("axis", "#7b8da0")
+    high = colors.get("brand", "#7c3aed")
+    return _blend_hex(low, high, target_weight=_clamp_unit(normalized))
+
+
 def _gradient_layers(
     *,
     base_fill: str,
@@ -266,6 +272,16 @@ def build_sensor_render_plan(
         amp = amp_by_location[name]
         return _clamp_unit((amp - min_amp) / (max_amp - min_amp))
 
+    def intensity_fill_weight(name: str) -> float:
+        if name not in amp_by_location:
+            return 0.45
+        if min_amp is None or max_amp is None:
+            return 0.72
+        if min_amp == max_amp:
+            return 1.0 if active_count == 1 else 0.72
+        amp = amp_by_location[name]
+        return _clamp_unit((amp - min_amp) / (max_amp - min_amp))
+
     def active_radius(name: str, *, highlighted: bool) -> float:
         normalized = intensity_emphasis(name)
         if highlighted:
@@ -276,24 +292,33 @@ def build_sensor_render_plan(
     for name, (px, py) in location_points.items():
         state = states[name]
         if state == "connected-active":
-            if name in highlight:
+            if single_sensor and name in highlight:
                 fill = highlight[name]
+                stroke = fill
                 radius = active_radius(name, highlighted=True)
+                stroke_width = 0.75
             else:
-                fill = colors["text_secondary"]
-                radius = active_radius(name, highlighted=False)
-            stroke_width = 0.75
+                fill = _intensity_fill(
+                    normalized=intensity_fill_weight(name),
+                    colors=colors,
+                )
+                stroke = highlight.get(name, fill)
+                radius = active_radius(name, highlighted=name in highlight)
+                stroke_width = 0.9 if name in highlight else 0.75
         elif state == "connected-inactive":
             if name in highlight:
                 fill = highlight[name]
+                stroke = highlight[name]
                 radius = 3.6
                 stroke_width = 0.62
             else:
                 fill = colors["surface_alt"]
+                stroke = fill
                 radius = 3.15
                 stroke_width = 0.58
         else:
             fill = "#d8dfea"
+            stroke = fill
             radius = 2.6
             stroke_width = 0.5
         emphasis = intensity_emphasis(name) if state == "connected-active" else 0.45
@@ -309,7 +334,7 @@ def build_sensor_render_plan(
             y=py,
             state=state,
             fill=fill,
-            stroke=fill,
+            stroke=stroke,
             stroke_width=stroke_width,
             radius=radius,
             mid_fill=mid_fill,

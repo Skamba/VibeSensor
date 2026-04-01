@@ -131,6 +131,7 @@ def test_report_pdf_action_ready_flow_includes_appendix_b_before_evidence() -> N
     assert len(reader.pages) == 4
     page_two_text = reader.pages[1].extract_text() or ""
     assert "Sensor Topology" in page_two_text
+    assert "Marker color shows relative vibration strength." in page_two_text
     assert "Appendix B" not in page_two_text
     assert "Evidence and Run Context" in (reader.pages[2].extract_text() or "")
 
