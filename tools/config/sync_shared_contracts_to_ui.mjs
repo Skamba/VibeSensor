@@ -9,7 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = resolve(__dirname, '../..');
 const requireFromUi = createRequire(resolve(root, 'apps/ui/package.json'));
-const openapiCliPath = requireFromUi.resolve('openapi-typescript/bin/cli.js');
 const generatorScript = 'tools/config/sync_shared_contracts_to_ui.mjs';
 const httpSchemaSrc = resolve(root, 'apps/ui/src/contracts/http_api_schema.json');
 const httpTypesDst = resolve(root, 'apps/ui/src/generated/http_api_contracts.ts');
@@ -18,6 +17,20 @@ const constantsDst = resolve(root, 'apps/ui/src/constants.ts');
 const wsSchemaSrc = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.json');
 const wsSchemaTsDst = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.generated.ts');
 const wsTypesDst = resolve(root, 'apps/ui/src/contracts/ws_payload_types.ts');
+
+function resolveOpenApiCliPath() {
+	const openapiPackageJsonPath = requireFromUi.resolve('openapi-typescript/package.json');
+	const openapiPackage = JSON.parse(readFileSync(openapiPackageJsonPath, 'utf8'));
+	const binEntry = typeof openapiPackage.bin === 'string'
+		? openapiPackage.bin
+		: openapiPackage.bin?.['openapi-typescript'];
+	if (typeof binEntry !== 'string' || binEntry.length === 0) {
+		throw new Error('openapi-typescript package does not expose a CLI bin path');
+	}
+	return resolve(dirname(openapiPackageJsonPath), binEntry);
+}
+
+const openapiCliPath = resolveOpenApiCliPath();
 
 function generatedHeader(sourcePath) {
 	return (
@@ -91,7 +104,6 @@ function wsAliasBlock(schemaVersion) {
 }
 
 async function generateWsTypes() {
-	const openapiCliPath = requireFromUi.resolve('openapi-typescript/bin/cli.js');
 	const wsSchema = JSON.parse(readFileSync(wsSchemaSrc, 'utf8'));
 	const defs = wsSchema.$defs && typeof wsSchema.$defs === 'object' ? wsSchema.$defs : {};
 	const schemaVersion = wsSchema.properties?.schema_version?.default ?? '1';

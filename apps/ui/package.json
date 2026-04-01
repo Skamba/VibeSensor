@@ -31,8 +31,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.9",
     "@playwright/test": "^1.58.2",
-    "openapi-typescript": "^6.7.6",
-    "typescript": "^6.0.2",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.9.3",
     "vite": "^8.0.3"
   }
 }
