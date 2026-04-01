@@ -162,6 +162,21 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
     assert facts.timeline_intervals[1].has_fault_evidence is True
 
 
+def test_prepare_report_facts_precomputes_workflow_display_sections() -> None:
+    summary = _summary()
+    test_run = build_test_run_from_summary(summary)
+    assert test_run is not None
+
+    facts = prepare_report_facts(summary, test_run=test_run)
+
+    assert facts.display.verdict.action_status
+    assert facts.display.verdict.suspected_source
+    assert facts.display.appendix_a.mode == "workflow"
+    assert len(facts.display.appendix_a.ranked_candidates) == 1
+    assert facts.display.appendix_b.coverage_label == facts.display.verdict.coverage_label
+    assert len(facts.display.verdict.footer_routes) == 4
+
+
 @pytest.mark.parametrize(
     ("source", "order_label"),
     [
@@ -196,3 +211,18 @@ def test_prepare_report_facts_keeps_weak_spatial_wheel_findings_on_recapture_pat
 
     assert facts.location_confidence_key == "weak"
     assert facts.action_status_key == "recapture_before_acting"
+
+
+def test_prepare_report_facts_precomputes_recapture_display_guidance() -> None:
+    summary = _weak_spatial_order_summary(source="wheel/tire", order_label="1x wheel order")
+    test_run = build_test_run_from_summary(summary)
+    assert test_run is not None
+
+    facts = prepare_report_facts(summary, test_run=test_run)
+
+    assert facts.display.appendix_a.mode == "recapture"
+    assert facts.display.appendix_a.capture_issues
+    assert facts.display.appendix_a.capture_changes
+    assert facts.display.appendix_a.capture_conditions
+    assert facts.display.verdict.reason_sentence == facts.display.appendix_a.capture_issues[0]
+    assert len(facts.display.verdict.footer_routes) == 1

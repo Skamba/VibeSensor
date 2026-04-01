@@ -145,7 +145,12 @@ def _build_prepared_report_input(
     prepared_language = str(normalize_lang(language or payload.get("lang")))
     renderer_payload = build_report_renderer_payload(payload)
     report_facts = (
-        prepare_report_facts(payload, test_run=domain_test_run, warnings=warnings)
+        prepare_report_facts(
+            payload,
+            test_run=domain_test_run,
+            language=prepared_language,
+            warnings=warnings,
+        )
         if domain_test_run is not None
         else None
     )

@@ -239,3 +239,23 @@ def test_mapping_module_no_longer_reexports_raw_summary_report_builder() -> None
     import vibesensor.adapters.pdf.mapping as mapping
 
     assert not hasattr(mapping, "build_report_from_summary")
+
+
+def test_mapping_section_builders_consume_prepared_display_facts() -> None:
+    from inspect import signature
+
+    import vibesensor.adapters.pdf.mapping as mapping
+
+    verdict_params = signature(mapping._build_verdict_page_data).parameters
+    assert "verdict" in verdict_params
+    assert "aggregate" not in verdict_params
+    assert "primary" not in verdict_params
+    assert "report_facts" not in verdict_params
+
+    appendix_a_params = signature(mapping._build_appendix_a_data).parameters
+    assert "appendix" in appendix_a_params
+    assert "report_facts" not in appendix_a_params
+
+    appendix_b_params = signature(mapping._build_appendix_b_data).parameters
+    assert "appendix" in appendix_b_params
+    assert "report_facts" not in appendix_b_params

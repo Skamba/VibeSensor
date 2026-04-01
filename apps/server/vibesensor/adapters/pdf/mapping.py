@@ -1,9 +1,9 @@
 """report_mapping – thin mapper from prepared report inputs to template data.
 
-Context preparation now happens on the PDF side from the validated prepared
-report-input seam, while this module keeps focused PDF mapping logic plus the
-final renderer-facing orchestration. It receives an explicit prepared report
-input and maps it to :class:`ReportTemplateData` for the PDF renderer.
+History-side preparation owns semantic report facts and display decisions
+before the renderer boundary. This module consumes the validated prepared
+report-input seam, formats those prepared values into renderer dataclasses, and
+handles the final template-data orchestration for the PDF renderer.
 """
 
 from __future__ import annotations
@@ -75,6 +75,11 @@ from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
+from vibesensor.use_cases.history.report_display_facts import (
+    PreparedAppendixADisplay,
+    PreparedAppendixBSummaryDisplay,
+    PreparedVerdictDisplay,
+)
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportFacts,
     PreparedReportInput,
@@ -179,71 +184,6 @@ def resolve_parts_context(
     return source_for_why, order_label
 
 
-def _action_status_text(action_status_key: str, *, tr: Callable[..., str]) -> str:
-    keys = {
-        "action_ready": "REPORT_ACTION_STATUS_READY",
-        "action_ready_caution": "REPORT_ACTION_STATUS_READY_CAUTION",
-        "recapture_before_acting": "REPORT_ACTION_STATUS_RECAPTURE",
-    }
-    return tr(keys.get(action_status_key, "REPORT_ACTION_STATUS_RECAPTURE"))
-
-
-def _location_confidence_text(location_confidence_key: str, *, tr: Callable[..., str]) -> str:
-    keys = {
-        "strong": "REPORT_LOCATION_CONFIDENCE_STRONG",
-        "limited": "REPORT_LOCATION_CONFIDENCE_LIMITED",
-        "mixed": "REPORT_LOCATION_CONFIDENCE_MIXED",
-        "weak": "REPORT_LOCATION_CONFIDENCE_WEAK",
-    }
-    return tr(keys.get(location_confidence_key, "REPORT_LOCATION_CONFIDENCE_MIXED"))
-
-
-def _presented_location_confidence_key(report_facts: PreparedReportFacts) -> str:
-    if (
-        report_facts.action_status_key == "action_ready_caution"
-        and report_facts.location_confidence_key != "weak"
-    ):
-        return "limited"
-    return report_facts.location_confidence_key
-
-
-def _first_confidence_reason_clause(primary: PrimaryCandidateContext) -> str | None:
-    for clause in str(primary.certainty_reason or "").split(";"):
-        text = clause.strip().rstrip(".")
-        if text:
-            return text
-    return None
-
-
-def _location_confidence_display_text(
-    *,
-    primary: PrimaryCandidateContext,
-    report_facts: PreparedReportFacts,
-    data_trust: list[DataTrustItem],
-    tr: Callable[..., str],
-) -> str:
-    presented_key = _presented_location_confidence_key(report_facts)
-    if report_facts.action_status_key != "action_ready_caution":
-        return _location_confidence_text(presented_key, tr=tr)
-
-    reason = _first_confidence_reason_clause(primary)
-    if reason:
-        return reason
-
-    if report_facts.alternative_source_visible:
-        return tr("REPORT_LOCATION_CONFIDENCE_CLOSE_SCORES")
-
-    issue = _first_nonpass_detail(data_trust)
-    if issue:
-        return issue.rstrip(".")
-
-    dominance_ratio = report_facts.primary_candidate_facts.dominance_ratio
-    if dominance_ratio is not None:
-        return tr("REPORT_LOCATION_CONFIDENCE_RATIO_REASON", ratio=f"{dominance_ratio:.1f}")
-
-    return tr("REPORT_LOCATION_CONFIDENCE_MODERATE_DETAIL")
-
-
 def _display_location(value: object, *, short: bool = True, tr: Callable[..., str]) -> str:
     text = str(value or "").strip()
     if not text:
@@ -263,75 +203,6 @@ def _display_location(value: object, *, short: bool = True, tr: Callable[..., st
     return human_location(text, short=short)
 
 
-def _coverage_label(
-    report_facts: PreparedReportFacts,
-    *,
-    tr: Callable[..., str],
-) -> str:
-    coverage = report_facts.coverage_summary
-    expected = len(coverage.expected_locations) or len(coverage.active_locations)
-    active = len(coverage.active_locations)
-    if expected <= 0:
-        return tr("REPORT_COVERAGE_UNKNOWN")
-    if not coverage.missing_locations and not coverage.partial_locations:
-        return tr("REPORT_COVERAGE_ALL_SEEN", active=active, expected=expected)
-    if coverage.partial_locations:
-        return tr("REPORT_COVERAGE_PARTIAL", active=active, expected=expected)
-    return tr("REPORT_COVERAGE_ACTIVE_OF_EXPECTED", active=active, expected=expected)
-
-
-def _coverage_notes(
-    report_facts: PreparedReportFacts,
-    *,
-    tr: Callable[..., str],
-) -> list[str]:
-    coverage = report_facts.coverage_summary
-    notes: list[str] = []
-    if coverage.missing_locations:
-        notes.append(
-            tr(
-                "REPORT_COVERAGE_NOTE_MISSING",
-                locations=", ".join(
-                    _display_location(location, short=False, tr=tr)
-                    for location in coverage.missing_locations
-                ),
-            ),
-        )
-    if coverage.partial_locations:
-        notes.append(
-            tr(
-                "REPORT_COVERAGE_NOTE_PARTIAL",
-                locations=", ".join(
-                    _display_location(location, short=False, tr=tr)
-                    for location in coverage.partial_locations
-                ),
-            ),
-        )
-    if not notes:
-        notes.append(tr("REPORT_COVERAGE_NOTE_COMPLETE"))
-    return notes
-
-
-def _first_nonpass_detail(data_trust: list[DataTrustItem]) -> str | None:
-    for item in data_trust:
-        if item.state != "pass":
-            detail = str(item.detail or item.check).strip()
-            if detail:
-                return detail
-    return None
-
-
-def _nonpass_detail_lines(data_trust: list[DataTrustItem]) -> list[str]:
-    lines: list[str] = []
-    for item in data_trust:
-        if item.state == "pass":
-            continue
-        detail = str(item.detail or item.check).strip()
-        if detail:
-            lines.append(detail)
-    return lines
-
-
 def _confidence_pct_text(finding: Finding) -> str:
     if finding.confidence_assessment is not None:
         return finding.confidence_assessment.pct_text
@@ -343,50 +214,6 @@ def _source_with_confidence(finding: Finding, *, tr: Callable[..., str]) -> str:
         "REPORT_SOURCE_WITH_CONFIDENCE",
         source=human_source(finding.suspected_source, tr=tr),
         confidence=_confidence_pct_text(finding),
-    )
-
-
-def _runner_up_corner(
-    report_facts: PreparedReportFacts,
-    *,
-    tr: Callable[..., str],
-) -> str | None:
-    ranked_rows = sorted(
-        report_facts.active_sensor_intensity,
-        key=lambda row: (
-            row.p95_intensity_db if row.p95_intensity_db is not None else float("-inf"),
-            row.mean_intensity_db if row.mean_intensity_db is not None else float("-inf"),
-        ),
-        reverse=True,
-    )
-    if len(ranked_rows) < 2:
-        return None
-    return _display_location(ranked_rows[1].location, tr=tr)
-
-
-def _build_primary_reason_sentence(
-    primary: PrimaryCandidateContext,
-    *,
-    report_facts: PreparedReportFacts,
-    tr: Callable[..., str],
-) -> str:
-    location = _display_location(primary.primary_location, tr=tr)
-    duration = str(report_facts.duration_text or "").strip() or tr("UNKNOWN")
-    sensor_count = len(report_facts.coverage_summary.active_locations) or primary.sensor_count
-    speed_window = str(primary.primary_speed or "").strip()
-    if speed_window and speed_window != tr("UNKNOWN"):
-        return tr(
-            "REPORT_REASON_RUN_SUMMARY",
-            duration=duration,
-            location=location,
-            speed=speed_window,
-            sensors=sensor_count,
-        )
-    return tr(
-        "REPORT_REASON_RUN_SUMMARY_NO_SPEED",
-        duration=duration,
-        location=location,
-        sensors=sensor_count,
     )
 
 
@@ -681,7 +508,7 @@ def _proof_summary_text(
         return sequence_summary
     ratio = report_facts.primary_candidate_facts.dominance_ratio
     location = _display_location(primary.primary_location, tr=tr)
-    runner_up = _runner_up_corner(report_facts, tr=tr)
+    runner_up = report_facts.display.appendix_b.runner_up_corner
     if ratio is not None:
         if runner_up is not None:
             return tr(
@@ -698,246 +525,21 @@ def _proof_summary_text(
     return tr("REPORT_PROOF_SUMMARY_SIMPLE_PLAIN", location=location)
 
 
-def _proof_caveat_text(
-    primary: PrimaryCandidateContext,
-    report_facts: PreparedReportFacts,
-    *,
-    tr: Callable[..., str],
-) -> str | None:
-    if report_facts.action_status_key == "action_ready_caution":
-        return None
-    reason = (
-        str(primary.certainty_reason or "").strip()
-        if report_facts.action_status_key != "action_ready"
-        else ""
-    )
-    if reason:
-        return reason
-    key = report_facts.location_confidence_key
-    if key == "weak":
-        return tr("REPORT_PROOF_CAVEAT_WEAK")
-    if key == "mixed":
-        return tr("REPORT_PROOF_CAVEAT_MIXED")
-    return None
-
-
-def _action_status_note_text(
-    *,
-    aggregate: TestRun,
-    primary: PrimaryCandidateContext,
-    report_facts: PreparedReportFacts,
-    data_trust: list[DataTrustItem],
-    tr: Callable[..., str],
-) -> str | None:
-    if report_facts.action_status_key not in {"action_ready_caution", "recapture_before_acting"}:
-        return None
-    issue = _first_nonpass_detail(data_trust)
-    score_note: str | None = None
-    if (
-        report_facts.action_status_key == "action_ready_caution"
-        and report_facts.alternative_source_visible
-    ):
-        ranked_candidates = list(aggregate.effective_top_causes()[:2])
-        if len(ranked_candidates) > 1:
-            score_note = tr(
-                "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_SCORES",
-                primary=human_source(ranked_candidates[0].suspected_source, tr=tr),
-                primary_confidence=_confidence_pct_text(ranked_candidates[0]),
-                alternative=human_source(ranked_candidates[1].suspected_source, tr=tr),
-                alternative_confidence=_confidence_pct_text(ranked_candidates[1]),
-            )
-        else:
-            score_note = tr("REPORT_ACTION_STATUS_NOTE_GATE_CAUTION")
-    reason = score_note or _proof_caveat_text(primary, report_facts, tr=tr)
-    if issue and reason:
-        issue_norm = issue.rstrip(".")
-        reason_norm = reason.rstrip(".")
-        if reason_norm.casefold() not in issue_norm.casefold():
-            return tr(
-                "REPORT_ACTION_STATUS_NOTE_COMBINED",
-                issue=issue_norm,
-                reason=reason_norm,
-            )
-        return issue
-    return issue or reason
-
-
 def _run_limits_summary_text(
-    primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
     *,
     tr: Callable[..., str],
 ) -> str:
-    speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
+    speed_window = str(report_facts.display.verdict.speed_window_label or "").strip() or tr(
+        "UNKNOWN"
+    )
     if (
         report_facts.action_status_key == "action_ready_caution"
         and report_facts.alternative_source_visible
     ):
         return tr("REPORT_RUN_LIMITS_RECAPTURE_RECIPE", speed=speed_window)
-    note = _proof_caveat_text(primary, report_facts, tr=tr)
+    note = report_facts.display.verdict.proof_caveat
     return note or tr("REPORT_CAPTURE_ISSUE_GENERIC")
-
-
-def _check_state(
-    report_facts: PreparedReportFacts,
-    check_key: str,
-) -> str:
-    target = check_key.strip().upper()
-    for check in report_facts.suitability_checks:
-        key = str(check.get("check_key") or "").strip().upper()
-        if key == target:
-            return str(check.get("state") or "").strip().lower()
-    return ""
-
-
-def _has_warning_code(report_facts: PreparedReportFacts, code: str) -> bool:
-    target = code.strip().lower()
-    return any(
-        str(warning.get("code") or "").strip().lower() == target
-        for warning in report_facts.warnings
-    )
-
-
-def _is_transient_primary(primary: PrimaryCandidateContext) -> bool:
-    finding = primary.primary_candidate
-    if finding is None:
-        return False
-    source = str(finding.suspected_source or "").strip().lower()
-    classification = str(finding.peak_classification or "").strip().lower()
-    return source == "transient_impact" or classification == "transient"
-
-
-def _has_source_overlap(
-    aggregate: TestRun,
-    *,
-    tr: Callable[..., str],
-) -> bool:
-    ranked = list(aggregate.effective_top_causes()[:2])
-    if len(ranked) < 2:
-        return False
-    return _uses_shared_overlap_wording(ranked[0], ranked[1], tr=tr)
-
-
-def _append_unique_line(lines: list[str], text: object) -> None:
-    value = str(text or "").strip()
-    if not value:
-        return
-    normalized = value.rstrip(".").casefold()
-    if any(existing.rstrip(".").casefold() == normalized for existing in lines):
-        return
-    lines.append(value)
-
-
-def _recapture_issue_lines(
-    *,
-    aggregate: TestRun,
-    primary: PrimaryCandidateContext,
-    report_facts: PreparedReportFacts,
-    data_trust: list[DataTrustItem],
-    tr: Callable[..., str],
-) -> list[str]:
-    issues: list[str] = []
-    if _has_source_overlap(aggregate, tr=tr):
-        ranked = list(aggregate.effective_top_causes()[:2])
-        if len(ranked) > 1:
-            _append_unique_line(
-                issues,
-                tr(
-                    "REPORT_RECAPTURE_ISSUE_SOURCE_OVERLAP",
-                    primary=human_source(ranked[0].suspected_source, tr=tr),
-                    alternative=human_source(ranked[1].suspected_source, tr=tr),
-                ),
-            )
-    if report_facts.location_confidence_key == "weak":
-        _append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_WEAK_LOCATION"))
-    elif report_facts.location_confidence_key == "mixed":
-        _append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_MIXED_LOCATION"))
-    if _is_transient_primary(primary):
-        _append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_TRANSIENT"))
-    for detail in _nonpass_detail_lines(data_trust):
-        _append_unique_line(issues, detail)
-    if not issues:
-        note = _proof_caveat_text(primary, report_facts, tr=tr)
-        _append_unique_line(issues, note or tr("REPORT_CAPTURE_ISSUE_GENERIC"))
-    return issues[:4]
-
-
-def _recapture_next_steps(
-    *,
-    aggregate: TestRun,
-    primary: PrimaryCandidateContext,
-    report_facts: PreparedReportFacts,
-    tr: Callable[..., str],
-) -> list[NextStep]:
-    expected = len(report_facts.coverage_summary.expected_locations) or len(
-        report_facts.coverage_summary.active_locations
-    )
-    actions: list[str] = []
-    if _has_source_overlap(aggregate, tr=tr):
-        _append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_COMPARE_PATHS"))
-    if _check_state(report_facts, "SUITABILITY_CHECK_SPEED_VARIATION") != "pass":
-        _append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_STEADY_HOLD"))
-    if _is_transient_primary(primary):
-        _append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_REPEAT_EVENT"))
-    if (
-        report_facts.location_confidence_key in {"weak", "mixed"}
-        or _check_state(report_facts, "SUITABILITY_CHECK_SENSOR_COVERAGE") != "pass"
-    ):
-        _append_unique_line(
-            actions,
-            tr("TIER_A_CAPTURE_MORE_SENSORS"),
-        )
-    if (
-        report_facts.primary_candidate_facts.has_reference_gaps
-        or _check_state(report_facts, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS") != "pass"
-        or _has_warning_code(report_facts, "reference_context_incomplete")
-    ):
-        _append_unique_line(actions, tr("TIER_A_CAPTURE_REFERENCE_DATA"))
-    if not actions:
-        _append_unique_line(actions, tr("TIER_A_CAPTURE_WIDER_SPEED"))
-        _append_unique_line(
-            actions,
-            tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected),
-        )
-    return [NextStep(action=action) for action in actions[:4]]
-
-
-def _recapture_condition_lines(
-    *,
-    aggregate: TestRun,
-    primary: PrimaryCandidateContext,
-    report_facts: PreparedReportFacts,
-    tr: Callable[..., str],
-) -> list[str]:
-    expected = len(report_facts.coverage_summary.expected_locations) or len(
-        report_facts.coverage_summary.active_locations
-    )
-    lines: list[str] = []
-    if _check_state(report_facts, "SUITABILITY_CHECK_SPEED_VARIATION") != "pass":
-        _append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_STEADY_HOLD"))
-    if _has_source_overlap(aggregate, tr=tr):
-        _append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_COMPARE_PATHS"))
-    if _is_transient_primary(primary):
-        _append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_REPEAT_EVENT"))
-    if (
-        report_facts.location_confidence_key in {"weak", "mixed"}
-        or _check_state(report_facts, "SUITABILITY_CHECK_SENSOR_COVERAGE") != "pass"
-    ):
-        _append_unique_line(
-            lines,
-            tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected),
-        )
-    if (
-        report_facts.primary_candidate_facts.has_reference_gaps
-        or _check_state(report_facts, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS") != "pass"
-        or _has_warning_code(report_facts, "reference_context_incomplete")
-    ):
-        _append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_REFERENCE"))
-    if not lines:
-        _append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_STEADY"))
-        _append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected))
-        _append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_REFERENCE"))
-    return lines[:4]
 
 
 def _candidate_signal_text(finding: Finding, *, tr: Callable[..., str]) -> str:
@@ -976,80 +578,6 @@ def _uses_shared_overlap_wording(
         .strip()
         .lower()
     )
-
-
-def _candidate_reason_text(
-    finding: Finding,
-    *,
-    tr: Callable[..., str],
-    use_shared_overlap_wording: bool = False,
-) -> str:
-    speed_window = (
-        str(
-            finding.evidence.focused_speed_band
-            if finding.evidence and finding.evidence.focused_speed_band
-            else ""
-        ).strip()
-        or str(finding.strongest_speed_band or "").strip()
-    )
-    location = _display_location(finding.strongest_location, tr=tr)
-    signal = _candidate_signal_text(finding, tr=tr)
-    if use_shared_overlap_wording:
-        return tr(
-            "REPORT_CANDIDATE_REASON_OVERLAP",
-            signal=signal,
-            speed=speed_window or tr("UNKNOWN"),
-        )
-    if finding.weak_spatial_separation:
-        return tr(
-            "REPORT_CANDIDATE_REASON_WEAK",
-            signal=signal,
-            speed=speed_window or tr("UNKNOWN"),
-        )
-    return tr(
-        "REPORT_CANDIDATE_REASON_STRONG",
-        signal=signal,
-        location=location,
-        speed=speed_window or tr("UNKNOWN"),
-    )
-
-
-def _path_role_text(index: int, *, tr: Callable[..., str]) -> str:
-    if index == 0:
-        return tr("REPORT_PATH_ROLE_PRIMARY")
-    if index == 1:
-        return tr("REPORT_PATH_ROLE_ALTERNATIVE")
-    return tr("REPORT_PATH_ROLE_LOW_CONFIDENCE")
-
-
-def _ranked_candidates(
-    aggregate: TestRun,
-    *,
-    tr: Callable[..., str],
-) -> list[RankedCandidateRow]:
-    candidates = list(aggregate.effective_top_causes()[:3])
-    rows: list[RankedCandidateRow] = []
-    primary_finding = candidates[0] if candidates else None
-    for index, finding in enumerate(candidates):
-        use_shared_overlap_wording = (
-            index > 0
-            and primary_finding is not None
-            and _uses_shared_overlap_wording(primary_finding, finding, tr=tr)
-        )
-        rows.append(
-            RankedCandidateRow(
-                source_name=human_source(finding.suspected_source, tr=tr),
-                confidence_pct=_confidence_pct_text(finding),
-                inspect_first=_display_location(finding.strongest_location, tr=tr),
-                path_role=f"{index + 1}. {_path_role_text(index, tr=tr)}",
-                reason=_candidate_reason_text(
-                    finding,
-                    tr=tr,
-                    use_shared_overlap_wording=use_shared_overlap_wording,
-                ),
-            ),
-        )
-    return rows
 
 
 def _evidence_summary_text(
@@ -1160,22 +688,6 @@ def _context_summary_text(
         speed=speed_window,
         active=active,
         expected=expected,
-    )
-
-
-def _next_if_primary_clean(
-    aggregate: TestRun,
-    *,
-    tr: Callable[..., str],
-) -> str:
-    candidates = list(aggregate.effective_top_causes()[:2])
-    if len(candidates) < 2:
-        return tr("REPORT_PRIMARY_CLEAN_GENERIC")
-    alternative = candidates[1]
-    return tr(
-        "REPORT_PRIMARY_CLEAN_ALT",
-        source=human_source(alternative.suspected_source, tr=tr),
-        location=_display_location(alternative.strongest_location, tr=tr),
     )
 
 
@@ -1439,148 +951,66 @@ def _build_timeline_graph_data(
 
 def _build_verdict_page_data(
     *,
-    aggregate: TestRun,
-    primary: PrimaryCandidateContext,
-    report_facts: PreparedReportFacts,
-    data_trust: list[DataTrustItem],
-    duration_s: float | None,
-    tr: Callable[..., str],
+    verdict: PreparedVerdictDisplay,
+    proof_summary: str | None,
+    timeline_graph: TimelineGraphData | None,
 ) -> VerdictPageData:
-    recapture_before_acting = report_facts.action_status_key == "recapture_before_acting"
-    ranked_candidates = list(aggregate.effective_top_causes()[:2])
     return VerdictPageData(
-        speed_window_label=str(primary.primary_speed or "").strip() or None,
-        suspected_source=(
-            tr("REPORT_INCONCLUSIVE_SOURCE") if recapture_before_acting else primary.primary_system
-        ),
-        inspect_first=(
-            None if recapture_before_acting else _display_location(primary.primary_location, tr=tr)
-        ),
-        action_status=_action_status_text(report_facts.action_status_key, tr=tr),
-        action_status_note=_action_status_note_text(
-            aggregate=aggregate,
-            primary=primary,
-            report_facts=report_facts,
-            data_trust=data_trust,
-            tr=tr,
-        ),
-        reason_sentence=(
-            _recapture_issue_lines(
-                aggregate=aggregate,
-                primary=primary,
-                report_facts=report_facts,
-                data_trust=data_trust,
-                tr=tr,
-            )[0]
-            if recapture_before_acting
-            else _build_primary_reason_sentence(primary, report_facts=report_facts, tr=tr)
-        ),
-        dominant_corner=_display_location(primary.primary_location, tr=tr),
-        runner_up_corner=_runner_up_corner(report_facts, tr=tr),
-        location_confidence=_location_confidence_display_text(
-            primary=primary,
-            report_facts=report_facts,
-            data_trust=data_trust,
-            tr=tr,
-        ),
-        coverage_label=_coverage_label(report_facts, tr=tr),
-        also_consider=(
-            _source_with_confidence(ranked_candidates[1], tr=tr)
-            if not recapture_before_acting
-            and report_facts.alternative_source_visible
-            and len(ranked_candidates) > 1
-            else None
-        ),
-        proof_summary=_proof_summary_text(aggregate, primary, report_facts, tr=tr),
-        proof_caveat=_proof_caveat_text(primary, report_facts, tr=tr),
-        proof_panel_title=(
-            tr("REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE")
-            if recapture_before_acting
-            else tr("REPORT_PROOF_PANEL_TITLE")
-        ),
-        timeline_graph=_build_timeline_graph_data(report_facts, duration_s=duration_s),
-        footer_routes=(
-            (tr("REPORT_ROUTE_APPENDIX_A"),)
-            if recapture_before_acting
-            else (
-                tr("REPORT_ROUTE_APPENDIX_A"),
-                tr("REPORT_ROUTE_APPENDIX_B"),
-                tr("REPORT_ROUTE_APPENDIX_C"),
-                tr("REPORT_ROUTE_APPENDIX_D"),
-            )
-        ),
+        speed_window_label=verdict.speed_window_label,
+        suspected_source=verdict.suspected_source,
+        inspect_first=verdict.inspect_first,
+        action_status=verdict.action_status,
+        action_status_note=verdict.action_status_note,
+        reason_sentence=verdict.reason_sentence,
+        dominant_corner=verdict.dominant_corner,
+        runner_up_corner=verdict.runner_up_corner,
+        location_confidence=verdict.location_confidence,
+        coverage_label=verdict.coverage_label,
+        also_consider=verdict.also_consider,
+        proof_summary=proof_summary,
+        proof_caveat=verdict.proof_caveat,
+        proof_panel_title=verdict.proof_panel_title,
+        timeline_graph=timeline_graph,
+        footer_routes=verdict.footer_routes,
     )
 
 
 def _build_appendix_a_data(
     *,
-    aggregate: TestRun,
-    primary: PrimaryCandidateContext,
-    report_facts: PreparedReportFacts,
+    appendix: PreparedAppendixADisplay,
     next_steps: list[NextStep],
-    data_trust: list[DataTrustItem],
-    tr: Callable[..., str],
 ) -> AppendixAData:
-    ranked = _ranked_candidates(aggregate, tr=tr)
-    if report_facts.action_status_key == "recapture_before_acting":
+    if appendix.mode == "recapture":
         return AppendixAData(
             mode="recapture",
-            capture_issues=_recapture_issue_lines(
-                aggregate=aggregate,
-                primary=primary,
-                report_facts=report_facts,
-                data_trust=data_trust,
-                tr=tr,
-            ),
+            capture_issues=list(appendix.capture_issues),
             capture_changes=[step.action for step in next_steps],
-            capture_conditions=_recapture_condition_lines(
-                aggregate=aggregate,
-                primary=primary,
-                report_facts=report_facts,
-                tr=tr,
-            ),
+            capture_conditions=list(appendix.capture_conditions),
         )
-    alternative_source = (
-        tr(
-            "REPORT_SOURCE_WITH_CONFIDENCE",
-            source=ranked[1].source_name,
-            confidence=ranked[1].confidence_pct,
-        )
-        if report_facts.alternative_source_visible and len(ranked) > 1 and ranked[1].confidence_pct
-        else ranked[1].source_name
-        if report_facts.alternative_source_visible and len(ranked) > 1
-        else None
-    )
     return AppendixAData(
         mode="workflow",
-        primary_source=(
-            tr(
-                "REPORT_SOURCE_WITH_CONFIDENCE",
-                source=ranked[0].source_name,
-                confidence=ranked[0].confidence_pct,
+        primary_source=appendix.primary_source,
+        alternative_source=appendix.alternative_source,
+        why_primary_first=appendix.why_primary_first,
+        why_alternative_next=appendix.why_alternative_next,
+        next_if_clean=appendix.next_if_clean,
+        ranked_candidates=[
+            RankedCandidateRow(
+                source_name=row.source_name,
+                confidence_pct=row.confidence_pct,
+                inspect_first=row.inspect_first,
+                path_role=row.path_role,
+                reason=row.reason,
             )
-            if ranked and ranked[0].confidence_pct
-            else ranked[0].source_name
-            if ranked
-            else None
-        ),
-        alternative_source=alternative_source,
-        why_primary_first=(ranked[0].reason if ranked else None),
-        why_alternative_next=(
-            ranked[1].reason
-            if report_facts.alternative_source_visible and len(ranked) > 1
-            else None
-        ),
-        next_if_clean=_next_if_primary_clean(aggregate, tr=tr),
-        ranked_candidates=ranked,
+            for row in appendix.ranked_candidates
+        ],
     )
 
 
 def _build_appendix_b_data(
     *,
-    primary: PrimaryCandidateContext,
     aggregate: TestRun,
-    report_facts: PreparedReportFacts,
+    appendix: PreparedAppendixBSummaryDisplay,
     sensor_locations: list[str],
     sensor_intensity: list[LocationIntensitySummary],
     tr: Callable[..., str],
@@ -1592,7 +1022,6 @@ def _build_appendix_b_data(
         ),
         reverse=True,
     )
-    runner_up = ranked_rows[1].location if len(ranked_rows) > 1 else None
     intensity_rows = [
         TopologyIntensityRow(
             location=_display_location(row.location, short=False, tr=tr),
@@ -1610,21 +1039,13 @@ def _build_appendix_b_data(
         sensor_locations=sensor_locations,
         tr=tr,
     )
-    dominance_ratio = report_facts.primary_candidate_facts.dominance_ratio
     return AppendixBData(
-        dominant_corner=_display_location(primary.primary_location, tr=tr),
-        runner_up_corner=(_display_location(runner_up, tr=tr) if runner_up is not None else None),
-        dominance_ratio_text=(
-            tr("REPORT_DOMINANCE_RATIO_TEXT", ratio=f"{dominance_ratio:.2f}")
-            if dominance_ratio is not None
-            else tr("REPORT_DOMINANCE_RATIO_UNKNOWN")
-        ),
-        location_confidence=_location_confidence_text(
-            _presented_location_confidence_key(report_facts),
-            tr=tr,
-        ),
-        coverage_label=_coverage_label(report_facts, tr=tr),
-        coverage_notes=_coverage_notes(report_facts, tr=tr),
+        dominant_corner=appendix.dominant_corner,
+        runner_up_corner=appendix.runner_up_corner,
+        dominance_ratio_text=appendix.dominance_ratio_text,
+        location_confidence=appendix.location_confidence,
+        coverage_label=appendix.coverage_label,
+        coverage_notes=list(appendix.coverage_notes),
         intensity_rows=intensity_rows,
         sensor_observation_rows=sensor_observation_rows,
     )
@@ -1729,7 +1150,7 @@ def _build_appendix_c_data(
         evidence_summary=_evidence_summary_text(aggregate, primary, report_facts, tr=tr),
         measurement_guide=tr("REPORT_MEASUREMENT_GUIDE"),
         context_summary=_context_summary_text(primary, report_facts, tr=tr),
-        limits_summary=_run_limits_summary_text(primary, report_facts, tr=tr),
+        limits_summary=_run_limits_summary_text(report_facts, tr=tr),
         speed_band_summary=speed_summary,
         phase_summary=_phase_summary_text(aggregate, report_facts, tr=tr),
         observations=_observation_texts(aggregate, tr=tr),
@@ -1850,12 +1271,7 @@ def _build_report_template_data(
         tr=tr,
     )
     next_steps = (
-        _recapture_next_steps(
-            aggregate=context.domain_aggregate,
-            primary=primary,
-            report_facts=report_facts,
-            tr=tr,
-        )
+        [NextStep(action=action) for action in report_facts.display.appendix_a.capture_changes]
         if recapture_mode
         else build_next_steps(
             recommended_actions=report_facts.recommended_actions,
@@ -1889,26 +1305,20 @@ def _build_report_template_data(
         aggregate=context.domain_aggregate,
         tr=tr,
     )
+    proof_summary = _proof_summary_text(context.domain_aggregate, primary, report_facts, tr=tr)
+    timeline_graph = _build_timeline_graph_data(report_facts, duration_s=report.duration_s)
     verdict_page = _build_verdict_page_data(
-        aggregate=context.domain_aggregate,
-        primary=primary,
-        report_facts=report_facts,
-        data_trust=data_trust,
-        duration_s=report.duration_s,
-        tr=tr,
+        verdict=report_facts.display.verdict,
+        proof_summary=proof_summary,
+        timeline_graph=timeline_graph,
     )
     appendix_a = _build_appendix_a_data(
-        aggregate=context.domain_aggregate,
-        primary=primary,
-        report_facts=report_facts,
+        appendix=report_facts.display.appendix_a,
         next_steps=next_steps,
-        data_trust=data_trust,
-        tr=tr,
     )
     appendix_b = _build_appendix_b_data(
-        primary=primary,
         aggregate=context.domain_aggregate,
-        report_facts=report_facts,
+        appendix=report_facts.display.appendix_b,
         sensor_locations=context.sensor_locations_active,
         sensor_intensity=raw_sensor_intensity,
         tr=tr,

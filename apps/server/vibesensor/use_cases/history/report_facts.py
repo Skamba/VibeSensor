@@ -14,6 +14,7 @@ from vibesensor.domain import (
     VibrationOrigin,
     coerce_float,
 )
+from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.report_facts_projection import (
     report_suitability_checks,
     report_warning_payloads,
@@ -37,6 +38,10 @@ from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.history_analysis_contracts import (
     SummaryWarningResponse as SummaryWarningPayload,
+)
+from vibesensor.use_cases.history.report_display_facts import (
+    PreparedReportDisplayFacts,
+    prepare_report_display_facts,
 )
 
 
@@ -68,6 +73,7 @@ class PreparedReportFacts:
     alternative_source_visible: bool
     confidence_gap_to_alternative: float | None
     timeline_intervals: tuple[ReportTimelineInterval, ...]
+    display: PreparedReportDisplayFacts
 
 
 @dataclass(frozen=True, slots=True)
@@ -345,10 +351,12 @@ def prepare_report_facts(
     payload: Mapping[str, object],
     *,
     test_run: TestRun,
+    language: str | None = None,
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportFacts:
     """Resolve semantic report facts shared by downstream PDF mapping."""
     metadata = summary_metadata(payload)
+    prepared_language = str(normalize_lang(language or payload.get("lang")))
     sensor_locations_active = active_sensor_locations(payload)
     origin = resolve_report_origin(test_run)
     origin_location = normalize_origin_location(origin)
@@ -389,11 +397,28 @@ def prepare_report_facts(
         suitability_checks=suitability_checks,
         warnings=warning_payloads,
     )
+    duration_text = str(payload.get("record_length") or "").strip() or None
+    display = prepare_report_display_facts(
+        aggregate=test_run,
+        primary_candidate_facts=primary_candidate_facts,
+        active_sensor_intensity=active_sensor_intensity,
+        duration_text=duration_text,
+        action_status_key=action_status_key,
+        location_confidence_key=location_confidence_key,
+        alternative_source_visible=alternative_source_visible,
+        expected_locations=coverage_summary.expected_locations,
+        active_locations=coverage_summary.active_locations,
+        missing_locations=coverage_summary.missing_locations,
+        partial_locations=coverage_summary.partial_locations,
+        suitability_checks=suitability_checks,
+        warnings=warning_payloads,
+        lang=prepared_language,
+    )
     return PreparedReportFacts(
         origin=origin,
         origin_location=origin_location,
         sensor_locations_active=sensor_locations_active,
-        duration_text=str(payload.get("record_length") or "").strip() or None,
+        duration_text=duration_text,
         start_time_utc=str(payload.get("start_time_utc") or "").strip() or None,
         end_time_utc=str(payload.get("end_time_utc") or "").strip() or None,
         sample_rate_hz=(
@@ -418,4 +443,5 @@ def prepare_report_facts(
         alternative_source_visible=alternative_source_visible,
         confidence_gap_to_alternative=confidence_gap_to_alternative,
         timeline_intervals=_timeline_intervals(payload),
+        display=display,
     )
