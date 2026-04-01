@@ -48,6 +48,29 @@ def test_estimate_actions_block_height_shrinks_for_short_content() -> None:
     assert actions_h >= PANEL_HEADER_H
 
 
+def test_estimate_actions_block_height_stays_compact_for_two_preview_steps() -> None:
+    width = PAGE_W - 2 * MARGIN
+    actions_w = width - (width * 0.58) - GAP
+    data = ReportTemplateData(
+        lang="en",
+        verdict_page=VerdictPageData(),
+        next_steps=[
+            NextStep(
+                action=(
+                    "Check Rear-Left for tire damage, flat spots, belt shift, uneven wear, "
+                    "or pressure mismatch."
+                )
+            ),
+            NextStep(action="Check Rear-Left for imbalance or radial/lateral runout."),
+        ],
+    )
+
+    actions_h = _estimate_actions_block_height(data, tr=_tr, w=actions_w)
+
+    assert actions_h < 55 * mm
+    assert actions_h >= PANEL_HEADER_H
+
+
 def test_estimate_appendix_c_lower_panels_shrink_for_short_content() -> None:
     data = ReportTemplateData(
         lang="en",
