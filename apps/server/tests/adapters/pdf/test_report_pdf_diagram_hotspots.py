@@ -67,6 +67,11 @@ def _item_box(item: object) -> tuple[float, float, float, float] | None:
         width = float(getattr(item, "width", 0.0))
         height = float(getattr(item, "height", 0.0))
         return (x, y, x + width, y + height)
+    bounds_fn = getattr(item, "getBounds", None)
+    if callable(bounds_fn):
+        bounds = bounds_fn()
+        if isinstance(bounds, tuple) and len(bounds) == 4:
+            return tuple(float(value) for value in bounds)
     if hasattr(item, "text"):
         return _text_item_box(item)
     return None
