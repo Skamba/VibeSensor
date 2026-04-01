@@ -102,7 +102,6 @@ def _build(**overrides: object) -> ReportTemplateData:
         "data_trust": [],
         "pattern_evidence": PatternEvidence(),
         "peak_rows": [],
-        "version_marker": "v1.0",
         "findings": [],
         "top_causes": [],
         "sensor_intensity": [],
@@ -281,12 +280,11 @@ def test_peak_rows_passthrough() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_title_and_version_map() -> None:
-    """Title and version marker are passed through."""
-    result = _build(title="My Title", version_marker="v2.0-abc123")
+def test_title_maps() -> None:
+    """Title is passed through."""
+    result = _build(title="My Title")
 
     assert result.title == "My Title"
-    assert result.version_marker == "v2.0-abc123"
 
 
 def test_lang_comes_from_report() -> None:

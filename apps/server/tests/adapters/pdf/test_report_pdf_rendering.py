@@ -22,7 +22,6 @@ from test_support.report_helpers import (
     report_run_metadata as run_metadata,
 )
 
-from vibesensor import __version__
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.panels._panel_systems import _draw_system_card
@@ -74,35 +73,6 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
     summary = summarize_log(run_path, include_samples=False)
     assert summary["sensor_intensity_by_location"][0]["strength_bucket_distribution"]["total"] == 8
     assert build_report_pdf(map_summary(prepare_report_input(summary))).startswith(b"%PDF")
-
-
-def test_report_pdf_footer_uses_report_title_instead_of_dev_version_marker(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    monkeypatch.setenv("GIT_SHA", "a1b2c3d4e5f6")
-    run_path = tmp_path / "run_version_marker.jsonl"
-    records = [run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
-    for idx in range(8):
-        records.append(
-            sample(
-                idx,
-                speed_kmh=48.0 + idx,
-                dominant_freq_hz=16.0,
-                peak_amp_g=0.05 + (idx * 0.001),
-            ),
-        )
-    records.append(RUN_END)
-    write_jsonl(run_path, records)
-    pdf = build_report_pdf(
-        map_summary(prepare_report_input(summarize_log(run_path))),
-    )
-    marker = f"v{__version__} (a1b2c3d4)"
-    text_blob = extract_pdf_text(pdf)
-    page1_text = PdfReader(BytesIO(pdf)).pages[0].extract_text() or ""
-    assert marker not in page1_text
-    assert marker in text_blob
-    assert "VibeSensor Diagnostic Report" in page1_text
 
 
 def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> None:
