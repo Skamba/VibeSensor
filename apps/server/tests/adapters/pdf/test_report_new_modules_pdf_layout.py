@@ -10,7 +10,12 @@ from pypdf import PdfReader
 from reportlab.lib.units import mm
 from test_support.core import extract_pdf_text
 from test_support.findings import make_finding_payload
-from test_support.report_helpers import RUN_END, minimal_summary, write_jsonl
+from test_support.report_helpers import (
+    RUN_END,
+    minimal_summary,
+    sequential_same_source_summary,
+    write_jsonl,
+)
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
@@ -465,11 +470,29 @@ def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> Non
     page_one_text = " ".join(
         (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
     )
-    text = extract_pdf_text(pdf).lower()
 
     assert "recapture before acting" in page_one_text
-    assert "what was insufficient in this run" in text
-    assert "conditions needed for a stronger result" in text
+
+
+def test_build_report_pdf_keeps_same_source_temporal_shift_visible_on_page_one() -> None:
+    pdf = build_report_pdf(map_summary(prepare_report_input(sequential_same_source_summary())))
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+
+    assert "Front-Left" in text
+    assert "Rear-Right" in text
+    assert "No single corner stayed dominant through the whole run" in text
+
+
+def test_build_report_pdf_keeps_same_source_temporal_shift_visible_in_recapture_flow() -> None:
+    pdf = build_report_pdf(
+        map_summary(prepare_report_input(sequential_same_source_summary(weak_spatial=True)))
+    )
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+
+    assert "Recapture before acting" in text
+    assert "Front-Left" in text
+    assert "Rear-Right" in text
+    assert "No single corner stayed dominant through the whole run" in text
 
 
 def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:

@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from test_support.findings import make_finding_payload
 from vibesensor.domain import LocationHotspot
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
@@ -74,6 +75,117 @@ def minimal_summary(**overrides: Any) -> dict:
     }
     base.update(overrides)
     return base
+
+
+def sequential_same_source_summary(*, weak_spatial: bool = False) -> dict:
+    """Return a report-ready summary with two same-source corners in sequence."""
+    front = make_finding_payload(
+        finding_id="F_FRONT",
+        suspected_source="wheel/tire",
+        confidence=0.64,
+        strongest_location="Front Left",
+        strongest_speed_band="40-60 km/h",
+        dominant_phase="acceleration",
+        phase_evidence={"cruise_fraction": 0.0, "phases_detected": ["acceleration"]},
+        weak_spatial_separation=weak_spatial,
+        frequency_hz_or_order="1x wheel order",
+        matched_points=[
+            {
+                "speed_kmh": 48.0,
+                "predicted_hz": 10.4,
+                "matched_hz": 10.5,
+                "location": "Front Left",
+                "phase": "acceleration",
+                "amp": 0.11,
+            },
+            {
+                "speed_kmh": 54.0,
+                "predicted_hz": 11.6,
+                "matched_hz": 11.7,
+                "location": "Front Left",
+                "phase": "acceleration",
+                "amp": 0.10,
+            },
+        ],
+        confidence_label_key="CONFIDENCE_MEDIUM",
+        confidence_tone="warn",
+        confidence_pct="64%",
+        confidence_reason="Evidence first rose during acceleration.",
+    )
+    rear = make_finding_payload(
+        finding_id="F_REAR",
+        suspected_source="wheel/tire",
+        confidence=0.61,
+        strongest_location="Rear Right",
+        strongest_speed_band="70-90 km/h",
+        dominant_phase="deceleration",
+        phase_evidence={"cruise_fraction": 0.0, "phases_detected": ["deceleration"]},
+        weak_spatial_separation=weak_spatial,
+        frequency_hz_or_order="1x wheel order",
+        matched_points=[
+            {
+                "speed_kmh": 82.0,
+                "predicted_hz": 17.8,
+                "matched_hz": 17.9,
+                "location": "Rear Right",
+                "phase": "deceleration",
+                "amp": 0.10,
+            },
+            {
+                "speed_kmh": 76.0,
+                "predicted_hz": 16.4,
+                "matched_hz": 16.3,
+                "location": "Rear Right",
+                "phase": "deceleration",
+                "amp": 0.09,
+            },
+        ],
+        confidence_label_key="CONFIDENCE_MEDIUM",
+        confidence_tone="warn",
+        confidence_pct="61%",
+        confidence_reason="Evidence returned during deceleration.",
+    )
+    return minimal_summary(
+        lang="en",
+        record_length="00:18.0",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=[
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        findings=[front, rear],
+        top_causes=[front, rear],
+        speed_stats={"steady_speed": False},
+        phase_timeline=[
+            {
+                "phase": "acceleration",
+                "start_t_s": 0.0,
+                "end_t_s": 6.0,
+                "speed_min_kmh": 30.0,
+                "speed_max_kmh": 60.0,
+                "has_fault_evidence": True,
+            },
+            {
+                "phase": "cruise",
+                "start_t_s": 6.0,
+                "end_t_s": 12.0,
+                "speed_min_kmh": 60.0,
+                "speed_max_kmh": 80.0,
+                "has_fault_evidence": False,
+            },
+            {
+                "phase": "deceleration",
+                "start_t_s": 12.0,
+                "end_t_s": 18.0,
+                "speed_min_kmh": 80.0,
+                "speed_max_kmh": 40.0,
+                "has_fault_evidence": True,
+            },
+        ],
+    )
 
 
 def report_run_metadata(

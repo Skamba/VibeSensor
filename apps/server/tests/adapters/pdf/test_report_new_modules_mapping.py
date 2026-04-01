@@ -6,7 +6,12 @@ from pathlib import Path
 
 import pytest
 from test_support.findings import make_finding_payload
-from test_support.report_helpers import RUN_END, minimal_summary, write_jsonl
+from test_support.report_helpers import (
+    RUN_END,
+    minimal_summary,
+    sequential_same_source_summary,
+    write_jsonl,
+)
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
@@ -736,6 +741,31 @@ def test_map_summary_softens_same_corner_wheel_driveline_overlap_wording() -> No
     evidence_summary = data.appendix_c.evidence_summary.lower()
     assert "wheel and driveline evidence overlap" in evidence_summary
     assert "1x driveshaft also stayed strongest near front-left" not in evidence_summary
+
+
+def test_map_summary_surfaces_same_source_temporal_shift_in_page_one_and_appendix() -> None:
+    data = map_summary(prepare_report_input(sequential_same_source_summary()))
+
+    assert data.verdict_page.suspected_source == "Wheel / Tire"
+    assert data.verdict_page.inspect_first == "Front-Left"
+    assert data.verdict_page.proof_summary is not None
+    proof_summary = data.verdict_page.proof_summary
+    assert "Front-Left" in proof_summary
+    assert "Rear-Right" in proof_summary
+    assert "remained the strongest connected location" not in proof_summary
+
+    assert data.appendix_c.phase_summary is not None
+    phase_summary = data.appendix_c.phase_summary
+    assert "Front-Left" in phase_summary
+    assert "Rear-Right" in phase_summary
+    assert "acceleration" in phase_summary
+    assert "deceleration" in phase_summary
+
+    assert data.appendix_c.evidence_summary is not None
+    evidence_summary = data.appendix_c.evidence_summary
+    assert "Front-Left" in evidence_summary
+    assert "Rear-Right" in evidence_summary
+    assert "stayed strongest at Front-Left" not in evidence_summary
 
 
 def test_map_summary_builds_sensor_observation_matrix_rows() -> None:

@@ -62,10 +62,12 @@ from vibesensor.domain import (
     TestRun,
     VibrationOrigin,
     VibrationSource,
+    speed_band_sort_key,
 )
 from vibesensor.report_i18n import human_location, human_source, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
+from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportFacts,
@@ -359,12 +361,295 @@ def _build_primary_reason_sentence(
     )
 
 
+def _normalized_phase_key(value: object) -> str:
+    return str(value or "").strip().lower()
+
+
+def _ordered_timeline_phase_keys(
+    report_facts: PreparedReportFacts,
+    *,
+    fault_only: bool = False,
+) -> tuple[str, ...]:
+    phase_keys: list[str] = []
+    ordered_intervals = sorted(
+        report_facts.timeline_intervals,
+        key=lambda interval: (
+            interval.start_t_s is None,
+            interval.start_t_s or 0.0,
+            interval.end_t_s or 0.0,
+        ),
+    )
+    for interval in ordered_intervals:
+        if fault_only and not interval.has_fault_evidence:
+            continue
+        phase_key = _normalized_phase_key(interval.phase)
+        if phase_key and phase_key not in phase_keys:
+            phase_keys.append(phase_key)
+    return tuple(phase_keys)
+
+
+def _phase_label_text(
+    phase_key: str | None,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    normalized = _normalized_phase_key(phase_key)
+    if not normalized:
+        return None
+    i18n_key = PHASE_I18N_KEYS.get(normalized)
+    return tr(i18n_key) if i18n_key is not None else normalized.replace("_", " ").title()
+
+
+def _finding_phase_keys(finding: Finding) -> tuple[str, ...]:
+    phases: list[str] = []
+    for raw_phase in (finding.dominant_phase, *finding.phases_detected):
+        phase_key = _normalized_phase_key(raw_phase)
+        if phase_key and phase_key not in phases:
+            phases.append(phase_key)
+    if phases:
+        return tuple(phases)
+    for point in finding.matched_points:
+        phase_key = _normalized_phase_key(getattr(point, "phase", None))
+        if phase_key and phase_key not in phases:
+            phases.append(phase_key)
+    return tuple(phases)
+
+
+def _finding_phase_index(
+    finding: Finding,
+    report_facts: PreparedReportFacts,
+) -> int | None:
+    ordered_phase_keys = _ordered_timeline_phase_keys(report_facts)
+    if not ordered_phase_keys:
+        return None
+    indexes = [
+        ordered_phase_keys.index(phase)
+        for phase in _finding_phase_keys(finding)
+        if phase in ordered_phase_keys
+    ]
+    return min(indexes) if indexes else None
+
+
+def _finding_phase_label(
+    finding: Finding,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    ordered_phase_keys = _ordered_timeline_phase_keys(report_facts)
+    finding_phase_keys = _finding_phase_keys(finding)
+    for phase_key in ordered_phase_keys:
+        if phase_key in finding_phase_keys:
+            return _phase_label_text(phase_key, tr=tr)
+    if finding_phase_keys:
+        return _phase_label_text(finding_phase_keys[0], tr=tr)
+    return None
+
+
+def _finding_speed_window(finding: Finding) -> str | None:
+    return (
+        str(
+            finding.evidence.focused_speed_band
+            if finding.evidence is not None and finding.evidence.focused_speed_band
+            else finding.strongest_speed_band or ""
+        ).strip()
+        or None
+    )
+
+
+def _same_display_location(
+    lhs: object,
+    rhs: object,
+    *,
+    tr: Callable[..., str],
+) -> bool:
+    return (
+        _display_location(lhs, short=False, tr=tr).strip().lower()
+        == _display_location(rhs, short=False, tr=tr).strip().lower()
+    )
+
+
+def _has_same_source_temporal_shift(
+    primary_finding: Finding,
+    alternative_finding: Finding,
+    report_facts: PreparedReportFacts,
+) -> bool:
+    primary_index = _finding_phase_index(primary_finding, report_facts)
+    alternative_index = _finding_phase_index(alternative_finding, report_facts)
+    if (
+        primary_index is not None
+        and alternative_index is not None
+        and primary_index != alternative_index
+    ):
+        return True
+    primary_phases = set(_finding_phase_keys(primary_finding))
+    alternative_phases = set(_finding_phase_keys(alternative_finding))
+    if primary_phases and alternative_phases and primary_phases != alternative_phases:
+        return True
+    primary_speed = _finding_speed_window(primary_finding)
+    alternative_speed = _finding_speed_window(alternative_finding)
+    if primary_speed and alternative_speed and primary_speed != alternative_speed:
+        return True
+    return len(_ordered_timeline_phase_keys(report_facts, fault_only=True)) >= 2
+
+
+def _ordered_temporal_pair(
+    first: Finding,
+    second: Finding,
+    report_facts: PreparedReportFacts,
+) -> tuple[Finding, Finding]:
+    first_index = _finding_phase_index(first, report_facts)
+    second_index = _finding_phase_index(second, report_facts)
+    if first_index is not None and second_index is not None and first_index != second_index:
+        return (first, second) if first_index < second_index else (second, first)
+    first_speed = _finding_speed_window(first)
+    second_speed = _finding_speed_window(second)
+    if first_speed and second_speed and first_speed != second_speed:
+        return (
+            (first, second)
+            if speed_band_sort_key(first_speed) <= speed_band_sort_key(second_speed)
+            else (second, first)
+        )
+    return first, second
+
+
+def _same_source_temporal_pair(
+    aggregate: TestRun,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> tuple[Finding, Finding] | None:
+    candidates = [
+        finding
+        for finding in aggregate.effective_top_causes()[:3]
+        if str(finding.strongest_location or "").strip()
+    ]
+    if len(candidates) < 2:
+        return None
+    primary_finding = candidates[0]
+    for alternative_finding in candidates[1:]:
+        if primary_finding.source_normalized != alternative_finding.source_normalized:
+            continue
+        if _same_display_location(
+            primary_finding.strongest_location,
+            alternative_finding.strongest_location,
+            tr=tr,
+        ):
+            continue
+        if not _has_same_source_temporal_shift(
+            primary_finding,
+            alternative_finding,
+            report_facts,
+        ):
+            continue
+        return _ordered_temporal_pair(primary_finding, alternative_finding, report_facts)
+    return None
+
+
+def _same_source_temporal_proof_summary(
+    aggregate: TestRun,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    pair = _same_source_temporal_pair(aggregate, report_facts, tr=tr)
+    if pair is None:
+        return None
+    first, second = pair
+    first_location = _display_location(first.strongest_location, tr=tr)
+    second_location = _display_location(second.strongest_location, tr=tr)
+    first_phase = _finding_phase_label(first, report_facts, tr=tr)
+    second_phase = _finding_phase_label(second, report_facts, tr=tr)
+    if first_phase and second_phase and first_phase != second_phase:
+        return tr(
+            "REPORT_PROOF_SUMMARY_SEQUENTIAL_PHASES",
+            first_location=first_location,
+            first_phase=first_phase,
+            second_location=second_location,
+            second_phase=second_phase,
+        )
+    return tr(
+        "REPORT_PROOF_SUMMARY_SEQUENTIAL_GENERIC",
+        first_location=first_location,
+        second_location=second_location,
+    )
+
+
+def _same_source_temporal_evidence_summary(
+    aggregate: TestRun,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    pair = _same_source_temporal_pair(aggregate, report_facts, tr=tr)
+    if pair is None:
+        return None
+    first, second = pair
+    source = human_source(first.suspected_source, tr=tr)
+    first_location = _display_location(first.strongest_location, tr=tr)
+    second_location = _display_location(second.strongest_location, tr=tr)
+    first_phase = _finding_phase_label(first, report_facts, tr=tr)
+    second_phase = _finding_phase_label(second, report_facts, tr=tr)
+    if first_phase and second_phase and first_phase != second_phase:
+        return tr(
+            "REPORT_EVIDENCE_SUMMARY_SEQUENTIAL_PHASES",
+            source=source,
+            first_location=first_location,
+            first_phase=first_phase,
+            second_location=second_location,
+            second_phase=second_phase,
+        )
+    return tr(
+        "REPORT_EVIDENCE_SUMMARY_SEQUENTIAL_GENERIC",
+        source=source,
+        first_location=first_location,
+        second_location=second_location,
+    )
+
+
+def _same_source_temporal_phase_summary(
+    aggregate: TestRun,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    pair = _same_source_temporal_pair(aggregate, report_facts, tr=tr)
+    if pair is None:
+        return None
+    first, second = pair
+    first_location = _display_location(first.strongest_location, tr=tr)
+    second_location = _display_location(second.strongest_location, tr=tr)
+    first_phase = _finding_phase_label(first, report_facts, tr=tr)
+    second_phase = _finding_phase_label(second, report_facts, tr=tr)
+    if first_phase and second_phase and first_phase != second_phase:
+        return tr(
+            "REPORT_PHASE_SUMMARY_SEQUENTIAL_PHASES",
+            first_location=first_location,
+            first_phase=first_phase,
+            second_location=second_location,
+            second_phase=second_phase,
+        )
+    return tr(
+        "REPORT_PHASE_SUMMARY_SEQUENTIAL_GENERIC",
+        first_location=first_location,
+        second_location=second_location,
+    )
+
+
 def _proof_summary_text(
+    aggregate: TestRun,
     primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
     *,
     tr: Callable[..., str],
 ) -> str:
+    sequence_summary = _same_source_temporal_proof_summary(
+        aggregate,
+        report_facts,
+        tr=tr,
+    )
+    if sequence_summary is not None:
+        return sequence_summary
     ratio = report_facts.primary_candidate_facts.dominance_ratio
     location = _display_location(primary.primary_location, tr=tr)
     runner_up = _runner_up_corner(report_facts, tr=tr)
@@ -588,6 +873,13 @@ def _evidence_summary_text(
     speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
     source = primary.primary_system
     location = _display_location(primary.primary_location, tr=tr)
+    sequential_summary = _same_source_temporal_evidence_summary(
+        aggregate,
+        report_facts,
+        tr=tr,
+    )
+    if sequential_summary is not None:
+        return sequential_summary
     alternative = (
         human_source(report_facts.alternative_source, tr=tr)
         if report_facts.alternative_source_visible and report_facts.alternative_source is not None
@@ -828,7 +1120,19 @@ def _evidence_chain_rows(
     return rows
 
 
-def _phase_summary_text(aggregate: TestRun, *, tr: Callable[..., str]) -> str:
+def _phase_summary_text(
+    aggregate: TestRun,
+    report_facts: PreparedReportFacts,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    sequential_summary = _same_source_temporal_phase_summary(
+        aggregate,
+        report_facts,
+        tr=tr,
+    )
+    if sequential_summary is not None:
+        return sequential_summary
     phases: list[str] = []
     for finding in aggregate.effective_top_causes():
         for phase in finding.phases_detected:
@@ -990,7 +1294,7 @@ def _build_verdict_page_data(
             and len(ranked_candidates) > 1
             else None
         ),
-        proof_summary=_proof_summary_text(primary, report_facts, tr=tr),
+        proof_summary=_proof_summary_text(aggregate, primary, report_facts, tr=tr),
         proof_caveat=_proof_caveat_text(primary, report_facts, tr=tr),
         proof_panel_title=(
             tr("REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE")
@@ -1218,7 +1522,7 @@ def _build_appendix_c_data(
         context_summary=_context_summary_text(primary, report_facts, tr=tr),
         limits_summary=_run_limits_summary_text(primary, report_facts, tr=tr),
         speed_band_summary=speed_summary,
-        phase_summary=_phase_summary_text(aggregate, tr=tr),
+        phase_summary=_phase_summary_text(aggregate, report_facts, tr=tr),
         observations=_observation_texts(aggregate, tr=tr),
         suitability_items=data_trust,
     )
