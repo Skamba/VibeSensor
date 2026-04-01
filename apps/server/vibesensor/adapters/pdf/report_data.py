@@ -27,6 +27,8 @@ __all__ = [
     "ReportTemplateData",
     "RankedCandidateRow",
     "SystemFindingCard",
+    "SensorObservationCell",
+    "SensorObservationMatrixRow",
     "TimelineGraphData",
     "TimelineGraphInterval",
     "TopologyIntensityRow",
@@ -226,6 +228,23 @@ class TopologyIntensityRow:
 
 
 @dataclass
+class SensorObservationCell:
+    """One per-sensor relative observation cell for a signal row."""
+
+    location: str = ""
+    relative_level_db: float | None = None
+
+
+@dataclass
+class SensorObservationMatrixRow:
+    """One detected signal row in the Appendix B sensor-observation matrix."""
+
+    source_name: str = ""
+    signal_label: str = ""
+    sensor_levels: list[SensorObservationCell] = field(default_factory=list)
+
+
+@dataclass
 class MeasurementRow:
     """One supporting-measurement row in the evidence appendix."""
 
@@ -271,7 +290,7 @@ class AppendixAData:
 
 @dataclass
 class AppendixBData:
-    """Spatial-proof appendix content."""
+    """Spatial-proof appendix content and sensor-by-signal view."""
 
     dominant_corner: str | None = None
     runner_up_corner: str | None = None
@@ -280,6 +299,7 @@ class AppendixBData:
     coverage_label: str | None = None
     coverage_notes: list[str] = field(default_factory=list)
     intensity_rows: list[TopologyIntensityRow] = field(default_factory=list)
+    sensor_observation_rows: list[SensorObservationMatrixRow] = field(default_factory=list)
 
 
 @dataclass

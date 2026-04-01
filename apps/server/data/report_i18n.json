@@ -1843,6 +1843,14 @@
     "en": "Location snapshot (context p95 dB)",
     "nl": "Locatiesnapshot (context p95 dB)"
   },
+  "REPORT_SENSOR_OBSERVATION_MATRIX_TITLE": {
+    "en": "Sensor-by-sensor signal view",
+    "nl": "Signaalbeeld per sensor"
+  },
+  "REPORT_SENSOR_OBSERVATION_MATRIX_NOTE": {
+    "en": "Cells show each sensor's matched p95 level for that signal relative to the strongest sensor in the row. 0 dB = strongest sensor; lower values mean weaker observation; — = no matched observation retained.",
+    "nl": "Cellen tonen per signaal het gematchte p95-niveau van elke sensor ten opzichte van de sterkste sensor in die regel. 0 dB = sterkste sensor; lagere waarden betekenen zwakkere waarneming; — = geen bewaarde matchwaarneming."
+  },
   "REPORT_LOCATION_COLUMN": {
     "en": "Location",
     "nl": "Locatie"
