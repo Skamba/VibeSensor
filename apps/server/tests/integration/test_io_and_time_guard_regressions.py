@@ -6,7 +6,7 @@ Covers:
   3. gps_speed.resolve_speed() – TOCTOU snapshot of speed_mps
   4. gps_speed._is_gps_stale() – TOCTOU snapshot of last_update_ts
   5. report_cli.main() – PDF generation errors return 1 instead of traceback
-  6. report_mapping_pipeline date_str – includes UTC suffix
+  6. report_mapping_pipeline date_str – uses recorded offset with UTC fallback
 """
 
 from __future__ import annotations
@@ -223,26 +223,22 @@ class TestReportCliErrorHandling:
 
 
 # ------------------------------------------------------------------
-# 6. report_mapping_pipeline – UTC suffix on date_str
+# 6. report_mapping_pipeline – recorded offset on date_str
 # ------------------------------------------------------------------
 
 
-class TestReportDataBuilderUTCSuffix:
-    """date_str in report data must end with ' UTC'."""
+class TestReportDataBuilderRecordedTimezone:
+    """date_str should prefer the recorded offset while keeping a UTC fallback."""
 
-    def test_date_str_has_utc_suffix(self) -> None:
+    def test_date_str_uses_recorded_offset_when_present(self) -> None:
         summary = _make_summary(
             "2025-06-01T14:30:00Z",
-            metadata={"car_name": "TestCar"},
+            metadata={"car_name": "TestCar", "recorded_utc_offset_seconds": 7200},
         )
         result = map_summary(prepare_report_input(summary))
-        assert result.run_datetime is not None
-        assert result.run_datetime.endswith(" UTC"), (
-            f"Expected UTC suffix, got: {result.run_datetime!r}"
-        )
-        assert "2025-06-01 14:30:00" in result.run_datetime
+        assert result.run_datetime == "2025-06-01 16:30:00 UTC+02:00"
 
-    def test_date_str_no_tz_input_still_has_utc(self) -> None:
+    def test_date_str_falls_back_to_utc_when_offset_missing(self) -> None:
         summary = _make_summary("2025-03-15T09:45:22")
         result = map_summary(prepare_report_input(summary))
         assert result.run_datetime == "2025-03-15 09:45:22 UTC"

@@ -197,11 +197,12 @@ def test_map_summary_formats_report_timestamps_for_header() -> None:
         report_date="2026-03-25T10:00:00Z",
         start_time_utc="2026-03-25T09:55:00.536855+00:00",
         end_time_utc="2026-03-25T10:00:11.901770+00:00",
+        metadata={"recorded_utc_offset_seconds": 7200},
     )
 
     data = map_summary(prepare_report_input(summary))
 
-    assert data.run_datetime == "2026-03-25 10:00:00 UTC"
+    assert data.run_datetime == "2026-03-25 12:00:00 UTC+02:00"
     assert data.start_time_utc == "2026-03-25 09:55:00 UTC"
     assert data.end_time_utc == "2026-03-25 10:00:11 UTC"
 

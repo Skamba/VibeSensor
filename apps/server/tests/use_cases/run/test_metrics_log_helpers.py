@@ -669,6 +669,21 @@ def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
     assert active_car_snapshot["name"] == "Primary"
 
 
+def test_run_metadata_captures_recorded_utc_offset(
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    logger = make_logger()
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run._recorder_types.current_utc_offset_seconds",
+        lambda: 7200,
+    )
+
+    metadata = _build_run_metadata_record(logger, "run-1", "2026-01-01T00:00:00Z")
+
+    assert metadata["recorded_utc_offset_seconds"] == 7200
+
+
 def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, persist_history_db=True)

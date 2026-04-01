@@ -11,7 +11,11 @@ from vibesensor.shared.boundaries.report_renderer_payload import (
 def test_build_report_renderer_payload_cleans_metadata_and_date() -> None:
     payload = {
         "run_id": "run-123",
-        "metadata": {"car_name": "  Track Car  ", "car_type": " coupe "},
+        "metadata": {
+            "car_name": "  Track Car  ",
+            "car_type": " coupe ",
+            "recorded_utc_offset_seconds": "7200",
+        },
         "report_date": " 2026-03-25T10:00:00Z ",
     }
 
@@ -26,6 +30,7 @@ def test_build_report_renderer_payload_cleans_metadata_and_date() -> None:
         sample_count=0,
         sensor_count=0,
         peak_table_rows=(),
+        recorded_utc_offset_seconds=7200,
     )
 
 
@@ -82,3 +87,14 @@ def test_build_report_renderer_payload_keeps_peak_table_rows() -> None:
         {"rank": 1, "strength_db": 12.0},
         {"rank": 2, "strength_db": 8.5},
     )
+
+
+def test_build_report_renderer_payload_drops_invalid_recorded_offset() -> None:
+    renderer_payload = build_report_renderer_payload(
+        {
+            "run_id": "bad-offset",
+            "metadata": {"recorded_utc_offset_seconds": "bad"},
+        },
+    )
+
+    assert renderer_payload.recorded_utc_offset_seconds is None
