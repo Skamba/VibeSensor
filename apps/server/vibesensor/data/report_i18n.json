@@ -1687,6 +1687,10 @@
     "en": "{signal} stayed strongest near {location} in the {speed} window.",
     "nl": "{signal} bleef het sterkst bij {location} in het venster {speed}."
   },
+  "REPORT_CANDIDATE_REASON_OVERLAP": {
+    "en": "{signal} remains in scope because wheel and driveline evidence overlap in the {speed} window, so inspect it only if the primary path is clean.",
+    "nl": "{signal} blijft relevant omdat wiel- en aandrijflijnbewijs elkaar overlappen in het venster {speed}, dus inspecteer dit alleen als het primaire pad niets oplevert."
+  },
   "REPORT_CANDIDATE_REASON_WEAK": {
     "en": "{signal} is still in scope, but spatial separation stayed weak in the {speed} window.",
     "nl": "{signal} blijft relevant, maar de ruimtelijke scheiding bleef zwak in het venster {speed}."
@@ -1802,6 +1806,10 @@
   "REPORT_EVIDENCE_SUMMARY_ALT_DETAILED": {
     "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}. {alternative_signal} also stayed strongest near {alternative_location} in the {alternative_speed} band, so {alternative} remains the next path if the primary inspection is clean.",
     "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. {alternative_signal} bleef ook het sterkst bij {alternative_location} in de band {alternative_speed}, dus {alternative} blijft het volgende pad als de eerste inspectie niets oplevert."
+  },
+  "REPORT_EVIDENCE_SUMMARY_ALT_OVERLAP": {
+    "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}. Wheel and driveline evidence overlap in that same band, so {alternative} remains the next path only if the primary inspection is clean.",
+    "nl": "{source} matchte {matches} bewijsvensters in de band {speed} en bleef het sterkst bij {location}. Wiel- en aandrijflijnbewijs overlappen in diezelfde band, dus {alternative} blijft alleen het volgende pad als de eerste inspectie niets oplevert."
   },
   "REPORT_EVIDENCE_SUMMARY_SIMPLE": {
     "en": "{source} matched {matches} evidence windows in the {speed} band and stayed strongest at {location}.",
