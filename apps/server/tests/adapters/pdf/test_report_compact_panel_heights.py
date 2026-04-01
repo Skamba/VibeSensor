@@ -169,7 +169,6 @@ def test_estimate_appendix_c_lower_panels_stay_tighter_for_unbalanced_card_conte
                 ReportLabelValueRow(label="Firmware Version", value="sim-0.2"),
                 ReportLabelValueRow(label="Analysis rows", value="124"),
                 ReportLabelValueRow(label="Raw Sample Rate (Hz)", value="800"),
-                ReportLabelValueRow(label="Report version", value="v0.0.0-dev"),
             ],
         ),
     )

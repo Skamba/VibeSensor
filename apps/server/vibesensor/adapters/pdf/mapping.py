@@ -9,10 +9,8 @@ input and maps it to :class:`ReportTemplateData` for the PDF renderer.
 from __future__ import annotations
 
 import logging
-import os
 from collections.abc import Callable
 
-from vibesensor import __version__
 from vibesensor.adapters.pdf._candidate_resolver import (
     PrimaryCandidateContext,
     resolve_primary_report_candidate,
@@ -166,12 +164,6 @@ def resolve_parts_context(
     else:
         order_label = None
     return source_for_why, order_label
-
-
-def build_version_marker() -> str:
-    """Return the report version marker including the short git sha when present."""
-    git_sha = str(os.getenv("GIT_SHA", "")).strip()
-    return f"v{__version__} ({git_sha[:8]})" if git_sha else f"v{__version__}"
 
 
 def _action_status_text(action_status_key: str, *, tr: Callable[..., str]) -> str:
@@ -1048,7 +1040,6 @@ def _build_appendix_d_data(
     *,
     context: ReportMappingContext,
     report: Report,
-    version_marker: str,
     tr: Callable[..., str],
 ) -> AppendixDData:
     rows = [
@@ -1072,7 +1063,6 @@ def _build_appendix_d_data(
                 label=tr("RAW_SAMPLE_RATE_HZ_LABEL"),
                 value=context.sample_rate_hz or tr("UNKNOWN"),
             ),
-            ReportLabelValueRow(label=tr("REPORT_VERSION"), value=version_marker),
         ]
     )
     return AppendixDData(rows=rows)
@@ -1182,7 +1172,6 @@ def _build_report_template_data(
         lang=lang,
         tr=tr,
     )
-    version_marker = build_version_marker()
     measurements = _measurement_rows(
         prepared,
         aggregate=context.domain_aggregate,
@@ -1220,7 +1209,6 @@ def _build_report_template_data(
     appendix_d = _build_appendix_d_data(
         context=context,
         report=report,
-        version_marker=version_marker,
         tr=tr,
     )
 
@@ -1235,7 +1223,6 @@ def _build_report_template_data(
         data_trust=data_trust,
         pattern_evidence=pattern_evidence,
         peak_rows=peak_rows,
-        version_marker=version_marker,
         findings=findings,
         top_causes=top_causes,
         sensor_intensity=raw_sensor_intensity,
