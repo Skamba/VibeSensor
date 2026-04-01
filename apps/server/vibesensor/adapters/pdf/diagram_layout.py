@@ -29,6 +29,10 @@ class MarkerRenderPlan:
     stroke: str
     stroke_width: float
     radius: float
+    mid_fill: str
+    mid_radius: float
+    outer_fill: str
+    outer_radius: float
 
 
 @dataclass(frozen=True)
@@ -94,6 +98,53 @@ def bounds_overflow(
     bottom = max(0.0, margin - box[1])
     top = max(0.0, box[3] - (height - margin))
     return left + right + bottom + top
+
+
+def _clamp_unit(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def _hex_to_rgb(value: str) -> tuple[int, int, int]:
+    token = value.strip().lstrip("#")
+    if len(token) != 6:
+        raise ValueError(f"Expected a 6-digit hex color, got {value!r}")
+    return (int(token[0:2], 16), int(token[2:4], 16), int(token[4:6], 16))
+
+
+def _blend_hex(base: str, target: str, *, target_weight: float) -> str:
+    weight = _clamp_unit(target_weight)
+    base_rgb = _hex_to_rgb(base)
+    target_rgb = _hex_to_rgb(target)
+    mixed = tuple(
+        round((base_rgb[idx] * (1.0 - weight)) + (target_rgb[idx] * weight)) for idx in range(3)
+    )
+    return f"#{mixed[0]:02x}{mixed[1]:02x}{mixed[2]:02x}"
+
+
+def _gradient_layers(
+    *,
+    base_fill: str,
+    core_radius: float,
+    emphasis: float,
+    state: MarkerState,
+) -> tuple[str, float, str, float]:
+    normalized = _clamp_unit(emphasis)
+    if state == "connected-active":
+        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.46 - (normalized * 0.16))
+        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.74 - (normalized * 0.24))
+        mid_radius = core_radius + 1.3 + (normalized * 0.3)
+        outer_radius = mid_radius + 1.6 + (normalized * 0.5)
+    elif state == "connected-inactive":
+        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.58)
+        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.82)
+        mid_radius = core_radius + 1.1
+        outer_radius = mid_radius + 1.4
+    else:
+        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.38)
+        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.66)
+        mid_radius = core_radius + 0.9
+        outer_radius = mid_radius + 1.1
+    return (mid_fill, mid_radius, outer_fill, outer_radius)
 
 
 # ── Marker state resolution ─────────────────────────────────────────────────
@@ -207,19 +258,21 @@ def build_sensor_render_plan(
     active_count = sum(1 for value in states.values() if value == "connected-active")
     single_sensor = active_count == 1 and (min_amp is None or min_amp == max_amp)
 
-    def active_radius(name: str, *, highlighted: bool) -> float:
+    def intensity_emphasis(name: str) -> float:
+        if name not in amp_by_location:
+            return 0.45
         if min_amp is None or max_amp is None or min_amp == max_amp:
-            return 6.8 if highlighted else 5.2
-        amp = amp_by_location.get(name)
-        if amp is None:
-            return 6.8 if highlighted else 5.2
-        normalized = (amp - min_amp) / (max_amp - min_amp)
+            return 1.0
+        amp = amp_by_location[name]
+        return _clamp_unit((amp - min_amp) / (max_amp - min_amp))
+
+    def active_radius(name: str, *, highlighted: bool) -> float:
+        normalized = intensity_emphasis(name)
         if highlighted:
-            return 6.2 + (normalized * 0.9)
-        return 4.8 + (normalized * 1.1)
+            return 5.4 + (normalized * 0.7)
+        return 4.6 + (normalized * 0.9)
 
     markers: list[MarkerRenderPlan] = []
-    occupied_boxes: list[tuple[float, float, float, float]] = []
     for name, (px, py) in location_points.items():
         state = states[name]
         if state == "connected-active":
@@ -232,12 +285,19 @@ def build_sensor_render_plan(
             stroke_width = 0.8
         elif state == "connected-inactive":
             fill = highlight.get(name, colors["surface_alt"])
-            radius = 4.8
-            stroke_width = 0.8
+            radius = 4.4
+            stroke_width = 0.7
         else:
-            fill = "#e3e8f1"
-            radius = 4.0
+            fill = "#d8dfea"
+            radius = 3.6
             stroke_width = 0.6
+        emphasis = intensity_emphasis(name) if state == "connected-active" else 0.45
+        mid_fill, mid_radius, outer_fill, outer_radius = _gradient_layers(
+            base_fill=fill,
+            core_radius=radius,
+            emphasis=emphasis,
+            state=state,
+        )
         marker = MarkerRenderPlan(
             name=name,
             x=px,
@@ -247,47 +307,13 @@ def build_sensor_render_plan(
             stroke=fill,
             stroke_width=stroke_width,
             radius=radius,
+            mid_fill=mid_fill,
+            mid_radius=mid_radius,
+            outer_fill=outer_fill,
+            outer_radius=outer_radius,
         )
         markers.append(marker)
-        occupied_boxes.append(
-            (px - radius - 1.0, py - radius - 1.0, px + radius + 1.0, py + radius + 1.0),
-        )
-
-    marker_by_name = {marker.name: marker for marker in markers}
-    labels: list[LabelRenderPlan] = []
-    label_states = frozenset({"connected-active", "connected-inactive"})
-    labeled_names = {
-        marker.name
-        for marker in markers
-        if marker.state in label_states or marker.name in highlight
-    }
-    for name in sorted(
-        labeled_names,
-        key=lambda value: (location_points[value][1], location_points[value][0]),
-    ):
-        px, py = location_points[name]
-        found_marker = marker_by_name.get(name)
-        if found_marker is None:
-            continue
-        if found_marker.state == "connected-active":
-            color = colors["ink"]
-        elif found_marker.state == "connected-inactive":
-            color = colors["text_secondary"]
-        else:
-            color = colors["text_muted"]
-        label = choose_label_plan(
-            name=name,
-            px=px,
-            py=py,
-            width=drawing_width,
-            height=drawing_height,
-            occupied_boxes=occupied_boxes,
-            font_size=6.8,
-            color=color,
-        )
-        labels.append(label)
-        occupied_boxes.append(label.bbox)
-    return markers, labels, single_sensor
+    return markers, [], single_sensor
 
 
 # ── Location canonicalization ────────────────────────────────────────────────

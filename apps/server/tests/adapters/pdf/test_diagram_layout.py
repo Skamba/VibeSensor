@@ -180,7 +180,10 @@ def test_build_sensor_render_plan_single_sensor() -> None:
     )
     assert single is True
     assert len(markers) == 1
+    assert labels == []
     assert markers[0].fill == "#ff0000"
+    assert markers[0].outer_radius > markers[0].mid_radius > markers[0].radius
+    assert markers[0].outer_fill != markers[0].fill
 
 
 def test_build_sensor_render_plan_multiple_sensors() -> None:
@@ -199,7 +202,9 @@ def test_build_sensor_render_plan_multiple_sensors() -> None:
     )
     assert single is False
     assert len(markers) == 2
-    assert len(labels) == 2
+    assert labels == []
+    assert markers[0].outer_radius > markers[0].mid_radius > markers[0].radius
+    assert markers[1].outer_radius > markers[1].mid_radius > markers[1].radius
 
 
 # ── canonical_location ───────────────────────────────────────────────────────

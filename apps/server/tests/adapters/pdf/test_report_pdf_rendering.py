@@ -264,7 +264,7 @@ def test_report_pdf_compacts_actionable_system_cards() -> None:
     assert long_location not in text
 
 
-def test_car_diagram_wheel_labels_stay_within_bounds_without_overlap() -> None:
+def test_car_diagram_omits_sensor_labels() -> None:
     diagram = car_location_diagram(
         [{"strongest_location": "front-left wheel", "suspected_source": "wheel/tire"}],
         {
@@ -285,6 +285,17 @@ def test_car_diagram_wheel_labels_stay_within_bounds_without_overlap() -> None:
     labels = [
         item
         for item in diagram.contents
-        if hasattr(item, "text") and str(getattr(item, "text", "")).endswith("wheel")
+        if hasattr(item, "text")
+        and str(getattr(item, "text", ""))
+        in {
+            "front-left wheel",
+            "front-right wheel",
+            "rear-left wheel",
+            "rear-right wheel",
+            "engine bay",
+            "driver seat",
+            "driveshaft tunnel",
+            "trunk",
+        }
     ]
-    assert len(labels) == 4
+    assert labels == []
