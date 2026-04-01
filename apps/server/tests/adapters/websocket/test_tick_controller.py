@@ -8,7 +8,10 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.adapters.websocket.tick_controller import BroadcastTickController
+from vibesensor.adapters.websocket.tick_controller import (
+    BroadcastTickController,
+    BroadcastTickLoopFailure,
+)
 
 
 @pytest.mark.asyncio
@@ -66,20 +69,19 @@ async def test_controller_on_tick_exception_logs_warning_and_continues(caplog) -
 
 
 @pytest.mark.asyncio
-async def test_controller_backs_off_after_consecutive_failures(caplog) -> None:
+async def test_controller_escalates_after_consecutive_failures(caplog) -> None:
     logger = logging.getLogger("vibesensor.adapters.websocket.hub")
     controller = BroadcastTickController(
         hz=10,
         logger=logger,
         max_consecutive_failures=2,
-        backoff_multiplier=5,
     )
     sleep_calls: list[float] = []
+    original_sleep = asyncio.sleep
 
     async def fake_sleep(duration: float) -> None:
         sleep_calls.append(duration)
-        if len(sleep_calls) >= 2:
-            raise asyncio.CancelledError
+        await original_sleep(0)
 
     async def failing_broadcast() -> None:
         raise RuntimeError("boom")
@@ -90,14 +92,13 @@ async def test_controller_backs_off_after_consecutive_failures(caplog) -> None:
             side_effect=fake_sleep,
         ),
         caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"),
-        pytest.raises(asyncio.CancelledError),
+        pytest.raises(BroadcastTickLoopFailure, match="2 consecutive times"),
     ):
         await controller.run(broadcast_tick=failing_broadcast)
 
-    assert sleep_calls[0] == pytest.approx(0.1, rel=0.2)
-    assert sleep_calls[1] == pytest.approx(0.5, rel=0.01)
+    assert sleep_calls == [pytest.approx(0.1, rel=0.2)]
     assert any("1 consecutive" in record.message for record in caplog.records)
-    assert any("2 consecutive times; backing off." in record.message for record in caplog.records)
+    assert any("2 consecutive times; escalating." in record.message for record in caplog.records)
 
 
 @pytest.mark.asyncio
