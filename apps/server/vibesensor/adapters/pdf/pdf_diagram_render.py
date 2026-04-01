@@ -68,6 +68,27 @@ def _build_sensor_render_plan(
     )
 
 
+def _fit_vehicle_shell_rect(
+    *, drawing_width: float, drawing_height: float
+) -> tuple[float, float, float, float]:
+    vehicle_ratio = _BMW_WIDTH_MM / _BMW_LENGTH_MM
+    horizontal_pad = max(12.0, drawing_width * 0.10)
+    orientation_reserve = 20.0
+    top_bottom_pad = 12.0
+    box_w = max(44.0, drawing_width - (2.0 * horizontal_pad))
+    box_h = max(92.0, drawing_height - (2.0 * orientation_reserve) - top_bottom_pad)
+    box_ratio = box_w / box_h if box_h > 0 else vehicle_ratio
+    if box_ratio > vehicle_ratio:
+        car_h = box_h
+        car_w = car_h * vehicle_ratio
+    else:
+        car_w = box_w
+        car_h = car_w / vehicle_ratio
+    x0 = (drawing_width - car_w) / 2.0
+    y0 = orientation_reserve + ((box_h - car_h) / 2.0)
+    return (x0, y0, car_w, car_h)
+
+
 # ── Canvas drawing functions ─────────────────────────────────────────────────
 
 
@@ -87,14 +108,21 @@ def _draw_vehicle_shell(
     from reportlab.graphics.shapes import Circle, Line, Rect, String
 
     center_x = x0 + (car_w / 2)
+    body_corner = max(12.0, car_w * 0.16)
+    cabin_corner = max(9.0, car_w * 0.11)
+    wheel_radius = max(7.0, car_w * 0.09)
+    cabin_x = x0 + (car_w * 0.21)
+    cabin_y = y0 + (car_h * 0.24)
+    cabin_w = car_w * 0.58
+    cabin_h = car_h * 0.52
     drawing.add(
         Rect(
             x0,
             y0,
             car_w,
             car_h,
-            rx=24,
-            ry=24,
+            rx=body_corner,
+            ry=body_corner,
             fillColor=color_surface,
             strokeColor=color_border,
             strokeWidth=1.4,
@@ -102,25 +130,117 @@ def _draw_vehicle_shell(
     )
     drawing.add(
         Rect(
-            x0 + (car_w * 0.08),
-            y0 + (car_h * 0.10),
-            car_w * 0.84,
-            car_h * 0.80,
-            rx=16,
-            ry=16,
+            cabin_x,
+            cabin_y,
+            cabin_w,
+            cabin_h,
+            rx=cabin_corner,
+            ry=cabin_corner,
             fillColor=hex_color("#ffffff"),
+            strokeColor=color_row_border,
+            strokeWidth=0.8,
+        ),
+    )
+    drawing.add(
+        Line(
+            center_x,
+            y0 + (car_h * 0.10),
+            center_x,
+            y0 + car_h - (car_h * 0.10),
+            strokeColor=color_row_border,
+            strokeWidth=0.8,
+        ),
+    )
+    roof_x0 = cabin_x + (cabin_w * 0.10)
+    roof_x1 = cabin_x + (cabin_w * 0.90)
+    hood_y = y0 + (car_h * 0.77)
+    hatch_y = y0 + (car_h * 0.23)
+    drawing.add(
+        Line(
+            roof_x0,
+            hood_y,
+            roof_x1,
+            hood_y,
             strokeColor=color_row_border,
             strokeWidth=0.7,
         ),
     )
     drawing.add(
         Line(
-            center_x,
-            y0 + 18,
-            center_x,
-            y0 + car_h - 18,
+            roof_x0,
+            hatch_y,
+            roof_x1,
+            hatch_y,
             strokeColor=color_row_border,
-            strokeWidth=0.8,
+            strokeWidth=0.7,
+        ),
+    )
+    front_cap_y = y0 + (car_h * 0.90)
+    rear_cap_y = y0 + (car_h * 0.10)
+    shoulder_left = x0 + (car_w * 0.15)
+    shoulder_right = x0 + (car_w * 0.85)
+    drawing.add(
+        Line(
+            shoulder_left,
+            front_cap_y,
+            roof_x0,
+            hood_y,
+            strokeColor=color_row_border,
+            strokeWidth=0.7,
+        ),
+    )
+    drawing.add(
+        Line(
+            shoulder_right,
+            front_cap_y,
+            roof_x1,
+            hood_y,
+            strokeColor=color_row_border,
+            strokeWidth=0.7,
+        ),
+    )
+    drawing.add(
+        Line(
+            shoulder_left,
+            rear_cap_y,
+            roof_x0,
+            hatch_y,
+            strokeColor=color_row_border,
+            strokeWidth=0.7,
+        ),
+    )
+    drawing.add(
+        Line(
+            shoulder_right,
+            rear_cap_y,
+            roof_x1,
+            hatch_y,
+            strokeColor=color_row_border,
+            strokeWidth=0.7,
+        ),
+    )
+    door_left_x = cabin_x + (cabin_w * 0.22)
+    door_right_x = cabin_x + (cabin_w * 0.78)
+    belt_low_y = cabin_y + (cabin_h * 0.34)
+    belt_high_y = cabin_y + (cabin_h * 0.66)
+    drawing.add(
+        Line(
+            door_left_x,
+            belt_low_y,
+            door_left_x,
+            belt_high_y,
+            strokeColor=color_row_border,
+            strokeWidth=0.6,
+        ),
+    )
+    drawing.add(
+        Line(
+            door_right_x,
+            belt_low_y,
+            door_right_x,
+            belt_high_y,
+            strokeColor=color_row_border,
+            strokeWidth=0.6,
         ),
     )
     front_axle_y = y0 + (car_h * 0.84)
@@ -147,26 +267,35 @@ def _draw_vehicle_shell(
         (wheel_x_right, rear_axle_y),
     ):
         drawing.add(
-            Circle(wx, wy, 11, fillColor=wheel_fill, strokeColor=wheel_stroke, strokeWidth=1.0),
+            Circle(
+                wx,
+                wy,
+                wheel_radius,
+                fillColor=wheel_fill,
+                strokeColor=wheel_stroke,
+                strokeWidth=1.0,
+            ),
         )
     drawing.add(
         String(
-            center_x - 16,
-            y0 + car_h + 16,
+            center_x,
+            y0 + car_h + 13,
             "DIAGRAM_LABEL_FRONT",
             fontName="Helvetica-Bold",
-            fontSize=8,
+            fontSize=7.5,
             fillColor=color_text_primary,
+            textAnchor="middle",
         ),
     )
     drawing.add(
         String(
-            center_x - 14,
-            y0 - 16,
+            center_x,
+            y0 - 15,
             "DIAGRAM_LABEL_REAR",
             fontName="Helvetica-Bold",
-            fontSize=8,
+            fontSize=7.5,
             fillColor=color_text_primary,
+            textAnchor="middle",
         ),
     )
 
@@ -177,6 +306,26 @@ def _draw_markers_and_labels(
     from reportlab.graphics.shapes import Circle, String
 
     for marker in markers:
+        drawing.add(
+            Circle(
+                marker.x,
+                marker.y,
+                marker.outer_radius,
+                fillColor=hex_color(marker.outer_fill),
+                strokeColor=hex_color(marker.outer_fill),
+                strokeWidth=0.0,
+            ),
+        )
+        drawing.add(
+            Circle(
+                marker.x,
+                marker.y,
+                marker.mid_radius,
+                fillColor=hex_color(marker.mid_fill),
+                strokeColor=hex_color(marker.mid_fill),
+                strokeWidth=0.0,
+            ),
+        )
         drawing.add(
             Circle(
                 marker.x,
@@ -223,10 +372,10 @@ def car_location_diagram(
     length_width_ratio = _BMW_LENGTH_MM / _BMW_WIDTH_MM
     drawing_h = max(220.0, float(diagram_height))
     drawing = Drawing(drawing_w, drawing_h)
-    car_h = max(162.0, drawing_h - 88.0)
-    car_w = car_h / length_width_ratio
-    x0 = (drawing_w - car_w) / 2.0
-    y0 = 54.0
+    x0, y0, car_w, car_h = _fit_vehicle_shell_rect(
+        drawing_width=drawing_w,
+        drawing_height=drawing_h,
+    )
 
     rendered_ratio = car_h / car_w if car_w > 0 else 0.0
     if abs(rendered_ratio - length_width_ratio) / length_width_ratio >= 0.02:
