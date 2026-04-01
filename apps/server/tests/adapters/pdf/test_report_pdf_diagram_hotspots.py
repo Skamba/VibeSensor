@@ -44,6 +44,34 @@ def _text_item_box(item: object) -> tuple[float, float, float, float]:
     return (x0, y - 1.0, x0 + width, y + size + 1.0)
 
 
+def _item_box(item: object) -> tuple[float, float, float, float] | None:
+    if hasattr(item, "radius") and hasattr(item, "x") and hasattr(item, "y"):
+        x = float(getattr(item, "x", 0.0))
+        y = float(getattr(item, "y", 0.0))
+        radius = float(getattr(item, "radius", 0.0))
+        return (x - radius, y - radius, x + radius, y + radius)
+    if hasattr(item, "x1") and hasattr(item, "y1") and hasattr(item, "x2") and hasattr(item, "y2"):
+        x1 = float(getattr(item, "x1", 0.0))
+        y1 = float(getattr(item, "y1", 0.0))
+        x2 = float(getattr(item, "x2", 0.0))
+        y2 = float(getattr(item, "y2", 0.0))
+        return (min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
+    if (
+        hasattr(item, "width")
+        and hasattr(item, "height")
+        and hasattr(item, "x")
+        and hasattr(item, "y")
+    ):
+        x = float(getattr(item, "x", 0.0))
+        y = float(getattr(item, "y", 0.0))
+        width = float(getattr(item, "width", 0.0))
+        height = float(getattr(item, "height", 0.0))
+        return (x, y, x + width, y + height)
+    if hasattr(item, "text"):
+        return _text_item_box(item)
+    return None
+
+
 def test_sensor_state_mapping_connected_active_inactive_and_disconnected() -> None:
     states = resolve_marker_states(
         ["front-left wheel", "front-right wheel", "engine bay"],
@@ -56,7 +84,7 @@ def test_sensor_state_mapping_connected_active_inactive_and_disconnected() -> No
     assert states["engine bay"] == "disconnected"
 
 
-def test_marker_colors_follow_diagnostic_highlight_and_use_single_color_markers() -> None:
+def test_marker_gradients_keep_diagnostic_core_color_and_expand_with_intensity() -> None:
     location_points = {
         "front-left wheel": (40.0, 180.0),
         "front-right wheel": (160.0, 180.0),
@@ -79,13 +107,20 @@ def test_marker_colors_follow_diagnostic_highlight_and_use_single_color_markers(
     marker_by_name = {marker.name: marker for marker in markers}
 
     assert marker_by_name["rear-left wheel"].fill == REPORT_COLORS["danger"]
-    assert marker_by_name["rear-left wheel"].radius > marker_by_name["front-left wheel"].radius
-    assert marker_by_name["front-left wheel"].fill == REPORT_COLORS["text_secondary"]
-    assert marker_by_name["front-right wheel"].fill == REPORT_COLORS["text_secondary"]
-    assert marker_by_name["rear-left wheel"].stroke == marker_by_name["rear-left wheel"].fill
-    assert marker_by_name["front-left wheel"].stroke == marker_by_name["front-left wheel"].fill
+    assert (
+        marker_by_name["rear-left wheel"].outer_radius
+        > marker_by_name["rear-left wheel"].mid_radius
+    )
+    assert marker_by_name["rear-left wheel"].mid_radius > marker_by_name["rear-left wheel"].radius
+    assert marker_by_name["rear-left wheel"].outer_fill != marker_by_name["rear-left wheel"].fill
+    assert (
+        marker_by_name["front-left wheel"].outer_radius
+        > marker_by_name["front-left wheel"].mid_radius
+    )
+    assert marker_by_name["front-left wheel"].mid_radius > marker_by_name["front-left wheel"].radius
+    assert marker_by_name["front-left wheel"].radius > marker_by_name["rear-left wheel"].radius
     assert marker_by_name["engine bay"].state == "disconnected"
-    assert marker_by_name["engine bay"].stroke == marker_by_name["engine bay"].fill
+    assert marker_by_name["engine bay"].outer_fill != marker_by_name["engine bay"].fill
 
 
 def test_marker_radius_grows_with_local_intensity_for_active_locations() -> None:
@@ -134,7 +169,7 @@ def test_highlighted_location_without_intensity_keeps_diagnostic_color() -> None
     assert marker_by_name["front-left wheel"].stroke == REPORT_COLORS["danger"]
 
 
-def test_label_placement_stays_in_bounds_and_avoids_overlap_for_dense_layout() -> None:
+def test_dense_layout_uses_gradient_markers_without_sensor_labels() -> None:
     location_points = {
         "front-left wheel": (36.0, 198.0),
         "front-right wheel": (164.0, 198.0),
@@ -155,30 +190,17 @@ def test_label_placement_stays_in_bounds_and_avoids_overlap_for_dense_layout() -
         colors=REPORT_COLORS,
     )
 
-    marker_boxes = {
-        marker.name: (
-            marker.x - marker.radius - 1.0,
-            marker.y - marker.radius - 1.0,
-            marker.x + marker.radius + 1.0,
-            marker.y + marker.radius + 1.0,
-        )
-        for marker in markers
-    }
-
-    assert len(labels) == len(location_points)
-    for label in labels:
-        assert label.bbox[0] >= 0.0
-        assert label.bbox[1] >= 0.0
-        assert label.bbox[2] <= 200.0
-        assert label.bbox[3] <= 252.0
-        for marker_name, marker_box in marker_boxes.items():
-            if marker_name != label.name:
-                assert not _rectangles_overlap(label.bbox, marker_box)
-
-    _assert_no_pairwise_overlap([label.bbox for label in labels])
+    assert labels == []
+    assert len(markers) == len(location_points)
+    for marker in markers:
+        assert marker.outer_radius > marker.mid_radius > marker.radius
+        assert marker.x - marker.outer_radius >= 0.0
+        assert marker.y - marker.outer_radius >= 0.0
+        assert marker.x + marker.outer_radius <= 200.0
+        assert marker.y + marker.outer_radius <= 252.0
 
 
-def test_sparse_layout_renders_only_connected_sensor_labels() -> None:
+def test_sparse_layout_omits_sensor_location_labels() -> None:
     summary = {
         "sensor_locations": ["front-left wheel", "rear-right wheel"],
         "sensor_intensity_by_location": [
@@ -196,12 +218,12 @@ def test_sparse_layout_renders_only_connected_sensor_labels() -> None:
         diagram_height=252.0,
     )
 
-    labels = {
+    sensor_labels = {
         str(item.text)
         for item in diagram.contents
         if hasattr(item, "text") and "wheel" in str(getattr(item, "text", ""))
     }
-    assert labels == {"front-left wheel", "rear-right wheel"}
+    assert sensor_labels == set()
 
 
 def test_single_sensor_uses_diagnostic_highlight_color() -> None:
@@ -264,16 +286,27 @@ def test_diagram_omits_source_legend_and_keeps_text_within_bounds() -> None:
     ]
     assert source_labels == []
 
-    boxes: list[tuple[float, float, float, float]] = []
-    for item in source_labels:
+    for item in text_items:
         box = _text_item_box(item)
         assert box[0] >= 0.0
         assert box[2] <= float(diagram.width) + 0.1
+    assert all(
+        str(getattr(item, "text", ""))
+        not in {
+            "front-left wheel",
+            "front-right wheel",
+            "rear-left wheel",
+            "rear-right wheel",
+            "engine bay",
+            "driver seat",
+            "driveshaft tunnel",
+            "trunk",
+        }
+        for item in text_items
+    )
 
-    _assert_no_pairwise_overlap(boxes)
 
-
-def test_diagram_keeps_right_wheel_labels_inside_narrow_page1_bounds() -> None:
+def test_tall_narrow_page1_diagram_stays_inside_bounds_without_sensor_labels() -> None:
     summary = {
         "sensor_locations": [
             "front-left wheel",
@@ -295,33 +328,38 @@ def test_diagram_keeps_right_wheel_labels_inside_narrow_page1_bounds() -> None:
         content_width=300.0,
         tr=lambda key, **kwargs: key,
         text_fn=lambda en, nl: en,
-        diagram_width=124.0,
-        diagram_height=252.0,
+        diagram_width=128.0,
+        diagram_height=490.0,
     )
 
-    wheel_labels = [
-        item
+    sensor_texts = [
+        str(item.text)
         for item in diagram.contents
-        if hasattr(item, "text") and str(getattr(item, "text", "")).endswith("wheel")
+        if hasattr(item, "text")
+        and str(getattr(item, "text", ""))
+        in {
+            "front-left wheel",
+            "front-right wheel",
+            "rear-left wheel",
+            "rear-right wheel",
+            "engine bay",
+            "driver seat",
+            "driveshaft tunnel",
+            "trunk",
+        }
     ]
-
-    assert {str(item.text) for item in wheel_labels} == {
-        "front-left wheel",
-        "front-right wheel",
-        "rear-left wheel",
-        "rear-right wheel",
-    }
-
-    box_by_label = {str(item.text): _text_item_box(item) for item in wheel_labels}
-    for label in ("front-right wheel", "rear-right wheel"):
-        box = box_by_label[label]
+    assert sensor_texts == []
+    for item in diagram.contents:
+        box = _item_box(item)
+        if box is None:
+            continue
+        assert box[0] >= -0.1
+        assert box[1] >= -0.1
         assert box[2] <= float(diagram.width) + 0.1
-
-    boxes = list(box_by_label.values())
-    _assert_no_pairwise_overlap(boxes)
+        assert box[3] <= float(diagram.height) + 0.1
 
 
-def test_narrow_page1_layout_keeps_left_wheel_labels_clear_of_wheel_markers() -> None:
+def test_narrow_page1_layout_returns_no_sensor_labels() -> None:
     location_points = {
         "front-left wheel": (18.0, 198.0),
         "front-right wheel": (106.0, 198.0),
@@ -342,11 +380,7 @@ def test_narrow_page1_layout_keeps_left_wheel_labels_clear_of_wheel_markers() ->
         highlight={"rear-left wheel": REPORT_COLORS["danger"]},
         colors=REPORT_COLORS,
     )
-
-    label_by_name = {label.name: label for label in labels}
-    for name in ("front-left wheel", "rear-left wheel"):
-        marker_x, _ = location_points[name]
-        assert label_by_name[name].bbox[0] >= marker_x + 14.0
+    assert labels == []
 
 
 def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs() -> None:
