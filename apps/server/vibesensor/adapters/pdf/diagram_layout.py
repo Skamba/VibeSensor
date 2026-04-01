@@ -119,17 +119,19 @@ def resolve_marker_states(
 
 # ── Label collision resolution ───────────────────────────────────────────────
 
+_INLINE_LABEL_GAP = 16.0
+
 _LABEL_CANDIDATES_RIGHT: tuple[tuple[float, float, str], ...] = (
-    (10.0, -2.0, "start"),
-    (-10.0, -2.0, "end"),
+    (_INLINE_LABEL_GAP, -2.0, "start"),
+    (-_INLINE_LABEL_GAP, -2.0, "end"),
     (0.0, 9.0, "middle"),
     (0.0, -11.0, "middle"),
 )
 _LABEL_CANDIDATES_LEFT: tuple[tuple[float, float, str], ...] = (
-    (-10.0, -2.0, "end"),
-    (-10.0, 18.0, "end"),
-    (-10.0, -20.0, "end"),
-    (10.0, -2.0, "start"),
+    (-_INLINE_LABEL_GAP, -2.0, "end"),
+    (-_INLINE_LABEL_GAP, 18.0, "end"),
+    (-_INLINE_LABEL_GAP, -20.0, "end"),
+    (_INLINE_LABEL_GAP, -2.0, "start"),
     (0.0, 9.0, "middle"),
     (0.0, -11.0, "middle"),
 )

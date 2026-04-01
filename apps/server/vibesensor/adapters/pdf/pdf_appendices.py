@@ -111,7 +111,7 @@ def _estimate_appendix_c_traceability_row_height(
     row: ReportLabelValueRow, *, width: float
 ) -> float:
     return float(
-        4.2 * mm
+        3.4 * mm
         + _measure_text_height(
             row.value,
             w=width,
@@ -119,7 +119,7 @@ def _estimate_appendix_c_traceability_row_height(
             leading=FS_BODY + 1.2,
             max_lines=3,
         )
-        + 0.8 * mm
+        + 0.4 * mm
     )
 
 
@@ -782,7 +782,7 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
                 y=trace_y,
                 w=trace_w - 8 * mm,
             )
-            - 0.8 * mm
+            - 0.4 * mm
         )
         if trace_y < lower_y + 4 * mm:
             break
@@ -1221,7 +1221,7 @@ def _draw_traceability_row(
     return _draw_text(
         c,
         x,
-        y - 4.2 * mm,
+        y - 3.4 * mm,
         w,
         row.value,
         font=FONT_B,
