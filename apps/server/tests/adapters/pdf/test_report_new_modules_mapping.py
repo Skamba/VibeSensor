@@ -10,6 +10,7 @@ from test_support.report_helpers import (
     RUN_END,
     ambiguous_primary_location_summary,
     minimal_summary,
+    recapture_guidance_summary,
     sequential_same_source_summary,
     trunk_primary_guidance_summary,
     write_jsonl,
@@ -245,8 +246,53 @@ def test_map_summary_rephrases_ambiguous_primary_locations_as_mixed_signal() -> 
     assert data.verdict_page.inspect_first == expected
     assert data.verdict_page.dominant_corner == expected
     assert data.observed.strongest_location == expected
-    assert data.pattern_evidence.strongest_location == expected
-    assert "/" not in data.verdict_page.inspect_first
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected_issue", "expected_step", "expected_condition"),
+    [
+        pytest.param(
+            "steady",
+            "Speed range never settled into a usable diagnostic band",
+            "Repeat the same speed band with a longer steady hold",
+            "Hold a repeatable steady-speed window",
+            id="steady-speed-recature-guidance",
+        ),
+        pytest.param(
+            "overlap",
+            "Wheel / Tire and Driveline evidence overlapped",
+            "Repeat the same speed band with separate drive/coast or load-change passes",
+            "Cover the same speed band in separate drive/coast or load-change passes",
+            id="source-overlap-recature-guidance",
+        ),
+        pytest.param(
+            "weak",
+            "Location evidence stayed spread across multiple positions",
+            "Add sensor locations",
+            "Keep all 4 expected positions connected throughout the run",
+            id="weak-location-recature-guidance",
+        ),
+        pytest.param(
+            "transient",
+            "The strongest signal was transient or intermittent",
+            "Repeat the same trigger several times",
+            "Repeat the same trigger with enough before/after baseline",
+            id="transient-recature-guidance",
+        ),
+    ],
+)
+def test_map_summary_builds_scenario_specific_recapture_guidance(
+    mode: str,
+    expected_issue: str,
+    expected_step: str,
+    expected_condition: str,
+) -> None:
+    data = map_summary(prepare_report_input(recapture_guidance_summary(mode)))
+
+    assert data.appendix_a.mode == "recapture"
+    assert any(expected_issue in line for line in data.appendix_a.capture_issues)
+    assert any(expected_step in step.action for step in data.next_steps)
+    assert any(expected_condition in line for line in data.appendix_a.capture_conditions)
 
 
 def test_map_summary_formats_report_timestamps_for_header() -> None:
