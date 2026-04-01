@@ -59,13 +59,16 @@ def build_phase_timeline(
     min_confidence: float,
 ) -> list[DrivingPhaseInterval]:
     """Build a simple phase timeline annotated with finding evidence."""
-    del findings, min_confidence
     if not phase_segments:
         return []
 
-    # NOTE: has_fault_evidence is always False because phases_detected is not
-    # preserved on the domain Finding (only cruise_fraction survives the
-    # payload→domain decode).  Keeping the field for schema stability.
+    evidence_phases = {
+        str(phase).strip().lower()
+        for finding in findings
+        if finding.is_diagnostic and finding.effective_confidence >= min_confidence
+        for phase in finding.phases_detected
+        if str(phase).strip()
+    }
     return [
         DrivingPhaseInterval(
             phase=segment.phase,
@@ -73,7 +76,7 @@ def build_phase_timeline(
             end_t_s=None if math.isnan(segment.end_t_s) else segment.end_t_s,
             speed_min_kmh=segment.speed_min_kmh,
             speed_max_kmh=segment.speed_max_kmh,
-            has_fault_evidence=False,
+            has_fault_evidence=str(segment.phase).strip().lower() in evidence_phases,
         )
         for segment in phase_segments
     ]
