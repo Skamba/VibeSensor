@@ -14,7 +14,13 @@ from vibesensor.shared.boundaries.run_log import (
 )
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.sampling import bounded_sample
-from vibesensor.shared.time_utils import format_utc_timestamp, parse_iso8601, utc_now_iso
+from vibesensor.shared.time_utils import (
+    coerce_utc_offset_seconds,
+    format_timestamp_in_recorded_timezone,
+    format_utc_timestamp,
+    parse_iso8601,
+    utc_now_iso,
+)
 from vibesensor.use_cases.run.sample_builder import create_run_metadata
 
 # -- Helpers -------------------------------------------------------------------
@@ -86,6 +92,47 @@ def test_parse_iso8601_returns_none_for_bad_input(value: object) -> None:
 )
 def test_format_utc_timestamp(value: object, expected: str | None) -> None:
     assert format_utc_timestamp(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (7200, 7200),
+        ("7200", 7200),
+        (-19800, -19800),
+        (None, None),
+        ("bad", None),
+        (15 * 60 * 60, None),
+        (True, None),
+    ],
+)
+def test_coerce_utc_offset_seconds(value: object, expected: int | None) -> None:
+    assert coerce_utc_offset_seconds(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "recorded_utc_offset_seconds", "expected"),
+    [
+        ("2025-01-15T10:30:00Z", 7200, "2025-01-15 12:30:00 UTC+02:00"),
+        ("2025-01-15T10:30:00Z", -19800, "2025-01-15 05:00:00 UTC-05:30"),
+        ("2025-01-15 10:30:00", 7200, "2025-01-15 12:30:00 UTC+02:00"),
+        ("2025-01-15T10:30:00Z", None, "2025-01-15 10:30:00 UTC"),
+        ("not-a-date", 7200, "not-a-date"),
+        ("", 7200, None),
+        (None, 7200, None),
+    ],
+)
+def test_format_timestamp_in_recorded_timezone(
+    value: object,
+    recorded_utc_offset_seconds: object,
+    expected: str | None,
+) -> None:
+    assert format_timestamp_in_recorded_timezone(value, recorded_utc_offset_seconds) == expected
+
+
+def test_create_run_metadata_keeps_recorded_utc_offset_seconds() -> None:
+    metadata = _make_run_metadata(recorded_utc_offset_seconds=7200)
+    assert metadata["recorded_utc_offset_seconds"] == 7200
 
 
 # -- as_float_or_none ---------------------------------------------------------

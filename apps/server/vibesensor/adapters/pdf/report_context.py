@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf.report_data import PatternEvidence
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.time_utils import format_utc_timestamp, utc_now_iso
+from vibesensor.shared.time_utils import (
+    format_timestamp_in_recorded_timezone,
+    format_utc_timestamp,
+    utc_now_iso,
+)
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportInput,
     ValidatedPreparedReportInput,
@@ -89,7 +93,10 @@ def prepare_report_mapping_context(
     validated = validate_prepared_report_input(prepared)
     report_facts = validated.report_facts
     report_date = validated.renderer_payload.report_date or utc_now_iso()
-    date_str = format_utc_timestamp(report_date) or str(report_date)
+    date_str = format_timestamp_in_recorded_timezone(
+        report_date,
+        validated.renderer_payload.recorded_utc_offset_seconds,
+    ) or str(report_date)
     return ReportMappingContext(
         car_name=validated.renderer_payload.car_name,
         car_type=validated.renderer_payload.car_type,

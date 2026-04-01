@@ -17,6 +17,7 @@ from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
 from vibesensor.shared.ports import ClientTracker, SensorMetadataReader
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
+from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -267,9 +268,10 @@ def create_run_metadata(
     firmware_version: str | None = None,
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
+    recorded_utc_offset_seconds: int | None = None,
 ) -> JsonObject:
     """Build and return a run-metadata dict from the supplied fields."""
-    return RunMetadata.create(
+    metadata = RunMetadata.create(
         run_id=run_id,
         start_time_utc=start_time_utc,
         sensor_model=sensor_model,
@@ -281,6 +283,10 @@ def create_run_metadata(
         end_time_utc=end_time_utc,
         incomplete_for_order_analysis=incomplete_for_order_analysis,
     ).to_dict()
+    normalized_offset = coerce_utc_offset_seconds(recorded_utc_offset_seconds)
+    if normalized_offset is not None:
+        metadata["recorded_utc_offset_seconds"] = normalized_offset
+    return metadata
 
 
 def build_run_metadata(
@@ -296,6 +302,7 @@ def build_run_metadata(
     accel_scale_g_per_lsb: float | None,
     active_car_snapshot: CarSnapshot | None = None,
     language_provider: Callable[[], str] | None = None,
+    recorded_utc_offset_seconds: int | None = None,
 ) -> JsonObject:
     """Assemble comprehensive run metadata."""
     settings = asdict(analysis_settings_snapshot)
@@ -317,6 +324,7 @@ def build_run_metadata(
         fft_window_size_samples=(fft_window_size_samples if fft_window_size_samples > 0 else None),
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         incomplete_for_order_analysis=incomplete,
+        recorded_utc_offset_seconds=recorded_utc_offset_seconds,
     )
     metadata.update(settings)
     metadata["tire_circumference_m"] = (
