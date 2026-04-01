@@ -64,7 +64,13 @@ from vibesensor.domain import (
     VibrationSource,
     speed_band_sort_key,
 )
-from vibesensor.report_i18n import human_location, human_source, normalize_lang, resolve_i18n
+from vibesensor.report_i18n import (
+    human_location,
+    human_source,
+    location_candidates,
+    normalize_lang,
+    resolve_i18n,
+)
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
@@ -123,7 +129,7 @@ def build_pattern_evidence(
     )
     return PatternEvidence(
         matched_systems=systems,
-        strongest_location=primary.primary_location,
+        strongest_location=_display_location(primary.primary_location, tr=tr),
         speed_band=primary.primary_speed,
         strength_label=primary.strength_text,
         strength_peak_db=primary.strength_db,
@@ -242,6 +248,18 @@ def _display_location(value: object, *, short: bool = True, tr: Callable[..., st
     text = str(value or "").strip()
     if not text:
         return tr("UNKNOWN")
+    candidates = location_candidates(text)
+    if len(candidates) == 2:
+        return tr(
+            "REPORT_LOCATION_MIXED_SIGNAL_BETWEEN",
+            first_location=human_location(candidates[0], short=short),
+            second_location=human_location(candidates[1], short=short),
+        )
+    if len(candidates) > 2:
+        return tr(
+            "REPORT_LOCATION_MIXED_SIGNAL_LIST",
+            locations=", ".join(human_location(candidate, short=short) for candidate in candidates),
+        )
     return human_location(text, short=short)
 
 
@@ -1626,6 +1644,7 @@ def _build_report_template_data(
         lang=lang,
     )
     observed = observed_signature(primary)
+    observed.strongest_location = _display_location(primary.primary_location, tr=tr)
     system_cards = build_system_cards(
         context,
         primary,
@@ -1635,6 +1654,7 @@ def _build_report_template_data(
     recapture_mode = report_facts.action_status_key == "recapture_before_acting"
     next_steps = build_next_steps(
         recommended_actions=report_facts.recommended_actions,
+        primary_source=primary.primary_source,
         primary_location=primary.primary_location,
         tier=primary.tier,
         cert_reason=primary.certainty_reason or tr("REPORT_CAPTURE_ISSUE_GENERIC"),
