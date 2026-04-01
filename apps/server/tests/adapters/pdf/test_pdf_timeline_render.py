@@ -79,6 +79,32 @@ def test_run_timeline_graph_draws_speed_line_evidence_and_labels() -> None:
     )
 
 
+def test_run_timeline_graph_keeps_detection_windows_in_a_dedicated_lane() -> None:
+    drawing = run_timeline_graph(
+        _sample_timeline_graph(),
+        tr=lambda key, **_kw: key,
+        graph_width=180.0,
+        graph_height=96.0,
+    )
+
+    plot_rect = _plot_rect(drawing)
+    detection_rects = [
+        item
+        for item in drawing.contents
+        if isinstance(item, Rect)
+        and _color_hex(item.fillColor) == _hex(REPORT_COLORS["card_error_bg"]).hexval()
+        and item.width < plot_rect.width
+        and item.y < plot_rect.y + (plot_rect.height * 0.25)
+    ]
+
+    assert detection_rects
+    assert all(rect.height < (plot_rect.height * 0.25) for rect in detection_rects)
+    assert all(rect.y >= plot_rect.y for rect in detection_rects)
+    assert all(
+        rect.y + rect.height <= plot_rect.y + (plot_rect.height * 0.25) for rect in detection_rects
+    )
+
+
 def test_run_timeline_graph_keeps_title_and_legend_above_plot() -> None:
     drawing = run_timeline_graph(
         _sample_timeline_graph(),

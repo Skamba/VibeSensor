@@ -80,6 +80,10 @@ def run_timeline_graph(
     plot_w = max(72.0, graph_width - 30.0)
     plot_top = legend_y - 8.0
     plot_h = max(28.0, plot_top - plot_y)
+    detection_lane_h = min(8.0, max(6.0, plot_h * 0.16))
+    detection_lane_gap = 4.0
+    speed_plot_y = plot_y + detection_lane_h + detection_lane_gap
+    speed_plot_h = max(18.0, plot_h - detection_lane_h - detection_lane_gap)
 
     speed_legend_x = plot_x + 2.0
     detection_legend_x = min(plot_x + 78.0, plot_x + plot_w - 34.0)
@@ -104,18 +108,29 @@ def run_timeline_graph(
         ),
     )
     drawing.add(
-        Circle(
+        Rect(
             detection_legend_x,
-            legend_y - 0.5,
-            2.4,
-            fillColor=_hex(REPORT_COLORS["danger"]),
+            legend_y - 2.6,
+            10.0,
+            4.2,
+            fillColor=_hex(REPORT_COLORS["card_error_bg"]),
             strokeColor=_hex(REPORT_COLORS["danger"]),
-            strokeWidth=0.0,
+            strokeWidth=0.45,
+        ),
+    )
+    drawing.add(
+        Circle(
+            detection_legend_x + 5.0,
+            legend_y - 0.5,
+            2.2,
+            fillColor=_hex(REPORT_COLORS["danger"]),
+            strokeColor=_hex(REPORT_COLORS["surface"]),
+            strokeWidth=0.7,
         ),
     )
     drawing.add(
         String(
-            detection_legend_x + 5.0,
+            detection_legend_x + 13.0,
             legend_y - 2.6,
             tr("REPORT_TIMELINE_DETECTIONS_LABEL"),
             fontName=FONT,
@@ -135,9 +150,30 @@ def run_timeline_graph(
             strokeWidth=0.8,
         ),
     )
+    drawing.add(
+        Rect(
+            plot_x,
+            plot_y,
+            plot_w,
+            detection_lane_h,
+            fillColor=_hex(REPORT_COLORS["surface_alt"]),
+            strokeColor=None,
+            strokeWidth=0.0,
+        ),
+    )
+    drawing.add(
+        Line(
+            plot_x,
+            speed_plot_y - (detection_lane_gap / 2.0),
+            plot_x + plot_w,
+            speed_plot_y - (detection_lane_gap / 2.0),
+            strokeColor=_hex(REPORT_COLORS["table_row_border"]),
+            strokeWidth=0.5,
+        ),
+    )
 
-    mid_y = plot_y + (plot_h / 2.0)
-    for y_value in (plot_y, mid_y, plot_y + plot_h):
+    mid_y = speed_plot_y + (speed_plot_h / 2.0)
+    for y_value in (speed_plot_y, mid_y, speed_plot_y + speed_plot_h):
         drawing.add(
             Line(
                 plot_x,
@@ -152,7 +188,7 @@ def run_timeline_graph(
     drawing.add(
         String(
             plot_x - 4.0,
-            plot_y - 2.0,
+            speed_plot_y - 2.0,
             "0",
             fontName=FONT,
             fontSize=FS_SMALL,
@@ -163,7 +199,7 @@ def run_timeline_graph(
     drawing.add(
         String(
             plot_x - 4.0,
-            plot_y + plot_h - 2.0,
+            speed_plot_y + speed_plot_h - 2.0,
             str(int(round(timeline_graph.speed_ceiling_kmh))),
             fontName=FONT,
             fontSize=FS_SMALL,
@@ -209,36 +245,27 @@ def run_timeline_graph(
         )
         interval_w = max(1.5, x_end - x_start)
         if interval.has_fault_evidence:
-            detection_y = plot_y + plot_h - 3.5
+            detection_bar_y = plot_y + 1.1
+            detection_bar_h = max(3.4, detection_lane_h - 2.2)
             drawing.add(
                 Rect(
                     x_start,
-                    plot_y,
+                    detection_bar_y,
                     interval_w,
-                    plot_h,
+                    detection_bar_h,
                     fillColor=_hex(REPORT_COLORS["card_error_bg"]),
-                    strokeColor=_hex(REPORT_COLORS["card_error_bg"]),
-                    strokeWidth=0.0,
-                ),
-            )
-            drawing.add(
-                Line(
-                    x_start,
-                    detection_y,
-                    x_start + interval_w,
-                    detection_y,
                     strokeColor=_hex(REPORT_COLORS["danger"]),
-                    strokeWidth=1.0,
+                    strokeWidth=0.45,
                 ),
             )
             drawing.add(
                 Circle(
                     x_start + (interval_w / 2.0),
-                    detection_y,
+                    detection_bar_y + (detection_bar_h / 2.0),
                     2.3,
                     fillColor=_hex(REPORT_COLORS["danger"]),
-                    strokeColor=_hex(REPORT_COLORS["danger"]),
-                    strokeWidth=0.0,
+                    strokeColor=_hex(REPORT_COLORS["surface"]),
+                    strokeWidth=0.75,
                 ),
             )
         if interval.speed_min_kmh is not None or interval.speed_max_kmh is not None:
@@ -252,14 +279,14 @@ def run_timeline_graph(
             assert band_high is not None
             y_low = _y_for_speed(
                 speed_kmh=min(band_low, band_high),
-                plot_y=plot_y,
-                plot_h=plot_h,
+                plot_y=speed_plot_y,
+                plot_h=speed_plot_h,
                 speed_ceiling_kmh=timeline_graph.speed_ceiling_kmh,
             )
             y_high = _y_for_speed(
                 speed_kmh=max(band_low, band_high),
-                plot_y=plot_y,
-                plot_h=plot_h,
+                plot_y=speed_plot_y,
+                plot_h=speed_plot_h,
                 speed_ceiling_kmh=timeline_graph.speed_ceiling_kmh,
             )
             drawing.add(
@@ -277,8 +304,8 @@ def run_timeline_graph(
         if speed_value is not None:
             y_speed = _y_for_speed(
                 speed_kmh=speed_value,
-                plot_y=plot_y,
-                plot_h=plot_h,
+                plot_y=speed_plot_y,
+                plot_h=speed_plot_h,
                 speed_ceiling_kmh=timeline_graph.speed_ceiling_kmh,
             )
             speed_line_points.extend([x_start, y_speed, x_end, y_speed])
