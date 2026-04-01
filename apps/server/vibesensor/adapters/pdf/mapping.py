@@ -199,6 +199,43 @@ def _presented_location_confidence_key(report_facts: PreparedReportFacts) -> str
     return report_facts.location_confidence_key
 
 
+def _first_confidence_reason_clause(primary: PrimaryCandidateContext) -> str | None:
+    for clause in str(primary.certainty_reason or "").split(";"):
+        text = clause.strip().rstrip(".")
+        if text:
+            return text
+    return None
+
+
+def _location_confidence_display_text(
+    *,
+    primary: PrimaryCandidateContext,
+    report_facts: PreparedReportFacts,
+    data_trust: list[DataTrustItem],
+    tr: Callable[..., str],
+) -> str:
+    presented_key = _presented_location_confidence_key(report_facts)
+    if report_facts.action_status_key != "action_ready_caution":
+        return _location_confidence_text(presented_key, tr=tr)
+
+    reason = _first_confidence_reason_clause(primary)
+    if reason:
+        return reason
+
+    if report_facts.alternative_source_visible:
+        return tr("REPORT_LOCATION_CONFIDENCE_CLOSE_SCORES")
+
+    issue = _first_nonpass_detail(data_trust)
+    if issue:
+        return issue.rstrip(".")
+
+    dominance_ratio = report_facts.primary_candidate_facts.dominance_ratio
+    if dominance_ratio is not None:
+        return tr("REPORT_LOCATION_CONFIDENCE_RATIO_REASON", ratio=f"{dominance_ratio:.1f}")
+
+    return tr("REPORT_LOCATION_CONFIDENCE_MODERATE_DETAIL")
+
+
 def _display_location(value: object, *, short: bool = True, tr: Callable[..., str]) -> str:
     text = str(value or "").strip()
     if not text:
@@ -939,8 +976,10 @@ def _build_verdict_page_data(
         ),
         dominant_corner=_display_location(primary.primary_location, tr=tr),
         runner_up_corner=_runner_up_corner(report_facts, tr=tr),
-        location_confidence=_location_confidence_text(
-            _presented_location_confidence_key(report_facts),
+        location_confidence=_location_confidence_display_text(
+            primary=primary,
+            report_facts=report_facts,
+            data_trust=data_trust,
             tr=tr,
         ),
         coverage_label=_coverage_label(report_facts, tr=tr),
