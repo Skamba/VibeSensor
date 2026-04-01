@@ -76,7 +76,7 @@ class TestSimulatorDeterminism:
         assert fault_client.scene_noise_gain == 1.04
         assert fault_client.amp_scale == 1.0
         assert fault_client.noise_scale == 1.04
-        assert fault_client.common_event_gain == 0.18
+        assert fault_client.common_event_gain == 0.12
         assert fault_client.scene_gain > max(client.scene_gain for client in other_clients)
         for client in other_clients:
             assert client.profile_name == "wheel_mild_imbalance"
@@ -84,7 +84,7 @@ class TestSimulatorDeterminism:
             assert 1.00 <= client.scene_noise_gain <= 1.03
             assert 0.70 <= client.amp_scale <= 0.74
             assert 0.98 <= client.noise_scale <= 1.00
-            assert 0.11 <= client.common_event_gain <= 0.13
+            assert 0.07 <= client.common_event_gain <= 0.08
 
     def test_road_scene_single_mode_keeps_non_active_sensors_alive(self) -> None:
         from vibesensor.adapters.simulator.sim_scene import RoadSceneController

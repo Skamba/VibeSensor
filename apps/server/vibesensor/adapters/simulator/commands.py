@@ -55,7 +55,7 @@ def apply_one_wheel_mild_scenario(clients: Sequence[SimClientLike], fault_wheel:
             client.scene_noise_gain = 1.04
             client.amp_scale = 1.0
             client.noise_scale = 1.04
-            client.common_event_gain = 0.18
+            client.common_event_gain = 0.12
             client.pulse(0.40)
         else:
             coupling = _cross_corner_coupling(fault_wheel, client.name)
@@ -65,7 +65,7 @@ def apply_one_wheel_mild_scenario(clients: Sequence[SimClientLike], fault_wheel:
             client.scene_noise_gain = 0.96 + 0.12 * coupling
             client.amp_scale = 0.58 + 0.30 * coupling
             client.noise_scale = 0.96 + 0.06 * coupling
-            client.common_event_gain = 0.08 + 0.08 * coupling
+            client.common_event_gain = 0.05 + 0.05 * coupling
 
 
 def apply_road_fixed_scenario(clients: Sequence[SimClientLike]) -> None:
