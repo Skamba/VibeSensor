@@ -406,6 +406,47 @@ def test_build_run_details_json_projects_analysis_through_domain() -> None:
     assert payload["analysis"]["most_likely_origin"]["suspected_source"] == "wheel/tire"
 
 
+def test_build_run_details_json_rehydrates_flat_metadata_from_nested_run_context() -> None:
+    payload = json.loads(
+        build_projected_run_details_json(
+            _stored_run(
+                {
+                    "run_id": "run-1",
+                    "metadata": {
+                        "analysis_settings_snapshot": {
+                            "tire_width_mm": 255.0,
+                            "tire_aspect_pct": 40.0,
+                            "rim_in": 19.0,
+                            "final_drive_ratio": 3.15,
+                            "current_gear_ratio": 0.81,
+                        },
+                        "active_car_snapshot": {
+                            "id": "car-1",
+                            "name": "Primary",
+                            "type": "sedan",
+                            "aspects": {
+                                "tire_width_mm": 255.0,
+                                "tire_aspect_pct": 40.0,
+                                "rim_in": 19.0,
+                                "final_drive_ratio": 3.15,
+                                "current_gear_ratio": 0.81,
+                            },
+                        },
+                    },
+                }
+            ),
+            sample_count=5,
+            run_id="run-1",
+        ),
+    )
+
+    metadata = payload["metadata"]
+    assert metadata["car_name"] == "Primary"
+    assert metadata["active_car_id"] == "car-1"
+    assert float(metadata["tire_width_mm"]) == pytest.approx(255.0)
+    assert float(metadata["tire_circumference_m"]) > 0
+
+
 def test_project_history_insights_keeps_non_projectable_analysis_shape() -> None:
     projected = project_history_insights(
         {
