@@ -266,9 +266,9 @@ def _allows_system_level_caution_with_weak_location(
         or not primary_candidate_facts.weak_spatial
     ):
         return False
-    source_key = str(
-        primary_candidate_facts.primary_source or primary.suspected_source
-    ).strip().lower()
+    source_key = (
+        str(primary_candidate_facts.primary_source or primary.suspected_source).strip().lower()
+    )
     if source_key not in {"engine", "driveline"}:
         return False
     return primary.confidence_assessment.tier in {"B", "C"}
