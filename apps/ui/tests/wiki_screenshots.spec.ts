@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  buildCaptureReadiness,
   createSettingsHandlerFromMap,
   fulfillJson,
   installCommonRoutes,
@@ -107,6 +108,27 @@ async function installWikiRoutes(page: Page): Promise<void> {
       }
       await fulfillJson(route, {});
     },
+  });
+
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      start_time_utc: null,
+      samples_written: 0,
+      samples_dropped: 0,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+      capture_readiness: buildCaptureReadiness({
+        isReady: true,
+        sensors: { state: "pass", reasonKey: "ready", details: { connected: 5, assigned: 5 } },
+        reference: { state: "pass", reasonKey: "ready" },
+        speed: { state: "pass", reasonKey: "ready" },
+        overall: { state: "pass", reasonKey: "capture_ready" },
+      }),
+    });
   });
 
   await page.route("**/api/update/status", async (route) => {
