@@ -7,10 +7,12 @@ from typing import cast
 
 from vibesensor.domain import coerce_float, coerce_int
 from vibesensor.shared.types.analysis_views import PeakTableRow
+from vibesensor.shared.types.history_analysis_contracts import PhaseTimelineEntryResponse
 
 __all__ = [
     "active_sensor_locations",
     "coerce_count",
+    "phase_timeline_payload",
     "peak_table_rows",
     "report_duration_s",
     "sensor_intensity_payload",
@@ -64,6 +66,18 @@ def sensor_intensity_payload(payload: Mapping[str, object]) -> tuple[object, ...
     if not isinstance(raw_sensor_intensity, list):
         return ()
     return tuple(raw_sensor_intensity)
+
+
+def phase_timeline_payload(payload: Mapping[str, object]) -> tuple[PhaseTimelineEntryResponse, ...]:
+    """Return normalized phase-timeline rows from the summary payload."""
+    raw_phase_timeline = payload.get("phase_timeline")
+    if not isinstance(raw_phase_timeline, list):
+        return ()
+    return tuple(
+        cast(PhaseTimelineEntryResponse, row)
+        for row in raw_phase_timeline
+        if isinstance(row, Mapping)
+    )
 
 
 def coerce_count(value: object) -> int:

@@ -69,3 +69,35 @@ def test_prepare_report_facts_shapes_warning_payloads() -> None:
     )
 
     assert [warning["code"] for warning in facts.warnings] == ["PERSISTED_ONLY"]
+
+
+def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
+    summary = _summary()
+    summary["phase_timeline"] = [
+        {
+            "phase": "cruise",
+            "start_t_s": 0.0,
+            "end_t_s": 3.0,
+            "speed_min_kmh": 58.0,
+            "speed_max_kmh": 62.0,
+            "has_fault_evidence": False,
+        },
+        {
+            "phase": "accel",
+            "start_t_s": 3.0,
+            "end_t_s": 6.5,
+            "speed_min_kmh": 62.0,
+            "speed_max_kmh": 78.0,
+            "has_fault_evidence": True,
+        },
+    ]
+    test_run = build_test_run_from_summary(summary)
+    assert test_run is not None
+
+    facts = prepare_report_facts(summary, test_run=test_run)
+
+    assert len(facts.timeline_intervals) == 2
+    assert facts.timeline_intervals[0].phase == "cruise"
+    assert facts.timeline_intervals[0].speed_max_kmh == 62.0
+    assert facts.timeline_intervals[1].phase == "accel"
+    assert facts.timeline_intervals[1].has_fault_evidence is True
