@@ -255,6 +255,25 @@ def _has_nonblocking_caution_signals(
     )
 
 
+def _allows_system_level_caution_with_weak_location(
+    *,
+    primary_candidate_facts: PrimaryReportFacts,
+) -> bool:
+    primary = primary_candidate_facts.domain_primary
+    if (
+        primary is None
+        or primary.confidence_assessment is None
+        or not primary_candidate_facts.weak_spatial
+    ):
+        return False
+    source_key = (
+        str(primary_candidate_facts.primary_source or primary.suspected_source).strip().lower()
+    )
+    if source_key not in {"engine", "driveline"}:
+        return False
+    return primary.confidence_assessment.tier in {"B", "C"}
+
+
 def _resolve_action_status_key(
     *,
     primary_candidate_facts: PrimaryReportFacts,
@@ -267,9 +286,15 @@ def _resolve_action_status_key(
     if primary is None or primary_candidate_facts.primary_source is None:
         return "recapture_before_acting"
     tier = primary.confidence_assessment.tier if primary.confidence_assessment is not None else "A"
+    weak_location_caution = (
+        location_confidence_key == "weak"
+        and _allows_system_level_caution_with_weak_location(
+            primary_candidate_facts=primary_candidate_facts,
+        )
+    )
     if (
         tier == "A"
-        or location_confidence_key == "weak"
+        or (location_confidence_key == "weak" and not weak_location_caution)
         or primary_candidate_facts.has_reference_gaps
         or any(_is_blocking_suitability(check) for check in suitability_checks)
     ):
@@ -277,6 +302,7 @@ def _resolve_action_status_key(
     if (
         tier == "B"
         or location_confidence_key == "mixed"
+        or weak_location_caution
         or alternative_source_visible
         or _has_nonblocking_caution_signals(
             suitability_checks=suitability_checks,

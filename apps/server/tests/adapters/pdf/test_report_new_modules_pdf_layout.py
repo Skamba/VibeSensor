@@ -351,6 +351,72 @@ def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_
     assert "recapture before acting" not in text
 
 
+@pytest.mark.parametrize(
+    ("source", "order_label", "source_label"),
+    [
+        pytest.param("engine", "2x engine order", "engine", id="engine"),
+        pytest.param("driveline", "1x driveshaft order", "driveline", id="driveline"),
+    ],
+)
+def test_build_report_pdf_keeps_weak_spatial_engine_and_driveline_findings_on_inspect_first_flow(
+    source: str,
+    order_label: str,
+    source_label: str,
+) -> None:
+    from test_support.report_helpers import minimal_summary
+
+    finding = {
+        "finding_id": "F_ORDER",
+        "suspected_source": source,
+        "confidence": 0.65,
+        "strongest_location": "Front Right",
+        "strongest_speed_band": "40-70 km/h",
+        "frequency_hz_or_order": order_label,
+        "dominance_ratio": 1.04,
+        "weak_spatial_separation": True,
+    }
+    summary = minimal_summary(
+        lang="en",
+        metadata={"car_info": {"tire_spec": "205/55R16"}},
+        sensor_locations=["front_left", "front_right", "rear_left", "rear_right"],
+        sensor_locations_connected_throughout=[
+            "front_left",
+            "front_right",
+            "rear_left",
+            "rear_right",
+        ],
+        sensor_intensity_by_location=[
+            {"location": "Front Left", "p95_intensity_db": 15.0, "peak_intensity_db": 18.8},
+            {"location": "Front Right", "p95_intensity_db": 18.0, "peak_intensity_db": 22.0},
+            {"location": "Rear Left", "p95_intensity_db": 15.4, "peak_intensity_db": 19.1},
+            {"location": "Rear Right", "p95_intensity_db": 17.6, "peak_intensity_db": 21.5},
+        ],
+        findings=[finding],
+        top_causes=[finding],
+        run_suitability=[
+            {
+                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "state": "pass",
+            },
+            {
+                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "state": "pass",
+            },
+        ],
+        samples=[],
+    )
+
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
+
+    assert "inspect first — moderate confidence" in text
+    assert "recapture before acting" not in text
+    assert "insufficient evidence" not in text
+    assert source_label in text
+
+
 def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> None:
     from test_support.report_helpers import minimal_summary
 
