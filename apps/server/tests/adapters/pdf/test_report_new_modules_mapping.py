@@ -77,7 +77,6 @@ def test_map_summary_basic(tmp_path: Path) -> None:
     assert data.observed.primary_system
     assert data.observed.certainty_label
     assert data.observed.certainty_reason
-    assert data.version_marker
 
 
 def test_map_summary_no_top_causes() -> None:

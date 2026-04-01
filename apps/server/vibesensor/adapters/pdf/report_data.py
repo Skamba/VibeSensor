@@ -347,7 +347,6 @@ class ReportTemplateData:
     data_trust: list[DataTrustItem] = field(default_factory=list)
     pattern_evidence: PatternEvidence = field(default_factory=PatternEvidence)
     peak_rows: list[PeakRow] = field(default_factory=list)
-    version_marker: str = ""
     lang: str = "en"
     certainty_tier_key: str = "A"
 
