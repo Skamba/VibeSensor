@@ -321,6 +321,34 @@ def test_diagram_keeps_right_wheel_labels_inside_narrow_page1_bounds() -> None:
     _assert_no_pairwise_overlap(boxes)
 
 
+def test_narrow_page1_layout_keeps_left_wheel_labels_clear_of_wheel_markers() -> None:
+    location_points = {
+        "front-left wheel": (18.0, 198.0),
+        "front-right wheel": (106.0, 198.0),
+        "rear-left wheel": (18.0, 76.0),
+        "rear-right wheel": (106.0, 76.0),
+    }
+    _, labels, _ = build_sensor_render_plan(
+        location_points=location_points,
+        drawing_width=124.0,
+        drawing_height=252.0,
+        connected_locations=set(location_points.keys()),
+        amp_by_location={
+            "front-left wheel": 31.1,
+            "front-right wheel": 34.9,
+            "rear-left wheel": 30.9,
+            "rear-right wheel": 31.4,
+        },
+        highlight={"rear-left wheel": REPORT_COLORS["danger"]},
+        colors=REPORT_COLORS,
+    )
+
+    label_by_name = {label.name: label for label in labels}
+    for name in ("front-left wheel", "rear-left wheel"):
+        marker_x, _ = location_points[name]
+        assert label_by_name[name].bbox[0] >= marker_x + 14.0
+
+
 def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs() -> None:
     location_points = {
         "front-left wheel": (40.0, 180.0),

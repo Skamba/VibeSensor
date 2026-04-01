@@ -112,6 +112,82 @@ def test_estimate_appendix_c_lower_panels_shrink_for_short_content() -> None:
     assert min(context_h, suitability_h, trace_h) >= 34 * mm
 
 
+def test_estimate_appendix_c_lower_panels_stay_tighter_for_unbalanced_card_content() -> None:
+    data = ReportTemplateData(
+        lang="en",
+        verdict_page=VerdictPageData(action_status_note="skip duplicate"),
+        appendix_c=AppendixCData(
+            context_summary=(
+                "A steady 100-110 km/h capture with 4 of 4 expected wheel positions connected "
+                "makes this run usable for source comparison."
+            ),
+            speed_band_summary="100-110 km/h",
+            phase_summary="Cruise",
+            observations=[],
+            limits_summary=(
+                "Treat this run as directional, not final. If the first inspection is clean, "
+                "rerun with a longer steady hold plus accel/decel and drive/coast comparison "
+                "through the 100-110 km/h band."
+            ),
+            suitability_items=[
+                DataTrustItem(
+                    check="Speed variation",
+                    detail=(
+                        "Speed range stayed in a usable diagnostic band for steady-state "
+                        "diagnosis and order tracking."
+                    ),
+                    state="pass",
+                ),
+                DataTrustItem(
+                    check="Sensor coverage",
+                    detail="Multiple sensor locations observed.",
+                    state="pass",
+                ),
+                DataTrustItem(
+                    check="Reference completeness",
+                    detail="Required order references are present.",
+                    state="pass",
+                ),
+                DataTrustItem(
+                    check="Saturation and outliers",
+                    detail="No obvious saturation detected.",
+                    state="pass",
+                ),
+                DataTrustItem(
+                    check="Frame integrity",
+                    detail="No dropped frames or queue overflows detected.",
+                    state="pass",
+                ),
+            ],
+        ),
+        appendix_d=AppendixDData(
+            rows=[
+                ReportLabelValueRow(label="Run date", value="2026-04-01 01:05:30 UTC"),
+                ReportLabelValueRow(label="Run ID", value="a2d18c88451f4d688b61e60b48d9949b"),
+                ReportLabelValueRow(label="tire size", value="285/30R21"),
+                ReportLabelValueRow(label="Sensor Model", value="ADXL345"),
+                ReportLabelValueRow(label="Firmware Version", value="sim-0.2"),
+                ReportLabelValueRow(label="Analysis rows", value="124"),
+                ReportLabelValueRow(label="Raw Sample Rate (Hz)", value="800"),
+                ReportLabelValueRow(label="Report version", value="v0.0.0-dev"),
+            ],
+        ),
+    )
+
+    width = PAGE_W - 2 * MARGIN
+    context_w = width * 0.24
+    suitability_w = width * 0.31
+    trace_w = width - context_w - suitability_w - (2 * GAP)
+
+    context_h = _estimate_appendix_c_context_panel_height(data, width=context_w)
+    suitability_h = _estimate_appendix_c_suitability_panel_height(data, width=suitability_w)
+    trace_h = _estimate_appendix_c_trace_panel_height(data, width=trace_w)
+
+    assert context_h < trace_h
+    assert suitability_h < trace_h
+    assert trace_h < 72 * mm
+
+
 def test_estimate_worksheet_summary_panels_shrink_for_short_content() -> None:
     appendix = AppendixAData(
         primary_source="Wheel / Tire",
