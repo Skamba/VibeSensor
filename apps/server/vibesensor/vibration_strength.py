@@ -46,6 +46,7 @@ __all__ = [
     "noise_floor_amp_p20_g",
     "peak_band_rms_amp_g",
     "percentile",
+    "relative_level_db_scalar",
     "strength_floor_amp_g",
     "VibrationStrengthMetrics",
     "vibration_strength_db_scalar",
@@ -401,6 +402,20 @@ def compute_db(peak_amplitude_g: float, noise_floor_g: float) -> float:
     return vibration_strength_db_scalar(
         peak_band_rms_amp_g=peak_amplitude_g,
         floor_amp_g=noise_floor_g,
+    )
+
+
+def relative_level_db_scalar(level_amp_g: float, reference_amp_g: float) -> float:
+    """Compute a relative dB level against a reference amplitude.
+
+    Uses the canonical vibration-strength formula so report-facing relative views
+    stay aligned with the repo's single dB definition while still producing
+    intuitive ``0 dB`` strongest-row values and negative offsets for weaker
+    sensor observations.
+    """
+    return vibration_strength_db_scalar(
+        peak_band_rms_amp_g=level_amp_g,
+        floor_amp_g=reference_amp_g,
     )
 
 
