@@ -1,0 +1,252 @@
+import type { LocationOption, LoggingStatusPayload } from "../../api/types";
+import type { AdaptedClient } from "../../server_payload";
+import * as I18N from "../../i18n";
+import { deriveCarSelectionState } from "../car_selection_state";
+import type { RealtimeState, SettingsState, SpectrumState } from "../ui_app_state";
+
+export type ActiveCarDisplayState = {
+  text: string;
+  isWarning: boolean;
+};
+
+export type LiveHealth = {
+  variant: "muted" | "ok" | "warn" | "bad";
+  text: string;
+  summary: string;
+  showOverviewPill: boolean;
+};
+
+type CaptureReadinessPayload = NonNullable<LoggingStatusPayload["capture_readiness"]>;
+
+export interface RealtimeSensorStateDeps {
+  realtime: RealtimeState;
+  settings: SettingsState;
+  spectrum: SpectrumState;
+  getLanguage: () => string;
+  t: (key: string, vars?: Record<string, unknown>) => string;
+  formatInt: (value: number) => string;
+}
+
+export interface RealtimeSensorState {
+  buildLocationOptions(codes: readonly string[]): LocationOption[];
+  locationCodeForClient(client: AdaptedClient): string;
+  connectedClients(): AdaptedClient[];
+  assignedClientCount(): number;
+  strongestSignal(): { client: AdaptedClient; db: number } | null;
+  strongestSignalText(signal?: { client: AdaptedClient; db: number } | null): string;
+  activeCarDisplayState(): ActiveCarDisplayState;
+  hasActiveCarSelection(): boolean;
+  computeLiveHealth(captureReadinessSummaryText: (readiness: CaptureReadinessPayload | null) => string): LiveHealth;
+}
+
+const SHORTHAND_LOCATION_MAP: Record<string, string> = {
+  "front left": "front_left_wheel",
+  "front right": "front_right_wheel",
+  "rear left": "rear_left_wheel",
+  "rear right": "rear_right_wheel",
+  driver: "driver_seat",
+};
+
+export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): RealtimeSensorState {
+  const { realtime, settings, spectrum, getLanguage, t, formatInt } = ctx;
+
+  function locationLabelForLang(lang: string, code: string): string {
+    return I18N.get(lang, `location.${code}`, { code });
+  }
+
+  function locationLabel(code: string): string {
+    return locationLabelForLang(getLanguage(), code);
+  }
+
+  function buildLocationOptions(codes: readonly string[]): LocationOption[] {
+    return codes.map((code) => ({ code, label: locationLabel(code) }));
+  }
+
+  function locationCodeForClient(client: AdaptedClient): string {
+    const explicitCode = String(client.location_code || "").trim();
+    if (explicitCode && realtime.locationCodes.includes(explicitCode)) return explicitCode;
+    const name = String(client.name || "").trim();
+    if (!name) return "";
+    const normalizedName = name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+    for (const [token, code] of Object.entries(SHORTHAND_LOCATION_MAP)) {
+      if (normalizedName.includes(token) && realtime.locationCodes.includes(code)) return code;
+    }
+    for (const code of realtime.locationCodes) {
+      const labels = I18N.getForAllLangs(`location.${code}`);
+      if (labels.some((label) => label === name)) return code;
+    }
+    const match = realtime.locationOptions.find((loc) => loc.label === name);
+    return match ? match.code : "";
+  }
+
+  function clientDisplayName(client: AdaptedClient): string {
+    return String(client.name || "").trim() || client.id;
+  }
+
+  function clientLocationText(client: AdaptedClient): string {
+    const code = locationCodeForClient(client);
+    if (!code) {
+      return t("dashboard.sensor_unassigned");
+    }
+    const option = realtime.locationOptions.find((location) => location.code === code);
+    return option?.label ?? locationLabel(code);
+  }
+
+  function connectedClients(): AdaptedClient[] {
+    return realtime.clients.filter((client) => Boolean(client.connected));
+  }
+
+  function assignedClientCount(): number {
+    return realtime.clients.filter((client) => locationCodeForClient(client)).length;
+  }
+
+  function strongestSignal(): { client: AdaptedClient; db: number } | null {
+    let bestClient: AdaptedClient | null = null;
+    let bestDb = Number.NEGATIVE_INFINITY;
+    for (const client of connectedClients()) {
+      const db = spectrum.spectra.clients[client.id]?.strength_metrics?.vibration_strength_db;
+      if (typeof db !== "number" || !Number.isFinite(db)) continue;
+      if (db > bestDb) {
+        bestDb = db;
+        bestClient = client;
+      }
+    }
+    if (!bestClient) {
+      return null;
+    }
+    return {
+      client: bestClient,
+      db: bestDb,
+    };
+  }
+
+  function strongestSignalText(signal = strongestSignal()): string {
+    if (!signal) {
+      return t("dashboard.strongest_signal_none");
+    }
+    const primary = locationCodeForClient(signal.client)
+      ? clientLocationText(signal.client)
+      : clientDisplayName(signal.client);
+    return `${primary} (${formatInt(signal.db)} dB)`;
+  }
+
+  function activeCarDisplayState(): ActiveCarDisplayState {
+    const selection = deriveCarSelectionState(settings);
+    if (selection.kind === "loading") {
+      return {
+        text: t("dashboard.active_car_loading"),
+        isWarning: false,
+      };
+    }
+    if (selection.kind !== "active") {
+      return {
+        text: selection.kind === "no_cars"
+          ? t("dashboard.active_car_none_no_cars")
+          : t("dashboard.active_car_none_blocked"),
+        isWarning: true,
+      };
+    }
+    return {
+      text: selection.car.name,
+      isWarning: false,
+    };
+  }
+
+  function hasActiveCarSelection(): boolean {
+    return deriveCarSelectionState(settings).kind === "active";
+  }
+
+  function computeLiveHealth(
+    captureReadinessSummaryText: (readiness: CaptureReadinessPayload | null) => string,
+  ): LiveHealth {
+    if (realtime.loggingStatus.write_error) {
+      return {
+        variant: "bad",
+        text: t("dashboard.health.write_error"),
+        summary: realtime.loggingStatus.write_error,
+        showOverviewPill: true,
+      };
+    }
+    const connected = connectedClients();
+    if (!connected.length) {
+      return {
+        variant: "muted",
+        text: t("dashboard.health.no_signal"),
+        summary: t("dashboard.logging.waiting"),
+        showOverviewPill: true,
+      };
+    }
+    if (!hasActiveCarSelection()) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: t("dashboard.logging.active_car_required"),
+        showOverviewPill: true,
+      };
+    }
+    const droppedCount = connected.filter((client) => (client.dropped_frames ?? 0) > 0).length;
+    if (droppedCount > 0) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: t("dashboard.logging.frame_loss", { count: formatInt(droppedCount) }),
+        showOverviewPill: true,
+      };
+    }
+    const unassignedConnectedCount = connected.filter((client) => !locationCodeForClient(client)).length;
+    if (unassignedConnectedCount > 0) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: t("dashboard.logging.unassigned", { count: formatInt(unassignedConnectedCount) }),
+        showOverviewPill: true,
+      };
+    }
+    const offlineCount = realtime.clients.filter((client) => !client.connected).length;
+    if (offlineCount > 0) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: t("dashboard.logging.offline", { count: formatInt(offlineCount) }),
+        showOverviewPill: true,
+      };
+    }
+    const connectedCount = formatInt(connected.length);
+    const assignedCount = formatInt(assignedClientCount());
+    if (realtime.loggingStatus.enabled) {
+      return {
+        variant: "ok",
+        text: t("dashboard.health.recording"),
+        summary: t("dashboard.logging.running", { connected: connectedCount, assigned: assignedCount }),
+        showOverviewPill: false,
+      };
+    }
+    const captureReadiness = realtime.loggingStatus.capture_readiness ?? null;
+    if (captureReadiness && !captureReadiness.is_ready) {
+      return {
+        variant: "warn",
+        text: t("dashboard.health.attention"),
+        summary: captureReadinessSummaryText(captureReadiness),
+        showOverviewPill: true,
+      };
+    }
+    return {
+      variant: "ok",
+      text: t("dashboard.health.ready"),
+      summary: "",
+      showOverviewPill: false,
+    };
+  }
+
+  return {
+    buildLocationOptions,
+    locationCodeForClient,
+    connectedClients,
+    assignedClientCount,
+    strongestSignal,
+    strongestSignalText,
+    activeCarDisplayState,
+    hasActiveCarSelection,
+    computeLiveHealth,
+  };
+}
