@@ -367,6 +367,53 @@ def test_tall_narrow_page1_diagram_stays_inside_bounds_without_sensor_labels() -
         assert box[3] <= float(diagram.height) + 0.1
 
 
+def test_tall_narrow_page1_diagram_can_top_align_orientation_labels() -> None:
+    summary = {
+        "sensor_locations": [
+            "front-left wheel",
+            "front-right wheel",
+            "rear-left wheel",
+            "rear-right wheel",
+        ],
+        "sensor_intensity_by_location": [
+            LocationIntensitySummary(location="front-left wheel", p95_intensity_db=31.1),
+            LocationIntensitySummary(location="front-right wheel", p95_intensity_db=34.9),
+            LocationIntensitySummary(location="rear-left wheel", p95_intensity_db=30.9),
+            LocationIntensitySummary(location="rear-right wheel", p95_intensity_db=31.4),
+        ],
+    }
+    centered = car_location_diagram(
+        [{"strongest_location": "front-right wheel", "suspected_source": "wheel/tire"}],
+        summary,
+        [],
+        content_width=300.0,
+        tr=lambda key, **kwargs: key,
+        text_fn=lambda en, nl: en,
+        diagram_width=128.0,
+        diagram_height=490.0,
+    )
+    top_aligned = car_location_diagram(
+        [{"strongest_location": "front-right wheel", "suspected_source": "wheel/tire"}],
+        summary,
+        [],
+        content_width=300.0,
+        tr=lambda key, **kwargs: key,
+        text_fn=lambda en, nl: en,
+        diagram_width=128.0,
+        diagram_height=490.0,
+        vertical_align="top",
+    )
+
+    def label_y(diagram: object, text: str) -> float:
+        for item in getattr(diagram, "contents", []):
+            if hasattr(item, "text") and str(getattr(item, "text", "")) == text:
+                return float(item.y)
+        raise AssertionError(f"Label {text!r} not found")
+
+    assert label_y(top_aligned, "DIAGRAM_LABEL_FRONT") > label_y(centered, "DIAGRAM_LABEL_FRONT")
+    assert label_y(top_aligned, "DIAGRAM_LABEL_REAR") > label_y(centered, "DIAGRAM_LABEL_REAR")
+
+
 def test_narrow_page1_layout_returns_no_sensor_labels() -> None:
     location_points = {
         "front-left wheel": (18.0, 198.0),

@@ -344,6 +344,7 @@ def _draw_proof_block(
         text_fn=lambda en, nl: nl if data.lang == "nl" else en,
         diagram_width=left_w,
         diagram_height=diagram_h - 2 * mm,
+        vertical_align="top",
     )
     diagram.drawOn(c, left_x, diagram_y)
 
@@ -384,14 +385,20 @@ def _draw_proof_block(
             value=verdict.runner_up_corner,
             value_size=FS_BODY,
         )
+    location_confidence = verdict.location_confidence or tr("UNKNOWN")
+    confidence_value_size = (
+        FS_BODY if len(_wrap_lines(location_confidence, text_w, FS_H2)) > 1 else FS_H2
+    )
+    confidence_max_lines = 3 if confidence_value_size == FS_BODY else 2
     text_y = _draw_label_value(
         c,
         x=text_x,
         y=text_y,
         width=text_w,
         label=tr("REPORT_LOCATION_CONFIDENCE_LABEL"),
-        value=verdict.location_confidence or tr("UNKNOWN"),
-        value_size=FS_H2,
+        value=location_confidence,
+        value_size=confidence_value_size,
+        max_lines=confidence_max_lines,
     )
     text_y = _draw_label_value(
         c,
