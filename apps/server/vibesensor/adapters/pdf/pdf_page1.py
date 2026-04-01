@@ -26,6 +26,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     TEXT_CLR,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height, _wrap_lines
+from vibesensor.adapters.pdf.pdf_timeline_render import run_timeline_graph
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.types.json_types import JsonValue
@@ -293,7 +294,28 @@ def _draw_proof_block(
     inner_x = x + 4 * mm
     inner_y = y + h - PANEL_HEADER_H - 2 * mm
     diagram_w = w * 0.42
-    diagram_h = h - 20 * mm
+    left_x = inner_x
+    left_w = diagram_w - 2 * mm
+    left_bottom = y + 7 * mm
+    left_top = inner_y
+    left_content_h = left_top - left_bottom
+    timeline_graph = verdict.timeline_graph
+    diagram_y = left_bottom
+    diagram_h = left_content_h
+    if timeline_graph is not None:
+        timeline_gap = 3.5 * mm
+        desired_timeline_h = min(36 * mm, max(28 * mm, left_content_h * 0.24))
+        min_diagram_h = 220.0
+        if left_content_h >= min_diagram_h + desired_timeline_h + timeline_gap:
+            timeline_h = desired_timeline_h
+            diagram_h = left_content_h - timeline_h - timeline_gap
+            diagram_y = left_bottom + timeline_h + timeline_gap
+            run_timeline_graph(
+                timeline_graph,
+                tr=tr,
+                graph_width=left_w,
+                graph_height=timeline_h,
+            ).drawOn(c, left_x, left_bottom)
     diagram = car_location_diagram(
         data.top_causes or data.findings,
         {
@@ -304,10 +326,10 @@ def _draw_proof_block(
         content_width=w - 8 * mm,
         tr=tr,
         text_fn=lambda en, nl: nl if data.lang == "nl" else en,
-        diagram_width=diagram_w - 2 * mm,
-        diagram_height=diagram_h - 8 * mm,
+        diagram_width=left_w,
+        diagram_height=diagram_h - 2 * mm,
     )
-    diagram.drawOn(c, inner_x, y + 7 * mm)
+    diagram.drawOn(c, left_x, diagram_y)
 
     text_x = x + diagram_w + 5 * mm
     text_w = w - diagram_w - 9 * mm
