@@ -211,6 +211,67 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     assert "frame integrity" in text
 
 
+def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() -> None:
+    summary = minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=[
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        sensor_intensity_by_location=[
+            {"location": "Front Left", "p95_intensity_db": 24.0, "mean_intensity_db": 20.0},
+            {"location": "Front Right", "p95_intensity_db": 12.0, "mean_intensity_db": 9.0},
+            {"location": "Rear Left", "p95_intensity_db": 9.0, "mean_intensity_db": 7.0},
+            {"location": "Rear Right", "p95_intensity_db": 8.0, "mean_intensity_db": 6.0},
+        ],
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.65,
+                "strongest_location": "Front Left",
+                "strongest_speed_band": "60-80 km/h",
+                "dominance_ratio": 1.9,
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.65,
+                "strongest_location": "Front Left",
+                "strongest_speed_band": "60-80 km/h",
+                "dominance_ratio": 1.9,
+            }
+        ],
+        run_suitability=[
+            {
+                "check": "Potential saturation samples detected",
+                "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                "state": "warn",
+            },
+            {
+                "check": "Frame integrity",
+                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "state": "pass",
+            },
+        ],
+        samples=[],
+    )
+
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    page_one_text = " ".join(
+        (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
+    )
+
+    assert "limited by run context" not in page_one_text
+    assert "speed was not steady during measurement" in page_one_text
+
+
 def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
     pdf = build_report_pdf(
         ReportTemplateData(

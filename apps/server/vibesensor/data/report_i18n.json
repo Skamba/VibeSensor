@@ -1867,6 +1867,18 @@
     "en": "Limited by run context",
     "nl": "Beperkt door runcontext"
   },
+  "REPORT_LOCATION_CONFIDENCE_CLOSE_SCORES": {
+    "en": "Top causes stayed too close to separate cleanly",
+    "nl": "De belangrijkste oorzaken bleven te dicht bij elkaar om ze duidelijk te scheiden"
+  },
+  "REPORT_LOCATION_CONFIDENCE_RATIO_REASON": {
+    "en": "Top corner was only {ratio}x stronger than the next corner",
+    "nl": "De sterkste hoek was slechts {ratio}x sterker dan de volgende hoek"
+  },
+  "REPORT_LOCATION_CONFIDENCE_MODERATE_DETAIL": {
+    "en": "Evidence separation stayed moderate in this run",
+    "nl": "De scheiding in het bewijs bleef in deze run gematigd"
+  },
   "REPORT_LOCATION_CONFIDENCE_STRONG": {
     "en": "Strong",
     "nl": "Sterk"
