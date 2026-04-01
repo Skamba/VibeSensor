@@ -31,6 +31,7 @@ from vibesensor.adapters.pdf.pdf_text import (
 )
 from vibesensor.adapters.pdf.report_data import (
     AppendixAData,
+    AppendixBData,
     NextStep,
     ReportLabelValueRow,
     ReportTemplateData,
@@ -433,26 +434,87 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
 
     bottom_h = top_y - (MARGIN + 8 * mm)
     bottom_y = MARGIN + 8 * mm
-    _draw_panel(
-        c, MARGIN, bottom_y, width, bottom_h, _tr(data.lang, "REPORT_INTENSITY_LADDER_TITLE")
-    )
-    rows = [
-        [row.location, _fmt_db(row.p95_db), row.coverage_state or _tr(data.lang, "UNKNOWN")]
-        for row in appendix.intensity_rows
-    ]
-    _draw_table(
-        c,
-        x=MARGIN + 4 * mm,
-        y=bottom_y + bottom_h - 13 * mm,
-        w=width - 8 * mm,
-        y_bottom=bottom_y + 4 * mm,
-        headers=[
-            _tr(data.lang, "REPORT_LOCATION_COLUMN"),
-            _tr(data.lang, "REPORT_P95_DB_COLUMN"),
-            _tr(data.lang, "REPORT_COVERAGE_STATE_COLUMN"),
-        ],
-        rows=rows,
-        col_widths=[0.42, 0.18, 0.40],
+    if appendix.sensor_observation_rows:
+        _draw_panel(
+            c,
+            MARGIN,
+            bottom_y,
+            width,
+            bottom_h,
+            _tr(data.lang, "REPORT_SENSOR_OBSERVATION_MATRIX_TITLE"),
+        )
+        table_top = (
+            _draw_text(
+                c,
+                MARGIN + 4 * mm,
+                bottom_y + bottom_h - 13 * mm,
+                width - 8 * mm,
+                _tr(data.lang, "REPORT_SENSOR_OBSERVATION_MATRIX_NOTE"),
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=3,
+            )
+            - 1.2 * mm
+        )
+        headers = [_tr(data.lang, "REPORT_SIGNAL_COLUMN")] + [
+            cell.location for cell in appendix.sensor_observation_rows[0].sensor_levels
+        ]
+        sensor_column_count = max(1, len(headers) - 1)
+        rows = [
+            [
+                f"{row.source_name}\n{row.signal_label}",
+                *[_fmt_relative_db(cell.relative_level_db) for cell in row.sensor_levels],
+            ]
+            for row in appendix.sensor_observation_rows
+        ]
+        _draw_table(
+            c,
+            x=MARGIN + 4 * mm,
+            y=table_top,
+            w=width - 8 * mm,
+            y_bottom=bottom_y + 4 * mm,
+            headers=headers,
+            rows=rows,
+            col_widths=[0.32] + ([0.68 / sensor_column_count] * sensor_column_count),
+            max_body_lines=3,
+        )
+    else:
+        _draw_panel(
+            c, MARGIN, bottom_y, width, bottom_h, _tr(data.lang, "REPORT_INTENSITY_LADDER_TITLE")
+        )
+        rows = [
+            [row.location, _fmt_db(row.p95_db), row.coverage_state or _tr(data.lang, "UNKNOWN")]
+            for row in appendix.intensity_rows
+        ]
+        _draw_table(
+            c,
+            x=MARGIN + 4 * mm,
+            y=bottom_y + bottom_h - 13 * mm,
+            w=width - 8 * mm,
+            y_bottom=bottom_y + 4 * mm,
+            headers=[
+                _tr(data.lang, "REPORT_LOCATION_COLUMN"),
+                _tr(data.lang, "REPORT_P95_DB_COLUMN"),
+                _tr(data.lang, "REPORT_COVERAGE_STATE_COLUMN"),
+            ],
+            rows=rows,
+            col_widths=[0.42, 0.18, 0.40],
+        )
+
+
+def _has_appendix_b_content(appendix: AppendixBData) -> bool:
+    return any(
+        (
+            appendix.dominant_corner,
+            appendix.runner_up_corner,
+            appendix.dominance_ratio_text,
+            appendix.location_confidence,
+            appendix.coverage_label,
+            appendix.coverage_notes,
+            appendix.intensity_rows,
+            appendix.sensor_observation_rows,
+        )
     )
 
 
@@ -1242,6 +1304,15 @@ def _fmt_hz(value: float | None) -> str:
     if value is None:
         return "—"
     return f"{value:.1f} Hz"
+
+
+def _fmt_relative_db(value: float | None) -> str:
+    if value is None:
+        return "—"
+    clamped = min(0.0, float(value))
+    if clamped > -0.5:
+        return "0 dB"
+    return f"{clamped:.0f} dB"
 
 
 def _draw_table(

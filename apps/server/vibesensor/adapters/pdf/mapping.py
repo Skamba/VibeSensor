@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from math import isfinite
 
 from vibesensor.adapters.pdf._candidate_resolver import (
     PrimaryCandidateContext,
@@ -42,6 +43,8 @@ from vibesensor.adapters.pdf.report_data import (
     Report,
     ReportLabelValueRow,
     ReportTemplateData,
+    SensorObservationCell,
+    SensorObservationMatrixRow,
     TimelineGraphData,
     TimelineGraphInterval,
     TopologyIntensityRow,
@@ -71,6 +74,7 @@ from vibesensor.use_cases.history.report_preparation import (
     prepare_report_input,
     validate_prepared_report_input,
 )
+from vibesensor.vibration_strength import percentile, relative_level_db_scalar
 
 __all__ = [
     "PrimaryCandidateContext",
@@ -1023,7 +1027,9 @@ def _build_appendix_a_data(
 def _build_appendix_b_data(
     *,
     primary: PrimaryCandidateContext,
+    aggregate: TestRun,
     report_facts: PreparedReportFacts,
+    sensor_locations: list[str],
     sensor_intensity: list[LocationIntensitySummary],
     tr: Callable[..., str],
 ) -> AppendixBData:
@@ -1047,6 +1053,11 @@ def _build_appendix_b_data(
         )
         for row in ranked_rows
     ]
+    sensor_observation_rows = _sensor_observation_matrix_rows(
+        aggregate,
+        sensor_locations=sensor_locations,
+        tr=tr,
+    )
     dominance_ratio = report_facts.primary_candidate_facts.dominance_ratio
     return AppendixBData(
         dominant_corner=_display_location(primary.primary_location, tr=tr),
@@ -1063,7 +1074,85 @@ def _build_appendix_b_data(
         coverage_label=_coverage_label(report_facts, tr=tr),
         coverage_notes=_coverage_notes(report_facts, tr=tr),
         intensity_rows=intensity_rows,
+        sensor_observation_rows=sensor_observation_rows,
     )
+
+
+def _sensor_observation_matrix_rows(
+    aggregate: TestRun,
+    *,
+    sensor_locations: list[str],
+    tr: Callable[..., str],
+) -> list[SensorObservationMatrixRow]:
+    if not sensor_locations:
+        return []
+    sensor_labels = [
+        _display_location(location, short=True, tr=tr) for location in sensor_locations
+    ]
+    rows: list[SensorObservationMatrixRow] = []
+    for finding in aggregate.effective_top_causes()[:4]:
+        sensor_levels = _sensor_observation_levels(
+            finding,
+            sensor_labels=sensor_labels,
+            tr=tr,
+        )
+        if not any(cell.relative_level_db is not None for cell in sensor_levels):
+            continue
+        rows.append(
+            SensorObservationMatrixRow(
+                source_name=human_source(finding.suspected_source, tr=tr),
+                signal_label=_candidate_signal_text(finding, tr=tr),
+                sensor_levels=sensor_levels,
+            )
+        )
+    return rows
+
+
+def _sensor_observation_levels(
+    finding: Finding,
+    *,
+    sensor_labels: list[str],
+    tr: Callable[..., str],
+) -> list[SensorObservationCell]:
+    matched_amps_by_location: dict[str, list[float]] = {}
+    for point in finding.matched_points:
+        amp = float(point.amp)
+        if not isfinite(amp) or amp < 0.0:
+            continue
+        location = _display_location(point.location, short=True, tr=tr)
+        matched_amps_by_location.setdefault(location, []).append(amp)
+    representative_amps = {
+        location: percentile(sorted(values), 0.95)
+        for location, values in matched_amps_by_location.items()
+        if values
+    }
+    if not representative_amps:
+        strongest_location = str(finding.strongest_location or "").strip()
+        strongest_label = (
+            _display_location(strongest_location, short=True, tr=tr) if strongest_location else None
+        )
+        return [
+            SensorObservationCell(
+                location=label,
+                relative_level_db=0.0 if label == strongest_label else None,
+            )
+            for label in sensor_labels
+        ]
+    strongest_amp = max(representative_amps.values())
+    return [
+        SensorObservationCell(
+            location=label,
+            relative_level_db=(
+                relative_level_db_scalar(
+                    representative_amps[label],
+                    strongest_amp,
+                )
+                if label in representative_amps
+                else None
+            ),
+        )
+        for label in sensor_labels
+    ]
 
 
 def _build_appendix_c_data(
@@ -1254,7 +1343,9 @@ def _build_report_template_data(
     )
     appendix_b = _build_appendix_b_data(
         primary=primary,
+        aggregate=context.domain_aggregate,
         report_facts=report_facts,
+        sensor_locations=context.sensor_locations_active,
         sensor_intensity=raw_sensor_intensity,
         tr=tr,
     )
