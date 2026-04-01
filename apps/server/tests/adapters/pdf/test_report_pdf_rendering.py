@@ -313,7 +313,7 @@ def test_report_pdf_renders_run_timeline_graph_labels() -> None:
 
     assert "run timeline" in page_one_text
     assert "speed" in page_one_text
-    assert "detections" in page_one_text
+    assert "detection windows" in page_one_text
 
 
 def test_report_pdf_compacts_actionable_system_cards() -> None:
