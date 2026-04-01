@@ -161,6 +161,8 @@ def test_choose_label_plan_prefers_inward_offset_before_outward_overflow() -> No
 # ── build_sensor_render_plan ─────────────────────────────────────────────────
 
 _COLORS = {
+    "brand": "#7c3aed",
+    "axis": "#7b8da0",
     "text_secondary": "#52555e",
     "surface_alt": "#f1f2f6",
     "ink": "#1a1c24",
@@ -203,6 +205,7 @@ def test_build_sensor_render_plan_multiple_sensors() -> None:
     assert single is False
     assert len(markers) == 2
     assert labels == []
+    assert markers[0].fill != markers[1].fill
     assert markers[0].outer_radius > markers[0].mid_radius > markers[0].radius
     assert markers[1].outer_radius > markers[1].mid_radius > markers[1].radius
 
