@@ -7,7 +7,6 @@ from typing import cast
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.persisted_analysis_contracts import PersistedAnalysisPayload
 
 
 def persisted_analysis_from_summary(summary: AnalysisSummary) -> PersistedAnalysis:
