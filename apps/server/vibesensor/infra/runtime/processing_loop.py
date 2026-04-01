@@ -15,6 +15,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from vibesensor.shared.exceptions import ProcessingError
+from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import ClockSyncBroadcaster
 
 if TYPE_CHECKING:
@@ -110,10 +111,7 @@ class ProcessingLoop:
 
     @staticmethod
     def _truncate_failure_message(exc: Exception) -> str:
-        message = str(exc).strip() or exc.__class__.__name__
-        if len(message) > _MAX_FAILURE_MESSAGE_LEN:
-            return f"{message[: _MAX_FAILURE_MESSAGE_LEN - 1]}..."
-        return message
+        return bounded_failure_message(exc, max_length=_MAX_FAILURE_MESSAGE_LEN)
 
     def _record_failure(self, category: str, exc: Exception) -> None:
         state = self.state

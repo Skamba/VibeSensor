@@ -8,6 +8,7 @@ import time
 from collections.abc import Callable, Coroutine
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.shared.failure_utils import bounded_failure_message
 
 __all__ = ["TaskSupervisor", "task_failure_message"]
 
@@ -22,8 +23,7 @@ _TASK_RESTART_RESET_AFTER_S = 60.0
 def task_failure_message(exc: BaseException) -> str:
     """Normalize a task failure into a bounded health-state message."""
 
-    message = str(exc).strip() or exc.__class__.__name__
-    return message[:240]
+    return bounded_failure_message(exc, max_length=240)
 
 
 class TaskSupervisor:

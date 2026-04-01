@@ -302,6 +302,25 @@ class TestPostAnalysisWorkerErrorHandling:
         assert worker.wait(timeout_s=3.0)
         assert seen == ["run-ok"]
 
+    def test_unexpected_worker_failure_updates_snapshot_and_error_callback(
+        self,
+        make_worker,
+    ) -> None:
+        errors: list[str] = []
+
+        def _fail(_rid: str) -> None:
+            raise RuntimeError("worker boom")
+
+        worker = make_worker(run_fn=_fail, error_callback=errors.append)
+
+        worker.schedule("run-unexpected")
+        assert worker.wait(timeout_s=3.0)
+
+        snapshot = worker.snapshot()
+        assert snapshot.last_completed_run_id == "run-unexpected"
+        assert snapshot.last_completed_error == "worker boom"
+        assert errors == ["post-analysis failed for run run-unexpected: worker boom"]
+
     def test_worker_retries_retryable_failure_until_success(
         self,
         monkeypatch: pytest.MonkeyPatch,

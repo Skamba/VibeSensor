@@ -1,4 +1,4 @@
-"""Broadcast tick scheduling and backoff control for WebSocket run loops."""
+"""Broadcast tick scheduling and failure escalation for WebSocket run loops."""
 
 from __future__ import annotations
 
@@ -6,14 +6,27 @@ import asyncio
 import logging
 from collections.abc import Awaitable, Callable
 
-__all__ = ["BroadcastTickController"]
+from vibesensor.shared.failure_utils import bounded_failure_message
+
+__all__ = ["BroadcastTickController", "BroadcastTickLoopFailure"]
 
 _MAX_CONSECUTIVE_FAILURES: int = 10
-_BACKOFF_MULTIPLIER: int = 5
+
+
+class BroadcastTickLoopFailure(RuntimeError):
+    """Repeated broadcast-loop failure escalated to outer runtime supervision."""
+
+    def __init__(self, *, consecutive_failures: int, cause: Exception) -> None:
+        self.consecutive_failures = consecutive_failures
+        self.cause = cause
+        super().__init__(
+            "WebSocket broadcast tick failed "
+            f"{consecutive_failures} consecutive times: {bounded_failure_message(cause)}"
+        )
 
 
 class BroadcastTickController:
-    """Drive a broadcast loop with fixed-rate timing and failure backoff."""
+    """Drive a broadcast loop with fixed-rate timing and bounded local retries."""
 
     def __init__(
         self,
@@ -21,7 +34,6 @@ class BroadcastTickController:
         hz: int,
         logger: logging.Logger,
         max_consecutive_failures: int = _MAX_CONSECUTIVE_FAILURES,
-        backoff_multiplier: int = _BACKOFF_MULTIPLIER,
     ) -> None:
         if hz <= 0:
             logger.warning(
@@ -31,7 +43,6 @@ class BroadcastTickController:
         self._logger = logger
         self._interval = 1.0 / max(1, hz)
         self._max_consecutive_failures = max_consecutive_failures
-        self._backoff_multiplier = backoff_multiplier
 
     async def run(
         self,
@@ -39,7 +50,13 @@ class BroadcastTickController:
         broadcast_tick: Callable[[], Awaitable[None]],
         on_tick: Callable[[], None] | None = None,
     ) -> None:
-        """Drive the loop until cancelled, preserving existing retry behavior."""
+        """Drive the loop until cancelled.
+
+        Transient failures still retry inside the tick loop, but once the
+        failure streak crosses the configured threshold this controller raises
+        to the caller so runtime supervision can own restart/backoff policy and
+        health reporting for the managed task.
+        """
 
         consecutive_failures = 0
         loop = asyncio.get_running_loop()
@@ -56,22 +73,22 @@ class BroadcastTickController:
                         )
                 await broadcast_tick()
                 consecutive_failures = 0
-            except Exception:
+            except Exception as exc:
                 consecutive_failures += 1
                 if consecutive_failures >= self._max_consecutive_failures:
                     self._logger.error(
-                        "WebSocket broadcast tick failed %d consecutive times; backing off.",
+                        "WebSocket broadcast tick failed %d consecutive times; escalating.",
                         consecutive_failures,
                         exc_info=True,
                     )
-                    await asyncio.sleep(self._interval * self._backoff_multiplier)
-                    tick_start = loop.time()
-                    consecutive_failures = 0
-                else:
-                    self._logger.warning(
-                        "WebSocket broadcast tick failed (%d consecutive); will retry.",
-                        consecutive_failures,
-                        exc_info=True,
-                    )
+                    raise BroadcastTickLoopFailure(
+                        consecutive_failures=consecutive_failures,
+                        cause=exc,
+                    ) from exc
+                self._logger.warning(
+                    "WebSocket broadcast tick failed (%d consecutive); will retry.",
+                    consecutive_failures,
+                    exc_info=True,
+                )
             elapsed = loop.time() - tick_start
             await asyncio.sleep(max(0, self._interval - elapsed))

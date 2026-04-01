@@ -18,6 +18,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from threading import Event, RLock, Thread
 
+from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisAttemptResult,
@@ -246,8 +247,8 @@ class PostAnalysisWorker:
                 self._analysis_active_started_at = time.time()
             try:
                 self._run_post_analysis(run_id)
-            except Exception:
-                LOGGER.exception("Unexpected error in analysis worker for run %s", run_id)
+            except Exception as exc:
+                self._record_unexpected_worker_failure(run_id, exc)
             finally:
                 with self._lock:
                     self._analysis_enqueued_run_ids.discard(run_id)
@@ -320,3 +321,11 @@ class PostAnalysisWorker:
 
         for error_msg in _execution_callback_errors(result):
             self._error_cb(error_msg)
+
+    def _record_unexpected_worker_failure(self, run_id: str, exc: Exception) -> None:
+        completed_error = bounded_failure_message(exc)
+        with self._lock:
+            self._last_completed_run_id = run_id
+            self._last_completed_error = completed_error
+        self._error_cb(f"post-analysis failed for run {run_id}: {completed_error}")
+        LOGGER.exception("Unexpected error in analysis worker for run %s", run_id)
