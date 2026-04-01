@@ -334,6 +334,17 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
     top_y = title_y - top_h
 
     _draw_panel(c, MARGIN, top_y, left_w, top_h, _tr(data.lang, "REPORT_TOPOLOGY_MAP_TITLE"))
+    _draw_text(
+        c,
+        MARGIN + 4 * mm,
+        top_y + top_h - PANEL_HEADER_H - 2 * mm,
+        left_w - 8 * mm,
+        _tr(data.lang, "REPORT_TOPOLOGY_MAP_NOTE"),
+        size=FS_SMALL,
+        color=SUB_CLR,
+        leading=FS_SMALL + 1.0,
+        max_lines=1,
+    )
     diagram = car_location_diagram(
         data.top_causes or data.findings,
         {

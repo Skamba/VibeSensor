@@ -2115,6 +2115,10 @@
     "en": "Sensor map",
     "nl": "Sensorkaart"
   },
+  "REPORT_TOPOLOGY_MAP_NOTE": {
+    "en": "Marker color shows relative vibration strength.",
+    "nl": "Markerkleur toont relatieve trillingssterkte."
+  },
   "REPORT_TRACEABILITY_PANEL_TITLE": {
     "en": "Traceability",
     "nl": "Herleidbaarheid"

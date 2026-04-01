@@ -89,7 +89,7 @@ def test_sensor_state_mapping_connected_active_inactive_and_disconnected() -> No
     assert states["engine bay"] == "disconnected"
 
 
-def test_marker_gradients_keep_diagnostic_core_color_and_expand_with_intensity() -> None:
+def test_marker_gradients_keep_diagnostic_stroke_and_expand_with_intensity() -> None:
     location_points = {
         "front-left wheel": (40.0, 180.0),
         "front-right wheel": (160.0, 180.0),
@@ -111,7 +111,8 @@ def test_marker_gradients_keep_diagnostic_core_color_and_expand_with_intensity()
     )
     marker_by_name = {marker.name: marker for marker in markers}
 
-    assert marker_by_name["rear-left wheel"].fill == REPORT_COLORS["danger"]
+    assert marker_by_name["rear-left wheel"].fill != REPORT_COLORS["danger"]
+    assert marker_by_name["rear-left wheel"].stroke == REPORT_COLORS["danger"]
     assert (
         marker_by_name["rear-left wheel"].outer_radius
         > marker_by_name["rear-left wheel"].mid_radius
@@ -123,6 +124,8 @@ def test_marker_gradients_keep_diagnostic_core_color_and_expand_with_intensity()
         > marker_by_name["front-left wheel"].mid_radius
     )
     assert marker_by_name["front-left wheel"].mid_radius > marker_by_name["front-left wheel"].radius
+    assert marker_by_name["front-left wheel"].stroke == marker_by_name["front-left wheel"].fill
+    assert marker_by_name["front-left wheel"].fill != marker_by_name["front-right wheel"].fill
     assert marker_by_name["front-left wheel"].radius > marker_by_name["rear-left wheel"].radius
     assert marker_by_name["engine bay"].state == "disconnected"
     assert marker_by_name["engine bay"].outer_fill != marker_by_name["engine bay"].fill
@@ -410,8 +413,9 @@ def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs()
         colors=REPORT_COLORS,
     )
     marker_by_name = {marker.name: marker for marker in markers}
-    assert marker_by_name["front-left wheel"].fill == REPORT_COLORS["text_secondary"]
-    assert marker_by_name["rear-left wheel"].fill == REPORT_COLORS["danger"]
+    assert marker_by_name["front-left wheel"].fill != marker_by_name["rear-left wheel"].fill
+    assert marker_by_name["rear-left wheel"].fill != REPORT_COLORS["danger"]
+    assert marker_by_name["rear-left wheel"].stroke == REPORT_COLORS["danger"]
 
 
 def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> None:
