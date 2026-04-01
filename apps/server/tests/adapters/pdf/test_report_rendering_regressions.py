@@ -13,6 +13,7 @@ from reportlab.pdfgen.canvas import Canvas
 import vibesensor.adapters.pdf.panels._panel_header as panel_header
 import vibesensor.adapters.pdf.panels._panel_systems as panel_systems
 import vibesensor.adapters.pdf.panels._panel_trust_steps as panel_trust_steps
+import vibesensor.adapters.pdf.pdf_page1 as pdf_page1
 from vibesensor.adapters.pdf.panels._panel_observations import _draw_additional_observations
 from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_next_steps_table
 from vibesensor.adapters.pdf.pdf_style import FONT, FS_H2, PdfRenderContext
@@ -22,6 +23,7 @@ from vibesensor.adapters.pdf.report_data import (
     PatternEvidence,
     ReportTemplateData,
     SystemFindingCard,
+    VerdictPageData,
 )
 from vibesensor.report_i18n import tr as report_tr
 
@@ -164,6 +166,64 @@ class TestNextStepCardPadding:
         assert number_x - row_x >= 1.8 * mm
         assert detail_x == action_x
         assert row_top - action_y >= 2.5 * mm
+
+
+class TestHeroActionStatusCallout:
+    """Regression: hero status heading and explanation should share one callout."""
+
+    def test_draw_hero_block_uses_single_status_callout_container(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        canvas = _make_canvas()
+        round_rect_calls: list[tuple[float, float, float, float]] = []
+        drawn_text: list[str] = []
+        original_round_rect = canvas.roundRect
+        original_draw_string = canvas.drawString
+
+        def capture_round_rect(x: float, y: float, w: float, h: float, *args, **kwargs):
+            round_rect_calls.append((float(x), float(y), float(w), float(h)))
+            return original_round_rect(x, y, w, h, *args, **kwargs)
+
+        def capture_draw_string(x: float, y: float, text: str, *args, **kwargs):
+            drawn_text.append(str(text))
+            return original_draw_string(x, y, text, *args, **kwargs)
+
+        monkeypatch.setattr(canvas, "roundRect", capture_round_rect)
+        monkeypatch.setattr(canvas, "drawString", capture_draw_string)
+
+        pdf_page1._draw_hero_block(
+            canvas,
+            ReportTemplateData(
+                lang="en",
+                verdict_page=VerdictPageData(
+                    suspected_source="Wheel / Tire",
+                    action_status="Inspect first — moderate confidence",
+                    action_status_note=(
+                        "Start with the wheel path, but keep the driveline path live if the "
+                        "first inspection is clean."
+                    ),
+                ),
+            ),
+            tr=lambda key, **kwargs: {
+                "UNKNOWN": "Unknown",
+                "REPORT_ACTION_STATUS_LABEL": "Action status",
+                "REPORT_ACTION_STATUS_READY": "Action-ready",
+                "REPORT_ACTION_STATUS_READY_CAUTION": "Inspect first — moderate confidence",
+                "REPORT_ACTION_STATUS_RECAPTURE": "Recapture before acting",
+                "REPORT_SUSPECTED_SOURCE_LABEL": "Suspected source",
+            }[key],
+            x=20 * mm,
+            y=140 * mm,
+            w=170 * mm,
+            h=40 * mm,
+        )
+
+        drawn_text_blob = " ".join(drawn_text)
+
+        assert "Inspect first — moderate confidence" in drawn_text_blob
+        assert "keep the driveline path live" in drawn_text_blob
+        assert len(round_rect_calls) == 2
 
 
 class TestAdditionalObservationsContext:
