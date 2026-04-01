@@ -11,6 +11,7 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     report_duration_s,
     summary_metadata,
 )
+from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.analysis_views import PeakTableRow
 
 __all__ = [
@@ -31,6 +32,7 @@ class PreparedReportRendererPayload:
     sample_count: int
     sensor_count: int
     peak_table_rows: tuple[PeakTableRow, ...]
+    recorded_utc_offset_seconds: int | None = None
 
 
 def build_report_renderer_payload(
@@ -47,6 +49,9 @@ def build_report_renderer_payload(
     if isinstance(report_date, str):
         normalized_report_date = report_date.strip()
         report_date_str = normalized_report_date or None
+    recorded_utc_offset_seconds = coerce_utc_offset_seconds(
+        metadata.get("recorded_utc_offset_seconds"),
+    )
     return PreparedReportRendererPayload(
         run_id=str(payload.get("run_id") or "unknown") or "unknown",
         car_name=str(metadata.get("car_name") or "").strip() or None,
@@ -56,4 +61,5 @@ def build_report_renderer_payload(
         sample_count=sample_count,
         sensor_count=sensor_count,
         peak_table_rows=peak_table_rows(payload),
+        recorded_utc_offset_seconds=recorded_utc_offset_seconds,
     )

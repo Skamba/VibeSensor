@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.shared.time_utils import current_utc_offset_seconds
 from vibesensor.shared.types.json_types import JsonObject
 
 from .sample_builder import build_run_metadata, firmware_version_for_run
@@ -64,6 +65,7 @@ def _build_run_metadata_record(
         accel_scale_g_per_lsb=recorder.accel_scale_g_per_lsb,
         active_car_snapshot=run_context.car,
         language_provider=recorder._language_provider,
+        recorded_utc_offset_seconds=current_utc_offset_seconds(),
     )
 
 
