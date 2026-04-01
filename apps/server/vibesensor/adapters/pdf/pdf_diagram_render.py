@@ -72,9 +72,9 @@ def _fit_vehicle_shell_rect(
     *, drawing_width: float, drawing_height: float
 ) -> tuple[float, float, float, float]:
     vehicle_ratio = _BMW_WIDTH_MM / _BMW_LENGTH_MM
-    horizontal_pad = max(12.0, drawing_width * 0.10)
-    orientation_reserve = 20.0
-    top_bottom_pad = 12.0
+    horizontal_pad = max(10.0, drawing_width * 0.085)
+    orientation_reserve = 16.0
+    top_bottom_pad = 8.0
     box_w = max(44.0, drawing_width - (2.0 * horizontal_pad))
     box_h = max(92.0, drawing_height - (2.0 * orientation_reserve) - top_bottom_pad)
     box_ratio = box_w / box_h if box_h > 0 else vehicle_ratio
@@ -120,7 +120,7 @@ def _draw_vehicle_shell(
     body = Path(
         fillColor=color_surface,
         strokeColor=color_border,
-        strokeWidth=1.4,
+        strokeWidth=1.55,
     )
     body.moveTo(center_x, py(0.985))
     body.curveTo(px(0.24), py(0.972), px(0.12), py(0.89), px(0.10), py(0.78))
@@ -137,7 +137,7 @@ def _draw_vehicle_shell(
     roof_shell = Path(
         fillColor=hex_color("#ffffff"),
         strokeColor=color_row_border,
-        strokeWidth=0.9,
+        strokeWidth=1.0,
     )
     roof_shell.moveTo(center_x, py(0.79))
     roof_shell.curveTo(px(0.35), py(0.785), px(0.25), py(0.70), px(0.23), py(0.58))
@@ -162,7 +162,7 @@ def _draw_vehicle_shell(
         ],
         fillColor=hex_color("#f6f9ff"),
         strokeColor=color_row_border,
-        strokeWidth=0.6,
+        strokeWidth=0.75,
     )
     rear_window = Polygon(
         [
@@ -177,17 +177,17 @@ def _draw_vehicle_shell(
         ],
         fillColor=hex_color("#f6f9ff"),
         strokeColor=color_row_border,
-        strokeWidth=0.6,
+        strokeWidth=0.75,
     )
     drawing.add(windshield)
     drawing.add(rear_window)
 
-    hood_seam = Path(strokeColor=color_row_border, strokeWidth=0.7)
+    hood_seam = Path(strokeColor=color_row_border, strokeWidth=0.82)
     hood_seam.moveTo(px(0.27), py(0.83))
     hood_seam.curveTo(px(0.37), py(0.79), px(0.63), py(0.79), px(0.73), py(0.83))
     drawing.add(hood_seam)
 
-    hatch_seam = Path(strokeColor=color_row_border, strokeWidth=0.7)
+    hatch_seam = Path(strokeColor=color_row_border, strokeWidth=0.82)
     hatch_seam.moveTo(px(0.30), py(0.15))
     hatch_seam.curveTo(px(0.40), py(0.18), px(0.60), py(0.18), px(0.70), py(0.15))
     drawing.add(hatch_seam)
@@ -203,7 +203,7 @@ def _draw_vehicle_shell(
             door_left_x,
             belt_high_y,
             strokeColor=color_row_border,
-            strokeWidth=0.6,
+            strokeWidth=0.72,
         ),
     )
     drawing.add(
@@ -213,7 +213,7 @@ def _draw_vehicle_shell(
             door_right_x,
             belt_high_y,
             strokeColor=color_row_border,
-            strokeWidth=0.6,
+            strokeWidth=0.72,
         ),
     )
     drawing.add(
@@ -223,7 +223,7 @@ def _draw_vehicle_shell(
             center_x,
             py(0.79),
             strokeColor=color_row_border,
-            strokeWidth=0.8,
+            strokeWidth=0.92,
         ),
     )
     drawing.add(
@@ -233,7 +233,7 @@ def _draw_vehicle_shell(
             px(0.71),
             py(0.47),
             strokeColor=color_row_border,
-            strokeWidth=0.5,
+            strokeWidth=0.62,
         ),
     )
 
@@ -249,7 +249,7 @@ def _draw_vehicle_shell(
         ],
         fillColor=mirror_fill,
         strokeColor=color_row_border,
-        strokeWidth=0.7,
+        strokeWidth=0.8,
     )
     mirror_right = Polygon(
         [
@@ -262,7 +262,7 @@ def _draw_vehicle_shell(
         ],
         fillColor=mirror_fill,
         strokeColor=color_row_border,
-        strokeWidth=0.7,
+        strokeWidth=0.8,
     )
     drawing.add(mirror_left)
     drawing.add(mirror_right)
@@ -282,7 +282,7 @@ def _draw_vehicle_shell(
                 max(2.2, car_w * 0.022),
                 fillColor=fill,
                 strokeColor=color_row_border,
-                strokeWidth=0.5,
+                strokeWidth=0.58,
             ),
         )
 
@@ -298,7 +298,7 @@ def _draw_vehicle_shell(
                 wheel_x_right,
                 axle_y,
                 strokeColor=color_row_border,
-                strokeWidth=0.6,
+                strokeWidth=0.7,
             ),
         )
     wheel_fill = hex_color("#f7f9fd")
@@ -325,7 +325,7 @@ def _draw_vehicle_shell(
     drawing.add(
         String(
             center_x,
-            y0 + car_h + 13,
+            y0 + car_h + 10.5,
             "DIAGRAM_LABEL_FRONT",
             fontName="Helvetica-Bold",
             fontSize=7.5,
@@ -336,7 +336,7 @@ def _draw_vehicle_shell(
     drawing.add(
         String(
             center_x,
-            y0 - 15,
+            y0 - 11.5,
             "DIAGRAM_LABEL_REAR",
             fontName="Helvetica-Bold",
             fontSize=7.5,
@@ -429,9 +429,9 @@ def car_location_diagram(
             f"Car visual aspect ratio violated: rendered {rendered_ratio:.4f} vs source {length_width_ratio:.4f}",
         )
 
-    color_surface = hex_color(REPORT_COLORS["surface"])
-    color_border = hex_color(REPORT_COLORS["border"])
-    color_row_border = hex_color(REPORT_COLORS["table_row_border"])
+    color_surface = hex_color(REPORT_COLORS["surface_alt"])
+    color_border = hex_color(REPORT_COLORS["axis"])
+    color_row_border = hex_color(REPORT_COLORS["border"])
     color_text_primary = hex_color(REPORT_COLORS["text_primary"])
 
     _draw_vehicle_shell(

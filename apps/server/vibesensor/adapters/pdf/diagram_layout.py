@@ -130,20 +130,20 @@ def _gradient_layers(
 ) -> tuple[str, float, str, float]:
     normalized = _clamp_unit(emphasis)
     if state == "connected-active":
-        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.46 - (normalized * 0.16))
-        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.74 - (normalized * 0.24))
-        mid_radius = core_radius + 1.3 + (normalized * 0.3)
-        outer_radius = mid_radius + 1.6 + (normalized * 0.5)
+        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.34 - (normalized * 0.10))
+        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.56 - (normalized * 0.18))
+        mid_radius = core_radius + 0.85 + (normalized * 0.15)
+        outer_radius = mid_radius + 1.05 + (normalized * 0.20)
     elif state == "connected-inactive":
-        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.58)
-        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.82)
-        mid_radius = core_radius + 1.1
-        outer_radius = mid_radius + 1.4
+        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.32)
+        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.50)
+        mid_radius = core_radius + 0.45
+        outer_radius = mid_radius + 0.65
     else:
-        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.38)
-        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.66)
-        mid_radius = core_radius + 0.9
-        outer_radius = mid_radius + 1.1
+        mid_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.20)
+        outer_fill = _blend_hex(base_fill, "#ffffff", target_weight=0.34)
+        mid_radius = core_radius + 0.25
+        outer_radius = mid_radius + 0.35
     return (mid_fill, mid_radius, outer_fill, outer_radius)
 
 
@@ -269,8 +269,8 @@ def build_sensor_render_plan(
     def active_radius(name: str, *, highlighted: bool) -> float:
         normalized = intensity_emphasis(name)
         if highlighted:
-            return 5.4 + (normalized * 0.7)
-        return 4.6 + (normalized * 0.9)
+            return 4.25 + (normalized * 0.35)
+        return 4.0 + (normalized * 0.55)
 
     markers: list[MarkerRenderPlan] = []
     for name, (px, py) in location_points.items():
@@ -282,15 +282,20 @@ def build_sensor_render_plan(
             else:
                 fill = colors["text_secondary"]
                 radius = active_radius(name, highlighted=False)
-            stroke_width = 0.8
+            stroke_width = 0.75
         elif state == "connected-inactive":
-            fill = highlight.get(name, colors["surface_alt"])
-            radius = 4.4
-            stroke_width = 0.7
+            if name in highlight:
+                fill = highlight[name]
+                radius = 3.6
+                stroke_width = 0.62
+            else:
+                fill = colors["surface_alt"]
+                radius = 3.15
+                stroke_width = 0.58
         else:
             fill = "#d8dfea"
-            radius = 3.6
-            stroke_width = 0.6
+            radius = 2.6
+            stroke_width = 0.5
         emphasis = intensity_emphasis(name) if state == "connected-active" else 0.45
         mid_fill, mid_radius, outer_fill, outer_radius = _gradient_layers(
             base_fill=fill,
