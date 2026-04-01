@@ -57,12 +57,20 @@ def _page1(
     hero_y = header_y - GAP - hero_h
     middle_y = content_bottom
 
-    actions_h = min(main_h, _estimate_actions_block_height(data, tr=tr, w=actions_w))
-    actions_y = middle_y + main_h - actions_h
+    timeline_graph = data.verdict_page.timeline_graph
+    timeline_gap = GAP if timeline_graph is not None else 0.0
+    timeline_h = (
+        float(min(48 * mm, max(42 * mm, main_h * 0.22))) if timeline_graph is not None else 0.0
+    )
+    upper_content_y = middle_y + timeline_h + timeline_gap
+    upper_content_h = main_h - timeline_h - timeline_gap
+
+    actions_h = min(upper_content_h, _estimate_actions_block_height(data, tr=tr, w=actions_w))
+    actions_y = upper_content_y + upper_content_h - actions_h
 
     _draw_header_strip(c, data, tr=tr, x=MARGIN, y=header_y, w=width, h=header_h)
     _draw_hero_block(c, data, tr=tr, x=MARGIN, y=hero_y, w=width, h=hero_h)
-    _draw_proof_block(c, data, tr=tr, x=MARGIN, y=middle_y, w=proof_w, h=main_h)
+    _draw_proof_block(c, data, tr=tr, x=MARGIN, y=upper_content_y, w=proof_w, h=upper_content_h)
     _draw_actions_block(
         c,
         data,
@@ -72,6 +80,8 @@ def _page1(
         w=actions_w,
         h=actions_h,
     )
+    if timeline_graph is not None:
+        _draw_timeline_block(c, data, tr=tr, x=MARGIN, y=middle_y, w=width, h=timeline_h)
 
 
 def _draw_header_strip(
@@ -320,23 +330,8 @@ def _draw_proof_block(
     left_bottom = y + 7 * mm
     left_top = inner_y
     left_content_h = left_top - left_bottom
-    timeline_graph = verdict.timeline_graph
     diagram_y = left_bottom
     diagram_h = left_content_h
-    if timeline_graph is not None:
-        timeline_gap = 3.5 * mm
-        desired_timeline_h = min(36 * mm, max(28 * mm, left_content_h * 0.24))
-        min_diagram_h = 220.0
-        if left_content_h >= min_diagram_h + desired_timeline_h + timeline_gap:
-            timeline_h = desired_timeline_h
-            diagram_h = left_content_h - timeline_h - timeline_gap
-            diagram_y = left_bottom + timeline_h + timeline_gap
-            run_timeline_graph(
-                timeline_graph,
-                tr=tr,
-                graph_width=left_w,
-                graph_height=timeline_h,
-            ).drawOn(c, left_x, left_bottom)
     diagram = car_location_diagram(
         data.top_causes or data.findings,
         {
@@ -429,6 +424,34 @@ def _draw_proof_block(
             color=SUB_CLR,
             leading=FS_SMALL + 1.2,
         )
+
+
+def _draw_timeline_block(
+    c: Canvas,
+    data: ReportTemplateData,
+    *,
+    tr: Callable[..., str],
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+) -> None:
+    timeline_graph = data.verdict_page.timeline_graph
+    if timeline_graph is None:
+        return
+
+    _draw_panel(c, x, y, w, h, tr("REPORT_TIMELINE_TITLE"))
+    graph_x = x + 4 * mm
+    graph_y = y + 4 * mm
+    graph_w = w - 8 * mm
+    graph_h = h - PANEL_HEADER_H - 6 * mm
+    run_timeline_graph(
+        timeline_graph,
+        tr=tr,
+        graph_width=graph_w,
+        graph_height=graph_h,
+        show_title=False,
+    ).drawOn(c, graph_x, graph_y)
 
 
 def _draw_action_row(

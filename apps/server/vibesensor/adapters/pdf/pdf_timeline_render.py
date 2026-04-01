@@ -53,31 +53,36 @@ def run_timeline_graph(
     tr: Callable[..., str],
     graph_width: float,
     graph_height: float,
+    show_title: bool = True,
 ) -> Any:
     """Build and return a ReportLab drawing for the proof-block run timeline."""
     from reportlab.graphics.shapes import Circle, Drawing, Line, PolyLine, Rect, String
 
     drawing = Drawing(graph_width, graph_height)
-    title_y = graph_height - 9.0
-    legend_y = graph_height - 10.0
+    top_cursor = graph_height - 4.0
+    if show_title:
+        title_y = top_cursor - 5.0
+        drawing.add(
+            String(
+                0.0,
+                title_y,
+                tr("REPORT_TIMELINE_TITLE"),
+                fontName=FONT_B,
+                fontSize=7.5,
+                fillColor=_hex(REPORT_COLORS["text_primary"]),
+            ),
+        )
+        top_cursor = title_y - 10.0
+
+    legend_y = top_cursor - 1.0
     plot_x = 24.0
     plot_y = 12.0
     plot_w = max(72.0, graph_width - 30.0)
-    plot_h = max(28.0, graph_height - 30.0)
-
-    drawing.add(
-        String(
-            0.0,
-            title_y,
-            tr("REPORT_TIMELINE_TITLE"),
-            fontName=FONT_B,
-            fontSize=7.5,
-            fillColor=_hex(REPORT_COLORS["text_primary"]),
-        ),
-    )
+    plot_top = legend_y - 8.0
+    plot_h = max(28.0, plot_top - plot_y)
 
     speed_legend_x = plot_x + 2.0
-    detection_legend_x = min(plot_x + (plot_w * 0.52), graph_width - 60.0)
+    detection_legend_x = min(plot_x + 78.0, plot_x + plot_w - 34.0)
     drawing.add(
         Line(
             speed_legend_x,
@@ -204,6 +209,7 @@ def run_timeline_graph(
         )
         interval_w = max(1.5, x_end - x_start)
         if interval.has_fault_evidence:
+            detection_y = plot_y + plot_h - 3.5
             drawing.add(
                 Rect(
                     x_start,
@@ -212,6 +218,26 @@ def run_timeline_graph(
                     plot_h,
                     fillColor=_hex(REPORT_COLORS["card_error_bg"]),
                     strokeColor=_hex(REPORT_COLORS["card_error_bg"]),
+                    strokeWidth=0.0,
+                ),
+            )
+            drawing.add(
+                Line(
+                    x_start,
+                    detection_y,
+                    x_start + interval_w,
+                    detection_y,
+                    strokeColor=_hex(REPORT_COLORS["danger"]),
+                    strokeWidth=1.0,
+                ),
+            )
+            drawing.add(
+                Circle(
+                    x_start + (interval_w / 2.0),
+                    detection_y,
+                    2.3,
+                    fillColor=_hex(REPORT_COLORS["danger"]),
+                    strokeColor=_hex(REPORT_COLORS["danger"]),
                     strokeWidth=0.0,
                 ),
             )
@@ -256,17 +282,6 @@ def run_timeline_graph(
                 speed_ceiling_kmh=timeline_graph.speed_ceiling_kmh,
             )
             speed_line_points.extend([x_start, y_speed, x_end, y_speed])
-            if interval.has_fault_evidence:
-                drawing.add(
-                    Circle(
-                        x_start + (interval_w / 2.0),
-                        y_speed,
-                        2.3,
-                        fillColor=_hex(REPORT_COLORS["danger"]),
-                        strokeColor=_hex(REPORT_COLORS["danger"]),
-                        strokeWidth=0.0,
-                    ),
-                )
     if speed_line_points:
         drawing.add(
             PolyLine(
