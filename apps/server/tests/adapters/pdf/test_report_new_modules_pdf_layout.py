@@ -14,6 +14,7 @@ from test_support.report_helpers import (
     RUN_END,
     ambiguous_primary_location_summary,
     minimal_summary,
+    recapture_guidance_summary,
     sequential_same_source_summary,
     trunk_primary_guidance_summary,
     write_jsonl,
@@ -516,6 +517,41 @@ def test_build_report_pdf_keeps_same_source_temporal_shift_visible_in_recapture_
     assert "Front-Left" in text
     assert "Rear-Right" in text
     assert "No single corner stayed dominant through the whole run" in text
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected_page_two_text"),
+    [
+        pytest.param(
+            "steady",
+            "Speed range never settled into a usable diagnostic band",
+            id="steady-speed-page-two-guidance",
+        ),
+        pytest.param(
+            "overlap",
+            "Wheel / Tire and Driveline evidence overlapped",
+            id="source-overlap-page-two-guidance",
+        ),
+        pytest.param(
+            "weak",
+            "Location evidence stayed spread across multiple positions",
+            id="weak-location-page-two-guidance",
+        ),
+        pytest.param(
+            "transient",
+            "The strongest signal was transient or intermittent",
+            id="transient-page-two-guidance",
+        ),
+    ],
+)
+def test_build_report_pdf_recapture_page_uses_scenario_specific_guidance(
+    mode: str,
+    expected_page_two_text: str,
+) -> None:
+    pdf = build_report_pdf(map_summary(prepare_report_input(recapture_guidance_summary(mode))))
+    page_two_text = " ".join((PdfReader(BytesIO(pdf)).pages[1].extract_text() or "").split())
+
+    assert expected_page_two_text in page_two_text
 
 
 def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:

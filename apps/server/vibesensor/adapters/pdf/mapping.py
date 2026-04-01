@@ -321,6 +321,17 @@ def _first_nonpass_detail(data_trust: list[DataTrustItem]) -> str | None:
     return None
 
 
+def _nonpass_detail_lines(data_trust: list[DataTrustItem]) -> list[str]:
+    lines: list[str] = []
+    for item in data_trust:
+        if item.state == "pass":
+            continue
+        detail = str(item.detail or item.check).strip()
+        if detail:
+            lines.append(detail)
+    return lines
+
+
 def _confidence_pct_text(finding: Finding) -> str:
     if finding.confidence_assessment is not None:
         return finding.confidence_assessment.pct_text
@@ -765,6 +776,168 @@ def _run_limits_summary_text(
         return tr("REPORT_RUN_LIMITS_RECAPTURE_RECIPE", speed=speed_window)
     note = _proof_caveat_text(primary, report_facts, tr=tr)
     return note or tr("REPORT_CAPTURE_ISSUE_GENERIC")
+
+
+def _check_state(
+    report_facts: PreparedReportFacts,
+    check_key: str,
+) -> str:
+    target = check_key.strip().upper()
+    for check in report_facts.suitability_checks:
+        key = str(check.get("check_key") or "").strip().upper()
+        if key == target:
+            return str(check.get("state") or "").strip().lower()
+    return ""
+
+
+def _has_warning_code(report_facts: PreparedReportFacts, code: str) -> bool:
+    target = code.strip().lower()
+    return any(
+        str(warning.get("code") or "").strip().lower() == target
+        for warning in report_facts.warnings
+    )
+
+
+def _is_transient_primary(primary: PrimaryCandidateContext) -> bool:
+    finding = primary.primary_candidate
+    if finding is None:
+        return False
+    source = str(finding.suspected_source or "").strip().lower()
+    classification = str(finding.peak_classification or "").strip().lower()
+    return source == "transient_impact" or classification == "transient"
+
+
+def _has_source_overlap(
+    aggregate: TestRun,
+    *,
+    tr: Callable[..., str],
+) -> bool:
+    ranked = list(aggregate.effective_top_causes()[:2])
+    if len(ranked) < 2:
+        return False
+    return _uses_shared_overlap_wording(ranked[0], ranked[1], tr=tr)
+
+
+def _append_unique_line(lines: list[str], text: object) -> None:
+    value = str(text or "").strip()
+    if not value:
+        return
+    normalized = value.rstrip(".").casefold()
+    if any(existing.rstrip(".").casefold() == normalized for existing in lines):
+        return
+    lines.append(value)
+
+
+def _recapture_issue_lines(
+    *,
+    aggregate: TestRun,
+    primary: PrimaryCandidateContext,
+    report_facts: PreparedReportFacts,
+    data_trust: list[DataTrustItem],
+    tr: Callable[..., str],
+) -> list[str]:
+    issues: list[str] = []
+    if _has_source_overlap(aggregate, tr=tr):
+        ranked = list(aggregate.effective_top_causes()[:2])
+        if len(ranked) > 1:
+            _append_unique_line(
+                issues,
+                tr(
+                    "REPORT_RECAPTURE_ISSUE_SOURCE_OVERLAP",
+                    primary=human_source(ranked[0].suspected_source, tr=tr),
+                    alternative=human_source(ranked[1].suspected_source, tr=tr),
+                ),
+            )
+    if report_facts.location_confidence_key == "weak":
+        _append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_WEAK_LOCATION"))
+    elif report_facts.location_confidence_key == "mixed":
+        _append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_MIXED_LOCATION"))
+    if _is_transient_primary(primary):
+        _append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_TRANSIENT"))
+    for detail in _nonpass_detail_lines(data_trust):
+        _append_unique_line(issues, detail)
+    if not issues:
+        note = _proof_caveat_text(primary, report_facts, tr=tr)
+        _append_unique_line(issues, note or tr("REPORT_CAPTURE_ISSUE_GENERIC"))
+    return issues[:4]
+
+
+def _recapture_next_steps(
+    *,
+    aggregate: TestRun,
+    primary: PrimaryCandidateContext,
+    report_facts: PreparedReportFacts,
+    tr: Callable[..., str],
+) -> list[NextStep]:
+    expected = len(report_facts.coverage_summary.expected_locations) or len(
+        report_facts.coverage_summary.active_locations
+    )
+    actions: list[str] = []
+    if _has_source_overlap(aggregate, tr=tr):
+        _append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_COMPARE_PATHS"))
+    if _check_state(report_facts, "SUITABILITY_CHECK_SPEED_VARIATION") != "pass":
+        _append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_STEADY_HOLD"))
+    if _is_transient_primary(primary):
+        _append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_REPEAT_EVENT"))
+    if (
+        report_facts.location_confidence_key in {"weak", "mixed"}
+        or _check_state(report_facts, "SUITABILITY_CHECK_SENSOR_COVERAGE") != "pass"
+    ):
+        _append_unique_line(
+            actions,
+            tr("TIER_A_CAPTURE_MORE_SENSORS"),
+        )
+    if (
+        report_facts.primary_candidate_facts.has_reference_gaps
+        or _check_state(report_facts, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS") != "pass"
+        or _has_warning_code(report_facts, "reference_context_incomplete")
+    ):
+        _append_unique_line(actions, tr("TIER_A_CAPTURE_REFERENCE_DATA"))
+    if not actions:
+        _append_unique_line(actions, tr("TIER_A_CAPTURE_WIDER_SPEED"))
+        _append_unique_line(
+            actions,
+            tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected),
+        )
+    return [NextStep(action=action) for action in actions[:4]]
+
+
+def _recapture_condition_lines(
+    *,
+    aggregate: TestRun,
+    primary: PrimaryCandidateContext,
+    report_facts: PreparedReportFacts,
+    tr: Callable[..., str],
+) -> list[str]:
+    expected = len(report_facts.coverage_summary.expected_locations) or len(
+        report_facts.coverage_summary.active_locations
+    )
+    lines: list[str] = []
+    if _check_state(report_facts, "SUITABILITY_CHECK_SPEED_VARIATION") != "pass":
+        _append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_STEADY_HOLD"))
+    if _has_source_overlap(aggregate, tr=tr):
+        _append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_COMPARE_PATHS"))
+    if _is_transient_primary(primary):
+        _append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_REPEAT_EVENT"))
+    if (
+        report_facts.location_confidence_key in {"weak", "mixed"}
+        or _check_state(report_facts, "SUITABILITY_CHECK_SENSOR_COVERAGE") != "pass"
+    ):
+        _append_unique_line(
+            lines,
+            tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected),
+        )
+    if (
+        report_facts.primary_candidate_facts.has_reference_gaps
+        or _check_state(report_facts, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS") != "pass"
+        or _has_warning_code(report_facts, "reference_context_incomplete")
+    ):
+        _append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_REFERENCE"))
+    if not lines:
+        _append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_STEADY"))
+        _append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected))
+        _append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_REFERENCE"))
+    return lines[:4]
 
 
 def _candidate_signal_text(finding: Finding, *, tr: Callable[..., str]) -> str:
@@ -1292,7 +1465,13 @@ def _build_verdict_page_data(
             tr=tr,
         ),
         reason_sentence=(
-            tr("REPORT_REASON_RECAPTURE_GENERIC")
+            _recapture_issue_lines(
+                aggregate=aggregate,
+                primary=primary,
+                report_facts=report_facts,
+                data_trust=data_trust,
+                tr=tr,
+            )[0]
             if recapture_before_acting
             else _build_primary_reason_sentence(primary, report_facts=report_facts, tr=tr)
         ),
@@ -1336,6 +1515,7 @@ def _build_verdict_page_data(
 def _build_appendix_a_data(
     *,
     aggregate: TestRun,
+    primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
     next_steps: list[NextStep],
     data_trust: list[DataTrustItem],
@@ -1345,9 +1525,20 @@ def _build_appendix_a_data(
     if report_facts.action_status_key == "recapture_before_acting":
         return AppendixAData(
             mode="recapture",
-            capture_issues=_capture_issue_lines(data_trust, tr=tr),
+            capture_issues=_recapture_issue_lines(
+                aggregate=aggregate,
+                primary=primary,
+                report_facts=report_facts,
+                data_trust=data_trust,
+                tr=tr,
+            ),
             capture_changes=[step.action for step in next_steps],
-            capture_conditions=_capture_condition_lines(report_facts, tr=tr),
+            capture_conditions=_recapture_condition_lines(
+                aggregate=aggregate,
+                primary=primary,
+                report_facts=report_facts,
+                tr=tr,
+            ),
         )
     alternative_source = (
         tr(
@@ -1652,21 +1843,30 @@ def _build_report_template_data(
         tr,
     )
     recapture_mode = report_facts.action_status_key == "recapture_before_acting"
-    next_steps = build_next_steps(
-        recommended_actions=report_facts.recommended_actions,
-        primary_source=primary.primary_source,
-        primary_location=primary.primary_location,
-        tier=primary.tier,
-        cert_reason=primary.certainty_reason or tr("REPORT_CAPTURE_ISSUE_GENERIC"),
-        recapture_mode=recapture_mode,
-        lang=lang,
-        tr=tr,
-    )
     data_trust = build_data_trust(
         suitability_checks=report_facts.suitability_checks,
         warnings=report_facts.warnings,
         lang=lang,
         tr=tr,
+    )
+    next_steps = (
+        _recapture_next_steps(
+            aggregate=context.domain_aggregate,
+            primary=primary,
+            report_facts=report_facts,
+            tr=tr,
+        )
+        if recapture_mode
+        else build_next_steps(
+            recommended_actions=report_facts.recommended_actions,
+            primary_source=primary.primary_source,
+            primary_location=primary.primary_location,
+            tier=primary.tier,
+            cert_reason=primary.certainty_reason or tr("REPORT_CAPTURE_ISSUE_GENERIC"),
+            recapture_mode=recapture_mode,
+            lang=lang,
+            tr=tr,
+        )
     )
     pattern_evidence = build_pattern_evidence(
         context,
@@ -1699,6 +1899,7 @@ def _build_report_template_data(
     )
     appendix_a = _build_appendix_a_data(
         aggregate=context.domain_aggregate,
+        primary=primary,
         report_facts=report_facts,
         next_steps=next_steps,
         data_trust=data_trust,
