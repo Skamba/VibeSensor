@@ -1003,11 +1003,13 @@ def _draw_worksheet_page(
             col_widths=[0.20, 0.20, 0.18, 0.42],
             max_body_lines=2,
         )
-        matrix_h = stack_y - (MARGIN + 8 * mm)
+        matrix_top = stack_y - GAP
     else:
-        matrix_h = top_y - GAP - (MARGIN + 8 * mm)
+        matrix_top = top_y - GAP
 
-    matrix_y = MARGIN + 8 * mm
+    max_matrix_h = matrix_top - (MARGIN + 8 * mm)
+    matrix_h = min(max_matrix_h, _estimate_action_steps_panel_height(steps, width=width))
+    matrix_y = matrix_top - matrix_h
     _draw_action_steps_panel(
         c,
         steps=steps,
@@ -1037,6 +1039,13 @@ def _worksheet_continuation_panel_height() -> float:
     return float(title_y - (MARGIN + 8 * mm))
 
 
+def _estimate_action_steps_panel_height(steps: list[NextStep], *, width: float) -> float:
+    inner_w = width - 8 * mm
+    gaps_h = max(len(steps) - 1, 0) * 2.5 * mm
+    cards_h = sum(_estimate_action_step_card_height(step, width=inner_w) for step in steps)
+    return float(max(PANEL_HEADER_H + 12 * mm, PANEL_HEADER_H + 7 * mm + cards_h + gaps_h))
+
+
 def _fit_action_steps(steps: list[NextStep], *, panel_w: float, panel_h: float) -> int:
     inner_w = panel_w - 8 * mm
     row_y = panel_h - PANEL_HEADER_H - 2 * mm
@@ -1059,13 +1068,15 @@ def _draw_action_steps_continuation_page(
     start_number: int,
 ) -> None:
     width = PAGE_W - 2 * MARGIN
-    panel_h = title_y - (MARGIN + 8 * mm)
+    max_panel_h = title_y - (MARGIN + 8 * mm)
+    panel_h = min(max_panel_h, _estimate_action_steps_panel_height(steps, width=width))
+    panel_y = title_y - panel_h
     _draw_action_steps_panel(
         c,
         steps=steps,
         lang=lang,
         x=MARGIN,
-        y=MARGIN + 8 * mm,
+        y=panel_y,
         w=width,
         h=panel_h,
         start_number=start_number,

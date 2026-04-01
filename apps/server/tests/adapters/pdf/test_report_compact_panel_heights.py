@@ -3,14 +3,16 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 
 from vibesensor.adapters.pdf.pdf_appendices import (
+    _estimate_action_steps_panel_height,
     _estimate_appendix_c_context_panel_height,
     _estimate_appendix_c_suitability_panel_height,
     _estimate_appendix_c_trace_panel_height,
     _estimate_worksheet_ranked_stack_height,
     _estimate_worksheet_top_panel_height,
+    _worksheet_first_actions_panel_height,
 )
 from vibesensor.adapters.pdf.pdf_page1 import _estimate_actions_block_height
-from vibesensor.adapters.pdf.pdf_style import GAP, MARGIN, PAGE_H, PANEL_HEADER_H
+from vibesensor.adapters.pdf.pdf_style import GAP, MARGIN, PAGE_H, PAGE_W, PANEL_HEADER_H
 from vibesensor.adapters.pdf.report_data import (
     AppendixAData,
     AppendixCData,
@@ -118,3 +120,30 @@ def test_estimate_worksheet_summary_panels_shrink_for_short_content() -> None:
 
     assert top_h < 56 * mm
     assert stack_h <= 48 * mm
+
+
+def test_estimate_worksheet_action_panel_shrinks_for_short_content() -> None:
+    appendix = AppendixAData(
+        primary_source="Wheel / Tire",
+        alternative_source="Driveline",
+        why_primary_first="Short reason.",
+        why_alternative_next="Backup reason.",
+        next_if_clean="Move to the alternative path.",
+    )
+    steps = [
+        NextStep(action="Check wheel balance", why="Start with the corner that won the ranking."),
+        NextStep(
+            action="Inspect tire condition",
+            why="Look for the simplest repeatable fault first.",
+        ),
+        NextStep(
+            action="Move to the backup path if clean",
+            why="Keep the alternative source active.",
+        ),
+    ]
+
+    max_panel_h = _worksheet_first_actions_panel_height(appendix, lang="en")
+    panel_h = _estimate_action_steps_panel_height(steps, width=PAGE_W - 2 * MARGIN)
+
+    assert panel_h < max_panel_h
+    assert panel_h >= PANEL_HEADER_H
