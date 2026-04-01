@@ -1895,6 +1895,14 @@
     "en": "Weak",
     "nl": "Zwak"
   },
+  "REPORT_LOCATION_MIXED_SIGNAL_BETWEEN": {
+    "en": "Mixed signal between {first_location} and {second_location}",
+    "nl": "Gemengd signaal tussen {first_location} en {second_location}"
+  },
+  "REPORT_LOCATION_MIXED_SIGNAL_LIST": {
+    "en": "Mixed signal across {locations}",
+    "nl": "Gemengd signaal over {locations}"
+  },
   "REPORT_MATCHED_WINDOWS_COLUMN": {
     "en": "Sensor matches",
     "nl": "Sensormatches"

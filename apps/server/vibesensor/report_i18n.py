@@ -54,6 +54,9 @@ _SHORT_LOCATION_LABELS: dict[str, str] = {
     "rear-right wheel": "Rear-Right",
 }
 
+_AMBIGUOUS_LOCATION_PREFIX = "ambiguous location:"
+_BODY_LIKE_LOCATION_TOKENS = {"body", "cabin", "trunk"}
+
 
 @lru_cache(maxsize=1)
 def _load_translations() -> dict[str, dict[str, str]]:
@@ -122,6 +125,36 @@ def human_location(location: object, *, short: bool = True) -> str:
             return short_label
     title = " ".join(part for part in normalized.split() if part)
     return title.title() if title else "Unknown"
+
+
+def location_candidates(location: object) -> tuple[str, ...]:
+    """Split a report location into distinct location candidates."""
+    raw = str(location or "").strip()
+    if not raw:
+        return ()
+    normalized = raw
+    if raw.lower().startswith(_AMBIGUOUS_LOCATION_PREFIX):
+        normalized = raw.split(":", maxsplit=1)[1].strip()
+    parts = [part.strip() for part in normalized.split("/") if part.strip()]
+    unique_parts: list[str] = []
+    for part in parts or [normalized]:
+        if part and part not in unique_parts:
+            unique_parts.append(part)
+    return tuple(unique_parts)
+
+
+def is_composite_location(location: object) -> bool:
+    """Whether a location encodes multiple competing candidates."""
+    return len(location_candidates(location)) > 1
+
+
+def is_body_like_location(location: object) -> bool:
+    """Whether a location points to a broad body/cabin area, not a precise part."""
+    for candidate in location_candidates(location):
+        normalized = candidate.lower().replace("_", " ").replace("-", " ")
+        if _BODY_LIKE_LOCATION_TOKENS.intersection(normalized.split()):
+            return True
+    return False
 
 
 def resolve_i18n(

@@ -12,8 +12,10 @@ from test_support.core import extract_pdf_text
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import (
     RUN_END,
+    ambiguous_primary_location_summary,
     minimal_summary,
     sequential_same_source_summary,
+    trunk_primary_guidance_summary,
     write_jsonl,
 )
 from test_support.report_helpers import report_run_metadata as _run_metadata
@@ -275,6 +277,27 @@ def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() ->
 
     assert "limited by run context" not in page_one_text
     assert "speed was not steady during measurement" in page_one_text
+
+
+def test_build_report_pdf_rephrases_ambiguous_primary_location_on_page_one() -> None:
+    pdf = build_report_pdf(map_summary(prepare_report_input(ambiguous_primary_location_summary())))
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+
+    assert "Mixed signal between Front-Left and Rear-Left" in text
+    assert "Front-Left / Rear-Left" not in text
+
+
+def test_build_report_pdf_avoids_trunk_specific_wheel_guidance_for_driveline_primary() -> None:
+    pdf = build_report_pdf(
+        map_summary(
+            prepare_report_input(trunk_primary_guidance_summary(primary_source="driveline"))
+        )
+    )
+    text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
+
+    assert "Inspect propshaft runout/balance" in text
+    assert "Check Trunk for tire damage" not in text
+    assert "Check driveline components near Trunk" not in text
 
 
 def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
