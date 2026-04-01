@@ -105,124 +105,97 @@ def _draw_vehicle_shell(
     color_text_primary: Any,
     hex_color: Any,
 ) -> None:
-    from reportlab.graphics.shapes import Circle, Line, Rect, String
+    from reportlab.graphics.shapes import Circle, Line, Path, Polygon, Rect, String
 
     center_x = x0 + (car_w / 2)
-    body_corner = max(12.0, car_w * 0.16)
-    cabin_corner = max(9.0, car_w * 0.11)
-    wheel_radius = max(7.0, car_w * 0.09)
-    cabin_x = x0 + (car_w * 0.21)
-    cabin_y = y0 + (car_h * 0.24)
-    cabin_w = car_w * 0.58
-    cabin_h = car_h * 0.52
-    drawing.add(
-        Rect(
-            x0,
-            y0,
-            car_w,
-            car_h,
-            rx=body_corner,
-            ry=body_corner,
-            fillColor=color_surface,
-            strokeColor=color_border,
-            strokeWidth=1.4,
-        ),
+    tire_w = max(10.0, car_w * 0.11)
+    tire_h = max(20.0, car_h * 0.12)
+
+    def px(ratio: float) -> float:
+        return x0 + (car_w * ratio)
+
+    def py(ratio: float) -> float:
+        return y0 + (car_h * ratio)
+
+    body = Path(
+        fillColor=color_surface,
+        strokeColor=color_border,
+        strokeWidth=1.4,
     )
-    drawing.add(
-        Rect(
-            cabin_x,
-            cabin_y,
-            cabin_w,
-            cabin_h,
-            rx=cabin_corner,
-            ry=cabin_corner,
-            fillColor=hex_color("#ffffff"),
-            strokeColor=color_row_border,
-            strokeWidth=0.8,
-        ),
+    body.moveTo(center_x, py(0.985))
+    body.curveTo(px(0.24), py(0.972), px(0.12), py(0.89), px(0.10), py(0.78))
+    body.curveTo(px(0.08), py(0.68), px(0.09), py(0.56), px(0.11), py(0.48))
+    body.curveTo(px(0.13), py(0.37), px(0.08), py(0.21), px(0.12), py(0.11))
+    body.curveTo(px(0.17), py(0.04), px(0.29), py(0.01), center_x, py(0.015))
+    body.curveTo(px(0.71), py(0.01), px(0.83), py(0.04), px(0.88), py(0.11))
+    body.curveTo(px(0.92), py(0.21), px(0.87), py(0.37), px(0.89), py(0.48))
+    body.curveTo(px(0.91), py(0.56), px(0.92), py(0.68), px(0.90), py(0.78))
+    body.curveTo(px(0.88), py(0.89), px(0.76), py(0.972), center_x, py(0.985))
+    body.closePath()
+    drawing.add(body)
+
+    roof_shell = Path(
+        fillColor=hex_color("#ffffff"),
+        strokeColor=color_row_border,
+        strokeWidth=0.9,
     )
-    drawing.add(
-        Line(
-            center_x,
-            y0 + (car_h * 0.10),
-            center_x,
-            y0 + car_h - (car_h * 0.10),
-            strokeColor=color_row_border,
-            strokeWidth=0.8,
-        ),
+    roof_shell.moveTo(center_x, py(0.79))
+    roof_shell.curveTo(px(0.35), py(0.785), px(0.25), py(0.70), px(0.23), py(0.58))
+    roof_shell.lineTo(px(0.23), py(0.34))
+    roof_shell.curveTo(px(0.25), py(0.24), px(0.35), py(0.18), center_x, py(0.17))
+    roof_shell.curveTo(px(0.65), py(0.18), px(0.75), py(0.24), px(0.77), py(0.34))
+    roof_shell.lineTo(px(0.77), py(0.58))
+    roof_shell.curveTo(px(0.75), py(0.70), px(0.65), py(0.785), center_x, py(0.79))
+    roof_shell.closePath()
+    drawing.add(roof_shell)
+
+    windshield = Polygon(
+        [
+            px(0.34),
+            py(0.73),
+            px(0.66),
+            py(0.73),
+            px(0.72),
+            py(0.60),
+            px(0.28),
+            py(0.60),
+        ],
+        fillColor=hex_color("#f6f9ff"),
+        strokeColor=color_row_border,
+        strokeWidth=0.6,
     )
-    roof_x0 = cabin_x + (cabin_w * 0.10)
-    roof_x1 = cabin_x + (cabin_w * 0.90)
-    hood_y = y0 + (car_h * 0.77)
-    hatch_y = y0 + (car_h * 0.23)
-    drawing.add(
-        Line(
-            roof_x0,
-            hood_y,
-            roof_x1,
-            hood_y,
-            strokeColor=color_row_border,
-            strokeWidth=0.7,
-        ),
+    rear_window = Polygon(
+        [
+            px(0.31),
+            py(0.31),
+            px(0.69),
+            py(0.31),
+            px(0.62),
+            py(0.20),
+            px(0.38),
+            py(0.20),
+        ],
+        fillColor=hex_color("#f6f9ff"),
+        strokeColor=color_row_border,
+        strokeWidth=0.6,
     )
-    drawing.add(
-        Line(
-            roof_x0,
-            hatch_y,
-            roof_x1,
-            hatch_y,
-            strokeColor=color_row_border,
-            strokeWidth=0.7,
-        ),
-    )
-    front_cap_y = y0 + (car_h * 0.90)
-    rear_cap_y = y0 + (car_h * 0.10)
-    shoulder_left = x0 + (car_w * 0.15)
-    shoulder_right = x0 + (car_w * 0.85)
-    drawing.add(
-        Line(
-            shoulder_left,
-            front_cap_y,
-            roof_x0,
-            hood_y,
-            strokeColor=color_row_border,
-            strokeWidth=0.7,
-        ),
-    )
-    drawing.add(
-        Line(
-            shoulder_right,
-            front_cap_y,
-            roof_x1,
-            hood_y,
-            strokeColor=color_row_border,
-            strokeWidth=0.7,
-        ),
-    )
-    drawing.add(
-        Line(
-            shoulder_left,
-            rear_cap_y,
-            roof_x0,
-            hatch_y,
-            strokeColor=color_row_border,
-            strokeWidth=0.7,
-        ),
-    )
-    drawing.add(
-        Line(
-            shoulder_right,
-            rear_cap_y,
-            roof_x1,
-            hatch_y,
-            strokeColor=color_row_border,
-            strokeWidth=0.7,
-        ),
-    )
-    door_left_x = cabin_x + (cabin_w * 0.22)
-    door_right_x = cabin_x + (cabin_w * 0.78)
-    belt_low_y = cabin_y + (cabin_h * 0.34)
-    belt_high_y = cabin_y + (cabin_h * 0.66)
+    drawing.add(windshield)
+    drawing.add(rear_window)
+
+    hood_seam = Path(strokeColor=color_row_border, strokeWidth=0.7)
+    hood_seam.moveTo(px(0.27), py(0.83))
+    hood_seam.curveTo(px(0.37), py(0.79), px(0.63), py(0.79), px(0.73), py(0.83))
+    drawing.add(hood_seam)
+
+    hatch_seam = Path(strokeColor=color_row_border, strokeWidth=0.7)
+    hatch_seam.moveTo(px(0.30), py(0.15))
+    hatch_seam.curveTo(px(0.40), py(0.18), px(0.60), py(0.18), px(0.70), py(0.15))
+    drawing.add(hatch_seam)
+
+    door_left_x = px(0.37)
+    door_right_x = px(0.63)
+    belt_low_y = py(0.42)
+    belt_high_y = py(0.56)
     drawing.add(
         Line(
             door_left_x,
@@ -243,6 +216,76 @@ def _draw_vehicle_shell(
             strokeWidth=0.6,
         ),
     )
+    drawing.add(
+        Line(
+            center_x,
+            py(0.18),
+            center_x,
+            py(0.79),
+            strokeColor=color_row_border,
+            strokeWidth=0.8,
+        ),
+    )
+    drawing.add(
+        Line(
+            px(0.29),
+            py(0.47),
+            px(0.71),
+            py(0.47),
+            strokeColor=color_row_border,
+            strokeWidth=0.5,
+        ),
+    )
+
+    mirror_fill = hex_color("#ffffff")
+    mirror_left = Polygon(
+        [
+            px(0.15),
+            py(0.70),
+            px(0.07),
+            py(0.67),
+            px(0.12),
+            py(0.63),
+        ],
+        fillColor=mirror_fill,
+        strokeColor=color_row_border,
+        strokeWidth=0.7,
+    )
+    mirror_right = Polygon(
+        [
+            px(0.85),
+            py(0.70),
+            px(0.93),
+            py(0.67),
+            px(0.88),
+            py(0.63),
+        ],
+        fillColor=mirror_fill,
+        strokeColor=color_row_border,
+        strokeWidth=0.7,
+    )
+    drawing.add(mirror_left)
+    drawing.add(mirror_right)
+
+    lamp_fill = hex_color("#fff7d9")
+    tail_fill = hex_color("#ffe3e6")
+    for lx, ly, fill in (
+        (px(0.24), py(0.90), lamp_fill),
+        (px(0.76), py(0.90), lamp_fill),
+        (px(0.24), py(0.08), tail_fill),
+        (px(0.76), py(0.08), tail_fill),
+    ):
+        drawing.add(
+            Circle(
+                lx,
+                ly,
+                max(2.2, car_w * 0.022),
+                fillColor=fill,
+                strokeColor=color_row_border,
+                strokeWidth=0.5,
+            ),
+        )
+
     front_axle_y = y0 + (car_h * 0.84)
     rear_axle_y = y0 + (car_h * 0.16)
     wheel_x_left = x0 + (car_w * 0.14)
@@ -258,7 +301,7 @@ def _draw_vehicle_shell(
                 strokeWidth=0.6,
             ),
         )
-    wheel_fill = hex_color("#f8fbff")
+    wheel_fill = hex_color("#f7f9fd")
     wheel_stroke = hex_color(REPORT_COLORS["axis"])
     for wx, wy in (
         (wheel_x_left, front_axle_y),
@@ -267,10 +310,13 @@ def _draw_vehicle_shell(
         (wheel_x_right, rear_axle_y),
     ):
         drawing.add(
-            Circle(
-                wx,
-                wy,
-                wheel_radius,
+            Rect(
+                wx - (tire_w / 2.0),
+                wy - (tire_h / 2.0),
+                tire_w,
+                tire_h,
+                rx=max(2.5, tire_w * 0.25),
+                ry=max(2.5, tire_h * 0.25),
                 fillColor=wheel_fill,
                 strokeColor=wheel_stroke,
                 strokeWidth=1.0,
