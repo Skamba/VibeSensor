@@ -9,9 +9,6 @@ from datetime import UTC, datetime, timedelta
 
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
-    persisted_analysis_to_summary,
-)
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -166,11 +163,11 @@ class _HistoryDBRunLifecycleMixin:
         run_id: str,
         analysis: PersistedAnalysis,
     ) -> bool:
-        summary_payload = persisted_analysis_to_summary(analysis)
-        missing = _EXPECTED_ANALYSIS_KEYS - summary_payload.keys()
+        analysis_payload = analysis.to_payload()
+        missing = _EXPECTED_ANALYSIS_KEYS - analysis_payload.keys()
         if missing:
             LOGGER.warning(
-                "store_analysis %s: summary missing expected keys: %s",
+                "store_analysis %s: persisted analysis missing expected keys: %s",
                 run_id,
                 ", ".join(sorted(missing)),
             )

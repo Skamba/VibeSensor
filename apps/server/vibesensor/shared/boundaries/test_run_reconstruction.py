@@ -18,8 +18,9 @@ from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries import run_suitability as _run_suitability_boundary
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
-__all__ = ["test_run_from_summary"]
+__all__ = ["test_run_from_persisted_analysis", "test_run_from_summary"]
 
 
 def _actions_from_steps(steps: object) -> tuple[RecommendedAction, ...]:
@@ -217,11 +218,11 @@ def _enrich_primary_origin_from_summary(
     return _replace_matches(findings), _replace_matches(top_causes)
 
 
-def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
-    metadata = summary.get("metadata")
+def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
+    metadata = payload.get("metadata")
     meta = metadata if isinstance(metadata, Mapping) else {}
-    findings = _enrich_findings(summary.get("findings"))
-    top_causes = _enrich_findings(summary.get("top_causes"))
+    findings = _enrich_findings(payload.get("findings"))
+    top_causes = _enrich_findings(payload.get("top_causes"))
     if top_causes:
         merged = list(findings)
         for tc in top_causes:
@@ -231,15 +232,15 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
                 merged.append(tc)
         findings = tuple(merged)
     findings, top_causes = _enrich_primary_origin_from_summary(
-        summary,
+        payload,
         findings=findings,
         top_causes=top_causes,
     )
-    actions = _actions_from_steps(summary.get("test_plan"))
-    raw_speed_stats = summary.get("speed_stats")
-    phase_info = summary.get("phase_info")
+    actions = _actions_from_steps(payload.get("test_plan"))
+    raw_speed_stats = payload.get("speed_stats")
+    phase_info = payload.get("phase_info")
     if not isinstance(phase_info, Mapping):
-        phase_info = summary.get("phase_summary")
+        phase_info = payload.get("phase_summary")
     speed_profile = (
         SpeedProfile.from_stats(
             SpeedProfileSummary.from_dict(raw_speed_stats),
@@ -248,7 +249,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         if isinstance(raw_speed_stats, Mapping)
         else None
     )
-    raw_suitability_payload = summary.get("run_suitability")
+    raw_suitability_payload = payload.get("run_suitability")
     suitability = (
         _run_suitability_boundary.run_suitability_from_payload(raw_suitability_payload)
         if isinstance(raw_suitability_payload, list)
@@ -256,9 +257,9 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     )
 
     _steady = speed_profile.steady_speed if speed_profile is not None else True
-    sensor_loc_list = _summary_sensor_locations(summary)
+    sensor_loc_list = _summary_sensor_locations(payload)
     _sensor_count = max(len(sensor_loc_list), 1)
-    _amp_summary = summary.get("amplitude_summary")
+    _amp_summary = payload.get("amplitude_summary")
     _band_key = (
         _amp_summary.get("overall_band", "moderate")
         if isinstance(_amp_summary, Mapping)
@@ -310,19 +311,19 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         speed_source=SpeedSource(),
         configuration_snapshot=ConfigurationSnapshot.from_metadata(meta),
     )
-    rows_raw = summary.get("rows")
+    rows_raw = payload.get("rows")
     try:
         row_count = coerce_int(rows_raw) if rows_raw is not None else 0
     except (TypeError, ValueError):
         row_count = 0
     capture = RunCapture(
-        run_id=str(summary.get("run_id") or "unknown"),
+        run_id=str(payload.get("run_id") or "unknown"),
         setup=setup,
         sample_count=row_count,
     )
     return TestRun(
         capture=capture,
-        driving_segments=_segments_from_summary(summary),
+        driving_segments=_segments_from_summary(payload),
         findings=findings,
         top_causes=top_causes,
         speed_profile=speed_profile,
@@ -332,3 +333,17 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
             requires_additional_data=not bool(findings),
         ),
     )
+
+
+def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
+    """Reconstruct a TestRun from an outward analysis-summary payload."""
+    return _test_run_from_payload(summary)
+
+
+def test_run_from_persisted_analysis(
+    analysis: PersistedAnalysis | Mapping[str, object],
+) -> TestRun:
+    """Reconstruct a TestRun from a storage-owned persisted-analysis payload."""
+    if isinstance(analysis, PersistedAnalysis):
+        return _test_run_from_payload(analysis.to_payload())
+    return _test_run_from_payload(analysis)

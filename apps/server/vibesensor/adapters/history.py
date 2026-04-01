@@ -17,12 +17,13 @@ from vibesensor.adapters.http.models import (
     HistoryListEntryResponse,
     HistoryRunResponse,
 )
-from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
+from vibesensor.shared.boundaries.analysis_summary_projection import project_persisted_analysis
 from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
 from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.ports import ActiveCarReader
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.exports import (
     EXPORT_SPOOL_THRESHOLD,
     HistoryExportContext,
@@ -39,12 +40,12 @@ _HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 
 
 def _project_history_analysis(
-    analysis: Mapping[str, object],
+    analysis: PersistedAnalysis | Mapping[str, object],
     *,
     strip_internal: bool,
 ) -> JsonObject:
     if has_projectable_report_payload(analysis):
-        projected, _ = project_analysis_summary(cast(JsonObject, dict(analysis)))
+        projected, _ = project_persisted_analysis(analysis)
     else:
         projected = cast(JsonObject, {key: value for key, value in analysis.items()})
     if strip_internal:
@@ -64,7 +65,7 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
         payload["error_message"] = run.error_message
     if run.analysis is not None:
         payload["analysis"] = _project_history_analysis(
-            run.analysis.to_json_object(),
+            run.analysis,
             strip_internal=True,
         )
     return payload
@@ -86,7 +87,7 @@ def build_projected_run_details_json(
         return build_run_details_json(run, sample_count, run_id)
     payload = run.to_json_object()
     payload["analysis"] = _project_history_analysis(
-        analysis.to_json_object(),
+        analysis,
         strip_internal=True,
     )
     return serialize_run_details_json(

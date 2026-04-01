@@ -15,7 +15,10 @@ from vibesensor.shared.boundaries.report_renderer_payload import (
     PreparedReportRendererPayload,
     build_report_renderer_payload,
 )
-from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
+from vibesensor.shared.boundaries.test_run_reconstruction import (
+    test_run_from_persisted_analysis,
+    test_run_from_summary,
+)
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary,
@@ -118,15 +121,19 @@ def validate_prepared_report_input(
     )
 
 
-def _reconstruct_report_test_run(payload: Mapping[str, object]) -> TestRun | None:
+def _reconstruct_report_test_run(
+    payload: Mapping[str, object] | PersistedAnalysis,
+) -> TestRun | None:
     """Rebuild the report domain aggregate only when the payload is projectable."""
     if not has_projectable_report_payload(payload):
         return None
+    if isinstance(payload, PersistedAnalysis):
+        return test_run_from_persisted_analysis(payload)
     return test_run_from_summary(payload)
 
 
 def _build_prepared_report_input(
-    payload: Mapping[str, object],
+    payload: Mapping[str, object] | PersistedAnalysis,
     *,
     filename: str | None,
     language: str | None,
