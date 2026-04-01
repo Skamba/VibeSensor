@@ -57,11 +57,18 @@ def test_scripted_scenario_library_exposes_ten_complex_runs() -> None:
         "launch-engine-flare",
         "pothole-recovery-loop",
         "lane-change-left-right",
-        "crosswind-body-boom",
-        "intermittent-wheel-hop",
+        "rear-left-cruise-rumble",
+        "front-right-cruise-shimmy",
         "driveline-coastdown",
         "dual-fault-recovery",
     } <= set(scripted_scenario_names())
+
+
+def test_scripted_scenarios_include_explicit_steady_speed_hold_phases() -> None:
+    assert all(
+        any(phase.speed_start_kmh == phase.speed_end_kmh for phase in scenario.phases)
+        for scenario in SCRIPTED_SCENARIOS.values()
+    )
 
 
 def test_accel_front_left_surge_phase_targets_front_left_and_body_sensors() -> None:
