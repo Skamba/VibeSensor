@@ -15,6 +15,14 @@ from vibesensor.adapters.simulator.commands import (
     choose_default_profile,
 )
 from vibesensor.adapters.simulator.profiles import DEFAULT_ORDER_HZ, DEFAULT_SPEED_KMH
+from vibesensor.adapters.simulator.scripted_scenarios import (
+    SCRIPTED_SCENARIOS,
+    apply_phase,
+    is_scripted_scenario,
+    run_scripted_scenario,
+    scripted_scenario_help,
+    scripted_scenario_names,
+)
 from vibesensor.adapters.simulator.server_http import (
     maybe_start_server,
     set_server_speed_override_kmh,
@@ -28,6 +36,7 @@ from vibesensor.adapters.simulator.sim_runtime import (
 )
 
 ROOT = Path(__file__).resolve().parents[3]
+_STATIC_SCENARIOS: tuple[str, ...] = ("road", "one-wheel-mild", "engine-order", "road-fixed")
 
 
 async def async_main(args: argparse.Namespace) -> None:
@@ -61,9 +70,14 @@ async def async_main(args: argparse.Namespace) -> None:
         apply_engine_order_scenario(clients)
     elif args.scenario == "road-fixed":
         apply_road_fixed_scenario(clients)
+    elif is_scripted_scenario(args.scenario):
+        initial_phase = SCRIPTED_SCENARIOS[args.scenario].phases[0]
+        apply_phase(clients, args.scenario, initial_phase)
+        for client in clients:
+            client.current_speed_kmh = initial_phase.speed_start_kmh
 
     override_speed_kmh = max(0.0, float(args.speed_kmh))
-    if override_speed_kmh > 0.0:
+    if override_speed_kmh > 0.0 and not is_scripted_scenario(args.scenario):
         applied_speed = set_server_speed_override_kmh(
             args.server_host,
             args.server_http_port,
@@ -102,10 +116,28 @@ async def async_main(args: argparse.Namespace) -> None:
     print("\n".join(c.summary() for c in clients))
 
     try:
+        if is_scripted_scenario(args.scenario):
+            tasks.append(
+                asyncio.create_task(
+                    run_scripted_scenario(
+                        clients,
+                        args.scenario,
+                        stop_event,
+                        server_host=args.server_host,
+                        server_http_port=args.server_http_port,
+                        server_check_timeout=args.server_check_timeout,
+                    )
+                )
+            )
         for client in clients:
             tasks.append(asyncio.create_task(run_client(client, args.hello_interval, stop_event)))
         if args.scenario == "road" and not args.no_road_scene:
             tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
+        elif is_scripted_scenario(args.scenario):
+            print(
+                f"[scenario] scripted={args.scenario} "
+                "(complex speed/profile timeline enabled)"
+            )
         else:
             print(
                 f"[scenario] fixed={args.scenario} fault_wheel={args.fault_wheel} "
@@ -130,7 +162,14 @@ async def async_main(args: argparse.Namespace) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="VibeSensor UDP simulator")
+    parser = argparse.ArgumentParser(
+        description="VibeSensor UDP simulator",
+        epilog=(
+            "Scripted scenarios with temporary vibrations and speed sweeps:\n"
+            f"{scripted_scenario_help()}"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("--server-host", default="127.0.0.1")
     parser.add_argument("--server-data-port", type=int, default=9000)
     parser.add_argument("--server-control-port", type=int, default=9001)
@@ -157,12 +196,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--scenario",
-        choices=("road", "one-wheel-mild", "engine-order", "road-fixed"),
+        choices=(*_STATIC_SCENARIOS, *scripted_scenario_names()),
         default="road",
         help=(
             "Simulation scenario: random road scene, deterministic mild "
             "single-wheel fault, deterministic engine-order excitation, "
-            "or fixed road baseline (no randomization)"
+            "fixed road baseline, or one of the scripted multi-phase runs"
         ),
     )
     parser.add_argument(
