@@ -15,14 +15,14 @@ from typing import cast
 from vibesensor.adapters.udp.protocol import (
     MSG_DATA,
     DataMessage,
-    ProtocolError,
-    ProtocolVersionMismatch,
     extract_client_id_hex,
     pack_data_ack,
     parse_data,
 )
+from vibesensor.adapters.udp.protocol_validator import ProtocolVersionMismatch
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.exceptions import ProtocolError
 
 LOGGER = logging.getLogger(__name__)
 

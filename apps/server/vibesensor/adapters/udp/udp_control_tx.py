@@ -19,8 +19,6 @@ from vibesensor.adapters.udp.protocol import (
     MSG_ACK,
     MSG_DATA_ACK,
     MSG_HELLO,
-    ProtocolError,
-    ProtocolVersionMismatch,
     extract_client_id_hex,
     pack_cmd_identify,
     pack_cmd_sync_clock,
@@ -29,7 +27,9 @@ from vibesensor.adapters.udp.protocol import (
     parse_client_id,
     parse_hello,
 )
+from vibesensor.adapters.udp.protocol_validator import ProtocolVersionMismatch
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.exceptions import ProtocolError
 
 LOGGER = logging.getLogger(__name__)
 

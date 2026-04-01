@@ -24,7 +24,6 @@ from vibesensor.adapters.udp.protocol import (
     MSG_DATA_ACK,
     MSG_HELLO,
     MSG_HELLO_ACK,
-    ProtocolError,
     client_id_hex,
     client_id_mac,
     extract_client_id_hex,
@@ -43,6 +42,14 @@ from vibesensor.adapters.udp.protocol import (
     parse_hello,
     parse_hello_ack,
 )
+from vibesensor.shared.exceptions import ProtocolError
+
+
+def test_protocol_module_no_longer_reexports_protocol_exceptions() -> None:
+    import vibesensor.adapters.udp.protocol as protocol_module
+
+    assert not hasattr(protocol_module, "ProtocolError")
+    assert not hasattr(protocol_module, "ProtocolVersionMismatch")
 
 
 def test_hello_roundtrip() -> None:

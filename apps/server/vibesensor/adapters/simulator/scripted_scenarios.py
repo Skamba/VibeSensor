@@ -2,37 +2,15 @@ from __future__ import annotations
 
 import asyncio
 
-from vibesensor.adapters.simulator.scripted_scenario_library import (
-    SCRIPTED_SCENARIOS,
-    PhaseOverride,
-    PhasePulse,
-    ScenarioPhase,
-    ScriptedScenario,
-    is_scripted_scenario,
-    phase_speed_kmh,
-    scripted_scenario_help,
-    scripted_scenario_names,
-)
+from vibesensor.adapters.simulator import scripted_scenario_library as _scenario_library
+from vibesensor.adapters.simulator import scripted_targeting as _targeting
 from vibesensor.adapters.simulator.scripted_speed_sync import apply_scripted_speed
-from vibesensor.adapters.simulator.scripted_targeting import apply_phase, target_clients
 from vibesensor.adapters.simulator.sim_client import SimClient
 
-__all__ = [
-    "SCRIPTED_SCENARIOS",
-    "PhaseOverride",
-    "PhasePulse",
-    "ScenarioPhase",
-    "ScriptedScenario",
-    "apply_phase",
-    "is_scripted_scenario",
-    "phase_speed_kmh",
-    "run_scripted_scenario",
-    "scripted_scenario_help",
-    "scripted_scenario_names",
-]
+__all__ = ["run_scripted_scenario"]
 
 
-def _pulse_order_key(pulse: PhasePulse) -> float:
+def _pulse_order_key(pulse: _scenario_library.PhasePulse) -> float:
     return pulse.at_s
 
 
@@ -46,7 +24,7 @@ async def run_scripted_scenario(
     server_check_timeout: float,
     speed_update_period_s: float = 0.5,
 ) -> None:
-    scenario = SCRIPTED_SCENARIOS[scenario_name]
+    scenario = _scenario_library.SCRIPTED_SCENARIOS[scenario_name]
     loop = asyncio.get_running_loop()
     server_speed_sync_enabled = True
     cycle = 0
@@ -58,7 +36,7 @@ async def run_scripted_scenario(
             if stop_event.is_set():
                 return
 
-            apply_phase(clients, scenario.name, phase)
+            _targeting.apply_phase(clients, scenario.name, phase)
             print(
                 f"[scenario] phase={phase.name} "
                 f"speed={phase.speed_start_kmh:.1f}->{phase.speed_end_kmh:.1f}km/h "
@@ -72,10 +50,10 @@ async def run_scripted_scenario(
                 elapsed_s = loop.time() - phase_start
                 while pending_pulses and elapsed_s >= pending_pulses[0].at_s:
                     pulse = pending_pulses.pop(0)
-                    for client in target_clients(clients, pulse.target):
+                    for client in _targeting.target_clients(clients, pulse.target):
                         client.pulse(pulse.strength)
 
-                speed_kmh = phase_speed_kmh(phase, elapsed_s)
+                speed_kmh = _scenario_library.phase_speed_kmh(phase, elapsed_s)
                 if (
                     last_speed_kmh is None
                     or abs(speed_kmh - last_speed_kmh) >= 0.5

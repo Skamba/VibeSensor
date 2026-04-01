@@ -30,11 +30,13 @@ import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.gps.gps_speed import (
-    _GPS_RECONNECT_DELAY_S,
-    _GPS_RECONNECT_MAX_DELAY_S,
     MAX_STALE_TIMEOUT_S,
     MIN_STALE_TIMEOUT_S,
     GPSSpeedMonitor,
+)
+from vibesensor.adapters.gps.transport_lifecycle import (
+    GPS_RECONNECT_DELAY_S,
+    GPS_RECONNECT_MAX_DELAY_S,
 )
 from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
 from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -379,13 +381,13 @@ class TestGPSReconnectBackoff:
             await m.run(host="127.0.0.1", port=29470)
 
         # First reconnect_delay should be the base delay
-        assert delays_seen[0] == _GPS_RECONNECT_DELAY_S
+        assert delays_seen[0] == GPS_RECONNECT_DELAY_S
         # Delays double
         for i in range(1, min(3, len(delays_seen))):
             assert delays_seen[i] >= delays_seen[i - 1]
         # Should be capped
         for d in delays_seen:
-            assert d <= _GPS_RECONNECT_MAX_DELAY_S
+            assert d <= GPS_RECONNECT_MAX_DELAY_S
 
     @pytest.mark.asyncio
     async def test_version_message_sets_device_info(self) -> None:
