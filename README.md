@@ -173,6 +173,15 @@ developer troubleshooting, and workflow guidance.
 The simulator supports interactive commands — type `help` to see options like
 `list`, `set <sensor> profile <name>`, `pulse`, `pause`, `resume`.
 
+It also ships with scripted multi-phase runs via `--scenario`, including
+acceleration/deceleration sweeps and temporary vibration windows. Example:
+
+```bash
+vibesensor-sim --count 5 --server-host 127.0.0.1 --scenario accel-front-left-surge
+```
+
+Run `vibesensor-sim --help` to see the full scripted scenario list.
+
 ## Deploying to Raspberry Pi
 
 Both deployment modes target Raspberry Pi 3 A+ with Trixie Lite.
