@@ -134,10 +134,7 @@ async def async_main(args: argparse.Namespace) -> None:
         if args.scenario == "road" and not args.no_road_scene:
             tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
         elif is_scripted_scenario(args.scenario):
-            print(
-                f"[scenario] scripted={args.scenario} "
-                "(complex speed/profile timeline enabled)"
-            )
+            print(f"[scenario] scripted={args.scenario} (complex speed/profile timeline enabled)")
         else:
             print(
                 f"[scenario] fixed={args.scenario} fault_wheel={args.fault_wheel} "

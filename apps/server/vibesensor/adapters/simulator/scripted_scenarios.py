@@ -157,8 +157,7 @@ async def _apply_speed(
         )
     except Exception as exc:
         print(
-            "[scenario] speed sync disabled after HTTP update failed: "
-            f"{type(exc).__name__}: {exc}"
+            f"[scenario] speed sync disabled after HTTP update failed: {type(exc).__name__}: {exc}"
         )
         return False
     return True
@@ -195,10 +194,7 @@ async def run_scripted_scenario(
 
     while not stop_event.is_set():
         cycle += 1
-        print(
-            f"[scenario] scripted={scenario.name} cycle={cycle} "
-            f"phases={len(scenario.phases)}"
-        )
+        print(f"[scenario] scripted={scenario.name} cycle={cycle} phases={len(scenario.phases)}")
         for phase in scenario.phases:
             if stop_event.is_set():
                 return
