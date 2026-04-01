@@ -69,7 +69,10 @@ def _build_sensor_render_plan(
 
 
 def _fit_vehicle_shell_rect(
-    *, drawing_width: float, drawing_height: float
+    *,
+    drawing_width: float,
+    drawing_height: float,
+    vertical_align: str = "center",
 ) -> tuple[float, float, float, float]:
     vehicle_ratio = _BMW_WIDTH_MM / _BMW_LENGTH_MM
     horizontal_pad = max(10.0, drawing_width * 0.085)
@@ -85,7 +88,13 @@ def _fit_vehicle_shell_rect(
         car_w = box_w
         car_h = car_w / vehicle_ratio
     x0 = (drawing_width - car_w) / 2.0
-    y0 = orientation_reserve + ((box_h - car_h) / 2.0)
+    spare_h = max(0.0, box_h - car_h)
+    if vertical_align == "top":
+        y0 = orientation_reserve + spare_h
+    elif vertical_align == "center":
+        y0 = orientation_reserve + (spare_h / 2.0)
+    else:
+        raise ValueError("vertical_align must be 'center' or 'top'")
     return (x0, y0, car_w, car_h)
 
 
@@ -408,6 +417,7 @@ def car_location_diagram(
     text_fn: Callable[..., str],
     diagram_width: float | None = None,
     diagram_height: float = 252,
+    vertical_align: str = "center",
 ) -> Any:
     """Build and return a ReportLab car location diagram Drawing."""
     from reportlab.graphics.shapes import Drawing
@@ -421,6 +431,7 @@ def car_location_diagram(
     x0, y0, car_w, car_h = _fit_vehicle_shell_rect(
         drawing_width=drawing_w,
         drawing_height=drawing_h,
+        vertical_align=vertical_align,
     )
 
     rendered_ratio = car_h / car_w if car_w > 0 else 0.0
