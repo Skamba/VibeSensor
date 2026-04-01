@@ -30,6 +30,7 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
 )
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
+    Sample,
     ensure_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics._view_types import (
@@ -41,14 +42,14 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
     PhaseSegment,
 )
 from vibesensor.use_cases.diagnostics.signal_aggregation import (
-    _phase_speed_breakdown,
-    _sensor_intensity_by_location,
-    _speed_breakdown,
+    _phase_speed_breakdown_samples,
+    _sensor_intensity_by_location_samples,
+    _speed_breakdown_samples,
 )
-from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats_by_phase
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats_by_phase_samples
 from vibesensor.use_cases.diagnostics.statistics import (
-    compute_run_timing,
-    prepare_speed_and_phases,
+    _compute_run_timing,
+    _prepare_speed_and_phases,
 )
 
 
@@ -111,18 +112,17 @@ def build_domain_driving_segments(
 
 def build_sensor_analysis(
     *,
-    samples: Sequence[AnalysisSampleInput],
+    samples: Sequence[Sample],
     language: str,
     per_sample_phases: Sequence[DrivingPhase],
 ) -> tuple[list[str], set[str], list[LocationIntensitySummary]]:
     """Build sensor location lists and intensity rows from analysed samples."""
-    typed_samples = ensure_analysis_samples(samples)
     sensor_locations = sorted(
-        {label for sample in typed_samples if (label := _location_label(sample, lang=language))},
+        {label for sample in samples if (label := _location_label(sample, lang=language))},
     )
-    connected_locations = _locations_connected_throughout_run(typed_samples, lang=language)
-    sensor_intensity_by_location = _sensor_intensity_by_location(
-        typed_samples,
+    connected_locations = _locations_connected_throughout_run(samples, lang=language)
+    sensor_intensity_by_location = _sensor_intensity_by_location_samples(
+        samples,
         include_locations=set(sensor_locations),
         lang=language,
         connected_locations=connected_locations,
@@ -175,8 +175,15 @@ def prepare_run_data(
     samples: Sequence[AnalysisSampleInput],
 ) -> PreparedRunData:
     """Prepare shared timing, speed, and phase context for summary generation."""
-    typed_samples = ensure_analysis_samples(samples)
-    run_id, start_ts, end_ts, duration_s = compute_run_timing(context, typed_samples)
+    return _prepare_run_data(context, ensure_analysis_samples(samples))
+
+
+def _prepare_run_data(
+    context: DiagnosticsContext,
+    samples: Sequence[Sample],
+) -> PreparedRunData:
+    """Prepare shared timing, speed, and phase context for summary generation."""
+    run_id, start_ts, end_ts, duration_s = _compute_run_timing(context, samples)
     (
         speed_values,
         speed_stats,
@@ -184,9 +191,9 @@ def prepare_run_data(
         speed_sufficient,
         per_sample_phases,
         phase_segments,
-    ) = prepare_speed_and_phases(typed_samples)
-    run_noise_baseline_g = _run_noise_baseline_g(typed_samples)
-    speed_breakdown = _speed_breakdown(typed_samples) if speed_sufficient else []
+    ) = _prepare_speed_and_phases(samples)
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    speed_breakdown = _speed_breakdown_samples(samples) if speed_sufficient else []
     speed_breakdown_skipped_reason: JsonObject | None = None
     if not speed_sufficient:
         speed_breakdown_skipped_reason = i18n_ref(
@@ -210,10 +217,10 @@ def prepare_run_data(
             speed_stats,
             phase_info,
         ),
-        speed_stats_by_phase=_speed_stats_by_phase(typed_samples, per_sample_phases),
+        speed_stats_by_phase=_speed_stats_by_phase_samples(samples, per_sample_phases),
         speed_breakdown=speed_breakdown,
         speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,
-        phase_speed_breakdown=_phase_speed_breakdown(typed_samples, per_sample_phases),
+        phase_speed_breakdown=_phase_speed_breakdown_samples(samples, per_sample_phases),
     )
 
 

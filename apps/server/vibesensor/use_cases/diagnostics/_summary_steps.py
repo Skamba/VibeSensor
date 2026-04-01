@@ -23,8 +23,8 @@ from .run_data_preparation import (
     build_sensor_analysis,
 )
 from .statistics import (
+    _compute_frame_integrity_counts,
     _strength_band_key,
-    compute_frame_integrity_counts,
     compute_reference_completeness,
 )
 from .top_cause_selection import select_top_causes
@@ -88,7 +88,7 @@ def build_run_suitability_bundle(
     """Build run-suitability checks and related confidence context."""
     reference_complete = compute_reference_completeness(context)
     sensor_ids = {client_id for sample in samples if (client_id := sample.client_id)}
-    total_dropped, total_overflow = compute_frame_integrity_counts(samples)
+    total_dropped, total_overflow = _compute_frame_integrity_counts(samples)
     run_suitability = RunSuitability.evaluate(
         steady_speed=prepared.is_steady_speed,
         speed_sufficient=prepared.speed_sufficient,

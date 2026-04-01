@@ -29,9 +29,9 @@ from vibesensor.use_cases.diagnostics._validation import (
 from vibesensor.use_cases.diagnostics.findings import _build_findings
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
-    prepare_run_data,
+    _prepare_run_data,
 )
-from vibesensor.use_cases.diagnostics.statistics import compute_accel_statistics
+from vibesensor.use_cases.diagnostics.statistics import _compute_accel_statistics
 
 from . import _summary_result, _summary_steps
 
@@ -62,7 +62,6 @@ class RunAnalysis:
 
     __slots__ = (
         "_context",
-        "_raw_samples",
         "_samples",
         "_file_name",
         "_language",
@@ -84,7 +83,7 @@ class RunAnalysis:
         findings_builder: FindingsBuilder | None = None,
     ) -> None:
         self._context = build_diagnostics_context(metadata, file_name=file_name)
-        self._raw_samples, self._samples = normalize_analysis_samples(samples)
+        self._samples = normalize_analysis_samples(samples)
         self._file_name = file_name
         self._language = normalize_lang(lang)
         self._include_samples = include_samples
@@ -92,8 +91,8 @@ class RunAnalysis:
         self._test_run: TestRun | None = None
 
         _validate_required_strength_metrics(self._samples)
-        self._prepared = prepare_run_data(self._context, self._samples)
-        self._accel_stats: AccelStatistics = compute_accel_statistics(
+        self._prepared = _prepare_run_data(self._context, self._samples)
+        self._accel_stats: AccelStatistics = _compute_accel_statistics(
             self._samples,
             self._context.sensor_model,
         )
@@ -167,7 +166,6 @@ class RunAnalysis:
                 file_name=self._file_name,
                 context=self._context,
                 samples=self._samples,
-                raw_samples=self._raw_samples,
                 language=self._language,
                 include_samples=self._include_samples,
                 prepared=self._prepared,
@@ -193,10 +191,10 @@ def build_findings_for_samples(
 ) -> tuple[DomainFinding, ...]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
-    rows = normalize_analysis_samples(samples)[1]
+    rows = normalize_analysis_samples(samples)
     _validate_required_strength_metrics(rows)
     context = build_diagnostics_context(metadata, file_name="run")
-    prepared = prepare_run_data(context, rows)
+    prepared = _prepare_run_data(context, rows)
     builder = findings_builder or _build_findings
     return builder(
         FindingsBuildRequest(

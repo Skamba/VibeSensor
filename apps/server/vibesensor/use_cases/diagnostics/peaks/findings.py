@@ -9,7 +9,11 @@ from vibesensor.shared.constants.analysis import ORDER_SUPPRESS_PERSISTENT_MIN_C
 
 from .._sample_metrics import _run_noise_baseline_g
 from .._types import PhaseLabels, Sample
-from ..phase_segmentation import DrivingPhase, diagnostic_sample_mask, segment_run_phases
+from ..phase_segmentation import (
+    DrivingPhase,
+    _segment_run_phases,
+    diagnostic_sample_mask,
+)
 from .accumulation import PeakBinStats, accumulate_peak_bin_stats
 from .finding_builder import assemble_peak_finding
 from .scoring import PeakBin
@@ -38,7 +42,7 @@ def prepare_analysis_samples(
             for phase in per_sample_phases
         ]
     else:
-        resolved_phases, _ = segment_run_phases(samples)
+        resolved_phases, _ = _segment_run_phases(samples)
 
     diagnostic_mask = diagnostic_sample_mask(resolved_phases)
     diagnostic_samples = [
