@@ -7,7 +7,7 @@ import asyncio
 import numpy as np
 import pytest
 
-from vibesensor.adapters.simulator import scripted_scenarios
+from vibesensor.adapters.simulator import scripted_scenarios, scripted_speed_sync
 from vibesensor.adapters.simulator.scripted_scenarios import (
     SCRIPTED_SCENARIOS,
     PhaseOverride,
@@ -106,7 +106,7 @@ async def test_run_scripted_scenario_advances_speed_and_fires_temporary_pulses(
         return speed_kmh
 
     monkeypatch.setattr(
-        scripted_scenarios,
+        scripted_speed_sync,
         "set_server_speed_override_kmh",
         fake_set_server_speed_override_kmh,
     )
