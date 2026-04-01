@@ -5,8 +5,10 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
+from typing import cast
 
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.persisted_analysis_contracts import PersistedAnalysisPayload
 
 PERSISTED_ANALYSIS_SCHEMA_VERSION = 1
 _STORAGE_SCHEMA_VERSION_KEY = "_schema_version"
@@ -14,14 +16,19 @@ _STORAGE_SCHEMA_VERSION_KEY = "_schema_version"
 
 @dataclass(frozen=True, slots=True)
 class PersistedAnalysis(Mapping[str, object]):
-    """Internal persisted-analysis object with explicit payload conversion helpers."""
+    """Internal persisted-analysis object with storage-owned payload helpers."""
 
-    _payload: JsonObject
+    _payload: PersistedAnalysisPayload
+
+    @classmethod
+    def from_payload(cls, payload: PersistedAnalysisPayload) -> PersistedAnalysis:
+        """Build a persisted-analysis wrapper from a storage-owned payload."""
+        return cls(_payload=deepcopy(payload))
 
     @classmethod
     def from_json_object(cls, payload: JsonObject) -> PersistedAnalysis:
-        """Build a persisted-analysis wrapper from an in-memory JSON payload."""
-        return cls(_payload=deepcopy(payload))
+        """Build a persisted-analysis wrapper from a raw JSON payload."""
+        return cls.from_payload(cast(PersistedAnalysisPayload, payload))
 
     @classmethod
     def from_storage_json_object(cls, payload: JsonObject) -> PersistedAnalysis:
@@ -30,11 +37,15 @@ class PersistedAnalysis(Mapping[str, object]):
         raw_version = normalized.pop(_STORAGE_SCHEMA_VERSION_KEY, 0)
         if raw_version not in (0, PERSISTED_ANALYSIS_SCHEMA_VERSION):
             raise ValueError(f"Unsupported persisted analysis schema version: {raw_version!r}")
-        return cls(_payload=normalized)
+        return cls.from_payload(cast(PersistedAnalysisPayload, normalized))
+
+    def to_payload(self) -> PersistedAnalysisPayload:
+        """Return a deep-copied storage-owned payload for persisted consumers."""
+        return deepcopy(self._payload)
 
     def to_json_object(self) -> JsonObject:
         """Return a deep-copied JSON payload for in-memory consumers."""
-        return deepcopy(self._payload)
+        return cast(JsonObject, self.to_payload())
 
     def to_storage_json_object(self) -> JsonObject:
         """Return a storage payload with the persisted-analysis schema version attached."""
@@ -43,7 +54,7 @@ class PersistedAnalysis(Mapping[str, object]):
         return payload
 
     def __getitem__(self, key: str) -> object:
-        return self._payload[key]
+        return cast(Mapping[str, object], self._payload)[key]
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._payload)

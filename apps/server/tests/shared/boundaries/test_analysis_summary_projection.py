@@ -7,8 +7,12 @@ from dataclasses import replace
 from test_support.findings import make_finding_payload
 
 from vibesensor.domain import Finding, VibrationSource
-from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
+from vibesensor.shared.boundaries.analysis_summary_projection import (
+    project_analysis_summary,
+    project_persisted_analysis,
+)
 from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 
 def test_project_analysis_summary_projects_run_suitability_from_reconstructed_test_run() -> None:
@@ -136,3 +140,32 @@ def test_project_analysis_summary_uses_list_sensor_locations_for_fallback_confid
         projected["top_causes"][0]["confidence_reason"]
         == "Vibration spread across multiple locations"
     )
+
+
+def test_project_persisted_analysis_uses_persisted_reconstruction_path(
+    monkeypatch,
+) -> None:
+    import vibesensor.shared.boundaries.analysis_summary_projection as projection
+
+    analysis = PersistedAnalysis.from_json_object(
+        {
+            "case_id": "case-001",
+            "run_id": "run-001",
+            "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
+            "findings": [make_finding_payload(finding_id="F001", confidence=0.8)],
+            "top_causes": [make_finding_payload(finding_id="F001", confidence=0.8)],
+            "test_plan": [],
+            "run_suitability": [],
+            "warnings": [],
+        }
+    )
+
+    def _explode(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("project_persisted_analysis should not use test_run_from_summary")
+
+    monkeypatch.setattr(projection, "test_run_from_summary", _explode)
+
+    projected, test_run = project_persisted_analysis(analysis)
+
+    assert test_run.capture.run_id == "run-001"
+    assert projected["top_causes"][0]["finding_id"] == "F001"

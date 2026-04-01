@@ -1,15 +1,15 @@
-"""Shared analysis/history wrapper contracts reused by boundary and HTTP layers.
+"""Shared analysis/history summary contracts reused by boundary and HTTP layers.
 
-These TypedDicts are the single semantic owners for analysis/history wrapper
-and composite contracts that are shared between persisted boundary payloads and
-the HTTP/OpenAPI response schema. ``AnalysisSummary``,
+These TypedDicts are the canonical outward owners for analysis/history summary
+wrapper and composite contracts used by summary-boundary serializers and the
+HTTP/OpenAPI response schema. ``AnalysisSummary``,
 ``AnalysisSummaryCoreResponse``, and ``AnalysisSummaryResponse`` are defined
 here, while ``FindingPayload`` remains the canonical shared outward finding
 wrapper re-exported from ``finding_payload_parts`` so its internal core versus
 presentation split can evolve without broadening this module's direct field
-ownership. Boundary modules should import these shared wrapper contracts
-directly from this module, while endpoint-specific HTTP wrappers remain local
-to ``shared.types.api_models.history``.
+ownership. Endpoint-specific HTTP wrappers remain local to
+``shared.types.api_models.history``. Persisted storage payloads should use the
+separate contracts in ``persisted_analysis_contracts``.
 """
 
 from __future__ import annotations
@@ -205,7 +205,7 @@ class SuspectedVibrationOriginPayload(TypedDict, total=False):
 
 
 class AnalysisSummaryCoreResponse(TypedDict, total=False):
-    """Canonical shared owner for persisted/localized summary core fields."""
+    """Canonical outward owner for summary core fields."""
 
     file_name: Required[str]
     run_id: Required[str]

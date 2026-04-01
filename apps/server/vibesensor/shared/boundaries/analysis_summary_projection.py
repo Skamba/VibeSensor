@@ -1,7 +1,8 @@
-"""Project persisted analysis summaries back into canonical boundary payload form."""
+"""Project summary and persisted-analysis payloads back into canonical response form."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import cast
 
 from vibesensor.domain.test_run import TestRun
@@ -11,14 +12,22 @@ from vibesensor.shared.boundaries.test_plan_projection import (
     _has_structured_step_content,
     step_payloads_from_plan,
 )
-from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
+from vibesensor.shared.boundaries.test_run_reconstruction import (
+    test_run_from_persisted_analysis,
+    test_run_from_summary,
+)
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+
+__all__ = ["project_analysis_summary", "project_persisted_analysis"]
 
 
-def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]:
-    """Reconstruct and re-serialize analysis through the canonical domain boundary."""
-    test_run = test_run_from_summary(analysis)
+def _project_analysis_payload(
+    analysis: Mapping[str, object],
+    *,
+    test_run: TestRun,
+) -> JsonObject:
     projected: dict[str, object] = dict(analysis)
     projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
     projected["top_causes"] = [
@@ -31,4 +40,19 @@ def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]
     if not _has_structured_step_content(analysis.get("test_plan")):
         projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
     projected["run_suitability"] = run_suitability_payload(test_run.suitability)
-    return cast(JsonObject, projected), test_run
+    return cast(JsonObject, projected)
+
+
+def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]:
+    """Reconstruct and re-serialize an outward analysis summary."""
+    test_run = test_run_from_summary(analysis)
+    return _project_analysis_payload(analysis, test_run=test_run), test_run
+
+
+def project_persisted_analysis(
+    analysis: PersistedAnalysis | Mapping[str, object],
+) -> tuple[JsonObject, TestRun]:
+    """Reconstruct and re-serialize storage-owned persisted analysis."""
+    payload = analysis.to_payload() if isinstance(analysis, PersistedAnalysis) else dict(analysis)
+    test_run = test_run_from_persisted_analysis(analysis)
+    return _project_analysis_payload(payload, test_run=test_run), test_run

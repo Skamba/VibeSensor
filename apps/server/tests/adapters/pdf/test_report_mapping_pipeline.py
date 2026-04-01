@@ -131,6 +131,44 @@ def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
     assert [warning["code"] for warning in prepared.report_facts.warnings] == ["PERSISTED_ONLY"]
 
 
+def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import vibesensor.use_cases.history.report_preparation as report_preparation
+
+    analysis = PersistedAnalysis.from_json_object(
+        {
+            "run_id": "persisted-run",
+            "lang": "en",
+            "metadata": {"car_name": "Track Car", "car_type": "coupe"},
+            "report_date": "2026-03-23T07:31:01Z",
+            "record_length": "5m",
+            "rows": 120,
+            "duration_s": 300.0,
+            "sensor_count_used": 2,
+            "sensor_locations": ["front-left", "rear-right"],
+            "sensor_locations_connected_throughout": ["front-left"],
+            "sensor_intensity_by_location": [],
+            "most_likely_origin": {},
+            "run_suitability": [],
+            "test_plan": [],
+            "findings": [],
+            "top_causes": [],
+            "warnings": [],
+        }
+    )
+
+    def _explode(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("prepare_persisted_report_input should not use test_run_from_summary")
+
+    monkeypatch.setattr(report_preparation, "test_run_from_summary", _explode)
+
+    prepared = report_preparation.prepare_persisted_report_input(analysis)
+
+    assert prepared.domain_test_run is not None
+    assert prepared.domain_test_run.capture.run_id == "persisted-run"
+
+
 def test_prepare_report_input_tolerates_invalid_count_strings() -> None:
     prepared = prepare_report_input(
         {
