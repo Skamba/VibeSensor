@@ -97,8 +97,9 @@ class WebSocketHub:
 
         *on_tick* (if provided) is called synchronously before each broadcast so
         the caller can update shared state atomically with payload generation.
-        Consecutive broadcast failures trigger back-off to avoid thundering-herd
-        log spam.
+        Repeated broadcast failures escalate out to the managed task supervisor,
+        which owns restart/backoff policy and health reporting for the
+        background ws-broadcast loop.
         """
         controller = BroadcastTickController(hz=hz, logger=LOGGER)
         await controller.run(
