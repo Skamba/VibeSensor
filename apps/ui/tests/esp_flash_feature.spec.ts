@@ -968,7 +968,7 @@ test.describe("createUpdateFeature polling", () => {
       deps.updateStartBtn.click();
       await flushAsyncWork();
 
-      expect(JSON.parse(startBody)).toEqual({ transport: "usb_internet" });
+      expect(JSON.parse(startBody)).toEqual({ transport: "usb_internet", password: "" });
     } finally {
       restoreFetch();
     }

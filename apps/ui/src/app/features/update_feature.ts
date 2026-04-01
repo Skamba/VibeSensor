@@ -389,7 +389,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
         ctx.showError(t("settings.update.usb_unavailable"));
         return;
       }
-      payload = { transport };
+      payload = { transport, password: "" };
     }
 
     try {
