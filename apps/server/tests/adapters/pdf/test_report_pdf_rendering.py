@@ -12,6 +12,7 @@ from _report_pdf_test_helpers import (
 from pypdf import PdfReader
 from reportlab.pdfgen.canvas import Canvas
 from test_support.core import extract_pdf_text
+from test_support.findings import make_finding_payload
 from test_support.report_helpers import (
     RUN_END,
     minimal_summary,
@@ -237,6 +238,63 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
     assert "pressure mismatch." in " ".join(text_blob.split())
     assert "Inspect propshaft runout/balance" not in text_blob
     assert "ETA:" not in text_blob
+
+
+def test_report_pdf_renders_run_timeline_graph_labels() -> None:
+    finding = make_finding_payload(
+        finding_id="F_TIMELINE",
+        suspected_source="wheel/tire",
+        strongest_location="Front Left wheel",
+        strongest_speed_band="60-80 km/h",
+        confidence=0.82,
+    )
+    summary = minimal_summary(
+        lang="en",
+        duration_s=12.0,
+        findings=[finding],
+        top_causes=[finding],
+        phase_timeline=[
+            {
+                "phase": "cruise",
+                "start_t_s": 0.0,
+                "end_t_s": 4.0,
+                "speed_min_kmh": 58.0,
+                "speed_max_kmh": 63.0,
+                "has_fault_evidence": False,
+            },
+            {
+                "phase": "cruise",
+                "start_t_s": 4.0,
+                "end_t_s": 9.0,
+                "speed_min_kmh": 64.0,
+                "speed_max_kmh": 72.0,
+                "has_fault_evidence": True,
+            },
+            {
+                "phase": "decel",
+                "start_t_s": 9.0,
+                "end_t_s": 12.0,
+                "speed_min_kmh": 48.0,
+                "speed_max_kmh": 62.0,
+                "has_fault_evidence": False,
+            },
+        ],
+    )
+
+    page_one_text = " ".join(
+        (
+            PdfReader(BytesIO(build_report_pdf(map_summary(prepare_report_input(summary)))))
+            .pages[0]
+            .extract_text()
+            or ""
+        )
+        .lower()
+        .split()
+    )
+
+    assert "run timeline" in page_one_text
+    assert "speed" in page_one_text
+    assert "detections" in page_one_text
 
 
 def test_report_pdf_compacts_actionable_system_cards() -> None:

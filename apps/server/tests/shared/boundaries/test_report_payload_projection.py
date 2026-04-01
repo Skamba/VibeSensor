@@ -6,6 +6,7 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     active_sensor_locations,
     coerce_count,
     peak_table_rows,
+    phase_timeline_payload,
     report_duration_s,
     sensor_intensity_payload,
     summary_metadata,
@@ -69,6 +70,49 @@ def test_sensor_intensity_payload_returns_tuple_copy() -> None:
     payload = {"sensor_intensity_by_location": [{"location": "front-left"}]}
 
     assert sensor_intensity_payload(payload) == ({"location": "front-left"},)
+
+
+def test_phase_timeline_payload_returns_only_mapping_rows() -> None:
+    payload = {
+        "phase_timeline": [
+            {
+                "phase": "cruise",
+                "start_t_s": 0.0,
+                "end_t_s": 3.0,
+                "speed_min_kmh": 58.0,
+                "speed_max_kmh": 62.0,
+                "has_fault_evidence": False,
+            },
+            "skip-me",
+            {
+                "phase": "cruise",
+                "start_t_s": 3.0,
+                "end_t_s": 6.0,
+                "speed_min_kmh": 60.0,
+                "speed_max_kmh": 64.0,
+                "has_fault_evidence": True,
+            },
+        ]
+    }
+
+    assert phase_timeline_payload(payload) == (
+        {
+            "phase": "cruise",
+            "start_t_s": 0.0,
+            "end_t_s": 3.0,
+            "speed_min_kmh": 58.0,
+            "speed_max_kmh": 62.0,
+            "has_fault_evidence": False,
+        },
+        {
+            "phase": "cruise",
+            "start_t_s": 3.0,
+            "end_t_s": 6.0,
+            "speed_min_kmh": 60.0,
+            "speed_max_kmh": 64.0,
+            "has_fault_evidence": True,
+        },
+    )
 
 
 def test_coerce_count_defaults_invalid_values_to_zero() -> None:

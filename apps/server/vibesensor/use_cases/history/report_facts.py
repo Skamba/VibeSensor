@@ -12,6 +12,7 @@ from vibesensor.domain import (
     RecommendedAction,
     TestRun,
     VibrationOrigin,
+    coerce_float,
 )
 from vibesensor.shared.boundaries.report_facts_projection import (
     report_suitability_checks,
@@ -28,6 +29,7 @@ from vibesensor.shared.boundaries.report_interpretation import (
 )
 from vibesensor.shared.boundaries.report_payload_projection import (
     active_sensor_locations,
+    phase_timeline_payload,
     sensor_intensity_payload,
     summary_metadata,
 )
@@ -65,6 +67,7 @@ class PreparedReportFacts:
     alternative_source: object | None
     alternative_source_visible: bool
     confidence_gap_to_alternative: float | None
+    timeline_intervals: tuple[ReportTimelineInterval, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +78,18 @@ class ReportCoverageSummary:
     active_locations: tuple[str, ...]
     missing_locations: tuple[str, ...]
     partial_locations: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ReportTimelineInterval:
+    """Prepared semantic snapshot for one report timeline interval."""
+
+    phase: str
+    start_t_s: float | None
+    end_t_s: float | None
+    speed_min_kmh: float | None
+    speed_max_kmh: float | None
+    has_fault_evidence: bool
 
 
 def _normalized_location_token(value: object) -> str:
@@ -272,6 +287,34 @@ def _resolve_action_status_key(
     return "action_ready"
 
 
+def _coerce_optional_float(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return coerce_float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _timeline_intervals(payload: Mapping[str, object]) -> tuple[ReportTimelineInterval, ...]:
+    intervals: list[ReportTimelineInterval] = []
+    for row in phase_timeline_payload(payload):
+        phase = str(row.get("phase") or "").strip()
+        if not phase:
+            continue
+        intervals.append(
+            ReportTimelineInterval(
+                phase=phase,
+                start_t_s=_coerce_optional_float(row.get("start_t_s")),
+                end_t_s=_coerce_optional_float(row.get("end_t_s")),
+                speed_min_kmh=_coerce_optional_float(row.get("speed_min_kmh")),
+                speed_max_kmh=_coerce_optional_float(row.get("speed_max_kmh")),
+                has_fault_evidence=bool(row.get("has_fault_evidence")),
+            ),
+        )
+    return tuple(intervals)
+
+
 def prepare_report_facts(
     payload: Mapping[str, object],
     *,
@@ -348,4 +391,5 @@ def prepare_report_facts(
         alternative_source=alternative_source,
         alternative_source_visible=alternative_source_visible,
         confidence_gap_to_alternative=confidence_gap_to_alternative,
+        timeline_intervals=_timeline_intervals(payload),
     )
