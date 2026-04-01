@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
+from dataclasses import asdict
 from typing import cast
 
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
     CarSnapshot,
-    OrderReferenceSpec,
     RunContextSnapshot,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -39,12 +40,27 @@ def apply_run_context_snapshot(
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     active_car_snapshot: CarSnapshot | None,
 ) -> None:
-    """Attach structured run-context snapshot fields to persisted metadata."""
+    """Attach only the canonical structured run-context snapshot fields."""
     context_snapshot = build_run_context_snapshot(
         analysis_settings_snapshot=analysis_settings_snapshot,
         active_car_snapshot=active_car_snapshot,
     )
     metadata.update(cast(JsonObject, context_snapshot.to_metadata_dict()))
+
+
+def apply_legacy_run_context_fields(
+    metadata: JsonObject,
+    *,
+    context_snapshot: RunContextSnapshot,
+) -> None:
+    """Project legacy flat run-context fields from the canonical snapshot.
+
+    This exists only for boundary compatibility when outward payloads still
+    expect historical flat fields next to the canonical nested snapshot.
+    """
+    for key, value in _analysis_settings_values(context_snapshot.analysis_settings).items():
+        if key in metadata or value != 0.0:
+            metadata[key] = value
     if context_snapshot.has_car_context:
         metadata["active_car_id"] = context_snapshot.active_car_id
         metadata["car_name"] = context_snapshot.car_name
@@ -52,10 +68,36 @@ def apply_run_context_snapshot(
         metadata["car_variant"] = context_snapshot.car_variant
 
 
+def run_context_snapshot_from_metadata(metadata: Mapping[str, object]) -> RunContextSnapshot:
+    """Decode the canonical run-context snapshot from persisted metadata.
+
+    Nested snapshot fields are authoritative when present. Legacy flat fields
+    are only used as a compatibility fallback when the canonical nested fields
+    are absent.
+    """
+    raw_settings = metadata.get("analysis_settings_snapshot")
+    analysis_settings = (
+        AnalysisSettingsSnapshot.from_dict(raw_settings)
+        if isinstance(raw_settings, Mapping)
+        else AnalysisSettingsSnapshot.from_dict(metadata)
+    )
+
+    raw_car = metadata.get("active_car_snapshot")
+    car = (
+        CarSnapshot.from_dict(raw_car)
+        if isinstance(raw_car, Mapping)
+        else _legacy_car_snapshot_from_metadata(
+            metadata,
+            analysis_settings=analysis_settings,
+        )
+    )
+    return RunContextSnapshot(analysis_settings=analysis_settings, car=car)
+
+
 def order_reference_context_complete(metadata: Mapping[str, object]) -> bool:
     """Return True when persisted run metadata is sufficient for order references."""
     raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
-    order_reference_spec = OrderReferenceSpec.from_settings(metadata)
+    order_reference_spec = run_context_snapshot_from_metadata(metadata).order_reference_spec
     tire_circumference_m = _as_float(metadata.get("tire_circumference_m"))
     if tire_circumference_m is None and order_reference_spec is not None:
         tire_circumference_m = order_reference_spec.tire_circumference_m
@@ -135,3 +177,44 @@ def _car_label(snapshot: CarSnapshot) -> str:
     if car_type:
         return car_type
     return "captured vehicle profile"
+
+
+def _analysis_settings_values(snapshot: AnalysisSettingsSnapshot) -> dict[str, float]:
+    return {
+        key: float(value)
+        for key, value in asdict(snapshot).items()
+        if isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    }
+
+
+def _legacy_car_snapshot_from_metadata(
+    metadata: Mapping[str, object],
+    *,
+    analysis_settings: AnalysisSettingsSnapshot,
+) -> CarSnapshot | None:
+    car_id = _normalized_text(metadata.get("active_car_id") or metadata.get("car_id"))
+    name = _normalized_text(metadata.get("car_name") or metadata.get("name"))
+    car_type = _normalized_text(metadata.get("car_type"))
+    variant = _normalized_text(metadata.get("car_variant") or metadata.get("variant"))
+    if not any((car_id, name, car_type, variant)):
+        return None
+    return CarSnapshot(
+        car_id=car_id,
+        name=name,
+        car_type=car_type,
+        variant=variant,
+        aspects={
+            key: value
+            for key, value in _analysis_settings_values(analysis_settings).items()
+            if value != 0.0
+        },
+    )
+
+
+def _normalized_text(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None

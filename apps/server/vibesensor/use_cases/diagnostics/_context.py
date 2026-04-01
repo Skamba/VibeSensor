@@ -17,7 +17,6 @@ from vibesensor.domain import (
     RunContextSnapshot,
     RunMetadataSnapshot,
 )
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
 from ._types import Sample
 
@@ -46,12 +45,6 @@ class DiagnosticsContext:
     tire_circumference_m_override: float | None = None
     explicit_engine_rpm: float | None = None
     scalar_analysis_settings: ScalarSettings = ()
-    _final_drive_ratio: float | None = None
-    _current_gear_ratio: float | None = None
-    _car_name: str | None = None
-    _car_type: str | None = None
-    _car_variant: str | None = None
-    _fallback_order_reference_spec: OrderReferenceSpec | None = None
     _boundary_metadata: Mapping[str, object] = field(default_factory=dict, repr=False)
 
     def __post_init__(self) -> None:
@@ -84,43 +77,41 @@ class DiagnosticsContext:
 
     @property
     def car_name(self) -> str | None:
-        return self.run_context.car_name or self._car_name
+        return self.run_context.car_name
 
     @property
     def car_type(self) -> str | None:
-        return self.run_context.car_type or self._car_type
+        return self.run_context.car_type
 
     @property
     def car_variant(self) -> str | None:
-        return self.run_context.car_variant or self._car_variant
+        return self.run_context.car_variant
 
     @property
     def order_reference_spec(self) -> OrderReferenceSpec | None:
-        run_context_spec = self.run_context.order_reference_spec
-        fallback_spec = self._fallback_order_reference_spec
-        if _reference_spec_score(fallback_spec) > _reference_spec_score(run_context_spec):
-            return fallback_spec
-        return run_context_spec or fallback_spec
+        return self.run_context.order_reference_spec
 
     @property
     def final_drive_ratio(self) -> float | None:
-        if self._final_drive_ratio is not None:
-            return self._final_drive_ratio
         spec = self.order_reference_spec
-        return _as_float(getattr(spec, "final_drive_ratio", None)) if spec is not None else None
+        if spec is not None and spec.final_drive_ratio > 0:
+            return spec.final_drive_ratio
+        ratio = self.run_context.analysis_settings.final_drive_ratio
+        return ratio if ratio > 0 else None
 
     @property
     def current_gear_ratio(self) -> float | None:
-        if self._current_gear_ratio is not None:
-            return self._current_gear_ratio
         spec = self.order_reference_spec
-        return _as_float(getattr(spec, "current_gear_ratio", None)) if spec is not None else None
+        if spec is not None and spec.current_gear_ratio > 0:
+            return spec.current_gear_ratio
+        ratio = self.run_context.analysis_settings.current_gear_ratio
+        return ratio if ratio > 0 else None
 
     @property
     def tire_circumference_m(self) -> float | None:
         spec = self.order_reference_spec
         if spec is not None and bool(getattr(spec, "supports_wheel_reference", False)):
-            return _as_float(getattr(spec, "tire_circumference_m", None))
+            return spec.tire_circumference_m
         override = self.tire_circumference_m_override
         if override is not None and override > 0:
             return override
@@ -159,18 +150,6 @@ class DiagnosticsContext:
             ),
             current_gear_ratio=(gear_ratio if gear_ratio is not None else spec.current_gear_ratio),
         )
-
-
-def _reference_spec_score(spec: OrderReferenceSpec | None) -> int:
-    if spec is None:
-        return 0
-    return (
-        int(bool(getattr(spec, "supports_wheel_reference", False)))
-        + int(bool(getattr(spec, "supports_driveshaft_reference", False)))
-        + int(
-            bool(getattr(spec, "supports_engine_reference", False)),
-        )
-    )
 
 
 __all__ = ["DiagnosticsContext"]

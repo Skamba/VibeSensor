@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import OrderReferenceSpec, RunContextSnapshot, RunMetadataSnapshot
+from vibesensor.domain import RunMetadataSnapshot
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.use_cases.run.run_context import run_context_snapshot_from_metadata
 
 from ._context import DiagnosticsContext
 
@@ -22,15 +23,7 @@ def build_diagnostics_context(
         run_metadata_payload.get("recording_id"),
     ):
         run_metadata_payload["run_id"] = f"run-{file_name}"
-    run_context = RunContextSnapshot.from_dict(raw_metadata)
-    order_reference_spec = OrderReferenceSpec.from_settings(raw_metadata)
-    run_context_spec = run_context.order_reference_spec
-    final_drive_ratio = _as_float(raw_metadata.get("final_drive_ratio"))
-    if final_drive_ratio is None and run_context_spec is not None:
-        final_drive_ratio = _as_float(getattr(run_context_spec, "final_drive_ratio", None))
-    current_gear_ratio = _as_float(raw_metadata.get("current_gear_ratio"))
-    if current_gear_ratio is None and run_context_spec is not None:
-        current_gear_ratio = _as_float(getattr(run_context_spec, "current_gear_ratio", None))
+    run_context = run_context_snapshot_from_metadata(raw_metadata)
     return DiagnosticsContext(
         run_metadata=RunMetadataSnapshot.from_dict(run_metadata_payload),
         run_context=run_context,
@@ -51,14 +44,6 @@ def build_diagnostics_context(
         tire_circumference_m_override=_as_float(raw_metadata.get("tire_circumference_m")),
         explicit_engine_rpm=_as_float(raw_metadata.get("engine_rpm")),
         scalar_analysis_settings=_scalar_analysis_settings(raw_metadata),
-        _final_drive_ratio=final_drive_ratio,
-        _current_gear_ratio=current_gear_ratio,
-        _car_name=_non_empty_text(raw_metadata.get("car_name") or raw_metadata.get("name")),
-        _car_type=_non_empty_text(raw_metadata.get("car_type")),
-        _car_variant=(
-            _non_empty_text(raw_metadata.get("car_variant") or raw_metadata.get("variant"))
-        ),
-        _fallback_order_reference_spec=order_reference_spec,
         _boundary_metadata=raw_metadata,
     )
 
