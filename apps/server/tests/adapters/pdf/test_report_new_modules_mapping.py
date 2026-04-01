@@ -8,8 +8,10 @@ import pytest
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import (
     RUN_END,
+    ambiguous_primary_location_summary,
     minimal_summary,
     sequential_same_source_summary,
+    trunk_primary_guidance_summary,
     write_jsonl,
 )
 from test_support.report_helpers import report_run_metadata as _run_metadata
@@ -178,7 +180,7 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
     )
 
     data = map_summary(prepare_report_input(summary))
-    assert len(data.next_steps) == 3
+    assert len(data.next_steps) == 2
     assert all(step.eta is None for step in data.next_steps)
     assert all("front-left wheel" in step.action.lower() for step in data.next_steps)
     rendered = " ".join(
@@ -194,6 +196,57 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
     assert "{driveline_focus}" not in rendered
     assert "{" not in rendered
     assert "}" not in rendered
+
+
+@pytest.mark.parametrize(
+    ("primary_source", "expected_text", "unexpected_text"),
+    [
+        pytest.param(
+            "engine",
+            "check engine mounts and accessory drive",
+            "tire damage",
+            id="engine-trunk-hotspot",
+        ),
+        pytest.param(
+            "driveline",
+            "inspect propshaft runout/balance",
+            "check driveline components near trunk",
+            id="driveline-trunk-hotspot",
+        ),
+    ],
+)
+def test_map_summary_keeps_generated_next_steps_on_primary_source_path_for_trunk_hotspots(
+    primary_source: str,
+    expected_text: str,
+    unexpected_text: str,
+) -> None:
+    data = map_summary(
+        prepare_report_input(trunk_primary_guidance_summary(primary_source=primary_source))
+    )
+
+    rendered = " ".join(
+        part
+        for step in data.next_steps
+        for part in (step.action, step.why, step.confirm, step.falsify)
+        if part
+    ).lower()
+
+    assert expected_text in rendered
+    assert unexpected_text not in rendered
+    assert "check trunk for tire damage" not in rendered
+    assert "imbalance or radial/lateral runout" not in rendered
+
+
+def test_map_summary_rephrases_ambiguous_primary_locations_as_mixed_signal() -> None:
+    data = map_summary(prepare_report_input(ambiguous_primary_location_summary()))
+
+    expected = "Mixed signal between Front-Left and Rear-Left"
+
+    assert data.verdict_page.inspect_first == expected
+    assert data.verdict_page.dominant_corner == expected
+    assert data.observed.strongest_location == expected
+    assert data.pattern_evidence.strongest_location == expected
+    assert "/" not in data.verdict_page.inspect_first
 
 
 def test_map_summary_formats_report_timestamps_for_header() -> None:
@@ -414,7 +467,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
     )
 
     data = map_summary(prepare_report_input(summary))
-    assert data.observed.strongest_location == "Rear Left / Front Right"
+    assert data.observed.strongest_location == "Mixed signal between Rear-Left and Front-Right"
 
 
 def test_map_summary_peak_rows_use_persistence_metrics() -> None:

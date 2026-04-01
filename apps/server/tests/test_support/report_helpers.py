@@ -188,6 +188,135 @@ def sequential_same_source_summary(*, weak_spatial: bool = False) -> dict:
     )
 
 
+_GENERATED_ACTION_STEPS: dict[str, dict[str, Any]] = {
+    "wheel_balance_and_runout": {
+        "action_id": "wheel_balance_and_runout",
+        "what": "ACTION_WHEEL_BALANCE_WHAT",
+        "why": "ACTION_WHEEL_BALANCE_WHY",
+        "confirm": "ACTION_WHEEL_BALANCE_CONFIRM",
+        "falsify": "ACTION_WHEEL_BALANCE_FALSIFY",
+        "eta": "20-45 min",
+    },
+    "wheel_tire_condition": {
+        "action_id": "wheel_tire_condition",
+        "what": "ACTION_TIRE_CONDITION_WHAT",
+        "why": "ACTION_TIRE_CONDITION_WHY",
+        "confirm": "ACTION_TIRE_CONDITION_CONFIRM",
+        "falsify": "ACTION_TIRE_CONDITION_FALSIFY",
+        "eta": "10-20 min",
+    },
+    "driveline_inspection": {
+        "action_id": "driveline_inspection",
+        "what": "ACTION_DRIVELINE_INSPECTION_WHAT",
+        "why": "ACTION_DRIVELINE_INSPECTION_WHY",
+        "confirm": "ACTION_DRIVELINE_INSPECTION_CONFIRM",
+        "falsify": "ACTION_DRIVELINE_INSPECTION_FALSIFY",
+        "eta": "20-35 min",
+    },
+    "driveline_mounts_and_fasteners": {
+        "action_id": "driveline_mounts_and_fasteners",
+        "what": "ACTION_DRIVELINE_MOUNTS_WHAT",
+        "why": "ACTION_DRIVELINE_MOUNTS_WHY",
+        "confirm": "ACTION_DRIVELINE_MOUNTS_CONFIRM",
+        "falsify": "ACTION_DRIVELINE_MOUNTS_FALSIFY",
+        "eta": "10-20 min",
+    },
+    "engine_mounts_and_accessories": {
+        "action_id": "engine_mounts_and_accessories",
+        "what": "ACTION_ENGINE_MOUNTS_WHAT",
+        "why": "ACTION_ENGINE_MOUNTS_WHY",
+        "confirm": "ACTION_ENGINE_MOUNTS_CONFIRM",
+        "falsify": "ACTION_ENGINE_MOUNTS_FALSIFY",
+        "eta": "15-30 min",
+    },
+    "engine_combustion_quality": {
+        "action_id": "engine_combustion_quality",
+        "what": "ACTION_ENGINE_COMBUSTION_WHAT",
+        "why": "ACTION_ENGINE_COMBUSTION_WHY",
+        "confirm": "ACTION_ENGINE_COMBUSTION_CONFIRM",
+        "falsify": "ACTION_ENGINE_COMBUSTION_FALSIFY",
+        "eta": "10-20 min",
+    },
+}
+
+
+def ambiguous_primary_location_summary() -> dict:
+    """Return a summary whose primary hotspot is explicitly ambiguous."""
+    primary = make_finding_payload(
+        finding_id="F_AMBIG",
+        suspected_source="wheel/tire",
+        confidence=0.82,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        dominance_ratio=2.0,
+        weak_spatial_separation=False,
+        location_hotspot={
+            "top_location": "Front Left",
+            "location": "Front Left",
+            "ambiguous_location": True,
+            "alternative_locations": ["Rear Left"],
+            "second_location": "Rear Left",
+        },
+    )
+    return minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=[
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        findings=[primary],
+        top_causes=[primary],
+        speed_stats={"steady_speed": True},
+    )
+
+
+def trunk_primary_guidance_summary(*, primary_source: str) -> dict:
+    """Return a summary with a trunk/body hotspot and mixed-source action plan."""
+    primary_action_ids = {
+        "engine": ("engine_mounts_and_accessories", "engine_combustion_quality"),
+        "driveline": ("driveline_inspection", "driveline_mounts_and_fasteners"),
+    }.get(primary_source)
+    if primary_action_ids is None:
+        raise ValueError(f"Unsupported primary source: {primary_source}")
+    primary = make_finding_payload(
+        finding_id="F_PRIMARY",
+        suspected_source=primary_source,
+        confidence=0.77,
+        strongest_location="Trunk",
+        strongest_speed_band="70-90 km/h",
+    )
+    alternative = make_finding_payload(
+        finding_id="F_WHEEL",
+        suspected_source="wheel/tire",
+        confidence=0.71,
+        strongest_location="Front Left",
+        strongest_speed_band="70-90 km/h",
+    )
+    return minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=[
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        findings=[primary, alternative],
+        top_causes=[primary, alternative],
+        speed_stats={"steady_speed": True},
+        test_plan=[
+            dict(_GENERATED_ACTION_STEPS["wheel_balance_and_runout"]),
+            dict(_GENERATED_ACTION_STEPS["wheel_tire_condition"]),
+            *(dict(_GENERATED_ACTION_STEPS[action_id]) for action_id in primary_action_ids),
+        ],
+    )
+
+
 def report_run_metadata(
     run_id: str = "run-01",
     *,

@@ -6,7 +6,12 @@ from collections.abc import Callable, Sequence
 
 from vibesensor.adapters.pdf.report_data import DataTrustItem, NextStep
 from vibesensor.domain import RecommendedAction
-from vibesensor.report_i18n import is_i18n_ref, resolve_i18n
+from vibesensor.report_i18n import (
+    is_body_like_location,
+    is_composite_location,
+    is_i18n_ref,
+    resolve_i18n,
+)
 from vibesensor.shared.types.history_analysis_contracts import (
     RunSuitabilityCheck,
 )
@@ -29,11 +34,21 @@ _REPORT_FOCUSED_ACTION_SPECS: dict[str, tuple[str, bool]] = {
     "wheel_balance_and_runout": ("REPORT_NEXT_STEP_WHEEL_BALANCE_WHAT", True),
     "wheel_tire_condition": ("REPORT_NEXT_STEP_TIRE_CONDITION_WHAT", True),
 }
+_PRIMARY_SOURCE_ACTION_IDS: dict[str, tuple[str, ...]] = {
+    "wheel/tire": ("wheel_balance_and_runout", "wheel_tire_condition"),
+    "driveline": ("driveline_inspection", "driveline_mounts_and_fasteners"),
+    "engine": ("engine_mounts_and_accessories", "engine_combustion_quality"),
+    "body resonance": ("general_mechanical_inspection",),
+    "unknown resonance": ("general_mechanical_inspection",),
+    "transient_impact": ("general_mechanical_inspection",),
+    "unknown": ("general_mechanical_inspection",),
+}
 
 
 def build_next_steps(
     *,
     recommended_actions: Sequence[RecommendedAction],
+    primary_source: object | None = None,
     primary_location: str | None = None,
     tier: str,
     cert_reason: str,
@@ -52,7 +67,10 @@ def build_next_steps(
             )
         ]
 
-    report_actions = _report_actions_for_report(recommended_actions)
+    report_actions = _report_actions_for_report(
+        recommended_actions,
+        primary_source=primary_source,
+    )
     location_hint = _usable_primary_location(primary_location, tr=tr)
     next_steps: list[NextStep] = []
     for action in report_actions:
@@ -81,10 +99,15 @@ def build_next_steps(
 
 def _report_actions_for_report(
     recommended_actions: Sequence[RecommendedAction],
+    *,
+    primary_source: object | None,
 ) -> tuple[RecommendedAction, ...]:
     """Return the report-facing action list without disturbing custom summary steps."""
     actions = tuple(recommended_actions)
     if _uses_generated_action_plan(actions):
+        source_actions = _source_aligned_report_actions(actions, primary_source)
+        if source_actions:
+            return source_actions[:_REPORT_FOCUSED_ACTION_LIMIT]
         return actions[:_REPORT_FOCUSED_ACTION_LIMIT]
     return actions
 
@@ -94,6 +117,18 @@ def _uses_generated_action_plan(actions: Sequence[RecommendedAction]) -> bool:
     return bool(actions) and all(
         _normalized_action_id(action.action_id) in _REPORT_FOCUSED_ACTION_SPECS
         for action in actions
+    )
+
+
+def _source_aligned_report_actions(
+    actions: Sequence[RecommendedAction],
+    primary_source: object | None,
+) -> tuple[RecommendedAction, ...]:
+    action_ids = _PRIMARY_SOURCE_ACTION_IDS.get(str(primary_source or "").strip().lower(), ())
+    if not action_ids:
+        return ()
+    return tuple(
+        action for action in actions if _normalized_action_id(action.action_id) in action_ids
     )
 
 
@@ -125,6 +160,8 @@ def _usable_primary_location(
         return None
     unknown_tokens = {"unknown", str(tr("UNKNOWN")).strip().lower()}
     if location.lower() in unknown_tokens:
+        return None
+    if is_composite_location(location) or is_body_like_location(location):
         return None
     return location
 
