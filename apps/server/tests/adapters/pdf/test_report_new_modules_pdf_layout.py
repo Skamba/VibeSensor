@@ -9,7 +9,8 @@ import pytest
 from pypdf import PdfReader
 from reportlab.lib.units import mm
 from test_support.core import extract_pdf_text
-from test_support.report_helpers import RUN_END, write_jsonl
+from test_support.findings import make_finding_payload
+from test_support.report_helpers import RUN_END, minimal_summary, write_jsonl
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
@@ -66,7 +67,7 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     assert len(reader.pages) == 2
 
 
-def test_report_pdf_two_pages(tmp_path: Path) -> None:
+def test_report_pdf_includes_appendix_b_for_generated_summary(tmp_path: Path) -> None:
     run_path = tmp_path / "two_pages.jsonl"
     records: list[dict[str, object]] = [_run_metadata(tire_circumference_m=2.2)]
     for idx in range(30):
@@ -82,6 +83,54 @@ def test_report_pdf_two_pages(tmp_path: Path) -> None:
     pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     reader = PdfReader(BytesIO(pdf))
     assert len(reader.pages) == 2
+
+
+def test_report_pdf_action_ready_flow_includes_appendix_b_before_evidence() -> None:
+    finding = make_finding_payload(
+        finding_id="F_APPENDIX_B",
+        suspected_source="wheel/tire",
+        strongest_location="Front Left wheel",
+        strongest_speed_band="60-80 km/h",
+        confidence=0.82,
+        frequency_hz_or_order="1x wheel order",
+        signatures_observed=["1x wheel order"],
+        matched_points=[
+            {
+                "speed_kmh": 62.0,
+                "predicted_hz": 13.2,
+                "matched_hz": 13.3,
+                "location": "Front Left wheel",
+                "amp": 0.10,
+            },
+            {
+                "speed_kmh": 64.0,
+                "predicted_hz": 13.6,
+                "matched_hz": 13.7,
+                "location": "Front Right wheel",
+                "amp": 0.05,
+            },
+        ],
+    )
+    summary = minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=[
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        findings=[finding],
+        top_causes=[finding],
+    )
+
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    reader = PdfReader(BytesIO(pdf))
+
+    assert len(reader.pages) == 4
+    assert "Appendix B: Sensor Topology" in (reader.pages[1].extract_text() or "")
+    assert "Evidence and Run Context" in (reader.pages[2].extract_text() or "")
 
 
 def test_fit_rect_preserve_aspect_wider_box() -> None:

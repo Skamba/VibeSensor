@@ -736,3 +736,76 @@ def test_map_summary_softens_same_corner_wheel_driveline_overlap_wording() -> No
     evidence_summary = data.appendix_c.evidence_summary.lower()
     assert "wheel and driveline evidence overlap" in evidence_summary
     assert "1x driveshaft also stayed strongest near front-left" not in evidence_summary
+
+
+def test_map_summary_builds_sensor_observation_matrix_rows() -> None:
+    wheel = make_finding_payload(
+        finding_id="F_SENSOR_MATRIX",
+        suspected_source="wheel/tire",
+        confidence=0.82,
+        strongest_location="Front Left wheel",
+        strongest_speed_band="60-80 km/h",
+        frequency_hz_or_order="1x wheel order",
+        signatures_observed=["1x wheel order"],
+        matched_points=[
+            {
+                "speed_kmh": 62.0,
+                "predicted_hz": 13.2,
+                "matched_hz": 13.3,
+                "location": "Front Left wheel",
+                "amp": 0.10,
+            },
+            {
+                "speed_kmh": 67.0,
+                "predicted_hz": 14.2,
+                "matched_hz": 14.3,
+                "location": "Front Left wheel",
+                "amp": 0.08,
+            },
+            {
+                "speed_kmh": 62.0,
+                "predicted_hz": 13.2,
+                "matched_hz": 13.4,
+                "location": "Front Right wheel",
+                "amp": 0.05,
+            },
+            {
+                "speed_kmh": 67.0,
+                "predicted_hz": 14.2,
+                "matched_hz": 14.4,
+                "location": "Rear Left wheel",
+                "amp": 0.025,
+            },
+        ],
+    )
+    summary = minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=[
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        findings=[wheel],
+        top_causes=[wheel],
+    )
+
+    data = map_summary(prepare_report_input(summary))
+
+    assert len(data.appendix_b.sensor_observation_rows) == 1
+    row = data.appendix_b.sensor_observation_rows[0]
+    assert row.source_name == "Wheel / Tire"
+    assert row.signal_label == "1x wheel order"
+    assert [cell.location for cell in row.sensor_levels] == [
+        "Front-Left",
+        "Front-Right",
+        "Rear-Left",
+        "Rear-Right",
+    ]
+    assert row.sensor_levels[0].relative_level_db == pytest.approx(0.0)
+    assert row.sensor_levels[1].relative_level_db == pytest.approx(-5.6, abs=0.5)
+    assert row.sensor_levels[2].relative_level_db is not None
+    assert row.sensor_levels[2].relative_level_db < row.sensor_levels[1].relative_level_db
+    assert row.sensor_levels[3].relative_level_db is None

@@ -9,7 +9,9 @@ from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor.adapters.pdf.pdf_appendices import (
     _appendix_a_page,
+    _appendix_b_page,
     _appendix_c_page,
+    _has_appendix_b_content,
     worksheet_step_pages,
 )
 from vibesensor.adapters.pdf.pdf_drawing import _draw_footer
@@ -54,7 +56,10 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
         if recapture_mode
         else worksheet_step_pages(data.appendix_a, list(data.next_steps), lang=data.lang)
     )
-    total_pages = 2 if recapture_mode else 2 + len(appendix_a_pages)
+    render_appendix_b = not recapture_mode and _has_appendix_b_content(data.appendix_b)
+    total_pages = (
+        2 if recapture_mode else 2 + len(appendix_a_pages) + (1 if render_appendix_b else 0)
+    )
 
     _page1(canvas, data, ctx=ctx)
     _draw_footer(canvas, 1, total_pages, data.title)
@@ -64,17 +69,24 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
         _appendix_a_page(canvas, data)
         _draw_footer(canvas, 2, total_pages, data.title)
     else:
+        current_page = 2
+        if render_appendix_b:
+            _appendix_b_page(canvas, data)
+            _draw_footer(canvas, current_page, total_pages, data.title)
+            canvas.showPage()
+            current_page += 1
         _appendix_c_page(canvas, data)
-        _draw_footer(canvas, 2, total_pages, data.title)
+        _draw_footer(canvas, current_page, total_pages, data.title)
         rendered_steps = 0
-        for page_number, page_steps in enumerate(appendix_a_pages, start=3):
+        first_appendix_a_page = current_page + 1
+        for page_number, page_steps in enumerate(appendix_a_pages, start=first_appendix_a_page):
             canvas.showPage()
             _appendix_a_page(
                 canvas,
                 data,
                 steps=page_steps,
                 start_number=rendered_steps + 1,
-                continued=page_number > 3,
+                continued=page_number > first_appendix_a_page,
             )
             _draw_footer(canvas, page_number, total_pages, data.title)
             rendered_steps += len(page_steps)

@@ -210,6 +210,55 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
     assert "ETA:" not in text_blob
 
 
+def test_report_pdf_renders_sensor_observation_matrix_on_appendix_b() -> None:
+    finding = make_finding_payload(
+        finding_id="F_SENSOR_MATRIX",
+        suspected_source="wheel/tire",
+        strongest_location="Front Left wheel",
+        strongest_speed_band="60-80 km/h",
+        confidence=0.82,
+        frequency_hz_or_order="1x wheel order",
+        signatures_observed=["1x wheel order"],
+        matched_points=[
+            {
+                "speed_kmh": 62.0,
+                "predicted_hz": 13.2,
+                "matched_hz": 13.3,
+                "location": "Front Left wheel",
+                "amp": 0.10,
+            },
+            {
+                "speed_kmh": 64.0,
+                "predicted_hz": 13.6,
+                "matched_hz": 13.7,
+                "location": "Front Right wheel",
+                "amp": 0.05,
+            },
+        ],
+    )
+    summary = minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=[
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        findings=[finding],
+        top_causes=[finding],
+    )
+
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    reader = PdfReader(BytesIO(pdf))
+
+    assert len(reader.pages) >= 3
+    page_two_text = reader.pages[1].extract_text() or ""
+    assert "Sensor-by-sensor signal view" in page_two_text
+    assert "0 dB = strongest sensor" in page_two_text
+
+
 def test_report_pdf_renders_run_timeline_graph_labels() -> None:
     finding = make_finding_payload(
         finding_id="F_TIMELINE",
