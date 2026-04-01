@@ -105,7 +105,12 @@ class SimClient:
         t = self.phase_s + np.arange(self.frame_samples, dtype=np.float32) * dt
 
         modulation = 1.0 + profile.modulation_depth * np.sin(_TWO_PI * profile.modulation_hz * t)
-        signal: np.ndarray[Any, np.dtype[Any]] = np.zeros((self.frame_samples, 3), dtype=np.float32)
+        local_signal: np.ndarray[Any, np.dtype[Any]] = np.zeros(
+            (self.frame_samples, 3), dtype=np.float32
+        )
+        common_signal: np.ndarray[Any, np.dtype[Any]] = np.zeros(
+            (self.frame_samples, 3), dtype=np.float32
+        )
 
         # Compute speed-scaling ratio for order-based profiles.
         # Tones in wheel_imbalance / wheel_mild_imbalance were defined at the
@@ -121,9 +126,9 @@ class SimClient:
             if effective_hz <= 0:
                 continue
             omega_t = _TWO_PI * effective_hz * t
-            signal[:, 0] += amps_xyz[0] * _sin(omega_t + _phase[0])
-            signal[:, 1] += amps_xyz[1] * _sin(omega_t + _phase[1])
-            signal[:, 2] += amps_xyz[2] * _sin(omega_t + _phase[2])
+            local_signal[:, 0] += amps_xyz[0] * _sin(omega_t + _phase[0])
+            local_signal[:, 1] += amps_xyz[1] * _sin(omega_t + _phase[1])
+            local_signal[:, 2] += amps_xyz[2] * _sin(omega_t + _phase[2])
 
         if self.common_event_gain > 0:
             # Common order tones shared by all sensors.
@@ -139,26 +144,29 @@ class SimClient:
                 if effective_hz <= 0:
                     continue
                 omega_t = _TWO_PI * effective_hz * t
-                signal[:, 0] += _gain * amps_xyz[0] * _sin(omega_t)
-                signal[:, 1] += _gain * amps_xyz[1] * _sin(omega_t + 0.2)
-                signal[:, 2] += _gain * amps_xyz[2] * _sin(omega_t + 0.4)
+                common_signal[:, 0] += _gain * amps_xyz[0] * _sin(omega_t)
+                common_signal[:, 1] += _gain * amps_xyz[1] * _sin(omega_t + 0.2)
+                common_signal[:, 2] += _gain * amps_xyz[2] * _sin(omega_t + 0.4)
 
-        signal *= modulation[:, None]
+        local_signal *= modulation[:, None]
 
         for i in range(self.frame_samples):
             if self.rng.random() < profile.bump_probability:
                 jitter = self.rng.uniform(0.85, 1.15, size=3).astype(np.float32)
                 self.bump_state += np.asarray(profile.bump_strength, dtype=np.float32) * jitter
-            signal[i] += self.bump_state
+            local_signal[i] += self.bump_state
             self.bump_state *= profile.bump_decay
 
         noise = self.rng.normal(
             0.0,
             profile.noise_std * self.noise_scale * self.scene_noise_gain,
-            size=signal.shape,
+            size=local_signal.shape,
         ).astype(np.float32)
-        signal += noise
-        signal *= self.amp_scale * self.scene_gain
+        local_signal += noise
+        local_signal *= self.amp_scale * self.scene_gain
+        # Keep shared/common tones independent from the local corner gain so
+        # generic driveline content does not inherit wheel-fault amplification.
+        signal = local_signal + common_signal
         # Keep a minimum broadband floor on every sensor even in quiet/low-gain scenes.
         floor_noise = self.rng.normal(
             0.0,
