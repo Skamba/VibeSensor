@@ -6,4835 +6,3810 @@
  * Do not make direct changes to the file.
  */
 
+
 export interface paths {
-    "/api/car-library/brands": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Car Library Brands
-         * @description Return all available car manufacturer brands from the library.
-         */
-        get: operations["get_car_library_brands_api_car_library_brands_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/car-library/models": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Car Library Models
-         * @description Return library entries for *brand* + *type*; 404 if the combination is unknown.
-         */
-        get: operations["get_car_library_models_api_car_library_models_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/car-library/types": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Car Library Types
-         * @description Return body types available for *brand*; 404 if the brand is unknown.
-         */
-        get: operations["get_car_library_types_api_car_library_types_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/client-locations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Client Locations
-         * @description List the supported sensor location codes that operators can assign to clients.
-         */
-        get: operations["get_client_locations_api_client_locations_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/clients": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Clients
-         * @description List known sensor clients with live connection state and latest computed metrics.
-         */
-        get: operations["get_clients_api_clients_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/clients/{client_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Remove Client
-         * @description Remove a disconnected sensor from the runtime registry.
-         */
-        delete: operations["remove_client_api_clients__client_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/clients/{client_id}/identify": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Identify Client
-         * @description Send a temporary identify/blink command so an operator can find a sensor physically.
-         */
-        post: operations["identify_client_api_clients__client_id__identify_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/clients/{client_id}/location": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Set Client Location
-         * @description Assign or clear the logical location for a sensor and persist the updated mapping.
-         */
-        post: operations["set_client_location_api_clients__client_id__location_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/debug/raw-samples/{client_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Debug Raw Samples
-         * @description Raw time-domain samples in g for offline analysis.
-         */
-        get: operations["debug_raw_samples_api_debug_raw_samples__client_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/debug/spectrum/{client_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Debug Spectrum
-         * @description Detailed spectrum debug info for independent verification.
-         */
-        get: operations["debug_spectrum_api_debug_spectrum__client_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/esp-flash/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cancel Esp Flash
-         * @description Request cancellation of the active ESP32 flash job.
-         */
-        post: operations["cancel_esp_flash_api_esp_flash_cancel_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/esp-flash/history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Esp Flash History
-         * @description List completed and failed ESP32 flash attempts kept in local history.
-         */
-        get: operations["get_esp_flash_history_api_esp_flash_history_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/esp-flash/logs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Esp Flash Logs
-         * @description Return incremental ESP32 flash logs for polling clients.
-         */
-        get: operations["get_esp_flash_logs_api_esp_flash_logs_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/esp-flash/ports": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Esp Flash Ports
-         * @description List serial ports currently available for ESP32 firmware flashing.
-         */
-        get: operations["list_esp_flash_ports_api_esp_flash_ports_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/esp-flash/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Start Esp Flash
-         * @description Start a new ESP32 firmware flash job with either auto-detect or an explicit port.
-         */
-        post: operations["start_esp_flash_api_esp_flash_start_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/esp-flash/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Esp Flash Status
-         * @description Return the current ESP32 flash job state and the selected serial port, if any.
-         */
-        get: operations["get_esp_flash_status_api_esp_flash_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health
-         * @description Return the current runtime health snapshot for the server and sensor pipeline.
-         */
-        get: operations["health_api_health_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get History
-         * @description List all persisted recording runs available in history storage.
-         */
-        get: operations["get_history_api_history_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/history/{run_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get History Run
-         * @description Return full metadata and analysis payloads for a single recorded run.
-         */
-        get: operations["get_history_run_api_history__run_id__get"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete History Run
-         * @description Delete a persisted run and its derived artifacts from history storage.
-         */
-        delete: operations["delete_history_run_api_history__run_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/history/{run_id}/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Export History Run
-         * @description Build and stream the ZIP export bundle for a persisted run.
-         */
-        get: operations["export_history_run_api_history__run_id__export_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/history/{run_id}/insights": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get History Insights
-         * @description Return localized post-analysis findings, or a 202 while analysis is still running.
-         */
-        get: operations["get_history_insights_api_history__run_id__insights_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/history/{run_id}/report.pdf": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Download History Report Pdf
-         * @description Build and download the PDF diagnostic report for a persisted run.
-         */
-        get: operations["download_history_report_pdf_api_history__run_id__report_pdf_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/recording/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Start Logging
-         * @description Start recording a new run and return the updated recorder status snapshot.
-         */
-        post: operations["start_logging_api_recording_start_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/recording/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Logging Status
-         * @description Return the current recording state, counters, and last completed run details.
-         */
-        get: operations["get_logging_status_api_recording_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/recording/stop": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Stop Logging
-         * @description Stop the active recording and return the updated recorder status snapshot.
-         */
-        post: operations["stop_logging_api_recording_stop_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/analysis": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Analysis Settings
-         * @description Return the validated analysis settings derived from the active car profile.
-         */
-        get: operations["get_analysis_settings_api_settings_analysis_get"];
-        /**
-         * Set Analysis Settings
-         * @description Update analysis-specific car aspects such as tire geometry and drivetrain ratios.
-         */
-        put: operations["set_analysis_settings_api_settings_analysis_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/cars": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Cars
-         * @description List all saved car profiles together with the currently active car ID.
-         */
-        get: operations["get_cars_api_settings_cars_get"];
-        put?: never;
-        /**
-         * Add Car
-         * @description Create a new car profile from the provided partial settings payload.
-         */
-        post: operations["add_car_api_settings_cars_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/cars/active": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Set Active Car
-         * @description Select which saved car profile should drive current analysis settings.
-         */
-        put: operations["set_active_car_api_settings_cars_active_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/cars/{car_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update Car
-         * @description Update an existing car profile while preserving unspecified fields.
-         */
-        put: operations["update_car_api_settings_cars__car_id__put"];
-        post?: never;
-        /**
-         * Delete Car
-         * @description Delete a saved car profile when that removal keeps settings state valid.
-         */
-        delete: operations["delete_car_api_settings_cars__car_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/language": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Language
-         * @description Return the currently selected dashboard language code.
-         */
-        get: operations["get_language_api_settings_language_get"];
-        /**
-         * Set Language
-         * @description Update the dashboard language used by the local UI.
-         */
-        put: operations["set_language_api_settings_language_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/obd/pair": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Pair Obd Device
-         * @description Pair, trust, connect, and persist the selected Bluetooth OBD adapter.
-         */
-        post: operations["pair_obd_device_api_settings_obd_pair_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/obd/scan": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Scan Obd Devices
-         * @description Scan nearby Bluetooth OBD adapters using the privileged helper.
-         */
-        post: operations["scan_obd_devices_api_settings_obd_scan_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/obd/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Obd Status
-         * @description Return detailed Bluetooth OBD runtime/admin status for diagnostics.
-         */
-        get: operations["get_obd_status_api_settings_obd_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/sensors": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Sensors
-         * @description List persisted per-sensor settings keyed by normalized MAC address.
-         */
-        get: operations["get_sensors_api_settings_sensors_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/sensors/{mac}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Update Sensor
-         * @description Create or update persisted sensor metadata for a specific MAC address.
-         */
-        post: operations["update_sensor_api_settings_sensors__mac__post"];
-        /**
-         * Delete Sensor
-         * @description Delete persisted sensor metadata for a specific MAC address.
-         */
-        delete: operations["delete_sensor_api_settings_sensors__mac__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/speed-source": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Speed Source
-         * @description Return the persisted speed-source configuration used for order tracking.
-         */
-        get: operations["get_speed_source_api_settings_speed_source_get"];
-        /**
-         * Update Speed Source
-         * @description Update the preferred speed source, manual fallback speed, and staleness timeout.
-         */
-        put: operations["update_speed_source_api_settings_speed_source_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/speed-source/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Speed Source Status
-         * @description Return the live selected-speed-source connection state and effective speed status.
-         */
-        get: operations["get_speed_source_status_api_settings_speed_source_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/settings/speed-unit": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Speed Unit
-         * @description Return the speed unit currently used for UI display and input.
-         */
-        get: operations["get_speed_unit_api_settings_speed_unit_get"];
-        /**
-         * Set Speed Unit
-         * @description Update the speed unit used for UI display and manual speed entry.
-         */
-        put: operations["set_speed_unit_api_settings_speed_unit_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/update/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cancel Update
-         * @description Request cancellation of the active OTA software update job.
-         */
-        post: operations["cancel_update_api_update_cancel_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/update/internet-status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Usb Internet Status
-         * @description Return the current USB internet detection and usability snapshot.
-         */
-        get: operations["get_usb_internet_status_api_update_internet_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/update/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Start Update
-         * @description Start an OTA software update using the supplied uplink Wi-Fi credentials.
-         */
-        post: operations["start_update_api_update_start_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/update/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Update Status
-         * @description Return the current OTA software update job state, logs, and runtime details.
-         */
-        get: operations["get_update_status_api_update_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+  "/api/car-library/brands": {
+    /**
+     * Get Car Library Brands
+     * @description Return all available car manufacturer brands from the library.
+     */
+    get: operations["get_car_library_brands_api_car_library_brands_get"];
+  };
+  "/api/car-library/models": {
+    /**
+     * Get Car Library Models
+     * @description Return library entries for *brand* + *type*; 404 if the combination is unknown.
+     */
+    get: operations["get_car_library_models_api_car_library_models_get"];
+  };
+  "/api/car-library/types": {
+    /**
+     * Get Car Library Types
+     * @description Return body types available for *brand*; 404 if the brand is unknown.
+     */
+    get: operations["get_car_library_types_api_car_library_types_get"];
+  };
+  "/api/client-locations": {
+    /**
+     * Get Client Locations
+     * @description List the supported sensor location codes that operators can assign to clients.
+     */
+    get: operations["get_client_locations_api_client_locations_get"];
+  };
+  "/api/clients": {
+    /**
+     * Get Clients
+     * @description List known sensor clients with live connection state and latest computed metrics.
+     */
+    get: operations["get_clients_api_clients_get"];
+  };
+  "/api/clients/{client_id}": {
+    /**
+     * Remove Client
+     * @description Remove a disconnected sensor from the runtime registry.
+     */
+    delete: operations["remove_client_api_clients__client_id__delete"];
+  };
+  "/api/clients/{client_id}/identify": {
+    /**
+     * Identify Client
+     * @description Send a temporary identify/blink command so an operator can find a sensor physically.
+     */
+    post: operations["identify_client_api_clients__client_id__identify_post"];
+  };
+  "/api/clients/{client_id}/location": {
+    /**
+     * Set Client Location
+     * @description Assign or clear the logical location for a sensor and persist the updated mapping.
+     */
+    post: operations["set_client_location_api_clients__client_id__location_post"];
+  };
+  "/api/debug/raw-samples/{client_id}": {
+    /**
+     * Debug Raw Samples
+     * @description Raw time-domain samples in g for offline analysis.
+     */
+    get: operations["debug_raw_samples_api_debug_raw_samples__client_id__get"];
+  };
+  "/api/debug/spectrum/{client_id}": {
+    /**
+     * Debug Spectrum
+     * @description Detailed spectrum debug info for independent verification.
+     */
+    get: operations["debug_spectrum_api_debug_spectrum__client_id__get"];
+  };
+  "/api/esp-flash/cancel": {
+    /**
+     * Cancel Esp Flash
+     * @description Request cancellation of the active ESP32 flash job.
+     */
+    post: operations["cancel_esp_flash_api_esp_flash_cancel_post"];
+  };
+  "/api/esp-flash/history": {
+    /**
+     * Get Esp Flash History
+     * @description List completed and failed ESP32 flash attempts kept in local history.
+     */
+    get: operations["get_esp_flash_history_api_esp_flash_history_get"];
+  };
+  "/api/esp-flash/logs": {
+    /**
+     * Get Esp Flash Logs
+     * @description Return incremental ESP32 flash logs for polling clients.
+     */
+    get: operations["get_esp_flash_logs_api_esp_flash_logs_get"];
+  };
+  "/api/esp-flash/ports": {
+    /**
+     * List Esp Flash Ports
+     * @description List serial ports currently available for ESP32 firmware flashing.
+     */
+    get: operations["list_esp_flash_ports_api_esp_flash_ports_get"];
+  };
+  "/api/esp-flash/start": {
+    /**
+     * Start Esp Flash
+     * @description Start a new ESP32 firmware flash job with either auto-detect or an explicit port.
+     */
+    post: operations["start_esp_flash_api_esp_flash_start_post"];
+  };
+  "/api/esp-flash/status": {
+    /**
+     * Get Esp Flash Status
+     * @description Return the current ESP32 flash job state and the selected serial port, if any.
+     */
+    get: operations["get_esp_flash_status_api_esp_flash_status_get"];
+  };
+  "/api/health": {
+    /**
+     * Health
+     * @description Return the current runtime health snapshot for the server and sensor pipeline.
+     */
+    get: operations["health_api_health_get"];
+  };
+  "/api/history": {
+    /**
+     * Get History
+     * @description List all persisted recording runs available in history storage.
+     */
+    get: operations["get_history_api_history_get"];
+  };
+  "/api/history/{run_id}": {
+    /**
+     * Get History Run
+     * @description Return full metadata and analysis payloads for a single recorded run.
+     */
+    get: operations["get_history_run_api_history__run_id__get"];
+    /**
+     * Delete History Run
+     * @description Delete a persisted run and its derived artifacts from history storage.
+     */
+    delete: operations["delete_history_run_api_history__run_id__delete"];
+  };
+  "/api/history/{run_id}/export": {
+    /**
+     * Export History Run
+     * @description Build and stream the ZIP export bundle for a persisted run.
+     */
+    get: operations["export_history_run_api_history__run_id__export_get"];
+  };
+  "/api/history/{run_id}/insights": {
+    /**
+     * Get History Insights
+     * @description Return localized post-analysis findings, or a 202 while analysis is still running.
+     */
+    get: operations["get_history_insights_api_history__run_id__insights_get"];
+  };
+  "/api/history/{run_id}/report.pdf": {
+    /**
+     * Download History Report Pdf
+     * @description Build and download the PDF diagnostic report for a persisted run.
+     */
+    get: operations["download_history_report_pdf_api_history__run_id__report_pdf_get"];
+  };
+  "/api/recording/start": {
+    /**
+     * Start Logging
+     * @description Start recording a new run and return the updated recorder status snapshot.
+     */
+    post: operations["start_logging_api_recording_start_post"];
+  };
+  "/api/recording/status": {
+    /**
+     * Get Logging Status
+     * @description Return the current recording state, counters, and last completed run details.
+     */
+    get: operations["get_logging_status_api_recording_status_get"];
+  };
+  "/api/recording/stop": {
+    /**
+     * Stop Logging
+     * @description Stop the active recording and return the updated recorder status snapshot.
+     */
+    post: operations["stop_logging_api_recording_stop_post"];
+  };
+  "/api/settings/analysis": {
+    /**
+     * Get Analysis Settings
+     * @description Return the validated analysis settings derived from the active car profile.
+     */
+    get: operations["get_analysis_settings_api_settings_analysis_get"];
+    /**
+     * Set Analysis Settings
+     * @description Update analysis-specific car aspects such as tire geometry and drivetrain ratios.
+     */
+    put: operations["set_analysis_settings_api_settings_analysis_put"];
+  };
+  "/api/settings/cars": {
+    /**
+     * Get Cars
+     * @description List all saved car profiles together with the currently active car ID.
+     */
+    get: operations["get_cars_api_settings_cars_get"];
+    /**
+     * Add Car
+     * @description Create a new car profile from the provided partial settings payload.
+     */
+    post: operations["add_car_api_settings_cars_post"];
+  };
+  "/api/settings/cars/active": {
+    /**
+     * Set Active Car
+     * @description Select which saved car profile should drive current analysis settings.
+     */
+    put: operations["set_active_car_api_settings_cars_active_put"];
+  };
+  "/api/settings/cars/{car_id}": {
+    /**
+     * Update Car
+     * @description Update an existing car profile while preserving unspecified fields.
+     */
+    put: operations["update_car_api_settings_cars__car_id__put"];
+    /**
+     * Delete Car
+     * @description Delete a saved car profile when that removal keeps settings state valid.
+     */
+    delete: operations["delete_car_api_settings_cars__car_id__delete"];
+  };
+  "/api/settings/language": {
+    /**
+     * Get Language
+     * @description Return the currently selected dashboard language code.
+     */
+    get: operations["get_language_api_settings_language_get"];
+    /**
+     * Set Language
+     * @description Update the dashboard language used by the local UI.
+     */
+    put: operations["set_language_api_settings_language_put"];
+  };
+  "/api/settings/obd/pair": {
+    /**
+     * Pair Obd Device
+     * @description Pair, trust, connect, and persist the selected Bluetooth OBD adapter.
+     */
+    post: operations["pair_obd_device_api_settings_obd_pair_post"];
+  };
+  "/api/settings/obd/scan": {
+    /**
+     * Scan Obd Devices
+     * @description Scan nearby Bluetooth OBD adapters using the privileged helper.
+     */
+    post: operations["scan_obd_devices_api_settings_obd_scan_post"];
+  };
+  "/api/settings/obd/status": {
+    /**
+     * Get Obd Status
+     * @description Return detailed Bluetooth OBD runtime/admin status for diagnostics.
+     */
+    get: operations["get_obd_status_api_settings_obd_status_get"];
+  };
+  "/api/settings/sensors": {
+    /**
+     * Get Sensors
+     * @description List persisted per-sensor settings keyed by normalized MAC address.
+     */
+    get: operations["get_sensors_api_settings_sensors_get"];
+  };
+  "/api/settings/sensors/{mac}": {
+    /**
+     * Update Sensor
+     * @description Create or update persisted sensor metadata for a specific MAC address.
+     */
+    post: operations["update_sensor_api_settings_sensors__mac__post"];
+    /**
+     * Delete Sensor
+     * @description Delete persisted sensor metadata for a specific MAC address.
+     */
+    delete: operations["delete_sensor_api_settings_sensors__mac__delete"];
+  };
+  "/api/settings/speed-source": {
+    /**
+     * Get Speed Source
+     * @description Return the persisted speed-source configuration used for order tracking.
+     */
+    get: operations["get_speed_source_api_settings_speed_source_get"];
+    /**
+     * Update Speed Source
+     * @description Update the preferred speed source, manual fallback speed, and staleness timeout.
+     */
+    put: operations["update_speed_source_api_settings_speed_source_put"];
+  };
+  "/api/settings/speed-source/status": {
+    /**
+     * Get Speed Source Status
+     * @description Return the live selected-speed-source connection state and effective speed status.
+     */
+    get: operations["get_speed_source_status_api_settings_speed_source_status_get"];
+  };
+  "/api/settings/speed-unit": {
+    /**
+     * Get Speed Unit
+     * @description Return the speed unit currently used for UI display and input.
+     */
+    get: operations["get_speed_unit_api_settings_speed_unit_get"];
+    /**
+     * Set Speed Unit
+     * @description Update the speed unit used for UI display and manual speed entry.
+     */
+    put: operations["set_speed_unit_api_settings_speed_unit_put"];
+  };
+  "/api/update/cancel": {
+    /**
+     * Cancel Update
+     * @description Request cancellation of the active OTA software update job.
+     */
+    post: operations["cancel_update_api_update_cancel_post"];
+  };
+  "/api/update/internet-status": {
+    /**
+     * Get Usb Internet Status
+     * @description Return the current USB internet detection and usability snapshot.
+     */
+    get: operations["get_usb_internet_status_api_update_internet_status_get"];
+  };
+  "/api/update/start": {
+    /**
+     * Start Update
+     * @description Start an OTA software update using the supplied uplink Wi-Fi credentials.
+     */
+    post: operations["start_update_api_update_start_post"];
+  };
+  "/api/update/status": {
+    /**
+     * Get Update Status
+     * @description Return the current OTA software update job state, logs, and runtime details.
+     */
+    get: operations["get_update_status_api_update_status_get"];
+  };
 }
+
 export type webhooks = Record<string, never>;
+
 export interface components {
-    schemas: {
-        /**
-         * ActiveCarRequest
-         * @description Request body for selecting the active car profile.
-         */
-        ActiveCarRequest: {
-            /** Car Id */
-            car_id: string;
-        };
-        /**
-         * AmpVsPhaseRow
-         * @description Typed HTTP contract for one phase-grouped vibration aggregate row.
-         */
-        AmpVsPhaseRow: {
-            /** Count */
-            count: number;
-            /** Max Vib Db */
-            max_vib_db: number | null;
-            /** Mean Speed Kmh */
-            mean_speed_kmh: number | null;
-            /** Mean Vib Db */
-            mean_vib_db: number;
-            /** Phase */
-            phase: string;
-        };
-        /**
-         * AmplitudeMetric
-         * @description HTTP contract for finding amplitude/strength metadata.
-         */
-        AmplitudeMetric: {
-            definition?: components["schemas"]["JsonSchemaValue"];
-            /** Name */
-            name?: string | null;
-            /** Units */
-            units?: string | null;
-            /** Value */
-            value?: number | null;
-        };
-        /**
-         * AnalysisSettingsPayload
-         * @description Structured partial payload for analysis-setting updates and car aspects.
-         */
-        AnalysisSettingsPayload: {
-            /** Current Gear Ratio */
-            current_gear_ratio?: number;
-            /** Driveshaft Bandwidth Pct */
-            driveshaft_bandwidth_pct?: number;
-            /** Engine Bandwidth Pct */
-            engine_bandwidth_pct?: number;
-            /** Final Drive Ratio */
-            final_drive_ratio?: number;
-            /** Final Drive Uncertainty Pct */
-            final_drive_uncertainty_pct?: number;
-            /** Gear Uncertainty Pct */
-            gear_uncertainty_pct?: number;
-            /** Max Band Half Width Pct */
-            max_band_half_width_pct?: number;
-            /** Min Abs Band Hz */
-            min_abs_band_hz?: number;
-            /** Rim In */
-            rim_in?: number;
-            /** Speed Uncertainty Pct */
-            speed_uncertainty_pct?: number;
-            /** Tire Aspect Pct */
-            tire_aspect_pct?: number;
-            /** Tire Deflection Factor */
-            tire_deflection_factor?: number;
-            /** Tire Diameter Uncertainty Pct */
-            tire_diameter_uncertainty_pct?: number;
-            /** Tire Width Mm */
-            tire_width_mm?: number;
-            /** Wheel Bandwidth Pct */
-            wheel_bandwidth_pct?: number;
-        };
-        /**
-         * AnalysisSettingsRequest
-         * @description Request body for updating vehicle analysis settings (tire geometry, gear ratios, etc.).
-         */
-        AnalysisSettingsRequest: {
-            /** Current Gear Ratio */
-            current_gear_ratio?: number | null;
-            /** Driveshaft Bandwidth Pct */
-            driveshaft_bandwidth_pct?: number | null;
-            /** Engine Bandwidth Pct */
-            engine_bandwidth_pct?: number | null;
-            /** Final Drive Ratio */
-            final_drive_ratio?: number | null;
-            /** Final Drive Uncertainty Pct */
-            final_drive_uncertainty_pct?: number | null;
-            /** Gear Uncertainty Pct */
-            gear_uncertainty_pct?: number | null;
-            /** Max Band Half Width Pct */
-            max_band_half_width_pct?: number | null;
-            /** Min Abs Band Hz */
-            min_abs_band_hz?: number | null;
-            /** Rim In */
-            rim_in?: number | null;
-            /** Speed Uncertainty Pct */
-            speed_uncertainty_pct?: number | null;
-            /** Tire Aspect Pct */
-            tire_aspect_pct?: number | null;
-            /** Tire Deflection Factor */
-            tire_deflection_factor?: number | null;
-            /** Tire Diameter Uncertainty Pct */
-            tire_diameter_uncertainty_pct?: number | null;
-            /** Tire Width Mm */
-            tire_width_mm?: number | null;
-            /** Wheel Bandwidth Pct */
-            wheel_bandwidth_pct?: number | null;
-        };
-        /**
-         * AnalysisSettingsResponse
-         * @description Response body reflecting the current validated analysis settings.
-         */
-        AnalysisSettingsResponse: {
-            /** Current Gear Ratio */
-            current_gear_ratio: number;
-            /** Driveshaft Bandwidth Pct */
-            driveshaft_bandwidth_pct: number;
-            /** Engine Bandwidth Pct */
-            engine_bandwidth_pct: number;
-            /** Final Drive Ratio */
-            final_drive_ratio: number;
-            /** Final Drive Uncertainty Pct */
-            final_drive_uncertainty_pct: number;
-            /** Gear Uncertainty Pct */
-            gear_uncertainty_pct: number;
-            /** Max Band Half Width Pct */
-            max_band_half_width_pct: number;
-            /** Min Abs Band Hz */
-            min_abs_band_hz: number;
-            /** Rim In */
-            rim_in: number;
-            /** Speed Uncertainty Pct */
-            speed_uncertainty_pct: number;
-            /** Tire Aspect Pct */
-            tire_aspect_pct: number;
-            /** Tire Deflection Factor */
-            tire_deflection_factor: number;
-            /** Tire Diameter Uncertainty Pct */
-            tire_diameter_uncertainty_pct: number;
-            /** Tire Width Mm */
-            tire_width_mm: number;
-            /** Wheel Bandwidth Pct */
-            wheel_bandwidth_pct: number;
-        };
-        /**
-         * AnalysisSummaryResponse
-         * @description Canonical shared owner for the persisted analysis summary wrapper.
-         */
-        AnalysisSummaryResponse: {
-            /** Accel Scale G Per Lsb */
-            accel_scale_g_per_lsb: number | null;
-            analysis_metadata?: components["schemas"]["PayloadObject"];
-            /** Case Id */
-            case_id?: string | null;
-            data_quality: components["schemas"]["DataQualityResponse"];
-            /** Duration S */
-            duration_s: number;
-            /** End Time Utc */
-            end_time_utc?: string | null;
-            /** Feature Interval S */
-            feature_interval_s: number | null;
-            /** Fft Window Size Samples */
-            fft_window_size_samples?: number | null;
-            /** Fft Window Type */
-            fft_window_type?: string | null;
-            /** File Name */
-            file_name: string;
-            /** Findings */
-            findings: components["schemas"]["FindingPayload"][];
-            /** Firmware Version */
-            firmware_version?: string | null;
-            /** Incomplete For Order Analysis */
-            incomplete_for_order_analysis: boolean;
-            /** Lang */
-            lang: string;
-            metadata: components["schemas"]["PayloadObject"];
-            most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
-            /** Peak Picker Method */
-            peak_picker_method?: string | null;
-            phase_info: components["schemas"]["PhaseInfoResponse"];
-            /** Phase Segments */
-            phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
-            /** Phase Speed Breakdown */
-            phase_speed_breakdown: components["schemas"]["PhaseSpeedBreakdownRow"][];
-            /** Phase Timeline */
-            phase_timeline: components["schemas"]["PhaseTimelineEntryResponse"][];
-            plots?: components["schemas"]["PlotDataResult"] | null;
-            /** Raw Sample Rate Hz */
-            raw_sample_rate_hz: number | null;
-            /** Record Length */
-            record_length: string;
-            /** Report Date */
-            report_date?: string | null;
-            /** Rows */
-            rows: number;
-            /** Run Id */
-            run_id: string;
-            /** Run Noise Baseline Db */
-            run_noise_baseline_db: number | null;
-            /** Run Suitability */
-            run_suitability: components["schemas"]["RunSuitabilityCheck"][];
-            /** Samples */
-            samples?: components["schemas"]["PayloadObject"][];
-            /** Sensor Count Used */
-            sensor_count_used: number;
-            /** Sensor Intensity By Location */
-            sensor_intensity_by_location: components["schemas"]["LocationIntensitySummaryResponse"][];
-            /** Sensor Locations */
-            sensor_locations: string[];
-            /** Sensor Locations Connected Throughout */
-            sensor_locations_connected_throughout: string[];
-            /** Sensor Model */
-            sensor_model?: string | null;
-            /** Speed Breakdown */
-            speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
-            speed_breakdown_skipped_reason: components["schemas"]["PayloadObject"] | null;
-            speed_stats: components["schemas"]["SpeedStatsResponse"];
-            /** Speed Stats By Phase */
-            speed_stats_by_phase: {
-                [key: string]: components["schemas"]["SpeedStatsResponse"];
-            };
-            /** Start Time Utc */
-            start_time_utc?: string | null;
-            /** Test Plan */
-            test_plan: components["schemas"]["TestPlanStepResponse"][];
-            /** Top Causes */
-            top_causes: components["schemas"]["FindingPayload"][];
-            /** Warnings */
-            warnings: components["schemas"]["SummaryWarningResponse"][];
-        };
-        ApiPayloadObject: {
-            [key: string]: components["schemas"]["JsonSchemaValue"];
-        };
-        /** AxisMetrics */
-        AxisMetrics: {
-            /** P2P */
-            p2p: number;
-            /** Peaks */
-            peaks: components["schemas"]["AxisPeak"][];
-            /** Rms */
-            rms: number;
-        };
-        /** AxisPeak */
-        AxisPeak: {
-            /** Amp */
-            amp?: number;
-            /** Hz */
-            hz?: number;
-            /** Snr Ratio */
-            snr_ratio?: number;
-        };
-        /**
-         * CarLibraryBrandsResponse
-         * @description Response body listing available car manufacturer brands.
-         */
-        CarLibraryBrandsResponse: {
-            /** Brands */
-            brands: string[];
-        };
-        /**
-         * CarLibraryGearboxEntry
-         * @description A gearbox option from the car library (gear ratios).
-         */
-        CarLibraryGearboxEntry: {
-            /** Final Drive Ratio */
-            final_drive_ratio: number;
-            /** Gear Ratios */
-            gear_ratios?: number[] | null;
-            /** Name */
-            name: string;
-            /** Top Gear Ratio */
-            top_gear_ratio: number;
-        };
-        /**
-         * CarLibraryModelEntry
-         * @description A full car library entry with brand, model, tire options, and variants.
-         */
-        CarLibraryModelEntry: {
-            /** Brand */
-            brand: string;
-            /** Gearboxes */
-            gearboxes: components["schemas"]["CarLibraryGearboxEntry"][];
-            /** Model */
-            model: string;
-            /** Rim In */
-            rim_in: number;
-            /** Tire Aspect Pct */
-            tire_aspect_pct: number;
-            /** Tire Options */
-            tire_options: components["schemas"]["CarLibraryTireOptionEntry"][];
-            /** Tire Width Mm */
-            tire_width_mm: number;
-            /** Type */
-            type: string;
-            /** Variants */
-            variants?: components["schemas"]["CarLibraryVariantEntry"][];
-        };
-        /**
-         * CarLibraryModelsResponse
-         * @description Response body listing car library model entries.
-         */
-        CarLibraryModelsResponse: {
-            /** Models */
-            models: components["schemas"]["CarLibraryModelEntry"][];
-        };
-        /**
-         * CarLibraryTireOptionEntry
-         * @description A tire size option from the car library.
-         */
-        CarLibraryTireOptionEntry: {
-            /** Name */
-            name: string;
-            /** Rim In */
-            rim_in: number;
-            /** Tire Aspect Pct */
-            tire_aspect_pct: number;
-            /** Tire Width Mm */
-            tire_width_mm: number;
-        };
-        /**
-         * CarLibraryTypesResponse
-         * @description Response body listing available car body types.
-         */
-        CarLibraryTypesResponse: {
-            /** Types */
-            types: string[];
-        };
-        /**
-         * CarLibraryVariantEntry
-         * @description A specific variant/trim of a car library model entry.
-         */
-        CarLibraryVariantEntry: {
-            /**
-             * Drivetrain
-             * @enum {string}
-             */
-            drivetrain: "FWD" | "RWD" | "AWD";
-            /** Engine */
-            engine?: string | null;
-            /** Gearboxes */
-            gearboxes?: components["schemas"]["CarLibraryGearboxEntry"][] | null;
-            /** Name */
-            name: string;
-            /** Rim In */
-            rim_in?: number | null;
-            /** Tire Aspect Pct */
-            tire_aspect_pct?: number | null;
-            /** Tire Options */
-            tire_options?: components["schemas"]["CarLibraryTireOptionEntry"][] | null;
-            /** Tire Width Mm */
-            tire_width_mm?: number | null;
-        };
-        /**
-         * CarResponse
-         * @description Response body representing a single car profile.
-         */
-        CarResponse: {
-            aspects: components["schemas"]["AnalysisSettingsPayload"];
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
-            /** Variant */
-            variant?: string | null;
-        };
-        /**
-         * CarUpsertRequest
-         * @description Request body for creating or updating a car profile.
-         */
-        CarUpsertRequest: {
-            aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
-            /** Name */
-            name?: string | null;
-            /** Type */
-            type?: string | null;
-            /** Variant */
-            variant?: string | null;
-        };
-        /**
-         * CarsResponse
-         * @description Response body for the list of all car profiles with the active car ID.
-         */
-        CarsResponse: {
-            /** Active Car Id */
-            active_car_id: string | null;
-            /** Cars */
-            cars: components["schemas"]["CarResponse"][];
-        };
-        /** ClientApiRow */
-        ClientApiRow: {
-            /** Connected */
-            connected: boolean;
-            /** Dropped Frames */
-            dropped_frames: number;
-            /** Firmware Version */
-            firmware_version: string;
-            /** Frame Samples */
-            frame_samples?: number;
-            /** Frames Total */
-            frames_total: number;
-            /** Id */
-            id: string;
-            /** Last Reset Time */
-            last_reset_time?: number | null;
-            /** Last Seen Age Ms */
-            last_seen_age_ms: number | null;
-            latest_metrics?: components["schemas"]["ClientMetrics"];
-            /** Location Code */
-            location_code: string;
-            /** Mac Address */
-            mac_address: string;
-            /** Name */
-            name: string;
-            /** Reset Count */
-            reset_count?: number;
-            /** Sample Rate Hz */
-            sample_rate_hz: number;
-        };
-        /**
-         * ClientLocationsResponse
-         * @description Response body with available sensor-location options.
-         */
-        ClientLocationsResponse: {
-            /** Locations */
-            locations: components["schemas"]["LocationOptionResponse"][];
-        };
-        /** ClientMetrics */
-        ClientMetrics: {
-            combined?: components["schemas"]["CombinedMetrics"];
-            x?: components["schemas"]["AxisMetrics"];
-            y?: components["schemas"]["AxisMetrics"];
-            z?: components["schemas"]["AxisMetrics"];
-        };
-        /**
-         * ClientsResponse
-         * @description Response body listing known sensor clients and their live connection state.
-         */
-        ClientsResponse: {
-            /** Clients */
-            clients: components["schemas"]["ClientApiRow"][];
-        };
-        /** CombinedMetrics */
-        CombinedMetrics: {
-            /** Peaks */
-            peaks?: components["schemas"]["StrengthPeak"][];
-            strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
-            /** Vib Mag P2P */
-            vib_mag_p2p?: number;
-            /** Vib Mag Rms */
-            vib_mag_rms?: number;
-        };
-        /**
-         * DataQualityAccelSanityResponse
-         * @description Response body for acceleration sanity diagnostics.
-         */
-        DataQualityAccelSanityResponse: {
-            /** Saturation Count */
-            saturation_count: number | null;
-            /** Sensor Limit */
-            sensor_limit: number | null;
-            /** X Mean */
-            x_mean: number | null;
-            /** X Variance */
-            x_variance: number | null;
-            /** Y Mean */
-            y_mean: number | null;
-            /** Y Variance */
-            y_variance: number | null;
-            /** Z Mean */
-            z_mean: number | null;
-            /** Z Variance */
-            z_variance: number | null;
-        };
-        /**
-         * DataQualityOutliersResponse
-         * @description Response body for grouped outlier summaries.
-         */
-        DataQualityOutliersResponse: {
-            accel_magnitude: components["schemas"]["OutlierSummaryResponse"];
-            amplitude_metric: components["schemas"]["OutlierSummaryResponse"];
-        };
-        /**
-         * DataQualityRequiredMissingPctResponse
-         * @description Response body for required-field missing percentages.
-         */
-        DataQualityRequiredMissingPctResponse: {
-            /** Accel X */
-            accel_x: number;
-            /** Accel Y */
-            accel_y: number;
-            /** Accel Z */
-            accel_z: number;
-            /** Speed Kmh */
-            speed_kmh: number;
-            /** T S */
-            t_s: number;
-        };
-        /**
-         * DataQualityResponse
-         * @description Response body for run-level data-quality diagnostics.
-         */
-        DataQualityResponse: {
-            accel_sanity: components["schemas"]["DataQualityAccelSanityResponse"];
-            outliers: components["schemas"]["DataQualityOutliersResponse"];
-            required_missing_pct: components["schemas"]["DataQualityRequiredMissingPctResponse"];
-            speed_coverage: components["schemas"]["DataQualitySpeedCoverageResponse"];
-        };
-        /**
-         * DataQualitySpeedCoverageResponse
-         * @description Response body for summarized speed-coverage statistics.
-         */
-        DataQualitySpeedCoverageResponse: {
-            /** Count Non Null */
-            count_non_null: number;
-            /** Max Kmh */
-            max_kmh: number | null;
-            /** Mean Kmh */
-            mean_kmh: number | null;
-            /** Min Kmh */
-            min_kmh: number | null;
-            /** Non Null Pct */
-            non_null_pct: number;
-            /** Stddev Kmh */
-            stddev_kmh: number | null;
-        };
-        /** DebugSpectrumPayload */
-        DebugSpectrumPayload: {
-            /** Client Id */
-            client_id: string;
-            /** Detrended Std G */
-            detrended_std_g: number[];
-            /** Fft N */
-            fft_n: number;
-            /** Fft Scale */
-            fft_scale: number;
-            /** Freq Bins */
-            freq_bins: number;
-            /** Freq Resolution Hz */
-            freq_resolution_hz: number;
-            raw_stats: components["schemas"]["DebugSpectrumStatsPayload"];
-            /** Sample Rate Hz */
-            sample_rate_hz: number;
-            /** Spectrum Max Hz */
-            spectrum_max_hz: number;
-            /** Spectrum Min Hz */
-            spectrum_min_hz: number;
-            /** Strength Peaks */
-            strength_peaks: components["schemas"]["StrengthPeak"][];
-            /** Top Bins By Amplitude */
-            top_bins_by_amplitude: components["schemas"]["DebugSpectrumTopBinPayload"][];
-            /** Vibration Strength Db */
-            vibration_strength_db: number;
-            /** Window */
-            window: string;
-        };
-        /** DebugSpectrumStatsPayload */
-        DebugSpectrumStatsPayload: {
-            /** Max G */
-            max_g: number[];
-            /** Mean G */
-            mean_g: number[];
-            /** Min G */
-            min_g: number[];
-            /** Std G */
-            std_g: number[];
-        };
-        /** DebugSpectrumTopBinPayload */
-        DebugSpectrumTopBinPayload: {
-            /** Bin */
-            bin: number;
-            /** Combined Amp G */
-            combined_amp_g: number;
-            /** Freq Hz */
-            freq_hz: number;
-            /** X Amp G */
-            x_amp_g: number;
-            /** Y Amp G */
-            y_amp_g: number;
-            /** Z Amp G */
-            z_amp_g: number;
-        };
-        /**
-         * DeleteHistoryRunResponse
-         * @description Response body confirming deletion of a history run.
-         */
-        DeleteHistoryRunResponse: {
-            /** Run Id */
-            run_id: string;
-            /** Status */
-            status: string;
-        };
-        /**
-         * EspFlashCancelResponse
-         * @description Response body confirming whether an ESP32 flash job was cancelled.
-         */
-        EspFlashCancelResponse: {
-            /** Cancelled */
-            cancelled: boolean;
-        };
-        /**
-         * EspFlashHistoryEntryResponse
-         * @description Response body for a single historical ESP32 flash job.
-         */
-        EspFlashHistoryEntryResponse: {
-            /** Auto Detect */
-            auto_detect: boolean;
-            /** Error */
-            error?: string | null;
-            /** Exit Code */
-            exit_code?: number | null;
-            /** Finished At */
-            finished_at?: number | null;
-            /** Job Id */
-            job_id: number;
-            /** Selected Port */
-            selected_port?: string | null;
-            /** Started At */
-            started_at: number;
-            /** State */
-            state: string;
-        };
-        /**
-         * EspFlashHistoryResponse
-         * @description Response body listing all past ESP32 flash job attempts.
-         */
-        EspFlashHistoryResponse: {
-            /** Attempts */
-            attempts: components["schemas"]["EspFlashHistoryEntryResponse"][];
-        };
-        /**
-         * EspFlashLogsResponse
-         * @description Response body with a page of ESP32 flash log lines.
-         */
-        EspFlashLogsResponse: {
-            /** From Index */
-            from_index: number;
-            /** Lines */
-            lines: string[];
-            /** Next Index */
-            next_index: number;
-        };
-        /**
-         * EspFlashPortsResponse
-         * @description Response body listing detected serial ports for ESP32 flashing.
-         */
-        EspFlashPortsResponse: {
-            /** Ports */
-            ports: components["schemas"]["EspSerialPortResponse"][];
-        };
-        /**
-         * EspFlashStartRequest
-         * @description Request body to start an ESP32 firmware flash job.
-         */
-        EspFlashStartRequest: {
-            /**
-             * Auto Detect
-             * @default true
-             */
-            auto_detect: boolean;
-            /** Port */
-            port?: string | null;
-        };
-        /**
-         * EspFlashStartResponse
-         * @description Response body confirming that an ESP32 flash job has been queued.
-         */
-        EspFlashStartResponse: {
-            /** Job Id */
-            job_id: number;
-            /** Status */
-            status: string;
-        };
-        /**
-         * EspFlashStatusResponse
-         * @description Response body for the current ESP32 flash job status.
-         */
-        EspFlashStatusResponse: {
-            /** Auto Detect */
-            auto_detect: boolean;
-            /** Error */
-            error?: string | null;
-            /** Exit Code */
-            exit_code?: number | null;
-            /** Finished At */
-            finished_at?: number | null;
-            /** Job Id */
-            job_id?: number | null;
-            /** Last Success At */
-            last_success_at?: number | null;
-            /** Log Count */
-            log_count: number;
-            /** Phase */
-            phase: string;
-            /** Selected Port */
-            selected_port?: string | null;
-            /** Started At */
-            started_at?: number | null;
-            /** State */
-            state: string;
-        };
-        /**
-         * EspSerialPortResponse
-         * @description Response body describing a single detected serial port.
-         */
-        EspSerialPortResponse: {
-            /** Description */
-            description: string;
-            /** Pid */
-            pid?: number | null;
-            /** Port */
-            port: string;
-            /** Serial Number */
-            serial_number?: string | null;
-            /** Vid */
-            vid?: number | null;
-        };
-        /**
-         * FindingEvidenceMetrics
-         * @description HTTP contract for serialized evidence metrics attached to a finding.
-         */
-        FindingEvidenceMetrics: {
-            /** Burstiness */
-            burstiness?: number | null;
-            /** Focused Speed Band */
-            focused_speed_band?: string | null;
-            /** Frequency Correlation */
-            frequency_correlation?: number | null;
-            /** Global Match Rate */
-            global_match_rate?: number | null;
-            /** Match Rate */
-            match_rate?: number | null;
-            /** Matched Samples */
-            matched_samples?: number | null;
-            /** Max Intensity Db */
-            max_intensity_db?: number | null;
-            /** Mean Noise Floor Db */
-            mean_noise_floor_db?: number | null;
-            /** Mean Relative Error */
-            mean_relative_error?: number | null;
-            /** Median Intensity Db */
-            median_intensity_db?: number | null;
-            /** Median Relative To Run Noise */
-            median_relative_to_run_noise?: number | null;
-            /** P95 Intensity Db */
-            p95_intensity_db?: number | null;
-            /** P95 Relative To Run Noise */
-            p95_relative_to_run_noise?: number | null;
-            /** Per Phase Confidence */
-            per_phase_confidence?: {
-                [key: string]: number;
-            } | null;
-            /** Phases With Evidence */
-            phases_with_evidence?: number | null;
-            /** Possible Samples */
-            possible_samples?: number | null;
-            /** Presence Ratio */
-            presence_ratio?: number | null;
-            /** Run Noise Baseline Db */
-            run_noise_baseline_db?: number | null;
-            /** Sample Count */
-            sample_count?: number | null;
-            /** Snr Db */
-            snr_db?: number | null;
-            /** Spatial Concentration */
-            spatial_concentration?: number | null;
-            /** Spatial Uniformity */
-            spatial_uniformity?: number | null;
-            /** Speed Uniformity */
-            speed_uniformity?: number | null;
-            /** Total Samples */
-            total_samples?: number | null;
-            /** Vibration Strength Db */
-            vibration_strength_db?: number | null;
-        };
-        /**
-         * FindingPayload
-         * @description Canonical shared contract for one serialized finding payload.
-         *
-         *     Boundary serializers and HTTP models should import this TypedDict directly
-         *     so future field changes have one source of truth. It intentionally includes
-         *     a few presentation-oriented projections (``evidence_summary``,
-         *     ``frequency_hz_or_order``, ``amplitude_metric``, and the confidence label
-         *     fields) alongside the domain-owned finding data.
-         */
-        FindingPayload: {
-            amplitude_metric: components["schemas"]["AmplitudeMetric"];
-            /** Confidence */
-            confidence: number | null;
-            /** Confidence Label Key */
-            confidence_label_key?: string | null;
-            /** Confidence Pct */
-            confidence_pct?: string | null;
-            /** Confidence Reason */
-            confidence_reason?: string | null;
-            /** Confidence Tone */
-            confidence_tone?: string | null;
-            /** Diffuse Excitation */
-            diffuse_excitation?: boolean | null;
-            /** Dominance Ratio */
-            dominance_ratio?: number | null;
-            /** Dominant Phase */
-            dominant_phase?: string | null;
-            evidence_metrics?: components["schemas"]["FindingEvidenceMetrics"] | null;
-            /** Evidence Summary */
-            evidence_summary: string;
-            /** Finding Id */
-            finding_id: string;
-            /** Finding Key */
-            finding_key?: string | null;
-            /** Finding Kind */
-            finding_kind?: string | null;
-            /** Frequency Hz Or Order */
-            frequency_hz_or_order: number | string;
-            location_hotspot?: components["schemas"]["LocationHotspotPayload"] | null;
-            /** Matched Points */
-            matched_points?: components["schemas"]["MatchedPoint"][];
-            /** Order */
-            order?: string | null;
-            /** Peak Classification */
-            peak_classification?: string | null;
-            phase_evidence?: components["schemas"]["PhaseEvidence"] | null;
-            /** Ranking Score */
-            ranking_score?: number | null;
-            /** Severity */
-            severity?: string | null;
-            /** Signatures Observed */
-            signatures_observed?: string[];
-            /** Strongest Location */
-            strongest_location?: string | null;
-            /** Strongest Speed Band */
-            strongest_speed_band?: string | null;
-            /** Suspected Source */
-            suspected_source: string;
-            /** Weak Spatial Separation */
-            weak_spatial_separation?: boolean | null;
-        };
-        /**
-         * FreqVsSpeedByFindingSeries
-         * @description Typed HTTP contract for one finding's freq-vs-speed series.
-         */
-        FreqVsSpeedByFindingSeries: {
-            /** Label */
-            label: string;
-            /** Matched */
-            matched: [
-                number,
-                number
-            ][];
-            /** Predicted */
-            predicted: [
-                number,
-                number
-            ][];
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
-        };
-        /**
-         * HealthDataLossResponse
-         * @description Response body for aggregated client data-loss counters.
-         */
-        HealthDataLossResponse: {
-            /** Affected Clients */
-            affected_clients: number;
-            /** Buffer Overflow Drops */
-            buffer_overflow_drops: number;
-            /** Frames Dropped */
-            frames_dropped: number;
-            /** Parse Errors */
-            parse_errors: number;
-            /** Queue Overflow Drops */
-            queue_overflow_drops: number;
-            /** Server Queue Drops */
-            server_queue_drops: number;
-            /** Tracked Clients */
-            tracked_clients: number;
-        };
-        /**
-         * HealthIntakeStatsResponse
-         * @description Response body for processing intake timing and throughput counters.
-         */
-        HealthIntakeStatsResponse: {
-            /** Last Compute All Duration S */
-            last_compute_all_duration_s: number;
-            /** Last Compute Duration S */
-            last_compute_duration_s: number;
-            /** Last Ingest Duration S */
-            last_ingest_duration_s: number;
-            /** Total Compute Calls */
-            total_compute_calls: number;
-            /** Total Ingested Samples */
-            total_ingested_samples: number;
-        };
-        /**
-         * HealthPersistenceResponse
-         * @description Response body for persistence health details.
-         */
-        HealthPersistenceResponse: {
-            /** Analysis Active Run Id */
-            analysis_active_run_id?: string | null;
-            /** Analysis Elapsed S */
-            analysis_elapsed_s?: number | null;
-            /** Analysis In Progress */
-            analysis_in_progress: boolean;
-            /**
-             * Analysis Queue Depth
-             * @default 0
-             */
-            analysis_queue_depth: number;
-            /**
-             * Analysis Queue Max Depth
-             * @default 0
-             */
-            analysis_queue_max_depth: number;
-            /** Analysis Queue Oldest Age S */
-            analysis_queue_oldest_age_s?: number | null;
-            /** Analysis Started At */
-            analysis_started_at?: number | null;
-            /** Analyzing Oldest Age S */
-            analyzing_oldest_age_s?: number | null;
-            /**
-             * Analyzing Run Count
-             * @default 0
-             */
-            analyzing_run_count: number;
-            /** Last Completed Run Error */
-            last_completed_run_error?: string | null;
-            /** Last Completed Run Id */
-            last_completed_run_id?: string | null;
-            /**
-             * Samples Dropped
-             * @default 0
-             */
-            samples_dropped: number;
-            /**
-             * Samples Written
-             * @default 0
-             */
-            samples_written: number;
-            /** Write Error */
-            write_error: string | null;
-        };
-        /**
-         * HealthResponse
-         * @description Response body for the server health check endpoint.
-         */
-        HealthResponse: {
-            /** Background Task Failures */
-            background_task_failures: {
-                [key: string]: string;
-            };
-            data_loss: components["schemas"]["HealthDataLossResponse"];
-            /**
-             * Db Corruption Detected
-             * @default false
-             */
-            db_corruption_detected: boolean;
-            /**
-             * Db Last Write Duration S
-             * @default 0
-             */
-            db_last_write_duration_s: number;
-            /**
-             * Db Max Write Duration S
-             * @default 0
-             */
-            db_max_write_duration_s: number;
-            /** Degradation Reasons */
-            degradation_reasons: string[];
-            /** Frame Size Mismatch Count */
-            frame_size_mismatch_count: number;
-            intake_stats: components["schemas"]["HealthIntakeStatsResponse"];
-            /**
-             * Max Tick Duration S
-             * @default 0
-             */
-            max_tick_duration_s: number;
-            persistence: components["schemas"]["HealthPersistenceResponse"];
-            /** Processing Failure Categories */
-            processing_failure_categories: {
-                [key: string]: number;
-            };
-            /** Processing Failures */
-            processing_failures: number;
-            /** Processing Last Failure */
-            processing_last_failure: string | null;
-            /** Processing State */
-            processing_state: string;
-            /** Sample Rate Mismatch Count */
-            sample_rate_mismatch_count: number;
-            /** Startup Error */
-            startup_error: string | null;
-            /** Startup Phase */
-            startup_phase: string;
-            /** Startup State */
-            startup_state: string;
-            /**
-             * Startup Warnings
-             * @default []
-             */
-            startup_warnings: string[];
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "ok" | "warn" | "degraded";
-            /**
-             * Tick Count
-             * @default 0
-             */
-            tick_count: number;
-            /**
-             * Tick Duration S
-             * @default 0
-             */
-            tick_duration_s: number;
-        };
-        /**
-         * HistoryInsightWarningResponse
-         * @description Response body for a localized history/run trust warning.
-         */
-        HistoryInsightWarningResponse: {
-            /** Applies To */
-            applies_to: string;
-            /** Code */
-            code: string;
-            /** Detail */
-            detail?: string | null;
-            /**
-             * Severity
-             * @enum {string}
-             */
-            severity: "warn" | "error";
-            /** Title */
-            title: string;
-        };
-        /**
-         * HistoryInsightsAnalyzingResponse
-         * @description Response body for a history run whose analysis is still in progress.
-         */
-        HistoryInsightsAnalyzingResponse: {
-            /** Run Id */
-            run_id: string;
-            /**
-             * Status
-             * @constant
-             */
-            status: "analyzing";
-        };
-        /**
-         * HistoryInsightsResponse
-         * @description Response body for the localized history insights endpoint payload.
-         */
-        HistoryInsightsResponse: {
-            /** Accel Scale G Per Lsb */
-            accel_scale_g_per_lsb: number | null;
-            analysis_metadata?: components["schemas"]["PayloadObject"];
-            /** Case Id */
-            case_id?: string | null;
-            data_quality: components["schemas"]["DataQualityResponse"];
-            /** Duration S */
-            duration_s: number;
-            /** End Time Utc */
-            end_time_utc?: string | null;
-            /** Feature Interval S */
-            feature_interval_s: number | null;
-            /** Fft Window Size Samples */
-            fft_window_size_samples?: number | null;
-            /** Fft Window Type */
-            fft_window_type?: string | null;
-            /** File Name */
-            file_name: string;
-            /** Findings */
-            findings: components["schemas"]["FindingPayload"][];
-            /** Firmware Version */
-            firmware_version?: string | null;
-            /** Incomplete For Order Analysis */
-            incomplete_for_order_analysis: boolean;
-            /** Lang */
-            lang: string;
-            metadata: components["schemas"]["PayloadObject"];
-            most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
-            /** Peak Picker Method */
-            peak_picker_method?: string | null;
-            phase_info: components["schemas"]["PhaseInfoResponse"];
-            /** Phase Segments */
-            phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
-            /** Phase Speed Breakdown */
-            phase_speed_breakdown: components["schemas"]["PhaseSpeedBreakdownRow"][];
-            /** Phase Timeline */
-            phase_timeline: components["schemas"]["PhaseTimelineEntryResponse"][];
-            plots?: components["schemas"]["PlotDataResult"] | null;
-            /** Raw Sample Rate Hz */
-            raw_sample_rate_hz: number | null;
-            /** Record Length */
-            record_length: string;
-            /** Report Date */
-            report_date?: string | null;
-            /** Rows */
-            rows: number;
-            /** Run Id */
-            run_id: string;
-            /** Run Noise Baseline Db */
-            run_noise_baseline_db: number | null;
-            /** Run Suitability */
-            run_suitability: components["schemas"]["RunSuitabilityCheck"][];
-            /** Samples */
-            samples?: components["schemas"]["PayloadObject"][];
-            /** Sensor Count Used */
-            sensor_count_used: number;
-            /** Sensor Intensity By Location */
-            sensor_intensity_by_location: components["schemas"]["LocationIntensitySummaryResponse"][];
-            /** Sensor Locations */
-            sensor_locations: string[];
-            /** Sensor Locations Connected Throughout */
-            sensor_locations_connected_throughout: string[];
-            /** Sensor Model */
-            sensor_model?: string | null;
-            /** Speed Breakdown */
-            speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
-            speed_breakdown_skipped_reason: components["schemas"]["PayloadObject"] | null;
-            speed_stats: components["schemas"]["SpeedStatsResponse"];
-            /** Speed Stats By Phase */
-            speed_stats_by_phase: {
-                [key: string]: components["schemas"]["SpeedStatsResponse"];
-            };
-            /** Start Time Utc */
-            start_time_utc?: string | null;
-            /**
-             * Status
-             * @default complete
-             * @constant
-             */
-            status: "complete";
-            /** Test Plan */
-            test_plan: components["schemas"]["TestPlanStepResponse"][];
-            /** Top Causes */
-            top_causes: components["schemas"]["FindingPayload"][];
-            /** Warnings */
-            warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
-        };
-        /**
-         * HistoryListEntryResponse
-         * @description Response body for a single history-run list row.
-         */
-        HistoryListEntryResponse: {
-            /** Car Name */
-            car_name?: string | null;
-            /** Created At */
-            created_at: string;
-            /** End Time Utc */
-            end_time_utc?: string | null;
-            /** Error Message */
-            error_message?: string | null;
-            /** Run Id */
-            run_id: string;
-            /** Sample Count */
-            sample_count: number;
-            /** Start Time Utc */
-            start_time_utc: string;
-            /** Status */
-            status: string;
-        };
-        /**
-         * HistoryListResponse
-         * @description Response body listing recorded run summaries.
-         */
-        HistoryListResponse: {
-            /** Runs */
-            runs: components["schemas"]["HistoryListEntryResponse"][];
-        };
-        /**
-         * HistoryRunResponse
-         * @description Response body for a single history run with metadata and optional analysis.
-         */
-        HistoryRunResponse: {
-            analysis?: components["schemas"]["AnalysisSummaryResponse"] | null;
-            /** Error Message */
-            error_message?: string | null;
-            metadata?: components["schemas"]["ApiPayloadObject"];
-            /** Run Id */
-            run_id: string;
-            /** Sample Count */
-            sample_count: number;
-            /** Status */
-            status: string;
-        };
-        /**
-         * IdentifyRequest
-         * @description Request body for the ``/api/clients/{id}/identify`` endpoint.
-         */
-        IdentifyRequest: {
-            /**
-             * Duration Ms
-             * @default 1500
-             */
-            duration_ms: number;
-        };
-        /**
-         * IdentifyResponse
-         * @description Response body for a sensor identify (blink) command.
-         */
-        IdentifyResponse: {
-            /** Cmd Seq */
-            cmd_seq?: number | null;
-            /** Status */
-            status: string;
-        };
-        JsonSchemaLeafObject: {
-            [key: string]: components["schemas"]["JsonSchemaScalar"];
-        };
-        JsonSchemaNestedValue: components["schemas"]["JsonSchemaScalar"] | components["schemas"]["JsonSchemaLeafObject"] | (components["schemas"]["JsonSchemaScalar"] | components["schemas"]["JsonSchemaLeafObject"])[];
-        JsonSchemaScalar: boolean | number | string | null;
-        JsonSchemaValue: components["schemas"]["JsonSchemaNestedValue"] | {
-            [key: string]: components["schemas"]["JsonSchemaNestedValue"];
-        } | components["schemas"]["JsonSchemaNestedValue"][];
-        /** @enum {string} */
-        LanguageCode: "en" | "nl";
-        /**
-         * LanguageRequest
-         * @description Request body for changing the UI language.
-         */
-        LanguageRequest: {
-            language: components["schemas"]["LanguageCode"];
-        };
-        /**
-         * LanguageResponse
-         * @description Response body confirming the active UI language.
-         */
-        LanguageResponse: {
-            /** Language */
-            language: string;
-        };
-        /**
-         * LocationHotspotPayload
-         * @description HTTP contract for serialized location-hotspot evidence.
-         */
-        LocationHotspotPayload: {
-            /** Ambiguous Location */
-            ambiguous_location?: boolean | null;
-            /** Ambiguous Locations */
-            ambiguous_locations?: string[];
-            /** Dominance Ratio */
-            dominance_ratio?: number | null;
-            /** Localization Confidence */
-            localization_confidence?: number | null;
-            /** Location Count */
-            location_count?: number | null;
-            /** Second Location */
-            second_location?: string | null;
-            /** Top Location */
-            top_location?: string | null;
-            /** Weak Spatial Separation */
-            weak_spatial_separation?: boolean | null;
-        };
-        /**
-         * LocationIntensitySummaryResponse
-         * @description Response body for one sensor-location intensity summary row.
-         */
-        LocationIntensitySummaryResponse: {
-            /** Dropped Frames Delta */
-            dropped_frames_delta: number | null;
-            /** Location */
-            location: string;
-            /** Max Intensity Db */
-            max_intensity_db: number | null;
-            /** Mean Intensity Db */
-            mean_intensity_db: number | null;
-            /** P50 Intensity Db */
-            p50_intensity_db: number | null;
-            /** P95 Intensity Db */
-            p95_intensity_db: number | null;
-            /** Partial Coverage */
-            partial_coverage: boolean;
-            /** Phase Intensity */
-            phase_intensity?: {
-                [key: string]: components["schemas"]["PhaseIntensityStatsResponse"];
-            } | null;
-            /** Queue Overflow Drops Delta */
-            queue_overflow_drops_delta: number | null;
-            /** Sample Count */
-            sample_count: number;
-            /** Sample Coverage Ratio */
-            sample_coverage_ratio: number;
-            /** Sample Coverage Warning */
-            sample_coverage_warning: boolean;
-            strength_bucket_distribution: components["schemas"]["StrengthBucketDistributionResponse"];
-        };
-        /**
-         * LocationOptionResponse
-         * @description A single sensor-location option (code + human-readable label).
-         */
-        LocationOptionResponse: {
-            /** Code */
-            code: string;
-            /** Label */
-            label: string;
-        };
-        /**
-         * MatchedAmpVsSpeedSeries
-         * @description Typed HTTP contract for one finding's amp-vs-speed series.
-         */
-        MatchedAmpVsSpeedSeries: {
-            /** Label */
-            label: string;
-            /** Points */
-            points: [
-                number,
-                number
-            ][];
-        };
-        /**
-         * MatchedPoint
-         * @description HTTP contract for one serialized finding matched-point observation.
-         */
-        MatchedPoint: {
-            /** Amp */
-            amp?: number | null;
-            /** Location */
-            location?: string | null;
-            /** Matched Hz */
-            matched_hz?: number | null;
-            /** Phase */
-            phase?: string | null;
-            /** Predicted Hz */
-            predicted_hz?: number | null;
-            /** Rel Error */
-            rel_error?: number | null;
-            /** Speed Kmh */
-            speed_kmh?: number | null;
-            /** T S */
-            t_s?: number | null;
-        };
-        /**
-         * ObdDeviceResponse
-         * @description Single discovered or configured Bluetooth OBD adapter.
-         */
-        ObdDeviceResponse: {
-            /** Connected */
-            connected: boolean;
-            /** Mac Address */
-            mac_address: string;
-            /** Name */
-            name: string | null;
-            /** Paired */
-            paired: boolean;
-            /** Rfcomm Channel */
-            rfcomm_channel: number | null;
-            /** Trusted */
-            trusted: boolean;
-        };
-        /**
-         * ObdPairRequest
-         * @description Request body for pairing and selecting a Bluetooth OBD adapter.
-         */
-        ObdPairRequest: {
-            /** Mac Address */
-            mac_address: string;
-        };
-        /**
-         * ObdPairResponse
-         * @description Response body after pairing and persisting a Bluetooth OBD adapter.
-         */
-        ObdPairResponse: {
-            /** Configured Device Mac */
-            configured_device_mac: string;
-            /** Configured Device Name */
-            configured_device_name: string | null;
-            /** Connected */
-            connected: boolean;
-            /** Paired */
-            paired: boolean;
-            /** Rfcomm Channel */
-            rfcomm_channel: number | null;
-            /** Trusted */
-            trusted: boolean;
-        };
-        /**
-         * ObdScanResponse
-         * @description Response body for a Bluetooth OBD discovery scan.
-         */
-        ObdScanResponse: {
-            /** Devices */
-            devices: components["schemas"]["ObdDeviceResponse"][];
-        };
-        /**
-         * ObdStatusResponse
-         * @description Detailed Bluetooth OBD runtime status for diagnostics and field recovery.
-         */
-        ObdStatusResponse: {
-            /** Backoff Active */
-            backoff_active: boolean;
-            /** Configured Device Mac */
-            configured_device_mac: string | null;
-            /** Configured Device Name */
-            configured_device_name: string | null;
-            /** Connected */
-            connected: boolean;
-            /** Connection State */
-            connection_state: string;
-            /** Debug Hint */
-            debug_hint: string | null;
-            /** Device Mac */
-            device_mac: string | null;
-            /** Device Name */
-            device_name: string | null;
-            /** Error Count */
-            error_count: number;
-            /** Last Error */
-            last_error: string | null;
-            /** Last Raw Response */
-            last_raw_response: string | null;
-            /** Last Rpm */
-            last_rpm: number | null;
-            /** Last Sample Age S */
-            last_sample_age_s: number | null;
-            /** Last Speed Kmh */
-            last_speed_kmh: number | null;
-            /** Paired */
-            paired: boolean;
-            /** Poll Mode */
-            poll_mode: string | null;
-            /** Reconnect Delay S */
-            reconnect_delay_s: number | null;
-            /** Request Rtt Ms */
-            request_rtt_ms: number | null;
-            /** Rfcomm Channel */
-            rfcomm_channel: number | null;
-            /** Rpm Effective Hz */
-            rpm_effective_hz: number | null;
-            /** Rpm Sample Age S */
-            rpm_sample_age_s: number | null;
-            /** Rpm Target Interval Ms */
-            rpm_target_interval_ms: number | null;
-            /** Timeout Count */
-            timeout_count: number;
-            /** Trusted */
-            trusted: boolean;
-        };
-        /**
-         * OutlierSummaryResponse
-         * @description Response body for an outlier-summary bucket.
-         */
-        OutlierSummaryResponse: {
-            /** Count */
-            count: number;
-            /** Lower Bound */
-            lower_bound: number | null;
-            /** Outlier Count */
-            outlier_count: number;
-            /** Outlier Pct */
-            outlier_pct: number;
-            /** Upper Bound */
-            upper_bound: number | null;
-        };
-        PayloadObject: {
-            [key: string]: components["schemas"]["JsonSchemaValue"];
-        };
-        PayloadValue: components["schemas"]["JsonSchemaNestedValue"] | {
-            [key: string]: components["schemas"]["JsonSchemaNestedValue"];
-        } | components["schemas"]["JsonSchemaNestedValue"][];
-        /**
-         * PeakTableRow
-         * @description Typed HTTP contract for one ranked peak table row.
-         */
-        PeakTableRow: {
-            /** Burstiness */
-            burstiness: number;
-            /** Frequency Hz */
-            frequency_hz: number;
-            /** Max Intensity Db */
-            max_intensity_db: number | null;
-            /** Median Intensity Db */
-            median_intensity_db: number | null;
-            /** Median Vs Run Noise Ratio */
-            median_vs_run_noise_ratio: number;
-            /** Order Label */
-            order_label: string;
-            /** P95 Intensity Db */
-            p95_intensity_db: number | null;
-            /** P95 Vs Run Noise Ratio */
-            p95_vs_run_noise_ratio: number;
-            /** Peak Classification */
-            peak_classification: string;
-            /** Persistence Score */
-            persistence_score: number;
-            /** Presence Ratio */
-            presence_ratio: number;
-            /** Rank */
-            rank: number;
-            /** Run Noise Baseline Db */
-            run_noise_baseline_db: number | null;
-            /** Strength Db */
-            strength_db: number | null;
-            /** Strength Floor Db */
-            strength_floor_db: number | null;
-            /** Suspected Source */
-            suspected_source: string;
-            /** Typical Speed Band */
-            typical_speed_band: string;
-        };
-        /**
-         * PhaseBoundary
-         * @description Typed HTTP contract for a phase-boundary marker.
-         */
-        PhaseBoundary: {
-            /** End T S */
-            end_t_s: number | null;
-            /** Phase */
-            phase: string;
-            /** T S */
-            t_s: number | null;
-        };
-        /**
-         * PhaseEvidence
-         * @description HTTP contract for optional driving-phase evidence attached to a finding.
-         */
-        PhaseEvidence: {
-            /** Cruise Fraction */
-            cruise_fraction?: number | null;
-            /** Phases Detected */
-            phases_detected?: string[];
-        };
-        /**
-         * PhaseInfoResponse
-         * @description Response body for aggregate driving-phase coverage metrics.
-         */
-        PhaseInfoResponse: {
-            /** Cruise Pct */
-            cruise_pct: number;
-            /** Has Acceleration */
-            has_acceleration: boolean;
-            /** Has Cruise */
-            has_cruise: boolean;
-            /** Idle Pct */
-            idle_pct: number;
-            /** Phase Counts */
-            phase_counts: {
-                [key: string]: number;
-            };
-            /** Phase Pcts */
-            phase_pcts: {
-                [key: string]: number;
-            };
-            /** Segment Count */
-            segment_count: number;
-            /** Speed Unknown Pct */
-            speed_unknown_pct: number;
-            /** Total Samples */
-            total_samples: number;
-        };
-        /**
-         * PhaseIntensityStatsResponse
-         * @description Response body for per-phase intensity aggregates at one location.
-         */
-        PhaseIntensityStatsResponse: {
-            /** Count */
-            count: number;
-            /** Max Intensity Db */
-            max_intensity_db: number | null;
-            /** Mean Intensity Db */
-            mean_intensity_db: number | null;
-        };
-        /**
-         * PhaseSegmentOut
-         * @description Typed HTTP contract for a serialized driving-phase segment.
-         */
-        PhaseSegmentOut: {
-            /** End T S */
-            end_t_s: number | null;
-            /** Phase */
-            phase: string;
-            /** Start T S */
-            start_t_s: number | null;
-        };
-        /**
-         * PhaseSegmentSummaryResponse
-         * @description Typed HTTP contract for a summarized driving-phase segment.
-         */
-        PhaseSegmentSummaryResponse: {
-            /** End Idx */
-            end_idx: number;
-            /** End T S */
-            end_t_s: number | null;
-            /** Phase */
-            phase: string;
-            /** Sample Count */
-            sample_count: number;
-            /** Speed Max Kmh */
-            speed_max_kmh: number | null;
-            /** Speed Min Kmh */
-            speed_min_kmh: number | null;
-            /** Start Idx */
-            start_idx: number;
-            /** Start T S */
-            start_t_s: number | null;
-        };
-        /**
-         * PhaseSpeedBreakdownRow
-         * @description Typed HTTP contract for one phase-aware speed aggregate row.
-         */
-        PhaseSpeedBreakdownRow: {
-            /** Count */
-            count: number;
-            /** Max Speed Kmh */
-            max_speed_kmh: number | null;
-            /** Max Vibration Strength Db */
-            max_vibration_strength_db: number | null;
-            /** Mean Speed Kmh */
-            mean_speed_kmh: number | null;
-            /** Mean Vibration Strength Db */
-            mean_vibration_strength_db: number | null;
-            /** Phase */
-            phase: string;
-        };
-        /**
-         * PhaseTimelineEntryResponse
-         * @description Response body for one summarized phase-timeline interval.
-         */
-        PhaseTimelineEntryResponse: {
-            /** End T S */
-            end_t_s: number | null;
-            /** Has Fault Evidence */
-            has_fault_evidence: boolean;
-            /** Phase */
-            phase: string;
-            /** Speed Max Kmh */
-            speed_max_kmh: number | null;
-            /** Speed Min Kmh */
-            speed_min_kmh: number | null;
-            /** Start T S */
-            start_t_s: number | null;
-        };
-        /**
-         * PlotDataResult
-         * @description Typed HTTP contract for serialized plot data attached to a run summary.
-         */
-        PlotDataResult: {
-            /** Amp Vs Phase */
-            amp_vs_phase: components["schemas"]["AmpVsPhaseRow"][];
-            /** Amp Vs Speed */
-            amp_vs_speed: [
-                number,
-                number
-            ][];
-            /** Dominant Freq */
-            dominant_freq: [
-                number,
-                number
-            ][];
-            /** Fft Spectrum */
-            fft_spectrum: [
-                number,
-                number
-            ][];
-            /** Fft Spectrum Raw */
-            fft_spectrum_raw: [
-                number,
-                number
-            ][];
-            /** Freq Vs Speed By Finding */
-            freq_vs_speed_by_finding: components["schemas"]["FreqVsSpeedByFindingSeries"][];
-            /** Matched Amp Vs Speed */
-            matched_amp_vs_speed: components["schemas"]["MatchedAmpVsSpeedSeries"][];
-            peaks_spectrogram: components["schemas"]["SpectrogramResult"];
-            peaks_spectrogram_raw: components["schemas"]["SpectrogramResult"];
-            /** Peaks Table */
-            peaks_table: components["schemas"]["PeakTableRow"][];
-            /** Phase Boundaries */
-            phase_boundaries: components["schemas"]["PhaseBoundary"][];
-            /** Phase Segments */
-            phase_segments: components["schemas"]["PhaseSegmentOut"][];
-            /** Steady Speed Distribution */
-            steady_speed_distribution: {
-                [key: string]: number;
-            } | null;
-            /** Vib Magnitude */
-            vib_magnitude: [
-                number,
-                number,
-                string
-            ][];
-        };
-        /** RawSamplesPayload */
-        RawSamplesPayload: {
-            /** Client Id */
-            client_id: string;
-            /** N Samples */
-            n_samples: number;
-            /** Sample Rate Hz */
-            sample_rate_hz: number;
-            /** X */
-            x: number[];
-            /** Y */
-            y: number[];
-            /** Z */
-            z: number[];
-        };
-        /**
-         * RecordingCaptureReadinessCheckResponse
-         * @description One capture-readiness checklist item returned by the recording status route.
-         */
-        RecordingCaptureReadinessCheckResponse: {
-            /** Check Key */
-            check_key: string;
-            /** Details */
-            details?: {
-                [key: string]: number | string;
-            };
-            /** Reason Key */
-            reason_key?: string | null;
-            /**
-             * State
-             * @enum {string}
-             */
-            state: "pass" | "warn" | "fail";
-        };
-        /**
-         * RecordingCaptureReadinessResponse
-         * @description Backend-owned live capture-readiness summary for idle/pre-record states.
-         */
-        RecordingCaptureReadinessResponse: {
-            /** Checks */
-            checks: components["schemas"]["RecordingCaptureReadinessCheckResponse"][];
-            /** Is Ready */
-            is_ready: boolean;
-        };
-        /**
-         * RecordingStatusResponse
-         * @description Response body with the current recording (run-logging) status.
-         */
-        RecordingStatusResponse: {
-            /** Analysis In Progress */
-            analysis_in_progress: boolean;
-            capture_readiness?: components["schemas"]["RecordingCaptureReadinessResponse"] | null;
-            /** Enabled */
-            enabled: boolean;
-            /** Last Completed Run Error */
-            last_completed_run_error?: string | null;
-            /** Last Completed Run Id */
-            last_completed_run_id?: string | null;
-            /** Run Id */
-            run_id: string | null;
-            /**
-             * Samples Dropped
-             * @default 0
-             */
-            samples_dropped: number;
-            /**
-             * Samples Written
-             * @default 0
-             */
-            samples_written: number;
-            /** Start Time Utc */
-            start_time_utc?: string | null;
-            /** Write Error */
-            write_error: string | null;
-        };
-        /**
-         * RemoveClientResponse
-         * @description Response body confirming removal of a disconnected client.
-         */
-        RemoveClientResponse: {
-            /** Id */
-            id: string;
-            /** Status */
-            status: string;
-        };
-        /** @enum {string} */
-        ResolvedSpeedSource: "gps" | "obd2" | "manual" | "fallback_manual" | "none";
-        /**
-         * RunSuitabilityCheck
-         * @description Typed HTTP contract for one run-suitability diagnostic check.
-         */
-        RunSuitabilityCheck: {
-            /** Check */
-            check: string;
-            /** Check Key */
-            check_key: string;
-            explanation?: components["schemas"]["PayloadValue"];
-            /** State */
-            state: string;
-        };
-        /**
-         * SensorConfigResponse
-         * @description Response body with persisted config for a single sensor (name, location_code).
-         */
-        SensorConfigResponse: {
-            /** Location Code */
-            location_code: string;
-            /** Name */
-            name: string;
-        };
-        /**
-         * SensorRequest
-         * @description Request body for updating sensor name and location.
-         */
-        SensorRequest: {
-            /** Location Code */
-            location_code?: string | null;
-            /** Name */
-            name?: string | null;
-        };
-        /**
-         * SensorsResponse
-         * @description Response body mapping MAC addresses to sensor config responses.
-         */
-        SensorsResponse: {
-            /** Sensors By Mac */
-            sensors_by_mac: {
-                [key: string]: components["schemas"]["SensorConfigResponse"];
-            };
-        };
-        /**
-         * SetClientLocationResponse
-         * @description Response body confirming the new location assignment for a client.
-         */
-        SetClientLocationResponse: {
-            /** Id */
-            id: string;
-            /** Location Code */
-            location_code: string;
-            /** Mac Address */
-            mac_address: string;
-            /** Name */
-            name: string;
-        };
-        /**
-         * SetLocationRequest
-         * @description Request body for setting the sensor location code.
-         */
-        SetLocationRequest: {
-            /** Location Code */
-            location_code: string;
-        };
-        /**
-         * SpectrogramResult
-         * @description Typed HTTP contract for a serialized spectrogram grid.
-         */
-        SpectrogramResult: {
-            /** Cells */
-            cells: number[][];
-            /** Max Amp */
-            max_amp: number;
-            /** X Axis */
-            x_axis: string;
-            /** X Bin Width */
-            x_bin_width?: number | null;
-            /** X Bins */
-            x_bins: number[];
-            /** X Label Key */
-            x_label_key: string;
-            /** Y Bin Width */
-            y_bin_width?: number | null;
-            /** Y Bins */
-            y_bins: number[];
-        };
-        /**
-         * SpeedBreakdownRow
-         * @description Typed HTTP contract for one speed-band aggregate row.
-         */
-        SpeedBreakdownRow: {
-            /** Count */
-            count: number;
-            /** Max Vibration Strength Db */
-            max_vibration_strength_db: number | null;
-            /** Mean Vibration Strength Db */
-            mean_vibration_strength_db: number | null;
-            /** Speed Range */
-            speed_range: string;
-        };
-        /**
-         * SpeedSourceKind
-         * @description How vehicle speed is acquired.
-         * @enum {string}
-         */
-        SpeedSourceKind: "gps" | "obd2" | "manual";
-        /**
-         * SpeedSourceRequest
-         * @description Request body for configuring the speed source (GPS, manual, OBD2, etc.).
-         */
-        SpeedSourceRequest: {
-            /** Manual Speed Kph */
-            manual_speed_kph?: number | null;
-            /** Obd Device Mac */
-            obd_device_mac?: string | null;
-            /** Obd Device Name */
-            obd_device_name?: string | null;
-            speed_source?: components["schemas"]["SpeedSourceKind"] | null;
-            /** Stale Timeout S */
-            stale_timeout_s?: number | null;
-        };
-        /**
-         * SpeedSourceResponse
-         * @description Response body for the current speed-source configuration.
-         */
-        SpeedSourceResponse: {
-            /** Manual Speed Kph */
-            manual_speed_kph: number | null;
-            /** Obd Device Mac */
-            obd_device_mac?: string | null;
-            /** Obd Device Name */
-            obd_device_name?: string | null;
-            speed_source: components["schemas"]["SpeedSourceKind"];
-            /** Stale Timeout S */
-            stale_timeout_s: number;
-        };
-        /**
-         * SpeedSourceStatusResponse
-         * @description Response body for the live GPS/speed-source connection status.
-         */
-        SpeedSourceStatusResponse: {
-            /** Connection State */
-            connection_state: string;
-            /** Device */
-            device: string | null;
-            /** Effective Speed Kmh */
-            effective_speed_kmh: number | null;
-            /** Epv M */
-            epv_m: number | null;
-            /** Epx M */
-            epx_m: number | null;
-            /** Epy M */
-            epy_m: number | null;
-            /** Fallback Active */
-            fallback_active: boolean;
-            /**
-             * Fix Dimension
-             * @enum {string}
-             */
-            fix_dimension: "3d" | "2d" | "none";
-            /** Fix Mode */
-            fix_mode: number | null;
-            /** Gps Enabled */
-            gps_enabled: boolean;
-            /** Last Error */
-            last_error: string | null;
-            /** Last Update Age S */
-            last_update_age_s: number | null;
-            /** Raw Speed Kmh */
-            raw_speed_kmh: number | null;
-            /** Reconnect Delay S */
-            reconnect_delay_s: number | null;
-            /**
-             * Speed Confidence
-             * @enum {string}
-             */
-            speed_confidence: "low" | "medium" | "high";
-            speed_source: components["schemas"]["ResolvedSpeedSource"];
-            /** Stale Timeout S */
-            stale_timeout_s: number;
-        };
-        /**
-         * SpeedStatsResponse
-         * @description Response body for one summarized speed-profile snapshot.
-         */
-        SpeedStatsResponse: {
-            /** Max Kmh */
-            max_kmh: number | null;
-            /** Mean Kmh */
-            mean_kmh: number | null;
-            /** Min Kmh */
-            min_kmh: number | null;
-            /** Range Kmh */
-            range_kmh: number | null;
-            /** Sample Count */
-            sample_count: number;
-            /** Stddev Kmh */
-            stddev_kmh: number | null;
-            /** Steady Speed */
-            steady_speed: boolean;
-        };
-        /** @enum {string} */
-        SpeedUnitCode: "kmh" | "mps";
-        /**
-         * SpeedUnitRequest
-         * @description Request body for changing the displayed speed unit.
-         */
-        SpeedUnitRequest: {
-            speed_unit: components["schemas"]["SpeedUnitCode"];
-        };
-        /**
-         * SpeedUnitResponse
-         * @description Response body confirming the active speed unit.
-         */
-        SpeedUnitResponse: {
-            speed_unit: components["schemas"]["SpeedUnitCode"];
-        };
-        /**
-         * StrengthBucketDistributionResponse
-         * @description Response body for per-location strength-bucket coverage.
-         */
-        StrengthBucketDistributionResponse: {
-            /** Counts */
-            counts: {
-                [key: string]: number;
-            };
-            /** Percent Time L0 */
-            percent_time_l0: number;
-            /** Percent Time L1 */
-            percent_time_l1: number;
-            /** Percent Time L2 */
-            percent_time_l2: number;
-            /** Percent Time L3 */
-            percent_time_l3: number;
-            /** Percent Time L4 */
-            percent_time_l4: number;
-            /** Percent Time L5 */
-            percent_time_l5: number;
-            /** Total */
-            total: number;
-        };
-        /** StrengthPeak */
-        StrengthPeak: {
-            /** Amp */
-            amp: number;
-            /** Hz */
-            hz: number;
-            /** Strength Bucket */
-            strength_bucket: string | null;
-            /** Vibration Strength Db */
-            vibration_strength_db: number;
-        };
-        /**
-         * SummaryWarningResponse
-         * @description Response body for a persisted summary warning before localization.
-         */
-        SummaryWarningResponse: {
-            /** Applies To */
-            applies_to: string;
-            /** Code */
-            code: string;
-            detail?: components["schemas"]["PayloadValue"];
-            /**
-             * Severity
-             * @enum {string}
-             */
-            severity: "warn" | "error";
-            title: components["schemas"]["PayloadValue"];
-        };
-        /**
-         * SuspectedVibrationOriginPayload
-         * @description Typed HTTP contract for the serialized likely-origin payload.
-         */
-        SuspectedVibrationOriginPayload: {
-            /** Alternative Locations */
-            alternative_locations?: string[];
-            /** Dominance Ratio */
-            dominance_ratio?: number | null;
-            /** Dominant Phase */
-            dominant_phase?: string | null;
-            explanation?: components["schemas"]["PayloadValue"];
-            /** Location */
-            location?: string | null;
-            /** Speed Band */
-            speed_band?: string | null;
-            /** Suspected Source */
-            suspected_source?: string | null;
-            /** Weak Spatial Separation */
-            weak_spatial_separation?: boolean | null;
-        };
-        /**
-         * TestPlanStepResponse
-         * @description Response body for one recommended next-step action.
-         */
-        TestPlanStepResponse: {
-            /** Action Id */
-            action_id: string;
-            /** Confirm */
-            confirm: string | null;
-            /** Eta */
-            eta: string | null;
-            /** Falsify */
-            falsify: string | null;
-            /** What */
-            what: string;
-            /** Why */
-            why: string | null;
-        };
-        /**
-         * UpdateCancelResponse
-         * @description Response body confirming whether an OTA update job was cancelled.
-         */
-        UpdateCancelResponse: {
-            /** Cancelled */
-            cancelled: boolean;
-        };
-        /**
-         * UpdateIssueResponse
-         * @description Response body for a single issue raised during an OTA update phase.
-         */
-        UpdateIssueResponse: {
-            /** Detail */
-            detail: string;
-            /** Message */
-            message: string;
-            /** Phase */
-            phase: string;
-        };
-        /**
-         * UpdateRuntimeResponse
-         * @description Response body for updater runtime/build verification details.
-         */
-        UpdateRuntimeResponse: {
-            /** Assets Verified */
-            assets_verified: boolean;
-            /** Commit */
-            commit: string;
-            /** Has Packaged Static */
-            has_packaged_static: boolean;
-            /** Static Assets Hash */
-            static_assets_hash: string;
-            /** Static Build Commit */
-            static_build_commit: string;
-            /** Static Build Source Hash */
-            static_build_source_hash: string;
-            /** Ui Source Hash */
-            ui_source_hash: string;
-            /** Version */
-            version: string;
-        };
-        /**
-         * UpdateStartRequest
-         * @description Request body to start an OTA software update (provides Wi-Fi credentials).
-         */
-        UpdateStartRequest: {
-            /**
-             * Password
-             * @default
-             */
-            password: string;
-            /** Ssid */
-            ssid?: string | null;
-            /** @default wifi */
-            transport: components["schemas"]["UpdateTransport"];
-        };
-        /**
-         * UpdateStartResponse
-         * @description Response body confirming that an OTA update job has started.
-         */
-        UpdateStartResponse: {
-            /** Ssid */
-            ssid?: string | null;
-            /** Status */
-            status: string;
-            /** Transport */
-            transport: string;
-        };
-        /**
-         * UpdateStatusResponse
-         * @description Response body for the full OTA update job status.
-         */
-        UpdateStatusResponse: {
-            /** Exit Code */
-            exit_code?: number | null;
-            /** Finished At */
-            finished_at?: number | null;
-            /** Issues */
-            issues: components["schemas"]["UpdateIssueResponse"][];
-            /** Last Success At */
-            last_success_at?: number | null;
-            /** Log Tail */
-            log_tail: string[];
-            /** Phase */
-            phase: string;
-            /** Phase Elapsed S */
-            phase_elapsed_s?: number | null;
-            /** Phase Started At */
-            phase_started_at?: number | null;
-            runtime: components["schemas"]["UpdateRuntimeResponse"];
-            /** Ssid */
-            ssid?: string | null;
-            /** Started At */
-            started_at?: number | null;
-            /** State */
-            state: string;
-            /** Transport */
-            transport: string;
-            /** Updated At */
-            updated_at?: number | null;
-            /** Uplink Interface */
-            uplink_interface?: string | null;
-        };
-        /**
-         * UpdateTransport
-         * @description Network path used by a single OTA update run.
-         * @enum {string}
-         */
-        UpdateTransport: "wifi" | "usb_internet";
-        /**
-         * UsbInternetStatusResponse
-         * @description Response body describing the current USB internet detection state.
-         */
-        UsbInternetStatusResponse: {
-            /** Connection Name */
-            connection_name?: string | null;
-            /** Detected */
-            detected: boolean;
-            /** Diagnostic */
-            diagnostic: string;
-            /** Driver */
-            driver?: string | null;
-            /** Gateway */
-            gateway?: string | null;
-            /** Has Default Route */
-            has_default_route: boolean;
-            /** Interface Name */
-            interface_name?: string | null;
-            /** Ipv4 Addresses */
-            ipv4_addresses: string[];
-            /** Usable */
-            usable: boolean;
-        };
-        /** ValidationError */
-        ValidationError: {
-            /** Context */
-            ctx?: Record<string, never>;
-            /** Input */
-            input?: unknown;
-            /** Location */
-            loc: (string | number)[];
-            /** Message */
-            msg: string;
-            /** Error Type */
-            type: string;
-        };
-        /** VibrationStrengthMetrics */
-        VibrationStrengthMetrics: {
-            /** Noise Floor Amp G */
-            noise_floor_amp_g: number;
-            /** Peak Amp G */
-            peak_amp_g: number;
-            /** Strength Bucket */
-            strength_bucket: string | null;
-            /** Top Peaks */
-            top_peaks: components["schemas"]["StrengthPeak"][];
-            /** Vibration Strength Db */
-            vibration_strength_db: number;
-        };
+  schemas: {
+    /**
+     * ActiveCarRequest
+     * @description Request body for selecting the active car profile.
+     */
+    ActiveCarRequest: {
+      /** Car Id */
+      car_id: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /**
+     * AmpVsPhaseRow
+     * @description Typed HTTP contract for one phase-grouped vibration aggregate row.
+     */
+    AmpVsPhaseRow: {
+      /** Count */
+      count: number;
+      /** Max Vib Db */
+      max_vib_db: number | null;
+      /** Mean Speed Kmh */
+      mean_speed_kmh: number | null;
+      /** Mean Vib Db */
+      mean_vib_db: number;
+      /** Phase */
+      phase: string;
+    };
+    /**
+     * AmplitudeMetric
+     * @description HTTP contract for finding amplitude/strength metadata.
+     */
+    AmplitudeMetric: {
+      definition?: components["schemas"]["JsonSchemaValue"];
+      /** Name */
+      name?: string | null;
+      /** Units */
+      units?: string | null;
+      /** Value */
+      value?: number | null;
+    };
+    /**
+     * AnalysisSettingsPayload
+     * @description Structured partial payload for analysis-setting updates and car aspects.
+     */
+    AnalysisSettingsPayload: {
+      /** Current Gear Ratio */
+      current_gear_ratio?: number;
+      /** Driveshaft Bandwidth Pct */
+      driveshaft_bandwidth_pct?: number;
+      /** Engine Bandwidth Pct */
+      engine_bandwidth_pct?: number;
+      /** Final Drive Ratio */
+      final_drive_ratio?: number;
+      /** Final Drive Uncertainty Pct */
+      final_drive_uncertainty_pct?: number;
+      /** Gear Uncertainty Pct */
+      gear_uncertainty_pct?: number;
+      /** Max Band Half Width Pct */
+      max_band_half_width_pct?: number;
+      /** Min Abs Band Hz */
+      min_abs_band_hz?: number;
+      /** Rim In */
+      rim_in?: number;
+      /** Speed Uncertainty Pct */
+      speed_uncertainty_pct?: number;
+      /** Tire Aspect Pct */
+      tire_aspect_pct?: number;
+      /** Tire Deflection Factor */
+      tire_deflection_factor?: number;
+      /** Tire Diameter Uncertainty Pct */
+      tire_diameter_uncertainty_pct?: number;
+      /** Tire Width Mm */
+      tire_width_mm?: number;
+      /** Wheel Bandwidth Pct */
+      wheel_bandwidth_pct?: number;
+    };
+    /**
+     * AnalysisSettingsRequest
+     * @description Request body for updating vehicle analysis settings (tire geometry, gear ratios, etc.).
+     */
+    AnalysisSettingsRequest: {
+      /** Current Gear Ratio */
+      current_gear_ratio?: number | null;
+      /** Driveshaft Bandwidth Pct */
+      driveshaft_bandwidth_pct?: number | null;
+      /** Engine Bandwidth Pct */
+      engine_bandwidth_pct?: number | null;
+      /** Final Drive Ratio */
+      final_drive_ratio?: number | null;
+      /** Final Drive Uncertainty Pct */
+      final_drive_uncertainty_pct?: number | null;
+      /** Gear Uncertainty Pct */
+      gear_uncertainty_pct?: number | null;
+      /** Max Band Half Width Pct */
+      max_band_half_width_pct?: number | null;
+      /** Min Abs Band Hz */
+      min_abs_band_hz?: number | null;
+      /** Rim In */
+      rim_in?: number | null;
+      /** Speed Uncertainty Pct */
+      speed_uncertainty_pct?: number | null;
+      /** Tire Aspect Pct */
+      tire_aspect_pct?: number | null;
+      /** Tire Deflection Factor */
+      tire_deflection_factor?: number | null;
+      /** Tire Diameter Uncertainty Pct */
+      tire_diameter_uncertainty_pct?: number | null;
+      /** Tire Width Mm */
+      tire_width_mm?: number | null;
+      /** Wheel Bandwidth Pct */
+      wheel_bandwidth_pct?: number | null;
+    };
+    /**
+     * AnalysisSettingsResponse
+     * @description Response body reflecting the current validated analysis settings.
+     */
+    AnalysisSettingsResponse: {
+      /** Current Gear Ratio */
+      current_gear_ratio: number;
+      /** Driveshaft Bandwidth Pct */
+      driveshaft_bandwidth_pct: number;
+      /** Engine Bandwidth Pct */
+      engine_bandwidth_pct: number;
+      /** Final Drive Ratio */
+      final_drive_ratio: number;
+      /** Final Drive Uncertainty Pct */
+      final_drive_uncertainty_pct: number;
+      /** Gear Uncertainty Pct */
+      gear_uncertainty_pct: number;
+      /** Max Band Half Width Pct */
+      max_band_half_width_pct: number;
+      /** Min Abs Band Hz */
+      min_abs_band_hz: number;
+      /** Rim In */
+      rim_in: number;
+      /** Speed Uncertainty Pct */
+      speed_uncertainty_pct: number;
+      /** Tire Aspect Pct */
+      tire_aspect_pct: number;
+      /** Tire Deflection Factor */
+      tire_deflection_factor: number;
+      /** Tire Diameter Uncertainty Pct */
+      tire_diameter_uncertainty_pct: number;
+      /** Tire Width Mm */
+      tire_width_mm: number;
+      /** Wheel Bandwidth Pct */
+      wheel_bandwidth_pct: number;
+    };
+    /**
+     * AnalysisSummaryResponse
+     * @description Canonical shared owner for the persisted analysis summary wrapper.
+     */
+    AnalysisSummaryResponse: {
+      /** Accel Scale G Per Lsb */
+      accel_scale_g_per_lsb: number | null;
+      analysis_metadata?: components["schemas"]["PayloadObject"];
+      /** Case Id */
+      case_id?: string | null;
+      data_quality: components["schemas"]["DataQualityResponse"];
+      /** Duration S */
+      duration_s: number;
+      /** End Time Utc */
+      end_time_utc?: string | null;
+      /** Feature Interval S */
+      feature_interval_s: number | null;
+      /** Fft Window Size Samples */
+      fft_window_size_samples?: number | null;
+      /** Fft Window Type */
+      fft_window_type?: string | null;
+      /** File Name */
+      file_name: string;
+      /** Findings */
+      findings: components["schemas"]["FindingPayload"][];
+      /** Firmware Version */
+      firmware_version?: string | null;
+      /** Incomplete For Order Analysis */
+      incomplete_for_order_analysis: boolean;
+      /** Lang */
+      lang: string;
+      metadata: components["schemas"]["PayloadObject"];
+      most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
+      /** Peak Picker Method */
+      peak_picker_method?: string | null;
+      phase_info: components["schemas"]["PhaseInfoResponse"];
+      /** Phase Segments */
+      phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
+      /** Phase Speed Breakdown */
+      phase_speed_breakdown: components["schemas"]["PhaseSpeedBreakdownRow"][];
+      /** Phase Timeline */
+      phase_timeline: components["schemas"]["PhaseTimelineEntryResponse"][];
+      plots?: components["schemas"]["PlotDataResult"] | null;
+      /** Raw Sample Rate Hz */
+      raw_sample_rate_hz: number | null;
+      /** Record Length */
+      record_length: string;
+      /** Report Date */
+      report_date?: string | null;
+      /** Rows */
+      rows: number;
+      /** Run Id */
+      run_id: string;
+      /** Run Noise Baseline Db */
+      run_noise_baseline_db: number | null;
+      /** Run Suitability */
+      run_suitability: components["schemas"]["RunSuitabilityCheck"][];
+      /** Samples */
+      samples?: components["schemas"]["PayloadObject"][];
+      /** Sensor Count Used */
+      sensor_count_used: number;
+      /** Sensor Intensity By Location */
+      sensor_intensity_by_location: components["schemas"]["LocationIntensitySummaryResponse"][];
+      /** Sensor Locations */
+      sensor_locations: string[];
+      /** Sensor Locations Connected Throughout */
+      sensor_locations_connected_throughout: string[];
+      /** Sensor Model */
+      sensor_model?: string | null;
+      /** Speed Breakdown */
+      speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
+      speed_breakdown_skipped_reason: components["schemas"]["PayloadObject"] | null;
+      speed_stats: components["schemas"]["SpeedStatsResponse"];
+      /** Speed Stats By Phase */
+      speed_stats_by_phase: {
+        [key: string]: components["schemas"]["SpeedStatsResponse"];
+      };
+      /** Start Time Utc */
+      start_time_utc?: string | null;
+      /** Test Plan */
+      test_plan: components["schemas"]["TestPlanStepResponse"][];
+      /** Top Causes */
+      top_causes: components["schemas"]["FindingPayload"][];
+      /** Warnings */
+      warnings: components["schemas"]["SummaryWarningResponse"][];
+    };
+    ApiPayloadObject: {
+      [key: string]: components["schemas"]["JsonSchemaValue"];
+    };
+    /** AxisMetrics */
+    AxisMetrics: {
+      /** P2P */
+      p2p: number;
+      /** Peaks */
+      peaks: components["schemas"]["AxisPeak"][];
+      /** Rms */
+      rms: number;
+    };
+    /** AxisPeak */
+    AxisPeak: {
+      /** Amp */
+      amp?: number;
+      /** Hz */
+      hz?: number;
+      /** Snr Ratio */
+      snr_ratio?: number;
+    };
+    /**
+     * CarLibraryBrandsResponse
+     * @description Response body listing available car manufacturer brands.
+     */
+    CarLibraryBrandsResponse: {
+      /** Brands */
+      brands: string[];
+    };
+    /**
+     * CarLibraryGearboxEntry
+     * @description A gearbox option from the car library (gear ratios).
+     */
+    CarLibraryGearboxEntry: {
+      /** Final Drive Ratio */
+      final_drive_ratio: number;
+      /** Gear Ratios */
+      gear_ratios?: number[] | null;
+      /** Name */
+      name: string;
+      /** Top Gear Ratio */
+      top_gear_ratio: number;
+    };
+    /**
+     * CarLibraryModelEntry
+     * @description A full car library entry with brand, model, tire options, and variants.
+     */
+    CarLibraryModelEntry: {
+      /** Brand */
+      brand: string;
+      /** Gearboxes */
+      gearboxes: components["schemas"]["CarLibraryGearboxEntry"][];
+      /** Model */
+      model: string;
+      /** Rim In */
+      rim_in: number;
+      /** Tire Aspect Pct */
+      tire_aspect_pct: number;
+      /** Tire Options */
+      tire_options: components["schemas"]["CarLibraryTireOptionEntry"][];
+      /** Tire Width Mm */
+      tire_width_mm: number;
+      /** Type */
+      type: string;
+      /** Variants */
+      variants?: components["schemas"]["CarLibraryVariantEntry"][];
+    };
+    /**
+     * CarLibraryModelsResponse
+     * @description Response body listing car library model entries.
+     */
+    CarLibraryModelsResponse: {
+      /** Models */
+      models: components["schemas"]["CarLibraryModelEntry"][];
+    };
+    /**
+     * CarLibraryTireOptionEntry
+     * @description A tire size option from the car library.
+     */
+    CarLibraryTireOptionEntry: {
+      /** Name */
+      name: string;
+      /** Rim In */
+      rim_in: number;
+      /** Tire Aspect Pct */
+      tire_aspect_pct: number;
+      /** Tire Width Mm */
+      tire_width_mm: number;
+    };
+    /**
+     * CarLibraryTypesResponse
+     * @description Response body listing available car body types.
+     */
+    CarLibraryTypesResponse: {
+      /** Types */
+      types: string[];
+    };
+    /**
+     * CarLibraryVariantEntry
+     * @description A specific variant/trim of a car library model entry.
+     */
+    CarLibraryVariantEntry: {
+      /**
+       * Drivetrain
+       * @enum {string}
+       */
+      drivetrain: "FWD" | "RWD" | "AWD";
+      /** Engine */
+      engine?: string | null;
+      /** Gearboxes */
+      gearboxes?: components["schemas"]["CarLibraryGearboxEntry"][] | null;
+      /** Name */
+      name: string;
+      /** Rim In */
+      rim_in?: number | null;
+      /** Tire Aspect Pct */
+      tire_aspect_pct?: number | null;
+      /** Tire Options */
+      tire_options?: components["schemas"]["CarLibraryTireOptionEntry"][] | null;
+      /** Tire Width Mm */
+      tire_width_mm?: number | null;
+    };
+    /**
+     * CarResponse
+     * @description Response body representing a single car profile.
+     */
+    CarResponse: {
+      aspects: components["schemas"]["AnalysisSettingsPayload"];
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Type */
+      type: string;
+      /** Variant */
+      variant?: string | null;
+    };
+    /**
+     * CarUpsertRequest
+     * @description Request body for creating or updating a car profile.
+     */
+    CarUpsertRequest: {
+      aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
+      /** Name */
+      name?: string | null;
+      /** Type */
+      type?: string | null;
+      /** Variant */
+      variant?: string | null;
+    };
+    /**
+     * CarsResponse
+     * @description Response body for the list of all car profiles with the active car ID.
+     */
+    CarsResponse: {
+      /** Active Car Id */
+      active_car_id: string | null;
+      /** Cars */
+      cars: components["schemas"]["CarResponse"][];
+    };
+    /** ClientApiRow */
+    ClientApiRow: {
+      /** Connected */
+      connected: boolean;
+      /** Dropped Frames */
+      dropped_frames: number;
+      /** Firmware Version */
+      firmware_version: string;
+      /** Frame Samples */
+      frame_samples?: number;
+      /** Frames Total */
+      frames_total: number;
+      /** Id */
+      id: string;
+      /** Last Reset Time */
+      last_reset_time?: number | null;
+      /** Last Seen Age Ms */
+      last_seen_age_ms: number | null;
+      latest_metrics?: components["schemas"]["ClientMetrics"];
+      /** Location Code */
+      location_code: string;
+      /** Mac Address */
+      mac_address: string;
+      /** Name */
+      name: string;
+      /** Reset Count */
+      reset_count?: number;
+      /** Sample Rate Hz */
+      sample_rate_hz: number;
+    };
+    /**
+     * ClientLocationsResponse
+     * @description Response body with available sensor-location options.
+     */
+    ClientLocationsResponse: {
+      /** Locations */
+      locations: components["schemas"]["LocationOptionResponse"][];
+    };
+    /** ClientMetrics */
+    ClientMetrics: {
+      combined?: components["schemas"]["CombinedMetrics"];
+      x?: components["schemas"]["AxisMetrics"];
+      y?: components["schemas"]["AxisMetrics"];
+      z?: components["schemas"]["AxisMetrics"];
+    };
+    /**
+     * ClientsResponse
+     * @description Response body listing known sensor clients and their live connection state.
+     */
+    ClientsResponse: {
+      /** Clients */
+      clients: components["schemas"]["ClientApiRow"][];
+    };
+    /** CombinedMetrics */
+    CombinedMetrics: {
+      /** Peaks */
+      peaks?: components["schemas"]["StrengthPeak"][];
+      strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
+      /** Vib Mag P2P */
+      vib_mag_p2p?: number;
+      /** Vib Mag Rms */
+      vib_mag_rms?: number;
+    };
+    /**
+     * DataQualityAccelSanityResponse
+     * @description Response body for acceleration sanity diagnostics.
+     */
+    DataQualityAccelSanityResponse: {
+      /** Saturation Count */
+      saturation_count: number | null;
+      /** Sensor Limit */
+      sensor_limit: number | null;
+      /** X Mean */
+      x_mean: number | null;
+      /** X Variance */
+      x_variance: number | null;
+      /** Y Mean */
+      y_mean: number | null;
+      /** Y Variance */
+      y_variance: number | null;
+      /** Z Mean */
+      z_mean: number | null;
+      /** Z Variance */
+      z_variance: number | null;
+    };
+    /**
+     * DataQualityOutliersResponse
+     * @description Response body for grouped outlier summaries.
+     */
+    DataQualityOutliersResponse: {
+      accel_magnitude: components["schemas"]["OutlierSummaryResponse"];
+      amplitude_metric: components["schemas"]["OutlierSummaryResponse"];
+    };
+    /**
+     * DataQualityRequiredMissingPctResponse
+     * @description Response body for required-field missing percentages.
+     */
+    DataQualityRequiredMissingPctResponse: {
+      /** Accel X */
+      accel_x: number;
+      /** Accel Y */
+      accel_y: number;
+      /** Accel Z */
+      accel_z: number;
+      /** Speed Kmh */
+      speed_kmh: number;
+      /** T S */
+      t_s: number;
+    };
+    /**
+     * DataQualityResponse
+     * @description Response body for run-level data-quality diagnostics.
+     */
+    DataQualityResponse: {
+      accel_sanity: components["schemas"]["DataQualityAccelSanityResponse"];
+      outliers: components["schemas"]["DataQualityOutliersResponse"];
+      required_missing_pct: components["schemas"]["DataQualityRequiredMissingPctResponse"];
+      speed_coverage: components["schemas"]["DataQualitySpeedCoverageResponse"];
+    };
+    /**
+     * DataQualitySpeedCoverageResponse
+     * @description Response body for summarized speed-coverage statistics.
+     */
+    DataQualitySpeedCoverageResponse: {
+      /** Count Non Null */
+      count_non_null: number;
+      /** Max Kmh */
+      max_kmh: number | null;
+      /** Mean Kmh */
+      mean_kmh: number | null;
+      /** Min Kmh */
+      min_kmh: number | null;
+      /** Non Null Pct */
+      non_null_pct: number;
+      /** Stddev Kmh */
+      stddev_kmh: number | null;
+    };
+    /** DebugSpectrumPayload */
+    DebugSpectrumPayload: {
+      /** Client Id */
+      client_id: string;
+      /** Detrended Std G */
+      detrended_std_g: number[];
+      /** Fft N */
+      fft_n: number;
+      /** Fft Scale */
+      fft_scale: number;
+      /** Freq Bins */
+      freq_bins: number;
+      /** Freq Resolution Hz */
+      freq_resolution_hz: number;
+      raw_stats: components["schemas"]["DebugSpectrumStatsPayload"];
+      /** Sample Rate Hz */
+      sample_rate_hz: number;
+      /** Spectrum Max Hz */
+      spectrum_max_hz: number;
+      /** Spectrum Min Hz */
+      spectrum_min_hz: number;
+      /** Strength Peaks */
+      strength_peaks: components["schemas"]["StrengthPeak"][];
+      /** Top Bins By Amplitude */
+      top_bins_by_amplitude: components["schemas"]["DebugSpectrumTopBinPayload"][];
+      /** Vibration Strength Db */
+      vibration_strength_db: number;
+      /** Window */
+      window: string;
+    };
+    /** DebugSpectrumStatsPayload */
+    DebugSpectrumStatsPayload: {
+      /** Max G */
+      max_g: number[];
+      /** Mean G */
+      mean_g: number[];
+      /** Min G */
+      min_g: number[];
+      /** Std G */
+      std_g: number[];
+    };
+    /** DebugSpectrumTopBinPayload */
+    DebugSpectrumTopBinPayload: {
+      /** Bin */
+      bin: number;
+      /** Combined Amp G */
+      combined_amp_g: number;
+      /** Freq Hz */
+      freq_hz: number;
+      /** X Amp G */
+      x_amp_g: number;
+      /** Y Amp G */
+      y_amp_g: number;
+      /** Z Amp G */
+      z_amp_g: number;
+    };
+    /**
+     * DeleteHistoryRunResponse
+     * @description Response body confirming deletion of a history run.
+     */
+    DeleteHistoryRunResponse: {
+      /** Run Id */
+      run_id: string;
+      /** Status */
+      status: string;
+    };
+    /**
+     * EspFlashCancelResponse
+     * @description Response body confirming whether an ESP32 flash job was cancelled.
+     */
+    EspFlashCancelResponse: {
+      /** Cancelled */
+      cancelled: boolean;
+    };
+    /**
+     * EspFlashHistoryEntryResponse
+     * @description Response body for a single historical ESP32 flash job.
+     */
+    EspFlashHistoryEntryResponse: {
+      /** Auto Detect */
+      auto_detect: boolean;
+      /** Error */
+      error?: string | null;
+      /** Exit Code */
+      exit_code?: number | null;
+      /** Finished At */
+      finished_at?: number | null;
+      /** Job Id */
+      job_id: number;
+      /** Selected Port */
+      selected_port?: string | null;
+      /** Started At */
+      started_at: number;
+      /** State */
+      state: string;
+    };
+    /**
+     * EspFlashHistoryResponse
+     * @description Response body listing all past ESP32 flash job attempts.
+     */
+    EspFlashHistoryResponse: {
+      /** Attempts */
+      attempts: components["schemas"]["EspFlashHistoryEntryResponse"][];
+    };
+    /**
+     * EspFlashLogsResponse
+     * @description Response body with a page of ESP32 flash log lines.
+     */
+    EspFlashLogsResponse: {
+      /** From Index */
+      from_index: number;
+      /** Lines */
+      lines: string[];
+      /** Next Index */
+      next_index: number;
+    };
+    /**
+     * EspFlashPortsResponse
+     * @description Response body listing detected serial ports for ESP32 flashing.
+     */
+    EspFlashPortsResponse: {
+      /** Ports */
+      ports: components["schemas"]["EspSerialPortResponse"][];
+    };
+    /**
+     * EspFlashStartRequest
+     * @description Request body to start an ESP32 firmware flash job.
+     */
+    EspFlashStartRequest: {
+      /**
+       * Auto Detect
+       * @default true
+       */
+      auto_detect?: boolean;
+      /** Port */
+      port?: string | null;
+    };
+    /**
+     * EspFlashStartResponse
+     * @description Response body confirming that an ESP32 flash job has been queued.
+     */
+    EspFlashStartResponse: {
+      /** Job Id */
+      job_id: number;
+      /** Status */
+      status: string;
+    };
+    /**
+     * EspFlashStatusResponse
+     * @description Response body for the current ESP32 flash job status.
+     */
+    EspFlashStatusResponse: {
+      /** Auto Detect */
+      auto_detect: boolean;
+      /** Error */
+      error?: string | null;
+      /** Exit Code */
+      exit_code?: number | null;
+      /** Finished At */
+      finished_at?: number | null;
+      /** Job Id */
+      job_id?: number | null;
+      /** Last Success At */
+      last_success_at?: number | null;
+      /** Log Count */
+      log_count: number;
+      /** Phase */
+      phase: string;
+      /** Selected Port */
+      selected_port?: string | null;
+      /** Started At */
+      started_at?: number | null;
+      /** State */
+      state: string;
+    };
+    /**
+     * EspSerialPortResponse
+     * @description Response body describing a single detected serial port.
+     */
+    EspSerialPortResponse: {
+      /** Description */
+      description: string;
+      /** Pid */
+      pid?: number | null;
+      /** Port */
+      port: string;
+      /** Serial Number */
+      serial_number?: string | null;
+      /** Vid */
+      vid?: number | null;
+    };
+    /**
+     * FindingEvidenceMetrics
+     * @description HTTP contract for serialized evidence metrics attached to a finding.
+     */
+    FindingEvidenceMetrics: {
+      /** Burstiness */
+      burstiness?: number | null;
+      /** Focused Speed Band */
+      focused_speed_band?: string | null;
+      /** Frequency Correlation */
+      frequency_correlation?: number | null;
+      /** Global Match Rate */
+      global_match_rate?: number | null;
+      /** Match Rate */
+      match_rate?: number | null;
+      /** Matched Samples */
+      matched_samples?: number | null;
+      /** Max Intensity Db */
+      max_intensity_db?: number | null;
+      /** Mean Noise Floor Db */
+      mean_noise_floor_db?: number | null;
+      /** Mean Relative Error */
+      mean_relative_error?: number | null;
+      /** Median Intensity Db */
+      median_intensity_db?: number | null;
+      /** Median Relative To Run Noise */
+      median_relative_to_run_noise?: number | null;
+      /** P95 Intensity Db */
+      p95_intensity_db?: number | null;
+      /** P95 Relative To Run Noise */
+      p95_relative_to_run_noise?: number | null;
+      /** Per Phase Confidence */
+      per_phase_confidence?: {
+        [key: string]: number;
+      } | null;
+      /** Phases With Evidence */
+      phases_with_evidence?: number | null;
+      /** Possible Samples */
+      possible_samples?: number | null;
+      /** Presence Ratio */
+      presence_ratio?: number | null;
+      /** Run Noise Baseline Db */
+      run_noise_baseline_db?: number | null;
+      /** Sample Count */
+      sample_count?: number | null;
+      /** Snr Db */
+      snr_db?: number | null;
+      /** Spatial Concentration */
+      spatial_concentration?: number | null;
+      /** Spatial Uniformity */
+      spatial_uniformity?: number | null;
+      /** Speed Uniformity */
+      speed_uniformity?: number | null;
+      /** Total Samples */
+      total_samples?: number | null;
+      /** Vibration Strength Db */
+      vibration_strength_db?: number | null;
+    };
+    /**
+     * FindingPayload
+     * @description Canonical shared contract for one serialized finding payload.
+     *
+     * Boundary serializers and HTTP models should import this TypedDict directly
+     * so future field changes have one source of truth. It intentionally includes
+     * a few presentation-oriented projections (``evidence_summary``,
+     * ``frequency_hz_or_order``, ``amplitude_metric``, and the confidence label
+     * fields) alongside the domain-owned finding data.
+     */
+    FindingPayload: {
+      amplitude_metric: components["schemas"]["AmplitudeMetric"];
+      /** Confidence */
+      confidence: number | null;
+      /** Confidence Label Key */
+      confidence_label_key?: string | null;
+      /** Confidence Pct */
+      confidence_pct?: string | null;
+      /** Confidence Reason */
+      confidence_reason?: string | null;
+      /** Confidence Tone */
+      confidence_tone?: string | null;
+      /** Diffuse Excitation */
+      diffuse_excitation?: boolean | null;
+      /** Dominance Ratio */
+      dominance_ratio?: number | null;
+      /** Dominant Phase */
+      dominant_phase?: string | null;
+      evidence_metrics?: components["schemas"]["FindingEvidenceMetrics"] | null;
+      /** Evidence Summary */
+      evidence_summary: string;
+      /** Finding Id */
+      finding_id: string;
+      /** Finding Key */
+      finding_key?: string | null;
+      /** Finding Kind */
+      finding_kind?: string | null;
+      /** Frequency Hz Or Order */
+      frequency_hz_or_order: number | string;
+      location_hotspot?: components["schemas"]["LocationHotspotPayload"] | null;
+      /** Matched Points */
+      matched_points?: components["schemas"]["MatchedPoint"][];
+      /** Order */
+      order?: string | null;
+      /** Peak Classification */
+      peak_classification?: string | null;
+      phase_evidence?: components["schemas"]["PhaseEvidence"] | null;
+      /** Ranking Score */
+      ranking_score?: number | null;
+      /** Severity */
+      severity?: string | null;
+      /** Signatures Observed */
+      signatures_observed?: string[];
+      /** Strongest Location */
+      strongest_location?: string | null;
+      /** Strongest Speed Band */
+      strongest_speed_band?: string | null;
+      /** Suspected Source */
+      suspected_source: string;
+      /** Weak Spatial Separation */
+      weak_spatial_separation?: boolean | null;
+    };
+    /**
+     * FreqVsSpeedByFindingSeries
+     * @description Typed HTTP contract for one finding's freq-vs-speed series.
+     */
+    FreqVsSpeedByFindingSeries: {
+      /** Label */
+      label: string;
+      /** Matched */
+      matched: [number, number][];
+      /** Predicted */
+      predicted: [number, number][];
+    };
+    /** HTTPValidationError */
+    HTTPValidationError: {
+      /** Detail */
+      detail?: components["schemas"]["ValidationError"][];
+    };
+    /**
+     * HealthDataLossResponse
+     * @description Response body for aggregated client data-loss counters.
+     */
+    HealthDataLossResponse: {
+      /** Affected Clients */
+      affected_clients: number;
+      /** Buffer Overflow Drops */
+      buffer_overflow_drops: number;
+      /** Frames Dropped */
+      frames_dropped: number;
+      /** Parse Errors */
+      parse_errors: number;
+      /** Queue Overflow Drops */
+      queue_overflow_drops: number;
+      /** Server Queue Drops */
+      server_queue_drops: number;
+      /** Tracked Clients */
+      tracked_clients: number;
+    };
+    /**
+     * HealthIntakeStatsResponse
+     * @description Response body for processing intake timing and throughput counters.
+     */
+    HealthIntakeStatsResponse: {
+      /** Last Compute All Duration S */
+      last_compute_all_duration_s: number;
+      /** Last Compute Duration S */
+      last_compute_duration_s: number;
+      /** Last Ingest Duration S */
+      last_ingest_duration_s: number;
+      /** Total Compute Calls */
+      total_compute_calls: number;
+      /** Total Ingested Samples */
+      total_ingested_samples: number;
+    };
+    /**
+     * HealthPersistenceResponse
+     * @description Response body for persistence health details.
+     */
+    HealthPersistenceResponse: {
+      /** Analysis Active Run Id */
+      analysis_active_run_id?: string | null;
+      /** Analysis Elapsed S */
+      analysis_elapsed_s?: number | null;
+      /** Analysis In Progress */
+      analysis_in_progress: boolean;
+      /**
+       * Analysis Queue Depth
+       * @default 0
+       */
+      analysis_queue_depth?: number;
+      /**
+       * Analysis Queue Max Depth
+       * @default 0
+       */
+      analysis_queue_max_depth?: number;
+      /** Analysis Queue Oldest Age S */
+      analysis_queue_oldest_age_s?: number | null;
+      /** Analysis Started At */
+      analysis_started_at?: number | null;
+      /** Analyzing Oldest Age S */
+      analyzing_oldest_age_s?: number | null;
+      /**
+       * Analyzing Run Count
+       * @default 0
+       */
+      analyzing_run_count?: number;
+      /** Last Completed Run Error */
+      last_completed_run_error?: string | null;
+      /** Last Completed Run Id */
+      last_completed_run_id?: string | null;
+      /**
+       * Samples Dropped
+       * @default 0
+       */
+      samples_dropped?: number;
+      /**
+       * Samples Written
+       * @default 0
+       */
+      samples_written?: number;
+      /** Write Error */
+      write_error: string | null;
+    };
+    /**
+     * HealthResponse
+     * @description Response body for the server health check endpoint.
+     */
+    HealthResponse: {
+      /** Background Task Failures */
+      background_task_failures: {
+        [key: string]: string;
+      };
+      data_loss: components["schemas"]["HealthDataLossResponse"];
+      /**
+       * Db Corruption Detected
+       * @default false
+       */
+      db_corruption_detected?: boolean;
+      /**
+       * Db Last Write Duration S
+       * @default 0
+       */
+      db_last_write_duration_s?: number;
+      /**
+       * Db Max Write Duration S
+       * @default 0
+       */
+      db_max_write_duration_s?: number;
+      /** Degradation Reasons */
+      degradation_reasons: string[];
+      /** Frame Size Mismatch Count */
+      frame_size_mismatch_count: number;
+      intake_stats: components["schemas"]["HealthIntakeStatsResponse"];
+      /**
+       * Max Tick Duration S
+       * @default 0
+       */
+      max_tick_duration_s?: number;
+      persistence: components["schemas"]["HealthPersistenceResponse"];
+      /** Processing Failure Categories */
+      processing_failure_categories: {
+        [key: string]: number;
+      };
+      /** Processing Failures */
+      processing_failures: number;
+      /** Processing Last Failure */
+      processing_last_failure: string | null;
+      /** Processing State */
+      processing_state: string;
+      /** Sample Rate Mismatch Count */
+      sample_rate_mismatch_count: number;
+      /** Startup Error */
+      startup_error: string | null;
+      /** Startup Phase */
+      startup_phase: string;
+      /** Startup State */
+      startup_state: string;
+      /**
+       * Startup Warnings
+       * @default []
+       */
+      startup_warnings?: string[];
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "ok" | "warn" | "degraded";
+      /**
+       * Tick Count
+       * @default 0
+       */
+      tick_count?: number;
+      /**
+       * Tick Duration S
+       * @default 0
+       */
+      tick_duration_s?: number;
+    };
+    /**
+     * HistoryInsightWarningResponse
+     * @description Response body for a localized history/run trust warning.
+     */
+    HistoryInsightWarningResponse: {
+      /** Applies To */
+      applies_to: string;
+      /** Code */
+      code: string;
+      /** Detail */
+      detail?: string | null;
+      /**
+       * Severity
+       * @enum {string}
+       */
+      severity: "warn" | "error";
+      /** Title */
+      title: string;
+    };
+    /**
+     * HistoryInsightsAnalyzingResponse
+     * @description Response body for a history run whose analysis is still in progress.
+     */
+    HistoryInsightsAnalyzingResponse: {
+      /** Run Id */
+      run_id: string;
+      /**
+       * Status
+       * @constant
+       */
+      status: "analyzing";
+    };
+    /**
+     * HistoryInsightsResponse
+     * @description Response body for the localized history insights endpoint payload.
+     */
+    HistoryInsightsResponse: {
+      /** Accel Scale G Per Lsb */
+      accel_scale_g_per_lsb: number | null;
+      analysis_metadata?: components["schemas"]["PayloadObject"];
+      /** Case Id */
+      case_id?: string | null;
+      data_quality: components["schemas"]["DataQualityResponse"];
+      /** Duration S */
+      duration_s: number;
+      /** End Time Utc */
+      end_time_utc?: string | null;
+      /** Feature Interval S */
+      feature_interval_s: number | null;
+      /** Fft Window Size Samples */
+      fft_window_size_samples?: number | null;
+      /** Fft Window Type */
+      fft_window_type?: string | null;
+      /** File Name */
+      file_name: string;
+      /** Findings */
+      findings: components["schemas"]["FindingPayload"][];
+      /** Firmware Version */
+      firmware_version?: string | null;
+      /** Incomplete For Order Analysis */
+      incomplete_for_order_analysis: boolean;
+      /** Lang */
+      lang: string;
+      metadata: components["schemas"]["PayloadObject"];
+      most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
+      /** Peak Picker Method */
+      peak_picker_method?: string | null;
+      phase_info: components["schemas"]["PhaseInfoResponse"];
+      /** Phase Segments */
+      phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
+      /** Phase Speed Breakdown */
+      phase_speed_breakdown: components["schemas"]["PhaseSpeedBreakdownRow"][];
+      /** Phase Timeline */
+      phase_timeline: components["schemas"]["PhaseTimelineEntryResponse"][];
+      plots?: components["schemas"]["PlotDataResult"] | null;
+      /** Raw Sample Rate Hz */
+      raw_sample_rate_hz: number | null;
+      /** Record Length */
+      record_length: string;
+      /** Report Date */
+      report_date?: string | null;
+      /** Rows */
+      rows: number;
+      /** Run Id */
+      run_id: string;
+      /** Run Noise Baseline Db */
+      run_noise_baseline_db: number | null;
+      /** Run Suitability */
+      run_suitability: components["schemas"]["RunSuitabilityCheck"][];
+      /** Samples */
+      samples?: components["schemas"]["PayloadObject"][];
+      /** Sensor Count Used */
+      sensor_count_used: number;
+      /** Sensor Intensity By Location */
+      sensor_intensity_by_location: components["schemas"]["LocationIntensitySummaryResponse"][];
+      /** Sensor Locations */
+      sensor_locations: string[];
+      /** Sensor Locations Connected Throughout */
+      sensor_locations_connected_throughout: string[];
+      /** Sensor Model */
+      sensor_model?: string | null;
+      /** Speed Breakdown */
+      speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
+      speed_breakdown_skipped_reason: components["schemas"]["PayloadObject"] | null;
+      speed_stats: components["schemas"]["SpeedStatsResponse"];
+      /** Speed Stats By Phase */
+      speed_stats_by_phase: {
+        [key: string]: components["schemas"]["SpeedStatsResponse"];
+      };
+      /** Start Time Utc */
+      start_time_utc?: string | null;
+      /**
+       * Status
+       * @default complete
+       * @constant
+       */
+      status?: "complete";
+      /** Test Plan */
+      test_plan: components["schemas"]["TestPlanStepResponse"][];
+      /** Top Causes */
+      top_causes: components["schemas"]["FindingPayload"][];
+      /** Warnings */
+      warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
+    };
+    /**
+     * HistoryListEntryResponse
+     * @description Response body for a single history-run list row.
+     */
+    HistoryListEntryResponse: {
+      /** Car Name */
+      car_name?: string | null;
+      /** Created At */
+      created_at: string;
+      /** End Time Utc */
+      end_time_utc?: string | null;
+      /** Error Message */
+      error_message?: string | null;
+      /** Run Id */
+      run_id: string;
+      /** Sample Count */
+      sample_count: number;
+      /** Start Time Utc */
+      start_time_utc: string;
+      /** Status */
+      status: string;
+    };
+    /**
+     * HistoryListResponse
+     * @description Response body listing recorded run summaries.
+     */
+    HistoryListResponse: {
+      /** Runs */
+      runs: components["schemas"]["HistoryListEntryResponse"][];
+    };
+    /**
+     * HistoryRunResponse
+     * @description Response body for a single history run with metadata and optional analysis.
+     */
+    HistoryRunResponse: {
+      analysis?: components["schemas"]["AnalysisSummaryResponse"] | null;
+      /** Error Message */
+      error_message?: string | null;
+      metadata?: components["schemas"]["ApiPayloadObject"];
+      /** Run Id */
+      run_id: string;
+      /** Sample Count */
+      sample_count: number;
+      /** Status */
+      status: string;
+    };
+    /**
+     * IdentifyRequest
+     * @description Request body for the ``/api/clients/{id}/identify`` endpoint.
+     */
+    IdentifyRequest: {
+      /**
+       * Duration Ms
+       * @default 1500
+       */
+      duration_ms?: number;
+    };
+    /**
+     * IdentifyResponse
+     * @description Response body for a sensor identify (blink) command.
+     */
+    IdentifyResponse: {
+      /** Cmd Seq */
+      cmd_seq?: number | null;
+      /** Status */
+      status: string;
+    };
+    JsonSchemaLeafObject: {
+      [key: string]: components["schemas"]["JsonSchemaScalar"];
+    };
+    JsonSchemaNestedValue: components["schemas"]["JsonSchemaScalar"] | components["schemas"]["JsonSchemaLeafObject"] | ((components["schemas"]["JsonSchemaScalar"] | components["schemas"]["JsonSchemaLeafObject"])[]);
+    JsonSchemaScalar: boolean | number | string | null;
+    JsonSchemaValue: components["schemas"]["JsonSchemaNestedValue"] | {
+      [key: string]: components["schemas"]["JsonSchemaNestedValue"];
+    } | components["schemas"]["JsonSchemaNestedValue"][];
+    /** @enum {string} */
+    LanguageCode: "en" | "nl";
+    /**
+     * LanguageRequest
+     * @description Request body for changing the UI language.
+     */
+    LanguageRequest: {
+      language: components["schemas"]["LanguageCode"];
+    };
+    /**
+     * LanguageResponse
+     * @description Response body confirming the active UI language.
+     */
+    LanguageResponse: {
+      /** Language */
+      language: string;
+    };
+    /**
+     * LocationHotspotPayload
+     * @description HTTP contract for serialized location-hotspot evidence.
+     */
+    LocationHotspotPayload: {
+      /** Ambiguous Location */
+      ambiguous_location?: boolean | null;
+      /** Ambiguous Locations */
+      ambiguous_locations?: string[];
+      /** Dominance Ratio */
+      dominance_ratio?: number | null;
+      /** Localization Confidence */
+      localization_confidence?: number | null;
+      /** Location Count */
+      location_count?: number | null;
+      /** Second Location */
+      second_location?: string | null;
+      /** Top Location */
+      top_location?: string | null;
+      /** Weak Spatial Separation */
+      weak_spatial_separation?: boolean | null;
+    };
+    /**
+     * LocationIntensitySummaryResponse
+     * @description Response body for one sensor-location intensity summary row.
+     */
+    LocationIntensitySummaryResponse: {
+      /** Dropped Frames Delta */
+      dropped_frames_delta: number | null;
+      /** Location */
+      location: string;
+      /** Max Intensity Db */
+      max_intensity_db: number | null;
+      /** Mean Intensity Db */
+      mean_intensity_db: number | null;
+      /** P50 Intensity Db */
+      p50_intensity_db: number | null;
+      /** P95 Intensity Db */
+      p95_intensity_db: number | null;
+      /** Partial Coverage */
+      partial_coverage: boolean;
+      /** Phase Intensity */
+      phase_intensity?: {
+        [key: string]: components["schemas"]["PhaseIntensityStatsResponse"];
+      } | null;
+      /** Queue Overflow Drops Delta */
+      queue_overflow_drops_delta: number | null;
+      /** Sample Count */
+      sample_count: number;
+      /** Sample Coverage Ratio */
+      sample_coverage_ratio: number;
+      /** Sample Coverage Warning */
+      sample_coverage_warning: boolean;
+      strength_bucket_distribution: components["schemas"]["StrengthBucketDistributionResponse"];
+    };
+    /**
+     * LocationOptionResponse
+     * @description A single sensor-location option (code + human-readable label).
+     */
+    LocationOptionResponse: {
+      /** Code */
+      code: string;
+      /** Label */
+      label: string;
+    };
+    /**
+     * MatchedAmpVsSpeedSeries
+     * @description Typed HTTP contract for one finding's amp-vs-speed series.
+     */
+    MatchedAmpVsSpeedSeries: {
+      /** Label */
+      label: string;
+      /** Points */
+      points: [number, number][];
+    };
+    /**
+     * MatchedPoint
+     * @description HTTP contract for one serialized finding matched-point observation.
+     */
+    MatchedPoint: {
+      /** Amp */
+      amp?: number | null;
+      /** Location */
+      location?: string | null;
+      /** Matched Hz */
+      matched_hz?: number | null;
+      /** Phase */
+      phase?: string | null;
+      /** Predicted Hz */
+      predicted_hz?: number | null;
+      /** Rel Error */
+      rel_error?: number | null;
+      /** Speed Kmh */
+      speed_kmh?: number | null;
+      /** T S */
+      t_s?: number | null;
+    };
+    /**
+     * ObdDeviceResponse
+     * @description Single discovered or configured Bluetooth OBD adapter.
+     */
+    ObdDeviceResponse: {
+      /** Connected */
+      connected: boolean;
+      /** Mac Address */
+      mac_address: string;
+      /** Name */
+      name: string | null;
+      /** Paired */
+      paired: boolean;
+      /** Rfcomm Channel */
+      rfcomm_channel: number | null;
+      /** Trusted */
+      trusted: boolean;
+    };
+    /**
+     * ObdPairRequest
+     * @description Request body for pairing and selecting a Bluetooth OBD adapter.
+     */
+    ObdPairRequest: {
+      /** Mac Address */
+      mac_address: string;
+    };
+    /**
+     * ObdPairResponse
+     * @description Response body after pairing and persisting a Bluetooth OBD adapter.
+     */
+    ObdPairResponse: {
+      /** Configured Device Mac */
+      configured_device_mac: string;
+      /** Configured Device Name */
+      configured_device_name: string | null;
+      /** Connected */
+      connected: boolean;
+      /** Paired */
+      paired: boolean;
+      /** Rfcomm Channel */
+      rfcomm_channel: number | null;
+      /** Trusted */
+      trusted: boolean;
+    };
+    /**
+     * ObdScanResponse
+     * @description Response body for a Bluetooth OBD discovery scan.
+     */
+    ObdScanResponse: {
+      /** Devices */
+      devices: components["schemas"]["ObdDeviceResponse"][];
+    };
+    /**
+     * ObdStatusResponse
+     * @description Detailed Bluetooth OBD runtime status for diagnostics and field recovery.
+     */
+    ObdStatusResponse: {
+      /** Backoff Active */
+      backoff_active: boolean;
+      /** Configured Device Mac */
+      configured_device_mac: string | null;
+      /** Configured Device Name */
+      configured_device_name: string | null;
+      /** Connected */
+      connected: boolean;
+      /** Connection State */
+      connection_state: string;
+      /** Debug Hint */
+      debug_hint: string | null;
+      /** Device Mac */
+      device_mac: string | null;
+      /** Device Name */
+      device_name: string | null;
+      /** Error Count */
+      error_count: number;
+      /** Last Error */
+      last_error: string | null;
+      /** Last Raw Response */
+      last_raw_response: string | null;
+      /** Last Rpm */
+      last_rpm: number | null;
+      /** Last Sample Age S */
+      last_sample_age_s: number | null;
+      /** Last Speed Kmh */
+      last_speed_kmh: number | null;
+      /** Paired */
+      paired: boolean;
+      /** Poll Mode */
+      poll_mode: string | null;
+      /** Reconnect Delay S */
+      reconnect_delay_s: number | null;
+      /** Request Rtt Ms */
+      request_rtt_ms: number | null;
+      /** Rfcomm Channel */
+      rfcomm_channel: number | null;
+      /** Rpm Effective Hz */
+      rpm_effective_hz: number | null;
+      /** Rpm Sample Age S */
+      rpm_sample_age_s: number | null;
+      /** Rpm Target Interval Ms */
+      rpm_target_interval_ms: number | null;
+      /** Timeout Count */
+      timeout_count: number;
+      /** Trusted */
+      trusted: boolean;
+    };
+    /**
+     * OutlierSummaryResponse
+     * @description Response body for an outlier-summary bucket.
+     */
+    OutlierSummaryResponse: {
+      /** Count */
+      count: number;
+      /** Lower Bound */
+      lower_bound: number | null;
+      /** Outlier Count */
+      outlier_count: number;
+      /** Outlier Pct */
+      outlier_pct: number;
+      /** Upper Bound */
+      upper_bound: number | null;
+    };
+    PayloadObject: {
+      [key: string]: components["schemas"]["JsonSchemaValue"];
+    };
+    PayloadValue: components["schemas"]["JsonSchemaNestedValue"] | {
+      [key: string]: components["schemas"]["JsonSchemaNestedValue"];
+    } | components["schemas"]["JsonSchemaNestedValue"][];
+    /**
+     * PeakTableRow
+     * @description Typed HTTP contract for one ranked peak table row.
+     */
+    PeakTableRow: {
+      /** Burstiness */
+      burstiness: number;
+      /** Frequency Hz */
+      frequency_hz: number;
+      /** Max Intensity Db */
+      max_intensity_db: number | null;
+      /** Median Intensity Db */
+      median_intensity_db: number | null;
+      /** Median Vs Run Noise Ratio */
+      median_vs_run_noise_ratio: number;
+      /** Order Label */
+      order_label: string;
+      /** P95 Intensity Db */
+      p95_intensity_db: number | null;
+      /** P95 Vs Run Noise Ratio */
+      p95_vs_run_noise_ratio: number;
+      /** Peak Classification */
+      peak_classification: string;
+      /** Persistence Score */
+      persistence_score: number;
+      /** Presence Ratio */
+      presence_ratio: number;
+      /** Rank */
+      rank: number;
+      /** Run Noise Baseline Db */
+      run_noise_baseline_db: number | null;
+      /** Strength Db */
+      strength_db: number | null;
+      /** Strength Floor Db */
+      strength_floor_db: number | null;
+      /** Suspected Source */
+      suspected_source: string;
+      /** Typical Speed Band */
+      typical_speed_band: string;
+    };
+    /**
+     * PhaseBoundary
+     * @description Typed HTTP contract for a phase-boundary marker.
+     */
+    PhaseBoundary: {
+      /** End T S */
+      end_t_s: number | null;
+      /** Phase */
+      phase: string;
+      /** T S */
+      t_s: number | null;
+    };
+    /**
+     * PhaseEvidence
+     * @description HTTP contract for optional driving-phase evidence attached to a finding.
+     */
+    PhaseEvidence: {
+      /** Cruise Fraction */
+      cruise_fraction?: number | null;
+      /** Phases Detected */
+      phases_detected?: string[];
+    };
+    /**
+     * PhaseInfoResponse
+     * @description Response body for aggregate driving-phase coverage metrics.
+     */
+    PhaseInfoResponse: {
+      /** Cruise Pct */
+      cruise_pct: number;
+      /** Has Acceleration */
+      has_acceleration: boolean;
+      /** Has Cruise */
+      has_cruise: boolean;
+      /** Idle Pct */
+      idle_pct: number;
+      /** Phase Counts */
+      phase_counts: {
+        [key: string]: number;
+      };
+      /** Phase Pcts */
+      phase_pcts: {
+        [key: string]: number;
+      };
+      /** Segment Count */
+      segment_count: number;
+      /** Speed Unknown Pct */
+      speed_unknown_pct: number;
+      /** Total Samples */
+      total_samples: number;
+    };
+    /**
+     * PhaseIntensityStatsResponse
+     * @description Response body for per-phase intensity aggregates at one location.
+     */
+    PhaseIntensityStatsResponse: {
+      /** Count */
+      count: number;
+      /** Max Intensity Db */
+      max_intensity_db: number | null;
+      /** Mean Intensity Db */
+      mean_intensity_db: number | null;
+    };
+    /**
+     * PhaseSegmentOut
+     * @description Typed HTTP contract for a serialized driving-phase segment.
+     */
+    PhaseSegmentOut: {
+      /** End T S */
+      end_t_s: number | null;
+      /** Phase */
+      phase: string;
+      /** Start T S */
+      start_t_s: number | null;
+    };
+    /**
+     * PhaseSegmentSummaryResponse
+     * @description Typed HTTP contract for a summarized driving-phase segment.
+     */
+    PhaseSegmentSummaryResponse: {
+      /** End Idx */
+      end_idx: number;
+      /** End T S */
+      end_t_s: number | null;
+      /** Phase */
+      phase: string;
+      /** Sample Count */
+      sample_count: number;
+      /** Speed Max Kmh */
+      speed_max_kmh: number | null;
+      /** Speed Min Kmh */
+      speed_min_kmh: number | null;
+      /** Start Idx */
+      start_idx: number;
+      /** Start T S */
+      start_t_s: number | null;
+    };
+    /**
+     * PhaseSpeedBreakdownRow
+     * @description Typed HTTP contract for one phase-aware speed aggregate row.
+     */
+    PhaseSpeedBreakdownRow: {
+      /** Count */
+      count: number;
+      /** Max Speed Kmh */
+      max_speed_kmh: number | null;
+      /** Max Vibration Strength Db */
+      max_vibration_strength_db: number | null;
+      /** Mean Speed Kmh */
+      mean_speed_kmh: number | null;
+      /** Mean Vibration Strength Db */
+      mean_vibration_strength_db: number | null;
+      /** Phase */
+      phase: string;
+    };
+    /**
+     * PhaseTimelineEntryResponse
+     * @description Response body for one summarized phase-timeline interval.
+     */
+    PhaseTimelineEntryResponse: {
+      /** End T S */
+      end_t_s: number | null;
+      /** Has Fault Evidence */
+      has_fault_evidence: boolean;
+      /** Phase */
+      phase: string;
+      /** Speed Max Kmh */
+      speed_max_kmh: number | null;
+      /** Speed Min Kmh */
+      speed_min_kmh: number | null;
+      /** Start T S */
+      start_t_s: number | null;
+    };
+    /**
+     * PlotDataResult
+     * @description Typed HTTP contract for serialized plot data attached to a run summary.
+     */
+    PlotDataResult: {
+      /** Amp Vs Phase */
+      amp_vs_phase: components["schemas"]["AmpVsPhaseRow"][];
+      /** Amp Vs Speed */
+      amp_vs_speed: [number, number][];
+      /** Dominant Freq */
+      dominant_freq: [number, number][];
+      /** Fft Spectrum */
+      fft_spectrum: [number, number][];
+      /** Fft Spectrum Raw */
+      fft_spectrum_raw: [number, number][];
+      /** Freq Vs Speed By Finding */
+      freq_vs_speed_by_finding: components["schemas"]["FreqVsSpeedByFindingSeries"][];
+      /** Matched Amp Vs Speed */
+      matched_amp_vs_speed: components["schemas"]["MatchedAmpVsSpeedSeries"][];
+      peaks_spectrogram: components["schemas"]["SpectrogramResult"];
+      peaks_spectrogram_raw: components["schemas"]["SpectrogramResult"];
+      /** Peaks Table */
+      peaks_table: components["schemas"]["PeakTableRow"][];
+      /** Phase Boundaries */
+      phase_boundaries: components["schemas"]["PhaseBoundary"][];
+      /** Phase Segments */
+      phase_segments: components["schemas"]["PhaseSegmentOut"][];
+      /** Steady Speed Distribution */
+      steady_speed_distribution: {
+        [key: string]: number;
+      } | null;
+      /** Vib Magnitude */
+      vib_magnitude: [number, number, string][];
+    };
+    /** RawSamplesPayload */
+    RawSamplesPayload: {
+      /** Client Id */
+      client_id: string;
+      /** N Samples */
+      n_samples: number;
+      /** Sample Rate Hz */
+      sample_rate_hz: number;
+      /** X */
+      x: number[];
+      /** Y */
+      y: number[];
+      /** Z */
+      z: number[];
+    };
+    /**
+     * RecordingCaptureReadinessCheckResponse
+     * @description One capture-readiness checklist item returned by the recording status route.
+     */
+    RecordingCaptureReadinessCheckResponse: {
+      /** Check Key */
+      check_key: string;
+      /** Details */
+      details?: {
+        [key: string]: number | string;
+      };
+      /** Reason Key */
+      reason_key?: string | null;
+      /**
+       * State
+       * @enum {string}
+       */
+      state: "pass" | "warn" | "fail";
+    };
+    /**
+     * RecordingCaptureReadinessResponse
+     * @description Backend-owned live capture-readiness summary for idle/pre-record states.
+     */
+    RecordingCaptureReadinessResponse: {
+      /** Checks */
+      checks: components["schemas"]["RecordingCaptureReadinessCheckResponse"][];
+      /** Is Ready */
+      is_ready: boolean;
+    };
+    /**
+     * RecordingStatusResponse
+     * @description Response body with the current recording (run-logging) status.
+     */
+    RecordingStatusResponse: {
+      /** Analysis In Progress */
+      analysis_in_progress: boolean;
+      capture_readiness?: components["schemas"]["RecordingCaptureReadinessResponse"] | null;
+      /** Enabled */
+      enabled: boolean;
+      /** Last Completed Run Error */
+      last_completed_run_error?: string | null;
+      /** Last Completed Run Id */
+      last_completed_run_id?: string | null;
+      /** Run Id */
+      run_id: string | null;
+      /**
+       * Samples Dropped
+       * @default 0
+       */
+      samples_dropped?: number;
+      /**
+       * Samples Written
+       * @default 0
+       */
+      samples_written?: number;
+      /** Start Time Utc */
+      start_time_utc?: string | null;
+      /** Write Error */
+      write_error: string | null;
+    };
+    /**
+     * RemoveClientResponse
+     * @description Response body confirming removal of a disconnected client.
+     */
+    RemoveClientResponse: {
+      /** Id */
+      id: string;
+      /** Status */
+      status: string;
+    };
+    /** @enum {string} */
+    ResolvedSpeedSource: "gps" | "obd2" | "manual" | "fallback_manual" | "none";
+    /**
+     * RunSuitabilityCheck
+     * @description Typed HTTP contract for one run-suitability diagnostic check.
+     */
+    RunSuitabilityCheck: {
+      /** Check */
+      check: string;
+      /** Check Key */
+      check_key: string;
+      explanation?: components["schemas"]["PayloadValue"];
+      /** State */
+      state: string;
+    };
+    /**
+     * SensorConfigResponse
+     * @description Response body with persisted config for a single sensor (name, location_code).
+     */
+    SensorConfigResponse: {
+      /** Location Code */
+      location_code: string;
+      /** Name */
+      name: string;
+    };
+    /**
+     * SensorRequest
+     * @description Request body for updating sensor name and location.
+     */
+    SensorRequest: {
+      /** Location Code */
+      location_code?: string | null;
+      /** Name */
+      name?: string | null;
+    };
+    /**
+     * SensorsResponse
+     * @description Response body mapping MAC addresses to sensor config responses.
+     */
+    SensorsResponse: {
+      /** Sensors By Mac */
+      sensors_by_mac: {
+        [key: string]: components["schemas"]["SensorConfigResponse"];
+      };
+    };
+    /**
+     * SetClientLocationResponse
+     * @description Response body confirming the new location assignment for a client.
+     */
+    SetClientLocationResponse: {
+      /** Id */
+      id: string;
+      /** Location Code */
+      location_code: string;
+      /** Mac Address */
+      mac_address: string;
+      /** Name */
+      name: string;
+    };
+    /**
+     * SetLocationRequest
+     * @description Request body for setting the sensor location code.
+     */
+    SetLocationRequest: {
+      /** Location Code */
+      location_code: string;
+    };
+    /**
+     * SpectrogramResult
+     * @description Typed HTTP contract for a serialized spectrogram grid.
+     */
+    SpectrogramResult: {
+      /** Cells */
+      cells: number[][];
+      /** Max Amp */
+      max_amp: number;
+      /** X Axis */
+      x_axis: string;
+      /** X Bin Width */
+      x_bin_width?: number | null;
+      /** X Bins */
+      x_bins: number[];
+      /** X Label Key */
+      x_label_key: string;
+      /** Y Bin Width */
+      y_bin_width?: number | null;
+      /** Y Bins */
+      y_bins: number[];
+    };
+    /**
+     * SpeedBreakdownRow
+     * @description Typed HTTP contract for one speed-band aggregate row.
+     */
+    SpeedBreakdownRow: {
+      /** Count */
+      count: number;
+      /** Max Vibration Strength Db */
+      max_vibration_strength_db: number | null;
+      /** Mean Vibration Strength Db */
+      mean_vibration_strength_db: number | null;
+      /** Speed Range */
+      speed_range: string;
+    };
+    /**
+     * SpeedSourceKind
+     * @description How vehicle speed is acquired.
+     * @enum {string}
+     */
+    SpeedSourceKind: "gps" | "obd2" | "manual";
+    /**
+     * SpeedSourceRequest
+     * @description Request body for configuring the speed source (GPS, manual, OBD2, etc.).
+     */
+    SpeedSourceRequest: {
+      /** Manual Speed Kph */
+      manual_speed_kph?: number | null;
+      /** Obd Device Mac */
+      obd_device_mac?: string | null;
+      /** Obd Device Name */
+      obd_device_name?: string | null;
+      speed_source?: components["schemas"]["SpeedSourceKind"] | null;
+      /** Stale Timeout S */
+      stale_timeout_s?: number | null;
+    };
+    /**
+     * SpeedSourceResponse
+     * @description Response body for the current speed-source configuration.
+     */
+    SpeedSourceResponse: {
+      /** Manual Speed Kph */
+      manual_speed_kph: number | null;
+      /** Obd Device Mac */
+      obd_device_mac?: string | null;
+      /** Obd Device Name */
+      obd_device_name?: string | null;
+      speed_source: components["schemas"]["SpeedSourceKind"];
+      /** Stale Timeout S */
+      stale_timeout_s: number;
+    };
+    /**
+     * SpeedSourceStatusResponse
+     * @description Response body for the live GPS/speed-source connection status.
+     */
+    SpeedSourceStatusResponse: {
+      /** Connection State */
+      connection_state: string;
+      /** Device */
+      device: string | null;
+      /** Effective Speed Kmh */
+      effective_speed_kmh: number | null;
+      /** Epv M */
+      epv_m: number | null;
+      /** Epx M */
+      epx_m: number | null;
+      /** Epy M */
+      epy_m: number | null;
+      /** Fallback Active */
+      fallback_active: boolean;
+      /**
+       * Fix Dimension
+       * @enum {string}
+       */
+      fix_dimension: "3d" | "2d" | "none";
+      /** Fix Mode */
+      fix_mode: number | null;
+      /** Gps Enabled */
+      gps_enabled: boolean;
+      /** Last Error */
+      last_error: string | null;
+      /** Last Update Age S */
+      last_update_age_s: number | null;
+      /** Raw Speed Kmh */
+      raw_speed_kmh: number | null;
+      /** Reconnect Delay S */
+      reconnect_delay_s: number | null;
+      /**
+       * Speed Confidence
+       * @enum {string}
+       */
+      speed_confidence: "low" | "medium" | "high";
+      speed_source: components["schemas"]["ResolvedSpeedSource"];
+      /** Stale Timeout S */
+      stale_timeout_s: number;
+    };
+    /**
+     * SpeedStatsResponse
+     * @description Response body for one summarized speed-profile snapshot.
+     */
+    SpeedStatsResponse: {
+      /** Max Kmh */
+      max_kmh: number | null;
+      /** Mean Kmh */
+      mean_kmh: number | null;
+      /** Min Kmh */
+      min_kmh: number | null;
+      /** Range Kmh */
+      range_kmh: number | null;
+      /** Sample Count */
+      sample_count: number;
+      /** Stddev Kmh */
+      stddev_kmh: number | null;
+      /** Steady Speed */
+      steady_speed: boolean;
+    };
+    /** @enum {string} */
+    SpeedUnitCode: "kmh" | "mps";
+    /**
+     * SpeedUnitRequest
+     * @description Request body for changing the displayed speed unit.
+     */
+    SpeedUnitRequest: {
+      speed_unit: components["schemas"]["SpeedUnitCode"];
+    };
+    /**
+     * SpeedUnitResponse
+     * @description Response body confirming the active speed unit.
+     */
+    SpeedUnitResponse: {
+      speed_unit: components["schemas"]["SpeedUnitCode"];
+    };
+    /**
+     * StrengthBucketDistributionResponse
+     * @description Response body for per-location strength-bucket coverage.
+     */
+    StrengthBucketDistributionResponse: {
+      /** Counts */
+      counts: {
+        [key: string]: number;
+      };
+      /** Percent Time L0 */
+      percent_time_l0: number;
+      /** Percent Time L1 */
+      percent_time_l1: number;
+      /** Percent Time L2 */
+      percent_time_l2: number;
+      /** Percent Time L3 */
+      percent_time_l3: number;
+      /** Percent Time L4 */
+      percent_time_l4: number;
+      /** Percent Time L5 */
+      percent_time_l5: number;
+      /** Total */
+      total: number;
+    };
+    /** StrengthPeak */
+    StrengthPeak: {
+      /** Amp */
+      amp: number;
+      /** Hz */
+      hz: number;
+      /** Strength Bucket */
+      strength_bucket: string | null;
+      /** Vibration Strength Db */
+      vibration_strength_db: number;
+    };
+    /**
+     * SummaryWarningResponse
+     * @description Response body for a persisted summary warning before localization.
+     */
+    SummaryWarningResponse: {
+      /** Applies To */
+      applies_to: string;
+      /** Code */
+      code: string;
+      detail?: components["schemas"]["PayloadValue"];
+      /**
+       * Severity
+       * @enum {string}
+       */
+      severity: "warn" | "error";
+      title: components["schemas"]["PayloadValue"];
+    };
+    /**
+     * SuspectedVibrationOriginPayload
+     * @description Typed HTTP contract for the serialized likely-origin payload.
+     */
+    SuspectedVibrationOriginPayload: {
+      /** Alternative Locations */
+      alternative_locations?: string[];
+      /** Dominance Ratio */
+      dominance_ratio?: number | null;
+      /** Dominant Phase */
+      dominant_phase?: string | null;
+      explanation?: components["schemas"]["PayloadValue"];
+      /** Location */
+      location?: string | null;
+      /** Speed Band */
+      speed_band?: string | null;
+      /** Suspected Source */
+      suspected_source?: string | null;
+      /** Weak Spatial Separation */
+      weak_spatial_separation?: boolean | null;
+    };
+    /**
+     * TestPlanStepResponse
+     * @description Response body for one recommended next-step action.
+     */
+    TestPlanStepResponse: {
+      /** Action Id */
+      action_id: string;
+      /** Confirm */
+      confirm: string | null;
+      /** Eta */
+      eta: string | null;
+      /** Falsify */
+      falsify: string | null;
+      /** What */
+      what: string;
+      /** Why */
+      why: string | null;
+    };
+    /**
+     * UpdateCancelResponse
+     * @description Response body confirming whether an OTA update job was cancelled.
+     */
+    UpdateCancelResponse: {
+      /** Cancelled */
+      cancelled: boolean;
+    };
+    /**
+     * UpdateIssueResponse
+     * @description Response body for a single issue raised during an OTA update phase.
+     */
+    UpdateIssueResponse: {
+      /** Detail */
+      detail: string;
+      /** Message */
+      message: string;
+      /** Phase */
+      phase: string;
+    };
+    /**
+     * UpdateRuntimeResponse
+     * @description Response body for updater runtime/build verification details.
+     */
+    UpdateRuntimeResponse: {
+      /** Assets Verified */
+      assets_verified: boolean;
+      /** Commit */
+      commit: string;
+      /** Has Packaged Static */
+      has_packaged_static: boolean;
+      /** Static Assets Hash */
+      static_assets_hash: string;
+      /** Static Build Commit */
+      static_build_commit: string;
+      /** Static Build Source Hash */
+      static_build_source_hash: string;
+      /** Ui Source Hash */
+      ui_source_hash: string;
+      /** Version */
+      version: string;
+    };
+    /**
+     * UpdateStartRequest
+     * @description Request body to start an OTA software update (provides Wi-Fi credentials).
+     */
+    UpdateStartRequest: {
+      /**
+       * Password
+       * @default
+       */
+      password?: string;
+      /** Ssid */
+      ssid?: string | null;
+      /** @default wifi */
+      transport?: components["schemas"]["UpdateTransport"];
+    };
+    /**
+     * UpdateStartResponse
+     * @description Response body confirming that an OTA update job has started.
+     */
+    UpdateStartResponse: {
+      /** Ssid */
+      ssid?: string | null;
+      /** Status */
+      status: string;
+      /** Transport */
+      transport: string;
+    };
+    /**
+     * UpdateStatusResponse
+     * @description Response body for the full OTA update job status.
+     */
+    UpdateStatusResponse: {
+      /** Exit Code */
+      exit_code?: number | null;
+      /** Finished At */
+      finished_at?: number | null;
+      /** Issues */
+      issues: components["schemas"]["UpdateIssueResponse"][];
+      /** Last Success At */
+      last_success_at?: number | null;
+      /** Log Tail */
+      log_tail: string[];
+      /** Phase */
+      phase: string;
+      /** Phase Elapsed S */
+      phase_elapsed_s?: number | null;
+      /** Phase Started At */
+      phase_started_at?: number | null;
+      runtime: components["schemas"]["UpdateRuntimeResponse"];
+      /** Ssid */
+      ssid?: string | null;
+      /** Started At */
+      started_at?: number | null;
+      /** State */
+      state: string;
+      /** Transport */
+      transport: string;
+      /** Updated At */
+      updated_at?: number | null;
+      /** Uplink Interface */
+      uplink_interface?: string | null;
+    };
+    /**
+     * UpdateTransport
+     * @description Network path used by a single OTA update run.
+     * @enum {string}
+     */
+    UpdateTransport: "wifi" | "usb_internet";
+    /**
+     * UsbInternetStatusResponse
+     * @description Response body describing the current USB internet detection state.
+     */
+    UsbInternetStatusResponse: {
+      /** Connection Name */
+      connection_name?: string | null;
+      /** Detected */
+      detected: boolean;
+      /** Diagnostic */
+      diagnostic: string;
+      /** Driver */
+      driver?: string | null;
+      /** Gateway */
+      gateway?: string | null;
+      /** Has Default Route */
+      has_default_route: boolean;
+      /** Interface Name */
+      interface_name?: string | null;
+      /** Ipv4 Addresses */
+      ipv4_addresses: string[];
+      /** Usable */
+      usable: boolean;
+    };
+    /** ValidationError */
+    ValidationError: {
+      /** Context */
+      ctx?: Record<string, never>;
+      /** Input */
+      input?: unknown;
+      /** Location */
+      loc: (string | number)[];
+      /** Message */
+      msg: string;
+      /** Error Type */
+      type: string;
+    };
+    /** VibrationStrengthMetrics */
+    VibrationStrengthMetrics: {
+      /** Noise Floor Amp G */
+      noise_floor_amp_g: number;
+      /** Peak Amp G */
+      peak_amp_g: number;
+      /** Strength Bucket */
+      strength_bucket: string | null;
+      /** Top Peaks */
+      top_peaks: components["schemas"]["StrengthPeak"][];
+      /** Vibration Strength Db */
+      vibration_strength_db: number;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
+
 export type $defs = Record<string, never>;
+
+export type external = Record<string, never>;
+
 export interface operations {
-    get_car_library_brands_api_car_library_brands_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+
+  /**
+   * Get Car Library Brands
+   * @description Return all available car manufacturer brands from the library.
+   */
+  get_car_library_brands_api_car_library_brands_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CarLibraryBrandsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CarLibraryBrandsResponse"];
-                };
-            };
-        };
+      };
     };
-    get_car_library_models_api_car_library_models_get: {
-        parameters: {
-            query: {
-                /** @description Manufacturer brand to look up. */
-                brand: string;
-                /** @description Vehicle body type to look up for the selected brand. */
-                type: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CarLibraryModelsResponse"];
-                };
-            };
-            /** @description The requested brand or brand/type combination does not exist. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  /**
+   * Get Car Library Models
+   * @description Return library entries for *brand* + *type*; 404 if the combination is unknown.
+   */
+  get_car_library_models_api_car_library_models_get: {
+    parameters: {
+      query: {
+        /** @description Manufacturer brand to look up. */
+        brand: string;
+        /** @description Vehicle body type to look up for the selected brand. */
+        type: string;
+      };
     };
-    get_car_library_types_api_car_library_types_get: {
-        parameters: {
-            query: {
-                /** @description Manufacturer brand to look up. */
-                brand: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CarLibraryModelsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CarLibraryTypesResponse"];
-                };
-            };
-            /** @description The requested brand or brand/type combination does not exist. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
+      };
+      /** @description The requested brand or brand/type combination does not exist. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    get_client_locations_api_client_locations_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClientLocationsResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Get Car Library Types
+   * @description Return body types available for *brand*; 404 if the brand is unknown.
+   */
+  get_car_library_types_api_car_library_types_get: {
+    parameters: {
+      query: {
+        /** @description Manufacturer brand to look up. */
+        brand: string;
+      };
     };
-    get_clients_api_clients_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CarLibraryTypesResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClientsResponse"];
-                };
-            };
+      };
+      /** @description The requested brand or brand/type combination does not exist. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    remove_client_api_clients__client_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                client_id: string;
-            };
-            cookie?: never;
+  };
+  /**
+   * Get Client Locations
+   * @description List the supported sensor location codes that operators can assign to clients.
+   */
+  get_client_locations_api_client_locations_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ClientLocationsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RemoveClientResponse"];
-                };
-            };
-            /** @description Invalid sensor identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Sensor not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
     };
-    identify_client_api_clients__client_id__identify_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                client_id: string;
-            };
-            cookie?: never;
+  };
+  /**
+   * Get Clients
+   * @description List known sensor clients with live connection state and latest computed metrics.
+   */
+  get_clients_api_clients_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ClientsResponse"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["IdentifyRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IdentifyResponse"];
-                };
-            };
-            /** @description Invalid sensor identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Sensor not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Sensor is known but not currently reachable. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+      };
     };
-    set_client_location_api_clients__client_id__location_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                client_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetLocationRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SetClientLocationResponse"];
-                };
-            };
-            /** @description Invalid sensor identifier or unknown location code. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Sensor not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested location is already assigned to another sensor. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  /**
+   * Remove Client
+   * @description Remove a disconnected sensor from the runtime registry.
+   */
+  remove_client_api_clients__client_id__delete: {
+    parameters: {
+      path: {
+        client_id: string;
+      };
     };
-    debug_raw_samples_api_debug_raw_samples__client_id__get: {
-        parameters: {
-            query?: {
-                /** @description Number of recent raw samples to return. */
-                n?: number;
-            };
-            header?: never;
-            path: {
-                client_id: string;
-            };
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RemoveClientResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RawSamplesPayload"];
-                };
-            };
-            /** @description Invalid sensor identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description No debug data is available for the requested sensor. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
+      };
+      /** @description Invalid sensor identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Sensor not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    debug_spectrum_api_debug_spectrum__client_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                client_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DebugSpectrumPayload"];
-                };
-            };
-            /** @description Invalid sensor identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description No debug data is available for the requested sensor. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  /**
+   * Identify Client
+   * @description Send a temporary identify/blink command so an operator can find a sensor physically.
+   */
+  identify_client_api_clients__client_id__identify_post: {
+    parameters: {
+      path: {
+        client_id: string;
+      };
     };
-    cancel_esp_flash_api_esp_flash_cancel_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EspFlashCancelResponse"];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["IdentifyRequest"];
+      };
     };
-    get_esp_flash_history_api_esp_flash_history_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["IdentifyResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EspFlashHistoryResponse"];
-                };
-            };
+      };
+      /** @description Invalid sensor identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Sensor not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
+      /** @description Sensor is known but not currently reachable. */
+      503: {
+        content: never;
+      };
     };
-    get_esp_flash_logs_api_esp_flash_logs_get: {
-        parameters: {
-            query?: {
-                /** @description Return log lines strictly after this zero-based index. */
-                after?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EspFlashLogsResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  /**
+   * Set Client Location
+   * @description Assign or clear the logical location for a sensor and persist the updated mapping.
+   */
+  set_client_location_api_clients__client_id__location_post: {
+    parameters: {
+      path: {
+        client_id: string;
+      };
     };
-    list_esp_flash_ports_api_esp_flash_ports_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EspFlashPortsResponse"];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetLocationRequest"];
+      };
     };
-    start_esp_flash_api_esp_flash_start_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SetClientLocationResponse"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EspFlashStartRequest"];
-            };
+      };
+      /** @description Invalid sensor identifier or unknown location code. */
+      400: {
+        content: never;
+      };
+      /** @description Sensor not found. */
+      404: {
+        content: never;
+      };
+      /** @description Requested location is already assigned to another sensor. */
+      409: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EspFlashStartResponse"];
-                };
-            };
-            /** @description Invalid flash settings or port selection. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description An ESP flash job is already running. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description The flash job could not be started. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+      };
     };
-    get_esp_flash_status_api_esp_flash_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EspFlashStatusResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Debug Raw Samples
+   * @description Raw time-domain samples in g for offline analysis.
+   */
+  debug_raw_samples_api_debug_raw_samples__client_id__get: {
+    parameters: {
+      query?: {
+        /** @description Number of recent raw samples to return. */
+        n?: number;
+      };
+      path: {
+        client_id: string;
+      };
     };
-    health_api_health_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RawSamplesPayload"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
+      };
+      /** @description Invalid sensor identifier. */
+      400: {
+        content: never;
+      };
+      /** @description No debug data is available for the requested sensor. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    get_history_api_history_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HistoryListResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Debug Spectrum
+   * @description Detailed spectrum debug info for independent verification.
+   */
+  debug_spectrum_api_debug_spectrum__client_id__get: {
+    parameters: {
+      path: {
+        client_id: string;
+      };
     };
-    get_history_run_api_history__run_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                run_id: string;
-            };
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["DebugSpectrumPayload"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HistoryRunResponse"];
-                };
-            };
-            /** @description Invalid run identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested run was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Run data is corrupt or could not be processed. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+      };
+      /** @description Invalid sensor identifier. */
+      400: {
+        content: never;
+      };
+      /** @description No debug data is available for the requested sensor. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    delete_history_run_api_history__run_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                run_id: string;
-            };
-            cookie?: never;
+  };
+  /**
+   * Cancel Esp Flash
+   * @description Request cancellation of the active ESP32 flash job.
+   */
+  cancel_esp_flash_api_esp_flash_cancel_post: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashCancelResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DeleteHistoryRunResponse"];
-                };
-            };
-            /** @description Invalid run identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested run was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
     };
-    export_history_run_api_history__run_id__export_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                run_id: string;
-            };
-            cookie?: never;
+  };
+  /**
+   * Get Esp Flash History
+   * @description List completed and failed ESP32 flash attempts kept in local history.
+   */
+  get_esp_flash_history_api_esp_flash_history_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashHistoryResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Invalid run identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested run was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Export generation failed because the run data is corrupt or incomplete. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+      };
     };
-    get_history_insights_api_history__run_id__insights_get: {
-        parameters: {
-            query?: {
-                /** @description Optional language override for localized insights text (for example 'en' or 'nl'). */
-                lang?: string | null;
-            };
-            header?: never;
-            path: {
-                run_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HistoryInsightsResponse"];
-                };
-            };
-            /** @description Analysis is still running for the requested run. */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HistoryInsightsAnalyzingResponse"];
-                };
-            };
-            /** @description Invalid run identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested run was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Insights are not ready yet for the requested run. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Insights are unavailable because analysis failed or produced unsupported persisted data. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Run data is corrupt or insights generation failed. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  /**
+   * Get Esp Flash Logs
+   * @description Return incremental ESP32 flash logs for polling clients.
+   */
+  get_esp_flash_logs_api_esp_flash_logs_get: {
+    parameters: {
+      query?: {
+        /** @description Return log lines strictly after this zero-based index. */
+        after?: number;
+      };
     };
-    download_history_report_pdf_api_history__run_id__report_pdf_get: {
-        parameters: {
-            query?: {
-                /** @description Optional language override for the generated PDF report (for example 'en' or 'nl'). */
-                lang?: string | null;
-            };
-            header?: never;
-            path: {
-                run_id: string;
-            };
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashLogsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Invalid run identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested run was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Report generation failed because the run data is corrupt or incomplete. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    start_logging_api_recording_start_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * List Esp Flash Ports
+   * @description List serial ports currently available for ESP32 firmware flashing.
+   */
+  list_esp_flash_ports_api_esp_flash_ports_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashPortsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RecordingStatusResponse"];
-                };
-            };
-        };
+      };
     };
-    get_logging_status_api_recording_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RecordingStatusResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Start Esp Flash
+   * @description Start a new ESP32 firmware flash job with either auto-detect or an explicit port.
+   */
+  start_esp_flash_api_esp_flash_start_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EspFlashStartRequest"];
+      };
     };
-    stop_logging_api_recording_stop_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashStartResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RecordingStatusResponse"];
-                };
-            };
+      };
+      /** @description Invalid flash settings or port selection. */
+      400: {
+        content: never;
+      };
+      /** @description An ESP flash job is already running. */
+      409: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
+      /** @description The flash job could not be started. */
+      500: {
+        content: never;
+      };
     };
-    get_analysis_settings_api_settings_analysis_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * Get Esp Flash Status
+   * @description Return the current ESP32 flash job state and the selected serial port, if any.
+   */
+  get_esp_flash_status_api_esp_flash_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashStatusResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AnalysisSettingsResponse"];
-                };
-            };
-        };
+      };
     };
-    set_analysis_settings_api_settings_analysis_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * Health
+   * @description Return the current runtime health snapshot for the server and sensor pipeline.
+   */
+  health_api_health_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["HealthResponse"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AnalysisSettingsRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AnalysisSettingsResponse"];
-                };
-            };
-            /** @description Analysis settings are invalid or no active car is configured. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
     };
-    get_cars_api_settings_cars_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * Get History
+   * @description List all persisted recording runs available in history storage.
+   */
+  get_history_api_history_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["HistoryListResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CarsResponse"];
-                };
-            };
-        };
+      };
     };
-    add_car_api_settings_cars_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CarUpsertRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CarsResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  /**
+   * Get History Run
+   * @description Return full metadata and analysis payloads for a single recorded run.
+   */
+  get_history_run_api_history__run_id__get: {
+    parameters: {
+      path: {
+        run_id: string;
+      };
     };
-    set_active_car_api_settings_cars_active_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["HistoryRunResponse"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ActiveCarRequest"];
-            };
+      };
+      /** @description Invalid run identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CarsResponse"];
-                };
-            };
-            /** @description Invalid car identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested car profile was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
+      /** @description Run data is corrupt or could not be processed. */
+      500: {
+        content: never;
+      };
     };
-    update_car_api_settings_cars__car_id__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                car_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CarUpsertRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CarsResponse"];
-                };
-            };
-            /** @description Invalid car identifier. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested car profile was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  /**
+   * Delete History Run
+   * @description Delete a persisted run and its derived artifacts from history storage.
+   */
+  delete_history_run_api_history__run_id__delete: {
+    parameters: {
+      path: {
+        run_id: string;
+      };
     };
-    delete_car_api_settings_cars__car_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                car_id: string;
-            };
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["DeleteHistoryRunResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CarsResponse"];
-                };
-            };
-            /** @description Invalid car identifier or the requested deletion violates current settings constraints. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested car profile was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
+      };
+      /** @description Invalid run identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    get_language_api_settings_language_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LanguageResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Export History Run
+   * @description Build and stream the ZIP export bundle for a persisted run.
+   */
+  export_history_run_api_history__run_id__export_get: {
+    parameters: {
+      path: {
+        run_id: string;
+      };
     };
-    set_language_api_settings_language_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: never;
+      };
+      /** @description Invalid run identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LanguageRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LanguageResponse"];
-                };
-            };
-            /** @description Unsupported language code. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
+      /** @description Export generation failed because the run data is corrupt or incomplete. */
+      500: {
+        content: never;
+      };
     };
-    pair_obd_device_api_settings_obd_pair_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ObdPairRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ObdPairResponse"];
-                };
-            };
-            /** @description Invalid Bluetooth MAC address. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Bluetooth OBD helper unavailable or the requested action failed. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  /**
+   * Get History Insights
+   * @description Return localized post-analysis findings, or a 202 while analysis is still running.
+   */
+  get_history_insights_api_history__run_id__insights_get: {
+    parameters: {
+      query?: {
+        /** @description Optional language override for localized insights text (for example 'en' or 'nl'). */
+        lang?: string | null;
+      };
+      path: {
+        run_id: string;
+      };
     };
-    scan_obd_devices_api_settings_obd_scan_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["HistoryInsightsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ObdScanResponse"];
-                };
-            };
-            /** @description Bluetooth OBD helper unavailable or the requested action failed. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+      };
+      /** @description Analysis is still running for the requested run. */
+      202: {
+        content: {
+          "application/json": components["schemas"]["HistoryInsightsAnalyzingResponse"];
         };
+      };
+      /** @description Invalid run identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Insights are not ready yet for the requested run. */
+      409: {
+        content: never;
+      };
+      /** @description Insights are unavailable because analysis failed or produced unsupported persisted data. */
+      422: {
+        content: never;
+      };
+      /** @description Run data is corrupt or insights generation failed. */
+      500: {
+        content: never;
+      };
     };
-    get_obd_status_api_settings_obd_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ObdStatusResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Download History Report Pdf
+   * @description Build and download the PDF diagnostic report for a persisted run.
+   */
+  download_history_report_pdf_api_history__run_id__report_pdf_get: {
+    parameters: {
+      query?: {
+        /** @description Optional language override for the generated PDF report (for example 'en' or 'nl'). */
+        lang?: string | null;
+      };
+      path: {
+        run_id: string;
+      };
     };
-    get_sensors_api_settings_sensors_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: never;
+      };
+      /** @description Invalid run identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Requested run was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SensorsResponse"];
-                };
-            };
-        };
+      };
+      /** @description Report generation failed because the run data is corrupt or incomplete. */
+      500: {
+        content: never;
+      };
     };
-    update_sensor_api_settings_sensors__mac__post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                mac: string;
-            };
-            cookie?: never;
+  };
+  /**
+   * Start Logging
+   * @description Start recording a new run and return the updated recorder status snapshot.
+   */
+  start_logging_api_recording_start_post: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RecordingStatusResponse"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SensorRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SensorsResponse"];
-                };
-            };
-            /** @description Invalid sensor MAC address or sensor settings payload. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Requested sensor location is already assigned to another sensor. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
     };
-    delete_sensor_api_settings_sensors__mac__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                mac: string;
-            };
-            cookie?: never;
+  };
+  /**
+   * Get Logging Status
+   * @description Return the current recording state, counters, and last completed run details.
+   */
+  get_logging_status_api_recording_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RecordingStatusResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SensorsResponse"];
-                };
-            };
-            /** @description Invalid sensor MAC address. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Sensor configuration not found for the given MAC address. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
     };
-    get_speed_source_api_settings_speed_source_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * Stop Logging
+   * @description Stop the active recording and return the updated recorder status snapshot.
+   */
+  stop_logging_api_recording_stop_post: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RecordingStatusResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SpeedSourceResponse"];
-                };
-            };
-        };
+      };
     };
-    update_speed_source_api_settings_speed_source_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * Get Analysis Settings
+   * @description Return the validated analysis settings derived from the active car profile.
+   */
+  get_analysis_settings_api_settings_analysis_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AnalysisSettingsResponse"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SpeedSourceRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SpeedSourceResponse"];
-                };
-            };
-            /** @description The requested speed-source configuration is invalid. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
     };
-    get_speed_source_status_api_settings_speed_source_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SpeedSourceStatusResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Set Analysis Settings
+   * @description Update analysis-specific car aspects such as tire geometry and drivetrain ratios.
+   */
+  set_analysis_settings_api_settings_analysis_put: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AnalysisSettingsRequest"];
+      };
     };
-    get_speed_unit_api_settings_speed_unit_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AnalysisSettingsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SpeedUnitResponse"];
-                };
-            };
+      };
+      /** @description Analysis settings are invalid or no active car is configured. */
+      400: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    set_speed_unit_api_settings_speed_unit_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * Get Cars
+   * @description List all saved car profiles together with the currently active car ID.
+   */
+  get_cars_api_settings_cars_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CarsResponse"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SpeedUnitRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SpeedUnitResponse"];
-                };
-            };
-            /** @description Unsupported speed unit. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
     };
-    cancel_update_api_update_cancel_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UpdateCancelResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Add Car
+   * @description Create a new car profile from the provided partial settings payload.
+   */
+  add_car_api_settings_cars_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CarUpsertRequest"];
+      };
     };
-    get_usb_internet_status_api_update_internet_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CarsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UsbInternetStatusResponse"];
-                };
-            };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    start_update_api_update_start_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateStartRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UpdateStartResponse"];
-                };
-            };
-            /** @description Invalid Wi-Fi credentials or update request values. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description An update job is already running. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description The update process could not be started. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  /**
+   * Set Active Car
+   * @description Select which saved car profile should drive current analysis settings.
+   */
+  set_active_car_api_settings_cars_active_put: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ActiveCarRequest"];
+      };
     };
-    get_update_status_api_update_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CarsResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UpdateStatusResponse"];
-                };
-            };
+      };
+      /** @description Invalid car identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Requested car profile was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
+  };
+  /**
+   * Update Car
+   * @description Update an existing car profile while preserving unspecified fields.
+   */
+  update_car_api_settings_cars__car_id__put: {
+    parameters: {
+      path: {
+        car_id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CarUpsertRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CarsResponse"];
+        };
+      };
+      /** @description Invalid car identifier. */
+      400: {
+        content: never;
+      };
+      /** @description Requested car profile was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Car
+   * @description Delete a saved car profile when that removal keeps settings state valid.
+   */
+  delete_car_api_settings_cars__car_id__delete: {
+    parameters: {
+      path: {
+        car_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CarsResponse"];
+        };
+      };
+      /** @description Invalid car identifier or the requested deletion violates current settings constraints. */
+      400: {
+        content: never;
+      };
+      /** @description Requested car profile was not found. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Language
+   * @description Return the currently selected dashboard language code.
+   */
+  get_language_api_settings_language_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["LanguageResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Set Language
+   * @description Update the dashboard language used by the local UI.
+   */
+  set_language_api_settings_language_put: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LanguageRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["LanguageResponse"];
+        };
+      };
+      /** @description Unsupported language code. */
+      400: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Pair Obd Device
+   * @description Pair, trust, connect, and persist the selected Bluetooth OBD adapter.
+   */
+  pair_obd_device_api_settings_obd_pair_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ObdPairRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ObdPairResponse"];
+        };
+      };
+      /** @description Invalid Bluetooth MAC address. */
+      400: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+      /** @description Bluetooth OBD helper unavailable or the requested action failed. */
+      503: {
+        content: never;
+      };
+    };
+  };
+  /**
+   * Scan Obd Devices
+   * @description Scan nearby Bluetooth OBD adapters using the privileged helper.
+   */
+  scan_obd_devices_api_settings_obd_scan_post: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ObdScanResponse"];
+        };
+      };
+      /** @description Bluetooth OBD helper unavailable or the requested action failed. */
+      503: {
+        content: never;
+      };
+    };
+  };
+  /**
+   * Get Obd Status
+   * @description Return detailed Bluetooth OBD runtime/admin status for diagnostics.
+   */
+  get_obd_status_api_settings_obd_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ObdStatusResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Sensors
+   * @description List persisted per-sensor settings keyed by normalized MAC address.
+   */
+  get_sensors_api_settings_sensors_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SensorsResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Sensor
+   * @description Create or update persisted sensor metadata for a specific MAC address.
+   */
+  update_sensor_api_settings_sensors__mac__post: {
+    parameters: {
+      path: {
+        mac: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SensorRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SensorsResponse"];
+        };
+      };
+      /** @description Invalid sensor MAC address or sensor settings payload. */
+      400: {
+        content: never;
+      };
+      /** @description Requested sensor location is already assigned to another sensor. */
+      409: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Sensor
+   * @description Delete persisted sensor metadata for a specific MAC address.
+   */
+  delete_sensor_api_settings_sensors__mac__delete: {
+    parameters: {
+      path: {
+        mac: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SensorsResponse"];
+        };
+      };
+      /** @description Invalid sensor MAC address. */
+      400: {
+        content: never;
+      };
+      /** @description Sensor configuration not found for the given MAC address. */
+      404: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Speed Source
+   * @description Return the persisted speed-source configuration used for order tracking.
+   */
+  get_speed_source_api_settings_speed_source_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SpeedSourceResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Speed Source
+   * @description Update the preferred speed source, manual fallback speed, and staleness timeout.
+   */
+  update_speed_source_api_settings_speed_source_put: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SpeedSourceRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SpeedSourceResponse"];
+        };
+      };
+      /** @description The requested speed-source configuration is invalid. */
+      400: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Speed Source Status
+   * @description Return the live selected-speed-source connection state and effective speed status.
+   */
+  get_speed_source_status_api_settings_speed_source_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SpeedSourceStatusResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Speed Unit
+   * @description Return the speed unit currently used for UI display and input.
+   */
+  get_speed_unit_api_settings_speed_unit_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SpeedUnitResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Set Speed Unit
+   * @description Update the speed unit used for UI display and manual speed entry.
+   */
+  set_speed_unit_api_settings_speed_unit_put: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SpeedUnitRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SpeedUnitResponse"];
+        };
+      };
+      /** @description Unsupported speed unit. */
+      400: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Cancel Update
+   * @description Request cancellation of the active OTA software update job.
+   */
+  cancel_update_api_update_cancel_post: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UpdateCancelResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Usb Internet Status
+   * @description Return the current USB internet detection and usability snapshot.
+   */
+  get_usb_internet_status_api_update_internet_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UsbInternetStatusResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Start Update
+   * @description Start an OTA software update using the supplied uplink Wi-Fi credentials.
+   */
+  start_update_api_update_start_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateStartRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UpdateStartResponse"];
+        };
+      };
+      /** @description Invalid Wi-Fi credentials or update request values. */
+      400: {
+        content: never;
+      };
+      /** @description An update job is already running. */
+      409: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+      /** @description The update process could not be started. */
+      500: {
+        content: never;
+      };
+    };
+  };
+  /**
+   * Get Update Status
+   * @description Return the current OTA software update job state, logs, and runtime details.
+   */
+  get_update_status_api_update_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UpdateStatusResponse"];
+        };
+      };
+    };
+  };
 }

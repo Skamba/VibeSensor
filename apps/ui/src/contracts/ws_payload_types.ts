@@ -6,191 +6,198 @@
  * Do not make direct changes to the file.
  */
 
+
 export type paths = Record<string, never>;
+
 export type webhooks = Record<string, never>;
+
 export interface components {
-    schemas: {
-        /** LiveWsPayload */
-        LiveWsPayload: {
-            /** Clients */
-            clients: components["schemas"]["ClientApiRow"][];
-            rotational_speeds: components["schemas"]["RotationalSpeedsPayload"] | null;
-            /** Schema Version */
-            schema_version: string;
-            /** Selected Client Id */
-            selected_client_id: string | null;
-            /** Server Time */
-            server_time: string;
-            spectra?: components["schemas"]["SpectraPayload"];
-            /** Speed Mps */
-            speed_mps: number | null;
-        };
-        /** AlignmentInfoPayload */
-        AlignmentInfoPayload: {
-            /** Aligned */
-            aligned: boolean;
-            /** Clock Synced */
-            clock_synced: boolean;
-            /** Overlap Ratio */
-            overlap_ratio: number;
-            /** Sensor Count */
-            sensor_count: number;
-            /** Shared Window S */
-            shared_window_s: number;
-        };
-        /** AxisMetrics */
-        AxisMetrics: {
-            /** P2P */
-            p2p: number;
-            /** Peaks */
-            peaks: components["schemas"]["AxisPeak"][];
-            /** Rms */
-            rms: number;
-        };
-        /** AxisPeak */
-        AxisPeak: {
-            /** Amp */
-            amp?: number;
-            /** Hz */
-            hz?: number;
-            /** Snr Ratio */
-            snr_ratio?: number;
-        };
-        /** ClientApiRow */
-        ClientApiRow: {
-            /** Connected */
-            connected: boolean;
-            /** Dropped Frames */
-            dropped_frames: number;
-            /** Firmware Version */
-            firmware_version: string;
-            /** Frame Samples */
-            frame_samples?: number;
-            /** Frames Total */
-            frames_total: number;
-            /** Id */
-            id: string;
-            /** Last Reset Time */
-            last_reset_time?: number | null;
-            /** Last Seen Age Ms */
-            last_seen_age_ms: number | null;
-            latest_metrics?: components["schemas"]["ClientMetrics"];
-            /** Location Code */
-            location_code: string;
-            /** Mac Address */
-            mac_address: string;
-            /** Name */
-            name: string;
-            /** Reset Count */
-            reset_count?: number;
-            /** Sample Rate Hz */
-            sample_rate_hz: number;
-        };
-        /** ClientMetrics */
-        ClientMetrics: {
-            combined?: components["schemas"]["CombinedMetrics"];
-            x?: components["schemas"]["AxisMetrics"];
-            y?: components["schemas"]["AxisMetrics"];
-            z?: components["schemas"]["AxisMetrics"];
-        };
-        /** CombinedMetrics */
-        CombinedMetrics: {
-            /** Peaks */
-            peaks?: components["schemas"]["StrengthPeak"][];
-            strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
-            /** Vib Mag P2P */
-            vib_mag_p2p?: number;
-            /** Vib Mag Rms */
-            vib_mag_rms?: number;
-        };
-        /** FrequencyWarningPayload */
-        FrequencyWarningPayload: {
-            /** Client Ids */
-            client_ids: string[];
-            /** Code */
-            code: string;
-            /** Message */
-            message: string;
-        };
-        /** OrderBandPayload */
-        OrderBandPayload: {
-            /** Center Hz */
-            center_hz: number;
-            /** Key */
-            key: string;
-            /** Tolerance */
-            tolerance: number;
-        };
-        /** RotationalSpeedValuePayload */
-        RotationalSpeedValuePayload: {
-            /** Mode */
-            mode: string | null;
-            /** Reason */
-            reason: string | null;
-            /** Rpm */
-            rpm: number | null;
-        };
-        /** RotationalSpeedsPayload */
-        RotationalSpeedsPayload: {
-            /** Basis Speed Source */
-            basis_speed_source: string | null;
-            driveshaft: components["schemas"]["RotationalSpeedValuePayload"];
-            engine: components["schemas"]["RotationalSpeedValuePayload"];
-            /** Order Bands */
-            order_bands: components["schemas"]["OrderBandPayload"][] | null;
-            wheel: components["schemas"]["RotationalSpeedValuePayload"];
-        };
-        /** SpectraPayload */
-        SpectraPayload: {
-            alignment?: components["schemas"]["AlignmentInfoPayload"];
-            /** Clients */
-            clients?: {
-                [key: string]: components["schemas"]["SpectrumSeriesPayload"];
-            };
-            /** Freq */
-            freq?: number[];
-            warning?: components["schemas"]["FrequencyWarningPayload"];
-        };
-        /** SpectrumSeriesPayload */
-        SpectrumSeriesPayload: {
-            /** Combined Spectrum Amp G */
-            combined_spectrum_amp_g?: number[];
-            /** Freq */
-            freq?: number[];
-            strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
-        };
-        /** StrengthPeak */
-        StrengthPeak: {
-            /** Amp */
-            amp: number;
-            /** Hz */
-            hz: number;
-            /** Strength Bucket */
-            strength_bucket: string | null;
-            /** Vibration Strength Db */
-            vibration_strength_db: number;
-        };
-        /** VibrationStrengthMetrics */
-        VibrationStrengthMetrics: {
-            /** Noise Floor Amp G */
-            noise_floor_amp_g: number;
-            /** Peak Amp G */
-            peak_amp_g: number;
-            /** Strength Bucket */
-            strength_bucket: string | null;
-            /** Top Peaks */
-            top_peaks: components["schemas"]["StrengthPeak"][];
-            /** Vibration Strength Db */
-            vibration_strength_db: number;
-        };
+  schemas: {
+    /** LiveWsPayload */
+    LiveWsPayload: {
+      /** Clients */
+      clients: components["schemas"]["ClientApiRow"][];
+      rotational_speeds: components["schemas"]["RotationalSpeedsPayload"] | null;
+      /** Schema Version */
+      schema_version: string;
+      /** Selected Client Id */
+      selected_client_id: string | null;
+      /** Server Time */
+      server_time: string;
+      spectra?: components["schemas"]["SpectraPayload"];
+      /** Speed Mps */
+      speed_mps: number | null;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /** AlignmentInfoPayload */
+    AlignmentInfoPayload: {
+      /** Aligned */
+      aligned: boolean;
+      /** Clock Synced */
+      clock_synced: boolean;
+      /** Overlap Ratio */
+      overlap_ratio: number;
+      /** Sensor Count */
+      sensor_count: number;
+      /** Shared Window S */
+      shared_window_s: number;
+    };
+    /** AxisMetrics */
+    AxisMetrics: {
+      /** P2P */
+      p2p: number;
+      /** Peaks */
+      peaks: components["schemas"]["AxisPeak"][];
+      /** Rms */
+      rms: number;
+    };
+    /** AxisPeak */
+    AxisPeak: {
+      /** Amp */
+      amp?: number;
+      /** Hz */
+      hz?: number;
+      /** Snr Ratio */
+      snr_ratio?: number;
+    };
+    /** ClientApiRow */
+    ClientApiRow: {
+      /** Connected */
+      connected: boolean;
+      /** Dropped Frames */
+      dropped_frames: number;
+      /** Firmware Version */
+      firmware_version: string;
+      /** Frame Samples */
+      frame_samples?: number;
+      /** Frames Total */
+      frames_total: number;
+      /** Id */
+      id: string;
+      /** Last Reset Time */
+      last_reset_time?: number | null;
+      /** Last Seen Age Ms */
+      last_seen_age_ms: number | null;
+      latest_metrics?: components["schemas"]["ClientMetrics"];
+      /** Location Code */
+      location_code: string;
+      /** Mac Address */
+      mac_address: string;
+      /** Name */
+      name: string;
+      /** Reset Count */
+      reset_count?: number;
+      /** Sample Rate Hz */
+      sample_rate_hz: number;
+    };
+    /** ClientMetrics */
+    ClientMetrics: {
+      combined?: components["schemas"]["CombinedMetrics"];
+      x?: components["schemas"]["AxisMetrics"];
+      y?: components["schemas"]["AxisMetrics"];
+      z?: components["schemas"]["AxisMetrics"];
+    };
+    /** CombinedMetrics */
+    CombinedMetrics: {
+      /** Peaks */
+      peaks?: components["schemas"]["StrengthPeak"][];
+      strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
+      /** Vib Mag P2P */
+      vib_mag_p2p?: number;
+      /** Vib Mag Rms */
+      vib_mag_rms?: number;
+    };
+    /** FrequencyWarningPayload */
+    FrequencyWarningPayload: {
+      /** Client Ids */
+      client_ids: string[];
+      /** Code */
+      code: string;
+      /** Message */
+      message: string;
+    };
+    /** OrderBandPayload */
+    OrderBandPayload: {
+      /** Center Hz */
+      center_hz: number;
+      /** Key */
+      key: string;
+      /** Tolerance */
+      tolerance: number;
+    };
+    /** RotationalSpeedValuePayload */
+    RotationalSpeedValuePayload: {
+      /** Mode */
+      mode: string | null;
+      /** Reason */
+      reason: string | null;
+      /** Rpm */
+      rpm: number | null;
+    };
+    /** RotationalSpeedsPayload */
+    RotationalSpeedsPayload: {
+      /** Basis Speed Source */
+      basis_speed_source: string | null;
+      driveshaft: components["schemas"]["RotationalSpeedValuePayload"];
+      engine: components["schemas"]["RotationalSpeedValuePayload"];
+      /** Order Bands */
+      order_bands: components["schemas"]["OrderBandPayload"][] | null;
+      wheel: components["schemas"]["RotationalSpeedValuePayload"];
+    };
+    /** SpectraPayload */
+    SpectraPayload: {
+      alignment?: components["schemas"]["AlignmentInfoPayload"];
+      /** Clients */
+      clients?: {
+        [key: string]: components["schemas"]["SpectrumSeriesPayload"];
+      };
+      /** Freq */
+      freq?: number[];
+      warning?: components["schemas"]["FrequencyWarningPayload"];
+    };
+    /** SpectrumSeriesPayload */
+    SpectrumSeriesPayload: {
+      /** Combined Spectrum Amp G */
+      combined_spectrum_amp_g?: number[];
+      /** Freq */
+      freq?: number[];
+      strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
+    };
+    /** StrengthPeak */
+    StrengthPeak: {
+      /** Amp */
+      amp: number;
+      /** Hz */
+      hz: number;
+      /** Strength Bucket */
+      strength_bucket: string | null;
+      /** Vibration Strength Db */
+      vibration_strength_db: number;
+    };
+    /** VibrationStrengthMetrics */
+    VibrationStrengthMetrics: {
+      /** Noise Floor Amp G */
+      noise_floor_amp_g: number;
+      /** Peak Amp G */
+      peak_amp_g: number;
+      /** Strength Bucket */
+      strength_bucket: string | null;
+      /** Top Peaks */
+      top_peaks: components["schemas"]["StrengthPeak"][];
+      /** Vibration Strength Db */
+      vibration_strength_db: number;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
+
 export type $defs = Record<string, never>;
+
+export type external = Record<string, never>;
+
 export type operations = Record<string, never>;
 
 export const EXPECTED_SCHEMA_VERSION = "1" as const;
