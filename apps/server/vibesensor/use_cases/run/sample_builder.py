@@ -7,7 +7,6 @@ of ``RunRecorder`` or any async / threading machinery.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import asdict
 from typing import TYPE_CHECKING, NamedTuple
 
 from vibesensor.domain import CarSnapshot
@@ -305,8 +304,6 @@ def build_run_metadata(
     recorded_utc_offset_seconds: int | None = None,
 ) -> JsonObject:
     """Assemble comprehensive run metadata."""
-    settings = asdict(analysis_settings_snapshot)
-    order_reference_spec = analysis_settings_snapshot.order_reference_spec
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
     raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
     incomplete = raw_sample_rate_hz is None
@@ -325,10 +322,6 @@ def build_run_metadata(
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         incomplete_for_order_analysis=incomplete,
         recorded_utc_offset_seconds=recorded_utc_offset_seconds,
-    )
-    metadata.update(settings)
-    metadata["tire_circumference_m"] = (
-        order_reference_spec.tire_circumference_m if order_reference_spec is not None else None
     )
     apply_run_context_snapshot(
         metadata,

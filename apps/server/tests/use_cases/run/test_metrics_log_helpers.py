@@ -299,7 +299,7 @@ def test_finalize_preserves_run_metadata_from_recording_start(
     assert fake_history_db.updated_metadata
     updated_run_id, metadata = fake_history_db.updated_metadata[-1]
     assert updated_run_id == run_id
-    assert metadata.extras["tire_width_mm"] == 285.0
+    assert "tire_width_mm" not in metadata.extras
     analysis_settings_snapshot = metadata.extras["analysis_settings_snapshot"]
     assert isinstance(analysis_settings_snapshot, dict)
     assert analysis_settings_snapshot["tire_width_mm"] == 285.0
@@ -660,13 +660,15 @@ def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
 
     metadata = _build_run_metadata_record(logger, "run-1", "2026-01-01T00:00:00Z")
 
-    assert metadata["car_name"] == "Primary"
-    assert metadata["car_type"] == "sedan"
-    assert metadata["active_car_id"] == "car-1"
+    assert "car_name" not in metadata
+    assert "car_type" not in metadata
+    assert "active_car_id" not in metadata
     assert metadata["incomplete_for_order_analysis"] is False
     active_car_snapshot = metadata.get("active_car_snapshot")
     assert isinstance(active_car_snapshot, dict)
+    assert active_car_snapshot["id"] == "car-1"
     assert active_car_snapshot["name"] == "Primary"
+    assert active_car_snapshot["type"] == "sedan"
 
 
 def test_run_metadata_captures_recorded_utc_offset(

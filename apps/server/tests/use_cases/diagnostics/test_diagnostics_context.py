@@ -61,6 +61,77 @@ def test_diagnostics_context_decodes_typed_reference_data() -> None:
     assert context.reference_complete is True
 
 
+def test_diagnostics_context_prefers_nested_snapshot_over_conflicting_flat_aliases() -> None:
+    metadata = _context_metadata()
+    metadata.update(
+        {
+            "final_drive_ratio": 9.99,
+            "current_gear_ratio": 1.99,
+            "car_name": "Flat Name",
+            "car_type": "truck",
+            "car_variant": "flat",
+        },
+    )
+
+    context = build_diagnostics_context(metadata, file_name="ctx")
+    spec = context.order_reference_spec
+
+    assert spec is not None
+    assert spec.final_drive_ratio == 3.55
+    assert spec.current_gear_ratio == 0.81
+    assert context.car_name == "Primary"
+    assert context.car_type == "sedan"
+    assert context.car_variant == "sport"
+
+
+def test_diagnostics_context_decodes_legacy_flat_metadata_into_canonical_snapshot() -> None:
+    context = build_diagnostics_context(
+        {
+            "run_id": "legacy-run",
+            "raw_sample_rate_hz": 200.0,
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 45.0,
+            "rim_in": 18.0,
+            "final_drive_ratio": 3.55,
+            "current_gear_ratio": 0.81,
+            "car_name": "Legacy Car",
+            "car_type": "sedan",
+            "car_variant": "sport",
+            "active_car_id": "car-legacy",
+        },
+        file_name="ctx",
+    )
+
+    projected = context_to_metadata_dict(context)
+
+    assert context.run_context.analysis_settings.final_drive_ratio == 3.55
+    assert context.run_context.car is not None
+    assert context.run_context.car.car_id == "car-legacy"
+    assert context.run_context.car.name == "Legacy Car"
+    assert projected["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
+    assert projected["active_car_snapshot"]["id"] == "car-legacy"
+    assert projected["car_name"] == "Legacy Car"
+
+
+def test_diagnostics_context_preserves_legacy_flat_ratio_fallback_without_tire_geometry() -> None:
+    context = build_diagnostics_context(
+        {
+            "run_id": "legacy-run",
+            "raw_sample_rate_hz": 200.0,
+            "tire_circumference_m": 2.036,
+            "final_drive_ratio": 3.08,
+            "current_gear_ratio": 0.64,
+        },
+        file_name="ctx",
+    )
+
+    assert context.order_reference_spec is None
+    assert context.tire_circumference_m == 2.036
+    assert context.final_drive_ratio == 3.08
+    assert context.current_gear_ratio == 0.64
+    assert context.reference_complete is False
+
+
 def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None:
     context = _context()
     sample = replace(

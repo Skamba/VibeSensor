@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import cast
 
 from vibesensor.domain import Car, ConfigurationSnapshot, Symptom
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.run.run_context import apply_legacy_run_context_fields
 
 from ._context import DiagnosticsContext
 
 
 def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
     """Rehydrate the persisted metadata shape for boundary serializers."""
-    metadata: dict[str, object] = dict(context._boundary_metadata)
+    metadata: JsonObject = cast(JsonObject, dict(context._boundary_metadata))
     metadata["run_id"] = context.run_id
     metadata["case_id"] = context.run_metadata.case_id
     metadata["sensor_mac"] = context.run_metadata.sensor_mac
@@ -40,31 +40,12 @@ def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
     if context.explicit_engine_rpm is not None or "engine_rpm" in metadata:
         metadata["engine_rpm"] = context.explicit_engine_rpm
 
-    settings_dict = asdict(context.run_context.analysis_settings)
-    for key, value in settings_dict.items():
-        if key in metadata or value:
-            metadata[key] = value
+    metadata.update(cast(JsonObject, context.run_context.to_metadata_dict()))
+    apply_legacy_run_context_fields(metadata, context_snapshot=context.run_context)
     tire_circumference_m = context.tire_circumference_m
     if tire_circumference_m is not None or "tire_circumference_m" in metadata:
         metadata["tire_circumference_m"] = tire_circumference_m
-
-    has_non_zero_settings = any(value != 0.0 for value in settings_dict.values())
-    if "analysis_settings_snapshot" in metadata or has_non_zero_settings:
-        metadata.update(context.run_context.to_metadata_dict())
-
-    if context.run_context.has_car_context:
-        metadata["active_car_id"] = context.run_context.active_car_id
-        metadata["car_name"] = context.run_context.car_name
-        metadata["car_type"] = context.run_context.car_type
-        metadata["car_variant"] = context.run_context.car_variant
-    else:
-        if context.car_name is not None or "car_name" in metadata:
-            metadata["car_name"] = context.car_name
-        if context.car_type is not None or "car_type" in metadata:
-            metadata["car_type"] = context.car_type
-        if context.car_variant is not None or "car_variant" in metadata:
-            metadata["car_variant"] = context.car_variant
-    return cast(JsonObject, metadata)
+    return metadata
 
 
 def context_to_configuration_snapshot(context: DiagnosticsContext) -> ConfigurationSnapshot:

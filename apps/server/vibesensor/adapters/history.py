@@ -29,12 +29,15 @@ from vibesensor.use_cases.history.exports import (
     HistoryExportContext,
     HistoryExportDownload,
     HistoryExportService,
-    build_run_details_json,
     serialize_run_details_json,
 )
 from vibesensor.use_cases.history.helpers import strip_internal_fields
 from vibesensor.use_cases.history.runs import HistoryRunService
-from vibesensor.use_cases.run.run_context import add_current_context_warnings
+from vibesensor.use_cases.run.run_context import (
+    add_current_context_warnings,
+    apply_legacy_run_context_fields,
+    run_context_snapshot_from_metadata,
+)
 
 _HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 
@@ -53,13 +56,23 @@ def _project_history_analysis(
     return projected
 
 
+def _project_history_metadata(metadata: Mapping[str, object]) -> JsonObject:
+    projected = cast(JsonObject, {key: value for key, value in metadata.items()})
+    context_snapshot = run_context_snapshot_from_metadata(projected)
+    apply_legacy_run_context_fields(projected, context_snapshot=context_snapshot)
+    order_reference_spec = context_snapshot.order_reference_spec
+    if order_reference_spec is not None and order_reference_spec.supports_wheel_reference:
+        projected["tire_circumference_m"] = order_reference_spec.tire_circumference_m
+    return projected
+
+
 def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
     """Project persisted analysis fields in a history run for API responses."""
     payload: JsonObject = {
         "run_id": run.run_id,
         "status": run.status.value,
         "sample_count": run.sample_count,
-        "metadata": run.metadata.to_dict(),
+        "metadata": _project_history_metadata(run.metadata.to_dict()),
     }
     if run.error_message is not None:
         payload["error_message"] = run.error_message
@@ -82,10 +95,15 @@ def build_projected_run_details_json(
     run_id: str,
 ) -> str:
     """Build the exported JSON metadata document with canonical projected analysis."""
+    payload = run.to_json_object()
+    payload["metadata"] = _project_history_metadata(run.metadata.to_dict())
     analysis = run.analysis
     if analysis is None:
-        return build_run_details_json(run, sample_count, run_id)
-    payload = run.to_json_object()
+        return serialize_run_details_json(
+            payload,
+            sample_count=sample_count,
+            run_id=run_id,
+        )
     payload["analysis"] = _project_history_analysis(
         analysis,
         strip_internal=True,

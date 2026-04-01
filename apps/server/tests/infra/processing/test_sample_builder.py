@@ -163,9 +163,12 @@ class TestBuildRunMetadata:
         )
         assert meta["run_id"] == "test-run"
         assert meta["sensor_model"] == "ADXL345"
-        assert meta["tire_width_mm"] == 205.0
-        assert meta["tire_aspect_pct"] == 55.0
-        assert meta["rim_in"] == 16.0
+        assert "tire_width_mm" not in meta
+        assert "tire_aspect_pct" not in meta
+        assert "rim_in" not in meta
+        assert meta["analysis_settings_snapshot"]["tire_width_mm"] == 205.0
+        assert meta["analysis_settings_snapshot"]["tire_aspect_pct"] == 55.0
+        assert meta["analysis_settings_snapshot"]["rim_in"] == 16.0
 
     def test_with_language(self) -> None:
         meta = build_run_metadata(
@@ -190,6 +193,8 @@ class TestBuildRunMetadata:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         class _FakeSpec:
+            is_complete = True
+            has_engine_reference = True
             tire_circumference_m = 2.345
 
         monkeypatch.setattr(
@@ -204,7 +209,8 @@ class TestBuildRunMetadata:
             ),
         )
 
-        assert meta["tire_circumference_m"] == 2.345
+        assert meta["incomplete_for_order_analysis"] is False
+        assert "tire_circumference_m" not in meta
 
     def test_uses_default_simulator_car_when_active_car_missing(self) -> None:
         meta = build_run_metadata(
@@ -214,9 +220,9 @@ class TestBuildRunMetadata:
             ),
         )
 
-        assert meta["car_name"] == "VibeSensor Simulator"
-        assert meta["car_type"] == "sedan"
-        assert meta["active_car_id"] == "simulator-default"
+        assert "car_name" not in meta
+        assert "car_type" not in meta
+        assert "active_car_id" not in meta
         assert meta["active_car_snapshot"] == {
             "id": "simulator-default",
             "name": "VibeSensor Simulator",

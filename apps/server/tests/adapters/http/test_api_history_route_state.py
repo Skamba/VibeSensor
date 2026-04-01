@@ -212,6 +212,70 @@ async def test_history_list_includes_recorded_car_name() -> None:
 
 
 @pytest.mark.asyncio
+async def test_history_list_uses_nested_active_car_snapshot_name() -> None:
+    metadata = make_metadata(
+        active_car_snapshot={
+            "id": "car-1",
+            "name": "Nested Track Car",
+            "type": "coupe",
+            "aspects": {
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+                "final_drive_ratio": 3.15,
+                "current_gear_ratio": 0.91,
+            },
+        }
+    )
+    samples = [sample(i) for i in range(3)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+
+    payload = response_payload(await route_endpoint(router, "/api/history")())
+
+    assert payload["runs"][0]["car_name"] == "Nested Track Car"
+
+
+@pytest.mark.asyncio
+async def test_history_run_rehydrates_flat_metadata_from_nested_run_context() -> None:
+    metadata = make_metadata(
+        analysis_settings_snapshot={
+            "tire_width_mm": 275.0,
+            "tire_aspect_pct": 35.0,
+            "rim_in": 20.0,
+            "final_drive_ratio": 3.15,
+            "current_gear_ratio": 0.91,
+        },
+        active_car_snapshot={
+            "id": "car-1",
+            "name": "Nested Track Car",
+            "type": "hatchback",
+            "aspects": {
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+                "final_drive_ratio": 3.15,
+                "current_gear_ratio": 0.91,
+            },
+        },
+    )
+    samples = [sample(i) for i in range(3)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+
+    payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
+    projected_metadata = payload["metadata"]
+
+    assert projected_metadata["car_name"] == "Nested Track Car"
+    assert projected_metadata["car_type"] == "hatchback"
+    assert projected_metadata["active_car_id"] == "car-1"
+    assert float(projected_metadata["tire_width_mm"]) == pytest.approx(275.0)
+    assert float(projected_metadata["tire_aspect_pct"]) == pytest.approx(35.0)
+    assert float(projected_metadata["rim_in"]) == pytest.approx(20.0)
+    assert float(projected_metadata["tire_circumference_m"]) > 0
+
+
+@pytest.mark.asyncio
 async def test_history_run_includes_error_message_for_error_status() -> None:
     router = make_status_router(
         status="error",
