@@ -195,7 +195,11 @@ class TestPrepareReportMappingContext:
             {
                 "run_id": "report-context-metadata",
                 "lang": "en",
-                "metadata": {"car_name": "Track Car", "car_type": "coupe"},
+                "metadata": {
+                    "car_name": "Track Car",
+                    "car_type": "coupe",
+                    "recorded_utc_offset_seconds": 7200,
+                },
                 "report_date": "2026-03-25T10:00:00Z",
                 "record_length": "5m",
                 "start_time_utc": "2026-03-25T09:55:00Z",
@@ -218,7 +222,7 @@ class TestPrepareReportMappingContext:
 
         assert context.car_name == "Track Car"
         assert context.car_type == "coupe"
-        assert context.date_str == "2026-03-25 10:00:00 UTC"
+        assert context.date_str == "2026-03-25 12:00:00 UTC+02:00"
         assert context.start_time_utc == "2026-03-25 09:55:00 UTC"
         assert context.end_time_utc == "2026-03-25 10:00:00 UTC"
         assert context.origin is prepared.report_facts.origin
