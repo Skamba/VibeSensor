@@ -142,17 +142,63 @@ def _status_palette(text: str, *, tr: Callable[..., str]) -> tuple[str, str]:
     return (REPORT_COLORS["card_neutral_bg"], REPORT_COLORS["card_neutral_border"])
 
 
-def _draw_status_pill(c: Canvas, *, text: str, tr: Callable[..., str], x: float, y: float) -> None:
-    fill, border = _status_palette(text, tr=tr)
-    text_w = c.stringWidth(text, FONT_B, FS_SMALL)
-    pill_w = max(32 * mm, text_w + (6 * mm))
-    pill_h = 7 * mm
+def _draw_action_status_callout(
+    c: Canvas,
+    *,
+    status: str,
+    note: str | None,
+    tr: Callable[..., str],
+    x: float,
+    y_top: float,
+    w: float,
+) -> None:
+    fill, border = _status_palette(status, tr=tr)
+    content_w = w - 6 * mm
+    note_text = str(note or "").strip() or None
+    card_h = 4.0 * mm + _measure_text_height(
+        status,
+        w=content_w,
+        size=FS_SMALL,
+        leading=FS_SMALL + 1.0,
+        max_lines=2,
+    )
+    if note_text is not None:
+        card_h += 0.4 * mm + _measure_text_height(
+            note_text,
+            w=content_w,
+            size=FS_SMALL,
+            leading=FS_SMALL + 1.1,
+            max_lines=4,
+        )
+    card_h = float(max(12 * mm, card_h + 2.8 * mm))
     c.setFillColor(_hex(fill))
     c.setStrokeColor(_hex(border))
-    c.roundRect(x, y - pill_h + 1.2 * mm, pill_w, pill_h, 3 * mm, stroke=1, fill=1)
+    c.roundRect(x, y_top - card_h + 1.2 * mm, w, card_h, 2.5 * mm, stroke=1, fill=1)
     c.setFillColor(_hex(TEXT_CLR))
-    c.setFont(FONT_B, FS_SMALL)
-    c.drawString(x + 3 * mm, y - 3.5 * mm, text)
+    text_y = _draw_text(
+        c,
+        x + 3 * mm,
+        y_top - 3.2 * mm,
+        content_w,
+        status,
+        font=FONT_B,
+        size=FS_SMALL,
+        color=TEXT_CLR,
+        leading=FS_SMALL + 1.0,
+        max_lines=2,
+    )
+    if note_text is not None:
+        _draw_text(
+            c,
+            x + 3 * mm,
+            text_y - 0.4 * mm,
+            content_w,
+            note_text,
+            size=FS_SMALL,
+            color=TEXT_CLR,
+            leading=FS_SMALL + 1.1,
+            max_lines=4,
+        )
 
 
 def _draw_label_value(
@@ -243,40 +289,15 @@ def _draw_hero_block(
     c.setFillColor(_hex(SUB_CLR))
     c.setFont(FONT, FS_SMALL)
     c.drawString(right_x, inner_y + 1.2 * mm, tr("REPORT_ACTION_STATUS_LABEL"))
-    _draw_status_pill(
+    _draw_action_status_callout(
         c,
-        text=verdict.action_status or tr("UNKNOWN"),
+        status=verdict.action_status or tr("UNKNOWN"),
+        note=verdict.action_status_note,
         tr=tr,
         x=right_x,
-        y=inner_y - 1.5 * mm,
+        y_top=inner_y - 1.5 * mm,
+        w=right_w,
     )
-    if verdict.action_status_note:
-        note_fill, note_border = _status_palette(verdict.action_status or tr("UNKNOWN"), tr=tr)
-        note_lines = _wrap_lines(verdict.action_status_note, right_w - 6 * mm, FS_SMALL)[:4]
-        note_h = max(10 * mm, 4 * mm + (len(note_lines) * (FS_SMALL + 1.1)))
-        note_top = inner_y - 9.0 * mm
-        c.setFillColor(_hex(note_fill))
-        c.setStrokeColor(_hex(note_border))
-        c.roundRect(
-            right_x,
-            note_top - note_h + 1.2 * mm,
-            right_w,
-            note_h,
-            2.5 * mm,
-            stroke=1,
-            fill=1,
-        )
-        _draw_text(
-            c,
-            right_x + 3 * mm,
-            note_top - 2.0 * mm,
-            right_w - 6 * mm,
-            verdict.action_status_note,
-            size=FS_SMALL,
-            color=TEXT_CLR,
-            leading=FS_SMALL + 1.1,
-            max_lines=4,
-        )
 
 
 def _draw_proof_block(
