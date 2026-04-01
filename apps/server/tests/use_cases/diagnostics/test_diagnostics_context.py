@@ -113,6 +113,25 @@ def test_diagnostics_context_decodes_legacy_flat_metadata_into_canonical_snapsho
     assert projected["car_name"] == "Legacy Car"
 
 
+def test_diagnostics_context_preserves_legacy_flat_ratio_fallback_without_tire_geometry() -> None:
+    context = build_diagnostics_context(
+        {
+            "run_id": "legacy-run",
+            "raw_sample_rate_hz": 200.0,
+            "tire_circumference_m": 2.036,
+            "final_drive_ratio": 3.08,
+            "current_gear_ratio": 0.64,
+        },
+        file_name="ctx",
+    )
+
+    assert context.order_reference_spec is None
+    assert context.tire_circumference_m == 2.036
+    assert context.final_drive_ratio == 3.08
+    assert context.current_gear_ratio == 0.64
+    assert context.reference_complete is False
+
+
 def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None:
     context = _context()
     sample = replace(

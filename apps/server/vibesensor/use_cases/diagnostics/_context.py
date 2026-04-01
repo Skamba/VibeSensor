@@ -94,12 +94,18 @@ class DiagnosticsContext:
     @property
     def final_drive_ratio(self) -> float | None:
         spec = self.order_reference_spec
-        return spec.final_drive_ratio if spec is not None else None
+        if spec is not None and spec.final_drive_ratio > 0:
+            return spec.final_drive_ratio
+        ratio = self.run_context.analysis_settings.final_drive_ratio
+        return ratio if ratio > 0 else None
 
     @property
     def current_gear_ratio(self) -> float | None:
         spec = self.order_reference_spec
-        return spec.current_gear_ratio if spec is not None else None
+        if spec is not None and spec.current_gear_ratio > 0:
+            return spec.current_gear_ratio
+        ratio = self.run_context.analysis_settings.current_gear_ratio
+        return ratio if ratio > 0 else None
 
     @property
     def tire_circumference_m(self) -> float | None:
