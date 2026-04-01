@@ -3,10 +3,23 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from vibesensor.adapters.simulator.commands import apply_one_wheel_mild_scenario
 from vibesensor.adapters.simulator.profiles import DEFAULT_ORDER_HZ
 from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
+from vibesensor.infra.processing.compute import SignalMetricsComputer
+from vibesensor.infra.processing.models import ProcessorConfig
+
+_TEST_PROCESSOR_CONFIG = ProcessorConfig(
+    sample_rate_hz=800,
+    waveform_seconds=4,
+    waveform_display_hz=4,
+    fft_n=200,
+    spectrum_min_hz=0.0,
+    spectrum_max_hz=200.0,
+    accel_scale_g_per_lsb=None,
+)
 
 
 def _make_client(*, seed: int = 1, name: str = "front-left") -> SimClient:
@@ -32,6 +45,20 @@ def _measure_order_magnitude(client: SimClient, order_hz: float, *, axis: int = 
     order_index = int(np.argmin(np.abs(freqs - order_hz)))
     spectrum = np.fft.rfft(signal[:, axis])
     return float(np.abs(spectrum[order_index]) / sample_count)
+
+
+def _measure_p95_strength_db(
+    client: SimClient,
+    *,
+    frames: int = 60,
+) -> float:
+    computer = SignalMetricsComputer(_TEST_PROCESSOR_CONFIG)
+    strengths: list[float] = []
+    for _ in range(frames):
+        frame = client.make_frame().astype(np.float32).T
+        result = computer.compute_fft_spectrum(frame, client.sample_rate_hz)
+        strengths.append(float(result["strength_metrics"]["vibration_strength_db"]))
+    return float(np.percentile(strengths, 95))
 
 
 def test_make_frame_is_deterministic_without_asyncio() -> None:
@@ -72,10 +99,7 @@ def test_common_shaft_tone_does_not_become_corner_dominant_in_one_wheel_runs() -
         client.rng = np.random.default_rng(0)
 
     shaft_1x = DEFAULT_ORDER_HZ["shaft_1x"]
-    magnitudes = {
-        client.name: _measure_order_magnitude(client, shaft_1x)
-        for client in clients
-    }
+    magnitudes = {client.name: _measure_order_magnitude(client, shaft_1x) for client in clients}
 
     other_wheel_mean = np.mean(
         [
@@ -86,3 +110,18 @@ def test_common_shaft_tone_does_not_become_corner_dominant_in_one_wheel_runs() -
     )
     assert magnitudes["front-right"] < magnitudes["front-left"] * 2.0
     assert magnitudes["front-right"] < other_wheel_mean * 2.0
+
+
+@pytest.mark.parametrize("fault_wheel", ["front-left", "front-right", "rear-left"])
+def test_one_wheel_runs_keep_fault_corner_strongest_by_p95(fault_wheel: str) -> None:
+    clients = [
+        _make_client(seed=1, name="front-left"),
+        _make_client(seed=2, name="front-right"),
+        _make_client(seed=3, name="rear-left"),
+        _make_client(seed=4, name="rear-right"),
+    ]
+    apply_one_wheel_mild_scenario(clients, fault_wheel)
+
+    p95_by_name = {client.name: _measure_p95_strength_db(client) for client in clients}
+
+    assert max(p95_by_name, key=p95_by_name.get) == fault_wheel
