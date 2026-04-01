@@ -317,6 +317,119 @@ def trunk_primary_guidance_summary(*, primary_source: str) -> dict:
     )
 
 
+def recapture_guidance_summary(mode: str) -> dict:
+    """Return a recapture-mode summary tailored to one insufficiency mode."""
+    base = {
+        "lang": "en",
+        "record_length": "00:20.0",
+        "sensor_count_used": 4,
+        "sensor_locations": ["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        "sensor_locations_connected_throughout": [
+            "Front Left",
+            "Front Right",
+            "Rear Left",
+            "Rear Right",
+        ],
+        "speed_stats": {"steady_speed": False},
+    }
+    if mode == "steady":
+        finding = make_finding_payload(
+            finding_id="F_STEADY",
+            suspected_source="wheel/tire",
+            confidence=0.34,
+            strongest_location="Front Left",
+            strongest_speed_band="40-60 km/h",
+            confidence_label_key="CONFIDENCE_LOW",
+            confidence_tone="neutral",
+            confidence_pct="34%",
+            confidence_reason="Speed was not steady during measurement",
+        )
+        return minimal_summary(
+            **base,
+            findings=[finding],
+            top_causes=[finding],
+            run_suitability=[
+                {
+                    "check": "SUITABILITY_CHECK_SPEED_VARIATION",
+                    "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
+                    "state": "warn",
+                    "explanation": "SUITABILITY_SPEED_VARIATION_WARN",
+                }
+            ],
+        )
+    if mode == "overlap":
+        overlap_reason = (
+            "Wheel and driveline evidence overlap, so the system could not strongly "
+            "differentiate between them; inspect both areas."
+        )
+        wheel = make_finding_payload(
+            finding_id="F_WHEEL_RECAPTURE",
+            suspected_source="wheel/tire",
+            confidence=0.35,
+            strongest_location="Front Left",
+            strongest_speed_band="60-80 km/h",
+            signatures_observed=["1x wheel order"],
+            confidence_label_key="CONFIDENCE_LOW",
+            confidence_tone="neutral",
+            confidence_pct="35%",
+            confidence_reason=overlap_reason,
+        )
+        driveline = make_finding_payload(
+            finding_id="F_DRIVELINE_RECAPTURE",
+            suspected_source="driveline",
+            confidence=0.33,
+            strongest_location="Front Left",
+            strongest_speed_band="60-80 km/h",
+            signatures_observed=["1x driveshaft"],
+            confidence_label_key="CONFIDENCE_LOW",
+            confidence_tone="neutral",
+            confidence_pct="33%",
+            confidence_reason=overlap_reason,
+        )
+        return minimal_summary(
+            **base,
+            findings=[wheel, driveline],
+            top_causes=[wheel, driveline],
+        )
+    if mode == "weak":
+        finding = make_finding_payload(
+            finding_id="F_WEAK",
+            suspected_source="wheel/tire",
+            confidence=0.55,
+            strongest_location="Front Left",
+            strongest_speed_band="50-70 km/h",
+            weak_spatial_separation=True,
+            confidence_label_key="CONFIDENCE_MEDIUM",
+            confidence_tone="warn",
+            confidence_pct="55%",
+            confidence_reason="Vibration spread across multiple locations",
+        )
+        return minimal_summary(
+            **base,
+            findings=[finding],
+            top_causes=[finding],
+        )
+    if mode == "transient":
+        finding = make_finding_payload(
+            finding_id="F_TRANSIENT",
+            suspected_source="transient_impact",
+            confidence=0.28,
+            strongest_location="Rear Left",
+            strongest_speed_band="20-30 km/h",
+            peak_classification="transient",
+            confidence_label_key="CONFIDENCE_LOW",
+            confidence_tone="neutral",
+            confidence_pct="28%",
+            confidence_reason="Confidence downgraded due to negligible vibration strength",
+        )
+        return minimal_summary(
+            **base,
+            findings=[finding],
+            top_causes=[finding],
+        )
+    raise ValueError(f"Unsupported recapture guidance mode: {mode}")
+
+
 def report_run_metadata(
     run_id: str = "run-01",
     *,

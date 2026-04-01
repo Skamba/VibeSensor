@@ -1715,6 +1715,18 @@
     "en": "Capture a longer steady-speed window before treating the corner call as final.",
     "nl": "Leg eerst een langere stabiele snelheidsperiode vast voordat je de hoekindicatie als definitief ziet."
   },
+  "REPORT_RECAPTURE_CONDITION_COMPARE_PATHS": {
+    "en": "Cover the same speed band in separate drive/coast or load-change passes so competing sources separate cleanly.",
+    "nl": "Dek dezelfde snelheidsband af in aparte aangedreven/uitrollende of belastingswissel-passes zodat concurrerende bronnen schoner uit elkaar vallen."
+  },
+  "REPORT_RECAPTURE_CONDITION_REPEAT_EVENT": {
+    "en": "Repeat the same trigger with enough before/after baseline so the transient event can recur cleanly.",
+    "nl": "Herhaal dezelfde trigger met genoeg basislijn voor en na het event zodat de tijdelijke gebeurtenis schoon kan terugkomen."
+  },
+  "REPORT_RECAPTURE_CONDITION_STEADY_HOLD": {
+    "en": "Hold a repeatable steady-speed window through the problem band before changing throttle or load.",
+    "nl": "Houd een herhaalbare stabiele snelheidsfase aan door de probleemzone voordat gas of belasting verandert."
+  },
   "REPORT_CAPTURE_ISSUES_TITLE": {
     "en": "What was insufficient in this run",
     "nl": "Wat onvoldoende was in deze run"
@@ -1722,6 +1734,34 @@
   "REPORT_CAPTURE_ISSUE_GENERIC": {
     "en": "Current evidence is not strong enough to support an action-ready verdict.",
     "nl": "Het huidige bewijs is niet sterk genoeg voor een direct bruikbaar oordeel."
+  },
+  "REPORT_RECAPTURE_ISSUE_MIXED_LOCATION": {
+    "en": "Location evidence stayed mixed between multiple positions instead of narrowing to one inspect-first area.",
+    "nl": "Het locatiebewijs bleef gemengd tussen meerdere posities in plaats van te vernauwen naar één eerste inspectiegebied."
+  },
+  "REPORT_RECAPTURE_ISSUE_SOURCE_OVERLAP": {
+    "en": "{primary} and {alternative} evidence overlapped in the same window, so this run did not separate one inspection path cleanly.",
+    "nl": "Bewijs voor {primary} en {alternative} overlapte in hetzelfde venster, waardoor deze run geen enkel inspectiepad schoon scheidde."
+  },
+  "REPORT_RECAPTURE_ISSUE_TRANSIENT": {
+    "en": "The strongest signal was transient or intermittent, so it did not repeat cleanly enough for an inspection-first verdict.",
+    "nl": "Het sterkste signaal was tijdelijk of intermitterend en herhaalde zich daardoor niet schoon genoeg voor een inspectie-eerste conclusie."
+  },
+  "REPORT_RECAPTURE_ISSUE_WEAK_LOCATION": {
+    "en": "Location evidence stayed spread across multiple positions instead of separating one inspect-first area.",
+    "nl": "Het locatiebewijs bleef verspreid over meerdere posities in plaats van één eerste inspectiegebied te scheiden."
+  },
+  "REPORT_RECAPTURE_ACTION_COMPARE_PATHS": {
+    "en": "Repeat the same speed band with separate drive/coast or load-change passes to separate the overlapping source paths.",
+    "nl": "Herhaal dezelfde snelheidsband met aparte aangedreven/uitrollende of belastingswissel-passes om overlappende bronpaden te scheiden."
+  },
+  "REPORT_RECAPTURE_ACTION_REPEAT_EVENT": {
+    "en": "Repeat the same trigger several times and capture before/during/after the event so the transient signal can recur cleanly.",
+    "nl": "Herhaal dezelfde trigger meerdere keren en meet voor/tijdens/na het event zodat het tijdelijke signaal schoon kan terugkomen."
+  },
+  "REPORT_RECAPTURE_ACTION_STEADY_HOLD": {
+    "en": "Repeat the same speed band with a longer steady hold before adding accel/decel transitions.",
+    "nl": "Herhaal dezelfde snelheidsband met een langere stabiele fase voordat accel/decel-overgangen worden toegevoegd."
   },
   "REPORT_COVERAGE_ACTIVE_OF_EXPECTED": {
     "en": "{active} of {expected} expected positions stayed connected.",
