@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import pytest
 from test_support.findings import make_finding_payload
+from test_support.report_helpers import minimal_summary
 
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as build_test_run_from_summary,
@@ -41,6 +43,63 @@ def _summary() -> dict[str, object]:
         "findings": [finding],
         "top_causes": [finding],
     }
+
+
+def _weak_spatial_order_summary(*, source: str, order_label: str) -> dict[str, object]:
+    finding = make_finding_payload(
+        finding_id="F_ORDER",
+        suspected_source=source,
+        confidence=0.65,
+        strongest_location="Front Right",
+        strongest_speed_band="40-70 km/h",
+        frequency_hz_or_order=order_label,
+        dominance_ratio=1.04,
+        weak_spatial_separation=True,
+    )
+    return minimal_summary(
+        run_id=f"weak-spatial-{source.replace('/', '-')}",
+        file_name=f"weak-spatial-{source.replace('/', '-')}.json",
+        rows=64,
+        sensor_count_used=4,
+        lang="en",
+        metadata={
+            "car_info": {"tire_spec": "205/55R16"},
+            "sensor_model": "VS-1",
+            "firmware_version": "1.2.3",
+            "raw_sample_rate_hz": 400,
+        },
+        report_date="",
+        record_length="18.0 s",
+        start_time_utc="2026-03-30T12:00:00Z",
+        end_time_utc="2026-03-30T12:00:18Z",
+        sensor_locations=["front_left", "front_right", "rear_left", "rear_right"],
+        sensor_locations_connected_throughout=[
+            "front_left",
+            "front_right",
+            "rear_left",
+            "rear_right",
+        ],
+        sensor_intensity_by_location=[
+            {"location": "Front Left", "p95_intensity_db": 15.0, "peak_intensity_db": 18.8},
+            {"location": "Front Right", "p95_intensity_db": 18.0, "peak_intensity_db": 22.0},
+            {"location": "Rear Left", "p95_intensity_db": 15.4, "peak_intensity_db": 19.1},
+            {"location": "Rear Right", "p95_intensity_db": 17.6, "peak_intensity_db": 21.5},
+        ],
+        findings=[finding],
+        top_causes=[finding],
+        run_suitability=[
+            {
+                "check": "Frame integrity",
+                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "state": "pass",
+            },
+            {
+                "check": "Speed variation",
+                "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "state": "pass",
+            },
+        ],
+    )
 
 
 def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
@@ -101,3 +160,39 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
     assert facts.timeline_intervals[0].speed_max_kmh == 62.0
     assert facts.timeline_intervals[1].phase == "accel"
     assert facts.timeline_intervals[1].has_fault_evidence is True
+
+
+@pytest.mark.parametrize(
+    ("source", "order_label"),
+    [
+        pytest.param("engine", "2x engine order", id="engine"),
+        pytest.param("driveline", "1x driveshaft order", id="driveline"),
+    ],
+)
+def test_prepare_report_facts_keeps_weak_spatial_system_order_findings_on_caution_path(
+    source: str,
+    order_label: str,
+) -> None:
+    summary = _weak_spatial_order_summary(source=source, order_label=order_label)
+    test_run = build_test_run_from_summary(summary)
+    assert test_run is not None
+
+    facts = prepare_report_facts(summary, test_run=test_run)
+    primary = facts.primary_candidate_facts.domain_primary
+
+    assert primary is not None
+    assert primary.confidence_assessment is not None
+    assert primary.confidence_assessment.tier == "B"
+    assert facts.location_confidence_key == "weak"
+    assert facts.action_status_key == "action_ready_caution"
+
+
+def test_prepare_report_facts_keeps_weak_spatial_wheel_findings_on_recapture_path() -> None:
+    summary = _weak_spatial_order_summary(source="wheel/tire", order_label="1x wheel order")
+    test_run = build_test_run_from_summary(summary)
+    assert test_run is not None
+
+    facts = prepare_report_facts(summary, test_run=test_run)
+
+    assert facts.location_confidence_key == "weak"
+    assert facts.action_status_key == "recapture_before_acting"
