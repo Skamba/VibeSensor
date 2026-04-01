@@ -324,14 +324,14 @@ def _draw_proof_block(
     _draw_panel(c, x, y, w, h, verdict.proof_panel_title or tr("REPORT_PROOF_PANEL_TITLE"))
     inner_x = x + 4 * mm
     inner_y = y + h - PANEL_HEADER_H - 2 * mm
-    diagram_w = w * 0.42
+    diagram_w = w * 0.44
     left_x = inner_x
     left_w = diagram_w - 2 * mm
     left_bottom = y + 7 * mm
     left_top = inner_y
     left_content_h = left_top - left_bottom
-    diagram_y = left_bottom
-    diagram_h = left_content_h
+    diagram_y = left_bottom + (4 * mm)
+    diagram_h = left_content_h - (4 * mm)
     diagram = car_location_diagram(
         data.top_causes or data.findings,
         {
