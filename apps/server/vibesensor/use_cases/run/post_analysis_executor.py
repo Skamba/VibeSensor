@@ -1,22 +1,33 @@
-"""Execution and persistence outcomes for background post-analysis."""
+"""Execution and persistence coordination for background post-analysis."""
 
 from __future__ import annotations
 
 import logging
 import sqlite3
 import time
-from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Protocol
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.use_cases.run.post_analysis_input import (
+    PostAnalysisRunInput,
+    build_post_analysis_input,
+)
 from vibesensor.use_cases.run.post_analysis_loader import (
     EmptyPostAnalysisSamples,
     MissingPostAnalysisMetadata,
     PostAnalysisLoadResult,
     load_post_analysis_run,
+)
+from vibesensor.use_cases.run.post_analysis_outcomes import (
+    PostAnalysisAttemptResult,
+    PostAnalysisExecutionMissingMetadata,
+    PostAnalysisExecutionNoSamples,
+    PostAnalysisExecutionPersistenceFailure,
+    PostAnalysisExecutionResult,
+    PostAnalysisExecutionRetryableFailure,
+    PostAnalysisExecutionSuccess,
+    is_retryable_post_analysis_error,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -25,16 +36,7 @@ LOGGER = logging.getLogger(__name__)
 class PostAnalysisRunner(Protocol):
     """Injected boundary for building the stored post-stop analysis summary."""
 
-    def __call__(
-        self,
-        *,
-        run_id: str,
-        metadata: RunMetadata,
-        samples: list[SensorFrame],
-        language: str,
-        total_sample_count: int,
-        stride: int,
-    ) -> PersistedAnalysis: ...
+    def __call__(self, run: PostAnalysisRunInput) -> PersistedAnalysis: ...
 
 
 class PostAnalysisLoader(Protocol):
@@ -46,60 +48,6 @@ class PostAnalysisLoader(Protocol):
         run_id: str,
         db: RunPersistence,
     ) -> PostAnalysisLoadResult: ...
-
-
-@dataclass(frozen=True, slots=True)
-class PostAnalysisExecutionSuccess:
-    run_id: str
-
-
-@dataclass(frozen=True, slots=True)
-class PostAnalysisExecutionMissingMetadata:
-    run_id: str
-    completed_error: str
-
-
-@dataclass(frozen=True, slots=True)
-class PostAnalysisExecutionNoSamples:
-    run_id: str
-    completed_error: str
-
-
-@dataclass(frozen=True, slots=True)
-class PostAnalysisExecutionAnalysisFailure:
-    run_id: str
-    completed_error: str
-    callback_errors: tuple[str, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class PostAnalysisExecutionPersistenceFailure:
-    run_id: str
-    completed_error: str
-    callback_errors: tuple[str, ...] = ()
-
-
-@dataclass(frozen=True, slots=True)
-class PostAnalysisExecutionRetryableFailure:
-    run_id: str
-    error_message: str
-    callback_errors: tuple[str, ...] = ()
-
-
-PostAnalysisExecutionResult = (
-    PostAnalysisExecutionSuccess
-    | PostAnalysisExecutionMissingMetadata
-    | PostAnalysisExecutionNoSamples
-    | PostAnalysisExecutionAnalysisFailure
-    | PostAnalysisExecutionPersistenceFailure
-)
-
-PostAnalysisAttemptResult = PostAnalysisExecutionResult | PostAnalysisExecutionRetryableFailure
-
-
-def is_retryable_post_analysis_error(exc: Exception) -> bool:
-    """Return whether a post-analysis exception should be retried before storing failure."""
-    return isinstance(exc, (sqlite3.Error, OSError, MemoryError))
 
 
 def execute_post_analysis(
@@ -114,19 +62,18 @@ def execute_post_analysis(
     LOGGER.info("Analysis started for run %s", run_id)
     try:
         load_result = load_run(run_id=run_id, db=db)
-    except Exception as exc:  # includes sample-read and metadata-read failures
+    except (sqlite3.Error, OSError, MemoryError) as exc:
         if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
             return _retryable_failure_result(
                 run_id=run_id,
                 analysis_start=analysis_start,
                 exc=exc,
             )
-        return _failure_result(
+        return _persistence_failure_result(
             run_id=run_id,
             analysis_start=analysis_start,
             exc=exc,
             db=db,
-            kind="persistence" if isinstance(exc, sqlite3.Error) else "analysis",
         )
 
     if isinstance(load_result, MissingPostAnalysisMetadata):
@@ -148,36 +95,29 @@ def execute_post_analysis(
         )
 
     loaded = load_result
+    run_input = build_post_analysis_input(loaded)
     try:
-        summary = analysis_runner(
-            run_id=loaded.run_id,
-            metadata=loaded.metadata,
-            samples=loaded.samples,
-            language=loaded.language,
-            total_sample_count=loaded.total_sample_count,
-            stride=loaded.stride,
-        )
+        summary = analysis_runner(run_input)
         db.store_analysis(loaded.run_id, summary)
-    except Exception as exc:
+    except (sqlite3.Error, OSError, MemoryError) as exc:
         if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
             return _retryable_failure_result(
                 run_id=loaded.run_id,
                 analysis_start=analysis_start,
                 exc=exc,
             )
-        return _failure_result(
+        return _persistence_failure_result(
             run_id=loaded.run_id,
             analysis_start=analysis_start,
             exc=exc,
             db=db,
-            kind="persistence" if isinstance(exc, sqlite3.Error) else "analysis",
         )
 
     duration_s = time.monotonic() - analysis_start
     LOGGER.info(
         "Analysis completed for run %s: %d samples in %.2fs",
         loaded.run_id,
-        len(loaded.samples),
+        len(run_input.samples),
         duration_s,
     )
     return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
@@ -188,7 +128,7 @@ def _store_load_error(
     db: RunPersistence,
     run_id: str,
     completed_error: str,
-    kind: Literal["missing_metadata", "no_samples"],
+    kind: str,
 ) -> PostAnalysisExecutionResult:
     try:
         db.store_analysis_error(run_id, completed_error)
@@ -214,7 +154,7 @@ def _retryable_failure_result(
     *,
     run_id: str,
     analysis_start: float,
-    exc: Exception,
+    exc: BaseException,
 ) -> PostAnalysisExecutionRetryableFailure:
     duration_s = time.monotonic() - analysis_start
     LOGGER.warning(
@@ -231,13 +171,12 @@ def _retryable_failure_result(
     )
 
 
-def _failure_result(
+def _persistence_failure_result(
     *,
     run_id: str,
     analysis_start: float,
-    exc: Exception,
+    exc: BaseException,
     db: RunPersistence,
-    kind: Literal["analysis", "persistence"],
 ) -> PostAnalysisExecutionResult:
     duration_s = time.monotonic() - analysis_start
     callback_error = f"post-analysis failed for run {run_id}: {exc}"
@@ -262,12 +201,6 @@ def _failure_result(
             + (f"history store_analysis_error failed for run {run_id}: {store_exc}",),
         )
 
-    if kind == "analysis":
-        return PostAnalysisExecutionAnalysisFailure(
-            run_id=run_id,
-            completed_error=completed_error,
-            callback_errors=callback_errors,
-        )
     return PostAnalysisExecutionPersistenceFailure(
         run_id=run_id,
         completed_error=completed_error,

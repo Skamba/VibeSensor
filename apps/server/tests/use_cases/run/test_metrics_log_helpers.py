@@ -404,7 +404,7 @@ def test_stop_recording_does_not_block_on_post_analysis(
     summary_started = threading.Event()
     allow_summary_finish = threading.Event()
 
-    def _slow_analysis_runner(**_: object):
+    def _slow_analysis_runner(_run):
         summary_started.set()
         assert allow_summary_finish.wait(timeout=5.0)
         return make_persisted_analysis(
@@ -445,14 +445,14 @@ def test_stop_recording_does_not_block_on_post_analysis(
     assert wait_until(lambda: _status() == "complete", timeout_s=5.0)
 
 
-def test_post_analysis_failure_sets_persistent_error_status(
+def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
     make_logger,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
 
-    def _failing_analysis_runner(**_: object) -> dict[str, object]:
+    def _failing_analysis_runner(_run) -> dict[str, object]:
         raise RuntimeError("analysis exploded")
 
     monkeypatch.setattr(
@@ -470,13 +470,16 @@ def test_post_analysis_failure_sets_persistent_error_status(
     logger.stop_recording()
 
     def _status():
-        run = history_db.get_run(run_id)
-        return run.status.value if run is not None else None
+        return logger.status().last_completed_run_error
 
-    assert wait_until(lambda: _status() == "error", timeout_s=2.0)
+    assert wait_until(lambda: _status() == "analysis exploded", timeout_s=2.0)
+    status = logger.status()
+    assert status.last_completed_run_error == "analysis exploded"
+    assert status.write_error == f"post-analysis failed for run {run_id}: analysis exploded"
     run = history_db.get_run(run_id)
     assert run is not None
-    assert "analysis exploded" in str(run.error_message or "")
+    assert run.analysis is None
+    assert run.error_message is None
 
 
 def test_post_analysis_burst_uses_single_daemon_worker(
@@ -591,26 +594,19 @@ def test_post_analysis_uses_run_language_from_metadata(
     start_mono = snapshot.start_mono_s
     logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
-    def _analysis_runner(
-        *,
-        run_id: str,
-        metadata,
-        samples,
-        language: str,
-        total_sample_count: int,
-        stride: int,
-    ):
-        assert run_id == snapshot.run_id
-        assert metadata.language == "nl"
-        assert total_sample_count == len(samples)
-        assert stride == 1
+    def _analysis_runner(run):
+        assert run.run_id == snapshot.run_id
+        assert run.context.default_language == "nl"
+        assert run.language == "nl"
+        assert run.total_sample_count == len(run.samples)
+        assert run.stride == 1
         return make_persisted_analysis(
             {
-                "lang": language,
-                "row_count": len(samples),
+                "lang": run.language,
+                "row_count": len(run.samples),
                 "analysis_metadata": {
-                    "analyzed_sample_count": len(samples),
-                    "total_sample_count": total_sample_count,
+                    "analyzed_sample_count": len(run.samples),
+                    "total_sample_count": run.total_sample_count,
                     "sampling_method": "full",
                 },
                 "run_suitability": [],
@@ -723,34 +719,26 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     for _ in range(cap + 50):
         logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
-    def _analysis_runner(
-        *,
-        run_id: str,
-        metadata,
-        samples,
-        language: str,
-        total_sample_count: int,
-        stride: int,
-    ):
-        assert run_id == snapshot.run_id
-        assert language == "en"
+    def _analysis_runner(run):
+        assert run.run_id == snapshot.run_id
+        assert run.language == "en"
         return make_persisted_analysis(
             {
-                "row_count": len(samples),
+                "row_count": len(run.samples),
                 "analysis_metadata": {
-                    "analyzed_sample_count": len(samples),
-                    "total_sample_count": total_sample_count,
-                    "sampling_method": "full" if stride == 1 else f"stride_{stride}",
+                    "analyzed_sample_count": len(run.samples),
+                    "total_sample_count": run.total_sample_count,
+                    "sampling_method": ("full" if run.stride == 1 else f"stride_{run.stride}"),
                 },
                 "run_suitability": (
                     [
                         {
                             "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
                             "state": "warn",
-                            "explanation": f"stride={stride}",
+                            "explanation": f"stride={run.stride}",
                         }
                     ]
-                    if stride > 1
+                    if run.stride > 1
                     else []
                 ),
             }

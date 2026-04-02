@@ -14,7 +14,7 @@ import pytest
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run import post_analysis as post_analysis_module
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
-from vibesensor.use_cases.run.post_analysis_executor import (
+from vibesensor.use_cases.run.post_analysis_outcomes import (
     PostAnalysisExecutionPersistenceFailure,
     PostAnalysisExecutionRetryableFailure,
     PostAnalysisExecutionSuccess,
@@ -216,32 +216,24 @@ class TestPostAnalysisWorkerErrorHandling:
             def store_analysis_error(self, run_id, msg):
                 raise AssertionError(f"unexpected error storage for {run_id}: {msg}")
 
-        def _analysis_runner(
-            *,
-            run_id: str,
-            metadata,
-            samples,
-            language: str,
-            total_sample_count: int,
-            stride: int,
-        ):
+        def _analysis_runner(run):
             captured.update(
                 {
-                    "run_id": run_id,
-                    "metadata": metadata,
-                    "samples": samples,
-                    "language": language,
-                    "total_sample_count": total_sample_count,
-                    "stride": stride,
+                    "run_id": run.run_id,
+                    "context": run.context,
+                    "samples": run.samples,
+                    "language": run.language,
+                    "total_sample_count": run.total_sample_count,
+                    "stride": run.stride,
                 }
             )
             return {
-                "lang": language,
-                "row_count": len(samples),
+                "lang": run.language,
+                "row_count": len(run.samples),
                 "analysis_metadata": {
-                    "analyzed_sample_count": len(samples),
-                    "total_sample_count": total_sample_count,
-                    "sampling_method": "full" if stride == 1 else f"stride_{stride}",
+                    "analyzed_sample_count": len(run.samples),
+                    "total_sample_count": run.total_sample_count,
+                    "sampling_method": ("full" if run.stride == 1 else f"stride_{run.stride}"),
                 },
                 "run_suitability": [],
             }
@@ -258,6 +250,7 @@ class TestPostAnalysisWorkerErrorHandling:
         assert captured["total_sample_count"] == 2
         assert captured["stride"] == 1
         assert len(captured["samples"]) == 2
+        assert captured["context"].run_id == "run-ok"
         assert stored["run_id"] == "run-ok"
         assert stored["analysis"]["lang"] == "nl"
 

@@ -10,31 +10,22 @@ from vibesensor.shared.json_utils import payload_object_from_json
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 
 _MIN_POST_ANALYSIS_DURATION_S = 1.0
 
 
-def build_post_analysis_summary(
-    *,
-    run_id: str,
-    metadata: RunMetadata,
-    samples: list[SensorFrame],
-    language: str,
-    total_sample_count: int,
-    stride: int,
-) -> PersistedAnalysis:
+def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     """Run diagnostics analysis and return the internal persisted-analysis object."""
     from vibesensor.domain import SuitabilityCheck
     from vibesensor.report_i18n import tr
     from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
     result = RunAnalysis(
-        metadata.to_dict(),
-        samples,
-        lang=language,
-        file_name=run_id,
+        run.context,
+        run.samples,
+        lang=run.language,
+        file_name=run.run_id,
         include_samples=False,
     ).summarize()
     summary_payload = analysis_result_to_summary(result)
@@ -58,37 +49,38 @@ def build_post_analysis_summary(
         run_suitability.append(warning_payload)
 
     analysis_metadata: JsonObject = {
-        "analyzed_sample_count": len(samples),
-        "total_sample_count": total_sample_count,
-        "sampling_method": "full" if stride == 1 else f"stride_{stride}",
+        "analyzed_sample_count": len(run.samples),
+        "total_sample_count": run.total_sample_count,
+        "sampling_method": "full" if run.stride == 1 else f"stride_{run.stride}",
     }
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
 
-    sample_rate_hz = _post_analysis_sample_rate_hz(metadata)
-    if sample_rate_hz is not None and total_sample_count < max(
-        1, int(sample_rate_hz * _MIN_POST_ANALYSIS_DURATION_S)
+    sample_rate_hz = _post_analysis_sample_rate_hz(run)
+    if sample_rate_hz is not None and run.total_sample_count < max(
+        1,
+        int(sample_rate_hz * _MIN_POST_ANALYSIS_DURATION_S),
     ):
         short_run_check = SuitabilityCheck(
             check_key="SUITABILITY_CHECK_RUN_DURATION",
             state="warn",
         )
-        explanation = tr(language, "SUITABILITY_RUN_DURATION_WARNING")
+        explanation = tr(run.language, "SUITABILITY_RUN_DURATION_WARNING")
         append_run_suitability_warning(
             check_key=short_run_check.check_key,
             state=short_run_check.state,
             explanation=explanation,
         )
 
-    if stride > 1:
+    if run.stride > 1:
         stride_check = SuitabilityCheck(
             check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
             state="warn",
-            details=(("stride", stride),),
+            details=(("stride", run.stride),),
         )
         explanation = tr(
-            language,
+            run.language,
             "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
-            stride=str(stride),
+            stride=str(run.stride),
         )
         append_run_suitability_warning(
             check_key=stride_check.check_key,
@@ -99,14 +91,9 @@ def build_post_analysis_summary(
     return persisted_analysis_from_summary(summary_payload)
 
 
-def _post_analysis_sample_rate_hz(metadata: RunMetadata) -> int | None:
-    """Resolve the sample rate used for duration checks from canonical or extra metadata."""
-    raw_sample_rate_hz = metadata.raw_sample_rate_hz
+def _post_analysis_sample_rate_hz(run: PostAnalysisRunInput) -> int | None:
+    """Resolve the sample rate from the canonical diagnostics context only."""
+    raw_sample_rate_hz = run.context.raw_sample_rate_hz
     if raw_sample_rate_hz is not None and raw_sample_rate_hz > 0:
-        return raw_sample_rate_hz
-    extra_sample_rate_hz = metadata.extras.get("sample_rate_hz")
-    if isinstance(extra_sample_rate_hz, int) and extra_sample_rate_hz > 0:
-        return extra_sample_rate_hz
-    if isinstance(extra_sample_rate_hz, float) and extra_sample_rate_hz > 0:
-        return int(extra_sample_rate_hz)
+        return int(raw_sample_rate_hz)
     return None

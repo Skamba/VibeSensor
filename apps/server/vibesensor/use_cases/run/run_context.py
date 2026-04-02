@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
     CarSnapshot,
     RunContextSnapshot,
+)
+from vibesensor.shared.boundaries.run_context_codec import (
+    run_context_snapshot_from_metadata,
+    run_context_snapshot_to_metadata,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.run_context_warning import (
@@ -43,12 +46,7 @@ def apply_run_context_snapshot(
         analysis_settings_snapshot=analysis_settings_snapshot,
         active_car_snapshot=active_car_snapshot,
     )
-    metadata.update(cast(JsonObject, context_snapshot.to_metadata_dict()))
-
-
-def run_context_snapshot_from_metadata(metadata: Mapping[str, object]) -> RunContextSnapshot:
-    """Decode the canonical run-context snapshot from persisted metadata."""
-    return RunContextSnapshot.from_dict(metadata)
+    metadata.update(run_context_snapshot_to_metadata(context_snapshot))
 
 
 def order_reference_context_complete(metadata: Mapping[str, object]) -> bool:

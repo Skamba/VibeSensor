@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import RunMetadataSnapshot
+from vibesensor.shared.boundaries.run_context_codec import (
+    run_context_snapshot_from_metadata,
+    run_metadata_snapshot_from_metadata,
+)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.use_cases.run.run_context import run_context_snapshot_from_metadata
 
 from ._context import DiagnosticsContext
 
@@ -75,7 +77,10 @@ def build_diagnostics_context(
         run_metadata_payload["run_id"] = f"run-{file_name}"
     run_context = run_context_snapshot_from_metadata(raw_metadata)
     return DiagnosticsContext(
-        run_metadata=RunMetadataSnapshot.from_dict(run_metadata_payload),
+        run_metadata=run_metadata_snapshot_from_metadata(
+            run_metadata_payload,
+            fallback_run_id=f"run-{file_name}",
+        ),
         run_context=run_context,
         start_time_utc=_non_empty_text(raw_metadata.get("start_time_utc")),
         end_time_utc=_non_empty_text(raw_metadata.get("end_time_utc")),

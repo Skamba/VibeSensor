@@ -22,13 +22,14 @@ from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisAttemptResult,
-    PostAnalysisExecutionAnalysisFailure,
-    PostAnalysisExecutionPersistenceFailure,
+    PostAnalysisRunner,
+    execute_post_analysis,
+)
+from vibesensor.use_cases.run.post_analysis_outcomes import (
     PostAnalysisExecutionResult,
     PostAnalysisExecutionRetryableFailure,
     PostAnalysisExecutionSuccess,
-    PostAnalysisRunner,
-    execute_post_analysis,
+    execution_callback_errors,
 )
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
@@ -53,20 +54,6 @@ class PostAnalysisHealthSnapshot:
     max_queue_depth: int
     last_completed_run_id: str | None
     last_completed_error: str | None
-
-
-def _execution_callback_errors(
-    result: PostAnalysisExecutionResult,
-) -> tuple[str, ...]:
-    if isinstance(
-        result,
-        (
-            PostAnalysisExecutionAnalysisFailure,
-            PostAnalysisExecutionPersistenceFailure,
-        ),
-    ):
-        return result.callback_errors
-    return ()
 
 
 class PostAnalysisWorker:
@@ -319,7 +306,7 @@ class PostAnalysisWorker:
             self._clear_error_cb()
             return
 
-        for error_msg in _execution_callback_errors(result):
+        for error_msg in execution_callback_errors(result):
             self._error_cb(error_msg)
 
     def _record_unexpected_worker_failure(self, run_id: str, exc: Exception) -> None:

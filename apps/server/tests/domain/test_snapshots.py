@@ -16,6 +16,10 @@ from vibesensor.domain import (
     RunContextSnapshot,
     SpeedProfileSummary,
 )
+from vibesensor.shared.boundaries.run_context_codec import (
+    run_context_snapshot_from_metadata,
+    run_context_snapshot_to_metadata,
+)
 
 # ── AnalysisSettingsSnapshot ────────────────────────────────────────
 
@@ -113,22 +117,24 @@ class TestAnalysisSettingsOrderRef:
 # ── RunContextSnapshot ──────────────────────────────────────────────
 
 
-class TestRunContextSnapshotFromDict:
-    """from_dict() constructor tests."""
+class TestRunContextSnapshotBoundaryCodecs:
+    """Boundary codec tests for RunContextSnapshot."""
 
     def test_empty_dict_never_raises(self) -> None:
-        ctx = RunContextSnapshot.from_dict({})
+        ctx = run_context_snapshot_from_metadata({})
         assert ctx.car is None
         assert ctx.has_car_context is False
         assert ctx.analysis_settings.tire_width_mm == 0.0
 
     def test_with_settings_only(self) -> None:
-        ctx = RunContextSnapshot.from_dict({"analysis_settings_snapshot": {"tire_width_mm": 200.0}})
+        ctx = run_context_snapshot_from_metadata(
+            {"analysis_settings_snapshot": {"tire_width_mm": 200.0}}
+        )
         assert ctx.analysis_settings.tire_width_mm == 200.0
         assert ctx.car is None
 
     def test_with_car_snapshot(self) -> None:
-        ctx = RunContextSnapshot.from_dict(
+        ctx = run_context_snapshot_from_metadata(
             {
                 "analysis_settings_snapshot": {"rim_in": 18.0},
                 "active_car_snapshot": {"name": "Test Car", "uuid": "abc-123"},
@@ -140,7 +146,7 @@ class TestRunContextSnapshotFromDict:
         assert ctx.car.name == "Test Car"
 
     def test_order_reference_spec_delegates(self) -> None:
-        ctx = RunContextSnapshot.from_dict(
+        ctx = run_context_snapshot_from_metadata(
             {
                 "analysis_settings_snapshot": {
                     "tire_width_mm": 285.0,
@@ -169,7 +175,7 @@ class TestRunContextSnapshotFromDict:
             ),
         )
 
-        metadata = ctx.to_metadata_dict()
+        metadata = run_context_snapshot_to_metadata(ctx)
 
         assert metadata == {
             "analysis_settings_snapshot": {
