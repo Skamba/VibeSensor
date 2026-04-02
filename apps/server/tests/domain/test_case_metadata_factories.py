@@ -14,9 +14,11 @@ def test_car_from_metadata_returns_none_without_case_context() -> None:
 def test_car_from_metadata_builds_context_from_vehicle_fields() -> None:
     car = Car.from_metadata(
         {
-            "car_name": "Golf",
-            "car_type": "hatchback",
-            "car_variant": "GTI",
+            "active_car_snapshot": {
+                "name": "Golf",
+                "type": "hatchback",
+                "variant": "GTI",
+            }
         }
     )
 
@@ -29,9 +31,11 @@ def test_car_from_metadata_builds_context_from_vehicle_fields() -> None:
 def test_car_from_metadata_keeps_order_reference_context_without_names() -> None:
     car = Car.from_metadata(
         {
-            "tire_width_mm": 225,
-            "tire_aspect_pct": 40,
-            "rim_in": 18,
+            "analysis_settings_snapshot": {
+                "tire_width_mm": 225,
+                "tire_aspect_pct": 40,
+                "rim_in": 18,
+            }
         }
     )
 

@@ -350,7 +350,6 @@ def recapture_guidance_summary(mode: str) -> dict:
             top_causes=[finding],
             run_suitability=[
                 {
-                    "check": "SUITABILITY_CHECK_SPEED_VARIATION",
                     "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
                     "state": "warn",
                     "explanation": "SUITABILITY_SPEED_VARIATION_WARN",

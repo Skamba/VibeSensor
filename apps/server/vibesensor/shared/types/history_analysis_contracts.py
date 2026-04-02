@@ -75,7 +75,6 @@ _IGNORE_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="ignore")
 class RunSuitabilityCheck(TypedDict, total=False):
     """Typed HTTP contract for one run-suitability diagnostic check."""
 
-    check: Required[str]
     check_key: Required[str]
     state: Required[str]
     explanation: PayloadValue

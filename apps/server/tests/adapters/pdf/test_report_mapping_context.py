@@ -196,8 +196,10 @@ class TestPrepareReportMappingContext:
                 "run_id": "report-context-metadata",
                 "lang": "en",
                 "metadata": {
-                    "car_name": "Track Car",
-                    "car_type": "coupe",
+                    "active_car_snapshot": {
+                        "name": "Track Car",
+                        "type": "coupe",
+                    },
                     "recorded_utc_offset_seconds": 7200,
                 },
                 "report_date": "2026-03-25T10:00:00Z",

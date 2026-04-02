@@ -35,7 +35,6 @@ from vibesensor.use_cases.history.helpers import strip_internal_fields
 from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run.run_context import (
     add_current_context_warnings,
-    apply_legacy_run_context_fields,
     run_context_snapshot_from_metadata,
 )
 
@@ -59,7 +58,6 @@ def _project_history_analysis(
 def _project_history_metadata(metadata: Mapping[str, object]) -> JsonObject:
     projected = cast(JsonObject, {key: value for key, value in metadata.items()})
     context_snapshot = run_context_snapshot_from_metadata(projected)
-    apply_legacy_run_context_fields(projected, context_snapshot=context_snapshot)
     order_reference_spec = context_snapshot.order_reference_spec
     if order_reference_spec is not None and order_reference_spec.supports_wheel_reference:
         projected["tire_circumference_m"] = order_reference_spec.tire_circumference_m

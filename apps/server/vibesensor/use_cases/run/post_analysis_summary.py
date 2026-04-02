@@ -52,7 +52,6 @@ def build_post_analysis_summary(
             summary_payload["run_suitability"] = run_suitability
         warning_payload: RunSuitabilityCheck = {
             "check_key": check_key,
-            "check": check_key,
             "state": state,
             "explanation": explanation,
         }

@@ -242,8 +242,6 @@ async def test_projected_run_service_adds_current_context_overlay_explicitly() -
             "type": "coupe",
             "aspects": {"tire_width_mm": 245.0},
         },
-        "car_name": "Track Car",
-        "tire_width_mm": 245.0,
         "incomplete_for_order_analysis": True,
     }
     persisted_analysis = cast(
@@ -441,9 +439,9 @@ def test_build_run_details_json_rehydrates_flat_metadata_from_nested_run_context
     )
 
     metadata = payload["metadata"]
-    assert metadata["car_name"] == "Primary"
-    assert metadata["active_car_id"] == "car-1"
-    assert float(metadata["tire_width_mm"]) == pytest.approx(255.0)
+    assert metadata["active_car_snapshot"]["name"] == "Primary"
+    assert metadata["active_car_snapshot"]["id"] == "car-1"
+    assert float(metadata["analysis_settings_snapshot"]["tire_width_mm"]) == pytest.approx(255.0)
     assert float(metadata["tire_circumference_m"]) > 0
 
 
@@ -451,14 +449,14 @@ def test_project_history_insights_keeps_non_projectable_analysis_shape() -> None
     projected = project_history_insights(
         {
             "lang": "en",
-            "metadata": {"car_name": "Track Car"},
+            "metadata": {"active_car_snapshot": {"name": "Track Car"}},
             "_internal": {"secret": True},
         }
     )
 
     assert projected == {
         "lang": "en",
-        "metadata": {"car_name": "Track Car"},
+        "metadata": {"active_car_snapshot": {"name": "Track Car"}},
     }
 
 

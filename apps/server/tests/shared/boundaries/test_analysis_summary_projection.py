@@ -15,11 +15,20 @@ from vibesensor.shared.boundaries.finding import finding_payload_from_domain
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 
+def _canonical_metadata() -> dict[str, object]:
+    return {
+        "active_car_snapshot": {
+            "name": "Guard Car",
+            "type": "sedan",
+        }
+    }
+
+
 def test_project_analysis_summary_projects_run_suitability_from_reconstructed_test_run() -> None:
     summary = {
         "case_id": "case-001",
         "run_id": "run-001",
-        "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
+        "metadata": _canonical_metadata(),
         "findings": [make_finding_payload(finding_id="F001", confidence=0.8)],
         "top_causes": [make_finding_payload(finding_id="F001", confidence=0.8)],
         "test_plan": [
@@ -39,7 +48,6 @@ def test_project_analysis_summary_projects_run_suitability_from_reconstructed_te
     assert test_run.suitability is not None
     assert projected["run_suitability"] == [
         {
-            "check": "speed_profile",
             "check_key": "speed_profile",
             "state": "warn",
             "explanation": test_run.suitability.checks[0].explanation_i18n_ref(),
@@ -51,7 +59,7 @@ def test_project_analysis_summary_drops_persisted_origin_without_primary_finding
     summary = {
         "case_id": "case-001",
         "run_id": "run-001",
-        "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
+        "metadata": _canonical_metadata(),
         "findings": [],
         "top_causes": [],
         "test_plan": [],
@@ -94,7 +102,7 @@ def test_project_analysis_summary_preserves_persisted_confidence_reason() -> Non
     summary = {
         "case_id": "case-001",
         "run_id": "run-001",
-        "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
+        "metadata": _canonical_metadata(),
         "findings": [payload],
         "top_causes": [payload],
         "test_plan": [],
@@ -111,7 +119,7 @@ def test_project_analysis_summary_uses_list_sensor_locations_for_fallback_confid
     summary = {
         "case_id": "case-001",
         "run_id": "run-001",
-        "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
+        "metadata": _canonical_metadata(),
         "findings": [
             make_finding_payload(
                 finding_id="F001",
@@ -151,7 +159,7 @@ def test_project_persisted_analysis_uses_persisted_reconstruction_path(
         {
             "case_id": "case-001",
             "run_id": "run-001",
-            "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
+            "metadata": _canonical_metadata(),
             "findings": [make_finding_payload(finding_id="F001", confidence=0.8)],
             "top_causes": [make_finding_payload(finding_id="F001", confidence=0.8)],
             "test_plan": [],

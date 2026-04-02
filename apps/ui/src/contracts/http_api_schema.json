@@ -5670,10 +5670,6 @@
         "additionalProperties": false,
         "description": "Typed HTTP contract for one run-suitability diagnostic check.",
         "properties": {
-          "check": {
-            "title": "Check",
-            "type": "string"
-          },
           "check_key": {
             "title": "Check Key",
             "type": "string"
@@ -5687,7 +5683,6 @@
           }
         },
         "required": [
-          "check",
           "check_key",
           "state"
         ],

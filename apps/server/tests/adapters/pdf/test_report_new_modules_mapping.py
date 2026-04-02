@@ -574,7 +574,6 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
         lang="nl",
         run_suitability=[
             {
-                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "warn",
                 "explanation": "3 dropped frames, 2 queue overflows detected.",
@@ -594,7 +593,7 @@ def test_map_summary_data_trust_literal_check_labels() -> None:
         lang="nl",
         run_suitability=[
             {
-                "check": "Frame integrity",
+                "check_key": "Frame integrity",
                 "state": "warn",
                 "explanation": "3 dropped frames, 2 queue overflows detected.",
             },
@@ -628,7 +627,7 @@ def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data()
     base_summary = minimal_summary(
         run_suitability=[
             {
-                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
+                "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "pass",
                 "explanation": (
                     "Speed range stayed in a usable diagnostic band for steady-state diagnosis "

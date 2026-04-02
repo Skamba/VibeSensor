@@ -34,7 +34,7 @@ def _minimal_summary(**overrides: object) -> dict[str, object]:
         "record_length": "0:05",
         "lang": "en",
         "report_date": "2025-01-01T10:00:00Z",
-        "metadata": {"car_name": "Test Car"},
+        "metadata": {"active_car_snapshot": {"name": "Test Car"}},
         "findings": [],
         "top_causes": [],
         "speed_stats": {
