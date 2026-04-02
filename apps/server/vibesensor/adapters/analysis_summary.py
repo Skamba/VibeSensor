@@ -8,7 +8,7 @@ from pathlib import Path
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_summary
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -52,7 +52,7 @@ def build_findings_for_samples(
 
     return build_findings_for_sensor_frames(
         metadata=run_metadata_from_mapping(metadata),
-        samples=sensor_frames_from_rows(samples),
+        samples=sensor_frames_from_mappings(samples),
         lang=lang,
         findings_builder=findings_builder,
     )
@@ -69,7 +69,7 @@ def summarize_run_data(
     """Decode boundary payloads once, then execute the typed diagnostics core."""
     return summarize_sensor_frames(
         run_metadata_from_mapping(metadata),
-        sensor_frames_from_rows(samples),
+        sensor_frames_from_mappings(samples),
         lang=lang,
         file_name=file_name,
         include_samples=include_samples,

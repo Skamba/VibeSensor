@@ -16,10 +16,8 @@ from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.shared.constants.analysis import SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.shared.time_utils import parse_iso8601
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._counters import counter_delta
-from vibesensor.use_cases.diagnostics._metadata import reference_complete
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _primary_vibration_strength_db,
     _sensor_limit_g,
@@ -28,6 +26,7 @@ from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     Sample,
 )
+from vibesensor.use_cases.diagnostics.context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
@@ -143,9 +142,9 @@ def compute_frame_integrity_counts(samples: Sequence[Sample]) -> tuple[int, int]
 # ── Reference completeness ───────────────────────────────────────────────
 
 
-def compute_reference_completeness(context: RunMetadata) -> bool:
+def compute_reference_completeness(context: DiagnosticsContext) -> bool:
     """Return True when enough reference metadata is present for order analysis."""
-    return reference_complete(context)
+    return context.reference_complete
 
 
 # ── Speed and phase preparation ──────────────────────────────────────────
@@ -180,7 +179,7 @@ def prepare_speed_and_phases(
 
 
 def compute_run_timing(
-    context: RunMetadata,
+    context: DiagnosticsContext,
     samples: Sequence[Sample],
 ) -> tuple[str, datetime | None, datetime | None, float]:
     """Extract run_id, start/end timestamps and duration from context+samples."""

@@ -11,7 +11,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import (
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )

@@ -63,7 +63,7 @@ def test_run_analysis_produces_test_run() -> None:
     from vibesensor.adapters.analysis_summary import analysis_result_to_summary
     from vibesensor.domain import TestRun
     from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-    from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+    from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
     from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
     from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
@@ -83,7 +83,7 @@ def test_run_analysis_produces_test_run() -> None:
     analysis = RunAnalysis(
         build_diagnostics_run_input(
             run_metadata_from_mapping(metadata),
-            sensor_frames_from_rows(samples),
+            sensor_frames_from_mappings(samples),
         ),
     )
     result = analysis.summarize()
@@ -225,7 +225,7 @@ def test_test_run_from_summary_populates_suitability() -> None:
 def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
     from vibesensor.domain import DiagnosticCase, TestRun
     from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-    from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+    from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
     from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
     from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
@@ -252,7 +252,7 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
     analysis = RunAnalysis(
         build_diagnostics_run_input(
             run_metadata_from_mapping(metadata),
-            sensor_frames_from_rows(samples),
+            sensor_frames_from_mappings(samples),
         ),
     )
     result = analysis.summarize()

@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none
-from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
+from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
 from vibesensor.use_cases.diagnostics.orders.physics import _driveshaft_hz, _order_label
 
 # ------------------------------------------------------------------
@@ -30,11 +30,11 @@ def _guarded_float(value: object) -> float:
 
 
 def _context(overrides: dict | None = None):
-    return prepare_diagnostics_metadata(overrides or {}, file_name="test")
+    return diagnostics_context_from_metadata(overrides or {}, file_name="test")
 
 
 def _sample(**overrides: object):
-    return sensor_frames_from_rows([overrides])[0]
+    return sensor_frames_from_mappings([overrides])[0]
 
 
 class TestPdfBuilderConfidenceGuard:

@@ -12,7 +12,7 @@ from test_support.report_helpers import (
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.domain import Finding, LocationHotspot
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import findings as findings_builder_module
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
@@ -30,7 +30,7 @@ def test_speed_breakdown_basic() -> None:
         _make_sample(2.0, 87.0, 0.03),
         _make_sample(3.0, 92.0, 0.01),
     ]
-    rows = _speed_breakdown(sensor_frames_from_rows(samples))
+    rows = _speed_breakdown(sensor_frames_from_mappings(samples))
     assert len(rows) == 2
     labels = [row.speed_range for row in rows]
     assert "80-90 km/h" in labels
@@ -44,7 +44,7 @@ def test_speed_breakdown_empty() -> None:
 def test_speed_breakdown_no_speed() -> None:
     assert (
         _speed_breakdown(
-            sensor_frames_from_rows([{"speed_kmh": None}, {"speed_kmh": 0}]),
+            sensor_frames_from_mappings([{"speed_kmh": None}, {"speed_kmh": 0}]),
         )
         == []
     )
@@ -285,7 +285,7 @@ def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> No
 
     order_band = wheel_finding.strongest_speed_band or ""
     persistent_band = persistent.strongest_speed_band or ""
-    rows = _top_peaks_table_rows(sensor_frames_from_rows(samples), top_n=6, freq_bin_hz=1.0)
+    rows = _top_peaks_table_rows(sensor_frames_from_mappings(samples), top_n=6, freq_bin_hz=1.0)
     target_row = min(rows, key=lambda row: abs(row.frequency_hz - 43.0))
     peak_table_band = str(target_row.typical_speed_band or "")
 

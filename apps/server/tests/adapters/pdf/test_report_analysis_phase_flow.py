@@ -14,7 +14,7 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
@@ -145,7 +145,7 @@ def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
 
 def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
     samples = [_make_sample(float(i) * 0.5, 60.0, 0.02) for i in range(20)]
-    typed_samples = sensor_frames_from_rows(samples)
+    typed_samples = sensor_frames_from_mappings(samples)
     pre_computed_phases, _ = segment_run_phases(typed_samples)
     recompute_calls: list[int] = []
 

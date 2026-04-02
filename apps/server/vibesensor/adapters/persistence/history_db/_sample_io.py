@@ -12,7 +12,7 @@ from vibesensor.adapters.persistence.history_db._samples import (
     V2_SELECT_SQL_COLS,
     v2_row_to_sensor_frame,
 )
-from vibesensor.shared.boundaries.sensor_frame_codec import SensorFrameDecodeError
+from vibesensor.shared.boundaries.sensor_frame_value_codec import SensorFrameDecodeError
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
