@@ -9,6 +9,9 @@ from datetime import UTC, datetime, timedelta
 
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
+from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_to_storage_json_object,
+)
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
@@ -168,7 +171,7 @@ class _HistoryDBRunLifecycleMixin:
         run_id: str,
         analysis: PersistedAnalysis,
     ) -> bool:
-        analysis_payload = analysis.to_payload()
+        analysis_payload = analysis.payload
         missing = _EXPECTED_ANALYSIS_KEYS - analysis_payload.keys()
         if missing:
             LOGGER.warning(
@@ -199,7 +202,7 @@ class _HistoryDBRunLifecycleMixin:
                 "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
                 "WHERE run_id = ?",
                 (
-                    safe_json_dumps(analysis.to_storage_json_object()),
+                    safe_json_dumps(persisted_analysis_to_storage_json_object(analysis)),
                     now,
                     now,
                     run_id,

@@ -1,8 +1,8 @@
-"""Typed request and bundle models for diagnostics summary orchestration."""
+"""Typed models for canonical diagnostics analysis orchestration."""
 
 from __future__ import annotations
 
-from collections.abc import Callable, Collection, Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
@@ -34,17 +34,6 @@ FindingsBuilder = Callable[[FindingsBuildRequest], tuple[DomainFinding, ...]]
 
 
 @dataclass(frozen=True, slots=True)
-class FindingsBundleRequest:
-    """Inputs needed to build findings plus derived narrative artifacts."""
-
-    findings_request: FindingsBuildRequest
-    prepared: PreparedRunData
-    overall_strength_band_key: str | None
-    has_reference_gaps: bool
-    sensor_count: int
-
-
-@dataclass(frozen=True, slots=True)
 class FindingsBundle:
     """Derived findings outputs carried together through summary assembly."""
 
@@ -55,19 +44,35 @@ class FindingsBundle:
 
 
 @dataclass(frozen=True, slots=True)
-class AnalysisResultBuildRequest:
-    """Inputs required to assemble the final diagnostics analysis result."""
+class PreparedAnalysisContext:
+    """Canonical typed context shared across diagnostics result assembly."""
 
     file_name: str
     context: RunMetadata
-    samples: Sequence[Sample]
+    samples: tuple[Sample, ...]
     language: str
     include_samples: bool
     prepared: PreparedRunData
     accel_stats: AccelStatistics
-    sensor_locations: Sequence[str]
-    connected_locations: Collection[str]
-    sensor_intensity_by_location: Sequence[LocationIntensitySummary]
     reference_complete: bool
+    overall_strength_band_key: str | None
     run_suitability: RunSuitability | None
-    findings_bundle: FindingsBundle
+    sensor_locations: tuple[str, ...]
+    connected_locations: frozenset[str]
+    sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
+
+    def findings_request(self) -> FindingsBuildRequest:
+        """Project the canonical analysis context into findings-specific inputs."""
+
+        return FindingsBuildRequest(
+            context=self.context,
+            samples=self.samples,
+            speed_sufficient=self.prepared.speed_sufficient,
+            steady_speed=self.prepared.is_steady_speed,
+            speed_stddev_kmh=self.prepared.speed_stddev_kmh,
+            speed_non_null_pct=self.prepared.speed_non_null_pct,
+            raw_sample_rate_hz=self.prepared.raw_sample_rate_hz,
+            lang=self.language,
+            per_sample_phases=self.prepared.per_sample_phases,
+            run_noise_baseline_g=self.prepared.run_noise_baseline_g,
+        )

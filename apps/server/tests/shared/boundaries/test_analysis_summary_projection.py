@@ -12,7 +12,9 @@ from vibesensor.shared.boundaries.analysis_summary_projection import (
     project_persisted_analysis,
 )
 from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_from_json_object,
+)
 
 
 def _canonical_metadata() -> dict[str, object]:
@@ -155,7 +157,7 @@ def test_project_persisted_analysis_uses_persisted_reconstruction_path(
 ) -> None:
     import vibesensor.shared.boundaries.analysis_summary_projection as projection
 
-    analysis = PersistedAnalysis.from_json_object(
+    analysis = persisted_analysis_from_json_object(
         {
             "case_id": "case-001",
             "run_id": "run-001",

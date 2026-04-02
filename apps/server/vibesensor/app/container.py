@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -89,7 +90,7 @@ def create_history_db(
         return history
     try:
         recovered_runs = history.run_repository.recover_stale_recording_runs()
-    except Exception:
+    except (sqlite3.Error, OSError):
         LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
         history.lifecycle.close()
         raise
@@ -99,7 +100,7 @@ def create_history_db(
         pruned_runs = history.run_repository.prune_terminal_runs_older_than_days(
             config.logging.run_retention_days,
         )
-    except Exception:
+    except (sqlite3.Error, OSError):
         LOGGER.warning(
             "Failed to prune terminal runs older than %d day(s) during startup maintenance",
             config.logging.run_retention_days,

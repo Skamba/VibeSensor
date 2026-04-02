@@ -222,9 +222,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
 
 
 def test_run_from_persisted_analysis(
-    analysis: PersistedAnalysis | Mapping[str, object],
+    analysis: PersistedAnalysis,
 ) -> TestRun:
     """Reconstruct a TestRun from a storage-owned persisted-analysis payload."""
-    if isinstance(analysis, PersistedAnalysis):
-        return _test_run_from_payload(analysis.to_payload())
-    return _test_run_from_payload(analysis)
+    return _test_run_from_payload(analysis.payload)
