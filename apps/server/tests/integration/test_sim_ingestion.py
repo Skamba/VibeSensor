@@ -240,8 +240,9 @@ class TestSimulatorIngestion:
         """Simulator runs should persist a deterministic known car profile."""
         history_run = _api_json(f"/api/history/{self.run_id}")
         metadata = history_run.get("metadata") or {}
-        assert metadata.get("car_name") == "VibeSensor Simulator"
-        assert metadata.get("car_type") == "sedan"
+        active_car_snapshot = metadata.get("active_car_snapshot") or {}
+        assert active_car_snapshot.get("name") == "VibeSensor Simulator"
+        assert active_car_snapshot.get("type") == "sedan"
 
     def test_report_pdf_accessible(self) -> None:
         """PDF report should be downloadable and valid."""

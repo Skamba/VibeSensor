@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from test_support.core import canonicalize_run_context_metadata
 from test_support.findings import make_finding_payload
 from vibesensor.domain import LocationHotspot
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
@@ -468,7 +469,7 @@ def report_run_metadata(
         "incomplete_for_order_analysis": raw_sample_rate_hz is None,
     }
     metadata.update(kwargs)
-    return metadata
+    return canonicalize_run_context_metadata(metadata)
 
 
 def report_sample(
@@ -548,7 +549,13 @@ def analysis_metadata(**overrides: Any) -> dict[str, Any]:
     }
     defaults.update(overrides)
     valid_keys = create_run_metadata.__code__.co_varnames
-    return create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys})
+    metadata = create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys})
+    metadata.update(
+        canonicalize_run_context_metadata(
+            {k: v for k, v in defaults.items() if k not in valid_keys}
+        )
+    )
+    return metadata
 
 
 def diagnostics_context(
@@ -653,7 +660,7 @@ def wheel_metadata(**overrides: object) -> dict[str, object]:
         "units": {"accel_x_g": "g"},
     }
     base.update(overrides)
-    return base
+    return canonicalize_run_context_metadata(base)
 
 
 def patch_order_hypothesis(

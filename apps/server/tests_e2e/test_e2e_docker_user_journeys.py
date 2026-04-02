@@ -183,8 +183,9 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             created_run_ids.append(run_id_1)
             run_1 = api_json(base_url, f"/api/history/{run_id_1}")
             metadata_1 = run_1["metadata"]
+            settings_snapshot = metadata_1["analysis_settings_snapshot"]
             for key, value in updated_tire.items():
-                assert float(metadata_1[key]) == pytest.approx(value)
+                assert float(settings_snapshot[key]) == pytest.approx(value)
             expected_circ = _circumference_m(
                 updated_tire["tire_width_mm"],
                 updated_tire["tire_aspect_pct"],

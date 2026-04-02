@@ -7,7 +7,7 @@ import hashlib
 import math
 import re
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from functools import cache
 from io import BytesIO
 from typing import Any
@@ -293,7 +293,37 @@ def standard_metadata(*, language: str = "en", **overrides: Any) -> dict[str, An
         "language": language,
     }
     meta.update(overrides)
-    return meta
+    return canonicalize_run_context_metadata(meta)
+
+
+def canonicalize_run_context_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
+    """Project flat test metadata inputs into the canonical nested run-context shape."""
+    normalized = dict(metadata)
+
+    raw_settings = normalized.get("analysis_settings_snapshot")
+    settings_snapshot = dict(raw_settings) if isinstance(raw_settings, Mapping) else {}
+    for key in AnalysisSettingsSnapshot.DEFAULTS:
+        value = normalized.pop(key, None)
+        if value is not None:
+            settings_snapshot[key] = value
+    if settings_snapshot:
+        normalized["analysis_settings_snapshot"] = settings_snapshot
+
+    raw_car = normalized.get("active_car_snapshot")
+    active_car_snapshot = dict(raw_car) if isinstance(raw_car, Mapping) else {}
+    for source_key, target_key in (
+        ("active_car_id", "id"),
+        ("car_name", "name"),
+        ("car_type", "type"),
+        ("car_variant", "variant"),
+    ):
+        value = normalized.pop(source_key, None)
+        if value is not None:
+            active_car_snapshot[target_key] = value
+    if active_car_snapshot:
+        normalized["active_car_snapshot"] = active_car_snapshot
+
+    return normalized
 
 
 # ---------------------------------------------------------------------------
