@@ -2,50 +2,19 @@
 
 from __future__ import annotations
 
-import math
-from collections.abc import Mapping, Sequence
-from typing import cast
+from collections.abc import Mapping
 
-from vibesensor.shared.boundaries.run_context_codec import (
-    run_context_snapshot_from_metadata,
+from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+    analysis_settings_snapshot_from_mapping,
 )
+from vibesensor.shared.boundaries.car_snapshot_codec import car_snapshot_from_mapping
 from vibesensor.shared.boundaries.run_metadata_snapshot_codec import (
     run_metadata_snapshot_from_metadata,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
-from ._context import DiagnosticsContext
-
-_OWNED_METADATA_KEYS = frozenset(
-    {
-        "run_id",
-        "case_id",
-        "sensor_mac",
-        "sensor_model",
-        "firmware_version",
-        "raw_sample_rate_hz",
-        "feature_interval_s",
-        "_summary_version",
-        "start_time_utc",
-        "end_time_utc",
-        "report_date",
-        "language",
-        "fft_window_size_samples",
-        "fft_window_type",
-        "peak_picker_method",
-        "accel_scale_g_per_lsb",
-        "incomplete_for_order_analysis",
-        "symptom",
-        "symptom_onset",
-        "symptom_context",
-        "tire_circumference_m",
-        "engine_rpm",
-        "analysis_settings",
-        "analysis_settings_snapshot",
-        "active_car_snapshot",
-    },
-)
+from ._context import DiagnosticsContext, DiagnosticsSymptom
 
 
 def build_diagnostics_context(
@@ -58,13 +27,20 @@ def build_diagnostics_context(
     run_metadata_payload = dict(raw_metadata)
     if not _non_empty_text(run_metadata_payload.get("run_id")):
         run_metadata_payload["run_id"] = f"run-{file_name}"
-    run_context = run_context_snapshot_from_metadata(raw_metadata)
     return DiagnosticsContext(
         run_metadata=run_metadata_snapshot_from_metadata(
             run_metadata_payload,
             fallback_run_id=f"run-{file_name}",
         ),
-        run_context=run_context,
+        analysis_settings=analysis_settings_snapshot_from_mapping(
+            raw_metadata.get("analysis_settings_snapshot"),
+        ),
+        car=car_snapshot_from_mapping(raw_metadata.get("active_car_snapshot")),
+        symptom=DiagnosticsSymptom(
+            description=_non_empty_text(raw_metadata.get("symptom")) or "",
+            onset=_non_empty_text(raw_metadata.get("symptom_onset")) or "",
+            context=_non_empty_text(raw_metadata.get("symptom_context")) or "",
+        ),
         start_time_utc=_non_empty_text(raw_metadata.get("start_time_utc")),
         end_time_utc=_non_empty_text(raw_metadata.get("end_time_utc")),
         report_date=_non_empty_text(raw_metadata.get("report_date")),
@@ -74,12 +50,10 @@ def build_diagnostics_context(
         peak_picker_method=_non_empty_text(raw_metadata.get("peak_picker_method")),
         accel_scale_g_per_lsb=_as_float(raw_metadata.get("accel_scale_g_per_lsb")),
         incomplete_for_order_analysis=bool(raw_metadata.get("incomplete_for_order_analysis")),
-        symptom_description=_non_empty_text(raw_metadata.get("symptom")) or "",
-        symptom_onset=_non_empty_text(raw_metadata.get("symptom_onset")) or "",
-        symptom_context=_non_empty_text(raw_metadata.get("symptom_context")) or "",
         tire_circumference_m_override=_as_float(raw_metadata.get("tire_circumference_m")),
         explicit_engine_rpm=_as_float(raw_metadata.get("engine_rpm")),
-        extra_metadata=_extra_metadata(raw_metadata),
+        units=_json_object_or_none(raw_metadata.get("units")),
+        amplitude_definitions=_json_object_or_none(raw_metadata.get("amplitude_definitions")),
     )
 
 
@@ -113,41 +87,5 @@ def _as_int(value: object) -> int | None:
     return None
 
 
-_INVALID_JSON = object()
-
-
-def _extra_metadata(metadata: Mapping[str, object]) -> JsonObject:
-    extra: JsonObject = {}
-    for key, value in metadata.items():
-        if not isinstance(key, str) or key in _OWNED_METADATA_KEYS:
-            continue
-        json_value = _json_value_or_invalid(value)
-        if json_value is not _INVALID_JSON:
-            extra[key] = cast(JsonValue, json_value)
-    return extra
-
-
-def _json_value_or_invalid(value: object) -> JsonValue | object:
-    if value is None or isinstance(value, bool | int | str):
-        return value
-    if isinstance(value, float):
-        return value if math.isfinite(value) else _INVALID_JSON
-    if isinstance(value, Mapping):
-        nested: JsonObject = {}
-        for key, item in value.items():
-            if not isinstance(key, str):
-                return _INVALID_JSON
-            nested_value = _json_value_or_invalid(item)
-            if nested_value is _INVALID_JSON:
-                return _INVALID_JSON
-            nested[key] = cast(JsonValue, nested_value)
-        return nested
-    if isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):
-        nested_items: list[JsonValue] = []
-        for item in value:
-            nested_value = _json_value_or_invalid(item)
-            if nested_value is _INVALID_JSON:
-                return _INVALID_JSON
-            nested_items.append(cast(JsonValue, nested_value))
-        return nested_items
-    return _INVALID_JSON
+def _json_object_or_none(value: object) -> JsonObject | None:
+    return value if is_json_object(value) else None

@@ -12,6 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, StrengthMetrics
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_to_json_object
 from vibesensor.shared.boundaries.strength_metrics_codec import (
     strength_metrics_from_mapping,
     strength_peak_payloads,
@@ -319,7 +320,7 @@ class TestBuildSampleRecords:
         assert frame.strength_peak_amp_g == 0.15
         assert frame.strength_floor_amp_g == 0.003
         assert frame.strength_bucket == "l2"
-        assert frame.to_dict()["top_peaks"] == [
+        assert sensor_frame_to_json_object(frame)["top_peaks"] == [
             {
                 "hz": 15.0,
                 "amp": 0.12,

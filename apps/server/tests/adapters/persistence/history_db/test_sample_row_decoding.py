@@ -10,11 +10,12 @@ from vibesensor.adapters.persistence.history_db._samples import (
     sample_to_v2_row,
     v2_row_to_sensor_frame,
 )
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 
 def _frame() -> SensorFrame:
-    return SensorFrame.from_dict(
+    return sensor_frame_from_mapping(
         {
             "run_id": "run-1",
             "timestamp_utc": "2026-01-01T00:00:00Z",

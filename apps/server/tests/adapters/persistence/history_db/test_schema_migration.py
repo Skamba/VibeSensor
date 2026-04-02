@@ -9,6 +9,7 @@ import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB, SQLiteHistoryEngine
 from vibesensor.adapters.persistence.history_db._schema import SCHEMA_VERSION
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 
 # -- helpers -----------------------------------------------------------------
@@ -25,7 +26,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "source": "followup",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 def _create_v4_database(db_path: Path) -> None:

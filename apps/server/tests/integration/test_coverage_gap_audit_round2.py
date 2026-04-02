@@ -43,6 +43,7 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.exports import flatten_for_csv as _flatten_for_csv
 
@@ -71,7 +72,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "source": "test",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 def _inject(proc: SignalProcessor, cid: str, n: int = 1024, sr: int = 800) -> None:

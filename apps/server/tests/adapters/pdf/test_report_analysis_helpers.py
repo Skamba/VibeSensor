@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import speed_band_sort_key, speed_bin_label
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.constants.analysis import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -35,11 +35,11 @@ from vibesensor.vibration_strength import percentile
 
 
 def _typed_sample(**overrides: object):
-    return normalize_sensor_frames([overrides])[0]
+    return sensor_frames_from_rows([overrides])[0]
 
 
 def _typed_samples(samples: list[dict]) -> list:
-    return normalize_sensor_frames(samples)
+    return sensor_frames_from_rows(samples)
 
 
 # -- _as_float -----------------------------------------------------------------
@@ -230,7 +230,7 @@ def test_speed_stats_by_phase_single_phase() -> None:
         {"speed_kmh": 60.5},
     ]
     phases = ["cruise", "cruise", "cruise"]
-    result = _speed_stats_by_phase(normalize_sensor_frames(samples), phases)
+    result = _speed_stats_by_phase(sensor_frames_from_rows(samples), phases)
     assert "cruise" in result
     assert result["cruise"].sample_count == 3
     assert result["cruise"].min_kmh == 60.0
@@ -246,7 +246,7 @@ def test_speed_stats_by_phase_multiple_phases() -> None:
         {"speed_kmh": 62.0},
     ]
     phases = ["idle", "idle", "cruise", "cruise", "cruise"]
-    result = _speed_stats_by_phase(normalize_sensor_frames(samples), phases)
+    result = _speed_stats_by_phase(sensor_frames_from_rows(samples), phases)
     assert set(result.keys()) == {"idle", "cruise"}
     assert result["idle"].sample_count == 2
     assert result["cruise"].sample_count == 3
@@ -261,7 +261,7 @@ def test_speed_stats_by_phase_excludes_zero_and_none_speed() -> None:
         {"speed_kmh": 50.0},
     ]
     phases = ["idle", "idle", "cruise"]
-    result = _speed_stats_by_phase(normalize_sensor_frames(samples), phases)
+    result = _speed_stats_by_phase(sensor_frames_from_rows(samples), phases)
     # idle has 2 samples but none with speed > 0
     assert result["idle"].sample_count == 2
     assert result["idle"].min_kmh is None
@@ -274,7 +274,7 @@ def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
         {"t_s": float(i), "speed_kmh": 0.5 if i < 5 else 60.0, "vibration_strength_db": 10.0}
         for i in range(10)
     ]
-    typed_samples = normalize_sensor_frames(samples)
+    typed_samples = sensor_frames_from_rows(samples)
     per_sample_phases, _ = segment_run_phases(typed_samples)
     result = _speed_stats_by_phase(typed_samples, per_sample_phases)
     total = sum(v.sample_count for v in result.values())

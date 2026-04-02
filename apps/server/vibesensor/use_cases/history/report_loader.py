@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 
 from vibesensor.domain import RunStatus
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
@@ -79,7 +80,12 @@ class HistoryReportRequestLoader:
 
     @staticmethod
     def _metadata_cache_token(metadata: RunMetadata) -> str:
-        return json.dumps(metadata.to_dict(), sort_keys=True, default=str, ensure_ascii=False)
+        return json.dumps(
+            run_metadata_to_json_object(metadata),
+            sort_keys=True,
+            default=str,
+            ensure_ascii=False,
+        )
 
     def _report_pdf_cache_key(
         self,

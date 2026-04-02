@@ -23,6 +23,8 @@ LOGGER = logging.getLogger(__name__)
 
 __all__ = ["BroadcastRunner"]
 
+_SEND_FAILURE_EXCEPTIONS = (OSError, RuntimeError)
+
 
 class BroadcastRunner:
     """Executes a single broadcast tick: build payloads, send, clean up."""
@@ -79,7 +81,7 @@ class BroadcastRunner:
                 timeout=self._send_timeout_s,
             )
             return None
-        except Exception:
+        except _SEND_FAILURE_EXCEPTIONS:
             now = asyncio.get_running_loop().time()
             if (now - self._last_send_error_log_ts) >= self._send_error_log_interval_s:
                 self._last_send_error_log_ts = now
@@ -125,7 +127,7 @@ class BroadcastRunner:
     ) -> None:
         for conn in dead_ws:
             if conn is not None:
-                with contextlib.suppress(Exception):
+                with contextlib.suppress(*_SEND_FAILURE_EXCEPTIONS):
                     await conn.websocket.close()
                 await self._tracker.remove_snapshot(conn)
 

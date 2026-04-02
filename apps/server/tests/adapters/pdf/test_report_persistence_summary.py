@@ -10,17 +10,20 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    sensor_frames_from_rows,
+    sensor_frames_to_json_objects,
+)
 from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
+from vibesensor.use_cases.diagnostics.run_analysis import build_findings_for_samples
 from vibesensor.use_cases.diagnostics.spectrogram import (
     spectrogram_from_peaks as _spectrogram_from_peaks,
 )
 from vibesensor.use_cases.diagnostics.spectrogram import (
     spectrogram_from_peaks_raw as _spectrogram_from_peaks_raw,
 )
-from vibesensor.use_cases.diagnostics.summary_builder import build_findings_for_samples
 
 
 class TestSummarizeRunDataPersistence:
@@ -113,8 +116,8 @@ class TestSpectrogramPersistence:
                 peaks.append({"hz": 70.0, "amp": 1.0})
             samples.append(sample(float(i), 90.0, peaks))
 
-        diagnostic = _spectrogram_from_peaks(normalize_sensor_frames(samples))
-        raw = _spectrogram_from_peaks_raw(normalize_sensor_frames(samples))
+        diagnostic = _spectrogram_from_peaks(sensor_frames_from_rows(samples))
+        raw = _spectrogram_from_peaks_raw(sensor_frames_from_rows(samples))
         assert diagnostic.max_amp < raw.max_amp
 
     def test_diagnostic_spectrogram_suppresses_broadband_near_floor(self) -> None:
@@ -127,7 +130,7 @@ class TestSpectrogramPersistence:
         ]
         samples.append(sample(21.0, 90.0, broadband_peaks, strength_floor_amp_g=0.05))
 
-        diagnostic = _spectrogram_from_peaks(normalize_sensor_frames(samples))
+        diagnostic = _spectrogram_from_peaks(sensor_frames_from_rows(samples))
         noisy_col = len(diagnostic.x_bins) - 1
         noisy_col_values = [row[noisy_col] for row in diagnostic.cells]
         assert max(noisy_col_values) == 0.0
@@ -160,7 +163,7 @@ class TestRobustness:
     def test_build_findings_for_samples_works(self) -> None:
         findings = build_findings_for_samples(
             metadata=make_metadata(),
-            samples=uniform_samples(15, 15.0, 0.02),
+            samples=sensor_frames_to_json_objects(uniform_samples(15, 15.0, 0.02)),
             lang="en",
         )
         assert isinstance(findings, tuple)

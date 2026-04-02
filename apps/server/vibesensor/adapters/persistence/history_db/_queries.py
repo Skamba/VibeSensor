@@ -8,6 +8,7 @@ from contextlib import AbstractContextManager
 from datetime import UTC, datetime
 
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.json_utils import safe_json_loads
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
@@ -32,7 +33,7 @@ class _HistoryDBQueryMixin:
         start_time_utc: str,
         end_time_utc: str | None,
     ) -> RunMetadata:
-        return RunMetadata.from_dict(
+        return run_metadata_from_mapping(
             {
                 "run_id": run_id,
                 "start_time_utc": start_time_utc,
@@ -72,7 +73,7 @@ class _HistoryDBQueryMixin:
             parsed["start_time_utc"] = start_time_utc
         if end_time_utc and "end_time_utc" not in parsed:
             parsed["end_time_utc"] = end_time_utc
-        return RunMetadata.from_dict(parsed)
+        return run_metadata_from_mapping(parsed)
 
     def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         with self._cursor(commit=False) as cur:

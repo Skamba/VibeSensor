@@ -73,18 +73,19 @@ load/store boundary around the injected analysis dependency.
 
 ## Pipeline Steps
 
-`RunAnalysis.summarize()` in `summary_builder.py` executes these steps
+`RunAnalysis.summarize()` in `run_analysis.py` delegates to
+`analysis_pipeline.py` and executes these steps
 in order. Each step runs exactly once per analysis invocation.
 
 | # | Step | Key Function(s) | Module | Purpose |
 |---|------|-----------------|--------|---------|
-| 1 | Validation | `_validate_required_strength_metrics` | summary_builder | Validate samples contain required strength metrics |
-| 2 | Context decode | `build_diagnostics_context` | `_context_decode.py`, `_context.py` | Decode raw metadata once into typed `RunMetadataSnapshot` + `RunContextSnapshot` plus diagnostics-local convenience fields |
+| 1 | Validation | `_validate_required_strength_metrics` | `run_analysis.py` | Validate samples contain required strength metrics |
+| 2 | Context decode | `build_diagnostics_context` | `_context_decode.py`, `_context.py` | Decode raw metadata once into the canonical typed `DiagnosticsContext` |
 | 3 | Run preparation | `prepare_run_data`, `compute_run_timing`, `_run_noise_baseline_g` | run_data_preparation, statistics, `_sample_metrics.py` | Extract timing, speed stats, phase segmentation, and speed context |
 | 4 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
 | 5 | Acceleration statistics | `compute_accel_statistics` | statistics | Per-axis and magnitude accel stats, saturation detection |
 | 6 | Findings bundle | `build_findings_bundle` → `_build_findings` | `_summary_steps`, `_analysis_models.py`, findings, `peaks/findings.py`, `orders/pipeline.py` | Order tracking, pattern matching, scoring, localisation, and top-cause candidates via typed request/bundle contracts |
-| 7 | Origin & test plan | `summarize_origin`, `build_phase_timeline` | summary_builder, run_data_preparation | Determine most likely vibration source, generate timeline |
+| 7 | Origin & test plan | `summarize_origin`, `build_phase_timeline` | `run_analysis.py`, run_data_preparation | Determine most likely vibration source, generate timeline |
 | 8 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
 | 9 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | `_summary_steps`, statistics | Check reference completeness plus data-quality and run-condition checks |
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
@@ -102,7 +103,8 @@ in order. Each step runs exactly once per analysis invocation.
 | `_context_projection.py` | ~80 | Projection helpers that rehydrate metadata, car, symptom, and configuration snapshots from `DiagnosticsContext` |
 | `_analysis_models.py` | ~80 | Typed request and bundle dataclasses shared across findings and result assembly |
 | `_types.py` | ~150 | Diagnostics-local aliases and value objects (`AccelStatistics`, speed/phase breakdown rows, plot bundles, peak rows, spectrogram data) |
-| `summary_builder.py` | ~250 | Top-level pipeline orchestration: `RunAnalysis`, `summarize_origin`, and findings entrypoints |
+| `run_analysis.py` | ~130 | Public typed entrypoint: `RunAnalysis`, raw-boundary findings helper, and language normalization |
+| `analysis_pipeline.py` | ~120 | Typed execution pipeline over already-prepared diagnostics inputs |
 | `_summary_steps.py` | ~150 | Findings, sensor, and suitability step builders consumed by `RunAnalysis` |
 | `_summary_result.py` | ~200 | `AnalysisResult` plus final `TestRun` / `DiagnosticCase` / diagnostics-local artifact assembly |
 | `run_data_preparation.py` | ~200 | Shared run timing/speed/phase/sensor preparation: `PreparedRunData`, `prepare_run_data`, phase timeline helpers |

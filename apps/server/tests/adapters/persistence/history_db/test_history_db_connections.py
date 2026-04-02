@@ -9,6 +9,7 @@ from threading import Event, Thread
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 
 
@@ -17,7 +18,7 @@ class _AbortTxn(BaseException):
 
 
 def _metadata(run_id: str) -> RunMetadata:
-    return RunMetadata.from_dict(
+    return run_metadata_from_mapping(
         {
             "run_id": run_id,
             "start_time_utc": "2026-01-01T00:00:00Z",

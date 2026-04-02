@@ -13,10 +13,11 @@ from test_support.persisted_analysis import make_persisted_analysis
 from tests.conftest import FakeState
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
 
 # -- Schema v4 tests ----------------------------------------------------------
 
@@ -32,7 +33,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "source": "test",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 def _stored_run(
@@ -50,7 +51,7 @@ def _stored_run(
     else:
         metadata_payload = dict(metadata or {})
         metadata_payload.setdefault("run_id", run_id)
-        typed_metadata = RunMetadata.from_dict(metadata_payload)
+        typed_metadata = run_metadata_from_mapping(metadata_payload)
     return StoredHistoryRun(
         run_id=run_id,
         status=status,
@@ -289,7 +290,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, language="en"))
     logger._persistence.history_run_created = True
     samples = [_sample(i) for i in range(20)]
-    db.append_samples(run_id, [SensorFrame.from_dict(sample) for sample in samples])
+    db.append_samples(run_id, [sensor_frame_from_mapping(sample) for sample in samples])
     logger._persistence.written_sample_count = len(samples)
 
     # Monkeypatch the adapter summarize_run_data wrapper to a lightweight version for speed
@@ -354,7 +355,7 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
         def iter_run_samples(self, run_id, batch_size=1000):
             if run_id != "run-pdf":
                 return
-            frames = [SensorFrame.from_dict(sample) for sample in samples]
+            frames = [sensor_frame_from_mapping(sample) for sample in samples]
             for start in range(0, len(frames), batch_size):
                 yield frames[start : start + batch_size]
 
@@ -434,7 +435,7 @@ async def test_export_offloaded_to_thread() -> None:
             return _stored_run(run_id, metadata={})
 
         def iter_run_samples(self, run_id, batch_size=1000):
-            frames = [SensorFrame.from_dict(sample) for sample in samples]
+            frames = [sensor_frame_from_mapping(sample) for sample in samples]
             for start in range(0, len(frames), batch_size):
                 yield frames[start : start + batch_size]
 

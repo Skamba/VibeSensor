@@ -19,12 +19,12 @@ from vibesensor.adapters.analysis_summary import (
 )
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
+from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
 
 def _run_suitability_state(summary: dict[str, Any], check_key: str) -> str | None:
@@ -82,7 +82,7 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
         db.create_run(
             "characterization-roundtrip",
             "2026-01-01T00:00:00Z",
-            RunMetadata.from_dict(
+            run_metadata_from_mapping(
                 {
                     "run_id": "characterization-roundtrip",
                     "start_time_utc": "2026-01-01T00:00:00Z",
@@ -147,7 +147,7 @@ def _short_run_samples() -> list[dict[str, Any]]:
 def _wheel_fault_analysis(file_name: str) -> RunAnalysis:
     return RunAnalysis(
         build_diagnostics_context(standard_metadata(), file_name=file_name),
-        normalize_sensor_frames(
+        sensor_frames_from_rows(
             fault_phase(
                 speed_kmh=80.0,
                 duration_s=20.0,

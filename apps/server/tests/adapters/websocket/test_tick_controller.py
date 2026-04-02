@@ -41,11 +41,10 @@ async def test_controller_calls_on_tick_and_broadcast() -> None:
 
 
 @pytest.mark.asyncio
-async def test_controller_on_tick_exception_logs_warning_and_continues(caplog) -> None:
+async def test_controller_on_tick_exception_propagates() -> None:
     logger = logging.getLogger("vibesensor.adapters.websocket.hub")
     controller = BroadcastTickController(hz=1000, logger=logger)
     tick_count = 0
-    broadcast_count = 0
 
     def on_tick() -> None:
         nonlocal tick_count
@@ -54,18 +53,10 @@ async def test_controller_on_tick_exception_logs_warning_and_continues(caplog) -
             raise RuntimeError("tick fail")
 
     async def broadcast_tick() -> None:
-        nonlocal broadcast_count
-        broadcast_count += 1
-        if broadcast_count >= 2:
-            raise asyncio.CancelledError
+        raise AssertionError("broadcast should not run after on_tick failure")
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"):
-        with pytest.raises(asyncio.CancelledError):
-            await controller.run(broadcast_tick=broadcast_tick, on_tick=on_tick)
-
-    assert broadcast_count == 2
-    assert any("on_tick callback raised" in record.message for record in caplog.records)
-    assert not any("broadcast tick failed" in record.message for record in caplog.records)
+    with pytest.raises(RuntimeError, match="tick fail"):
+        await controller.run(broadcast_tick=broadcast_tick, on_tick=on_tick)
 
 
 @pytest.mark.asyncio
@@ -84,7 +75,7 @@ async def test_controller_escalates_after_consecutive_failures(caplog) -> None:
         await original_sleep(0)
 
     async def failing_broadcast() -> None:
-        raise RuntimeError("boom")
+        raise OSError("boom")
 
     with (
         patch(
