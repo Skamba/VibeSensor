@@ -5,7 +5,7 @@ from dataclasses import replace
 from test_support.findings import make_finding
 
 from vibesensor.domain import VibrationSource
-from vibesensor.use_cases.diagnostics._summary_result import _final_top_causes
+from vibesensor.use_cases.diagnostics._analysis_result_builder import _final_top_causes
 
 
 def test_final_top_causes_preserves_derived_reason_in_findings_order() -> None:

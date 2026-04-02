@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import Car, normalize_sensor_id
-from vibesensor.shared.types.car_config import CarConfigPayload, car_to_persistence_dict
+from vibesensor.domain import normalize_sensor_id
+from vibesensor.shared.types.car_config import (
+    CarConfigPayload,
+    car_from_persistence_dict,
+    car_to_persistence_dict,
+)
 from vibesensor.shared.types.sensor_config import SensorConfig, SensorsByMacPayload
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
@@ -55,7 +59,7 @@ def settings_snapshot_from_payload(payload: Mapping[str, object]) -> SettingsSna
             if not isinstance(car, Mapping):
                 continue
             car_payload = {str(key): value for key, value in car.items()}
-            cars.append(car_to_persistence_dict(Car.from_persisted_dict(car_payload)))
+            cars.append(car_to_persistence_dict(car_from_persistence_dict(car_payload)))
 
     active_car_id_raw = str(payload.get("activeCarId") or "")
     car_ids = {car["id"] for car in cars}

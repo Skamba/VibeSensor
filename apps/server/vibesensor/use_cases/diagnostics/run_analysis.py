@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 from ._analysis_models import FindingsBuilder
-from ._context import DiagnosticsContext
-from ._context_decode import build_diagnostics_context
+from ._analysis_result import AnalysisResult
+from ._run_input import DiagnosticsRunInput, build_diagnostics_run_input
 from ._types import AccelStatistics
 from ._validation import _validate_required_strength_metrics
 from .analysis_pipeline import (
-    AnalysisResult,
     build_findings_for_typed_samples,
     execute_analysis,
 )
@@ -39,8 +36,7 @@ class RunAnalysis:
     """Typed analysis facade around a single prepared diagnostics run."""
 
     __slots__ = (
-        "_context",
-        "_samples",
+        "_run",
         "_file_name",
         "_language",
         "_include_samples",
@@ -52,27 +48,25 @@ class RunAnalysis:
 
     def __init__(
         self,
-        context: DiagnosticsContext,
-        samples: Sequence[SensorFrame],
+        run: DiagnosticsRunInput,
         *,
         file_name: str = "run",
         lang: str | None = None,
         include_samples: bool = True,
         findings_builder: FindingsBuilder | None = None,
     ) -> None:
-        self._context = context
-        self._samples = list(samples)
+        self._run = run
         self._file_name = file_name
         self._language = normalize_lang(lang)
         self._include_samples = include_samples
         self._findings_builder = findings_builder
         self._test_run: TestRun | None = None
 
-        _validate_required_strength_metrics(self._samples)
-        self._prepared = prepare_run_data(self._context, self._samples)
+        _validate_required_strength_metrics(self._run.samples)
+        self._prepared = prepare_run_data(self._run.context, self._run.samples)
         self._accel_stats = compute_accel_statistics(
-            self._samples,
-            self._context.sensor_model,
+            self._run.samples,
+            self._run.context.sensor_model,
         )
 
     @property
@@ -95,8 +89,8 @@ class RunAnalysis:
         """Run the full typed diagnostics pipeline."""
 
         result = execute_analysis(
-            context=self._context,
-            samples=self._samples,
+            context=self._run.context,
+            samples=self._run.samples,
             file_name=self._file_name,
             language=self._language,
             include_samples=self._include_samples,
@@ -116,30 +110,14 @@ def build_findings_for_sensor_frames(
     findings_builder: FindingsBuilder | None = None,
 ) -> tuple[DomainFinding, ...]:
     """Build findings from the canonical typed diagnostics inputs."""
-    _validate_required_strength_metrics(samples)
-    context = build_diagnostics_context(metadata, file_name="run")
-    prepared = prepare_run_data(context, samples)
+    run = build_diagnostics_run_input(metadata, samples, file_name="run")
+    _validate_required_strength_metrics(run.samples)
+    prepared = prepare_run_data(run.context, run.samples)
     return build_findings_for_typed_samples(
-        context=context,
-        samples=samples,
+        context=run.context,
+        samples=run.samples,
         language=normalize_lang(lang),
         prepared=prepared,
-        findings_builder=findings_builder,
-    )
-
-
-def build_findings_for_samples(
-    *,
-    metadata: Mapping[str, object],
-    samples: Sequence[Mapping[str, object]],
-    lang: str | None = None,
-    findings_builder: FindingsBuilder | None = None,
-) -> tuple[DomainFinding, ...]:
-    """Boundary helper that normalizes raw payloads once before typed analysis."""
-    return build_findings_for_sensor_frames(
-        metadata=run_metadata_from_mapping(metadata),
-        samples=sensor_frames_from_rows(samples),
-        lang=lang,
         findings_builder=findings_builder,
     )
 
@@ -147,7 +125,6 @@ def build_findings_for_samples(
 __all__ = [
     "AnalysisResult",
     "RunAnalysis",
-    "build_findings_for_samples",
     "build_findings_for_sensor_frames",
     "summarize_origin",
 ]
