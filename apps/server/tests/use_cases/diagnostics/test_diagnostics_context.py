@@ -84,7 +84,7 @@ def test_diagnostics_context_prefers_nested_snapshot_over_conflicting_flat_alias
     assert context.car_variant == "sport"
 
 
-def test_diagnostics_context_decodes_legacy_flat_metadata_into_canonical_snapshot() -> None:
+def test_diagnostics_context_requires_nested_snapshot_for_run_context_fields() -> None:
     context = build_diagnostics_context(
         {
             "run_id": "legacy-run",
@@ -104,13 +104,10 @@ def test_diagnostics_context_decodes_legacy_flat_metadata_into_canonical_snapsho
 
     projected = context_to_metadata_dict(context)
 
-    assert context.run_context.analysis_settings.final_drive_ratio == 3.55
-    assert context.run_context.car is not None
-    assert context.run_context.car.car_id == "car-legacy"
-    assert context.run_context.car.name == "Legacy Car"
-    assert projected["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
-    assert projected["active_car_snapshot"]["id"] == "car-legacy"
-    assert projected["car_name"] == "Legacy Car"
+    assert context.run_context.analysis_settings.final_drive_ratio == 0.0
+    assert context.run_context.car is None
+    assert projected["analysis_settings_snapshot"]["final_drive_ratio"] == 0.0
+    assert "active_car_snapshot" not in projected
 
 
 def test_diagnostics_context_preserves_legacy_flat_ratio_fallback_without_tire_geometry() -> None:
@@ -127,8 +124,8 @@ def test_diagnostics_context_preserves_legacy_flat_ratio_fallback_without_tire_g
 
     assert context.order_reference_spec is None
     assert context.tire_circumference_m == 2.036
-    assert context.final_drive_ratio == 3.08
-    assert context.current_gear_ratio == 0.64
+    assert context.final_drive_ratio is None
+    assert context.current_gear_ratio is None
     assert context.reference_complete is False
 
 
@@ -159,7 +156,6 @@ def test_diagnostics_context_rehydrates_boundary_metadata_with_known_and_unknown
 
     assert metadata["run_id"] == "ctx-run"
     assert metadata["custom_note"] == "preserve-me"
-    assert metadata["car_name"] == "Primary"
     assert metadata["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
     assert metadata["active_car_snapshot"]["variant"] == "sport"
     assert metadata["tire_circumference_m"] is not None

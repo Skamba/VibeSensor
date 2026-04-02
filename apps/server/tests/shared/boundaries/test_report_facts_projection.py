@@ -35,7 +35,6 @@ def test_report_suitability_checks_wraps_boundary_payloads_as_tuple() -> None:
 
     assert payload == (
         {
-            "check": "speed_profile",
             "check_key": "speed_profile",
             "state": "warn",
             "explanation": "",

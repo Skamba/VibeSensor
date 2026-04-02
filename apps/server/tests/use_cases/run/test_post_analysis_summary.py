@@ -113,7 +113,6 @@ def test_build_post_analysis_summary_adds_stride_warning(
     assert run_suitability == [
         {
             "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
-            "check": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
             "state": "warn",
             "explanation": "stride=3",
         }
@@ -157,7 +156,6 @@ def test_build_post_analysis_summary_adds_short_run_warning(
     assert summary["run_suitability"] == [
         {
             "check_key": "SUITABILITY_CHECK_RUN_DURATION",
-            "check": "SUITABILITY_CHECK_RUN_DURATION",
             "state": "warn",
             "explanation": "SUITABILITY_RUN_DURATION_WARNING",
         }

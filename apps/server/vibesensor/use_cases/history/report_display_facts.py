@@ -221,7 +221,7 @@ def _first_nonpass_detail(
         detail = _resolve_detail_text(check.get("explanation"), lang=lang, tr=tr)
         if detail:
             return detail
-        label = _resolve_check_text(check.get("check_key") or check.get("check"), lang=lang, tr=tr)
+        label = _resolve_check_text(check.get("check_key"), lang=lang, tr=tr)
         if label:
             return label
     for warning in warnings:
@@ -250,7 +250,7 @@ def _nonpass_detail_lines(
         if str(check.get("state") or "").strip().lower() == "pass":
             continue
         detail = _resolve_detail_text(check.get("explanation"), lang=lang, tr=tr)
-        label = _resolve_check_text(check.get("check_key") or check.get("check"), lang=lang, tr=tr)
+        label = _resolve_check_text(check.get("check_key"), lang=lang, tr=tr)
         text = detail or label
         if text:
             lines.append(text)

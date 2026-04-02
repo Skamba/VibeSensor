@@ -64,7 +64,7 @@ def test_run_analysis_produces_test_run() -> None:
     from vibesensor.domain import TestRun
     from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
-    metadata = {"run_id": "test-guard", "car_type": "sedan"}
+    metadata = {"run_id": "test-guard", "active_car_snapshot": {"type": "sedan"}}
     samples = [
         {
             "t_s": float(i),
@@ -220,8 +220,10 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
 
     metadata = {
         "run_id": "domain-case-guard",
-        "car_name": "Guard Car",
-        "car_type": "sedan",
+        "active_car_snapshot": {
+            "name": "Guard Car",
+            "type": "sedan",
+        },
         "language": "en",
     }
     samples = [

@@ -15,7 +15,7 @@ def run_suitability_from_payload(checks: Sequence[Mapping[str, object]]) -> RunS
     """Decode persisted checklist payloads into the domain RunSuitability shape."""
     domain_checks = tuple(
         SuitabilityCheck(
-            check_key=str(c.get("check_key", c.get("check", ""))),
+            check_key=str(c.get("check_key", "")),
             state=str(c.get("state", "pass")),
         )
         for c in checks
@@ -26,7 +26,6 @@ def run_suitability_from_payload(checks: Sequence[Mapping[str, object]]) -> RunS
 
 def _payload_for_check(check: SuitabilityCheck) -> RunSuitabilityCheck:
     return {
-        "check": check.check_key,
         "check_key": check.check_key,
         "state": check.state,
         "explanation": payload_value_from_json(cast(JsonValue, check.explanation_i18n_ref())),

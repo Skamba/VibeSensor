@@ -146,9 +146,7 @@ class TestSuitabilityCheckParity:
     RENAME_MAP: dict[str, str] = {
         "details": "explanation",  # details → i18n explanation
     }
-    PAYLOAD_ONLY: set[str] = {
-        "check",  # legacy alias of check_key
-    }
+    PAYLOAD_ONLY: set[str] = set()
 
     def test_all_domain_fields_covered(self) -> None:
         dc = _dc_fields(SuitabilityCheck)
