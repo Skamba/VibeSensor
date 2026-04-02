@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain import DiagnosticCase, DrivingPhaseInterval, LocationIntensitySummary, RunSuitability, TestRun
+from vibesensor.domain import (
+    DiagnosticCase,
+    DrivingPhaseInterval,
+    LocationIntensitySummary,
+    RunSuitability,
+    TestRun,
+)
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin

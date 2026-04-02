@@ -6,12 +6,12 @@ from vibesensor.domain import (
     DiagnosticCase,
     RunCapture,
     RunSetup,
-    RunSuitability,
     Sensor,
     SpeedSource,
     TestRun,
 )
 from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.shared.boundaries.diagnostic_case import car_from_metadata, symptom_from_metadata
 from vibesensor.shared.boundaries.run_capture_codec import configuration_snapshot_from_run_metadata
 
@@ -21,7 +21,6 @@ from .plots import _plot_data
 from .run_analysis_projection import build_domain_driving_segments
 from .run_data_preparation import build_phase_summary
 from .speed_profile_helpers import _speed_stats
-from vibesensor.domain.test_plan import plan_test_actions
 
 __all__ = ["AnalysisResult", "build_analysis_result", "_final_top_causes"]
 

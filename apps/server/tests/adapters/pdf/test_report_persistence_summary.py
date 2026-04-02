@@ -10,6 +10,7 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
+from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.shared.boundaries.sensor_frame_codec import (
     sensor_frames_from_rows,
     sensor_frames_to_json_objects,
@@ -17,7 +18,6 @@ from vibesensor.shared.boundaries.sensor_frame_codec import (
 from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
-from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.use_cases.diagnostics.spectrogram import (
     spectrogram_from_peaks as _spectrogram_from_peaks,
 )

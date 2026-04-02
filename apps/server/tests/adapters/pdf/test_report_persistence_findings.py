@@ -14,6 +14,7 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
+from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.shared.boundaries.sensor_frame_codec import (
     sensor_frames_from_rows,
     sensor_frames_to_json_objects,
@@ -23,7 +24,6 @@ from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
-from vibesensor.adapters.analysis_summary import build_findings_for_samples
 
 
 class TestBuildPersistentPeakFindings:

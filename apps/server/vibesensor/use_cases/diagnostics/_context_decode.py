@@ -18,7 +18,11 @@ def build_diagnostics_context(
 ) -> DiagnosticsContext:
     """Build the canonical diagnostics context from typed run metadata."""
 
-    typed_metadata = metadata if isinstance(metadata, RunMetadata) else run_metadata_from_mapping(metadata)
+    typed_metadata = (
+        metadata if isinstance(metadata, RunMetadata) else run_metadata_from_mapping(metadata)
+    )
     run_id = typed_metadata.run_id or f"run-{file_name}"
-    typed_metadata = typed_metadata if typed_metadata.run_id else replace(typed_metadata, run_id=run_id)
+    typed_metadata = (
+        typed_metadata if typed_metadata.run_id else replace(typed_metadata, run_id=run_id)
+    )
     return DiagnosticsContext(metadata=typed_metadata)
