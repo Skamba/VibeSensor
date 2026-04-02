@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from test_support.core import _stable_hash
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.constants.units import KMH_TO_MPS
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
-from vibesensor.use_cases.diagnostics._types import AnalysisSample
 
 
 def make_sample(
@@ -54,10 +55,10 @@ def make_sample(
     return sample
 
 
-def make_analysis_sample(**kwargs: Any) -> AnalysisSample:
+def make_analysis_sample(**kwargs: Any) -> SensorFrame:
     """Build one typed diagnostics sample from the shared raw sample builder."""
 
-    return AnalysisSample.from_dict(make_sample(**kwargs))
+    return normalize_sensor_frames([make_sample(**kwargs)])[0]
 
 
 def make_noise_samples(

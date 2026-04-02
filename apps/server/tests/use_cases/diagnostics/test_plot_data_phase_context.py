@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 
 import vibesensor.use_cases.diagnostics.plots as plots_module
-from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.use_cases.diagnostics.plots import _plot_data
 
@@ -59,7 +59,7 @@ def _build_plot_data(
     phase_segments: list | None = None,
 ):
     return _plot_data(
-        samples=normalize_analysis_samples(samples),
+        samples=normalize_sensor_frames(samples),
         speed_breakdown=[],
         phase_speed_breakdown=[],
         findings=(),
@@ -146,7 +146,7 @@ class TestPhaseSegmentsOutput:
 
 def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.MonkeyPatch) -> None:
     samples = _samples_at_speed(4, speed_kmh=60.0)
-    typed_samples = normalize_analysis_samples(samples)
+    typed_samples = normalize_sensor_frames(samples)
     per_sample_phases, phase_segments = segment_run_phases(typed_samples)
 
     segment_calls = 0
@@ -231,8 +231,12 @@ def test_aggregate_fft_spectrum_presence_ratio_clamped_to_one() -> None:
         },
     ]
 
-    two_result = dict(_aggregate_fft_spectrum(two_peaks_sample, freq_bin_hz=10.0))
-    one_result = dict(_aggregate_fft_spectrum(one_peak_sample, freq_bin_hz=10.0))
+    two_result = dict(
+        _aggregate_fft_spectrum(normalize_sensor_frames(two_peaks_sample), freq_bin_hz=10.0),
+    )
+    one_result = dict(
+        _aggregate_fft_spectrum(normalize_sensor_frames(one_peak_sample), freq_bin_hz=10.0),
+    )
 
     # Both produce a single bin near 45 Hz with presence_ratio=1 after clamping.
     # Without clamping, two_result score would be 4× one_result score (2²=4).

@@ -17,7 +17,8 @@ from vibesensor.domain import (
     RunSuitability,
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.strength_metrics_codec import strength_peak_payloads
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
@@ -493,7 +494,7 @@ class TestComputeAccelStatistics:
                 "vibration_strength_db": 12.0,
             },
         ]
-        result = _compute_accel_statistics(normalize_analysis_samples(samples), "ADXL345")
+        result = _compute_accel_statistics(normalize_sensor_frames(samples), "ADXL345")
         assert len(result["accel_x_vals"]) == 1
         assert result["accel_x_vals"][0] == pytest.approx(0.1)
         assert len(result["accel_mag_vals"]) == 1
@@ -505,12 +506,12 @@ class TestComputeAccelStatistics:
         samples: list[dict[str, Any]] = [
             {"accel_x_g": 15.7, "accel_y_g": 0.0, "accel_z_g": 0.0},
         ]
-        result = _compute_accel_statistics(normalize_analysis_samples(samples), "ADXL345")
+        result = _compute_accel_statistics(normalize_sensor_frames(samples), "ADXL345")
         assert result["sat_count"] >= 1, "Near-limit value should count as saturation"
 
     def test_missing_axes_handled(self) -> None:
         samples: list[dict[str, Any]] = [{"accel_x_g": 0.5}]
-        result = _compute_accel_statistics(normalize_analysis_samples(samples), "unknown")
+        result = _compute_accel_statistics(normalize_sensor_frames(samples), "unknown")
         assert len(result["accel_x_vals"]) == 1
         assert result["accel_y_vals"] == []
         assert result["accel_mag_vals"] == []  # can't compute magnitude without all 3
@@ -521,7 +522,7 @@ class TestComputeAccelStatistics:
             {"accel_x_g": 999.0, "accel_y_g": 999.0, "accel_z_g": 999.0},
         ]
         result = _compute_accel_statistics(
-            normalize_analysis_samples(samples),
+            normalize_sensor_frames(samples),
             "totally_unknown_sensor",
         )
         # With unknown sensor, sensor_limit should be None → sat_count = 0
@@ -574,7 +575,7 @@ class TestExtractStrengthData:
         assert result.peak_amp_g is None
         assert result.noise_floor_amp_g is None
         assert result.strength_bucket is None
-        assert result.to_peak_payloads(max_items=8) == []
+        assert strength_peak_payloads(result.top_peaks, max_items=8) == []
 
     def test_combined_strength_metrics(self) -> None:
         metrics: dict[str, object] = {
@@ -591,7 +592,7 @@ class TestExtractStrengthData:
         result = extract_strength_data(metrics)
         assert result.vibration_strength_db == pytest.approx(18.5)
         assert result.strength_bucket == "l3"
-        payloads = result.to_peak_payloads(max_items=8)
+        payloads = strength_peak_payloads(result.top_peaks, max_items=8)
         assert len(payloads) == 1
         assert payloads[0]["hz"] == pytest.approx(45.0)
 
@@ -625,7 +626,7 @@ class TestExtractStrengthData:
             },
         }
         result = extract_strength_data(metrics)
-        payloads = result.to_peak_payloads(max_items=8)
+        payloads = strength_peak_payloads(result.top_peaks, max_items=8)
         assert len(payloads) == 1
         assert payloads[0]["hz"] == pytest.approx(50.0)
 
@@ -656,7 +657,7 @@ class TestExtractStrengthData:
             },
         }
         result = extract_strength_data(metrics)
-        payloads = result.to_peak_payloads(max_items=8)
+        payloads = strength_peak_payloads(result.top_peaks, max_items=8)
         assert len(payloads) == 1
         assert payloads[0]["hz"] == 300.0
 
@@ -678,10 +679,10 @@ class TestExtractStrengthData:
         assert result.peak_amp_g is None
         assert result.noise_floor_amp_g is None
         assert result.dominant_hz == 50.0
-        assert result.to_peak_payloads(max_items=8) == [{"hz": 50.0, "amp": 0.2}]
+        assert strength_peak_payloads(result.top_peaks, max_items=8) == [{"hz": 50.0, "amp": 0.2}]
 
     def test_to_peak_payloads_respects_max_items(self) -> None:
-        """to_peak_payloads(max_items=N) truncates output to N items."""
+        """strength_peak_payloads(max_items=N) truncates output to N items."""
         metrics: dict[str, object] = {
             "combined": {
                 "strength_metrics": {
@@ -691,7 +692,7 @@ class TestExtractStrengthData:
         }
         result = extract_strength_data(metrics)
         assert len(result.top_peaks) == 11
-        assert len(result.to_peak_payloads(max_items=8)) == 8
+        assert len(strength_peak_payloads(result.top_peaks, max_items=8)) == 8
 
 
 class TestResolveSpeedContext:

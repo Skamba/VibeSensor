@@ -6,6 +6,7 @@ import pytest
 from _report_persistence_helpers import build_findings, findings_at_freq, uniform_samples
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
 from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
@@ -16,6 +17,10 @@ from vibesensor.use_cases.diagnostics.spectrogram import (
 from vibesensor.use_cases.diagnostics.spectrogram import (
     aggregate_fft_spectrum_raw as _aggregate_fft_spectrum_raw,
 )
+
+
+def _typed_samples(samples: list[dict]) -> list:
+    return normalize_sensor_frames(samples)
 
 
 class TestClassifyPeakType:
@@ -44,7 +49,7 @@ class TestAggregateFFTSpectrum:
                 peaks.append({"hz": 50.0, "amp": 0.50})
             samples.append(sample(float(i) * 0.5, 80.0 + i * 0.5, peaks))
 
-        spectrum = _aggregate_fft_spectrum(samples, freq_bin_hz=2.0)
+        spectrum = _aggregate_fft_spectrum(_typed_samples(samples), freq_bin_hz=2.0)
         spectrum_dict = dict(spectrum)
         persistent_val = spectrum_dict.get(25.0, spectrum_dict.get(26.0, 0.0))
         transient_val = spectrum_dict.get(51.0, spectrum_dict.get(50.0, 0.0))
@@ -59,7 +64,7 @@ class TestAggregateFFTSpectrum:
                 peaks.append({"hz": 50.0, "amp": 0.80})
             samples.append(sample(float(i), 80.0, peaks))
 
-        raw = _aggregate_fft_spectrum_raw(samples, freq_bin_hz=2.0)
+        raw = _aggregate_fft_spectrum_raw(_typed_samples(samples), freq_bin_hz=2.0)
         raw_dict = dict(raw)
         spike_val = raw_dict.get(51.0, raw_dict.get(50.0, 0.0))
         assert spike_val >= 0.80
@@ -86,7 +91,7 @@ class TestTopPeaksTableRows:
                 peaks.append({"hz": 80.0, "amp": 1.0})
             samples.append(sample(float(i) * 0.5, 85.0, peaks))
 
-        rows = _top_peaks_table_rows(samples)
+        rows = _top_peaks_table_rows(_typed_samples(samples))
         assert len(rows) >= 2
         assert rows[0].frequency_hz == 30.0
         assert rows[0].presence_ratio > 0.5
@@ -103,7 +108,9 @@ class TestTopPeaksTableRows:
         assert row.peaks.classification
 
     def test_single_sample_still_works(self) -> None:
-        rows = _top_peaks_table_rows([sample(0.0, 80.0, [{"hz": 20.0, "amp": 0.1}])])
+        rows = _top_peaks_table_rows(
+            _typed_samples([sample(0.0, 80.0, [{"hz": 20.0, "amp": 0.1}])]),
+        )
         assert len(rows) == 1
         assert hasattr(rows[0], "max_intensity_db")
         assert rows[0].presence_ratio == 1.0
@@ -116,7 +123,7 @@ class TestTopPeaksTableRows:
                 sustained_peaks.append({"hz": 60.0, "amp": 0.5 * (0.3**i)})
             samples.append(sample(float(i) * 0.5, 85.0, sustained_peaks))
 
-        rows = _top_peaks_table_rows(samples)
+        rows = _top_peaks_table_rows(_typed_samples(samples))
         freq_ranks = {row.frequency_hz: row.rank for row in rows}
         assert freq_ranks.get(25.0, 999) < freq_ranks.get(60.0, 999)
 
@@ -125,7 +132,7 @@ class TestTopPeaksTableRows:
             sample(0.0, 80.0, [{"hz": 30.0, "amp": 0.10}], strength_floor_amp_g=0.02),
             sample(0.5, 82.0, [{"hz": 30.0, "amp": 0.20}], strength_floor_amp_g=0.04),
         ]
-        rows = _top_peaks_table_rows(samples)
+        rows = _top_peaks_table_rows(_typed_samples(samples))
         assert rows
         row = rows[0]
         assert row.strength_floor_db is not None
@@ -138,7 +145,7 @@ class TestTopPeaksTableRows:
             sample(float(idx), speed_kmh, [{"hz": 30.0, "amp": amp}])
             for idx, (speed_kmh, amp) in enumerate(zip(speeds, amps, strict=False))
         ]
-        rows = _top_peaks_table_rows(samples, top_n=1, freq_bin_hz=1.0)
+        rows = _top_peaks_table_rows(_typed_samples(samples), top_n=1, freq_bin_hz=1.0)
         assert rows[0].typical_speed_band == "80-90 km/h"
 
     def test_typical_speed_band_uses_amplitude_weighted_window(self) -> None:
@@ -148,7 +155,7 @@ class TestTopPeaksTableRows:
             amp = 0.02 if i < 12 else 0.09
             samples.append(sample(float(i), speed, [{"hz": 33.0, "amp": amp}]))
 
-        rows = _top_peaks_table_rows(samples)
+        rows = _top_peaks_table_rows(_typed_samples(samples))
         assert rows[0].typical_speed_band == "100-110 km/h"
 
     def test_frequency_binning_matches_floor_based_spectrum_rules(self) -> None:
@@ -156,7 +163,7 @@ class TestTopPeaksTableRows:
             sample(0.0, 60.0, [{"hz": 10.51, "amp": 0.08}]),
             sample(0.5, 60.0, [{"hz": 10.52, "amp": 0.07}]),
         ]
-        rows = _top_peaks_table_rows(samples, top_n=1, freq_bin_hz=1.0)
+        rows = _top_peaks_table_rows(_typed_samples(samples), top_n=1, freq_bin_hz=1.0)
         assert rows[0].frequency_hz == 10.0
 
     def test_typical_and_strongest_speed_bands_stay_consistent(self) -> None:
@@ -166,7 +173,7 @@ class TestTopPeaksTableRows:
             amp = 0.02 if i < 12 else 0.09
             samples.append(sample(float(i), speed, [{"hz": 33.0, "amp": amp}]))
 
-        rows = _top_peaks_table_rows(samples)
+        rows = _top_peaks_table_rows(_typed_samples(samples))
         typical_speed_band = str(rows[0].typical_speed_band or "")
         assert typical_speed_band == "100-110 km/h"
 

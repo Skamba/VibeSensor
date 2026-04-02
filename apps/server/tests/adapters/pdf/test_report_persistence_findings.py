@@ -14,6 +14,7 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.boundaries.summary_serialization import annotate_peaks_with_order_labels
 from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
@@ -150,7 +151,7 @@ class TestBuildPersistentPeakFindings:
         target = findings_at_freq(findings, "25")
         assert target[0].peaks.classification == "baseline_noise"
 
-        rows = _top_peaks_table_rows(samples, top_n=12, freq_bin_hz=1.0)
+        rows = _top_peaks_table_rows(normalize_sensor_frames(samples), top_n=12, freq_bin_hz=1.0)
         row_25 = next(
             (row for row in rows if abs(row.frequency_hz - 25.0) <= 0.5),
             None,

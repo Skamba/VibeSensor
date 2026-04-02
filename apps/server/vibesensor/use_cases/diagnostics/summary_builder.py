@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import (
@@ -10,6 +10,7 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._analysis_models import (
     AnalysisResultBuildRequest,
@@ -19,12 +20,7 @@ from vibesensor.use_cases.diagnostics._analysis_models import (
 )
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics._types import (
-    AccelStatistics,
-    AnalysisSampleInput,
-    Sample,
-    normalize_analysis_samples,
-)
+from vibesensor.use_cases.diagnostics._types import AccelStatistics, Sample
 from vibesensor.use_cases.diagnostics._validation import (
     _validate_required_strength_metrics,
 )
@@ -77,7 +73,7 @@ class RunAnalysis:
     def __init__(
         self,
         context: DiagnosticsContext,
-        samples: Sequence[Sample],
+        samples: Sequence[Sample | Mapping[str, object]],
         *,
         file_name: str = "run",
         lang: str | None = None,
@@ -85,7 +81,7 @@ class RunAnalysis:
         findings_builder: FindingsBuilder | None = None,
     ) -> None:
         self._context = context
-        self._samples = list(samples)
+        self._samples = normalize_sensor_frames(samples)
         self._file_name = file_name
         self._language = normalize_lang(lang)
         self._include_samples = include_samples
@@ -187,21 +183,21 @@ class RunAnalysis:
 def build_findings_for_samples(
     *,
     metadata: JsonObject,
-    samples: Sequence[AnalysisSampleInput],
+    samples: Sequence[Sample | Mapping[str, object]],
     lang: str | None = None,
     findings_builder: FindingsBuilder | None = None,
 ) -> tuple[DomainFinding, ...]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
-    rows = normalize_analysis_samples(samples)
-    _validate_required_strength_metrics(rows)
+    typed_samples = normalize_sensor_frames(samples)
+    _validate_required_strength_metrics(typed_samples)
     context = build_diagnostics_context(metadata, file_name="run")
-    prepared = prepare_run_data(context, rows)
+    prepared = prepare_run_data(context, typed_samples)
     builder = findings_builder or _build_findings
     return builder(
         FindingsBuildRequest(
             context=context,
-            samples=rows,
+            samples=typed_samples,
             speed_sufficient=prepared.speed_sufficient,
             steady_speed=prepared.is_steady_speed,
             speed_stddev_kmh=prepared.speed_stddev_kmh,

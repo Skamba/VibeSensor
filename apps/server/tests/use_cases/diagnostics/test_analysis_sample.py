@@ -3,14 +3,13 @@ from __future__ import annotations
 from test_support.sample_scenarios import make_analysis_sample, make_sample
 
 from vibesensor.domain import StrengthPeak
-from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSample,
-    analysis_samples_to_json_objects,
-    normalize_analysis_samples,
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    normalize_sensor_frames,
+    sensor_frames_to_json_objects,
 )
 
 
-def test_analysis_sample_from_dict_types_top_peaks() -> None:
+def test_sensor_frame_boundary_normalization_types_top_peaks() -> None:
     raw = make_sample(
         t_s=1.5,
         speed_kmh=72.0,
@@ -20,15 +19,15 @@ def test_analysis_sample_from_dict_types_top_peaks() -> None:
         dominant_freq_hz=31.0,
     )
 
-    sample = AnalysisSample.from_dict(raw)
+    sample = normalize_sensor_frames([raw])[0]
 
     assert sample.t_s == 1.5
     assert sample.speed_kmh == 72.0
     assert sample.location == "FL"
-    assert sample.top_peaks == (StrengthPeak.from_dict({"hz": 31.0, "amp": 0.11}),)
+    assert sample.top_peaks == (StrengthPeak(hz=31.0, amp=0.11),)
 
 
-def test_normalize_analysis_samples_returns_typed_rows_and_explicit_json_projection() -> None:
+def test_normalize_sensor_frames_returns_typed_rows_and_explicit_json_projection() -> None:
     raw = make_sample(
         t_s=0.0,
         speed_kmh=60.0,
@@ -42,8 +41,8 @@ def test_normalize_analysis_samples_returns_typed_rows_and_explicit_json_project
         top_peaks=[{"hz": 27.0, "amp": 0.09}],
     )
 
-    typed_rows = normalize_analysis_samples([raw, typed])
-    raw_rows = analysis_samples_to_json_objects(typed_rows)
+    typed_rows = normalize_sensor_frames([raw, typed])
+    raw_rows = sensor_frames_to_json_objects(typed_rows)
 
     assert raw_rows[0]["client_name"] == raw["client_name"]
     assert raw_rows[0]["speed_kmh"] == raw["speed_kmh"]

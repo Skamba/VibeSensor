@@ -17,6 +17,7 @@ from vibesensor.infra.runtime.processing_loop import (
     ProcessingLoopError,
     ProcessingLoopState,
 )
+from vibesensor.shared.exceptions import ProcessingError
 
 # ---------------------------------------------------------------------------
 # Minimal stubs
@@ -63,7 +64,7 @@ class _StubProcessor:
         self.compute_all_calls += 1
         self.compute_call_args.append((list(client_ids), dict(sample_rates_hz or {})))
         if self._call_count <= self._fail_count:
-            raise RuntimeError("stub compute_all failure")
+            raise ProcessingError("stub compute_all failure")
         return {}
 
     def evict_clients(self, active: set[str]) -> None:
@@ -193,20 +194,19 @@ class TestProcessingLoopFailureTracking:
         assert state.fatal_backoff_cycles == MAX_FATAL_BACKOFF_CYCLES
 
     @pytest.mark.asyncio
-    async def test_uncategorized_exception_falls_into_unexpected(self) -> None:
-        """A non-ProcessingLoopError Exception is categorized as 'unexpected'."""
+    async def test_programmer_bug_propagates_from_ingress_state(self) -> None:
+        """Unexpected runtime bugs in ingress state should now fail explicitly."""
         mock_proc = MagicMock()
         mock_proc.clients_with_recent_data.return_value = []
         mock_proc.evict_clients.return_value = None
-        # Raise from a method before compute_all wraps it (use evict_stale path via registry)
         mock_registry = MagicMock()
         mock_registry.active_client_ids.side_effect = RuntimeError("unexpected boom")
         loop, state = _make_loop(processor=mock_proc, registry=mock_registry)
 
-        await _run_loop(loop, max_ticks=1)
+        with pytest.raises(RuntimeError, match="unexpected boom"):
+            await _run_loop(loop, max_ticks=1)
 
-        assert state.processing_failure_count == 1
-        assert "ingress_state" in state.processing_failure_categories
+        assert state.processing_failure_count == 0
 
     @pytest.mark.asyncio
     async def test_failure_message_is_truncated_at_limit(self) -> None:
@@ -214,9 +214,10 @@ class TestProcessingLoopFailureTracking:
         long_msg = "x" * 300
         mock_proc = MagicMock()
         mock_proc.clients_with_recent_data.return_value = []
+        mock_proc.compute_all.side_effect = ProcessingError(long_msg)
         mock_proc.evict_clients.return_value = None
         mock_registry = MagicMock()
-        mock_registry.active_client_ids.side_effect = RuntimeError(long_msg)
+        mock_registry.active_client_ids.return_value = []
         loop, state = _make_loop(processor=mock_proc, registry=mock_registry)
 
         await _run_loop(loop, max_ticks=1)

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import Car, CarSnapshot, OrderReferenceSpec
+from vibesensor.domain import Car, OrderReferenceSpec
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.shared.boundaries import test_run_reconstruction as _test_run_reconstruction
+from vibesensor.shared.boundaries.car_snapshot_codec import car_snapshot_from_mapping
 
 
 def _require_authoritative_case_id(summary: Mapping[str, object]) -> str:
@@ -35,8 +36,7 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
 
 def car_from_metadata(metadata: Mapping[str, object]) -> Car | None:
     """Build optional case-scoped car context from canonical run metadata."""
-    raw_snapshot = metadata.get("active_car_snapshot")
-    snapshot = CarSnapshot.from_dict(raw_snapshot) if isinstance(raw_snapshot, Mapping) else None
+    snapshot = car_snapshot_from_mapping(metadata.get("active_car_snapshot"))
 
     raw_settings = metadata.get("analysis_settings_snapshot")
     if isinstance(raw_settings, Mapping):
@@ -60,7 +60,7 @@ def car_from_metadata(metadata: Mapping[str, object]) -> Car | None:
 
 def symptom_from_metadata(metadata: Mapping[str, object]) -> Symptom:
     """Build case symptom context from run metadata at a boundary seam."""
-    complaint = str(metadata.get("symptom") or metadata.get("complaint") or "").strip()
+    complaint = str(metadata.get("symptom") or "").strip()
     if not complaint:
         return Symptom.unspecified()
     return Symptom(

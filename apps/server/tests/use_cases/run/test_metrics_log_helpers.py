@@ -773,11 +773,11 @@ async def test_run_offloads_flush_cycle_with_to_thread(
     logger.start_recording()
     captured: dict[str, object] = {}
 
-    async def _fake_to_thread(func: object, *args: object, **kwargs: object) -> bool:
+    async def _fake_to_thread(func: object, *args: object, **kwargs: object) -> tuple[None, bool]:
         captured["func"] = func
         captured["args"] = args
         captured["kwargs"] = kwargs
-        return False
+        return None, False
 
     async def _cancel_sleep(_interval: float) -> None:
         raise asyncio.CancelledError()

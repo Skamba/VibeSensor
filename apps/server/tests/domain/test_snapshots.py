@@ -16,6 +16,9 @@ from vibesensor.domain import (
     RunContextSnapshot,
     SpeedProfileSummary,
 )
+from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+    analysis_settings_snapshot_from_mapping,
+)
 from vibesensor.shared.boundaries.run_context_codec import (
     run_context_snapshot_from_metadata,
     run_context_snapshot_to_metadata,
@@ -28,7 +31,7 @@ class TestAnalysisSettingsSnapshotFromDict:
     """from_dict() constructor tests."""
 
     def test_empty_dict_never_raises(self) -> None:
-        snap = AnalysisSettingsSnapshot.from_dict({})
+        snap = analysis_settings_snapshot_from_mapping({})
         assert snap.tire_width_mm == 0.0
         assert snap.tire_deflection_factor == 1.0
 
@@ -50,21 +53,21 @@ class TestAnalysisSettingsSnapshotFromDict:
             "max_band_half_width_pct": 0.05,
             "tire_deflection_factor": 0.96,
         }
-        snap = AnalysisSettingsSnapshot.from_dict(data)
+        snap = analysis_settings_snapshot_from_mapping(data)
         assert snap.tire_width_mm == 285.0
         assert snap.current_gear_ratio == 0.64
         assert snap.tire_deflection_factor == 0.96
 
     def test_non_numeric_values_default(self) -> None:
-        snap = AnalysisSettingsSnapshot.from_dict({"tire_width_mm": "not_a_number"})
+        snap = analysis_settings_snapshot_from_mapping({"tire_width_mm": "not_a_number"})
         assert snap.tire_width_mm == 0.0
 
     def test_none_values_default(self) -> None:
-        snap = AnalysisSettingsSnapshot.from_dict({"rim_in": None})
+        snap = analysis_settings_snapshot_from_mapping({"rim_in": None})
         assert snap.rim_in == 0.0
 
     def test_infinity_defaults(self) -> None:
-        snap = AnalysisSettingsSnapshot.from_dict({"tire_width_mm": float("inf")})
+        snap = analysis_settings_snapshot_from_mapping({"tire_width_mm": float("inf")})
         assert snap.tire_width_mm == 0.0
 
 
@@ -76,7 +79,7 @@ class TestAnalysisSettingsOrderRef:
         assert snap.order_reference_spec is None
 
     def test_valid_tire_returns_spec(self) -> None:
-        snap = AnalysisSettingsSnapshot.from_dict(
+        snap = analysis_settings_snapshot_from_mapping(
             {"tire_width_mm": 285.0, "tire_aspect_pct": 30.0, "rim_in": 21.0}
         )
         spec = snap.order_reference_spec

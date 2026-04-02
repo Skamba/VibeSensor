@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
+_OPERATIONAL_PROCESSING_EXCEPTIONS = (OSError, ProcessingError)
+
 STALE_DATA_AGE_S = 2.0
 """Clients without fresh UDP data within this window are excluded from spectrum output."""
 
@@ -76,27 +78,21 @@ class ProcessingTickRunner:
             return
         try:
             await asyncio.to_thread(self._control_plane.broadcast_sync_clock)
-        except Exception as exc:
+        except OSError as exc:
             raise ProcessingLoopError("sync_clock", exc) from exc
 
     def _collect_compute_clients(self) -> tuple[list[str], dict[str, int]]:
-        try:
-            self._registry.evict_stale()
-            active_ids = self._registry.active_client_ids()
-            fresh_ids = self._processor.clients_with_recent_data(
-                active_ids,
-                max_age_s=STALE_DATA_AGE_S,
-            )
-        except Exception as exc:
-            raise ProcessingLoopError("ingress_state", exc) from exc
+        self._registry.evict_stale()
+        active_ids = self._registry.active_client_ids()
+        fresh_ids = self._processor.clients_with_recent_data(
+            active_ids,
+            max_age_s=STALE_DATA_AGE_S,
+        )
 
         sample_rates: dict[str, int] = {}
         compute_client_ids: list[str] = []
         for client_id in fresh_ids:
-            try:
-                record = self._registry.get(client_id)
-            except Exception as exc:
-                raise ProcessingLoopError("registry_lookup", exc) from exc
+            record = self._registry.get(client_id)
             if record is None:
                 continue
             compute_client_ids.append(client_id)
@@ -148,12 +144,12 @@ class ProcessingTickRunner:
                 compute_client_ids,
                 sample_rates_hz=sample_rates,
             )
-        except Exception as exc:
+        except _OPERATIONAL_PROCESSING_EXCEPTIONS as exc:
             compute_error = exc
 
         try:
             self._processor.evict_clients(set(self._registry.active_client_ids()))
-        except Exception as exc:
+        except _OPERATIONAL_PROCESSING_EXCEPTIONS as exc:
             if compute_error is not None:
                 LOGGER.warning(
                     "Processing loop cleanup also failed after compute_all failure; "

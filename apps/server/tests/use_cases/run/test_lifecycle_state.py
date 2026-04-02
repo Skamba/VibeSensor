@@ -5,7 +5,7 @@ from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
 
 
 def _analysis_settings_snapshot() -> AnalysisSettingsSnapshot:
-    return AnalysisSettingsSnapshot.from_dict(AnalysisSettingsSnapshot.DEFAULTS)
+    return AnalysisSettingsSnapshot(**AnalysisSettingsSnapshot.DEFAULTS)
 
 
 def test_start_new_run_enables_state_and_returns_snapshot() -> None:

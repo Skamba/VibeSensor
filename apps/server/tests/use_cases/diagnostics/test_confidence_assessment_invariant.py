@@ -8,11 +8,11 @@ from test_support import standard_metadata
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as _decode_test_run,
 )
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
@@ -26,7 +26,7 @@ def _assert_all_findings_have_assessment(findings: tuple[Any, ...]) -> None:
 def _wheel_fault_result(file_name: str):
     return RunAnalysis(
         build_diagnostics_context(standard_metadata(), file_name=file_name),
-        normalize_analysis_samples(
+        normalize_sensor_frames(
             fault_phase(
                 speed_kmh=80.0,
                 duration_s=20.0,
