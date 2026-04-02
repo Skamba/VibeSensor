@@ -24,6 +24,7 @@ LOGGER = logging.getLogger(__name__)
 # selected sensor, so this is intentionally long.
 _RECEIVE_IDLE_TIMEOUT_S: float = 300.0
 
+
 def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
     """Create and return the WebSocket streaming routes."""
     router = APIRouter()

@@ -164,4 +164,5 @@ class DiagnosticsContext:
             current_gear_ratio=(gear_ratio if gear_ratio is not None else spec.current_gear_ratio),
         )
 
+
 __all__ = ["DiagnosticsContext", "DiagnosticsSymptom"]
