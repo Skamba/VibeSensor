@@ -525,8 +525,8 @@ async def test_report_pdf_cache_builds_once_per_key() -> None:
         return b"%PDF-cache"
 
     cache_key = ("run-1", "nl", None, 0, "{}", "none")
-    first = await cache.get_or_build(cache_key, _build, run_id="run-1")
-    second = await cache.get_or_build(cache_key, _build, run_id="run-1")
+    first = await cache.get_or_build(cache_key, _build)
+    second = await cache.get_or_build(cache_key, _build)
 
     assert calls == 1
     assert first == second == b"%PDF-cache"
