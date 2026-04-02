@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
+import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -258,11 +259,11 @@ class LifecycleManager:
     async def _shutdown_resources(self) -> None:
         try:
             await asyncio.to_thread(self._runtime.worker_pool.shutdown, True)
-        except Exception:
+        except (OSError, RuntimeError):
             LOGGER.warning("Error shutting down worker pool", exc_info=True)
         try:
             self._runtime.history_db.close()
-        except Exception:
+        except (sqlite3.Error, OSError):
             LOGGER.warning("Error closing history DB", exc_info=True)
 
     def _report_lingering_tasks(

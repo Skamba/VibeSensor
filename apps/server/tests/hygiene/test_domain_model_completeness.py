@@ -54,7 +54,6 @@ _REQUIRED_DOMAIN_EXPORTS = [
     "SpeedProfileSummary",
     "DrivingPhaseSummary",
     # New typed internal concepts (Phase A creates these)
-    "RunMetadataSnapshot",
     "OrderMatchObservation",
     "DrivingPhaseInterval",
     "DrivingPhaseSegment",

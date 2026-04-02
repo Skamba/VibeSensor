@@ -302,7 +302,7 @@ class OBDSpeedMonitor:
         session.connect(mac_address, info.rfcomm_channel)
         try:
             session.initialize()
-        except Exception:
+        except (OSError, RuntimeError):
             session.close()
             raise
         device = replace(

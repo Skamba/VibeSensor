@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from test_support.core import standard_metadata
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.adapters.analysis_summary import summarize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 
 
 def run_analysis(
@@ -15,7 +16,11 @@ def run_analysis(
 ) -> dict[str, Any]:
     """Run the full analysis pipeline on *samples* and return the summary."""
     meta = metadata or standard_metadata(**meta_overrides)
-    return summarize_run_data(meta, samples, lang=meta.get("language", "en"))
+    return summarize_sensor_frames(
+        meta,
+        sensor_frames_from_rows(samples),
+        lang=meta.get("language", "en"),
+    )
 
 
 def extract_top(summary: dict[str, Any]) -> dict[str, Any] | None:
