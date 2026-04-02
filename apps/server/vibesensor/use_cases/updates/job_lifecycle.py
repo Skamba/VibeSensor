@@ -46,8 +46,11 @@ class UpdateJobLifecycleHandler:
         self._tracker.fail("unexpected", f"Unexpected error: {exc}")
         self._logger.exception("update: unexpected error")
 
-    def handle_cancelled_cleanup_error(self) -> None:
-        self._logger.warning("Update cleanup interrupted during cancellation", exc_info=True)
+    def handle_cancelled_cleanup_error(self, exc: Exception) -> None:
+        self._logger.warning(
+            "Update cleanup interrupted during cancellation",
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
 
     async def cleanup_after_update(self) -> None:
         tracker = self._tracker

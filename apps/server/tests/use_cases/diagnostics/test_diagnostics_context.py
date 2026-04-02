@@ -40,9 +40,11 @@ def _context_metadata() -> dict[str, object]:
             "type": "sedan",
             "variant": "sport",
         },
-        "symptom": "driveline hum",
-        "symptom_onset": "after 60 km/h",
-        "symptom_context": "during acceleration",
+        "symptom": {
+            "description": "driveline hum",
+            "onset": "after 60 km/h",
+            "context": "during acceleration",
+        },
     }
 
 
@@ -166,7 +168,8 @@ def test_run_metadata_rehydrates_boundary_metadata_with_known_fields_only() -> N
     assert payload["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
     assert payload["active_car_snapshot"]["variant"] == "sport"
     assert "aspects" not in payload["active_car_snapshot"]
-    assert payload["tire_circumference_m"] is not None
+    assert "reference_context" not in payload
+    assert "tire_circumference_m" not in payload
     assert "analysis_settings" not in payload
     assert "custom_note" not in payload
     assert metadata_analysis_settings_items(metadata)[0][0] == "current_gear_ratio"

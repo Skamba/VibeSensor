@@ -63,9 +63,11 @@ def test_symptom_from_metadata_reads_canonical_fields_and_context() -> None:
     symptom = symptom_from_metadata(
         run_metadata_from_mapping(
             {
-                "symptom": "whine under load",
-                "symptom_onset": "after 60 km/h",
-                "symptom_context": "during acceleration",
+                "symptom": {
+                    "description": "whine under load",
+                    "onset": "after 60 km/h",
+                    "context": "during acceleration",
+                },
             }
         )
     )

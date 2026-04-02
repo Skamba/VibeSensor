@@ -266,7 +266,8 @@ async def test_history_run_projects_canonical_nested_run_context() -> None:
         projected_metadata["analysis_settings_snapshot"]["tire_aspect_pct"]
     ) == pytest.approx(35.0)
     assert float(projected_metadata["analysis_settings_snapshot"]["rim_in"]) == pytest.approx(20.0)
-    assert float(projected_metadata["tire_circumference_m"]) > 0
+    assert "reference_context" not in projected_metadata
+    assert "tire_circumference_m" not in projected_metadata
 
 
 @pytest.mark.asyncio

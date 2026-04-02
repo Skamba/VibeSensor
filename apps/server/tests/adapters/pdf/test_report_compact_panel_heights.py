@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from reportlab.lib.units import mm
 
+from vibesensor.adapters.pdf.page1_actions import estimate_actions_block_height
 from vibesensor.adapters.pdf.pdf_appendices import (
     _estimate_action_steps_panel_height,
     _estimate_appendix_c_context_panel_height,
@@ -11,7 +12,6 @@ from vibesensor.adapters.pdf.pdf_appendices import (
     _estimate_worksheet_top_panel_height,
     _worksheet_first_actions_panel_height,
 )
-from vibesensor.adapters.pdf.pdf_page1 import _estimate_actions_block_height
 from vibesensor.adapters.pdf.pdf_style import GAP, MARGIN, PAGE_H, PAGE_W, PANEL_HEADER_H
 from vibesensor.adapters.pdf.report_data import (
     AppendixAData,
@@ -42,7 +42,7 @@ def test_estimate_actions_block_height_shrinks_for_short_content() -> None:
     page_top = PAGE_H - MARGIN
     content_bottom = MARGIN + 8 * mm
     main_h = page_top - content_bottom - (26 * mm) - (40 * mm) - (2 * GAP)
-    actions_h = _estimate_actions_block_height(data, tr=_tr, w=78 * mm)
+    actions_h = estimate_actions_block_height(data, tr=_tr, w=78 * mm)
 
     assert actions_h < main_h
     assert actions_h >= PANEL_HEADER_H
@@ -65,7 +65,7 @@ def test_estimate_actions_block_height_stays_compact_for_two_preview_steps() -> 
         ],
     )
 
-    actions_h = _estimate_actions_block_height(data, tr=_tr, w=actions_w)
+    actions_h = estimate_actions_block_height(data, tr=_tr, w=actions_w)
 
     assert actions_h < 55 * mm
     assert actions_h >= PANEL_HEADER_H

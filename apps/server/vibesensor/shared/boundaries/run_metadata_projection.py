@@ -19,10 +19,10 @@ def car_from_run_metadata(metadata: RunMetadata) -> Car | None:
     if run_car is None and order_reference_spec is None:
         return None
     return Car(
-        id=metadata.active_car_id,
-        name=metadata.car_name or "Unnamed Car",
-        car_type=metadata.car_type or "sedan",
-        variant=metadata.car_variant,
+        id=run_car.car_id if run_car is not None else None,
+        name=run_car.name if run_car is not None and run_car.name else "Unnamed Car",
+        car_type=run_car.car_type if run_car is not None and run_car.car_type else "sedan",
+        variant=run_car.variant if run_car is not None else None,
         order_reference_spec=order_reference_spec,
     )
 

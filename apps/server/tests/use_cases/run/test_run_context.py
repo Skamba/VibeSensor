@@ -79,18 +79,20 @@ class TestCurrentContextWarnings:
                     detail={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
                 )
             ],
-            metadata={
-                "analysis_settings_snapshot": {
-                    "tire_width_mm": 245.0,
-                    "tire_aspect_pct": 40.0,
-                    "rim_in": 19.0,
-                },
-                "active_car_snapshot": {
-                    "id": "car-a",
-                    "name": "Track Car",
-                    "type": "coupe",
-                },
-            },
+            metadata=run_metadata_from_mapping(
+                {
+                    "analysis_settings_snapshot": {
+                        "tire_width_mm": 245.0,
+                        "tire_aspect_pct": 40.0,
+                        "rim_in": 19.0,
+                    },
+                    "active_car_snapshot": {
+                        "id": "car-a",
+                        "name": "Track Car",
+                        "type": "coupe",
+                    },
+                }
+            ),
             current_active_car_snapshot=CarSnapshot(
                 car_id="car-b",
                 name="Daily Car",
