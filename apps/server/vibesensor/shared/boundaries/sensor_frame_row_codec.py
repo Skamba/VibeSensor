@@ -12,9 +12,9 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 from .sensor_frame_value_codec import (
     SensorFrameDecodeError,
     build_sensor_frame,
+    strength_bucket,
     strict_optional_float,
     strict_optional_int,
-    strength_bucket,
     text_value,
     top_peaks_payload_from_row_value,
 )

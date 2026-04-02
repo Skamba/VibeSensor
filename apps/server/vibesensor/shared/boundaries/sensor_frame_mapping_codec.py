@@ -14,9 +14,9 @@ from .sensor_frame_value_codec import (
     build_sensor_frame,
     optional_float,
     optional_int,
+    strength_bucket,
     strict_optional_float,
     strict_optional_int,
-    strength_bucket,
     text_value,
     top_peaks_from_value,
 )
