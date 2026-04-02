@@ -57,7 +57,6 @@ from .order_reference import OrderReferenceSpec
 from .run import Run
 from .run_capture import ConfigurationSnapshot, Measurement, RunCapture, RunSetup, VibrationReading
 from .run_context import RunContextSnapshot
-from .run_metadata import RunMetadataSnapshot
 from .run_status import RUN_TRANSITIONS, RunStatus, is_run_deletable, transition_run
 from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement, normalize_sensor_id
@@ -86,7 +85,6 @@ __all__ = [
     "AnalysisSettingsSnapshot",
     "DrivingPhaseSummary",
     "RunContextSnapshot",
-    "RunMetadataSnapshot",
     "SpeedProfileSummary",
     # Value objects — run and capture
     "ConfigurationSnapshot",

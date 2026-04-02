@@ -42,7 +42,11 @@ async def test_supervisor_restarts_failed_task_and_clears_health(monkeypatch) ->
 
     monkeypatch.setattr(task_supervisor_module.asyncio, "sleep", _fast_sleep)
 
-    task = supervisor.start(task_factory, name="ws-broadcast")
+    task = supervisor.start(
+        task_factory,
+        name="ws-broadcast",
+        restartable_exceptions=(RuntimeError,),
+    )
     await asyncio.wait_for(restart_started.wait(), timeout=1.0)
 
     assert call_count == 2
@@ -82,7 +86,11 @@ async def test_supervisor_restarts_unexpected_exit(monkeypatch) -> None:
 
     monkeypatch.setattr(task_supervisor_module.asyncio, "sleep", _fast_sleep)
 
-    task = supervisor.start(task_factory, name="metrics-log")
+    task = supervisor.start(
+        task_factory,
+        name="metrics-log",
+        restartable_exceptions=(RuntimeError,),
+    )
     await asyncio.wait_for(restart_started.wait(), timeout=1.0)
 
     assert call_count == 2
@@ -136,7 +144,39 @@ async def test_supervisor_caps_restart_delay() -> None:
         patch("vibesensor.infra.runtime.task_supervisor.asyncio.sleep", side_effect=_fake_sleep),
         pytest.raises(asyncio.CancelledError),
     ):
-        task = supervisor.start(task_factory, name="gps-speed")
+        task = supervisor.start(
+            task_factory,
+            name="gps-speed",
+            restartable_exceptions=(RuntimeError,),
+        )
         await task
 
     assert sleep_calls == [1.0, 2.0, 2.0]
+
+
+@pytest.mark.asyncio
+async def test_supervisor_does_not_restart_unclassified_exception() -> None:
+    health_state = RuntimeHealthState()
+    supervisor = TaskSupervisor(
+        health_state=health_state,
+        logger=logging.getLogger("vibesensor.infra.runtime.lifecycle"),
+        base_delay_s=0.0,
+        max_delay_s=0.0,
+    )
+    call_count = 0
+
+    async def task_factory() -> None:
+        nonlocal call_count
+        call_count += 1
+        raise TypeError("bug")
+
+    task = supervisor.start(
+        task_factory,
+        name="obd-speed",
+        restartable_exceptions=(RuntimeError,),
+    )
+    await asyncio.gather(task, return_exceptions=True)
+    await asyncio.sleep(0)
+
+    assert call_count == 1
+    assert health_state.background_task_failures["obd-speed"] == "bug"

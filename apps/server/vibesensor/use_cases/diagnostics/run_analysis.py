@@ -10,11 +10,12 @@ from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 from ._analysis_models import FindingsBuilder
 from ._context import DiagnosticsContext
 from ._context_decode import build_diagnostics_context
-from ._types import AccelStatistics, Sample
+from ._types import AccelStatistics
 from ._validation import _validate_required_strength_metrics
 from .analysis_pipeline import (
     AnalysisResult,
@@ -51,7 +52,7 @@ class RunAnalysis:
     def __init__(
         self,
         context: DiagnosticsContext,
-        samples: Sequence[Sample],
+        samples: Sequence[SensorFrame],
         *,
         file_name: str = "run",
         lang: str | None = None,
@@ -106,6 +107,26 @@ class RunAnalysis:
         return result
 
 
+def build_findings_for_sensor_frames(
+    *,
+    metadata: Mapping[str, object],
+    samples: Sequence[SensorFrame],
+    lang: str | None = None,
+    findings_builder: FindingsBuilder | None = None,
+) -> tuple[DomainFinding, ...]:
+    """Build findings from the canonical typed diagnostics samples."""
+    _validate_required_strength_metrics(samples)
+    context = build_diagnostics_context(metadata, file_name="run")
+    prepared = prepare_run_data(context, samples)
+    return build_findings_for_typed_samples(
+        context=context,
+        samples=samples,
+        language=normalize_lang(lang),
+        prepared=prepared,
+        findings_builder=findings_builder,
+    )
+
+
 def build_findings_for_samples(
     *,
     metadata: JsonObject,
@@ -113,19 +134,19 @@ def build_findings_for_samples(
     lang: str | None = None,
     findings_builder: FindingsBuilder | None = None,
 ) -> tuple[DomainFinding, ...]:
-    """Build findings from boundary payloads using the typed diagnostics core."""
-
-    typed_samples = sensor_frames_from_rows(samples)
-    _validate_required_strength_metrics(typed_samples)
-    context = build_diagnostics_context(metadata, file_name="run")
-    prepared = prepare_run_data(context, typed_samples)
-    return build_findings_for_typed_samples(
-        context=context,
-        samples=typed_samples,
-        language=normalize_lang(lang),
-        prepared=prepared,
+    """Decode boundary sample rows once, then build findings from typed frames."""
+    return build_findings_for_sensor_frames(
+        metadata=metadata,
+        samples=sensor_frames_from_rows(samples),
+        lang=lang,
         findings_builder=findings_builder,
     )
 
 
-__all__ = ["AnalysisResult", "RunAnalysis", "build_findings_for_samples", "summarize_origin"]
+__all__ = [
+    "AnalysisResult",
+    "RunAnalysis",
+    "build_findings_for_samples",
+    "build_findings_for_sensor_frames",
+    "summarize_origin",
+]

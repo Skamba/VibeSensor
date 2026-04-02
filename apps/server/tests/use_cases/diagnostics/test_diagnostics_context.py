@@ -4,6 +4,7 @@ from dataclasses import replace
 
 from test_support.sample_scenarios import make_analysis_sample
 
+from vibesensor.domain import Symptom
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics._context_projection import context_to_metadata_dict
 
@@ -50,6 +51,7 @@ def test_diagnostics_context_decodes_typed_reference_data() -> None:
     context = _context()
 
     assert context.run_id == "ctx-run"
+    assert not hasattr(context, "run_metadata")
     assert context.raw_sample_rate_hz == 200.0
     assert context.sensor_model == "ADXL345"
     assert context.car_name == "Primary"
@@ -57,6 +59,8 @@ def test_diagnostics_context_decodes_typed_reference_data() -> None:
     assert context.order_reference_spec is not None
     assert context.tire_circumference_m is not None
     assert context.reference_complete is True
+    assert isinstance(context.symptom, Symptom)
+    assert context.symptom is not None
     assert context.symptom.description == "driveline hum"
     assert context.symptom.onset == "after 60 km/h"
     assert context.symptom.context == "during acceleration"

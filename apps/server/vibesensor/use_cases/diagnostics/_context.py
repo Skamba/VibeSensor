@@ -4,52 +4,30 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 
-from vibesensor.domain import (
-    AnalysisSettingsSnapshot,
-    CarSnapshot,
-    OrderReferenceSpec,
-    RunMetadataSnapshot,
-    Symptom,
-)
+from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, OrderReferenceSpec, Symptom
 from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     ScalarSettings,
     analysis_settings_snapshot_items,
 )
 from vibesensor.shared.types.json_types import JsonObject
-
-from ._types import Sample
-
-
-@dataclass(frozen=True, slots=True)
-class DiagnosticsSymptom:
-    """Typed diagnostics-owned symptom input projected to the domain at the edge."""
-
-    description: str = ""
-    onset: str = ""
-    context: str = ""
-
-    @property
-    def is_specified(self) -> bool:
-        return bool(self.description)
-
-    def as_domain_symptom(self) -> Symptom:
-        if not self.description:
-            return Symptom.unspecified()
-        return Symptom(
-            description=self.description,
-            onset=self.onset,
-            context=self.context,
-        )
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 
 @dataclass(frozen=True, slots=True)
 class DiagnosticsContext:
     """Canonical typed diagnostics context built once at metadata ingress."""
 
-    run_metadata: RunMetadataSnapshot
+    run_id: str
+    case_id: str = ""
+    sensor_mac: str | None = None
+    sensor_model: str | None = None
+    firmware_version: str | None = None
+    raw_sample_rate_hz: float | None = None
+    feature_interval_s: float | None = None
+    summary_version: int = 1
     analysis_settings: AnalysisSettingsSnapshot = field(default_factory=AnalysisSettingsSnapshot)
     car: CarSnapshot | None = None
-    symptom: DiagnosticsSymptom = field(default_factory=DiagnosticsSymptom)
+    symptom: Symptom | None = None
     start_time_utc: str | None = None
     end_time_utc: str | None = None
     report_date: str | None = None
@@ -64,25 +42,11 @@ class DiagnosticsContext:
     units: JsonObject | None = None
     amplitude_definitions: JsonObject | None = None
 
-    @property
-    def run_id(self) -> str:
-        return self.run_metadata.run_id
-
-    @property
-    def sensor_model(self) -> str | None:
-        return self.run_metadata.sensor_model
-
-    @property
-    def firmware_version(self) -> str | None:
-        return self.run_metadata.firmware_version
-
-    @property
-    def raw_sample_rate_hz(self) -> float | None:
-        return self.run_metadata.raw_sample_rate_hz
-
-    @property
-    def feature_interval_s(self) -> float | None:
-        return self.run_metadata.feature_interval_s
+    def __post_init__(self) -> None:
+        if not self.run_id:
+            raise ValueError("run_id must be a non-empty string")
+        if self.summary_version < 1:
+            raise ValueError("summary_version must be >= 1")
 
     @property
     def car_name(self) -> str | None:
@@ -146,7 +110,7 @@ class DiagnosticsContext:
 
     def effective_order_reference_spec(
         self,
-        sample: Sample | None = None,
+        sample: SensorFrame | None = None,
     ) -> OrderReferenceSpec | None:
         """Return the base order-reference spec, optionally overridden by one sample."""
         spec = self.order_reference_spec
@@ -165,4 +129,4 @@ class DiagnosticsContext:
         )
 
 
-__all__ = ["DiagnosticsContext", "DiagnosticsSymptom"]
+__all__ = ["DiagnosticsContext"]
