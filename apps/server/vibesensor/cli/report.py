@@ -48,22 +48,28 @@ def main() -> int:
         return 1
 
     out_pdf = args.output or args.input.with_name(f"{args.input.stem}_report.pdf")
-    out_pdf.parent.mkdir(parents=True, exist_ok=True)
     try:
-        out_pdf.write_bytes(
-            build_report_pdf(map_summary(prepare_report_input(summary, filename=out_pdf.name)))
+        rendered_pdf = build_report_pdf(
+            map_summary(prepare_report_input(summary, filename=out_pdf.name))
         )
-    except Exception as exc:
-        print(
-            f"Error: PDF generation failed: {exc}",
-            file=sys.stderr,
-        )
+    except (TypeError, ValueError) as exc:
+        print(f"Error: invalid report input: {exc}", file=sys.stderr)
+        return 1
+    try:
+        out_pdf.parent.mkdir(parents=True, exist_ok=True)
+        out_pdf.write_bytes(rendered_pdf)
+    except OSError as exc:
+        print(f"Error: failed to write PDF: {exc}", file=sys.stderr)
         return 1
     print(f"wrote report: {out_pdf}")
 
     if args.summary_json is not None:
-        args.summary_json.parent.mkdir(parents=True, exist_ok=True)
-        args.summary_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        try:
+            args.summary_json.parent.mkdir(parents=True, exist_ok=True)
+            args.summary_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        except OSError as exc:
+            print(f"Error: failed to write summary JSON: {exc}", file=sys.stderr)
+            return 1
         print(f"wrote summary: {args.summary_json}")
     return 0
 

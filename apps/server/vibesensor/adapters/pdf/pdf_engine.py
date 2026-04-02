@@ -33,11 +33,7 @@ def build_report_pdf(data: ReportTemplateData) -> bytes:
             data.certainty_tier_key,
         )
         data.certainty_tier_key = "A"
-    try:
-        return _build_canvas_pdf(data)
-    except Exception as exc:
-        LOGGER.error("PDF generation failed.", exc_info=True)
-        raise RuntimeError(f"PDF generation failed: {type(exc).__name__}: {exc}") from exc
+    return _build_canvas_pdf(data)
 
 
 def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
