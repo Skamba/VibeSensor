@@ -19,7 +19,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     """Run diagnostics analysis and return the internal persisted-analysis object."""
     from vibesensor.domain import SuitabilityCheck
     from vibesensor.report_i18n import tr
-    from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
+    from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
     result = RunAnalysis(
         run.context,

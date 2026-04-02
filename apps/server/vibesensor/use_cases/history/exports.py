@@ -11,6 +11,7 @@ import tempfile
 from collections.abc import Iterator
 from dataclasses import dataclass
 
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_to_json_object
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
@@ -143,7 +144,7 @@ class HistoryExportService:
                 batch_size=EXPORT_BATCH_SIZE,
             ):
                 sample_count += len(batch)
-                writer.writerows(flatten_for_csv(row.to_dict()) for row in batch)
+                writer.writerows(flatten_for_csv(sensor_frame_to_json_object(row)) for row in batch)
             raw_csv_text.flush()
             raw_csv_text.detach()
             spool.seek(0)

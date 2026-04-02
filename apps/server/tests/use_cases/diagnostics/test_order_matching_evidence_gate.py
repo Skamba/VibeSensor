@@ -5,7 +5,7 @@ from __future__ import annotations
 from test_support.report_helpers import diagnostics_context
 
 from vibesensor.domain import OrderMatchObservation, VibrationSource
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.use_cases.diagnostics.orders.matching import OrderMatchAccumulator
 from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
 from vibesensor.use_cases.diagnostics.orders.pipeline import (
@@ -71,7 +71,7 @@ def _session(
     return OrderAnalysisSession(
         OrderAnalysisRequest(
             context=diagnostics_context(feature_interval_s=feature_interval_s),
-            samples=normalize_sensor_frames(
+            samples=sensor_frames_from_rows(
                 [{"speed_kmh": 60.0, "top_peaks": [{"hz": 10.0, "amp": 0.05}]}],
             ),
             speed_sufficient=True,

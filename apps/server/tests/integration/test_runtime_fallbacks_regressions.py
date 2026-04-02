@@ -14,6 +14,7 @@ from _paths import SERVER_ROOT
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.vibration_strength import (
     strength_floor_amp_g,
@@ -31,7 +32,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "source": "test",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 class TestStrengthFloorFallback:

@@ -20,6 +20,8 @@ import pytest
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
 from vibesensor.shared.sampling import bounded_sample as _bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -41,7 +43,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "source": "test",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 def _seeded_history_db(
@@ -54,7 +56,10 @@ def _seeded_history_db(
     """Create a HistoryDB with one run containing *n_samples* rows."""
     db = _make_history_db(tmp_path, name)
     db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="test"))
-    db.append_samples(run_id, [SensorFrame.from_dict({"t_s": float(i)}) for i in range(n_samples)])
+    db.append_samples(
+        run_id,
+        [sensor_frame_from_mapping({"t_s": float(i)}) for i in range(n_samples)],
+    )
     return db
 
 

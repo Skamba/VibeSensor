@@ -2,7 +2,7 @@
 
 Covers:
   1. pdf_engine.py — guarded float() on confidence
-  2. summary_builder.py — guarded float() on frequency_hz
+  2. run_analysis.py — guarded float() on frequency_hz
   3. order_analysis._order_label — edge cases (zero test coverage)
   4. order_analysis._driveshaft_hz — edge cases (zero test coverage)
   5. domain_models._as_float_or_none — NaN handling
@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import OrderReferenceSpec
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics.orders.physics import _driveshaft_hz, _order_label
@@ -35,7 +35,7 @@ def _context(overrides: dict | None = None):
 
 
 def _sample(**overrides: object):
-    return normalize_sensor_frames([overrides])[0]
+    return sensor_frames_from_rows([overrides])[0]
 
 
 class TestPdfBuilderConfidenceGuard:
@@ -54,7 +54,7 @@ class TestPdfBuilderConfidenceGuard:
 
 
 # ------------------------------------------------------------------
-# 2. summary_builder.py frequency guard
+# 2. run_analysis.py frequency guard
 # ------------------------------------------------------------------
 
 

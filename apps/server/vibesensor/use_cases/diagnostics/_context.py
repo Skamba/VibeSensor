@@ -2,22 +2,44 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from types import MappingProxyType
 
 from vibesensor.domain import (
+    AnalysisSettingsSnapshot,
+    CarSnapshot,
     OrderReferenceSpec,
-    RunContextSnapshot,
     RunMetadataSnapshot,
+    Symptom,
 )
 from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     ScalarSettings,
     analysis_settings_snapshot_items,
 )
-from vibesensor.shared.types.json_types import JsonValue
+from vibesensor.shared.types.json_types import JsonObject
 
 from ._types import Sample
+
+
+@dataclass(frozen=True, slots=True)
+class DiagnosticsSymptom:
+    """Typed diagnostics-owned symptom input projected to the domain at the edge."""
+
+    description: str = ""
+    onset: str = ""
+    context: str = ""
+
+    @property
+    def is_specified(self) -> bool:
+        return bool(self.description)
+
+    def as_domain_symptom(self) -> Symptom:
+        if not self.description:
+            return Symptom.unspecified()
+        return Symptom(
+            description=self.description,
+            onset=self.onset,
+            context=self.context,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,7 +47,9 @@ class DiagnosticsContext:
     """Canonical typed diagnostics context built once at metadata ingress."""
 
     run_metadata: RunMetadataSnapshot
-    run_context: RunContextSnapshot
+    analysis_settings: AnalysisSettingsSnapshot = field(default_factory=AnalysisSettingsSnapshot)
+    car: CarSnapshot | None = None
+    symptom: DiagnosticsSymptom = field(default_factory=DiagnosticsSymptom)
     start_time_utc: str | None = None
     end_time_utc: str | None = None
     report_date: str | None = None
@@ -35,20 +59,10 @@ class DiagnosticsContext:
     peak_picker_method: str | None = None
     accel_scale_g_per_lsb: float | None = None
     incomplete_for_order_analysis: bool = False
-    symptom_description: str = ""
-    symptom_onset: str = ""
-    symptom_context: str = ""
     tire_circumference_m_override: float | None = None
     explicit_engine_rpm: float | None = None
-    extra_metadata: Mapping[str, JsonValue] = field(default_factory=dict, repr=False)
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.extra_metadata, MappingProxyType):
-            object.__setattr__(
-                self,
-                "extra_metadata",
-                MappingProxyType(dict(self.extra_metadata)),
-            )
+    units: JsonObject | None = None
+    amplitude_definitions: JsonObject | None = None
 
     @property
     def run_id(self) -> str:
@@ -72,26 +86,26 @@ class DiagnosticsContext:
 
     @property
     def car_name(self) -> str | None:
-        return self.run_context.car_name
+        return self.car.name if self.car is not None else None
 
     @property
     def car_type(self) -> str | None:
-        return self.run_context.car_type
+        return self.car.car_type if self.car is not None else None
 
     @property
     def car_variant(self) -> str | None:
-        return self.run_context.car_variant
+        return self.car.variant if self.car is not None else None
 
     @property
     def order_reference_spec(self) -> OrderReferenceSpec | None:
-        return self.run_context.order_reference_spec
+        return self.analysis_settings.order_reference_spec
 
     @property
     def final_drive_ratio(self) -> float | None:
         spec = self.order_reference_spec
         if spec is not None and spec.final_drive_ratio > 0:
             return spec.final_drive_ratio
-        ratio = self.run_context.analysis_settings.final_drive_ratio
+        ratio = self.analysis_settings.final_drive_ratio
         return ratio if ratio > 0 else None
 
     @property
@@ -99,7 +113,7 @@ class DiagnosticsContext:
         spec = self.order_reference_spec
         if spec is not None and spec.current_gear_ratio > 0:
             return spec.current_gear_ratio
-        ratio = self.run_context.analysis_settings.current_gear_ratio
+        ratio = self.analysis_settings.current_gear_ratio
         return ratio if ratio > 0 else None
 
     @property
@@ -128,7 +142,7 @@ class DiagnosticsContext:
 
     @property
     def analysis_settings_items(self) -> ScalarSettings:
-        return analysis_settings_snapshot_items(self.run_context.analysis_settings)
+        return analysis_settings_snapshot_items(self.analysis_settings)
 
     def effective_order_reference_spec(
         self,
@@ -151,4 +165,4 @@ class DiagnosticsContext:
         )
 
 
-__all__ = ["DiagnosticsContext"]
+__all__ = ["DiagnosticsContext", "DiagnosticsSymptom"]

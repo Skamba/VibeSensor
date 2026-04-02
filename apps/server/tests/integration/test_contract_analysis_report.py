@@ -27,9 +27,9 @@ from vibesensor.adapters.pdf.mapping import (
 )
 from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
+from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
 pytestmark = pytest.mark.smoke
 
@@ -130,7 +130,7 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
     meta, samples = _make_steady_speed_fault_dataset()
     analysis = RunAnalysis(
         build_diagnostics_context(meta, file_name="ca-reason-proof"),
-        normalize_sensor_frames(samples),
+        sensor_frames_from_rows(samples),
         lang="en",
         file_name="ca-reason-proof",
     )

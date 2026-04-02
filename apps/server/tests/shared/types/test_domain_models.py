@@ -7,6 +7,14 @@ from typing import Any
 import pytest
 
 from vibesensor.domain import Car, StrengthPeak
+from vibesensor.shared.boundaries.run_metadata_codec import (
+    run_metadata_from_mapping,
+    run_metadata_to_json_object,
+)
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    sensor_frame_from_mapping,
+    sensor_frame_to_json_object,
+)
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.types.car_config import car_to_persistence_dict
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -256,12 +264,12 @@ class TestRunMetadata:
         assert rm.accel_scale_g_per_lsb == 0.004
 
     def test_from_dict_minimal(self) -> None:
-        rm = RunMetadata.from_dict({"run_id": "r2", "sensor_model": "TEST"})
+        rm = run_metadata_from_mapping({"run_id": "r2", "sensor_model": "TEST"})
         assert rm.run_id == "r2"
         assert rm.sensor_model == "TEST"
 
     def test_from_dict_nan_fields(self) -> None:
-        rm = RunMetadata.from_dict(
+        rm = run_metadata_from_mapping(
             {
                 "run_id": "r3",
                 "raw_sample_rate_hz": float("nan"),
@@ -282,8 +290,8 @@ class TestRunMetadata:
             fft_window_size_samples=512,
             accel_scale_g_per_lsb=0.002,
         )
-        d = rm.to_dict()
-        rm2 = RunMetadata.from_dict(d)
+        d = run_metadata_to_json_object(rm)
+        rm2 = run_metadata_from_mapping(d)
         assert rm2.run_id == rm.run_id
         assert rm2.sensor_model == rm.sensor_model
         assert rm2.raw_sample_rate_hz == rm.raw_sample_rate_hz
@@ -314,7 +322,7 @@ class TestSensorFrame:
         return base
 
     def _frame(self, **overrides: Any) -> SensorFrame:
-        return SensorFrame.from_dict(self._minimal_record(**overrides))
+        return sensor_frame_from_mapping(self._minimal_record(**overrides))
 
     @pytest.mark.smoke
     def test_from_dict_basic(self) -> None:
@@ -341,8 +349,8 @@ class TestSensorFrame:
     def test_vibration_strength_db_zero_roundtrip(self) -> None:
         """0.0 must survive from_dict → to_dict → from_dict."""
         sf = self._frame(vibration_strength_db=0.0)
-        d = sf.to_dict()
-        sf2 = SensorFrame.from_dict(d)
+        d = sensor_frame_to_json_object(sf)
+        sf2 = sensor_frame_from_mapping(d)
         assert sf2.vibration_strength_db == 0.0
 
     def test_top_peaks_normalized(self) -> None:
@@ -365,15 +373,15 @@ class TestSensorFrame:
 
     def test_roundtrip(self) -> None:
         sf = self._frame()
-        d = sf.to_dict()
-        sf2 = SensorFrame.from_dict(d)
+        d = sensor_frame_to_json_object(sf)
+        sf2 = sensor_frame_from_mapping(d)
         assert sf2.run_id == sf.run_id
         assert sf2.speed_kmh == sf.speed_kmh
         assert len(sf2.top_peaks) == len(sf.top_peaks)
 
     def test_missing_optional_fields(self) -> None:
         """Minimal record with most fields missing should still parse."""
-        sf = SensorFrame.from_dict({"run_id": "x"})
+        sf = sensor_frame_from_mapping({"run_id": "x"})
         assert sf.run_id == "x"
         assert sf.speed_kmh is None
         assert sf.accel_x_g is None

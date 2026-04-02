@@ -4,6 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_input import (
     PostAnalysisRunInput,
@@ -19,7 +21,7 @@ def _run_metadata(
     language: str = "en",
     raw_sample_rate_hz: int = 800,
 ) -> RunMetadata:
-    return RunMetadata.from_dict(
+    return run_metadata_from_mapping(
         {
             "run_id": run_id,
             "start_time_utc": "2025-01-01T00:00:00Z",
@@ -49,7 +51,7 @@ def _run_input(
                 raw_sample_rate_hz=raw_sample_rate_hz,
             ),
             language=language,
-            samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
+            samples=sensor_frames_from_rows([{"t_s": 1.0, "vibration_strength_db": 10.0}]),
             total_sample_count=total_sample_count,
             stride=stride,
         ),
@@ -75,7 +77,7 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
             )
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
+        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
         FakeRunAnalysis,
     )
     monkeypatch.setattr(
@@ -111,7 +113,7 @@ def test_build_post_analysis_summary_adds_stride_warning(
             )
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
+        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
         FakeRunAnalysis,
     )
     monkeypatch.setattr(
@@ -151,7 +153,7 @@ def test_build_post_analysis_summary_adds_short_run_warning(
             )
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
+        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
         FakeRunAnalysis,
     )
     monkeypatch.setattr(
@@ -191,7 +193,7 @@ def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_
             )
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
+        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
         FakeRunAnalysis,
     )
     monkeypatch.setattr(
@@ -204,14 +206,16 @@ def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_
             run_id="run-derived-strength",
             metadata=_run_metadata("run-derived-strength"),
             language="en",
-            samples=[
-                {
-                    "t_s": 1.0,
-                    "top_peaks": [{"hz": 14.0, "amp": 0.12}],
-                    "strength_peak_amp_g": 0.12,
-                    "strength_floor_amp_g": 0.003,
-                }
-            ],
+            samples=sensor_frames_from_rows(
+                [
+                    {
+                        "t_s": 1.0,
+                        "top_peaks": [{"hz": 14.0, "amp": 0.12}],
+                        "strength_peak_amp_g": 0.12,
+                        "strength_floor_amp_g": 0.003,
+                    }
+                ]
+            ),
             total_sample_count=1,
             stride=1,
         )

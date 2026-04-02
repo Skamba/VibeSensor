@@ -19,6 +19,7 @@ from vibesensor.adapters.http.models import (
 )
 from vibesensor.shared.boundaries.analysis_summary_projection import project_persisted_analysis
 from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.ports import ActiveCarReader
 from vibesensor.shared.types.history_records import StoredHistoryRun
@@ -70,7 +71,7 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
         "run_id": run.run_id,
         "status": run.status.value,
         "sample_count": run.sample_count,
-        "metadata": _project_history_metadata(run.metadata.to_dict()),
+        "metadata": _project_history_metadata(run_metadata_to_json_object(run.metadata)),
     }
     if run.error_message is not None:
         payload["error_message"] = run.error_message
@@ -94,7 +95,7 @@ def build_projected_run_details_json(
 ) -> str:
     """Build the exported JSON metadata document with canonical projected analysis."""
     payload = run.to_json_object()
-    payload["metadata"] = _project_history_metadata(run.metadata.to_dict())
+    payload["metadata"] = _project_history_metadata(run_metadata_to_json_object(run.metadata))
     analysis = run.analysis
     if analysis is None:
         return serialize_run_details_json(

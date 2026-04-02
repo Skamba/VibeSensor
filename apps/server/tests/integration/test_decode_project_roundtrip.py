@@ -26,11 +26,11 @@ from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics.summary_builder import AnalysisResult, RunAnalysis
+from vibesensor.use_cases.diagnostics.run_analysis import AnalysisResult, RunAnalysis
 
 # -- helpers ---------------------------------------------------------------
 
@@ -52,7 +52,7 @@ def _run_analysis() -> tuple[RunAnalysis, AnalysisResult]:
     )
     analysis = RunAnalysis(
         build_diagnostics_context(meta, file_name="roundtrip"),
-        normalize_sensor_frames(samples),
+        sensor_frames_from_rows(samples),
         lang="en",
         file_name="roundtrip",
     )
@@ -67,7 +67,7 @@ def _persist_and_reload(tmp_path: Path, summary: dict[str, Any]) -> StoredHistor
         db.create_run(
             _RUN_ID,
             "2026-01-01T00:00:00Z",
-            RunMetadata.from_dict(
+            run_metadata_from_mapping(
                 {
                     "run_id": _RUN_ID,
                     "start_time_utc": "2026-01-01T00:00:00Z",

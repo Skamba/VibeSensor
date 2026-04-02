@@ -20,8 +20,11 @@ from test_support import (
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    sensor_frame_from_mapping,
+    sensor_frame_to_json_object,
+)
 
 pytestmark = pytest.mark.smoke
 
@@ -36,7 +39,7 @@ def _create_populated_db(
     db.create_run(
         run_id,
         start_time_utc="2025-01-01T00:00:00Z",
-        metadata=RunMetadata.from_dict(
+        metadata=run_metadata_from_mapping(
             {
                 "run_id": run_id,
                 "start_time_utc": "2025-01-01T00:00:00Z",
@@ -44,7 +47,7 @@ def _create_populated_db(
             }
         ),
     )
-    db.append_samples(run_id, [SensorFrame.from_dict(sample) for sample in samples])
+    db.append_samples(run_id, [sensor_frame_from_mapping(sample) for sample in samples])
     return db, run_id
 
 
@@ -73,7 +76,11 @@ def test_persisted_samples_produce_valid_analysis():
     db, run_id = _create_populated_db(meta, samples)
     read_back = db.get_run_samples(run_id)
 
-    summary = summarize_run_data(meta, read_back, lang="en")
+    summary = summarize_run_data(
+        meta,
+        [sensor_frame_to_json_object(row) for row in read_back],
+        lang="en",
+    )
 
     assert "findings" in summary
     assert summary["rows"] > 0
@@ -91,7 +98,11 @@ def test_noise_only_round_trip():
     db, run_id = _create_populated_db(meta, samples)
     read_back = db.get_run_samples(run_id)
 
-    summary = summarize_run_data(meta, read_back, lang="en")
+    summary = summarize_run_data(
+        meta,
+        [sensor_frame_to_json_object(row) for row in read_back],
+        lang="en",
+    )
 
     assert "findings" in summary
     assert summary["rows"] == len(samples)
@@ -127,6 +138,6 @@ def test_key_sample_fields_survive_persistence():
 
     required_fields = {"t_s", "speed_kmh", "client_name", "vibration_strength_db"}
     for row in read_back:
-        payload = row.to_dict()
+        payload = sensor_frame_to_json_object(row)
         for field in required_fields:
             assert field in payload, f"Missing field {field!r} after DB round-trip"

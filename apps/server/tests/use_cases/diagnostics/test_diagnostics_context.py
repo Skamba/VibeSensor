@@ -39,7 +39,6 @@ def _context_metadata() -> dict[str, object]:
         "symptom": "driveline hum",
         "symptom_onset": "after 60 km/h",
         "symptom_context": "during acceleration",
-        "custom_note": "preserve-me",
     }
 
 
@@ -58,6 +57,9 @@ def test_diagnostics_context_decodes_typed_reference_data() -> None:
     assert context.order_reference_spec is not None
     assert context.tire_circumference_m is not None
     assert context.reference_complete is True
+    assert context.symptom.description == "driveline hum"
+    assert context.symptom.onset == "after 60 km/h"
+    assert context.symptom.context == "during acceleration"
 
 
 def test_diagnostics_context_prefers_nested_snapshot_over_conflicting_flat_aliases() -> None:
@@ -103,8 +105,8 @@ def test_diagnostics_context_requires_nested_snapshot_for_run_context_fields() -
 
     projected = context_to_metadata_dict(context)
 
-    assert context.run_context.analysis_settings.final_drive_ratio == 0.0
-    assert context.run_context.car is None
+    assert context.analysis_settings.final_drive_ratio == 0.0
+    assert context.car is None
     assert projected["analysis_settings_snapshot"]["final_drive_ratio"] == 0.0
     assert "active_car_snapshot" not in projected
 
@@ -145,15 +147,15 @@ def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None
     assert spec.current_gear_ratio == 1.05
 
 
-def test_diagnostics_context_rehydrates_boundary_metadata_with_known_and_unknown_fields() -> None:
+def test_diagnostics_context_rehydrates_boundary_metadata_with_known_fields_only() -> None:
     context = _context()
 
     metadata = context_to_metadata_dict(context)
 
     assert metadata["run_id"] == "ctx-run"
-    assert metadata["custom_note"] == "preserve-me"
     assert metadata["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
     assert metadata["active_car_snapshot"]["variant"] == "sport"
     assert metadata["tire_circumference_m"] is not None
     assert "analysis_settings" not in metadata
+    assert "custom_note" not in metadata
     assert context.analysis_settings_items[0][0] == "current_gear_ratio"

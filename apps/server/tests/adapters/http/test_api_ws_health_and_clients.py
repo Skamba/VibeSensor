@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from _history_endpoint_helpers import (
@@ -47,6 +47,17 @@ async def test_ws_ignores_invalid_client_selection_messages(messages: list[str])
     ws = FakeWs(messages=messages)
     await endpoint(ws)
     assert state.ws_hub.selected_updates == [None]
+
+
+@pytest.mark.asyncio
+async def test_ws_unexpected_update_error_propagates() -> None:
+    router, state = make_router_and_state(language="en")
+    endpoint = route_endpoint(router, "/ws")
+    state.ws_hub.update_selected_client = AsyncMock(side_effect=RuntimeError("boom"))
+    ws = FakeWs(messages=[json.dumps({"client_id": "aa:bb:cc:dd:ee:ff"})])
+
+    with pytest.raises(RuntimeError, match="boom"):
+        await endpoint(ws)
 
 
 @pytest.mark.asyncio

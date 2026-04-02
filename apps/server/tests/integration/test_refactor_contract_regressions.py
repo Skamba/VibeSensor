@@ -22,6 +22,7 @@ from vibesensor.infra.runtime.client_snapshot import (
 )
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.registry_updates import _JITTER_EMA_ALPHA, _RESTART_SEQ_GAP
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
@@ -48,7 +49,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "feature_interval_s": 1.0,
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 _SAMPLES_200X3 = np.zeros((200, 3), dtype=np.int16)
