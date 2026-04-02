@@ -2,31 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from copy import deepcopy
 
-from vibesensor.domain import (
-    DrivingPhaseInterval,
-    LocationIntensitySummary,
-    RunSuitability,
-    TestRun,
-)
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
-from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.analysis_summary_contracts import (
     AnalysisResultLike,
-    PreparedRunDataLike,
 )
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_to_json_objects
 from vibesensor.shared.boundaries.summary_serialization import (
     AccelStatisticsLike,
-    PhaseSegmentLike,
-    PhaseSpeedBreakdownRowLike,
-    PlotDataResultLike,
-    SpeedBreakdownRowLike,
     build_analysis_summary,
     serialize_plot_data,
 )
