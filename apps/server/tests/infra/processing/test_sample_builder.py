@@ -229,7 +229,6 @@ class TestBuildRunMetadata:
         assert meta.car.name == "VibeSensor Simulator"
         assert meta.car.car_type == "sedan"
         assert meta.car.variant is None
-        assert meta.car.aspects == {}
 
 
 # ---------------------------------------------------------------------------

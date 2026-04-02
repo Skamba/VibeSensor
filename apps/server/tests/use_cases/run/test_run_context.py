@@ -89,7 +89,7 @@ class TestCurrentContextWarnings:
                     "id": "car-a",
                     "name": "Track Car",
                     "type": "coupe",
-                }
+                },
             },
             current_active_car_snapshot=CarSnapshot(
                 car_id="car-b",

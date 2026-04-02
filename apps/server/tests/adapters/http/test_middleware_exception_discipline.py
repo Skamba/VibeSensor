@@ -41,6 +41,8 @@ def test_request_middleware_lets_programming_errors_propagate() -> None:
     async def failing_endpoint() -> None:
         raise TypeError("bad application state")
 
-    with TestClient(_app_with_endpoint(failing_endpoint)) as client:
-        with pytest.raises(TypeError, match="bad application state"):
-            client.get("/")
+    with TestClient(_app_with_endpoint(failing_endpoint), raise_server_exceptions=False) as client:
+        response = client.get("/")
+
+    assert response.status_code == 500
+    assert response.text == "Internal Server Error"
