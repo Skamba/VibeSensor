@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_match_locations
 from vibesensor.use_cases.diagnostics.signal_aggregation import _speed_breakdown
 
@@ -49,7 +49,7 @@ def test_speed_breakdown_stays_fixed_10kmh_bins() -> None:
         {"speed_kmh": 80.1, "strength_peak_band_rms_amp_g": 0.02},
     ]
 
-    rows = _speed_breakdown(normalize_analysis_samples(samples))
+    rows = _speed_breakdown(normalize_sensor_frames(samples))
     labels = {row.speed_range for row in rows}
 
     assert "70-80 km/h" in labels

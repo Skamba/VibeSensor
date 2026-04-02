@@ -5,6 +5,10 @@ from __future__ import annotations
 from types import MappingProxyType
 
 from vibesensor.domain import Car, CarSnapshot, OrderReferenceSpec
+from vibesensor.shared.boundaries.car_snapshot_codec import (
+    car_snapshot_from_mapping,
+    car_snapshot_to_metadata,
+)
 
 
 def _order_settings(**overrides: float) -> dict[str, float]:
@@ -168,7 +172,8 @@ class TestCarOrderReferenceSpec:
 
 class TestCarSnapshot:
     def test_from_dict_empty(self) -> None:
-        snap = CarSnapshot.from_dict({})
+        snap = car_snapshot_from_mapping({})
+        assert snap is not None
         assert snap.car_id is None
         assert snap.name is None
         assert snap.car_type is None
@@ -176,7 +181,7 @@ class TestCarSnapshot:
         assert dict(snap.aspects) == {}
 
     def test_from_dict_full(self) -> None:
-        snap = CarSnapshot.from_dict(
+        snap = car_snapshot_from_mapping(
             {
                 "id": "abc123",
                 "name": "Test Car",
@@ -185,6 +190,7 @@ class TestCarSnapshot:
                 "aspects": {"tire_width_mm": 205.0, "tire_aspect_pct": 55.0},
             }
         )
+        assert snap is not None
         assert snap.car_id == "abc123"
         assert snap.name == "Test Car"
         assert snap.car_type == "sedan"
@@ -192,7 +198,8 @@ class TestCarSnapshot:
         assert snap.aspects["tire_width_mm"] == 205.0
 
     def test_from_dict_with_id_key(self) -> None:
-        snap = CarSnapshot.from_dict({"id": "xyz"})
+        snap = car_snapshot_from_mapping({"id": "xyz"})
+        assert snap is not None
         assert snap.car_id == "xyz"
 
     def test_to_dict_round_trip(self) -> None:
@@ -203,10 +210,12 @@ class TestCarSnapshot:
             variant=None,
             aspects={"tire_width_mm": 205.0},
         )
-        d = original.to_dict()
+        d = car_snapshot_to_metadata(original)
+        assert d is not None
         assert d["id"] == "abc"
         assert d["name"] == "Test"
-        reconstructed = CarSnapshot.from_dict(d)
+        reconstructed = car_snapshot_from_mapping(d)
+        assert reconstructed is not None
         assert reconstructed.car_id == original.car_id
         assert reconstructed.name == original.name
 
@@ -219,10 +228,12 @@ class TestCarSnapshot:
             pass  # MappingProxyType raises TypeError on mutation
 
     def test_whitespace_name_becomes_none(self) -> None:
-        snap = CarSnapshot.from_dict({"name": "  "})
+        snap = car_snapshot_from_mapping({"name": "  "})
+        assert snap is not None
         assert snap.name is None
 
     def test_invalid_aspects_skipped(self) -> None:
-        snap = CarSnapshot.from_dict({"aspects": {"a": "not_a_number", "b": 1.5}})
+        snap = car_snapshot_from_mapping({"aspects": {"a": "not_a_number", "b": 1.5}})
+        assert snap is not None
         assert "a" not in snap.aspects
         assert snap.aspects["b"] == 1.5

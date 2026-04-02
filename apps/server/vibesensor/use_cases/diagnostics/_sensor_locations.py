@@ -7,29 +7,28 @@ from collections.abc import Sequence
 
 from vibesensor.shared.locations import label_for_code as _label_for_code
 
-from ._types import AnalysisSampleInput, ensure_analysis_sample
+from ._types import Sample
 
 
-def _location_label(sample: AnalysisSampleInput, *, lang: str = "en") -> str:
+def _location_label(sample: Sample, *, lang: str = "en") -> str:
     """Return a stable language-neutral location label for the sample."""
     del lang
-    typed_sample = ensure_analysis_sample(sample)
-    location_code = typed_sample.location.strip()
+    location_code = sample.location.strip()
     if location_code:
         translated = _label_for_code(location_code)
         return str(translated) if translated else location_code
 
-    client_name_raw = typed_sample.client_name.strip()
+    client_name_raw = sample.client_name.strip()
     if client_name_raw:
         return client_name_raw
-    client_id_raw = typed_sample.client_id.strip()
+    client_id_raw = sample.client_id.strip()
     if client_id_raw:
         return f"Sensor …{client_id_raw[-4:]}"
     return "Unknown sensor"
 
 
 def _locations_connected_throughout_run(
-    samples: Sequence[AnalysisSampleInput],
+    samples: Sequence[Sample],
     *,
     lang: str = "en",
 ) -> set[str]:
@@ -37,8 +36,7 @@ def _locations_connected_throughout_run(
     by_location_times: dict[str, set[float]] = defaultdict(set)
     all_times: list[float] = []
 
-    for raw_sample in samples:
-        sample = ensure_analysis_sample(raw_sample)
+    for sample in samples:
         location = _location_label(sample, lang=lang)
         if not location:
             continue

@@ -12,10 +12,9 @@ lifecycle, health state, and callback forwarding.
 from __future__ import annotations
 
 import logging
+import sqlite3
 import time
-from collections import deque
 from collections.abc import Callable
-from dataclasses import dataclass
 from threading import Event, RLock, Thread
 
 from vibesensor.shared.failure_utils import bounded_failure_message
@@ -31,29 +30,16 @@ from vibesensor.use_cases.run.post_analysis_outcomes import (
     PostAnalysisExecutionSuccess,
     execution_callback_errors,
 )
+from vibesensor.use_cases.run.post_analysis_state import (
+    PostAnalysisHealthSnapshot,
+    PostAnalysisState,
+)
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
 LOGGER = logging.getLogger(__name__)
 
 _WARN_QUEUE_DEPTH = 10
 _RETRY_DELAYS_S = (0.5, 1.0, 2.0)
-
-
-@dataclass(frozen=True, slots=True)
-class _QueuedRun:
-    run_id: str
-    enqueued_at: float
-
-
-@dataclass(frozen=True, slots=True)
-class PostAnalysisHealthSnapshot:
-    queue_depth: int
-    active_run_id: str | None
-    active_started_at: float | None
-    oldest_queued_at: float | None
-    max_queue_depth: int
-    last_completed_run_id: str | None
-    last_completed_error: str | None
 
 
 class PostAnalysisWorker:
@@ -93,14 +79,8 @@ class PostAnalysisWorker:
         self._clear_error_cb = clear_error_callback or (lambda: None)
         self._analysis_runner = analysis_runner
         self._lock = RLock()
+        self._state = PostAnalysisState()
         self._analysis_thread: Thread | None = None
-        self._analysis_queue: deque[_QueuedRun] = deque()
-        self._analysis_enqueued_run_ids: set[str] = set()
-        self._analysis_active_run_id: str | None = None
-        self._analysis_active_started_at: float | None = None
-        self._analysis_max_queue_depth: int = 0
-        self._last_completed_run_id: str | None = None
-        self._last_completed_error: str | None = None
         self._shutdown_event = Event()
 
     # -- public API -----------------------------------------------------------
@@ -109,31 +89,20 @@ class PostAnalysisWorker:
     def is_active(self) -> bool:
         """``True`` when analysis work is queued or in progress."""
         with self._lock:
-            return bool(
-                self._analysis_active_run_id
-                or self._analysis_queue
-                or (self._analysis_thread and self._analysis_thread.is_alive()),
+            return self._state.is_active(
+                worker_alive=bool(self._analysis_thread and self._analysis_thread.is_alive()),
             )
 
     @property
     def active_run_id(self) -> str | None:
         """Return the run ID currently being analysed, or ``None``."""
         with self._lock:
-            return self._analysis_active_run_id
+            return self._state.active_run_id
 
     def snapshot(self) -> PostAnalysisHealthSnapshot:
         """Return queue depth and active-run timing for health reporting."""
         with self._lock:
-            oldest_queued_at = self._analysis_queue[0].enqueued_at if self._analysis_queue else None
-            return PostAnalysisHealthSnapshot(
-                queue_depth=len(self._analysis_queue),
-                active_run_id=self._analysis_active_run_id,
-                active_started_at=self._analysis_active_started_at,
-                oldest_queued_at=oldest_queued_at,
-                max_queue_depth=self._analysis_max_queue_depth,
-                last_completed_run_id=self._last_completed_run_id,
-                last_completed_error=self._last_completed_error,
-            )
+            return self._state.snapshot()
 
     def schedule(self, run_id: str) -> None:
         """Enqueue *run_id* for background analysis."""
@@ -142,15 +111,9 @@ class PostAnalysisWorker:
             if self._shutdown_event.is_set():
                 LOGGER.info("Ignoring post-analysis schedule for %s during shutdown", run_id)
                 return
-            if run_id in self._analysis_enqueued_run_ids or run_id == self._analysis_active_run_id:
+            queue_depth = self._state.enqueue(run_id, enqueued_at=time.time())
+            if queue_depth is None:
                 return
-            self._analysis_queue.append(_QueuedRun(run_id=run_id, enqueued_at=time.time()))
-            self._analysis_enqueued_run_ids.add(run_id)
-            queue_depth = len(self._analysis_queue)
-            self._analysis_max_queue_depth = max(
-                self._analysis_max_queue_depth,
-                queue_depth,
-            )
             self._ensure_worker_running()
         if queue_depth >= _WARN_QUEUE_DEPTH:
             LOGGER.warning(
@@ -169,8 +132,9 @@ class PostAnalysisWorker:
         while True:
             with lock:
                 worker = self._analysis_thread
-                queued = bool(self._analysis_queue)
-                active_run = self._analysis_active_run_id is not None
+                snapshot = self._state.snapshot()
+                queued = snapshot.queue_depth > 0
+                active_run = snapshot.active_run_id is not None
                 worker_alive = bool(worker and worker.is_alive())
             if not queued and not active_run and not worker_alive:
                 return True
@@ -194,8 +158,7 @@ class PostAnalysisWorker:
         """Cancel pending post-analysis work and wait briefly for the worker to exit."""
         self._shutdown_event.set()
         with self._lock:
-            self._analysis_queue.clear()
-            self._analysis_enqueued_run_ids.clear()
+            self._state.clear_pending()
         return self.wait(timeout_s)
 
     # -- internals ------------------------------------------------------------
@@ -219,28 +182,21 @@ class PostAnalysisWorker:
         while True:
             with self._lock:
                 if self._shutdown_event.is_set():
-                    self._analysis_active_run_id = None
-                    self._analysis_active_started_at = None
+                    self._state.active_run_id = None
+                    self._state.active_started_at = None
                     self._analysis_thread = None
                     return
-                if not self._analysis_queue:
-                    self._analysis_active_run_id = None
-                    self._analysis_active_started_at = None
+                run_id = self._state.start_next(started_at=time.time())
+                if run_id is None:
                     self._analysis_thread = None
                     return
-                queued = self._analysis_queue.popleft()
-                run_id = queued.run_id
-                self._analysis_active_run_id = run_id
-                self._analysis_active_started_at = time.time()
             try:
                 self._run_post_analysis(run_id)
             except Exception as exc:
                 self._record_unexpected_worker_failure(run_id, exc)
             finally:
                 with self._lock:
-                    self._analysis_enqueued_run_ids.discard(run_id)
-                    self._analysis_active_run_id = None
-                    self._analysis_active_started_at = None
+                    self._state.finish_active(run_id)
 
     def _run_post_analysis(self, run_id: str) -> None:
         """Run thorough post-run analysis and store results in history DB."""
@@ -299,8 +255,7 @@ class PostAnalysisWorker:
             completed_error = result.completed_error
 
         with self._lock:
-            self._last_completed_run_id = result.run_id
-            self._last_completed_error = completed_error
+            self._state.mark_completed(result.run_id, error=completed_error)
 
         if isinstance(result, PostAnalysisExecutionSuccess):
             self._clear_error_cb()
@@ -312,15 +267,14 @@ class PostAnalysisWorker:
     def _record_unexpected_worker_failure(self, run_id: str, exc: Exception) -> None:
         completed_error = bounded_failure_message(exc)
         with self._lock:
-            self._last_completed_run_id = run_id
-            self._last_completed_error = completed_error
+            self._state.mark_completed(run_id, error=completed_error)
         db = self._history_db
         if db is not None:
             store_analysis_error = getattr(db, "store_analysis_error", None)
             if callable(store_analysis_error):
                 try:
                     store_analysis_error(run_id, completed_error)
-                except Exception:
+                except (sqlite3.Error, OSError):
                     LOGGER.exception(
                         "Failed to persist unexpected analysis failure for run %s",
                         run_id,

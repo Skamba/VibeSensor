@@ -36,7 +36,6 @@ def _context_metadata() -> dict[str, object]:
                 "current_gear_ratio": 0.81,
             },
         },
-        "analysis_settings": {"mode": "test", "window": 256},
         "symptom": "driveline hum",
         "symptom_onset": "after 60 km/h",
         "symptom_context": "during acceleration",
@@ -110,23 +109,20 @@ def test_diagnostics_context_requires_nested_snapshot_for_run_context_fields() -
     assert "active_car_snapshot" not in projected
 
 
-def test_diagnostics_context_preserves_legacy_flat_ratio_fallback_without_tire_geometry() -> None:
+def test_diagnostics_context_drops_flat_analysis_settings_payload() -> None:
     context = build_diagnostics_context(
         {
             "run_id": "legacy-run",
             "raw_sample_rate_hz": 200.0,
-            "tire_circumference_m": 2.036,
-            "final_drive_ratio": 3.08,
-            "current_gear_ratio": 0.64,
+            "analysis_settings": {"mode": "legacy"},
         },
         file_name="ctx",
     )
 
-    assert context.order_reference_spec is None
-    assert context.tire_circumference_m == 2.036
-    assert context.final_drive_ratio is None
-    assert context.current_gear_ratio is None
-    assert context.reference_complete is False
+    metadata = context_to_metadata_dict(context)
+
+    assert context.analysis_settings_items == ()
+    assert "analysis_settings" not in metadata
 
 
 def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None:
@@ -159,4 +155,5 @@ def test_diagnostics_context_rehydrates_boundary_metadata_with_known_and_unknown
     assert metadata["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
     assert metadata["active_car_snapshot"]["variant"] == "sport"
     assert metadata["tire_circumference_m"] is not None
-    assert context.scalar_analysis_settings == (("mode", "test"), ("window", 256))
+    assert "analysis_settings" not in metadata
+    assert context.analysis_settings_items[0][0] == "current_gear_ratio"

@@ -12,6 +12,10 @@ import logging
 import math
 
 from vibesensor.domain import StrengthPeak
+from vibesensor.shared.boundaries.strength_metrics_codec import (
+    strength_peak_payloads,
+    strength_peaks_from_sequence,
+)
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.types.json_types import is_json_array
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -86,7 +90,8 @@ def sample_to_v2_row(run_id: str, item: SensorFrame) -> tuple[object, ...]:
     for col in _V2_COLUMNS[1:]:
         raw = _get(col)
         if col in _json_cols:
-            vals.append(safe_json_dumps(raw) if raw else None)
+            payload = strength_peak_payloads(item.top_peaks) if col == "top_peaks" else raw
+            vals.append(safe_json_dumps(payload) if payload else None)
         elif isinstance(raw, float) and not isfinite(raw):
             vals.append(None)
         else:
@@ -137,14 +142,7 @@ def _row_top_peaks(value: object, *, row_id: object) -> tuple[StrengthPeak, ...]
                 type(parsed).__name__,
             )
         return ()
-    peaks: list[StrengthPeak] = []
-    for peak in parsed[:10]:
-        if not isinstance(peak, dict):
-            continue
-        normalized_peak = StrengthPeak.from_dict(peak)
-        if normalized_peak.is_valid:
-            peaks.append(normalized_peak)
-    return tuple(peaks)
+    return strength_peaks_from_sequence(parsed, max_items=10)
 
 
 def v2_row_to_sensor_frame(row: tuple[object, ...]) -> SensorFrame:

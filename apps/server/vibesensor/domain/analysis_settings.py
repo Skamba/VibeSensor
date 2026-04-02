@@ -9,7 +9,6 @@ from dataclasses import asdict, dataclass
 from typing import ClassVar
 
 from ._numeric import coerce_float
-from ._snapshot_parse import _float_or
 from .car import OrderReferenceSpec
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,8 +21,6 @@ class AnalysisSettingsSnapshot:
     """Typed internal analysis-settings context used by runtime and
     use-case logic.
 
-    Raw tire fields (``tire_width_mm``, ``tire_aspect_pct``, ``rim_in``)
-    are construction inputs for ``from_dict()`` persistence compatibility.
     Behavioral tire geometry access goes through ``order_reference_spec``.
     """
 
@@ -104,27 +101,6 @@ class AnalysisSettingsSnapshot:
     min_abs_band_hz: float = 0.0
     max_band_half_width_pct: float = 0.0
     tire_deflection_factor: float = 1.0
-
-    @classmethod
-    def from_dict(cls, d: Mapping[str, object]) -> AnalysisSettingsSnapshot:
-        """Parse from flat mapping. Missing keys default to ``0.0``."""
-        return cls(
-            tire_width_mm=_float_or(d, "tire_width_mm"),
-            tire_aspect_pct=_float_or(d, "tire_aspect_pct"),
-            rim_in=_float_or(d, "rim_in"),
-            final_drive_ratio=_float_or(d, "final_drive_ratio"),
-            current_gear_ratio=_float_or(d, "current_gear_ratio"),
-            wheel_bandwidth_pct=_float_or(d, "wheel_bandwidth_pct"),
-            driveshaft_bandwidth_pct=_float_or(d, "driveshaft_bandwidth_pct"),
-            engine_bandwidth_pct=_float_or(d, "engine_bandwidth_pct"),
-            speed_uncertainty_pct=_float_or(d, "speed_uncertainty_pct"),
-            tire_diameter_uncertainty_pct=_float_or(d, "tire_diameter_uncertainty_pct"),
-            final_drive_uncertainty_pct=_float_or(d, "final_drive_uncertainty_pct"),
-            gear_uncertainty_pct=_float_or(d, "gear_uncertainty_pct"),
-            min_abs_band_hz=_float_or(d, "min_abs_band_hz"),
-            max_band_half_width_pct=_float_or(d, "max_band_half_width_pct"),
-            tire_deflection_factor=_float_or(d, "tire_deflection_factor", 1.0),
-        )
 
     @staticmethod
     def sanitize(

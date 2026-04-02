@@ -281,7 +281,7 @@ class _MutableFakeAnalysisSettings(_FakeAnalysisSettings):
         self.active_car: CarSnapshot | None = None
 
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
-        return AnalysisSettingsSnapshot.from_dict(self.values)
+        return AnalysisSettingsSnapshot(**self.values)
 
 
 class _FakeHistoryDB:

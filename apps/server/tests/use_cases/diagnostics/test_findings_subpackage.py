@@ -13,6 +13,7 @@ from test_support.findings import make_finding
 
 import vibesensor.use_cases.diagnostics.findings as findings_module
 from vibesensor.domain import OrderMatchObservation
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.constants.analysis import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
@@ -21,7 +22,6 @@ from vibesensor.shared.constants.analysis import (
 from vibesensor.shared.types.analysis_views import MatchedPoint
 from vibesensor.shared.types.history_analysis_contracts import AmplitudeMetric, FindingPayload
 from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
-from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
@@ -322,7 +322,7 @@ class TestSpeedBreakdown:
             {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
             {"speed_kmh": 68.0, "vibration_strength_db": 22.0},
         ]
-        rows = _speed_breakdown(normalize_analysis_samples(samples))
+        rows = _speed_breakdown(normalize_sensor_frames(samples))
         assert len(rows) == 1
         assert rows[0].count == 2
 
@@ -336,7 +336,7 @@ class TestPhaseSpeedBreakdown:
             {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
         ]
         phases = [DrivingPhase.CRUISE, DrivingPhase.CRUISE]
-        rows = _phase_speed_breakdown(normalize_analysis_samples(samples), phases)
+        rows = _phase_speed_breakdown(normalize_sensor_frames(samples), phases)
         cruise_rows = [r for r in rows if r.phase == "cruise"]
         assert len(cruise_rows) == 1
         assert cruise_rows[0].count == 2
@@ -353,7 +353,7 @@ class TestSensorIntensityByLocation:
             {"location": "front_left", "vibration_strength_db": 20.0},
             {"location": "front_left", "vibration_strength_db": 22.0},
         ]
-        rows = _sensor_intensity_by_location(normalize_analysis_samples(samples))
+        rows = _sensor_intensity_by_location(normalize_sensor_frames(samples))
         assert len(rows) == 1
         assert rows[0].location == "front_left"
         assert rows[0].sample_count == 2

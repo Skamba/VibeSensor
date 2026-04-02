@@ -15,11 +15,7 @@ from vibesensor.use_cases.diagnostics._reference_resolution import (
     _effective_engine_rpm,
     _order_reference_spec_from_context,
 )
-from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSampleInput,
-    Sample,
-    ensure_analysis_sample,
-)
+from vibesensor.use_cases.diagnostics._types import Sample
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Hz helpers
@@ -27,19 +23,18 @@ from vibesensor.use_cases.diagnostics._types import (
 
 
 def _wheel_hz(
-    sample: AnalysisSampleInput,
+    sample: Sample,
     tire_circumference_m: float | None,
     context: DiagnosticsContext | None = None,
     order_reference_spec: OrderReferenceSpec | None = None,
 ) -> float | None:
     """Return wheel rotational frequency from speed plus optional reference data."""
-    typed_sample = ensure_analysis_sample(sample)
-    speed_kmh = typed_sample.speed_kmh
+    speed_kmh = sample.speed_kmh
     if speed_kmh is None or speed_kmh <= 0:
         return None
     spec = order_reference_spec
     if spec is None and context is not None:
-        spec = _order_reference_spec_from_context(context, typed_sample)
+        spec = _order_reference_spec_from_context(context, sample)
     if spec is not None and spec.supports_wheel_reference:
         return spec.wheel_hz_from_speed_kmh(speed_kmh)
     if tire_circumference_m is None or tire_circumference_m <= 0:
@@ -48,14 +43,13 @@ def _wheel_hz(
 
 
 def _driveshaft_hz(
-    sample: AnalysisSampleInput,
+    sample: Sample,
     context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> float | None:
     """Return driveshaft frequency from the best available wheel/final-drive inputs."""
-    typed_sample = ensure_analysis_sample(sample)
-    speed_kmh = typed_sample.speed_kmh
-    spec = _order_reference_spec_from_context(context, typed_sample)
+    speed_kmh = sample.speed_kmh
+    spec = _order_reference_spec_from_context(context, sample)
     if (
         speed_kmh is not None
         and speed_kmh > 0
@@ -64,14 +58,14 @@ def _driveshaft_hz(
     ):
         return spec.driveshaft_hz_from_speed_kmh(speed_kmh)
     whz = _wheel_hz(
-        typed_sample,
+        sample,
         tire_circumference_m,
         context,
         order_reference_spec=spec,
     )
     fd = (
-        typed_sample.final_drive_ratio
-        if typed_sample.final_drive_ratio is not None
+        sample.final_drive_ratio
+        if sample.final_drive_ratio is not None
         else context.final_drive_ratio
     )
     if whz is None or fd is None or fd <= 0:
@@ -80,13 +74,13 @@ def _driveshaft_hz(
 
 
 def _engine_hz(
-    sample: AnalysisSampleInput,
+    sample: Sample,
     context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     """Return engine rotational frequency plus the source label used to derive it."""
     rpm, src = _effective_engine_rpm(
-        ensure_analysis_sample(sample),
+        sample,
         context,
         tire_circumference_m,
     )

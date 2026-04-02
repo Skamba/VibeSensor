@@ -9,6 +9,7 @@ from vibesensor.domain import (
     CarSnapshot,
     RunContextSnapshot,
 )
+from vibesensor.shared.boundaries.car_snapshot_codec import car_snapshot_from_mapping
 from vibesensor.shared.boundaries.run_context_codec import (
     run_context_snapshot_from_metadata,
     run_context_snapshot_to_metadata,
@@ -95,9 +96,9 @@ def _build_car_settings_changed_warning(
     if not is_json_object(metadata) or current_active_car_snapshot is None:
         return None
     recorded_snapshot_payload = metadata.get("active_car_snapshot")
-    if not is_json_object(recorded_snapshot_payload):
+    recorded_snapshot = car_snapshot_from_mapping(recorded_snapshot_payload)
+    if recorded_snapshot is None:
         return None
-    recorded_snapshot = CarSnapshot.from_dict(recorded_snapshot_payload)
     if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_active_car_snapshot):
         return None
     return RunContextWarning(

@@ -16,6 +16,7 @@ from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_to_json_objects
 from vibesensor.shared.boundaries.summary_serialization import (
     AccelStatisticsLike,
     PhaseSegmentLike,
@@ -34,10 +35,6 @@ from vibesensor.shared.run_context_warning import (
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
-
-
-class AnalysisSampleLike(Protocol):
-    def to_json_object(self) -> JsonObject: ...
 
 
 class PreparedRunDataLike(Protocol):
@@ -83,7 +80,7 @@ class AnalysisResultLike(Protocol):
     def metadata(self) -> JsonObject: ...
 
     @property
-    def samples(self) -> Sequence[AnalysisSampleLike]: ...
+    def samples(self) -> Sequence: ...
 
     @property
     def language(self) -> str: ...
@@ -165,7 +162,7 @@ def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
     summary = build_analysis_summary(
         file_name=result.file_name,
         run_id=result.prepared.run_id,
-        samples=[sample.to_json_object() for sample in result.samples],
+        samples=sensor_frames_to_json_objects(result.samples),
         duration_s=result.prepared.duration_s,
         language=result.language,
         metadata=result.metadata,

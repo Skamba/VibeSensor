@@ -5,6 +5,7 @@ import sqlite3
 import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
@@ -36,6 +37,10 @@ def _run_metadata(run_id: str, *, language: str = "en") -> RunMetadata:
     )
 
 
+def _samples() -> list:
+    return normalize_sensor_frames([{"t_s": 1.0, "vibration_strength_db": 10.0}])
+
+
 def test_execute_post_analysis_success_stores_summary() -> None:
     stored: dict[str, object] = {}
 
@@ -54,7 +59,7 @@ def test_execute_post_analysis_success_stores_summary() -> None:
             run_id=run_id,
             metadata=_run_metadata(run_id, language="nl"),
             language="nl",
-            samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
+            samples=_samples(),
             total_sample_count=1,
             stride=1,
         ),
@@ -143,7 +148,7 @@ def test_execute_post_analysis_propagates_unexpected_analysis_failure() -> None:
                 run_id=run_id,
                 metadata=_run_metadata(run_id),
                 language="en",
-                samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
+                samples=_samples(),
                 total_sample_count=1,
                 stride=1,
             ),
@@ -168,7 +173,7 @@ def test_execute_post_analysis_reports_persistence_failure() -> None:
             run_id=run_id,
             metadata=_run_metadata(run_id),
             language="en",
-            samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
+            samples=_samples(),
             total_sample_count=1,
             stride=1,
         ),
@@ -200,7 +205,7 @@ def test_execute_post_analysis_defers_retryable_persistence_failure() -> None:
             run_id=run_id,
             metadata=_run_metadata(run_id),
             language="en",
-            samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
+            samples=_samples(),
             total_sample_count=1,
             stride=1,
         ),
@@ -255,7 +260,7 @@ def test_execute_post_analysis_passes_canonical_typed_input_to_runner() -> None:
             run_id=run_id,
             metadata=_run_metadata(run_id, language="nl"),
             language="nl",
-            samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
+            samples=_samples(),
             total_sample_count=1,
             stride=1,
         ),
@@ -265,7 +270,7 @@ def test_execute_post_analysis_passes_canonical_typed_input_to_runner() -> None:
     assert isinstance(result, PostAnalysisExecutionSuccess)
     assert captured["run_input_type"] is PostAnalysisRunInput
     assert captured["context_run_id"] == "run-input"
-    assert captured["sample_type"] == "AnalysisSample"
+    assert captured["sample_type"] == "SensorFrame"
 
 
 def _capture_run_input(captured: dict[str, object], run: PostAnalysisRunInput):

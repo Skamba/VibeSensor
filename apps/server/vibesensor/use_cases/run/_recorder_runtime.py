@@ -8,6 +8,9 @@ import time
 from typing import TYPE_CHECKING
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+    analysis_settings_snapshot_from_mapping,
+)
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.ports import ClientTracker, SettingsReader
 from vibesensor.shared.time_utils import utc_now_iso
@@ -38,7 +41,7 @@ def analysis_settings_snapshot(
     """Load the current analysis settings snapshot or repo defaults."""
     if settings_store is not None:
         return settings_store.analysis_settings_snapshot()
-    return AnalysisSettingsSnapshot.from_dict(AnalysisSettingsSnapshot.DEFAULTS)
+    return analysis_settings_snapshot_from_mapping(AnalysisSettingsSnapshot.DEFAULTS)
 
 
 def active_frames_total(registry: ClientTracker) -> int:
@@ -129,11 +132,5 @@ async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
             logger.warning(
                 "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
                 _DB_THREAD_TIMEOUT_S,
-            )
-        except Exception as exc:
-            recorder._persistence.set_last_write_error(f"{_TICK_FAILURE_PREFIX}{exc}")
-            logger.warning(
-                "Metrics logger tick failed; will retry next interval.",
-                exc_info=True,
             )
         await asyncio.sleep(interval)

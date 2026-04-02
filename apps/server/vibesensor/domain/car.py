@@ -48,43 +48,6 @@ class CarSnapshot:
         if not isinstance(self.aspects, MappingProxyType):
             object.__setattr__(self, "aspects", MappingProxyType(dict(self.aspects)))
 
-    @classmethod
-    def from_dict(cls, d: Mapping[str, object]) -> CarSnapshot:
-        """Parse from a flat mapping. Missing keys default to ``None``/empty."""
-        raw_aspects = d.get("aspects")
-        aspects: dict[str, float] = {}
-        if isinstance(raw_aspects, dict):
-            for k, v in raw_aspects.items():
-                if isinstance(k, str):
-                    try:
-                        aspects[k] = float(v)
-                    except (TypeError, ValueError):
-                        pass
-        return cls(
-            car_id=_str_or_none(d.get("id")),
-            name=_str_or_none(d.get("name")),
-            car_type=_str_or_none(d.get("type")),
-            variant=_str_or_none(d.get("variant")),
-            aspects=aspects,
-        )
-
-    def to_dict(self) -> dict[str, object]:
-        """Project to a persistence-compatible dict."""
-        return {
-            "id": self.car_id,
-            "name": self.name,
-            "type": self.car_type,
-            "variant": self.variant,
-            "aspects": dict(self.aspects),
-        }
-
-
-def _str_or_none(v: object) -> str | None:
-    if v is None:
-        return None
-    s = str(v).strip()
-    return s if s else None
-
 
 @dataclass(frozen=True, slots=True, init=False)
 class Car:

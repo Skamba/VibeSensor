@@ -7,6 +7,9 @@ from math import isfinite, sqrt
 
 from vibesensor.domain import OrderReferenceSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+    analysis_settings_snapshot_from_mapping,
+)
 from vibesensor.shared.constants.analysis import (
     FREQUENCY_EPSILON_HZ,
     HARMONIC_2X,
@@ -32,12 +35,12 @@ def build_diagnostic_settings(
     """Return analysis settings merged with validated *overrides* as a snapshot."""
     out = dict(AnalysisSettingsSnapshot.DEFAULTS)
     if not overrides:
-        return AnalysisSettingsSnapshot.from_dict(out)
+        return analysis_settings_snapshot_from_mapping(out)
     for key in AnalysisSettingsSnapshot.DEFAULTS:
         parsed = as_float_or_none(overrides.get(key))
         if parsed is not None:
             out[key] = parsed
-    return AnalysisSettingsSnapshot.from_dict(out)
+    return analysis_settings_snapshot_from_mapping(out)
 
 
 def combined_relative_uncertainty(*parts: float) -> float:

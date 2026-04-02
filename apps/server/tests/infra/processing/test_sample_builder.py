@@ -12,6 +12,10 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, StrengthMetrics
+from vibesensor.shared.boundaries.strength_metrics_codec import (
+    strength_metrics_from_mapping,
+    strength_peak_payloads,
+)
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.sample_builder import (
@@ -54,7 +58,7 @@ class TestExtractStrengthData:
         result = extract_strength_data(metrics)
         assert result.vibration_strength_db == pytest.approx(18.5)
         assert result.strength_bucket == "l3"
-        payloads = result.to_peak_payloads(max_items=8)
+        payloads = strength_peak_payloads(result.top_peaks, max_items=8)
         assert len(payloads) == 1
         assert payloads[0]["hz"] == pytest.approx(45.0)
 
@@ -66,14 +70,14 @@ class TestExtractStrengthData:
 
 class TestDominantHzFromStrength:
     def test_returns_first_peak_hz(self) -> None:
-        sm = StrengthMetrics.from_dict({"top_peaks": [{"hz": 42.0, "amp": 0.5}]})
+        sm = strength_metrics_from_mapping({"top_peaks": [{"hz": 42.0, "amp": 0.5}]})
         assert dominant_hz_from_strength(sm) == 42.0
 
     def test_empty(self) -> None:
         assert dominant_hz_from_strength(StrengthMetrics()) is None
 
     def test_invalid_first_peak_does_not_scan_ahead(self) -> None:
-        sm = StrengthMetrics.from_dict(
+        sm = strength_metrics_from_mapping(
             {
                 "top_peaks": [
                     {"hz": "bad", "amp": 0.5},

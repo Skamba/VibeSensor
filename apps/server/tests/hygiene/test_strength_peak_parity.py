@@ -4,8 +4,8 @@ The processing pipeline uses ``StrengthPeak`` / ``VibrationStrengthMetrics``
 TypedDicts in ``vibration_strength.py`` for zero-overhead dict construction in
 the real-time FFT loop.  The analysis layer uses frozen dataclass equivalents
 in ``domain/strength_metrics.py``.  Both must share identical field names so
-that ``StrengthMetrics.from_dict()`` can ingest pipeline output without silent
-data loss.
+that the strength-metrics boundary codec can ingest pipeline output without
+silent data loss.
 """
 
 from __future__ import annotations

@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass, replace
 
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSampleInput,
-    Sample,
-    normalize_analysis_samples,
-)
+from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 from .post_analysis_loader import LoadedPostAnalysisRun
@@ -34,19 +30,15 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
     """Normalize one loaded persisted run into canonical diagnostics input."""
 
     context = build_diagnostics_context(loaded.metadata.to_dict(), file_name=loaded.run_id)
+    typed_samples = normalize_sensor_frames(loaded.samples)
     return PostAnalysisRunInput(
         run_id=loaded.run_id,
         context=context,
         language=loaded.language,
-        samples=_normalize_post_analysis_samples(loaded.samples),
+        samples=[_ensure_strength_metrics(sample) for sample in typed_samples],
         total_sample_count=loaded.total_sample_count,
         stride=loaded.stride,
     )
-
-
-def _normalize_post_analysis_samples(samples: Sequence[AnalysisSampleInput]) -> list[Sample]:
-    rows = normalize_analysis_samples(samples)
-    return [_ensure_strength_metrics(row) for row in rows]
 
 
 def _ensure_strength_metrics(sample: Sample) -> Sample:

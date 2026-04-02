@@ -24,11 +24,7 @@ from vibesensor.use_cases.diagnostics._sample_metrics import (
 from vibesensor.use_cases.diagnostics._sensor_locations import (
     _location_label,
 )
-from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSampleInput,
-    Sample,
-    normalize_analysis_samples,
-)
+from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics._view_types import SpectrogramResultData
 from vibesensor.vibration_strength import percentile
 
@@ -105,10 +101,10 @@ def _scan_peak_samples(samples: Sequence[Sample]) -> PeakSampleScan:
     )
 
 
-def scan_peak_samples(samples: Sequence[AnalysisSampleInput]) -> PeakSampleScan:
+def scan_peak_samples(samples: Sequence[Sample]) -> PeakSampleScan:
     """Scan samples once and cache the peak-facing data needed by plot builders."""
 
-    return _scan_peak_samples(normalize_analysis_samples(samples))
+    return _scan_peak_samples(samples)
 
 
 def safe_percentile(sorted_vals: Sequence[float], q: float, *, default: float = 0.0) -> float:

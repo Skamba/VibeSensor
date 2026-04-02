@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ
 from vibesensor.vibration_strength import percentile
 
-from ._types import AnalysisSampleInput, Sample, ensure_analysis_sample
+from ._types import Sample
 
 
 def _sensor_limit_g(sensor_model: object) -> float | None:
@@ -19,15 +19,13 @@ def _sensor_limit_g(sensor_model: object) -> float | None:
 
 
 def _primary_vibration_strength_db(sample: Sample) -> float | None:
-    typed_sample = ensure_analysis_sample(sample)
-    value = typed_sample.vibration_strength_db
+    value = sample.vibration_strength_db
     return float(value) if value is not None else None
 
 
-def _sample_top_peaks(sample: AnalysisSampleInput) -> list[tuple[float, float]]:
-    typed_sample = ensure_analysis_sample(sample)
+def _sample_top_peaks(sample: Sample) -> list[tuple[float, float]]:
     out: list[tuple[float, float]] = []
-    for peak in typed_sample.top_peaks[:8]:
+    for peak in sample.top_peaks[:8]:
         hz = peak.hz
         amp = peak.amp
         if hz <= 0 or amp <= 0:
@@ -38,20 +36,19 @@ def _sample_top_peaks(sample: AnalysisSampleInput) -> list[tuple[float, float]]:
     return out
 
 
-def _estimate_strength_floor_amp_g(sample: AnalysisSampleInput) -> float | None:
+def _estimate_strength_floor_amp_g(sample: Sample) -> float | None:
     """Estimate per-sample floor amplitude."""
-    typed_sample = ensure_analysis_sample(sample)
-    floor_amp = typed_sample.strength_floor_amp_g
+    floor_amp = sample.strength_floor_amp_g
     if floor_amp is not None and floor_amp > 0:
         return float(floor_amp)
-    peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(typed_sample) if amp > 0)
+    peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(sample) if amp > 0)
     if len(peak_amps) < 3:
         return None
     floor_from_peaks = float(percentile(peak_amps, 0.20))
     return float(floor_from_peaks) if floor_from_peaks > 0 else None
 
 
-def _run_noise_baseline_g(samples: Sequence[AnalysisSampleInput]) -> float | None:
+def _run_noise_baseline_g(samples: Sequence[Sample]) -> float | None:
     """Estimate run-level noise baseline as median of per-sample floor estimates."""
     floors: list[float] = []
     for sample in samples:

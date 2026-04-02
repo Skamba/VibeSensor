@@ -13,6 +13,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import OrderReferenceSpec
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics.orders.physics import _driveshaft_hz, _order_label
@@ -31,6 +32,10 @@ def _guarded_float(value: object) -> float:
 
 def _context(overrides: dict | None = None):
     return build_diagnostics_context(overrides or {}, file_name="test")
+
+
+def _sample(**overrides: object):
+    return normalize_sensor_frames([overrides])[0]
 
 
 class TestPdfBuilderConfidenceGuard:
@@ -120,12 +125,12 @@ class TestDriveshaftHz:
         tire_m: float | None,
     ) -> None:
         context = _context(overrides)
-        assert _driveshaft_hz(sample, context, tire_circumference_m=tire_m) is None
+        assert _driveshaft_hz(_sample(**sample), context, tire_circumference_m=tire_m) is None
 
     def test_valid_inputs(self) -> None:
         context = _context()
         result = _driveshaft_hz(
-            {"speed_kmh": 72.0, "final_drive_ratio": 3.5},
+            _sample(speed_kmh=72.0, final_drive_ratio=3.5),
             context,
             tire_circumference_m=2.0,
         )
@@ -150,7 +155,7 @@ class TestDriveshaftHz:
         )
 
         context = _context()
-        result = _driveshaft_hz({"speed_kmh": 72.0}, context, tire_circumference_m=None)
+        result = _driveshaft_hz(_sample(speed_kmh=72.0), context, tire_circumference_m=None)
 
         assert result == pytest.approx(44.5)
 

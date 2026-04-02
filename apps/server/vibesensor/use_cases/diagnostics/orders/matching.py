@@ -27,9 +27,8 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
     _location_label,
 )
 from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSampleInput,
     PhaseLabels,
-    ensure_analysis_sample,
+    Sample,
 )
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
@@ -123,7 +122,7 @@ class OrderMatchAccumulator:
 
 
 def match_samples_for_hypothesis(
-    samples: Sequence[AnalysisSampleInput],
+    samples: Sequence[Sample],
     cached_peaks: list[list[tuple[float, float]]],
     hypothesis: OrderHypothesis,
     context: DiagnosticsContext,
@@ -152,8 +151,7 @@ def match_samples_for_hypothesis(
     compliance = getattr(hypothesis, "path_compliance", 1.0)
     compliance_scale = compliance**0.5
 
-    for sample_idx, raw_sample in enumerate(samples):
-        sample = ensure_analysis_sample(raw_sample)
+    for sample_idx, sample in enumerate(samples):
         peaks = cached_peaks[sample_idx]
         if not peaks:
             continue
