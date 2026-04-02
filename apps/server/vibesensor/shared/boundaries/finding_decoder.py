@@ -11,7 +11,7 @@ from vibesensor.domain import (
     Signature,
     coerce_float,
 )
-from vibesensor.domain.order_match import OrderMatchObservation
+from vibesensor.shared.boundaries.order_match_codec import order_match_observations_from_sequence
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
     vibration_origin_from_payload,
@@ -80,13 +80,11 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     if isinstance(ev_metrics, dict):
         evidence = FindingEvidence.from_metrics(ev_metrics)
     raw_matched_points = payload.get("matched_points")
-    matched_points: tuple[OrderMatchObservation, ...] = ()
-    if isinstance(raw_matched_points, list):
-        matched_points = tuple(
-            OrderMatchObservation.from_dict(point)
-            for point in raw_matched_points
-            if isinstance(point, Mapping)
-        )
+    matched_points = (
+        order_match_observations_from_sequence(raw_matched_points)
+        if isinstance(raw_matched_points, list)
+        else ()
+    )
     hotspot_raw = payload.get("location_hotspot")
     location = location_hotspot_from_payload(hotspot_raw) if isinstance(hotspot_raw, dict) else None
 

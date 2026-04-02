@@ -16,6 +16,9 @@ from vibesensor.domain import (
     TestRun,
     VibrationOrigin,
 )
+from vibesensor.shared.boundaries.location_hotspot_codec import (
+    location_intensity_summary_from_mapping,
+)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
 
@@ -130,7 +133,7 @@ def filter_active_sensor_intensity(
         if isinstance(row, LocationIntensitySummary):
             typed_row = row
         elif isinstance(row, Mapping):
-            typed_row = LocationIntensitySummary.from_dict(row)
+            typed_row = location_intensity_summary_from_mapping(row)
         else:
             continue
         if active_locations and typed_row.location not in active_locations:

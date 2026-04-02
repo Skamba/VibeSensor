@@ -18,7 +18,7 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 
-_RECOMMENDED_METADATA_KEYS: frozenset[str] = frozenset({"sensor_model", "sample_rate_hz"})
+_RECOMMENDED_METADATA_KEYS: frozenset[str] = frozenset({"sensor_model", "raw_sample_rate_hz"})
 _EXPECTED_ANALYSIS_KEYS: frozenset[str] = frozenset({"findings", "top_causes", "warnings"})
 
 
@@ -45,7 +45,11 @@ class _HistoryDBRunLifecycleMixin:
         case_id: str | None = None,
     ) -> None:
         metadata_payload = run_metadata_to_json_object(metadata)
-        missing = _RECOMMENDED_METADATA_KEYS - metadata_payload.keys()
+        missing = {
+            key
+            for key in _RECOMMENDED_METADATA_KEYS
+            if not _has_recommended_metadata_value(key, metadata_payload.get(key))
+        }
         if missing:
             LOGGER.warning(
                 "create_run %s: metadata missing recommended keys: %s",
@@ -258,3 +262,10 @@ class _HistoryDBRunLifecycleMixin:
                 (cutoff_utc,),
             )
             return int(cur.rowcount)
+
+
+def _has_recommended_metadata_value(key: str, value: object) -> bool:
+    if key == "sensor_model":
+        text = str(value or "").strip().lower()
+        return bool(text and text != "unknown")
+    return value is not None

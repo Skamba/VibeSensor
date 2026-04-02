@@ -7,7 +7,11 @@ from dataclasses import asdict
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
-from vibesensor.shared.boundaries.run_context_codec import run_context_snapshot_from_metadata
+from vibesensor.shared.boundaries.run_context_codec import (
+    run_context_snapshot_from_metadata,
+    run_context_snapshot_to_metadata,
+)
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
@@ -15,7 +19,6 @@ from vibesensor.shared.run_context_warning import (
 )
 from vibesensor.use_cases.run.run_context import (
     add_current_context_warnings,
-    apply_run_context_snapshot,
     build_run_context_snapshot,
     order_reference_context_complete,
 )
@@ -40,9 +43,8 @@ class TestBuildRunContextSnapshot:
         assert snapshot == RunContextSnapshot(analysis_settings=settings, car=car)
 
 
-class TestApplyRunContextSnapshot:
+class TestRunContextProjection:
     def test_serializes_snapshot_into_metadata_shape(self) -> None:
-        metadata: dict[str, object] = {}
         settings = AnalysisSettingsSnapshot(
             tire_width_mm=255.0,
             tire_aspect_pct=40.0,
@@ -50,23 +52,19 @@ class TestApplyRunContextSnapshot:
             final_drive_ratio=3.15,
             current_gear_ratio=0.81,
         )
-
-        apply_run_context_snapshot(
-            metadata,
-            analysis_settings_snapshot=settings,
-            active_car_snapshot=CarSnapshot(
-                car_id="car-1",
-                name="Primary",
-                car_type="sedan",
-                variant="track",
-                aspects={"tire_width_mm": 255.0},
+        metadata = run_context_snapshot_to_metadata(
+            build_run_context_snapshot(
+                analysis_settings_snapshot=settings,
+                active_car_snapshot=CarSnapshot(
+                    car_id="car-1",
+                    name="Primary",
+                    car_type="sedan",
+                    variant="track",
+                    aspects={"tire_width_mm": 255.0},
+                ),
             ),
         )
 
-        assert "active_car_id" not in metadata
-        assert "car_name" not in metadata
-        assert "car_type" not in metadata
-        assert "car_variant" not in metadata
         assert metadata["analysis_settings_snapshot"] == _analysis_settings_metadata(settings)
         assert metadata["active_car_snapshot"] == {
             "id": "car-1",
@@ -77,20 +75,16 @@ class TestApplyRunContextSnapshot:
         }
 
     def test_no_active_car_snapshot_keeps_car_fields_absent(self) -> None:
-        metadata: dict[str, object] = {}
         settings = AnalysisSettingsSnapshot(tire_width_mm=205.0)
 
-        apply_run_context_snapshot(
-            metadata,
-            analysis_settings_snapshot=settings,
-            active_car_snapshot=None,
+        metadata = run_context_snapshot_to_metadata(
+            build_run_context_snapshot(
+                analysis_settings_snapshot=settings,
+                active_car_snapshot=None,
+            ),
         )
 
         assert "active_car_snapshot" not in metadata
-        assert "active_car_id" not in metadata
-        assert "car_name" not in metadata
-        assert "car_type" not in metadata
-        assert "car_variant" not in metadata
         assert metadata["analysis_settings_snapshot"] == _analysis_settings_metadata(settings)
 
 
@@ -147,21 +141,23 @@ class TestBoundaryHelpers:
         assert snapshot.car.variant == "sport"
 
     def test_order_reference_context_complete_uses_canonical_snapshot_metadata(self) -> None:
-        assert (
-            order_reference_context_complete(
-                {
-                    "raw_sample_rate_hz": 800,
-                    "analysis_settings_snapshot": {
-                        "tire_width_mm": 255.0,
-                        "tire_aspect_pct": 40.0,
-                        "rim_in": 19.0,
-                        "final_drive_ratio": 3.15,
-                        "current_gear_ratio": 0.81,
-                    },
+        metadata = run_metadata_from_mapping(
+            {
+                "run_id": "run-1",
+                "start_time_utc": "2025-01-01T00:00:00Z",
+                "sensor_model": "fixture-sensor",
+                "raw_sample_rate_hz": 800,
+                "analysis_settings_snapshot": {
+                    "tire_width_mm": 255.0,
+                    "tire_aspect_pct": 40.0,
+                    "rim_in": 19.0,
+                    "final_drive_ratio": 3.15,
+                    "current_gear_ratio": 0.81,
                 },
-            )
-            is True
+            },
         )
+
+        assert order_reference_context_complete(metadata) is True
 
 
 def test_add_current_context_warnings_returns_app_level_models() -> None:

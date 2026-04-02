@@ -8,7 +8,7 @@ domain-level identity instead of living in boundary TypedDicts.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import ClassVar
 
@@ -19,8 +19,6 @@ __all__ = [
     "PhaseIntensitySummary",
     "StrengthBucketDistribution",
 ]
-
-from ._numeric import coerce_float, coerce_int
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,8 +63,6 @@ class LocationHotspot:
         sample_component = min(1.0, max(0.0, total_samples / 10.0))
         confidence = dominance_component * location_component * (0.6 + 0.4 * sample_component)
         return max(0.05, min(1.0, confidence))
-
-    # -- domain queries ----------------------------------------------------
 
     @property
     def has_clear_separation(self) -> bool:
@@ -215,43 +211,6 @@ class StrengthBucketDistribution:
     percent_time_l4: float = 0.0
     percent_time_l5: float = 0.0
 
-    @classmethod
-    def from_dict(cls, raw: Mapping[str, object] | None) -> StrengthBucketDistribution:
-        """Parse from a raw bucket-distribution mapping."""
-
-        def _opt_float(value: object) -> float | None:
-            if value is None or not isinstance(value, (int, float, str)):
-                return None
-            try:
-                return coerce_float(value)
-            except (TypeError, ValueError):
-                return None
-
-        if not isinstance(raw, Mapping):
-            return cls()
-        counts_raw = raw.get("counts")
-        counts: dict[str, int] = {}
-        if isinstance(counts_raw, Mapping):
-            for key, value in counts_raw.items():
-                try:
-                    counts[str(key)] = coerce_int(value)
-                except (TypeError, ValueError):
-                    continue
-        try:
-            total = coerce_int(raw.get("total", 0))
-        except (TypeError, ValueError):
-            total = 0
-        return cls(
-            total=total,
-            counts=counts,
-            percent_time_l0=_opt_float(raw.get("percent_time_l0")) or 0.0,
-            percent_time_l1=_opt_float(raw.get("percent_time_l1")) or 0.0,
-            percent_time_l2=_opt_float(raw.get("percent_time_l2")) or 0.0,
-            percent_time_l3=_opt_float(raw.get("percent_time_l3")) or 0.0,
-            percent_time_l4=_opt_float(raw.get("percent_time_l4")) or 0.0,
-            percent_time_l5=_opt_float(raw.get("percent_time_l5")) or 0.0,
-        )
-
 
 @dataclass(frozen=True, slots=True)
 class PhaseIntensitySummary:
@@ -260,30 +219,6 @@ class PhaseIntensitySummary:
     count: int = 0
     mean_intensity_db: float | None = None
     max_intensity_db: float | None = None
-
-    @classmethod
-    def from_dict(cls, raw: Mapping[str, object] | None) -> PhaseIntensitySummary:
-        """Parse from a raw phase-intensity mapping."""
-
-        def _opt_float(value: object) -> float | None:
-            if value is None or not isinstance(value, (int, float, str)):
-                return None
-            try:
-                return coerce_float(value)
-            except (TypeError, ValueError):
-                return None
-
-        if not isinstance(raw, Mapping):
-            return cls()
-        try:
-            count = coerce_int(raw.get("count", 0))
-        except (TypeError, ValueError):
-            count = 0
-        return cls(
-            count=count,
-            mean_intensity_db=_opt_float(raw.get("mean_intensity_db")),
-            max_intensity_db=_opt_float(raw.get("max_intensity_db")),
-        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -297,18 +232,9 @@ class LocationHotspotRow:
     mean_value: float = 0.0
 
 
-# ---------------------------------------------------------------------------
-# LocationIntensitySummary
-# ---------------------------------------------------------------------------
-
-
 @dataclass(frozen=True, slots=True)
 class LocationIntensitySummary:
-    """Typed internal per-location intensity summary for diagnostics.
-
-    Replaces the untyped ``IntensityRow`` (``JsonObject`` alias) with a
-    structured domain representation of sensor intensity at one location.
-    """
+    """Typed internal per-location intensity summary for diagnostics."""
 
     location: str
     partial_coverage: bool = False
@@ -331,65 +257,3 @@ class LocationIntensitySummary:
             raise ValueError("sample_count must be >= 0")
         if not (0.0 <= self.sample_coverage_ratio <= 1.0):
             raise ValueError("sample_coverage_ratio must be in [0.0, 1.0]")
-
-    @classmethod
-    def from_dict(cls, raw: Mapping[str, object]) -> LocationIntensitySummary:
-        """Parse from a raw dict."""
-
-        def _opt_float(key: str) -> float | None:
-            v = raw.get(key)
-            if v is None:
-                return None
-            if not isinstance(v, (int, float, str)):
-                return None
-            try:
-                f = coerce_float(v)
-            except (TypeError, ValueError):
-                return None
-            return f
-
-        sc = raw.get("sample_count", raw.get("samples", 0))
-        try:
-            sample_count = coerce_int(sc)
-        except (TypeError, ValueError):
-            sample_count = 0
-
-        scr = raw.get("sample_coverage_ratio", 0.0)
-        try:
-            sample_coverage_ratio = coerce_float(scr)
-        except (TypeError, ValueError):
-            sample_coverage_ratio = 0.0
-
-        strength_bucket_distribution_raw = raw.get("strength_bucket_distribution")
-        strength_bucket_distribution_payload = (
-            strength_bucket_distribution_raw
-            if isinstance(strength_bucket_distribution_raw, Mapping)
-            else None
-        )
-        sbd = StrengthBucketDistribution.from_dict(strength_bucket_distribution_payload)
-
-        phase_intensity_raw = raw.get("phase_intensity")
-        phase_intensity: dict[str, PhaseIntensitySummary] | None = None
-        if isinstance(phase_intensity_raw, Mapping):
-            parsed_phase_intensity = {
-                str(phase_key): PhaseIntensitySummary.from_dict(stats)
-                for phase_key, stats in phase_intensity_raw.items()
-                if isinstance(stats, Mapping)
-            }
-            phase_intensity = parsed_phase_intensity or None
-
-        return cls(
-            location=str(raw.get("location", "")),
-            partial_coverage=bool(raw.get("partial_coverage", False)),
-            sample_count=sample_count,
-            sample_coverage_ratio=sample_coverage_ratio,
-            sample_coverage_warning=bool(raw.get("sample_coverage_warning", False)),
-            mean_intensity_db=_opt_float("mean_intensity_db"),
-            p50_intensity_db=_opt_float("p50_intensity_db"),
-            p95_intensity_db=_opt_float("p95_intensity_db"),
-            max_intensity_db=_opt_float("max_intensity_db"),
-            dropped_frames_delta=_opt_float("dropped_frames_delta"),
-            queue_overflow_drops_delta=_opt_float("queue_overflow_drops_delta"),
-            strength_bucket_distribution=sbd,
-            phase_intensity=phase_intensity,
-        )
