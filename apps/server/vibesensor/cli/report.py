@@ -55,6 +55,9 @@ def main() -> int:
     except (TypeError, ValueError) as exc:
         print(f"Error: invalid report input: {exc}", file=sys.stderr)
         return 1
+    except RuntimeError as exc:
+        print(f"Error: PDF generation failed: {exc}", file=sys.stderr)
+        return 1
     try:
         out_pdf.parent.mkdir(parents=True, exist_ok=True)
         out_pdf.write_bytes(rendered_pdf)
