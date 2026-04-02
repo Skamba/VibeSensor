@@ -14,13 +14,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
-from vibesensor.domain.order_reference import OrderReferenceSpec
-from vibesensor.domain.tire_spec import TireSpec
-from vibesensor.shared.order_reference_settings import (
+from vibesensor.domain._order_reference_helpers import (
     normalize_order_reference_mapping,
     order_reference_mapping_from_spec,
     order_reference_spec_from_mapping,
 )
+from vibesensor.domain.order_reference import OrderReferenceSpec
+from vibesensor.domain.tire_spec import TireSpec
 
 __all__ = [
     "Car",

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from vibesensor.domain.tire_spec import TireSpec
 
-__all__ = ["OrderReferenceSpec"]
+__all__ = ["OrderReferenceSpec", "order_reference_mapping_from_spec"]
 
 _KMH_TO_MPS = 1.0 / 3.6
 
@@ -177,3 +177,25 @@ def _combined_relative_uncertainty(*parts: float) -> float:
         if part > 0 and math.isfinite(part):
             sum_sq += part * part
     return math.sqrt(sum_sq)
+
+
+def order_reference_mapping_from_spec(spec: OrderReferenceSpec) -> dict[str, float]:
+    """Project an order-reference spec into the flat settings mapping boundary."""
+
+    return {
+        "tire_width_mm": spec.tire_spec.width_mm,
+        "tire_aspect_pct": spec.tire_spec.aspect_pct,
+        "rim_in": spec.tire_spec.rim_in,
+        "final_drive_ratio": spec.final_drive_ratio,
+        "current_gear_ratio": spec.current_gear_ratio,
+        "wheel_bandwidth_pct": spec.wheel_bandwidth_pct,
+        "driveshaft_bandwidth_pct": spec.driveshaft_bandwidth_pct,
+        "engine_bandwidth_pct": spec.engine_bandwidth_pct,
+        "speed_uncertainty_pct": spec.speed_uncertainty_pct,
+        "tire_diameter_uncertainty_pct": spec.tire_diameter_uncertainty_pct,
+        "final_drive_uncertainty_pct": spec.final_drive_uncertainty_pct,
+        "gear_uncertainty_pct": spec.gear_uncertainty_pct,
+        "min_abs_band_hz": spec.min_abs_band_hz,
+        "max_band_half_width_pct": spec.max_band_half_width_pct,
+        "tire_deflection_factor": spec.tire_spec.deflection_factor,
+    }
