@@ -84,6 +84,7 @@ class PreparedReportFacts:
     timeline_intervals: tuple[ReportTimelineInterval, ...]
     display: PreparedReportDisplayFacts
 
+
 @dataclass(frozen=True, slots=True)
 class ReportTimelineInterval:
     """Prepared semantic snapshot for one report timeline interval."""
@@ -94,6 +95,7 @@ class ReportTimelineInterval:
     speed_min_kmh: float | None
     speed_max_kmh: float | None
     has_fault_evidence: bool
+
 
 def _coerce_optional_float(value: object) -> float | None:
     if value is None:

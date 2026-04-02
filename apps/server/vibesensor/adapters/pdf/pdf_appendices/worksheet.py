@@ -79,6 +79,7 @@ def _appendix_a_page(
             start_number=start_number,
         )
 
+
 def _draw_worksheet_page(
     c: Canvas,
     appendix: AppendixAData,

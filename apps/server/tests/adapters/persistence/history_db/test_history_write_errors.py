@@ -28,6 +28,7 @@ class _FakeRecord:
     location_code: str
     sample_rate_hz: int
     latest_metrics: ClientMetrics
+    firmware_version: str | None = None
     frames_total: int = 0
     frames_dropped: int = 0
     queue_overflow_drops: int = 0
