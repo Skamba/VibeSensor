@@ -27,7 +27,7 @@ from vibesensor.adapters.pdf.mapping import (
 )
 from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
-from vibesensor.use_cases.diagnostics import RunAnalysis
+from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 pytestmark = pytest.mark.smoke
 

@@ -96,7 +96,7 @@ in order. Each step runs exactly once per analysis invocation.
 
 | Module | LOC | Responsibility |
 |--------|-----|---------------|
-| `__init__.py` | ~50 | Diagnostics public API re-exports, including shared order-band helpers |
+| `__init__.py` | ~5 | Package marker only; callers import canonical diagnostics owners directly |
 | `_context.py` | ~150 | `DiagnosticsContext`: typed run context container with effective reference helpers |
 | `_context_decode.py` | ~120 | Raw metadata → `DiagnosticsContext` decoding via `build_diagnostics_context()` |
 | `_context_projection.py` | ~80 | Projection helpers that rehydrate metadata, car, symptom, and configuration snapshots from `DiagnosticsContext` |

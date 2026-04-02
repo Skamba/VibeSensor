@@ -10,7 +10,6 @@ from test_support.sample_scenarios import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
@@ -21,6 +20,7 @@ from vibesensor.use_cases.diagnostics.signal_aggregation import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
 )
+from vibesensor.use_cases.diagnostics.summary_builder import build_findings_for_samples
 
 
 class TestPhaseSegmentation:
