@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import DrivingPhaseSegment
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
@@ -15,6 +16,11 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
     phase_summary,
     segment_run_phases,
 )
+
+
+def _typed(samples: list[dict]) -> list:
+    return normalize_analysis_samples(samples)
+
 
 # ---------------------------------------------------------------------------
 # _estimate_speed_derivative
@@ -107,7 +113,7 @@ class TestSegmentRunPhases:
 
     def test_single_sample(self) -> None:
         samples = [{"speed_kmh": 80.0, "t_s": 0.0}]
-        phases, segments = segment_run_phases(samples)
+        phases, segments = segment_run_phases(_typed(samples))
         assert len(phases) == 1
         assert len(segments) == 1
         assert segments[0].phase == DrivingPhase.CRUISE
@@ -116,7 +122,7 @@ class TestSegmentRunPhases:
         samples = [{"speed_kmh": 0.0, "t_s": float(i)} for i in range(5)] + [
             {"speed_kmh": 80.0, "t_s": float(i)} for i in range(5, 10)
         ]
-        phases, segments = segment_run_phases(samples)
+        phases, segments = segment_run_phases(_typed(samples))
         assert len(phases) == 10
         # Should have at least idle and cruise segments
         segment_phases = {seg.phase for seg in segments}
@@ -124,7 +130,7 @@ class TestSegmentRunPhases:
 
     def test_all_samples_same_phase(self) -> None:
         samples = [{"speed_kmh": 80.0, "t_s": float(i)} for i in range(20)]
-        phases, segments = segment_run_phases(samples)
+        phases, segments = segment_run_phases(_typed(samples))
         assert all(p == DrivingPhase.CRUISE for p in phases)
         assert len(segments) == 1
 
@@ -135,7 +141,7 @@ class TestSegmentRunPhases:
             + [{"speed_kmh": None, "t_s": float(i)} for i in range(5, 15)]  # 10s GPS dropout
             + [{"speed_kmh": 120.0, "t_s": float(i)} for i in range(15, 20)]
         )
-        phases, segments = segment_run_phases(samples)
+        phases, segments = segment_run_phases(_typed(samples))
         assert len(phases) == 20
         # All dropout samples should be interpolated to CRUISE (surrounded by CRUISE)
         for i in range(5, 15):
@@ -151,7 +157,7 @@ class TestSegmentRunPhases:
         samples = [{"speed_kmh": None, "t_s": float(i)} for i in range(3)] + [
             {"speed_kmh": 80.0, "t_s": float(i)} for i in range(3, 10)
         ]
-        phases, _ = segment_run_phases(samples)
+        phases, _ = segment_run_phases(_typed(samples))
         # Leading unknown-speed samples should be assigned the neighbouring CRUISE phase
         for i in range(3):
             assert phases[i] != DrivingPhase.IDLE
@@ -161,7 +167,7 @@ class TestSegmentRunPhases:
         samples = [{"speed_kmh": 80.0, "t_s": float(i)} for i in range(7)] + [
             {"speed_kmh": None, "t_s": float(i)} for i in range(7, 10)
         ]
-        phases, _ = segment_run_phases(samples)
+        phases, _ = segment_run_phases(_typed(samples))
         # Trailing unknown-speed samples should keep the moving phase
         for i in range(7, 10):
             assert phases[i] != DrivingPhase.IDLE
@@ -173,7 +179,7 @@ class TestSegmentRunPhases:
             + [{"speed_kmh": None, "t_s": float(i)} for i in range(3, 6)]
             + [{"speed_kmh": 0.0, "t_s": float(i)} for i in range(6, 10)]
         )
-        phases, _ = segment_run_phases(samples)
+        phases, _ = segment_run_phases(_typed(samples))
         # Surrounded by IDLE → stays SPEED_UNKNOWN (not interpolated to a moving phase)
         for i in range(3, 6):
             assert phases[i] == DrivingPhase.SPEED_UNKNOWN
@@ -181,7 +187,7 @@ class TestSegmentRunPhases:
     def test_all_none_speeds(self) -> None:
         """All samples have None speed → all SPEED_UNKNOWN."""
         samples = [{"speed_kmh": None, "t_s": float(i)} for i in range(5)]
-        phases, _ = segment_run_phases(samples)
+        phases, _ = segment_run_phases(_typed(samples))
         assert all(p == DrivingPhase.SPEED_UNKNOWN for p in phases)
 
 

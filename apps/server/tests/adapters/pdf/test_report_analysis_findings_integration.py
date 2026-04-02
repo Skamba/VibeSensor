@@ -14,6 +14,7 @@ from vibesensor.domain import Finding, LocationHotspot
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import findings as findings_builder_module
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.peaks.table import (
@@ -29,7 +30,7 @@ def test_speed_breakdown_basic() -> None:
         _make_sample(2.0, 87.0, 0.03),
         _make_sample(3.0, 92.0, 0.01),
     ]
-    rows = _speed_breakdown(samples)
+    rows = _speed_breakdown(normalize_analysis_samples(samples))
     assert len(rows) == 2
     labels = [row.speed_range for row in rows]
     assert "80-90 km/h" in labels
@@ -41,7 +42,12 @@ def test_speed_breakdown_empty() -> None:
 
 
 def test_speed_breakdown_no_speed() -> None:
-    assert _speed_breakdown([{"speed_kmh": None}, {"speed_kmh": 0}]) == []
+    assert (
+        _speed_breakdown(
+            normalize_analysis_samples([{"speed_kmh": None}, {"speed_kmh": 0}]),
+        )
+        == []
+    )
 
 
 def test_build_findings_empty_samples() -> None:

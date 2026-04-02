@@ -15,6 +15,7 @@ from vibesensor.adapters.pdf.presentation import strength_label
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.use_cases.diagnostics._sample_metrics import _effective_baseline_floor
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics._validation import _validate_required_strength_metrics
 
 # ------------------------------------------------------------------
@@ -106,9 +107,9 @@ class TestValidateRequiredStrengthMetrics:
         ids=["empty", "all-valid"],
     )
     def test_valid_no_error(self, samples: list[dict]) -> None:
-        _validate_required_strength_metrics(samples)  # should not raise
+        _validate_required_strength_metrics(normalize_analysis_samples(samples))  # should not raise
 
     def test_all_missing_raises(self) -> None:
         samples = [{"other_field": 1}, {"other_field": 2}]
         with pytest.raises(ValueError, match="vibration_strength_db"):
-            _validate_required_strength_metrics(samples)
+            _validate_required_strength_metrics(normalize_analysis_samples(samples))

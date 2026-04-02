@@ -15,11 +15,7 @@ from vibesensor.use_cases.diagnostics._sample_metrics import (
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
 )
-from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSampleInput,
-    Sample,
-    ensure_analysis_samples,
-)
+from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics._view_types import (
     AmpVsPhaseRowData,
     FreqVsSpeedByFindingSeriesData,
@@ -38,11 +34,10 @@ from vibesensor.use_cases.diagnostics.peaks.table import (
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
-    _segment_run_phases,
+    segment_run_phases,
 )
 from vibesensor.use_cases.diagnostics.spectrogram import (
     PeakSampleScan,
-    _scan_peak_samples,
     aggregate_fft_spectrum,
     aggregate_fft_spectrum_raw,
     scan_peak_samples,
@@ -231,34 +226,6 @@ def serialize_phase_context(
 
 def _plot_data(
     *,
-    samples: Sequence[AnalysisSampleInput],
-    speed_breakdown: Sequence[SpeedBreakdownRowData],
-    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowData],
-    findings: Sequence[DomainFinding],
-    raw_sample_rate_hz: float | None,
-    steady_speed: bool,
-    run_noise_baseline_g: float | None = None,
-    per_sample_phases: Sequence[DrivingPhase] | None = None,
-    phase_segments: Sequence[PhaseSegment] | None = None,
-) -> PlotDataResultData:
-    typed_samples = ensure_analysis_samples(samples)
-    peak_scan = scan_peak_samples(typed_samples)
-    return _plot_data_for_samples(
-        samples=typed_samples,
-        speed_breakdown=speed_breakdown,
-        phase_speed_breakdown=phase_speed_breakdown,
-        findings=findings,
-        raw_sample_rate_hz=raw_sample_rate_hz,
-        steady_speed=steady_speed,
-        run_noise_baseline_g=run_noise_baseline_g,
-        per_sample_phases=per_sample_phases,
-        phase_segments=phase_segments,
-        peak_scan=peak_scan,
-    )
-
-
-def _plot_data_for_samples(
-    *,
     samples: Sequence[Sample],
     speed_breakdown: Sequence[SpeedBreakdownRowData],
     phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowData],
@@ -277,9 +244,9 @@ def _plot_data_for_samples(
         resolved_phases = per_sample_phases
         resolved_phase_segments = phase_segments
     else:
-        resolved_phases, resolved_phase_segments = _segment_run_phases(samples)
+        resolved_phases, resolved_phase_segments = segment_run_phases(samples)
 
-    resolved_peak_scan = peak_scan or _scan_peak_samples(samples)
+    resolved_peak_scan = peak_scan or scan_peak_samples(samples)
     series = build_plot_series(
         samples=samples,
         speed_breakdown=speed_breakdown,

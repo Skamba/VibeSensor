@@ -18,6 +18,7 @@ from vibesensor.report_i18n import tr
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
@@ -45,7 +46,7 @@ class TestBug01ComputeRunTimingTimedelta:
         meta = {"start_time_utc": "2024-01-01T12:00:00Z"}
         samples = [{"t_s": 0.0}, {"t_s": 300.0}]
         context = build_diagnostics_context(meta, file_name="test")
-        _, start, end, duration = compute_run_timing(context, samples)
+        _, start, end, duration = compute_run_timing(context, normalize_analysis_samples(samples))
         assert start is not None
         assert end is not None
         assert (end - start).total_seconds() == pytest.approx(300.0)
@@ -224,7 +225,7 @@ class TestBug12PhaseSegmentTimestamps:
             {"t_s": None, "speed_kmh": 50.0},
             {"t_s": None, "speed_kmh": 50.0},
         ]
-        _, segments = segment_run_phases(samples)
+        _, segments = segment_run_phases(normalize_analysis_samples(samples))
         if len(segments) > 1:
             second = segments[1]
             # Should not be 0.0 for a segment that comes after the first
@@ -327,7 +328,11 @@ class TestBug18IntensitySortZero:
             }
             for i in range(10)
         ]
-        result = _sensor_intensity_by_location(samples, include_locations={"FL"}, lang="en")
+        result = _sensor_intensity_by_location(
+            normalize_analysis_samples(samples),
+            include_locations={"FL"},
+            lang="en",
+        )
         assert len(result) > 0
 
 

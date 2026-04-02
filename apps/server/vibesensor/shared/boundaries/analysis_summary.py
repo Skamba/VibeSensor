@@ -36,6 +36,10 @@ from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
 
 
+class AnalysisSampleLike(Protocol):
+    def to_json_object(self) -> JsonObject: ...
+
+
 class PreparedRunDataLike(Protocol):
     @property
     def run_id(self) -> str: ...
@@ -79,7 +83,7 @@ class AnalysisResultLike(Protocol):
     def metadata(self) -> JsonObject: ...
 
     @property
-    def samples(self) -> Sequence[JsonObject]: ...
+    def samples(self) -> Sequence[AnalysisSampleLike]: ...
 
     @property
     def language(self) -> str: ...
@@ -161,7 +165,7 @@ def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
     summary = build_analysis_summary(
         file_name=result.file_name,
         run_id=result.prepared.run_id,
-        samples=list(result.samples),
+        samples=[sample.to_json_object() for sample in result.samples],
         duration_s=result.prepared.duration_s,
         language=result.language,
         metadata=result.metadata,
