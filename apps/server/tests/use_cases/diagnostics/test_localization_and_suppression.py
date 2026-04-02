@@ -20,7 +20,7 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.locations import WHEEL_LOCATION_CODES, is_wheel_location
 from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_match_locations
-from vibesensor.use_cases.diagnostics.summary_builder import build_findings_for_samples
+from vibesensor.use_cases.diagnostics.run_analysis import build_findings_for_samples
 
 # ---------------------------------------------------------------------------
 # Helpers (reused from test_scenario_ground_truth patterns)

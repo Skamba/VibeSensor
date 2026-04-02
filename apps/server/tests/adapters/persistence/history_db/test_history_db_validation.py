@@ -10,10 +10,11 @@ import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
 from vibesensor.shared.json_utils import sanitize_value
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
 
 
 def _metadata(run_id: str, **overrides: object) -> RunMetadata:
@@ -27,7 +28,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "source": "test",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
@@ -66,7 +67,7 @@ def test_list_runs_clamps_negative_limit_to_all_rows(tmp_path: Path) -> None:
 def test_resolve_keyset_offset_rejects_invalid_table(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-guard", "2026-01-01T00:00:00Z", _metadata("run-guard"))
-    db.append_samples("run-guard", [SensorFrame.from_dict({"i": i}) for i in range(3)])
+    db.append_samples("run-guard", [sensor_frame_from_mapping({"i": i}) for i in range(3)])
 
     with pytest.raises(ValueError, match="invalid table name"):
         db._resolve_keyset_offset("injected_table", "run-guard", 1)
@@ -75,19 +76,19 @@ def test_resolve_keyset_offset_rejects_invalid_table(tmp_path: Path) -> None:
 def test_append_samples_empty_run_id_raises(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     with pytest.raises(ValueError, match="run_id"):
-        db.append_samples("", [SensorFrame.from_dict({"i": 1})])
+        db.append_samples("", [sensor_frame_from_mapping({"i": 1})])
 
 
 def test_append_samples_whitespace_run_id_raises(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     with pytest.raises(ValueError, match="run_id"):
-        db.append_samples("   ", [SensorFrame.from_dict({"i": 1})])
+        db.append_samples("   ", [sensor_frame_from_mapping({"i": 1})])
 
 
 def test_iter_run_samples_negative_offset_raises(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-neg-off", "2026-01-01T00:00:00Z", _metadata("run-neg-off"))
-    db.append_samples("run-neg-off", [SensorFrame.from_dict({"i": i}) for i in range(3)])
+    db.append_samples("run-neg-off", [sensor_frame_from_mapping({"i": i}) for i in range(3)])
 
     with pytest.raises(ValueError, match="offset"):
         list(db.iter_run_samples("run-neg-off", offset=-1))
@@ -145,7 +146,7 @@ def test_verify_run_integrity_clean_run(tmp_path: Path) -> None:
         "2026-01-01T00:00:00Z",
         _metadata("run-ok", sensor_model="a", sample_rate_hz=100),
     )
-    db.append_samples("run-ok", [SensorFrame.from_dict({"i": i}) for i in range(5)])
+    db.append_samples("run-ok", [sensor_frame_from_mapping({"i": i}) for i in range(5)])
     db.finalize_run("run-ok", "2026-01-01T00:10:00Z")
     db.store_analysis("run-ok", make_persisted_analysis(_analysis("run-ok")))
     assert db.verify_run_integrity("run-ok") == []
@@ -158,7 +159,7 @@ def test_verify_run_integrity_sample_count_mismatch(tmp_path: Path) -> None:
         "2026-01-01T00:00:00Z",
         _metadata("run-m", sensor_model="a", sample_rate_hz=100),
     )
-    db.append_samples("run-m", [SensorFrame.from_dict({"i": i}) for i in range(5)])
+    db.append_samples("run-m", [sensor_frame_from_mapping({"i": i}) for i in range(5)])
     db.finalize_run("run-m", "2026-01-01T00:10:00Z")
     db.store_analysis("run-m", make_persisted_analysis(_analysis("run-m")))
     # Manually corrupt sample_count
@@ -196,7 +197,7 @@ def test_create_run_warns_on_missing_metadata_keys(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    incomplete_meta = RunMetadata.from_dict(
+    incomplete_meta = run_metadata_from_mapping(
         {
             "run_id": "run-w",
             "start_time_utc": "2026-01-01T00:00:00Z",

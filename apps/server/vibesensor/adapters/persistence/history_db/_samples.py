@@ -12,6 +12,7 @@ import logging
 import math
 
 from vibesensor.domain import StrengthPeak
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_to_json_object
 from vibesensor.shared.boundaries.strength_metrics_codec import (
     strength_peak_payloads,
     strength_peaks_from_sequence,
@@ -80,7 +81,7 @@ _isfinite = math.isfinite
 
 def sample_to_v2_row(run_id: str, item: SensorFrame) -> tuple[object, ...]:
     """Convert a typed SensorFrame to a row tuple for ``samples_v2``."""
-    d = item.to_dict()
+    d = sensor_frame_to_json_object(item)
     isfinite = _isfinite
     _get = d.get
     _json_cols = _JSON_COLUMNS

@@ -1,8 +1,7 @@
-"""Shared JSONL run-schema constants and typed metadata contract."""
+"""Shared JSONL run-schema constants and canonical typed metadata contract."""
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Final
@@ -19,39 +18,12 @@ __all__ = [
     "RunMetadata",
 ]
 
-_LOGGER = logging.getLogger(__name__)
-_RUN_METADATA_FIELD_KEYS: Final[frozenset[str]] = frozenset(
-    {
-        "record_type",
-        "schema_version",
-        "run_id",
-        "start_time_utc",
-        "end_time_utc",
-        "sensor_model",
-        "firmware_version",
-        "raw_sample_rate_hz",
-        "feature_interval_s",
-        "fft_window_size_samples",
-        "fft_window_type",
-        "peak_picker_method",
-        "accel_scale_g_per_lsb",
-        "incomplete_for_order_analysis",
-    }
-)
-
 RUN_SCHEMA_VERSION: Final[str] = "v2-jsonl"
 RUN_METADATA_TYPE: Final[str] = "run_metadata"
 RUN_SAMPLE_TYPE: Final[str] = "sample"
 RUN_END_TYPE: Final[str] = "run_end"
 FFT_WINDOW_TYPE: str = "hann"
 PEAK_PICKER_METHOD: str = "canonical_strength_metrics_module"
-
-
-def _as_str_or_none(value: object) -> str | None:
-    if isinstance(value, str):
-        normalized = value.strip()
-        return normalized or None
-    return None
 
 
 @dataclass(slots=True)
@@ -114,37 +86,6 @@ class RunMetadata:
             extras={},
         )
 
-    @classmethod
-    def from_dict(cls, data: Mapping[str, object]) -> RunMetadata:
-        """Normalize a raw persisted metadata mapping into the typed dataclass."""
-        from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-
-        run_id = str(data.get("run_id", ""))
-        if not run_id:
-            _LOGGER.warning("RunMetadata.from_dict: missing or empty run_id in record %r", data)
-        return cls(
-            record_type=str(data.get("record_type", RUN_METADATA_TYPE)),
-            schema_version=str(data.get("schema_version", RUN_SCHEMA_VERSION)),
-            run_id=run_id,
-            start_time_utc=str(data.get("start_time_utc", "")),
-            end_time_utc=_as_str_or_none(data.get("end_time_utc")),
-            sensor_model=str(data.get("sensor_model", "unknown")),
-            firmware_version=(str(data.get("firmware_version", "")).strip() or None),
-            raw_sample_rate_hz=as_int_or_none(data.get("raw_sample_rate_hz")),
-            feature_interval_s=as_float_or_none(data.get("feature_interval_s")),
-            fft_window_size_samples=as_int_or_none(data.get("fft_window_size_samples")),
-            fft_window_type=_as_str_or_none(data.get("fft_window_type")),
-            peak_picker_method=str(data.get("peak_picker_method", "")),
-            accel_scale_g_per_lsb=as_float_or_none(data.get("accel_scale_g_per_lsb")),
-            incomplete_for_order_analysis=bool(data.get("incomplete_for_order_analysis", False)),
-            extras={
-                key: value
-                for key, value in data.items()
-                if key not in _RUN_METADATA_FIELD_KEYS
-                and (value is None or isinstance(value, (bool, int, float, str, list, dict)))
-            },
-        )
-
     @property
     def language(self) -> str | None:
         """Return the normalized persisted language code from metadata extras."""
@@ -165,24 +106,3 @@ class RunMetadata:
             normalized = value.strip()
             return normalized or None
         return None
-
-    def to_dict(self) -> JsonObject:
-        """Serialize typed run metadata back to the canonical JSONL header shape."""
-        payload: JsonObject = {
-            "record_type": self.record_type,
-            "schema_version": self.schema_version,
-            "run_id": self.run_id,
-            "start_time_utc": self.start_time_utc,
-            "end_time_utc": self.end_time_utc,
-            "sensor_model": self.sensor_model,
-            "firmware_version": self.firmware_version,
-            "raw_sample_rate_hz": self.raw_sample_rate_hz,
-            "feature_interval_s": self.feature_interval_s,
-            "fft_window_size_samples": self.fft_window_size_samples,
-            "fft_window_type": self.fft_window_type,
-            "peak_picker_method": self.peak_picker_method,
-            "accel_scale_g_per_lsb": self.accel_scale_g_per_lsb,
-            "incomplete_for_order_analysis": self.incomplete_for_order_analysis,
-        }
-        payload.update(self.extras)
-        return payload

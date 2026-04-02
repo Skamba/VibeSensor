@@ -15,9 +15,10 @@ from test_support.core import canonicalize_run_context_metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB, SQLiteHistoryEngine
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 
 
@@ -32,7 +33,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "source": "test",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(canonicalize_run_context_metadata(payload))
+    return run_metadata_from_mapping(canonicalize_run_context_metadata(payload))
 
 
 def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
@@ -84,7 +85,7 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
             yield _CursorProxy(cur)
 
     db.write_transaction_cursor = _wrapped_write_transaction
-    samples = [SensorFrame.from_dict({"i": i, "x": 0.1}) for i in range(700)]
+    samples = [sensor_frame_from_mapping({"i": i, "x": 0.1}) for i in range(700)]
     db.append_samples("run-1", samples)
     assert sum(calls) == 700
     assert max(calls) <= 256
@@ -109,7 +110,7 @@ def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
     db.create_run("run-2", "2026-01-01T00:00:00Z", _metadata("run-2"))
 
     def _append(start: int) -> None:
-        batch = [SensorFrame.from_dict({"i": start + i}) for i in range(50)]
+        batch = [sensor_frame_from_mapping({"i": start + i}) for i in range(50)]
         db.append_samples("run-2", batch)
 
     with ThreadPoolExecutor(max_workers=4) as pool:
@@ -123,11 +124,11 @@ def test_append_samples_rejects_non_recording_runs(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-guard", "2026-01-01T00:00:00Z", _metadata("run-guard"))
 
-    written = db.append_samples("run-guard", [SensorFrame.from_dict({"i": 1})])
+    written = db.append_samples("run-guard", [sensor_frame_from_mapping({"i": 1})])
     assert written == 1
 
     db.finalize_run("run-guard", "2026-01-01T00:10:00Z")
-    rejected = db.append_samples("run-guard", [SensorFrame.from_dict({"i": 2})])
+    rejected = db.append_samples("run-guard", [sensor_frame_from_mapping({"i": 2})])
 
     assert rejected == 0
     run = db.get_run("run-guard")
@@ -193,7 +194,7 @@ def test_schema_version_future_fails_fast(tmp_path: Path) -> None:
 def test_iter_run_samples_batches(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-3", "2026-01-01T00:00:00Z", _metadata("run-3"))
-    db.append_samples("run-3", [SensorFrame.from_dict({"i": i}) for i in range(11)])
+    db.append_samples("run-3", [sensor_frame_from_mapping({"i": i}) for i in range(11)])
     batches = list(db.iter_run_samples("run-3", batch_size=4))
     assert [len(batch) for batch in batches] == [4, 4, 3]
 
@@ -204,9 +205,9 @@ def test_list_runs_uses_incremental_sample_count(tmp_path: Path) -> None:
     db.append_samples(
         "run-4",
         [
-            SensorFrame.from_dict({"i": 1}),
-            SensorFrame.from_dict({"i": 2}),
-            SensorFrame.from_dict({"i": 3}),
+            sensor_frame_from_mapping({"i": 1}),
+            sensor_frame_from_mapping({"i": 2}),
+            sensor_frame_from_mapping({"i": 3}),
         ],
     )
     run = db.list_runs()[0]
@@ -281,7 +282,7 @@ def test_prune_terminal_runs_older_than_days_deletes_only_old_terminal_runs(
 def test_prune_terminal_runs_older_than_days_cascades_samples(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-prune", "2026-01-01T00:00:00Z", _metadata("run-prune"))
-    db.append_samples("run-prune", [SensorFrame.from_dict({"i": i}) for i in range(3)])
+    db.append_samples("run-prune", [sensor_frame_from_mapping({"i": i}) for i in range(3)])
     db.store_analysis("run-prune", make_persisted_analysis(_analysis("run-prune", score=9)))
 
     old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
@@ -440,7 +441,7 @@ def test_startup_quick_check_blocks_future_writes(
     monkeypatch.setattr(db, "_cursor", original_cursor)
 
     with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
-        db.append_samples("run-corrupt", [SensorFrame.from_dict({"i": 1})])
+        db.append_samples("run-corrupt", [sensor_frame_from_mapping({"i": 1})])
     with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
         db.finalize_run("run-corrupt", "2026-01-01T00:10:00Z")
 
@@ -454,7 +455,7 @@ def test_startup_quick_check_blocks_future_writes(
 def test_delete_run_cascades_samples(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-del", "2026-01-01T00:00:00Z", _metadata("run-del"))
-    db.append_samples("run-del", [SensorFrame.from_dict({"i": i}) for i in range(5)])
+    db.append_samples("run-del", [sensor_frame_from_mapping({"i": i}) for i in range(5)])
     assert len(db.get_run_samples("run-del")) == 5
 
     db.delete_run("run-del")
@@ -524,7 +525,7 @@ def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) ->
     with pytest.raises(sqlite3.OperationalError, match="simulated sample_count failure"):
         db.append_samples(
             "run-rollback",
-            [SensorFrame.from_dict({"i": 1}), SensorFrame.from_dict({"i": 2})],
+            [sensor_frame_from_mapping({"i": 1}), sensor_frame_from_mapping({"i": 2})],
         )
 
     run = db.get_run("run-rollback")
@@ -601,7 +602,7 @@ def test_update_run_metadata_overwrites_stored_metadata(tmp_path: Path) -> None:
 def test_append_empty_samples_is_noop(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-empty", "2026-01-01T00:00:00Z", _metadata("run-empty"))
-    db.append_samples("run-empty", [SensorFrame.from_dict({"i": 1})])
+    db.append_samples("run-empty", [sensor_frame_from_mapping({"i": 1})])
     db.append_samples("run-empty", [])
     run = db.list_runs()[0]
     assert run.sample_count == 1
@@ -628,7 +629,13 @@ def test_client_names_crud(tmp_path: Path) -> None:
 def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-ro", "2026-01-01T00:00:00Z", _metadata("run-ro"))
-    db.append_samples("run-ro", [SensorFrame.from_dict({"i": 1}), SensorFrame.from_dict({"i": 2})])
+    db.append_samples(
+        "run-ro",
+        [
+            sensor_frame_from_mapping({"i": 1}),
+            sensor_frame_from_mapping({"i": 2}),
+        ],
+    )
     db.set_settings_snapshot(_settings_snapshot())
     db.upsert_client_name("client-1", "Alice")
 

@@ -24,7 +24,7 @@ from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.domain import VibrationOrigin
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
-from vibesensor.use_cases.diagnostics.summary_builder import (
+from vibesensor.use_cases.diagnostics.run_analysis import (
     summarize_origin,
 )
 

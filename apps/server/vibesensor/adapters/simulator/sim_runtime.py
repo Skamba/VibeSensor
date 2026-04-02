@@ -16,6 +16,7 @@ from vibesensor.adapters.udp.protocol import (
     pack_hello,
     parse_cmd,
 )
+from vibesensor.shared.exceptions import ProtocolError
 
 __all__ = [
     "ClientProtocol",
@@ -42,7 +43,7 @@ class ClientProtocol(asyncio.DatagramProtocol):
             return
         try:
             cmd = parse_cmd(data)
-        except Exception as exc:
+        except (ProtocolError, ValueError) as exc:
             print(f"{self.sim.name}: ignoring unparseable command from {addr[0]}:{addr[1]}: {exc}")
             return
         if cmd.client_id != self.sim.client_id:
@@ -76,7 +77,7 @@ async def command_loop(clients: list[SimClient], stop_event: asyncio.Event) -> N
             break
         try:
             out = apply_command(clients, line, stop_event, list(PROFILE_LIBRARY.keys()))
-        except Exception as exc:
+        except ValueError as exc:
             print(f"Command error: {exc}")
             continue
         if out:

@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -43,7 +44,7 @@ class _HistoryDBRunLifecycleMixin:
         metadata: RunMetadata,
         case_id: str | None = None,
     ) -> None:
-        metadata_payload = metadata.to_dict()
+        metadata_payload = run_metadata_to_json_object(metadata)
         missing = _RECOMMENDED_METADATA_KEYS - metadata_payload.keys()
         if missing:
             LOGGER.warning(
@@ -120,7 +121,7 @@ class _HistoryDBRunLifecycleMixin:
             params: list[object] = [end_time_utc, now]
             if metadata is not None:
                 assignments.insert(0, "metadata_json = ?")
-                params.insert(0, safe_json_dumps(metadata.to_dict()))
+                params.insert(0, safe_json_dumps(run_metadata_to_json_object(metadata)))
             if case_id is not None:
                 assignments.insert(0, "case_id = ?")
                 params.insert(0, case_id)
@@ -139,7 +140,7 @@ class _HistoryDBRunLifecycleMixin:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
-                (safe_json_dumps(metadata.to_dict()), run_id),
+                (safe_json_dumps(run_metadata_to_json_object(metadata)), run_id),
             )
             return bool(int(cur.rowcount) > 0)
 

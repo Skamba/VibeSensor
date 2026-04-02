@@ -13,14 +13,14 @@ def test_finding_has_no_from_payload_method() -> None:
 
 
 def test_build_run_suitability_checks_does_not_exist() -> None:
-    """``build_run_suitability_checks`` must not exist in summary_builder.
+    """``build_run_suitability_checks`` must not exist in run_analysis.
 
     It was deleted in Workstream 2 (T3.21).  ``RunSuitability.evaluate()``
     is the canonical owner of suitability evaluation.
     """
-    from vibesensor.use_cases.diagnostics import summary_builder
+    from vibesensor.use_cases.diagnostics import run_analysis
 
-    assert not hasattr(summary_builder, "build_run_suitability_checks"), (
+    assert not hasattr(run_analysis, "build_run_suitability_checks"), (
         "build_run_suitability_checks was deleted; use RunSuitability.evaluate()"
     )
 
@@ -40,12 +40,12 @@ def test_project_analysis_summary_has_no_legacy_summary_version_fast_path() -> N
     assert 'analysis.get("_summary_version") == 2' not in source
 
 
-def test_summary_builder_does_not_define_case_context_wrappers() -> None:
-    """summary_builder must not own duplicate Car/Symptom metadata decoders."""
+def test_run_analysis_does_not_define_case_context_wrappers() -> None:
+    """run_analysis must not own duplicate Car/Symptom metadata decoders."""
     from tests._paths import SERVER_ROOT
 
     source = (
-        SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "summary_builder.py"
+        SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "run_analysis.py"
     ).read_text()
     assert "def build_domain_car" not in source
     assert "def build_domain_symptoms" not in source

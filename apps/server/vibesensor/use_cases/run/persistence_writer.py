@@ -13,9 +13,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
 
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
@@ -201,7 +201,7 @@ class RunPersistenceWriter:
             history_db.create_run(
                 run_id,
                 start_time_utc,
-                RunMetadata.from_dict(metadata),
+                run_metadata_from_mapping(metadata),
             )
             with self._lock:
                 if not self._run_id_matches(run_id):
@@ -338,7 +338,7 @@ class RunPersistenceWriter:
             finalized = history_db.finalize_run(
                 run_id,
                 end_utc,
-                metadata=RunMetadata.from_dict(latest_metadata),
+                metadata=run_metadata_from_mapping(latest_metadata),
             )
             if finalized is False:
                 self.set_last_write_error("history finalize_run skipped due to invalid state")

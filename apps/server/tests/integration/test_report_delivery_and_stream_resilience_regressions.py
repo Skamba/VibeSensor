@@ -5,8 +5,6 @@ report_cli error handling, WebSocketHub circuit breaker,
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
 import json
 from unittest.mock import patch
 
@@ -55,36 +53,22 @@ class TestWebSocketHubCircuitBreaker:
     """Verify consecutive failure tracking in ws_hub.run()."""
 
     @pytest.mark.asyncio
-    async def test_run_tolerates_failures_and_continues(self):
-        """run() should not crash on on_tick exceptions; it keeps retrying."""
+    async def test_run_propagates_on_tick_failures(self):
+        """Programmer errors in on_tick should fail fast instead of being swallowed."""
         hub = WebSocketHub()
         call_count = 0
 
         def failing_tick():
             nonlocal call_count
             call_count += 1
-            if call_count <= 3:
-                raise RuntimeError("tick fail")
+            raise RuntimeError("tick fail")
 
         def dummy_builder(sel_id=None):
             return {}
 
-        async def stop_after_4():
-            """Let the loop run enough ticks, then cancel."""
-            while call_count < 4:
-                await asyncio.sleep(0.005)
-
-        task = asyncio.create_task(
-            hub.run(hz=200, payload_builder=dummy_builder, on_tick=failing_tick),
-        )
-        with contextlib.suppress(TimeoutError):
-            await asyncio.wait_for(stop_after_4(), timeout=5.0)
-        task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await task
-        assert call_count >= 4, (
-            f"on_tick should have been called at least 4 times, got {call_count}"
-        )
+        with pytest.raises(RuntimeError, match="tick fail"):
+            await hub.run(hz=200, payload_builder=dummy_builder, on_tick=failing_tick)
+        assert call_count == 1
 
 
 # ── 8. i18n keys for car error feedback ──────────────────────────────────

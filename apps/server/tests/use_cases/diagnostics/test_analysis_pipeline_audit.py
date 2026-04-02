@@ -10,7 +10,7 @@ import pytest
 from vibesensor.adapters.pdf.presentation import strength_label
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.processing.fft import noise_floor
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,
@@ -154,7 +154,7 @@ class TestPhaseSegmentIndexAsSeconds:
             {"speed_kmh": 80.0}  # no t_s
             for _ in range(20)
         ]
-        per_sample_phases, segments = segment_run_phases(normalize_sensor_frames(samples))
+        per_sample_phases, segments = segment_run_phases(sensor_frames_from_rows(samples))
         assert len(segments) > 0
         seg = segments[0]
         # Fixed: start_t_s and end_t_s are NaN (unknown), not sample indices

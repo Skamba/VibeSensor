@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, NamedTuple
 from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.boundaries.strength_metrics_codec import strength_metrics_from_mapping
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
@@ -267,18 +268,20 @@ def create_run_metadata(
     recorded_utc_offset_seconds: int | None = None,
 ) -> JsonObject:
     """Build and return a run-metadata dict from the supplied fields."""
-    metadata = RunMetadata.create(
-        run_id=run_id,
-        start_time_utc=start_time_utc,
-        sensor_model=sensor_model,
-        firmware_version=firmware_version,
-        raw_sample_rate_hz=raw_sample_rate_hz,
-        feature_interval_s=feature_interval_s,
-        fft_window_size_samples=fft_window_size_samples,
-        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-        end_time_utc=end_time_utc,
-        incomplete_for_order_analysis=incomplete_for_order_analysis,
-    ).to_dict()
+    metadata = run_metadata_to_json_object(
+        RunMetadata.create(
+            run_id=run_id,
+            start_time_utc=start_time_utc,
+            sensor_model=sensor_model,
+            firmware_version=firmware_version,
+            raw_sample_rate_hz=raw_sample_rate_hz,
+            feature_interval_s=feature_interval_s,
+            fft_window_size_samples=fft_window_size_samples,
+            accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+            end_time_utc=end_time_utc,
+            incomplete_for_order_analysis=incomplete_for_order_analysis,
+        )
+    )
     normalized_offset = coerce_utc_offset_seconds(recorded_utc_offset_seconds)
     if normalized_offset is not None:
         metadata["recorded_utc_offset_seconds"] = normalized_offset

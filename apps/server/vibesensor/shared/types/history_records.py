@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -71,7 +72,7 @@ class StoredHistoryRun:
             "status": self.status.value,
             "start_time_utc": self.start_time_utc,
             "end_time_utc": self.end_time_utc,
-            "metadata": self.metadata.to_dict(),
+            "metadata": run_metadata_to_json_object(self.metadata),
             "created_at": self.created_at,
             "sample_count": self.sample_count,
         }
