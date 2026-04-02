@@ -58,10 +58,8 @@ class RequestLoggingMiddleware:
 
         try:
             await self.app(scope, receive, _send_with_request_id)
-        except BaseException as exc:
-            if isinstance(exc, (asyncio.CancelledError, KeyboardInterrupt, SystemExit)):
-                raise
-            if not isinstance(exc, Exception):
+        except Exception as exc:
+            if isinstance(exc, asyncio.CancelledError):
                 raise
             request_failed = True
             LOGGER.exception(

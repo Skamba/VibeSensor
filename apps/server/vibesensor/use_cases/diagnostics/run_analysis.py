@@ -8,8 +8,9 @@ from typing import TYPE_CHECKING
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 from ._analysis_models import FindingsBuilder
@@ -109,12 +110,12 @@ class RunAnalysis:
 
 def build_findings_for_sensor_frames(
     *,
-    metadata: Mapping[str, object],
+    metadata: RunMetadata,
     samples: Sequence[SensorFrame],
     lang: str | None = None,
     findings_builder: FindingsBuilder | None = None,
 ) -> tuple[DomainFinding, ...]:
-    """Build findings from the canonical typed diagnostics samples."""
+    """Build findings from the canonical typed diagnostics inputs."""
     _validate_required_strength_metrics(samples)
     context = build_diagnostics_context(metadata, file_name="run")
     prepared = prepare_run_data(context, samples)
@@ -129,14 +130,14 @@ def build_findings_for_sensor_frames(
 
 def build_findings_for_samples(
     *,
-    metadata: JsonObject,
+    metadata: Mapping[str, object],
     samples: Sequence[Mapping[str, object]],
     lang: str | None = None,
     findings_builder: FindingsBuilder | None = None,
 ) -> tuple[DomainFinding, ...]:
-    """Decode boundary sample rows once, then build findings from typed frames."""
+    """Boundary helper that normalizes raw payloads once before typed analysis."""
     return build_findings_for_sensor_frames(
-        metadata=metadata,
+        metadata=run_metadata_from_mapping(metadata),
         samples=sensor_frames_from_rows(samples),
         lang=lang,
         findings_builder=findings_builder,

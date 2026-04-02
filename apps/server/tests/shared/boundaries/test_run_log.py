@@ -12,6 +12,7 @@ from vibesensor.shared.boundaries.run_log import (
     normalize_sample_record,
     read_jsonl_run,
 )
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.time_utils import (
@@ -21,7 +22,7 @@ from vibesensor.shared.time_utils import (
     parse_iso8601,
     utc_now_iso,
 )
-from vibesensor.use_cases.run.sample_builder import create_run_metadata
+from vibesensor.use_cases.run.run_metadata_builder import create_run_metadata
 
 # -- Helpers -------------------------------------------------------------------
 
@@ -38,7 +39,7 @@ def _make_run_metadata(*, run_id: str = "r1", **overrides) -> dict:
         "accel_scale_g_per_lsb": 1.0 / 256.0,
     }
     defaults.update(overrides)
-    return create_run_metadata(**defaults)
+    return run_metadata_to_json_object(create_run_metadata(**defaults))
 
 
 # -- utc_now_iso ---------------------------------------------------------------
@@ -276,7 +277,7 @@ def test_read_jsonl_run_skips_blank_lines(tmp_path: Path) -> None:
     lines = [json.dumps(metadata), "", "  ", json.dumps({"record_type": "sample", "t_s": 1.0})]
     path.write_text("\n".join(lines) + "\n")
     run_data = read_jsonl_run(path)
-    assert run_data.metadata["run_id"] == "r1"
+    assert run_data.metadata.run_id == "r1"
     assert len(run_data.samples) == 1
 
 
@@ -292,7 +293,7 @@ def test_read_jsonl_run_skips_corrupt_line_mid_file(tmp_path: Path) -> None:
     ]
     path.write_text("\n".join(lines) + "\n")
     run_data = read_jsonl_run(path)
-    assert run_data.metadata["run_id"] == "r2"
+    assert run_data.metadata.run_id == "r2"
     assert len(run_data.samples) == 2
     assert run_data.samples[0].t_s == 1.0
     assert run_data.samples[1].t_s == 2.0
@@ -310,7 +311,7 @@ def test_read_jsonl_run_truncated_last_line(tmp_path: Path) -> None:
     ]
     path.write_text("\n".join(lines) + "\n")
     run_data = read_jsonl_run(path)
-    assert run_data.metadata["run_id"] == "r3"
+    assert run_data.metadata.run_id == "r3"
     assert len(run_data.samples) == 2
     assert run_data.samples[-1].t_s == 2.0
 
@@ -395,7 +396,7 @@ def test_read_jsonl_run_warns_on_duplicate_metadata(
         run_data = read_jsonl_run(path)
 
     # First metadata wins
-    assert run_data.metadata["run_id"] == "dup-run"
+    assert run_data.metadata.run_id == "dup-run"
     # Warning was emitted
     assert "Duplicate metadata" in caplog.text
 
@@ -424,7 +425,7 @@ def test_read_jsonl_run_end_record_without_end_time_utc_leaves_metadata_unchange
         run_data = read_jsonl_run(path)
 
     # end_time_utc must NOT be set to None
-    assert run_data.metadata.get("end_time_utc") in (None, "")
+    assert run_data.metadata.end_time_utc in (None, "")
     # Warning was emitted
     assert "end_time_utc" in caplog.text
     assert "no end_time_utc" in caplog.text.lower() or "not updated" in caplog.text.lower()
@@ -448,4 +449,4 @@ def test_read_jsonl_run_end_record_with_valid_end_time_utc_is_applied(
         f.write(json.dumps(end_record) + "\n")
 
     run_data = read_jsonl_run(path)
-    assert run_data.metadata["end_time_utc"] == "2025-01-01T00:10:00Z"
+    assert run_data.metadata.end_time_utc == "2025-01-01T00:10:00Z"

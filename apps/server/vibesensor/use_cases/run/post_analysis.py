@@ -180,6 +180,8 @@ class PostAnalysisWorker:
 
     def _worker_loop(self) -> None:
         while True:
+            fatal_worker_bug = False
+            dropped_queued_runs = 0
             with self._lock:
                 if self._shutdown_event.is_set():
                     self._state.active_run_id = None
@@ -193,10 +195,23 @@ class PostAnalysisWorker:
             try:
                 self._run_post_analysis(run_id)
             except Exception as exc:
+                fatal_worker_bug = True
                 self._record_unexpected_worker_failure(run_id, exc)
             finally:
                 with self._lock:
                     self._state.finish_active(run_id)
+                    if fatal_worker_bug:
+                        dropped_queued_runs = self._state.snapshot().queue_depth
+                        self._state.clear_pending()
+                        self._analysis_thread = None
+            if fatal_worker_bug:
+                LOGGER.error(
+                    "Halting post-analysis worker after unexpected error in run %s; "
+                    "cleared %d queued run(s)",
+                    run_id,
+                    dropped_queued_runs,
+                )
+                return
 
     def _run_post_analysis(self, run_id: str) -> None:
         """Run thorough post-run analysis and store results in history DB."""

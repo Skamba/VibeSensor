@@ -7,13 +7,15 @@ from typing import cast
 
 from vibesensor.shared.boundaries.analysis_summary_projection import project_persisted_analysis
 from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
+from vibesensor.shared.boundaries.run_metadata_codec import (
+    run_metadata_from_mapping,
+    run_metadata_to_json_object,
+)
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.exports import serialize_run_details_json
 from vibesensor.use_cases.history.helpers import strip_internal_fields
-from vibesensor.use_cases.run.run_context import run_context_snapshot_from_metadata
 
 __all__ = [
     "build_projected_run_details_json",
@@ -37,12 +39,7 @@ def _project_history_analysis(
 
 
 def _project_history_metadata(metadata: Mapping[str, object]) -> JsonObject:
-    projected = cast(JsonObject, {key: value for key, value in metadata.items()})
-    context_snapshot = run_context_snapshot_from_metadata(projected)
-    order_reference_spec = context_snapshot.order_reference_spec
-    if order_reference_spec is not None and order_reference_spec.supports_wheel_reference:
-        projected["tire_circumference_m"] = order_reference_spec.tire_circumference_m
-    return projected
+    return run_metadata_to_json_object(run_metadata_from_mapping(metadata))
 
 
 def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
@@ -51,7 +48,7 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
         "run_id": run.run_id,
         "status": run.status.value,
         "sample_count": run.sample_count,
-        "metadata": _project_history_metadata(run_metadata_to_json_object(run.metadata)),
+        "metadata": run_metadata_to_json_object(run.metadata),
     }
     if run.error_message is not None:
         payload["error_message"] = run.error_message
@@ -75,7 +72,7 @@ def build_projected_run_details_json(
 ) -> str:
     """Build the exported JSON metadata document with canonical projected analysis."""
     payload = run.to_json_object()
-    payload["metadata"] = _project_history_metadata(run_metadata_to_json_object(run.metadata))
+    payload["metadata"] = run_metadata_to_json_object(run.metadata)
     analysis = run.analysis
     if analysis is None:
         return serialize_run_details_json(

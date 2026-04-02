@@ -236,7 +236,7 @@ class SQLiteHistoryEngine:
                         f"v{version}→v{next_version} completed without updating "
                         f"PRAGMA user_version (found v{actual_version})"
                     )
-            except BaseException as exc:
+            except Exception as exc:
                 self._restore_migration_backup(backup_path)
                 raise RuntimeError(
                     "History DB migration "
@@ -298,7 +298,7 @@ class SQLiteHistoryEngine:
                 backup_conn.close()
             temp_path.chmod(0o600)
             temp_path.replace(backup_path)
-        except BaseException:
+        except Exception:
             temp_path.unlink(missing_ok=True)
             raise
         LOGGER.warning(

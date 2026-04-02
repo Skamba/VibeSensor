@@ -1,9 +1,4 @@
-"""Construction tests for new typed internal domain concepts.
-
-Tests: construction, immutability, computed properties, invariant enforcement,
-and from_dict factories for OrderMatchObservation, DrivingPhaseInterval,
-and LocationIntensitySummary.
-"""
+"""Construction tests for typed domain concepts and their boundary codecs."""
 
 from __future__ import annotations
 
@@ -18,6 +13,12 @@ from vibesensor.domain import (
     OrderMatchObservation,
     PhaseIntensitySummary,
     StrengthBucketDistribution,
+)
+from vibesensor.shared.boundaries.location_hotspot_codec import (
+    location_intensity_summary_from_mapping,
+)
+from vibesensor.shared.boundaries.order_match_codec import (
+    order_match_observation_from_mapping,
 )
 
 # ---------------------------------------------------------------------------
@@ -78,7 +79,7 @@ class TestOrderMatchObservation:
                 predicted_hz=100.0, matched_hz=100.0, rel_error=-0.1, amp=1.0, location="x"
             )
 
-    def test_from_dict(self) -> None:
+    def test_boundary_codec_from_mapping(self) -> None:
         raw = {
             "predicted_hz": 100.0,
             "matched_hz": 102.0,
@@ -89,12 +90,12 @@ class TestOrderMatchObservation:
             "speed_kmh": 60.0,
             "phase": "cruise",
         }
-        obs = OrderMatchObservation.from_dict(raw)
+        obs = order_match_observation_from_mapping(raw)
         assert obs.predicted_hz == 100.0
         assert obs.phase == "cruise"
         assert obs.t_s == 1.5
 
-    def test_from_dict_missing_keys(self) -> None:
+    def test_boundary_codec_missing_optional_keys(self) -> None:
         raw = {
             "predicted_hz": 100.0,
             "matched_hz": 100.0,
@@ -102,7 +103,7 @@ class TestOrderMatchObservation:
             "amp": 1.0,
             "location": "x",
         }
-        obs = OrderMatchObservation.from_dict(raw)
+        obs = order_match_observation_from_mapping(raw)
         assert obs.t_s is None
         assert obs.speed_kmh is None
         assert obs.phase is None
@@ -189,7 +190,7 @@ class TestLocationIntensitySummary:
         with pytest.raises(ValueError, match="sample_coverage_ratio"):
             LocationIntensitySummary(location="x", sample_coverage_ratio=1.5)
 
-    def test_from_dict(self) -> None:
+    def test_boundary_codec_from_mapping(self) -> None:
         raw = {
             "location": "rear_axle",
             "partial_coverage": True,
@@ -215,7 +216,7 @@ class TestLocationIntensitySummary:
                 },
             },
         }
-        summary = LocationIntensitySummary.from_dict(raw)
+        summary = location_intensity_summary_from_mapping(raw)
         assert summary.location == "rear_axle"
         assert summary.partial_coverage is True
         assert summary.sample_count == 50  # from "samples" key
@@ -229,9 +230,9 @@ class TestLocationIntensitySummary:
             ),
         }
 
-    def test_from_dict_sample_count_key(self) -> None:
+    def test_boundary_codec_prefers_sample_count_key(self) -> None:
         raw = {"location": "x", "sample_count": 42, "sample_coverage_ratio": 0.5}
-        summary = LocationIntensitySummary.from_dict(raw)
+        summary = location_intensity_summary_from_mapping(raw)
         assert summary.sample_count == 42
 
     def test_default_strength_bucket_distribution(self) -> None:
