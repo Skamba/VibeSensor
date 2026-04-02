@@ -17,7 +17,7 @@ from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.run_log import normalize_sample_record
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frame_to_json_object
+from vibesensor.shared.boundaries.sensor_frame_encoder import sensor_frame_to_json_object
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig

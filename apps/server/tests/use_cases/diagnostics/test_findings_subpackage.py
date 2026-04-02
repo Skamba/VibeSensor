@@ -13,7 +13,7 @@ from test_support.findings import make_finding
 
 import vibesensor.use_cases.diagnostics.findings as findings_module
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.constants.analysis import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,

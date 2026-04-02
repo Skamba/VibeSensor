@@ -11,10 +11,13 @@ import pytest
 from test_support.core import canonicalize_run_context_metadata
 from test_support.findings import make_finding_payload
 from vibesensor.domain import LocationHotspot
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.run_metadata_codec import (
+    run_metadata_from_mapping,
+    run_metadata_to_json_object,
+)
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
+from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.orders import (
     pipeline as order_findings_module,
@@ -569,7 +572,7 @@ def diagnostics_context(
     """Return canonical typed diagnostics metadata for tests."""
     raw_metadata: dict[str, object] = dict(metadata or {})
     raw_metadata.update(overrides)
-    return diagnostics_context_from_metadata(raw_metadata, file_name="test")
+    return normalize_run_metadata(run_metadata_from_mapping(raw_metadata), file_name="test")
 
 
 def analysis_sample(

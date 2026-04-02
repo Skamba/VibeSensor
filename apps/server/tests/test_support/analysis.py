@@ -6,7 +6,8 @@ from typing import Any
 
 from test_support.core import standard_metadata
 from vibesensor.adapters.analysis_summary import summarize_sensor_frames
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 
 
 def run_analysis(
@@ -17,7 +18,7 @@ def run_analysis(
     """Run the full analysis pipeline on *samples* and return the summary."""
     meta = metadata or standard_metadata(**meta_overrides)
     return summarize_sensor_frames(
-        meta,
+        run_metadata_from_mapping(meta),
         sensor_frames_from_mappings(samples),
         lang=meta.get("language", "en"),
     )

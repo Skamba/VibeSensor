@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import ClassVar
 
 from vibesensor.domain.finding_types import VibrationSource
-
-from ._numeric import coerce_float
 
 __all__ = [
     "FindingEvidence",
@@ -65,73 +62,6 @@ class FindingEvidence:
     def is_well_localized(self) -> bool:
         """Evidence is spatially concentrated, not diffuse."""
         return self.spatial_concentration >= self._WELL_LOCALIZED_CONCENTRATION
-
-    @classmethod
-    def from_metrics(cls, d: Mapping[str, object]) -> FindingEvidence:
-        """Construct from a ``FindingEvidenceMetrics`` dict using canonical keys.
-
-        Legacy alias handling (e.g. ``snr_ratio`` → ``snr_db``) is NOT done
-        here — boundary callers must pre-normalize before calling this factory.
-        """
-
-        def _float(key: str) -> float:
-            raw = d.get(key)
-            if raw is None:
-                return 0.0
-            try:
-                return coerce_float(raw)
-            except (TypeError, ValueError):
-                return 0.0
-
-        def _float_or_none(key: str) -> float | None:
-            raw = d.get(key)
-            if raw is None:
-                return None
-            try:
-                return coerce_float(raw)
-            except (TypeError, ValueError):
-                return None
-
-        phase_conf = d.get("per_phase_confidence")
-        phase_items: tuple[tuple[str, float], ...] = ()
-        if isinstance(phase_conf, dict):
-            phase_items = tuple(
-                (str(k), float(v))
-                for k, v in sorted(phase_conf.items())
-                if isinstance(v, (int, float))
-            )
-
-        return cls(
-            match_rate=_float("match_rate"),
-            global_match_rate=_float_or_none("global_match_rate"),
-            focused_speed_band=(
-                str(d.get("focused_speed_band")).strip()
-                if d.get("focused_speed_band") is not None
-                else None
-            ),
-            mean_relative_error=_float_or_none("mean_relative_error"),
-            mean_noise_floor_db=_float_or_none("mean_noise_floor_db"),
-            possible_samples=(
-                int(ps) if isinstance((ps := d.get("possible_samples")), (int, float)) else None
-            ),
-            matched_samples=(
-                int(ms) if isinstance((ms := d.get("matched_samples")), (int, float)) else None
-            ),
-            snr_db=_float_or_none("snr_db"),
-            presence_ratio=_float("presence_ratio"),
-            burstiness=_float("burstiness"),
-            spatial_concentration=_float("spatial_concentration"),
-            frequency_correlation=_float("frequency_correlation"),
-            speed_uniformity=_float("speed_uniformity"),
-            spatial_uniformity=_float("spatial_uniformity"),
-            phases_with_evidence=(
-                int(pwe)
-                if isinstance((pwe := d.get("phases_with_evidence")), (int, float))
-                else None
-            ),
-            phase_confidences=phase_items,
-            vibration_strength_db=_float_or_none("vibration_strength_db"),
-        )
 
 
 @dataclass(frozen=True, slots=True)

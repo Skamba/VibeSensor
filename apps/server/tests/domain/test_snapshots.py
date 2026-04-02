@@ -17,10 +17,6 @@ from vibesensor.domain import (
 from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     analysis_settings_snapshot_from_mapping,
 )
-from vibesensor.shared.boundaries.run_context_codec import (
-    run_context_snapshot_from_metadata,
-    run_context_snapshot_to_metadata,
-)
 from vibesensor.shared.boundaries.summary_snapshot_codec import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
@@ -129,92 +125,26 @@ class TestAnalysisSettingsOrderRef:
 # ── RunContextSnapshot ──────────────────────────────────────────────
 
 
-class TestRunContextSnapshotBoundaryCodecs:
-    """Boundary codec tests for RunContextSnapshot."""
+class TestRunContextSnapshot:
+    """Typed domain tests for RunContextSnapshot."""
 
-    def test_empty_dict_never_raises(self) -> None:
-        ctx = run_context_snapshot_from_metadata({})
+    def test_defaults_are_empty(self) -> None:
+        ctx = RunContextSnapshot()
+
         assert ctx.car is None
         assert ctx.has_car_context is False
         assert ctx.analysis_settings.tire_width_mm == 0.0
 
-    def test_with_settings_only(self) -> None:
-        ctx = run_context_snapshot_from_metadata(
-            {"analysis_settings_snapshot": {"tire_width_mm": 200.0}}
-        )
-        assert ctx.analysis_settings.tire_width_mm == 200.0
-        assert ctx.car is None
-
-    def test_with_car_snapshot(self) -> None:
-        ctx = run_context_snapshot_from_metadata(
-            {
-                "analysis_settings_snapshot": {"rim_in": 18.0},
-                "active_car_snapshot": {"name": "Test Car", "uuid": "abc-123"},
-            }
-        )
-        assert ctx.has_car_context is True
-        assert ctx.car is not None
-        assert isinstance(ctx.car, CarSnapshot)
-        assert ctx.car.name == "Test Car"
-
-    def test_order_reference_spec_delegates(self) -> None:
-        ctx = run_context_snapshot_from_metadata(
-            {
-                "analysis_settings_snapshot": {
-                    "tire_width_mm": 285.0,
-                    "tire_aspect_pct": 30.0,
-                    "rim_in": 21.0,
-                }
-            }
-        )
-        assert order_reference_spec_from_snapshot(ctx.analysis_settings) is not None
-
-    def test_to_metadata_dict_matches_persisted_shape(self) -> None:
+    def test_order_reference_spec_delegates_to_analysis_settings(self) -> None:
         ctx = RunContextSnapshot(
             analysis_settings=AnalysisSettingsSnapshot(
-                tire_width_mm=255.0,
-                tire_aspect_pct=40.0,
-                rim_in=19.0,
-                final_drive_ratio=3.15,
-                current_gear_ratio=0.81,
-            ),
-            car=CarSnapshot(
-                car_id="car-1",
-                name="Primary",
-                car_type="sedan",
-                variant="track",
-                aspects={"tire_width_mm": 255.0},
+                tire_width_mm=285.0,
+                tire_aspect_pct=30.0,
+                rim_in=21.0,
             ),
         )
 
-        metadata = run_context_snapshot_to_metadata(ctx)
-
-        assert metadata == {
-            "analysis_settings_snapshot": {
-                "tire_width_mm": 255.0,
-                "tire_aspect_pct": 40.0,
-                "rim_in": 19.0,
-                "final_drive_ratio": 3.15,
-                "current_gear_ratio": 0.81,
-                "wheel_bandwidth_pct": 0.0,
-                "driveshaft_bandwidth_pct": 0.0,
-                "engine_bandwidth_pct": 0.0,
-                "speed_uncertainty_pct": 0.0,
-                "tire_diameter_uncertainty_pct": 0.0,
-                "final_drive_uncertainty_pct": 0.0,
-                "gear_uncertainty_pct": 0.0,
-                "min_abs_band_hz": 0.0,
-                "max_band_half_width_pct": 0.0,
-                "tire_deflection_factor": 1.0,
-            },
-            "active_car_snapshot": {
-                "id": "car-1",
-                "name": "Primary",
-                "type": "sedan",
-                "variant": "track",
-                "aspects": {"tire_width_mm": 255.0},
-            },
-        }
+        assert order_reference_spec_from_snapshot(ctx.analysis_settings) is not None
 
     def test_convenience_accessors_delegate_to_car_snapshot(self) -> None:
         ctx = RunContextSnapshot(

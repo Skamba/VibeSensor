@@ -14,7 +14,8 @@ from test_support.sample_scenarios import (
     make_ramp_samples,
 )
 from vibesensor.adapters.analysis_summary import summarize_sensor_frames
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 
 ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
@@ -167,7 +168,7 @@ def build_summary_from_phases(
         samples.extend(step.builder(start_t_s=t, sensors=ALL_SENSORS, **step.kwargs))
         t += step.duration_s
     return summarize_sensor_frames(
-        standard_metadata(language=language),
+        run_metadata_from_mapping(standard_metadata(language=language)),
         sensor_frames_from_mappings(samples),
         lang=language,
         file_name=file_name,

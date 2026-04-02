@@ -10,7 +10,7 @@ from vibesensor.adapters.persistence.history_db._samples import (
     sample_to_v2_row,
     v2_row_to_sensor_frame,
 )
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
+from vibesensor.shared.boundaries.sensor_frame_decoder import (
     SensorFrameDecodeError,
     sensor_frame_from_mapping,
 )
