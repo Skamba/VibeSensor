@@ -220,7 +220,7 @@ def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
     assert "REF_ENGINE" not in finding_ids
 
 
-def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
+def test_metadata_accel_scale_is_exposed_without_legacy_unit_metadata(tmp_path: Path) -> None:
     run_path = tmp_path / "run_units.jsonl"
     records = [
         run_metadata(
@@ -245,8 +245,8 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
     assert summary["accel_scale_g_per_lsb"] == (1.0 / 256.0)
-    assert summary["metadata"]["units"]["accel_x_g"] == "g"
-    assert summary["metadata"]["units"]["vibration_strength_db"] == "dB"
+    assert "units" not in summary["metadata"]
+    assert "amplitude_definitions" not in summary["metadata"]
 
 
 def test_steady_speed_report_wording(tmp_path: Path) -> None:

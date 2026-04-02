@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Mapping
 
 from vibesensor.domain import CarSnapshot
+from vibesensor.shared.order_reference_settings import normalize_order_reference_mapping
 from vibesensor.shared.types.json_types import JsonObject
 
 
@@ -15,14 +15,9 @@ def car_snapshot_from_mapping(payload: object) -> CarSnapshot | None:
     if not isinstance(payload, Mapping):
         return None
     raw_aspects = payload.get("aspects")
-    aspects: dict[str, float] = {}
-    if isinstance(raw_aspects, Mapping):
-        for key, value in raw_aspects.items():
-            if not isinstance(key, str):
-                continue
-            numeric = _float_or_none(value)
-            if numeric is not None:
-                aspects[key] = numeric
+    aspects = (
+        normalize_order_reference_mapping(raw_aspects) if isinstance(raw_aspects, Mapping) else {}
+    )
     return CarSnapshot(
         car_id=_text_or_none(payload.get("id")),
         name=_text_or_none(payload.get("name")),
@@ -37,12 +32,15 @@ def car_snapshot_to_metadata(snapshot: CarSnapshot | None) -> JsonObject | None:
 
     if snapshot is None:
         return None
+    normalized_aspects: JsonObject = {
+        key: value for key, value in normalize_order_reference_mapping(snapshot.aspects).items()
+    }
     return {
         "id": snapshot.car_id,
         "name": snapshot.name,
         "type": snapshot.car_type,
         "variant": snapshot.variant,
-        "aspects": dict(snapshot.aspects),
+        "aspects": normalized_aspects,
     }
 
 
@@ -51,21 +49,3 @@ def _text_or_none(value: object) -> str | None:
         return None
     text = str(value).strip()
     return text or None
-
-
-def _float_or_none(value: object) -> float | None:
-    if value is None or isinstance(value, bool):
-        return None
-    if isinstance(value, int | float):
-        numeric = float(value)
-        return numeric if math.isfinite(numeric) else None
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return None
-        try:
-            numeric = float(text)
-        except ValueError:
-            return None
-        return numeric if math.isfinite(numeric) else None
-    return None

@@ -240,4 +240,4 @@ class TestCarSnapshot:
         snap = car_snapshot_from_mapping({"aspects": {"a": "not_a_number", "b": 1.5}})
         assert snap is not None
         assert "a" not in snap.aspects
-        assert snap.aspects["b"] == 1.5
+        assert "b" not in snap.aspects

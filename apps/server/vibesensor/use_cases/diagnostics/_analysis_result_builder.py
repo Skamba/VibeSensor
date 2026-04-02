@@ -12,15 +12,15 @@ from vibesensor.domain import (
 )
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.test_plan import plan_test_actions
+from vibesensor.shared.boundaries.run_metadata_projection import (
+    car_from_run_metadata,
+    configuration_snapshot_from_run_metadata,
+    symptom_from_run_metadata,
+)
 
 from ._analysis_models import FindingsBundle, PreparedAnalysisContext
 from ._analysis_result import AnalysisResult
-from .metadata_projection import (
-    metadata_analysis_settings_items,
-    metadata_car,
-    metadata_configuration_snapshot,
-    metadata_symptom,
-)
+from .metadata_projection import metadata_analysis_settings_items
 from .plots import _plot_data
 from .run_analysis_projection import build_domain_driving_segments
 from .run_data_preparation import build_phase_summary
@@ -80,7 +80,7 @@ def build_analysis_result(
                     else ()
                 ),
                 speed_source=SpeedSource(),
-                configuration_snapshot=metadata_configuration_snapshot(context.context),
+                configuration_snapshot=configuration_snapshot_from_run_metadata(context.context),
             ),
             analysis_settings=metadata_analysis_settings_items(context.context),
             sample_count=len(context.samples),
@@ -97,8 +97,8 @@ def build_analysis_result(
         test_plan=domain_test_plan,
     )
     diagnostic_case = DiagnosticCase.start(
-        car=metadata_car(context.context),
-        symptoms=(metadata_symptom(context.context),),
+        car=car_from_run_metadata(context.context),
+        symptoms=(symptom_from_run_metadata(context.context),),
         test_plan=domain_test_plan,
     ).add_run(test_run)
     return AnalysisResult(

@@ -66,6 +66,5 @@ class HistoryReportService:
                     cache_key=request.cache_key,
                 )
             ),
-            run_id=run_id,
         )
         return HistoryReportPdf(content=pdf, filename=request.filename)
