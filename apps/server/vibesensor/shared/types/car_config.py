@@ -7,6 +7,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, NotRequired, TypedDict
 
+from vibesensor.shared.analysis_settings_schema import (
+    ANALYSIS_SETTINGS_DEFAULTS,
+    sanitize_analysis_settings,
+)
 from vibesensor.shared.types.settings_types import (
     AnalysisSettingsPayload,
     analysis_settings_payload_from_mapping,
@@ -62,12 +66,11 @@ def car_from_persistence_dict(payload: Mapping[str, object]) -> Car:
     """Decode one persisted/shared car payload into the canonical domain object."""
 
     from vibesensor.domain import Car
-    from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
     raw_aspects = payload.get("aspects")
-    aspects: dict[str, float] = dict(AnalysisSettingsSnapshot.DEFAULTS)
+    aspects: dict[str, float] = dict(ANALYSIS_SETTINGS_DEFAULTS)
     if isinstance(raw_aspects, Mapping):
-        aspects.update(AnalysisSettingsSnapshot.sanitize(raw_aspects))
+        aspects.update(sanitize_analysis_settings(raw_aspects))
     return Car(
         id=_text_or_default(payload.get("id"), default=new_car_id(), max_length=128),
         name=_text_or_default(payload.get("name"), default="Unnamed Car", max_length=64),

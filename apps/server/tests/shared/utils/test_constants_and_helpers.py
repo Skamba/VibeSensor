@@ -5,9 +5,11 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import OrderReferenceSpec
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.constants.analysis import SILENCE_DB
 from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from vibesensor.shared.constants.units import KMH_TO_MPS, MPS_TO_KMH
+from vibesensor.shared.order_reference_settings import order_reference_spec_from_mapping
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -38,9 +40,9 @@ def test_peak_constants_positive() -> None:
 
 def _make_spec() -> OrderReferenceSpec:
     """Build a spec using default analysis settings."""
-    from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-
-    return OrderReferenceSpec.from_settings(AnalysisSettingsSnapshot.DEFAULTS)
+    spec = order_reference_spec_from_mapping(AnalysisSettingsSnapshot.DEFAULTS)
+    assert spec is not None
+    return spec
 
 
 def test_wheel_hz_from_speed_kmh_basic() -> None:

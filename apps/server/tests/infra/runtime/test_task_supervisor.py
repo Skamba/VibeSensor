@@ -58,9 +58,7 @@ async def test_supervisor_restarts_failed_task_and_clears_health(monkeypatch) ->
 
 
 @pytest.mark.asyncio
-async def test_supervisor_restarts_unexpected_exit(monkeypatch) -> None:
-    import vibesensor.infra.runtime.task_supervisor as task_supervisor_module
-
+async def test_supervisor_treats_unexpected_exit_as_terminal_failure() -> None:
     health_state = RuntimeHealthState()
     supervisor = TaskSupervisor(
         health_state=health_state,
@@ -68,37 +66,26 @@ async def test_supervisor_restarts_unexpected_exit(monkeypatch) -> None:
         base_delay_s=0.0,
         max_delay_s=0.0,
     )
-    restart_started = asyncio.Event()
     call_count = 0
-    original_sleep = asyncio.sleep
-
-    async def _fast_sleep(delay: float) -> None:
-        del delay
-        await original_sleep(0)
 
     async def task_factory() -> None:
         nonlocal call_count
         call_count += 1
-        if call_count == 1:
-            return
-        restart_started.set()
-        await asyncio.Future()
-
-    monkeypatch.setattr(task_supervisor_module.asyncio, "sleep", _fast_sleep)
 
     task = supervisor.start(
         task_factory,
         name="metrics-log",
         restartable_exceptions=(RuntimeError,),
     )
-    await asyncio.wait_for(restart_started.wait(), timeout=1.0)
-
-    assert call_count == 2
-    assert health_state.background_task_failures == {}
-
-    task.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
+    with pytest.raises(RuntimeError, match="managed task metrics-log exited unexpectedly"):
         await task
+    await asyncio.sleep(0)
+
+    assert call_count == 1
+    assert (
+        health_state.background_task_failures["metrics-log"]
+        == "managed task metrics-log exited unexpectedly"
+    )
 
 
 @pytest.mark.asyncio

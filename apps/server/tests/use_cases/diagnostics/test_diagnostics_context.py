@@ -6,7 +6,12 @@ from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain import Symptom
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
-from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._metadata import (
+    analysis_settings_items,
+    effective_order_reference_spec,
+    prepare_diagnostics_metadata,
+    reference_complete,
+)
 
 
 def _context_metadata() -> dict[str, object]:
@@ -44,21 +49,20 @@ def _context_metadata() -> dict[str, object]:
 
 
 def _context():
-    return build_diagnostics_context(_context_metadata(), file_name="ctx")
+    return prepare_diagnostics_metadata(_context_metadata(), file_name="ctx")
 
 
 def test_diagnostics_context_decodes_typed_reference_data() -> None:
     context = _context()
 
     assert context.run_id == "ctx-run"
-    assert context.metadata.run_id == "ctx-run"
     assert context.raw_sample_rate_hz == 200.0
     assert context.sensor_model == "ADXL345"
     assert context.car_name == "Primary"
     assert context.car_variant == "sport"
     assert context.order_reference_spec is not None
     assert context.tire_circumference_m is not None
-    assert context.reference_complete is True
+    assert reference_complete(context) is True
     assert isinstance(context.symptom, Symptom)
     assert context.symptom is not None
     assert context.symptom.description == "driveline hum"
@@ -78,7 +82,7 @@ def test_diagnostics_context_prefers_nested_snapshot_over_conflicting_flat_alias
         },
     )
 
-    context = build_diagnostics_context(metadata, file_name="ctx")
+    context = prepare_diagnostics_metadata(metadata, file_name="ctx")
     spec = context.order_reference_spec
 
     assert spec is not None
@@ -90,7 +94,7 @@ def test_diagnostics_context_prefers_nested_snapshot_over_conflicting_flat_alias
 
 
 def test_diagnostics_context_requires_nested_snapshot_for_run_context_fields() -> None:
-    context = build_diagnostics_context(
+    context = prepare_diagnostics_metadata(
         {
             "run_id": "legacy-run",
             "raw_sample_rate_hz": 200.0,
@@ -107,7 +111,7 @@ def test_diagnostics_context_requires_nested_snapshot_for_run_context_fields() -
         file_name="ctx",
     )
 
-    projected = run_metadata_to_json_object(context.metadata)
+    projected = run_metadata_to_json_object(context)
 
     assert context.analysis_settings.final_drive_ratio == 0.0
     assert context.car is None
@@ -116,7 +120,7 @@ def test_diagnostics_context_requires_nested_snapshot_for_run_context_fields() -
 
 
 def test_diagnostics_context_drops_flat_analysis_settings_payload() -> None:
-    context = build_diagnostics_context(
+    context = prepare_diagnostics_metadata(
         {
             "run_id": "legacy-run",
             "raw_sample_rate_hz": 200.0,
@@ -125,9 +129,9 @@ def test_diagnostics_context_drops_flat_analysis_settings_payload() -> None:
         file_name="ctx",
     )
 
-    metadata = run_metadata_to_json_object(context.metadata)
+    metadata = run_metadata_to_json_object(context)
 
-    assert context.analysis_settings_items == ()
+    assert analysis_settings_items(context) == ()
     assert "analysis_settings" not in metadata
 
 
@@ -144,7 +148,7 @@ def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None
         gear=1.05,
     )
 
-    spec = context.effective_order_reference_spec(sample)
+    spec = effective_order_reference_spec(context, sample)
 
     assert spec is not None
     assert spec.final_drive_ratio == 4.1
@@ -154,7 +158,7 @@ def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None
 def test_diagnostics_context_rehydrates_boundary_metadata_with_known_fields_only() -> None:
     context = _context()
 
-    metadata = run_metadata_to_json_object(context.metadata)
+    metadata = run_metadata_to_json_object(context)
 
     assert metadata["run_id"] == "ctx-run"
     assert metadata["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
@@ -162,4 +166,4 @@ def test_diagnostics_context_rehydrates_boundary_metadata_with_known_fields_only
     assert metadata["tire_circumference_m"] is not None
     assert "analysis_settings" not in metadata
     assert "custom_note" not in metadata
-    assert context.analysis_settings_items[0][0] == "current_gear_ratio"
+    assert analysis_settings_items(context)[0][0] == "current_gear_ratio"

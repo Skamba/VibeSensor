@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
+from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
 from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     analysis_settings_snapshot_from_mapping,
 )
@@ -22,7 +23,7 @@ def analysis_settings_snapshot_from_aspects(
     """Build the current typed analysis snapshot from active-car aspects."""
     values = dict(AnalysisSettingsSnapshot.DEFAULTS)
     if aspects:
-        values.update(AnalysisSettingsSnapshot.sanitize(aspects))
+        values.update(sanitize_analysis_settings(aspects))
     return analysis_settings_snapshot_from_mapping(values)
 
 

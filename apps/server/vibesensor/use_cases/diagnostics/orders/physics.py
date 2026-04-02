@@ -10,7 +10,8 @@ from dataclasses import dataclass
 
 from vibesensor.domain import OrderReferenceSpec, VibrationSource
 from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
-from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.diagnostics._metadata import final_drive_ratio
 from vibesensor.use_cases.diagnostics._reference_resolution import (
     _effective_engine_rpm,
     _order_reference_spec_from_context,
@@ -25,7 +26,7 @@ from vibesensor.use_cases.diagnostics._types import Sample
 def _wheel_hz(
     sample: Sample,
     tire_circumference_m: float | None,
-    context: DiagnosticsContext | None = None,
+    context: RunMetadata | None = None,
     order_reference_spec: OrderReferenceSpec | None = None,
 ) -> float | None:
     """Return wheel rotational frequency from speed plus optional reference data."""
@@ -44,7 +45,7 @@ def _wheel_hz(
 
 def _driveshaft_hz(
     sample: Sample,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     tire_circumference_m: float | None,
 ) -> float | None:
     """Return driveshaft frequency from the best available wheel/final-drive inputs."""
@@ -66,7 +67,7 @@ def _driveshaft_hz(
     fd = (
         sample.final_drive_ratio
         if sample.final_drive_ratio is not None
-        else context.final_drive_ratio
+        else final_drive_ratio(context)
     )
     if whz is None or fd is None or fd <= 0:
         return None
@@ -75,7 +76,7 @@ def _driveshaft_hz(
 
 def _engine_hz(
     sample: Sample,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     """Return engine rotational frequency plus the source label used to derive it."""
@@ -115,7 +116,7 @@ class OrderHypothesis:
     def predicted_hz(
         self,
         sample: Sample,
-        context: DiagnosticsContext,
+        context: RunMetadata,
         tire_circumference_m: float | None,
     ) -> tuple[float | None, str]:
         if self.order_label_base == "wheel":

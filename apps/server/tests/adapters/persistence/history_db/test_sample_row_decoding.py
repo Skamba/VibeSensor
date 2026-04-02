@@ -10,7 +10,10 @@ from vibesensor.adapters.persistence.history_db._samples import (
     sample_to_v2_row,
     v2_row_to_sensor_frame,
 )
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    SensorFrameDecodeError,
+    sensor_frame_from_mapping,
+)
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 
@@ -58,5 +61,5 @@ def test_v2_row_to_sensor_frame_rejects_non_numeric_scalar_columns() -> None:
     row = list((123, *sample_to_v2_row(frame.run_id, frame)))
     row[_V2_COL_OFFSET + _V2_COLUMNS.index("sample_rate_hz")] = "fast"
 
-    with pytest.raises(TypeError, match="sample_rate_hz"):
+    with pytest.raises(SensorFrameDecodeError, match="sample_rate_hz"):
         v2_row_to_sensor_frame(tuple(row))
