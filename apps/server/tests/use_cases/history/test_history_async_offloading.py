@@ -145,11 +145,7 @@ async def test_report_pdf_cache_get_or_build_offloads_pdf_generation_to_worker_t
         captured["thread_id"] = threading.get_ident()
         return b"%PDF-1.7"
 
-    pdf = await cache.get_or_build(
-        ("run-1", "en", None, 1, "{}", "none"),
-        _build_pdf,
-        run_id="run-1",
-    )
+    pdf = await cache.get_or_build(("run-1", "en", None, 1, "{}", "none"), _build_pdf)
 
     assert pdf == b"%PDF-1.7"
     assert captured["thread_id"] != main_thread_id

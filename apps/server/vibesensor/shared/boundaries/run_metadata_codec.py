@@ -16,7 +16,7 @@ from vibesensor.shared.boundaries.car_snapshot_codec import (
 )
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_schema import (
     PEAK_PICKER_METHOD,
     RUN_METADATA_TYPE,
@@ -65,8 +65,6 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         language=_normalized_language(data.get("language")),
         explicit_engine_rpm=as_float_or_none(data.get("engine_rpm")),
         tire_circumference_m_override=as_float_or_none(data.get("tire_circumference_m")),
-        units=_json_object_or_none(data.get("units")),
-        amplitude_definitions=_json_object_or_none(data.get("amplitude_definitions")),
         recorded_utc_offset_seconds=coerce_utc_offset_seconds(
             data.get("recorded_utc_offset_seconds")
         ),
@@ -112,10 +110,6 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         payload["engine_rpm"] = metadata.explicit_engine_rpm
     if metadata.tire_circumference_m is not None:
         payload["tire_circumference_m"] = metadata.tire_circumference_m
-    if metadata.units is not None:
-        payload["units"] = metadata.units
-    if metadata.amplitude_definitions is not None:
-        payload["amplitude_definitions"] = metadata.amplitude_definitions
     if metadata.recorded_utc_offset_seconds is not None:
         payload["recorded_utc_offset_seconds"] = metadata.recorded_utc_offset_seconds
     return payload
@@ -142,7 +136,3 @@ def _symptom_or_none(data: Mapping[str, object]) -> Symptom | None:
         onset=_as_str_or_none(data.get("symptom_onset")) or "",
         context=_as_str_or_none(data.get("symptom_context")) or "",
     )
-
-
-def _json_object_or_none(value: object) -> JsonObject | None:
-    return dict(value) if is_json_object(value) else None

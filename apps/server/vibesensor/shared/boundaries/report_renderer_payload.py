@@ -11,7 +11,7 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     report_duration_s,
     summary_metadata,
 )
-from vibesensor.shared.time_utils import coerce_utc_offset_seconds
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.analysis_views import PeakTableRow
 
 __all__ = [
@@ -39,39 +39,35 @@ def build_report_renderer_payload(
     payload: Mapping[str, object],
 ) -> PreparedReportRendererPayload:
     """Return the normalized renderer-edge payload derived from a report summary."""
-    metadata = summary_metadata(payload)
+    metadata = dict(summary_metadata(payload))
+    raw_run_id = str(payload.get("run_id") or "").strip()
+    if raw_run_id and "run_id" not in metadata:
+        metadata["run_id"] = raw_run_id
+    typed_metadata = run_metadata_from_mapping(metadata) if metadata else None
     rows = payload.get("rows")
     sample_count = coerce_count(rows)
     sensor_count_raw = payload.get("sensor_count_used")
     sensor_count = coerce_count(sensor_count_raw)
-    report_date = payload.get("report_date")
-    report_date_str = None
-    if isinstance(report_date, str):
-        normalized_report_date = report_date.strip()
-        report_date_str = normalized_report_date or None
-    recorded_utc_offset_seconds = coerce_utc_offset_seconds(
-        metadata.get("recorded_utc_offset_seconds"),
-    )
-    car_name, car_type = _car_identity_from_metadata(metadata)
+    report_date_str = _normalized_report_date(payload.get("report_date"))
+    if report_date_str is None and typed_metadata is not None:
+        report_date_str = _normalized_report_date(typed_metadata.report_date)
     return PreparedReportRendererPayload(
-        run_id=str(payload.get("run_id") or "unknown") or "unknown",
-        car_name=car_name,
-        car_type=car_type,
+        run_id=raw_run_id or (typed_metadata.run_id if typed_metadata is not None else "unknown"),
+        car_name=typed_metadata.car_name if typed_metadata is not None else None,
+        car_type=typed_metadata.car_type if typed_metadata is not None else None,
         report_date=report_date_str,
         duration_s=report_duration_s(payload),
         sample_count=sample_count,
         sensor_count=sensor_count,
         peak_table_rows=peak_table_rows(payload),
-        recorded_utc_offset_seconds=recorded_utc_offset_seconds,
+        recorded_utc_offset_seconds=(
+            typed_metadata.recorded_utc_offset_seconds if typed_metadata is not None else None
+        ),
     )
 
 
-def _car_identity_from_metadata(metadata: Mapping[str, object]) -> tuple[str | None, str | None]:
-    raw_snapshot = metadata.get("active_car_snapshot")
-    if not isinstance(raw_snapshot, Mapping):
-        return None, None
-    raw_name = raw_snapshot.get("name")
-    raw_type = raw_snapshot.get("type")
-    name = str(raw_name).strip() if isinstance(raw_name, str) else ""
-    car_type = str(raw_type).strip() if isinstance(raw_type, str) else ""
-    return (name or None, car_type or None)
+def _normalized_report_date(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized_report_date = value.strip()
+    return normalized_report_date or None

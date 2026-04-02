@@ -15,7 +15,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frame_from_mapping
-from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
+from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
@@ -179,12 +179,12 @@ async def test_report_pdf_cache_retries_after_build_failure() -> None:
             raise RuntimeError("boom")
         return b"%PDF-success"
 
-    with pytest.raises(ProcessingError, match="PDF generation failed due to an internal error"):
-        await cache.get_or_build(cache_key, _build, run_id="run-1")
+    with pytest.raises(RuntimeError, match="boom"):
+        await cache.get_or_build(cache_key, _build)
 
     assert cache.get(cache_key) is None
 
-    pdf = await cache.get_or_build(cache_key, _build, run_id="run-1")
+    pdf = await cache.get_or_build(cache_key, _build)
 
     assert pdf == b"%PDF-success"
     assert calls == 2

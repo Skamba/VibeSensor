@@ -8,7 +8,10 @@ from vibesensor.domain import Car
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.shared.boundaries import test_run_reconstruction as _test_run_reconstruction
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.order_reference_settings import order_reference_mapping_from_spec
+from vibesensor.shared.boundaries.run_metadata_projection import (
+    car_from_run_metadata,
+    symptom_from_run_metadata,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 
 
@@ -51,28 +54,9 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
 def car_from_metadata(metadata: RunMetadata) -> Car | None:
     """Build optional case-scoped car context from canonical run metadata."""
 
-    snapshot = metadata.car
-    order_reference_spec = metadata.order_reference_spec
-    if snapshot is None and order_reference_spec is None:
-        return None
-    return Car(
-        id=snapshot.car_id if snapshot is not None else None,
-        name=snapshot.name if snapshot is not None and snapshot.name else "Unnamed Car",
-        car_type=snapshot.car_type if snapshot is not None and snapshot.car_type else "sedan",
-        aspects=(
-            snapshot.aspects
-            if snapshot is not None and snapshot.aspects
-            else (
-                order_reference_mapping_from_spec(order_reference_spec)
-                if order_reference_spec is not None
-                else None
-            )
-        ),
-        variant=snapshot.variant if snapshot is not None else None,
-        order_reference_spec=order_reference_spec,
-    )
+    return car_from_run_metadata(metadata)
 
 
 def symptom_from_metadata(metadata: RunMetadata) -> Symptom:
     """Build case symptom context from run metadata at a boundary seam."""
-    return metadata.symptom if metadata.symptom is not None else Symptom.unspecified()
+    return symptom_from_run_metadata(metadata)

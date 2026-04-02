@@ -12,7 +12,7 @@ from vibesensor.domain import (
 )
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 
-from .json_types import JsonObject
+from .sensor_frame import SensorFrame
 
 __all__ = [
     "FFT_WINDOW_TYPE",
@@ -60,8 +60,6 @@ class RunMetadata:
     language: str = "en"
     explicit_engine_rpm: float | None = None
     tire_circumference_m_override: float | None = None
-    units: JsonObject | None = None
-    amplitude_definitions: JsonObject | None = None
     recorded_utc_offset_seconds: int | None = None
 
     @classmethod
@@ -88,8 +86,6 @@ class RunMetadata:
         language: str = "en",
         explicit_engine_rpm: float | None = None,
         tire_circumference_m_override: float | None = None,
-        units: JsonObject | None = None,
-        amplitude_definitions: JsonObject | None = None,
         recorded_utc_offset_seconds: int | None = None,
     ) -> RunMetadata:
         """Construct canonical run metadata for a newly recorded run."""
@@ -120,8 +116,6 @@ class RunMetadata:
             language=(str(language).strip().lower() or "en"),
             explicit_engine_rpm=explicit_engine_rpm,
             tire_circumference_m_override=tire_circumference_m_override,
-            units=units,
-            amplitude_definitions=amplitude_definitions,
             recorded_utc_offset_seconds=recorded_utc_offset_seconds,
         )
 
@@ -157,13 +151,13 @@ class RunMetadata:
 
     def order_reference_spec_for(
         self,
-        sample: object | None = None,
+        sample: SensorFrame | None = None,
     ) -> OrderReferenceSpec | None:
         spec = self.order_reference_spec
         if sample is None or spec is None:
             return spec
-        final_drive = getattr(sample, "final_drive_ratio", None)
-        gear_ratio = getattr(sample, "gear", None)
+        final_drive = sample.final_drive_ratio
+        gear_ratio = sample.gear
         if final_drive is None and gear_ratio is None:
             return spec
         return replace(
