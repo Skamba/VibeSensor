@@ -7,8 +7,8 @@ from collections.abc import Sequence
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import FindingKind, VibrationSource
 from vibesensor.shared.constants.analysis import SPEED_COVERAGE_MIN_PCT
+from vibesensor.shared.types.run_schema import RunMetadata
 
-from ._context import DiagnosticsContext
 from ._reference_resolution import _effective_engine_rpm
 from ._types import Sample
 
@@ -37,7 +37,7 @@ def _reference_missing_finding(
 
 def build_reference_findings(
     *,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     samples: Sequence[Sample],
     speed_sufficient: bool,
     tire_circumference_m: float | None,
@@ -87,7 +87,7 @@ def build_reference_findings(
 def engine_reference_coverage_pct(
     samples: Sequence[Sample],
     *,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     tire_circumference_m: float | None,
 ) -> float:
     """Compute engine reference coverage percentage from samples and metadata."""
@@ -102,7 +102,7 @@ def engine_reference_coverage_pct(
 def has_engine_reference(
     samples: Sequence[Sample],
     *,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     tire_circumference_m: float | None,
 ) -> bool:
     """Return whether the engine reference coverage is sufficient."""

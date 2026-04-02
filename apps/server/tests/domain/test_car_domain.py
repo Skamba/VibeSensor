@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-from vibesensor.domain import Car, CarSnapshot, OrderReferenceSpec
+from vibesensor.domain import Car, CarSnapshot
 from vibesensor.shared.boundaries.car_snapshot_codec import (
     car_snapshot_from_mapping,
     car_snapshot_to_metadata,
+)
+from vibesensor.shared.order_reference_settings import (
+    order_reference_mapping_from_spec,
+    order_reference_spec_from_mapping,
 )
 
 
@@ -28,7 +32,7 @@ def _order_settings(**overrides: float) -> dict[str, float]:
 
 class TestOrderReferenceSpecFromSettings:
     def test_returns_none_when_missing_tire_keys(self) -> None:
-        assert OrderReferenceSpec.from_settings({"final_drive_ratio": 3.0}) is None
+        assert order_reference_spec_from_mapping({"final_drive_ratio": 3.0}) is None
 
     def test_returns_spec_with_complete_tire_keys(self) -> None:
         settings = _order_settings(
@@ -44,7 +48,7 @@ class TestOrderReferenceSpecFromSettings:
             min_abs_band_hz=0.2,
             max_band_half_width_pct=6.0,
         )
-        spec = OrderReferenceSpec.from_settings(settings, deflection_factor=0.97)
+        spec = order_reference_spec_from_mapping(settings, deflection_factor=0.97)
         assert spec is not None
         assert spec.tire_spec.width_mm == 285.0
         assert spec.final_drive_ratio == 3.08
@@ -53,39 +57,39 @@ class TestOrderReferenceSpecFromSettings:
 
     def test_missing_non_tire_keys_default_to_zero(self) -> None:
         settings = {"tire_width_mm": 205.0, "tire_aspect_pct": 55.0, "rim_in": 16.0}
-        spec = OrderReferenceSpec.from_settings(settings)
+        spec = order_reference_spec_from_mapping(settings)
         assert spec is not None
         assert spec.final_drive_ratio == 0.0
         assert spec.wheel_bandwidth_pct == 0.0
 
     def test_tire_circumference(self) -> None:
         settings = _order_settings()
-        spec = OrderReferenceSpec.from_settings(settings)
+        spec = order_reference_spec_from_mapping(settings)
         assert spec is not None
         assert spec.tire_circumference_m > 0
         assert spec.tire_circumference_m == spec.tire_spec.circumference_m
 
     def test_has_engine_reference(self) -> None:
         settings = _order_settings(current_gear_ratio=0.64)
-        spec = OrderReferenceSpec.from_settings(settings)
+        spec = order_reference_spec_from_mapping(settings)
         assert spec is not None
         assert spec.has_engine_reference is True
 
     def test_no_engine_reference_when_zero(self) -> None:
         settings = _order_settings(current_gear_ratio=0.0)
-        spec = OrderReferenceSpec.from_settings(settings)
+        spec = order_reference_spec_from_mapping(settings)
         assert spec is not None
         assert spec.has_engine_reference is False
 
     def test_is_complete(self) -> None:
         settings = _order_settings(final_drive_ratio=3.08)
-        spec = OrderReferenceSpec.from_settings(settings)
+        spec = order_reference_spec_from_mapping(settings)
         assert spec is not None
         assert spec.is_complete is True
 
     def test_not_complete_without_drive_ratio(self) -> None:
         settings = _order_settings()
-        spec = OrderReferenceSpec.from_settings(settings)
+        spec = order_reference_spec_from_mapping(settings)
         assert spec is not None
         assert spec.is_complete is False
 
@@ -114,7 +118,7 @@ class TestCarOrderReferenceSpec:
         assert car.order_reference_spec.tire_spec.deflection_factor == 0.97
 
     def test_car_projects_boundary_aspects_from_typed_spec(self) -> None:
-        spec = OrderReferenceSpec.from_settings(
+        spec = order_reference_spec_from_mapping(
             {
                 "tire_width_mm": 245.0,
                 "tire_aspect_pct": 40.0,
@@ -132,7 +136,7 @@ class TestCarOrderReferenceSpec:
         )
 
         assert car.order_reference_spec is spec
-        assert dict(car.aspects) == spec.to_settings_dict()
+        assert dict(car.aspects) == order_reference_mapping_from_spec(spec)
         assert car.tire_width_mm == 245.0
         assert car.tire_aspect_pct == 40.0
         assert car.rim_in == 18.0

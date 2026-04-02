@@ -203,9 +203,8 @@ class TestBuildRunMetadata:
             tire_circumference_m = 2.345
 
         monkeypatch.setattr(
-            AnalysisSettingsSnapshot,
-            "order_reference_spec",
-            property(lambda self: _FakeSpec()),
+            "vibesensor.shared.types.run_schema.order_reference_spec_from_snapshot",
+            lambda snapshot: _FakeSpec(),
         )
 
         meta = build_run_metadata(

@@ -12,10 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.json_utils import as_float_or_none
-from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
 from vibesensor.use_cases.diagnostics.orders.physics import _driveshaft_hz, _order_label
 
 # ------------------------------------------------------------------
@@ -31,7 +30,7 @@ def _guarded_float(value: object) -> float:
 
 
 def _context(overrides: dict | None = None):
-    return build_diagnostics_context(overrides or {}, file_name="test")
+    return prepare_diagnostics_metadata(overrides or {}, file_name="test")
 
 
 def _sample(**overrides: object):
@@ -149,9 +148,8 @@ class TestDriveshaftHz:
                 return 44.5
 
         monkeypatch.setattr(
-            OrderReferenceSpec,
-            "from_settings",
-            lambda data: _FakeSpec(),
+            "vibesensor.use_cases.diagnostics.orders.physics._order_reference_spec_from_context",
+            lambda context, sample=None: _FakeSpec(),
         )
 
         context = _context()

@@ -9,8 +9,8 @@ from threading import RLock
 from typing import Protocol, TypeVar
 
 from vibesensor.domain import Car, CarSnapshot
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.config.settings_transaction import log_settings_change
+from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
 from vibesensor.shared.types.car_config import (
     CarConfigUpdatePayload,
     CarsSnapshot,
@@ -187,7 +187,7 @@ class CarSettingsService:
                         new_car_type = clamped
             new_aspects = dict(car.aspects)
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
-                new_aspects.update(AnalysisSettingsSnapshot.sanitize(car_data["aspects"]))
+                new_aspects.update(sanitize_analysis_settings(car_data["aspects"]))
             new_variant = car.variant
             if "variant" in car_data:
                 raw_variant = car_data["variant"]
@@ -231,7 +231,7 @@ class CarSettingsService:
                 id=car.id,
                 name=car.name,
                 car_type=car.car_type,
-                aspects={**car.aspects, **AnalysisSettingsSnapshot.sanitize(aspects)},
+                aspects={**car.aspects, **sanitize_analysis_settings(aspects)},
                 variant=car.variant,
             )
             return True

@@ -7,9 +7,11 @@ import pytest
 from vibesensor.domain import Car as _Car
 from vibesensor.domain import OrderReferenceSpec, TireSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
+from vibesensor.shared.order_reference_settings import order_reference_spec_from_mapping
 
 DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
-sanitize_settings = AnalysisSettingsSnapshot.sanitize
+sanitize_settings = sanitize_analysis_settings
 
 # -- TireSpec.circumference_m -------------------------------------------------
 
@@ -98,9 +100,7 @@ def test_car_tire_circumference_no_aspects_returns_none() -> None:
 
 
 def test_wheel_hz_returns_none_for_non_finite_speed() -> None:
-    from vibesensor.domain import OrderReferenceSpec
-
-    spec = OrderReferenceSpec.from_settings(DEFAULT_ANALYSIS_SETTINGS)
+    spec = order_reference_spec_from_mapping(DEFAULT_ANALYSIS_SETTINGS)
     assert spec is not None
     assert spec.wheel_hz(nan) is None
     assert spec.wheel_hz(inf) is None
@@ -246,7 +246,7 @@ def test_sanitize_keeps_valid_tire_params_unchanged() -> None:
 
 
 def _default_spec() -> OrderReferenceSpec:
-    spec = OrderReferenceSpec.from_settings(DEFAULT_ANALYSIS_SETTINGS)
+    spec = order_reference_spec_from_mapping(DEFAULT_ANALYSIS_SETTINGS)
     assert spec is not None
     return spec
 

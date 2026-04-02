@@ -3,33 +3,12 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
 from dataclasses import dataclass
 
 from vibesensor.domain.tire_spec import TireSpec
 
-__all__ = [
-    "OrderReferenceSpec",
-    "normalize_order_reference_mapping",
-]
+__all__ = ["OrderReferenceSpec", "order_reference_mapping_from_spec"]
 
-_ORDER_REFERENCE_KEYS: tuple[str, ...] = (
-    "tire_width_mm",
-    "tire_aspect_pct",
-    "rim_in",
-    "final_drive_ratio",
-    "current_gear_ratio",
-    "wheel_bandwidth_pct",
-    "driveshaft_bandwidth_pct",
-    "engine_bandwidth_pct",
-    "speed_uncertainty_pct",
-    "tire_diameter_uncertainty_pct",
-    "final_drive_uncertainty_pct",
-    "gear_uncertainty_pct",
-    "min_abs_band_hz",
-    "max_band_half_width_pct",
-    "tire_deflection_factor",
-)
 _KMH_TO_MPS = 1.0 / 3.6
 
 
@@ -49,73 +28,6 @@ class OrderReferenceSpec:
     gear_uncertainty_pct: float
     min_abs_band_hz: float
     max_band_half_width_pct: float
-
-    @classmethod
-    def from_settings(
-        cls,
-        settings: Mapping[str, object],
-        deflection_factor: float | None = None,
-    ) -> OrderReferenceSpec | None:
-        """Build from a flat settings mapping.
-
-        Returns ``None`` if tire geometry keys are missing or invalid.
-        """
-        resolved_deflection = _coerce_finite_float(
-            settings.get("tire_deflection_factor"),
-            default=1.0,
-        )
-        if deflection_factor is not None and math.isfinite(deflection_factor):
-            resolved_deflection = float(deflection_factor)
-        tire_inputs = {
-            key: value
-            for key in ("tire_width_mm", "tire_aspect_pct", "rim_in")
-            if (value := _coerce_finite_float(settings.get(key), default=None)) is not None
-        }
-        tire = TireSpec.from_aspects(
-            tire_inputs,
-            deflection_factor=resolved_deflection if resolved_deflection is not None else 1.0,
-        )
-        if tire is None:
-            return None
-
-        def _f(key: str, default: float = 0.0) -> float:
-            value = _coerce_finite_float(settings.get(key), default=default)
-            return default if value is None else value
-
-        return cls(
-            tire_spec=tire,
-            final_drive_ratio=_f("final_drive_ratio"),
-            current_gear_ratio=_f("current_gear_ratio"),
-            wheel_bandwidth_pct=_f("wheel_bandwidth_pct"),
-            driveshaft_bandwidth_pct=_f("driveshaft_bandwidth_pct"),
-            engine_bandwidth_pct=_f("engine_bandwidth_pct"),
-            speed_uncertainty_pct=_f("speed_uncertainty_pct"),
-            tire_diameter_uncertainty_pct=_f("tire_diameter_uncertainty_pct"),
-            final_drive_uncertainty_pct=_f("final_drive_uncertainty_pct"),
-            gear_uncertainty_pct=_f("gear_uncertainty_pct"),
-            min_abs_band_hz=_f("min_abs_band_hz"),
-            max_band_half_width_pct=_f("max_band_half_width_pct"),
-        )
-
-    def to_settings_dict(self) -> dict[str, float]:
-        """Project to the flat settings mapping used at persistence boundaries."""
-        return {
-            "tire_width_mm": self.tire_spec.width_mm,
-            "tire_aspect_pct": self.tire_spec.aspect_pct,
-            "rim_in": self.tire_spec.rim_in,
-            "final_drive_ratio": self.final_drive_ratio,
-            "current_gear_ratio": self.current_gear_ratio,
-            "wheel_bandwidth_pct": self.wheel_bandwidth_pct,
-            "driveshaft_bandwidth_pct": self.driveshaft_bandwidth_pct,
-            "engine_bandwidth_pct": self.engine_bandwidth_pct,
-            "speed_uncertainty_pct": self.speed_uncertainty_pct,
-            "tire_diameter_uncertainty_pct": self.tire_diameter_uncertainty_pct,
-            "final_drive_uncertainty_pct": self.final_drive_uncertainty_pct,
-            "gear_uncertainty_pct": self.gear_uncertainty_pct,
-            "min_abs_band_hz": self.min_abs_band_hz,
-            "max_band_half_width_pct": self.max_band_half_width_pct,
-            "tire_deflection_factor": self.tire_spec.deflection_factor,
-        }
 
     @property
     def tire_circumference_m(self) -> float:
@@ -259,38 +171,31 @@ class OrderReferenceSpec:
         }
 
 
-def normalize_order_reference_mapping(aspects: Mapping[str, float]) -> dict[str, float]:
-    """Normalize persisted/raw order-reference aspects to canonical finite floats."""
-    normalized: dict[str, float] = {}
-    for key in _ORDER_REFERENCE_KEYS:
-        value = _coerce_finite_float(aspects.get(key), default=None)
-        if value is None:
-            continue
-        if key in {"tire_width_mm", "tire_aspect_pct", "rim_in"} and value <= 0:
-            raise ValueError(
-                f"Car.aspects[{key!r}] must be a positive finite number, got {value}",
-            )
-        normalized[key] = value
-    return normalized
-
-
-def _coerce_finite_float(value: object, *, default: float | None) -> float | None:
-    if value is None:
-        return default
-    if isinstance(value, bool):
-        return default
-    if not isinstance(value, int | float | str):
-        return default
-    try:
-        parsed = float(value)
-    except (TypeError, ValueError):
-        return default
-    return parsed if math.isfinite(parsed) else default
-
-
 def _combined_relative_uncertainty(*parts: float) -> float:
     sum_sq = 0.0
     for part in parts:
         if part > 0 and math.isfinite(part):
             sum_sq += part * part
     return math.sqrt(sum_sq)
+
+
+def order_reference_mapping_from_spec(spec: OrderReferenceSpec) -> dict[str, float]:
+    """Project an order-reference spec into the flat settings mapping boundary."""
+
+    return {
+        "tire_width_mm": spec.tire_spec.width_mm,
+        "tire_aspect_pct": spec.tire_spec.aspect_pct,
+        "rim_in": spec.tire_spec.rim_in,
+        "final_drive_ratio": spec.final_drive_ratio,
+        "current_gear_ratio": spec.current_gear_ratio,
+        "wheel_bandwidth_pct": spec.wheel_bandwidth_pct,
+        "driveshaft_bandwidth_pct": spec.driveshaft_bandwidth_pct,
+        "engine_bandwidth_pct": spec.engine_bandwidth_pct,
+        "speed_uncertainty_pct": spec.speed_uncertainty_pct,
+        "tire_diameter_uncertainty_pct": spec.tire_diameter_uncertainty_pct,
+        "final_drive_uncertainty_pct": spec.final_drive_uncertainty_pct,
+        "gear_uncertainty_pct": spec.gear_uncertainty_pct,
+        "min_abs_band_hz": spec.min_abs_band_hz,
+        "max_band_half_width_pct": spec.max_band_half_width_pct,
+        "tire_deflection_factor": spec.tire_spec.deflection_factor,
+    }

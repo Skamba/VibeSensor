@@ -13,7 +13,7 @@ from vibesensor.shared.statistics_utils import (
     _percent_missing,
 )
 from vibesensor.shared.time_utils import format_duration_mm_ss
-from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
 from vibesensor.use_cases.diagnostics._reference_resolution import _effective_engine_rpm
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _primary_vibration_strength_db,
@@ -436,7 +436,7 @@ def test_wheel_hz_returns_none(sample: dict, tire_circ: float | None) -> None:
 
 def test_effective_engine_rpm_measured() -> None:
     sample = _typed_sample(engine_rpm=3000.0, engine_rpm_source="obd")
-    context = build_diagnostics_context({}, file_name="test")
+    context = prepare_diagnostics_metadata({}, file_name="test")
     rpm, src = _effective_engine_rpm(sample, context, None)
     assert rpm == 3000.0
     assert src == "obd"
@@ -445,7 +445,7 @@ def test_effective_engine_rpm_measured() -> None:
 def test_effective_engine_rpm_estimated_from_speed() -> None:
     tire_circ = 2.0
     sample = _typed_sample(speed_kmh=90.0, gear=0.64, final_drive_ratio=3.08)
-    context = build_diagnostics_context({}, file_name="test")
+    context = prepare_diagnostics_metadata({}, file_name="test")
     rpm, src = _effective_engine_rpm(sample, context, tire_circ)
     assert rpm is not None
     assert rpm > 0
@@ -453,7 +453,7 @@ def test_effective_engine_rpm_estimated_from_speed() -> None:
 
 
 def test_effective_engine_rpm_missing() -> None:
-    context = build_diagnostics_context({}, file_name="test")
+    context = prepare_diagnostics_metadata({}, file_name="test")
     rpm, src = _effective_engine_rpm(_typed_sample(), context, None)
     assert rpm is None
     assert src == "missing"

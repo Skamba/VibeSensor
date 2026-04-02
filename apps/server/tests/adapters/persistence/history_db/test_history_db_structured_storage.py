@@ -267,14 +267,13 @@ def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> No
     rows = [
         sample for batch in db.iter_run_samples("run-corrupt", batch_size=2) for sample in batch
     ]
-    assert len(rows) == 4
+    assert len(rows) == 3
     assert rows[0].t_s == 1.0
     assert rows[1].t_s == 2.0
-    assert rows[2].top_peaks == ()
-    assert rows[3].t_s == 3.0
+    assert rows[2].t_s == 3.0
 
 
-def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
+def test_v2_row_to_dict_non_list_peak_column_warns_and_skips_row(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -292,6 +291,5 @@ def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
     with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.history_db"):
         rows = db.get_run_samples("run-peak-warn")
 
-    assert len(rows) == 1
-    assert rows[0].top_peaks == ()
+    assert rows == []
     assert "top_peaks" in caplog.text

@@ -594,7 +594,7 @@ def test_post_analysis_uses_run_language_from_metadata(
 
     def _analysis_runner(run):
         assert run.run_id == snapshot.run_id
-        assert run.context.default_language == "nl"
+        assert run.context.language == "nl"
         assert run.language == "nl"
         assert run.total_sample_count == len(run.samples)
         assert run.stride == 1
