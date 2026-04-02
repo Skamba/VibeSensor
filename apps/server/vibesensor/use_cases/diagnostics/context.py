@@ -7,7 +7,11 @@ from dataclasses import dataclass, field, replace
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, OrderReferenceSpec, Symptom
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.run_schema import PEAK_PICKER_METHOD, RUN_METADATA_TYPE, RUN_SCHEMA_VERSION
+from vibesensor.shared.types.run_schema import (
+    PEAK_PICKER_METHOD,
+    RUN_METADATA_TYPE,
+    RUN_SCHEMA_VERSION,
+)
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = ["DiagnosticsContext"]
@@ -75,7 +79,10 @@ class DiagnosticsContext:
             return override
         return None
 
-    def order_reference_spec_for(self, sample: SensorFrame | None = None) -> OrderReferenceSpec | None:
+    def order_reference_spec_for(
+        self,
+        sample: SensorFrame | None = None,
+    ) -> OrderReferenceSpec | None:
         spec = self.order_reference_spec
         if sample is None or spec is None:
             return spec
