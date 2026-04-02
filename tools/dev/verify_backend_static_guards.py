@@ -887,8 +887,8 @@ def _check_http_api_models_live_under_http_adapters() -> list[str]:
     return failures
 
 
-def _check_summary_builder_does_not_define_normalize_lang() -> list[str]:
-    path = VIBESENSOR_DIR / "use_cases" / "diagnostics" / "summary_builder.py"
+def _check_run_analysis_does_not_define_normalize_lang() -> list[str]:
+    path = VIBESENSOR_DIR / "use_cases" / "diagnostics" / "run_analysis.py"
     tree = _parse_python(path)
     if tree is None:
         return []
@@ -896,7 +896,7 @@ def _check_summary_builder_does_not_define_normalize_lang() -> list[str]:
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "normalize_lang":
             failures.append(
-                f"{path.relative_to(REPO_ROOT)}:{node.lineno}: summary_builder must not define normalize_lang()"
+                f"{path.relative_to(REPO_ROOT)}:{node.lineno}: run_analysis must not define normalize_lang()"
             )
     return failures
 
@@ -907,7 +907,8 @@ _INTERNAL_DIAGNOSTICS_MODULES = (
     "peaks/table.py",
     "spectrogram.py",
     "plots.py",
-    "summary_builder.py",
+    "run_analysis.py",
+    "analysis_pipeline.py",
 )
 _FORBIDDEN_ANALYSIS_PAYLOAD_NAMES = frozenset(
     {
@@ -950,9 +951,10 @@ def _check_diagnostics_boundary_types() -> list[str]:
                     f"{path.relative_to(REPO_ROOT)}:{node.lineno}: {', '.join(bad)}"
                 )
         failures.extend(bad_imports)
-    summary_builder = diagnostics_dir / "summary_builder.py"
-    tree = _parse_python(summary_builder)
-    if tree is not None:
+    for path in _python_files(diagnostics_dir):
+        tree = _parse_python(path)
+        if tree is None:
+            continue
         for node in ast.walk(tree):
             if (
                 isinstance(node, ast.ImportFrom)
@@ -962,8 +964,8 @@ def _check_diagnostics_boundary_types() -> list[str]:
                 )
             ):
                 failures.append(
-                    f"{summary_builder.relative_to(REPO_ROOT)}:{node.lineno}: "
-                    "summary_builder must leave finding projection in the boundary seam"
+                    f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
+                    "diagnostics core must leave finding projection in the boundary seam"
                 )
     return failures
 
@@ -1709,8 +1711,8 @@ CHECKS: tuple[Check, ...] = (
     ),
     ("Layer boundaries stay acyclic and clean", _check_layer_boundaries),
     (
-        "summary_builder keeps normalize_lang in report_i18n",
-        _check_summary_builder_does_not_define_normalize_lang,
+        "run_analysis keeps normalize_lang in report_i18n",
+        _check_run_analysis_does_not_define_normalize_lang,
     ),
     (
         "Diagnostics internals avoid boundary payload TypedDicts",
