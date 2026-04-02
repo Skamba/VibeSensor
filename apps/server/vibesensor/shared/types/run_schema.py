@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Final
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.domain import AnalysisSettingsSnapshot, RunContextSnapshot, Symptom
+
+from .json_types import JsonObject
 
 __all__ = [
     "FFT_WINDOW_TYPE",
@@ -18,23 +18,17 @@ __all__ = [
     "RunMetadata",
 ]
 
-RUN_SCHEMA_VERSION: Final[str] = "v2-jsonl"
-RUN_METADATA_TYPE: Final[str] = "run_metadata"
-RUN_SAMPLE_TYPE: Final[str] = "sample"
-RUN_END_TYPE: Final[str] = "run_end"
-FFT_WINDOW_TYPE: str = "hann"
-PEAK_PICKER_METHOD: str = "canonical_strength_metrics_module"
+RUN_SCHEMA_VERSION = "v2-jsonl"
+RUN_METADATA_TYPE = "run_metadata"
+RUN_SAMPLE_TYPE = "sample"
+RUN_END_TYPE = "run_end"
+FFT_WINDOW_TYPE = "hann"
+PEAK_PICKER_METHOD = "canonical_strength_metrics_module"
 
 
 @dataclass(slots=True)
 class RunMetadata:
-    """Typed persisted run metadata.
-
-    Stable header fields live on explicit dataclass attributes. Additional
-    persisted run/context/settings metadata stays in ``extras`` so history and
-    post-analysis code can keep a typed object route without losing the richer
-    stored payload.
-    """
+    """Typed persisted run metadata with explicit run-context ownership."""
 
     record_type: str
     schema_version: str
@@ -50,7 +44,18 @@ class RunMetadata:
     peak_picker_method: str
     accel_scale_g_per_lsb: float | None
     incomplete_for_order_analysis: bool
-    extras: JsonObject = field(default_factory=dict)
+    run_context: RunContextSnapshot = field(default_factory=RunContextSnapshot)
+    case_id: str = ""
+    sensor_mac: str | None = None
+    summary_version: int = 1
+    symptom: Symptom | None = None
+    report_date: str | None = None
+    language: str = "en"
+    explicit_engine_rpm: float | None = None
+    tire_circumference_m_override: float | None = None
+    units: JsonObject | None = None
+    amplitude_definitions: JsonObject | None = None
+    recorded_utc_offset_seconds: int | None = None
 
     @classmethod
     def create(
@@ -66,6 +71,18 @@ class RunMetadata:
         firmware_version: str | None = None,
         end_time_utc: str | None = None,
         incomplete_for_order_analysis: bool = False,
+        run_context: RunContextSnapshot | None = None,
+        case_id: str = "",
+        sensor_mac: str | None = None,
+        summary_version: int = 1,
+        symptom: Symptom | None = None,
+        report_date: str | None = None,
+        language: str = "en",
+        explicit_engine_rpm: float | None = None,
+        tire_circumference_m_override: float | None = None,
+        units: JsonObject | None = None,
+        amplitude_definitions: JsonObject | None = None,
+        recorded_utc_offset_seconds: int | None = None,
     ) -> RunMetadata:
         """Construct canonical run metadata for a newly recorded run."""
         return cls(
@@ -83,26 +100,54 @@ class RunMetadata:
             peak_picker_method=PEAK_PICKER_METHOD,
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,
             incomplete_for_order_analysis=bool(incomplete_for_order_analysis),
-            extras={},
+            run_context=(run_context if run_context is not None else RunContextSnapshot()),
+            case_id=case_id.strip(),
+            sensor_mac=sensor_mac,
+            summary_version=max(1, int(summary_version)),
+            symptom=symptom,
+            report_date=report_date,
+            language=(str(language).strip().lower() or "en"),
+            explicit_engine_rpm=explicit_engine_rpm,
+            tire_circumference_m_override=tire_circumference_m_override,
+            units=units,
+            amplitude_definitions=amplitude_definitions,
+            recorded_utc_offset_seconds=recorded_utc_offset_seconds,
         )
 
     @property
-    def language(self) -> str | None:
-        """Return the normalized persisted language code from metadata extras."""
-        value = self.extras.get("language")
-        if isinstance(value, str):
-            normalized = value.strip().lower()
-            return normalized or None
-        return None
+    def analysis_settings(self) -> AnalysisSettingsSnapshot:
+        return self.run_context.analysis_settings
+
+    @property
+    def car(self):
+        return self.run_context.car
 
     @property
     def car_name(self) -> str | None:
-        """Return the normalized persisted car name from metadata extras."""
-        value = None
-        active_car_snapshot = self.extras.get("active_car_snapshot")
-        if isinstance(active_car_snapshot, Mapping):
-            value = active_car_snapshot.get("name") or active_car_snapshot.get("type")
-        if isinstance(value, str):
-            normalized = value.strip()
-            return normalized or None
+        return self.car.name if self.car is not None else None
+
+    @property
+    def car_type(self) -> str | None:
+        return self.car.car_type if self.car is not None else None
+
+    @property
+    def car_variant(self) -> str | None:
+        return self.car.variant if self.car is not None else None
+
+    @property
+    def active_car_id(self) -> str | None:
+        return self.car.car_id if self.car is not None else None
+
+    @property
+    def order_reference_spec(self):
+        return self.run_context.order_reference_spec
+
+    @property
+    def tire_circumference_m(self) -> float | None:
+        spec = self.order_reference_spec
+        if spec is not None and bool(getattr(spec, "supports_wheel_reference", False)):
+            return spec.tire_circumference_m
+        override = self.tire_circumference_m_override
+        if override is not None and override > 0:
+            return override
         return None

@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.shared.time_utils import current_utc_offset_seconds
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import RunMetadata
 
-from .sample_builder import build_run_metadata, firmware_version_for_run
+from .run_metadata_builder import build_run_metadata, firmware_version_for_run
 from .status_reporting import RunRecorderStatusSnapshot
 
 if TYPE_CHECKING:
@@ -51,7 +51,7 @@ def _build_run_metadata_record(
     recorder: RunRecorder,
     run_id: str,
     start_time_utc: str,
-) -> JsonObject:
+) -> RunMetadata:
     run_context = recorder._run_context_snapshot(run_id)
     return build_run_metadata(
         run_id=run_id,

@@ -51,7 +51,8 @@ def test_create_run_sanitizes_non_finite_metadata(tmp_path: Path) -> None:
     )
     run = db.get_run("run-nan")
     assert run is not None
-    assert run.metadata.extras["tire_circumference_m"] is None
+    assert run.metadata.tire_circumference_m_override is None
+    assert run.metadata.tire_circumference_m is None
 
 
 def test_list_runs_clamps_negative_limit_to_all_rows(tmp_path: Path) -> None:
@@ -207,7 +208,7 @@ def test_create_run_warns_on_missing_metadata_keys(
     with caplog.at_level("WARNING"):
         db.create_run("run-w", "2026-01-01T00:00:00Z", incomplete_meta)
     assert "missing recommended keys" in caplog.text
-    assert "sample_rate_hz" in caplog.text
+    assert "raw_sample_rate_hz" in caplog.text
 
 
 def test_create_run_no_warning_when_metadata_complete(
@@ -215,7 +216,7 @@ def test_create_run_no_warning_when_metadata_complete(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    meta = _metadata("run-ok", sensor_model="a", sample_rate_hz=100)
+    meta = _metadata("run-ok", sensor_model="a", raw_sample_rate_hz=100)
     with caplog.at_level("WARNING"):
         db.create_run("run-ok", "2026-01-01T00:00:00Z", meta)
     assert "missing recommended keys" not in caplog.text
@@ -229,7 +230,7 @@ def test_store_analysis_warns_on_missing_summary_keys(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    meta = _metadata("run-w2", sensor_model="a", sample_rate_hz=100)
+    meta = _metadata("run-w2", sensor_model="a", raw_sample_rate_hz=100)
     db.create_run("run-w2", "2026-01-01T00:00:00Z", meta)
     db.finalize_run("run-w2", "2026-01-01T00:10:00Z")
     incomplete_summary = cast(AnalysisSummary, {"run_id": "run-w2", "score": 42})

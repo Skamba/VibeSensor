@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
@@ -29,10 +28,7 @@ class PostAnalysisRunInput:
 def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunInput:
     """Normalize one loaded persisted run into canonical diagnostics input."""
 
-    context = build_diagnostics_context(
-        run_metadata_to_json_object(loaded.metadata),
-        file_name=loaded.run_id,
-    )
+    context = build_diagnostics_context(loaded.metadata, file_name=loaded.run_id)
     return PostAnalysisRunInput(
         run_id=loaded.run_id,
         context=context,

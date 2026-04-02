@@ -280,24 +280,35 @@ class TestPostAnalysisWorkerErrorHandling:
         assert worker.wait(timeout_s=3.0)
         assert any("boom" in e for e in errors)
 
-    def test_worker_continues_after_failure(self, make_worker) -> None:
-        """A failing run does not block subsequent runs."""
+    def test_unexpected_worker_failure_clears_current_batch_but_allows_reschedule(
+        self,
+        make_worker,
+    ) -> None:
+        """Unexpected worker bugs stop the current batch instead of masking the fault."""
         seen: list[str] = []
-        call_count = 0
+        errors: list[str] = []
 
         def _sometimes_fail(rid: str) -> None:
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
+            if rid == "run-fail":
                 raise RuntimeError("first run fails")
             seen.append(rid)
 
-        worker = make_worker(run_fn=_sometimes_fail)
+        worker = make_worker(run_fn=_sometimes_fail, error_callback=errors.append)
 
         worker.schedule("run-fail")
-        worker.schedule("run-ok")
+        worker.schedule("run-dropped")
         assert worker.wait(timeout_s=3.0)
-        assert seen == ["run-ok"]
+        assert seen == []
+        assert errors == ["post-analysis failed for run run-fail: first run fails"]
+
+        snapshot = worker.snapshot()
+        assert snapshot.last_completed_run_id == "run-fail"
+        assert snapshot.last_completed_error == "first run fails"
+        assert snapshot.queue_depth == 0
+
+        worker.schedule("run-recovered")
+        assert worker.wait(timeout_s=3.0)
+        assert seen == ["run-recovered"]
 
     def test_unexpected_worker_failure_updates_snapshot_and_error_callback(
         self,

@@ -1,27 +1,19 @@
-"""Run-context orchestration helpers for recording and explicit history overlays."""
+"""Run-context helpers for recording metadata and current-context warnings."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import (
-    AnalysisSettingsSnapshot,
-    CarSnapshot,
-    RunContextSnapshot,
-)
-from vibesensor.shared.boundaries.car_snapshot_codec import car_snapshot_from_mapping
-from vibesensor.shared.boundaries.run_context_codec import (
-    run_context_snapshot_from_metadata,
-    run_context_snapshot_to_metadata,
-)
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     RunContextWarning,
     RunContextWarningsInput,
     normalize_run_context_warnings,
 )
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.json_types import is_json_object
+from vibesensor.shared.types.run_schema import RunMetadata
 
 
 def build_run_context_snapshot(
@@ -36,28 +28,12 @@ def build_run_context_snapshot(
     )
 
 
-def apply_run_context_snapshot(
-    metadata: JsonObject,
-    *,
-    analysis_settings_snapshot: AnalysisSettingsSnapshot,
-    active_car_snapshot: CarSnapshot | None,
-) -> None:
-    """Attach only the canonical structured run-context snapshot fields."""
-    context_snapshot = build_run_context_snapshot(
-        analysis_settings_snapshot=analysis_settings_snapshot,
-        active_car_snapshot=active_car_snapshot,
-    )
-    metadata.update(run_context_snapshot_to_metadata(context_snapshot))
-
-
-def order_reference_context_complete(metadata: Mapping[str, object]) -> bool:
-    """Return True when persisted run metadata is sufficient for order references."""
-    raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
-    order_reference_spec = run_context_snapshot_from_metadata(metadata).order_reference_spec
-    tire_circumference_m = _as_float(metadata.get("tire_circumference_m"))
-    if tire_circumference_m is None and order_reference_spec is not None:
-        tire_circumference_m = order_reference_spec.tire_circumference_m
-    has_engine_reference = _as_float(metadata.get("engine_rpm")) is not None or (
+def order_reference_context_complete(metadata: RunMetadata) -> bool:
+    """Return True when typed run metadata is sufficient for order references."""
+    raw_sample_rate_hz = metadata.raw_sample_rate_hz
+    order_reference_spec = metadata.order_reference_spec
+    tire_circumference_m = metadata.tire_circumference_m
+    has_engine_reference = metadata.explicit_engine_rpm is not None or (
         order_reference_spec is not None and order_reference_spec.has_engine_reference
     )
     return bool(
@@ -72,7 +48,7 @@ def order_reference_context_complete(metadata: Mapping[str, object]) -> bool:
 def add_current_context_warnings(
     warnings: RunContextWarningsInput,
     *,
-    metadata: object,
+    metadata: RunMetadata | Mapping[str, object] | object,
     current_active_car_snapshot: CarSnapshot | None,
 ) -> list[RunContextWarning]:
     """Return warning models enriched with any current-context warning."""
@@ -89,14 +65,18 @@ def add_current_context_warnings(
 
 
 def _build_car_settings_changed_warning(
-    metadata: object,
+    metadata: RunMetadata | Mapping[str, object] | object,
     *,
     current_active_car_snapshot: CarSnapshot | None,
 ) -> RunContextWarning | None:
-    if not is_json_object(metadata) or current_active_car_snapshot is None:
+    if current_active_car_snapshot is None:
         return None
-    recorded_snapshot_payload = metadata.get("active_car_snapshot")
-    recorded_snapshot = car_snapshot_from_mapping(recorded_snapshot_payload)
+    if isinstance(metadata, RunMetadata):
+        recorded_snapshot = metadata.car
+    elif is_json_object(metadata):
+        recorded_snapshot = run_metadata_from_mapping(metadata).car
+    else:
+        return None
     if recorded_snapshot is None:
         return None
     if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_active_car_snapshot):
@@ -116,9 +96,9 @@ def _build_car_settings_changed_warning(
 
 def _normalized_aspects(snapshot: CarSnapshot) -> tuple[tuple[str, float], ...]:
     normalized = [
-        (key, numeric_value)
+        (str(key), float(value))
         for key, value in snapshot.aspects.items()
-        if isinstance(key, str) and (numeric_value := _as_float(value)) is not None
+        if isinstance(key, str) and isinstance(value, (int, float))
     ]
     return tuple(sorted(normalized))
 

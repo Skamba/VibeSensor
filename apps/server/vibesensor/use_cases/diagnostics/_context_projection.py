@@ -2,64 +2,49 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import Car, ConfigurationSnapshot, Symptom
-from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
-    analysis_settings_snapshot_to_metadata,
-)
-from vibesensor.shared.boundaries.car_snapshot_codec import car_snapshot_to_metadata
+from vibesensor.domain import Car, ConfigurationSnapshot, RunContextSnapshot, Symptom
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import RunMetadata
 
 from ._context import DiagnosticsContext
 
 
-def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
-    """Rehydrate the persisted metadata shape for boundary serializers."""
-    metadata: JsonObject = {
-        "run_id": context.run_id,
-        "case_id": context.case_id,
-        "sensor_mac": context.sensor_mac,
-        "sensor_model": context.sensor_model,
-        "firmware_version": context.firmware_version,
-        "raw_sample_rate_hz": context.raw_sample_rate_hz,
-        "feature_interval_s": context.feature_interval_s,
-        "_summary_version": context.summary_version,
-        "start_time_utc": context.start_time_utc,
-        "end_time_utc": context.end_time_utc,
-        "language": context.default_language,
-        "incomplete_for_order_analysis": context.incomplete_for_order_analysis,
-        "analysis_settings_snapshot": analysis_settings_snapshot_to_metadata(
-            context.analysis_settings,
+def context_to_run_metadata(context: DiagnosticsContext) -> RunMetadata:
+    """Project diagnostics context back to the canonical typed run metadata model."""
+    return RunMetadata.create(
+        run_id=context.run_id,
+        start_time_utc=context.start_time_utc or "",
+        sensor_model=context.sensor_model or "unknown",
+        firmware_version=context.firmware_version,
+        raw_sample_rate_hz=(
+            int(context.raw_sample_rate_hz) if context.raw_sample_rate_hz is not None else None
         ),
-    }
-    if context.report_date is not None:
-        metadata["report_date"] = context.report_date
-    if context.fft_window_size_samples is not None:
-        metadata["fft_window_size_samples"] = context.fft_window_size_samples
-    if context.fft_window_type is not None:
-        metadata["fft_window_type"] = context.fft_window_type
-    if context.peak_picker_method is not None:
-        metadata["peak_picker_method"] = context.peak_picker_method
-    if context.accel_scale_g_per_lsb is not None:
-        metadata["accel_scale_g_per_lsb"] = context.accel_scale_g_per_lsb
-    if context.units is not None:
-        metadata["units"] = context.units
-    if context.amplitude_definitions is not None:
-        metadata["amplitude_definitions"] = context.amplitude_definitions
-    if context.explicit_engine_rpm is not None:
-        metadata["engine_rpm"] = context.explicit_engine_rpm
-    symptom = context.symptom
-    if symptom is not None and not symptom.is_unspecified:
-        metadata["symptom"] = symptom.description
-        if symptom.onset:
-            metadata["symptom_onset"] = symptom.onset
-        if symptom.context:
-            metadata["symptom_context"] = symptom.context
-    if (car_metadata := car_snapshot_to_metadata(context.car)) is not None:
-        metadata["active_car_snapshot"] = car_metadata
-    tire_circumference_m = context.tire_circumference_m
-    if tire_circumference_m is not None:
-        metadata["tire_circumference_m"] = tire_circumference_m
-    return metadata
+        feature_interval_s=context.feature_interval_s,
+        fft_window_size_samples=context.fft_window_size_samples,
+        accel_scale_g_per_lsb=context.accel_scale_g_per_lsb,
+        end_time_utc=context.end_time_utc,
+        incomplete_for_order_analysis=context.incomplete_for_order_analysis,
+        run_context=RunContextSnapshot(
+            analysis_settings=context.analysis_settings,
+            car=context.car,
+        ),
+        case_id=context.case_id,
+        sensor_mac=context.sensor_mac,
+        summary_version=context.summary_version,
+        symptom=context.symptom,
+        report_date=context.report_date,
+        language=context.default_language,
+        explicit_engine_rpm=context.explicit_engine_rpm,
+        tire_circumference_m_override=context.tire_circumference_m_override,
+        units=context.units,
+        amplitude_definitions=context.amplitude_definitions,
+    )
+
+
+def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
+    """Project diagnostics context into the canonical boundary payload shape."""
+    return run_metadata_to_json_object(context_to_run_metadata(context))
 
 
 def context_to_configuration_snapshot(context: DiagnosticsContext) -> ConfigurationSnapshot:

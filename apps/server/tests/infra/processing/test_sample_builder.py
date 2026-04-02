@@ -19,13 +19,15 @@ from vibesensor.shared.boundaries.strength_metrics_codec import (
 )
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.use_cases.run.run_metadata_builder import (
+    build_run_metadata,
+    firmware_version_for_run,
+)
 from vibesensor.use_cases.run.sample_builder import (
     SpeedContext,
-    build_run_metadata,
     build_sample_records,
     dominant_hz_from_strength,
     extract_strength_data,
-    firmware_version_for_run,
 )
 
 # ---------------------------------------------------------------------------
@@ -166,14 +168,11 @@ class TestBuildRunMetadata:
                 ),
             ),
         )
-        assert meta["run_id"] == "test-run"
-        assert meta["sensor_model"] == "ADXL345"
-        assert "tire_width_mm" not in meta
-        assert "tire_aspect_pct" not in meta
-        assert "rim_in" not in meta
-        assert meta["analysis_settings_snapshot"]["tire_width_mm"] == 205.0
-        assert meta["analysis_settings_snapshot"]["tire_aspect_pct"] == 55.0
-        assert meta["analysis_settings_snapshot"]["rim_in"] == 16.0
+        assert meta.run_id == "test-run"
+        assert meta.sensor_model == "ADXL345"
+        assert meta.analysis_settings.tire_width_mm == 205.0
+        assert meta.analysis_settings.tire_aspect_pct == 55.0
+        assert meta.analysis_settings.rim_in == 16.0
 
     def test_with_language(self) -> None:
         meta = build_run_metadata(
@@ -182,7 +181,7 @@ class TestBuildRunMetadata:
                 language_provider=lambda: "fi",
             ),
         )
-        assert meta["language"] == "fi"
+        assert meta.language == "fi"
 
     def test_language_provider_defaults_to_en_when_blank(self) -> None:
         meta = build_run_metadata(
@@ -191,7 +190,7 @@ class TestBuildRunMetadata:
                 language_provider=lambda: "   ",
             ),
         )
-        assert meta["language"] == "en"
+        assert meta.language == "en"
 
     def test_uses_order_reference_spec_for_tire_circumference(
         self,
@@ -200,6 +199,7 @@ class TestBuildRunMetadata:
         class _FakeSpec:
             is_complete = True
             has_engine_reference = True
+            supports_wheel_reference = True
             tire_circumference_m = 2.345
 
         monkeypatch.setattr(
@@ -214,8 +214,8 @@ class TestBuildRunMetadata:
             ),
         )
 
-        assert meta["incomplete_for_order_analysis"] is False
-        assert "tire_circumference_m" not in meta
+        assert meta.incomplete_for_order_analysis is False
+        assert meta.tire_circumference_m == pytest.approx(2.345)
 
     def test_uses_default_simulator_car_when_active_car_missing(self) -> None:
         meta = build_run_metadata(
@@ -225,16 +225,12 @@ class TestBuildRunMetadata:
             ),
         )
 
-        assert "car_name" not in meta
-        assert "car_type" not in meta
-        assert "active_car_id" not in meta
-        assert meta["active_car_snapshot"] == {
-            "id": "simulator-default",
-            "name": "VibeSensor Simulator",
-            "type": "sedan",
-            "variant": None,
-            "aspects": {},
-        }
+        assert meta.car is not None
+        assert meta.car.car_id == "simulator-default"
+        assert meta.car.name == "VibeSensor Simulator"
+        assert meta.car.car_type == "sedan"
+        assert meta.car.variant is None
+        assert meta.car.aspects == {}
 
 
 # ---------------------------------------------------------------------------
