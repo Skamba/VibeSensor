@@ -1,8 +1,8 @@
 """Construction tests for new typed internal domain concepts.
 
 Tests: construction, immutability, computed properties, invariant enforcement,
-and from_dict factories for RunMetadataSnapshot, OrderMatchObservation,
-DrivingPhaseInterval, and LocationIntensitySummary.
+and from_dict factories for OrderMatchObservation, DrivingPhaseInterval,
+and LocationIntensitySummary.
 """
 
 from __future__ import annotations
@@ -17,71 +17,8 @@ from vibesensor.domain import (
     LocationIntensitySummary,
     OrderMatchObservation,
     PhaseIntensitySummary,
-    RunMetadataSnapshot,
     StrengthBucketDistribution,
 )
-from vibesensor.shared.boundaries.run_metadata_snapshot_codec import (
-    run_metadata_snapshot_from_metadata,
-)
-
-# ---------------------------------------------------------------------------
-# RunMetadataSnapshot
-# ---------------------------------------------------------------------------
-
-
-class TestRunMetadataSnapshot:
-    def test_construction(self) -> None:
-        snap = RunMetadataSnapshot(
-            run_id="r1",
-            case_id="c1",
-            sensor_mac="AA:BB:CC:DD:EE:FF",
-            summary_version=2,
-        )
-        assert snap.run_id == "r1"
-        assert snap.case_id == "c1"
-        assert snap.sensor_mac == "AA:BB:CC:DD:EE:FF"
-        assert snap.summary_version == 2
-        assert snap.firmware_version is None
-        assert snap.raw_sample_rate_hz is None
-
-    def test_frozen(self) -> None:
-        snap = RunMetadataSnapshot(run_id="r1")
-        with pytest.raises(dataclasses.FrozenInstanceError):
-            snap.run_id = "r2"
-
-    def test_has_slots(self) -> None:
-        assert hasattr(RunMetadataSnapshot, "__slots__")
-
-    def test_empty_run_id_rejected(self) -> None:
-        with pytest.raises(ValueError, match="run_id"):
-            RunMetadataSnapshot(run_id="")
-
-    def test_invalid_summary_version_rejected(self) -> None:
-        with pytest.raises(ValueError, match="summary_version"):
-            RunMetadataSnapshot(run_id="r1", summary_version=0)
-
-    def test_boundary_codec_from_metadata(self) -> None:
-        raw = {
-            "run_id": "r1",
-            "case_id": "c1",
-            "sensor_mac": "mac1",
-            "sensor_model": "m1",
-            "firmware_version": "1.0",
-            "raw_sample_rate_hz": 100.0,
-            "feature_interval_s": 0.5,
-            "_summary_version": 2,
-        }
-        snap = run_metadata_snapshot_from_metadata(raw)
-        assert snap.run_id == "r1"
-        assert snap.sensor_model == "m1"
-        assert snap.raw_sample_rate_hz == 100.0
-        assert snap.summary_version == 2
-
-    def test_boundary_codec_uses_explicit_fallback_run_id(self) -> None:
-        raw = {"_summary_version": 1}
-        snap = run_metadata_snapshot_from_metadata(raw, fallback_run_id="rec1")
-        assert snap.run_id == "rec1"
-
 
 # ---------------------------------------------------------------------------
 # OrderMatchObservation

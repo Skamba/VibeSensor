@@ -6,24 +6,12 @@ import asyncio
 import logging
 from collections.abc import Awaitable, Callable
 
-from vibesensor.shared.failure_utils import bounded_failure_message
+from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 
 __all__ = ["BroadcastTickController", "BroadcastTickLoopFailure"]
 
 _MAX_CONSECUTIVE_FAILURES: int = 10
 _RETRYABLE_BROADCAST_EXCEPTIONS = (OSError,)
-
-
-class BroadcastTickLoopFailure(RuntimeError):
-    """Repeated broadcast-loop failure escalated to outer runtime supervision."""
-
-    def __init__(self, *, consecutive_failures: int, cause: Exception) -> None:
-        self.consecutive_failures = consecutive_failures
-        self.cause = cause
-        super().__init__(
-            "WebSocket broadcast tick failed "
-            f"{consecutive_failures} consecutive times: {bounded_failure_message(cause)}"
-        )
 
 
 class BroadcastTickController:

@@ -12,13 +12,14 @@ from typing import TYPE_CHECKING
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.task_supervisor import task_failure_message
+from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 
 if TYPE_CHECKING:
     from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
     from vibesensor.infra.runtime.lifecycle import (
         LifecycleRuntime,
     )
-    from vibesensor.infra.runtime.task_supervisor import TaskSupervisor
+    from vibesensor.infra.runtime.task_supervisor import RestartableExceptions, TaskSupervisor
     from vibesensor.infra.runtime.udp_transport_lifecycle import UdpTransportLifecycle
 
 
@@ -66,7 +67,7 @@ class StartupRunner:
                 self._health_state.set_phase(phase_name)
                 await phase.run()
             self._health_state.mark_ready()
-        except Exception as exc:
+        except (OSError, RuntimeError) as exc:
             self._health_state.mark_failed(phase_name, task_failure_message(exc))
             raise
 
@@ -90,6 +91,7 @@ class StartupRunner:
                         on_tick=r.ws_broadcast.on_tick,
                     ),
                     "ws-broadcast",
+                    restartable_exceptions=(BroadcastTickLoopFailure,),
                 ),
             ),
             StartupPhase(
@@ -129,9 +131,15 @@ class StartupRunner:
         self,
         coro_factory: Callable[[], Coroutine[object, object, object]],
         name: str,
+        *,
+        restartable_exceptions: RestartableExceptions = (),
     ) -> None:
         self._background_tasks.add(
-            self._task_supervisor.start(coro_factory, name=name),
+            self._task_supervisor.start(
+                coro_factory,
+                name=name,
+                restartable_exceptions=restartable_exceptions,
+            ),
         )
 
     async def _start_update_recovery(self) -> None:

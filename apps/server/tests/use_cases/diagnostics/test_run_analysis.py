@@ -11,6 +11,7 @@ from test_support.sample_scenarios import make_analysis_sample
 from vibesensor.adapters.analysis_summary import (
     analysis_result_to_summary,
     summarize_run_data,
+    summarize_sensor_frames,
 )
 from vibesensor.domain import SpeedProfile
 from vibesensor.shared.boundaries.sensor_frame_codec import (
@@ -153,8 +154,8 @@ class TestRunAnalysis:
         assert result.test_run is not None
         assert result.diagnostic_case is not None
 
-    def test_summarize_matches_function_api(self) -> None:
-        """RunAnalysis.summarize() should produce identical output to summarize_run_data()."""
+    def test_summarize_matches_typed_and_row_boundary_apis(self) -> None:
+        """Typed and row boundary helpers should produce identical summaries."""
         metadata = {"raw_sample_rate_hz": 100.0}
         samples = [
             {
@@ -167,15 +168,26 @@ class TestRunAnalysis:
             }
             for i in range(10)
         ]
-        # The function API delegates to RunAnalysis, so they should be equivalent
-        summary_via_function = summarize_run_data(metadata, samples, file_name="f")
+        summary_via_rows = summarize_run_data(metadata, samples, file_name="f")
+        summary_via_frames = summarize_sensor_frames(
+            metadata,
+            sensor_frames_from_rows(samples),
+            file_name="f",
+        )
         summary_via_class = analysis_result_to_summary(
             _analysis(metadata, samples, file_name="f").summarize(),
         )
-        # Key structural fields should match
-        assert summary_via_function["run_id"] == summary_via_class["run_id"]
-        assert summary_via_function["rows"] == summary_via_class["rows"]
-        assert len(summary_via_function["findings"]) == len(summary_via_class["findings"])
+        assert (
+            summary_via_rows["run_id"]
+            == summary_via_frames["run_id"]
+            == summary_via_class["run_id"]
+        )
+        assert summary_via_rows["rows"] == summary_via_frames["rows"] == summary_via_class["rows"]
+        assert (
+            len(summary_via_rows["findings"])
+            == len(summary_via_frames["findings"])
+            == len(summary_via_class["findings"])
+        )
 
     def test_prepared_property(self) -> None:
         metadata = {"raw_sample_rate_hz": 100.0}

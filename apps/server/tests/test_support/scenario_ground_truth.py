@@ -13,7 +13,8 @@ from test_support.sample_scenarios import (
     make_noise_samples,
     make_ramp_samples,
 )
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.adapters.analysis_summary import summarize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 
 ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
@@ -165,9 +166,9 @@ def build_summary_from_phases(
     for step in phases:
         samples.extend(step.builder(start_t_s=t, sensors=ALL_SENSORS, **step.kwargs))
         t += step.duration_s
-    return summarize_run_data(
+    return summarize_sensor_frames(
         standard_metadata(language=language),
-        samples,
+        sensor_frames_from_rows(samples),
         lang=language,
         file_name=file_name,
     )
