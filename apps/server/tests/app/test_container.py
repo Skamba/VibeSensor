@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -99,7 +100,7 @@ def test_create_history_db_continues_when_retention_prune_fails(
         run_repository=SimpleNamespace(
             recover_stale_recording_runs=lambda: 0,
             prune_terminal_runs_older_than_days=lambda _days: (_ for _ in ()).throw(
-                RuntimeError("prune failed")
+                sqlite3.OperationalError("prune failed")
             ),
         ),
     )

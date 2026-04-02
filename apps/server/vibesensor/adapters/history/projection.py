@@ -5,7 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import cast
 
-from vibesensor.shared.boundaries.analysis_summary_projection import project_persisted_analysis
+from vibesensor.shared.boundaries.analysis_summary_projection import (
+    project_analysis_summary,
+    project_persisted_analysis,
+)
 from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
 from vibesensor.shared.boundaries.run_metadata_codec import (
     run_metadata_from_mapping,
@@ -24,8 +27,8 @@ __all__ = [
 ]
 
 
-def _project_history_analysis(
-    analysis: PersistedAnalysis | Mapping[str, object],
+def _project_persisted_history_analysis(
+    analysis: PersistedAnalysis,
     *,
     strip_internal: bool,
 ) -> JsonObject:
@@ -36,6 +39,14 @@ def _project_history_analysis(
     if strip_internal:
         projected = strip_internal_fields(projected)
     return projected
+
+
+def _project_summary_analysis(analysis: Mapping[str, object]) -> JsonObject:
+    if has_projectable_report_payload(analysis):
+        projected, _ = project_analysis_summary(cast(JsonObject, dict(analysis)))
+    else:
+        projected = cast(JsonObject, {key: value for key, value in analysis.items()})
+    return strip_internal_fields(projected)
 
 
 def _project_history_metadata(metadata: Mapping[str, object]) -> JsonObject:
@@ -53,7 +64,7 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
     if run.error_message is not None:
         payload["error_message"] = run.error_message
     if run.analysis is not None:
-        payload["analysis"] = _project_history_analysis(
+        payload["analysis"] = _project_persisted_history_analysis(
             run.analysis,
             strip_internal=True,
         )
@@ -62,7 +73,7 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
 
 def project_history_insights(analysis: Mapping[str, object]) -> JsonObject:
     """Project persisted insights payloads for HTTP responses."""
-    return _project_history_analysis(analysis, strip_internal=True)
+    return _project_summary_analysis(analysis)
 
 
 def build_projected_run_details_json(
@@ -80,7 +91,7 @@ def build_projected_run_details_json(
             sample_count=sample_count,
             run_id=run_id,
         )
-    payload["analysis"] = _project_history_analysis(
+    payload["analysis"] = _project_persisted_history_analysis(
         analysis,
         strip_internal=True,
     )

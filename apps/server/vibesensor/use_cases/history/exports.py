@@ -176,5 +176,5 @@ def build_run_details_json(
     """Build the exported JSON metadata document for a history run."""
     run_details = run.to_json_object()
     if run.analysis is not None:
-        run_details["analysis"] = strip_internal_fields(run.analysis.to_payload())
+        run_details["analysis"] = strip_internal_fields(run.analysis.payload)
     return serialize_run_details_json(run_details, sample_count=sample_count, run_id=run_id)

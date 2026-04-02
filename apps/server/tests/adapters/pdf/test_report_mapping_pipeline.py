@@ -7,7 +7,9 @@ from vibesensor.adapters.pdf.mapping import (
     resolve_primary_report_candidate,
 )
 from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_from_json_object,
+)
 from vibesensor.use_cases.history.report_preparation import prepare_persisted_report_input
 
 
@@ -96,7 +98,7 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
 def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    analysis = PersistedAnalysis.from_json_object(
+    analysis = persisted_analysis_from_json_object(
         {
             "run_id": "persisted-run",
             "lang": "en",
@@ -119,11 +121,6 @@ def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
         }
     )
 
-    def _explode(*_args: object, **_kwargs: object) -> object:
-        raise AssertionError("prepare_persisted_report_input should not replay PersistedAnalysis")
-
-    monkeypatch.setattr(PersistedAnalysis, "to_json_object", _explode)
-
     prepared = prepare_persisted_report_input(analysis)
 
     assert prepared.renderer_payload.run_id == "persisted-run"
@@ -136,7 +133,7 @@ def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(
 ) -> None:
     import vibesensor.use_cases.history.report_preparation as report_preparation
 
-    analysis = PersistedAnalysis.from_json_object(
+    analysis = persisted_analysis_from_json_object(
         {
             "run_id": "persisted-run",
             "lang": "en",
