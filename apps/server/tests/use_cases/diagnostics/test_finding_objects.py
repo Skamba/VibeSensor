@@ -20,16 +20,18 @@ def _peak_samples(
     vibration_strength_db: float = 25.0,
     count: int = 30,
 ) -> list:
-    return normalize_sensor_frames([
-        {
-            "speed_kmh": 60.0,
-            "t_s": float(i),
-            "top_peaks": [{"hz": hz, "amp": amp}],
-            "vibration_strength_db": vibration_strength_db,
-            "client_name": "sensor_fl",
-        }
-        for i in range(count)
-    ])
+    return normalize_sensor_frames(
+        [
+            {
+                "speed_kmh": 60.0,
+                "t_s": float(i),
+                "top_peaks": [{"hz": hz, "amp": amp}],
+                "vibration_strength_db": vibration_strength_db,
+                "client_name": "sensor_fl",
+            }
+            for i in range(count)
+        ]
+    )
 
 
 class TestDomainFindingFromPayload:

@@ -91,4 +91,3 @@ class PostAnalysisState:
     def clear_pending(self) -> None:
         self._queue.clear()
         self._enqueued_run_ids.clear()
-

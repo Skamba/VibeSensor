@@ -48,6 +48,7 @@ class CarSnapshot:
         if not isinstance(self.aspects, MappingProxyType):
             object.__setattr__(self, "aspects", MappingProxyType(dict(self.aspects)))
 
+
 @dataclass(frozen=True, slots=True, init=False)
 class Car:
     """The vehicle under test.
