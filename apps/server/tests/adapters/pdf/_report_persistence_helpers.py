@@ -9,10 +9,10 @@ from test_support.report_helpers import analysis_metadata as make_metadata
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.shared.boundaries.sensor_frame_codec import (
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
-    sensor_frames_from_rows,
+    sensor_frames_from_mappings,
 )
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -29,7 +29,7 @@ def uniform_samples(
     dt: float = 0.5,
     **kwargs: object,
 ) -> list[SensorFrame]:
-    return sensor_frames_from_rows(
+    return sensor_frames_from_mappings(
         [sample(float(i) * dt, speed, [{"hz": freq, "amp": amp}], **kwargs) for i in range(n)],
     )
 

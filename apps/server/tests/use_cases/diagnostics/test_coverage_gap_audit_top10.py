@@ -17,7 +17,7 @@ from vibesensor.domain import (
     RunSuitability,
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.boundaries.strength_metrics_codec import strength_peak_payloads
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
@@ -36,7 +36,8 @@ from vibesensor.use_cases.diagnostics.statistics import (
     compute_accel_statistics as _compute_accel_statistics,
 )
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
-from vibesensor.use_cases.run.sample_builder import extract_strength_data, resolve_speed_context
+from vibesensor.use_cases.run.sample_speed_context import resolve_speed_context
+from vibesensor.use_cases.run.sample_strength_metrics import extract_strength_data
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -494,7 +495,7 @@ class TestComputeAccelStatistics:
                 "vibration_strength_db": 12.0,
             },
         ]
-        result = _compute_accel_statistics(sensor_frames_from_rows(samples), "ADXL345")
+        result = _compute_accel_statistics(sensor_frames_from_mappings(samples), "ADXL345")
         assert len(result["accel_x_vals"]) == 1
         assert result["accel_x_vals"][0] == pytest.approx(0.1)
         assert len(result["accel_mag_vals"]) == 1
@@ -506,12 +507,12 @@ class TestComputeAccelStatistics:
         samples: list[dict[str, Any]] = [
             {"accel_x_g": 15.7, "accel_y_g": 0.0, "accel_z_g": 0.0},
         ]
-        result = _compute_accel_statistics(sensor_frames_from_rows(samples), "ADXL345")
+        result = _compute_accel_statistics(sensor_frames_from_mappings(samples), "ADXL345")
         assert result["sat_count"] >= 1, "Near-limit value should count as saturation"
 
     def test_missing_axes_handled(self) -> None:
         samples: list[dict[str, Any]] = [{"accel_x_g": 0.5}]
-        result = _compute_accel_statistics(sensor_frames_from_rows(samples), "unknown")
+        result = _compute_accel_statistics(sensor_frames_from_mappings(samples), "unknown")
         assert len(result["accel_x_vals"]) == 1
         assert result["accel_y_vals"] == []
         assert result["accel_mag_vals"] == []  # can't compute magnitude without all 3
@@ -522,7 +523,7 @@ class TestComputeAccelStatistics:
             {"accel_x_g": 999.0, "accel_y_g": 999.0, "accel_z_g": 999.0},
         ]
         result = _compute_accel_statistics(
-            sensor_frames_from_rows(samples),
+            sensor_frames_from_mappings(samples),
             "totally_unknown_sensor",
         )
         # With unknown sensor, sensor_limit should be None → sat_count = 0
@@ -762,7 +763,7 @@ class TestResolveSpeedContext:
                 return 1234.5 if speed_kmh > 0 else None
 
         monkeypatch.setattr(
-            "vibesensor.use_cases.run.sample_builder.order_reference_spec_from_snapshot",
+            "vibesensor.use_cases.run.sample_speed_context.order_reference_spec_from_snapshot",
             lambda snapshot: _FakeSpec(),
         )
         logger, gps_mock = _make_run_recorder()

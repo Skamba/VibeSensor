@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, StrengthMetrics
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_to_json_object
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frame_to_json_object
 from vibesensor.shared.boundaries.strength_metrics_codec import (
     strength_metrics_from_mapping,
     strength_peak_payloads,
@@ -23,9 +23,9 @@ from vibesensor.use_cases.run.run_metadata_builder import (
     build_run_metadata,
     firmware_version_for_run,
 )
-from vibesensor.use_cases.run.sample_builder import (
-    SpeedContext,
-    build_sample_records,
+from vibesensor.use_cases.run.sample_builder import build_sample_records
+from vibesensor.use_cases.run.sample_speed_context import SpeedContext
+from vibesensor.use_cases.run.sample_strength_metrics import (
     dominant_hz_from_strength,
     extract_strength_data,
 )

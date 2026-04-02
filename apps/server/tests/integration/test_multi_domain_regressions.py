@@ -15,10 +15,10 @@ from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.domain import Finding, SpeedSourceKind, speed_bin_label
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
-from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
+from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
 from vibesensor.use_cases.diagnostics.location_scoring import weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
@@ -45,8 +45,8 @@ class TestBug01ComputeRunTimingTimedelta:
     def test_end_ts_from_samples_uses_timedelta(self) -> None:
         meta = {"start_time_utc": "2024-01-01T12:00:00Z"}
         samples = [{"t_s": 0.0}, {"t_s": 300.0}]
-        context = prepare_diagnostics_metadata(meta, file_name="test")
-        _, start, end, duration = compute_run_timing(context, sensor_frames_from_rows(samples))
+        context = diagnostics_context_from_metadata(meta, file_name="test")
+        _, start, end, duration = compute_run_timing(context, sensor_frames_from_mappings(samples))
         assert start is not None
         assert end is not None
         assert (end - start).total_seconds() == pytest.approx(300.0)
@@ -225,7 +225,7 @@ class TestBug12PhaseSegmentTimestamps:
             {"t_s": None, "speed_kmh": 50.0},
             {"t_s": None, "speed_kmh": 50.0},
         ]
-        _, segments = segment_run_phases(sensor_frames_from_rows(samples))
+        _, segments = segment_run_phases(sensor_frames_from_mappings(samples))
         if len(segments) > 1:
             second = segments[1]
             # Should not be 0.0 for a segment that comes after the first
@@ -329,7 +329,7 @@ class TestBug18IntensitySortZero:
             for i in range(10)
         ]
         result = _sensor_intensity_by_location(
-            sensor_frames_from_rows(samples),
+            sensor_frames_from_mappings(samples),
             include_locations={"FL"},
             lang="en",
         )

@@ -13,7 +13,7 @@ from test_support.findings import make_finding
 
 import vibesensor.use_cases.diagnostics.findings as findings_module
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.constants.analysis import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
@@ -322,7 +322,7 @@ class TestSpeedBreakdown:
             {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
             {"speed_kmh": 68.0, "vibration_strength_db": 22.0},
         ]
-        rows = _speed_breakdown(sensor_frames_from_rows(samples))
+        rows = _speed_breakdown(sensor_frames_from_mappings(samples))
         assert len(rows) == 1
         assert rows[0].count == 2
 
@@ -336,7 +336,7 @@ class TestPhaseSpeedBreakdown:
             {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
         ]
         phases = [DrivingPhase.CRUISE, DrivingPhase.CRUISE]
-        rows = _phase_speed_breakdown(sensor_frames_from_rows(samples), phases)
+        rows = _phase_speed_breakdown(sensor_frames_from_mappings(samples), phases)
         cruise_rows = [r for r in rows if r.phase == "cruise"]
         assert len(cruise_rows) == 1
         assert cruise_rows[0].count == 2
@@ -353,7 +353,7 @@ class TestSensorIntensityByLocation:
             {"location": "front_left", "vibration_strength_db": 20.0},
             {"location": "front_left", "vibration_strength_db": 22.0},
         ]
-        rows = _sensor_intensity_by_location(sensor_frames_from_rows(samples))
+        rows = _sensor_intensity_by_location(sensor_frames_from_mappings(samples))
         assert len(rows) == 1
         assert rows[0].location == "front_left"
         assert rows[0].sample_count == 2

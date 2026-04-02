@@ -11,8 +11,8 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples
-from vibesensor.shared.boundaries.sensor_frame_codec import (
-    sensor_frames_from_rows,
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
+    sensor_frames_from_mappings,
     sensor_frames_to_json_objects,
 )
 from vibesensor.use_cases.diagnostics.peaks.table import (
@@ -116,8 +116,8 @@ class TestSpectrogramPersistence:
                 peaks.append({"hz": 70.0, "amp": 1.0})
             samples.append(sample(float(i), 90.0, peaks))
 
-        diagnostic = _spectrogram_from_peaks(sensor_frames_from_rows(samples))
-        raw = _spectrogram_from_peaks_raw(sensor_frames_from_rows(samples))
+        diagnostic = _spectrogram_from_peaks(sensor_frames_from_mappings(samples))
+        raw = _spectrogram_from_peaks_raw(sensor_frames_from_mappings(samples))
         assert diagnostic.max_amp < raw.max_amp
 
     def test_diagnostic_spectrogram_suppresses_broadband_near_floor(self) -> None:
@@ -130,7 +130,7 @@ class TestSpectrogramPersistence:
         ]
         samples.append(sample(21.0, 90.0, broadband_peaks, strength_floor_amp_g=0.05))
 
-        diagnostic = _spectrogram_from_peaks(sensor_frames_from_rows(samples))
+        diagnostic = _spectrogram_from_peaks(sensor_frames_from_mappings(samples))
         noisy_col = len(diagnostic.x_bins) - 1
         noisy_col_values = [row[noisy_col] for row in diagnostic.cells]
         assert max(noisy_col_values) == 0.0

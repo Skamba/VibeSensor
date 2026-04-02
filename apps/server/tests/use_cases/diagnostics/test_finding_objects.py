@@ -5,7 +5,7 @@ from __future__ import annotations
 from test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.findings import PeakFindingAnalyzer, finalize_findings
 
 # ===========================================================================
@@ -20,7 +20,7 @@ def _peak_samples(
     vibration_strength_db: float = 25.0,
     count: int = 30,
 ) -> list:
-    return sensor_frames_from_rows(
+    return sensor_frames_from_mappings(
         [
             {
                 "speed_kmh": 60.0,

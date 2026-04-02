@@ -21,7 +21,7 @@ import pytest
 
 from vibesensor.domain import Run
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frame_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.logger import (
