@@ -5,7 +5,7 @@ from __future__ import annotations
 from test_support.report_helpers import diagnostics_context
 
 from vibesensor.domain import OrderMatchObservation, VibrationSource
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.orders.matching import OrderMatchAccumulator
 from vibesensor.use_cases.diagnostics.orders.physics import OrderHypothesis
 from vibesensor.use_cases.diagnostics.orders.pipeline import (

@@ -63,7 +63,7 @@ def test_run_analysis_produces_test_run() -> None:
     from vibesensor.adapters.analysis_summary import analysis_result_to_summary
     from vibesensor.domain import TestRun
     from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-    from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+    from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
     from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
     from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
@@ -71,10 +71,9 @@ def test_run_analysis_produces_test_run() -> None:
     samples = [
         {
             "t_s": float(i),
-            "accel_x": 0.01,
-            "accel_y": 0.01,
-            "accel_z": 1.0,
-            "accel_mag": 1.0,
+            "accel_x_g": 0.01,
+            "accel_y_g": 0.01,
+            "accel_z_g": 1.0,
             "speed_kmh": 80.0,
             "vibration_strength_db": 5.0,
         }
@@ -225,7 +224,7 @@ def test_test_run_from_summary_populates_suitability() -> None:
 def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
     from vibesensor.domain import DiagnosticCase, TestRun
     from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-    from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+    from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
     from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
     from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
@@ -240,10 +239,9 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
     samples = [
         {
             "t_s": float(i),
-            "accel_x": 0.01,
-            "accel_y": 0.01,
-            "accel_z": 1.0,
-            "accel_mag": 1.0,
+            "accel_x_g": 0.01,
+            "accel_y_g": 0.01,
+            "accel_z_g": 1.0,
             "speed_kmh": 80.0,
             "vibration_strength_db": 5.0,
         }

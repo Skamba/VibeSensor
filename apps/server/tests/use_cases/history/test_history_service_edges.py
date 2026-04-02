@@ -14,7 +14,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frame_from_mapping
 from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.sensor_frame import SensorFrame

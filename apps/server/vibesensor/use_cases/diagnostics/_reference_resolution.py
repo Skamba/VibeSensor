@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
+from vibesensor.shared.types.run_schema import RunMetadata
 
 from ._types import Sample
-from .context import DiagnosticsContext
 
 
-def _tire_reference_from_context(context: DiagnosticsContext) -> tuple[float | None, str | None]:
+def _tire_reference_from_context(context: RunMetadata) -> tuple[float | None, str | None]:
     """Return the wheel reference circumference and the metadata source name."""
     spec = _order_reference_spec_from_context(context)
     if spec is not None and spec.supports_wheel_reference:
@@ -22,7 +22,7 @@ def _tire_reference_from_context(context: DiagnosticsContext) -> tuple[float | N
 
 
 def _order_reference_spec_from_context(
-    context: DiagnosticsContext,
+    context: RunMetadata,
     sample: Sample | None = None,
 ) -> OrderReferenceSpec | None:
     """Return the effective order-reference spec for one optional sample override."""
@@ -31,7 +31,7 @@ def _order_reference_spec_from_context(
 
 def _effective_engine_rpm(
     sample: Sample,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     """Resolve measured or inferred engine rpm plus the source label."""

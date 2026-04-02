@@ -25,7 +25,7 @@ def test_parse_data_message_marks_registry_on_protocol_error(fake_transport) -> 
     assert fake_transport.sent == []
 
 
-def test_dispatch_data_message_logs_processing_error_without_parse_step(
+def test_dispatch_data_message_propagates_processing_bug_without_parse_step(
     fake_transport,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -42,9 +42,12 @@ def test_dispatch_data_message_logs_processing_error_without_parse_step(
         samples=np.zeros((4, 3), dtype=np.int16),
     )
 
-    with caplog.at_level("WARNING", logger="vibesensor.adapters.udp.udp_data_rx"):
+    with (
+        caplog.at_level("WARNING", logger="vibesensor.adapters.udp.udp_data_rx"),
+        pytest.raises(ValueError, match="boom"),
+    ):
         proto._dispatch_data_message(msg, ("127.0.0.1", 12345))
 
     registry.update_from_data.assert_called_once()
     processor.ingest.assert_not_called()
-    assert "client=aabbccddeeff" in caplog.text
+    assert caplog.text == ""

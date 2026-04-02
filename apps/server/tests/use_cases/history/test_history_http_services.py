@@ -20,7 +20,7 @@ from vibesensor.adapters.history import (
 )
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frame_from_mapping
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,

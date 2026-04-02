@@ -11,6 +11,7 @@ from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._sample_metrics import _run_noise_baseline_g
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics._view_types import (
@@ -27,8 +28,6 @@ from vibesensor.use_cases.diagnostics.statistics import (
     compute_run_timing,
     prepare_speed_and_phases,
 )
-
-from .context import DiagnosticsContext
 
 
 @dataclass(frozen=True)
@@ -71,7 +70,7 @@ class PreparedRunData:
 
 
 def prepare_run_data(
-    context: DiagnosticsContext,
+    context: RunMetadata,
     samples: Sequence[Sample],
 ) -> PreparedRunData:
     """Prepare shared timing, speed, and phase context for summary generation."""

@@ -11,6 +11,7 @@ from vibesensor.domain import (
     Signature,
     coerce_float,
 )
+from vibesensor.shared.boundaries.finding_evidence_codec import finding_evidence_from_mapping
 from vibesensor.shared.boundaries.order_match_codec import order_match_observations_from_sequence
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
@@ -78,7 +79,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
     evidence: FindingEvidence | None = None
     if isinstance(ev_metrics, dict):
-        evidence = FindingEvidence.from_metrics(ev_metrics)
+        evidence = finding_evidence_from_mapping(ev_metrics)
     raw_matched_points = payload.get("matched_points")
     matched_points = (
         order_match_observations_from_sequence(raw_matched_points)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _estimate_strength_floor_amp_g,
     _run_noise_baseline_g,

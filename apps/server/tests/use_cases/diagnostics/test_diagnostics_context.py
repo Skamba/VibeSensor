@@ -5,12 +5,13 @@ from dataclasses import replace
 from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain import Symptom
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
-from vibesensor.use_cases.diagnostics.context_codec import (
-    diagnostics_analysis_settings_items,
-    diagnostics_context_from_metadata,
-    diagnostics_context_to_run_metadata,
+from vibesensor.shared.boundaries.run_metadata_codec import (
+    run_metadata_from_mapping,
+    run_metadata_to_json_object,
 )
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
+from vibesensor.use_cases.diagnostics.metadata_projection import metadata_analysis_settings_items
 
 
 def _context_metadata() -> dict[str, object]:
@@ -47,31 +48,31 @@ def _context_metadata() -> dict[str, object]:
     }
 
 
-def _context():
-    return diagnostics_context_from_metadata(_context_metadata(), file_name="ctx")
+def _metadata() -> RunMetadata:
+    return normalize_run_metadata(run_metadata_from_mapping(_context_metadata()), file_name="ctx")
 
 
-def test_diagnostics_context_decodes_typed_reference_data() -> None:
-    context = _context()
+def test_run_metadata_is_the_diagnostics_context() -> None:
+    metadata = _metadata()
 
-    assert context.run_id == "ctx-run"
-    assert context.raw_sample_rate_hz == 200.0
-    assert context.sensor_model == "ADXL345"
-    assert context.car_name == "Primary"
-    assert context.car_variant == "sport"
-    assert context.order_reference_spec is not None
-    assert context.tire_circumference_m is not None
-    assert context.reference_complete is True
-    assert isinstance(context.symptom, Symptom)
-    assert context.symptom is not None
-    assert context.symptom.description == "driveline hum"
-    assert context.symptom.onset == "after 60 km/h"
-    assert context.symptom.context == "during acceleration"
+    assert metadata.run_id == "ctx-run"
+    assert metadata.raw_sample_rate_hz == 200.0
+    assert metadata.sensor_model == "ADXL345"
+    assert metadata.car_name == "Primary"
+    assert metadata.car_variant == "sport"
+    assert metadata.order_reference_spec is not None
+    assert metadata.tire_circumference_m is not None
+    assert metadata.reference_complete is True
+    assert isinstance(metadata.symptom, Symptom)
+    assert metadata.symptom is not None
+    assert metadata.symptom.description == "driveline hum"
+    assert metadata.symptom.onset == "after 60 km/h"
+    assert metadata.symptom.context == "during acceleration"
 
 
-def test_diagnostics_context_prefers_nested_snapshot_over_conflicting_flat_aliases() -> None:
-    metadata = _context_metadata()
-    metadata.update(
+def test_run_metadata_prefers_nested_snapshot_over_conflicting_flat_aliases() -> None:
+    metadata_payload = _context_metadata()
+    metadata_payload.update(
         {
             "final_drive_ratio": 9.99,
             "current_gear_ratio": 1.99,
@@ -81,61 +82,65 @@ def test_diagnostics_context_prefers_nested_snapshot_over_conflicting_flat_alias
         },
     )
 
-    context = diagnostics_context_from_metadata(metadata, file_name="ctx")
-    spec = context.order_reference_spec
+    metadata = normalize_run_metadata(run_metadata_from_mapping(metadata_payload), file_name="ctx")
+    spec = metadata.order_reference_spec
 
     assert spec is not None
     assert spec.final_drive_ratio == 3.55
     assert spec.current_gear_ratio == 0.81
-    assert context.car_name == "Primary"
-    assert context.car_type == "sedan"
-    assert context.car_variant == "sport"
+    assert metadata.car_name == "Primary"
+    assert metadata.car_type == "sedan"
+    assert metadata.car_variant == "sport"
 
 
-def test_diagnostics_context_requires_nested_snapshot_for_run_context_fields() -> None:
-    context = diagnostics_context_from_metadata(
-        {
-            "run_id": "legacy-run",
-            "raw_sample_rate_hz": 200.0,
-            "tire_width_mm": 225.0,
-            "tire_aspect_pct": 45.0,
-            "rim_in": 18.0,
-            "final_drive_ratio": 3.55,
-            "current_gear_ratio": 0.81,
-            "car_name": "Legacy Car",
-            "car_type": "sedan",
-            "car_variant": "sport",
-            "active_car_id": "car-legacy",
-        },
+def test_run_metadata_requires_nested_snapshot_for_context_fields() -> None:
+    metadata = normalize_run_metadata(
+        run_metadata_from_mapping(
+            {
+                "run_id": "legacy-run",
+                "raw_sample_rate_hz": 200.0,
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 18.0,
+                "final_drive_ratio": 3.55,
+                "current_gear_ratio": 0.81,
+                "car_name": "Legacy Car",
+                "car_type": "sedan",
+                "car_variant": "sport",
+                "active_car_id": "car-legacy",
+            },
+        ),
         file_name="ctx",
     )
 
-    projected = run_metadata_to_json_object(diagnostics_context_to_run_metadata(context))
+    projected = run_metadata_to_json_object(metadata)
 
-    assert context.analysis_settings.final_drive_ratio == 0.0
-    assert context.car is None
+    assert metadata.analysis_settings.final_drive_ratio == 0.0
+    assert metadata.car is None
     assert projected["analysis_settings_snapshot"]["final_drive_ratio"] == 0.0
     assert "active_car_snapshot" not in projected
 
 
-def test_diagnostics_context_drops_flat_analysis_settings_payload() -> None:
-    context = diagnostics_context_from_metadata(
-        {
-            "run_id": "legacy-run",
-            "raw_sample_rate_hz": 200.0,
-            "analysis_settings": {"mode": "legacy"},
-        },
+def test_run_metadata_drops_flat_analysis_settings_payload() -> None:
+    metadata = normalize_run_metadata(
+        run_metadata_from_mapping(
+            {
+                "run_id": "legacy-run",
+                "raw_sample_rate_hz": 200.0,
+                "analysis_settings": {"mode": "legacy"},
+            },
+        ),
         file_name="ctx",
     )
 
-    metadata = run_metadata_to_json_object(diagnostics_context_to_run_metadata(context))
+    projected = run_metadata_to_json_object(metadata)
 
-    assert diagnostics_analysis_settings_items(context) == ()
-    assert "analysis_settings" not in metadata
+    assert metadata_analysis_settings_items(metadata) == ()
+    assert "analysis_settings" not in projected
 
 
 def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None:
-    context = _context()
+    metadata = _metadata()
     sample = replace(
         make_analysis_sample(
             t_s=0.0,
@@ -147,22 +152,22 @@ def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None
         gear=1.05,
     )
 
-    spec = context.order_reference_spec_for(sample)
+    spec = metadata.order_reference_spec_for(sample)
 
     assert spec is not None
     assert spec.final_drive_ratio == 4.1
     assert spec.current_gear_ratio == 1.05
 
 
-def test_diagnostics_context_rehydrates_boundary_metadata_with_known_fields_only() -> None:
-    context = _context()
+def test_run_metadata_rehydrates_boundary_metadata_with_known_fields_only() -> None:
+    metadata = _metadata()
 
-    metadata = run_metadata_to_json_object(diagnostics_context_to_run_metadata(context))
+    payload = run_metadata_to_json_object(metadata)
 
-    assert metadata["run_id"] == "ctx-run"
-    assert metadata["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
-    assert metadata["active_car_snapshot"]["variant"] == "sport"
-    assert metadata["tire_circumference_m"] is not None
-    assert "analysis_settings" not in metadata
-    assert "custom_note" not in metadata
-    assert diagnostics_analysis_settings_items(context)[0][0] == "current_gear_ratio"
+    assert payload["run_id"] == "ctx-run"
+    assert payload["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
+    assert payload["active_car_snapshot"]["variant"] == "sport"
+    assert payload["tire_circumference_m"] is not None
+    assert "analysis_settings" not in payload
+    assert "custom_note" not in payload
+    assert metadata_analysis_settings_items(metadata)[0][0] == "current_gear_ratio"

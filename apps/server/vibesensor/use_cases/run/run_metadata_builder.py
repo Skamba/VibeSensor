@@ -10,7 +10,7 @@ from vibesensor.shared.ports import ClientTracker
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.run_schema import RunMetadata
 
-from .run_context import build_run_context_snapshot, order_reference_context_complete
+from .run_context import order_reference_context_complete
 
 
 def firmware_version_for_run(registry: ClientTracker) -> str | None:
@@ -96,10 +96,8 @@ def build_run_metadata(
         incomplete_for_order_analysis=incomplete,
         recorded_utc_offset_seconds=recorded_utc_offset_seconds,
     )
-    metadata.run_context = build_run_context_snapshot(
-        analysis_settings_snapshot=analysis_settings_snapshot,
-        active_car_snapshot=run_car_snapshot,
-    )
+    metadata.analysis_settings = analysis_settings_snapshot
+    metadata.car = run_car_snapshot
     metadata.incomplete_for_order_analysis = not order_reference_context_complete(metadata)
     if language_provider is not None:
         metadata.language = str(language_provider()).strip().lower() or "en"

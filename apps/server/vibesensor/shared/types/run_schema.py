@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
     CarSnapshot,
     OrderReferenceSpec,
-    RunContextSnapshot,
     Symptom,
 )
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
@@ -51,7 +50,8 @@ class RunMetadata:
     peak_picker_method: str
     accel_scale_g_per_lsb: float | None
     incomplete_for_order_analysis: bool
-    run_context: RunContextSnapshot = field(default_factory=RunContextSnapshot)
+    analysis_settings: AnalysisSettingsSnapshot = field(default_factory=AnalysisSettingsSnapshot)
+    car: CarSnapshot | None = None
     case_id: str = ""
     sensor_mac: str | None = None
     summary_version: int = 1
@@ -78,7 +78,8 @@ class RunMetadata:
         firmware_version: str | None = None,
         end_time_utc: str | None = None,
         incomplete_for_order_analysis: bool = False,
-        run_context: RunContextSnapshot | None = None,
+        analysis_settings: AnalysisSettingsSnapshot | None = None,
+        car: CarSnapshot | None = None,
         case_id: str = "",
         sensor_mac: str | None = None,
         summary_version: int = 1,
@@ -107,7 +108,10 @@ class RunMetadata:
             peak_picker_method=PEAK_PICKER_METHOD,
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,
             incomplete_for_order_analysis=bool(incomplete_for_order_analysis),
-            run_context=(run_context if run_context is not None else RunContextSnapshot()),
+            analysis_settings=(
+                analysis_settings if analysis_settings is not None else AnalysisSettingsSnapshot()
+            ),
+            car=car,
             case_id=case_id.strip(),
             sensor_mac=sensor_mac,
             summary_version=max(1, int(summary_version)),
@@ -120,14 +124,6 @@ class RunMetadata:
             amplitude_definitions=amplitude_definitions,
             recorded_utc_offset_seconds=recorded_utc_offset_seconds,
         )
-
-    @property
-    def analysis_settings(self) -> AnalysisSettingsSnapshot:
-        return self.run_context.analysis_settings
-
-    @property
-    def car(self) -> CarSnapshot | None:
-        return self.run_context.car
 
     @property
     def car_name(self) -> str | None:
@@ -150,6 +146,33 @@ class RunMetadata:
         return order_reference_spec_from_snapshot(self.analysis_settings)
 
     @property
+    def final_drive_ratio(self) -> float | None:
+        value = self.analysis_settings.final_drive_ratio
+        return value if value > 0 else None
+
+    @property
+    def current_gear_ratio(self) -> float | None:
+        value = self.analysis_settings.current_gear_ratio
+        return value if value > 0 else None
+
+    def order_reference_spec_for(
+        self,
+        sample: object | None = None,
+    ) -> OrderReferenceSpec | None:
+        spec = self.order_reference_spec
+        if sample is None or spec is None:
+            return spec
+        final_drive = getattr(sample, "final_drive_ratio", None)
+        gear_ratio = getattr(sample, "gear", None)
+        if final_drive is None and gear_ratio is None:
+            return spec
+        return replace(
+            spec,
+            final_drive_ratio=final_drive if final_drive is not None else spec.final_drive_ratio,
+            current_gear_ratio=gear_ratio if gear_ratio is not None else spec.current_gear_ratio,
+        )
+
+    @property
     def tire_circumference_m(self) -> float | None:
         spec = self.order_reference_spec
         if spec is not None and spec.supports_wheel_reference:
@@ -158,3 +181,14 @@ class RunMetadata:
         if override is not None and override > 0:
             return override
         return None
+
+    @property
+    def reference_complete(self) -> bool:
+        spec = self.order_reference_spec
+        return bool(
+            self.raw_sample_rate_hz
+            and self.tire_circumference_m
+            and spec is not None
+            and spec.is_complete
+            and (self.explicit_engine_rpm is not None or spec.has_engine_reference)
+        )
