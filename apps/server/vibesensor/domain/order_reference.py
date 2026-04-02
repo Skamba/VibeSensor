@@ -169,6 +169,8 @@ class OrderReferenceSpec:
             "drive_uncertainty_pct": self.drive_uncertainty_pct,
             "engine_uncertainty_pct": self.engine_uncertainty_pct,
         }
+
+
 def _combined_relative_uncertainty(*parts: float) -> float:
     sum_sq = 0.0
     for part in parts:
