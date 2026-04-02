@@ -479,7 +479,8 @@ def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
     run = history_db.get_run(run_id)
     assert run is not None
     assert run.analysis is None
-    assert run.error_message is None
+    assert run.status.value == "error"
+    assert run.error_message == "analysis exploded"
 
 
 def test_post_analysis_burst_uses_single_daemon_worker(

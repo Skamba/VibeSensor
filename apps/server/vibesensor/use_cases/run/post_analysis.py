@@ -314,5 +314,16 @@ class PostAnalysisWorker:
         with self._lock:
             self._last_completed_run_id = run_id
             self._last_completed_error = completed_error
+        db = self._history_db
+        if db is not None:
+            store_analysis_error = getattr(db, "store_analysis_error", None)
+            if callable(store_analysis_error):
+                try:
+                    store_analysis_error(run_id, completed_error)
+                except Exception:
+                    LOGGER.exception(
+                        "Failed to persist unexpected analysis failure for run %s",
+                        run_id,
+                    )
         self._error_cb(f"post-analysis failed for run {run_id}: {completed_error}")
         LOGGER.exception("Unexpected error in analysis worker for run %s", run_id)

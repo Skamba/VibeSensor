@@ -300,11 +300,20 @@ class TestPostAnalysisWorkerErrorHandling:
         make_worker,
     ) -> None:
         errors: list[str] = []
+        stored_errors: list[tuple[str, str]] = []
+
+        class FakeDB:
+            def store_analysis_error(self, run_id, msg):
+                stored_errors.append((run_id, msg))
 
         def _fail(_rid: str) -> None:
             raise RuntimeError("worker boom")
 
-        worker = make_worker(run_fn=_fail, error_callback=errors.append)
+        worker = make_worker(
+            run_fn=_fail,
+            history_db=FakeDB(),
+            error_callback=errors.append,
+        )
 
         worker.schedule("run-unexpected")
         assert worker.wait(timeout_s=3.0)
@@ -313,6 +322,7 @@ class TestPostAnalysisWorkerErrorHandling:
         assert snapshot.last_completed_run_id == "run-unexpected"
         assert snapshot.last_completed_error == "worker boom"
         assert errors == ["post-analysis failed for run run-unexpected: worker boom"]
+        assert stored_errors == [("run-unexpected", "worker boom")]
 
     def test_worker_retries_retryable_failure_until_success(
         self,
