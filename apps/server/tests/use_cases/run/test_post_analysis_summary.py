@@ -174,3 +174,51 @@ def test_build_post_analysis_summary_adds_short_run_warning(
             "explanation": "SUITABILITY_RUN_DURATION_WARNING",
         }
     ]
+
+
+def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_floor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeRunAnalysis:
+        def __init__(self, _context, samples, **_kwargs):
+            captured["sample"] = samples[0]
+
+        def summarize(self):
+            return SimpleNamespace(
+                diagnostic_case=SimpleNamespace(case_id="case-4"),
+            )
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
+        FakeRunAnalysis,
+    )
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
+        lambda _result: {"run_suitability": []},
+    )
+
+    run = build_post_analysis_input(
+        LoadedPostAnalysisRun(
+            run_id="run-derived-strength",
+            metadata=_run_metadata("run-derived-strength"),
+            language="en",
+            samples=[
+                {
+                    "t_s": 1.0,
+                    "top_peaks": [{"hz": 14.0, "amp": 0.12}],
+                    "strength_peak_amp_g": 0.12,
+                    "strength_floor_amp_g": 0.003,
+                }
+            ],
+            total_sample_count=1,
+            stride=1,
+        )
+    )
+
+    build_post_analysis_summary(run)
+
+    sample = captured["sample"]
+    assert sample.vibration_strength_db is not None
+    assert sample.strength_bucket
