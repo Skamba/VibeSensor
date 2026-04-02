@@ -5,7 +5,12 @@ from __future__ import annotations
 from collections.abc import Collection, Mapping, Sequence
 from typing import Protocol
 
-from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability, TestRun
+from vibesensor.domain import (
+    DrivingPhaseInterval,
+    LocationIntensitySummary,
+    RunSuitability,
+    TestRun,
+)
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
@@ -16,6 +21,7 @@ from vibesensor.shared.boundaries.summary_serialization import (
     PlotDataResultLike,
     SpeedBreakdownRowLike,
 )
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_schema import RunMetadata
 
 
@@ -42,7 +48,7 @@ class PreparedRunDataLike(Protocol):
     def run_noise_baseline_g(self) -> float | None: ...
 
     @property
-    def speed_breakdown_skipped_reason(self) -> Mapping[str, object] | None: ...
+    def speed_breakdown_skipped_reason(self) -> JsonObject | None: ...
 
     @property
     def speed_stats_by_phase(self) -> Mapping[str, SpeedProfileSummary]: ...
