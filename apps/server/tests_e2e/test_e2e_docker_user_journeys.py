@@ -183,8 +183,9 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             created_run_ids.append(run_id_1)
             run_1 = api_json(base_url, f"/api/history/{run_id_1}")
             metadata_1 = run_1["metadata"]
+            settings_snapshot = metadata_1["analysis_settings_snapshot"]
             for key, value in updated_tire.items():
-                assert float(metadata_1[key]) == pytest.approx(value)
+                assert float(settings_snapshot[key]) == pytest.approx(value)
             expected_circ = _circumference_m(
                 updated_tire["tire_width_mm"],
                 updated_tire["tire_aspect_pct"],
@@ -260,9 +261,13 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
 
             insights_nl = api_json(base_url, f"/api/history/{run_id_3}/insights?lang=nl")
             insights_en = api_json(base_url, f"/api/history/{run_id_3}/insights?lang=en")
-            checks_nl = {str(item.get("check")) for item in insights_nl.get("run_suitability", [])}
-            checks_en = {str(item.get("check")) for item in insights_en.get("run_suitability", [])}
-            # Analysis output is now language-neutral: check field contains i18n keys
+            checks_nl = {
+                str(item.get("check_key")) for item in insights_nl.get("run_suitability", [])
+            }
+            checks_en = {
+                str(item.get("check_key")) for item in insights_en.get("run_suitability", [])
+            }
+            # Analysis output is language-neutral: check_key contains the stable identifiers.
             assert "SUITABILITY_CHECK_SPEED_VARIATION" in checks_nl
             assert "SUITABILITY_CHECK_SPEED_VARIATION" in checks_en
 

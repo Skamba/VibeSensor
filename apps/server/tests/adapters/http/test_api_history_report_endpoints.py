@@ -34,10 +34,7 @@ async def test_history_insights_returns_persisted_analysis() -> None:
     result = response_payload(await endpoint("run-1"))
     assert result["lang"] == "en"
     assert "most_likely_origin" in result
-    check_keys = {
-        str(item.get("check_key") or item.get("check"))
-        for item in result.get("run_suitability", [])
-    }
+    check_keys = {str(item.get("check_key")) for item in result.get("run_suitability", [])}
     assert "SUITABILITY_CHECK_SPEED_VARIATION" in check_keys
 
 

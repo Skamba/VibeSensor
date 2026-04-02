@@ -180,7 +180,7 @@ class TestCarSnapshot:
             {
                 "id": "abc123",
                 "name": "Test Car",
-                "car_type": "sedan",
+                "type": "sedan",
                 "variant": "sport",
                 "aspects": {"tire_width_mm": 205.0, "tire_aspect_pct": 55.0},
             }
@@ -191,8 +191,8 @@ class TestCarSnapshot:
         assert snap.variant == "sport"
         assert snap.aspects["tire_width_mm"] == 205.0
 
-    def test_from_dict_with_car_id_key(self) -> None:
-        snap = CarSnapshot.from_dict({"car_id": "xyz"})
+    def test_from_dict_with_id_key(self) -> None:
+        snap = CarSnapshot.from_dict({"id": "xyz"})
         assert snap.car_id == "xyz"
 
     def test_to_dict_round_trip(self) -> None:

@@ -201,7 +201,7 @@ async def test_history_run_includes_sample_count() -> None:
 
 @pytest.mark.asyncio
 async def test_history_list_includes_recorded_car_name() -> None:
-    metadata = make_metadata(car_name="Track Car")
+    metadata = make_metadata(active_car_snapshot={"name": "Track Car"})
     samples = [sample(i) for i in range(3)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
@@ -266,12 +266,16 @@ async def test_history_run_rehydrates_flat_metadata_from_nested_run_context() ->
     payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
     projected_metadata = payload["metadata"]
 
-    assert projected_metadata["car_name"] == "Nested Track Car"
-    assert projected_metadata["car_type"] == "hatchback"
-    assert projected_metadata["active_car_id"] == "car-1"
-    assert float(projected_metadata["tire_width_mm"]) == pytest.approx(275.0)
-    assert float(projected_metadata["tire_aspect_pct"]) == pytest.approx(35.0)
-    assert float(projected_metadata["rim_in"]) == pytest.approx(20.0)
+    assert projected_metadata["active_car_snapshot"]["name"] == "Nested Track Car"
+    assert projected_metadata["active_car_snapshot"]["type"] == "hatchback"
+    assert projected_metadata["active_car_snapshot"]["id"] == "car-1"
+    assert float(
+        projected_metadata["analysis_settings_snapshot"]["tire_width_mm"]
+    ) == pytest.approx(275.0)
+    assert float(
+        projected_metadata["analysis_settings_snapshot"]["tire_aspect_pct"]
+    ) == pytest.approx(35.0)
+    assert float(projected_metadata["analysis_settings_snapshot"]["rim_in"]) == pytest.approx(20.0)
     assert float(projected_metadata["tire_circumference_m"]) > 0
 
 

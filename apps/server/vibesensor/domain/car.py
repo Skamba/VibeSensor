@@ -61,9 +61,9 @@ class CarSnapshot:
                     except (TypeError, ValueError):
                         pass
         return cls(
-            car_id=_str_or_none(d.get("id") or d.get("car_id")),
+            car_id=_str_or_none(d.get("id")),
             name=_str_or_none(d.get("name")),
-            car_type=_str_or_none(d.get("type") or d.get("car_type")),
+            car_type=_str_or_none(d.get("type")),
             variant=_str_or_none(d.get("variant")),
             aspects=aspects,
         )
@@ -166,17 +166,28 @@ class Car:
 
     @classmethod
     def from_metadata(cls, metadata: Mapping[str, object]) -> Car | None:
-        """Build optional case-scoped car context from submitted metadata."""
-        car_name = str(metadata.get("car_name") or metadata.get("name") or "").strip()
-        car_type = str(metadata.get("car_type") or "").strip()
-        car_variant = str(metadata.get("car_variant") or metadata.get("variant") or "").strip()
-        order_reference_spec = OrderReferenceSpec.from_settings(metadata)
-        if not (car_name or car_type or car_variant or order_reference_spec is not None):
+        """Build optional case-scoped car context from canonical run-context metadata."""
+        raw_snapshot = metadata.get("active_car_snapshot")
+        snapshot = (
+            CarSnapshot.from_dict(raw_snapshot) if isinstance(raw_snapshot, Mapping) else None
+        )
+
+        raw_settings = metadata.get("analysis_settings_snapshot")
+        if isinstance(raw_settings, Mapping):
+            order_reference_spec = OrderReferenceSpec.from_settings(raw_settings)
+        elif snapshot is not None and snapshot.aspects:
+            order_reference_spec = OrderReferenceSpec.from_settings(snapshot.aspects)
+        else:
+            order_reference_spec = None
+
+        if snapshot is None and order_reference_spec is None:
             return None
         return cls(
-            name=car_name or "Unnamed Car",
-            car_type=car_type or "sedan",
-            variant=car_variant or None,
+            id=snapshot.car_id if snapshot is not None else None,
+            name=snapshot.name if snapshot is not None and snapshot.name else "Unnamed Car",
+            car_type=snapshot.car_type if snapshot is not None and snapshot.car_type else "sedan",
+            aspects=snapshot.aspects if snapshot is not None and snapshot.aspects else None,
+            variant=snapshot.variant if snapshot is not None else None,
             order_reference_spec=order_reference_spec,
         )
 

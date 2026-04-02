@@ -157,11 +157,10 @@ class RunMetadata:
     @property
     def car_name(self) -> str | None:
         """Return the normalized persisted car name from metadata extras."""
-        value = self.extras.get("car_name") or self.extras.get("name")
-        if value is None:
-            active_car_snapshot = self.extras.get("active_car_snapshot")
-            if isinstance(active_car_snapshot, Mapping):
-                value = active_car_snapshot.get("name") or active_car_snapshot.get("type")
+        value = None
+        active_car_snapshot = self.extras.get("active_car_snapshot")
+        if isinstance(active_car_snapshot, Mapping):
+            value = active_car_snapshot.get("name") or active_car_snapshot.get("type")
         if isinstance(value, str):
             normalized = value.strip()
             return normalized or None

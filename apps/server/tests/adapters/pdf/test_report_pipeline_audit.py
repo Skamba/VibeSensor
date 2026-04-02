@@ -21,7 +21,7 @@ def _make_minimal_summary(
     base: dict[str, object] = {
         "lang": "en",
         "report_date": "2025-01-01T00:00:00",
-        "metadata": {"car_name": "Test Car"},
+        "metadata": {"active_car_snapshot": {"name": "Test Car"}},
         "findings": [],
         "top_causes": [],
         "speed_stats": {},

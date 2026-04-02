@@ -193,12 +193,10 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
         ],
         run_suitability=[
             {
-                "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
                 "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
                 "state": "warn",
             },
             {
-                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "pass",
             },
@@ -258,12 +256,10 @@ def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() ->
         ],
         run_suitability=[
             {
-                "check": "Potential saturation samples detected",
                 "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
                 "state": "warn",
             },
             {
-                "check": "Frame integrity",
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "pass",
             },
@@ -360,12 +356,10 @@ def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_
         ],
         run_suitability=[
             {
-                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "pass",
             },
             {
-                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "pass",
             },
@@ -424,12 +418,10 @@ def test_build_report_pdf_keeps_weak_spatial_engine_and_driveline_findings_on_in
         top_causes=[finding],
         run_suitability=[
             {
-                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "pass",
             },
             {
-                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "pass",
             },
@@ -467,22 +459,18 @@ def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> Non
         ],
         run_suitability=[
             {
-                "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "warn",
             },
             {
-                "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
                 "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
                 "state": "warn",
             },
             {
-                "check": "SUITABILITY_CHECK_SENSOR_COVERAGE",
                 "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
                 "state": "warn",
             },
             {
-                "check": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "warn",
             },

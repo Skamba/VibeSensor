@@ -2663,8 +2663,6 @@ export interface components {
          * @description Typed HTTP contract for one run-suitability diagnostic check.
          */
         RunSuitabilityCheck: {
-            /** Check */
-            check: string;
             /** Check Key */
             check_key: string;
             explanation?: components["schemas"]["PayloadValue"];

@@ -89,12 +89,10 @@ def _weak_spatial_order_summary(*, source: str, order_label: str) -> dict[str, o
         top_causes=[finding],
         run_suitability=[
             {
-                "check": "Frame integrity",
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "pass",
             },
             {
-                "check": "Speed variation",
                 "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "pass",
             },

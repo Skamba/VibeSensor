@@ -100,7 +100,7 @@ def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
         {
             "run_id": "persisted-run",
             "lang": "en",
-            "metadata": {"car_name": "Track Car", "car_type": "coupe"},
+            "metadata": {"active_car_snapshot": {"name": "Track Car", "type": "coupe"}},
             "report_date": "2026-03-23T07:31:01Z",
             "record_length": "5m",
             "rows": 120,
@@ -140,7 +140,7 @@ def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(
         {
             "run_id": "persisted-run",
             "lang": "en",
-            "metadata": {"car_name": "Track Car", "car_type": "coupe"},
+            "metadata": {"active_car_snapshot": {"name": "Track Car", "type": "coupe"}},
             "report_date": "2026-03-23T07:31:01Z",
             "record_length": "5m",
             "rows": 120,

@@ -140,9 +140,9 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
 
         insights_en = api_json(base, f"/api/history/{run_id}/insights?lang=en")
         insights_nl = api_json(base, f"/api/history/{run_id}/insights?lang=nl")
-        checks_en = {str(item.get("check")) for item in insights_en.get("run_suitability", [])}
-        checks_nl = {str(item.get("check")) for item in insights_nl.get("run_suitability", [])}
-        # Analysis output is now language-neutral: check field contains i18n keys
+        checks_en = {str(item.get("check_key")) for item in insights_en.get("run_suitability", [])}
+        checks_nl = {str(item.get("check_key")) for item in insights_nl.get("run_suitability", [])}
+        # Analysis output is language-neutral: check_key contains the stable identifiers.
         assert "SUITABILITY_CHECK_SPEED_VARIATION" in checks_en
         assert "SUITABILITY_CHECK_SPEED_VARIATION" in checks_nl
 

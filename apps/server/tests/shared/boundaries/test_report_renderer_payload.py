@@ -12,8 +12,10 @@ def test_build_report_renderer_payload_cleans_metadata_and_date() -> None:
     payload = {
         "run_id": "run-123",
         "metadata": {
-            "car_name": "  Track Car  ",
-            "car_type": " coupe ",
+            "active_car_snapshot": {
+                "name": "  Track Car  ",
+                "type": " coupe ",
+            },
             "recorded_utc_offset_seconds": "7200",
         },
         "report_date": " 2026-03-25T10:00:00Z ",

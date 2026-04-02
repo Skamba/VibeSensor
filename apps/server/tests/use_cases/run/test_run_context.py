@@ -14,7 +14,6 @@ from vibesensor.shared.run_context_warning import (
 )
 from vibesensor.use_cases.run.run_context import (
     add_current_context_warnings,
-    apply_legacy_run_context_fields,
     apply_run_context_snapshot,
     build_run_context_snapshot,
     order_reference_context_complete,
@@ -77,34 +76,6 @@ class TestApplyRunContextSnapshot:
             "aspects": {"tire_width_mm": 255.0},
         }
 
-    def test_legacy_projection_can_rehydrate_flat_context_fields(self) -> None:
-        metadata: dict[str, object] = {}
-        context_snapshot = build_run_context_snapshot(
-            analysis_settings_snapshot=AnalysisSettingsSnapshot(
-                tire_width_mm=255.0,
-                tire_aspect_pct=40.0,
-                rim_in=19.0,
-                final_drive_ratio=3.15,
-                current_gear_ratio=0.81,
-            ),
-            active_car_snapshot=CarSnapshot(
-                car_id="typed-id",
-                name="Typed Name",
-                car_type="typed-type",
-                variant="typed-variant",
-            ),
-        )
-
-        apply_legacy_run_context_fields(metadata, context_snapshot=context_snapshot)
-
-        assert metadata["active_car_id"] == "typed-id"
-        assert metadata["car_name"] == "Typed Name"
-        assert metadata["car_type"] == "typed-type"
-        assert metadata["car_variant"] == "typed-variant"
-        assert metadata["final_drive_ratio"] == pytest.approx(3.15)
-        assert metadata["current_gear_ratio"] == pytest.approx(0.81)
-        assert metadata["tire_width_mm"] == pytest.approx(255.0)
-
     def test_no_active_car_snapshot_keeps_car_fields_absent(self) -> None:
         metadata: dict[str, object] = {}
         settings = AnalysisSettingsSnapshot(tire_width_mm=205.0)
@@ -124,7 +95,7 @@ class TestApplyRunContextSnapshot:
 
 
 class TestBoundaryHelpers:
-    def test_run_context_snapshot_from_metadata_falls_back_to_legacy_flat_fields(self) -> None:
+    def test_run_context_snapshot_from_metadata_ignores_flat_legacy_fields(self) -> None:
         snapshot = run_context_snapshot_from_metadata(
             {
                 "tire_width_mm": 255.0,
@@ -139,12 +110,8 @@ class TestBoundaryHelpers:
             },
         )
 
-        assert snapshot.analysis_settings.final_drive_ratio == pytest.approx(3.15)
-        assert snapshot.car is not None
-        assert snapshot.car.car_id == "legacy-1"
-        assert snapshot.car.name == "Legacy Car"
-        assert snapshot.car.car_type == "wagon"
-        assert snapshot.car.variant == "touring"
+        assert snapshot.analysis_settings == AnalysisSettingsSnapshot()
+        assert snapshot.car is None
 
     def test_run_context_snapshot_from_metadata_prefers_nested_snapshot_over_flat_aliases(
         self,

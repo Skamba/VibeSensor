@@ -52,10 +52,11 @@ def build_report_renderer_payload(
     recorded_utc_offset_seconds = coerce_utc_offset_seconds(
         metadata.get("recorded_utc_offset_seconds"),
     )
+    car_name, car_type = _car_identity_from_metadata(metadata)
     return PreparedReportRendererPayload(
         run_id=str(payload.get("run_id") or "unknown") or "unknown",
-        car_name=str(metadata.get("car_name") or "").strip() or None,
-        car_type=str(metadata.get("car_type") or "").strip() or None,
+        car_name=car_name,
+        car_type=car_type,
         report_date=report_date_str,
         duration_s=report_duration_s(payload),
         sample_count=sample_count,
@@ -63,3 +64,14 @@ def build_report_renderer_payload(
         peak_table_rows=peak_table_rows(payload),
         recorded_utc_offset_seconds=recorded_utc_offset_seconds,
     )
+
+
+def _car_identity_from_metadata(metadata: Mapping[str, object]) -> tuple[str | None, str | None]:
+    raw_snapshot = metadata.get("active_car_snapshot")
+    if not isinstance(raw_snapshot, Mapping):
+        return None, None
+    raw_name = raw_snapshot.get("name")
+    raw_type = raw_snapshot.get("type")
+    name = str(raw_name).strip() if isinstance(raw_name, str) else ""
+    car_type = str(raw_type).strip() if isinstance(raw_type, str) else ""
+    return (name or None, car_type or None)

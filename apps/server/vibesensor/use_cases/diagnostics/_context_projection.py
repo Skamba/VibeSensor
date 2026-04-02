@@ -6,7 +6,6 @@ from typing import cast
 
 from vibesensor.domain import Car, ConfigurationSnapshot, Symptom
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.run.run_context import apply_legacy_run_context_fields
 
 from ._context import DiagnosticsContext
 
@@ -41,7 +40,6 @@ def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
         metadata["engine_rpm"] = context.explicit_engine_rpm
 
     metadata.update(cast(JsonObject, context.run_context.to_metadata_dict()))
-    apply_legacy_run_context_fields(metadata, context_snapshot=context.run_context)
     tire_circumference_m = context.tire_circumference_m
     if tire_circumference_m is not None or "tire_circumference_m" in metadata:
         metadata["tire_circumference_m"] = tire_circumference_m

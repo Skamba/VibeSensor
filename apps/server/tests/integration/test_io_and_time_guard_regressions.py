@@ -233,7 +233,10 @@ class TestReportDataBuilderRecordedTimezone:
     def test_date_str_uses_recorded_offset_when_present(self) -> None:
         summary = _make_summary(
             "2025-06-01T14:30:00Z",
-            metadata={"car_name": "TestCar", "recorded_utc_offset_seconds": 7200},
+            metadata={
+                "active_car_snapshot": {"name": "TestCar"},
+                "recorded_utc_offset_seconds": 7200,
+            },
         )
         result = map_summary(prepare_report_input(summary))
         assert result.run_datetime == "2025-06-01 16:30:00 UTC+02:00"

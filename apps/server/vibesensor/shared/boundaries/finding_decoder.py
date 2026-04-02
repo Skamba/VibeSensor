@@ -100,7 +100,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     )
     source = origin.suspected_source
 
-    explicit = payload.get("finding_kind") or payload.get("finding_type")
+    explicit = payload.get("finding_kind")
     kind = Finding.derive_kind_from_fields(
         finding_id,
         severity,

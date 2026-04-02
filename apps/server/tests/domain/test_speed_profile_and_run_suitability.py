@@ -357,9 +357,9 @@ class TestRunSuitability:
         rs = run_suitability_from_payload([])
         assert rs.overall == "pass"
 
-    def test_from_checks_legacy_key(self) -> None:
-        rs = run_suitability_from_payload([{"check": "old_key", "state": "pass"}])
-        assert rs.checks[0].check_key == "old_key"
+    def test_from_checks_canonical_key(self) -> None:
+        rs = run_suitability_from_payload([{"check_key": "speed_profile", "state": "pass"}])
+        assert rs.checks[0].check_key == "speed_profile"
 
     def test_has_reference_gaps_true_when_not_passing(self) -> None:
         rs = RunSuitability(

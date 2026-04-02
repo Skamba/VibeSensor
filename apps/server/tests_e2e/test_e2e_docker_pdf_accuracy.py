@@ -49,7 +49,8 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
             assert required in text, f"missing PDF section: {required}"
 
         metadata = detail["metadata"]
-        car_name = str(metadata.get("car_name") or "").strip().lower()
+        active_car_snapshot = metadata.get("active_car_snapshot") or {}
+        car_name = str(active_car_snapshot.get("name") or "").strip().lower()
         if car_name:
             assert car_name in text
         assert run_id.lower() in text

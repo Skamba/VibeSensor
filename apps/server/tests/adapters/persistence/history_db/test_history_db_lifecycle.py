@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from test_support.core import canonicalize_run_context_metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB, SQLiteHistoryEngine
@@ -31,7 +32,7 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
         "source": "test",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return RunMetadata.from_dict(canonicalize_run_context_metadata(payload))
 
 
 def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
@@ -92,7 +93,11 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
 
 def test_list_runs_includes_recorded_car_name(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-car", "2026-01-01T00:00:00Z", _metadata("run-car", car_name="Track Car"))
+    db.create_run(
+        "run-car",
+        "2026-01-01T00:00:00Z",
+        _metadata("run-car", active_car_snapshot={"name": "Track Car"}),
+    )
 
     run = db.list_runs()[0]
 
@@ -588,7 +593,9 @@ def test_update_run_metadata_overwrites_stored_metadata(tmp_path: Path) -> None:
     assert db.update_run_metadata("run-meta", _metadata("run-meta", tire_width_mm=285.0)) is True
     run = db.get_run("run-meta")
     assert run is not None
-    assert run.metadata.extras["tire_width_mm"] == 285.0
+    settings_snapshot = run.metadata.extras["analysis_settings_snapshot"]
+    assert isinstance(settings_snapshot, dict)
+    assert settings_snapshot["tire_width_mm"] == 285.0
 
 
 def test_append_empty_samples_is_noop(tmp_path: Path) -> None:
