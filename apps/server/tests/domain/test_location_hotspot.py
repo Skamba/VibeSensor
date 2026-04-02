@@ -8,8 +8,11 @@ from vibesensor.domain.location_hotspot import (
     LocationHotspot,
     LocationHotspotRow,
     LocationIntensitySummary,
-    PhaseIntensitySummary,
     StrengthBucketDistribution,
+)
+from vibesensor.shared.boundaries.location_hotspot_codec import (
+    location_intensity_summary_from_mapping,
+    phase_intensity_summary_from_mapping,
 )
 
 
@@ -110,8 +113,8 @@ class TestComputeConfidence:
 
 
 class TestLocationIntensitySummaryRows:
-    def test_from_dict_parses_typed_nested_values(self) -> None:
-        summary = LocationIntensitySummary.from_dict(
+    def test_boundary_codec_parses_typed_nested_values(self) -> None:
+        summary = location_intensity_summary_from_mapping(
             {
                 "location": "rear-left",
                 "sample_count": 8,
@@ -150,8 +153,8 @@ class TestLocationIntensitySummaryRows:
 
         assert row.unit == "db"
 
-    def test_phase_intensity_summary_from_dict(self) -> None:
-        phase = PhaseIntensitySummary.from_dict(
+    def test_phase_intensity_summary_boundary_codec(self) -> None:
+        phase = phase_intensity_summary_from_mapping(
             {
                 "count": 5,
                 "mean_intensity_db": 10.0,

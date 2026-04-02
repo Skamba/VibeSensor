@@ -542,7 +542,7 @@ def test_finalize_run_returns_false_when_already_analyzing(tmp_path: Path) -> No
         db.finalize_run(
             "run-finalize",
             "2026-01-01T00:05:00Z",
-            metadata=_metadata("run-finalize", step=1),
+            metadata=_metadata("run-finalize"),
         )
         is True
     )
@@ -550,7 +550,7 @@ def test_finalize_run_returns_false_when_already_analyzing(tmp_path: Path) -> No
         db.finalize_run(
             "run-finalize",
             "2026-01-01T00:06:00Z",
-            metadata=_metadata("run-finalize", step=2),
+            metadata=_metadata("run-finalize"),
         )
         is False
     )
@@ -564,7 +564,7 @@ def test_finalize_run_persists_case_id(tmp_path: Path) -> None:
         db.finalize_run(
             "run-case-finalize",
             "2026-01-01T00:05:00Z",
-            metadata=_metadata("run-case-finalize", step=1),
+            metadata=_metadata("run-case-finalize"),
             case_id="case-456",
         )
         is True
@@ -573,7 +573,6 @@ def test_finalize_run_persists_case_id(tmp_path: Path) -> None:
     run = db.get_run("run-case-finalize")
     assert run is not None
     assert run.status.value == "analyzing"
-    assert run.metadata.extras["step"] == 1
     assert run.case_id == "case-456"
 
 
@@ -594,9 +593,7 @@ def test_update_run_metadata_overwrites_stored_metadata(tmp_path: Path) -> None:
     assert db.update_run_metadata("run-meta", _metadata("run-meta", tire_width_mm=285.0)) is True
     run = db.get_run("run-meta")
     assert run is not None
-    settings_snapshot = run.metadata.extras["analysis_settings_snapshot"]
-    assert isinstance(settings_snapshot, dict)
-    assert settings_snapshot["tire_width_mm"] == 285.0
+    assert run.metadata.analysis_settings.tire_width_mm == 285.0
 
 
 def test_append_empty_samples_is_noop(tmp_path: Path) -> None:

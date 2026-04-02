@@ -11,6 +11,7 @@ import pytest
 from test_support.core import canonicalize_run_context_metadata
 from test_support.findings import make_finding_payload
 from vibesensor.domain import LocationHotspot
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
@@ -28,7 +29,7 @@ from vibesensor.use_cases.diagnostics.orders.pipeline import (
 from vibesensor.use_cases.diagnostics.orders.pipeline import (
     _build_order_findings as _findings_build_order_findings,
 )
-from vibesensor.use_cases.run.sample_builder import create_run_metadata
+from vibesensor.use_cases.run.run_metadata_builder import create_run_metadata
 
 # Canonical run-end record reused across report tests.
 RUN_END = {"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"}
@@ -550,7 +551,9 @@ def analysis_metadata(**overrides: Any) -> dict[str, Any]:
     }
     defaults.update(overrides)
     valid_keys = create_run_metadata.__code__.co_varnames
-    metadata = create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys})
+    metadata = run_metadata_to_json_object(
+        create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys}),
+    )
     metadata.update(
         canonicalize_run_context_metadata(
             {k: v for k, v in defaults.items() if k not in valid_keys}
@@ -747,14 +750,16 @@ def max_non_ref_confidence(findings: tuple | list) -> float:
 
 def write_test_log(path: Path, n_samples: int = 20, speed: float = 85.0) -> None:
     """Write a small run log with precomputed strength metrics."""
-    metadata = create_run_metadata(
-        run_id="test-run",
-        start_time_utc="2025-01-01T00:00:00+00:00",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        accel_scale_g_per_lsb=1.0 / 256.0,
+    metadata = run_metadata_to_json_object(
+        create_run_metadata(
+            run_id="test-run",
+            start_time_utc="2025-01-01T00:00:00+00:00",
+            sensor_model="ADXL345",
+            raw_sample_rate_hz=200,
+            feature_interval_s=0.5,
+            fft_window_size_samples=256,
+            accel_scale_g_per_lsb=1.0 / 256.0,
+        ),
     )
     samples = [analysis_sample(float(i) * 0.5, speed, 0.01 + i * 0.001) for i in range(n_samples)]
     end = {

@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 
 __all__ = ["OrderMatchObservation"]
-
-from ._numeric import coerce_float
 
 _CLOSE_MATCH_THRESHOLD = 0.05  # 5% relative error
 
@@ -44,36 +41,3 @@ class OrderMatchObservation:
     def frequency_error_hz(self) -> float:
         """Absolute frequency error in Hz."""
         return abs(self.predicted_hz - self.matched_hz)
-
-    @classmethod
-    def from_dict(cls, raw: Mapping[str, object]) -> OrderMatchObservation:
-        """Parse from a raw dict, tolerating missing keys for historical data."""
-
-        def _opt_float(key: str) -> float | None:
-            v = raw.get(key)
-            if v is None:
-                return None
-            try:
-                return coerce_float(v)
-            except (TypeError, ValueError):
-                return None
-
-        def _float(key: str, default: float = 0.0) -> float:
-            v = raw.get(key)
-            if v is None:
-                return default
-            try:
-                return coerce_float(v)
-            except (TypeError, ValueError):
-                return default
-
-        return cls(
-            predicted_hz=_float("predicted_hz"),
-            matched_hz=_float("matched_hz"),
-            rel_error=_float("rel_error"),
-            amp=_float("amp"),
-            location=str(raw.get("location", "")),
-            t_s=_opt_float("t_s"),
-            speed_kmh=_opt_float("speed_kmh"),
-            phase=str(raw["phase"]) if raw.get("phase") is not None else None,
-        )

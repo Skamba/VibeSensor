@@ -4,11 +4,19 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
-from typing import Final
 
+from vibesensor.domain import Symptom
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.run_schema import RUN_METADATA_TYPE, RUN_SCHEMA_VERSION, RunMetadata
+from vibesensor.shared.time_utils import coerce_utc_offset_seconds
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.run_schema import (
+    PEAK_PICKER_METHOD,
+    RUN_METADATA_TYPE,
+    RUN_SCHEMA_VERSION,
+    RunMetadata,
+)
+
+from .run_context_codec import run_context_snapshot_from_metadata, run_context_snapshot_to_metadata
 
 __all__ = [
     "run_metadata_from_mapping",
@@ -16,31 +24,6 @@ __all__ = [
 ]
 
 _LOGGER = logging.getLogger(__name__)
-_RUN_METADATA_FIELD_KEYS: Final[frozenset[str]] = frozenset(
-    {
-        "record_type",
-        "schema_version",
-        "run_id",
-        "start_time_utc",
-        "end_time_utc",
-        "sensor_model",
-        "firmware_version",
-        "raw_sample_rate_hz",
-        "feature_interval_s",
-        "fft_window_size_samples",
-        "fft_window_type",
-        "peak_picker_method",
-        "accel_scale_g_per_lsb",
-        "incomplete_for_order_analysis",
-    }
-)
-
-
-def _as_str_or_none(value: object) -> str | None:
-    if isinstance(value, str):
-        normalized = value.strip()
-        return normalized or None
-    return None
 
 
 def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
@@ -56,20 +39,26 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         start_time_utc=str(data.get("start_time_utc", "")),
         end_time_utc=_as_str_or_none(data.get("end_time_utc")),
         sensor_model=str(data.get("sensor_model", "unknown")),
-        firmware_version=(str(data.get("firmware_version", "")).strip() or None),
+        firmware_version=_as_str_or_none(data.get("firmware_version")),
         raw_sample_rate_hz=as_int_or_none(data.get("raw_sample_rate_hz")),
         feature_interval_s=as_float_or_none(data.get("feature_interval_s")),
         fft_window_size_samples=as_int_or_none(data.get("fft_window_size_samples")),
         fft_window_type=_as_str_or_none(data.get("fft_window_type")),
-        peak_picker_method=str(data.get("peak_picker_method", "")),
+        peak_picker_method=_as_str_or_none(data.get("peak_picker_method")) or PEAK_PICKER_METHOD,
         accel_scale_g_per_lsb=as_float_or_none(data.get("accel_scale_g_per_lsb")),
         incomplete_for_order_analysis=bool(data.get("incomplete_for_order_analysis", False)),
-        extras={
-            key: value
-            for key, value in data.items()
-            if key not in _RUN_METADATA_FIELD_KEYS
-            and (value is None or isinstance(value, (bool, int, float, str, list, dict)))
-        },
+        run_context=run_context_snapshot_from_metadata(data),
+        case_id=_as_str_or_none(data.get("case_id")) or "",
+        sensor_mac=_as_str_or_none(data.get("sensor_mac")),
+        summary_version=max(1, as_int_or_none(data.get("_summary_version")) or 1),
+        symptom=_symptom_or_none(data),
+        report_date=_as_str_or_none(data.get("report_date")),
+        language=_normalized_language(data.get("language")),
+        explicit_engine_rpm=as_float_or_none(data.get("engine_rpm")),
+        tire_circumference_m_override=as_float_or_none(data.get("tire_circumference_m")),
+        units=_json_object_or_none(data.get("units")),
+        amplitude_definitions=_json_object_or_none(data.get("amplitude_definitions")),
+        recorded_utc_offset_seconds=coerce_utc_offset_seconds(data.get("recorded_utc_offset_seconds")),
     )
 
 
@@ -91,6 +80,54 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         "peak_picker_method": metadata.peak_picker_method,
         "accel_scale_g_per_lsb": metadata.accel_scale_g_per_lsb,
         "incomplete_for_order_analysis": metadata.incomplete_for_order_analysis,
+        "case_id": metadata.case_id,
+        "sensor_mac": metadata.sensor_mac,
+        "_summary_version": metadata.summary_version,
+        "report_date": metadata.report_date,
+        "language": metadata.language,
+        **run_context_snapshot_to_metadata(metadata.run_context),
     }
-    payload.update(metadata.extras)
+    if metadata.symptom is not None and not metadata.symptom.is_unspecified:
+        payload["symptom"] = metadata.symptom.description
+        if metadata.symptom.onset:
+            payload["symptom_onset"] = metadata.symptom.onset
+        if metadata.symptom.context:
+            payload["symptom_context"] = metadata.symptom.context
+    if metadata.explicit_engine_rpm is not None:
+        payload["engine_rpm"] = metadata.explicit_engine_rpm
+    if metadata.tire_circumference_m is not None:
+        payload["tire_circumference_m"] = metadata.tire_circumference_m
+    if metadata.units is not None:
+        payload["units"] = metadata.units
+    if metadata.amplitude_definitions is not None:
+        payload["amplitude_definitions"] = metadata.amplitude_definitions
+    if metadata.recorded_utc_offset_seconds is not None:
+        payload["recorded_utc_offset_seconds"] = metadata.recorded_utc_offset_seconds
     return payload
+
+
+def _as_str_or_none(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _normalized_language(value: object) -> str:
+    text = _as_str_or_none(value)
+    return text.lower() if text is not None else "en"
+
+
+def _symptom_or_none(data: Mapping[str, object]) -> Symptom | None:
+    description = _as_str_or_none(data.get("symptom"))
+    if description is None:
+        return None
+    return Symptom(
+        description=description,
+        onset=_as_str_or_none(data.get("symptom_onset")) or "",
+        context=_as_str_or_none(data.get("symptom_context")) or "",
+    )
+
+
+def _json_object_or_none(value: object) -> JsonObject | None:
+    return dict(value) if is_json_object(value) else None

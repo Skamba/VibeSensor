@@ -1,33 +1,19 @@
-"""Pure functions for building sample records from sensor metrics.
-
-All functions in this module are stateless and can be tested independently
-of ``RunRecorder`` or any async / threading machinery.
-"""
+"""Pure functions for building canonical typed sensor frames from live sensor metrics."""
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, NamedTuple
 
-from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.boundaries.strength_metrics_codec import strength_metrics_from_mapping
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
 from vibesensor.shared.ports import ClientTracker, SensorMetadataReader
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
-from vibesensor.shared.time_utils import coerce_utc_offset_seconds
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.payload_types import ClientMetrics
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
-from vibesensor.use_cases.run.run_context import (
-    apply_run_context_snapshot,
-    order_reference_context_complete,
-)
 
 if TYPE_CHECKING:
     from vibesensor.shared.ports import SignalSource
@@ -40,6 +26,8 @@ _SPEED_SOURCE_MAP = {
     "fallback_manual": "manual",
     "none": "none",
 }
+
+_LIVE_SAMPLE_WINDOW_S = 2.0
 
 
 def extract_strength_data(
@@ -120,26 +108,6 @@ def resolve_speed_context(
     )
 
 
-def firmware_version_for_run(registry: ClientTracker) -> str | None:
-    """Collect firmware version string(s) from active clients."""
-    versions: set[str] = set()
-    for client_id in registry.active_client_ids():
-        record = registry.get(client_id)
-        if record is None:
-            continue
-        firmware_version = str(getattr(record, "firmware_version", "") or "").strip()
-        if firmware_version:
-            versions.add(firmware_version)
-    if not versions:
-        return None
-    if len(versions) == 1:
-        return next(iter(versions))
-    return ", ".join(sorted(versions))
-
-
-_LIVE_SAMPLE_WINDOW_S = 2.0
-
-
 def build_sample_records(
     *,
     run_id: str,
@@ -201,12 +169,11 @@ def build_sample_records(
         vibration_strength_db = strength_metrics.vibration_strength_db
         strength_peak_amp_g = strength_metrics.peak_amp_g
         strength_floor_amp_g = strength_metrics.noise_floor_amp_g
-
-        # Derive severity bucket directly from the dB value via the
-        # canonical bucket_for_strength() function (single source of truth).
-        strength_bucket: str | None = None
-        if vibration_strength_db is not None:
-            strength_bucket = bucket_for_strength(vibration_strength_db)
+        strength_bucket = (
+            bucket_for_strength(vibration_strength_db)
+            if vibration_strength_db is not None
+            else None
+        )
 
         sample_rate_hz = (
             processor.latest_sample_rate_hz(record.client_id)
@@ -220,136 +187,37 @@ def build_sample_records(
             fallback_name=str(record.name or ""),
             fallback_location_code=str(getattr(record, "location_code", "") or ""),
         )
-        frame = SensorFrame(
-            run_id=run_id,
-            timestamp_utc=timestamp_utc,
-            t_s=t_s,
-            client_id=client_id,
-            client_name=resolved_name,
-            location=resolved_location,
-            sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
-            speed_kmh=speed_kmh,
-            gps_speed_kmh=gps_speed_kmh,
-            speed_source=speed_source,
-            engine_rpm=engine_rpm,
-            engine_rpm_source=engine_rpm_source,
-            gear=gear_ratio if isinstance(gear_ratio, float) else None,
-            final_drive_ratio=final_drive_ratio if isinstance(final_drive_ratio, float) else None,
-            accel_x_g=accel_x_g,
-            accel_y_g=accel_y_g,
-            accel_z_g=accel_z_g,
-            dominant_freq_hz=dominant_hz,
-            dominant_axis="combined",
-            top_peaks=tuple(peak for peak in strength_metrics.top_peaks[:8] if peak.is_valid),
-            vibration_strength_db=vibration_strength_db,
-            strength_bucket=strength_bucket,
-            strength_peak_amp_g=strength_peak_amp_g,
-            strength_floor_amp_g=strength_floor_amp_g,
-            frames_dropped_total=int(record.frames_dropped),
-            queue_overflow_drops=int(record.queue_overflow_drops),
+        records.append(
+            SensorFrame(
+                run_id=run_id,
+                timestamp_utc=timestamp_utc,
+                t_s=t_s,
+                client_id=client_id,
+                client_name=resolved_name,
+                location=resolved_location,
+                sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
+                speed_kmh=speed_kmh,
+                gps_speed_kmh=gps_speed_kmh,
+                speed_source=speed_source,
+                engine_rpm=engine_rpm,
+                engine_rpm_source=engine_rpm_source,
+                gear=gear_ratio if isinstance(gear_ratio, float) else None,
+                final_drive_ratio=(
+                    final_drive_ratio if isinstance(final_drive_ratio, float) else None
+                ),
+                accel_x_g=accel_x_g,
+                accel_y_g=accel_y_g,
+                accel_z_g=accel_z_g,
+                dominant_freq_hz=dominant_hz,
+                dominant_axis="combined",
+                top_peaks=tuple(peak for peak in strength_metrics.top_peaks[:8] if peak.is_valid),
+                vibration_strength_db=vibration_strength_db,
+                strength_bucket=strength_bucket,
+                strength_peak_amp_g=strength_peak_amp_g,
+                strength_floor_amp_g=strength_floor_amp_g,
+                frames_dropped_total=int(record.frames_dropped),
+                queue_overflow_drops=int(record.queue_overflow_drops),
+            )
         )
-        records.append(frame)
 
     return records
-
-
-def create_run_metadata(
-    *,
-    run_id: str,
-    start_time_utc: str,
-    sensor_model: str,
-    raw_sample_rate_hz: int | None,
-    feature_interval_s: float | None,
-    fft_window_size_samples: int | None,
-    accel_scale_g_per_lsb: float | None,
-    firmware_version: str | None = None,
-    end_time_utc: str | None = None,
-    incomplete_for_order_analysis: bool = False,
-    recorded_utc_offset_seconds: int | None = None,
-) -> JsonObject:
-    """Build and return a run-metadata dict from the supplied fields."""
-    metadata = run_metadata_to_json_object(
-        RunMetadata.create(
-            run_id=run_id,
-            start_time_utc=start_time_utc,
-            sensor_model=sensor_model,
-            firmware_version=firmware_version,
-            raw_sample_rate_hz=raw_sample_rate_hz,
-            feature_interval_s=feature_interval_s,
-            fft_window_size_samples=fft_window_size_samples,
-            accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-            end_time_utc=end_time_utc,
-            incomplete_for_order_analysis=incomplete_for_order_analysis,
-        )
-    )
-    normalized_offset = coerce_utc_offset_seconds(recorded_utc_offset_seconds)
-    if normalized_offset is not None:
-        metadata["recorded_utc_offset_seconds"] = normalized_offset
-    return metadata
-
-
-def build_run_metadata(
-    *,
-    run_id: str,
-    start_time_utc: str,
-    analysis_settings_snapshot: AnalysisSettingsSnapshot,
-    sensor_model: str,
-    firmware_version: str | None,
-    default_sample_rate_hz: int,
-    metrics_log_hz: int,
-    fft_window_size_samples: int,
-    accel_scale_g_per_lsb: float | None,
-    active_car_snapshot: CarSnapshot | None = None,
-    language_provider: Callable[[], str] | None = None,
-    recorded_utc_offset_seconds: int | None = None,
-) -> JsonObject:
-    """Assemble comprehensive run metadata."""
-    feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
-    raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
-    incomplete = raw_sample_rate_hz is None
-    run_car_snapshot = _car_snapshot_for_run(
-        active_car_snapshot=active_car_snapshot,
-        firmware_version=firmware_version,
-    )
-    metadata: JsonObject = create_run_metadata(
-        run_id=run_id,
-        start_time_utc=start_time_utc,
-        sensor_model=sensor_model,
-        firmware_version=firmware_version,
-        raw_sample_rate_hz=raw_sample_rate_hz,
-        feature_interval_s=feature_interval_s,
-        fft_window_size_samples=(fft_window_size_samples if fft_window_size_samples > 0 else None),
-        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-        incomplete_for_order_analysis=incomplete,
-        recorded_utc_offset_seconds=recorded_utc_offset_seconds,
-    )
-    apply_run_context_snapshot(
-        metadata,
-        analysis_settings_snapshot=analysis_settings_snapshot,
-        active_car_snapshot=run_car_snapshot,
-    )
-    metadata["incomplete_for_order_analysis"] = not order_reference_context_complete(metadata)
-    if language_provider is not None:
-        metadata["language"] = str(language_provider()).strip().lower() or "en"
-    return dict(metadata)
-
-
-_SIMULATOR_DEFAULT_CAR = CarSnapshot(
-    car_id="simulator-default",
-    name="VibeSensor Simulator",
-    car_type="sedan",
-)
-
-
-def _car_snapshot_for_run(
-    *,
-    active_car_snapshot: CarSnapshot | None,
-    firmware_version: str | None,
-) -> CarSnapshot | None:
-    """Return the car snapshot to persist for a run."""
-    if active_car_snapshot is not None:
-        return active_car_snapshot
-    tokens = [token.strip().lower() for token in str(firmware_version or "").split(",")]
-    if any(token.startswith("sim-") for token in tokens if token):
-        return _SIMULATOR_DEFAULT_CAR
-    return None

@@ -184,13 +184,12 @@ class TestFinalizeRunWithMetadata:
     def test_atomic_metadata_and_status(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
         db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
-        new_meta = _metadata("r1", end_time_utc="2026-01-01T00:05:00Z", extra="val")
+        new_meta = _metadata("r1", end_time_utc="2026-01-01T00:05:00Z")
         db.finalize_run("r1", "2026-01-01T00:05:00Z", metadata=new_meta)
         run = db.get_run("r1")
         assert run is not None
         assert run.status.value == "analyzing"
         assert run.end_time_utc == "2026-01-01T00:05:00Z"
-        assert run.metadata.extras["extra"] == "val"
         db.close()
 
     def test_only_recording_transitions(self, tmp_path: Path) -> None:
@@ -198,7 +197,7 @@ class TestFinalizeRunWithMetadata:
         db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         db.finalize_run("r1", "2026-01-01T00:05:00Z")
         # Already analyzing — second finalize with metadata should be no-op
-        db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata=_metadata("r1", extra="v2"))
+        db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata=_metadata("r1"))
         run = db.get_run("r1")
         assert run is not None
         assert run.status.value == "analyzing"

@@ -13,9 +13,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
 
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
@@ -34,7 +33,7 @@ _RETRY_COOLDOWN_BASE_S = 2.0
 _MAX_APPEND_RETRIES = 3
 _APPEND_RETRY_DELAYS_S = (0.1, 0.3)
 
-MetadataBuilder = Callable[[str, str], JsonObject]
+MetadataBuilder = Callable[[str, str], RunMetadata]
 RunIdMatcher = Callable[[str], bool]
 LoggerProvider = Callable[[], logging.Logger]
 MonotonicFn = Callable[[], float]
@@ -143,11 +142,13 @@ class RunPersistenceWriter:
         with self._lock:
             return self._max_write_duration_s
 
-    def set_last_write_error(self, value: str | None) -> None:
-        self.last_write_error = value
+    def set_last_write_error(self, message: str | None) -> None:
+        with self._lock:
+            self._last_write_error = message
 
     def clear_last_write_error(self) -> None:
-        self.last_write_error = None
+        with self._lock:
+            self._last_write_error = None
 
     def status_snapshot(self) -> PersistenceStatusSnapshot:
         with self._lock:
@@ -201,7 +202,7 @@ class RunPersistenceWriter:
             history_db.create_run(
                 run_id,
                 start_time_utc,
-                run_metadata_from_mapping(metadata),
+                metadata,
             )
             with self._lock:
                 if not self._run_id_matches(run_id):
@@ -334,11 +335,11 @@ class RunPersistenceWriter:
             return True
         try:
             latest_metadata = self._metadata_builder(run_id, start_time_utc)
-            latest_metadata["end_time_utc"] = end_utc
+            latest_metadata.end_time_utc = end_utc
             finalized = history_db.finalize_run(
                 run_id,
                 end_utc,
-                metadata=run_metadata_from_mapping(latest_metadata),
+                metadata=latest_metadata,
             )
             if finalized is False:
                 self.set_last_write_error("history finalize_run skipped due to invalid state")
