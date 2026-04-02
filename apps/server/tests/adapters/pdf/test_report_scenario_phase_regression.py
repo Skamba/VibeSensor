@@ -17,7 +17,7 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
     phase_summary,
     segment_run_phases,
 )
-from vibesensor.use_cases.diagnostics.run_analysis import build_findings_for_samples
+from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.use_cases.diagnostics.signal_aggregation import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,

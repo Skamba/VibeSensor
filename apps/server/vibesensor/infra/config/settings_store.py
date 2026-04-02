@@ -69,6 +69,7 @@ from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.car_config import (
     CarConfigUpdatePayload,
     CarsSnapshot,
+    car_from_persistence_dict,
     car_to_persistence_dict,
 )
 from vibesensor.shared.types.sensor_config import (
@@ -156,7 +157,7 @@ class SettingsStore:
             return
 
         with self._lock:
-            self._car_state.cars = [Car.from_persisted_dict(car) for car in snapshot["cars"]]
+            self._car_state.cars = [car_from_persistence_dict(car) for car in snapshot["cars"]]
 
             active_id = snapshot["activeCarId"] or ""
             car_ids = {c.id for c in self._car_state.cars}

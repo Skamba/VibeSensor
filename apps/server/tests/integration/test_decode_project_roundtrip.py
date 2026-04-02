@@ -29,7 +29,7 @@ from vibesensor.shared.boundaries.analysis_summary_projection import project_ana
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import AnalysisResult, RunAnalysis
 
 # -- helpers ---------------------------------------------------------------
@@ -51,8 +51,11 @@ def _run_analysis() -> tuple[RunAnalysis, AnalysisResult]:
         )
     )
     analysis = RunAnalysis(
-        build_diagnostics_context(meta, file_name="roundtrip"),
-        sensor_frames_from_rows(samples),
+        build_diagnostics_run_input(
+            run_metadata_from_mapping(meta),
+            sensor_frames_from_rows(samples),
+            file_name="roundtrip",
+        ),
         lang="en",
         file_name="roundtrip",
     )

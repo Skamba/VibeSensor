@@ -14,6 +14,7 @@ from vibesensor.infra.config.settings_transaction import log_settings_change
 from vibesensor.shared.types.car_config import (
     CarConfigUpdatePayload,
     CarsSnapshot,
+    car_from_persistence_dict,
     car_to_persistence_dict,
     new_car_id,
 )
@@ -147,7 +148,7 @@ class CarSettingsService:
             payload: dict[str, object] = dict(car_data)
             created_car_id = new_car_id()
             payload["id"] = created_car_id
-            self._state.cars.append(Car.from_persisted_dict(payload))
+            self._state.cars.append(car_from_persistence_dict(payload))
             return True
 
         return self._update_with_rollback(

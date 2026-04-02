@@ -6,19 +6,19 @@ from collections.abc import Sequence
 
 from vibesensor.domain import Finding as DomainFinding
 
-from . import _summary_result, _summary_steps
+from . import _summary_steps
 from ._analysis_models import (
     AnalysisResultBuildRequest,
     FindingsBuilder,
     FindingsBuildRequest,
     FindingsBundleRequest,
 )
+from ._analysis_result import AnalysisResult
+from ._analysis_result_builder import build_analysis_result
 from ._context import DiagnosticsContext
 from ._types import AccelStatistics, Sample
 from .findings import _build_findings
 from .run_data_preparation import PreparedRunData
-
-AnalysisResult = _summary_result.AnalysisResult
 
 
 def execute_analysis(
@@ -71,7 +71,7 @@ def execute_analysis(
         ),
         findings_builder=findings_builder,
     )
-    return _summary_result.build_analysis_result(
+    return build_analysis_result(
         AnalysisResultBuildRequest(
             file_name=file_name,
             context=context,

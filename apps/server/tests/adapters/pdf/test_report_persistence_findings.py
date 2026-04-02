@@ -23,7 +23,7 @@ from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
-from vibesensor.use_cases.diagnostics.run_analysis import build_findings_for_samples
+from vibesensor.adapters.analysis_summary import build_findings_for_samples
 
 
 class TestBuildPersistentPeakFindings:

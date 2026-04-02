@@ -12,10 +12,8 @@ from vibesensor.use_cases.diagnostics.location_analysis import (
     summarize_order_match_locations,
 )
 from vibesensor.use_cases.diagnostics.orders import scoring as _order_scoring_module
-from vibesensor.use_cases.diagnostics.run_analysis import (
-    build_findings_for_samples,
-    summarize_origin,
-)
+from vibesensor.adapters.analysis_summary import build_findings_for_samples
+from vibesensor.use_cases.diagnostics.run_analysis import summarize_origin
 
 
 def _obs(

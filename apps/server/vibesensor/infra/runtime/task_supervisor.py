@@ -102,9 +102,7 @@ class TaskSupervisor:
                     await task_factory()
                 except asyncio.CancelledError:
                     raise
-                except Exception as exc:
-                    if not isinstance(exc, restartable_exceptions):
-                        raise
+                except restartable_exceptions as exc:
                     runtime_s = time.monotonic() - started_at
                     if runtime_s >= self._reset_after_s:
                         restart_count = 0

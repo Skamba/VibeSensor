@@ -7,11 +7,9 @@ describe what was measured and how.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from math import sqrt
-from types import MappingProxyType
 
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_source import SpeedSource
@@ -94,11 +92,6 @@ class ConfigurationSnapshot:
     feature_interval_s: float | None = None
     final_drive_ratio: float | None = None
     tire_spec: TireSpec | None = None
-    metadata: Mapping[str, object] = field(default_factory=dict)
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.metadata, MappingProxyType):
-            object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
 
 # ---------------------------------------------------------------------------

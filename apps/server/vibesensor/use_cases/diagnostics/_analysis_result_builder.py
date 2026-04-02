@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from vibesensor.domain import (
     DiagnosticCase,
-    DrivingPhaseInterval,
-    LocationIntensitySummary,
     RunCapture,
     RunSetup,
     RunSuitability,
@@ -16,51 +12,18 @@ from vibesensor.domain import (
     TestRun,
 )
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
-from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.domain.test_plan import plan_test_actions
-from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.boundaries.diagnostic_case import car_from_metadata, symptom_from_metadata
+from vibesensor.shared.boundaries.run_capture_codec import configuration_snapshot_from_run_metadata
 
 from ._analysis_models import AnalysisResultBuildRequest
-from ._context_projection import (
-    context_to_car,
-    context_to_configuration_snapshot,
-    context_to_metadata_dict,
-    context_to_symptom,
-)
-from ._types import AccelStatistics, Sample
-from ._view_types import PlotDataResultData
+from ._analysis_result import AnalysisResult
 from .plots import _plot_data
 from .run_analysis_projection import build_domain_driving_segments
-from .run_data_preparation import PreparedRunData, build_phase_summary
+from .run_data_preparation import build_phase_summary
 from .speed_profile_helpers import _speed_stats
+from vibesensor.domain.test_plan import plan_test_actions
 
-
-@dataclass(frozen=True, slots=True)
-class AnalysisResult:
-    """App-level analysis result for a completed run."""
-
-    file_name: str
-    metadata: JsonObject
-    samples: tuple[Sample, ...]
-    language: str
-    include_samples: bool
-    prepared: PreparedRunData
-    accel_stats: AccelStatistics
-    reference_complete: bool
-    run_suitability: RunSuitability | None
-    most_likely_origin: VibrationOrigin | None
-    phase_timeline: tuple[DrivingPhaseInterval, ...]
-    sensor_locations: tuple[str, ...]
-    connected_locations: frozenset[str]
-    sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
-    summary_speed_stats: SpeedProfileSummary
-    summary_phase_info: DrivingPhaseSummary
-    plot_data: PlotDataResultData
-
-    test_run: TestRun
-    diagnostic_case: DiagnosticCase
+__all__ = ["AnalysisResult", "build_analysis_result", "_final_top_causes"]
 
 
 def _final_top_causes(
@@ -86,8 +49,9 @@ def build_analysis_result(
     request: AnalysisResultBuildRequest,
 ) -> AnalysisResult:
     """Build the final app-level analysis result."""
+
+    metadata = request.context.metadata
     findings_bundle = request.findings_bundle
-    context_metadata = context_to_metadata_dict(request.context)
     summary_speed_stats = _speed_stats(request.prepared.speed_values)
     summary_phase_info = build_phase_summary(request.prepared.phase_segments)
     domain_test_plan = plan_test_actions(findings_bundle.domain_findings)
@@ -113,7 +77,7 @@ def build_analysis_result(
                     else ()
                 ),
                 speed_source=SpeedSource(),
-                configuration_snapshot=context_to_configuration_snapshot(request.context),
+                configuration_snapshot=configuration_snapshot_from_run_metadata(metadata),
             ),
             analysis_settings=request.context.analysis_settings_items,
             sample_count=len(request.samples),
@@ -129,16 +93,14 @@ def build_analysis_result(
         suitability=request.run_suitability,
         test_plan=domain_test_plan,
     )
-    domain_car = context_to_car(request.context)
-    domain_symptoms = (context_to_symptom(request.context),)
     diagnostic_case = DiagnosticCase.start(
-        car=domain_car,
-        symptoms=domain_symptoms,
+        car=car_from_metadata(metadata),
+        symptoms=(symptom_from_metadata(metadata),),
         test_plan=domain_test_plan,
     ).add_run(test_run)
     return AnalysisResult(
         file_name=request.file_name,
-        metadata=context_metadata,
+        metadata=metadata,
         samples=tuple(request.samples),
         language=request.language,
         include_samples=request.include_samples,
