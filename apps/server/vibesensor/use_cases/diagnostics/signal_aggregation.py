@@ -19,11 +19,7 @@ from vibesensor.use_cases.diagnostics._sample_metrics import _primary_vibration_
 from vibesensor.use_cases.diagnostics._sensor_locations import (
     _location_label,
 )
-from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSampleInput,
-    Sample,
-    ensure_analysis_samples,
-)
+from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics._view_types import (
     PhaseSpeedBreakdownRowData,
     SpeedBreakdownRowData,
@@ -52,7 +48,7 @@ def _counter_delta(counter_values: Sequence[tuple[float | None, float]]) -> int:
 _EMPTY_BUCKET_COUNTS: dict[str, int] = {f"l{idx}": 0 for idx in range(6)}
 
 
-def _phase_speed_breakdown_samples(
+def _phase_speed_breakdown(
     samples: Sequence[Sample],
     per_sample_phases: Sequence[DrivingPhase],
 ) -> list[PhaseSpeedBreakdownRowData]:
@@ -96,16 +92,7 @@ def _phase_speed_breakdown_samples(
     return rows
 
 
-def _phase_speed_breakdown(
-    samples: Sequence[AnalysisSampleInput],
-    per_sample_phases: Sequence[DrivingPhase],
-) -> list[PhaseSpeedBreakdownRowData]:
-    """Group vibration statistics by driving phase (temporal context)."""
-
-    return _phase_speed_breakdown_samples(ensure_analysis_samples(samples), per_sample_phases)
-
-
-def _speed_breakdown_samples(samples: Sequence[Sample]) -> list[SpeedBreakdownRowData]:
+def _speed_breakdown(samples: Sequence[Sample]) -> list[SpeedBreakdownRowData]:
     grouped: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
     _as_float_local = _as_float
@@ -135,11 +122,7 @@ def _speed_breakdown_samples(samples: Sequence[Sample]) -> list[SpeedBreakdownRo
     return rows
 
 
-def _speed_breakdown(samples: Sequence[AnalysisSampleInput]) -> list[SpeedBreakdownRowData]:
-    return _speed_breakdown_samples(ensure_analysis_samples(samples))
-
-
-def _sensor_intensity_by_location_samples(
+def _sensor_intensity_by_location(
     samples: Sequence[Sample],
     include_locations: Sequence[str] | set[str] | None = None,
     *,
@@ -276,22 +259,3 @@ def _sensor_intensity_by_location_samples(
         reverse=True,
     )
     return rows
-
-
-def _sensor_intensity_by_location(
-    samples: Sequence[AnalysisSampleInput],
-    include_locations: Sequence[str] | set[str] | None = None,
-    *,
-    lang: str = "en",
-    connected_locations: Sequence[str] | set[str] | None = None,
-    per_sample_phases: Sequence[DrivingPhase] | None = None,
-) -> list[LocationIntensitySummary]:
-    """Compute per-location vibration intensity statistics."""
-
-    return _sensor_intensity_by_location_samples(
-        ensure_analysis_samples(samples),
-        include_locations=include_locations,
-        lang=lang,
-        connected_locations=connected_locations,
-        per_sample_phases=per_sample_phases,
-    )

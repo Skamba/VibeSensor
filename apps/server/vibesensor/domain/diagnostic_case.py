@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from uuid import uuid4
 
@@ -27,18 +26,6 @@ class Symptom:
     @classmethod
     def unspecified(cls) -> Symptom:
         return cls(description="unspecified complaint")
-
-    @classmethod
-    def from_metadata(cls, metadata: Mapping[str, object]) -> Symptom:
-        """Build the case symptom from submitted run metadata."""
-        complaint = str(metadata.get("symptom") or metadata.get("complaint") or "").strip()
-        if not complaint:
-            return cls.unspecified()
-        return cls(
-            description=complaint,
-            onset=str(metadata.get("symptom_onset") or "").strip(),
-            context=str(metadata.get("symptom_context") or "").strip(),
-        )
 
     @property
     def is_unspecified(self) -> bool:

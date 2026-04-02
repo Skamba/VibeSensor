@@ -162,12 +162,6 @@ def ensure_analysis_sample(sample: AnalysisSampleInput) -> AnalysisSample:
     return AnalysisSample.from_dict(sample)
 
 
-def ensure_analysis_samples(samples: Sequence[AnalysisSampleInput]) -> list[AnalysisSample]:
-    """Normalize arbitrary sample rows to typed diagnostics samples."""
-
-    return normalize_analysis_samples(samples)
-
-
 class AccelStatistics(TypedDict):
     accel_x_vals: list[float]
     accel_y_vals: list[float]

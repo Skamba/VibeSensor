@@ -10,6 +10,56 @@ from vibesensor.use_cases.run.run_context import run_context_snapshot_from_metad
 
 from ._context import DiagnosticsContext
 
+_PRESENCE_TRACKED_KEYS = frozenset(
+    {
+        "report_date",
+        "fft_window_size_samples",
+        "fft_window_type",
+        "peak_picker_method",
+        "accel_scale_g_per_lsb",
+        "language",
+        "engine_rpm",
+        "tire_circumference_m",
+        "analysis_settings",
+        "symptom",
+        "complaint",
+        "symptom_onset",
+        "symptom_context",
+    },
+)
+
+_OWNED_METADATA_KEYS = frozenset(
+    {
+        "run_id",
+        "recording_id",
+        "case_id",
+        "sensor_mac",
+        "sensor_model",
+        "firmware_version",
+        "raw_sample_rate_hz",
+        "feature_interval_s",
+        "_summary_version",
+        "start_time_utc",
+        "end_time_utc",
+        "report_date",
+        "language",
+        "fft_window_size_samples",
+        "fft_window_type",
+        "peak_picker_method",
+        "accel_scale_g_per_lsb",
+        "incomplete_for_order_analysis",
+        "symptom",
+        "complaint",
+        "symptom_onset",
+        "symptom_context",
+        "tire_circumference_m",
+        "engine_rpm",
+        "analysis_settings",
+        "analysis_settings_snapshot",
+        "active_car_snapshot",
+    },
+)
+
 
 def build_diagnostics_context(
     metadata: Mapping[str, object],
@@ -43,8 +93,11 @@ def build_diagnostics_context(
         symptom_context=_non_empty_text(raw_metadata.get("symptom_context")) or "",
         tire_circumference_m_override=_as_float(raw_metadata.get("tire_circumference_m")),
         explicit_engine_rpm=_as_float(raw_metadata.get("engine_rpm")),
-        scalar_analysis_settings=_scalar_analysis_settings(raw_metadata),
-        _boundary_metadata=raw_metadata,
+        scalar_analysis_settings=_scalar_analysis_settings(raw_metadata.get("analysis_settings")),
+        present_boundary_keys=frozenset(
+            key for key in _PRESENCE_TRACKED_KEYS if key in raw_metadata
+        ),
+        passthrough_metadata=_passthrough_metadata(raw_metadata),
     )
 
 
@@ -79,9 +132,8 @@ def _as_int(value: object) -> int | None:
 
 
 def _scalar_analysis_settings(
-    metadata: Mapping[str, object],
+    raw_settings: object,
 ) -> tuple[tuple[str, int | float | bool | str], ...]:
-    raw_settings = metadata.get("analysis_settings")
     if not isinstance(raw_settings, Mapping):
         return ()
     scalar_items: list[tuple[str, int | float | bool | str]] = []
@@ -89,3 +141,11 @@ def _scalar_analysis_settings(
         if isinstance(key, str) and isinstance(value, (int, float, bool, str)):
             scalar_items.append((key, value))
     return tuple(scalar_items)
+
+
+def _passthrough_metadata(metadata: Mapping[str, object]) -> dict[str, object]:
+    return {
+        key: value
+        for key, value in metadata.items()
+        if isinstance(key, str) and key not in _OWNED_METADATA_KEYS
+    }

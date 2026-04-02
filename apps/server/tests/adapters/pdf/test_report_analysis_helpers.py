@@ -23,6 +23,7 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
     _location_label,
     _locations_connected_throughout_run,
 )
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs
 from vibesensor.use_cases.diagnostics.orders.physics import _wheel_hz
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
@@ -220,7 +221,7 @@ def test_speed_stats_by_phase_single_phase() -> None:
         {"speed_kmh": 60.5},
     ]
     phases = ["cruise", "cruise", "cruise"]
-    result = _speed_stats_by_phase(samples, phases)
+    result = _speed_stats_by_phase(normalize_analysis_samples(samples), phases)
     assert "cruise" in result
     assert result["cruise"].sample_count == 3
     assert result["cruise"].min_kmh == 60.0
@@ -236,7 +237,7 @@ def test_speed_stats_by_phase_multiple_phases() -> None:
         {"speed_kmh": 62.0},
     ]
     phases = ["idle", "idle", "cruise", "cruise", "cruise"]
-    result = _speed_stats_by_phase(samples, phases)
+    result = _speed_stats_by_phase(normalize_analysis_samples(samples), phases)
     assert set(result.keys()) == {"idle", "cruise"}
     assert result["idle"].sample_count == 2
     assert result["cruise"].sample_count == 3
@@ -251,7 +252,7 @@ def test_speed_stats_by_phase_excludes_zero_and_none_speed() -> None:
         {"speed_kmh": 50.0},
     ]
     phases = ["idle", "idle", "cruise"]
-    result = _speed_stats_by_phase(samples, phases)
+    result = _speed_stats_by_phase(normalize_analysis_samples(samples), phases)
     # idle has 2 samples but none with speed > 0
     assert result["idle"].sample_count == 2
     assert result["idle"].min_kmh is None
@@ -264,8 +265,9 @@ def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
         {"t_s": float(i), "speed_kmh": 0.5 if i < 5 else 60.0, "vibration_strength_db": 10.0}
         for i in range(10)
     ]
-    per_sample_phases, _ = segment_run_phases(samples)
-    result = _speed_stats_by_phase(samples, per_sample_phases)
+    typed_samples = normalize_analysis_samples(samples)
+    per_sample_phases, _ = segment_run_phases(typed_samples)
+    result = _speed_stats_by_phase(typed_samples, per_sample_phases)
     total = sum(v.sample_count for v in result.values())
     assert total == len(samples)
 

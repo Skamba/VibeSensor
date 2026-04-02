@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import Car, Symptom
+from vibesensor.shared.boundaries.diagnostic_case import (
+    car_from_metadata,
+    symptom_from_metadata,
+)
 
 
 def test_car_from_metadata_returns_none_without_case_context() -> None:
-    assert Car.from_metadata({}) is None
+    assert car_from_metadata({}) is None
 
 
 def test_car_from_metadata_builds_context_from_vehicle_fields() -> None:
-    car = Car.from_metadata(
+    car = car_from_metadata(
         {
             "active_car_snapshot": {
                 "name": "Golf",
@@ -29,7 +32,7 @@ def test_car_from_metadata_builds_context_from_vehicle_fields() -> None:
 
 
 def test_car_from_metadata_keeps_order_reference_context_without_names() -> None:
-    car = Car.from_metadata(
+    car = car_from_metadata(
         {
             "analysis_settings_snapshot": {
                 "tire_width_mm": 225,
@@ -48,11 +51,11 @@ def test_car_from_metadata_keeps_order_reference_context_without_names() -> None
 
 
 def test_symptom_from_metadata_defaults_to_unspecified() -> None:
-    assert Symptom.from_metadata({}).is_unspecified is True
+    assert symptom_from_metadata({}).is_unspecified is True
 
 
 def test_symptom_from_metadata_reads_aliases_and_context() -> None:
-    symptom = Symptom.from_metadata(
+    symptom = symptom_from_metadata(
         {
             "complaint": "whine under load",
             "symptom_onset": "after 60 km/h",

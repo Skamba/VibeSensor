@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
-from vibesensor.infra.runtime.processing_loop import STALE_DATA_AGE_S
+from vibesensor.infra.runtime.processing_tick import STALE_DATA_AGE_S
 from vibesensor.infra.runtime.rotational_speeds import (
     build_rotational_speeds_payload,
     rotational_basis_speed_source,

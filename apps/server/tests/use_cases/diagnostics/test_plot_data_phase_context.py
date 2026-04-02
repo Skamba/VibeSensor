@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 
 import vibesensor.use_cases.diagnostics.plots as plots_module
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.use_cases.diagnostics.plots import _plot_data
 
@@ -58,7 +59,7 @@ def _build_plot_data(
     phase_segments: list | None = None,
 ):
     return _plot_data(
-        samples=samples,
+        samples=normalize_analysis_samples(samples),
         speed_breakdown=[],
         phase_speed_breakdown=[],
         findings=(),
@@ -145,12 +146,13 @@ class TestPhaseSegmentsOutput:
 
 def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.MonkeyPatch) -> None:
     samples = _samples_at_speed(4, speed_kmh=60.0)
-    per_sample_phases, phase_segments = segment_run_phases(samples)
+    typed_samples = normalize_analysis_samples(samples)
+    per_sample_phases, phase_segments = segment_run_phases(typed_samples)
 
     segment_calls = 0
     noise_calls = 0
 
-    def _count_segment_calls(rows: list[dict]) -> tuple[list, list]:  # pragma: no cover - defensive
+    def _count_segment_calls(rows: list) -> tuple[list, list]:  # pragma: no cover - defensive
         nonlocal segment_calls
         segment_calls += 1
         return segment_run_phases(rows)
@@ -160,7 +162,7 @@ def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.Monkey
         noise_calls += 1
         return 0.02
 
-    monkeypatch.setattr(plots_module, "_segment_run_phases", _count_segment_calls)
+    monkeypatch.setattr(plots_module, "segment_run_phases", _count_segment_calls)
     monkeypatch.setattr(plots_module, "_run_noise_baseline_g", _count_noise_calls)
 
     _build_plot_data(

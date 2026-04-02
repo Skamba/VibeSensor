@@ -14,9 +14,10 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.exceptions import ProcessingError
 from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import ClockSyncBroadcaster
+
+from .processing_tick import ProcessingLoopError, ProcessingTickRunner
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
@@ -33,19 +34,7 @@ FAILURE_BACKOFF_S = 5
 MAX_FATAL_BACKOFF_CYCLES = 3
 """After this many fatal backoff cycles, escalate to a managed task failure."""
 
-STALE_DATA_AGE_S = 2.0
-"""Clients without fresh UDP data within this window are excluded from spectrum output."""
-
 _MAX_FAILURE_MESSAGE_LEN = 240
-
-
-class ProcessingLoopError(ProcessingError):
-    """Categorized processing-loop failure with a stable health-reporting key."""
-
-    def __init__(self, category: str, cause: Exception) -> None:
-        super().__init__(str(cause))
-        self.category = category
-        self.cause = cause
 
 
 class ProcessingHealth(StrEnum):
@@ -81,12 +70,8 @@ class ProcessingLoop:
     """Async processing tick loop: evict stale clients, compute metrics, handle failures."""
 
     __slots__ = (
-        "_control_plane",
-        "_fft_n",
         "_fft_update_hz",
-        "_processor",
-        "_registry",
-        "_sample_rate_hz",
+        "_tick_runner",
         "state",
     )
 
@@ -103,11 +88,14 @@ class ProcessingLoop:
     ) -> None:
         self.state = state
         self._fft_update_hz = fft_update_hz
-        self._sample_rate_hz = sample_rate_hz
-        self._fft_n = fft_n
-        self._registry = registry
-        self._processor = processor
-        self._control_plane = control_plane
+        self._tick_runner = ProcessingTickRunner(
+            state=state,
+            sample_rate_hz=sample_rate_hz,
+            fft_n=fft_n,
+            registry=registry,
+            processor=processor,
+            control_plane=control_plane,
+        )
 
     @staticmethod
     def _truncate_failure_message(exc: Exception) -> str:
@@ -155,87 +143,7 @@ class ProcessingLoop:
         return 0
 
     async def _run_tick(self, *, sync_clock: bool) -> None:
-        if sync_clock:
-            try:
-                if self._control_plane is not None:
-                    await asyncio.to_thread(self._control_plane.broadcast_sync_clock)
-            except Exception as exc:
-                raise ProcessingLoopError("sync_clock", exc) from exc
-
-        try:
-            self._registry.evict_stale()
-            active_ids = self._registry.active_client_ids()
-            fresh_ids = self._processor.clients_with_recent_data(
-                active_ids,
-                max_age_s=STALE_DATA_AGE_S,
-            )
-        except Exception as exc:
-            raise ProcessingLoopError("ingress_state", exc) from exc
-
-        sample_rates: dict[str, int] = {}
-        compute_client_ids: list[str] = []
-        state = self.state
-        for client_id in fresh_ids:
-            try:
-                record = self._registry.get(client_id)
-            except Exception as exc:
-                raise ProcessingLoopError("registry_lookup", exc) from exc
-            if record is None:
-                continue
-            compute_client_ids.append(client_id)
-            sample_rates[client_id] = record.sample_rate_hz
-            client_rate = int(record.sample_rate_hz or 0)
-            if (
-                client_rate > 0
-                and client_rate != self._sample_rate_hz
-                and client_id not in state.sample_rate_mismatch_logged
-            ):
-                state.sample_rate_mismatch_logged.add(client_id)
-                LOGGER.warning(
-                    "Client %s uses sample_rate_hz=%d; default config is %d.",
-                    client_id,
-                    client_rate,
-                    self._sample_rate_hz,
-                )
-            frame_samples = int(record.frame_samples or 0)
-            if (
-                frame_samples > 0
-                and frame_samples > self._fft_n
-                and client_id not in state.frame_size_mismatch_logged
-            ):
-                state.frame_size_mismatch_logged.add(client_id)
-                LOGGER.error(
-                    "Client %s reported frame_samples=%d larger than fft_n=%d; "
-                    "ingest may be degraded.",
-                    client_id,
-                    frame_samples,
-                    self._fft_n,
-                )
-
-        compute_error: Exception | None = None
-        try:
-            await asyncio.to_thread(
-                self._processor.compute_all,
-                compute_client_ids,
-                sample_rates_hz=sample_rates,
-            )
-        except Exception as exc:
-            compute_error = exc
-
-        try:
-            self._processor.evict_clients(set(self._registry.active_client_ids()))
-        except Exception as exc:
-            if compute_error is not None:
-                LOGGER.warning(
-                    "Processing loop cleanup also failed after compute_all failure; "
-                    "reporting compute_all as the primary error.",
-                    exc_info=True,
-                )
-                raise ProcessingLoopError("compute_all", compute_error) from compute_error
-            raise ProcessingLoopError("publish_metrics", exc) from exc
-
-        if compute_error is not None:
-            raise ProcessingLoopError("compute_all", compute_error) from compute_error
+        await self._tick_runner.run(sync_clock=sync_clock)
 
     async def run(self) -> None:
         """~100 ms tick loop: evict stale clients, compute metrics, handle failures."""
@@ -270,19 +178,6 @@ class ProcessingLoop:
                 LOGGER.warning(
                     "Processing loop tick failed in %s; will retry.",
                     exc.category,
-                    exc_info=True,
-                )
-                if is_fatal:
-                    consecutive_failures = await self._handle_fatal_backoff()
-            except Exception as exc:
-                consecutive_failures += 1
-                self._record_failure("unexpected", exc)
-                is_fatal = consecutive_failures >= MAX_CONSECUTIVE_FAILURES
-                self.state.processing_state = (
-                    ProcessingHealth.FATAL if is_fatal else ProcessingHealth.DEGRADED
-                )
-                LOGGER.warning(
-                    "Processing loop tick failed unexpectedly; will retry.",
                     exc_info=True,
                 )
                 if is_fatal:

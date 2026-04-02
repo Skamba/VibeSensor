@@ -21,11 +21,7 @@ from dataclasses import dataclass
 from vibesensor.domain import DrivingPhase
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhaseSegment
-from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSampleInput,
-    Sample,
-    ensure_analysis_samples,
-)
+from vibesensor.use_cases.diagnostics._types import Sample
 
 # Thresholds (tuneable)
 _IDLE_SPEED_KMH = 3.0  # below this → IDLE
@@ -203,7 +199,7 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
         i = j
 
 
-def _segment_run_phases(
+def segment_run_phases(
     samples: Sequence[Sample],
 ) -> tuple[list[DrivingPhase], list[PhaseSegment]]:
     """Classify every sample into a driving phase and return contiguous segments.
@@ -276,14 +272,6 @@ def _segment_run_phases(
         seg_start = i
 
     return per_sample, segments
-
-
-def segment_run_phases(
-    samples: Sequence[AnalysisSampleInput],
-) -> tuple[list[DrivingPhase], list[PhaseSegment]]:
-    """Normalize input rows once, then classify every sample into a driving phase."""
-
-    return _segment_run_phases(ensure_analysis_samples(samples))
 
 
 def phase_summary(segments: list[PhaseSegment]) -> DrivingPhaseSummary:

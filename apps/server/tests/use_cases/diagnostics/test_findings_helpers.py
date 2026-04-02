@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_profile_from_points
@@ -197,7 +198,7 @@ class TestSensorIntensityByLocation:
         ],
     )
     def test_counter_deltas(self, samples: list[dict]) -> None:
-        rows = _sensor_intensity_by_location(samples)
+        rows = _sensor_intensity_by_location(normalize_analysis_samples(samples))
         assert len(rows) == 1
         row = rows[0]
         assert row.queue_overflow_drops_delta == 8

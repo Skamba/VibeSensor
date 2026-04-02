@@ -14,12 +14,7 @@ from vibesensor.shared.constants.analysis import (
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.statistics_utils import _mean_variance
-from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSampleInput,
-    PhaseLabel,
-    Sample,
-    ensure_analysis_samples,
-)
+from vibesensor.use_cases.diagnostics._types import PhaseLabel, Sample
 from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 
 
@@ -65,7 +60,7 @@ def _speed_stats(speed_values: Sequence[float]) -> SpeedProfileSummary:
     )
 
 
-def _speed_stats_by_phase_samples(
+def _speed_stats_by_phase(
     samples: Sequence[Sample],
     per_sample_phases: Sequence[PhaseLabel],
 ) -> dict[str, SpeedProfileSummary]:
@@ -91,15 +86,6 @@ def _speed_stats_by_phase_samples(
             sample_count=phase_sample_counts[phase_key],
         )
     return result
-
-
-def _speed_stats_by_phase(
-    samples: Sequence[AnalysisSampleInput],
-    per_sample_phases: Sequence[PhaseLabel],
-) -> dict[str, SpeedProfileSummary]:
-    """Compute speed statistics broken down by driving phase."""
-
-    return _speed_stats_by_phase_samples(ensure_analysis_samples(samples), per_sample_phases)
 
 
 _SENTINEL = object()

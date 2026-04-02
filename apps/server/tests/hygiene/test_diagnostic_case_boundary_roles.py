@@ -9,8 +9,10 @@ from vibesensor.use_cases.diagnostics import _summary_result, run_data_preparati
 
 def test_diagnostic_case_boundary_does_not_expose_domain_factories() -> None:
     assert callable(SpeedProfile.from_stats)
-    assert callable(Car.from_metadata)
-    assert callable(Symptom.from_metadata)
+    assert not hasattr(Car, "from_metadata")
+    assert not hasattr(Symptom, "from_metadata")
+    assert callable(diagnostic_case.car_from_metadata)
+    assert callable(diagnostic_case.symptom_from_metadata)
     assert not hasattr(diagnostic_case, "speed_profile_from_stats")
     assert not hasattr(diagnostic_case, "case_context_from_metadata")
     assert not hasattr(diagnostic_case, "project_analysis_summary")

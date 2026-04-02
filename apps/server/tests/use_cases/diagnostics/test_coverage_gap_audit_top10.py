@@ -17,6 +17,7 @@ from vibesensor.domain import (
     RunSuitability,
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
@@ -27,7 +28,7 @@ from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
-from vibesensor.use_cases.diagnostics.run_data_preparation import (
+from vibesensor.use_cases.diagnostics.run_analysis_projection import (
     build_phase_timeline as _build_phase_timeline,
 )
 from vibesensor.use_cases.diagnostics.statistics import (
@@ -492,7 +493,7 @@ class TestComputeAccelStatistics:
                 "vibration_strength_db": 12.0,
             },
         ]
-        result = _compute_accel_statistics(samples, "ADXL345")
+        result = _compute_accel_statistics(normalize_analysis_samples(samples), "ADXL345")
         assert len(result["accel_x_vals"]) == 1
         assert result["accel_x_vals"][0] == pytest.approx(0.1)
         assert len(result["accel_mag_vals"]) == 1
@@ -504,12 +505,12 @@ class TestComputeAccelStatistics:
         samples: list[dict[str, Any]] = [
             {"accel_x_g": 15.7, "accel_y_g": 0.0, "accel_z_g": 0.0},
         ]
-        result = _compute_accel_statistics(samples, "ADXL345")
+        result = _compute_accel_statistics(normalize_analysis_samples(samples), "ADXL345")
         assert result["sat_count"] >= 1, "Near-limit value should count as saturation"
 
     def test_missing_axes_handled(self) -> None:
         samples: list[dict[str, Any]] = [{"accel_x_g": 0.5}]
-        result = _compute_accel_statistics(samples, "unknown")
+        result = _compute_accel_statistics(normalize_analysis_samples(samples), "unknown")
         assert len(result["accel_x_vals"]) == 1
         assert result["accel_y_vals"] == []
         assert result["accel_mag_vals"] == []  # can't compute magnitude without all 3
@@ -519,7 +520,10 @@ class TestComputeAccelStatistics:
         samples: list[dict[str, Any]] = [
             {"accel_x_g": 999.0, "accel_y_g": 999.0, "accel_z_g": 999.0},
         ]
-        result = _compute_accel_statistics(samples, "totally_unknown_sensor")
+        result = _compute_accel_statistics(
+            normalize_analysis_samples(samples),
+            "totally_unknown_sensor",
+        )
         # With unknown sensor, sensor_limit should be None → sat_count = 0
         if result["sensor_limit"] is None:
             assert result["sat_count"] == 0
