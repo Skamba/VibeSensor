@@ -28,7 +28,8 @@ def summarize_order_match_locations(
 ) -> tuple[object, LocationAnalysisResult | None]:
     """Return strongest location summary, optionally restricted to specific speed bins."""
     del lang  # localization happens through i18n keys, not by branching here
-    grouped = group_matches_by_speed_bin(matches, relevant_speed_bins=relevant_speed_bins)
+    typed_matches = tuple(matches)
+    grouped = group_matches_by_speed_bin(typed_matches, relevant_speed_bins=relevant_speed_bins)
     if not grouped:
         return "", None
 

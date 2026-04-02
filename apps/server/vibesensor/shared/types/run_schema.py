@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from vibesensor.domain import AnalysisSettingsSnapshot, RunContextSnapshot, Symptom
+from vibesensor.domain import (
+    AnalysisSettingsSnapshot,
+    CarSnapshot,
+    OrderReferenceSpec,
+    RunContextSnapshot,
+    Symptom,
+)
 
 from .json_types import JsonObject
 
@@ -119,7 +125,7 @@ class RunMetadata:
         return self.run_context.analysis_settings
 
     @property
-    def car(self):
+    def car(self) -> CarSnapshot | None:
         return self.run_context.car
 
     @property
@@ -139,13 +145,13 @@ class RunMetadata:
         return self.car.car_id if self.car is not None else None
 
     @property
-    def order_reference_spec(self):
+    def order_reference_spec(self) -> OrderReferenceSpec | None:
         return self.run_context.order_reference_spec
 
     @property
     def tire_circumference_m(self) -> float | None:
         spec = self.order_reference_spec
-        if spec is not None and bool(getattr(spec, "supports_wheel_reference", False)):
+        if spec is not None and spec.supports_wheel_reference:
             return spec.tire_circumference_m
         override = self.tire_circumference_m_override
         if override is not None and override > 0:

@@ -58,7 +58,9 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         tire_circumference_m_override=as_float_or_none(data.get("tire_circumference_m")),
         units=_json_object_or_none(data.get("units")),
         amplitude_definitions=_json_object_or_none(data.get("amplitude_definitions")),
-        recorded_utc_offset_seconds=coerce_utc_offset_seconds(data.get("recorded_utc_offset_seconds")),
+        recorded_utc_offset_seconds=coerce_utc_offset_seconds(
+            data.get("recorded_utc_offset_seconds")
+        ),
     )
 
 
