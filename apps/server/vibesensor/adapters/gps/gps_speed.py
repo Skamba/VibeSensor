@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Literal
 
-from vibesensor.adapters.gps import gps_transport as _gps_transport
 from vibesensor.adapters.gps import speed_resolution as _speed_resolution
 from vibesensor.adapters.gps.gps_transport import (
     GPSTransportCapturedState,
@@ -27,11 +26,6 @@ from vibesensor.adapters.gps.speed_status import (
     speed_confidence,
 )
 from vibesensor.shared.types.json_types import JsonObject
-
-_GPS_DISABLED_POLL_S = _gps_transport._GPS_DISABLED_POLL_S
-_GPS_MAX_SPEED_MPS = _gps_transport._GPS_MAX_SPEED_MPS
-_GPS_RECONNECT_DELAY_S = _gps_transport._GPS_RECONNECT_DELAY_S
-_GPS_RECONNECT_MAX_DELAY_S = _gps_transport._GPS_RECONNECT_MAX_DELAY_S
 
 DEFAULT_STALE_TIMEOUT_S = _speed_resolution.DEFAULT_STALE_TIMEOUT_S
 MIN_STALE_TIMEOUT_S = _speed_resolution.MIN_STALE_TIMEOUT_S

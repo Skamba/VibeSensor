@@ -9,7 +9,6 @@ import numpy as np
 import pytest
 
 from vibesensor.adapters.udp.protocol import (
-    ProtocolVersionMismatch,
     pack_ack,
     pack_cmd_identify,
     pack_data,
@@ -23,6 +22,7 @@ from vibesensor.adapters.udp.protocol import (
     parse_hello,
     parse_hello_ack,
 )
+from vibesensor.adapters.udp.protocol_validator import ProtocolVersionMismatch
 from vibesensor.adapters.udp.udp_control_tx import ControlDatagramProtocol
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 

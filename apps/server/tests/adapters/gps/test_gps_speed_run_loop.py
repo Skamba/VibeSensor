@@ -151,8 +151,14 @@ async def test_run_reconnects_on_connection_failure(
         raise ConnectionRefusedError("mock refused")
 
     monkeypatch.setattr(asyncio, "open_connection", _failing_open)
-    monkeypatch.setattr("vibesensor.adapters.gps.gps_transport._GPS_RECONNECT_DELAY_S", 0.02)
-    monkeypatch.setattr("vibesensor.adapters.gps.gps_transport._GPS_RECONNECT_MAX_DELAY_S", 0.04)
+    monkeypatch.setattr(
+        "vibesensor.adapters.gps.transport_lifecycle.GPS_RECONNECT_DELAY_S",
+        0.02,
+    )
+    monkeypatch.setattr(
+        "vibesensor.adapters.gps.transport_lifecycle.GPS_RECONNECT_MAX_DELAY_S",
+        0.04,
+    )
     caplog.set_level("WARNING")
 
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=9999))
@@ -217,7 +223,10 @@ async def test_run_resets_speed_on_disconnect(monkeypatch: pytest.MonkeyPatch) -
     host, port = server.sockets[0].getsockname()[:2]
 
     # Shrink reconnect delay so the reconnect path runs quickly
-    monkeypatch.setattr("vibesensor.adapters.gps.gps_transport._GPS_RECONNECT_DELAY_S", 0.05)
+    monkeypatch.setattr(
+        "vibesensor.adapters.gps.transport_lifecycle.GPS_RECONNECT_DELAY_S",
+        0.05,
+    )
 
     task = asyncio.create_task(monitor.run(host=host, port=port))
 
@@ -256,7 +265,10 @@ async def test_run_disabled_polls_without_connecting(monkeypatch: pytest.MonkeyP
         raise AssertionError("should not be called")
 
     monkeypatch.setattr(asyncio, "open_connection", _spy_open)
-    monkeypatch.setattr("vibesensor.adapters.gps.gps_transport._GPS_DISABLED_POLL_S", 0.02)
+    monkeypatch.setattr(
+        "vibesensor.adapters.gps.transport_lifecycle.GPS_DISABLED_POLL_S",
+        0.02,
+    )
 
     task = asyncio.create_task(monitor.run())
     await asyncio.sleep(0.1)

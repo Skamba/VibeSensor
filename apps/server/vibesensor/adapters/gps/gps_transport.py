@@ -7,27 +7,10 @@ from dataclasses import dataclass, replace
 from typing import Any, cast
 
 from vibesensor.adapters.gps import gps_transport_updates as _transport_updates
+from vibesensor.adapters.gps import transport_lifecycle as _transport_lifecycle
 from vibesensor.adapters.gps.gps_transport_runner import GPSTransportRunner
 from vibesensor.adapters.gps.gpsd_message_handler import GpsdVersionInfo, NormalizedTpvData
-from vibesensor.adapters.gps.speed_validation import DEFAULT_SPEED_VALIDATION_CONFIG
-from vibesensor.adapters.gps.transport_lifecycle import (
-    GPS_CONNECT_TIMEOUT_S,
-    GPS_DISABLED_POLL_S,
-    GPS_READ_TIMEOUT_S,
-    GPS_RECONNECT_DELAY_S,
-    GPS_RECONNECT_MAX_DELAY_S,
-)
 from vibesensor.shared.types.json_types import JsonObject
-
-# Backward-compatible aliases for constants that consumers import from here.
-_GPS_DISABLED_POLL_S: float = GPS_DISABLED_POLL_S
-_GPS_RECONNECT_DELAY_S: float = GPS_RECONNECT_DELAY_S
-_GPS_CONNECT_TIMEOUT_S: float = GPS_CONNECT_TIMEOUT_S
-_GPS_READ_TIMEOUT_S: float = GPS_READ_TIMEOUT_S
-_GPS_RECONNECT_MAX_DELAY_S: float = GPS_RECONNECT_MAX_DELAY_S
-
-# Re-export for consumers that import from this module.
-_GPS_MAX_SPEED_MPS: float = DEFAULT_SPEED_VALIDATION_CONFIG.max_speed_mps
 
 TpvModeReader = _transport_updates.TpvModeReader
 MetricReader = _transport_updates.MetricReader
@@ -53,7 +36,7 @@ class GPSTransportLifecycleState:
     """Reconnect/backoff state captured alongside the observational transport snapshot."""
 
     last_error: str | None = None
-    current_reconnect_delay: float = _GPS_RECONNECT_DELAY_S
+    current_reconnect_delay: float = _transport_lifecycle.GPS_RECONNECT_DELAY_S
 
 
 @dataclass(frozen=True, slots=True)
@@ -310,11 +293,11 @@ class GPSTransportState:
         read_metric: MetricReader | None = None,
     ) -> None:
         runner = GPSTransportRunner(
-            disabled_poll_s=_GPS_DISABLED_POLL_S,
-            reconnect_delay_s=_GPS_RECONNECT_DELAY_S,
-            connect_timeout_s=_GPS_CONNECT_TIMEOUT_S,
-            read_timeout_s=_GPS_READ_TIMEOUT_S,
-            reconnect_max_delay_s=_GPS_RECONNECT_MAX_DELAY_S,
+            disabled_poll_s=_transport_lifecycle.GPS_DISABLED_POLL_S,
+            reconnect_delay_s=_transport_lifecycle.GPS_RECONNECT_DELAY_S,
+            connect_timeout_s=_transport_lifecycle.GPS_CONNECT_TIMEOUT_S,
+            read_timeout_s=_transport_lifecycle.GPS_READ_TIMEOUT_S,
+            reconnect_max_delay_s=_transport_lifecycle.GPS_RECONNECT_MAX_DELAY_S,
         )
         await runner.run(
             self,

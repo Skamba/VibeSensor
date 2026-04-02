@@ -27,12 +27,7 @@ from vibesensor.adapters.udp.protocol_validator import (
     validate_minimum_size,
     validate_samples_array,
 )
-from vibesensor.adapters.udp.protocol_validator import (
-    ProtocolVersionMismatch as ProtocolVersionMismatch,  # re-export
-)
-from vibesensor.shared.exceptions import (
-    ProtocolError as ProtocolError,  # re-export for consumers
-)
+from vibesensor.shared.exceptions import ProtocolError as _ProtocolError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,8 +40,6 @@ __all__ = [
     "HELLO_CAP_EXPLICIT_ACK",
     "HelloMessage",
     "HelloAckMessage",
-    "ProtocolError",
-    "ProtocolVersionMismatch",
     "client_id_hex",
     "client_id_mac",
     "extract_client_id_hex",
@@ -232,7 +225,7 @@ def parse_hello(data: bytes) -> HelloMessage:
 
     offset = HELLO_BASE.size
     if len(data) < offset + name_len:
-        raise ProtocolError("HELLO missing name bytes")
+        raise _ProtocolError("HELLO missing name bytes")
     raw_name = data[offset : offset + name_len]
     offset += name_len
     if name_len > HELLO_MAX_NAME_BYTES:
@@ -251,7 +244,7 @@ def parse_hello(data: bytes) -> HelloMessage:
         firmware_len = data[offset]
         offset += 1
         if len(data) < offset + firmware_len:
-            raise ProtocolError("HELLO firmware length out of range")
+            raise _ProtocolError("HELLO firmware length out of range")
         raw_fw = data[offset : offset + firmware_len]
         offset += firmware_len
         if firmware_len > HELLO_MAX_NAME_BYTES:

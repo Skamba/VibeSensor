@@ -8,12 +8,10 @@ from pathlib import Path
 from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_summary
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics import (
-    AnalysisSampleInput,
-    FindingsBuilder,
-    RunAnalysis,
-    load_run,
-)
+from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuilder
+from vibesensor.use_cases.diagnostics._run_loader import _load_run as load_run
+from vibesensor.use_cases.diagnostics._types import AnalysisSampleInput
+from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
 def summarize_run_data(

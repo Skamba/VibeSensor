@@ -46,7 +46,7 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
             )
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.RunAnalysis",
+        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
         FakeRunAnalysis,
     )
     monkeypatch.setattr(
@@ -87,7 +87,7 @@ def test_build_post_analysis_summary_adds_stride_warning(
             )
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.RunAnalysis",
+        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
         FakeRunAnalysis,
     )
     monkeypatch.setattr(
@@ -133,7 +133,7 @@ def test_build_post_analysis_summary_adds_short_run_warning(
             )
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.RunAnalysis",
+        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
         FakeRunAnalysis,
     )
     monkeypatch.setattr(

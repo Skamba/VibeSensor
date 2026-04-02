@@ -7,17 +7,18 @@ import asyncio
 import numpy as np
 import pytest
 
-from vibesensor.adapters.simulator import scripted_scenarios, scripted_speed_sync
-from vibesensor.adapters.simulator.scripted_scenarios import (
+import vibesensor.adapters.simulator.scripted_scenarios as scripted_scenarios
+from vibesensor.adapters.simulator import scripted_speed_sync
+from vibesensor.adapters.simulator.scripted_scenario_library import (
     SCRIPTED_SCENARIOS,
     PhaseOverride,
     PhasePulse,
     ScenarioPhase,
     ScriptedScenario,
-    apply_phase,
-    run_scripted_scenario,
     scripted_scenario_names,
 )
+from vibesensor.adapters.simulator.scripted_scenarios import run_scripted_scenario
+from vibesensor.adapters.simulator.scripted_targeting import apply_phase
 
 
 class _FakeSimClient:
@@ -62,6 +63,11 @@ def test_scripted_scenario_library_exposes_ten_complex_runs() -> None:
         "driveline-coastdown",
         "dual-fault-recovery",
     } <= set(scripted_scenario_names())
+
+
+def test_scripted_scenario_runner_module_no_longer_reexports_library_symbols() -> None:
+    assert not hasattr(scripted_scenarios, "SCRIPTED_SCENARIOS")
+    assert not hasattr(scripted_scenarios, "apply_phase")
 
 
 def test_scripted_scenarios_include_explicit_steady_speed_hold_phases() -> None:
@@ -111,7 +117,7 @@ async def test_run_scripted_scenario_advances_speed_and_fires_temporary_pulses(
         fake_set_server_speed_override_kmh,
     )
     monkeypatch.setitem(
-        scripted_scenarios.SCRIPTED_SCENARIOS,
+        SCRIPTED_SCENARIOS,
         "unit-test-scripted",
         ScriptedScenario(
             name="unit-test-scripted",

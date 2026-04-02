@@ -11,7 +11,7 @@ from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as _decode_test_run,
 )
-from vibesensor.use_cases.diagnostics import RunAnalysis
+from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
 def _assert_all_findings_have_assessment(findings: tuple[Any, ...]) -> None:

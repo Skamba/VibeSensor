@@ -22,7 +22,7 @@ from vibesensor.shared.boundaries.analysis_summary_projection import project_ana
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.diagnostics import RunAnalysis
+from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
 def _run_suitability_state(summary: dict[str, Any], check_key: str) -> str | None:

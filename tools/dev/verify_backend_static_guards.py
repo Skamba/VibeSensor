@@ -474,25 +474,37 @@ def _check_analysis_summary_stays_at_boundaries() -> list[str]:
     return violations
 
 
-def _check_analysis_summary_adapter_uses_public_diagnostics_api() -> list[str]:
-    path = VIBESENSOR_DIR / "adapters" / "analysis_summary.py"
+_DIAGNOSTICS_FACADE_NAMES = frozenset(
+    {
+        "AnalysisResult",
+        "AnalysisSampleInput",
+        "FindingsBuilder",
+        "RunAnalysis",
+        "build_findings_for_samples",
+        "build_order_bands",
+        "load_run",
+        "vehicle_orders_hz",
+    }
+)
+
+
+def _check_modules_avoid_diagnostics_facade_reexports() -> list[str]:
+    diagnostics_init_path = VIBESENSOR_DIR / "use_cases" / "diagnostics" / "__init__.py"
     failures: list[str] = []
-    imported_public_api = False
-    for lineno, module, names, _level in _scan_imports(path):
-        if module == "vibesensor.use_cases.diagnostics":
-            imported_public_api = True
-        if module.startswith("vibesensor.use_cases.diagnostics._"):
-            failures.append(
-                f"{path.relative_to(REPO_ROOT)}:{lineno}: adapters must not import private diagnostics modules"
+    for path in _python_files(VIBESENSOR_DIR):
+        if path == diagnostics_init_path:
+            continue
+        for lineno, module, names, _level in _scan_imports(path):
+            if module != "vibesensor.use_cases.diagnostics":
+                continue
+            facade_names = sorted(
+                name for name in names if name in _DIAGNOSTICS_FACADE_NAMES
             )
-        if any(name.startswith("vibesensor.use_cases.diagnostics._") for name in names):
-            failures.append(
-                f"{path.relative_to(REPO_ROOT)}:{lineno}: adapters must not import private diagnostics modules"
-            )
-    if not imported_public_api:
-        failures.append(
-            f"{path.relative_to(REPO_ROOT)} must import diagnostics helpers through vibesensor.use_cases.diagnostics"
-        )
+            if facade_names:
+                failures.append(
+                    f"{path.relative_to(REPO_ROOT)}:{lineno}: import canonical diagnostics modules directly instead of "
+                    f"the diagnostics package facade ({', '.join(facade_names)})"
+                )
     return failures
 
 
@@ -1651,8 +1663,8 @@ CHECKS: tuple[Check, ...] = (
         _check_analysis_summary_stays_at_boundaries,
     ),
     (
-        "analysis_summary adapter uses public diagnostics API",
-        _check_analysis_summary_adapter_uses_public_diagnostics_api,
+        "Modules avoid diagnostics facade re-exports",
+        _check_modules_avoid_diagnostics_facade_reexports,
     ),
     (
         "Summary serialization uses a build context",

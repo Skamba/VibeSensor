@@ -10,11 +10,9 @@ import time
 
 import pytest
 
-from vibesensor.adapters.gps.gps_speed import (
-    _GPS_MAX_SPEED_MPS,
-    MAX_MANUAL_SPEED_KMH,
-    GPSSpeedMonitor,
-)
+from vibesensor.adapters.gps.gps_speed import MAX_MANUAL_SPEED_KMH, GPSSpeedMonitor
+from vibesensor.adapters.gps.speed_validation import DEFAULT_SPEED_VALIDATION_CONFIG
+from vibesensor.adapters.gps.transport_lifecycle import GPS_RECONNECT_DELAY_S
 from vibesensor.shared.constants.units import KMH_TO_MPS
 
 # ---------------------------------------------------------------------------
@@ -162,25 +160,22 @@ def test_status_snapshot_speed_source_none_when_no_data() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Fix 9: GPS plausibility gate in run() — speeds > _GPS_MAX_SPEED_MPS rejected
+# Fix 9: GPS plausibility gate in run() — speeds > max_speed_mps rejected
 # ---------------------------------------------------------------------------
 
 
-def test_gps_max_speed_constant_is_reasonable() -> None:
-    """_GPS_MAX_SPEED_MPS should be between 100 and 200 m/s (360–720 km/h)."""
-    assert 100.0 < _GPS_MAX_SPEED_MPS <= 200.0, (
-        f"_GPS_MAX_SPEED_MPS={_GPS_MAX_SPEED_MPS} is outside the expected range"
+def test_gps_max_speed_validation_config_is_reasonable() -> None:
+    """DEFAULT_SPEED_VALIDATION_CONFIG.max_speed_mps should stay realistic."""
+    max_speed_mps = DEFAULT_SPEED_VALIDATION_CONFIG.max_speed_mps
+    assert 100.0 < max_speed_mps <= 200.0, (
+        f"max_speed_mps={max_speed_mps} is outside the expected range"
     )
 
 
-def test_accept_speed_sample_not_affected_by_plausibility_constant() -> None:
-    """_accept_speed_sample does not know about the cap; cap is enforced in run().
-    The constant exists and the TPV guard uses it.  Verify the module exports it.
-    """
+def test_gps_speed_module_no_longer_reexports_max_speed_alias() -> None:
     import vibesensor.adapters.gps.gps_speed as mod
 
-    assert hasattr(mod, "_GPS_MAX_SPEED_MPS")
-    assert mod._GPS_MAX_SPEED_MPS > 0
+    assert not hasattr(mod, "_GPS_MAX_SPEED_MPS")
 
 
 # ---------------------------------------------------------------------------
@@ -190,7 +185,5 @@ def test_accept_speed_sample_not_affected_by_plausibility_constant() -> None:
 
 def test_current_reconnect_delay_constant_initial_value() -> None:
     """Newly constructed monitor starts with the initial reconnect delay."""
-    from vibesensor.adapters.gps.gps_speed import _GPS_RECONNECT_DELAY_S
-
     monitor = GPSSpeedMonitor(gps_enabled=True)
-    assert monitor.current_reconnect_delay == _GPS_RECONNECT_DELAY_S
+    assert monitor.current_reconnect_delay == GPS_RECONNECT_DELAY_S

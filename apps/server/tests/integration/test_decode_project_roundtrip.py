@@ -28,7 +28,7 @@ from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.diagnostics import AnalysisResult, RunAnalysis
+from vibesensor.use_cases.diagnostics.summary_builder import AnalysisResult, RunAnalysis
 
 # -- helpers ---------------------------------------------------------------
 
