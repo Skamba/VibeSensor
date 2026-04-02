@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .action_matrix import worksheet_step_pages
 from .appendix_b import _appendix_b_page, _has_appendix_b_content
 from .appendix_c import _appendix_c_page
 from .appendix_d import _appendix_d_page
@@ -14,7 +15,7 @@ from .layout import (
     _estimate_worksheet_top_panel_height,
     _worksheet_first_actions_panel_height,
 )
-from .worksheet import _appendix_a_page, worksheet_step_pages
+from .worksheet import _appendix_a_page
 
 __all__ = [
     "_appendix_a_page",

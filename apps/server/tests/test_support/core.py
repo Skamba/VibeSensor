@@ -309,6 +309,14 @@ def canonicalize_run_context_metadata(metadata: dict[str, Any]) -> dict[str, Any
     if settings_snapshot:
         normalized["analysis_settings_snapshot"] = settings_snapshot
 
+    raw_reference = normalized.get("reference_context")
+    reference_context = dict(raw_reference) if isinstance(raw_reference, Mapping) else {}
+    tire_circumference_m = normalized.pop("tire_circumference_m", None)
+    if tire_circumference_m is not None:
+        reference_context["tire_circumference_m"] = tire_circumference_m
+    if reference_context:
+        normalized["reference_context"] = reference_context
+
     raw_car = normalized.get("active_car_snapshot")
     active_car_snapshot = dict(raw_car) if isinstance(raw_car, Mapping) else {}
     for source_key, target_key in (
@@ -322,6 +330,19 @@ def canonicalize_run_context_metadata(metadata: dict[str, Any]) -> dict[str, Any
             active_car_snapshot[target_key] = value
     if active_car_snapshot:
         normalized["active_car_snapshot"] = active_car_snapshot
+
+    raw_symptom = normalized.pop("symptom", None)
+    symptom = dict(raw_symptom) if isinstance(raw_symptom, Mapping) else {}
+    if raw_symptom is not None and not isinstance(raw_symptom, Mapping):
+        symptom["description"] = raw_symptom
+    symptom_onset = normalized.pop("symptom_onset", None)
+    if symptom_onset is not None:
+        symptom["onset"] = symptom_onset
+    symptom_context = normalized.pop("symptom_context", None)
+    if symptom_context is not None:
+        symptom["context"] = symptom_context
+    if symptom:
+        normalized["symptom"] = symptom
 
     return normalized
 

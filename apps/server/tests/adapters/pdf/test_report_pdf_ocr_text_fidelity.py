@@ -53,7 +53,7 @@ def _write_sparse_fixture(run_path: Path) -> None:
             "fft_window_type": "hann",
             "peak_picker_method": "max_peak_amp_across_axes",
             "accel_scale_g_per_lsb": 1.0 / 256.0,
-            "tire_circumference_m": 2.2,
+            "reference_context": {"tire_circumference_m": 2.2},
             "units": {
                 "t_s": "s",
                 "speed_kmh": "km/h",

@@ -48,7 +48,7 @@ def run_car_metadata_to_json_object(run_car: RunCarMetadata | None) -> JsonObjec
 
 
 def _text_or_none(value: object) -> str | None:
-    if value is None:
+    if not isinstance(value, str):
         return None
-    text = str(value).strip()
+    text = value.strip()
     return text or None

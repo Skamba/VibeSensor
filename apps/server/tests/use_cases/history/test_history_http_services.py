@@ -440,7 +440,8 @@ def test_build_run_details_json_projects_canonical_nested_run_context() -> None:
     assert metadata["active_car_snapshot"]["id"] == "car-1"
     assert "aspects" not in metadata["active_car_snapshot"]
     assert float(metadata["analysis_settings_snapshot"]["tire_width_mm"]) == pytest.approx(255.0)
-    assert float(metadata["tire_circumference_m"]) > 0
+    assert "reference_context" not in metadata
+    assert "tire_circumference_m" not in metadata
 
 
 def test_project_history_insights_keeps_non_projectable_analysis_shape() -> None:

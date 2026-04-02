@@ -47,11 +47,11 @@ def test_create_run_sanitizes_non_finite_metadata(tmp_path: Path) -> None:
     db.create_run(
         "run-nan",
         "2026-01-01T00:00:00Z",
-        _metadata("run-nan", tire_circumference_m=float("nan")),
+        _metadata("run-nan", reference_context={"tire_circumference_m": float("nan")}),
     )
     run = db.get_run("run-nan")
     assert run is not None
-    assert run.metadata.tire_circumference_m_override is None
+    assert run.metadata.wheel_circumference_m is None
     assert run.metadata.tire_circumference_m is None
 
 
