@@ -3,9 +3,9 @@ from __future__ import annotations
 from test_support.sample_scenarios import make_analysis_sample, make_sample
 
 from vibesensor.domain import StrengthPeak
-from vibesensor.shared.boundaries.sensor_frame_codec import (
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
     sensor_frame_to_json_object,
-    sensor_frames_from_rows,
+    sensor_frames_from_mappings,
     sensor_frames_to_json_objects,
 )
 
@@ -20,7 +20,7 @@ def test_sensor_frame_boundary_normalization_types_top_peaks() -> None:
         dominant_freq_hz=31.0,
     )
 
-    sample = sensor_frames_from_rows([raw])[0]
+    sample = sensor_frames_from_mappings([raw])[0]
 
     assert sample.t_s == 1.5
     assert sample.speed_kmh == 72.0
@@ -28,7 +28,7 @@ def test_sensor_frame_boundary_normalization_types_top_peaks() -> None:
     assert sample.top_peaks == (StrengthPeak(hz=31.0, amp=0.11),)
 
 
-def test_sensor_frames_from_rows_returns_typed_rows_and_explicit_json_projection() -> None:
+def test_sensor_frames_from_mappings_returns_typed_rows_and_explicit_json_projection() -> None:
     raw = make_sample(
         t_s=0.0,
         speed_kmh=60.0,
@@ -44,7 +44,7 @@ def test_sensor_frames_from_rows_returns_typed_rows_and_explicit_json_projection
         ),
     )
 
-    typed_rows = sensor_frames_from_rows([raw, typed])
+    typed_rows = sensor_frames_from_mappings([raw, typed])
     raw_rows = sensor_frames_to_json_objects(typed_rows)
 
     assert raw_rows[0]["client_name"] == raw["client_name"]

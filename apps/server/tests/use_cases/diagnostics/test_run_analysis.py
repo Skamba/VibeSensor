@@ -15,14 +15,14 @@ from vibesensor.adapters.analysis_summary import (
 )
 from vibesensor.domain import SpeedProfile
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import (
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
     sensor_frame_from_mapping,
-    sensor_frames_from_rows,
+    sensor_frames_from_mappings,
 )
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
+from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
 from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
@@ -114,8 +114,8 @@ class TestPreparedRunDataProperties:
             for index, speed_kmh in enumerate(speeds)
         ]
 
-        context = prepare_diagnostics_metadata(metadata, file_name="test")
-        prepared = prepare_run_data(context, sensor_frames_from_rows(samples))
+        context = diagnostics_context_from_metadata(metadata, file_name="test")
+        prepared = prepare_run_data(context, sensor_frames_from_mappings(samples))
         speed_stats = _speed_stats(prepared.speed_values)
         phase_info = build_phase_summary(prepared.phase_segments)
 
@@ -176,7 +176,7 @@ class TestRunAnalysis:
         summary_via_rows = summarize_run_data(metadata, samples, file_name="f")
         summary_via_frames = summarize_sensor_frames(
             metadata,
-            sensor_frames_from_rows(samples),
+            sensor_frames_from_mappings(samples),
             file_name="f",
         )
         summary_via_class = analysis_result_to_summary(

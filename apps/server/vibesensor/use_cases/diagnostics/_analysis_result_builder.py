@@ -12,12 +12,16 @@ from vibesensor.domain import (
 )
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.test_plan import plan_test_actions
-from vibesensor.shared.boundaries.diagnostic_case import car_from_metadata, symptom_from_metadata
-from vibesensor.shared.boundaries.run_capture_codec import configuration_snapshot_from_run_metadata
 
 from ._analysis_models import AnalysisResultBuildRequest
 from ._analysis_result import AnalysisResult
-from ._metadata import analysis_settings_items
+from .context_codec import (
+    diagnostics_analysis_settings_items,
+    diagnostics_car,
+    diagnostics_configuration_snapshot,
+    diagnostics_context_to_run_metadata,
+    diagnostics_symptom,
+)
 from .plots import _plot_data
 from .run_analysis_projection import build_domain_driving_segments
 from .run_data_preparation import build_phase_summary
@@ -50,7 +54,7 @@ def build_analysis_result(
 ) -> AnalysisResult:
     """Build the final app-level analysis result."""
 
-    metadata = request.context
+    metadata = diagnostics_context_to_run_metadata(request.context)
     findings_bundle = request.findings_bundle
     summary_speed_stats = _speed_stats(request.prepared.speed_values)
     summary_phase_info = build_phase_summary(request.prepared.phase_segments)
@@ -77,9 +81,9 @@ def build_analysis_result(
                     else ()
                 ),
                 speed_source=SpeedSource(),
-                configuration_snapshot=configuration_snapshot_from_run_metadata(metadata),
+                configuration_snapshot=diagnostics_configuration_snapshot(request.context),
             ),
-            analysis_settings=analysis_settings_items(metadata),
+            analysis_settings=diagnostics_analysis_settings_items(request.context),
             sample_count=len(request.samples),
             duration_s=request.prepared.duration_s,
         ),
@@ -94,8 +98,8 @@ def build_analysis_result(
         test_plan=domain_test_plan,
     )
     diagnostic_case = DiagnosticCase.start(
-        car=car_from_metadata(metadata),
-        symptoms=(symptom_from_metadata(metadata),),
+        car=diagnostics_car(request.context),
+        symptoms=(diagnostics_symptom(request.context),),
         test_plan=domain_test_plan,
     ).add_run(test_run)
     return AnalysisResult(

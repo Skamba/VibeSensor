@@ -20,7 +20,7 @@ from vibesensor.adapters.analysis_summary import (
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
@@ -148,7 +148,7 @@ def _wheel_fault_analysis(file_name: str) -> RunAnalysis:
     return RunAnalysis(
         build_diagnostics_run_input(
             run_metadata_from_mapping(standard_metadata()),
-            sensor_frames_from_rows(
+            sensor_frames_from_mappings(
                 fault_phase(
                     speed_kmh=80.0,
                     duration_s=20.0,

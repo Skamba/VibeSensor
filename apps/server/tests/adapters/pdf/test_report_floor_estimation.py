@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _estimate_strength_floor_amp_g,
     _run_noise_baseline_g,
@@ -24,7 +24,7 @@ def _sample(
     }
     if floor_amp is not None:
         sample["strength_floor_amp_g"] = floor_amp
-    return sensor_frames_from_rows([sample])[0]
+    return sensor_frames_from_mappings([sample])[0]
 
 
 def test_estimate_strength_floor_amp_g_uses_consistent_policy() -> None:

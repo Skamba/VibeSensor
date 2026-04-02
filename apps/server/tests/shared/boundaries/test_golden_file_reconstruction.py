@@ -7,7 +7,7 @@ from test_support import build_speed_sweep_fault_samples, standard_metadata
 
 from vibesensor.adapters.analysis_summary import summarize_sensor_frames
 from vibesensor.domain import SpeedProfile
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.boundaries.summary_snapshot_codec import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
@@ -22,7 +22,7 @@ def golden_summary() -> dict:
     """Build a representative summary via the canonical typed diagnostics path."""
     return summarize_sensor_frames(
         standard_metadata(),
-        sensor_frames_from_rows(
+        sensor_frames_from_mappings(
             build_speed_sweep_fault_samples(
                 speed_start_kmh=40.0,
                 speed_end_kmh=120.0,

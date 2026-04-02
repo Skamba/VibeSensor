@@ -12,11 +12,8 @@ from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter
-from vibesensor.use_cases.run.sample_builder import (
-    _LIVE_SAMPLE_WINDOW_S,
-    build_sample_records,
-    resolve_speed_context,
-)
+from vibesensor.use_cases.run.sample_builder import _LIVE_SAMPLE_WINDOW_S, build_sample_records
+from vibesensor.use_cases.run.sample_speed_context import resolve_speed_context
 
 AnalysisSettingsProvider = Callable[[], AnalysisSettingsSnapshot]
 CurrentTotalProvider = Callable[[], int]

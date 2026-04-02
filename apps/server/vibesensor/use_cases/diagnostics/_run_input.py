@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
-from ._metadata import prepare_diagnostics_metadata
+from .context import DiagnosticsContext
+from .context_codec import diagnostics_context_from_metadata
 
 __all__ = ["DiagnosticsRunInput", "build_diagnostics_run_input"]
 
@@ -17,12 +18,8 @@ __all__ = ["DiagnosticsRunInput", "build_diagnostics_run_input"]
 class DiagnosticsRunInput:
     """One normalized diagnostics run used by the typed analysis core."""
 
-    context: RunMetadata
+    context: DiagnosticsContext
     samples: tuple[SensorFrame, ...]
-
-    @property
-    def metadata(self) -> RunMetadata:
-        return self.context
 
     @property
     def run_id(self) -> str:
@@ -38,6 +35,6 @@ def build_diagnostics_run_input(
     """Normalize typed diagnostics inputs into the canonical run model."""
 
     return DiagnosticsRunInput(
-        context=prepare_diagnostics_metadata(metadata, file_name=file_name),
+        context=diagnostics_context_from_metadata(metadata, file_name=file_name),
         samples=tuple(samples),
     )

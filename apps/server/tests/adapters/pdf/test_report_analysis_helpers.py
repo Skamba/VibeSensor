@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import speed_band_sort_key, speed_bin_label
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.constants.analysis import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -13,7 +13,6 @@ from vibesensor.shared.statistics_utils import (
     _percent_missing,
 )
 from vibesensor.shared.time_utils import format_duration_mm_ss
-from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
 from vibesensor.use_cases.diagnostics._reference_resolution import _effective_engine_rpm
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _primary_vibration_strength_db,
@@ -24,6 +23,7 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
     _location_label,
     _locations_connected_throughout_run,
 )
+from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs
 from vibesensor.use_cases.diagnostics.orders.physics import _wheel_hz
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
@@ -35,11 +35,11 @@ from vibesensor.vibration_strength import percentile
 
 
 def _typed_sample(**overrides: object):
-    return sensor_frames_from_rows([overrides])[0]
+    return sensor_frames_from_mappings([overrides])[0]
 
 
 def _typed_samples(samples: list[dict]) -> list:
-    return sensor_frames_from_rows(samples)
+    return sensor_frames_from_mappings(samples)
 
 
 # -- _as_float -----------------------------------------------------------------
@@ -230,7 +230,7 @@ def test_speed_stats_by_phase_single_phase() -> None:
         {"speed_kmh": 60.5},
     ]
     phases = ["cruise", "cruise", "cruise"]
-    result = _speed_stats_by_phase(sensor_frames_from_rows(samples), phases)
+    result = _speed_stats_by_phase(sensor_frames_from_mappings(samples), phases)
     assert "cruise" in result
     assert result["cruise"].sample_count == 3
     assert result["cruise"].min_kmh == 60.0
@@ -246,7 +246,7 @@ def test_speed_stats_by_phase_multiple_phases() -> None:
         {"speed_kmh": 62.0},
     ]
     phases = ["idle", "idle", "cruise", "cruise", "cruise"]
-    result = _speed_stats_by_phase(sensor_frames_from_rows(samples), phases)
+    result = _speed_stats_by_phase(sensor_frames_from_mappings(samples), phases)
     assert set(result.keys()) == {"idle", "cruise"}
     assert result["idle"].sample_count == 2
     assert result["cruise"].sample_count == 3
@@ -261,7 +261,7 @@ def test_speed_stats_by_phase_excludes_zero_and_none_speed() -> None:
         {"speed_kmh": 50.0},
     ]
     phases = ["idle", "idle", "cruise"]
-    result = _speed_stats_by_phase(sensor_frames_from_rows(samples), phases)
+    result = _speed_stats_by_phase(sensor_frames_from_mappings(samples), phases)
     # idle has 2 samples but none with speed > 0
     assert result["idle"].sample_count == 2
     assert result["idle"].min_kmh is None
@@ -274,7 +274,7 @@ def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
         {"t_s": float(i), "speed_kmh": 0.5 if i < 5 else 60.0, "vibration_strength_db": 10.0}
         for i in range(10)
     ]
-    typed_samples = sensor_frames_from_rows(samples)
+    typed_samples = sensor_frames_from_mappings(samples)
     per_sample_phases, _ = segment_run_phases(typed_samples)
     result = _speed_stats_by_phase(typed_samples, per_sample_phases)
     total = sum(v.sample_count for v in result.values())
@@ -436,7 +436,7 @@ def test_wheel_hz_returns_none(sample: dict, tire_circ: float | None) -> None:
 
 def test_effective_engine_rpm_measured() -> None:
     sample = _typed_sample(engine_rpm=3000.0, engine_rpm_source="obd")
-    context = prepare_diagnostics_metadata({}, file_name="test")
+    context = diagnostics_context_from_metadata({}, file_name="test")
     rpm, src = _effective_engine_rpm(sample, context, None)
     assert rpm == 3000.0
     assert src == "obd"
@@ -445,7 +445,7 @@ def test_effective_engine_rpm_measured() -> None:
 def test_effective_engine_rpm_estimated_from_speed() -> None:
     tire_circ = 2.0
     sample = _typed_sample(speed_kmh=90.0, gear=0.64, final_drive_ratio=3.08)
-    context = prepare_diagnostics_metadata({}, file_name="test")
+    context = diagnostics_context_from_metadata({}, file_name="test")
     rpm, src = _effective_engine_rpm(sample, context, tire_circ)
     assert rpm is not None
     assert rpm > 0
@@ -453,7 +453,7 @@ def test_effective_engine_rpm_estimated_from_speed() -> None:
 
 
 def test_effective_engine_rpm_missing() -> None:
-    context = prepare_diagnostics_metadata({}, file_name="test")
+    context = diagnostics_context_from_metadata({}, file_name="test")
     rpm, src = _effective_engine_rpm(_typed_sample(), context, None)
     assert rpm is None
     assert src == "missing"

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_input import (
     PostAnalysisRunInput,
@@ -51,7 +51,7 @@ def _run_input(
                 raw_sample_rate_hz=raw_sample_rate_hz,
             ),
             language=language,
-            samples=sensor_frames_from_rows([{"t_s": 1.0, "vibration_strength_db": 10.0}]),
+            samples=sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}]),
             total_sample_count=total_sample_count,
             stride=stride,
         ),
@@ -206,7 +206,7 @@ def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_
             run_id="run-derived-strength",
             metadata=_run_metadata("run-derived-strength"),
             language="en",
-            samples=sensor_frames_from_rows(
+            samples=sensor_frames_from_mappings(
                 [
                     {
                         "t_s": 1.0,

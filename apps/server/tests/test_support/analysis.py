@@ -6,7 +6,7 @@ from typing import Any
 
 from test_support.core import standard_metadata
 from vibesensor.adapters.analysis_summary import summarize_sensor_frames
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 
 
 def run_analysis(
@@ -18,7 +18,7 @@ def run_analysis(
     meta = metadata or standard_metadata(**meta_overrides)
     return summarize_sensor_frames(
         meta,
-        sensor_frames_from_rows(samples),
+        sensor_frames_from_mappings(samples),
         lang=meta.get("language", "en"),
     )
 
