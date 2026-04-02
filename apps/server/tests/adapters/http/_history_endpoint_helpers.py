@@ -108,9 +108,7 @@ def _coerce_analysis(
     baseline = summarize_run_data(
         run_metadata_to_json_object(metadata),
         [
-            sensor_frame_to_json_object(row)
-            if isinstance(row, SensorFrame)
-            else row
+            sensor_frame_to_json_object(row) if isinstance(row, SensorFrame) else row
             for row in samples
         ],
         lang=metadata.language or "en",
