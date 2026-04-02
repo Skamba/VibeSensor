@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, NotRequired, TypedDict
 
@@ -18,6 +19,7 @@ __all__ = [
     "CarConfigPayload",
     "CarConfigUpdatePayload",
     "CarsSnapshot",
+    "car_from_persistence_dict",
     "car_to_persistence_dict",
     "new_car_id",
 ]
@@ -56,6 +58,25 @@ def new_car_id() -> str:
     return str(uuid.uuid4())
 
 
+def car_from_persistence_dict(payload: Mapping[str, object]) -> Car:
+    """Decode one persisted/shared car payload into the canonical domain object."""
+
+    from vibesensor.domain import Car
+    from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+
+    raw_aspects = payload.get("aspects")
+    aspects: dict[str, float] = dict(AnalysisSettingsSnapshot.DEFAULTS)
+    if isinstance(raw_aspects, Mapping):
+        aspects.update(AnalysisSettingsSnapshot.sanitize(raw_aspects))
+    return Car(
+        id=_text_or_default(payload.get("id"), default=new_car_id(), max_length=128),
+        name=_text_or_default(payload.get("name"), default="Unnamed Car", max_length=64),
+        car_type=_text_or_default(payload.get("type"), default="sedan", max_length=32),
+        aspects=aspects,
+        variant=_optional_text(payload.get("variant"), max_length=64),
+    )
+
+
 def car_to_persistence_dict(car: Car) -> CarConfigPayload:
     """Serialize a domain ``Car`` to a plain dict for JSON persistence."""
     payload: CarConfigPayload = {
@@ -67,3 +88,18 @@ def car_to_persistence_dict(car: Car) -> CarConfigPayload:
     if car.variant:
         payload["variant"] = car.variant
     return payload
+
+
+def _text_or_default(value: object, *, default: str, max_length: int) -> str:
+    if value is not None:
+        text = str(value).strip()[:max_length]
+        if text:
+            return text
+    return default
+
+
+def _optional_text(value: object, *, max_length: int) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()[:max_length]
+    return text or None

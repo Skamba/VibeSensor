@@ -14,6 +14,7 @@ from vibesensor.adapters.analysis_summary import (
     summarize_sensor_frames,
 )
 from vibesensor.domain import SpeedProfile
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_codec import (
     sensor_frame_from_mapping,
     sensor_frames_from_rows,
@@ -21,6 +22,7 @@ from vibesensor.shared.boundaries.sensor_frame_codec import (
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
@@ -37,11 +39,14 @@ def _analysis(
 ) -> RunAnalysis:
     file_name = str(kwargs.get("file_name") or "run")
     return RunAnalysis(
-        build_diagnostics_context(metadata, file_name=file_name),
-        [
-            sample if isinstance(sample, SensorFrame) else sensor_frame_from_mapping(sample)
-            for sample in samples
-        ],
+        build_diagnostics_run_input(
+            run_metadata_from_mapping(metadata),
+            [
+                sample if isinstance(sample, SensorFrame) else sensor_frame_from_mapping(sample)
+                for sample in samples
+            ],
+            file_name=file_name,
+        ),
         **kwargs,
     )
 

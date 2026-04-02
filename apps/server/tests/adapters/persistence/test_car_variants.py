@@ -12,8 +12,7 @@ from vibesensor.adapters.persistence.car_library import (
     get_variants_for_model,
     resolve_variant,
 )
-from vibesensor.domain import Car
-from vibesensor.shared.types.car_config import car_to_persistence_dict
+from vibesensor.shared.types.car_config import car_from_persistence_dict, car_to_persistence_dict
 
 
 def _variant_label(entry: dict[str, object], variant: dict[str, object]) -> str:
@@ -342,36 +341,36 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Car persistence (from_persisted_dict) tests
+# Car persistence (boundary decoder) tests
 # ---------------------------------------------------------------------------
 
 
-def test_car_from_persisted_dict_without_variant() -> None:
-    """Car.from_persisted_dict without variant sets variant to None."""
-    car = Car.from_persisted_dict({"name": "Old Car", "type": "sedan"})
+def test_car_from_persistence_dict_without_variant() -> None:
+    """Boundary car decoder without variant sets variant to None."""
+    car = car_from_persistence_dict({"name": "Old Car", "type": "sedan"})
     assert car.variant is None
     d = car_to_persistence_dict(car)
     assert "variant" not in d
 
 
-def test_car_from_persisted_dict_with_variant() -> None:
-    """Car.from_persisted_dict with variant preserves it."""
-    car = Car.from_persisted_dict({"name": "BMW 320i", "type": "Sedan", "variant": "320i"})
+def test_car_from_persistence_dict_with_variant() -> None:
+    """Boundary car decoder preserves the optional variant."""
+    car = car_from_persistence_dict({"name": "BMW 320i", "type": "Sedan", "variant": "320i"})
     assert car.variant == "320i"
     d = car_to_persistence_dict(car)
     assert d["variant"] == "320i"
 
 
-def test_car_from_persisted_dict_empty_variant() -> None:
+def test_car_from_persistence_dict_empty_variant() -> None:
     """Empty string variant is treated as None."""
-    car = Car.from_persisted_dict({"name": "Car", "type": "sedan", "variant": ""})
+    car = car_from_persistence_dict({"name": "Car", "type": "sedan", "variant": ""})
     assert car.variant is None
 
 
-def test_car_from_persisted_dict_variant_truncated() -> None:
+def test_car_from_persistence_dict_variant_truncated() -> None:
     """Very long variant names are truncated to 64 chars."""
     long_name = "x" * 100
-    car = Car.from_persisted_dict({"name": "Car", "type": "sedan", "variant": long_name})
+    car = car_from_persistence_dict({"name": "Car", "type": "sedan", "variant": long_name})
     assert len(car.variant) == 64
 
 

@@ -15,8 +15,9 @@ from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries import run_suitability as _run_suitability_boundary
 from vibesensor.shared.boundaries.run_capture_codec import (
-    configuration_snapshot_from_metadata,
+    configuration_snapshot_from_run_metadata,
 )
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.summary_snapshot_codec import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
@@ -187,7 +188,9 @@ def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
     setup = RunSetup(
         sensors=Sensor.from_location_codes(sensor_loc_list) if sensor_loc_list else (),
         speed_source=SpeedSource(),
-        configuration_snapshot=configuration_snapshot_from_metadata(meta),
+        configuration_snapshot=configuration_snapshot_from_run_metadata(
+            run_metadata_from_mapping(meta),
+        ),
     )
     rows_raw = payload.get("rows")
     try:

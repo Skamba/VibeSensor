@@ -64,9 +64,9 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
     captured: dict[str, object] = {}
 
     class FakeRunAnalysis:
-        def __init__(self, context, samples, *, lang, file_name, include_samples):
-            captured["context"] = context
-            captured["samples"] = samples
+        def __init__(self, diagnostics_run, *, lang, file_name, include_samples):
+            captured["context"] = diagnostics_run.context
+            captured["samples"] = diagnostics_run.samples
             captured["lang"] = lang
             captured["file_name"] = file_name
             captured["include_samples"] = include_samples
@@ -184,8 +184,8 @@ def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_
     captured: dict[str, object] = {}
 
     class FakeRunAnalysis:
-        def __init__(self, _context, samples, **_kwargs):
-            captured["sample"] = samples[0]
+        def __init__(self, diagnostics_run, **_kwargs):
+            captured["sample"] = diagnostics_run.samples[0]
 
         def summarize(self):
             return SimpleNamespace(

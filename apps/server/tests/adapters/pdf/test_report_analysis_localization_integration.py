@@ -4,6 +4,7 @@ import pytest
 from test_support.report_helpers import analysis_sample as _make_sample
 from test_support.report_helpers import max_non_ref_confidence, wheel_metadata
 
+from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.domain import LocationHotspot, OrderMatchObservation
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants.units import KMH_TO_MPS
@@ -12,10 +13,7 @@ from vibesensor.use_cases.diagnostics.location_analysis import (
     summarize_order_match_locations,
 )
 from vibesensor.use_cases.diagnostics.orders import scoring as _order_scoring_module
-from vibesensor.use_cases.diagnostics.run_analysis import (
-    build_findings_for_samples,
-    summarize_origin,
-)
+from vibesensor.use_cases.diagnostics.run_analysis import summarize_origin
 
 
 def _obs(

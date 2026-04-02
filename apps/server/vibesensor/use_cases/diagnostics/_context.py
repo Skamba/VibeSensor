@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, OrderReferenceSpec, Symptom
 from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
@@ -10,59 +10,134 @@ from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     analysis_settings_snapshot_items,
 )
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 
 @dataclass(frozen=True, slots=True)
 class DiagnosticsContext:
-    """Canonical typed diagnostics context built once at metadata ingress."""
+    """Thin typed diagnostics view over canonical run metadata."""
 
-    run_id: str
-    case_id: str = ""
-    sensor_mac: str | None = None
-    sensor_model: str | None = None
-    firmware_version: str | None = None
-    raw_sample_rate_hz: float | None = None
-    feature_interval_s: float | None = None
-    summary_version: int = 1
-    analysis_settings: AnalysisSettingsSnapshot = field(default_factory=AnalysisSettingsSnapshot)
-    car: CarSnapshot | None = None
-    symptom: Symptom | None = None
-    start_time_utc: str | None = None
-    end_time_utc: str | None = None
-    report_date: str | None = None
-    default_language: str = "en"
-    fft_window_size_samples: int | None = None
-    fft_window_type: str | None = None
-    peak_picker_method: str | None = None
-    accel_scale_g_per_lsb: float | None = None
-    incomplete_for_order_analysis: bool = False
-    tire_circumference_m_override: float | None = None
-    explicit_engine_rpm: float | None = None
-    units: JsonObject | None = None
-    amplitude_definitions: JsonObject | None = None
+    metadata: RunMetadata
 
     def __post_init__(self) -> None:
-        if not self.run_id:
+        if not self.metadata.run_id:
             raise ValueError("run_id must be a non-empty string")
-        if self.summary_version < 1:
+        if self.metadata.summary_version < 1:
             raise ValueError("summary_version must be >= 1")
 
     @property
+    def run_id(self) -> str:
+        return self.metadata.run_id
+
+    @property
+    def case_id(self) -> str:
+        return self.metadata.case_id
+
+    @property
+    def sensor_mac(self) -> str | None:
+        return self.metadata.sensor_mac
+
+    @property
+    def sensor_model(self) -> str:
+        return self.metadata.sensor_model
+
+    @property
+    def firmware_version(self) -> str | None:
+        return self.metadata.firmware_version
+
+    @property
+    def raw_sample_rate_hz(self) -> float | None:
+        value = self.metadata.raw_sample_rate_hz
+        return float(value) if value is not None else None
+
+    @property
+    def feature_interval_s(self) -> float | None:
+        return self.metadata.feature_interval_s
+
+    @property
+    def summary_version(self) -> int:
+        return self.metadata.summary_version
+
+    @property
+    def analysis_settings(self) -> AnalysisSettingsSnapshot:
+        return self.metadata.analysis_settings
+
+    @property
+    def car(self) -> CarSnapshot | None:
+        return self.metadata.car
+
+    @property
+    def symptom(self) -> Symptom | None:
+        return self.metadata.symptom
+
+    @property
+    def start_time_utc(self) -> str:
+        return self.metadata.start_time_utc
+
+    @property
+    def end_time_utc(self) -> str | None:
+        return self.metadata.end_time_utc
+
+    @property
+    def report_date(self) -> str | None:
+        return self.metadata.report_date
+
+    @property
+    def default_language(self) -> str:
+        return self.metadata.language
+
+    @property
+    def fft_window_size_samples(self) -> int | None:
+        return self.metadata.fft_window_size_samples
+
+    @property
+    def fft_window_type(self) -> str | None:
+        return self.metadata.fft_window_type
+
+    @property
+    def peak_picker_method(self) -> str:
+        return self.metadata.peak_picker_method
+
+    @property
+    def accel_scale_g_per_lsb(self) -> float | None:
+        return self.metadata.accel_scale_g_per_lsb
+
+    @property
+    def incomplete_for_order_analysis(self) -> bool:
+        return self.metadata.incomplete_for_order_analysis
+
+    @property
+    def tire_circumference_m_override(self) -> float | None:
+        return self.metadata.tire_circumference_m_override
+
+    @property
+    def explicit_engine_rpm(self) -> float | None:
+        return self.metadata.explicit_engine_rpm
+
+    @property
+    def units(self) -> JsonObject | None:
+        return self.metadata.units
+
+    @property
+    def amplitude_definitions(self) -> JsonObject | None:
+        return self.metadata.amplitude_definitions
+
+    @property
     def car_name(self) -> str | None:
-        return self.car.name if self.car is not None else None
+        return self.metadata.car_name
 
     @property
     def car_type(self) -> str | None:
-        return self.car.car_type if self.car is not None else None
+        return self.metadata.car_type
 
     @property
     def car_variant(self) -> str | None:
-        return self.car.variant if self.car is not None else None
+        return self.metadata.car_variant
 
     @property
     def order_reference_spec(self) -> OrderReferenceSpec | None:
-        return self.analysis_settings.order_reference_spec
+        return self.metadata.order_reference_spec
 
     @property
     def final_drive_ratio(self) -> float | None:
@@ -82,13 +157,7 @@ class DiagnosticsContext:
 
     @property
     def tire_circumference_m(self) -> float | None:
-        spec = self.order_reference_spec
-        if spec is not None and bool(getattr(spec, "supports_wheel_reference", False)):
-            return spec.tire_circumference_m
-        override = self.tire_circumference_m_override
-        if override is not None and override > 0:
-            return override
-        return None
+        return self.metadata.tire_circumference_m
 
     @property
     def reference_complete(self) -> bool:

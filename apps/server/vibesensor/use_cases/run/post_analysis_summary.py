@@ -22,8 +22,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
     result = RunAnalysis(
-        run.context,
-        run.samples,
+        run.diagnostics_run,
         lang=run.language,
         file_name=run.run_id,
         include_samples=False,

@@ -22,7 +22,6 @@ _SERVER_PKG = SERVER_ROOT / "vibesensor"
 _REMOVED_FACADE_SYMBOLS = [
     "AnalysisResult",
     "RunAnalysis",
-    "build_findings_for_samples",
 ]
 
 
@@ -37,11 +36,8 @@ def test_diagnostics_package_no_longer_reexports_app_level_symbols() -> None:
 
 
 def test_canonical_analysis_symbols_live_in_run_analysis() -> None:
-    from vibesensor.use_cases.diagnostics.run_analysis import (
-        AnalysisResult,
-        RunAnalysis,
-        build_findings_for_samples,
-    )
+    from vibesensor.adapters.analysis_summary import build_findings_for_samples
+    from vibesensor.use_cases.diagnostics.run_analysis import AnalysisResult, RunAnalysis
 
     assert isinstance(AnalysisResult, type)
     assert isinstance(RunAnalysis, type)

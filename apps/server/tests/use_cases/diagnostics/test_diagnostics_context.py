@@ -5,8 +5,8 @@ from dataclasses import replace
 from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain import Symptom
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics._context_projection import context_to_metadata_dict
 
 
 def _context_metadata() -> dict[str, object]:
@@ -51,7 +51,7 @@ def test_diagnostics_context_decodes_typed_reference_data() -> None:
     context = _context()
 
     assert context.run_id == "ctx-run"
-    assert not hasattr(context, "run_metadata")
+    assert context.metadata.run_id == "ctx-run"
     assert context.raw_sample_rate_hz == 200.0
     assert context.sensor_model == "ADXL345"
     assert context.car_name == "Primary"
@@ -107,7 +107,7 @@ def test_diagnostics_context_requires_nested_snapshot_for_run_context_fields() -
         file_name="ctx",
     )
 
-    projected = context_to_metadata_dict(context)
+    projected = run_metadata_to_json_object(context.metadata)
 
     assert context.analysis_settings.final_drive_ratio == 0.0
     assert context.car is None
@@ -125,7 +125,7 @@ def test_diagnostics_context_drops_flat_analysis_settings_payload() -> None:
         file_name="ctx",
     )
 
-    metadata = context_to_metadata_dict(context)
+    metadata = run_metadata_to_json_object(context.metadata)
 
     assert context.analysis_settings_items == ()
     assert "analysis_settings" not in metadata
@@ -154,7 +154,7 @@ def test_effective_order_reference_spec_applies_sample_ratio_overrides() -> None
 def test_diagnostics_context_rehydrates_boundary_metadata_with_known_fields_only() -> None:
     context = _context()
 
-    metadata = context_to_metadata_dict(context)
+    metadata = run_metadata_to_json_object(context.metadata)
 
     assert metadata["run_id"] == "ctx-run"
     assert metadata["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55

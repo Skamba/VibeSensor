@@ -10,6 +10,7 @@ from test_support.report_helpers import (
     wheel_metadata,
 )
 
+from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.domain import Finding, LocationHotspot
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.constants.units import KMH_TO_MPS
@@ -20,7 +21,6 @@ from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisR
 from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
-from vibesensor.use_cases.diagnostics.run_analysis import build_findings_for_samples
 from vibesensor.use_cases.diagnostics.signal_aggregation import _speed_breakdown
 
 
