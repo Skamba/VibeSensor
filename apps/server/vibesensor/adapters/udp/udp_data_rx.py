@@ -29,6 +29,21 @@ LOGGER = logging.getLogger(__name__)
 _QUEUE_DROP_LOG_INTERVAL_S: float = 2.0
 
 
+class DatagramDispatchError(RuntimeError):
+    """Operational failure while dispatching one parsed DATA message."""
+
+    def __init__(
+        self,
+        *,
+        client_id: str,
+        addr: tuple[str, int],
+        detail: str,
+    ) -> None:
+        super().__init__(detail)
+        self.client_id = client_id
+        self.addr = addr
+
+
 class DataDatagramProtocol(asyncio.DatagramProtocol):
     """asyncio ``DatagramProtocol`` that ingests UDP sensor data frames."""
 
@@ -95,6 +110,14 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             data, addr = await self._queue.get()
             try:
                 self._process_datagram(data, addr)
+            except DatagramDispatchError as exc:
+                LOGGER.warning(
+                    "Error processing datagram from %s (client=%s): %s",
+                    exc.addr,
+                    exc.client_id,
+                    exc,
+                    exc_info=True,
+                )
             finally:
                 self._queue.task_done()
 
@@ -122,35 +145,44 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         client_id = msg.client_id.hex()
         registry = self.registry
         processor = self.processor
-        try:
-            now_ts = time.time()
-            result = registry.update_from_data(msg, addr, now_ts)
-            if not result.is_duplicate:
-                if result.reset_detected:
-                    LOGGER.warning(
-                        "Sensor reset detected for %s — flushing FFT buffer",
-                        client_id,
-                    )
-                    processor.flush_client_buffer(client_id)
-                record = registry.get(client_id)
-                sample_rate_hz = record.sample_rate_hz if record is not None else None
-                processor.ingest(
+        now_ts = time.time()
+        result = registry.update_from_data(msg, addr, now_ts)
+        if not result.is_duplicate:
+            if result.reset_detected:
+                LOGGER.warning(
+                    "Sensor reset detected for %s — flushing FFT buffer",
                     client_id,
-                    msg.samples,
-                    sample_rate_hz=sample_rate_hz,
-                    t0_us=msg.t0_us,
                 )
-            transport = self.transport
-            if transport is not None:
-                ack_payload = pack_data_ack(msg.client_id, msg.seq)
-                transport.sendto(ack_payload, addr)
-        except (ValueError, KeyError, OSError):
-            LOGGER.warning(
-                "Error processing datagram from %s (client=%s)",
-                addr,
+                processor.flush_client_buffer(client_id)
+            record = registry.get(client_id)
+            sample_rate_hz = record.sample_rate_hz if record is not None else None
+            processor.ingest(
                 client_id,
-                exc_info=True,
+                msg.samples,
+                sample_rate_hz=sample_rate_hz,
+                t0_us=msg.t0_us,
             )
+        self._send_data_ack(msg, addr, client_id=client_id)
+
+    def _send_data_ack(
+        self,
+        msg: DataMessage,
+        addr: tuple[str, int],
+        *,
+        client_id: str,
+    ) -> None:
+        transport = self.transport
+        if transport is None:
+            return
+        ack_payload = pack_data_ack(msg.client_id, msg.seq)
+        try:
+            transport.sendto(ack_payload, addr)
+        except OSError as exc:
+            raise DatagramDispatchError(
+                client_id=client_id,
+                addr=addr,
+                detail="failed to send DATA_ACK",
+            ) from exc
 
 
 async def start_udp_data_receiver(

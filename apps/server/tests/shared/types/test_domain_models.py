@@ -11,10 +11,8 @@ from vibesensor.shared.boundaries.run_metadata_codec import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
-    sensor_frame_from_mapping,
-    sensor_frame_to_json_object,
-)
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_encoder import sensor_frame_to_json_object
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.types.car_config import car_from_persistence_dict, car_to_persistence_dict
 from vibesensor.shared.types.run_schema import RunMetadata

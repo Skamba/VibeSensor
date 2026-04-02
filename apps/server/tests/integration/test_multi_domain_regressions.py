@@ -15,10 +15,11 @@ from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.domain import Finding, SpeedSourceKind, speed_bin_label
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
-from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
+from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics.location_scoring import weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
@@ -45,7 +46,7 @@ class TestBug01ComputeRunTimingTimedelta:
     def test_end_ts_from_samples_uses_timedelta(self) -> None:
         meta = {"start_time_utc": "2024-01-01T12:00:00Z"}
         samples = [{"t_s": 0.0}, {"t_s": 300.0}]
-        context = diagnostics_context_from_metadata(meta, file_name="test")
+        context = normalize_run_metadata(run_metadata_from_mapping(meta), file_name="test")
         _, start, end, duration = compute_run_timing(context, sensor_frames_from_mappings(samples))
         assert start is not None
         assert end is not None

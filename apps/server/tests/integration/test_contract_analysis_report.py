@@ -28,7 +28,7 @@ from vibesensor.adapters.pdf.mapping import (
 from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 

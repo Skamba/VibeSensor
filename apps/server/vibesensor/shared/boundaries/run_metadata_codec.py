@@ -6,6 +6,14 @@ import logging
 from collections.abc import Mapping
 
 from vibesensor.domain import Symptom
+from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+    analysis_settings_snapshot_from_mapping,
+    analysis_settings_snapshot_to_metadata,
+)
+from vibesensor.shared.boundaries.car_snapshot_codec import (
+    car_snapshot_from_mapping,
+    car_snapshot_to_metadata,
+)
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
@@ -15,8 +23,6 @@ from vibesensor.shared.types.run_schema import (
     RUN_SCHEMA_VERSION,
     RunMetadata,
 )
-
-from .run_context_codec import run_context_snapshot_from_metadata, run_context_snapshot_to_metadata
 
 __all__ = [
     "run_metadata_from_mapping",
@@ -47,7 +53,10 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         peak_picker_method=_as_str_or_none(data.get("peak_picker_method")) or PEAK_PICKER_METHOD,
         accel_scale_g_per_lsb=as_float_or_none(data.get("accel_scale_g_per_lsb")),
         incomplete_for_order_analysis=bool(data.get("incomplete_for_order_analysis", False)),
-        run_context=run_context_snapshot_from_metadata(data),
+        analysis_settings=analysis_settings_snapshot_from_mapping(
+            data.get("analysis_settings_snapshot"),
+        ),
+        car=car_snapshot_from_mapping(data.get("active_car_snapshot")),
         case_id=_as_str_or_none(data.get("case_id")) or "",
         sensor_mac=_as_str_or_none(data.get("sensor_mac")),
         summary_version=max(1, as_int_or_none(data.get("_summary_version")) or 1),
@@ -87,8 +96,12 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         "_summary_version": metadata.summary_version,
         "report_date": metadata.report_date,
         "language": metadata.language,
-        **run_context_snapshot_to_metadata(metadata.run_context),
+        "analysis_settings_snapshot": analysis_settings_snapshot_to_metadata(
+            metadata.analysis_settings,
+        ),
     }
+    if (car_metadata := car_snapshot_to_metadata(metadata.car)) is not None:
+        payload["active_car_snapshot"] = car_metadata
     if metadata.symptom is not None and not metadata.symptom.is_unspecified:
         payload["symptom"] = metadata.symptom.description
         if metadata.symptom.onset:

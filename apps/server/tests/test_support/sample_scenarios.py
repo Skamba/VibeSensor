@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from test_support.core import _stable_hash
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength

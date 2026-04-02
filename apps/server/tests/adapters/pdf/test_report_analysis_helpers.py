@@ -3,7 +3,8 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import speed_band_sort_key, speed_bin_label
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.constants.analysis import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -14,6 +15,7 @@ from vibesensor.shared.statistics_utils import (
 )
 from vibesensor.shared.time_utils import format_duration_mm_ss
 from vibesensor.use_cases.diagnostics._reference_resolution import _effective_engine_rpm
+from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _primary_vibration_strength_db,
     _sample_top_peaks,
@@ -23,7 +25,6 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
     _location_label,
     _locations_connected_throughout_run,
 )
-from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs
 from vibesensor.use_cases.diagnostics.orders.physics import _wheel_hz
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
@@ -436,7 +437,7 @@ def test_wheel_hz_returns_none(sample: dict, tire_circ: float | None) -> None:
 
 def test_effective_engine_rpm_measured() -> None:
     sample = _typed_sample(engine_rpm=3000.0, engine_rpm_source="obd")
-    context = diagnostics_context_from_metadata({}, file_name="test")
+    context = normalize_run_metadata(run_metadata_from_mapping({}), file_name="test")
     rpm, src = _effective_engine_rpm(sample, context, None)
     assert rpm == 3000.0
     assert src == "obd"
@@ -445,7 +446,7 @@ def test_effective_engine_rpm_measured() -> None:
 def test_effective_engine_rpm_estimated_from_speed() -> None:
     tire_circ = 2.0
     sample = _typed_sample(speed_kmh=90.0, gear=0.64, final_drive_ratio=3.08)
-    context = diagnostics_context_from_metadata({}, file_name="test")
+    context = normalize_run_metadata(run_metadata_from_mapping({}), file_name="test")
     rpm, src = _effective_engine_rpm(sample, context, tire_circ)
     assert rpm is not None
     assert rpm > 0
@@ -453,7 +454,7 @@ def test_effective_engine_rpm_estimated_from_speed() -> None:
 
 
 def test_effective_engine_rpm_missing() -> None:
-    context = diagnostics_context_from_metadata({}, file_name="test")
+    context = normalize_run_metadata(run_metadata_from_mapping({}), file_name="test")
     rpm, src = _effective_engine_rpm(_typed_sample(), context, None)
     assert rpm is None
     assert src == "missing"

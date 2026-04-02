@@ -10,12 +10,12 @@ from dataclasses import dataclass
 
 from vibesensor.domain import OrderReferenceSpec, VibrationSource
 from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._reference_resolution import (
     _effective_engine_rpm,
     _order_reference_spec_from_context,
 )
 from vibesensor.use_cases.diagnostics._types import Sample
-from vibesensor.use_cases.diagnostics.context import DiagnosticsContext
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Hz helpers
@@ -25,7 +25,7 @@ from vibesensor.use_cases.diagnostics.context import DiagnosticsContext
 def _wheel_hz(
     sample: Sample,
     tire_circumference_m: float | None,
-    context: DiagnosticsContext | None = None,
+    context: RunMetadata | None = None,
     order_reference_spec: OrderReferenceSpec | None = None,
 ) -> float | None:
     """Return wheel rotational frequency from speed plus optional reference data."""
@@ -44,7 +44,7 @@ def _wheel_hz(
 
 def _driveshaft_hz(
     sample: Sample,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     tire_circumference_m: float | None,
 ) -> float | None:
     """Return driveshaft frequency from the best available wheel/final-drive inputs."""
@@ -75,7 +75,7 @@ def _driveshaft_hz(
 
 def _engine_hz(
     sample: Sample,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     """Return engine rotational frequency plus the source label used to derive it."""
@@ -115,7 +115,7 @@ class OrderHypothesis:
     def predicted_hz(
         self,
         sample: Sample,
-        context: DiagnosticsContext,
+        context: RunMetadata,
         tire_circumference_m: float | None,
     ) -> tuple[float | None, str]:
         if self.order_label_base == "wheel":

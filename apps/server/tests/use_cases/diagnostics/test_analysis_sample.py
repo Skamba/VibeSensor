@@ -3,9 +3,9 @@ from __future__ import annotations
 from test_support.sample_scenarios import make_analysis_sample, make_sample
 
 from vibesensor.domain import StrengthPeak
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_encoder import (
     sensor_frame_to_json_object,
-    sensor_frames_from_mappings,
     sensor_frames_to_json_objects,
 )
 

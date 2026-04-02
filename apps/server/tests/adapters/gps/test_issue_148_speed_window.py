@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_match_locations
 from vibesensor.use_cases.diagnostics.signal_aggregation import _speed_breakdown
 

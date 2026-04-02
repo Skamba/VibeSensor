@@ -10,7 +10,7 @@ import pytest
 from vibesensor.adapters.pdf.presentation import strength_label
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.processing.fft import noise_floor
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,

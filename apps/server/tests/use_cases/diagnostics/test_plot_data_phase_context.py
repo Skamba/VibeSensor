@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 
 import vibesensor.use_cases.diagnostics.plots as plots_module
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.use_cases.diagnostics.plots import _plot_data
 
