@@ -50,7 +50,5 @@ def order_match_observations_from_sequence(
 ) -> tuple[OrderMatchObservation, ...]:
     """Decode a sequence of raw payload rows into typed observations."""
     return tuple(
-        order_match_observation_from_mapping(item)
-        for item in payload
-        if isinstance(item, Mapping)
+        order_match_observation_from_mapping(item) for item in payload if isinstance(item, Mapping)
     )

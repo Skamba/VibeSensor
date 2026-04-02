@@ -19,7 +19,7 @@ from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_r
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label
+from vibesensor.use_cases.diagnostics.location_scoring import weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.statistics import compute_run_timing
@@ -233,17 +233,17 @@ class TestBug12PhaseSegmentTimestamps:
 
 
 # ---------------------------------------------------------------------------
-# Bug 14: _weighted_speed_window_label shows "50-50 km/h"
+# Bug 14: weighted_speed_window_label shows "50-50 km/h"
 # ---------------------------------------------------------------------------
 
 
 class TestBug14UniformSpeedLabel:
     def test_uniform_speed_shows_single_value(self) -> None:
-        result = _weighted_speed_window_label([(50.0, 1.0), (50.0, 1.0)])
+        result = weighted_speed_window_label([(50.0, 1.0), (50.0, 1.0)])
         assert result == "50 km/h"
 
     def test_range_shows_range(self) -> None:
-        result = _weighted_speed_window_label([(40.0, 1.0), (60.0, 1.0)])
+        result = weighted_speed_window_label([(40.0, 1.0), (60.0, 1.0)])
         assert "-" in result
 
 
