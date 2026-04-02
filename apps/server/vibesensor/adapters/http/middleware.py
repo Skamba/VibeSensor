@@ -20,6 +20,12 @@ from vibesensor.shared.structured_logging import (
 LOGGER = logging.getLogger(__name__)
 
 
+def _failure_kind(exc: Exception) -> str:
+    """Return the structured failure bucket for one unhandled request exception."""
+
+    return "operational" if isinstance(exc, (OSError, TimeoutError)) else "programmer"
+
+
 class RequestLoggingMiddleware:
     """ASGI middleware that logs requests and preserves cancellation semantics."""
 
@@ -66,9 +72,7 @@ class RequestLoggingMiddleware:
                 "http_request_failed",
                 extra=log_extra(
                     event="http_request_failed",
-                    failure_kind=(
-                        "operational" if isinstance(exc, (OSError, RuntimeError)) else "programmer"
-                    ),
+                    failure_kind=_failure_kind(exc),
                     method=method,
                     path=path,
                     status_code=status_code,

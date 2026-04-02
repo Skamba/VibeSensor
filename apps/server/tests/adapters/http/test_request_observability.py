@@ -85,6 +85,7 @@ def test_unhandled_errors_still_echo_request_id(caplog: pytest.LogCaptureFixture
     assert response.headers[REQUEST_ID_HEADER] == "failing-request"
     failure_log = _log_record(caplog, "http_request_failed")
     assert failure_log.request_id == "failing-request"
+    assert failure_log.failure_kind == "programmer"
 
 
 def test_http_exception_keeps_status_code_and_request_id(caplog: pytest.LogCaptureFixture) -> None:

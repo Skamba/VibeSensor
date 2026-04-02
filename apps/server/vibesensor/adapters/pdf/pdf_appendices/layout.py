@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from reportlab.lib.units import mm
 
+from vibesensor.adapters.pdf.action_cards import estimate_detailed_action_card_height
 from vibesensor.adapters.pdf.pdf_style import (
     FS_BODY,
     FS_SMALL,
@@ -267,7 +268,7 @@ def _worksheet_continuation_panel_height() -> float:
 def _estimate_action_steps_panel_height(steps: list[NextStep], *, width: float) -> float:
     inner_w = width - 8 * mm
     gaps_h = max(len(steps) - 1, 0) * 2.5 * mm
-    cards_h = sum(_estimate_action_step_card_height(step, width=inner_w) for step in steps)
+    cards_h = sum(estimate_detailed_action_card_height(step, width=inner_w) for step in steps)
     return float(max(PANEL_HEADER_H + 12 * mm, PANEL_HEADER_H + 7 * mm + cards_h + gaps_h))
 
 
@@ -276,28 +277,9 @@ def _fit_action_steps(steps: list[NextStep], *, panel_w: float, panel_h: float) 
     row_y = panel_h - PANEL_HEADER_H - 2 * mm
     count = 0
     for step in steps:
-        estimated_h = _estimate_action_step_card_height(step, width=inner_w)
+        estimated_h = estimate_detailed_action_card_height(step, width=inner_w)
         if row_y - estimated_h < 4 * mm:
             break
         row_y = row_y - estimated_h - 2.5 * mm
         count += 1
     return count
-
-
-def _estimate_action_step_card_height(step: NextStep, *, width: float) -> float:
-    title_lines = _wrap_lines(step.action, width - 18 * mm, FS_BODY)[:2]
-    why_lines = _wrap_lines(step.why or "", width - 12 * mm, FS_SMALL)[:3] if step.why else []
-    detail_w = (width - 18 * mm) / 2
-    confirm_lines = _wrap_lines(step.confirm or "", detail_w, FS_SMALL)[:3] if step.confirm else []
-    clean_lines = _wrap_lines(step.falsify or "", detail_w, FS_SMALL)[:3] if step.falsify else []
-    bottom_lines = max(len(confirm_lines), len(clean_lines), 1)
-    return float(
-        max(
-            28 * mm,
-            10 * mm
-            + (len(title_lines) * (FS_BODY + 1.2))
-            + (len(why_lines) * (FS_SMALL + 1.0))
-            + 8 * mm
-            + (bottom_lines * (FS_SMALL + 1.0)),
-        )
-    )

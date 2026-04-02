@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-
 from vibesensor.domain import ConfigurationSnapshot
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 
 
@@ -24,14 +21,16 @@ def _configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> Configur
 
 
 def configuration_snapshot_from_metadata(
-    metadata: RunMetadata | Mapping[str, object],
+    metadata: RunMetadata,
 ) -> ConfigurationSnapshot:
-    """Decode raw or typed run metadata into the domain configuration snapshot."""
+    """Project typed run metadata into the domain configuration snapshot."""
 
-    typed_metadata = (
-        metadata if isinstance(metadata, RunMetadata) else run_metadata_from_mapping(metadata)
-    )
-    return _configuration_snapshot_from_run_metadata(typed_metadata)
+    if not isinstance(metadata, RunMetadata):
+        raise TypeError(
+            "configuration_snapshot_from_metadata expects RunMetadata, "
+            f"got {type(metadata).__name__}"
+        )
+    return _configuration_snapshot_from_run_metadata(metadata)
 
 
 def configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> ConfigurationSnapshot:
@@ -40,8 +39,8 @@ def configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> Configura
     return _configuration_snapshot_from_run_metadata(metadata)
 
 
-def _non_empty_text(value: object) -> str | None:
-    text = str(value or "").strip()
+def _non_empty_text(value: str | None) -> str | None:
+    text = (value or "").strip()
     if not text or text.lower() == "unknown":
         return None
     return text

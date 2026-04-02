@@ -10,10 +10,10 @@ from _paths import SERVER_ROOT
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+import vibesensor.adapters.pdf.page1_header as page1_header
 import vibesensor.adapters.pdf.panels._panel_header as panel_header
 import vibesensor.adapters.pdf.panels._panel_systems as panel_systems
 import vibesensor.adapters.pdf.panels._panel_trust_steps as panel_trust_steps
-import vibesensor.adapters.pdf.pdf_page1 as pdf_page1
 from vibesensor.adapters.pdf.panels._panel_observations import _draw_additional_observations
 from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_next_steps_table
 from vibesensor.adapters.pdf.pdf_style import FONT, FS_H2, PdfRenderContext
@@ -192,7 +192,7 @@ class TestHeroActionStatusCallout:
         monkeypatch.setattr(canvas, "roundRect", capture_round_rect)
         monkeypatch.setattr(canvas, "drawString", capture_draw_string)
 
-        pdf_page1._draw_hero_block(
+        page1_header.draw_hero_block(
             canvas,
             ReportTemplateData(
                 lang="en",

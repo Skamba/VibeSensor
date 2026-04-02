@@ -20,7 +20,7 @@ def firmware_version_for_run(registry: ClientTracker) -> str | None:
         record = registry.get(client_id)
         if record is None:
             continue
-        firmware_version = str(getattr(record, "firmware_version", "") or "").strip()
+        firmware_version = record.firmware_version.strip()
         if firmware_version:
             versions.add(firmware_version)
     if not versions:

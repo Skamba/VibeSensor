@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from vibesensor.domain import (
-    Finding,
     LocationHotspotRow,
     LocationIntensitySummary,
     RecommendedAction,
@@ -42,6 +41,17 @@ from vibesensor.use_cases.history.report_display_facts import (
     PreparedReportDisplayFacts,
     prepare_report_display_facts,
 )
+from vibesensor.use_cases.history.report_fact_coverage import (
+    ReportCoverageSummary,
+    build_coverage_summary,
+)
+from vibesensor.use_cases.history.report_fact_decisions import (
+    ActionStatusKey,
+    LocationConfidenceKey,
+    resolve_action_status_key,
+    resolve_alternative_source,
+    resolve_location_confidence_key,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,24 +76,13 @@ class PreparedReportFacts:
     suitability_checks: tuple[RunSuitabilityCheck, ...]
     warnings: tuple[SummaryWarningPayload, ...]
     coverage_summary: ReportCoverageSummary
-    action_status_key: str
-    location_confidence_key: str
-    alternative_source: object | None
+    action_status_key: ActionStatusKey
+    location_confidence_key: LocationConfidenceKey
+    alternative_source: str | None
     alternative_source_visible: bool
     confidence_gap_to_alternative: float | None
     timeline_intervals: tuple[ReportTimelineInterval, ...]
     display: PreparedReportDisplayFacts
-
-
-@dataclass(frozen=True, slots=True)
-class ReportCoverageSummary:
-    """Coverage facts used by report preparation and rendering."""
-
-    expected_locations: tuple[str, ...]
-    active_locations: tuple[str, ...]
-    missing_locations: tuple[str, ...]
-    partial_locations: tuple[str, ...]
-
 
 @dataclass(frozen=True, slots=True)
 class ReportTimelineInterval:
@@ -95,228 +94,6 @@ class ReportTimelineInterval:
     speed_min_kmh: float | None
     speed_max_kmh: float | None
     has_fault_evidence: bool
-
-
-def _normalized_location_token(value: object) -> str:
-    text = str(value or "").strip().lower().replace("_", " ").replace("-", " ")
-    parts = [part for part in text.split() if part not in {"wheel", "sensor"}]
-    return " ".join(parts)
-
-
-def _ordered_unique(values: Sequence[str]) -> tuple[str, ...]:
-    ordered: list[str] = []
-    for value in values:
-        cleaned = str(value).strip()
-        if cleaned and cleaned not in ordered:
-            ordered.append(cleaned)
-    return tuple(ordered)
-
-
-def _resolve_expected_sensor_locations(test_run: TestRun) -> tuple[str, ...]:
-    configured = tuple(
-        sensor.placement.display_name if sensor.placement is not None else sensor.display_name
-        for sensor in test_run.capture.setup.sensors
-        if (sensor.placement is not None and sensor.placement.display_name) or sensor.display_name
-    )
-    return _ordered_unique(configured)
-
-
-def _build_coverage_summary(
-    *,
-    test_run: TestRun,
-    sensor_locations_active: Sequence[str],
-    sensor_intensity: Sequence[LocationIntensitySummary],
-) -> ReportCoverageSummary:
-    expected_locations = _resolve_expected_sensor_locations(test_run) or _ordered_unique(
-        tuple(sensor_locations_active)
-    )
-    active_locations = _ordered_unique(tuple(sensor_locations_active))
-    active_tokens = {_normalized_location_token(location) for location in active_locations}
-    partial_locations = _ordered_unique(
-        tuple(
-            row.location
-            for row in sensor_intensity
-            if row.partial_coverage or row.sample_coverage_warning
-        )
-    )
-    missing_locations = tuple(
-        location
-        for location in expected_locations
-        if _normalized_location_token(location) not in active_tokens
-    )
-    return ReportCoverageSummary(
-        expected_locations=expected_locations,
-        active_locations=active_locations,
-        missing_locations=_ordered_unique(missing_locations),
-        partial_locations=_ordered_unique(partial_locations),
-    )
-
-
-def _primary_location_has_coverage_gap(
-    primary_location: str | None,
-    coverage_summary: ReportCoverageSummary,
-) -> bool:
-    token = _normalized_location_token(primary_location)
-    if not token:
-        return False
-    missing_tokens = {
-        _normalized_location_token(location) for location in coverage_summary.missing_locations
-    }
-    partial_tokens = {
-        _normalized_location_token(location) for location in coverage_summary.partial_locations
-    }
-    return token in missing_tokens or token in partial_tokens
-
-
-def _resolve_location_confidence_key(
-    *,
-    primary_candidate_facts: PrimaryReportFacts,
-    coverage_summary: ReportCoverageSummary,
-) -> str:
-    hotspot = primary_candidate_facts.location_hotspot
-    dominance_ratio = primary_candidate_facts.dominance_ratio
-    primary_gap = _primary_location_has_coverage_gap(
-        primary_candidate_facts.primary_location,
-        coverage_summary,
-    )
-    if primary_candidate_facts.weak_spatial or primary_gap:
-        return "weak"
-    if dominance_ratio is not None:
-        if dominance_ratio < 1.25:
-            return "weak"
-        if dominance_ratio < 1.75 or bool(coverage_summary.partial_locations):
-            return "mixed"
-        return "strong"
-    if hotspot is not None and hotspot.localization_confidence is not None:
-        if hotspot.localization_confidence < 0.4:
-            return "weak"
-        if hotspot.localization_confidence < 0.7 or bool(coverage_summary.partial_locations):
-            return "mixed"
-        return "strong"
-    if coverage_summary.partial_locations or coverage_summary.missing_locations:
-        return "mixed"
-    return "mixed"
-
-
-def _relevant_source_candidates(aggregate: TestRun) -> tuple[Finding, ...]:
-    return aggregate.effective_top_causes() or aggregate.non_reference_findings
-
-
-def _resolve_alternative_source(
-    aggregate: TestRun,
-    *,
-    primary_candidate_facts: PrimaryReportFacts,
-) -> tuple[object | None, bool, float | None]:
-    candidates = _relevant_source_candidates(aggregate)
-    primary = primary_candidate_facts.domain_primary
-    if primary is None:
-        return None, False, None
-    primary_source = str(primary.suspected_source).strip().lower()
-    primary_conf = primary.effective_confidence
-    ambiguity_visible = bool(
-        primary_candidate_facts.weak_spatial
-        or (
-            primary_candidate_facts.location_hotspot is not None
-            and primary_candidate_facts.location_hotspot.ambiguous
-        )
-    )
-    for candidate in candidates[1:]:
-        source = str(candidate.suspected_source).strip().lower()
-        if not source or source == primary_source:
-            continue
-        confidence_gap = max(0.0, primary_conf - candidate.effective_confidence)
-        visible = confidence_gap <= 0.20 or ambiguity_visible
-        return candidate.suspected_source, visible, confidence_gap
-    return None, False, None
-
-
-def _is_blocking_suitability(check: RunSuitabilityCheck) -> bool:
-    key = str(check.get("check_key") or "").strip().upper()
-    state = str(check.get("state") or "").strip().lower()
-    if state in {"fail", "error"}:
-        return True
-    return (
-        key
-        in {
-            "SUITABILITY_CHECK_SENSOR_COVERAGE",
-            "SUITABILITY_CHECK_FRAME_INTEGRITY",
-        }
-        and state != "pass"
-    )
-
-
-def _has_nonblocking_caution_signals(
-    *,
-    suitability_checks: Sequence[RunSuitabilityCheck],
-    warnings: Sequence[SummaryWarningPayload],
-) -> bool:
-    if any(
-        str(warning.get("severity") or "").strip().lower() in {"warn", "error"}
-        for warning in warnings
-    ):
-        return True
-    return any(
-        str(check.get("state") or "").strip().lower() != "pass" for check in suitability_checks
-    )
-
-
-def _allows_system_level_caution_with_weak_location(
-    *,
-    primary_candidate_facts: PrimaryReportFacts,
-) -> bool:
-    primary = primary_candidate_facts.domain_primary
-    if (
-        primary is None
-        or primary.confidence_assessment is None
-        or not primary_candidate_facts.weak_spatial
-    ):
-        return False
-    source_key = (
-        str(primary_candidate_facts.primary_source or primary.suspected_source).strip().lower()
-    )
-    if source_key not in {"engine", "driveline"}:
-        return False
-    return primary.confidence_assessment.tier in {"B", "C"}
-
-
-def _resolve_action_status_key(
-    *,
-    primary_candidate_facts: PrimaryReportFacts,
-    location_confidence_key: str,
-    alternative_source_visible: bool,
-    suitability_checks: Sequence[RunSuitabilityCheck],
-    warnings: Sequence[SummaryWarningPayload],
-) -> str:
-    primary = primary_candidate_facts.domain_primary
-    if primary is None or primary_candidate_facts.primary_source is None:
-        return "recapture_before_acting"
-    tier = primary.confidence_assessment.tier if primary.confidence_assessment is not None else "A"
-    weak_location_caution = (
-        location_confidence_key == "weak"
-        and _allows_system_level_caution_with_weak_location(
-            primary_candidate_facts=primary_candidate_facts,
-        )
-    )
-    if (
-        tier == "A"
-        or (location_confidence_key == "weak" and not weak_location_caution)
-        or primary_candidate_facts.has_reference_gaps
-        or any(_is_blocking_suitability(check) for check in suitability_checks)
-    ):
-        return "recapture_before_acting"
-    if (
-        tier == "B"
-        or location_confidence_key == "mixed"
-        or weak_location_caution
-        or alternative_source_visible
-        or _has_nonblocking_caution_signals(
-            suitability_checks=suitability_checks,
-            warnings=warnings,
-        )
-    ):
-        return "action_ready_caution"
-    return "action_ready"
-
 
 def _coerce_optional_float(value: object) -> float | None:
     if value is None:
@@ -373,22 +150,22 @@ def prepare_report_facts(
     )
     suitability_checks = report_suitability_checks(test_run.suitability)
     warning_payloads = report_warning_payloads(payload, warnings=warnings)
-    coverage_summary = _build_coverage_summary(
+    coverage_summary = build_coverage_summary(
         test_run=test_run,
         sensor_locations_active=sensor_locations_active,
         sensor_intensity=active_sensor_intensity,
     )
-    location_confidence_key = _resolve_location_confidence_key(
+    location_confidence_key = resolve_location_confidence_key(
         primary_candidate_facts=primary_candidate_facts,
         coverage_summary=coverage_summary,
     )
     alternative_source, alternative_source_visible, confidence_gap_to_alternative = (
-        _resolve_alternative_source(
+        resolve_alternative_source(
             test_run,
             primary_candidate_facts=primary_candidate_facts,
         )
     )
-    action_status_key = _resolve_action_status_key(
+    action_status_key = resolve_action_status_key(
         primary_candidate_facts=primary_candidate_facts,
         location_confidence_key=location_confidence_key,
         alternative_source_visible=alternative_source_visible,

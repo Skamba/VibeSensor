@@ -60,12 +60,10 @@ class RunMetadata:
     car: RunCarMetadata | None = None
     case_id: str = ""
     sensor_mac: str | None = None
-    summary_version: int = 1
     symptom: Symptom | None = None
     report_date: str | None = None
     language: str = "en"
-    explicit_engine_rpm: float | None = None
-    tire_circumference_m_override: float | None = None
+    wheel_circumference_m: float | None = None
     recorded_utc_offset_seconds: int | None = None
 
     @classmethod
@@ -86,12 +84,10 @@ class RunMetadata:
         car: RunCarMetadata | None = None,
         case_id: str = "",
         sensor_mac: str | None = None,
-        summary_version: int = 1,
         symptom: Symptom | None = None,
         report_date: str | None = None,
         language: str = "en",
-        explicit_engine_rpm: float | None = None,
-        tire_circumference_m_override: float | None = None,
+        wheel_circumference_m: float | None = None,
         recorded_utc_offset_seconds: int | None = None,
     ) -> RunMetadata:
         """Construct canonical run metadata for a newly recorded run."""
@@ -116,12 +112,10 @@ class RunMetadata:
             car=car,
             case_id=case_id.strip(),
             sensor_mac=sensor_mac,
-            summary_version=max(1, int(summary_version)),
             symptom=symptom,
             report_date=report_date,
             language=(str(language).strip().lower() or "en"),
-            explicit_engine_rpm=explicit_engine_rpm,
-            tire_circumference_m_override=tire_circumference_m_override,
+            wheel_circumference_m=wheel_circumference_m,
             recorded_utc_offset_seconds=recorded_utc_offset_seconds,
         )
 
@@ -177,9 +171,8 @@ class RunMetadata:
         spec = self.order_reference_spec
         if spec is not None and spec.supports_wheel_reference:
             return spec.tire_circumference_m
-        override = self.tire_circumference_m_override
-        if override is not None and override > 0:
-            return override
+        if self.wheel_circumference_m is not None and self.wheel_circumference_m > 0:
+            return self.wheel_circumference_m
         return None
 
     @property
@@ -190,5 +183,5 @@ class RunMetadata:
             and self.tire_circumference_m
             and spec is not None
             and spec.is_complete
-            and (self.explicit_engine_rpm is not None or spec.has_engine_reference)
+            and spec.has_engine_reference
         )

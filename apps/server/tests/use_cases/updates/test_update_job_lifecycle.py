@@ -115,8 +115,8 @@ def test_handle_cancelled_cleanup_error_logs_warning(tmp_path, caplog) -> None:
     with caplog.at_level("WARNING"):
         try:
             raise RuntimeError("cleanup bug")
-        except RuntimeError:
-            manager._lifecycle.handle_cancelled_cleanup_error()
+        except RuntimeError as exc:
+            manager._lifecycle.handle_cancelled_cleanup_error(exc)
 
     assert any(
         record.message == "Update cleanup interrupted during cancellation"

@@ -18,7 +18,7 @@ def _metadata() -> dict[str, Any]:
         "run_id": "unit-guard-run",
         "language": "en",
         "raw_sample_rate_hz": 400.0,
-        "tire_circumference_m": 2.1,
+        "reference_context": {"tire_circumference_m": 2.1},
         "final_drive_ratio": 3.7,
         "current_gear_ratio": 0.8,
     }
