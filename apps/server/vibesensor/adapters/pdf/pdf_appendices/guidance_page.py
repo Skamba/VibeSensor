@@ -64,6 +64,10 @@ def draw_capture_guidance_page(c: Canvas, data: ReportTemplateData, title_y: flo
     right_y = left_y
     mid = (len(appendix_d.rows) + 1) // 2
     for row in appendix_d.rows[:mid]:
-        left_y = _draw_traceability_row(c, row, x=left_x, y=left_y, w=(width / 2) - 8 * mm) - 1.0 * mm
+        left_y = (
+            _draw_traceability_row(c, row, x=left_x, y=left_y, w=(width / 2) - 8 * mm) - 1.0 * mm
+        )
     for row in appendix_d.rows[mid:]:
-        right_y = _draw_traceability_row(c, row, x=right_x, y=right_y, w=(width / 2) - 8 * mm) - 1.0 * mm
+        right_y = (
+            _draw_traceability_row(c, row, x=right_x, y=right_y, w=(width / 2) - 8 * mm) - 1.0 * mm
+        )

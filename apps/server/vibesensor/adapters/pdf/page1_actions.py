@@ -68,7 +68,9 @@ def draw_actions_block(
     inner_x = x + 4 * mm
     inner_y = y + h - PANEL_HEADER_H - 2 * mm
     if not data.next_steps:
-        _draw_text(c, inner_x, inner_y, w - 8 * mm, tr("NO_NEXT_STEPS"), size=FS_BODY, color=SUB_CLR)
+        _draw_text(
+            c, inner_x, inner_y, w - 8 * mm, tr("NO_NEXT_STEPS"), size=FS_BODY, color=SUB_CLR
+        )
         return
 
     row_y = inner_y

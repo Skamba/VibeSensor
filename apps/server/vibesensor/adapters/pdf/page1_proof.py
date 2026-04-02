@@ -102,7 +102,9 @@ def draw_proof_block(
             value_size=FS_BODY,
         )
     location_confidence = verdict.location_confidence or tr("UNKNOWN")
-    confidence_value_size = FS_BODY if len(_wrap_lines(location_confidence, text_w, FS_H2)) > 1 else FS_H2
+    confidence_value_size = (
+        FS_BODY if len(_wrap_lines(location_confidence, text_w, FS_H2)) > 1 else FS_H2
+    )
     confidence_max_lines = 3 if confidence_value_size == FS_BODY else 2
     text_y = draw_label_value(
         c,
