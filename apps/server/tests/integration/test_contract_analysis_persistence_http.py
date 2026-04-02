@@ -12,7 +12,9 @@ from test_support.report_helpers import report_sample
 from vibesensor.adapters.history import ProjectedHistoryRunService
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_from_storage_json_object,
     persisted_analysis_from_summary,
+    persisted_analysis_to_storage_json_object,
     persisted_analysis_to_summary,
 )
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
@@ -20,7 +22,6 @@ from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import (
     PERSISTED_ANALYSIS_SCHEMA_VERSION,
-    PersistedAnalysis,
 )
 from vibesensor.use_cases.history.runs import HistoryRunService
 
@@ -64,10 +65,10 @@ def _stored_run_from_summary(
     summary: AnalysisSummary,
 ) -> tuple[StoredHistoryRun, AnalysisSummary]:
     persisted = persisted_analysis_from_summary(summary)
-    storage_payload = persisted.to_storage_json_object()
+    storage_payload = persisted_analysis_to_storage_json_object(persisted)
     assert storage_payload["_schema_version"] == PERSISTED_ANALYSIS_SCHEMA_VERSION
 
-    reloaded = PersistedAnalysis.from_storage_json_object(storage_payload)
+    reloaded = persisted_analysis_from_storage_json_object(storage_payload)
     restored_summary = persisted_analysis_to_summary(reloaded)
 
     metadata = run_metadata_from_mapping(

@@ -454,7 +454,7 @@ class TestUpdateManagerAsync:
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
-            mock_fetcher.return_value.check_update_available.side_effect = RuntimeError(
+            mock_fetcher.return_value.check_update_available.side_effect = OSError(
                 "API rate limit exceeded",
             )
             await run_update(manager, "TestNet", "pass")

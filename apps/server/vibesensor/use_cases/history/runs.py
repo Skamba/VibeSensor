@@ -44,7 +44,7 @@ class HistoryRunService:
             return None
 
         raw_analysis = require_analysis_ready(run)
-        analysis = strip_internal_fields(raw_analysis.to_payload())
+        analysis = strip_internal_fields(raw_analysis.payload)
         response_lang = resolve_run_language(run, requested_lang)
         raw_warnings = analysis.get("warnings")
         analysis["warnings"] = cast(

@@ -39,7 +39,7 @@ async def check_for_update(
     )
     try:
         release = await asyncio.to_thread(fetcher.check_update_available, current_version)
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         tracker.fail("checking", f"Failed to check for updates: {exc}")
         return UpdateReleaseCheck(release=None, failed=True)
     if release is not None:
@@ -49,7 +49,7 @@ async def check_for_update(
         latest_release = await asyncio.to_thread(fetcher.find_latest_release)
         if isinstance(latest_release.tag, str):
             latest_tag = latest_release.tag
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         tracker.log(
             f"Could not resolve the latest release tag for ESP firmware sync: {exc}",
         )
@@ -73,7 +73,7 @@ async def download_release(
     )
     try:
         return await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         tracker.fail("downloading", f"Failed to download release: {exc}")
         return None
 

@@ -121,27 +121,23 @@ def validate_prepared_report_input(
     )
 
 
-def _reconstruct_report_test_run(
-    payload: Mapping[str, object] | PersistedAnalysis,
-) -> TestRun | None:
-    """Rebuild the report domain aggregate only when the payload is projectable."""
+def _reconstruct_report_test_run(payload: Mapping[str, object]) -> TestRun | None:
+    """Rebuild the report domain aggregate only when the summary payload is projectable."""
     if not has_projectable_report_payload(payload):
         return None
-    if isinstance(payload, PersistedAnalysis):
-        return test_run_from_persisted_analysis(payload)
     return test_run_from_summary(payload)
 
 
 def _build_prepared_report_input(
-    payload: Mapping[str, object] | PersistedAnalysis,
+    payload: Mapping[str, object],
     *,
+    domain_test_run: TestRun | None,
     filename: str | None,
     language: str | None,
     cache_key: ReportPdfCacheKey | None,
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportInput:
     """Assemble the canonical history-side report handoff for PDF rendering."""
-    domain_test_run = _reconstruct_report_test_run(payload)
     prepared_language = str(normalize_lang(language or payload.get("lang")))
     renderer_payload = build_report_renderer_payload(payload)
     report_facts = (
@@ -174,6 +170,7 @@ def prepare_report_input(
     """Prepare a direct summary payload for domain-first report mapping."""
     return _build_prepared_report_input(
         analysis_summary,
+        domain_test_run=_reconstruct_report_test_run(analysis_summary),
         filename=filename,
         language=language,
         cache_key=cache_key,
@@ -191,6 +188,11 @@ def prepare_persisted_report_input(
     """Prepare a persisted history payload for domain-first report mapping."""
     return _build_prepared_report_input(
         analysis,
+        domain_test_run=(
+            test_run_from_persisted_analysis(analysis)
+            if has_projectable_report_payload(analysis)
+            else None
+        ),
         filename=filename,
         language=language,
         cache_key=cache_key,

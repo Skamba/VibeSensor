@@ -54,12 +54,8 @@ class UpdateJobLifecycleHandler:
         wifi = self._wifi_factory()
         try:
             await wifi.maybe_restore_hotspot_during_cleanup()
-            tracker.clear_secrets()
             tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
             tracker.extend_issues(await wifi.collect_cleanup_diagnostics())
-            tracker.finish_cleanup()
-        except Exception:
+        finally:
             tracker.clear_secrets()
             tracker.finish_cleanup()
-            self._logger.warning("Update cleanup interrupted", exc_info=True)
-            raise

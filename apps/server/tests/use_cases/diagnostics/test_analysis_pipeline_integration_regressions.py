@@ -15,6 +15,9 @@ from vibesensor.adapters.analysis_summary import build_findings_for_samples, sum
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_to_json_object,
+)
 from vibesensor.shared.boundaries.run_log import normalize_sample_record
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_encoder import sensor_frame_to_json_object
@@ -413,7 +416,7 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     analysis = run.analysis
     assert analysis is not None
 
-    report_data = map_summary(prepare_report_input(analysis.to_json_object()))
+    report_data = map_summary(prepare_report_input(persisted_analysis_to_json_object(analysis)))
     pdf_bytes = build_report_pdf(report_data)
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 1000
