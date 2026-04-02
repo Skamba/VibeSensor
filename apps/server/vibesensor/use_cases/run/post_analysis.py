@@ -22,13 +22,14 @@ from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisAttemptResult,
-    PostAnalysisExecutionAnalysisFailure,
-    PostAnalysisExecutionPersistenceFailure,
+    PostAnalysisRunner,
+    execute_post_analysis,
+)
+from vibesensor.use_cases.run.post_analysis_outcomes import (
     PostAnalysisExecutionResult,
     PostAnalysisExecutionRetryableFailure,
     PostAnalysisExecutionSuccess,
-    PostAnalysisRunner,
-    execute_post_analysis,
+    execution_callback_errors,
 )
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
@@ -53,20 +54,6 @@ class PostAnalysisHealthSnapshot:
     max_queue_depth: int
     last_completed_run_id: str | None
     last_completed_error: str | None
-
-
-def _execution_callback_errors(
-    result: PostAnalysisExecutionResult,
-) -> tuple[str, ...]:
-    if isinstance(
-        result,
-        (
-            PostAnalysisExecutionAnalysisFailure,
-            PostAnalysisExecutionPersistenceFailure,
-        ),
-    ):
-        return result.callback_errors
-    return ()
 
 
 class PostAnalysisWorker:
@@ -319,7 +306,7 @@ class PostAnalysisWorker:
             self._clear_error_cb()
             return
 
-        for error_msg in _execution_callback_errors(result):
+        for error_msg in execution_callback_errors(result):
             self._error_cb(error_msg)
 
     def _record_unexpected_worker_failure(self, run_id: str, exc: Exception) -> None:
@@ -327,5 +314,16 @@ class PostAnalysisWorker:
         with self._lock:
             self._last_completed_run_id = run_id
             self._last_completed_error = completed_error
+        db = self._history_db
+        if db is not None:
+            store_analysis_error = getattr(db, "store_analysis_error", None)
+            if callable(store_analysis_error):
+                try:
+                    store_analysis_error(run_id, completed_error)
+                except Exception:
+                    LOGGER.exception(
+                        "Failed to persist unexpected analysis failure for run %s",
+                        run_id,
+                    )
         self._error_cb(f"post-analysis failed for run {run_id}: {completed_error}")
         LOGGER.exception("Unexpected error in analysis worker for run %s", run_id)

@@ -17,10 +17,12 @@ from vibesensor.use_cases.diagnostics._analysis_models import (
     FindingsBuildRequest,
     FindingsBundleRequest,
 )
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSampleInput,
+    Sample,
     normalize_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics._validation import (
@@ -74,16 +76,16 @@ class RunAnalysis:
 
     def __init__(
         self,
-        metadata: JsonObject,
-        samples: Sequence[AnalysisSampleInput],
+        context: DiagnosticsContext,
+        samples: Sequence[Sample],
         *,
         file_name: str = "run",
         lang: str | None = None,
         include_samples: bool = True,
         findings_builder: FindingsBuilder | None = None,
     ) -> None:
-        self._context = build_diagnostics_context(metadata, file_name=file_name)
-        self._samples = normalize_analysis_samples(samples)
+        self._context = context
+        self._samples = list(samples)
         self._file_name = file_name
         self._language = normalize_lang(lang)
         self._include_samples = include_samples

@@ -5,6 +5,11 @@ from types import SimpleNamespace
 import pytest
 
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.run.post_analysis_input import (
+    PostAnalysisRunInput,
+    build_post_analysis_input,
+)
+from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
 
@@ -27,14 +32,38 @@ def _run_metadata(
     )
 
 
+def _run_input(
+    run_id: str,
+    *,
+    language: str = "en",
+    raw_sample_rate_hz: int = 800,
+    total_sample_count: int = 1,
+    stride: int = 1,
+) -> PostAnalysisRunInput:
+    return build_post_analysis_input(
+        LoadedPostAnalysisRun(
+            run_id=run_id,
+            metadata=_run_metadata(
+                run_id,
+                language=language,
+                raw_sample_rate_hz=raw_sample_rate_hz,
+            ),
+            language=language,
+            samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
+            total_sample_count=total_sample_count,
+            stride=stride,
+        ),
+    )
+
+
 def test_build_post_analysis_summary_adds_analysis_metadata(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict[str, object] = {}
 
     class FakeRunAnalysis:
-        def __init__(self, metadata, samples, *, lang, file_name, include_samples):
-            captured["metadata"] = metadata
+        def __init__(self, context, samples, *, lang, file_name, include_samples):
+            captured["context"] = context
             captured["samples"] = samples
             captured["lang"] = lang
             captured["file_name"] = file_name
@@ -55,12 +84,7 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
     )
 
     summary = build_post_analysis_summary(
-        run_id="run-ok",
-        metadata=_run_metadata("run-ok", language="nl", raw_sample_rate_hz=1),
-        samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
-        language="nl",
-        total_sample_count=3,
-        stride=1,
+        _run_input("run-ok", language="nl", raw_sample_rate_hz=1, total_sample_count=3),
     )
 
     assert captured["lang"] == "nl"
@@ -100,12 +124,7 @@ def test_build_post_analysis_summary_adds_stride_warning(
     )
 
     summary = build_post_analysis_summary(
-        run_id="run-stride",
-        metadata=_run_metadata("run-stride", raw_sample_rate_hz=1),
-        samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
-        language="en",
-        total_sample_count=5,
-        stride=3,
+        _run_input("run-stride", raw_sample_rate_hz=1, total_sample_count=5, stride=3),
     )
 
     run_suitability = summary["run_suitability"]
@@ -145,12 +164,7 @@ def test_build_post_analysis_summary_adds_short_run_warning(
     )
 
     summary = build_post_analysis_summary(
-        run_id="run-short",
-        metadata=_run_metadata("run-short", raw_sample_rate_hz=800),
-        samples=[{"t_s": 1.0, "vibration_strength_db": 10.0}],
-        language="en",
-        total_sample_count=100,
-        stride=1,
+        _run_input("run-short", raw_sample_rate_hz=800, total_sample_count=100),
     )
 
     assert summary["run_suitability"] == [
@@ -160,3 +174,51 @@ def test_build_post_analysis_summary_adds_short_run_warning(
             "explanation": "SUITABILITY_RUN_DURATION_WARNING",
         }
     ]
+
+
+def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_floor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeRunAnalysis:
+        def __init__(self, _context, samples, **_kwargs):
+            captured["sample"] = samples[0]
+
+        def summarize(self):
+            return SimpleNamespace(
+                diagnostic_case=SimpleNamespace(case_id="case-4"),
+            )
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis",
+        FakeRunAnalysis,
+    )
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
+        lambda _result: {"run_suitability": []},
+    )
+
+    run = build_post_analysis_input(
+        LoadedPostAnalysisRun(
+            run_id="run-derived-strength",
+            metadata=_run_metadata("run-derived-strength"),
+            language="en",
+            samples=[
+                {
+                    "t_s": 1.0,
+                    "top_peaks": [{"hz": 14.0, "amp": 0.12}],
+                    "strength_peak_amp_g": 0.12,
+                    "strength_floor_amp_g": 0.003,
+                }
+            ],
+            total_sample_count=1,
+            stride=1,
+        )
+    )
+
+    build_post_analysis_summary(run)
+
+    sample = captured["sample"]
+    assert sample.vibration_strength_db is not None
+    assert sample.strength_bucket

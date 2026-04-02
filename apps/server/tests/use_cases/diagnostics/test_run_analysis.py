@@ -25,6 +25,19 @@ from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
 from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
+def _analysis(
+    metadata: dict[str, object],
+    samples: list[dict[str, object]],
+    **kwargs: object,
+) -> RunAnalysis:
+    file_name = str(kwargs.get("file_name") or "run")
+    return RunAnalysis(
+        build_diagnostics_context(metadata, file_name=file_name),
+        normalize_analysis_samples(samples),
+        **kwargs,
+    )
+
+
 def _prepared_with_speed_profile(
     *,
     speed_profile: SpeedProfile,
@@ -124,7 +137,7 @@ class TestRunAnalysis:
             }
             for i in range(20)
         ]
-        analysis = RunAnalysis(metadata, samples, file_name="test_run")
+        analysis = _analysis(metadata, samples, file_name="test_run")
         result = analysis.summarize()
         summary = analysis_result_to_summary(result)
         assert "findings" in summary
@@ -150,7 +163,7 @@ class TestRunAnalysis:
         # The function API delegates to RunAnalysis, so they should be equivalent
         summary_via_function = summarize_run_data(metadata, samples, file_name="f")
         summary_via_class = analysis_result_to_summary(
-            RunAnalysis(metadata, samples, file_name="f").summarize(),
+            _analysis(metadata, samples, file_name="f").summarize(),
         )
         # Key structural fields should match
         assert summary_via_function["run_id"] == summary_via_class["run_id"]
@@ -160,14 +173,14 @@ class TestRunAnalysis:
     def test_prepared_property(self) -> None:
         metadata = {"raw_sample_rate_hz": 100.0}
         samples = [{"speed_kmh": 60.0, "t_s": 0.0, "vibration_strength_db": 10.0}]
-        analysis = RunAnalysis(metadata, samples)
+        analysis = _analysis(metadata, samples)
         assert isinstance(analysis.prepared, PreparedRunData)
         assert isinstance(analysis.prepared.speed_profile, SpeedProfile)
 
     def test_language_property(self) -> None:
         metadata = {}
         samples = [{"t_s": 0.0, "vibration_strength_db": 10.0}]
-        analysis = RunAnalysis(metadata, samples, lang="en")
+        analysis = _analysis(metadata, samples, lang="en")
         assert analysis.language == "en"
 
     def test_include_samples_false(self) -> None:
@@ -182,7 +195,7 @@ class TestRunAnalysis:
                 "accel_z_g": 0.01,
             }
         ]
-        analysis = RunAnalysis(metadata, samples, include_samples=False)
+        analysis = _analysis(metadata, samples, include_samples=False)
         result = analysis.summarize()
         assert "samples" not in analysis_result_to_summary(result)
 
@@ -202,7 +215,7 @@ class TestRunAnalysis:
         ]
 
         summary = analysis_result_to_summary(
-            RunAnalysis(metadata, samples, file_name="typed-run").summarize(),
+            _analysis(metadata, samples, file_name="typed-run").summarize(),
         )
 
         assert summary["samples"][0]["client_name"] == "FL"

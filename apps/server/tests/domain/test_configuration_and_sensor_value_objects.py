@@ -13,6 +13,7 @@ from vibesensor.domain import (
     SensorPlacement,
     TestRun,
 )
+from vibesensor.shared.boundaries.run_capture_codec import configuration_snapshot_from_metadata
 
 
 class TestConfigurationSnapshot:
@@ -29,7 +30,7 @@ class TestConfigurationSnapshot:
             "tire_aspect_pct": 55,
             "rim_in": 16,
         }
-        snap = ConfigurationSnapshot.from_metadata(md)
+        snap = configuration_snapshot_from_metadata(md)
         assert snap.sensor_model == "MPU6050"
         assert snap.firmware_version == "1.2.3"
         assert snap.raw_sample_rate_hz == 100.0
@@ -38,7 +39,7 @@ class TestConfigurationSnapshot:
         assert snap.tire_spec is not None
 
     def test_from_metadata_with_empty_dict(self) -> None:
-        snap = ConfigurationSnapshot.from_metadata({})
+        snap = configuration_snapshot_from_metadata({})
         assert snap.sensor_model is None
         assert snap.firmware_version is None
         assert snap.raw_sample_rate_hz is None
@@ -51,7 +52,7 @@ class TestConfigurationSnapshot:
             "feature_interval_s": "0.5",
             "final_drive_ratio": "3.73",
         }
-        snap = ConfigurationSnapshot.from_metadata(md)
+        snap = configuration_snapshot_from_metadata(md)
         assert snap.raw_sample_rate_hz == 100.0
         assert snap.feature_interval_s == 0.5
         assert snap.final_drive_ratio == 3.73
@@ -59,7 +60,7 @@ class TestConfigurationSnapshot:
     def test_metadata_is_frozen(self) -> None:
         from types import MappingProxyType
 
-        snap = ConfigurationSnapshot.from_metadata({"sensor_model": "MPU6050"})
+        snap = configuration_snapshot_from_metadata({"sensor_model": "MPU6050"})
         assert isinstance(snap.metadata, MappingProxyType)
         with pytest.raises(TypeError):
             snap.metadata["new_key"] = "value"
@@ -69,13 +70,13 @@ class TestConfigurationSnapshot:
 
     def test_from_metadata_preserves_raw_metadata(self) -> None:
         md = {"sensor_model": "MPU6050", "custom_key": "custom_value"}
-        snap = ConfigurationSnapshot.from_metadata(md)
+        snap = configuration_snapshot_from_metadata(md)
         assert snap.metadata["sensor_model"] == "MPU6050"
         assert snap.metadata["custom_key"] == "custom_value"
 
     def test_case_snapshot_accessible_via_capture(self) -> None:
-        snap_a = ConfigurationSnapshot.from_metadata({"sensor_model": "MPU6050"})
-        snap_b = ConfigurationSnapshot.from_metadata({"sensor_model": "BMI270"})
+        snap_a = configuration_snapshot_from_metadata({"sensor_model": "MPU6050"})
+        snap_b = configuration_snapshot_from_metadata({"sensor_model": "BMI270"})
 
         from vibesensor.domain import RunSetup
 

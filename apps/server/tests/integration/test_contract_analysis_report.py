@@ -27,6 +27,8 @@ from vibesensor.adapters.pdf.mapping import (
 )
 from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
+from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 pytestmark = pytest.mark.smoke
@@ -126,7 +128,12 @@ def test_multilingual_mapping():
 def test_report_certainty_uses_confidence_assessment_reason() -> None:
     """Report certainty reason comes from ConfidenceAssessment on the domain finding."""
     meta, samples = _make_steady_speed_fault_dataset()
-    analysis = RunAnalysis(meta, samples, lang="en", file_name="ca-reason-proof")
+    analysis = RunAnalysis(
+        build_diagnostics_context(meta, file_name="ca-reason-proof"),
+        normalize_analysis_samples(samples),
+        lang="en",
+        file_name="ca-reason-proof",
+    )
     result = analysis.summarize()
     summary = analysis_result_to_summary(result)
 
