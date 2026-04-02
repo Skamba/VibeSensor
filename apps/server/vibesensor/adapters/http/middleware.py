@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from time import perf_counter
 
@@ -57,12 +58,17 @@ class RequestLoggingMiddleware:
 
         try:
             await self.app(scope, receive, _send_with_request_id)
-        except (OSError, RuntimeError):
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
             request_failed = True
             LOGGER.exception(
                 "http_request_failed",
                 extra=log_extra(
                     event="http_request_failed",
+                    failure_kind=(
+                        "operational" if isinstance(exc, (OSError, RuntimeError)) else "programmer"
+                    ),
                     method=method,
                     path=path,
                     status_code=status_code,

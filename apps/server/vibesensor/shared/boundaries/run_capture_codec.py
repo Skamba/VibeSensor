@@ -38,6 +38,8 @@ def configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> Configura
     """Project typed run metadata into the domain configuration snapshot."""
 
     return _configuration_snapshot_from_run_metadata(metadata)
+
+
 def _non_empty_text(value: object) -> str | None:
     text = str(value or "").strip()
     if not text or text.lower() == "unknown":

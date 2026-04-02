@@ -293,7 +293,9 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
     trust_x = suitability_x + 4 * mm
     trust_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
     filtered_suitability_items = [
-        item for item in appendix.suitability_items if item.detail != data.verdict_page.action_status_note
+        item
+        for item in appendix.suitability_items
+        if item.detail != data.verdict_page.action_status_note
     ]
     if appendix.limits_summary:
         trust_y = (
@@ -343,7 +345,9 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
             )
 
     trace_x = suitability_x + suitability_w + GAP
-    _draw_panel(c, trace_x, lower_y, trace_w, lower_h, _tr(data.lang, "REPORT_TRACEABILITY_PANEL_TITLE"))
+    _draw_panel(
+        c, trace_x, lower_y, trace_w, lower_h, _tr(data.lang, "REPORT_TRACEABILITY_PANEL_TITLE")
+    )
     trace_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
     for trace_row in appendix_d.rows:
         trace_y = (
