@@ -9,6 +9,7 @@ import pytest
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.startup_runner import StartupRunner
+from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 
 
 def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock]:
@@ -108,6 +109,26 @@ class TestStartupRunnerPhases:
         assert health_state.startup_phase == "control_plane"
 
     @pytest.mark.asyncio
+    async def test_ws_broadcast_phase_uses_explicit_restartable_exception_types(self) -> None:
+        runner, _, _ = _make_runner()
+
+        await runner.run()
+
+        restartable = runner._task_supervisor.start.call_args_list[1].kwargs[
+            "restartable_exceptions"
+        ]
+        assert restartable == (BroadcastTickLoopFailure,)
+
+    @pytest.mark.asyncio
+    async def test_type_error_propagates_without_operational_wrapping(self) -> None:
+        runner, health_state, runtime = _make_runner()
+        runtime.control_plane.start = AsyncMock(side_effect=TypeError("bad startup wiring"))
+
+        with pytest.raises(TypeError, match="bad startup wiring"):
+            await runner.run()
+
+        assert health_state.startup_state != "failed"
+
     async def test_udp_startup_called_first(self) -> None:
         """UDP receiver starts before background tasks are created."""
         runner, _, _ = _make_runner()

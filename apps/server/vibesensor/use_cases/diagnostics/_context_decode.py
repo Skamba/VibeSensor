@@ -4,17 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from vibesensor.domain import Symptom
 from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     analysis_settings_snapshot_from_mapping,
 )
 from vibesensor.shared.boundaries.car_snapshot_codec import car_snapshot_from_mapping
-from vibesensor.shared.boundaries.run_metadata_snapshot_codec import (
-    run_metadata_snapshot_from_metadata,
-)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
-from ._context import DiagnosticsContext, DiagnosticsSymptom
+from ._context import DiagnosticsContext
 
 
 def build_diagnostics_context(
@@ -22,25 +20,23 @@ def build_diagnostics_context(
     *,
     file_name: str = "run",
 ) -> DiagnosticsContext:
-    """Decode one raw metadata mapping into the diagnostics context."""
+    """Decode one raw metadata mapping into the canonical diagnostics context."""
     raw_metadata = dict(metadata)
-    run_metadata_payload = dict(raw_metadata)
-    if not _non_empty_text(run_metadata_payload.get("run_id")):
-        run_metadata_payload["run_id"] = f"run-{file_name}"
+    run_id = _non_empty_text(raw_metadata.get("run_id")) or f"run-{file_name}"
     return DiagnosticsContext(
-        run_metadata=run_metadata_snapshot_from_metadata(
-            run_metadata_payload,
-            fallback_run_id=f"run-{file_name}",
-        ),
+        run_id=run_id,
+        case_id=_non_empty_text(raw_metadata.get("case_id")) or "",
+        sensor_mac=_non_empty_text(raw_metadata.get("sensor_mac")),
+        sensor_model=_non_empty_text(raw_metadata.get("sensor_model")),
+        firmware_version=_non_empty_text(raw_metadata.get("firmware_version")),
+        raw_sample_rate_hz=_as_float(raw_metadata.get("raw_sample_rate_hz")),
+        feature_interval_s=_as_float(raw_metadata.get("feature_interval_s")),
+        summary_version=_as_int(raw_metadata.get("_summary_version")) or 1,
         analysis_settings=analysis_settings_snapshot_from_mapping(
             raw_metadata.get("analysis_settings_snapshot"),
         ),
         car=car_snapshot_from_mapping(raw_metadata.get("active_car_snapshot")),
-        symptom=DiagnosticsSymptom(
-            description=_non_empty_text(raw_metadata.get("symptom")) or "",
-            onset=_non_empty_text(raw_metadata.get("symptom_onset")) or "",
-            context=_non_empty_text(raw_metadata.get("symptom_context")) or "",
-        ),
+        symptom=_symptom_or_none(raw_metadata),
         start_time_utc=_non_empty_text(raw_metadata.get("start_time_utc")),
         end_time_utc=_non_empty_text(raw_metadata.get("end_time_utc")),
         report_date=_non_empty_text(raw_metadata.get("report_date")),
@@ -55,6 +51,15 @@ def build_diagnostics_context(
         units=_json_object_or_none(raw_metadata.get("units")),
         amplitude_definitions=_json_object_or_none(raw_metadata.get("amplitude_definitions")),
     )
+
+
+def _symptom_or_none(metadata: Mapping[str, object]) -> Symptom | None:
+    description = _non_empty_text(metadata.get("symptom"))
+    onset = _non_empty_text(metadata.get("symptom_onset")) or ""
+    context = _non_empty_text(metadata.get("symptom_context")) or ""
+    if description is None:
+        return None
+    return Symptom(description=description, onset=onset, context=context)
 
 
 def _non_empty_text(value: object) -> str | None:

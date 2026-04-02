@@ -7,13 +7,14 @@ import dataclasses
 import pytest
 
 from vibesensor.domain import (
+    DrivingPhaseSummary,
     RunSuitability,
     SpeedProfile,
     SuitabilityCheck,
 )
-from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.shared.boundaries.run_suitability import run_suitability_from_payload
+from vibesensor.shared.boundaries.summary_snapshot_codec import driving_phase_summary_from_mapping
 
 
 class TestSpeedProfile:
@@ -143,7 +144,7 @@ class TestSpeedProfile:
                 max_kmh=60,
                 sample_count=50,
             ),
-            DrivingPhaseSummary.from_dict(
+            driving_phase_summary_from_mapping(
                 {
                     "phase_counts": {"acceleration": 5, "cruise": 20},
                     "phase_pcts": {"cruise": 40.0, "idle": 15.0, "speed_unknown": 20.0},

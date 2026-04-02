@@ -13,6 +13,7 @@ from vibesensor.shared.failure_utils import bounded_failure_message
 __all__ = ["TaskSupervisor", "task_failure_message"]
 
 TaskFactory = Callable[[], Coroutine[object, object, object]]
+RestartableExceptions = tuple[type[Exception], ...]
 
 _TASK_RESTART_MAX_ATTEMPTS = 3
 _TASK_RESTART_BASE_DELAY_S = 1.0
@@ -89,8 +90,9 @@ class TaskSupervisor:
         task_factory: TaskFactory,
         *,
         name: str,
+        restartable_exceptions: RestartableExceptions = (),
     ) -> asyncio.Task[object]:
-        """Create a supervised task that restarts on failure or unexpected exit."""
+        """Create a supervised task that restarts on declared failures or unexpected exit."""
 
         async def _run_supervised() -> None:
             restart_count = 0
@@ -101,6 +103,8 @@ class TaskSupervisor:
                 except asyncio.CancelledError:
                     raise
                 except Exception as exc:
+                    if not isinstance(exc, restartable_exceptions):
+                        raise
                     runtime_s = time.monotonic() - started_at
                     if runtime_s >= self._reset_after_s:
                         restart_count = 0
@@ -110,7 +114,10 @@ class TaskSupervisor:
                     delay_s = self._restart_delay_s(restart_count)
                     self._health_state.record_task_failure(name, task_failure_message(exc))
                     self._logger.error(
-                        "Managed task %s failed; restarting in %.1fs (%d/%d).",
+                        (
+                            "Managed task %s failed with restartable error; "
+                            "restarting in %.1fs (%d/%d)."
+                        ),
                         name,
                         delay_s,
                         restart_count,

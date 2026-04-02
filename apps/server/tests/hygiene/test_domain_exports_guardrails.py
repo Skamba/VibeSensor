@@ -80,7 +80,6 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "AnalysisSettingsSnapshot",
     "DrivingPhaseSummary",
     "RunContextSnapshot",
-    "RunMetadataSnapshot",
     "SpeedProfileSummary",
     # Value objects — run and capture
     "ConfigurationSnapshot",
@@ -144,3 +143,11 @@ def test_domain_exports_completeness() -> None:
     all_names = set(getattr(mod, "__all__", []))
     missing = [n for n in _EXPECTED_DOMAIN_EXPORTS if n not in all_names]
     assert not missing, f"Missing from domain __all__: {missing}"
+
+
+def test_removed_run_metadata_snapshot_not_exported() -> None:
+    """The obsolete diagnostics-only RunMetadataSnapshot must stay removed."""
+    import importlib
+
+    mod = importlib.import_module("vibesensor.domain")
+    assert not hasattr(mod, "RunMetadataSnapshot")

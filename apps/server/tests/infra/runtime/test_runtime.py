@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from vibesensor.shared.exceptions import ProcessingError
+from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 
 # ---------------------------------------------------------------------------
 # Stubs – lightweight stand-ins for RuntimeState dependencies
@@ -439,7 +440,10 @@ async def test_start_restarts_supervised_task_after_failure(monkeypatch) -> None
     async def _ws_run(*args, **kwargs):
         ws_run_calls["count"] += 1
         if ws_run_calls["count"] == 1:
-            raise RuntimeError("ws boom")
+            raise BroadcastTickLoopFailure(
+                consecutive_failures=10,
+                cause=OSError("ws boom"),
+            )
         restart_started.set()
         await asyncio.Future()
 

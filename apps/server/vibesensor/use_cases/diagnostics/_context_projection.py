@@ -16,19 +16,19 @@ def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
     """Rehydrate the persisted metadata shape for boundary serializers."""
     metadata: JsonObject = {
         "run_id": context.run_id,
-        "case_id": context.run_metadata.case_id,
-        "sensor_mac": context.run_metadata.sensor_mac,
+        "case_id": context.case_id,
+        "sensor_mac": context.sensor_mac,
         "sensor_model": context.sensor_model,
         "firmware_version": context.firmware_version,
         "raw_sample_rate_hz": context.raw_sample_rate_hz,
         "feature_interval_s": context.feature_interval_s,
-        "_summary_version": context.run_metadata.summary_version,
+        "_summary_version": context.summary_version,
         "start_time_utc": context.start_time_utc,
         "end_time_utc": context.end_time_utc,
         "language": context.default_language,
         "incomplete_for_order_analysis": context.incomplete_for_order_analysis,
         "analysis_settings_snapshot": analysis_settings_snapshot_to_metadata(
-            context.analysis_settings
+            context.analysis_settings,
         ),
     }
     if context.report_date is not None:
@@ -47,12 +47,13 @@ def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
         metadata["amplitude_definitions"] = context.amplitude_definitions
     if context.explicit_engine_rpm is not None:
         metadata["engine_rpm"] = context.explicit_engine_rpm
-    if context.symptom.description:
-        metadata["symptom"] = context.symptom.description
-    if context.symptom.onset:
-        metadata["symptom_onset"] = context.symptom.onset
-    if context.symptom.context:
-        metadata["symptom_context"] = context.symptom.context
+    symptom = context.symptom
+    if symptom is not None and not symptom.is_unspecified:
+        metadata["symptom"] = symptom.description
+        if symptom.onset:
+            metadata["symptom_onset"] = symptom.onset
+        if symptom.context:
+            metadata["symptom_context"] = symptom.context
     if (car_metadata := car_snapshot_to_metadata(context.car)) is not None:
         metadata["active_car_snapshot"] = car_metadata
     tire_circumference_m = context.tire_circumference_m
@@ -93,4 +94,4 @@ def context_to_car(context: DiagnosticsContext) -> Car | None:
 
 def context_to_symptom(context: DiagnosticsContext) -> Symptom:
     """Project diagnostics symptom metadata into the domain symptom object."""
-    return context.symptom.as_domain_symptom()
+    return context.symptom if context.symptom is not None else Symptom.unspecified()

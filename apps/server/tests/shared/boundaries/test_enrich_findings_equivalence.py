@@ -1,6 +1,6 @@
-"""Equivalence test: _enrich_findings delegates to finding_from_payload.
+"""Equivalence test: enrich_findings delegates to finding_from_payload.
 
-After deduplication, _enrich_findings() is a thin wrapper around
+After deduplication, enrich_findings() is a thin wrapper around
 finding_from_payload(). This test confirms that the output is identical
 to calling finding_from_payload() directly.
 """
@@ -11,12 +11,14 @@ from test_support.findings import make_finding_payload, make_info_finding, make_
 
 from vibesensor.domain import Finding
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.test_run_reconstruction import _enrich_findings
+from vibesensor.shared.boundaries.test_run_reconstruction._finding_reconstruction import (
+    enrich_findings,
+)
 
 
 def _enriched_finding(payload: dict) -> Finding:
-    """Run _enrich_findings on a single payload."""
-    results = _enrich_findings([payload])
+    """Run enrich_findings on a single payload."""
+    results = enrich_findings([payload])
     assert len(results) == 1
     return results[0]
 
@@ -27,7 +29,7 @@ def _decoded_findings(payload: dict) -> tuple[Finding, Finding]:
 
 
 class TestEnrichFindingsEquivalence:
-    """Confirm that _enrich_findings produces the same origin and signatures
+    """Confirm that enrich_findings produces the same origin and signatures
     as finding_from_payload alone (the double-construction is redundant)."""
 
     def test_diagnostic_finding_origin_equivalent(self) -> None:
