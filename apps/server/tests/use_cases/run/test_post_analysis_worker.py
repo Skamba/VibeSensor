@@ -11,7 +11,8 @@ import time
 
 import pytest
 
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run import post_analysis as post_analysis_module
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
@@ -46,7 +47,7 @@ def make_worker():
 
 
 def _run_metadata(run_id: str, *, language: str = "en") -> RunMetadata:
-    return RunMetadata.from_dict(
+    return run_metadata_from_mapping(
         {
             "run_id": run_id,
             "start_time_utc": "2025-01-01T00:00:00Z",
@@ -205,7 +206,7 @@ class TestPostAnalysisWorkerErrorHandling:
 
             def iter_run_samples(self, run_id, batch_size=1024):
                 assert run_id == "run-ok"
-                yield normalize_sensor_frames(
+                yield sensor_frames_from_rows(
                     [
                         {"t_s": 1.0, "vibration_strength_db": 10.0},
                         {"t_s": 2.0, "vibration_strength_db": 11.0},

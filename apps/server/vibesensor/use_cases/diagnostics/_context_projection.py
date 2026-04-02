@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from vibesensor.domain import Car, ConfigurationSnapshot, Symptom
-from vibesensor.shared.boundaries.run_context_codec import run_context_snapshot_to_metadata
+from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+    analysis_settings_snapshot_to_metadata,
+)
+from vibesensor.shared.boundaries.car_snapshot_codec import car_snapshot_to_metadata
 from vibesensor.shared.types.json_types import JsonObject
 
 from ._context import DiagnosticsContext
@@ -11,17 +14,23 @@ from ._context import DiagnosticsContext
 
 def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
     """Rehydrate the persisted metadata shape for boundary serializers."""
-    metadata: JsonObject = dict(context.extra_metadata)
-    metadata["run_id"] = context.run_id
-    metadata["case_id"] = context.run_metadata.case_id
-    metadata["sensor_mac"] = context.run_metadata.sensor_mac
-    metadata["sensor_model"] = context.sensor_model
-    metadata["firmware_version"] = context.firmware_version
-    metadata["raw_sample_rate_hz"] = context.raw_sample_rate_hz
-    metadata["feature_interval_s"] = context.feature_interval_s
-    metadata["_summary_version"] = context.run_metadata.summary_version
-    metadata["start_time_utc"] = context.start_time_utc
-    metadata["end_time_utc"] = context.end_time_utc
+    metadata: JsonObject = {
+        "run_id": context.run_id,
+        "case_id": context.run_metadata.case_id,
+        "sensor_mac": context.run_metadata.sensor_mac,
+        "sensor_model": context.sensor_model,
+        "firmware_version": context.firmware_version,
+        "raw_sample_rate_hz": context.raw_sample_rate_hz,
+        "feature_interval_s": context.feature_interval_s,
+        "_summary_version": context.run_metadata.summary_version,
+        "start_time_utc": context.start_time_utc,
+        "end_time_utc": context.end_time_utc,
+        "language": context.default_language,
+        "incomplete_for_order_analysis": context.incomplete_for_order_analysis,
+        "analysis_settings_snapshot": analysis_settings_snapshot_to_metadata(
+            context.analysis_settings
+        ),
+    }
     if context.report_date is not None:
         metadata["report_date"] = context.report_date
     if context.fft_window_size_samples is not None:
@@ -32,17 +41,20 @@ def context_to_metadata_dict(context: DiagnosticsContext) -> JsonObject:
         metadata["peak_picker_method"] = context.peak_picker_method
     if context.accel_scale_g_per_lsb is not None:
         metadata["accel_scale_g_per_lsb"] = context.accel_scale_g_per_lsb
-    metadata["incomplete_for_order_analysis"] = context.incomplete_for_order_analysis
-    metadata["language"] = context.default_language
+    if context.units is not None:
+        metadata["units"] = context.units
+    if context.amplitude_definitions is not None:
+        metadata["amplitude_definitions"] = context.amplitude_definitions
     if context.explicit_engine_rpm is not None:
         metadata["engine_rpm"] = context.explicit_engine_rpm
-    if context.symptom_description:
-        metadata["symptom"] = context.symptom_description
-    if context.symptom_onset:
-        metadata["symptom_onset"] = context.symptom_onset
-    if context.symptom_context:
-        metadata["symptom_context"] = context.symptom_context
-    metadata.update(run_context_snapshot_to_metadata(context.run_context))
+    if context.symptom.description:
+        metadata["symptom"] = context.symptom.description
+    if context.symptom.onset:
+        metadata["symptom_onset"] = context.symptom.onset
+    if context.symptom.context:
+        metadata["symptom_context"] = context.symptom.context
+    if (car_metadata := car_snapshot_to_metadata(context.car)) is not None:
+        metadata["active_car_snapshot"] = car_metadata
     tire_circumference_m = context.tire_circumference_m
     if tire_circumference_m is not None:
         metadata["tire_circumference_m"] = tire_circumference_m
@@ -66,7 +78,7 @@ def context_to_configuration_snapshot(context: DiagnosticsContext) -> Configurat
 def context_to_car(context: DiagnosticsContext) -> Car | None:
     """Project the optional car context used by report and finding consumers."""
     spec = context.order_reference_spec
-    car_snapshot = context.run_context.car
+    car_snapshot = context.car
     if not (context.car_name or context.car_type or context.car_variant or spec is not None):
         return None
     return Car(
@@ -81,10 +93,4 @@ def context_to_car(context: DiagnosticsContext) -> Car | None:
 
 def context_to_symptom(context: DiagnosticsContext) -> Symptom:
     """Project diagnostics symptom metadata into the domain symptom object."""
-    if not context.symptom_description:
-        return Symptom.unspecified()
-    return Symptom(
-        description=context.symptom_description,
-        onset=context.symptom_onset,
-        context=context.symptom_context,
-    )
+    return context.symptom.as_domain_symptom()

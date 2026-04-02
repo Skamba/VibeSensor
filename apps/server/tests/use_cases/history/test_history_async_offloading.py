@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 import pytest
 
 from vibesensor.domain import RunStatus
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.helpers import async_require_run
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
@@ -21,7 +21,7 @@ def _stored_run(run_id: str = "run-1") -> StoredHistoryRun:
         status=RunStatus.COMPLETE,
         start_time_utc="2026-01-01T00:00:00Z",
         end_time_utc="2026-01-01T00:01:00Z",
-        metadata=RunMetadata.from_dict(
+        metadata=run_metadata_from_mapping(
             {
                 "run_id": run_id,
                 "start_time_utc": "2026-01-01T00:00:00Z",

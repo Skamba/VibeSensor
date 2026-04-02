@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import DrivingPhaseSegment
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
@@ -19,7 +19,7 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
 
 
 def _typed(samples: list[dict]) -> list:
-    return normalize_sensor_frames(samples)
+    return sensor_frames_from_rows(samples)
 
 
 # ---------------------------------------------------------------------------

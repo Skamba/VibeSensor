@@ -14,13 +14,16 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    sensor_frames_from_rows,
+    sensor_frames_to_json_objects,
+)
 from vibesensor.shared.boundaries.summary_serialization import annotate_peaks_with_order_labels
 from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
-from vibesensor.use_cases.diagnostics.summary_builder import build_findings_for_samples
+from vibesensor.use_cases.diagnostics.run_analysis import build_findings_for_samples
 
 
 class TestBuildPersistentPeakFindings:
@@ -151,7 +154,7 @@ class TestBuildPersistentPeakFindings:
         target = findings_at_freq(findings, "25")
         assert target[0].peaks.classification == "baseline_noise"
 
-        rows = _top_peaks_table_rows(normalize_sensor_frames(samples), top_n=12, freq_bin_hz=1.0)
+        rows = _top_peaks_table_rows(sensor_frames_from_rows(samples), top_n=12, freq_bin_hz=1.0)
         row_25 = next(
             (row for row in rows if abs(row.frequency_hz - 25.0) <= 0.5),
             None,
@@ -252,7 +255,7 @@ class TestPersistentPeakFindingsPhaseAwareness:
     def test_phase_presence_via_build_findings_integration(self) -> None:
         findings = build_findings_for_samples(
             metadata=make_metadata(),
-            samples=uniform_samples(25, 40.0, 0.06),
+            samples=sensor_frames_to_json_objects(uniform_samples(25, 40.0, 0.06)),
             lang="en",
         )
         # build_findings_for_samples now returns domain Finding objects;

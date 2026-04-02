@@ -20,6 +20,8 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.domain import Run
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.logger import (
@@ -35,7 +37,7 @@ from vibesensor.use_cases.run.post_analysis import _WARN_QUEUE_DEPTH, PostAnalys
 
 
 def _run_metadata(run_id: str, *, language: str = "en") -> RunMetadata:
-    return RunMetadata.from_dict(
+    return run_metadata_from_mapping(
         {
             "run_id": run_id,
             "start_time_utc": "2025-01-01T00:00:00Z",
@@ -57,7 +59,7 @@ def _make_persist_logger(make_logger, *, history_db: object, run_id: str = "run-
 
 
 def _sample_rows(count: int) -> list[SensorFrame]:
-    return [SensorFrame.from_dict({"t_s": float(i)}) for i in range(count)]
+    return [sensor_frame_from_mapping({"t_s": float(i)}) for i in range(count)]
 
 
 class _FailingDB:
@@ -330,16 +332,18 @@ class TestPostAnalysisOutcomeTracking:
 
             def iter_run_samples(self, run_id, batch_size=1024):
                 yield [
-                    {
-                        "x": 0.1,
-                        "y": 0.2,
-                        "z": 0.3,
-                        "t_s": 1.0,
-                        "vibration_strength_db": 10.0,
-                        "strength_bucket": "l1",
-                        "peak_amp_g": 0.05,
-                        "noise_floor_amp_g": 0.001,
-                    },
+                    sensor_frame_from_mapping(
+                        {
+                            "x": 0.1,
+                            "y": 0.2,
+                            "z": 0.3,
+                            "t_s": 1.0,
+                            "vibration_strength_db": 10.0,
+                            "strength_bucket": "l1",
+                            "peak_amp_g": 0.05,
+                            "noise_floor_amp_g": 0.001,
+                        }
+                    ),
                 ]
 
             def store_analysis(self, run_id, analysis):

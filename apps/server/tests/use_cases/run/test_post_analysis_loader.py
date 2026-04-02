@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 import pytest
 
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_loader import (
     EmptyPostAnalysisSamples,
@@ -30,7 +32,7 @@ def _run_metadata(run_id: str, *, language: str | None = "en") -> RunMetadata:
     }
     if language is not None:
         payload["language"] = language
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 def test_load_post_analysis_run_returns_loaded_run() -> None:
@@ -45,10 +47,12 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
             assert run_id == "run-ok"
             assert batch_size == 1024
             assert stride == 1
-            yield [
-                {"t_s": 1.0, "vibration_strength_db": 10.0},
-                {"t_s": 2.0, "vibration_strength_db": 11.0},
-            ]
+            yield sensor_frames_from_rows(
+                [
+                    {"t_s": 1.0, "vibration_strength_db": 10.0},
+                    {"t_s": 2.0, "vibration_strength_db": 11.0},
+                ]
+            )
 
     result = load_post_analysis_run(run_id="run-ok", db=FakeDB())
 
@@ -106,10 +110,12 @@ def test_load_post_analysis_run_applies_upfront_stride(
 
         def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             iter_calls.append((batch_size, stride))
-            yield [
-                {"t_s": 1.0, "vibration_strength_db": 10.0},
-                {"t_s": 3.0, "vibration_strength_db": 12.0},
-            ]
+            yield sensor_frames_from_rows(
+                [
+                    {"t_s": 1.0, "vibration_strength_db": 10.0},
+                    {"t_s": 3.0, "vibration_strength_db": 12.0},
+                ]
+            )
 
     result = load_post_analysis_run(run_id="run-capped", db=FakeDB())
 
@@ -130,7 +136,7 @@ def test_load_post_analysis_run_defaults_language_to_en() -> None:
 
         def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             assert stride == 1
-            yield [{"t_s": 1.0, "vibration_strength_db": 10.0}]
+            yield sensor_frames_from_rows([{"t_s": 1.0, "vibration_strength_db": 10.0}])
 
     result = load_post_analysis_run(run_id="run-lang", db=FakeDB())
 

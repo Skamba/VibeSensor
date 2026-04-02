@@ -19,6 +19,8 @@ from vibesensor.adapters.history import (
     project_history_insights,
 )
 from vibesensor.domain import CarSnapshot, RunStatus
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
@@ -26,7 +28,6 @@ from vibesensor.shared.run_context_warning import (
 )
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
@@ -51,7 +52,7 @@ class _HistoryDbStub:
 
     def iter_run_samples(self, run_id: str, batch_size: int = 1000):
         rows = [
-            row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row)
+            row if isinstance(row, SensorFrame) else sensor_frame_from_mapping(row)
             for row in (self.samples or [])
         ]
         for start in range(0, len(rows), batch_size):
@@ -83,7 +84,7 @@ def _stored_run(run: dict[str, Any]) -> StoredHistoryRun:
         status=RunStatus(str(run.get("status") or "complete")),
         start_time_utc=str(run.get("start_time_utc") or "2026-01-01T00:00:00Z"),
         end_time_utc=cast(str | None, run.get("end_time_utc")),
-        metadata=RunMetadata.from_dict(metadata_payload),
+        metadata=run_metadata_from_mapping(metadata_payload),
         created_at=str(run.get("created_at") or "2026-01-01T00:00:00Z"),
         sample_count=int(run.get("sample_count") or 0),
         case_id=cast(str | None, run.get("case_id")),

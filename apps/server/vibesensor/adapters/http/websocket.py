@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from pydantic import TypeAdapter, ValidationError
 
+from vibesensor.adapters.http.ws_message_router import route_ws_message
 from vibesensor.domain import normalize_sensor_id
-from vibesensor.shared.types.payload_types import WsClientSelectionPayload
 
 if TYPE_CHECKING:
     from vibesensor.adapters.websocket.hub import WebSocketHub
@@ -25,9 +23,6 @@ LOGGER = logging.getLogger(__name__)
 # closes it.  Normal dashboard sessions only send messages when changing the
 # selected sensor, so this is intentionally long.
 _RECEIVE_IDLE_TIMEOUT_S: float = 300.0
-
-_WS_CLIENT_SELECTION_ADAPTER = TypeAdapter(WsClientSelectionPayload)
-
 
 def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
     """Create and return the WebSocket streaming routes."""
@@ -43,7 +38,6 @@ def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
                 selected = None
         await ws.accept()
         await ws_hub.add(ws, selected)
-        _loads = json.loads
         try:
             while True:
                 try:
@@ -58,48 +52,9 @@ def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
                     )
                     await ws.close()
                     return
-                try:
-                    payload = _loads(message)
-                except json.JSONDecodeError:
-                    LOGGER.debug("Ignoring malformed WS message (not valid JSON)")
-                    continue
-                if not isinstance(payload, dict):
-                    LOGGER.debug(
-                        "Ignoring WS message with unexpected type %s (expected dict)",
-                        type(payload).__name__,
-                    )
-                    continue
-                try:
-                    typed_payload = _WS_CLIENT_SELECTION_ADAPTER.validate_python(payload)
-                except ValidationError:
-                    LOGGER.debug("Ignoring invalid WS message payload: %r", payload)
-                    continue
-                if "client_id" in typed_payload:
-                    value = typed_payload["client_id"]
-                    try:
-                        if value is None:
-                            await ws_hub.update_selected_client(ws, None)
-                        else:
-                            normalized = normalize_sensor_id(value)
-                            await ws_hub.update_selected_client(ws, normalized)
-                    except ValueError:
-                        LOGGER.debug(
-                            "Ignoring invalid client_id value in WS message: %r",
-                            value,
-                        )
-                        continue
-                    except Exception:
-                        LOGGER.warning("Error processing WS message", exc_info=True)
-                        continue
-                else:
-                    LOGGER.debug(
-                        "Ignoring WS message dict with no recognized keys: %s",
-                        list(payload.keys()),
-                    )
+                await route_ws_message(ws_hub, ws, message)
         except WebSocketDisconnect:
             LOGGER.debug("WebSocket client disconnected")
-        except Exception:
-            LOGGER.warning("WebSocket handler error", exc_info=True)
         finally:
             await ws_hub.remove(ws)
 

@@ -24,6 +24,14 @@ from vibesensor.adapters.http.dependencies import (
 )
 from vibesensor.domain import RunStatus
 from vibesensor.infra.runtime import RuntimeHealthState
+from vibesensor.shared.boundaries.run_metadata_codec import (
+    run_metadata_from_mapping,
+    run_metadata_to_json_object,
+)
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    sensor_frame_from_mapping,
+    sensor_frame_to_json_object,
+)
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -85,7 +93,7 @@ def sample(i: int) -> dict[str, Any]:
 
 
 def _coerce_metadata(metadata: dict[str, Any] | RunMetadata) -> RunMetadata:
-    return metadata if isinstance(metadata, RunMetadata) else RunMetadata.from_dict(metadata)
+    return metadata if isinstance(metadata, RunMetadata) else run_metadata_from_mapping(metadata)
 
 
 def _coerce_analysis(
@@ -98,8 +106,13 @@ def _coerce_analysis(
     if {"findings", "top_causes", "warnings"}.issubset(analysis):
         return make_persisted_analysis(cast(AnalysisSummary, analysis))
     baseline = summarize_run_data(
-        metadata.to_dict(),
-        [row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row) for row in samples],
+        run_metadata_to_json_object(metadata),
+        [
+            sensor_frame_to_json_object(row)
+            if isinstance(row, SensorFrame)
+            else row
+            for row in samples
+        ],
         lang=metadata.language or "en",
         include_samples=False,
     )
@@ -134,7 +147,7 @@ class FakeHistoryDB:
         if run_id != "run-1":
             return
         rows = [
-            row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row)
+            row if isinstance(row, SensorFrame) else sensor_frame_from_mapping(row)
             for row in self.samples
         ]
         for start in range(0, len(rows), batch_size):
@@ -144,7 +157,7 @@ class FakeHistoryDB:
         if run_id != "run-1":
             return []
         return [
-            row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row)
+            row if isinstance(row, SensorFrame) else sensor_frame_from_mapping(row)
             for row in self.samples
         ]
 

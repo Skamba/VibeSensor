@@ -11,6 +11,7 @@ from vibesensor.shared.failure_utils import bounded_failure_message
 __all__ = ["BroadcastTickController", "BroadcastTickLoopFailure"]
 
 _MAX_CONSECUTIVE_FAILURES: int = 10
+_RETRYABLE_BROADCAST_EXCEPTIONS = (OSError,)
 
 
 class BroadcastTickLoopFailure(RuntimeError):
@@ -62,18 +63,12 @@ class BroadcastTickController:
         loop = asyncio.get_running_loop()
         while True:
             tick_start = loop.time()
+            if on_tick is not None:
+                on_tick()
             try:
-                if on_tick is not None:
-                    try:
-                        on_tick()
-                    except Exception:
-                        self._logger.warning(
-                            "WebSocket on_tick callback raised; proceeding to broadcast.",
-                            exc_info=True,
-                        )
                 await broadcast_tick()
                 consecutive_failures = 0
-            except Exception as exc:
+            except _RETRYABLE_BROADCAST_EXCEPTIONS as exc:
                 consecutive_failures += 1
                 if consecutive_failures >= self._max_consecutive_failures:
                     self._logger.error(

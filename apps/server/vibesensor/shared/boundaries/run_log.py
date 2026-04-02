@@ -7,12 +7,9 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.run_schema import (
-    RUN_END_TYPE,
-    RUN_METADATA_TYPE,
-    RUN_SAMPLE_TYPE,
-)
+from vibesensor.shared.types.run_schema import RUN_END_TYPE, RUN_METADATA_TYPE, RUN_SAMPLE_TYPE
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
@@ -35,10 +32,10 @@ class RunData:
     source_path: Path
 
 
-def normalize_sample_record(record: JsonObject | SensorFrame) -> SensorFrame:
+def normalize_sample_record(record: JsonObject) -> SensorFrame:
     """Normalize a raw sample payload into the canonical typed sample object."""
 
-    return record if isinstance(record, SensorFrame) else SensorFrame.from_dict(record)
+    return sensor_frame_from_mapping(record)
 
 
 def read_jsonl_run(path: Path) -> RunData:

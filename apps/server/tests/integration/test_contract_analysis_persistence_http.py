@@ -15,13 +15,13 @@ from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_summary,
     persisted_analysis_to_summary,
 )
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import (
     PERSISTED_ANALYSIS_SCHEMA_VERSION,
     PersistedAnalysis,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.runs import HistoryRunService
 
 pytestmark = pytest.mark.smoke
@@ -70,7 +70,7 @@ def _stored_run_from_summary(
     reloaded = PersistedAnalysis.from_storage_json_object(storage_payload)
     restored_summary = persisted_analysis_to_summary(reloaded)
 
-    metadata = RunMetadata.from_dict(
+    metadata = run_metadata_from_mapping(
         {
             "run_id": str(summary.get("run_id") or "run-1"),
             "start_time_utc": (

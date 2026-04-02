@@ -1,7 +1,7 @@
 """Pure computation helpers for run statistics.
 
 Side-effect-free, independently testable functions extracted from
-``summary_builder.py``: acceleration statistics, run timing, frame
+``run_analysis.py``: acceleration statistics, run timing, frame
 integrity, reference completeness, and speed/phase preparation.
 """
 

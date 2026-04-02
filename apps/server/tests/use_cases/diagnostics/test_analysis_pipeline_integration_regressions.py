@@ -16,9 +16,11 @@ from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.run_log import normalize_sample_record
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_to_json_object
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.diagnostics.summary_builder import build_findings_for_samples
+from vibesensor.use_cases.diagnostics.run_analysis import build_findings_for_samples
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
@@ -55,7 +57,7 @@ def _run_metadata(run_id: str, **overrides: object) -> RunMetadata:
         "language": "en",
     }
     payload.update(overrides)
-    return RunMetadata.from_dict(payload)
+    return run_metadata_from_mapping(payload)
 
 
 def _simple_samples(n: int = 20) -> list[dict[str, Any]]:
@@ -388,7 +390,7 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     assert run.status.value == "analyzing"
 
     read_samples = db.get_run_samples(run_id)
-    normalized = [normalize_sample_record(s) for s in read_samples]
+    normalized = [sensor_frame_to_json_object(sample) for sample in read_samples]
     summary = summarize_run_data(
         metadata,
         normalized,

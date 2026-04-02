@@ -13,27 +13,34 @@ from vibesensor.adapters.analysis_summary import (
     summarize_run_data,
 )
 from vibesensor.domain import SpeedProfile
-from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    sensor_frame_from_mapping,
+    sensor_frames_from_rows,
+)
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
     build_phase_summary,
     prepare_run_data,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
-from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
 def _analysis(
     metadata: dict[str, object],
-    samples: list[dict[str, object]],
+    samples: list[dict[str, object] | SensorFrame],
     **kwargs: object,
 ) -> RunAnalysis:
     file_name = str(kwargs.get("file_name") or "run")
     return RunAnalysis(
         build_diagnostics_context(metadata, file_name=file_name),
-        normalize_sensor_frames(samples),
+        [
+            sample if isinstance(sample, SensorFrame) else sensor_frame_from_mapping(sample)
+            for sample in samples
+        ],
         **kwargs,
     )
 
@@ -102,7 +109,7 @@ class TestPreparedRunDataProperties:
         ]
 
         context = build_diagnostics_context(metadata, file_name="test")
-        prepared = prepare_run_data(context, normalize_sensor_frames(samples))
+        prepared = prepare_run_data(context, sensor_frames_from_rows(samples))
         speed_stats = _speed_stats(prepared.speed_values)
         phase_info = build_phase_summary(prepared.phase_segments)
 
