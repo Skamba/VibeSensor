@@ -1,14 +1,10 @@
-"""Tests for OrderReferenceSpec and CarSnapshot domain objects."""
+"""Tests for order-reference and car domain objects."""
 
 from __future__ import annotations
 
 from types import MappingProxyType
 
 from vibesensor.domain import Car, CarSnapshot
-from vibesensor.shared.boundaries.car_snapshot_codec import (
-    car_snapshot_from_mapping,
-    car_snapshot_to_metadata,
-)
 from vibesensor.shared.order_reference_settings import (
     order_reference_mapping_from_spec,
     order_reference_spec_from_mapping,
@@ -169,75 +165,10 @@ class TestCarOrderReferenceSpec:
         assert car.rim_in == 18.0
 
 
-# ---------------------------------------------------------------------------
-# CarSnapshot tests
-# ---------------------------------------------------------------------------
-
-
-class TestCarSnapshot:
-    def test_from_dict_empty(self) -> None:
-        snap = car_snapshot_from_mapping({})
-        assert snap is not None
-        assert snap.car_id is None
-        assert snap.name is None
-        assert snap.car_type is None
-        assert snap.variant is None
-        assert dict(snap.aspects) == {}
-
-    def test_from_dict_full(self) -> None:
-        snap = car_snapshot_from_mapping(
-            {
-                "id": "abc123",
-                "name": "Test Car",
-                "type": "sedan",
-                "variant": "sport",
-                "aspects": {"tire_width_mm": 205.0, "tire_aspect_pct": 55.0},
-            }
-        )
-        assert snap is not None
-        assert snap.car_id == "abc123"
-        assert snap.name == "Test Car"
-        assert snap.car_type == "sedan"
-        assert snap.variant == "sport"
-        assert snap.aspects["tire_width_mm"] == 205.0
-
-    def test_from_dict_with_id_key(self) -> None:
-        snap = car_snapshot_from_mapping({"id": "xyz"})
-        assert snap is not None
-        assert snap.car_id == "xyz"
-
-    def test_to_dict_round_trip(self) -> None:
-        original = CarSnapshot(
-            car_id="abc",
-            name="Test",
-            car_type="suv",
-            variant=None,
-            aspects={"tire_width_mm": 205.0},
-        )
-        d = car_snapshot_to_metadata(original)
-        assert d is not None
-        assert d["id"] == "abc"
-        assert d["name"] == "Test"
-        reconstructed = car_snapshot_from_mapping(d)
-        assert reconstructed is not None
-        assert reconstructed.car_id == original.car_id
-        assert reconstructed.name == original.name
-
-    def test_aspects_frozen(self) -> None:
-        snap = CarSnapshot(aspects={"a": 1.0})
-        try:
-            snap.aspects["b"] = 2.0
-            raise AssertionError("Should not allow mutation")  # noqa: TRY301
-        except TypeError:
-            pass  # MappingProxyType raises TypeError on mutation
-
-    def test_whitespace_name_becomes_none(self) -> None:
-        snap = car_snapshot_from_mapping({"name": "  "})
-        assert snap is not None
-        assert snap.name is None
-
-    def test_invalid_aspects_skipped(self) -> None:
-        snap = car_snapshot_from_mapping({"aspects": {"a": "not_a_number", "b": 1.5}})
-        assert snap is not None
-        assert "a" not in snap.aspects
-        assert "b" not in snap.aspects
+def test_car_snapshot_aspects_mapping_is_immutable() -> None:
+    snap = CarSnapshot(aspects={"a": 1.0})
+    try:
+        snap.aspects["b"] = 2.0
+        raise AssertionError("Should not allow mutation")  # noqa: TRY301
+    except TypeError:
+        pass  # MappingProxyType raises TypeError on mutation

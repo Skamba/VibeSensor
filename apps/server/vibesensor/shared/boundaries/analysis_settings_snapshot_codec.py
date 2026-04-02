@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.shared.analysis_settings_schema import (
@@ -14,6 +14,33 @@ from vibesensor.shared.types.json_types import JsonObject
 
 type ScalarSettingValue = int | float | bool | str
 type ScalarSettings = tuple[tuple[str, ScalarSettingValue], ...]
+
+_ANALYSIS_SETTINGS_PAIRS: tuple[
+    tuple[str, Callable[[AnalysisSettingsSnapshot], float]],
+    ...,
+] = (
+    ("tire_width_mm", lambda snapshot: snapshot.tire_width_mm),
+    ("tire_aspect_pct", lambda snapshot: snapshot.tire_aspect_pct),
+    ("rim_in", lambda snapshot: snapshot.rim_in),
+    ("final_drive_ratio", lambda snapshot: snapshot.final_drive_ratio),
+    ("current_gear_ratio", lambda snapshot: snapshot.current_gear_ratio),
+    ("wheel_bandwidth_pct", lambda snapshot: snapshot.wheel_bandwidth_pct),
+    ("driveshaft_bandwidth_pct", lambda snapshot: snapshot.driveshaft_bandwidth_pct),
+    ("engine_bandwidth_pct", lambda snapshot: snapshot.engine_bandwidth_pct),
+    ("speed_uncertainty_pct", lambda snapshot: snapshot.speed_uncertainty_pct),
+    (
+        "tire_diameter_uncertainty_pct",
+        lambda snapshot: snapshot.tire_diameter_uncertainty_pct,
+    ),
+    (
+        "final_drive_uncertainty_pct",
+        lambda snapshot: snapshot.final_drive_uncertainty_pct,
+    ),
+    ("gear_uncertainty_pct", lambda snapshot: snapshot.gear_uncertainty_pct),
+    ("min_abs_band_hz", lambda snapshot: snapshot.min_abs_band_hz),
+    ("max_band_half_width_pct", lambda snapshot: snapshot.max_band_half_width_pct),
+    ("tire_deflection_factor", lambda snapshot: snapshot.tire_deflection_factor),
+)
 
 
 def analysis_settings_snapshot_from_mapping(payload: object) -> AnalysisSettingsSnapshot:
@@ -44,8 +71,7 @@ def analysis_settings_snapshot_to_metadata(snapshot: AnalysisSettingsSnapshot) -
     """Project a typed snapshot into the canonical persisted metadata shape."""
 
     metadata: JsonObject = {}
-    for key in ANALYSIS_SETTINGS_FIELDS:
-        value = getattr(snapshot, key)
+    for key, value in _analysis_settings_values(snapshot):
         if math.isfinite(float(value)):
             metadata[key] = value
     return metadata
@@ -61,6 +87,12 @@ def analysis_settings_snapshot_items(snapshot: AnalysisSettingsSnapshot) -> Scal
         if default_values.get(key) != value and isinstance(value, bool | int | float | str):
             items.append((key, value))
     return tuple(sorted(items))
+
+
+def _analysis_settings_values(
+    snapshot: AnalysisSettingsSnapshot,
+) -> tuple[tuple[str, float], ...]:
+    return tuple((key, read_value(snapshot)) for key, read_value in _ANALYSIS_SETTINGS_PAIRS)
 
 
 def _float_or(value: object, default: float = 0.0) -> float:
@@ -84,6 +116,7 @@ def _float_or(value: object, default: float = 0.0) -> float:
 __all__ = [
     "ScalarSettingValue",
     "ScalarSettings",
+    "ANALYSIS_SETTINGS_FIELDS",
     "analysis_settings_snapshot_from_mapping",
     "analysis_settings_snapshot_items",
     "analysis_settings_snapshot_to_metadata",
