@@ -1,10 +1,4 @@
-"""Typed diagnostics-internal run context.
-
-Boundary metadata arrives as a raw JSON mapping from JSONL/history storage, but the
-analysis pipeline should consume a typed object once that payload crosses the
-boundary. ``DiagnosticsContext`` centralizes that normalization while preserving
-round-trippable metadata for explicit serializer edges.
-"""
+"""Canonical typed diagnostics run context."""
 
 from __future__ import annotations
 
@@ -17,16 +11,18 @@ from vibesensor.domain import (
     RunContextSnapshot,
     RunMetadataSnapshot,
 )
+from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+    ScalarSettings,
+    analysis_settings_snapshot_items,
+)
+from vibesensor.shared.types.json_types import JsonValue
 
 from ._types import Sample
-
-type ScalarSettingValue = int | float | bool | str
-type ScalarSettings = tuple[tuple[str, ScalarSettingValue], ...]
 
 
 @dataclass(frozen=True, slots=True)
 class DiagnosticsContext:
-    """Canonical typed diagnostics context built once at raw-metadata ingress."""
+    """Canonical typed diagnostics context built once at metadata ingress."""
 
     run_metadata: RunMetadataSnapshot
     run_context: RunContextSnapshot
@@ -44,19 +40,15 @@ class DiagnosticsContext:
     symptom_context: str = ""
     tire_circumference_m_override: float | None = None
     explicit_engine_rpm: float | None = None
-    scalar_analysis_settings: ScalarSettings = ()
-    present_boundary_keys: frozenset[str] = frozenset()
-    passthrough_metadata: Mapping[str, object] = field(default_factory=dict, repr=False)
+    extra_metadata: Mapping[str, JsonValue] = field(default_factory=dict, repr=False)
 
     def __post_init__(self) -> None:
-        if not isinstance(self.passthrough_metadata, MappingProxyType):
+        if not isinstance(self.extra_metadata, MappingProxyType):
             object.__setattr__(
                 self,
-                "passthrough_metadata",
-                MappingProxyType(dict(self.passthrough_metadata)),
+                "extra_metadata",
+                MappingProxyType(dict(self.extra_metadata)),
             )
-        if not isinstance(self.present_boundary_keys, frozenset):
-            object.__setattr__(self, "present_boundary_keys", frozenset(self.present_boundary_keys))
 
     @property
     def run_id(self) -> str:
@@ -134,6 +126,10 @@ class DiagnosticsContext:
             )
         )
 
+    @property
+    def analysis_settings_items(self) -> ScalarSettings:
+        return analysis_settings_snapshot_items(self.run_context.analysis_settings)
+
     def effective_order_reference_spec(
         self,
         sample: Sample | None = None,
@@ -153,9 +149,6 @@ class DiagnosticsContext:
             ),
             current_gear_ratio=(gear_ratio if gear_ratio is not None else spec.current_gear_ratio),
         )
-
-    def has_boundary_key(self, key: str) -> bool:
-        return key in self.present_boundary_keys
 
 
 __all__ = ["DiagnosticsContext"]

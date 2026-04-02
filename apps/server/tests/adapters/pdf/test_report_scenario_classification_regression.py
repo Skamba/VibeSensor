@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._sensor_locations import _location_label
 from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
@@ -101,4 +102,4 @@ class TestLocationLabel:
         ],
     )
     def test_location_label(self, sample: dict[str, str], expected: str) -> None:
-        assert _location_label(sample) == expected
+        assert _location_label(normalize_sensor_frames([sample])[0]) == expected

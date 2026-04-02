@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from typing import cast
 
 from vibesensor.domain import StrengthPeak
+from vibesensor.shared.boundaries.strength_metrics_codec import (
+    strength_peak_payloads,
+    strength_peaks_from_sequence,
+)
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 __all__ = ["SensorFrame"]
@@ -18,16 +22,7 @@ _BUCKET_KEY: str = "strength_bucket"
 def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> tuple[StrengthPeak, ...]:
     """Validate and normalize raw peak payloads into typed peak objects."""
 
-    normalized: list[StrengthPeak] = []
-    if not isinstance(peaks_raw, list):
-        return ()
-    for peak in peaks_raw[:max_items]:
-        if not isinstance(peak, dict):
-            continue
-        normalized_peak = StrengthPeak.from_dict(peak)
-        if normalized_peak.is_valid:
-            normalized.append(normalized_peak)
-    return tuple(normalized)
+    return strength_peaks_from_sequence(peaks_raw, max_items=max_items)
 
 
 @dataclass(slots=True)
@@ -68,7 +63,7 @@ class SensorFrame:
     def to_dict(self) -> JsonObject:
         top_peaks = cast(
             list[JsonValue],
-            [peak.to_dict() for peak in self.top_peaks],
+            strength_peak_payloads(self.top_peaks),
         )
         return {
             "run_id": self.run_id,

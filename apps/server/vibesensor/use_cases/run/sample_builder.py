@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, NamedTuple
 from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
+from vibesensor.shared.boundaries.strength_metrics_codec import strength_metrics_from_mapping
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
 from vibesensor.shared.ports import ClientTracker, SensorMetadataReader
@@ -48,11 +49,7 @@ def extract_strength_data(
     raw_strength_metrics = (
         combined_metrics.get("strength_metrics") if combined_metrics is not None else None
     )
-    return (
-        StrengthMetrics.from_dict(raw_strength_metrics)
-        if raw_strength_metrics is not None
-        else StrengthMetrics()
-    )
+    return strength_metrics_from_mapping(raw_strength_metrics)
 
 
 def dominant_hz_from_strength(

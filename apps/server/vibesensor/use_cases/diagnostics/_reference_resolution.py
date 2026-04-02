@@ -6,7 +6,7 @@ from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
 
 from ._context import DiagnosticsContext
-from ._types import AnalysisSampleInput, Sample, ensure_analysis_sample
+from ._types import Sample
 
 
 def _tire_reference_from_context(context: DiagnosticsContext) -> tuple[float | None, str | None]:
@@ -30,22 +30,17 @@ def _order_reference_spec_from_context(
 
 
 def _effective_engine_rpm(
-    sample: AnalysisSampleInput,
+    sample: Sample,
     context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     """Resolve measured or inferred engine rpm plus the source label."""
-    typed_sample = ensure_analysis_sample(sample)
-    measured = typed_sample.engine_rpm
+    measured = sample.engine_rpm
     if measured is not None and measured > 0:
-        return measured, typed_sample.engine_rpm_source or "measured"
+        return measured, sample.engine_rpm_source or "measured"
 
-    estimated_in_sample = typed_sample.engine_rpm_estimated
-    if estimated_in_sample is not None and estimated_in_sample > 0:
-        return estimated_in_sample, "estimated_from_speed_and_ratios"
-
-    speed_kmh = typed_sample.speed_kmh
-    spec = _order_reference_spec_from_context(context, typed_sample)
+    speed_kmh = sample.speed_kmh
+    spec = _order_reference_spec_from_context(context, sample)
     if (
         speed_kmh is not None
         and speed_kmh > 0
@@ -57,11 +52,11 @@ def _effective_engine_rpm(
             return rpm, "estimated_from_speed_and_ratios"
 
     final_drive_ratio = (
-        typed_sample.final_drive_ratio
-        if typed_sample.final_drive_ratio is not None
+        sample.final_drive_ratio
+        if sample.final_drive_ratio is not None
         else context.final_drive_ratio
     )
-    gear_val = typed_sample.gear
+    gear_val = sample.gear
     gear_ratio = gear_val if gear_val is not None else context.current_gear_ratio
     if (
         speed_kmh is None

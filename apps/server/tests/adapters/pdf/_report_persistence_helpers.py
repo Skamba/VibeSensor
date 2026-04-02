@@ -8,6 +8,7 @@ from test_support.report_helpers import analysis_metadata as make_metadata
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics.findings import _build_persistent_peak_findings
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 
@@ -21,7 +22,9 @@ def uniform_samples(
     dt: float = 0.5,
     **kwargs: object,
 ) -> list[dict[str, object]]:
-    return [sample(float(i) * dt, speed, [{"hz": freq, "amp": amp}], **kwargs) for i in range(n)]
+    return normalize_sensor_frames(
+        [sample(float(i) * dt, speed, [{"hz": freq, "amp": amp}], **kwargs) for i in range(n)],
+    )
 
 
 def build_findings(
@@ -31,7 +34,7 @@ def build_findings(
     per_sample_phases: list[DrivingPhase] | None = None,
 ) -> list[dict[str, object]]:
     return _build_persistent_peak_findings(
-        samples=samples,
+        samples=normalize_sensor_frames(samples),
         order_finding_freqs=order_finding_freqs or set(),
         lang="en",
         per_sample_phases=per_sample_phases,

@@ -10,7 +10,7 @@ from test_support.sample_scenarios import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
@@ -30,7 +30,7 @@ class TestPhaseSegmentation:
     def test_idle_to_speed_up(self) -> None:
         samples = build_phased_samples([(5, 0.0, 0.0), (10, 8.0, 80.0), (10, 80.0, 81.0)])
 
-        per_sample, segments = segment_run_phases(normalize_analysis_samples(samples))
+        per_sample, segments = segment_run_phases(normalize_sensor_frames(samples))
         assert len(per_sample) == 25
         phases_present = {segment.phase for segment in segments}
         assert DrivingPhase.IDLE in phases_present
@@ -47,13 +47,13 @@ class TestPhaseSegmentation:
                 (5, 30.0, 50.0),
             ],
         )
-        per_sample, _segments = segment_run_phases(normalize_analysis_samples(samples))
+        per_sample, _segments = segment_run_phases(normalize_sensor_frames(samples))
         idle_count = sum(1 for phase in per_sample if phase == DrivingPhase.IDLE)
         assert idle_count >= 6
 
     def test_coast_down(self) -> None:
         samples = build_phased_samples([(20, 50.0, 2.0)])
-        per_sample, _segments = segment_run_phases(normalize_analysis_samples(samples))
+        per_sample, _segments = segment_run_phases(normalize_sensor_frames(samples))
         assert any(
             phase in (DrivingPhase.DECELERATION, DrivingPhase.COAST_DOWN) for phase in per_sample
         )
@@ -100,7 +100,7 @@ class TestPhaseSegmentation:
             {"t_s": 1.0, "speed_kmh": 60.0},
             {"t_s": 2.0, "speed_kmh": 60.0},
         ]
-        _, segments = segment_run_phases(normalize_analysis_samples(samples))
+        _, segments = segment_run_phases(normalize_sensor_frames(samples))
         info = phase_summary(segments)
         assert info.phase_counts is not None
         assert info.total_samples == 3
@@ -119,7 +119,7 @@ class TestPhaseSegmentation:
         for idx in range(55, 60):
             samples.append({"t_s": float(idx), "speed_kmh": max(0.0, 20.0 - (idx - 55) * 4.0)})
 
-        per_sample, segments = segment_run_phases(normalize_analysis_samples(samples))
+        per_sample, segments = segment_run_phases(normalize_sensor_frames(samples))
         assert len(per_sample) == len(samples)
         phases_found = {segment.phase for segment in segments}
         assert DrivingPhase.IDLE in phases_found
@@ -139,7 +139,7 @@ class TestPhaseSegmentation:
 
     def test_none_speed_treated_as_speed_unknown(self) -> None:
         samples = [{"t_s": 0.0, "speed_kmh": None}, {"t_s": 1.0, "speed_kmh": None}]
-        per_sample, _segments = segment_run_phases(normalize_analysis_samples(samples))
+        per_sample, _segments = segment_run_phases(normalize_sensor_frames(samples))
         assert all(phase == DrivingPhase.SPEED_UNKNOWN for phase in per_sample)
 
 
@@ -167,7 +167,7 @@ class TestSensorIntensityPhaseContext:
                 },
             )
 
-        typed_samples = normalize_analysis_samples(samples)
+        typed_samples = normalize_sensor_frames(samples)
         per_sample_phases, _ = segment_run_phases(typed_samples)
         rows = _sensor_intensity_by_location(typed_samples, per_sample_phases=per_sample_phases)
 
@@ -181,7 +181,7 @@ class TestSensorIntensityPhaseContext:
 
     def test_phase_intensity_absent_without_phases(self) -> None:
         rows = _sensor_intensity_by_location(
-            normalize_analysis_samples(
+            normalize_sensor_frames(
                 [
                     {
                         "t_s": 0.0,
@@ -222,7 +222,7 @@ class TestOrderFindingsPhaseFiltering:
             for idx in range(15)
         ]
         samples = idle + cruise
-        per_sample_phases, _ = segment_run_phases(normalize_analysis_samples(samples))
+        per_sample_phases, _ = segment_run_phases(normalize_sensor_frames(samples))
 
         idle_count = sum(1 for phase in per_sample_phases if phase == DrivingPhase.IDLE)
         non_idle_count = sum(1 for phase in per_sample_phases if phase != DrivingPhase.IDLE)
@@ -258,7 +258,7 @@ class TestPhaseSpeedBreakdown:
         for idx in range(5, 20):
             samples.append({"t_s": float(idx), "speed_kmh": 60.0, "vibration_strength_db": 22.0})
 
-        typed_samples = normalize_analysis_samples(samples)
+        typed_samples = normalize_sensor_frames(samples)
         per_sample_phases, _ = segment_run_phases(typed_samples)
         rows = _phase_speed_breakdown(typed_samples, per_sample_phases)
         phase_names = {row.phase for row in rows}
@@ -285,7 +285,7 @@ class TestPhaseSpeedBreakdown:
 
     def test_phase_breakdown_rows_cover_all_samples(self) -> None:
         samples = build_phased_samples([(5, 0.0, 0.0), (10, 50.0, 80.0), (5, 0.0, 0.0)])
-        typed_samples = normalize_analysis_samples(samples)
+        typed_samples = normalize_sensor_frames(samples)
         per_sample_phases, _ = segment_run_phases(typed_samples)
         rows = _phase_speed_breakdown(typed_samples, per_sample_phases)
         assert sum(row.count for row in rows) == len(samples)
@@ -312,7 +312,7 @@ class TestPhaseSpeedBreakdown:
             {"t_s": 1.0, "speed_kmh": 50.0, "vibration_strength_db": 11.0},
             {"t_s": 2.0, "speed_kmh": 60.0, "vibration_strength_db": 12.0},
         ]
-        rows = _phase_speed_breakdown(normalize_analysis_samples(samples), ["cruise"])
+        rows = _phase_speed_breakdown(normalize_sensor_frames(samples), ["cruise"])
         assert sum(row.count for row in rows) == 3
         assert any(row.phase == "unknown" for row in rows)
 

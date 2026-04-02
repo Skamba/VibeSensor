@@ -5,6 +5,7 @@ from __future__ import annotations
 from test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics.findings import PeakFindingAnalyzer, finalize_findings
 
 # ===========================================================================
@@ -18,17 +19,19 @@ def _peak_samples(
     amp: float = 0.05,
     vibration_strength_db: float = 25.0,
     count: int = 30,
-) -> list[dict[str, float | str | list[dict[str, float]]]]:
-    return [
-        {
-            "speed_kmh": 60.0,
-            "t_s": float(i),
-            "top_peaks": [{"hz": hz, "amp": amp}],
-            "vibration_strength_db": vibration_strength_db,
-            "client_name": "sensor_fl",
-        }
-        for i in range(count)
-    ]
+) -> list:
+    return normalize_sensor_frames(
+        [
+            {
+                "speed_kmh": 60.0,
+                "t_s": float(i),
+                "top_peaks": [{"hz": hz, "amp": amp}],
+                "vibration_strength_db": vibration_strength_db,
+                "client_name": "sensor_fl",
+            }
+            for i in range(count)
+        ]
+    )
 
 
 class TestDomainFindingFromPayload:

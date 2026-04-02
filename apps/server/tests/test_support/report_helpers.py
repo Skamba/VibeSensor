@@ -11,6 +11,7 @@ import pytest
 from test_support.core import canonicalize_run_context_metadata
 from test_support.findings import make_finding_payload
 from vibesensor.domain import LocationHotspot
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
@@ -713,7 +714,7 @@ def call_build_order_findings(
     metadata = dict(overrides.pop("metadata", {"units": {"accel_x_g": "g"}}))
     kwargs: dict[str, object] = {
         "context": overrides.pop("context", diagnostics_context(metadata)),
-        "samples": samples,
+        "samples": normalize_sensor_frames(samples),
         "speed_sufficient": True,
         "steady_speed": False,
         "speed_stddev_kmh": speed_stddev_kmh,

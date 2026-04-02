@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _estimate_strength_floor_amp_g,
     _run_noise_baseline_g,
@@ -16,14 +17,14 @@ def _sample(
     peaks: list[tuple[float, float]],
     *,
     floor_amp: float | None = None,
-) -> dict[str, object]:
+) -> object:
     sample: dict[str, object] = {
         "top_peaks": [{"hz": hz, "amp": amp} for hz, amp in peaks],
         "speed_kmh": 80.0,
     }
     if floor_amp is not None:
         sample["strength_floor_amp_g"] = floor_amp
-    return sample
+    return normalize_sensor_frames([sample])[0]
 
 
 def test_estimate_strength_floor_amp_g_uses_consistent_policy() -> None:

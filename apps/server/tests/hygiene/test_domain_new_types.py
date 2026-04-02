@@ -20,7 +20,9 @@ from vibesensor.domain import (
     RunMetadataSnapshot,
     StrengthBucketDistribution,
 )
-from vibesensor.shared.boundaries.run_context_codec import run_metadata_snapshot_from_metadata
+from vibesensor.shared.boundaries.run_metadata_snapshot_codec import (
+    run_metadata_snapshot_from_metadata,
+)
 
 # ---------------------------------------------------------------------------
 # RunMetadataSnapshot
@@ -75,9 +77,9 @@ class TestRunMetadataSnapshot:
         assert snap.raw_sample_rate_hz == 100.0
         assert snap.summary_version == 2
 
-    def test_boundary_codec_recording_id_fallback(self) -> None:
-        raw = {"recording_id": "rec1", "_summary_version": 1}
-        snap = run_metadata_snapshot_from_metadata(raw)
+    def test_boundary_codec_uses_explicit_fallback_run_id(self) -> None:
+        raw = {"_summary_version": 1}
+        snap = run_metadata_snapshot_from_metadata(raw, fallback_run_id="rec1")
         assert snap.run_id == "rec1"
 
 

@@ -7,6 +7,7 @@ from test_support.report_helpers import diagnostics_context
 
 import vibesensor.use_cases.diagnostics.orders.finding_builder as order_finding_builder_module
 from vibesensor.domain import OrderMatchObservation, VibrationSource
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.use_cases.diagnostics.orders.matching import (
     OrderMatchAccumulator,
 )
@@ -287,7 +288,7 @@ class TestOrderAnalysisSession:
         session = OrderAnalysisSession(
             OrderAnalysisRequest(
                 context=diagnostics_context(),
-                samples=[{"speed_kmh": 60.0}],
+                samples=normalize_sensor_frames([{"speed_kmh": 60.0}]),
                 speed_sufficient=True,
                 steady_speed=False,
                 speed_stddev_kmh=5.0,

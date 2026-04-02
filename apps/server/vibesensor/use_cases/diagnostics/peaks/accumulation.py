@@ -10,7 +10,7 @@ from vibesensor.domain import speed_bin_label
 
 from .._sample_metrics import _estimate_strength_floor_amp_g, _sample_top_peaks
 from .._sensor_locations import _location_label
-from .._types import AnalysisSampleInput, PhaseLabels, ensure_analysis_sample
+from .._types import PhaseLabels, Sample
 from ..speed_profile_helpers import _phase_to_str
 
 
@@ -52,7 +52,7 @@ class PeakBinStats:
 
 
 def accumulate_peak_bin_stats(
-    samples: Sequence[AnalysisSampleInput],
+    samples: Sequence[Sample],
     *,
     freq_bin_hz: float,
     freq_bin_hz_half: float,
@@ -70,8 +70,7 @@ def accumulate_peak_bin_stats(
     local_phase_str = _phase_to_str
     floor_fn = _math_floor
 
-    for i, raw_sample in enumerate(samples):
-        sample = ensure_analysis_sample(raw_sample)
+    for i, sample in enumerate(samples):
         stats.n_samples += 1
         speed = sample.speed_kmh
         sample_speed_bin = local_speed_bin(speed) if speed is not None and speed > 0 else None

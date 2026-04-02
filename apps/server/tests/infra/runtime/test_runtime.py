@@ -14,6 +14,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from vibesensor.shared.exceptions import ProcessingError
+
 # ---------------------------------------------------------------------------
 # Stubs – lightweight stand-ins for RuntimeState dependencies
 # ---------------------------------------------------------------------------
@@ -252,7 +254,7 @@ async def test_processing_loop_handles_failure_gracefully() -> None:
     processor = _StubProcessor()
 
     def _failing_compute(*args, **kwargs):
-        raise RuntimeError("test failure")
+        raise ProcessingError("test failure")
 
     processor.compute_all = _failing_compute
     rt, _ = _make_runtime(processor=processor)

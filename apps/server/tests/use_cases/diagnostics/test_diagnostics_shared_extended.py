@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import OrderReferenceSpec
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.order_bands import (
     build_diagnostic_settings,
@@ -173,7 +174,7 @@ def test_effective_engine_rpm_prefers_order_reference_spec(
     )
 
     rpm, source = _effective_engine_rpm(
-        {"speed_kmh": 80.0},
+        normalize_sensor_frames([{"speed_kmh": 80.0}])[0],
         context=build_diagnostics_context({}, file_name="test"),
         tire_circumference_m=None,
     )

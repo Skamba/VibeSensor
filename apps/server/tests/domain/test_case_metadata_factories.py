@@ -54,10 +54,10 @@ def test_symptom_from_metadata_defaults_to_unspecified() -> None:
     assert symptom_from_metadata({}).is_unspecified is True
 
 
-def test_symptom_from_metadata_reads_aliases_and_context() -> None:
+def test_symptom_from_metadata_reads_canonical_fields_and_context() -> None:
     symptom = symptom_from_metadata(
         {
-            "complaint": "whine under load",
+            "symptom": "whine under load",
             "symptom_onset": "after 60 km/h",
             "symptom_context": "during acceleration",
         }
@@ -66,3 +66,7 @@ def test_symptom_from_metadata_reads_aliases_and_context() -> None:
     assert symptom.description == "whine under load"
     assert symptom.onset == "after 60 km/h"
     assert symptom.context == "during acceleration"
+
+
+def test_symptom_from_metadata_ignores_removed_complaint_alias() -> None:
+    assert symptom_from_metadata({"complaint": "legacy alias"}).is_unspecified is True

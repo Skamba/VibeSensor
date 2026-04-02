@@ -26,10 +26,10 @@ from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
+from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.summary_builder import AnalysisResult, RunAnalysis
 
 # -- helpers ---------------------------------------------------------------
@@ -52,7 +52,7 @@ def _run_analysis() -> tuple[RunAnalysis, AnalysisResult]:
     )
     analysis = RunAnalysis(
         build_diagnostics_context(meta, file_name="roundtrip"),
-        normalize_analysis_samples(samples),
+        normalize_sensor_frames(samples),
         lang="en",
         file_name="roundtrip",
     )

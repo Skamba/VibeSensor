@@ -115,7 +115,7 @@ def build_analysis_result(
                 speed_source=SpeedSource(),
                 configuration_snapshot=context_to_configuration_snapshot(request.context),
             ),
-            analysis_settings=request.context.scalar_analysis_settings,
+            analysis_settings=request.context.analysis_settings_items,
             sample_count=len(request.samples),
             duration_s=request.prepared.duration_s,
         ),

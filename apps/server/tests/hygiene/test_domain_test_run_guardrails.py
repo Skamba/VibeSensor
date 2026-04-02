@@ -62,8 +62,8 @@ def test_run_analysis_produces_test_run() -> None:
     """``RunAnalysis.summarize()`` must populate ``test_run``."""
     from vibesensor.adapters.analysis_summary import analysis_result_to_summary
     from vibesensor.domain import TestRun
+    from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
     from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-    from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
     from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
     metadata = {"run_id": "test-guard", "active_car_snapshot": {"type": "sedan"}}
@@ -81,7 +81,7 @@ def test_run_analysis_produces_test_run() -> None:
     ]
     analysis = RunAnalysis(
         build_diagnostics_context(metadata),
-        normalize_analysis_samples(samples),
+        normalize_sensor_frames(samples),
     )
     result = analysis.summarize()
     summary = analysis_result_to_summary(result)
@@ -221,8 +221,8 @@ def test_test_run_from_summary_populates_suitability() -> None:
 
 def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
     from vibesensor.domain import DiagnosticCase, TestRun
+    from vibesensor.shared.boundaries.sensor_frame_codec import normalize_sensor_frames
     from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
-    from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
     from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
     metadata = {
@@ -247,7 +247,7 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
     ]
     analysis = RunAnalysis(
         build_diagnostics_context(metadata),
-        normalize_analysis_samples(samples),
+        normalize_sensor_frames(samples),
     )
     result = analysis.summarize()
 
