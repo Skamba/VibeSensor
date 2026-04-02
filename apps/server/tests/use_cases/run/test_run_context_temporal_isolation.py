@@ -85,11 +85,8 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     assert later_row.engine_rpm == pytest.approx(initial_row.engine_rpm)
 
     metadata = _build_run_metadata_record(logger, snapshot.run_id, snapshot.start_time_utc)
-    assert "tire_width_mm" not in metadata
-    analysis_settings_snapshot = metadata["analysis_settings_snapshot"]
-    assert isinstance(analysis_settings_snapshot, dict)
-    assert analysis_settings_snapshot["tire_width_mm"] == pytest.approx(285.0)
-    active_car_snapshot = metadata["active_car_snapshot"]
-    assert isinstance(active_car_snapshot, dict)
-    assert active_car_snapshot["id"] == "car-1"
-    assert active_car_snapshot["name"] == "Primary"
+    assert not hasattr(metadata, "tire_width_mm")
+    assert metadata.analysis_settings.tire_width_mm == pytest.approx(285.0)
+    assert metadata.car is not None
+    assert metadata.car.car_id == "car-1"
+    assert metadata.car.name == "Primary"

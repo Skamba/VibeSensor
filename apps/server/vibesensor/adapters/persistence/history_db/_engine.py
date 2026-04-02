@@ -140,7 +140,7 @@ class SQLiteHistoryEngine:
                 yield cur
                 if commit:
                     conn.commit()
-            except Exception:
+            except BaseException:
                 if conn.in_transaction:
                     conn.rollback()
                 raise
@@ -159,7 +159,7 @@ class SQLiteHistoryEngine:
                 cur.execute("BEGIN IMMEDIATE")
                 yield cur
                 self._conn.commit()
-            except Exception:
+            except BaseException:
                 if self._conn.in_transaction:
                     self._conn.rollback()
                 raise
