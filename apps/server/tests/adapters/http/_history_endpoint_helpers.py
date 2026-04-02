@@ -28,7 +28,7 @@ from vibesensor.shared.boundaries.run_metadata_codec import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.shared.boundaries.sensor_frame_codec import (
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )

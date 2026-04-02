@@ -6,7 +6,7 @@ import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
@@ -39,7 +39,7 @@ def _run_metadata(run_id: str, *, language: str = "en") -> RunMetadata:
 
 
 def _samples() -> list:
-    return sensor_frames_from_rows([{"t_s": 1.0, "vibration_strength_db": 10.0}])
+    return sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
 
 
 def test_execute_post_analysis_success_stores_summary() -> None:

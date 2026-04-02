@@ -12,9 +12,9 @@ from test_support.core import canonicalize_run_context_metadata
 from test_support.findings import make_finding_payload
 from vibesensor.domain import LocationHotspot
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
+from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.orders import (
     pipeline as order_findings_module,
@@ -569,7 +569,7 @@ def diagnostics_context(
     """Return canonical typed diagnostics metadata for tests."""
     raw_metadata: dict[str, object] = dict(metadata or {})
     raw_metadata.update(overrides)
-    return prepare_diagnostics_metadata(raw_metadata, file_name="test")
+    return diagnostics_context_from_metadata(raw_metadata, file_name="test")
 
 
 def analysis_sample(
@@ -717,7 +717,7 @@ def call_build_order_findings(
     metadata = dict(overrides.pop("metadata", {"units": {"accel_x_g": "g"}}))
     kwargs: dict[str, object] = {
         "context": overrides.pop("context", diagnostics_context(metadata)),
-        "samples": sensor_frames_from_rows(samples),
+        "samples": sensor_frames_from_mappings(samples),
         "speed_sufficient": True,
         "steady_speed": False,
         "speed_stddev_kmh": speed_stddev_kmh,

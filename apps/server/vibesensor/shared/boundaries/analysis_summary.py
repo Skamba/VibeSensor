@@ -9,7 +9,7 @@ from vibesensor.shared.boundaries.analysis_summary_contracts import (
     AnalysisResultLike,
 )
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_to_json_objects
+from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_to_json_objects
 from vibesensor.shared.boundaries.summary_serialization import (
     AccelStatisticsLike,
     build_analysis_summary,

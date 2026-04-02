@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
-from vibesensor.shared.types.run_schema import RunMetadata
 
-from ._metadata import current_gear_ratio, effective_order_reference_spec, final_drive_ratio
 from ._types import Sample
+from .context import DiagnosticsContext
 
 
-def _tire_reference_from_context(context: RunMetadata) -> tuple[float | None, str | None]:
+def _tire_reference_from_context(context: DiagnosticsContext) -> tuple[float | None, str | None]:
     """Return the wheel reference circumference and the metadata source name."""
     spec = _order_reference_spec_from_context(context)
     if spec is not None and spec.supports_wheel_reference:
@@ -23,16 +22,16 @@ def _tire_reference_from_context(context: RunMetadata) -> tuple[float | None, st
 
 
 def _order_reference_spec_from_context(
-    context: RunMetadata,
+    context: DiagnosticsContext,
     sample: Sample | None = None,
 ) -> OrderReferenceSpec | None:
     """Return the effective order-reference spec for one optional sample override."""
-    return effective_order_reference_spec(context, sample)
+    return context.order_reference_spec_for(sample)
 
 
 def _effective_engine_rpm(
     sample: Sample,
-    context: RunMetadata,
+    context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     """Resolve measured or inferred engine rpm plus the source label."""
@@ -55,10 +54,10 @@ def _effective_engine_rpm(
     drive_ratio = (
         sample.final_drive_ratio
         if sample.final_drive_ratio is not None
-        else final_drive_ratio(context)
+        else context.final_drive_ratio
     )
     gear_val = sample.gear
-    gear_ratio = gear_val if gear_val is not None else current_gear_ratio(context)
+    gear_ratio = gear_val if gear_val is not None else context.current_gear_ratio
     if (
         speed_kmh is None
         or speed_kmh <= 0
