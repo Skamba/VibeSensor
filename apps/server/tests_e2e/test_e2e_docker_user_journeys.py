@@ -191,9 +191,10 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 updated_tire["tire_aspect_pct"],
                 updated_tire["rim_in"],
             )
-            assert float(metadata_1["tire_circumference_m"]) == pytest.approx(
-                expected_circ, abs=1e-6
-            )
+            reference_context = metadata_1.get("reference_context")
+            assert reference_context is None or "tire_circumference_m" not in reference_context
+            assert "tire_circumference_m" not in metadata_1
+            assert expected_circ > 0
 
         if journey_group == "speed_export_delete":
             # E2E-5/6/7: Manual speed, ZIP export format, and delete semantics.

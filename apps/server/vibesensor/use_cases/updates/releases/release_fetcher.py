@@ -200,6 +200,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
         tmp = dest.with_suffix(".tmp")
         max_bytes = self._MAX_DOWNLOAD_BYTES
         chunk_size = DOWNLOAD_CHUNK_BYTES
+        replaced = False
         try:
             with urlopen(req, timeout=300) as resp:
                 total = 0
@@ -215,9 +216,10 @@ class ServerReleaseFetcher(GitHubAPIClient):
                     f.flush()
                     os.fsync(f.fileno())
             tmp.replace(dest)
-        except BaseException:
-            tmp.unlink(missing_ok=True)
-            raise
+            replaced = True
+        finally:
+            if not replaced:
+                tmp.unlink(missing_ok=True)
 
     def find_latest_release(self) -> ReleaseInfo:
         """Find the latest server release (tag matching ``server-v*``).
@@ -358,5 +360,6 @@ def fetch_latest_wheel_cli() -> None:
         print(f"Downloaded: {whl}")
         print(f"SHA256: {release.sha256}")
     except Exception as exc:
+        LOGGER.exception("release fetch CLI failed")
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(1)

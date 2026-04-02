@@ -14,7 +14,7 @@ def test_run_car_metadata_from_mapping_returns_none_for_empty_payload() -> None:
     assert run_car_metadata_from_mapping("bad") is None
 
 
-def test_run_car_metadata_from_mapping_ignores_obsolete_aspects() -> None:
+def test_run_car_metadata_from_mapping_keeps_identity_only_when_extra_fields_exist() -> None:
     run_car = run_car_metadata_from_mapping(
         {
             "id": "car-1",
@@ -22,6 +22,7 @@ def test_run_car_metadata_from_mapping_ignores_obsolete_aspects() -> None:
             "type": "coupe",
             "variant": "sport",
             "aspects": {"tire_width_mm": 245.0},
+            "unused": "value",
         }
     )
 
