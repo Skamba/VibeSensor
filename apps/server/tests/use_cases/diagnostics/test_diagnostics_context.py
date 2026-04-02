@@ -12,6 +12,11 @@ from vibesensor.shared.boundaries.run_metadata_codec import (
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics.metadata_projection import metadata_analysis_settings_items
+from vibesensor.use_cases.diagnostics.prepared_analysis_context import (
+    prepare_analysis_context,
+)
+from vibesensor.use_cases.diagnostics.run_data_preparation import prepare_run_data
+from vibesensor.use_cases.diagnostics.statistics import compute_accel_statistics
 
 
 def _context_metadata() -> dict[str, object]:
@@ -171,3 +176,52 @@ def test_run_metadata_rehydrates_boundary_metadata_with_known_fields_only() -> N
     assert "analysis_settings" not in payload
     assert "custom_note" not in payload
     assert metadata_analysis_settings_items(metadata)[0][0] == "current_gear_ratio"
+
+
+def test_prepare_analysis_context_builds_one_canonical_typed_summary_context() -> None:
+    metadata = _metadata()
+    samples = [
+        replace(
+            make_analysis_sample(
+                t_s=0.0,
+                speed_kmh=72.0,
+                client_id="sensor-1",
+                client_name="front_left",
+                location="front-left",
+                top_peaks=[{"hz": 12.0, "amp": 0.02}],
+            ),
+            vibration_strength_db=18.0,
+            strength_bucket="l2",
+        ),
+        replace(
+            make_analysis_sample(
+                t_s=1.0,
+                speed_kmh=74.0,
+                client_id="sensor-1",
+                client_name="front_left",
+                location="front-left",
+                top_peaks=[{"hz": 12.0, "amp": 0.03}],
+            ),
+            vibration_strength_db=19.0,
+            strength_bucket="l2",
+        ),
+    ]
+
+    prepared = prepare_run_data(metadata, samples)
+    accel_stats = compute_accel_statistics(samples, metadata.sensor_model)
+    analysis_context = prepare_analysis_context(
+        context=metadata,
+        samples=samples,
+        file_name="ctx",
+        language="en",
+        include_samples=True,
+        prepared=prepared,
+        accel_stats=accel_stats,
+    )
+
+    assert analysis_context.context is metadata
+    assert analysis_context.samples == tuple(samples)
+    assert analysis_context.reference_complete is metadata.reference_complete
+    assert analysis_context.overall_strength_band_key == "moderate"
+    assert analysis_context.sensor_locations == ("front-left",)
+    assert analysis_context.connected_locations == frozenset({"front-left"})

@@ -13,7 +13,7 @@ from vibesensor.domain import (
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.test_plan import plan_test_actions
 
-from ._analysis_models import AnalysisResultBuildRequest
+from ._analysis_models import FindingsBundle, PreparedAnalysisContext
 from ._analysis_result import AnalysisResult
 from .metadata_projection import (
     metadata_analysis_settings_items,
@@ -49,73 +49,73 @@ def _final_top_causes(
 
 
 def build_analysis_result(
-    request: AnalysisResultBuildRequest,
+    context: PreparedAnalysisContext,
+    findings_bundle: FindingsBundle,
 ) -> AnalysisResult:
     """Build the final app-level analysis result."""
 
-    metadata = request.context
-    findings_bundle = request.findings_bundle
-    summary_speed_stats = _speed_stats(request.prepared.speed_values)
-    summary_phase_info = build_phase_summary(request.prepared.phase_segments)
+    metadata = context.context
+    summary_speed_stats = _speed_stats(context.prepared.speed_values)
+    summary_phase_info = build_phase_summary(context.prepared.phase_segments)
     domain_test_plan = plan_test_actions(findings_bundle.domain_findings)
     plot_data = _plot_data(
-        samples=list(request.samples),
-        speed_breakdown=request.prepared.speed_breakdown,
-        phase_speed_breakdown=request.prepared.phase_speed_breakdown,
+        samples=list(context.samples),
+        speed_breakdown=context.prepared.speed_breakdown,
+        phase_speed_breakdown=context.prepared.phase_speed_breakdown,
         findings=findings_bundle.domain_findings,
-        raw_sample_rate_hz=request.prepared.raw_sample_rate_hz,
-        steady_speed=request.prepared.is_steady_speed,
-        run_noise_baseline_g=request.prepared.run_noise_baseline_g,
-        per_sample_phases=request.prepared.per_sample_phases,
-        phase_segments=request.prepared.phase_segments,
+        raw_sample_rate_hz=context.prepared.raw_sample_rate_hz,
+        steady_speed=context.prepared.is_steady_speed,
+        run_noise_baseline_g=context.prepared.run_noise_baseline_g,
+        per_sample_phases=context.prepared.per_sample_phases,
+        phase_segments=context.prepared.phase_segments,
     )
 
     test_run = TestRun(
         capture=RunCapture(
-            run_id=request.prepared.run_id,
+            run_id=context.prepared.run_id,
             setup=RunSetup(
                 sensors=(
-                    Sensor.from_location_codes(request.sensor_locations)
-                    if request.sensor_locations
+                    Sensor.from_location_codes(context.sensor_locations)
+                    if context.sensor_locations
                     else ()
                 ),
                 speed_source=SpeedSource(),
-                configuration_snapshot=metadata_configuration_snapshot(request.context),
+                configuration_snapshot=metadata_configuration_snapshot(context.context),
             ),
-            analysis_settings=metadata_analysis_settings_items(request.context),
-            sample_count=len(request.samples),
-            duration_s=request.prepared.duration_s,
+            analysis_settings=metadata_analysis_settings_items(context.context),
+            sample_count=len(context.samples),
+            duration_s=context.prepared.duration_s,
         ),
-        driving_segments=build_domain_driving_segments(request.prepared.phase_segments),
+        driving_segments=build_domain_driving_segments(context.prepared.phase_segments),
         findings=findings_bundle.domain_findings,
         top_causes=_final_top_causes(
             findings_bundle.domain_findings,
             findings_bundle.domain_top_causes,
         ),
-        speed_profile=request.prepared.speed_profile if request.prepared.speed_values else None,
-        suitability=request.run_suitability,
+        speed_profile=context.prepared.speed_profile if context.prepared.speed_values else None,
+        suitability=context.run_suitability,
         test_plan=domain_test_plan,
     )
     diagnostic_case = DiagnosticCase.start(
-        car=metadata_car(request.context),
-        symptoms=(metadata_symptom(request.context),),
+        car=metadata_car(context.context),
+        symptoms=(metadata_symptom(context.context),),
         test_plan=domain_test_plan,
     ).add_run(test_run)
     return AnalysisResult(
-        file_name=request.file_name,
+        file_name=context.file_name,
         metadata=metadata,
-        samples=tuple(request.samples),
-        language=request.language,
-        include_samples=request.include_samples,
-        prepared=request.prepared,
-        accel_stats=request.accel_stats,
-        reference_complete=request.reference_complete,
-        run_suitability=request.run_suitability,
+        samples=context.samples,
+        language=context.language,
+        include_samples=context.include_samples,
+        prepared=context.prepared,
+        accel_stats=context.accel_stats,
+        reference_complete=context.reference_complete,
+        run_suitability=context.run_suitability,
         most_likely_origin=findings_bundle.most_likely_origin,
         phase_timeline=findings_bundle.phase_timeline,
-        sensor_locations=tuple(request.sensor_locations),
-        connected_locations=frozenset(request.connected_locations),
-        sensor_intensity_by_location=tuple(request.sensor_intensity_by_location),
+        sensor_locations=context.sensor_locations,
+        connected_locations=context.connected_locations,
+        sensor_intensity_by_location=context.sensor_intensity_by_location,
         summary_speed_stats=summary_speed_stats,
         summary_phase_info=summary_phase_info,
         plot_data=plot_data,

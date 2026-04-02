@@ -22,6 +22,9 @@ from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http import create_router
 from vibesensor.domain import CarSnapshot
+from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_to_json_object,
+)
 from vibesensor.shared.types.history_records import StoredHistoryRun
 
 
@@ -356,7 +359,11 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
                 return None
             result = super().get_run(run_id)
             assert result is not None
-            analysis = dict(result.analysis.to_json_object() if result.analysis is not None else {})
+            analysis = dict(
+                persisted_analysis_to_json_object(result.analysis)
+                if result.analysis is not None
+                else {}
+            )
             analysis["_internal_secret"] = "should-not-appear"
             analysis["_report_template_data"] = {"lang": "en"}
             return replace(result, analysis=make_persisted_analysis(analysis))

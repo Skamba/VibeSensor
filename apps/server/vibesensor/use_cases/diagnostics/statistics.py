@@ -2,7 +2,7 @@
 
 Side-effect-free, independently testable functions extracted from
 ``run_analysis.py``: acceleration statistics, run timing, frame
-integrity, reference completeness, and speed/phase preparation.
+integrity, and speed/phase preparation.
 """
 
 from __future__ import annotations
@@ -137,14 +137,6 @@ def compute_frame_integrity_counts(samples: Sequence[Sample]) -> tuple[int, int]
     total_dropped = sum(counter_delta(values) for values in per_client_dropped.values())
     total_overflow = sum(counter_delta(values) for values in per_client_overflow.values())
     return total_dropped, total_overflow
-
-
-# ── Reference completeness ───────────────────────────────────────────────
-
-
-def compute_reference_completeness(context: RunMetadata) -> bool:
-    """Return True when enough reference metadata is present for order analysis."""
-    return context.reference_complete
 
 
 # ── Speed and phase preparation ──────────────────────────────────────────
