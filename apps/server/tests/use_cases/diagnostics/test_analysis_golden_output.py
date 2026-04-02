@@ -22,6 +22,8 @@ from vibesensor.shared.boundaries.analysis_summary_projection import project_ana
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
@@ -144,12 +146,14 @@ def _short_run_samples() -> list[dict[str, Any]]:
 
 def _wheel_fault_analysis(file_name: str) -> RunAnalysis:
     return RunAnalysis(
-        standard_metadata(),
-        fault_phase(
-            speed_kmh=80.0,
-            duration_s=20.0,
-            fault_sensor="front-right",
-            sensors=ALL_SENSORS,
+        build_diagnostics_context(standard_metadata(), file_name=file_name),
+        normalize_analysis_samples(
+            fault_phase(
+                speed_kmh=80.0,
+                duration_s=20.0,
+                fault_sensor="front-right",
+                sensors=ALL_SENSORS,
+            ),
         ),
         lang="en",
         file_name=file_name,

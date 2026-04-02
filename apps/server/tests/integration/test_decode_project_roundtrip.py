@@ -28,6 +28,8 @@ from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._types import normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.summary_builder import AnalysisResult, RunAnalysis
 
 # -- helpers ---------------------------------------------------------------
@@ -48,7 +50,12 @@ def _run_analysis() -> tuple[RunAnalysis, AnalysisResult]:
             n_samples=20,
         )
     )
-    analysis = RunAnalysis(meta, samples, lang="en", file_name="roundtrip")
+    analysis = RunAnalysis(
+        build_diagnostics_context(meta, file_name="roundtrip"),
+        normalize_analysis_samples(samples),
+        lang="en",
+        file_name="roundtrip",
+    )
     result = analysis.summarize()
     return analysis, result
 

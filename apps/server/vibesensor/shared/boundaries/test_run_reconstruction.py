@@ -8,7 +8,7 @@ from dataclasses import replace
 from vibesensor.domain import Finding, LocationHotspot, VibrationOrigin, coerce_int
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
-from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
+from vibesensor.domain.run_capture import RunCapture, RunSetup
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
@@ -17,6 +17,9 @@ from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries import run_suitability as _run_suitability_boundary
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.run_capture_codec import (
+    configuration_snapshot_from_metadata,
+)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
@@ -309,7 +312,7 @@ def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
     setup = RunSetup(
         sensors=Sensor.from_location_codes(sensor_loc_list) if sensor_loc_list else (),
         speed_source=SpeedSource(),
-        configuration_snapshot=ConfigurationSnapshot.from_metadata(meta),
+        configuration_snapshot=configuration_snapshot_from_metadata(meta),
     )
     rows_raw = payload.get("rows")
     try:

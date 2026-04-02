@@ -30,6 +30,7 @@ class AnalysisSample:
     accel_z_g: float | None = None
     vibration_strength_db: float | None = None
     strength_bucket: str = ""
+    strength_peak_amp_g: float | None = None
     strength_floor_amp_g: float | None = None
     top_peaks: tuple[StrengthPeak, ...] = ()
     dominant_freq_hz: float | None = None
@@ -65,6 +66,7 @@ class AnalysisSample:
             accel_z_g=_as_float(raw.get("accel_z_g")),
             vibration_strength_db=_as_float(raw.get("vibration_strength_db")),
             strength_bucket=str(raw.get("strength_bucket") or ""),
+            strength_peak_amp_g=_as_float(raw.get("strength_peak_amp_g")),
             strength_floor_amp_g=_as_float(raw.get("strength_floor_amp_g")),
             top_peaks=tuple(top_peaks),
             dominant_freq_hz=_as_float(raw.get("dominant_freq_hz")),
@@ -90,6 +92,7 @@ class AnalysisSample:
             accel_z_g=sample.accel_z_g,
             vibration_strength_db=sample.vibration_strength_db,
             strength_bucket=sample.strength_bucket or "",
+            strength_peak_amp_g=sample.strength_peak_amp_g,
             strength_floor_amp_g=sample.strength_floor_amp_g,
             top_peaks=sample.top_peaks,
             dominant_freq_hz=sample.dominant_freq_hz,
@@ -117,6 +120,7 @@ class AnalysisSample:
             "accel_z_g": self.accel_z_g,
             "vibration_strength_db": self.vibration_strength_db,
             "strength_bucket": self.strength_bucket,
+            "strength_peak_amp_g": self.strength_peak_amp_g,
             "strength_floor_amp_g": self.strength_floor_amp_g,
             "top_peaks": top_peaks,
             "dominant_freq_hz": self.dominant_freq_hz,

@@ -30,7 +30,7 @@ def test_start_append_stop_produces_complete_run_in_db(
     }
     monkeypatch.setattr(
         "vibesensor.use_cases.run.logger.build_post_analysis_summary",
-        lambda **_: make_persisted_analysis(
+        lambda _run: make_persisted_analysis(
             {
                 **fake_analysis,
                 "analysis_metadata": {},

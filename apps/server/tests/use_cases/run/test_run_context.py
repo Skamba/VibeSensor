@@ -7,6 +7,7 @@ from dataclasses import asdict
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
+from vibesensor.shared.boundaries.run_context_codec import run_context_snapshot_from_metadata
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
@@ -17,7 +18,6 @@ from vibesensor.use_cases.run.run_context import (
     apply_run_context_snapshot,
     build_run_context_snapshot,
     order_reference_context_complete,
-    run_context_snapshot_from_metadata,
 )
 
 

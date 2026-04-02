@@ -9,8 +9,9 @@ from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_sum
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuilder
+from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics._run_loader import _load_run as load_run
-from vibesensor.use_cases.diagnostics._types import AnalysisSampleInput
+from vibesensor.use_cases.diagnostics._types import AnalysisSampleInput, normalize_analysis_samples
 from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
@@ -23,9 +24,11 @@ def summarize_run_data(
     findings_builder: FindingsBuilder | None = None,
 ) -> AnalysisSummary:
     """Analyze pre-loaded run data and serialize the boundary summary payload."""
+    context = build_diagnostics_context(metadata, file_name=file_name)
+    typed_samples = normalize_analysis_samples(samples)
     result = RunAnalysis(
-        metadata,
-        samples,
+        context,
+        typed_samples,
         file_name=file_name,
         lang=lang,
         include_samples=include_samples,
