@@ -6,7 +6,10 @@ from dataclasses import dataclass, replace
 
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
-from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._run_input import (
+    DiagnosticsRunInput,
+    build_diagnostics_run_input,
+)
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.vibration_strength import vibration_strength_db_scalar
 
@@ -17,23 +20,35 @@ from .post_analysis_loader import LoadedPostAnalysisRun
 class PostAnalysisRunInput:
     """Typed post-analysis input built once at the storage boundary."""
 
-    run_id: str
-    context: DiagnosticsContext
+    diagnostics_run: DiagnosticsRunInput
     language: str
-    samples: list[Sample]
     total_sample_count: int
     stride: int
+
+    @property
+    def run_id(self) -> str:
+        return self.diagnostics_run.run_id
+
+    @property
+    def context(self) -> DiagnosticsContext:
+        return self.diagnostics_run.context
+
+    @property
+    def samples(self) -> tuple[Sample, ...]:
+        return self.diagnostics_run.samples
 
 
 def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunInput:
     """Normalize one loaded persisted run into canonical diagnostics input."""
 
-    context = build_diagnostics_context(loaded.metadata, file_name=loaded.run_id)
+    samples = tuple(_ensure_strength_metrics(sample) for sample in loaded.samples)
     return PostAnalysisRunInput(
-        run_id=loaded.run_id,
-        context=context,
+        diagnostics_run=build_diagnostics_run_input(
+            loaded.metadata,
+            samples,
+            file_name=loaded.run_id,
+        ),
         language=loaded.language,
-        samples=[_ensure_strength_metrics(sample) for sample in loaded.samples],
         total_sample_count=loaded.total_sample_count,
         stride=loaded.stride,
     )
