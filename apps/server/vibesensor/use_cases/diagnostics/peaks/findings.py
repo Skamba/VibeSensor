@@ -9,8 +9,7 @@ from vibesensor.shared.constants.analysis import ORDER_SUPPRESS_PERSISTENT_MIN_C
 
 from .._sample_metrics import _run_noise_baseline_g
 from .._types import PhaseLabels, Sample
-from ..phase_segmentation import DrivingPhase, diagnostic_sample_mask
-from ..phase_segmentation import _segment_run_phases as segment_run_phases
+from ..phase_segmentation import DrivingPhase, diagnostic_sample_mask, segment_run_phases
 from .accumulation import PeakBinStats, accumulate_peak_bin_stats
 from .finding_builder import assemble_peak_finding
 from .scoring import PeakBin

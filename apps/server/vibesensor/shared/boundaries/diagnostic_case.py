@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import Car
+from vibesensor.domain import Car, CarSnapshot, OrderReferenceSpec
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.shared.boundaries import test_run_reconstruction as _test_run_reconstruction
 
@@ -21,8 +21,8 @@ def _require_authoritative_case_id(summary: Mapping[str, object]) -> str:
 def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCase:
     metadata = summary.get("metadata")
     meta = metadata if isinstance(metadata, Mapping) else {}
-    car = Car.from_metadata(meta)
-    symptoms = (Symptom.from_metadata(meta),)
+    car = car_from_metadata(meta)
+    symptoms = (symptom_from_metadata(meta),)
     test_run = _test_run_reconstruction.test_run_from_summary(summary)
     case = DiagnosticCase(
         case_id=_require_authoritative_case_id(summary),
@@ -31,3 +31,40 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
         test_plan=test_run.test_plan,
     )
     return case.add_run(test_run)
+
+
+def car_from_metadata(metadata: Mapping[str, object]) -> Car | None:
+    """Build optional case-scoped car context from canonical run metadata."""
+    raw_snapshot = metadata.get("active_car_snapshot")
+    snapshot = CarSnapshot.from_dict(raw_snapshot) if isinstance(raw_snapshot, Mapping) else None
+
+    raw_settings = metadata.get("analysis_settings_snapshot")
+    if isinstance(raw_settings, Mapping):
+        order_reference_spec = OrderReferenceSpec.from_settings(raw_settings)
+    elif snapshot is not None and snapshot.aspects:
+        order_reference_spec = OrderReferenceSpec.from_settings(snapshot.aspects)
+    else:
+        order_reference_spec = None
+
+    if snapshot is None and order_reference_spec is None:
+        return None
+    return Car(
+        id=snapshot.car_id if snapshot is not None else None,
+        name=snapshot.name if snapshot is not None and snapshot.name else "Unnamed Car",
+        car_type=snapshot.car_type if snapshot is not None and snapshot.car_type else "sedan",
+        aspects=snapshot.aspects if snapshot is not None and snapshot.aspects else None,
+        variant=snapshot.variant if snapshot is not None else None,
+        order_reference_spec=order_reference_spec,
+    )
+
+
+def symptom_from_metadata(metadata: Mapping[str, object]) -> Symptom:
+    """Build case symptom context from run metadata at a boundary seam."""
+    complaint = str(metadata.get("symptom") or metadata.get("complaint") or "").strip()
+    if not complaint:
+        return Symptom.unspecified()
+    return Symptom(
+        description=complaint,
+        onset=str(metadata.get("symptom_onset") or "").strip(),
+        context=str(metadata.get("symptom_context") or "").strip(),
+    )

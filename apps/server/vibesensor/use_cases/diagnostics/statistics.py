@@ -25,14 +25,12 @@ from vibesensor.use_cases.diagnostics._sample_metrics import (
 )
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
-    AnalysisSampleInput,
     Sample,
-    ensure_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
-    _segment_run_phases,
+    segment_run_phases,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
 
@@ -64,7 +62,7 @@ def _strength_band_key(db_value: float | None) -> str | None:
 # ── Acceleration statistics ──────────────────────────────────────────────
 
 
-def _compute_accel_statistics(
+def compute_accel_statistics(
     samples: Sequence[Sample],
     sensor_model: object,
 ) -> AccelStatistics:
@@ -119,19 +117,10 @@ def _compute_accel_statistics(
     }
 
 
-def compute_accel_statistics(
-    samples: Sequence[AnalysisSampleInput],
-    sensor_model: object,
-) -> AccelStatistics:
-    """Compute acceleration statistics after normalizing the input sample rows once."""
-
-    return _compute_accel_statistics(ensure_analysis_samples(samples), sensor_model)
-
-
 # ── Frame integrity ──────────────────────────────────────────────────────
 
 
-def _compute_frame_integrity_counts(samples: Sequence[Sample]) -> tuple[int, int]:
+def compute_frame_integrity_counts(samples: Sequence[Sample]) -> tuple[int, int]:
     """Compute ``(total_dropped, total_overflow)`` across all client sensors."""
     per_client_dropped: dict[str, list[float]] = defaultdict(list)
     per_client_overflow: dict[str, list[float]] = defaultdict(list)
@@ -150,12 +139,6 @@ def _compute_frame_integrity_counts(samples: Sequence[Sample]) -> tuple[int, int
     return total_dropped, total_overflow
 
 
-def compute_frame_integrity_counts(samples: Sequence[AnalysisSampleInput]) -> tuple[int, int]:
-    """Compute frame-integrity totals after normalizing the input rows once."""
-
-    return _compute_frame_integrity_counts(ensure_analysis_samples(samples))
-
-
 # ── Reference completeness ───────────────────────────────────────────────
 
 
@@ -167,7 +150,7 @@ def compute_reference_completeness(context: DiagnosticsContext) -> bool:
 # ── Speed and phase preparation ──────────────────────────────────────────
 
 
-def _prepare_speed_and_phases(
+def prepare_speed_and_phases(
     samples: Sequence[Sample],
 ) -> tuple[list[float], SpeedProfileSummary, float, bool, list[DrivingPhase], list[PhaseSegment]]:
     """Compute speed stats and phase segmentation shared by multiple entry points."""
@@ -181,7 +164,7 @@ def _prepare_speed_and_phases(
     speed_sufficient = (
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
     )
-    per_sample_phases, phase_segments = _segment_run_phases(samples)
+    per_sample_phases, phase_segments = segment_run_phases(samples)
     return (
         speed_values,
         speed_stats,
@@ -192,18 +175,10 @@ def _prepare_speed_and_phases(
     )
 
 
-def prepare_speed_and_phases(
-    samples: Sequence[AnalysisSampleInput],
-) -> tuple[list[float], SpeedProfileSummary, float, bool, list[DrivingPhase], list[PhaseSegment]]:
-    """Compute speed stats and phase segmentation after normalizing rows once."""
-
-    return _prepare_speed_and_phases(ensure_analysis_samples(samples))
-
-
 # ── Run timing ───────────────────────────────────────────────────────────
 
 
-def _compute_run_timing(
+def compute_run_timing(
     context: DiagnosticsContext,
     samples: Sequence[Sample],
 ) -> tuple[str, datetime | None, datetime | None, float]:
@@ -223,12 +198,3 @@ def _compute_run_timing(
         duration_s = max((sample.t_s or 0.0) for sample in samples)
 
     return run_id, start_ts, end_ts, duration_s
-
-
-def compute_run_timing(
-    context: DiagnosticsContext,
-    samples: Sequence[AnalysisSampleInput],
-) -> tuple[str, datetime | None, datetime | None, float]:
-    """Extract run timing after normalizing the input rows once."""
-
-    return _compute_run_timing(context, ensure_analysis_samples(samples))

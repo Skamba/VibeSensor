@@ -164,33 +164,6 @@ class Car:
             variant=variant or None,
         )
 
-    @classmethod
-    def from_metadata(cls, metadata: Mapping[str, object]) -> Car | None:
-        """Build optional case-scoped car context from canonical run-context metadata."""
-        raw_snapshot = metadata.get("active_car_snapshot")
-        snapshot = (
-            CarSnapshot.from_dict(raw_snapshot) if isinstance(raw_snapshot, Mapping) else None
-        )
-
-        raw_settings = metadata.get("analysis_settings_snapshot")
-        if isinstance(raw_settings, Mapping):
-            order_reference_spec = OrderReferenceSpec.from_settings(raw_settings)
-        elif snapshot is not None and snapshot.aspects:
-            order_reference_spec = OrderReferenceSpec.from_settings(snapshot.aspects)
-        else:
-            order_reference_spec = None
-
-        if snapshot is None and order_reference_spec is None:
-            return None
-        return cls(
-            id=snapshot.car_id if snapshot is not None else None,
-            name=snapshot.name if snapshot is not None and snapshot.name else "Unnamed Car",
-            car_type=snapshot.car_type if snapshot is not None and snapshot.car_type else "sedan",
-            aspects=snapshot.aspects if snapshot is not None and snapshot.aspects else None,
-            variant=snapshot.variant if snapshot is not None else None,
-            order_reference_spec=order_reference_spec,
-        )
-
     @property
     def aspects(self) -> Mapping[str, float]:
         return self._aspects

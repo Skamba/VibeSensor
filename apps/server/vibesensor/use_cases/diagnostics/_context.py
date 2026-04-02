@@ -45,15 +45,18 @@ class DiagnosticsContext:
     tire_circumference_m_override: float | None = None
     explicit_engine_rpm: float | None = None
     scalar_analysis_settings: ScalarSettings = ()
-    _boundary_metadata: Mapping[str, object] = field(default_factory=dict, repr=False)
+    present_boundary_keys: frozenset[str] = frozenset()
+    passthrough_metadata: Mapping[str, object] = field(default_factory=dict, repr=False)
 
     def __post_init__(self) -> None:
-        if not isinstance(self._boundary_metadata, MappingProxyType):
+        if not isinstance(self.passthrough_metadata, MappingProxyType):
             object.__setattr__(
                 self,
-                "_boundary_metadata",
-                MappingProxyType(dict(self._boundary_metadata)),
+                "passthrough_metadata",
+                MappingProxyType(dict(self.passthrough_metadata)),
             )
+        if not isinstance(self.present_boundary_keys, frozenset):
+            object.__setattr__(self, "present_boundary_keys", frozenset(self.present_boundary_keys))
 
     @property
     def run_id(self) -> str:
@@ -150,6 +153,9 @@ class DiagnosticsContext:
             ),
             current_gear_ratio=(gear_ratio if gear_ratio is not None else spec.current_gear_ratio),
         )
+
+    def has_boundary_key(self, key: str) -> bool:
+        return key in self.present_boundary_keys
 
 
 __all__ = ["DiagnosticsContext"]

@@ -29,9 +29,9 @@ from vibesensor.use_cases.diagnostics._validation import (
 from vibesensor.use_cases.diagnostics.findings import _build_findings
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
-    _prepare_run_data,
+    prepare_run_data,
 )
-from vibesensor.use_cases.diagnostics.statistics import _compute_accel_statistics
+from vibesensor.use_cases.diagnostics.statistics import compute_accel_statistics
 
 from . import _summary_result, _summary_steps
 
@@ -91,8 +91,8 @@ class RunAnalysis:
         self._test_run: TestRun | None = None
 
         _validate_required_strength_metrics(self._samples)
-        self._prepared = _prepare_run_data(self._context, self._samples)
-        self._accel_stats: AccelStatistics = _compute_accel_statistics(
+        self._prepared = prepare_run_data(self._context, self._samples)
+        self._accel_stats: AccelStatistics = compute_accel_statistics(
             self._samples,
             self._context.sensor_model,
         )
@@ -194,7 +194,7 @@ def build_findings_for_samples(
     rows = normalize_analysis_samples(samples)
     _validate_required_strength_metrics(rows)
     context = build_diagnostics_context(metadata, file_name="run")
-    prepared = _prepare_run_data(context, rows)
+    prepared = prepare_run_data(context, rows)
     builder = findings_builder or _build_findings
     return builder(
         FindingsBuildRequest(
