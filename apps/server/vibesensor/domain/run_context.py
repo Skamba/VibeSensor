@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .analysis_settings import AnalysisSettingsSnapshot
-from .car import CarSnapshot, OrderReferenceSpec
+from .car import CarSnapshot
 
 __all__ = ["RunContextSnapshot"]
 
@@ -18,11 +18,6 @@ class RunContextSnapshot:
 
     analysis_settings: AnalysisSettingsSnapshot = field(default_factory=AnalysisSettingsSnapshot)
     car: CarSnapshot | None = None
-
-    @property
-    def order_reference_spec(self) -> OrderReferenceSpec | None:
-        """Convenience — delegates to analysis settings."""
-        return self.analysis_settings.order_reference_spec
 
     @property
     def has_car_context(self) -> bool:

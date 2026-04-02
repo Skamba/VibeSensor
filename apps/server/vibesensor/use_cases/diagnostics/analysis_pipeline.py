@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding as DomainFinding
+from vibesensor.shared.types.run_schema import RunMetadata
 
 from . import _summary_steps
 from ._analysis_models import (
@@ -15,7 +16,6 @@ from ._analysis_models import (
 )
 from ._analysis_result import AnalysisResult
 from ._analysis_result_builder import build_analysis_result
-from ._context import DiagnosticsContext
 from ._types import AccelStatistics, Sample
 from .findings import _build_findings
 from .run_data_preparation import PreparedRunData
@@ -23,7 +23,7 @@ from .run_data_preparation import PreparedRunData
 
 def execute_analysis(
     *,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     samples: Sequence[Sample],
     file_name: str,
     language: str,
@@ -92,7 +92,7 @@ def execute_analysis(
 
 def build_findings_for_typed_samples(
     *,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     samples: Sequence[Sample],
     language: str,
     prepared: PreparedRunData,

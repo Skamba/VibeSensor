@@ -9,6 +9,7 @@ from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.boundaries.strength_metrics_codec import strength_metrics_from_mapping
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
+from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.ports import ClientTracker, SensorMetadataReader
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.payload_types import ClientMetrics
@@ -68,7 +69,7 @@ def resolve_speed_context(
     measured_engine_rpm_source: str | None = None,
 ) -> SpeedContext:
     """Resolve a concrete speed snapshot into sample-record values."""
-    order_reference_spec = analysis_settings_snapshot.order_reference_spec
+    order_reference_spec = order_reference_spec_from_snapshot(analysis_settings_snapshot)
     gps_speed_kmh = (
         (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, NUMERIC_TYPES) else None
     )
@@ -129,7 +130,7 @@ def build_sample_records(
         engine_rpm,
         engine_rpm_source,
     ) = speed_context
-    order_reference_spec = analysis_settings_snapshot.order_reference_spec
+    order_reference_spec = order_reference_spec_from_snapshot(analysis_settings_snapshot)
     final_drive_ratio = (
         order_reference_spec.final_drive_ratio if order_reference_spec is not None else None
     )

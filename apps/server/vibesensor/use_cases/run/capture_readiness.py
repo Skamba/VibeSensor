@@ -11,6 +11,7 @@ from typing import Protocol, runtime_checkable
 from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck, RunContextSnapshot
 from vibesensor.shared.constants.analysis import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
+from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.ports import ClientTracker, TrackedClient
 
 _MIN_READY_SPEED_KMH = 20.0
@@ -268,7 +269,7 @@ class CaptureReadinessTracker:
                 reason_key="active_car_missing",
             )
 
-        order_reference = run_context.order_reference_spec
+        order_reference = order_reference_spec_from_snapshot(run_context.analysis_settings)
         if order_reference is None or not order_reference.is_complete:
             return CaptureReadinessCheck(
                 check_key="reference_ready",

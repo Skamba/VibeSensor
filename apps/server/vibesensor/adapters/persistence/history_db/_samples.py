@@ -11,14 +11,15 @@ from __future__ import annotations
 import logging
 import math
 
-from vibesensor.domain import StrengthPeak
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_to_json_object
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    SENSOR_FRAME_FIELD_NAMES,
+    sensor_frame_from_row,
+    sensor_frame_to_json_object,
+)
 from vibesensor.shared.boundaries.strength_metrics_codec import (
     strength_peak_payloads,
-    strength_peaks_from_sequence,
 )
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
-from vibesensor.shared.types.json_types import is_json_array
+from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
@@ -26,34 +27,7 @@ LOGGER = logging.getLogger(__name__)
 
 # -- Schema column definitions ------------------------------------------------
 
-_V2_COLUMNS: tuple[str, ...] = (
-    "run_id",
-    "timestamp_utc",
-    "t_s",
-    "client_id",
-    "client_name",
-    "location",
-    "sample_rate_hz",
-    "speed_kmh",
-    "gps_speed_kmh",
-    "speed_source",
-    "engine_rpm",
-    "engine_rpm_source",
-    "gear",
-    "final_drive_ratio",
-    "accel_x_g",
-    "accel_y_g",
-    "accel_z_g",
-    "dominant_freq_hz",
-    "dominant_axis",
-    "vibration_strength_db",
-    "strength_bucket",
-    "strength_peak_amp_g",
-    "strength_floor_amp_g",
-    "frames_dropped_total",
-    "queue_overflow_drops",
-    "top_peaks",
-)
+_V2_COLUMNS: tuple[str, ...] = SENSOR_FRAME_FIELD_NAMES
 
 # Columns whose values are JSON-serialised for storage.
 _JSON_COLUMNS: frozenset[str] = frozenset({"top_peaks"})
@@ -101,133 +75,11 @@ def sample_to_v2_row(run_id: str, item: SensorFrame) -> tuple[object, ...]:
     return tuple(vals)
 
 
-def _row_optional_float(value: object, *, field: str, row_id: object) -> float | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        raise TypeError(f"row id={row_id}: field {field} expected float-compatible value, got bool")
-    if isinstance(value, (int, float)):
-        numeric = float(value)
-        return numeric if _isfinite(numeric) else None
-    raise TypeError(
-        f"row id={row_id}: field {field} expected float-compatible value, "
-        f"got {type(value).__name__}"
-    )
-
-
-def _row_optional_int(value: object, *, field: str, row_id: object) -> int | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        raise TypeError(f"row id={row_id}: field {field} expected int-compatible value, got bool")
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float) and value.is_integer():
-        return int(value)
-    raise TypeError(
-        f"row id={row_id}: field {field} expected int-compatible value, got {type(value).__name__}"
-    )
-
-
-def _row_top_peaks(value: object, *, row_id: object) -> tuple[StrengthPeak, ...]:
-    if not value:
-        return ()
-    parsed = safe_json_loads(str(value), context="column top_peaks")
-    if not is_json_array(parsed):
-        if parsed is not None:
-            LOGGER.warning(
-                "v2_row_to_sensor_frame: column %r for row id=%s parsed to %s, "
-                "expected list; using []",
-                "top_peaks",
-                row_id,
-                type(parsed).__name__,
-            )
-        return ()
-    return strength_peaks_from_sequence(parsed, max_items=10)
-
-
 def v2_row_to_sensor_frame(row: tuple[object, ...]) -> SensorFrame:
     """Reconstruct a typed SensorFrame from a ``samples_v2`` row."""
-    row_id = row[0]
-    (
-        run_id,
-        timestamp_utc,
-        t_s,
-        client_id,
-        client_name,
-        location,
-        sample_rate_hz,
-        speed_kmh,
-        gps_speed_kmh,
-        speed_source,
-        engine_rpm,
-        engine_rpm_source,
-        gear,
-        final_drive_ratio,
-        accel_x_g,
-        accel_y_g,
-        accel_z_g,
-        dominant_freq_hz,
-        dominant_axis,
-        vibration_strength_db,
-        strength_bucket,
-        strength_peak_amp_g,
-        strength_floor_amp_g,
-        frames_dropped_total,
-        queue_overflow_drops,
-        top_peaks_raw,
-    ) = row[_V2_COL_OFFSET : _V2_COL_OFFSET + len(_V2_COLUMNS)]
-    return SensorFrame(
-        run_id=str(run_id or ""),
-        timestamp_utc=str(timestamp_utc or ""),
-        t_s=_row_optional_float(t_s, field="t_s", row_id=row_id),
-        client_id=str(client_id or ""),
-        client_name=str(client_name or ""),
-        location=str(location or ""),
-        sample_rate_hz=_row_optional_int(sample_rate_hz, field="sample_rate_hz", row_id=row_id),
-        speed_kmh=_row_optional_float(speed_kmh, field="speed_kmh", row_id=row_id),
-        gps_speed_kmh=_row_optional_float(gps_speed_kmh, field="gps_speed_kmh", row_id=row_id),
-        speed_source=str(speed_source or ""),
-        engine_rpm=_row_optional_float(engine_rpm, field="engine_rpm", row_id=row_id),
-        engine_rpm_source=str(engine_rpm_source or ""),
-        gear=_row_optional_float(gear, field="gear", row_id=row_id),
-        final_drive_ratio=_row_optional_float(
-            final_drive_ratio,
-            field="final_drive_ratio",
-            row_id=row_id,
-        ),
-        accel_x_g=_row_optional_float(accel_x_g, field="accel_x_g", row_id=row_id),
-        accel_y_g=_row_optional_float(accel_y_g, field="accel_y_g", row_id=row_id),
-        accel_z_g=_row_optional_float(accel_z_g, field="accel_z_g", row_id=row_id),
-        dominant_freq_hz=_row_optional_float(
-            dominant_freq_hz,
-            field="dominant_freq_hz",
-            row_id=row_id,
-        ),
-        dominant_axis=str(dominant_axis or ""),
-        top_peaks=_row_top_peaks(top_peaks_raw, row_id=row_id),
-        vibration_strength_db=_row_optional_float(
-            vibration_strength_db,
-            field="vibration_strength_db",
-            row_id=row_id,
-        ),
-        strength_bucket=str(strength_bucket) if strength_bucket not in (None, "") else None,
-        strength_peak_amp_g=_row_optional_float(
-            strength_peak_amp_g,
-            field="strength_peak_amp_g",
-            row_id=row_id,
-        ),
-        strength_floor_amp_g=_row_optional_float(
-            strength_floor_amp_g,
-            field="strength_floor_amp_g",
-            row_id=row_id,
-        ),
-        frames_dropped_total=(
-            _row_optional_int(frames_dropped_total, field="frames_dropped_total", row_id=row_id)
-            or 0
-        ),
-        queue_overflow_drops=(
-            _row_optional_int(queue_overflow_drops, field="queue_overflow_drops", row_id=row_id)
-            or 0
-        ),
+    row_id = row[0] if row else "?"
+    return sensor_frame_from_row(
+        row,
+        row_offset=_V2_COL_OFFSET,
+        source=f"samples_v2 row id={row_id}",
     )

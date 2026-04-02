@@ -19,7 +19,7 @@ from vibesensor.shared.constants.analysis import (
     ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS,
     SPEED_BIN_WIDTH_KMH,
 )
-from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _estimate_strength_floor_amp_g,
 )
@@ -125,7 +125,7 @@ def match_samples_for_hypothesis(
     samples: Sequence[Sample],
     cached_peaks: list[list[tuple[float, float]]],
     hypothesis: OrderHypothesis,
-    context: DiagnosticsContext,
+    context: RunMetadata,
     tire_circumference_m: float | None,
     per_sample_phases: PhaseLabels | None,
     lang: str,

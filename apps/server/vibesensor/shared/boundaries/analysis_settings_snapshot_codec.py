@@ -4,31 +4,16 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from dataclasses import asdict
 
 from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.shared.analysis_settings_schema import (
+    ANALYSIS_SETTINGS_FIELDS,
+    sanitize_analysis_settings,
+)
 from vibesensor.shared.types.json_types import JsonObject
 
 type ScalarSettingValue = int | float | bool | str
 type ScalarSettings = tuple[tuple[str, ScalarSettingValue], ...]
-
-_SNAPSHOT_FIELDS: tuple[str, ...] = (
-    "tire_width_mm",
-    "tire_aspect_pct",
-    "rim_in",
-    "final_drive_ratio",
-    "current_gear_ratio",
-    "wheel_bandwidth_pct",
-    "driveshaft_bandwidth_pct",
-    "engine_bandwidth_pct",
-    "speed_uncertainty_pct",
-    "tire_diameter_uncertainty_pct",
-    "final_drive_uncertainty_pct",
-    "gear_uncertainty_pct",
-    "min_abs_band_hz",
-    "max_band_half_width_pct",
-    "tire_deflection_factor",
-)
 
 
 def analysis_settings_snapshot_from_mapping(payload: object) -> AnalysisSettingsSnapshot:
@@ -58,11 +43,9 @@ def analysis_settings_snapshot_from_mapping(payload: object) -> AnalysisSettings
 def analysis_settings_snapshot_to_metadata(snapshot: AnalysisSettingsSnapshot) -> JsonObject:
     """Project a typed snapshot into the canonical persisted metadata shape."""
 
-    raw = asdict(snapshot)
     metadata: JsonObject = {}
-    for key, value in raw.items():
-        if key not in _SNAPSHOT_FIELDS or not isinstance(value, (int, float)):
-            continue
+    for key in ANALYSIS_SETTINGS_FIELDS:
+        value = getattr(snapshot, key)
         if math.isfinite(float(value)):
             metadata[key] = value
     return metadata
@@ -96,3 +79,13 @@ def _float_or(value: object, default: float = 0.0) -> float:
             return default
         return numeric if math.isfinite(numeric) else default
     return default
+
+
+__all__ = [
+    "ScalarSettingValue",
+    "ScalarSettings",
+    "analysis_settings_snapshot_from_mapping",
+    "analysis_settings_snapshot_items",
+    "analysis_settings_snapshot_to_metadata",
+    "sanitize_analysis_settings",
+]

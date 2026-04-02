@@ -16,6 +16,7 @@ from vibesensor.shared.constants.analysis import (
     MIN_OVERLAP_TOLERANCE,
 )
 from vibesensor.shared.json_utils import as_float_or_none
+from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.types.payload_types import OrderBandPayload
 
 __all__ = [
@@ -105,7 +106,7 @@ def build_order_bands(
     analysis_settings: AnalysisSettingsSnapshot,
 ) -> list[OrderBandPayload]:
     """Pre-compute order tolerance bands so the frontend doesn't duplicate this math."""
-    order_reference_spec = analysis_settings.order_reference_spec
+    order_reference_spec = order_reference_spec_from_snapshot(analysis_settings)
     if order_reference_spec is None:
         return []
     wheel_hz = float(orders_hz["wheel_hz"])
@@ -145,7 +146,7 @@ def vehicle_orders_hz(
     """Return per-order frequencies in Hz for the given speed and settings."""
     if speed_mps is None or not isfinite(speed_mps) or speed_mps <= 0:
         return None
-    order_reference_spec = settings.order_reference_spec
+    order_reference_spec = order_reference_spec_from_snapshot(settings)
     if order_reference_spec is None:
         return None
     return order_reference_spec.orders_hz_from_speed_mps(speed_mps)

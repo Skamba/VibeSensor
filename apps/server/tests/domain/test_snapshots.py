@@ -25,6 +25,10 @@ from vibesensor.shared.boundaries.summary_snapshot_codec import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )
+from vibesensor.shared.order_reference_settings import (
+    order_reference_spec_from_mapping,
+    order_reference_spec_from_snapshot,
+)
 
 # ── AnalysisSettingsSnapshot ────────────────────────────────────────
 
@@ -74,18 +78,18 @@ class TestAnalysisSettingsSnapshotFromDict:
 
 
 class TestAnalysisSettingsOrderRef:
-    """order_reference_spec property."""
+    """Order-reference projection helpers."""
 
     def test_missing_tire_returns_none(self) -> None:
         snap = AnalysisSettingsSnapshot()
-        assert snap.order_reference_spec is None
+        assert order_reference_spec_from_snapshot(snap) is None
 
     def test_valid_tire_returns_spec(self) -> None:
         snap = analysis_settings_snapshot_from_mapping(
             {"tire_width_mm": 285.0, "tire_aspect_pct": 30.0, "rim_in": 21.0}
         )
-        spec = snap.order_reference_spec
-        assert isinstance(spec, OrderReferenceSpec)
+        spec = order_reference_spec_from_snapshot(snap)
+        assert spec is not None
         assert spec.tire_spec is not None
         assert spec.tire_spec.width_mm == 285.0
 
@@ -94,7 +98,7 @@ class TestAnalysisSettingsOrderRef:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         captured: dict[str, object] = {}
-        sentinel = OrderReferenceSpec.from_settings(
+        sentinel = order_reference_spec_from_mapping(
             {"tire_width_mm": 285.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
         )
         assert sentinel is not None
@@ -103,7 +107,10 @@ class TestAnalysisSettingsOrderRef:
             captured.update(data)
             return sentinel
 
-        monkeypatch.setattr(OrderReferenceSpec, "from_settings", _fake_from_settings)
+        monkeypatch.setattr(
+            "vibesensor.shared.order_reference_settings.order_reference_spec_from_mapping",
+            _fake_from_settings,
+        )
         snap = AnalysisSettingsSnapshot(
             tire_width_mm=285.0,
             tire_aspect_pct=30.0,
@@ -113,7 +120,7 @@ class TestAnalysisSettingsOrderRef:
             tire_deflection_factor=0.97,
         )
 
-        assert snap.order_reference_spec is sentinel
+        assert order_reference_spec_from_snapshot(snap) is sentinel
         assert captured["tire_width_mm"] == 285.0
         assert captured["final_drive_ratio"] == 3.08
         assert captured["tire_deflection_factor"] == 0.97
@@ -160,7 +167,7 @@ class TestRunContextSnapshotBoundaryCodecs:
                 }
             }
         )
-        assert ctx.order_reference_spec is not None
+        assert order_reference_spec_from_snapshot(ctx.analysis_settings) is not None
 
     def test_to_metadata_dict_matches_persisted_shape(self) -> None:
         ctx = RunContextSnapshot(

@@ -136,15 +136,15 @@ class SQLiteHistoryEngine:
             if commit:
                 self._assert_write_allowed()
             cur = conn.cursor()
+            completed = False
             try:
                 yield cur
                 if commit:
                     conn.commit()
-            except BaseException:
-                if conn.in_transaction:
-                    conn.rollback()
-                raise
+                completed = True
             finally:
+                if not completed:
+                    self._rollback_transaction(conn, context="_cursor")
                 cur.close()
 
     @contextmanager
@@ -155,15 +155,15 @@ class SQLiteHistoryEngine:
                 raise RuntimeError("HistoryDB is closed")
             self._assert_write_allowed()
             cur = self._conn.cursor()
+            completed = False
             try:
                 cur.execute("BEGIN IMMEDIATE")
                 yield cur
                 self._conn.commit()
-            except BaseException:
-                if self._conn.in_transaction:
-                    self._conn.rollback()
-                raise
+                completed = True
             finally:
+                if not completed:
+                    self._rollback_transaction(self._conn, context="write_transaction_cursor")
                 cur.close()
 
     @property
@@ -187,6 +187,14 @@ class SQLiteHistoryEngine:
         self._corruption_details = details
         if self._corruption_reporter is not None:
             self._corruption_reporter(details)
+
+    def _rollback_transaction(self, conn: sqlite3.Connection, *, context: str) -> None:
+        if not conn.in_transaction:
+            return
+        try:
+            conn.rollback()
+        except sqlite3.Error:
+            LOGGER.critical("History DB rollback failed during %s", context, exc_info=True)
 
     def _ensure_schema(self) -> None:
         with self._cursor() as cur:

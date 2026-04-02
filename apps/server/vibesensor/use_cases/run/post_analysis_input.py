@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.strength_bands import bucket_for_strength
-from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._run_input import (
     DiagnosticsRunInput,
     build_diagnostics_run_input,
@@ -30,7 +30,7 @@ class PostAnalysisRunInput:
         return self.diagnostics_run.run_id
 
     @property
-    def context(self) -> DiagnosticsContext:
+    def context(self) -> RunMetadata:
         return self.diagnostics_run.context
 
     @property

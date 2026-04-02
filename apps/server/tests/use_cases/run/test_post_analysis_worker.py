@@ -287,16 +287,22 @@ class TestPostAnalysisWorkerErrorHandling:
         """Unexpected worker bugs stop the current batch instead of masking the fault."""
         seen: list[str] = []
         errors: list[str] = []
+        failing_run_started = threading.Event()
+        release_failure = threading.Event()
 
         def _sometimes_fail(rid: str) -> None:
             if rid == "run-fail":
+                failing_run_started.set()
+                assert release_failure.wait(timeout=1.0)
                 raise RuntimeError("first run fails")
             seen.append(rid)
 
         worker = make_worker(run_fn=_sometimes_fail, error_callback=errors.append)
 
         worker.schedule("run-fail")
+        assert failing_run_started.wait(timeout=1.0)
         worker.schedule("run-dropped")
+        release_failure.set()
         assert worker.wait(timeout_s=3.0)
         assert seen == []
         assert errors == ["post-analysis failed for run run-fail: first run fails"]

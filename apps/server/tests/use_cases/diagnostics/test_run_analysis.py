@@ -21,7 +21,7 @@ from vibesensor.shared.boundaries.sensor_frame_codec import (
 )
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
@@ -114,7 +114,7 @@ class TestPreparedRunDataProperties:
             for index, speed_kmh in enumerate(speeds)
         ]
 
-        context = build_diagnostics_context(metadata, file_name="test")
+        context = prepare_diagnostics_metadata(metadata, file_name="test")
         prepared = prepare_run_data(context, sensor_frames_from_rows(samples))
         speed_stats = _speed_stats(prepared.speed_values)
         phase_info = build_phase_summary(prepared.phase_segments)
