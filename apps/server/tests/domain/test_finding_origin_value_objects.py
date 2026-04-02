@@ -13,6 +13,9 @@ from vibesensor.domain import (
     VibrationOrigin,
     VibrationSource,
 )
+from vibesensor.shared.boundaries.finding_evidence_codec import (
+    finding_evidence_from_mapping,
+)
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
     origin_payload_from_finding,
@@ -60,7 +63,7 @@ class TestFindingEvidence:
         e2 = FindingEvidence(spatial_concentration=0.3)
         assert not e2.is_well_localized
 
-    def test_from_metrics_dict_full(self) -> None:
+    def test_boundary_decode_full(self) -> None:
         d = {
             "match_rate": 0.85,
             "snr_db": 12.5,
@@ -73,7 +76,7 @@ class TestFindingEvidence:
             "per_phase_confidence": {"cruise": 0.9, "accel": 0.6},
             "vibration_strength_db": 25.3,
         }
-        e = FindingEvidence.from_metrics(d)
+        e = finding_evidence_from_mapping(d)
         assert e.match_rate == 0.85
         assert e.snr_db == 12.5
         assert e.presence_ratio == 0.7
@@ -83,19 +86,18 @@ class TestFindingEvidence:
         assert ("accel", 0.6) in e.phase_confidences
         assert ("cruise", 0.9) in e.phase_confidences
 
-    def test_from_metrics_dict_empty(self) -> None:
-        e = FindingEvidence.from_metrics({})
+    def test_boundary_decode_empty(self) -> None:
+        e = finding_evidence_from_mapping({})
         assert e.match_rate == 0.0
         assert e.snr_db is None
         assert e.phase_confidences == ()
 
-    def test_from_metrics_domain_uses_canonical_keys_only(self) -> None:
-        """Domain factory does not handle legacy snr_ratio alias."""
-        e = FindingEvidence.from_metrics({"snr_ratio": 8.0})
-        assert e.snr_db is None  # legacy alias not recognized by domain
+    def test_boundary_decode_uses_canonical_keys_only(self) -> None:
+        e = finding_evidence_from_mapping({"snr_ratio": 8.0})
+        assert e.snr_db is None
 
-    def test_from_metrics_snr_db_canonical(self) -> None:
-        e = FindingEvidence.from_metrics({"snr_db": 8.0})
+    def test_boundary_decode_snr_db_canonical(self) -> None:
+        e = finding_evidence_from_mapping({"snr_db": 8.0})
         assert e.snr_db == 8.0
 
 

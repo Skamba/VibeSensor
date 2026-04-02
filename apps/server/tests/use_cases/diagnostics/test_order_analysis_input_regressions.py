@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none
-from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
+from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics.orders.physics import _driveshaft_hz, _order_label
 
 # ------------------------------------------------------------------
@@ -30,7 +31,7 @@ def _guarded_float(value: object) -> float:
 
 
 def _context(overrides: dict | None = None):
-    return diagnostics_context_from_metadata(overrides or {}, file_name="test")
+    return normalize_run_metadata(run_metadata_from_mapping(overrides or {}), file_name="test")
 
 
 def _sample(**overrides: object):

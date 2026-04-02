@@ -3,7 +3,8 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
-from vibesensor.shared.boundaries.sensor_frame_mapping_codec import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.order_bands import (
     build_diagnostic_settings,
@@ -12,7 +13,7 @@ from vibesensor.shared.order_bands import (
     vehicle_orders_hz,
 )
 from vibesensor.use_cases.diagnostics._reference_resolution import _effective_engine_rpm
-from vibesensor.use_cases.diagnostics.context_codec import diagnostics_context_from_metadata
+from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 
 # -- _as_float NaN/edge cases -------------------------------------------------
 
@@ -179,7 +180,7 @@ def test_effective_engine_rpm_prefers_order_reference_spec(
 
     rpm, source = _effective_engine_rpm(
         sensor_frames_from_mappings([{"speed_kmh": 80.0}])[0],
-        context=diagnostics_context_from_metadata({}, file_name="test"),
+        context=normalize_run_metadata(run_metadata_from_mapping({}), file_name="test"),
         tire_circumference_m=None,
     )
 
