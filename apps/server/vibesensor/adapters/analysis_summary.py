@@ -15,7 +15,10 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuilder
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics._run_loader import _load_run as load_run
-from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis, build_findings_for_sensor_frames
+from vibesensor.use_cases.diagnostics.run_analysis import (
+    RunAnalysis,
+    build_findings_for_sensor_frames,
+)
 
 
 def summarize_sensor_frames(

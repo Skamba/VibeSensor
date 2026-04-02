@@ -6,7 +6,10 @@ from dataclasses import dataclass, replace
 
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
-from vibesensor.use_cases.diagnostics._run_input import DiagnosticsRunInput, build_diagnostics_run_input
+from vibesensor.use_cases.diagnostics._run_input import (
+    DiagnosticsRunInput,
+    build_diagnostics_run_input,
+)
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.vibration_strength import vibration_strength_db_scalar
 

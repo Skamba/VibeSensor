@@ -6,9 +6,9 @@ from collections.abc import Mapping
 
 from vibesensor.domain import Car, OrderReferenceSpec
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries import test_run_reconstruction as _test_run_reconstruction
 from vibesensor.shared.boundaries.car_snapshot_codec import car_snapshot_from_mapping
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 
 

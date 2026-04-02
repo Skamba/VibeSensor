@@ -8,8 +8,8 @@ from vibesensor.domain import ConfigurationSnapshot, TireSpec
 from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     analysis_settings_snapshot_to_metadata,
 )
-from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.types.run_schema import RunMetadata
 
 
@@ -42,7 +42,9 @@ def configuration_snapshot_from_metadata(
 ) -> ConfigurationSnapshot:
     """Decode raw or typed run metadata into the domain configuration snapshot."""
 
-    typed_metadata = metadata if isinstance(metadata, RunMetadata) else run_metadata_from_mapping(metadata)
+    typed_metadata = (
+        metadata if isinstance(metadata, RunMetadata) else run_metadata_from_mapping(metadata)
+    )
     return _configuration_snapshot_from_run_metadata(typed_metadata)
 
 

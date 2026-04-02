@@ -16,11 +16,10 @@ from test_support import make_speed_sweep_fault_samples as _make_speed_sweep_fau
 from test_support import standard_metadata as _standard_metadata
 from test_support import wheel_hz as _wheel_hz
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.adapters.analysis_summary import build_findings_for_samples, summarize_run_data
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.locations import WHEEL_LOCATION_CODES, is_wheel_location
 from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_match_locations
-from vibesensor.adapters.analysis_summary import build_findings_for_samples
 
 # ---------------------------------------------------------------------------
 # Helpers (reused from test_scenario_ground_truth patterns)
