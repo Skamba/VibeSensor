@@ -6,8 +6,10 @@ from collections.abc import Mapping
 from typing import cast
 
 from vibesensor.domain import coerce_float, coerce_int
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.analysis_views import PeakTableRow
 from vibesensor.shared.types.history_analysis_contracts import PhaseTimelineEntryResponse
+from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
     "active_sensor_locations",
@@ -16,14 +18,21 @@ __all__ = [
     "peak_table_rows",
     "report_duration_s",
     "sensor_intensity_payload",
-    "summary_metadata",
+    "summary_run_metadata",
 ]
 
 
-def summary_metadata(payload: Mapping[str, object]) -> Mapping[str, object]:
-    """Return the summary metadata mapping, or an empty mapping when absent."""
+def summary_run_metadata(payload: Mapping[str, object]) -> RunMetadata | None:
+    """Return canonical typed run metadata when one summary metadata block exists."""
+
     metadata = payload.get("metadata")
-    return metadata if isinstance(metadata, dict) else {}
+    if not isinstance(metadata, Mapping):
+        return None
+    normalized_metadata = dict(metadata)
+    raw_run_id = str(payload.get("run_id") or "").strip()
+    if raw_run_id and "run_id" not in normalized_metadata:
+        normalized_metadata["run_id"] = raw_run_id
+    return run_metadata_from_mapping(normalized_metadata) if normalized_metadata else None
 
 
 def active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:

@@ -33,7 +33,7 @@ from vibesensor.use_cases.history.report_display_facts.shared import _display_lo
 from vibesensor.use_cases.history.report_facts import PreparedReportFacts
 
 from .measurements import _evidence_chain_rows, _sensor_observation_matrix_rows
-from .summaries import (
+from .narrative_summaries import (
     _context_summary_text,
     _evidence_summary_text,
     _observation_texts,

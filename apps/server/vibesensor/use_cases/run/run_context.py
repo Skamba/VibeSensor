@@ -6,6 +6,7 @@ from collections.abc import Mapping
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.order_reference_settings import order_reference_mapping_from_spec
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     RunContextWarning,
@@ -72,14 +73,17 @@ def _build_car_settings_changed_warning(
     if current_active_car_snapshot is None:
         return None
     if isinstance(metadata, RunMetadata):
-        recorded_snapshot = metadata.car
+        recorded_car = metadata.car
+        recorded_settings = _normalized_recorded_order_reference(metadata)
     elif is_json_object(metadata):
-        recorded_snapshot = run_metadata_from_mapping(metadata).car
+        typed_metadata = run_metadata_from_mapping(metadata)
+        recorded_car = typed_metadata.car
+        recorded_settings = _normalized_recorded_order_reference(typed_metadata)
     else:
         return None
-    if recorded_snapshot is None:
+    if recorded_car is None:
         return None
-    if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_active_car_snapshot):
+    if recorded_settings == _normalized_current_car_settings(current_active_car_snapshot):
         return None
     return RunContextWarning(
         code=WARNING_CODE_CAR_SETTINGS_CHANGED,
@@ -88,13 +92,23 @@ def _build_car_settings_changed_warning(
         title={"_i18n_key": "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE"},
         detail={
             "_i18n_key": "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_DETAIL",
-            "run_car": _car_label(recorded_snapshot),
-            "current_car": _car_label(current_active_car_snapshot),
+            "run_car": _car_label(recorded_car.name, recorded_car.car_type),
+            "current_car": _car_label(
+                current_active_car_snapshot.name,
+                current_active_car_snapshot.car_type,
+            ),
         },
     )
 
 
-def _normalized_aspects(snapshot: CarSnapshot) -> tuple[tuple[str, float], ...]:
+def _normalized_recorded_order_reference(metadata: RunMetadata) -> tuple[tuple[str, float], ...]:
+    spec = metadata.order_reference_spec
+    if spec is None:
+        return ()
+    return tuple(sorted(order_reference_mapping_from_spec(spec).items()))
+
+
+def _normalized_current_car_settings(snapshot: CarSnapshot) -> tuple[tuple[str, float], ...]:
     normalized = [
         (str(key), float(value))
         for key, value in snapshot.aspects.items()
@@ -103,9 +117,9 @@ def _normalized_aspects(snapshot: CarSnapshot) -> tuple[tuple[str, float], ...]:
     return tuple(sorted(normalized))
 
 
-def _car_label(snapshot: CarSnapshot) -> str:
-    name = str(snapshot.name or "").strip()
-    car_type = str(snapshot.car_type or "").strip()
+def _car_label(name_value: str | None, car_type_value: str | None) -> str:
+    name = str(name_value or "").strip()
+    car_type = str(car_type_value or "").strip()
     if name and car_type:
         return f"{name} ({car_type})"
     if name:

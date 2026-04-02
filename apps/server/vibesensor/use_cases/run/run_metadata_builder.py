@@ -8,7 +8,7 @@ from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.ports import ClientTracker
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.run_schema import RunCarMetadata, RunMetadata
 
 from .run_context import order_reference_context_complete
 
@@ -80,7 +80,7 @@ def build_run_metadata(
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
     raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
     incomplete = raw_sample_rate_hz is None
-    run_car_snapshot = _car_snapshot_for_run(
+    run_car_metadata = _run_car_metadata_for_run(
         active_car_snapshot=active_car_snapshot,
         firmware_version=firmware_version,
     )
@@ -97,28 +97,34 @@ def build_run_metadata(
         recorded_utc_offset_seconds=recorded_utc_offset_seconds,
     )
     metadata.analysis_settings = analysis_settings_snapshot
-    metadata.car = run_car_snapshot
+    metadata.car = run_car_metadata
     metadata.incomplete_for_order_analysis = not order_reference_context_complete(metadata)
     if language_provider is not None:
         metadata.language = str(language_provider()).strip().lower() or "en"
     return metadata
 
 
-_SIMULATOR_DEFAULT_CAR = CarSnapshot(
+_SIMULATOR_DEFAULT_CAR = RunCarMetadata(
     car_id="simulator-default",
     name="VibeSensor Simulator",
     car_type="sedan",
 )
 
 
-def _car_snapshot_for_run(
+def _run_car_metadata_for_run(
     *,
     active_car_snapshot: CarSnapshot | None,
     firmware_version: str | None,
-) -> CarSnapshot | None:
-    """Return the car snapshot to persist for a run."""
+) -> RunCarMetadata | None:
+    """Return the minimal run-car metadata to persist for a run."""
+
     if active_car_snapshot is not None:
-        return active_car_snapshot
+        return RunCarMetadata(
+            car_id=active_car_snapshot.car_id,
+            name=active_car_snapshot.name,
+            car_type=active_car_snapshot.car_type,
+            variant=active_car_snapshot.variant,
+        )
     tokens = [token.strip().lower() for token in str(firmware_version or "").split(",")]
     if any(token.startswith("sim-") for token in tokens if token):
         return _SIMULATOR_DEFAULT_CAR
