@@ -79,6 +79,7 @@ class UpdateJobExecutor:
             raise
         except Exception as exc:
             on_unexpected(exc)
+            raise
         finally:
             if cancelled:
                 try:
@@ -87,5 +88,6 @@ class UpdateJobExecutor:
                     raise
                 except Exception:
                     on_cancelled_cleanup_error()
+                    raise
             else:
                 await cleanup()

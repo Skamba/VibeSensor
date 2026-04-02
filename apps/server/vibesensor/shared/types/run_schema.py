@@ -11,6 +11,7 @@ from vibesensor.domain import (
     RunContextSnapshot,
     Symptom,
 )
+from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 
 from .json_types import JsonObject
 
@@ -146,7 +147,7 @@ class RunMetadata:
 
     @property
     def order_reference_spec(self) -> OrderReferenceSpec | None:
-        return self.run_context.order_reference_spec
+        return order_reference_spec_from_snapshot(self.analysis_settings)
 
     @property
     def tire_circumference_m(self) -> float | None:

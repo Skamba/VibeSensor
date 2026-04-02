@@ -12,7 +12,7 @@ from vibesensor.shared.constants.analysis import (
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
 )
-from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._reference_resolution import (
     _order_reference_spec_from_context,
 )
@@ -46,7 +46,7 @@ _MIN_DOMINANCE_FOR_SCALE = 1.01
 class OrderAnalysisRequest:
     """Typed inputs for one order-analysis pass across a prepared sample set."""
 
-    context: DiagnosticsContext
+    context: RunMetadata
     samples: Sequence[Sample]
     speed_sufficient: bool
     steady_speed: bool

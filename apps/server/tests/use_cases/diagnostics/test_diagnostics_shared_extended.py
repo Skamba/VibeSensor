@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import OrderReferenceSpec
+from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.order_bands import (
@@ -11,7 +11,7 @@ from vibesensor.shared.order_bands import (
     tolerance_for_order,
     vehicle_orders_hz,
 )
-from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
 from vibesensor.use_cases.diagnostics._reference_resolution import _effective_engine_rpm
 
 # -- _as_float NaN/edge cases -------------------------------------------------
@@ -134,11 +134,16 @@ def test_vehicle_orders_projects_boundary_settings_into_order_reference_spec(
                 "engine_uncertainty_pct": 0.3,
             }
 
-    def _fake_from_settings(data: dict[str, object]) -> OrderReferenceSpec | None:
+    def _fake_from_settings(data: dict[str, object]):
         captured.update(data)
         return _FakeSpec()
 
-    monkeypatch.setattr(OrderReferenceSpec, "from_settings", _fake_from_settings)
+    monkeypatch.setattr(
+        "vibesensor.shared.order_bands.order_reference_spec_from_snapshot",
+        lambda snapshot: _fake_from_settings(
+            {key: getattr(snapshot, key) for key in ANALYSIS_SETTINGS_FIELDS}
+        ),
+    )
 
     result = vehicle_orders_hz(
         speed_mps=25.0,
@@ -168,14 +173,13 @@ def test_effective_engine_rpm_prefers_order_reference_spec(
             return 2345.0
 
     monkeypatch.setattr(
-        OrderReferenceSpec,
-        "from_settings",
-        lambda data: _FakeSpec(),
+        "vibesensor.use_cases.diagnostics._reference_resolution._order_reference_spec_from_context",
+        lambda context, sample=None: _FakeSpec(),
     )
 
     rpm, source = _effective_engine_rpm(
         sensor_frames_from_rows([{"speed_kmh": 80.0}])[0],
-        context=build_diagnostics_context({}, file_name="test"),
+        context=prepare_diagnostics_metadata({}, file_name="test"),
         tire_circumference_m=None,
     )
 

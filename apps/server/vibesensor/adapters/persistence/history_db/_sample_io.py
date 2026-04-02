@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import sqlite3
 from collections.abc import Iterator
@@ -13,6 +12,7 @@ from vibesensor.adapters.persistence.history_db._samples import (
     V2_SELECT_SQL_COLS,
     v2_row_to_sensor_frame,
 )
+from vibesensor.shared.boundaries.sensor_frame_codec import SensorFrameDecodeError
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
@@ -108,8 +108,8 @@ class _HistoryDBSampleIOMixin:
                     continue
                 try:
                     parsed_batch.append(v2_row_to_sensor_frame(row))
-                except (json.JSONDecodeError, KeyError, ValueError, TypeError):
+                except SensorFrameDecodeError as exc:
                     total_skipped += 1
-                    LOGGER.warning("Skipping corrupt v2 sample row id=%s", row[0], exc_info=True)
+                    LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
             if parsed_batch:
                 yield parsed_batch

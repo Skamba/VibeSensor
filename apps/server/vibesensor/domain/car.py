@@ -14,8 +14,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
-from vibesensor.domain.order_reference import OrderReferenceSpec, normalize_order_reference_mapping
+from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.shared.order_reference_settings import (
+    normalize_order_reference_mapping,
+    order_reference_mapping_from_spec,
+    order_reference_spec_from_mapping,
+)
 
 __all__ = [
     "Car",
@@ -92,10 +97,10 @@ class Car:
         if not self.name or not self.name.strip():
             object.__setattr__(self, "name", "Unnamed Car")
         normalized_aspects = normalize_order_reference_mapping(aspects or {})
-        spec = self.order_reference_spec or OrderReferenceSpec.from_settings(normalized_aspects)
+        spec = self.order_reference_spec or order_reference_spec_from_mapping(normalized_aspects)
         object.__setattr__(self, "order_reference_spec", spec)
         if spec is not None:
-            normalized_aspects = spec.to_settings_dict()
+            normalized_aspects = order_reference_mapping_from_spec(spec)
         object.__setattr__(self, "_aspects", MappingProxyType(normalized_aspects))
 
     @property

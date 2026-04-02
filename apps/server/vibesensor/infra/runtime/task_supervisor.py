@@ -92,7 +92,7 @@ class TaskSupervisor:
         name: str,
         restartable_exceptions: RestartableExceptions = (),
     ) -> asyncio.Task[object]:
-        """Create a supervised task that restarts on declared failures or unexpected exit."""
+        """Create a supervised task that restarts only on declared failures."""
 
         async def _run_supervised() -> None:
             restart_count = 0
@@ -125,28 +125,7 @@ class TaskSupervisor:
                     await asyncio.sleep(delay_s)
                     self._health_state.clear_task_failure(name)
                     continue
-
-                runtime_s = time.monotonic() - started_at
-                if runtime_s >= self._reset_after_s:
-                    restart_count = 0
-                unexpected_exit = RuntimeError(f"managed task {name} exited unexpectedly")
-                if restart_count >= self._max_attempts:
-                    raise unexpected_exit
-                restart_count += 1
-                delay_s = self._restart_delay_s(restart_count)
-                self._health_state.record_task_failure(
-                    name,
-                    task_failure_message(unexpected_exit),
-                )
-                self._logger.error(
-                    "Managed task %s exited unexpectedly; restarting in %.1fs (%d/%d).",
-                    name,
-                    delay_s,
-                    restart_count,
-                    self._max_attempts,
-                )
-                await asyncio.sleep(delay_s)
-                self._health_state.clear_task_failure(name)
+                raise RuntimeError(f"managed task {name} exited unexpectedly")
 
         task = asyncio.create_task(_run_supervised(), name=name)
         self.monitor_task(task)

@@ -13,8 +13,8 @@ from test_support.findings import make_finding_payload
 from vibesensor.domain import LocationHotspot
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frames_from_rows
-from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
-from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.diagnostics._metadata import prepare_diagnostics_metadata
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.orders import (
     pipeline as order_findings_module,
@@ -565,11 +565,11 @@ def analysis_metadata(**overrides: Any) -> dict[str, Any]:
 def diagnostics_context(
     metadata: dict[str, object] | None = None,
     **overrides: object,
-) -> DiagnosticsContext:
-    """Return a typed diagnostics context for tests."""
+) -> RunMetadata:
+    """Return canonical typed diagnostics metadata for tests."""
     raw_metadata: dict[str, object] = dict(metadata or {})
     raw_metadata.update(overrides)
-    return build_diagnostics_context(raw_metadata, file_name="test")
+    return prepare_diagnostics_metadata(raw_metadata, file_name="test")
 
 
 def analysis_sample(

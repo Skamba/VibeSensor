@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_codec import sensor_frame_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_codec import (
+    SensorFrameDecodeError,
+    sensor_frame_from_mapping,
+)
 from vibesensor.shared.types.run_schema import (
     RUN_END_TYPE,
     RUN_METADATA_TYPE,
@@ -40,7 +43,7 @@ class RunData:
 def normalize_sample_record(record: dict[str, object]) -> SensorFrame:
     """Normalize a raw sample payload into the canonical typed sample object."""
 
-    return sensor_frame_from_mapping(record)
+    return sensor_frame_from_mapping(record, strict=True, source="jsonl sample")
 
 
 def read_jsonl_run(path: Path) -> RunData:
@@ -87,7 +90,7 @@ def read_jsonl_run(path: Path) -> RunData:
             elif record_type == _sample_type:
                 try:
                     samples.append(_normalize(payload))
-                except (KeyError, ValueError, TypeError) as exc:
+                except SensorFrameDecodeError as exc:
                     LOGGER.warning(
                         "Skipping malformed sample at line %d in %s: %s",
                         line_no,

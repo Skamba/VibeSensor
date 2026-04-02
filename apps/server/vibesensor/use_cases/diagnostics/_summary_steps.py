@@ -7,13 +7,13 @@ from statistics import median as _median
 
 from vibesensor.domain import LocationIntensitySummary, RunSuitability
 from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.shared.types.run_schema import RunMetadata
 
 from ._analysis_models import (
     FindingsBuilder,
     FindingsBundle,
     FindingsBundleRequest,
 )
-from ._context import DiagnosticsContext
 from ._types import AccelStatistics, Sample
 from .findings import _build_findings
 from .phase_segmentation import DrivingPhase
@@ -76,7 +76,7 @@ def build_sensor_bundle(
 
 
 def build_run_suitability_bundle(
-    context: DiagnosticsContext,
+    context: RunMetadata,
     samples: Sequence[Sample],
     *,
     prepared: PreparedRunData,

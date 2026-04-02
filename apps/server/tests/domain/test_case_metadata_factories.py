@@ -8,21 +8,24 @@ from vibesensor.shared.boundaries.diagnostic_case import (
     car_from_metadata,
     symptom_from_metadata,
 )
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 
 
 def test_car_from_metadata_returns_none_without_case_context() -> None:
-    assert car_from_metadata({}) is None
+    assert car_from_metadata(run_metadata_from_mapping({})) is None
 
 
 def test_car_from_metadata_builds_context_from_vehicle_fields() -> None:
     car = car_from_metadata(
-        {
-            "active_car_snapshot": {
-                "name": "Golf",
-                "type": "hatchback",
-                "variant": "GTI",
+        run_metadata_from_mapping(
+            {
+                "active_car_snapshot": {
+                    "name": "Golf",
+                    "type": "hatchback",
+                    "variant": "GTI",
+                }
             }
-        }
+        )
     )
 
     assert car is not None
@@ -33,13 +36,15 @@ def test_car_from_metadata_builds_context_from_vehicle_fields() -> None:
 
 def test_car_from_metadata_keeps_order_reference_context_without_names() -> None:
     car = car_from_metadata(
-        {
-            "analysis_settings_snapshot": {
-                "tire_width_mm": 225,
-                "tire_aspect_pct": 40,
-                "rim_in": 18,
+        run_metadata_from_mapping(
+            {
+                "analysis_settings_snapshot": {
+                    "tire_width_mm": 225,
+                    "tire_aspect_pct": 40,
+                    "rim_in": 18,
+                }
             }
-        }
+        )
     )
 
     assert car is not None
@@ -51,16 +56,18 @@ def test_car_from_metadata_keeps_order_reference_context_without_names() -> None
 
 
 def test_symptom_from_metadata_defaults_to_unspecified() -> None:
-    assert symptom_from_metadata({}).is_unspecified is True
+    assert symptom_from_metadata(run_metadata_from_mapping({})).is_unspecified is True
 
 
 def test_symptom_from_metadata_reads_canonical_fields_and_context() -> None:
     symptom = symptom_from_metadata(
-        {
-            "symptom": "whine under load",
-            "symptom_onset": "after 60 km/h",
-            "symptom_context": "during acceleration",
-        }
+        run_metadata_from_mapping(
+            {
+                "symptom": "whine under load",
+                "symptom_onset": "after 60 km/h",
+                "symptom_context": "during acceleration",
+            }
+        )
     )
 
     assert symptom.description == "whine under load"
@@ -69,4 +76,5 @@ def test_symptom_from_metadata_reads_canonical_fields_and_context() -> None:
 
 
 def test_symptom_from_metadata_ignores_removed_complaint_alias() -> None:
-    assert symptom_from_metadata({"complaint": "legacy alias"}).is_unspecified is True
+    metadata = run_metadata_from_mapping({"complaint": "legacy alias"})
+    assert symptom_from_metadata(metadata).is_unspecified is True

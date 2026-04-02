@@ -17,6 +17,7 @@ from vibesensor.shared.boundaries.run_capture_codec import configuration_snapsho
 
 from ._analysis_models import AnalysisResultBuildRequest
 from ._analysis_result import AnalysisResult
+from ._metadata import analysis_settings_items
 from .plots import _plot_data
 from .run_analysis_projection import build_domain_driving_segments
 from .run_data_preparation import build_phase_summary
@@ -49,7 +50,7 @@ def build_analysis_result(
 ) -> AnalysisResult:
     """Build the final app-level analysis result."""
 
-    metadata = request.context.metadata
+    metadata = request.context
     findings_bundle = request.findings_bundle
     summary_speed_stats = _speed_stats(request.prepared.speed_values)
     summary_phase_info = build_phase_summary(request.prepared.phase_segments)
@@ -78,7 +79,7 @@ def build_analysis_result(
                 speed_source=SpeedSource(),
                 configuration_snapshot=configuration_snapshot_from_run_metadata(metadata),
             ),
-            analysis_settings=request.context.analysis_settings_items,
+            analysis_settings=analysis_settings_items(metadata),
             sample_count=len(request.samples),
             duration_s=request.prepared.duration_s,
         ),

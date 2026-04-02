@@ -420,7 +420,7 @@ class TestUpdateManagerAsync:
             await asyncio.wait_for(task, timeout=3)
         assert manager.status.state == UpdateState.failed
 
-    async def test_run_update_preserves_cancelled_error_when_cleanup_bug_occurs(
+    async def test_run_update_surfaces_cleanup_bug_when_cancellation_cleanup_fails(
         self,
         tmp_path,
         caplog: pytest.LogCaptureFixture,
@@ -441,7 +441,7 @@ class TestUpdateManagerAsync:
         ):
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
-            with pytest.raises(asyncio.CancelledError):
+            with pytest.raises(TypeError, match="runtime bug"):
                 await manager.job_task
 
         assert manager.status.finished_at is not None

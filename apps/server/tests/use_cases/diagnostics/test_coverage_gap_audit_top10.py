@@ -762,9 +762,8 @@ class TestResolveSpeedContext:
                 return 1234.5 if speed_kmh > 0 else None
 
         monkeypatch.setattr(
-            AnalysisSettingsSnapshot,
-            "order_reference_spec",
-            property(lambda self: _FakeSpec()),
+            "vibesensor.use_cases.run.sample_builder.order_reference_spec_from_snapshot",
+            lambda snapshot: _FakeSpec(),
         )
         logger, gps_mock = _make_run_recorder()
         gps_mock.speed_mps = 10.0

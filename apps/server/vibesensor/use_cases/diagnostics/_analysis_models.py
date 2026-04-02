@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.shared.types.run_schema import RunMetadata
 
-from ._context import DiagnosticsContext
 from ._types import AccelStatistics, PhaseLabels, Sample
 from .run_data_preparation import PreparedRunData
 
@@ -18,7 +18,7 @@ from .run_data_preparation import PreparedRunData
 class FindingsBuildRequest:
     """Normalized inputs required to build diagnostics findings."""
 
-    context: DiagnosticsContext
+    context: RunMetadata
     samples: Sequence[Sample]
     speed_sufficient: bool
     steady_speed: bool
@@ -59,7 +59,7 @@ class AnalysisResultBuildRequest:
     """Inputs required to assemble the final diagnostics analysis result."""
 
     file_name: str
-    context: DiagnosticsContext
+    context: RunMetadata
     samples: Sequence[Sample]
     language: str
     include_samples: bool
