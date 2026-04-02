@@ -65,9 +65,7 @@ def finding_evidence_from_mapping(payload: Mapping[str, object]) -> FindingEvide
         speed_uniformity=_float("speed_uniformity"),
         spatial_uniformity=_float("spatial_uniformity"),
         phases_with_evidence=(
-            int(phases_with_evidence)
-            if isinstance(phases_with_evidence, (int, float))
-            else None
+            int(phases_with_evidence) if isinstance(phases_with_evidence, (int, float)) else None
         ),
         phase_confidences=phase_items,
         vibration_strength_db=_float_or_none("vibration_strength_db"),
