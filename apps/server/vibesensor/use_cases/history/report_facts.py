@@ -32,7 +32,6 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     active_sensor_locations,
     phase_timeline_payload,
     sensor_intensity_payload,
-    summary_metadata,
 )
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
@@ -355,7 +354,6 @@ def prepare_report_facts(
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportFacts:
     """Resolve semantic report facts shared by downstream PDF mapping."""
-    metadata = summary_metadata(payload)
     prepared_language = str(normalize_lang(language or payload.get("lang")))
     sensor_locations_active = active_sensor_locations(payload)
     origin = resolve_report_origin(test_run)
@@ -426,7 +424,7 @@ def prepare_report_facts(
             if config_snap.raw_sample_rate_hz is not None
             else None
         ),
-        tire_spec_text=tire_spec_text(metadata),
+        tire_spec_text=tire_spec_text(config_snap.tire_spec),
         sample_count=test_run.capture.sample_count,
         sensor_model=config_snap.sensor_model,
         firmware_version=config_snap.firmware_version,

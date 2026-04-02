@@ -1,0 +1,239 @@
+"""Appendix B page rendering."""
+
+from __future__ import annotations
+
+from reportlab.lib.units import mm
+from reportlab.pdfgen.canvas import Canvas
+
+from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
+from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
+from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
+from vibesensor.adapters.pdf.pdf_style import (
+    FS_SMALL,
+    GAP,
+    MARGIN,
+    PAGE_H,
+    PAGE_W,
+    PANEL_HEADER_H,
+    SUB_CLR,
+)
+from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
+from vibesensor.adapters.pdf.report_data import AppendixBData, ReportTemplateData
+from vibesensor.report_i18n import tr as _tr
+
+from .tables import _draw_table, _fmt_db, _fmt_relative_db
+
+__all__ = [
+    "_appendix_b_page",
+    "_has_appendix_b_content",
+]
+
+
+def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
+    title_y = _draw_title_bar(
+        c,
+        title=_tr(data.lang, "REPORT_APPENDIX_B_TITLE"),
+        width=PAGE_W - 2 * MARGIN,
+        page_top=PAGE_H - MARGIN,
+    )
+    appendix = data.appendix_b
+    width = PAGE_W - 2 * MARGIN
+    top_h = 114 * mm
+    left_w = width * 0.56
+    right_w = width - left_w - GAP
+    top_y = title_y - top_h
+
+    _draw_panel(c, MARGIN, top_y, left_w, top_h, _tr(data.lang, "REPORT_TOPOLOGY_MAP_TITLE"))
+    _draw_text(
+        c,
+        MARGIN + 4 * mm,
+        top_y + top_h - PANEL_HEADER_H - 2 * mm,
+        left_w - 8 * mm,
+        _tr(data.lang, "REPORT_TOPOLOGY_MAP_NOTE"),
+        size=FS_SMALL,
+        color=SUB_CLR,
+        leading=FS_SMALL + 1.0,
+        max_lines=1,
+    )
+    diagram = car_location_diagram(
+        data.top_causes or data.findings,
+        {
+            "sensor_locations": data.sensor_locations,
+            "sensor_intensity_by_location": data.sensor_intensity_by_location,
+        },
+        data.location_hotspot_rows,
+        content_width=left_w - 8 * mm,
+        tr=lambda key, **kw: _tr(data.lang, key, **kw),
+        text_fn=lambda en, nl: nl if data.lang == "nl" else en,
+        diagram_width=left_w - 12 * mm,
+        diagram_height=top_h - 24 * mm,
+    )
+    diagram.drawOn(c, MARGIN + 4 * mm, top_y + 6 * mm)
+
+    _draw_panel(
+        c,
+        MARGIN + left_w + GAP,
+        top_y,
+        right_w,
+        top_h,
+        _tr(data.lang, "REPORT_DOMINANCE_SUMMARY_TITLE"),
+    )
+    text_x = MARGIN + left_w + GAP + 4 * mm
+    text_y = top_y + top_h - PANEL_HEADER_H - 2 * mm
+    text_y = _draw_section_block(
+        c,
+        text_x,
+        text_y,
+        right_w - 8 * mm,
+        _tr(data.lang, "REPORT_DOMINANT_CORNER_LABEL"),
+        appendix.dominant_corner or _tr(data.lang, "UNKNOWN"),
+    )
+    if appendix.runner_up_corner:
+        text_y = _draw_section_block(
+            c,
+            text_x,
+            text_y,
+            right_w - 8 * mm,
+            _tr(data.lang, "REPORT_RUNNER_UP_CORNER_LABEL"),
+            appendix.runner_up_corner,
+        )
+    text_y = _draw_section_block(
+        c,
+        text_x,
+        text_y,
+        right_w - 8 * mm,
+        _tr(data.lang, "REPORT_DOMINANCE_RATIO_LABEL"),
+        appendix.dominance_ratio_text or _tr(data.lang, "UNKNOWN"),
+    )
+    if appendix.dominance_ratio_text:
+        text_y = (
+            _draw_text(
+                c,
+                text_x,
+                text_y,
+                right_w - 8 * mm,
+                _tr(data.lang, "REPORT_DOMINANCE_RATIO_NOTE"),
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=4,
+            )
+            - 0.8 * mm
+        )
+    text_y = _draw_section_block(
+        c,
+        text_x,
+        text_y,
+        right_w - 8 * mm,
+        _tr(data.lang, "REPORT_LOCATION_CONFIDENCE_LABEL"),
+        appendix.location_confidence or _tr(data.lang, "UNKNOWN"),
+    )
+    text_y = _draw_section_block(
+        c,
+        text_x,
+        text_y,
+        right_w - 8 * mm,
+        _tr(data.lang, "REPORT_COVERAGE_LABEL"),
+        appendix.coverage_label or _tr(data.lang, "UNKNOWN"),
+        max_lines=3,
+    )
+    for note in appendix.coverage_notes[:3]:
+        text_y = (
+            _draw_text(
+                c,
+                text_x,
+                text_y,
+                right_w - 8 * mm,
+                note,
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.2,
+                max_lines=3,
+            )
+            - 1.0 * mm
+        )
+
+    bottom_h = top_y - (MARGIN + 8 * mm)
+    bottom_y = MARGIN + 8 * mm
+    if appendix.sensor_observation_rows:
+        _draw_panel(
+            c,
+            MARGIN,
+            bottom_y,
+            width,
+            bottom_h,
+            _tr(data.lang, "REPORT_SENSOR_OBSERVATION_MATRIX_TITLE"),
+        )
+        table_top = (
+            _draw_text(
+                c,
+                MARGIN + 4 * mm,
+                bottom_y + bottom_h - 13 * mm,
+                width - 8 * mm,
+                _tr(data.lang, "REPORT_SENSOR_OBSERVATION_MATRIX_NOTE"),
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=3,
+            )
+            - 1.2 * mm
+        )
+        headers = [_tr(data.lang, "REPORT_SIGNAL_COLUMN")] + [
+            cell.location for cell in appendix.sensor_observation_rows[0].sensor_levels
+        ]
+        sensor_column_count = max(1, len(headers) - 1)
+        rows = [
+            [
+                f"{row.source_name}\n{row.signal_label}",
+                *[_fmt_relative_db(cell.relative_level_db) for cell in row.sensor_levels],
+            ]
+            for row in appendix.sensor_observation_rows
+        ]
+        _draw_table(
+            c,
+            x=MARGIN + 4 * mm,
+            y=table_top,
+            w=width - 8 * mm,
+            y_bottom=bottom_y + 4 * mm,
+            headers=headers,
+            rows=rows,
+            col_widths=[0.32] + ([0.68 / sensor_column_count] * sensor_column_count),
+            max_body_lines=3,
+        )
+    else:
+        _draw_panel(
+            c, MARGIN, bottom_y, width, bottom_h, _tr(data.lang, "REPORT_INTENSITY_LADDER_TITLE")
+        )
+        rows = [
+            [row.location, _fmt_db(row.p95_db), row.coverage_state or _tr(data.lang, "UNKNOWN")]
+            for row in appendix.intensity_rows
+        ]
+        _draw_table(
+            c,
+            x=MARGIN + 4 * mm,
+            y=bottom_y + bottom_h - 13 * mm,
+            w=width - 8 * mm,
+            y_bottom=bottom_y + 4 * mm,
+            headers=[
+                _tr(data.lang, "REPORT_LOCATION_COLUMN"),
+                _tr(data.lang, "REPORT_P95_DB_COLUMN"),
+                _tr(data.lang, "REPORT_COVERAGE_STATE_COLUMN"),
+            ],
+            rows=rows,
+            col_widths=[0.42, 0.18, 0.40],
+        )
+
+
+def _has_appendix_b_content(appendix: AppendixBData) -> bool:
+    return any(
+        (
+            appendix.dominant_corner,
+            appendix.runner_up_corner,
+            appendix.dominance_ratio_text,
+            appendix.location_confidence,
+            appendix.coverage_label,
+            appendix.coverage_notes,
+            appendix.intensity_rows,
+            appendix.sensor_observation_rows,
+        )
+    )

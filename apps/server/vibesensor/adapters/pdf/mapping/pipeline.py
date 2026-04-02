@@ -33,6 +33,8 @@ from vibesensor.use_cases.history.report_preparation import (
 )
 
 from .measurements import _measurement_rows
+from .narrative_summaries import _proof_summary_text
+from .pattern_evidence import build_pattern_evidence
 from .sections import (
     _build_appendix_a_data,
     _build_appendix_b_data,
@@ -42,7 +44,6 @@ from .sections import (
     _build_verdict_page_data,
     _finding_to_presentation,
 )
-from .summaries import _proof_summary_text, build_pattern_evidence
 
 __all__ = ["map_summary"]
 

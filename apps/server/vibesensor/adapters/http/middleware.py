@@ -58,14 +58,17 @@ class RequestLoggingMiddleware:
 
         try:
             await self.app(scope, receive, _send_with_request_id)
+        except asyncio.CancelledError:
+            raise
         except Exception as exc:
-            if isinstance(exc, asyncio.CancelledError):
-                raise
             request_failed = True
             LOGGER.exception(
                 "http_request_failed",
                 extra=log_extra(
                     event="http_request_failed",
+                    failure_kind=(
+                        "operational" if isinstance(exc, (OSError, RuntimeError)) else "programmer"
+                    ),
                     method=method,
                     path=path,
                     status_code=status_code,

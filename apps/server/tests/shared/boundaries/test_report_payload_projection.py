@@ -9,13 +9,34 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     phase_timeline_payload,
     report_duration_s,
     sensor_intensity_payload,
-    summary_metadata,
+    summary_run_metadata,
 )
 
 
-def test_summary_metadata_defaults_to_empty_mapping() -> None:
-    assert summary_metadata({}) == {}
-    assert summary_metadata({"metadata": "not-a-dict"}) == {}
+def test_summary_run_metadata_defaults_to_none_without_mapping() -> None:
+    assert summary_run_metadata({}) is None
+    assert summary_run_metadata({"metadata": "not-a-dict"}) is None
+
+
+def test_summary_run_metadata_projects_canonical_run_metadata() -> None:
+    metadata = summary_run_metadata(
+        {
+            "run_id": "run-123",
+            "metadata": {
+                "active_car_snapshot": {"name": "Track Car", "type": "coupe"},
+                "analysis_settings_snapshot": {
+                    "tire_width_mm": 245.0,
+                    "tire_aspect_pct": 40.0,
+                    "rim_in": 18.0,
+                },
+            },
+        }
+    )
+
+    assert metadata is not None
+    assert metadata.run_id == "run-123"
+    assert metadata.car_name == "Track Car"
+    assert metadata.order_reference_spec is not None
 
 
 def test_active_sensor_locations_prefers_connected_locations() -> None:

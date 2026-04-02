@@ -9,9 +9,8 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     coerce_count,
     peak_table_rows,
     report_duration_s,
-    summary_metadata,
+    summary_run_metadata,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.analysis_views import PeakTableRow
 
 __all__ = [
@@ -39,11 +38,8 @@ def build_report_renderer_payload(
     payload: Mapping[str, object],
 ) -> PreparedReportRendererPayload:
     """Return the normalized renderer-edge payload derived from a report summary."""
-    metadata = dict(summary_metadata(payload))
     raw_run_id = str(payload.get("run_id") or "").strip()
-    if raw_run_id and "run_id" not in metadata:
-        metadata["run_id"] = raw_run_id
-    typed_metadata = run_metadata_from_mapping(metadata) if metadata else None
+    typed_metadata = summary_run_metadata(payload)
     rows = payload.get("rows")
     sample_count = coerce_count(rows)
     sensor_count_raw = payload.get("sensor_count_used")

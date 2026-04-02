@@ -80,18 +80,22 @@ class TestCurrentContextWarnings:
                 )
             ],
             metadata={
+                "analysis_settings_snapshot": {
+                    "tire_width_mm": 245.0,
+                    "tire_aspect_pct": 40.0,
+                    "rim_in": 19.0,
+                },
                 "active_car_snapshot": {
                     "id": "car-a",
                     "name": "Track Car",
                     "type": "coupe",
-                    "aspects": {"tire_width_mm": 245.0},
-                }
+                },
             },
             current_active_car_snapshot=CarSnapshot(
                 car_id="car-b",
                 name="Daily Car",
                 car_type="wagon",
-                aspects={"tire_width_mm": 225.0},
+                aspects={"tire_width_mm": 225.0, "tire_aspect_pct": 45.0, "rim_in": 18.0},
             ),
         )
 
@@ -106,11 +110,15 @@ class TestCurrentContextWarnings:
             {
                 "run_id": "run-1",
                 "raw_sample_rate_hz": 800,
+                "analysis_settings_snapshot": {
+                    "tire_width_mm": 245.0,
+                    "tire_aspect_pct": 40.0,
+                    "rim_in": 19.0,
+                },
                 "active_car_snapshot": {
                     "id": "car-a",
                     "name": "Track Car",
                     "type": "coupe",
-                    "aspects": {"tire_width_mm": 245.0},
                 },
             },
         )
@@ -122,7 +130,7 @@ class TestCurrentContextWarnings:
                 car_id="car-b",
                 name="Daily Car",
                 car_type="wagon",
-                aspects={"tire_width_mm": 225.0},
+                aspects={"tire_width_mm": 225.0, "tire_aspect_pct": 45.0, "rim_in": 18.0},
             ),
         )
 
