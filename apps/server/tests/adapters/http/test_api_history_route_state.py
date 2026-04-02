@@ -221,13 +221,6 @@ async def test_history_list_uses_nested_active_car_snapshot_name() -> None:
             "id": "car-1",
             "name": "Nested Track Car",
             "type": "coupe",
-            "aspects": {
-                "tire_width_mm": 245.0,
-                "tire_aspect_pct": 40.0,
-                "rim_in": 19.0,
-                "final_drive_ratio": 3.15,
-                "current_gear_ratio": 0.91,
-            },
         }
     )
     samples = [sample(i) for i in range(3)]
@@ -240,7 +233,7 @@ async def test_history_list_uses_nested_active_car_snapshot_name() -> None:
 
 
 @pytest.mark.asyncio
-async def test_history_run_rehydrates_flat_metadata_from_nested_run_context() -> None:
+async def test_history_run_projects_canonical_nested_run_context() -> None:
     metadata = make_metadata(
         analysis_settings_snapshot={
             "tire_width_mm": 275.0,
@@ -253,13 +246,6 @@ async def test_history_run_rehydrates_flat_metadata_from_nested_run_context() ->
             "id": "car-1",
             "name": "Nested Track Car",
             "type": "hatchback",
-            "aspects": {
-                "tire_width_mm": 275.0,
-                "tire_aspect_pct": 35.0,
-                "rim_in": 20.0,
-                "final_drive_ratio": 3.15,
-                "current_gear_ratio": 0.91,
-            },
         },
     )
     samples = [sample(i) for i in range(3)]
@@ -272,6 +258,7 @@ async def test_history_run_rehydrates_flat_metadata_from_nested_run_context() ->
     assert projected_metadata["active_car_snapshot"]["name"] == "Nested Track Car"
     assert projected_metadata["active_car_snapshot"]["type"] == "hatchback"
     assert projected_metadata["active_car_snapshot"]["id"] == "car-1"
+    assert "aspects" not in projected_metadata["active_car_snapshot"]
     assert float(
         projected_metadata["analysis_settings_snapshot"]["tire_width_mm"]
     ) == pytest.approx(275.0)
@@ -298,17 +285,17 @@ async def test_history_run_includes_error_message_for_error_status() -> None:
 @pytest.mark.asyncio
 async def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
     metadata = make_metadata(
+        analysis_settings_snapshot={
+            "tire_width_mm": 245.0,
+            "tire_aspect_pct": 35.0,
+            "rim_in": 19.0,
+            "final_drive_ratio": 3.23,
+            "current_gear_ratio": 0.82,
+        },
         active_car_snapshot={
             "id": "car-a",
             "name": "Track Car",
             "type": "coupe",
-            "aspects": {
-                "tire_width_mm": 245.0,
-                "tire_aspect_pct": 35.0,
-                "rim_in": 19.0,
-                "final_drive_ratio": 3.23,
-                "current_gear_ratio": 0.82,
-            },
         },
         car_name="Track Car",
         tire_width_mm=245.0,

@@ -39,13 +39,6 @@ def _context_metadata() -> dict[str, object]:
             "name": "Primary",
             "type": "sedan",
             "variant": "sport",
-            "aspects": {
-                "tire_width_mm": 225.0,
-                "tire_aspect_pct": 45.0,
-                "rim_in": 18.0,
-                "final_drive_ratio": 3.55,
-                "current_gear_ratio": 0.81,
-            },
         },
         "symptom": "driveline hum",
         "symptom_onset": "after 60 km/h",
@@ -172,6 +165,7 @@ def test_run_metadata_rehydrates_boundary_metadata_with_known_fields_only() -> N
     assert payload["run_id"] == "ctx-run"
     assert payload["analysis_settings_snapshot"]["final_drive_ratio"] == 3.55
     assert payload["active_car_snapshot"]["variant"] == "sport"
+    assert "aspects" not in payload["active_car_snapshot"]
     assert payload["tire_circumference_m"] is not None
     assert "analysis_settings" not in payload
     assert "custom_note" not in payload

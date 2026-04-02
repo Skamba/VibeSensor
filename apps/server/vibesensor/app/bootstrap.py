@@ -8,6 +8,7 @@ and serves static assets.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import errno
 import logging
 import os
@@ -105,7 +106,11 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         try:
             await lifecycle.start()
-        except Exception:
+        except asyncio.CancelledError:
+            LOGGER.info("Runtime lifecycle start cancelled; cleaning up before re-raise")
+            await lifecycle.stop()
+            raise
+        except (OSError, RuntimeError):
             LOGGER.error(
                 "Runtime lifecycle start failed; cleaning up before re-raise",
                 exc_info=True,

@@ -4,12 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 
-from vibesensor.domain import (
-    AnalysisSettingsSnapshot,
-    CarSnapshot,
-    OrderReferenceSpec,
-    Symptom,
-)
+from vibesensor.domain import AnalysisSettingsSnapshot, OrderReferenceSpec, Symptom
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 
 from .sensor_frame import SensorFrame
@@ -22,6 +17,7 @@ __all__ = [
     "RUN_SAMPLE_TYPE",
     "RUN_SCHEMA_VERSION",
     "RunMetadata",
+    "RunCarMetadata",
 ]
 
 RUN_SCHEMA_VERSION = "v2-jsonl"
@@ -30,6 +26,16 @@ RUN_SAMPLE_TYPE = "sample"
 RUN_END_TYPE = "run_end"
 FFT_WINDOW_TYPE = "hann"
 PEAK_PICKER_METHOD = "canonical_strength_metrics_module"
+
+
+@dataclass(frozen=True, slots=True)
+class RunCarMetadata:
+    """Minimal run-attached car identity stored alongside analysis settings."""
+
+    car_id: str | None = None
+    name: str | None = None
+    car_type: str | None = None
+    variant: str | None = None
 
 
 @dataclass(slots=True)
@@ -51,7 +57,7 @@ class RunMetadata:
     accel_scale_g_per_lsb: float | None
     incomplete_for_order_analysis: bool
     analysis_settings: AnalysisSettingsSnapshot = field(default_factory=AnalysisSettingsSnapshot)
-    car: CarSnapshot | None = None
+    car: RunCarMetadata | None = None
     case_id: str = ""
     sensor_mac: str | None = None
     summary_version: int = 1
@@ -77,7 +83,7 @@ class RunMetadata:
         end_time_utc: str | None = None,
         incomplete_for_order_analysis: bool = False,
         analysis_settings: AnalysisSettingsSnapshot | None = None,
-        car: CarSnapshot | None = None,
+        car: RunCarMetadata | None = None,
         case_id: str = "",
         sensor_mac: str | None = None,
         summary_version: int = 1,

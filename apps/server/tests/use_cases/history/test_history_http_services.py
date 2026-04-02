@@ -195,7 +195,6 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
                     "id": "car-a",
                     "name": "Track Car",
                     "type": "coupe",
-                    "aspects": {"tire_width_mm": 245.0},
                 }
             },
         },
@@ -237,11 +236,15 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
 @pytest.mark.asyncio
 async def test_projected_run_service_adds_current_context_overlay_explicitly() -> None:
     metadata = {
+        "analysis_settings_snapshot": {
+            "tire_width_mm": 245.0,
+            "tire_aspect_pct": 40.0,
+            "rim_in": 19.0,
+        },
         "active_car_snapshot": {
             "id": "car-a",
             "name": "Track Car",
             "type": "coupe",
-            "aspects": {"tire_width_mm": 245.0},
         },
         "incomplete_for_order_analysis": True,
     }
@@ -405,7 +408,7 @@ def test_build_run_details_json_projects_analysis_through_domain() -> None:
     assert payload["analysis"]["most_likely_origin"]["suspected_source"] == "wheel/tire"
 
 
-def test_build_run_details_json_rehydrates_flat_metadata_from_nested_run_context() -> None:
+def test_build_run_details_json_projects_canonical_nested_run_context() -> None:
     payload = json.loads(
         build_projected_run_details_json(
             _stored_run(
@@ -423,13 +426,6 @@ def test_build_run_details_json_rehydrates_flat_metadata_from_nested_run_context
                             "id": "car-1",
                             "name": "Primary",
                             "type": "sedan",
-                            "aspects": {
-                                "tire_width_mm": 255.0,
-                                "tire_aspect_pct": 40.0,
-                                "rim_in": 19.0,
-                                "final_drive_ratio": 3.15,
-                                "current_gear_ratio": 0.81,
-                            },
                         },
                     },
                 }
@@ -442,6 +438,7 @@ def test_build_run_details_json_rehydrates_flat_metadata_from_nested_run_context
     metadata = payload["metadata"]
     assert metadata["active_car_snapshot"]["name"] == "Primary"
     assert metadata["active_car_snapshot"]["id"] == "car-1"
+    assert "aspects" not in metadata["active_car_snapshot"]
     assert float(metadata["analysis_settings_snapshot"]["tire_width_mm"]) == pytest.approx(255.0)
     assert float(metadata["tire_circumference_m"]) > 0
 

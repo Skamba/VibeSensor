@@ -14,12 +14,12 @@ from vibesensor.domain import (
     LocationHotspotRow,
     LocationIntensitySummary,
     TestRun,
+    TireSpec,
     VibrationOrigin,
 )
 from vibesensor.shared.boundaries.location_hotspot_codec import (
     location_intensity_summary_from_mapping,
 )
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,21 +105,14 @@ def sensor_fallback_strength_db(
     )
 
 
-def tire_spec_text(meta: Mapping[str, object]) -> str | None:
-    """Format tire specification text from metadata when present."""
-    tire_width_mm = _as_float(meta.get("tire_width_mm"))
-    tire_aspect_pct = _as_float(meta.get("tire_aspect_pct"))
-    rim_in = _as_float(meta.get("rim_in"))
-    if not (
-        tire_width_mm is not None
-        and tire_aspect_pct is not None
-        and rim_in is not None
-        and tire_width_mm > 0
-        and tire_aspect_pct > 0
-        and rim_in > 0
-    ):
+def tire_spec_text(tire_spec: TireSpec | None) -> str | None:
+    """Format tire specification text from canonical typed tire geometry."""
+
+    if tire_spec is None:
         return None
-    return f"{tire_width_mm:g}/{tire_aspect_pct:g}R{rim_in:g}"
+    if tire_spec.width_mm <= 0 or tire_spec.aspect_pct <= 0 or tire_spec.rim_in <= 0:
+        return None
+    return f"{tire_spec.width_mm:g}/{tire_spec.aspect_pct:g}R{tire_spec.rim_in:g}"
 
 
 def filter_active_sensor_intensity(

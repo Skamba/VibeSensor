@@ -10,9 +10,9 @@ from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     analysis_settings_snapshot_from_mapping,
     analysis_settings_snapshot_to_metadata,
 )
-from vibesensor.shared.boundaries.car_snapshot_codec import (
-    car_snapshot_from_mapping,
-    car_snapshot_to_metadata,
+from vibesensor.shared.boundaries.run_car_codec import (
+    run_car_metadata_from_mapping,
+    run_car_metadata_to_json_object,
 )
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
@@ -56,7 +56,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         analysis_settings=analysis_settings_snapshot_from_mapping(
             data.get("analysis_settings_snapshot"),
         ),
-        car=car_snapshot_from_mapping(data.get("active_car_snapshot")),
+        car=run_car_metadata_from_mapping(data.get("active_car_snapshot")),
         case_id=_as_str_or_none(data.get("case_id")) or "",
         sensor_mac=_as_str_or_none(data.get("sensor_mac")),
         summary_version=max(1, as_int_or_none(data.get("_summary_version")) or 1),
@@ -98,7 +98,7 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
             metadata.analysis_settings,
         ),
     }
-    if (car_metadata := car_snapshot_to_metadata(metadata.car)) is not None:
+    if (car_metadata := run_car_metadata_to_json_object(metadata.car)) is not None:
         payload["active_car_snapshot"] = car_metadata
     if metadata.symptom is not None and not metadata.symptom.is_unspecified:
         payload["symptom"] = metadata.symptom.description
