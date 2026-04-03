@@ -17,7 +17,7 @@ from test_support.report_helpers import (
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.constants.units import KMH_TO_MPS
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 
 def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
@@ -48,7 +48,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     assert summary["rows"] == 30
     assert summary["speed_breakdown"]
     assert summary["findings"]
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     assert pdf.startswith(b"%PDF")
     for text in (
         "VibeSensor Diagnostic Report",
@@ -73,7 +73,8 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     assert summary["speed_breakdown"] == []
     assert any(f.get("finding_id") == "REF_SPEED" for f in summary["findings"])
-    assert build_report_pdf(map_summary(prepare_report_input(summary))).startswith(b"%PDF")
+    rendered_pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
+    assert rendered_pdf.startswith(b"%PDF")
 
 
 def test_run_suitability_warns_for_degraded_scenario(tmp_path: Path) -> None:
@@ -173,7 +174,8 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     assert summary["raw_sample_rate_hz"] is None
     assert any(f.get("finding_id") == "REF_SAMPLE_RATE" for f in summary["findings"])
-    assert build_report_pdf(map_summary(prepare_report_input(summary))).startswith(b"%PDF")
+    rendered_pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
+    assert rendered_pdf.startswith(b"%PDF")
 
 
 def test_data_quality_outliers_include_zero_strength_values(tmp_path: Path) -> None:
@@ -265,6 +267,6 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
     assert bool(summary["speed_stats"]["steady_speed"]) is True
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     assert_pdf_contains(pdf, "Speed Band")
     assert_pdf_contains(pdf, "VibeSensor Diagnostic Report")

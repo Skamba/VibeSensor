@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
     FS_SMALL,
@@ -36,6 +35,7 @@ from .layout import (
     _estimate_worksheet_top_panel_height,
 )
 from .tables import _draw_table
+from .title_bar import draw_appendix_title_bar
 
 __all__ = ["_appendix_a_page"]
 
@@ -52,7 +52,7 @@ def _appendix_a_page(
         if plan.appendix.mode == "recapture"
         else "REPORT_APPENDIX_A_TITLE"
     )
-    title_y = _draw_title_bar(
+    title_y = draw_appendix_title_bar(
         c,
         title=_tr(plan.lang, title_key),
         width=PAGE_W - 2 * MARGIN,

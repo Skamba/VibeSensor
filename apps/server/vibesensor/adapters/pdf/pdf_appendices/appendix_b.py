@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
@@ -24,6 +23,7 @@ from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting.document import AppendixBData
 
 from .tables import _draw_table, _fmt_db, _fmt_relative_db
+from .title_bar import draw_appendix_title_bar
 
 __all__ = [
     "_appendix_b_page",
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
-    title_y = _draw_title_bar(
+    title_y = draw_appendix_title_bar(
         c,
         title=_tr(plan.lang, "REPORT_APPENDIX_B_TITLE"),
         width=PAGE_W - 2 * MARGIN,

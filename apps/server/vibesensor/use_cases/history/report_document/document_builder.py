@@ -1,7 +1,7 @@
-"""Focused builder for ReportTemplateData field mapping.
+"""Focused builder for canonical report-document field mapping.
 
 Owns the mapping from resolved report sections and prepared report inputs into
-``ReportTemplateData``. Keeps the field assignment explicit and testable while
+``ReportDocument``. Keeps the field assignment explicit and testable while
 the orchestration layer handles section resolution.
 """
 
@@ -20,14 +20,14 @@ from vibesensor.shared.boundaries.reporting.document import (
     PatternEvidence,
     PeakRow,
     Report,
-    ReportTemplateData,
+    ReportDocument,
     SystemFindingCard,
     VerdictPageData,
 )
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 
 
-def build_template_data(
+def build_report_document_data(
     *,
     prepared: PreparedReportInput,
     report: Report,
@@ -51,8 +51,8 @@ def build_template_data(
     appendix_b: AppendixBData | None = None,
     appendix_c: AppendixCData | None = None,
     appendix_d: AppendixDData | None = None,
-) -> ReportTemplateData:
-    """Map resolved report sections into ``ReportTemplateData``.
+) -> ReportDocument:
+    """Map resolved report sections into ``ReportDocument``.
 
     All section resolution (candidate selection, card building, etc.) is done
     before this function is called.  This builder only performs field
@@ -60,7 +60,7 @@ def build_template_data(
     """
     report_facts = prepared.report_facts
     summary_metadata = prepared.summary.metadata
-    return ReportTemplateData(
+    return ReportDocument(
         title=title,
         run_datetime=report_date_text,
         run_id=report.run_id,

@@ -31,13 +31,13 @@ from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
     PatternEvidence,
     RankedCandidateRow,
+    ReportDocument,
     ReportLabelValueRow,
-    ReportTemplateData,
     VerdictPageData,
 )
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
 
@@ -330,7 +330,7 @@ def test_pdf_contains_i18n_labels(
 ) -> None:
     run_path = _make_run_jsonl(tmp_path)
     summary = summarize_log(run_path, lang=lang)
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     text = extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     missing = []
@@ -343,7 +343,7 @@ def test_pdf_contains_i18n_labels(
 
 def test_full_report_template_contains_peak_db_column_labels() -> None:
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
-    data = ReportTemplateData(
+    data = ReportDocument(
         title="Diagnostic worksheet",
         lang="en",
         verdict_page=VerdictPageData(
@@ -400,7 +400,7 @@ def test_full_report_template_contains_peak_db_column_labels() -> None:
 
 
 def test_pdf_additional_observations_heading_for_transient_findings() -> None:
-    data = ReportTemplateData(
+    data = ReportDocument(
         title="Diagnostic worksheet",
         pattern_evidence=PatternEvidence(),
         lang="en",
@@ -419,7 +419,7 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
 @pytest.mark.parametrize("lang", ["en", "nl"])
 def test_pdf_workflow_appendix_a_headings_render(lang: str) -> None:
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
-    data = ReportTemplateData(
+    data = ReportDocument(
         title="Diagnostic worksheet",
         lang=lang,
         appendix_a=AppendixAData(

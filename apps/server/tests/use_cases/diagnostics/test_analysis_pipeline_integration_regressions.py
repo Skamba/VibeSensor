@@ -22,7 +22,7 @@ from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_ma
 from vibesensor.shared.boundaries.sensor_frame_encoder import sensor_frame_to_json_object
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
@@ -331,7 +331,7 @@ def test_recover_stale_does_not_touch_analyzing(db: HistoryDB) -> None:
 
 def test_build_report_pdf_rejects_invalid_type() -> None:
     """build_report_pdf raises TypeError for non-RTD input."""
-    with pytest.raises(TypeError, match="expects ReportTemplateData"):
+    with pytest.raises(TypeError, match="expects ReportDocument"):
         build_report_pdf("not a valid input")
 
 
@@ -416,7 +416,9 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     analysis = run.analysis
     assert analysis is not None
 
-    report_data = map_summary(prepare_report_input(persisted_analysis_to_json_object(analysis)))
+    report_data = build_report_document(
+        prepare_report_input(persisted_analysis_to_json_object(analysis))
+    )
     pdf_bytes = build_report_pdf(report_data)
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 1000

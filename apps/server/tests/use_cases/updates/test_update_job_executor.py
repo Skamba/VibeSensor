@@ -70,7 +70,6 @@ async def test_run_timeout_calls_timeout_handler_and_cleanup() -> None:
         on_timeout=lambda: events.append("timeout"),
         on_cancelled=lambda: events.append("cancelled"),
         cleanup=cleanup,
-        on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
     )
 
     assert events == ["timeout", "cleanup"]
@@ -95,10 +94,9 @@ async def test_run_surfaces_cancelled_cleanup_error() -> None:
             on_timeout=lambda: events.append("timeout"),
             on_cancelled=lambda: events.append("cancelled"),
             cleanup=cleanup,
-            on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
         )
 
-    assert events == ["cancelled", "cleanup", "cleanup-error:RuntimeError"]
+    assert events == ["cancelled", "cleanup"]
 
 
 @pytest.mark.asyncio
@@ -119,7 +117,6 @@ async def test_run_reraises_unexpected_error_after_reporting_and_cleanup() -> No
             on_timeout=lambda: events.append("timeout"),
             on_cancelled=lambda: events.append("cancelled"),
             cleanup=cleanup,
-            on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
         )
 
     assert events == ["cleanup"]
@@ -144,7 +141,6 @@ async def test_run_preserves_workflow_error_when_cleanup_also_fails() -> None:
             on_timeout=lambda: events.append("timeout"),
             on_cancelled=lambda: events.append("cancelled"),
             cleanup=cleanup,
-            on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
         )
 
-    assert events == ["cleanup", "cleanup-error:RuntimeError"]
+    assert events == ["cleanup"]

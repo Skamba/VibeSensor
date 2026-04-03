@@ -23,25 +23,20 @@ from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.panels._panel_diagram import (
-    assert_aspect_preserved,
-    fit_rect_preserve_aspect,
-)
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.pdf_style import (
     MARGIN,
     PAGE_H,
     PAGE_W,
     build_page1_layout,
-    build_page2_layout,
     observed_signature_row_count,
 )
 from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
-    ReportTemplateData,
+    ReportDocument,
     VerdictPageData,
 )
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 
 def _sample(
@@ -68,7 +63,7 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     assert pdf.startswith(b"%PDF")
 
     reader = PdfReader(BytesIO(pdf))
@@ -88,7 +83,7 @@ def test_report_pdf_includes_appendix_b_for_generated_summary(tmp_path: Path) ->
     write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     reader = PdfReader(BytesIO(pdf))
     assert len(reader.pages) == 2
 
@@ -133,7 +128,7 @@ def test_report_pdf_action_ready_flow_includes_appendix_b_before_evidence() -> N
         top_causes=[finding],
     )
 
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     reader = PdfReader(BytesIO(pdf))
 
     assert len(reader.pages) == 4
@@ -142,34 +137,6 @@ def test_report_pdf_action_ready_flow_includes_appendix_b_before_evidence() -> N
     assert "Marker color shows relative vibration strength." in page_two_text
     assert "Appendix B" not in page_two_text
     assert "Evidence and Run Context" in (reader.pages[2].extract_text() or "")
-
-
-def test_fit_rect_preserve_aspect_wider_box() -> None:
-    x, y, w, h = fit_rect_preserve_aspect(100, 200, 0, 0, 400, 200)
-    assert h == pytest.approx(200.0)
-    assert w == pytest.approx(100.0)
-    assert x == pytest.approx(150.0)
-
-
-def test_fit_rect_preserve_aspect_taller_box() -> None:
-    x, y, w, h = fit_rect_preserve_aspect(200, 100, 0, 0, 200, 400)
-    assert w == pytest.approx(200.0)
-    assert h == pytest.approx(100.0)
-    assert y == pytest.approx(150.0)
-
-
-def test_assert_aspect_preserved_ok() -> None:
-    assert_aspect_preserved(100, 200, 50, 100)
-
-
-def test_assert_aspect_preserved_fails() -> None:
-    with pytest.raises(AssertionError, match="distorted"):
-        assert_aspect_preserved(100, 200, 150, 100)
-
-
-def test_assert_aspect_preserved_zero_dims() -> None:
-    with pytest.raises(AssertionError, match="Invalid"):
-        assert_aspect_preserved(0, 200, 50, 100)
 
 
 def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
@@ -204,7 +171,7 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
         samples=[],
     )
 
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     page_one_text = " ".join(
         (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
     )
@@ -267,7 +234,7 @@ def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() ->
         samples=[],
     )
 
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     page_one_text = " ".join(
         (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
     )
@@ -277,7 +244,9 @@ def test_build_report_pdf_replaces_limited_run_context_with_concrete_reason() ->
 
 
 def test_build_report_pdf_rephrases_ambiguous_primary_location_on_page_one() -> None:
-    pdf = build_report_pdf(map_summary(prepare_report_input(ambiguous_primary_location_summary())))
+    pdf = build_report_pdf(
+        build_report_document(prepare_report_input(ambiguous_primary_location_summary()))
+    )
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
 
     assert "Mixed signal between Front-Left and Rear-Left" in text
@@ -286,7 +255,7 @@ def test_build_report_pdf_rephrases_ambiguous_primary_location_on_page_one() -> 
 
 def test_build_report_pdf_avoids_trunk_specific_wheel_guidance_for_driveline_primary() -> None:
     pdf = build_report_pdf(
-        map_summary(
+        build_report_document(
             prepare_report_input(trunk_primary_guidance_summary(primary_source="driveline"))
         )
     )
@@ -299,7 +268,7 @@ def test_build_report_pdf_avoids_trunk_specific_wheel_guidance_for_driveline_pri
 
 def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
     pdf = build_report_pdf(
-        ReportTemplateData(
+        ReportDocument(
             title="VibeSensor Diagnostic Report",
             verdict_page=VerdictPageData(
                 suspected_source="Wheel / Tire",
@@ -367,7 +336,7 @@ def test_build_report_pdf_renders_medium_confidence_data_trust_summary_for_tier_
         samples=[],
     )
 
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
 
     assert "inspect first — moderate confidence" in text
@@ -429,7 +398,7 @@ def test_build_report_pdf_keeps_weak_spatial_engine_and_driveline_findings_on_in
         samples=[],
     )
 
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split())
 
     assert "inspect first — moderate confidence" in text
@@ -478,7 +447,7 @@ def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> Non
         samples=[],
     )
 
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     page_one_text = " ".join(
         (PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").lower().split()
     )
@@ -487,7 +456,9 @@ def test_build_report_pdf_recapture_mode_moves_guidance_into_appendix_a() -> Non
 
 
 def test_build_report_pdf_keeps_same_source_temporal_shift_visible_on_page_one() -> None:
-    pdf = build_report_pdf(map_summary(prepare_report_input(sequential_same_source_summary())))
+    pdf = build_report_pdf(
+        build_report_document(prepare_report_input(sequential_same_source_summary()))
+    )
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
 
     assert "Front-Left" in text
@@ -497,7 +468,9 @@ def test_build_report_pdf_keeps_same_source_temporal_shift_visible_on_page_one()
 
 def test_build_report_pdf_keeps_same_source_temporal_shift_visible_in_recapture_flow() -> None:
     pdf = build_report_pdf(
-        map_summary(prepare_report_input(sequential_same_source_summary(weak_spatial=True)))
+        build_report_document(
+            prepare_report_input(sequential_same_source_summary(weak_spatial=True))
+        )
     )
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split())
 
@@ -536,7 +509,9 @@ def test_build_report_pdf_recapture_page_uses_scenario_specific_guidance(
     mode: str,
     expected_page_two_text: str,
 ) -> None:
-    pdf = build_report_pdf(map_summary(prepare_report_input(recapture_guidance_summary(mode))))
+    pdf = build_report_pdf(
+        build_report_document(prepare_report_input(recapture_guidance_summary(mode)))
+    )
     page_two_text = " ".join((PdfReader(BytesIO(pdf)).pages[1].extract_text() or "").split())
 
     assert expected_page_two_text in page_two_text
@@ -551,21 +526,6 @@ def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:
     )
     assert layout.observed.h > layout.header.h
     assert layout.systems.h < 50 * mm
-
-
-def test_build_page2_layout_expands_evidence_space_and_keeps_continuation_room() -> None:
-    layout = build_page2_layout(
-        width=PAGE_W - 2 * MARGIN,
-        page_top=PAGE_H - MARGIN,
-        has_transient_findings=True,
-        has_next_steps_continued=True,
-    )
-    assert layout.pattern_panel.h > 125 * mm
-    assert layout.peaks_panel.h >= 58 * mm
-    assert layout.observations_panel is not None
-    assert layout.observations_panel.h < 24 * mm
-    assert layout.continued_next_steps is not None
-    assert layout.continued_next_steps.h > 16 * mm
 
 
 def test_observed_signature_row_count_reserves_optional_reason_and_tier_a_warning() -> None:

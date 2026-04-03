@@ -19,7 +19,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
     PatternEvidence,
     RankedCandidateRow,
-    ReportTemplateData,
+    ReportDocument,
     VerdictPageData,
 )
 
@@ -107,8 +107,8 @@ def test_report_package_imports_without_shared_report_projection() -> None:
 
 
 def test_build_report_pdf_accepts_report_template_data() -> None:
-    """build_report_pdf must accept a ReportTemplateData directly."""
-    data = ReportTemplateData(
+    """build_report_pdf must accept a ReportDocument directly."""
+    data = ReportDocument(
         title="Test Report",
         pattern_evidence=PatternEvidence(),
         lang="en",
@@ -123,8 +123,8 @@ def test_build_report_pdf_accepts_report_template_data() -> None:
 
 
 def test_report_output_matches_template_data() -> None:
-    """Key facts from ReportTemplateData appear in the rendered PDF text."""
-    data = ReportTemplateData(
+    """Key facts from ReportDocument appear in the rendered PDF text."""
+    data = ReportDocument(
         title="VibeSensor Diagnostic Report",
         run_datetime="2026-01-15 10:30:00",
         sensor_count=4,
@@ -185,7 +185,7 @@ def test_report_output_matches_template_data() -> None:
 
 def test_report_keeps_strongest_sensor_on_page_one_when_no_system_cards() -> None:
     """Page one keeps the dominant corner visible even without worksheet rows."""
-    data = ReportTemplateData(
+    data = ReportDocument(
         title="VibeSensor Diagnostic Report",
         verdict_page=VerdictPageData(
             suspected_source="Unknown resonance",
@@ -222,7 +222,7 @@ def test_report_keeps_strongest_sensor_on_page_one_when_no_system_cards() -> Non
 
 def test_report_cards_switch_to_check_first_summary_when_parts_exist() -> None:
     """Workflow appendix surfaces primary path context and concrete action rows."""
-    data = ReportTemplateData(
+    data = ReportDocument(
         title="VibeSensor Diagnostic Report",
         verdict_page=VerdictPageData(
             suspected_source="Wheel / Tire",

@@ -42,22 +42,23 @@ class UpdateJobLifecycleHandler:
         self._tracker.fail("cancelled", "Update was cancelled")
         self._tracker.log("Update cancelled")
 
-    def handle_unexpected(self, exc: Exception) -> None:
-        self._tracker.fail("unexpected", f"Unexpected error: {exc}")
-        self._logger.exception("update: unexpected error")
-
-    def handle_cleanup_error(self, exc: Exception) -> None:
-        self._tracker.fail("cleanup", f"Cleanup failed: {exc}")
-        self._logger.exception("update: cleanup error")
-
     async def cleanup_after_update(self) -> None:
         tracker = self._tracker
         transport_session = self._transport_sessions_factory().for_transport(
             tracker.status.transport,
         )
+        cleanup_error: Exception | None = None
         try:
             await transport_session.cleanup_after_update()
             tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            tracker.fail("cleanup", f"Cleanup failed: {exc}")
+            self._logger.exception("update: cleanup error")
+            cleanup_error = exc
         finally:
             tracker.clear_secrets()
             tracker.finish_cleanup()
+        if cleanup_error is not None:
+            raise cleanup_error

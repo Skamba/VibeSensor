@@ -472,7 +472,10 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
     from test_support.report_helpers import minimal_summary
 
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-    from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+    from vibesensor.use_cases.history.report_document import (
+        build_report_document,
+        prepare_report_input,
+    )
 
     summary = minimal_summary(
         lang="en",
@@ -500,7 +503,7 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
         samples=[],
     )
 
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     text = " ".join((PdfReader(BytesIO(pdf)).pages[0].extract_text() or "").split()).lower()
 
     assert "why this corner wins" in text

@@ -12,17 +12,18 @@ lifecycle, health state, and callback forwarding.
 from __future__ import annotations
 
 import logging
-import sqlite3
 import time
 from collections.abc import Callable
 from threading import Event, RLock, Thread
 
-from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisAttemptResult,
     PostAnalysisRunner,
     execute_post_analysis,
+)
+from vibesensor.use_cases.run.post_analysis_failures import (
+    UnexpectedPostAnalysisFailureRecorder,
 )
 from vibesensor.use_cases.run.post_analysis_outcomes import (
     PostAnalysisExecutionResult,
@@ -78,6 +79,10 @@ class PostAnalysisWorker:
         self._error_cb = error_callback or (lambda _msg: None)
         self._clear_error_cb = clear_error_callback or (lambda: None)
         self._analysis_runner = analysis_runner
+        self._unexpected_failure_recorder = UnexpectedPostAnalysisFailureRecorder(
+            history_db=history_db,
+            error_callback=self._error_cb,
+        )
         self._lock = RLock()
         self._state = PostAnalysisState()
         self._analysis_thread: Thread | None = None
@@ -213,7 +218,9 @@ class PostAnalysisWorker:
             LOGGER.exception("Unexpected error in analysis worker outside an active run")
             return
 
-        self._record_unexpected_worker_failure(run_id, exc)
+        completed_error = self._unexpected_failure_recorder.record(run_id=run_id, exc=exc)
+        with self._lock:
+            self._state.mark_completed(run_id, error=completed_error)
         LOGGER.error(
             "Halting post-analysis worker after unexpected error in run %s; "
             "cleared %d queued run(s)",
@@ -286,21 +293,3 @@ class PostAnalysisWorker:
 
         for error_msg in execution_callback_errors(result):
             self._error_cb(error_msg)
-
-    def _record_unexpected_worker_failure(self, run_id: str, exc: Exception) -> None:
-        completed_error = bounded_failure_message(exc)
-        with self._lock:
-            self._state.mark_completed(run_id, error=completed_error)
-        db = self._history_db
-        if db is not None:
-            store_analysis_error = getattr(db, "store_analysis_error", None)
-            if callable(store_analysis_error):
-                try:
-                    store_analysis_error(run_id, completed_error)
-                except (sqlite3.Error, OSError):
-                    LOGGER.exception(
-                        "Failed to persist unexpected analysis failure for run %s",
-                        run_id,
-                    )
-        self._error_cb(f"post-analysis failed for run {run_id}: {completed_error}")
-        LOGGER.exception("Unexpected error in analysis worker for run %s", run_id)

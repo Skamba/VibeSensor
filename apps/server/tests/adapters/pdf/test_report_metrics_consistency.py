@@ -1,7 +1,7 @@
 """Five-scenario report consistency tests.
 
 Each scenario generates analysis output via the builders, builds
-ReportTemplateData, and then validates that every report field traces
+ReportDocument, and then validates that every report field traces
 back consistently to the persisted analysis metrics.
 
 Scenarios
@@ -35,23 +35,23 @@ from test_support.sample_scenarios import (
 )
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 # ---------------------------------------------------------------------------
 # Type alias
 # ---------------------------------------------------------------------------
 
-ScenarioPair = tuple[dict, ReportTemplateData]
+ScenarioPair = tuple[dict, ReportDocument]
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _build_report_data(summary: dict) -> ReportTemplateData:
-    """Build ReportTemplateData from a summary dict."""
-    return map_summary(prepare_report_input(summary))
+def _build_report_data(summary: dict) -> ReportDocument:
+    """Build ReportDocument from a summary dict."""
+    return build_report_document(prepare_report_input(summary))
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +168,7 @@ _CROSS_SECTION_FIELDS: list[tuple[str, str, str]] = [
 ]
 
 
-def _assert_cross_section_consistency(rd: ReportTemplateData) -> None:
+def _assert_cross_section_consistency(rd: ReportDocument) -> None:
     """Assert observed <-> pattern_evidence values match exactly."""
     obs, pe = rd.observed, rd.pattern_evidence
     for obs_attr, pe_attr, label in _CROSS_SECTION_FIELDS:
@@ -179,7 +179,7 @@ def _assert_cross_section_consistency(rd: ReportTemplateData) -> None:
         )
 
 
-def _assert_tier_gating(rd: ReportTemplateData) -> None:
+def _assert_tier_gating(rd: ReportDocument) -> None:
     """Assert tier-based section gating is correct."""
     tier = rd.certainty_tier_key
 
@@ -204,7 +204,7 @@ def _assert_valid_float(value: str, field_name: str) -> None:
             pytest.fail(f"Peak row {field_name} not a valid float: '{value}'")
 
 
-def _assert_unit_consistency(rd: ReportTemplateData) -> None:
+def _assert_unit_consistency(rd: ReportDocument) -> None:
     """Assert units are consistent across the report."""
     sl = rd.observed.strength_label or ""
     if "dB" in sl:
@@ -219,7 +219,7 @@ def _assert_unit_consistency(rd: ReportTemplateData) -> None:
     assert len(units) <= 1, f"Mixed units in location hotspot rows: {units}"
 
 
-def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> None:
+def _assert_certainty_tier_consistent(rd: ReportDocument, summary: dict) -> None:
     """Assert the tier stored in report matches ConfidenceAssessment.tier."""
     from vibesensor.domain import ConfidenceAssessment
     from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
@@ -246,7 +246,7 @@ def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> 
     )
 
 
-def _assert_no_report_time_analysis(rd: ReportTemplateData) -> None:
+def _assert_no_report_time_analysis(rd: ReportDocument) -> None:
     """Verify the report data is fully pre-computed (no analysis imports in report)."""
     assert isinstance(rd.observed.strength_label, (str, type(None)))
     assert isinstance(rd.observed.certainty_label, (str, type(None)))
@@ -255,7 +255,7 @@ def _assert_no_report_time_analysis(rd: ReportTemplateData) -> None:
         assert isinstance(rd.location_hotspot_rows, list)
 
 
-def _assert_pdf_generates(rd: ReportTemplateData) -> bytes:
+def _assert_pdf_generates(rd: ReportDocument) -> bytes:
     """Assert the PDF generates successfully and returns valid bytes."""
     pdf = build_report_pdf(rd)
     assert isinstance(pdf, bytes)
@@ -266,7 +266,7 @@ def _assert_pdf_generates(rd: ReportTemplateData) -> bytes:
 
 def _run_all_consistency_checks(
     summary: dict,
-    rd: ReportTemplateData,
+    rd: ReportDocument,
     *,
     expect_tier: str | None = None,
 ) -> bytes:
@@ -467,19 +467,19 @@ class TestAllFiveScenariosPass:
     def named_scenario(
         self,
         request: pytest.FixtureRequest,
-    ) -> tuple[str, dict, ReportTemplateData]:
+    ) -> tuple[str, dict, ReportDocument]:
         name: str = request.param
         summary, rd = _SCENARIO_BUILDERS[name]()
         return name, summary, rd
 
-    def test_consistency(self, named_scenario: tuple[str, dict, ReportTemplateData]) -> None:
+    def test_consistency(self, named_scenario: tuple[str, dict, ReportDocument]) -> None:
         name, summary, rd = named_scenario
         try:
             _run_all_consistency_checks(summary, rd)
         except AssertionError as e:
             pytest.fail(f"Scenario '{name}' failed consistency check: {e}")
 
-    def test_pdf_generates(self, named_scenario: tuple[str, dict, ReportTemplateData]) -> None:
+    def test_pdf_generates(self, named_scenario: tuple[str, dict, ReportDocument]) -> None:
         name, _, rd = named_scenario
         pdf = _assert_pdf_generates(rd)
         assert len(pdf) > 500, f"Scenario '{name}' PDF too small: {len(pdf)} bytes"

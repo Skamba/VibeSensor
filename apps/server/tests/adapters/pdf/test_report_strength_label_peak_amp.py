@@ -5,7 +5,7 @@ from __future__ import annotations
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 from vibesensor.use_cases.history.report_document.presentation import strength_text
 
 # ---------------------------------------------------------------------------
@@ -29,7 +29,7 @@ def test_strength_text_value_with_peak_amp() -> None:
     assert " g" not in txt
 
 
-def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
+def test_build_report_document_strength_label_includes_peak_amp_when_available() -> None:
     summary = minimal_summary(
         top_causes=[_F_ORDER_CAUSE],
         findings=[
@@ -40,7 +40,7 @@ def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
         ],
         sensor_intensity_by_location=[{"p95_intensity_db": 22.0}],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.observed.strength_label is not None
     assert "22.0 dB" in data.observed.strength_label
     assert " g" not in data.observed.strength_label
@@ -50,9 +50,9 @@ def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
     assert data.pattern_evidence.strength_peak_db == 22.0
 
 
-def test_map_summary_strength_label_falls_back_to_db_only_without_peak_amp() -> None:
+def test_build_report_document_strength_label_falls_back_to_db_only_without_peak_amp() -> None:
     summary = minimal_summary(sensor_intensity_by_location=[{"p95_intensity_db": 22.0}])
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.observed.strength_label is not None
     assert "22.0 dB" in data.observed.strength_label
     assert "g peak" not in data.observed.strength_label
@@ -71,7 +71,7 @@ def test_strength_with_peak_appends_only_when_label_lacks_db_text() -> None:
     assert _strength_with_peak("Moderate", 15.3, fallback="N/A") == "Moderate · 15.3 dB peak"
 
 
-def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -> None:
+def test_build_report_document_strength_label_uses_finding_db_when_sensor_rows_missing() -> None:
     summary = minimal_summary(
         top_causes=[_F_ORDER_CAUSE],
         findings=[
@@ -82,14 +82,14 @@ def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -
             },
         ],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.observed.strength_label is not None
     assert "23.4 dB" in data.observed.strength_label
     assert " g" not in data.observed.strength_label
     assert data.observed.strength_peak_db == 23.4
 
 
-def test_map_summary_strength_label_keeps_db_and_peak_from_same_finding() -> None:
+def test_build_report_document_strength_label_keeps_db_and_peak_from_same_finding() -> None:
     summary = minimal_summary(
         top_causes=[{"finding_id": "F_PRIMARY"}, {"finding_id": "F_SECONDARY"}],
         findings=[
@@ -104,13 +104,13 @@ def test_map_summary_strength_label_keeps_db_and_peak_from_same_finding() -> Non
         ],
         sensor_intensity_by_location=[{"p95_intensity_db": 22.0}],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.observed.strength_label is not None
     assert "40.0 dB" in data.observed.strength_label
     assert "g peak" not in data.observed.strength_label
 
 
-def test_map_summary_strength_label_uses_strongest_sensor_row_when_unsorted() -> None:
+def test_build_report_document_strength_label_uses_strongest_sensor_row_when_unsorted() -> None:
     summary = minimal_summary(
         sensor_intensity_by_location=[
             {"location": "A", "p95_intensity_db": 12.0},
@@ -118,6 +118,6 @@ def test_map_summary_strength_label_uses_strongest_sensor_row_when_unsorted() ->
             {"location": "C", "p95_intensity_db": 20.0},
         ],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.observed.strength_label is not None
     assert "28.0 dB" in data.observed.strength_label
