@@ -7,27 +7,27 @@ from pathlib import Path
 
 from vibesensor.use_cases.updates.models import UpdateRequest
 from vibesensor.use_cases.updates.status import UpdateStatusTracker, collect_runtime_details
-from vibesensor.use_cases.updates.wifi import UpdateWifiOrchestrator
+from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 
-WifiFactory = Callable[[], UpdateWifiOrchestrator]
+TransportSessionsFactory = Callable[[], UpdateTransportSessions]
 
 
 class UpdateJobLifecycleHandler:
     """Own stateful update job lifecycle callbacks and cleanup sequencing."""
 
-    __slots__ = ("_logger", "_repo", "_tracker", "_wifi_factory")
+    __slots__ = ("_logger", "_repo", "_tracker", "_transport_sessions_factory")
 
     def __init__(
         self,
         *,
         tracker: UpdateStatusTracker,
         repo: Path,
-        wifi_factory: WifiFactory,
+        transport_sessions_factory: TransportSessionsFactory,
         logger: logging.Logger,
     ) -> None:
         self._tracker = tracker
         self._repo = repo
-        self._wifi_factory = wifi_factory
+        self._transport_sessions_factory = transport_sessions_factory
         self._logger = logger
 
     def prepare_start(self, request: UpdateRequest) -> None:
@@ -54,11 +54,12 @@ class UpdateJobLifecycleHandler:
 
     async def cleanup_after_update(self) -> None:
         tracker = self._tracker
-        wifi = self._wifi_factory()
+        transport_session = self._transport_sessions_factory().for_transport(
+            tracker.status.transport,
+        )
         try:
-            await wifi.maybe_restore_hotspot_during_cleanup()
+            await transport_session.cleanup_after_update()
             tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
-            tracker.extend_issues(await wifi.collect_cleanup_diagnostics())
         finally:
             tracker.clear_secrets()
             tracker.finish_cleanup()
