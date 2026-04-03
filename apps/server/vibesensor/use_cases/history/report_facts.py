@@ -7,8 +7,7 @@ from collections.abc import Mapping
 from vibesensor.domain import (
     TestRun,
 )
-from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
+from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.payload import NormalizedReportSummary
 from vibesensor.shared.boundaries.reporting.projection import (
     compute_location_hotspot_rows,
@@ -20,7 +19,6 @@ from vibesensor.shared.boundaries.reporting.projection import (
 )
 from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
-from vibesensor.use_cases.history.report_display_mapping import prepare_report_sections
 from vibesensor.use_cases.history.report_fact_coverage import build_coverage_summary
 from vibesensor.use_cases.history.report_fact_decisions import (
     resolve_action_status_key,
@@ -38,7 +36,6 @@ def prepare_report_facts(
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportFacts:
     """Resolve semantic report facts shared by downstream PDF mapping."""
-    prepared_language = str(normalize_lang(language or payload.get("lang")))
     sensor_locations_active = summary.active_sensor_locations
     origin = resolve_report_origin(test_run)
     origin_location = normalize_origin_location(origin)
@@ -80,22 +77,6 @@ def prepare_report_facts(
         warnings=warning_models,
     )
     duration_text = summary.record_length
-    verdict_page, appendix_a, appendix_b = prepare_report_sections(
-        aggregate=test_run,
-        primary_candidate_facts=primary_candidate_facts,
-        active_sensor_intensity=active_sensor_intensity,
-        duration_text=duration_text,
-        action_status_key=action_status_key,
-        location_confidence_key=location_confidence_key,
-        alternative_source_visible=alternative_source_visible,
-        expected_locations=coverage_summary.expected_locations,
-        active_locations=coverage_summary.active_locations,
-        missing_locations=coverage_summary.missing_locations,
-        partial_locations=coverage_summary.partial_locations,
-        suitability_checks=suitability_checks,
-        warnings=warning_models,
-        lang=prepared_language,
-    )
     return PreparedReportFacts(
         origin=origin,
         origin_location=origin_location,
@@ -125,7 +106,4 @@ def prepare_report_facts(
         alternative_source_visible=alternative_source_visible,
         confidence_gap_to_alternative=confidence_gap_to_alternative,
         timeline_intervals=summary.timeline_intervals,
-        verdict_page=verdict_page,
-        appendix_a=appendix_a,
-        appendix_b=appendix_b,
     )

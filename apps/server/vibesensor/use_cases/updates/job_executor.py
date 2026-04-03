@@ -71,14 +71,24 @@ class UpdateJobExecutor:
 
     async def _cleanup_after_workflow(self, cleanup: CleanupCallback) -> None:
         active_error = sys.exc_info()[1]
+        if active_error is None:
+            try:
+                await cleanup()
+            except asyncio.CancelledError:
+                raise
+            except (OSError, UpdateError) as exc:
+                raise UpdateCleanupError(f"Cleanup failed: {exc}") from exc
+            return
+
         try:
             await cleanup()
         except asyncio.CancelledError:
             raise
-        except (OSError, RuntimeError, UpdateError) as exc:
+        except (OSError, UpdateError) as exc:
             if isinstance(active_error, asyncio.CancelledError):
                 raise UpdateCleanupError(f"Cleanup failed after cancellation: {exc}") from exc
-            if active_error is not None:
-                active_error.add_note(f"Cleanup also failed: {exc}")
-                return
-            raise UpdateCleanupError(f"Cleanup failed: {exc}") from exc
+            active_error.add_note(f"Cleanup also failed: {exc}")
+        except Exception as exc:
+            if isinstance(active_error, asyncio.CancelledError):
+                raise
+            active_error.add_note(f"Cleanup also failed: {exc}")

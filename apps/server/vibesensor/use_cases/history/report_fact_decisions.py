@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding, SuitabilityCheck, TestRun
-from vibesensor.shared.boundaries.reporting.contracts import (
+from vibesensor.shared.boundaries.reporting import (
     ActionStatusKey,
     LocationConfidenceKey,
     ReportCoverageSummary,

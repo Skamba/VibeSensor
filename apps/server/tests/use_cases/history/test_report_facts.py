@@ -10,6 +10,7 @@ from vibesensor.shared.boundaries.test_run_reconstruction import (
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
 from vibesensor.use_cases.history.report_facts import prepare_report_facts
+from vibesensor.use_cases.history.report_presentation import prepare_report_presentation
 
 
 def _summary() -> dict[str, object]:
@@ -115,6 +116,20 @@ def _prepare_facts(summary: dict[str, object], **kwargs: object):
     )
 
 
+def _prepare_presentation(summary: dict[str, object]):
+    test_run = build_test_run_from_summary(summary)
+    assert test_run is not None
+    return prepare_report_presentation(
+        aggregate=test_run,
+        report_facts=prepare_report_facts(
+            summary,
+            summary=report_summary_from_mapping(summary),
+            test_run=test_run,
+        ),
+        lang=str(summary["lang"]),
+    )
+
+
 def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
     summary = _summary()
     facts = _prepare_facts(summary)
@@ -173,16 +188,16 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
     assert facts.timeline_intervals[1].has_fault_evidence is True
 
 
-def test_prepare_report_facts_precomputes_workflow_document_sections() -> None:
+def test_prepare_report_presentation_builds_workflow_document_sections() -> None:
     summary = _summary()
-    facts = _prepare_facts(summary)
+    presentation = _prepare_presentation(summary)
 
-    assert facts.verdict_page.action_status
-    assert facts.verdict_page.suspected_source
-    assert facts.appendix_a.mode == "workflow"
-    assert len(facts.appendix_a.ranked_candidates) == 1
-    assert facts.appendix_b.coverage_label == facts.verdict_page.coverage_label
-    assert len(facts.verdict_page.footer_routes) == 4
+    assert presentation.verdict_page.action_status
+    assert presentation.verdict_page.suspected_source
+    assert presentation.appendix_a.mode == "workflow"
+    assert len(presentation.appendix_a.ranked_candidates) == 1
+    assert presentation.appendix_b.coverage_label == presentation.verdict_page.coverage_label
+    assert len(presentation.verdict_page.footer_routes) == 4
 
 
 @pytest.mark.parametrize(
@@ -215,13 +230,13 @@ def test_prepare_report_facts_keeps_weak_spatial_wheel_findings_on_recapture_pat
     assert facts.action_status_key == "recapture_before_acting"
 
 
-def test_prepare_report_facts_precomputes_recapture_document_guidance() -> None:
+def test_prepare_report_presentation_builds_recapture_document_guidance() -> None:
     summary = _weak_spatial_order_summary(source="wheel/tire", order_label="1x wheel order")
-    facts = _prepare_facts(summary)
+    presentation = _prepare_presentation(summary)
 
-    assert facts.appendix_a.mode == "recapture"
-    assert facts.appendix_a.capture_issues
-    assert facts.appendix_a.capture_changes
-    assert facts.appendix_a.capture_conditions
-    assert facts.verdict_page.reason_sentence == facts.appendix_a.capture_issues[0]
-    assert len(facts.verdict_page.footer_routes) == 1
+    assert presentation.appendix_a.mode == "recapture"
+    assert presentation.appendix_a.capture_issues
+    assert presentation.appendix_a.capture_changes
+    assert presentation.appendix_a.capture_conditions
+    assert presentation.verdict_page.reason_sentence == presentation.appendix_a.capture_issues[0]
+    assert len(presentation.verdict_page.footer_routes) == 1
