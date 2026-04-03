@@ -9,9 +9,13 @@ from typing import TYPE_CHECKING
 
 from vibesensor.shared.ports import ClockSyncBroadcaster
 
-from .processing_failure_policy import ProcessingFailurePolicy
+from .processing_failure_policy import (
+    ProcessingFailureDecision,
+    ProcessingFailurePolicy,
+    ProcessingSuccessDecision,
+)
 from .processing_failures import ProcessingTickFailure
-from .processing_state import ProcessingLoopState
+from .processing_state import ProcessingHealth, ProcessingLoopState
 from .processing_tick import ProcessingTickRunner
 
 if TYPE_CHECKING:
@@ -74,11 +78,39 @@ class ProcessingLoop:
                 tick_start = time.monotonic()
                 await self._run_tick(sync_clock=sync_clock)
                 tick_dur = time.monotonic() - tick_start
-                self._failure_policy.record_success(self.state, tick_duration_s=tick_dur)
+                self._apply_success(
+                    self._failure_policy.plan_success(tick_duration_s=tick_dur),
+                )
             except ProcessingTickFailure as failure:
-                delay = await self._failure_policy.record_failure(
-                    self.state,
+                decision = self._failure_policy.plan_failure(
                     failure,
                     interval_s=interval,
                 )
+                delay = await self._apply_failure(decision)
             await asyncio.sleep(delay)
+
+    def _apply_success(self, decision: ProcessingSuccessDecision) -> None:
+        self.state.last_tick_duration_s = decision.tick_duration_s
+        if decision.tick_duration_s > self.state.max_tick_duration_s:
+            self.state.max_tick_duration_s = decision.tick_duration_s
+        self.state.tick_count += 1
+        self.state.processing_state = ProcessingHealth.OK
+
+    async def _apply_failure(self, decision: ProcessingFailureDecision) -> float:
+        self.state.processing_failure_count += 1
+        self.state.last_failure_category = decision.failure_category
+        self.state.last_failure_message = decision.failure_message
+        self.state.processing_failure_categories[decision.failure_category] = (
+            self.state.processing_failure_categories.get(decision.failure_category, 0) + 1
+        )
+        self.state.processing_state = decision.processing_state
+        if decision.escalation_failure is not None:
+            raise decision.escalation_failure
+        if decision.backoff_sleep_s is not None:
+            await self._failure_policy.complete_backoff(
+                cycle=self._failure_policy.fatal_backoff_cycles,
+                total_failure_count=self.state.processing_failure_count,
+            )
+            if decision.post_backoff_state is not None:
+                self.state.processing_state = decision.post_backoff_state
+        return decision.next_delay_s

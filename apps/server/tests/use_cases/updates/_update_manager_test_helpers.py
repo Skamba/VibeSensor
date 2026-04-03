@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdateTransport
 from vibesensor.use_cases.updates.runner import CommandRunner
+from vibesensor.use_cases.updates.runtime import build_update_manager_runtime
 from vibesensor.use_cases.updates.status import UpdateStateStore, collect_runtime_details
 
 
@@ -160,7 +161,7 @@ def setup_update_env(
         kwargs["rollback_dir"] = str(tmp_path / "rollback")
     if usb_internet_service is not None:
         kwargs["usb_internet_service"] = usb_internet_service
-    mgr = UpdateManager(**kwargs)
+    mgr = UpdateManager(runtime=build_update_manager_runtime(**kwargs))
     if seed_artifacts:
         seed_runtime_artifacts(repo, mgr, valid=True)
     return mgr, runner, repo

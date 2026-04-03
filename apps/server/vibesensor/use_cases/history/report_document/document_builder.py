@@ -1,33 +1,22 @@
-"""Focused builder for canonical report-document field mapping.
-
-Owns the mapping from resolved report sections and prepared report inputs into
-``ReportDocument``. Keeps the field assignment explicit and testable while
-the orchestration layer handles section resolution.
-"""
+"""Focused builder for canonical report-document field mapping."""
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
-from vibesensor.shared.boundaries.reporting.document import (
-    Report,
-    ReportDocument,
-)
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 
-from .resolved_sections import ResolvedReportDocumentSections
+from .assembly import ReportDocumentAssembly
 
 
-def build_report_document_data(
-    *,
-    prepared: PreparedReportInput,
-    report: Report,
-    sections: ResolvedReportDocumentSections,
-) -> ReportDocument:
+def build_report_document_data(assembly: ReportDocumentAssembly) -> ReportDocument:
     """Map resolved report sections into ``ReportDocument``.
 
     All section resolution (candidate selection, card building, etc.) is done
     before this function is called.  This builder only performs field
     assignment and simple fallback defaults so it stays easily testable.
     """
+    prepared = assembly.prepared
+    report = assembly.report
+    sections = assembly.sections
     report_facts = prepared.report_facts
     summary_metadata = prepared.summary.metadata
     return ReportDocument(

@@ -39,6 +39,7 @@ from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.constants.dsp import (
     FFT_N,
@@ -55,15 +56,23 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.runtime import build_update_manager_runtime
 
 LOGGER = logging.getLogger(__name__)
 
 
 def _build_pdf_bytes(document: ReportDocument) -> bytes:
-    """Render a prepared report document through the PDF adapter."""
+    """Render a prepared report document through the PDF adapter boundary."""
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
     return build_report_pdf(document)
+
+
+def _build_prepared_pdf_bytes(prepared: PreparedReportInput) -> bytes:
+    """Render a prepared report input through the PDF adapter boundary."""
+    from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
+
+    return build_prepared_report_pdf(prepared)
 
 
 def resolve_accel_scale_g_per_lsb(config: AppConfig) -> float:
@@ -152,7 +161,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     )
     report_service = HistoryReportService(
         history_db,
-        pdf_renderer=_build_pdf_bytes,
+        pdf_renderer=_build_prepared_pdf_bytes,
     )
     history_export_service = HistoryExportService(
         history_db,
@@ -242,9 +251,11 @@ def build_runtime(config: AppConfig) -> AppRuntime:
 
     # update manager
     update_manager = UpdateManager(
-        ap_con_name=config.ap.con_name,
-        wifi_ifname=config.ap.ifname,
-        rollback_dir=str(config.update.rollback_dir),
+        runtime=build_update_manager_runtime(
+            ap_con_name=config.ap.con_name,
+            wifi_ifname=config.ap.ifname,
+            rollback_dir=str(config.update.rollback_dir),
+        ),
     )
 
     esp_flash_manager = EspFlashManager()
