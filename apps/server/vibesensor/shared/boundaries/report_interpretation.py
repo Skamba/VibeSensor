@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from statistics import mean as _mean
 
@@ -16,9 +16,6 @@ from vibesensor.domain import (
     TestRun,
     TireSpec,
     VibrationOrigin,
-)
-from vibesensor.shared.boundaries.location_hotspot_codec import (
-    location_intensity_summary_from_mapping,
 )
 
 
@@ -116,22 +113,16 @@ def tire_spec_text(tire_spec: TireSpec | None) -> str | None:
 
 
 def filter_active_sensor_intensity(
-    raw_sensor_intensity_all: Sequence[object],
+    raw_sensor_intensity_all: Sequence[LocationIntensitySummary],
     sensor_locations_active: Sequence[str],
 ) -> list[LocationIntensitySummary]:
     """Filter sensor intensity rows to only active locations."""
     active_locations = set(sensor_locations_active)
     rows: list[LocationIntensitySummary] = []
     for row in raw_sensor_intensity_all:
-        if isinstance(row, LocationIntensitySummary):
-            typed_row = row
-        elif isinstance(row, Mapping):
-            typed_row = location_intensity_summary_from_mapping(row)
-        else:
+        if active_locations and row.location not in active_locations:
             continue
-        if active_locations and typed_row.location not in active_locations:
-            continue
-        rows.append(typed_row)
+        rows.append(row)
     return rows
 
 

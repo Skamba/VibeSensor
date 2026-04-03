@@ -11,7 +11,10 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     summary = {
         "case_id": "summary-case-guard-id",
         "run_id": "summary-case-guard",
-        "metadata": {"active_car_snapshot": {"name": "Guard Car", "type": "sedan"}},
+        "metadata": {
+            "run_id": "summary-case-guard",
+            "active_car_snapshot": {"name": "Guard Car", "type": "sedan"},
+        },
         "findings": [make_finding_payload(finding_id="F001", confidence=0.80)],
         "top_causes": [make_finding_payload(finding_id="F001", confidence=0.80)],
         "test_plan": [

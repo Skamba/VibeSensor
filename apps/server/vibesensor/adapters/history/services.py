@@ -117,6 +117,7 @@ class ProjectedHistoryExportService:
         spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
             max_size=EXPORT_SPOOL_THRESHOLD,
         )
+        download_built = False
         try:
             with zipfile.ZipFile(spool, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
                 context.raw_csv_spool.seek(0)
@@ -132,13 +133,13 @@ class ProjectedHistoryExportService:
                 )
             file_size = spool.seek(0, 2)
             spool.seek(0)
+            download_built = True
             return HistoryExportDownload(
                 filename=f"{context.safe_name}.zip",
                 file_size=file_size,
                 spool=spool,
             )
-        except BaseException:
-            spool.close()
-            raise
         finally:
+            if not download_built:
+                spool.close()
             context.raw_csv_spool.close()
