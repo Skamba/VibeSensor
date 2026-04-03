@@ -206,21 +206,18 @@ def test_mapping_module_no_longer_reexports_raw_summary_report_builder() -> None
     assert not hasattr(mapping, "build_report_from_summary")
 
 
-def test_mapping_section_builders_consume_prepared_display_facts() -> None:
-    from inspect import signature
+def test_report_facts_hold_canonical_document_sections_without_builder_shims() -> None:
+    from dataclasses import fields
 
     import vibesensor.use_cases.history.report_document as mapping
+    from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
 
-    verdict_params = signature(mapping._build_verdict_page_data).parameters
-    assert "verdict" in verdict_params
-    assert "aggregate" not in verdict_params
-    assert "primary" not in verdict_params
-    assert "report_facts" not in verdict_params
+    fact_fields = {field.name for field in fields(PreparedReportFacts)}
+    assert "verdict_page" in fact_fields
+    assert "appendix_a" in fact_fields
+    assert "appendix_b" in fact_fields
+    assert "display" not in fact_fields
 
-    appendix_a_params = signature(mapping._build_appendix_a_data).parameters
-    assert "appendix" in appendix_a_params
-    assert "report_facts" not in appendix_a_params
-
-    appendix_b_params = signature(mapping._build_appendix_b_data).parameters
-    assert "appendix" in appendix_b_params
-    assert "report_facts" not in appendix_b_params
+    assert not hasattr(mapping, "_build_verdict_page_data")
+    assert not hasattr(mapping, "_build_appendix_a_data")
+    assert not hasattr(mapping, "_build_appendix_b_data")

@@ -12,7 +12,6 @@ from vibesensor.use_cases.updates.release_planner import (
 )
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.success_finalizer import UpdateSuccessFinalizer
-from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
 
 __all__ = ["UpdateWorkflowExecutor"]
 
@@ -38,36 +37,24 @@ class UpdateWorkflowExecutor:
     async def execute(
         self,
         plan: ReleaseExecutionPlan,
-        *,
-        transport_session: UpdateTransportSession,
     ) -> UpdateExecutionOutcome:
         if isinstance(plan, RefreshFirmwarePlan):
-            return await self._execute_refresh_only(plan, transport_session=transport_session)
-        return await self._execute_install(plan, transport_session=transport_session)
+            return await self._execute_refresh_only(plan)
+        return await self._execute_install(plan)
 
     async def _execute_refresh_only(
         self,
         plan: RefreshFirmwarePlan,
-        *,
-        transport_session: UpdateTransportSession,
     ) -> UpdateExecutionOutcome:
         await self._firmware_refresher.refresh_esp_firmware(pinned_tag=plan.latest_tag)
-        await self._finalizer.complete(
-            transport_session,
-            message="No server update needed; ESP firmware checked",
-        )
+        await self._finalizer.complete(message="No server update needed; ESP firmware checked")
         return UpdateExecutionOutcome.refresh_only
 
     async def _execute_install(
         self,
         plan: InstallServerReleasePlan,
-        *,
-        transport_session: UpdateTransportSession,
     ) -> UpdateExecutionOutcome:
         async with self._stager.stage(plan.release) as staged_release:
             await self._deployer.deploy(staged_release)
-        await self._finalizer.complete(
-            transport_session,
-            message="Update completed successfully",
-        )
+        await self._finalizer.complete(message="Update completed successfully")
         return UpdateExecutionOutcome.installed
