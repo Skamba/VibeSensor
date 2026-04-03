@@ -30,6 +30,7 @@ __all__ = [
     "PersistenceError",
     "ProcessingError",
     "ProtocolError",
+    "UpdateCleanupError",
     "RunNotFoundError",
     "UpdateError",
     "VibeSensorError",
@@ -62,6 +63,10 @@ class UpdateError(VibeSensorError):
     def __init__(self, message: str, *, status: str = "error") -> None:
         super().__init__(message)
         self.status = status
+
+
+class UpdateCleanupError(UpdateError):
+    """Updater cleanup failed after the main workflow had already exited."""
 
 
 class RunNotFoundError(VibeSensorError):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import shutil
 import tempfile
 from collections.abc import AsyncIterator
@@ -10,8 +11,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from vibesensor.use_cases.updates.artifact_validation import sha256_file
 from vibesensor.use_cases.updates.models import UpdatePhase
-from vibesensor.use_cases.updates.releases import download_release, verify_download
+from vibesensor.use_cases.updates.releases import factory as release_fetcher_factory
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
@@ -59,3 +61,42 @@ class ServerReleaseStager:
             yield StagedServerRelease(release=release, wheel_path=wheel_path)
         finally:
             shutil.rmtree(staging_dir, ignore_errors=True)
+
+
+async def download_release(
+    tracker: UpdateStatusTracker,
+    rollback_dir: Path,
+    release: ReleaseInfo,
+    staging_dir: Path,
+) -> Path | None:
+    """Download a release wheel to *staging_dir*."""
+
+    fetcher = release_fetcher_factory.build_server_release_fetcher(rollback_dir=rollback_dir)
+    try:
+        return await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
+    except (OSError, ValueError) as exc:
+        tracker.fail("downloading", f"Failed to download release: {exc}")
+        return None
+
+
+async def verify_download(
+    tracker: UpdateStatusTracker,
+    release: ReleaseInfo,
+    wheel_path: Path,
+) -> bool:
+    """Verify SHA-256 digest of a downloaded wheel."""
+
+    if not release.sha256:
+        return True
+    actual_sha256 = await asyncio.to_thread(sha256_file, wheel_path)
+    expected_sha256 = release.sha256.lower()
+    if actual_sha256 == expected_sha256:
+        tracker.log(f"SHA-256 verified: {actual_sha256}")
+        return True
+    tracker.fail(
+        "downloading",
+        "Downloaded wheel SHA-256 mismatch",
+        f"expected={release.sha256} actual={actual_sha256}",
+    )
+    tracker.log(f"SHA-256 mismatch: expected {release.sha256} but got {actual_sha256}")
+    return False

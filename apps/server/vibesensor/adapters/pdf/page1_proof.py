@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
@@ -21,14 +22,16 @@ from vibesensor.adapters.pdf.pdf_style import (
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _wrap_lines
 from vibesensor.adapters.pdf.pdf_timeline_render import run_timeline_graph
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
+
+if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.report_types import Page1RenderPlan
 
 __all__ = ["draw_proof_block", "draw_timeline_block"]
 
 
 def draw_proof_block(
     c: Canvas,
-    data: ReportTemplateData,
+    plan: Page1RenderPlan,
     *,
     tr: Callable[..., str],
     x: float,
@@ -36,7 +39,7 @@ def draw_proof_block(
     w: float,
     h: float,
 ) -> None:
-    verdict = data.verdict_page
+    verdict = plan.verdict_page
     _draw_panel(c, x, y, w, h, verdict.proof_panel_title or tr("REPORT_PROOF_PANEL_TITLE"))
     inner_x = x + 4 * mm
     inner_y = y + h - PANEL_HEADER_H - 2 * mm
@@ -49,15 +52,15 @@ def draw_proof_block(
     diagram_y = left_bottom + (4 * mm)
     diagram_h = left_content_h - (4 * mm)
     diagram = car_location_diagram(
-        data.top_causes or data.findings,
+        plan.top_causes or plan.findings,
         {
-            "sensor_locations": data.sensor_locations,
-            "sensor_intensity_by_location": data.sensor_intensity_by_location,
+            "sensor_locations": plan.sensor_locations,
+            "sensor_intensity_by_location": plan.sensor_intensity_by_location,
         },
-        data.location_hotspot_rows,
+        plan.location_hotspot_rows,
         content_width=w - 8 * mm,
         tr=tr,
-        text_fn=lambda en, nl: nl if data.lang == "nl" else en,
+        text_fn=lambda en, nl: nl if plan.lang == "nl" else en,
         diagram_width=left_w,
         diagram_height=diagram_h - 2 * mm,
         vertical_align="top",
@@ -151,7 +154,7 @@ def draw_proof_block(
 
 def draw_timeline_block(
     c: Canvas,
-    data: ReportTemplateData,
+    plan: Page1RenderPlan,
     *,
     tr: Callable[..., str],
     x: float,
@@ -159,7 +162,7 @@ def draw_timeline_block(
     w: float,
     h: float,
 ) -> None:
-    timeline_graph = data.verdict_page.timeline_graph
+    timeline_graph = plan.verdict_page.timeline_graph
     if timeline_graph is None:
         return
 

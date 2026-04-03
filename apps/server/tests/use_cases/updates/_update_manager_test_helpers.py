@@ -131,9 +131,8 @@ def patch_release_fetcher(current_version: str = "2025.6.15") -> Iterator[MagicM
     with (
         patch("shutil.which", mock_which),
         patch(
-            "vibesensor.use_cases.updates.releases.release_fetcher.ServerReleaseFetcher",
+            "vibesensor.use_cases.updates.releases.factory.build_server_release_fetcher",
         ) as mock_fetcher,
-        patch("vibesensor.use_cases.updates.releases.release_fetcher.ReleaseFetcherConfig"),
         patch("vibesensor._version.__version__", current_version),
     ):
         yield mock_fetcher

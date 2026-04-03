@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
+from vibesensor.use_cases.updates.models import UpdateExecutionOutcome
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_planner import (
     InstallServerReleasePlan,
@@ -49,7 +50,7 @@ class UpdateWorkflowExecutor:
         plan: ReleaseExecutionPlan,
         *,
         transport_session: UpdateTransportSession,
-    ) -> bool:
+    ) -> UpdateExecutionOutcome:
         if isinstance(plan, RefreshFirmwarePlan):
             return await self._execute_refresh_only(plan, transport_session=transport_session)
         return await self._execute_install(plan, transport_session=transport_session)
@@ -59,32 +60,34 @@ class UpdateWorkflowExecutor:
         plan: RefreshFirmwarePlan,
         *,
         transport_session: UpdateTransportSession,
-    ) -> bool:
+    ) -> UpdateExecutionOutcome:
         await self._firmware_refresher.refresh_esp_firmware(pinned_tag=plan.latest_tag)
         if self._cancelled():
-            return False
-        return await self._finalizer.complete(
+            return UpdateExecutionOutcome.aborted
+        completed = await self._finalizer.complete(
             transport_session,
             message="No server update needed; ESP firmware checked",
         )
+        return UpdateExecutionOutcome.refresh_only if completed else UpdateExecutionOutcome.aborted
 
     async def _execute_install(
         self,
         plan: InstallServerReleasePlan,
         *,
         transport_session: UpdateTransportSession,
-    ) -> bool:
+    ) -> UpdateExecutionOutcome:
         async with self._stager.stage(plan.release) as staged_release:
             if staged_release is None or self._cancelled():
-                return False
+                return UpdateExecutionOutcome.aborted
             if not await self._deployer.deploy(staged_release):
-                return False
+                return UpdateExecutionOutcome.aborted
         if self._cancelled():
-            return False
-        return await self._finalizer.complete(
+            return UpdateExecutionOutcome.aborted
+        completed = await self._finalizer.complete(
             transport_session,
             message="Update completed successfully",
         )
+        return UpdateExecutionOutcome.installed if completed else UpdateExecutionOutcome.aborted
 
     def _cancelled(self) -> bool:
         return self._cancel_requested()

@@ -38,7 +38,7 @@ from vibesensor.use_cases.updates.usb_status import (
 )
 from vibesensor.use_cases.updates.usb_transport import UpdateUsbInternetSession
 from vibesensor.use_cases.updates.validation import MIN_FREE_DISK_BYTES
-from vibesensor.use_cases.updates.wifi import UpdateWifiOrchestrator, build_default_wifi_config
+from vibesensor.use_cases.updates.wifi import UpdateWifiSession, build_default_wifi_config
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 
 LOGGER = logging.getLogger(__name__)
@@ -110,7 +110,7 @@ def build_update_manager_runtime(
     ) -> UpdateTransportSessions:
         active_commands = commands or build_command_executor()
         return UpdateTransportSessions(
-            wifi=UpdateWifiOrchestrator(
+            wifi=UpdateWifiSession(
                 commands=active_commands,
                 tracker=tracker,
                 config=wifi_config,

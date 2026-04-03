@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from reportlab.lib.units import mm
 
 from vibesensor.adapters.pdf.action_cards import estimate_detailed_action_card_height
@@ -24,8 +26,10 @@ from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     NextStep,
     ReportLabelValueRow,
-    ReportTemplateData,
 )
+
+if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.report_types import AppendixCRenderPlan
 
 __all__ = [
     "_estimate_action_steps_panel_height",
@@ -54,10 +58,8 @@ def _estimate_appendix_c_traceability_row_height(
     )
 
 
-def _estimate_appendix_c_context_panel_height(
-    appendix: ReportTemplateData, *, width: float
-) -> float:
-    appendix_c = appendix.appendix_c
+def _estimate_appendix_c_context_panel_height(plan: AppendixCRenderPlan, *, width: float) -> float:
+    appendix_c = plan.appendix
     content_w = width - 8 * mm
     total = PANEL_HEADER_H + 2 * mm
     if appendix_c.context_summary:
@@ -72,12 +74,12 @@ def _estimate_appendix_c_context_panel_height(
             + 1.2 * mm
         )
     total += _measure_section_block_height(
-        appendix_c.speed_band_summary or _tr(appendix.lang, "UNKNOWN"),
+        appendix_c.speed_band_summary or _tr(plan.lang, "UNKNOWN"),
         w=content_w,
         max_lines=3,
     )
     total += _measure_section_block_height(
-        appendix_c.phase_summary or _tr(appendix.lang, "UNKNOWN"),
+        appendix_c.phase_summary or _tr(plan.lang, "UNKNOWN"),
         w=content_w,
         max_lines=3,
     )
@@ -88,9 +90,9 @@ def _estimate_appendix_c_context_panel_height(
 
 
 def _estimate_appendix_c_suitability_panel_height(
-    appendix: ReportTemplateData, *, width: float
+    plan: AppendixCRenderPlan, *, width: float
 ) -> float:
-    appendix_c = appendix.appendix_c
+    appendix_c = plan.appendix
     content_w = width - 8 * mm
     total = PANEL_HEADER_H + 2 * mm
     if appendix_c.limits_summary:
@@ -105,9 +107,7 @@ def _estimate_appendix_c_suitability_panel_height(
             + 1.0 * mm
         )
     filtered_suitability_items = [
-        item
-        for item in appendix_c.suitability_items
-        if item.detail != appendix.verdict_page.action_status_note
+        item for item in appendix_c.suitability_items if item.detail != plan.action_status_note
     ]
     for item in filtered_suitability_items[:5]:
         total += (
@@ -127,12 +127,10 @@ def _estimate_appendix_c_suitability_panel_height(
     return float(max(34 * mm, total + 3 * mm))
 
 
-def _estimate_appendix_c_trace_panel_height(
-    appendix_d: ReportTemplateData, *, width: float
-) -> float:
+def _estimate_appendix_c_trace_panel_height(plan: AppendixCRenderPlan, *, width: float) -> float:
     content_w = width - 8 * mm
     total = PANEL_HEADER_H + 2 * mm
-    for row in appendix_d.appendix_d.rows:
+    for row in plan.trace_rows:
         total += _estimate_appendix_c_traceability_row_height(row, width=content_w)
     return float(max(34 * mm, total + 3 * mm))
 

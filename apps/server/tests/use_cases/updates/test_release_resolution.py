@@ -6,8 +6,10 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
-from vibesensor.use_cases.updates.releases import UpdateReleaseCheck
+from vibesensor.use_cases.updates.release_resolution import (
+    ServerReleaseResolver,
+    UpdateReleaseCheck,
+)
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 
 

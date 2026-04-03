@@ -5,7 +5,7 @@ import contextlib
 
 import pytest
 
-from vibesensor.shared.exceptions import UpdateError
+from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
 from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
 
 
@@ -69,7 +69,6 @@ async def test_run_timeout_calls_timeout_handler_and_cleanup() -> None:
         timeout_s=0.01,
         on_timeout=lambda: events.append("timeout"),
         on_cancelled=lambda: events.append("cancelled"),
-        on_unexpected=lambda exc: events.append(f"unexpected:{type(exc).__name__}"),
         cleanup=cleanup,
         on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
     )
@@ -89,13 +88,12 @@ async def test_run_surfaces_cancelled_cleanup_error() -> None:
         events.append("cleanup")
         raise RuntimeError("cleanup bug")
 
-    with pytest.raises(RuntimeError, match="cleanup bug"):
+    with pytest.raises(UpdateCleanupError, match="Cleanup failed: cleanup bug"):
         await executor.run(
             workflow_factory=lambda: cancelled_workflow(),
             timeout_s=1.0,
             on_timeout=lambda: events.append("timeout"),
             on_cancelled=lambda: events.append("cancelled"),
-            on_unexpected=lambda exc: events.append(f"unexpected:{type(exc).__name__}"),
             cleanup=cleanup,
             on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
         )
@@ -120,12 +118,11 @@ async def test_run_reraises_unexpected_error_after_reporting_and_cleanup() -> No
             timeout_s=1.0,
             on_timeout=lambda: events.append("timeout"),
             on_cancelled=lambda: events.append("cancelled"),
-            on_unexpected=lambda exc: events.append(f"unexpected:{type(exc).__name__}"),
             cleanup=cleanup,
             on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
         )
 
-    assert events == ["unexpected:RuntimeError", "cleanup"]
+    assert events == ["cleanup"]
 
 
 @pytest.mark.asyncio
@@ -146,9 +143,8 @@ async def test_run_preserves_workflow_error_when_cleanup_also_fails() -> None:
             timeout_s=1.0,
             on_timeout=lambda: events.append("timeout"),
             on_cancelled=lambda: events.append("cancelled"),
-            on_unexpected=lambda exc: events.append(f"unexpected:{type(exc).__name__}"),
             cleanup=cleanup,
             on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
         )
 
-    assert events == ["unexpected:RuntimeError", "cleanup", "cleanup-error:RuntimeError"]
+    assert events == ["cleanup", "cleanup-error:RuntimeError"]

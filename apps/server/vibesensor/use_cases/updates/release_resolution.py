@@ -2,15 +2,32 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from vibesensor.use_cases.updates.releases import check_for_update
+from vibesensor.use_cases.updates.releases import factory as release_fetcher_factory
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
     from vibesensor.use_cases.updates.status import UpdateStatusTracker
+
+__all__ = [
+    "ServerReleaseResolver",
+    "UpdateReleaseCheck",
+    "UpdateReleaseResolution",
+    "check_for_update",
+]
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateReleaseCheck:
+    """Outcome of checking for a newer server release during updater execution."""
+
+    release: ReleaseInfo | None
+    latest_tag: str = ""
+    failed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,3 +65,30 @@ class ServerReleaseResolver:
             latest_tag=release_check.latest_tag,
             failed=release_check.failed,
         )
+
+
+async def check_for_update(
+    tracker: UpdateStatusTracker,
+    rollback_dir: Path,
+    current_version: str,
+) -> UpdateReleaseCheck:
+    """Check GitHub releases for an available update."""
+
+    fetcher = release_fetcher_factory.build_server_release_fetcher(rollback_dir=rollback_dir)
+    try:
+        release = await asyncio.to_thread(fetcher.check_update_available, current_version)
+    except (OSError, ValueError) as exc:
+        tracker.fail("checking", f"Failed to check for updates: {exc}")
+        return UpdateReleaseCheck(release=None, failed=True)
+    if release is not None:
+        return UpdateReleaseCheck(release=release)
+    latest_tag = ""
+    try:
+        latest_release = await asyncio.to_thread(fetcher.find_latest_release)
+        if isinstance(latest_release.tag, str):
+            latest_tag = latest_release.tag
+    except (OSError, ValueError) as exc:
+        tracker.log(
+            f"Could not resolve the latest release tag for ESP firmware sync: {exc}",
+        )
+    return UpdateReleaseCheck(release=None, latest_tag=latest_tag)
