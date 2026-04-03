@@ -8,8 +8,12 @@ Module topology
 - **Facade**: ``manager.py`` — public ``UpdateManager`` API for routes and
   runtime lifecycle. Delegates update sequencing to ``workflow.py``.
 - **Workflow**: ``workflow.py`` — ``UpdateWorkflow`` runs the full update
-  sequence as named phase handlers with centralized cancellation. Also owns
-  ``schedule_service_restart()``.
+  sequence over validation, transport preparation, and release application.
+- **Transport sessions**: ``transport_sessions.py`` — canonical Wi-Fi and USB
+  transport-session boundary used by workflow, cleanup, and startup recovery.
+- **Release application**: ``release_application.py`` — release discovery,
+  download, install, firmware refresh, and restart scheduling after transport
+  preparation succeeds.
 - **Recovery**: ``recovery.py`` — ``InterruptedUpdateRecovery`` collaborator
   for interrupted-job detection, cleanup, and persistence on startup.
 - **Validation**: ``validation.py`` — runtime prerequisite checks for tools,
