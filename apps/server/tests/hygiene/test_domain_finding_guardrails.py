@@ -127,12 +127,7 @@ def test_speed_profile_used_by_confidence_assessment() -> None:
     from tests._paths import SERVER_ROOT
 
     strength_labels_path = (
-        SERVER_ROOT
-        / "vibesensor"
-        / "use_cases"
-        / "history"
-        / "report_document"
-        / "presentation.py"
+        SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "report_document" / "presentation.py"
     )
     source = strength_labels_path.read_text()
     assert "certainty_label" not in source, (
