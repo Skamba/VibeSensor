@@ -105,6 +105,10 @@ class SpeedSourceConfig:
     obd_device_mac: str | None = None
     obd_device_name: str | None = None
 
+    @property
+    def manual_source_selected(self) -> bool:
+        return self.speed_source is SpeedSourceKind.MANUAL
+
     @classmethod
     def default(cls) -> SpeedSourceConfig:
         """Return a GPS-based default speed source config."""
@@ -142,6 +146,20 @@ class SpeedSourceConfig:
         if self.obd_device_name is not None:
             payload["obdDeviceName"] = self.obd_device_name
         return payload
+
+    def copy(self) -> SpeedSourceConfig:
+        return SpeedSourceConfig(
+            speed_source=self.speed_source,
+            manual_speed_kph=self.manual_speed_kph,
+            stale_timeout_s=self.stale_timeout_s,
+            obd_device_mac=self.obd_device_mac,
+            obd_device_name=self.obd_device_name,
+        )
+
+    def updated(self, data: SpeedSourceUpdatePayload) -> SpeedSourceConfig:
+        updated = self.copy()
+        updated.apply_update(data)
+        return updated
 
     def apply_update(self, data: SpeedSourceUpdatePayload) -> None:
         """Mutate in-place from an API update payload."""

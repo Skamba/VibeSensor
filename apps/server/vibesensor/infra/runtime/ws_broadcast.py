@@ -105,9 +105,9 @@ class WsBroadcastService:
         resolution = self._gps_monitor.resolve_speed()
         speed_mps = resolution.speed_mps
         analysis_settings_snapshot = self._settings_reader.analysis_settings_snapshot()
-        speed_source = self._speed_source_reader.get_speed_source()
+        speed_source = self._speed_source_reader.speed_source_config()
         basis = rotational_basis_speed_source(
-            str(speed_source.get("speedSource") or "gps"),
+            str(speed_source.speed_source),
             gps_enabled=self._gps_enabled,
             resolution_source=resolution.source,
         )

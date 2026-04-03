@@ -209,6 +209,21 @@ def _settings_store_mock() -> SettingsStore:
     return store
 
 
+def _speed_source_service_mock() -> MagicMock:
+    service = MagicMock()
+    service.get_speed_source.return_value = {
+        "speedSource": "manual",
+        "manualSpeedKph": 0.0,
+        "staleTimeoutS": 8.0,
+    }
+    service.update_speed_source.return_value = {
+        "speedSource": "manual",
+        "manualSpeedKph": 0.0,
+        "staleTimeoutS": 8.0,
+    }
+    return service
+
+
 @dataclass
 class FakeState:
     """Minimal stand-in for router assembly tests.
@@ -226,6 +241,7 @@ class FakeState:
     gps_monitor: GPSSpeedMonitor = field(default_factory=_gps_monitor_mock)
     run_recorder: RunRecorder = field(default_factory=_run_recorder_mock)
     settings_store: SettingsStore = field(default_factory=_settings_store_mock)
+    speed_source_service: MagicMock = field(default_factory=_speed_source_service_mock)
     history_db: object = field(default_factory=MagicMock)
     update_manager: UpdateManager = field(default_factory=_update_manager_mock)
     esp_flash_manager: EspFlashManager = field(default_factory=_esp_flash_manager_mock)
@@ -276,6 +292,7 @@ class FakeState:
     def settings(self) -> SettingsDeps:
         return SettingsDeps(
             settings_store=self.settings_store,
+            speed_source_service=self.speed_source_service,
             gps_monitor=self.gps_monitor,
         )
 

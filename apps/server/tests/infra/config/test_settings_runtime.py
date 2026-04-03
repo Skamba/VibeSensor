@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.infra.config.settings_runtime import SettingsRuntimeApplier
 from vibesensor.infra.config.settings_store import SettingsStore
+from vibesensor.infra.config.speed_source_runtime import (
+    SpeedSourceRuntimeApplier,
+    SpeedSourceSettingsService,
+)
 
 
 class _FakeSpeedSourceSync:
@@ -38,10 +41,6 @@ class _FakeSpeedSourceSync:
 def test_runtime_applier_pushes_current_speed_source_to_monitor() -> None:
     store = SettingsStore()
     monitor = _FakeSpeedSourceSync()
-    applier = SettingsRuntimeApplier(
-        gps_monitor=monitor,
-        speed_source_reader=store,
-    )
     store.update_speed_source(
         {
             "speedSource": "manual",
@@ -50,7 +49,7 @@ def test_runtime_applier_pushes_current_speed_source_to_monitor() -> None:
         }
     )
 
-    applier.sync_all()
+    SpeedSourceRuntimeApplier(speed_monitor=monitor).apply(store.speed_source_config())
 
     assert monitor.calls == [
         {
@@ -67,10 +66,6 @@ def test_runtime_applier_pushes_current_speed_source_to_monitor() -> None:
 def test_runtime_applier_keeps_live_source_manual_fallback_and_obd_device() -> None:
     store = SettingsStore()
     monitor = _FakeSpeedSourceSync()
-    applier = SettingsRuntimeApplier(
-        gps_monitor=monitor,
-        speed_source_reader=store,
-    )
     store.update_speed_source(
         {
             "speedSource": "obd2",
@@ -81,7 +76,7 @@ def test_runtime_applier_keeps_live_source_manual_fallback_and_obd_device() -> N
         }
     )
 
-    applier.sync_all()
+    SpeedSourceRuntimeApplier(speed_monitor=monitor).apply(store.speed_source_config())
 
     assert monitor.calls == [
         {
@@ -95,11 +90,25 @@ def test_runtime_applier_keeps_live_source_manual_fallback_and_obd_device() -> N
     ]
 
 
-def test_store_invokes_bound_speed_source_sync_after_persist() -> None:
+def test_speed_source_service_updates_store_and_runtime() -> None:
     store = SettingsStore()
-    calls: list[str] = []
-    store.bind_speed_source_sync(lambda: calls.append("apply"))
+    monitor = _FakeSpeedSourceSync()
+    service = SpeedSourceSettingsService(
+        settings_store=store,
+        runtime_applier=SpeedSourceRuntimeApplier(speed_monitor=monitor),
+    )
 
-    store.update_speed_source({"speedSource": "manual", "manualSpeedKph": 42})
+    result = service.update_speed_source({"speedSource": "manual", "manualSpeedKph": 42})
 
-    assert calls == ["apply"]
+    assert result["speedSource"] == "manual"
+    assert store.get_speed_source()["manualSpeedKph"] == pytest.approx(42.0)
+    assert monitor.calls == [
+        {
+            "effective_speed_kmh": pytest.approx(42.0),
+            "manual_source_selected": True,
+            "stale_timeout_s": pytest.approx(10.0),
+            "selected_source": "manual",
+            "obd_device_mac": None,
+            "obd_device_name": None,
+        }
+    ]
