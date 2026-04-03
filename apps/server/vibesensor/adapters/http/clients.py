@@ -9,9 +9,9 @@ from fastapi import APIRouter, HTTPException
 
 from vibesensor.adapters.http._helpers import (
     OpenAPIResponses,
-    domain_errors_to_http,
     normalize_client_id_or_400,
 )
+from vibesensor.adapters.http.error_boundary import route_errors_to_http
 from vibesensor.adapters.http.models import (
     ClientLocationsResponse,
     ClientsResponse,
@@ -128,7 +128,7 @@ def create_client_routes(
 
         updated = registry.get(normalized_client_id)
         mac = client_id_mac(normalized_client_id)
-        with domain_errors_to_http(catch_value_error=409):
+        with route_errors_to_http(catch_value_error=409):
             stored = await asyncio.to_thread(sensor_settings_store.set_sensor, mac, payload)
             registry.set_location(normalized_client_id, code)
             if code:

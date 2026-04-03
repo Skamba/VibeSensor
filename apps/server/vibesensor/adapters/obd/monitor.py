@@ -22,6 +22,7 @@ from vibesensor.adapters.obd.status import ObdMonitorStatusState, build_obd_stat
 from vibesensor.domain import SpeedSourceKind
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import KMH_TO_MPS
+from vibesensor.shared.operational_errors import OperationalError, ServiceUnavailableError
 
 __all__ = ["OBDSpeedMonitor"]
 
@@ -185,7 +186,7 @@ class OBDSpeedMonitor:
         if refresh_admin and configured_mac is not None:
             try:
                 helper_device = self._admin_client.device_info(configured_mac)
-            except RuntimeError as exc:
+            except OperationalError as exc:
                 helper_error = str(exc)
             else:
                 self._apply_device_snapshot(helper_device)
@@ -248,7 +249,7 @@ class OBDSpeedMonitor:
                             configured_mac,
                             configured_name,
                         )
-                    except RuntimeError as exc:
+                    except (OperationalError, RuntimeError) as exc:
                         self._set_connection_state(
                             "disconnected",
                             error=str(exc),
@@ -293,16 +294,16 @@ class OBDSpeedMonitor:
     ) -> tuple[Elm327Session, ObdDeviceSnapshot]:
         info = self._admin_client.device_info(mac_address)
         if not info.paired:
-            raise RuntimeError("Configured OBD adapter is not paired")
+            raise ServiceUnavailableError("Configured OBD adapter is not paired")
         if not info.trusted:
-            raise RuntimeError("Configured OBD adapter is not trusted")
+            raise ServiceUnavailableError("Configured OBD adapter is not trusted")
         if info.rfcomm_channel is None:
-            raise RuntimeError("Bluetooth OBD adapter exposes no RFCOMM serial channel")
+            raise ServiceUnavailableError("Bluetooth OBD adapter exposes no RFCOMM serial channel")
         session = self._session_factory()
         session.connect(mac_address, info.rfcomm_channel)
         try:
             session.initialize()
-        except (OSError, RuntimeError):
+        except (OSError, OperationalError, RuntimeError):
             session.close()
             raise
         device = replace(

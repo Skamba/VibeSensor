@@ -10,13 +10,13 @@ from fastapi import APIRouter, HTTPException
 
 from vibesensor.adapters.http._helpers import (
     OpenAPIResponses,
-    domain_errors_to_http,
     normalize_car_id_or_400,
     normalize_mac_or_400,
 )
 from vibesensor.adapters.http.analysis_settings_request_codec import (
     analysis_settings_payload_from_request,
 )
+from vibesensor.adapters.http.error_boundary import route_errors_to_http
 from vibesensor.adapters.http.models import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
@@ -274,7 +274,7 @@ def create_settings_routes(
     async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
         """Select which saved car profile should drive current analysis settings."""
         car_id = normalize_car_id_or_400(req.car_id)
-        with domain_errors_to_http(catch_value_error=404):
+        with route_errors_to_http(catch_value_error=404):
             result = await asyncio.to_thread(settings_store.set_active_car, car_id)
         return _cars_response(result)
 
@@ -287,7 +287,7 @@ def create_settings_routes(
         """Update an existing car profile while preserving unspecified fields."""
         car_id = normalize_car_id_or_400(car_id)
         payload = _car_upsert_payload(req)
-        with domain_errors_to_http(catch_value_error=404):
+        with route_errors_to_http(catch_value_error=404):
             result = await asyncio.to_thread(
                 settings_store.update_car,
                 car_id,
@@ -308,7 +308,7 @@ def create_settings_routes(
         cars_snapshot = await asyncio.to_thread(settings_store.get_cars)
         if not any(car["id"] == car_id for car in cars_snapshot.cars):
             raise HTTPException(status_code=404, detail=f"Car {car_id!r} not found")
-        with domain_errors_to_http(catch_value_error=400):
+        with route_errors_to_http(catch_value_error=400):
             result = await asyncio.to_thread(settings_store.delete_car, car_id)
         return _cars_response(result)
 
@@ -327,7 +327,7 @@ def create_settings_routes(
     async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
         """Update the preferred speed source, manual fallback speed, and staleness timeout."""
         payload = _speed_source_update_payload(req)
-        with domain_errors_to_http(catch_value_error=400):
+        with route_errors_to_http(catch_value_error=400):
             result = await asyncio.to_thread(
                 speed_source_service.update_speed_source,
                 payload,
@@ -346,10 +346,8 @@ def create_settings_routes(
     )
     async def scan_obd_devices() -> ObdScanResponse:
         """Scan nearby Bluetooth OBD adapters using the privileged helper."""
-        try:
+        with route_errors_to_http():
             devices = await asyncio.to_thread(gps_monitor.scan_obd_devices)
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
         return ObdScanResponse(devices=[_obd_device_response(device) for device in devices])
 
     @router.post(
@@ -360,17 +358,15 @@ def create_settings_routes(
     async def pair_obd_device(req: ObdPairRequest) -> ObdPairResponse:
         """Pair, trust, connect, and persist the selected Bluetooth OBD adapter."""
         normalized_mac = normalize_mac_or_400(req.mac_address)
-        try:
+        with route_errors_to_http():
             device = await asyncio.to_thread(gps_monitor.pair_obd_device, normalized_mac)
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        persisted = await asyncio.to_thread(
-            speed_source_service.update_speed_source,
-            {
-                "obdDeviceMac": device.mac_address,
-                "obdDeviceName": device.name,
-            },
-        )
+            persisted = await asyncio.to_thread(
+                speed_source_service.update_speed_source,
+                {
+                    "obdDeviceMac": device.mac_address,
+                    "obdDeviceName": device.name,
+                },
+            )
         return _obd_pair_response(
             configured_device_mac=str(persisted.get("obdDeviceMac") or device.mac_address),
             configured_device_name=(
@@ -405,7 +401,7 @@ def create_settings_routes(
         """Create or update persisted sensor metadata for a specific MAC address."""
         normalized_mac = normalize_mac_or_400(mac)
         payload = _sensor_update_payload(req)
-        with domain_errors_to_http(catch_value_error=409):
+        with route_errors_to_http(catch_value_error=409):
             await asyncio.to_thread(
                 settings_store.set_sensor,
                 normalized_mac,
@@ -421,7 +417,7 @@ def create_settings_routes(
     async def delete_sensor(mac: str) -> SensorsResponse:
         """Delete persisted sensor metadata for a specific MAC address."""
         normalized_mac = normalize_mac_or_400(mac)
-        with domain_errors_to_http(catch_value_error=400):
+        with route_errors_to_http(catch_value_error=400):
             removed = await asyncio.to_thread(settings_store.remove_sensor, normalized_mac)
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
@@ -441,7 +437,7 @@ def create_settings_routes(
     )
     async def set_language(req: LanguageRequest) -> LanguageResponse:
         """Update the dashboard language used by the local UI."""
-        with domain_errors_to_http(catch_value_error=400):
+        with route_errors_to_http(catch_value_error=400):
             language = await asyncio.to_thread(settings_store.set_language, req.language)
         return LanguageResponse(language=language)
 
@@ -457,7 +453,7 @@ def create_settings_routes(
     )
     async def set_speed_unit(req: SpeedUnitRequest) -> SpeedUnitResponse:
         """Update the speed unit used for UI display and manual speed entry."""
-        with domain_errors_to_http(catch_value_error=400):
+        with route_errors_to_http(catch_value_error=400):
             unit = await asyncio.to_thread(settings_store.set_speed_unit, req.speed_unit)
         return SpeedUnitResponse(speed_unit=unit)
 
@@ -477,7 +473,7 @@ def create_settings_routes(
         """Update analysis-specific car aspects such as tire geometry and drivetrain ratios."""
         changes = analysis_settings_payload_from_request(req)
         if changes:
-            with domain_errors_to_http(catch_value_error=400):
+            with route_errors_to_http(catch_value_error=400):
                 await asyncio.to_thread(settings_store.update_active_car_aspects, changes)
         return _analysis_settings_response()
 

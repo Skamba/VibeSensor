@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
+from vibesensor.shared.operational_errors import ExternalCommandError
 
 __all__ = ["CommandResult", "ObdAdminClient"]
 
@@ -53,11 +54,11 @@ def _default_runner(argv: list[str], timeout_s: int) -> CommandResult:
             timeout=timeout_s,
         )
     except FileNotFoundError as exc:
-        raise RuntimeError(f"Required command is unavailable: {argv[0]}") from exc
+        raise ExternalCommandError(f"Required command is unavailable: {argv[0]}") from exc
     except subprocess.TimeoutExpired as exc:
         stdout = str(exc.stdout or "").strip()
         stderr = str(exc.stderr or "").strip()
-        raise RuntimeError(
+        raise ExternalCommandError(
             f"OBD helper timed out after {timeout_s}s"
             + (f": {stderr}" if stderr else "")
             + (f" ({stdout})" if stdout else "")
@@ -92,17 +93,17 @@ class ObdAdminClient:
         result = self._runner(argv, timeout_s)
         launch_error = self._pre_json_failure(result)
         if launch_error is not None:
-            raise RuntimeError(launch_error)
+            raise ExternalCommandError(launch_error)
         raw_output = result.stdout or result.stderr or ""
         try:
             payload_raw = json.loads(raw_output or "{}")
         except json.JSONDecodeError as exc:
-            raise RuntimeError(
+            raise ExternalCommandError(
                 "Bluetooth OBD helper returned invalid JSON"
                 + (f": {raw_output}" if raw_output else "")
             ) from exc
         if not isinstance(payload_raw, dict):
-            raise RuntimeError("Bluetooth OBD helper returned a non-object JSON payload")
+            raise ExternalCommandError("Bluetooth OBD helper returned a non-object JSON payload")
         payload = cast(dict[str, Any], payload_raw)
         if result.returncode != 0:
             error = str(
@@ -111,7 +112,7 @@ class ObdAdminClient:
                 or result.stdout
                 or "Bluetooth OBD helper failed"
             )
-            raise RuntimeError(error)
+            raise ExternalCommandError(error)
         return payload
 
     @staticmethod
@@ -134,7 +135,7 @@ class ObdAdminClient:
     @staticmethod
     def _device_from_payload(raw: object) -> ObdDeviceSnapshot:
         if not isinstance(raw, dict):
-            raise RuntimeError("Bluetooth OBD helper returned an invalid device payload")
+            raise ExternalCommandError("Bluetooth OBD helper returned an invalid device payload")
         channel_raw = raw.get("rfcomm_channel")
         channel = int(channel_raw) if isinstance(channel_raw, int) else None
         return ObdDeviceSnapshot(
@@ -153,7 +154,7 @@ class ObdAdminClient:
         )
         devices_raw = payload.get("devices")
         if not isinstance(devices_raw, list):
-            raise RuntimeError("Bluetooth OBD helper did not return a device list")
+            raise ExternalCommandError("Bluetooth OBD helper did not return a device list")
         return [self._device_from_payload(item) for item in devices_raw]
 
     def pair_device(self, mac_address: str) -> ObdDeviceSnapshot:
