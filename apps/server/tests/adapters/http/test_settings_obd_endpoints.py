@@ -10,8 +10,9 @@ from vibesensor.adapters.http.settings import create_settings_routes
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
 
 
-def _build_client() -> tuple[TestClient, MagicMock, MagicMock]:
+def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock]:
     settings_store = MagicMock()
+    speed_source_service = MagicMock()
     speed_service = MagicMock()
     speed_service.status_snapshot.return_value = SpeedSourceStatusSnapshot(
         gps_enabled=True,
@@ -33,12 +34,12 @@ def _build_client() -> tuple[TestClient, MagicMock, MagicMock]:
         stale_timeout_s=8.0,
     )
     app = FastAPI()
-    app.include_router(create_settings_routes(settings_store, speed_service))
-    return TestClient(app), settings_store, speed_service
+    app.include_router(create_settings_routes(settings_store, speed_source_service, speed_service))
+    return TestClient(app), settings_store, speed_source_service, speed_service
 
 
 def test_scan_obd_devices_endpoint_returns_serialized_devices() -> None:
-    client, _, speed_service = _build_client()
+    client, _, _, speed_service = _build_client()
     speed_service.scan_obd_devices.return_value = [
         ObdDeviceSnapshot(
             mac_address="00043e5a4a4d",
@@ -58,7 +59,7 @@ def test_scan_obd_devices_endpoint_returns_serialized_devices() -> None:
 
 
 def test_scan_obd_devices_endpoint_returns_structured_runtime_error_detail() -> None:
-    client, _, speed_service = _build_client()
+    client, _, _, speed_service = _build_client()
     speed_service.scan_obd_devices.side_effect = RuntimeError(
         "Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry "
         "to run non-interactively."
@@ -76,7 +77,7 @@ def test_scan_obd_devices_endpoint_returns_structured_runtime_error_detail() -> 
 
 
 def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
-    client, settings_store, speed_service = _build_client()
+    client, settings_store, speed_source_service, speed_service = _build_client()
     speed_service.pair_obd_device.return_value = ObdDeviceSnapshot(
         mac_address="00043e5a4a4d",
         name="OBDLink MX+",
@@ -85,7 +86,7 @@ def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
         connected=True,
         rfcomm_channel=1,
     )
-    settings_store.update_speed_source.return_value = {
+    speed_source_service.update_speed_source.return_value = {
         "speedSource": "gps",
         "manualSpeedKph": None,
         "staleTimeoutS": 8.0,
@@ -101,7 +102,8 @@ def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
     assert response.status_code == 200
     assert response.json()["configured_device_mac"] == "00043e5a4a4d"
     speed_service.pair_obd_device.assert_called_once_with("00043e5a4a4d")
-    settings_store.update_speed_source.assert_called_once_with(
+    settings_store.update_speed_source.assert_not_called()
+    speed_source_service.update_speed_source.assert_called_once_with(
         {
             "obdDeviceMac": "00043e5a4a4d",
             "obdDeviceName": "OBDLink MX+",
@@ -110,7 +112,7 @@ def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
 
 
 def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
-    client, _, speed_service = _build_client()
+    client, _, _, speed_service = _build_client()
     speed_service.obd_status.return_value = ObdStatusSnapshot(
         configured_device_mac="00043e5a4a4d",
         configured_device_name="OBDLink MX+",

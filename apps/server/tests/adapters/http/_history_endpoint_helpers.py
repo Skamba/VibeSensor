@@ -361,6 +361,7 @@ class FakeState:
     def settings(self) -> SettingsDeps:
         return SettingsDeps(
             settings_store=self.settings_store,
+            speed_source_service=self.settings_store,
             gps_monitor=self.gps_monitor,
         )
 

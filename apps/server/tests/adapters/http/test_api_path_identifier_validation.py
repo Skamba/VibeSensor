@@ -41,6 +41,7 @@ def _settings_test_client() -> tuple[TestClient, MagicMock]:
     from vibesensor.adapters.http.settings import create_settings_routes
 
     settings_store = MagicMock()
+    speed_source_service = MagicMock()
     settings_store.get_cars.return_value = CarsSnapshot(
         cars=[
             {
@@ -74,7 +75,7 @@ def _settings_test_client() -> tuple[TestClient, MagicMock]:
     )
 
     app = FastAPI()
-    app.include_router(create_settings_routes(settings_store, gps_monitor))
+    app.include_router(create_settings_routes(settings_store, speed_source_service, gps_monitor))
     return TestClient(app), settings_store
 
 

@@ -28,8 +28,11 @@ from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.runtime_state import AppRuntime, RuntimeState
 from vibesensor.app.settings import AppConfig
 from vibesensor.infra.config.settings_derivation import SettingsDerivationService
-from vibesensor.infra.config.settings_runtime import SettingsRuntimeApplier
 from vibesensor.infra.config.settings_store import SettingsStore
+from vibesensor.infra.config.speed_source_runtime import (
+    SpeedSourceRuntimeApplier,
+    SpeedSourceSettingsService,
+)
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
@@ -140,11 +143,12 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         active_car_aspects=settings_store.active_car_aspects,
         active_car_snapshot=settings_store.active_car_snapshot,
     )
-    settings_runtime_applier = SettingsRuntimeApplier(
-        gps_monitor=speed_monitor,
-        speed_source_reader=settings_store,
+    speed_source_service = SpeedSourceSettingsService(
+        settings_store=settings_store,
+        runtime_applier=SpeedSourceRuntimeApplier(
+            speed_monitor=speed_monitor,
+        ),
     )
-    settings_store.bind_speed_source_sync(settings_runtime_applier.apply_speed_source)
 
     # persistence services
     history_run_service = HistoryRunService(
@@ -280,6 +284,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         ),
         settings=SettingsDeps(
             settings_store=settings_store,
+            speed_source_service=speed_source_service,
             gps_monitor=speed_monitor,
         ),
         history=HistoryDeps(
@@ -292,5 +297,5 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             esp_flash_manager=esp_flash_manager,
         ),
     )
-    settings_runtime_applier.sync_all()
+    speed_source_service.sync_all()
     return AppRuntime(lifecycle=lifecycle, router=router)
