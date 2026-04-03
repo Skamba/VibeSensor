@@ -1,34 +1,23 @@
 from __future__ import annotations
 
-import asyncio
-import logging
-from collections.abc import Callable
-from pathlib import Path
-
+from vibesensor.use_cases.updates.cleanup import UpdateCleanupCoordinator
 from vibesensor.use_cases.updates.models import UpdateRequest
-from vibesensor.use_cases.updates.status import UpdateStatusTracker, collect_runtime_details
-from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
-
-TransportSessionsFactory = Callable[[], UpdateTransportSessions]
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
 class UpdateJobLifecycleHandler:
     """Own stateful update job lifecycle callbacks and cleanup sequencing."""
 
-    __slots__ = ("_logger", "_repo", "_tracker", "_transport_sessions_factory")
+    __slots__ = ("_cleanup", "_tracker")
 
     def __init__(
         self,
         *,
         tracker: UpdateStatusTracker,
-        repo: Path,
-        transport_sessions_factory: TransportSessionsFactory,
-        logger: logging.Logger,
+        cleanup: UpdateCleanupCoordinator,
     ) -> None:
         self._tracker = tracker
-        self._repo = repo
-        self._transport_sessions_factory = transport_sessions_factory
-        self._logger = logger
+        self._cleanup = cleanup
 
     def prepare_start(self, request: UpdateRequest) -> None:
         self._tracker.start_job(request)
@@ -43,22 +32,8 @@ class UpdateJobLifecycleHandler:
         self._tracker.log("Update cancelled")
 
     async def cleanup_after_update(self) -> None:
-        tracker = self._tracker
-        transport_session = self._transport_sessions_factory().for_transport(
-            tracker.status.transport,
-        )
-        cleanup_error: Exception | None = None
         try:
-            await transport_session.cleanup_after_update()
-            tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:
-            tracker.fail("cleanup", f"Cleanup failed: {exc}")
-            self._logger.exception("update: cleanup error")
-            cleanup_error = exc
+            await self._cleanup.run()
         finally:
-            tracker.clear_secrets()
-            tracker.finish_cleanup()
-        if cleanup_error is not None:
-            raise cleanup_error
+            self._tracker.clear_secrets()
+            self._tracker.finish_cleanup()

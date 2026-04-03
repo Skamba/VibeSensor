@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from vibesensor.shared.exceptions import UpdateTransportError
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
@@ -30,10 +31,11 @@ class UpdateUsbInternetSession:
             config=config,
         )
 
-    async def prepare(self, request: UpdateRequest) -> bool:
+    async def prepare(self, request: UpdateRequest) -> None:
         del request
         self._tracker.transition(UpdatePhase.connecting_usb_internet)
-        return await self.ensure_uplink_ready()
+        if not await self.ensure_uplink_ready():
+            raise UpdateTransportError("Failed to prepare the USB internet uplink for update")
 
     async def ensure_uplink_ready(self) -> bool:
         status = await self._status_service.snapshot(activate=True)
@@ -65,9 +67,8 @@ class UpdateUsbInternetSession:
             failure_message="USB internet detected, but internet/DNS is not ready",
         )
 
-    async def complete_success(self, message: str) -> bool:
+    async def complete_success(self, message: str) -> None:
         self._tracker.mark_success(message)
-        return True
 
     async def cleanup_after_update(self) -> None:
         return None

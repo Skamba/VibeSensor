@@ -33,7 +33,7 @@ async def test_start_rejects_concurrent_job() -> None:
 
 
 @pytest.mark.asyncio
-async def test_cancel_sets_event_and_cancels_running_task() -> None:
+async def test_cancel_cancels_running_task() -> None:
     executor = UpdateJobExecutor()
     started = asyncio.Event()
 
@@ -46,9 +46,7 @@ async def test_cancel_sets_event_and_cancels_running_task() -> None:
     assert task is not None
     await asyncio.wait_for(started.wait(), timeout=1)
 
-    assert executor.cancel_requested() is False
     assert executor.cancel() is True
-    assert executor.cancel_requested() is True
     with pytest.raises(asyncio.CancelledError):
         await task
 
@@ -85,9 +83,12 @@ async def test_run_surfaces_cancelled_cleanup_error() -> None:
 
     async def cleanup() -> None:
         events.append("cleanup")
-        raise RuntimeError("cleanup bug")
+        raise OSError("cleanup bug")
 
-    with pytest.raises(UpdateCleanupError, match="Cleanup failed: cleanup bug"):
+    with pytest.raises(
+        UpdateCleanupError,
+        match="Cleanup failed after cancellation: cleanup bug",
+    ):
         await executor.run(
             workflow_factory=lambda: cancelled_workflow(),
             timeout_s=1.0,
@@ -134,7 +135,7 @@ async def test_run_preserves_workflow_error_when_cleanup_also_fails() -> None:
         events.append("cleanup")
         raise RuntimeError("cleanup bug")
 
-    with pytest.raises(RuntimeError, match="workflow bug"):
+    with pytest.raises(RuntimeError, match="workflow bug") as exc_info:
         await executor.run(
             workflow_factory=lambda: broken_workflow(),
             timeout_s=1.0,
@@ -144,3 +145,4 @@ async def test_run_preserves_workflow_error_when_cleanup_also_fails() -> None:
         )
 
     assert events == ["cleanup"]
+    assert exc_info.value.__notes__ == ["Cleanup also failed: cleanup bug"]

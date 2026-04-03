@@ -16,7 +16,6 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
-from vibesensor.shared.exceptions import UpdateCleanupError
 from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
 from vibesensor.use_cases.updates.status import collect_runtime_details
 
@@ -421,7 +420,7 @@ class TestUpdateManagerAsync:
             await asyncio.wait_for(task, timeout=3)
         assert manager.status.state == UpdateState.failed
 
-    async def test_run_update_surfaces_cleanup_bug_when_cancellation_cleanup_fails(
+    async def test_run_update_marks_failed_when_cancellation_cleanup_reports_operational_error(
         self,
         tmp_path,
         caplog: pytest.LogCaptureFixture,
@@ -432,23 +431,45 @@ class TestUpdateManagerAsync:
 
         with (
             patch(
-                "vibesensor.use_cases.updates.job_lifecycle.collect_runtime_details",
-                side_effect=TypeError("runtime bug"),
+                "vibesensor.use_cases.updates.cleanup.collect_runtime_details",
+                side_effect=OSError("runtime unavailable"),
             ),
             caplog.at_level("ERROR"),
         ):
             object.__setattr__(manager._runtime, "coordinator_factory", lambda: mock_coordinator)
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
-            with pytest.raises(UpdateCleanupError, match="Cleanup failed: runtime bug"):
+            await manager.job_task
+
+        assert manager.status.finished_at is not None
+        assert manager.status.state == UpdateState.failed
+        assert any(
+            issue.message == "Runtime details refresh failed"
+            and issue.detail == "runtime unavailable"
+            for issue in manager.status.issues
+        )
+        assert any(rec.message == "update: runtime details refresh error" for rec in caplog.records)
+
+    async def test_run_update_surfaces_programmer_bug_from_cancellation_cleanup(
+        self,
+        tmp_path,
+    ) -> None:
+        manager, _runner, _ = setup_update_env(tmp_path)
+        mock_coordinator = MagicMock()
+        mock_coordinator.execute = AsyncMock(side_effect=asyncio.CancelledError())
+
+        with patch(
+            "vibesensor.use_cases.updates.cleanup.collect_runtime_details",
+            side_effect=TypeError("runtime bug"),
+        ):
+            object.__setattr__(manager._runtime, "coordinator_factory", lambda: mock_coordinator)
+            manager.start("TestNet", "pass123")
+            assert manager.job_task is not None
+            with pytest.raises(TypeError, match="runtime bug"):
                 await manager.job_task
 
         assert manager.status.finished_at is not None
         assert manager.status.state == UpdateState.failed
-        assert any(rec.message == "update: cleanup error" for rec in caplog.records)
-        assert any(
-            issue.message == "Cleanup failed: runtime bug" for issue in manager.status.issues
-        )
 
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)

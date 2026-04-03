@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.models import UpdateExecutionOutcome
 from vibesensor.use_cases.updates.release_planner import (
     InstallServerReleasePlan,
@@ -15,10 +16,7 @@ from vibesensor.use_cases.updates.release_planner import (
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 
 
-def _executor(
-    *,
-    cancel_requested=lambda: False,
-) -> tuple[UpdateWorkflowExecutor, MagicMock, MagicMock, MagicMock, MagicMock]:
+def _executor() -> tuple[UpdateWorkflowExecutor, MagicMock, MagicMock, MagicMock, MagicMock]:
     stager = MagicMock()
     deployer = MagicMock()
     deployer.deploy = AsyncMock(return_value=True)
@@ -31,7 +29,6 @@ def _executor(
         deployer=deployer,
         firmware_refresher=firmware_refresher,
         finalizer=finalizer,
-        cancel_requested=cancel_requested,
     )
     return executor, stager, deployer, firmware_refresher, finalizer
 
@@ -88,13 +85,10 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
 
 
 @pytest.mark.asyncio
-async def test_execute_install_plan_stops_before_finalization_when_cancelled(
+async def test_execute_install_plan_propagates_deploy_failure_before_finalization(
     tmp_path: Path,
 ) -> None:
-    cancel_results = iter((False, True))
-    executor, stager, deployer, _firmware_refresher, finalizer = _executor(
-        cancel_requested=lambda: next(cancel_results),
-    )
+    executor, stager, deployer, _firmware_refresher, finalizer = _executor()
     transport_session = object()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
     staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
@@ -104,12 +98,13 @@ async def test_execute_install_plan_stops_before_finalization_when_cancelled(
         yield staged_release
 
     stager.stage.side_effect = stage
+    deployer.deploy.side_effect = UpdateReleaseError("install failed")
 
-    completed = await executor.execute(
-        InstallServerReleasePlan(current_version="2026.4.3", release=release),
-        transport_session=transport_session,
-    )
+    with pytest.raises(UpdateReleaseError, match="install failed"):
+        await executor.execute(
+            InstallServerReleasePlan(current_version="2026.4.3", release=release),
+            transport_session=transport_session,
+        )
 
-    assert completed == UpdateExecutionOutcome.aborted
     deployer.deploy.assert_awaited_once_with(staged_release)
     finalizer.complete.assert_not_awaited()
