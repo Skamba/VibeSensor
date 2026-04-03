@@ -611,6 +611,7 @@ def test_map_summary_data_trust_includes_run_context_warnings() -> None:
             {
                 "code": "reference_context_incomplete",
                 "severity": "warn",
+                "applies_to": "order_analysis",
                 "title": {"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"},
                 "detail": {"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
             },
