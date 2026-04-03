@@ -74,7 +74,7 @@ class TestRemovedSignalFallbacks:
         finding = finding_from_payload(payload)
 
         assert finding.frequency_hz is None
-        assert finding.order is None
+        assert finding.order == ""
 
 
 class TestRemovedHotspotAliases:

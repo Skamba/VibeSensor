@@ -64,6 +64,16 @@ def make_finding_payload(
         base["strongest_location"] = strongest_location
     if overrides:
         base.update(overrides)
+    if "order" not in overrides:
+        if "frequency_hz" in overrides:
+            base.pop("order", None)
+        else:
+            display_signal = base.get("frequency_hz_or_order")
+            if isinstance(display_signal, str):
+                base["order"] = display_signal
+            elif isinstance(display_signal, (int, float)) and not isinstance(display_signal, bool):
+                base["frequency_hz"] = float(display_signal)
+                base.pop("order", None)
     return base
 
 
