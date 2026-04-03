@@ -13,7 +13,7 @@ from .appendices import (
     SensorObservationMatrixRow,
     TopologyIntensityRow,
 )
-from .document import Report, ReportTemplateData, build_report_from_summary
+from .document import Report, ReportDocument, build_report_from_summary
 from .panels import DataTrustItem, NextStep, PartSuggestion, PatternEvidence, SystemFindingCard
 from .sections import (
     FindingPresentation,
@@ -39,7 +39,7 @@ __all__ = [
     "RankedCandidateRow",
     "Report",
     "ReportLabelValueRow",
-    "ReportTemplateData",
+    "ReportDocument",
     "SensorObservationCell",
     "SensorObservationMatrixRow",
     "SystemFindingCard",

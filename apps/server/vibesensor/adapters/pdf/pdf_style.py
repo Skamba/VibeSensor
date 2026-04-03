@@ -1,17 +1,11 @@
-"""Shared PDF renderer style, theme, layout constants, page geometry, and render context."""
+"""Shared PDF renderer style, theme, and page geometry."""
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
-
-from vibesensor.domain import LocationHotspotRow
-from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import FindingPresentation, ReportTemplateData
-from vibesensor.shared.types.json_types import JsonValue
 
 # ── Theme ────────────────────────────────────────────────────────────────────
 
@@ -77,9 +71,7 @@ GAP = 4 * mm
 OBSERVED_LABEL_W = 28 * mm
 DATA_TRUST_WIDTH_RATIO = 0.32
 DATA_TRUST_LABEL_W = 27 * mm
-EVIDENCE_CAR_PANEL_WIDTH_RATIO = 0.50
 DISCLAIMER_Y_OFFSET = 5.5 * mm
-CAR_PANEL_TITLE_RESERVE = 18 * mm
 PANEL_HEADER_H = 10.5 * mm
 
 _HELVETICA_AVG_CHAR_RATIO = 0.48
@@ -118,25 +110,6 @@ class Page1Layout:
     observed: PanelLayout
     systems: PanelLayout
     bottom: BottomRowLayout
-
-
-@dataclass(frozen=True)
-class CarDiagramLayout:
-    panel: PanelLayout
-    box_x: float
-    box_y: float
-    box_w: float
-    box_h: float
-
-
-@dataclass(frozen=True)
-class Page2Layout:
-    title_bar: PanelLayout
-    car_panel: CarDiagramLayout
-    pattern_panel: PanelLayout
-    peaks_panel: PanelLayout
-    observations_panel: PanelLayout | None
-    continued_next_steps: PanelLayout | None
 
 
 def build_header_columns_layout(*, width: float) -> HeaderColumnsLayout:
@@ -215,110 +188,3 @@ def build_page1_layout(
         systems=systems,
         bottom=bottom,
     )
-
-
-def build_page2_layout(
-    *,
-    width: float,
-    page_top: float,
-    has_transient_findings: bool,
-    has_next_steps_continued: bool,
-) -> Page2Layout:
-    title_h = 12 * mm
-    title_bar = PanelLayout(MARGIN, page_top - title_h, width, title_h)
-    y_cursor = title_bar.y - GAP
-
-    left_w = width * EVIDENCE_CAR_PANEL_WIDTH_RATIO
-    right_w = width - left_w - GAP
-    main_h = 132 * mm
-    left_y = y_cursor - main_h
-    car_panel = PanelLayout(MARGIN, left_y, left_w, main_h)
-    inner_pad = 5 * mm
-    car_diagram = CarDiagramLayout(
-        panel=car_panel,
-        box_x=car_panel.x + inner_pad,
-        box_y=car_panel.y + inner_pad,
-        box_w=car_panel.w - (2 * inner_pad),
-        box_h=car_panel.h - CAR_PANEL_TITLE_RESERVE,
-    )
-    pattern_panel = PanelLayout(MARGIN + left_w + GAP, left_y, right_w, main_h)
-
-    table_h = 58 * mm
-    table_y = left_y - GAP - table_h
-    peaks_panel = PanelLayout(MARGIN, table_y, width, table_h)
-
-    observations_panel = None
-    obs_y_anchor = table_y
-    if has_transient_findings:
-        obs_h = 22 * mm
-        obs_y = table_y - GAP - obs_h
-        observations_panel = PanelLayout(MARGIN, obs_y, width, obs_h)
-        obs_y_anchor = obs_y
-
-    continued_next_steps = None
-    if has_next_steps_continued:
-        cont_top = obs_y_anchor - GAP
-        cont_bottom = MARGIN + 8 * mm
-        if cont_top - cont_bottom > 16 * mm:
-            continued_next_steps = PanelLayout(MARGIN, cont_bottom, width, cont_top - cont_bottom)
-
-    return Page2Layout(
-        title_bar=title_bar,
-        car_panel=car_diagram,
-        pattern_panel=pattern_panel,
-        peaks_panel=peaks_panel,
-        observations_panel=observations_panel,
-        continued_next_steps=continued_next_steps,
-    )
-
-
-# ── Render Context ───────────────────────────────────────────────────────────
-
-
-@dataclass(frozen=True)
-class PdfRenderContext:
-    """Resolved page-rendering context derived from ReportTemplateData."""
-
-    data: ReportTemplateData
-    width: float
-    page_top: float
-    lang: str
-    location_rows: list[LocationHotspotRow]
-    top_causes: list[FindingPresentation]
-    tr_fn: Callable[..., str]
-    text_fn: Callable[[str, str], str]
-
-    @classmethod
-    def from_data(
-        cls,
-        data: ReportTemplateData,
-        *,
-        location_rows: list[LocationHotspotRow] | None = None,
-        top_causes: list[FindingPresentation] | None = None,
-        tr_fn: Callable[..., str] | None = None,
-        text_fn: Callable[[str, str], str] | None = None,
-    ) -> PdfRenderContext:
-        lang = data.lang
-
-        def default_tr(key: str, **kw: JsonValue) -> str:
-            result: str = _tr(lang, key, **kw)
-            return result
-
-        def default_text(en: str, nl: str) -> str:
-            return nl if lang == "nl" else en
-
-        return cls(
-            data=data,
-            width=PAGE_W - 2 * MARGIN,
-            page_top=PAGE_H - MARGIN,
-            lang=lang,
-            location_rows=location_rows
-            if location_rows is not None
-            else data.location_hotspot_rows,
-            top_causes=top_causes if top_causes is not None else data.top_causes,
-            tr_fn=tr_fn or default_tr,
-            text_fn=text_fn or default_text,
-        )
-
-    def tr(self, key: str, **kw: JsonValue) -> str:
-        return self.tr_fn(key, **kw)

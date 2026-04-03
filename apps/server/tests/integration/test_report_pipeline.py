@@ -41,7 +41,7 @@ from test_support import (
 )
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -56,7 +56,7 @@ def _extract_pdf_text(pdf_bytes: bytes) -> str:
 
 def _build_pdf_from_summary(summary: dict[str, Any]) -> bytes:
     """Render a PDF directly from an analysis summary."""
-    return build_report_pdf(map_summary(prepare_report_input(summary)))
+    return build_report_pdf(build_report_document(prepare_report_input(summary)))
 
 
 # ---------------------------------------------------------------------------

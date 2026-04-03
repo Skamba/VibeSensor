@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
     FONT_B,
@@ -29,6 +28,7 @@ from .layout import (
     _estimate_appendix_c_trace_panel_height,
 )
 from .tables import _draw_table, _draw_traceability_row, _fmt_db, _fmt_hz
+from .title_bar import draw_appendix_title_bar
 
 __all__ = ["_appendix_c_page"]
 
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
-    title_y = _draw_title_bar(
+    title_y = draw_appendix_title_bar(
         c,
         title=_tr(plan.lang, "REPORT_APPENDIX_C_TITLE"),
         width=PAGE_W - 2 * MARGIN,

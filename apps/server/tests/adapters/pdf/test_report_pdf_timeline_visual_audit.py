@@ -11,7 +11,7 @@ from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 pdfium = pytest.importorskip("pypdfium2")
 
@@ -79,7 +79,7 @@ def test_page_one_timeline_visual_audit_exports_screenshot(tmp_path: Path) -> No
         ],
     )
 
-    pdf_bytes = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf_bytes = build_report_pdf(build_report_document(prepare_report_input(summary)))
     pdf_path = artifact_dir / "timeline_visual_audit_report.pdf"
     pdf_path.write_bytes(pdf_bytes)
 

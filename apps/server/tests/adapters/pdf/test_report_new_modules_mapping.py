@@ -21,12 +21,12 @@ from test_support.report_helpers import report_sample as _base_sample
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.domain import VibrationOrigin
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.use_cases.diagnostics.run_analysis import (
     summarize_origin,
 )
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 
 def _sample(
@@ -65,8 +65,8 @@ def _origin_explanation(origin: VibrationOrigin) -> object:
     )
 
 
-def test_map_summary_basic(tmp_path: Path) -> None:
-    run_path = tmp_path / "map_summary.jsonl"
+def test_build_report_document_basic(tmp_path: Path) -> None:
+    run_path = tmp_path / "build_report_document.jsonl"
     records: list[dict[str, object]] = [_run_metadata(tire_circumference_m=2.2)]
     for idx in range(20):
         speed = 50 + idx
@@ -78,8 +78,8 @@ def test_map_summary_basic(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
 
-    data = map_summary(prepare_report_input(summary))
-    assert isinstance(data, ReportTemplateData)
+    data = build_report_document(prepare_report_input(summary))
+    assert isinstance(data, ReportDocument)
     assert data.title
     assert data.run_datetime
     assert data.observed.primary_system
@@ -87,16 +87,16 @@ def test_map_summary_basic(tmp_path: Path) -> None:
     assert data.observed.certainty_reason
 
 
-def test_map_summary_no_top_causes() -> None:
+def test_build_report_document_no_top_causes() -> None:
     summary = minimal_summary()
-    data = map_summary(prepare_report_input(summary))
-    assert isinstance(data, ReportTemplateData)
+    data = build_report_document(prepare_report_input(summary))
+    assert isinstance(data, ReportDocument)
     assert data.system_cards == []
     assert data.certainty_tier_key == "A"
     assert len(data.next_steps) >= 1
 
 
-def test_map_summary_uses_domain_action_render_queries_for_next_steps() -> None:
+def test_build_report_document_uses_domain_action_render_queries_for_next_steps() -> None:
     summary = minimal_summary(
         findings=[
             {
@@ -124,7 +124,7 @@ def test_map_summary_uses_domain_action_render_queries_for_next_steps() -> None:
         ],
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert data.next_steps[0].action
     assert "engine mount" in data.next_steps[0].action.lower()
@@ -134,7 +134,7 @@ def test_map_summary_uses_domain_action_render_queries_for_next_steps() -> None:
     assert data.next_steps[0].eta is None
 
 
-def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
+def test_build_report_document_next_steps_do_not_leak_placeholder_tokens() -> None:
     summary = minimal_summary(
         findings=[
             {
@@ -180,7 +180,7 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
         ],
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert len(data.next_steps) == 2
     assert all(step.eta is None for step in data.next_steps)
     assert all("front-left wheel" in step.action.lower() for step in data.next_steps)
@@ -216,12 +216,12 @@ def test_map_summary_next_steps_do_not_leak_placeholder_tokens() -> None:
         ),
     ],
 )
-def test_map_summary_keeps_generated_next_steps_on_primary_source_path_for_trunk_hotspots(
+def test_build_report_document_keeps_generated_next_steps_on_primary_source_path_for_trunk_hotspots(
     primary_source: str,
     expected_text: str,
     unexpected_text: str,
 ) -> None:
-    data = map_summary(
+    data = build_report_document(
         prepare_report_input(trunk_primary_guidance_summary(primary_source=primary_source))
     )
 
@@ -238,8 +238,8 @@ def test_map_summary_keeps_generated_next_steps_on_primary_source_path_for_trunk
     assert "imbalance or radial/lateral runout" not in rendered
 
 
-def test_map_summary_rephrases_ambiguous_primary_locations_as_mixed_signal() -> None:
-    data = map_summary(prepare_report_input(ambiguous_primary_location_summary()))
+def test_build_report_document_rephrases_ambiguous_primary_locations_as_mixed_signal() -> None:
+    data = build_report_document(prepare_report_input(ambiguous_primary_location_summary()))
 
     expected = "Mixed signal between Front-Left and Rear-Left"
 
@@ -281,13 +281,13 @@ def test_map_summary_rephrases_ambiguous_primary_locations_as_mixed_signal() -> 
         ),
     ],
 )
-def test_map_summary_builds_scenario_specific_recapture_guidance(
+def test_build_report_document_builds_scenario_specific_recapture_guidance(
     mode: str,
     expected_issue: str,
     expected_step: str,
     expected_condition: str,
 ) -> None:
-    data = map_summary(prepare_report_input(recapture_guidance_summary(mode)))
+    data = build_report_document(prepare_report_input(recapture_guidance_summary(mode)))
 
     assert data.appendix_a.mode == "recapture"
     assert any(expected_issue in line for line in data.appendix_a.capture_issues)
@@ -295,7 +295,7 @@ def test_map_summary_builds_scenario_specific_recapture_guidance(
     assert any(expected_condition in line for line in data.appendix_a.capture_conditions)
 
 
-def test_map_summary_formats_report_timestamps_for_header() -> None:
+def test_build_report_document_formats_report_timestamps_for_header() -> None:
     summary = minimal_summary(
         report_date="2026-03-25T10:00:00Z",
         start_time_utc="2026-03-25T09:55:00.536855+00:00",
@@ -303,14 +303,14 @@ def test_map_summary_formats_report_timestamps_for_header() -> None:
         metadata={"recorded_utc_offset_seconds": 7200},
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert data.run_datetime == "2026-03-25 12:00:00 UTC+02:00"
     assert data.start_time_utc == "2026-03-25 09:55:00 UTC"
     assert data.end_time_utc == "2026-03-25 10:00:11 UTC"
 
 
-def test_map_summary_backfills_peak_system_from_matching_finding() -> None:
+def test_build_report_document_backfills_peak_system_from_matching_finding() -> None:
     summary = minimal_summary(
         findings=[
             make_finding_payload(
@@ -349,13 +349,13 @@ def test_map_summary_backfills_peak_system_from_matching_finding() -> None:
         },
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert len(data.peak_rows) == 1
     assert data.peak_rows[0].system == "Wheel / Tire"
 
 
-def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
+def test_build_report_document_uses_connected_sensors_for_report_evidence() -> None:
     summary = minimal_summary(
         lang="en",
         sensor_count_used=4,
@@ -368,7 +368,7 @@ def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
         ],
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.sensor_count == 2
     assert data.sensor_locations == ["Front Left", "Rear Left"]
     assert [row.location for row in data.sensor_intensity_by_location] == [
@@ -513,11 +513,11 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
         },
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.observed.strongest_location == "Mixed signal between Rear-Left and Front-Right"
 
 
-def test_map_summary_peak_rows_use_persistence_metrics() -> None:
+def test_build_report_document_peak_rows_use_persistence_metrics() -> None:
     summary = minimal_summary(
         plots={
             "peaks_table": [
@@ -536,7 +536,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
             ],
         },
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.peak_rows
     row = data.peak_rows[0]
     assert row.peak_db == "18.4"
@@ -545,7 +545,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     assert "%" not in row.relevance
 
 
-def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
+def test_build_report_document_peak_rows_render_baseline_noise_label() -> None:
     summary = minimal_summary(
         lang="en",
         plots={
@@ -565,12 +565,12 @@ def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
             ],
         },
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.peak_rows
     assert data.peak_rows[0].relevance == "Near noise floor"
 
 
-def test_map_summary_data_trust_keeps_warning_detail() -> None:
+def test_build_report_document_data_trust_keeps_warning_detail() -> None:
     summary = minimal_summary(
         lang="nl",
         run_suitability=[
@@ -581,7 +581,7 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
             },
         ],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.data_trust
     assert data.data_trust[0].state == "warn"
     assert data.data_trust[0].check == "Frame-integriteit"
@@ -589,7 +589,7 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
     assert data.data_trust[0].detail == "0 verloren frames, 0 wachtrijoverlopen gedetecteerd."
 
 
-def test_map_summary_data_trust_literal_check_labels() -> None:
+def test_build_report_document_data_trust_literal_check_labels() -> None:
     summary = minimal_summary(
         lang="nl",
         run_suitability=[
@@ -600,12 +600,12 @@ def test_map_summary_data_trust_literal_check_labels() -> None:
             },
         ],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.data_trust
     assert data.data_trust[0].check == "Frame integrity"
 
 
-def test_map_summary_data_trust_includes_run_context_warnings() -> None:
+def test_build_report_document_data_trust_includes_run_context_warnings() -> None:
     summary = minimal_summary(
         lang="en",
         warnings=[
@@ -618,14 +618,14 @@ def test_map_summary_data_trust_includes_run_context_warnings() -> None:
             },
         ],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert any(
         item.check == "Order-analysis reference context was incomplete for this run"
         for item in data.data_trust
     )
 
 
-def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data() -> None:
+def test_build_report_document_data_trust_check_labels_follow_lang_for_same_summary_data() -> None:
     base_summary = minimal_summary(
         run_suitability=[
             {
@@ -642,14 +642,14 @@ def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data()
     summary_en = {**base_summary, "lang": "en"}
     summary_nl = {**base_summary, "lang": "nl"}
 
-    data_en = map_summary(prepare_report_input(summary_en))
-    data_nl = map_summary(prepare_report_input(summary_nl))
+    data_en = build_report_document(prepare_report_input(summary_en))
+    data_nl = build_report_document(prepare_report_input(summary_nl))
 
     assert data_en.data_trust[0].check == "Speed variation"
     assert data_nl.data_trust[0].check == "Snelheidsvariatie"
 
 
-def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
+def test_build_report_document_certainty_reason_ignores_unrelated_reference_gap() -> None:
     summary = minimal_summary(
         lang="en",
         sensor_count_used=4,
@@ -663,12 +663,12 @@ def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
         ],
         findings=[{"finding_id": "REF_ENGINE"}],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert data.observed.certainty_reason
     assert "Missing reference data" not in data.observed.certainty_reason
 
 
-def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
+def test_build_report_document_certainty_reason_keeps_relevant_reference_gap() -> None:
     summary = minimal_summary(
         lang="en",
         sensor_count_used=4,
@@ -688,11 +688,11 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
         ],
         findings=[{"finding_id": "REF_ENGINE"}],
     )
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
     assert "Missing reference data" in data.observed.certainty_reason
 
 
-def test_map_summary_builds_verdict_timeline_graph_from_phase_timeline() -> None:
+def test_build_report_document_builds_verdict_timeline_graph_from_phase_timeline() -> None:
     finding = make_finding_payload(
         finding_id="F_TIMELINE",
         suspected_source="wheel/tire",
@@ -733,7 +733,7 @@ def test_map_summary_builds_verdict_timeline_graph_from_phase_timeline() -> None
         ],
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     timeline = data.verdict_page.timeline_graph
     assert timeline is not None
@@ -747,7 +747,7 @@ def test_map_summary_builds_verdict_timeline_graph_from_phase_timeline() -> None
     assert [interval.has_fault_evidence for interval in timeline.intervals] == [False, True, False]
 
 
-def test_map_summary_softens_same_corner_wheel_driveline_overlap_wording() -> None:
+def test_build_report_document_softens_same_corner_wheel_driveline_overlap_wording() -> None:
     overlap_reason = (
         "Wheel and driveline evidence overlap, so the system could not strongly "
         "differentiate between them; inspect both areas."
@@ -829,7 +829,7 @@ def test_map_summary_softens_same_corner_wheel_driveline_overlap_wording() -> No
         ],
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert data.verdict_page.also_consider is not None
     assert "Driveline" in data.verdict_page.also_consider
@@ -843,8 +843,8 @@ def test_map_summary_softens_same_corner_wheel_driveline_overlap_wording() -> No
     assert "1x driveshaft also stayed strongest near front-left" not in evidence_summary
 
 
-def test_map_summary_surfaces_same_source_temporal_shift_in_page_one_and_appendix() -> None:
-    data = map_summary(prepare_report_input(sequential_same_source_summary()))
+def test_build_report_document_surfaces_temporal_shift_in_page_one_and_appendix() -> None:
+    data = build_report_document(prepare_report_input(sequential_same_source_summary()))
 
     assert data.verdict_page.suspected_source == "Wheel / Tire"
     assert data.verdict_page.inspect_first == "Front-Left"
@@ -868,7 +868,7 @@ def test_map_summary_surfaces_same_source_temporal_shift_in_page_one_and_appendi
     assert "stayed strongest at Front-Left" not in evidence_summary
 
 
-def test_map_summary_builds_sensor_observation_matrix_rows() -> None:
+def test_build_report_document_builds_sensor_observation_matrix_rows() -> None:
     wheel = make_finding_payload(
         finding_id="F_SENSOR_MATRIX",
         suspected_source="wheel/tire",
@@ -922,7 +922,7 @@ def test_map_summary_builds_sensor_observation_matrix_rows() -> None:
         top_causes=[wheel],
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert len(data.appendix_b.sensor_observation_rows) == 1
     row = data.appendix_b.sensor_observation_rows[0]

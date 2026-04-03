@@ -69,7 +69,7 @@ Contract bridge tests live in `apps/server/tests/integration/` and validate that
 
 | File | Boundary |
 |---|---|
-| `test_contract_analysis_report.py` | `summarize_run_data()` → `prepare_report_input()` → `map_summary()` |
+| `test_contract_analysis_report.py` | `summarize_run_data()` → `prepare_report_input()` → `build_report_document()` |
 | `test_contract_persistence_analysis.py` | `HistoryDB` write → read → `summarize_run_data()` |
 
 These tests are marked `smoke`, run in standard CI, use minimal synthetic data,

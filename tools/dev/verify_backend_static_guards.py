@@ -607,17 +607,16 @@ def _check_report_pdf_entrypoint_renders_report_document() -> list[str]:
             if not node.args.args:
                 violations.append(
                     f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
-                    "_build_pdf_bytes must accept ReportTemplateData"
+                    "_build_pdf_bytes must accept ReportDocument"
                 )
                 continue
             annotation = node.args.args[0].annotation
             if not (
-                isinstance(annotation, ast.Name)
-                and annotation.id == "ReportTemplateData"
+                isinstance(annotation, ast.Name) and annotation.id == "ReportDocument"
             ):
                 violations.append(
                     f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
-                    "_build_pdf_bytes must accept ReportTemplateData"
+                    "_build_pdf_bytes must accept ReportDocument"
                 )
         if isinstance(node, ast.ImportFrom) and (
             node.module == "vibesensor.shared.types.history_analysis_contracts"

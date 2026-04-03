@@ -44,18 +44,6 @@ def test_handle_timeout_marks_failed_and_logs(tmp_path) -> None:
     assert "Update timed out after 12.5s" in manager.status.log_tail[-1]
 
 
-def test_handle_unexpected_marks_failed_and_logs_exception(tmp_path, caplog) -> None:
-    manager, _runner, _repo = setup_update_env(tmp_path)
-    manager._runtime.tracker.start_job(_wifi_request("TestNet", ""))
-
-    with caplog.at_level("ERROR"):
-        manager._runtime.lifecycle.handle_unexpected(RuntimeError("boom"))
-
-    assert manager.status.state == UpdateState.failed
-    assert any(issue.message == "Unexpected error: boom" for issue in manager.status.issues)
-    assert any(record.message == "update: unexpected error" for record in caplog.records)
-
-
 @pytest.mark.asyncio
 async def test_cleanup_records_hotspot_restore_failure(tmp_path) -> None:
     with (
@@ -109,6 +97,27 @@ async def test_cleanup_re_raises_wifi_diagnostics_bug_after_finishing_cleanup(tm
 
 
 @pytest.mark.asyncio
+async def test_cleanup_logs_and_marks_failed_before_reraising(tmp_path, caplog) -> None:
+    manager, _runner, _repo = setup_update_env(tmp_path)
+    manager.status.state = UpdateState.running
+    manager.status.phase = UpdatePhase.installing
+
+    with (
+        patch(
+            "vibesensor.use_cases.updates.job_lifecycle.collect_runtime_details",
+            side_effect=RuntimeError("cleanup bug"),
+        ),
+        caplog.at_level("ERROR"),
+        pytest.raises(RuntimeError, match="cleanup bug"),
+    ):
+        await manager._runtime.lifecycle.cleanup_after_update()
+
+    assert manager.status.state == UpdateState.failed
+    assert any(issue.message == "Cleanup failed: cleanup bug" for issue in manager.status.issues)
+    assert any(record.message == "update: cleanup error" for record in caplog.records)
+
+
+@pytest.mark.asyncio
 async def test_cleanup_skips_wifi_cleanup_for_usb_transport(tmp_path) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
     manager.status.transport = UpdateTransport.usb_internet
@@ -122,18 +131,3 @@ async def test_cleanup_skips_wifi_cleanup_for_usb_transport(tmp_path) -> None:
         await manager._runtime.lifecycle.cleanup_after_update()
 
     assert manager.status.finished_at is not None
-
-
-def test_handle_cleanup_error_marks_failed_and_logs_exception(tmp_path, caplog) -> None:
-    manager, _runner, _repo = setup_update_env(tmp_path)
-    manager._runtime.tracker.start_job(_wifi_request("TestNet", ""))
-
-    with caplog.at_level("ERROR"):
-        try:
-            raise RuntimeError("cleanup bug")
-        except RuntimeError as exc:
-            manager._runtime.lifecycle.handle_cleanup_error(exc)
-
-    assert manager.status.state == UpdateState.failed
-    assert any(issue.message == "Cleanup failed: cleanup bug" for issue in manager.status.issues)
-    assert any(record.message == "update: cleanup error" for record in caplog.records)

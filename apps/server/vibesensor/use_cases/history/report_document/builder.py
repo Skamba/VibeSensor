@@ -11,7 +11,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
     PatternEvidence,
     Report,
-    ReportTemplateData,
+    ReportDocument,
     build_report_from_summary,
 )
 from vibesensor.shared.report_presentation import display_location
@@ -26,12 +26,14 @@ from vibesensor.use_cases.history.report_document._candidate_resolver import (
     resolve_primary_report_candidate,
 )
 from vibesensor.use_cases.history.report_document._card_builder import build_system_cards
+from vibesensor.use_cases.history.report_document.document_builder import (
+    build_report_document_data,
+)
 from vibesensor.use_cases.history.report_document.peak_table import build_peak_rows
 from vibesensor.use_cases.history.report_document.report_sections import (
     build_data_trust,
     build_next_steps,
 )
-from vibesensor.use_cases.history.report_document.template_builder import build_template_data
 
 from .measurements import _measurement_rows
 from .narrative_summaries import _proof_summary_text
@@ -46,10 +48,10 @@ from .sections import (
     _finding_to_presentation,
 )
 
-__all__ = ["map_summary"]
+__all__ = ["build_report_document"]
 
 
-def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
+def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
     """Build the canonical report document from prepared report input."""
     lang = str(normalize_lang(prepared.language))
     report = build_report_from_summary(
@@ -60,7 +62,7 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     def tr(key: str, **kw: JsonValue) -> str:
         return str(_tr(lang, key, **kw))
 
-    return _build_report_template_data(
+    return _build_report_document(
         prepared,
         report=report,
         lang=lang,
@@ -68,14 +70,14 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
     )
 
 
-def _build_report_template_data(
+def _build_report_document(
     prepared: PreparedReportInput,
     *,
     report: Report,
     lang: str,
     tr: Callable[..., str],
-) -> ReportTemplateData:
-    """Resolve report sections, then delegate field assignment to the builder."""
+) -> ReportDocument:
+    """Resolve report sections, then assemble the canonical report document."""
     test_run = prepared.domain_test_run
     report_facts = prepared.report_facts
     report_date_text = _report_date_text(prepared)
@@ -175,7 +177,7 @@ def _build_report_template_data(
         tr=tr,
     )
 
-    return build_template_data(
+    return build_report_document_data(
         prepared=prepared,
         report=report,
         report_date_text=report_date_text,

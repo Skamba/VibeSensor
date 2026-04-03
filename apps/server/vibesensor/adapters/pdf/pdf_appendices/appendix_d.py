@@ -5,19 +5,19 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import MARGIN, PAGE_H, PAGE_W, PANEL_HEADER_H
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 
 from .tables import _draw_traceability_row
+from .title_bar import draw_appendix_title_bar
 
 __all__ = ["_appendix_d_page"]
 
 
-def _appendix_d_page(c: Canvas, data: ReportTemplateData) -> None:
-    title_y = _draw_title_bar(
+def _appendix_d_page(c: Canvas, data: ReportDocument) -> None:
+    title_y = draw_appendix_title_bar(
         c,
         title=_tr(data.lang, "REPORT_APPENDIX_D_TITLE"),
         width=PAGE_W - 2 * MARGIN,

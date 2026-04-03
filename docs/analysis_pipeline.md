@@ -193,12 +193,12 @@ history/report projection is derived from persisted run data plus the persisted
 analysis summary only; any comparison against current mutable car settings is an
 explicit advisory overlay at the history delivery boundary, not a hidden input
 to the persisted projection or the default report cache path. Report endpoints
-rebuild `ReportTemplateData` from the persisted summary on demand via
+rebuild a `ReportDocument` from the persisted summary on demand via
 `use_cases/history/report_preparation.py:prepare_report_input()`, which
 reconstructs the domain aggregate and assembles the prepared report handoff,
-`use_cases/history/report_facts.py:prepare_report_facts()`, which precomputes
-semantic report facts, and `adapters/pdf/assembly/assembler.py:map_summary()`,
-which stays focused on adapter-local mapping and rendering data assembly.
+and `use_cases/history/report_document/builder.py:build_report_document()`,
+which performs the final document assembly before adapter-local PDF render
+planning.
 
 Persisted post-stop analysis strength/intensity outputs are dB-only.
 Raw ingest/sample acceleration fields may still be expressed in g.
@@ -210,10 +210,10 @@ Raw ingest/sample acceleration fields may still be expressed in g.
 2. Call it from `RunAnalysis.summarize()` at the correct point in the
    pipeline.
 3. If the new output is needed by the renderer, add any report-facing shaping
-   in `use_cases/history/report_facts.py` or
-   `use_cases/history/report_preparation.py`, then update
-   `adapters/pdf/assembly/assembler.py:map_summary()` and `ReportTemplateData`.
-   Keep semantic interpretation on the history/preparation side rather than in
+   in `use_cases/history/report_preparation.py` or
+   `use_cases/history/report_document/`, then update
+   `build_report_document()` and `ReportDocument`. Keep semantic
+   interpretation on the history/preparation side rather than in
    `adapters/pdf/*`.
 4. Export any new public symbol from `use_cases/diagnostics/__init__.py`.
 5. Run `pytest apps/server/tests/` to verify tests still pass.

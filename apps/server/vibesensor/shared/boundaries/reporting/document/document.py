@@ -13,7 +13,7 @@ from .sections import FindingPresentation, PeakRow, VerdictPageData
 
 __all__ = [
     "Report",
-    "ReportTemplateData",
+    "ReportDocument",
     "build_report_from_summary",
 ]
 
@@ -40,7 +40,7 @@ class Report:
 
 
 @dataclass
-class ReportTemplateData:
+class ReportDocument:
     """All data needed to render a diagnostic PDF report."""
 
     title: str = ""
