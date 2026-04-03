@@ -26,7 +26,10 @@ Module topology
   diagnostics parsing, and the thin Wi-Fi workflow coordinator.
 - **Releases**: ``releases/`` — GitHub release discovery, validation, and
   updater-facing download helpers.
-- **Operations**: ``installer.py`` (install/rollback orchestration),
+- **Operations**: ``installer.py`` (install policy facade),
+  ``wheel_installation.py`` (wheel install + verification execution),
+  ``rollback_snapshot_builder.py`` (rollback snapshot capture),
+  ``rollback_executor.py`` (rollback candidate selection + execution),
   ``artifact_validation.py`` (wheel validation + checksums),
   ``rollback_snapshot.py`` (rollback metadata + stored wheels),
   ``runner.py`` (process execution and command helpers), and
