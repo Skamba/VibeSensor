@@ -89,7 +89,7 @@ def test_f_order_finding_id_normalization() -> None:
 def test_fallback_payload_functions_removed() -> None:
     """``top_strength_values`` and ``has_relevant_reference_gap`` have been
     removed — the domain aggregate is always available."""
-    from vibesensor.adapters.pdf import mapping
+    from vibesensor.adapters.pdf import assembly as mapping
 
     assert not hasattr(mapping, "top_strength_values")
     assert not hasattr(mapping, "has_relevant_reference_gap")
