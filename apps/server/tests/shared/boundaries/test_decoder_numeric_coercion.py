@@ -9,7 +9,7 @@ from vibesensor.shared.boundaries.vibration_origin import location_hotspot_from_
 def test_location_hotspot_from_payload_drops_non_finite_numeric_values() -> None:
     hotspot = location_hotspot_from_payload(
         {
-            "location": "front-left",
+            "top_location": "front-left",
             "dominance_ratio": float("nan"),
             "localization_confidence": float("inf"),
             "location_count": float("-inf"),
@@ -33,7 +33,7 @@ def test_finding_from_payload_drops_non_finite_boundary_numbers() -> None:
             "phase_evidence": {"cruise_fraction": float("nan")},
             "evidence_metrics": {"vibration_strength_db": float("inf")},
             "location_hotspot": {
-                "location": "front-left",
+                "top_location": "front-left",
                 "dominance_ratio": float("nan"),
                 "localization_confidence": float("inf"),
                 "location_count": float("-inf"),

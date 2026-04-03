@@ -20,7 +20,7 @@ def test_finding_payload_uses_split_core_and_presentation_types() -> None:
     presentation_fields = set(get_type_hints(FindingPresentationPayload))
 
     assert SharedFindingPayload is SplitFindingPayload
-    assert {"finding_id", "suspected_source", "evidence_metrics"} <= core_fields
+    assert {"finding_id", "suspected_source", "evidence_metrics", "frequency_hz"} <= core_fields
     assert {"evidence_summary", "frequency_hz_or_order", "amplitude_metric"} <= presentation_fields
     assert core_fields.isdisjoint(
         {"evidence_summary", "frequency_hz_or_order", "amplitude_metric"},

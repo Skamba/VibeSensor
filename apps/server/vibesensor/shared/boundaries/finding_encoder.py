@@ -64,6 +64,8 @@ def _finding_core_payload_from_domain(finding: Finding) -> FindingCorePayload:
         payload["severity"] = finding.severity
     if finding.kind is not None:
         payload["finding_kind"] = str(finding.kind)
+    if finding.frequency_hz is not None:
+        payload["frequency_hz"] = finding.frequency_hz
     if finding.order:
         payload["order"] = finding.order
     if finding.dominant_phase:

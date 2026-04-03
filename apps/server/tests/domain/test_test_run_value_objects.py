@@ -160,7 +160,7 @@ class TestFindingWithValueObjects:
             "suspected_source": "wheel/tire",
             "confidence": 0.85,
             "location_hotspot": {
-                "location": "FL wheel",
+                "top_location": "FL wheel",
                 "dominance_ratio": 0.75,
                 "weak_spatial_separation": False,
             },
@@ -201,7 +201,7 @@ class TestFindingWithValueObjects:
             "confidence": 0.85,
             "strongest_speed_band": "80-90 km/h",
             "signatures_observed": ["1x wheel order", "2x wheel order"],
-            "location_hotspot": {"location": "FL wheel", "dominance_ratio": 0.75},
+            "location_hotspot": {"top_location": "FL wheel", "dominance_ratio": 0.75},
         }
         finding = finding_from_payload(payload)
         assert finding.origin is not None
