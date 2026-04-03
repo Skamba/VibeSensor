@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
 from vibesensor.adapters.http.settings import create_settings_routes
 from vibesensor.infra.config.settings_store import SettingsStore
+from vibesensor.shared.operational_errors import ServiceUnavailableError
 from vibesensor.shared.structured_logging import REQUEST_ID_HEADER
 
 
@@ -86,6 +87,31 @@ def test_unhandled_errors_still_echo_request_id(caplog: pytest.LogCaptureFixture
     failure_log = _log_record(caplog, "http_request_failed")
     assert failure_log.request_id == "failing-request"
     assert failure_log.failure_kind == "programmer"
+
+
+def test_unhandled_operational_errors_return_503_and_log_operational_kind(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    app = FastAPI()
+    install_request_logging_middleware(app)
+
+    @app.get("/dependency-down")
+    async def dependency_down() -> dict[str, bool]:
+        raise ServiceUnavailableError("helper unavailable")
+
+    with caplog.at_level(logging.INFO):
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.get(
+                "/dependency-down",
+                headers={REQUEST_ID_HEADER: "operational-request"},
+            )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "helper unavailable"}
+    assert response.headers[REQUEST_ID_HEADER] == "operational-request"
+    failure_log = _log_record(caplog, "http_request_failed")
+    assert failure_log.request_id == "operational-request"
+    assert failure_log.failure_kind == "operational"
 
 
 def test_http_exception_keeps_status_code_and_request_id(caplog: pytest.LogCaptureFixture) -> None:
