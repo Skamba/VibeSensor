@@ -9,15 +9,18 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.infra.runtime.processing_loop import (
+from vibesensor.infra.runtime.processing_failure_policy import (
     MAX_CONSECUTIVE_FAILURES,
     MAX_FATAL_BACKOFF_CYCLES,
-    ProcessingHealth,
-    ProcessingLoop,
-    ProcessingLoopError,
-    ProcessingLoopState,
 )
+from vibesensor.infra.runtime.processing_failures import (
+    ProcessingFailureCategory,
+    ProcessingTickFailure,
+)
+from vibesensor.infra.runtime.processing_loop import ProcessingLoop
+from vibesensor.infra.runtime.processing_state import ProcessingHealth, ProcessingLoopState
 from vibesensor.shared.exceptions import ProcessingError
+from vibesensor.shared.runtime_failures import ProcessingLoopFailure
 
 # ---------------------------------------------------------------------------
 # Minimal stubs
@@ -135,7 +138,7 @@ class TestProcessingLoopFailureTracking:
 
     @pytest.mark.asyncio
     async def test_single_failure_records_category_and_count(self) -> None:
-        """A single ProcessingLoopError records category and increments failure count."""
+        """A single processing tick failure records category and increments failure count."""
         processor = _StubProcessor(fail_count=1)
         loop, state = _make_loop(processor=processor)
 
@@ -172,7 +175,7 @@ class TestProcessingLoopFailureTracking:
         await _run_loop(loop, max_ticks=MAX_CONSECUTIVE_FAILURES + 2)
 
         assert state.processing_state == ProcessingHealth.OK
-        assert state.fatal_backoff_cycles == 0
+        assert state.tick_count == 1
         assert state.last_failure_category == "compute_all"
 
     @pytest.mark.asyncio
@@ -187,11 +190,10 @@ class TestProcessingLoopFailureTracking:
             await original_sleep(0)
 
         with patch("asyncio.sleep", _fast_sleep):
-            with pytest.raises(RuntimeError, match="persistent processing failure"):
+            with pytest.raises(ProcessingLoopFailure, match="Processing loop remained unhealthy"):
                 await loop.run()
 
         assert state.processing_state == ProcessingHealth.FATAL
-        assert state.fatal_backoff_cycles == MAX_FATAL_BACKOFF_CYCLES
 
     @pytest.mark.asyncio
     async def test_programmer_bug_propagates_from_ingress_state(self) -> None:
@@ -355,10 +357,10 @@ class TestProcessingLoopCleanup:
         processor = _StubProcessor(fail_count=1)
         loop, _state = _make_loop(processor=processor, registry=registry)
 
-        with pytest.raises(ProcessingLoopError, match="stub compute_all failure") as exc_info:
+        with pytest.raises(ProcessingTickFailure, match="stub compute_all failure") as exc_info:
             await loop._run_tick(sync_clock=False)
 
-        assert exc_info.value.category == "compute_all"
+        assert exc_info.value.category is ProcessingFailureCategory.COMPUTE_ALL
         assert processor.compute_call_args == [
             (
                 ["stay", "drop"],

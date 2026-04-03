@@ -12,7 +12,8 @@ from typing import TYPE_CHECKING
 
 from vibesensor.adapters.http.dependencies import RouterDeps
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
+from vibesensor.infra.runtime.processing_loop import ProcessingLoop
+from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource

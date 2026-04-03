@@ -170,7 +170,8 @@ def _make_state(
 ) -> RuntimeState:
     from vibesensor.app.runtime_state import RuntimeState
     from vibesensor.infra.runtime import RuntimeHealthState
-    from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
+    from vibesensor.infra.runtime.processing_loop import ProcessingLoop
+    from vibesensor.infra.runtime.processing_state import ProcessingLoopState
     from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 
     registry = _StubRegistry(clients)
