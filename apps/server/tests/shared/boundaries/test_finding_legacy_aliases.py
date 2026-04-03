@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import Finding, FindingEvidence, VibrationSource
-from vibesensor.shared.boundaries.finding_decoder import finding_from_payload
-from vibesensor.shared.boundaries.finding_encoder import finding_payload_from_domain
+from vibesensor.shared.boundaries.finding import finding_from_payload, finding_payload_from_domain
 
 
 class TestLegacySourceAlias:
@@ -59,3 +58,42 @@ class TestLegacySnrRatioAlias:
         assert isinstance(evidence_metrics, dict)
         assert evidence_metrics["snr_db"] == 12.5
         assert "snr_ratio" not in evidence_metrics
+
+
+class TestRemovedSignalFallbacks:
+    """Presentation-only signal labels no longer drive domain reconstruction."""
+
+    def test_frequency_hz_or_order_only_does_not_restore_signal_fields(self) -> None:
+        payload: dict[str, object] = {
+            "finding_id": "F-freq",
+            "severity": "diagnostic",
+            "suspected_source": "wheel/tire",
+            "frequency_hz_or_order": "41.0 Hz",
+        }
+
+        finding = finding_from_payload(payload)
+
+        assert finding.frequency_hz is None
+        assert finding.order is None
+
+
+class TestRemovedHotspotAliases:
+    """Canonical hotspot decoding ignores removed alias keys."""
+
+    def test_location_hotspot_ignores_second_location_and_old_location_aliases(self) -> None:
+        payload: dict[str, object] = {
+            "finding_id": "F-hotspot",
+            "severity": "diagnostic",
+            "suspected_source": "wheel/tire",
+            "location_hotspot": {
+                "location": "front-left",
+                "second_location": "front-right",
+                "ambiguous_location": True,
+            },
+        }
+
+        finding = finding_from_payload(payload)
+
+        assert finding.location is not None
+        assert finding.location.strongest_location == ""
+        assert finding.location.alternative_locations == ()

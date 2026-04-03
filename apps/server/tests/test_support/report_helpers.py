@@ -265,10 +265,8 @@ def ambiguous_primary_location_summary() -> dict:
         weak_spatial_separation=False,
         location_hotspot={
             "top_location": "Front Left",
-            "location": "Front Left",
             "ambiguous_location": True,
-            "alternative_locations": ["Rear Left"],
-            "second_location": "Rear Left",
+            "ambiguous_locations": ["Rear Left"],
         },
     )
     return minimal_summary(

@@ -48,6 +48,7 @@ def make_finding_payload(
         "suspected_source": suspected_source,
         "evidence_summary": "Test evidence summary",
         "frequency_hz_or_order": "1x wheel",
+        "order": "1x wheel",
         "amplitude_metric": {
             "name": "vibration_strength_db",
             "value": 25.0,

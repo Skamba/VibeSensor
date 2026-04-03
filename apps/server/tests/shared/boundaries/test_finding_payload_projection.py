@@ -110,6 +110,18 @@ def test_projection_serializes_matched_points_with_boundary_shape() -> None:
     ]
 
 
+def test_projection_emits_frequency_hz_in_core_payload() -> None:
+    core_payload = _finding_core_payload_from_domain(
+        Finding(
+            finding_id="F_HZ",
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            frequency_hz=41.0,
+        )
+    )
+
+    assert core_payload["frequency_hz"] == 41.0
+
+
 def test_projection_separates_core_and_presentation_metadata_before_composing() -> None:
     finding = Finding(
         finding_id="F_ORDER",
@@ -146,6 +158,7 @@ def test_projection_separates_core_and_presentation_metadata_before_composing() 
     assert "strongest_location" not in presentation_payload
     assert presentation_payload["evidence_summary"] == "Strong wheel-order correlation"
     assert presentation_payload["confidence_tone"] == finding.confidence_assessment.tone
+    assert "frequency_hz" not in core_payload
 
     assert payload == {**core_payload, **presentation_payload}
 

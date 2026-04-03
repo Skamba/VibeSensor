@@ -172,12 +172,12 @@ class TestLocationHotspot:
 
     def test_location_hotspot_from_payload_full(self) -> None:
         d = {
-            "location": "FL wheel",
+            "top_location": "FL wheel",
             "dominance_ratio": 0.75,
             "localization_confidence": 0.9,
             "weak_spatial_separation": True,
             "ambiguous_location": False,
-            "alternative_locations": ["FR wheel", "RL wheel"],
+            "ambiguous_locations": ["FR wheel", "RL wheel"],
         }
         h = location_hotspot_from_payload(d)
         assert h.strongest_location == "FL wheel"
@@ -199,7 +199,6 @@ class TestLocationHotspot:
     def test_location_hotspot_from_payload_prefers_top_location_identity(self) -> None:
         hotspot = location_hotspot_from_payload(
             {
-                "location": "ambiguous location: Front Left / Front Right",
                 "top_location": "Front Left",
                 "ambiguous_location": True,
                 "ambiguous_locations": ["Front Left", "Front Right"],

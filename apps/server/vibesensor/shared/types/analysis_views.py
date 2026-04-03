@@ -79,7 +79,6 @@ class LocationHotspotPayload(TypedDict, total=False):
     dominance_ratio: float | None
     location_count: int | None
     top_location: str | None
-    second_location: str | None
     ambiguous_location: bool | None
     ambiguous_locations: list[str]
     localization_confidence: float | None

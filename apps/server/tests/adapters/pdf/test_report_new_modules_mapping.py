@@ -384,8 +384,9 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
             {
                 "strongest_location": "Rear Left",
                 "location_hotspot": {
+                    "top_location": "Rear Left",
                     "ambiguous_locations": ["Rear Left", "Front Right"],
-                    "second_location": "Front Right",
+                    "ambiguous_location": True,
                 },
                 "suspected_source": "wheel/tire",
                 "dominance_ratio": 1.05,
