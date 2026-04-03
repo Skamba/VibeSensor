@@ -36,20 +36,18 @@ def _executor() -> tuple[UpdateWorkflowExecutor, MagicMock, MagicMock, MagicMock
 @pytest.mark.asyncio
 async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport() -> None:
     executor, stager, deployer, firmware_refresher, finalizer = _executor()
-    transport_session = object()
     plan = RefreshFirmwarePlan(
         current_version="2026.4.3",
         latest_tag="server-v2026.4.3",
     )
 
-    completed = await executor.execute(plan, transport_session=transport_session)
+    completed = await executor.execute(plan)
 
     assert completed == UpdateExecutionOutcome.refresh_only
     firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
         pinned_tag="server-v2026.4.3",
     )
     finalizer.complete.assert_awaited_once_with(
-        transport_session,
         message="No server update needed; ESP firmware checked",
     )
     deployer.deploy.assert_not_awaited()
@@ -59,7 +57,6 @@ async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport(
 @pytest.mark.asyncio
 async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_path: Path) -> None:
     executor, stager, deployer, firmware_refresher, finalizer = _executor()
-    transport_session = object()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
     staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
 
@@ -71,14 +68,12 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
 
     completed = await executor.execute(
         InstallServerReleasePlan(current_version="2026.4.3", release=release),
-        transport_session=transport_session,
     )
 
     assert completed == UpdateExecutionOutcome.installed
     stager.stage.assert_called_once_with(release)
     deployer.deploy.assert_awaited_once_with(staged_release)
     finalizer.complete.assert_awaited_once_with(
-        transport_session,
         message="Update completed successfully",
     )
     firmware_refresher.refresh_esp_firmware.assert_not_awaited()
@@ -89,7 +84,6 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
     tmp_path: Path,
 ) -> None:
     executor, stager, deployer, _firmware_refresher, finalizer = _executor()
-    transport_session = object()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
     staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
 
@@ -103,7 +97,6 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
     with pytest.raises(UpdateReleaseError, match="install failed"):
         await executor.execute(
             InstallServerReleasePlan(current_version="2026.4.3", release=release),
-            transport_session=transport_session,
         )
 
     deployer.deploy.assert_awaited_once_with(staged_release)

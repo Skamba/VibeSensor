@@ -6,7 +6,7 @@ from time import perf_counter
 
 from fastapi import FastAPI
 from starlette.datastructures import Headers, MutableHeaders
-from starlette.responses import JSONResponse, PlainTextResponse
+from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from vibesensor.adapters.http.error_boundary import http_exception_for_operational_error
@@ -96,10 +96,7 @@ class RequestLoggingMiddleware:
                     duration_ms=round((perf_counter() - started_at) * 1000.0, 3),
                 ),
             )
-            if response_started:
-                raise
-            failure_response = PlainTextResponse("Internal Server Error", status_code=500)
-            await failure_response(scope, receive, _send_with_request_id)
+            raise
         finally:
             if not request_failed:
                 LOGGER.info(

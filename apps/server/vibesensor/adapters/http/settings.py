@@ -53,6 +53,7 @@ from vibesensor.shared.types.speed_source_config import SpeedSourceUpdatePayload
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
     from vibesensor.adapters.http.dependencies import (
+        ObdAdminServiceProtocol,
         SettingsSpeedServiceProtocol,
         SpeedSourceSettingsServiceProtocol,
     )
@@ -108,7 +109,8 @@ _OBD_ADMIN_RESPONSES: OpenAPIResponses = {
 def create_settings_routes(
     settings_store: SettingsStore,
     speed_source_service: SpeedSourceSettingsServiceProtocol,
-    gps_monitor: SettingsSpeedServiceProtocol,
+    speed_status_service: SettingsSpeedServiceProtocol,
+    obd_admin_service: ObdAdminServiceProtocol,
 ) -> APIRouter:
     """Create and return the device-settings API routes."""
     router = APIRouter(tags=["settings"])
@@ -337,7 +339,7 @@ def create_settings_routes(
     @router.get("/api/settings/speed-source/status", response_model=SpeedSourceStatusResponse)
     async def get_speed_source_status() -> SpeedSourceStatusResponse:
         """Return the live selected-speed-source connection state and effective speed status."""
-        return _speed_source_status_response(gps_monitor.status_snapshot())
+        return _speed_source_status_response(speed_status_service.status_snapshot())
 
     @router.post(
         "/api/settings/obd/scan",
@@ -347,7 +349,7 @@ def create_settings_routes(
     async def scan_obd_devices() -> ObdScanResponse:
         """Scan nearby Bluetooth OBD adapters using the privileged helper."""
         with route_errors_to_http():
-            devices = await asyncio.to_thread(gps_monitor.scan_obd_devices)
+            devices = await asyncio.to_thread(obd_admin_service.scan_obd_devices)
         return ObdScanResponse(devices=[_obd_device_response(device) for device in devices])
 
     @router.post(
@@ -359,7 +361,7 @@ def create_settings_routes(
         """Pair, trust, connect, and persist the selected Bluetooth OBD adapter."""
         normalized_mac = normalize_mac_or_400(req.mac_address)
         with route_errors_to_http():
-            device = await asyncio.to_thread(gps_monitor.pair_obd_device, normalized_mac)
+            device = await asyncio.to_thread(obd_admin_service.pair_obd_device, normalized_mac)
             persisted = await asyncio.to_thread(
                 speed_source_service.update_speed_source,
                 {
@@ -380,7 +382,7 @@ def create_settings_routes(
     @router.get("/api/settings/obd/status", response_model=ObdStatusResponse)
     async def get_obd_status() -> ObdStatusResponse:
         """Return detailed Bluetooth OBD runtime/admin status for diagnostics."""
-        return _obd_status_response(await asyncio.to_thread(gps_monitor.obd_status))
+        return _obd_status_response(await asyncio.to_thread(speed_status_service.obd_status))
 
     # -- sensors ---------------------------------------------------------------
 

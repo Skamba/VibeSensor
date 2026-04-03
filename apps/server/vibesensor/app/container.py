@@ -21,7 +21,7 @@ from vibesensor.adapters.persistence.history_db import (
     HistoryPersistenceAdapters,
     create_history_persistence_adapters,
 )
-from vibesensor.adapters.speed import SpeedSourceCoordinator
+from vibesensor.adapters.speed import build_speed_source_services
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.runtime_state import AppRuntime, RuntimeState
@@ -139,7 +139,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
     obd_admin_client = ObdAdminClient()
     obd_monitor = OBDSpeedMonitor(admin_client=obd_admin_client)
-    speed_monitor = SpeedSourceCoordinator(
+    speed_services = build_speed_source_services(
         gps_monitor=gps_monitor,
         obd_monitor=obd_monitor,
     )
@@ -151,7 +151,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     speed_source_service = SpeedSourceSettingsService(
         settings_store=settings_store,
         runtime_applier=SpeedSourceRuntimeApplier(
-            speed_monitor=speed_monitor,
+            speed_control=speed_services.control,
         ),
     )
 
@@ -214,7 +214,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
         registry=registry,
         processor=processor,
-        gps_monitor=speed_monitor,
+        gps_monitor=speed_services.observation,
         gps_enabled=config.gps.gps_enabled,
         settings_reader=settings_reader,
         speed_source_reader=settings_store,
@@ -233,7 +233,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             persist_history_db=config.logging.persist_history_db,
         ),
         registry=registry,
-        gps_monitor=speed_monitor,
+        gps_monitor=speed_services.observation,
         processor=processor,
         history_db=history_db,
         settings_store=settings_reader,
@@ -292,7 +292,8 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         settings=SettingsDeps(
             settings_store=settings_store,
             speed_source_service=speed_source_service,
-            gps_monitor=speed_monitor,
+            speed_status_service=speed_services.observation,
+            obd_admin_service=speed_services.admin,
         ),
         history=HistoryDeps(
             run_service=run_service,

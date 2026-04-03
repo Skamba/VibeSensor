@@ -293,7 +293,8 @@ class FakeState:
         return SettingsDeps(
             settings_store=self.settings_store,
             speed_source_service=self.speed_source_service,
-            gps_monitor=self.gps_monitor,
+            speed_status_service=self.gps_monitor,
+            obd_admin_service=self.gps_monitor,
         )
 
     @property

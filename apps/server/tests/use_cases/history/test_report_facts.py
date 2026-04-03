@@ -173,16 +173,16 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
     assert facts.timeline_intervals[1].has_fault_evidence is True
 
 
-def test_prepare_report_facts_precomputes_workflow_display_sections() -> None:
+def test_prepare_report_facts_precomputes_workflow_document_sections() -> None:
     summary = _summary()
     facts = _prepare_facts(summary)
 
-    assert facts.display.verdict.action_status
-    assert facts.display.verdict.suspected_source
-    assert facts.display.appendix_a.mode == "workflow"
-    assert len(facts.display.appendix_a.ranked_candidates) == 1
-    assert facts.display.appendix_b.coverage_label == facts.display.verdict.coverage_label
-    assert len(facts.display.verdict.footer_routes) == 4
+    assert facts.verdict_page.action_status
+    assert facts.verdict_page.suspected_source
+    assert facts.appendix_a.mode == "workflow"
+    assert len(facts.appendix_a.ranked_candidates) == 1
+    assert facts.appendix_b.coverage_label == facts.verdict_page.coverage_label
+    assert len(facts.verdict_page.footer_routes) == 4
 
 
 @pytest.mark.parametrize(
@@ -215,13 +215,13 @@ def test_prepare_report_facts_keeps_weak_spatial_wheel_findings_on_recapture_pat
     assert facts.action_status_key == "recapture_before_acting"
 
 
-def test_prepare_report_facts_precomputes_recapture_display_guidance() -> None:
+def test_prepare_report_facts_precomputes_recapture_document_guidance() -> None:
     summary = _weak_spatial_order_summary(source="wheel/tire", order_label="1x wheel order")
     facts = _prepare_facts(summary)
 
-    assert facts.display.appendix_a.mode == "recapture"
-    assert facts.display.appendix_a.capture_issues
-    assert facts.display.appendix_a.capture_changes
-    assert facts.display.appendix_a.capture_conditions
-    assert facts.display.verdict.reason_sentence == facts.display.appendix_a.capture_issues[0]
-    assert len(facts.display.verdict.footer_routes) == 1
+    assert facts.appendix_a.mode == "recapture"
+    assert facts.appendix_a.capture_issues
+    assert facts.appendix_a.capture_changes
+    assert facts.appendix_a.capture_conditions
+    assert facts.verdict_page.reason_sentence == facts.appendix_a.capture_issues[0]
+    assert len(facts.verdict_page.footer_routes) == 1

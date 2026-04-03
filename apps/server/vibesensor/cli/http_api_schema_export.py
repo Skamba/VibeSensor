@@ -50,7 +50,8 @@ def _build_openapi_app() -> FastAPI:
         settings=SettingsDeps(
             settings_store=placeholder,
             speed_source_service=placeholder,
-            gps_monitor=placeholder,
+            speed_status_service=placeholder,
+            obd_admin_service=placeholder,
         ),
         history=HistoryDeps(
             run_service=placeholder,
