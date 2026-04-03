@@ -6,6 +6,7 @@ import logging
 from collections.abc import Mapping
 
 from vibesensor.domain import Symptom
+from vibesensor.shared.boundaries._codec_helpers import text_or_none
 from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
     analysis_settings_snapshot_from_mapping,
     analysis_settings_snapshot_to_metadata,
@@ -35,32 +36,32 @@ _LOGGER = logging.getLogger(__name__)
 def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
     """Normalize a raw persisted metadata mapping into the canonical typed object."""
 
-    run_id = _text_or_none(data.get("run_id")) or ""
+    run_id = text_or_none(data.get("run_id")) or ""
     if not run_id:
         _LOGGER.warning("run_metadata_from_mapping: missing or empty run_id in record %r", data)
     return RunMetadata(
-        record_type=_text_or_none(data.get("record_type")) or RUN_METADATA_TYPE,
-        schema_version=_text_or_none(data.get("schema_version")) or RUN_SCHEMA_VERSION,
+        record_type=text_or_none(data.get("record_type")) or RUN_METADATA_TYPE,
+        schema_version=text_or_none(data.get("schema_version")) or RUN_SCHEMA_VERSION,
         run_id=run_id,
-        start_time_utc=_text_or_none(data.get("start_time_utc")) or "",
-        end_time_utc=_text_or_none(data.get("end_time_utc")),
-        sensor_model=_text_or_none(data.get("sensor_model")) or "unknown",
-        firmware_version=_text_or_none(data.get("firmware_version")),
+        start_time_utc=text_or_none(data.get("start_time_utc")) or "",
+        end_time_utc=text_or_none(data.get("end_time_utc")),
+        sensor_model=text_or_none(data.get("sensor_model")) or "unknown",
+        firmware_version=text_or_none(data.get("firmware_version")),
         raw_sample_rate_hz=as_int_or_none(data.get("raw_sample_rate_hz")),
         feature_interval_s=as_float_or_none(data.get("feature_interval_s")),
         fft_window_size_samples=as_int_or_none(data.get("fft_window_size_samples")),
-        fft_window_type=_text_or_none(data.get("fft_window_type")),
-        peak_picker_method=_text_or_none(data.get("peak_picker_method")) or PEAK_PICKER_METHOD,
+        fft_window_type=text_or_none(data.get("fft_window_type")),
+        peak_picker_method=text_or_none(data.get("peak_picker_method")) or PEAK_PICKER_METHOD,
         accel_scale_g_per_lsb=as_float_or_none(data.get("accel_scale_g_per_lsb")),
         incomplete_for_order_analysis=bool(data.get("incomplete_for_order_analysis", False)),
         analysis_settings=analysis_settings_snapshot_from_mapping(
             data.get("analysis_settings_snapshot"),
         ),
         car=run_car_metadata_from_mapping(data.get("active_car_snapshot")),
-        case_id=_text_or_none(data.get("case_id")) or "",
-        sensor_mac=_text_or_none(data.get("sensor_mac")),
+        case_id=text_or_none(data.get("case_id")) or "",
+        sensor_mac=text_or_none(data.get("sensor_mac")),
         symptom=_symptom_from_payload(data.get("symptom")),
-        report_date=_text_or_none(data.get("report_date")),
+        report_date=text_or_none(data.get("report_date")),
         language=_normalized_language(data.get("language")),
         wheel_circumference_m=_reference_tire_circumference(data.get("reference_context")),
         recorded_utc_offset_seconds=coerce_utc_offset_seconds(
@@ -106,28 +107,21 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
     return payload
 
 
-def _text_or_none(value: object) -> str | None:
-    if not isinstance(value, str):
-        return None
-    text = value.strip()
-    return text or None
-
-
 def _normalized_language(value: object) -> str:
-    text = _text_or_none(value)
+    text = text_or_none(value)
     return text.lower() if text is not None else "en"
 
 
 def _symptom_from_payload(payload: object) -> Symptom | None:
     if not isinstance(payload, Mapping):
         return None
-    description = _text_or_none(payload.get("description"))
+    description = text_or_none(payload.get("description"))
     if description is None:
         return None
     return Symptom(
         description=description,
-        onset=_text_or_none(payload.get("onset")) or "",
-        context=_text_or_none(payload.get("context")) or "",
+        onset=text_or_none(payload.get("onset")) or "",
+        context=text_or_none(payload.get("context")) or "",
     )
 
 

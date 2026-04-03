@@ -7,6 +7,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from vibesensor.shared.exceptions import UpdatePreparationError
 from vibesensor.use_cases.updates.models import (
     UpdateRequest,
     UpdateTransport,
@@ -19,6 +20,15 @@ from vibesensor.use_cases.updates.runner import (
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
+
+
+def _fail_validation(
+    tracker: UpdateStatusTracker,
+    message: str,
+    detail: str = "",
+) -> UpdatePreparationError:
+    tracker.fail("validating", message, detail)
+    return UpdatePreparationError(message)
 
 
 def _probe_rollback_dir(rollback_dir: Path) -> None:
@@ -54,7 +64,7 @@ async def validate_prerequisites(
     tracker: UpdateStatusTracker,
     config: UpdateValidationConfig,
     request: UpdateRequest,
-) -> bool:
+) -> None:
     """Validate tool availability, privilege access, and disk space."""
     if request.transport == UpdateTransport.wifi:
         tracker.log(f"Starting update with SSID: {request.ssid}")
@@ -62,8 +72,7 @@ async def validate_prerequisites(
         tracker.log("Starting update using existing USB internet")
     for tool in ("nmcli", "python3"):
         if not shutil.which(tool):
-            tracker.fail("validating", f"Required tool not found: {tool}")
-            return False
+            raise _fail_validation(tracker, f"Required tool not found: {tool}")
 
     if os.geteuid() != 0:
         rc, _, _ = await commands.run(
@@ -73,23 +82,23 @@ async def validate_prerequisites(
             sudo=True,
         )
         if rc != 0:
-            tracker.fail(
-                "validating",
+            raise _fail_validation(
+                tracker,
                 "Insufficient privileges",
-                "Cannot run updater privileged commands non-interactively. "
-                "In dev/Docker environments, hotspot management is not available.",
+                (
+                    "Cannot run updater privileged commands non-interactively. "
+                    "In dev/Docker environments, hotspot management is not available."
+                ),
             )
-            return False
 
     try:
         _probe_rollback_dir(config.rollback_dir)
     except OSError as exc:
-        tracker.fail(
-            "validating",
+        raise _fail_validation(
+            tracker,
             "Rollback directory is not writable",
             f"{config.rollback_dir}: {exc}",
-        )
-        return False
+        ) from exc
 
     try:
         disk_check_path = _disk_check_path(config.rollback_dir)
@@ -97,17 +106,13 @@ async def validate_prerequisites(
         if free_bytes < config.min_free_disk_bytes:
             free_mb = free_bytes // (1024 * 1024)
             min_mb = config.min_free_disk_bytes // (1024 * 1024)
-            tracker.fail(
-                "validating",
+            raise _fail_validation(
+                tracker,
                 f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
             )
-            return False
     except OSError as exc:
-        tracker.fail(
-            "validating",
+        raise _fail_validation(
+            tracker,
             "Could not verify free disk space",
             str(exc),
-        )
-        return False
-
-    return True
+        ) from exc

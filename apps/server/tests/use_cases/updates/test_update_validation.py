@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.shared.exceptions import UpdatePreparationError
 from vibesensor.use_cases.updates.models import (
     UpdateRequest,
     UpdateTransport,
@@ -38,21 +39,21 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
         _raise_probe,
     )
 
-    result = await validate_prerequisites(
-        commands=_Commands(),
-        tracker=tracker,
-        config=UpdateValidationConfig(
-            rollback_dir=tmp_path / "rollback",
-            min_free_disk_bytes=1,
-        ),
-        request=UpdateRequest(
-            transport=UpdateTransport.wifi,
-            ssid="TestNet",
-            password="",
-        ),
-    )
+    with pytest.raises(UpdatePreparationError, match="Rollback directory is not writable"):
+        await validate_prerequisites(
+            commands=_Commands(),
+            tracker=tracker,
+            config=UpdateValidationConfig(
+                rollback_dir=tmp_path / "rollback",
+                min_free_disk_bytes=1,
+            ),
+            request=UpdateRequest(
+                transport=UpdateTransport.wifi,
+                ssid="TestNet",
+                password="",
+            ),
+        )
 
-    assert result is False
     assert tracker.status.state.value == "failed"
     assert any(
         issue.message == "Rollback directory is not writable" for issue in tracker.status.issues

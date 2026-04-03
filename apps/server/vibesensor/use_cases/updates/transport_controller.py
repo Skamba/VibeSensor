@@ -19,8 +19,7 @@ class UpdateTransportController:
     def __init__(self, *, sessions: UpdateTransportSessions) -> None:
         self._sessions = sessions
 
-    async def prepare(self, request: UpdateRequest) -> UpdateTransportSession | None:
+    async def prepare(self, request: UpdateRequest) -> UpdateTransportSession:
         transport_session = self._sessions.for_request(request)
-        if not await transport_session.prepare(request):
-            return None
+        await transport_session.prepare(request)
         return transport_session

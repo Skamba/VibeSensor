@@ -34,7 +34,6 @@ class UpdatePreparationCoordinator:
     """Own validation, transport setup, and version resolution before release work."""
 
     __slots__ = (
-        "_cancel_requested",
         "_commands",
         "_current_version_provider",
         "_tracker",
@@ -50,28 +49,21 @@ class UpdatePreparationCoordinator:
         transport_controller: UpdateTransportController,
         validation_config: UpdateValidationConfig,
         current_version_provider: CurrentVersionProvider,
-        cancel_requested: Callable[[], bool],
     ) -> None:
         self._tracker = tracker
         self._commands = commands
         self._transport_controller = transport_controller
         self._validation_config = validation_config
         self._current_version_provider = current_version_provider
-        self._cancel_requested = cancel_requested
 
-    async def prepare(self, request: UpdateRequest) -> PreparedUpdateSession | None:
-        if not await validate_prerequisites(
+    async def prepare(self, request: UpdateRequest) -> PreparedUpdateSession:
+        await validate_prerequisites(
             commands=self._commands,
             tracker=self._tracker,
             config=self._validation_config,
             request=request,
-        ):
-            return None
-        if self._cancel_requested():
-            return None
+        )
         transport_session = await self._transport_controller.prepare(request)
-        if transport_session is None or self._cancel_requested():
-            return None
         return PreparedUpdateSession(
             request=request,
             current_version=self._current_version_provider(),

@@ -10,6 +10,10 @@ from threading import RLock
 
 from vibesensor.adapters.gps.speed_resolution import SpeedResolution, SpeedResolutionPolicy
 from vibesensor.adapters.obd.admin_client import ObdAdminClient
+from vibesensor.adapters.obd.admin_state import (
+    ObdAdminObservation,
+    observe_configured_obd_device,
+)
 from vibesensor.adapters.obd.elm327 import Elm327Session
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
 from vibesensor.adapters.obd.polling import (
@@ -51,6 +55,7 @@ class OBDSpeedMonitor:
         "_device_name",
         "_engine_rpm",
         "_engine_rpm_ts",
+        "_last_admin_error",
         "_last_error",
         "_lock",
         "_monotonic",
@@ -94,6 +99,7 @@ class OBDSpeedMonitor:
         self._speed_snapshot: tuple[float | None, float | None] = (None, None)
         self._engine_rpm: float | None = None
         self._engine_rpm_ts: float | None = None
+        self._last_admin_error: str | None = None
         self._last_error: str | None = None
         self._current_reconnect_delay = _INITIAL_RECONNECT_DELAY_S
 
@@ -146,17 +152,22 @@ class OBDSpeedMonitor:
             stale_timeout_s=stale_timeout_s,
         )
         with self._lock:
+            previous_configured_mac = self._configured_device_mac
             if selected_source is not None:
                 self._selected_source = SpeedSourceKind(selected_source)
             self._configured_device_mac = obd_device_mac
             self._configured_device_name = obd_device_name
+            if self._configured_device_mac != previous_configured_mac:
+                self._reset_observed_device_state_unlocked(clear_runtime_error=True)
             if (
                 self._selected_source is SpeedSourceKind.OBD2
                 and self._configured_device_mac is None
             ):
                 self._connection_state = "disconnected"
+                self._reset_observed_device_state_unlocked(clear_runtime_error=True)
             elif self._selected_source is not SpeedSourceKind.OBD2:
                 self._connection_state = "idle"
+                self._reset_observed_device_state_unlocked(clear_runtime_error=True)
         return applied_speed
 
     def scan_devices(self, *, timeout_s: int = 8) -> list[ObdDeviceSnapshot]:
@@ -178,18 +189,15 @@ class OBDSpeedMonitor:
     ) -> None:
         self._policy.set_fallback_settings(stale_timeout_s=stale_timeout_s, **kwargs)
 
-    def status_snapshot(self, *, refresh_admin: bool = False) -> ObdStatusSnapshot:
-        helper_error: str | None = None
-        configured_mac: str | None
-        with self._lock:
-            configured_mac = self._configured_device_mac
-        if refresh_admin and configured_mac is not None:
-            try:
-                helper_device = self._admin_client.device_info(configured_mac)
-            except OperationalError as exc:
-                helper_error = str(exc)
-            else:
-                self._apply_device_snapshot(helper_device)
+    def refresh_admin_state(self) -> None:
+        configured_mac = self._configured_device_mac_snapshot()
+        observation = observe_configured_obd_device(
+            admin_client=self._admin_client,
+            configured_mac=configured_mac,
+        )
+        self._apply_admin_observation(configured_mac, observation)
+
+    def status_snapshot(self) -> ObdStatusSnapshot:
         with self._lock:
             now = self._monotonic()
             return build_obd_status_snapshot(
@@ -208,8 +216,8 @@ class OBDSpeedMonitor:
                     engine_rpm=self._engine_rpm_unlocked(now),
                     engine_rpm_ts=self._engine_rpm_ts,
                     obd_selected=self._selected_source is SpeedSourceKind.OBD2,
-                    last_error=self._last_error or helper_error,
-                    helper_error=helper_error,
+                    last_error=self._last_error or self._last_admin_error,
+                    helper_error=self._last_admin_error,
                     reconnect_delay_s=self._current_reconnect_delay,
                     polling=self._polling.snapshot(),
                 ),
@@ -344,12 +352,7 @@ class OBDSpeedMonitor:
 
     def _apply_device_snapshot(self, snapshot: ObdDeviceSnapshot) -> None:
         with self._lock:
-            self._device_mac = snapshot.mac_address
-            self._device_name = snapshot.name
-            self._paired = snapshot.paired
-            self._trusted = snapshot.trusted
-            self._device_connected = snapshot.connected
-            self._rfcomm_channel = snapshot.rfcomm_channel
+            self._apply_device_snapshot_unlocked(snapshot)
 
     async def _idle(
         self,
@@ -363,6 +366,22 @@ class OBDSpeedMonitor:
     def _config_snapshot(self) -> tuple[SpeedSourceKind, str | None, str | None]:
         with self._lock:
             return self._selected_source, self._configured_device_mac, self._configured_device_name
+
+    def _configured_device_mac_snapshot(self) -> str | None:
+        with self._lock:
+            return self._configured_device_mac
+
+    def _apply_admin_observation(
+        self,
+        configured_mac: str | None,
+        observation: ObdAdminObservation,
+    ) -> None:
+        with self._lock:
+            if configured_mac != self._configured_device_mac:
+                return
+            self._last_admin_error = observation.helper_error
+            if observation.snapshot is not None:
+                self._apply_device_snapshot_unlocked(observation.snapshot)
 
     def _set_connection_state(
         self,
@@ -379,6 +398,26 @@ class OBDSpeedMonitor:
                 self._current_reconnect_delay = float(reconnect_delay_s)
             elif state == "connected":
                 self._current_reconnect_delay = _INITIAL_RECONNECT_DELAY_S
+
+    def _apply_device_snapshot_unlocked(self, snapshot: ObdDeviceSnapshot) -> None:
+        self._device_mac = snapshot.mac_address
+        self._device_name = snapshot.name
+        self._paired = snapshot.paired
+        self._trusted = snapshot.trusted
+        self._device_connected = snapshot.connected
+        self._rfcomm_channel = snapshot.rfcomm_channel
+        self._last_admin_error = None
+
+    def _reset_observed_device_state_unlocked(self, *, clear_runtime_error: bool) -> None:
+        self._device_mac = None
+        self._device_name = None
+        self._paired = False
+        self._trusted = False
+        self._device_connected = False
+        self._rfcomm_channel = None
+        self._last_admin_error = None
+        if clear_runtime_error:
+            self._last_error = None
 
     def _engine_rpm_unlocked(self, now: float) -> float | None:
         if self._selected_source is not SpeedSourceKind.OBD2:

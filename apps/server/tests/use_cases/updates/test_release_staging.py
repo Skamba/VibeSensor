@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
@@ -63,8 +64,11 @@ async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> Non
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(tracker=tracker, rollback_dir=tmp_path / "rollback")
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="bad")
+    staged_dir: Path | None = None
 
     async def _download_release(_tracker, _rollback_dir, _release, staging_dir: Path) -> Path:
+        nonlocal staged_dir
+        staged_dir = staging_dir
         wheel_path = staging_dir / "release.whl"
         wheel_path.write_text("wheel", encoding="utf-8")
         return wheel_path
@@ -76,8 +80,12 @@ async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> Non
         ),
         patch(
             "vibesensor.use_cases.updates.release_staging.verify_download",
-            new=AsyncMock(return_value=False),
+            new=AsyncMock(side_effect=UpdateReleaseError("checksum mismatch")),
         ),
+        pytest.raises(UpdateReleaseError, match="checksum mismatch"),
     ):
-        async with stager.stage(release) as staged:
-            assert staged is None
+        async with stager.stage(release):
+            pytest.fail("stage() should not yield when verification fails")
+
+    assert staged_dir is not None
+    assert staged_dir.exists() is False

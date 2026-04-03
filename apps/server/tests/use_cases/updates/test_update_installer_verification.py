@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.artifact_validation import (
     WheelArtifactValidator,
     read_wheel_metadata,
@@ -234,7 +235,8 @@ async def test_install_release_rejects_corrupt_downloaded_wheel(tmp_path: Path) 
     broken_wheel = tmp_path / "broken.whl"
     broken_wheel.write_text("not a wheel", encoding="utf-8")
 
-    assert await installer.install_release(broken_wheel, "2025.6.15") is False
+    with pytest.raises(UpdateReleaseError, match="Update install failed"):
+        await installer.install_release(broken_wheel, "2025.6.15")
     assert tracker.status.state.value == "failed"
     assert not commands.calls
     assert any(issue.message == "Downloaded wheel is corrupt" for issue in tracker.status.issues)
@@ -433,7 +435,8 @@ async def test_install_release_rejects_incompatible_environment_before_pip_insta
         "",
     )
 
-    assert await installer.install_release(wheel_path, "2025.6.15") is False
+    with pytest.raises(UpdateReleaseError, match="Update install failed"):
+        await installer.install_release(wheel_path, "2025.6.15")
     assert tracker.status.state.value == "failed"
     assert any(
         issue.message == "Downloaded wheel is incompatible with the current environment"
