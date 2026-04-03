@@ -5,13 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
+from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
-from vibesensor.use_cases.updates.models import UpdatePhase
 
 
 class UpdateReleaseCoordinator:

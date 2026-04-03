@@ -10,8 +10,8 @@ from vibesensor.use_cases.updates.release_coordinator import UpdateReleaseCoordi
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
-from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.releases import UpdateReleaseCheck
+from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 
 
