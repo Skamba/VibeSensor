@@ -76,11 +76,14 @@ def test_build_system_cards_uses_domain_findings() -> None:
     assert cards[0].tone == "success"
 
 
-def test_map_summary_produces_report_with_domain_findings() -> None:
-    """map_summary must produce report data using domain-first pipeline."""
+def test_build_report_document_produces_report_with_domain_findings() -> None:
+    """build_report_document must produce report data using domain-first pipeline."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+    from vibesensor.use_cases.history.report_document import (
+        build_report_document,
+        prepare_report_input,
+    )
 
     summary = {
         "run_id": "test-map",
@@ -105,7 +108,7 @@ def test_map_summary_produces_report_with_domain_findings() -> None:
         "top_causes": [make_finding_payload(finding_id="F001", confidence=0.80)],
         "sensor_count_used": 2,
     }
-    template = map_summary(prepare_report_input(summary))
+    template = build_report_document(prepare_report_input(summary))
     assert template.run_id == "test-map"
 
 

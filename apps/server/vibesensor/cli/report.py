@@ -9,7 +9,7 @@ from pathlib import Path
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,7 +50,7 @@ def main() -> int:
     out_pdf = args.output or args.input.with_name(f"{args.input.stem}_report.pdf")
     try:
         prepared = prepare_report_input(summary, filename=out_pdf.name)
-        rendered_pdf = build_report_pdf(map_summary(prepared))
+        rendered_pdf = build_report_pdf(build_report_document(prepared))
     except (TypeError, ValueError) as exc:
         print(f"Error: invalid report input: {exc}", file=sys.stderr)
         return 1

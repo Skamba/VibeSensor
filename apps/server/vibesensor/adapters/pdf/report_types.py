@@ -11,8 +11,8 @@ from vibesensor.shared.boundaries.reporting.document import (
     AppendixCData,
     FindingPresentation,
     NextStep,
+    ReportDocument,
     ReportLabelValueRow,
-    ReportTemplateData,
     VerdictPageData,
 )
 from vibesensor.shared.types.analysis_views import PeakTableRow
@@ -101,7 +101,7 @@ class ReportPdfRenderPlan:
     total_pages: int
 
 
-def build_page1_render_plan(data: ReportTemplateData) -> Page1RenderPlan:
+def build_page1_render_plan(data: ReportDocument) -> Page1RenderPlan:
     """Project the document boundary into the page-1-only render model."""
 
     return Page1RenderPlan(
@@ -122,7 +122,7 @@ def build_page1_render_plan(data: ReportTemplateData) -> Page1RenderPlan:
     )
 
 
-def build_appendix_b_render_plan(data: ReportTemplateData) -> AppendixBRenderPlan:
+def build_appendix_b_render_plan(data: ReportDocument) -> AppendixBRenderPlan:
     """Project the document boundary into the spatial-proof appendix model."""
 
     return AppendixBRenderPlan(
@@ -136,7 +136,7 @@ def build_appendix_b_render_plan(data: ReportTemplateData) -> AppendixBRenderPla
     )
 
 
-def build_appendix_c_render_plan(data: ReportTemplateData) -> AppendixCRenderPlan:
+def build_appendix_c_render_plan(data: ReportDocument) -> AppendixCRenderPlan:
     """Project the document boundary into the evidence appendix model."""
 
     return AppendixCRenderPlan(
@@ -147,7 +147,7 @@ def build_appendix_c_render_plan(data: ReportTemplateData) -> AppendixCRenderPla
     )
 
 
-def build_report_render_plan(data: ReportTemplateData) -> ReportPdfRenderPlan:
+def build_report_render_plan(data: ReportDocument) -> ReportPdfRenderPlan:
     """Build the complete adapter-side render plan for the shipped PDF flow."""
 
     recapture_mode = data.appendix_a.mode == "recapture"
@@ -166,7 +166,7 @@ def build_report_render_plan(data: ReportTemplateData) -> ReportPdfRenderPlan:
     )
 
 
-def _appendix_a_page_plans(data: ReportTemplateData) -> tuple[AppendixAPageRenderPlan, ...]:
+def _appendix_a_page_plans(data: ReportDocument) -> tuple[AppendixAPageRenderPlan, ...]:
     trace_rows = tuple(data.appendix_d.rows)
     if data.appendix_a.mode == "recapture":
         return (

@@ -16,15 +16,15 @@ from vibesensor.adapters.pdf.pdf_drawing import _draw_footer
 from vibesensor.adapters.pdf.pdf_page1 import _page1
 from vibesensor.adapters.pdf.pdf_style import PAGE_SIZE
 from vibesensor.adapters.pdf.report_types import build_report_render_plan
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 
 LOGGER = logging.getLogger(__name__)
 
 
-def build_report_pdf(data: ReportTemplateData) -> bytes:
+def build_report_pdf(data: ReportDocument) -> bytes:
     """Build the redesigned multi-page diagnostic report PDF."""
-    if not isinstance(data, ReportTemplateData):
-        raise TypeError(f"build_report_pdf expects ReportTemplateData, got {type(data).__name__}")
+    if not isinstance(data, ReportDocument):
+        raise TypeError(f"build_report_pdf expects ReportDocument, got {type(data).__name__}")
     valid_tiers = frozenset({"A", "B", "C"})
     if data.certainty_tier_key not in valid_tiers:
         LOGGER.warning(
@@ -35,7 +35,7 @@ def build_report_pdf(data: ReportTemplateData) -> bytes:
     return _build_canvas_pdf(data)
 
 
-def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
+def _build_canvas_pdf(data: ReportDocument) -> bytes:
     """Build the raw PDF bytes from *data* using the ReportLab Canvas API."""
     plan = build_report_render_plan(data)
 

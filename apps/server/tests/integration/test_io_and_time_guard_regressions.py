@@ -20,14 +20,14 @@ from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.cli.report import main as report_cli_main
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 from vibesensor.use_cases.updates.firmware.firmware_cache import FirmwareCache
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
 
 
 def _make_summary(report_date: str, **overrides: Any) -> dict[str, Any]:
-    """Build a minimal summary dict for map_summary tests."""
+    """Build a minimal summary dict for build_report_document tests."""
     base: dict[str, Any] = {
         "lang": "en",
         "report_date": report_date,
@@ -194,7 +194,7 @@ class TestReportCliErrorHandling:
                 "vibesensor.cli.report.build_report_pdf",
                 side_effect=RuntimeError("PDF engine failed"),
             ),
-            patch("vibesensor.cli.report.map_summary", return_value={}),
+            patch("vibesensor.cli.report.build_report_document", return_value={}),
             patch(
                 "vibesensor.cli.report.parse_args",
                 return_value=MagicMock(input=run_file, output=None, summary_json=None),
@@ -213,7 +213,7 @@ class TestReportCliErrorHandling:
                 return_value={"run_id": "cli-report", "findings": [], "top_causes": []},
             ),
             patch("vibesensor.cli.report.build_report_pdf", return_value=b"%PDF-1.4 fake"),
-            patch("vibesensor.cli.report.map_summary", return_value={}),
+            patch("vibesensor.cli.report.build_report_document", return_value={}),
             patch(
                 "vibesensor.cli.report.parse_args",
                 return_value=MagicMock(
@@ -245,10 +245,10 @@ class TestReportDataBuilderRecordedTimezone:
                 "recorded_utc_offset_seconds": 7200,
             },
         )
-        result = map_summary(prepare_report_input(summary))
+        result = build_report_document(prepare_report_input(summary))
         assert result.run_datetime == "2025-06-01 16:30:00 UTC+02:00"
 
     def test_date_str_falls_back_to_utc_when_offset_missing(self) -> None:
         summary = _make_summary("2025-03-15T09:45:22")
-        result = map_summary(prepare_report_input(summary))
+        result = build_report_document(prepare_report_input(summary))
         assert result.run_datetime == "2025-03-15 09:45:22 UTC"

@@ -1,4 +1,4 @@
-"""Tests for the focused ReportTemplateData builder."""
+"""Tests for the focused report-document field builder."""
 
 from __future__ import annotations
 
@@ -15,7 +15,9 @@ from vibesensor.shared.boundaries.reporting.document import (
     SystemFindingCard,
 )
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
-from vibesensor.use_cases.history.report_document.template_builder import build_template_data
+from vibesensor.use_cases.history.report_document.document_builder import (
+    build_report_document_data,
+)
 
 
 @dataclass
@@ -91,7 +93,7 @@ def _make_primary(**overrides: object) -> PrimaryCandidateContext:
 
 
 def _build(**overrides: object):
-    """Build a ReportTemplateData with sensible defaults, allowing overrides."""
+    """Build a ReportDocument with sensible defaults, allowing overrides."""
     defaults: dict[str, object] = {
         "prepared": _make_prepared(),
         "report": _make_report(),
@@ -112,7 +114,7 @@ def _build(**overrides: object):
         "hotspot_rows": [],
     }
     defaults.update(overrides)
-    return build_template_data(**defaults)
+    return build_report_document_data(**defaults)
 
 
 def test_prepared_metadata_maps_to_template() -> None:

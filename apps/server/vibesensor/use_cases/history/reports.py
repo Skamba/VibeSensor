@@ -10,15 +10,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
-from vibesensor.use_cases.history.report_document import map_summary
+from vibesensor.use_cases.history.report_document import build_report_document
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
 from vibesensor.use_cases.history.report_preparation import prepare_persisted_report_input
 
 #: Callable that turns a canonical report document into PDF bytes.
-PdfRendererFn = Callable[[ReportTemplateData], bytes]
+PdfRendererFn = Callable[[ReportDocument], bytes]
 
 
 @dataclass(frozen=True)
@@ -57,7 +57,7 @@ class HistoryReportService:
         pdf = await self._pdf_cache.get_or_build(
             request.cache_key,
             lambda: self._pdf_renderer(
-                map_summary(
+                build_report_document(
                     prepare_persisted_report_input(
                         request.analysis,
                         warnings=request.warnings,

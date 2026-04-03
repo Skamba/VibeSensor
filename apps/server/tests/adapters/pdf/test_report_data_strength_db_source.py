@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 _ORDER_TOP_CAUSE: dict[str, object] = {
     "finding_id": "F_ORDER",
@@ -32,7 +32,7 @@ def _summary_with_top_order(
     )
 
 
-def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
+def test_build_report_document_prefers_non_ref_top_cause_for_observed_location() -> None:
     summary = _summary_with_top_order(_BASE_ORDER_FINDING)
     summary["top_causes"] = [
         {
@@ -53,12 +53,12 @@ def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
         },
     ]
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert data.observed.strongest_location.lower() == "rear-left"
 
 
-def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeholder() -> None:
+def test_build_report_document_falls_back_when_top_cause_is_placeholder() -> None:
     summary = _summary_with_top_order(
         {
             **_BASE_ORDER_FINDING,
@@ -76,12 +76,12 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
         },
     ]
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert data.observed.strongest_location.lower() == "rear-left"
 
 
-def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() -> None:
+def test_build_report_document_pattern_evidence_uses_same_primary_candidate_as_observed() -> None:
     summary = _summary_with_top_order(
         {
             **_BASE_ORDER_FINDING,
@@ -102,7 +102,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
         },
     ]
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert data.observed.strongest_location.lower() == "rear-left"
     assert data.observed.speed_band == "40-60 km/h"
@@ -112,7 +112,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
     assert "wheel" in data.pattern_evidence.why_parts_text.lower()
 
 
-def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
+def test_build_report_document_peak_rows_render_missing_values_as_dashes() -> None:
     summary = minimal_summary(
         plots={
             "peaks_table": [
@@ -125,7 +125,7 @@ def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
         },
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert data.peak_rows
     row = data.peak_rows[0]
@@ -134,7 +134,7 @@ def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
     assert row.peak_db == "—"
 
 
-def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
+def test_build_report_document_peak_rows_use_source_hint_for_system_label() -> None:
     summary = minimal_summary(
         lang="en",
         plots={
@@ -155,7 +155,7 @@ def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
         },
     )
 
-    data = map_summary(prepare_report_input(summary))
+    data = build_report_document(prepare_report_input(summary))
 
     assert data.peak_rows
     assert data.peak_rows[0].system == "Wheel / Tire"

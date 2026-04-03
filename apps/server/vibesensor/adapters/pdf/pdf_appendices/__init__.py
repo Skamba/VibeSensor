@@ -15,6 +15,7 @@ from .layout import (
     _estimate_worksheet_top_panel_height,
     _worksheet_first_actions_panel_height,
 )
+from .title_bar import draw_appendix_title_bar
 from .worksheet import _appendix_a_page
 
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     "_estimate_worksheet_top_panel_height",
     "_has_appendix_b_content",
     "_worksheet_first_actions_panel_height",
+    "draw_appendix_title_bar",
     "worksheet_step_pages",
 ]

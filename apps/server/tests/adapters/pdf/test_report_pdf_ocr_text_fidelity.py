@@ -13,7 +13,7 @@ from test_support.report_helpers import write_jsonl
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 pdfium = pytest.importorskip("pypdfium2")
 RapidOCR = pytest.importorskip("rapidocr_onnxruntime").RapidOCR
@@ -137,7 +137,7 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
         summary["findings"][0]["strongest_location"] = "front-left wheel"
         summary["findings"][0]["suspected_source"] = "wheel/tire"
 
-    pdf_bytes = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf_bytes = build_report_pdf(build_report_document(prepare_report_input(summary)))
 
     audit_root_env = os.getenv("VIBESENSOR_OCR_AUDIT_DIR")
     artifact_dir = Path(audit_root_env) if audit_root_env else tmp_path
