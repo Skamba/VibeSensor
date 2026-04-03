@@ -14,11 +14,11 @@ if TYPE_CHECKING:
         TestRun,
         VibrationOrigin,
     )
-    from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
-    from vibesensor.shared.boundaries.reporting.summary_codec import (
+    from vibesensor.shared.boundaries.reporting.payload import (
         NormalizedReportSummary,
         ReportTimelineInterval,
     )
+    from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
     from vibesensor.shared.run_context_warning import RunContextWarning
     from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 

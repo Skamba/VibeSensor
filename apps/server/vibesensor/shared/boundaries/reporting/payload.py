@@ -1,4 +1,4 @@
-"""Canonical typed summary boundary for report/history consumers."""
+"""Canonical reporting payload boundary for history and PDF preparation."""
 
 from __future__ import annotations
 
@@ -17,7 +17,9 @@ from vibesensor.shared.types.run_schema import RunMetadata
 __all__ = [
     "NormalizedReportSummary",
     "ReportTimelineInterval",
+    "has_projectable_report_payload",
     "report_summary_from_mapping",
+    "require_projectable_report_payload",
 ]
 
 
@@ -50,6 +52,23 @@ class NormalizedReportSummary:
     sensor_intensity_rows: tuple[LocationIntensitySummary, ...]
     peak_table_rows: tuple[PeakTableRow, ...]
     timeline_intervals: tuple[ReportTimelineInterval, ...]
+
+
+def has_projectable_report_payload(payload: Mapping[str, object]) -> bool:
+    """Return whether *payload* has the minimum shape needed for report projection."""
+
+    findings = payload.get("findings")
+    top_causes = payload.get("top_causes")
+    return isinstance(findings, list) or isinstance(top_causes, list)
+
+
+def require_projectable_report_payload(payload: Mapping[str, object]) -> None:
+    """Raise when *payload* cannot be projected into the canonical report shape."""
+
+    if not has_projectable_report_payload(payload):
+        raise ValueError(
+            "Report payload must include findings or top_causes lists for report preparation"
+        )
 
 
 def report_summary_from_mapping(payload: Mapping[str, object]) -> NormalizedReportSummary:

@@ -55,6 +55,14 @@ class UpdateTransport(enum.StrEnum):
     usb_internet = "usb_internet"
 
 
+class UpdateExecutionOutcome(enum.StrEnum):
+    """Canonical coordinator/workflow result for one update run."""
+
+    aborted = "aborted"
+    refresh_only = "refresh_only"
+    installed = "installed"
+
+
 _LOG_TAIL_LIMIT: int = 50
 
 

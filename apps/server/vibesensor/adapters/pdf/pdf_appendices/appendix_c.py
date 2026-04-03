@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
@@ -20,7 +22,6 @@ from vibesensor.adapters.pdf.pdf_style import (
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 
 from .layout import (
     _estimate_appendix_c_context_panel_height,
@@ -31,28 +32,30 @@ from .tables import _draw_table, _draw_traceability_row, _fmt_db, _fmt_hz
 
 __all__ = ["_appendix_c_page"]
 
+if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.report_types import AppendixCRenderPlan
 
-def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
+
+def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
     title_y = _draw_title_bar(
         c,
-        title=_tr(data.lang, "REPORT_APPENDIX_C_TITLE"),
+        title=_tr(plan.lang, "REPORT_APPENDIX_C_TITLE"),
         width=PAGE_W - 2 * MARGIN,
         page_top=PAGE_H - MARGIN,
     )
-    appendix = data.appendix_c
-    appendix_d = data.appendix_d
+    appendix = plan.appendix
     width = PAGE_W - 2 * MARGIN
 
     chain_h = 58 * mm
     chain_y = title_y - chain_h
-    _draw_panel(c, MARGIN, chain_y, width, chain_h, _tr(data.lang, "REPORT_EVIDENCE_CHAIN_TITLE"))
+    _draw_panel(c, MARGIN, chain_y, width, chain_h, _tr(plan.lang, "REPORT_EVIDENCE_CHAIN_TITLE"))
     chain_top = (
         _draw_text(
             c,
             MARGIN + 4 * mm,
             chain_y + chain_h - PANEL_HEADER_H - 2 * mm,
             width - 8 * mm,
-            appendix.evidence_summary or _tr(data.lang, "REPORT_EVIDENCE_CHAIN_NOTE"),
+            appendix.evidence_summary or _tr(plan.lang, "REPORT_EVIDENCE_CHAIN_NOTE"),
             size=FS_SMALL,
             color=SUB_CLR,
             leading=FS_SMALL + 1.0,
@@ -64,12 +67,12 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         bool(row.ambiguity_note) for row in appendix.evidence_chain_rows
     )
     chain_headers = [
-        _tr(data.lang, "REPORT_SOURCE_COLUMN"),
-        _tr(data.lang, "REPORT_SIGNAL_COLUMN"),
-        _tr(data.lang, "REPORT_MEASUREMENT_REFS_COLUMN"),
-        _tr(data.lang, "REPORT_MATCHED_WINDOWS_COLUMN"),
-        _tr(data.lang, "REPORT_SPEED_WINDOW_COLUMN"),
-        _tr(data.lang, "REPORT_LOCATION_COLUMN"),
+        _tr(plan.lang, "REPORT_SOURCE_COLUMN"),
+        _tr(plan.lang, "REPORT_SIGNAL_COLUMN"),
+        _tr(plan.lang, "REPORT_MEASUREMENT_REFS_COLUMN"),
+        _tr(plan.lang, "REPORT_MATCHED_WINDOWS_COLUMN"),
+        _tr(plan.lang, "REPORT_SPEED_WINDOW_COLUMN"),
+        _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
     ]
     chain_widths = [0.18, 0.19, 0.15, 0.12, 0.16, 0.20]
     chain_rows = []
@@ -77,16 +80,16 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         current = [
             row.source_name,
             row.supporting_signal_label,
-            ", ".join(row.measurement_refs) or _tr(data.lang, "REPORT_MEASUREMENT_REFS_NONE"),
+            ", ".join(row.measurement_refs) or _tr(plan.lang, "REPORT_MEASUREMENT_REFS_NONE"),
             str(row.matched_evidence_window_count or 0),
-            row.speed_window or _tr(data.lang, "UNKNOWN"),
-            row.dominant_location or _tr(data.lang, "UNKNOWN"),
+            row.speed_window or _tr(plan.lang, "UNKNOWN"),
+            row.dominant_location or _tr(plan.lang, "UNKNOWN"),
         ]
         if show_ambiguity:
             current.append(row.ambiguity_note or "—")
         chain_rows.append(current)
     if show_ambiguity:
-        chain_headers.append(_tr(data.lang, "REPORT_AMBIGUITY_COLUMN"))
+        chain_headers.append(_tr(plan.lang, "REPORT_AMBIGUITY_COLUMN"))
         chain_widths = [0.15, 0.16, 0.13, 0.10, 0.13, 0.11, 0.22]
     _draw_table(
         c,
@@ -108,7 +111,7 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         measurement_y,
         width,
         measurement_h,
-        _tr(data.lang, "REPORT_SUPPORTING_MEASUREMENTS_TITLE"),
+        _tr(plan.lang, "REPORT_SUPPORTING_MEASUREMENTS_TITLE"),
     )
     measurement_source_values = {
         row.source_name for row in appendix.measurement_rows if row.source_name
@@ -137,7 +140,7 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
                 measurement_top,
                 width - 8 * mm,
                 _tr(
-                    data.lang,
+                    plan.lang,
                     "REPORT_SUPPORTING_MEASUREMENTS_SHARED_CONTEXT",
                     source=next(iter(measurement_source_values)),
                     signal=next(iter(measurement_signal_values)),
@@ -168,10 +171,10 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         )
     if shared_measurement_context:
         measurement_headers = [
-            _tr(data.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
-            _tr(data.lang, "FREQUENCY_HZ"),
-            _tr(data.lang, "REPORT_PEAK_DB_COLUMN"),
-            _tr(data.lang, "REPORT_STRENGTH_DB_COLUMN"),
+            _tr(plan.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
+            _tr(plan.lang, "FREQUENCY_HZ"),
+            _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
+            _tr(plan.lang, "REPORT_STRENGTH_DB_COLUMN"),
         ]
         measurement_rows = [
             [
@@ -185,13 +188,13 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         measurement_widths = [0.18, 0.22, 0.30, 0.30]
     else:
         measurement_headers = [
-            _tr(data.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
-            _tr(data.lang, "REPORT_SOURCE_COLUMN"),
-            _tr(data.lang, "REPORT_SIGNAL_COLUMN"),
-            _tr(data.lang, "REPORT_PEAK_DB_COLUMN"),
-            _tr(data.lang, "REPORT_STRENGTH_DB_COLUMN"),
-            _tr(data.lang, "REPORT_SPEED_WINDOW_COLUMN"),
-            _tr(data.lang, "REPORT_LOCATION_COLUMN"),
+            _tr(plan.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
+            _tr(plan.lang, "REPORT_SOURCE_COLUMN"),
+            _tr(plan.lang, "REPORT_SIGNAL_COLUMN"),
+            _tr(plan.lang, "REPORT_PEAK_DB_COLUMN"),
+            _tr(plan.lang, "REPORT_STRENGTH_DB_COLUMN"),
+            _tr(plan.lang, "REPORT_SPEED_WINDOW_COLUMN"),
+            _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
         ]
         measurement_rows = [
             [
@@ -200,8 +203,8 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
                 row.signal_label,
                 _fmt_db(row.peak_db),
                 _fmt_db(row.strength_db),
-                row.speed_window or _tr(data.lang, "UNKNOWN"),
-                row.dominant_location or _tr(data.lang, "UNKNOWN"),
+                row.speed_window or _tr(plan.lang, "UNKNOWN"),
+                row.dominant_location or _tr(plan.lang, "UNKNOWN"),
             ]
             for row in appendix.measurement_rows
         ]
@@ -225,14 +228,14 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
     lower_h = min(
         max_lower_h,
         max(
-            _estimate_appendix_c_context_panel_height(data, width=context_w),
-            _estimate_appendix_c_suitability_panel_height(data, width=suitability_w),
-            _estimate_appendix_c_trace_panel_height(data, width=trace_w),
+            _estimate_appendix_c_context_panel_height(plan, width=context_w),
+            _estimate_appendix_c_suitability_panel_height(plan, width=suitability_w),
+            _estimate_appendix_c_trace_panel_height(plan, width=trace_w),
         ),
     )
     lower_y = measurement_y - GAP - lower_h
     _draw_panel(
-        c, MARGIN, lower_y, context_w, lower_h, _tr(data.lang, "REPORT_SUPPORTING_CONTEXT_TITLE")
+        c, MARGIN, lower_y, context_w, lower_h, _tr(plan.lang, "REPORT_SUPPORTING_CONTEXT_TITLE")
     )
     block_x = MARGIN + 4 * mm
     block_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
@@ -256,8 +259,8 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         block_x,
         block_y,
         context_w - 8 * mm,
-        _tr(data.lang, "REPORT_SPEED_BAND_SUMMARY_LABEL"),
-        appendix.speed_band_summary or _tr(data.lang, "UNKNOWN"),
+        _tr(plan.lang, "REPORT_SPEED_BAND_SUMMARY_LABEL"),
+        appendix.speed_band_summary or _tr(plan.lang, "UNKNOWN"),
         max_lines=3,
     )
     block_y = _draw_section_block(
@@ -265,8 +268,8 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         block_x,
         block_y,
         context_w - 8 * mm,
-        _tr(data.lang, "REPORT_PHASE_SUMMARY_LABEL"),
-        appendix.phase_summary or _tr(data.lang, "UNKNOWN"),
+        _tr(plan.lang, "REPORT_PHASE_SUMMARY_LABEL"),
+        appendix.phase_summary or _tr(plan.lang, "UNKNOWN"),
         max_lines=3,
     )
     if appendix.observations:
@@ -276,7 +279,7 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
             block_x,
             block_y,
             context_w - 8 * mm,
-            _tr(data.lang, "ADDITIONAL_OBSERVATIONS"),
+            _tr(plan.lang, "ADDITIONAL_OBSERVATIONS"),
             observations_text,
             max_lines=6,
         )
@@ -288,14 +291,12 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
         lower_y,
         suitability_w,
         lower_h,
-        _tr(data.lang, "REPORT_SUITABILITY_DETAIL_TITLE"),
+        _tr(plan.lang, "REPORT_SUITABILITY_DETAIL_TITLE"),
     )
     trust_x = suitability_x + 4 * mm
     trust_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
     filtered_suitability_items = [
-        item
-        for item in appendix.suitability_items
-        if item.detail != data.verdict_page.action_status_note
+        item for item in appendix.suitability_items if item.detail != plan.action_status_note
     ]
     if appendix.limits_summary:
         trust_y = (
@@ -346,10 +347,10 @@ def _appendix_c_page(c: Canvas, data: ReportTemplateData) -> None:
 
     trace_x = suitability_x + suitability_w + GAP
     _draw_panel(
-        c, trace_x, lower_y, trace_w, lower_h, _tr(data.lang, "REPORT_TRACEABILITY_PANEL_TITLE")
+        c, trace_x, lower_y, trace_w, lower_h, _tr(plan.lang, "REPORT_TRACEABILITY_PANEL_TITLE")
     )
     trace_y = lower_y + lower_h - PANEL_HEADER_H - 2 * mm
-    for trace_row in appendix_d.rows:
+    for trace_row in plan.trace_rows:
         trace_y = (
             _draw_traceability_row(
                 c,
