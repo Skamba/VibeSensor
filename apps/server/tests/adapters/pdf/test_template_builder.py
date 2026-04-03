@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
 from vibesensor.adapters.pdf.models import (
@@ -18,40 +17,42 @@ from vibesensor.adapters.pdf.models import (
 from vibesensor.adapters.pdf.template_builder import build_template_data
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
-if TYPE_CHECKING:
-    from vibesensor.adapters.pdf.models import ReportTemplateData
-    from vibesensor.adapters.pdf.report_context import ReportMappingContext
+
+@dataclass
+class _StubMetadata:
+    car_name: str | None = "TestCar"
+    car_type: str | None = "Sedan"
 
 
 @dataclass
-class _StubTestRun:
-    """Minimal stand-in for a domain TestRun used only by the builder context."""
-
-    findings: list[object] = field(default_factory=list)
+class _StubSummary:
+    metadata: _StubMetadata | None = field(default_factory=_StubMetadata)
 
 
-def _make_context(**overrides: object) -> ReportMappingContext:
-    from vibesensor.adapters.pdf.report_context import ReportMappingContext
+@dataclass
+class _StubReportFacts:
+    duration_text: str | None = "60s"
+    sample_rate_hz: str | None = "100"
+    tire_spec_text: str | None = "205/55R16"
+    sample_count: int = 6000
+    sensor_locations_active: tuple[str, ...] = ("front", "rear")
+    sensor_model: str | None = "MPU6050"
+    firmware_version: str | None = "1.2.3"
 
+
+@dataclass
+class _StubPrepared:
+    summary: _StubSummary = field(default_factory=_StubSummary)
+    report_facts: _StubReportFacts = field(default_factory=_StubReportFacts)
+
+
+def _make_prepared(**overrides: object) -> _StubPrepared:
     defaults: dict[str, object] = {
-        "car_name": "TestCar",
-        "car_type": "Sedan",
-        "date_str": "2026-01-01 12:00:00 UTC",
-        "origin": None,
-        "origin_location": "",
-        "sensor_locations_active": ["front", "rear"],
-        "duration_text": "60s",
-        "start_time_utc": "2026-01-01T12:00:00Z",
-        "end_time_utc": "2026-01-01T12:01:00Z",
-        "sample_rate_hz": "100",
-        "tire_spec_text": "205/55R16",
-        "sample_count": 6000,
-        "sensor_model": "MPU6050",
-        "firmware_version": "1.2.3",
-        "domain_aggregate": _StubTestRun(),
+        "summary": _StubSummary(),
+        "report_facts": _StubReportFacts(),
     }
     defaults.update(overrides)
-    return ReportMappingContext(**defaults)
+    return _StubPrepared(**defaults)
 
 
 def _make_report(**overrides: object) -> Report:
@@ -89,11 +90,14 @@ def _make_primary(**overrides: object) -> PrimaryCandidateContext:
     return PrimaryCandidateContext(**defaults)
 
 
-def _build(**overrides: object) -> ReportTemplateData:
+def _build(**overrides: object):
     """Build a ReportTemplateData with sensible defaults, allowing overrides."""
     defaults: dict[str, object] = {
-        "context": _make_context(),
+        "prepared": _make_prepared(),
         "report": _make_report(),
+        "report_date_text": "2026-01-01 12:00:00 UTC",
+        "report_start_time_utc": "2026-01-01T12:00:00Z",
+        "report_end_time_utc": "2026-01-01T12:01:00Z",
         "primary": _make_primary(),
         "title": "Test Report",
         "observed": PatternEvidence(),
@@ -111,26 +115,25 @@ def _build(**overrides: object) -> ReportTemplateData:
     return build_template_data(**defaults)
 
 
-# ---------------------------------------------------------------------------
-# Context metadata mapping
-# ---------------------------------------------------------------------------
-
-
-def test_context_metadata_maps_to_template() -> None:
-    """Context-owned run metadata fields map directly to template data."""
-    ctx = _make_context(
-        date_str="2026-03-25 10:00:00 UTC",
-        duration_text="90s",
-        start_time_utc="2026-03-25T10:00:00Z",
-        end_time_utc="2026-03-25T10:01:30Z",
-        sample_rate_hz="200",
-        tire_spec_text="225/45R17",
-        sample_count=18000,
-        sensor_model="ICM-42688",
-        firmware_version="2.0.0",
-        sensor_locations_active=["front", "rear", "trunk"],
+def test_prepared_metadata_maps_to_template() -> None:
+    """Prepared report metadata fields map directly to template data."""
+    prepared = _make_prepared(
+        report_facts=_StubReportFacts(
+            duration_text="90s",
+            sample_rate_hz="200",
+            tire_spec_text="225/45R17",
+            sample_count=18000,
+            sensor_model="ICM-42688",
+            firmware_version="2.0.0",
+            sensor_locations_active=("front", "rear", "trunk"),
+        ),
     )
-    result = _build(context=ctx)
+    result = _build(
+        prepared=prepared,
+        report_date_text="2026-03-25 10:00:00 UTC",
+        report_start_time_utc="2026-03-25T10:00:00Z",
+        report_end_time_utc="2026-03-25T10:01:30Z",
+    )
 
     assert result.run_datetime == "2026-03-25 10:00:00 UTC"
     assert result.duration_text == "90s"
@@ -144,54 +147,39 @@ def test_context_metadata_maps_to_template() -> None:
     assert result.sensor_locations == ["front", "rear", "trunk"]
 
 
-# ---------------------------------------------------------------------------
-# Car name/type fallback logic
-# ---------------------------------------------------------------------------
-
-
-def test_car_name_from_report_overrides_context() -> None:
-    """Report.car_name takes precedence over context.car_name."""
-    ctx = _make_context(car_name="ContextCar")
+def test_car_name_from_report_overrides_prepared_summary() -> None:
+    prepared = _make_prepared(summary=_StubSummary(metadata=_StubMetadata(car_name="ContextCar")))
     report = _make_report(car_name="ReportCar")
-    result = _build(context=ctx, report=report)
+    result = _build(prepared=prepared, report=report)
 
     assert result.car_name == "ReportCar"
 
 
-def test_car_name_falls_back_to_context() -> None:
-    """When report.car_name is None, context.car_name is used."""
-    ctx = _make_context(car_name="ContextCar")
+def test_car_name_falls_back_to_prepared_summary() -> None:
+    prepared = _make_prepared(summary=_StubSummary(metadata=_StubMetadata(car_name="ContextCar")))
     report = _make_report(car_name=None)
-    result = _build(context=ctx, report=report)
+    result = _build(prepared=prepared, report=report)
 
     assert result.car_name == "ContextCar"
 
 
-def test_car_type_from_report_overrides_context() -> None:
-    """Report.car_type takes precedence over context.car_type."""
-    ctx = _make_context(car_type="ContextType")
+def test_car_type_from_report_overrides_prepared_summary() -> None:
+    prepared = _make_prepared(summary=_StubSummary(metadata=_StubMetadata(car_type="ContextType")))
     report = _make_report(car_type="ReportType")
-    result = _build(context=ctx, report=report)
+    result = _build(prepared=prepared, report=report)
 
     assert result.car_type == "ReportType"
 
 
-def test_car_type_falls_back_to_context() -> None:
-    """When report.car_type is None, context.car_type is used."""
-    ctx = _make_context(car_type="ContextType")
+def test_car_type_falls_back_to_prepared_summary() -> None:
+    prepared = _make_prepared(summary=_StubSummary(metadata=_StubMetadata(car_type="ContextType")))
     report = _make_report(car_type=None)
-    result = _build(context=ctx, report=report)
+    result = _build(prepared=prepared, report=report)
 
     assert result.car_type == "ContextType"
 
 
-# ---------------------------------------------------------------------------
-# Primary candidate fields
-# ---------------------------------------------------------------------------
-
-
 def test_primary_sensor_count_maps_to_template() -> None:
-    """Primary candidate sensor_count maps to template sensor_count."""
     primary = _make_primary(sensor_count=4)
     result = _build(primary=primary)
 
@@ -199,20 +187,13 @@ def test_primary_sensor_count_maps_to_template() -> None:
 
 
 def test_primary_tier_maps_to_certainty_tier_key() -> None:
-    """Primary candidate tier maps to certainty_tier_key."""
     primary = _make_primary(tier="C")
     result = _build(primary=primary)
 
     assert result.certainty_tier_key == "C"
 
 
-# ---------------------------------------------------------------------------
-# Section passthrough
-# ---------------------------------------------------------------------------
-
-
 def test_findings_passthrough() -> None:
-    """Findings list is passed through without modification."""
     findings = [FindingPresentation(suspected_source="wheel/tire")]
     result = _build(findings=findings)
 
@@ -220,7 +201,6 @@ def test_findings_passthrough() -> None:
 
 
 def test_top_causes_passthrough() -> None:
-    """Top causes list is passed through without modification."""
     top_causes = [FindingPresentation(suspected_source="engine")]
     result = _build(top_causes=top_causes)
 
@@ -228,7 +208,6 @@ def test_top_causes_passthrough() -> None:
 
 
 def test_sensor_intensity_passthrough() -> None:
-    """Sensor intensity list is passed through without modification."""
     intensity = [LocationIntensitySummary(location="front", p95_intensity_db=12.5)]
     result = _build(sensor_intensity=intensity)
 
@@ -236,7 +215,6 @@ def test_sensor_intensity_passthrough() -> None:
 
 
 def test_hotspot_rows_passthrough() -> None:
-    """Hotspot rows are passed through without modification."""
     rows = [LocationHotspotRow(location="front", peak_value=20.0)]
     result = _build(hotspot_rows=rows)
 
@@ -244,7 +222,6 @@ def test_hotspot_rows_passthrough() -> None:
 
 
 def test_system_cards_passthrough() -> None:
-    """System cards are passed through without modification."""
     cards = [SystemFindingCard(system_name="Engine")]
     result = _build(system_cards=cards)
 
@@ -252,7 +229,6 @@ def test_system_cards_passthrough() -> None:
 
 
 def test_next_steps_passthrough() -> None:
-    """Next steps are passed through without modification."""
     steps = [NextStep(action="Inspect tires")]
     result = _build(next_steps=steps)
 
@@ -260,7 +236,6 @@ def test_next_steps_passthrough() -> None:
 
 
 def test_data_trust_passthrough() -> None:
-    """Data trust items are passed through without modification."""
     trust = [DataTrustItem(check="GPS lock", state="pass")]
     result = _build(data_trust=trust)
 
@@ -268,27 +243,19 @@ def test_data_trust_passthrough() -> None:
 
 
 def test_peak_rows_passthrough() -> None:
-    """Peak rows are passed through without modification."""
     rows = [PeakRow(rank="1", system="Wheel")]
     result = _build(peak_rows=rows)
 
     assert result.peak_rows == rows
 
 
-# ---------------------------------------------------------------------------
-# Scalar fields
-# ---------------------------------------------------------------------------
-
-
 def test_title_maps() -> None:
-    """Title is passed through."""
     result = _build(title="My Title")
 
     assert result.title == "My Title"
 
 
 def test_lang_comes_from_report() -> None:
-    """Language is sourced from the Report, not the context."""
     report = _make_report(lang="sv")
     result = _build(report=report)
 
@@ -296,7 +263,6 @@ def test_lang_comes_from_report() -> None:
 
 
 def test_run_id_comes_from_report() -> None:
-    """run_id is sourced from the Report."""
     report = _make_report(run_id="custom-run-id")
     result = _build(report=report)
 

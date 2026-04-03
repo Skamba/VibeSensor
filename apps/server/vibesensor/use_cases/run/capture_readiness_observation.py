@@ -1,4 +1,4 @@
-"""Observation gathering for live capture-readiness evaluation."""
+"""Boundary observation gathering for live capture-readiness evaluation."""
 
 from __future__ import annotations
 
@@ -11,8 +11,9 @@ from vibesensor.shared.ports import ClientTracker, TrackedClient
 
 __all__ = [
     "CaptureReadinessObservation",
-    "ObdStatusSnapshotView",
-    "SpeedStatusSnapshotView",
+    "CaptureReadinessObdObservation",
+    "CaptureReadinessSensorObservation",
+    "CaptureReadinessSpeedObservation",
     "observe_capture_readiness",
 ]
 
@@ -50,12 +51,36 @@ class _ObdStatusProvider(Protocol):
 
 
 @dataclass(frozen=True, slots=True)
+class CaptureReadinessSensorObservation:
+    client_id: str
+    location_code: str
+    frames_dropped: int
+    queue_overflow_drops: int
+    server_queue_drops: int
+    parse_errors: int
+
+
+@dataclass(frozen=True, slots=True)
+class CaptureReadinessSpeedObservation:
+    source: str
+    speed_kmh: float | None
+    age_s: float | None
+    fallback_active: bool
+
+
+@dataclass(frozen=True, slots=True)
+class CaptureReadinessObdObservation:
+    rpm: float | None
+    rpm_age_s: float | None
+
+
+@dataclass(frozen=True, slots=True)
 class CaptureReadinessObservation:
     observed_at_mono_s: float
-    active_clients: tuple[TrackedClient, ...]
+    active_sensors: tuple[CaptureReadinessSensorObservation, ...]
     run_context: RunContextSnapshot
-    speed_status: SpeedStatusSnapshotView | None
-    obd_status: ObdStatusSnapshotView | None
+    speed: CaptureReadinessSpeedObservation | None
+    obd: CaptureReadinessObdObservation | None
 
 
 def observe_capture_readiness(
@@ -66,32 +91,53 @@ def observe_capture_readiness(
     now_mono: float | None = None,
 ) -> CaptureReadinessObservation:
     observed_at_mono_s = time.monotonic() if now_mono is None else now_mono
-    active_clients = _active_clients(registry)
+    active_sensors = _active_sensors(registry)
     return CaptureReadinessObservation(
         observed_at_mono_s=observed_at_mono_s,
-        active_clients=active_clients,
+        active_sensors=active_sensors,
         run_context=run_context,
-        speed_status=_speed_status(speed_provider),
-        obd_status=_obd_status(speed_provider),
+        speed=_speed_observation(speed_provider),
+        obd=_obd_observation(speed_provider),
     )
 
 
-def _active_clients(registry: ClientTracker) -> tuple[TrackedClient, ...]:
-    active_clients: list[TrackedClient] = []
+def _active_sensors(registry: ClientTracker) -> tuple[CaptureReadinessSensorObservation, ...]:
+    active_sensors: list[CaptureReadinessSensorObservation] = []
     for client_id in registry.active_client_ids():
         client = registry.get(client_id)
         if client is not None:
-            active_clients.append(client)
-    return tuple(active_clients)
+            active_sensors.append(_sensor_observation(client))
+    return tuple(active_sensors)
 
 
-def _speed_status(speed_provider: object) -> SpeedStatusSnapshotView | None:
+def _sensor_observation(client: TrackedClient) -> CaptureReadinessSensorObservation:
+    return CaptureReadinessSensorObservation(
+        client_id=client.client_id,
+        location_code=str(client.location_code),
+        frames_dropped=int(getattr(client, "frames_dropped", 0)),
+        queue_overflow_drops=int(getattr(client, "queue_overflow_drops", 0)),
+        server_queue_drops=int(getattr(client, "server_queue_drops", 0)),
+        parse_errors=int(getattr(client, "parse_errors", 0)),
+    )
+
+
+def _speed_observation(speed_provider: object) -> CaptureReadinessSpeedObservation | None:
     if isinstance(speed_provider, _SpeedStatusProvider):
-        return speed_provider.status_snapshot()
+        speed_status = speed_provider.status_snapshot()
+        return CaptureReadinessSpeedObservation(
+            source=str(speed_status.speed_source),
+            speed_kmh=speed_status.effective_speed_kmh,
+            age_s=speed_status.last_update_age_s,
+            fallback_active=speed_status.fallback_active,
+        )
     return None
 
 
-def _obd_status(speed_provider: object) -> ObdStatusSnapshotView | None:
+def _obd_observation(speed_provider: object) -> CaptureReadinessObdObservation | None:
     if isinstance(speed_provider, _ObdStatusProvider):
-        return speed_provider.obd_status()
+        obd_status = speed_provider.obd_status()
+        return CaptureReadinessObdObservation(
+            rpm=obd_status.last_rpm,
+            rpm_age_s=obd_status.rpm_sample_age_s,
+        )
     return None

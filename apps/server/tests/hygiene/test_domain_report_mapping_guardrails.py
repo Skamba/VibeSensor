@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 
-def test_report_mapping_context_has_domain_aggregate() -> None:
-    """``prepare_report_mapping_context`` must consume a prepared domain aggregate."""
+def test_prepared_report_input_has_domain_aggregate() -> None:
+    """Prepared report inputs must carry the reconstructed domain aggregate."""
     from test_support.findings import make_finding_payload
 
     from vibesensor.adapters.pdf.assembly import prepare_report_input
-    from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
     from vibesensor.domain import TestRun
 
     summary = {
@@ -27,21 +26,13 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
         "run_suitability": [],
     }
     prepared = prepare_report_input(summary)
-    assert prepared.domain_test_run is not None
-    assert prepared.report_facts is not None
-    context = prepare_report_mapping_context(prepared)
-    assert context.domain_aggregate is not None
-    assert isinstance(context.domain_aggregate, TestRun)
-    assert len(context.domain_aggregate.findings) == 1
+    assert isinstance(prepared.domain_test_run, TestRun)
+    assert len(prepared.domain_test_run.findings) == 1
 
 
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
-    from vibesensor.adapters.pdf.assembly import (
-        PrimaryCandidateContext,
-        ReportMappingContext,
-        build_system_cards,
-    )
+    from vibesensor.adapters.pdf.assembly import PrimaryCandidateContext, build_system_cards
     from vibesensor.domain import Finding, RunCapture, TestRun
     from vibesensor.report_i18n import tr
 
@@ -56,24 +47,6 @@ def test_build_system_cards_uses_domain_findings() -> None:
         capture=RunCapture(run_id="test"),
         findings=(domain_f,),
         top_causes=(domain_f,),
-    )
-    # Build a context with the aggregate (payloads no longer stored on context)
-    context = ReportMappingContext(
-        car_name=None,
-        car_type=None,
-        date_str="",
-        origin={},
-        origin_location="",
-        sensor_locations_active=[],
-        duration_text=None,
-        start_time_utc=None,
-        end_time_utc=None,
-        sample_rate_hz=None,
-        tire_spec_text=None,
-        sample_count=0,
-        sensor_model=None,
-        firmware_version=None,
-        domain_aggregate=aggregate,
     )
     primary = PrimaryCandidateContext(
         primary_candidate=domain_f,
@@ -94,11 +67,10 @@ def test_build_system_cards_uses_domain_findings() -> None:
         certainty_reason="Consistent order-tracking match",
         tier="C",
     )
-    cards = build_system_cards(context, primary, lang, lambda key, **kw: tr(lang, key, **kw))
+    cards = build_system_cards(aggregate, primary, lang, lambda key, **kw: tr(lang, key, **kw))
     assert len(cards) == 1
-    # The tone should come from domain Finding, not the payload's "WRONG_TONE"
     assert cards[0].tone != "WRONG_TONE"
-    assert cards[0].tone == "success"  # HIGH confidence → success
+    assert cards[0].tone == "success"
 
 
 def test_map_summary_produces_report_with_domain_findings() -> None:
@@ -135,21 +107,14 @@ def test_map_summary_produces_report_with_domain_findings() -> None:
 
 
 def test_report_mapping_business_functions_use_domain_objects() -> None:
-    """Key business-decision functions derive values from the domain aggregate.
-
-    When ``prepare_report_mapping_context`` produces a domain aggregate,
-    ``resolve_primary_report_candidate`` must derive primary source,
-    strength, and reference-gap status from domain objects — not from
-    raw payload dict traversal.
-    """
+    """Primary-candidate resolution must derive values from the domain aggregate."""
     from test_support.findings import make_finding_payload
 
     from vibesensor.adapters.pdf.assembly import (
         prepare_report_input,
         resolve_primary_report_candidate,
     )
-    from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
-    from vibesensor.domain import TestRun, VibrationSource
+    from vibesensor.domain import VibrationSource
     from vibesensor.report_i18n import tr
 
     lang = "en"
@@ -175,27 +140,20 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     }
 
     prepared = prepare_report_input(summary)
-    assert prepared.domain_test_run is not None
-    assert prepared.report_facts is not None
-    context = prepare_report_mapping_context(prepared)
-    assert context.domain_aggregate is not None
-    assert isinstance(context.domain_aggregate, TestRun)
-
     primary = resolve_primary_report_candidate(
-        context=context,
+        aggregate=prepared.domain_test_run,
         facts=prepared.report_facts.primary_candidate_facts,
         tr=lambda key, **kw: tr(lang, key, **kw),
         lang=lang,
     )
 
-    # primary_source must be a VibrationSource enum (domain-first derivation)
     assert isinstance(primary.primary_source, VibrationSource), (
         "primary_source must be a VibrationSource enum when domain aggregate is present"
     )
 
 
-def test_prepared_report_input_no_longer_exposes_summary_payload() -> None:
-    """Prepared report inputs must expose explicit fields instead of a raw summary dict."""
+def test_prepared_report_input_exposes_canonical_summary_boundary() -> None:
+    """Prepared report inputs must expose explicit typed fields instead of raw dict state."""
     from test_support.findings import make_finding_payload
 
     from vibesensor.adapters.pdf.assembly import prepare_report_input
@@ -220,7 +178,8 @@ def test_prepared_report_input_no_longer_exposes_summary_payload() -> None:
     )
 
     assert not hasattr(prepared, "analysis_summary")
-    assert prepared.renderer_payload.run_id == "guardrails"
+    assert not hasattr(prepared, "renderer_payload")
+    assert prepared.summary.run_id == "guardrails"
 
 
 def test_next_steps_consume_prepared_actions() -> None:

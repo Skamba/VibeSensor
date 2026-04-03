@@ -11,11 +11,11 @@ from vibesensor.adapters.pdf.models import (
 )
 from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern
 from vibesensor.adapters.pdf.presentation import order_label_human
+from vibesensor.domain import TestRun
 from vibesensor.report_i18n import human_source
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-    from vibesensor.adapters.pdf.report_context import ReportMappingContext
 
 __all__ = [
     "build_system_cards",
@@ -24,7 +24,7 @@ __all__ = [
 
 
 def build_system_cards(
-    context: ReportMappingContext,
+    aggregate: TestRun,
     primary: PrimaryCandidateContext,
     lang: str,
     tr: Callable[..., str],
@@ -33,7 +33,6 @@ def build_system_cards(
     tier = primary.tier
     if tier == "A":
         return []
-    aggregate = context.domain_aggregate
     card_sources = (
         aggregate.effective_top_causes() or aggregate.non_reference_findings or aggregate.findings
     )

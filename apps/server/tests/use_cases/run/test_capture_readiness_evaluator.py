@@ -9,7 +9,11 @@ from vibesensor.domain import (
     RunContextSnapshot,
 )
 from vibesensor.use_cases.run.capture_readiness_evaluator import evaluate_capture_readiness
-from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessObservation
+from vibesensor.use_cases.run.capture_readiness_observation import (
+    CaptureReadinessObservation,
+    CaptureReadinessSensorObservation,
+    CaptureReadinessSpeedObservation,
+)
 from vibesensor.use_cases.run.capture_readiness_state import (
     CaptureReadinessStateSnapshot,
     IntegrityState,
@@ -17,25 +21,11 @@ from vibesensor.use_cases.run.capture_readiness_state import (
 )
 
 
-@dataclass(slots=True)
-class _TrackedClient:
-    client_id: str = "client-1"
-    name: str = "Front left"
-    firmware_version: str = "1.0.0"
-    sample_rate_hz: int = 800
-    location_code: str = "front_left_wheel"
-    frames_total: int = 0
-    frames_dropped: int = 0
-    queue_overflow_drops: int = 0
-    server_queue_drops: int = 0
-    parse_errors: int = 0
-
-
 @dataclass(frozen=True, slots=True)
 class _SpeedStatus:
-    speed_source: str = "gps"
-    effective_speed_kmh: float | None = 80.0
-    last_update_age_s: float | None = 0.2
+    source: str = "gps"
+    speed_kmh: float | None = 80.0
+    age_s: float | None = 0.2
     fallback_active: bool = False
 
 
@@ -66,22 +56,36 @@ def _run_context() -> RunContextSnapshot:
 def _observation(
     *,
     speed_status: _SpeedStatus,
-    active_clients: tuple[_TrackedClient, ...] = (_TrackedClient(),),
+    active_sensors: tuple[CaptureReadinessSensorObservation, ...] = (
+        CaptureReadinessSensorObservation(
+            client_id="client-1",
+            location_code="front_left_wheel",
+            frames_dropped=0,
+            queue_overflow_drops=0,
+            server_queue_drops=0,
+            parse_errors=0,
+        ),
+    ),
     now_mono: float = 108.0,
 ) -> CaptureReadinessObservation:
     return CaptureReadinessObservation(
         observed_at_mono_s=now_mono,
-        active_clients=active_clients,
+        active_sensors=active_sensors,
         run_context=_run_context(),
-        speed_status=speed_status,
-        obd_status=None,
+        speed=CaptureReadinessSpeedObservation(
+            source=speed_status.source,
+            speed_kmh=speed_status.speed_kmh,
+            age_s=speed_status.age_s,
+            fallback_active=speed_status.fallback_active,
+        ),
+        obd=None,
     )
 
 
 def test_capture_readiness_evaluator_reports_non_live_speed_sources_explicitly() -> None:
     readiness = evaluate_capture_readiness(
         policy=CaptureReadinessPolicy(),
-        observation=_observation(speed_status=_SpeedStatus(speed_source="manual")),
+        observation=_observation(speed_status=_SpeedStatus(source="manual")),
         state=CaptureReadinessStateSnapshot(
             integrity=IntegrityState(
                 active=False,
@@ -103,7 +107,7 @@ def test_capture_readiness_evaluator_reports_non_live_speed_sources_explicitly()
 
 def test_capture_readiness_evaluator_accepts_ready_observation_from_state_snapshot() -> None:
     policy = CaptureReadinessPolicy(low_sensor_count_warn_threshold=1)
-    observation = _observation(speed_status=_SpeedStatus(effective_speed_kmh=82.0))
+    observation = _observation(speed_status=_SpeedStatus(speed_kmh=82.0))
 
     readiness = evaluate_capture_readiness(
         policy=policy,

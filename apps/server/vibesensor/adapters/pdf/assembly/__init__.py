@@ -8,7 +8,6 @@ from vibesensor.adapters.pdf._candidate_resolver import (
 )
 from vibesensor.adapters.pdf._card_builder import build_system_cards, humanize_signatures
 from vibesensor.adapters.pdf.models import Report
-from vibesensor.adapters.pdf.report_context import ReportMappingContext
 from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.use_cases.history.report_preparation import prepare_report_input
 
@@ -26,7 +25,6 @@ __all__ = [
     "PrimaryCandidateContext",
     "PreparedReportInput",
     "Report",
-    "ReportMappingContext",
     "_build_appendix_a_data",
     "_build_appendix_b_data",
     "_build_appendix_c_data",
