@@ -22,6 +22,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import CommandRunner
+from vibesensor.use_cases.updates.runtime import build_update_manager_runtime
 from vibesensor.use_cases.updates.status import (
     UpdatePhaseTransitionError,
     UpdateStateStore,
@@ -101,10 +102,12 @@ def update_env(
 
     def _make_mgr(**kw: object) -> UpdateManager:
         return UpdateManager(
-            runner=kw.pop("runner", runner),
-            repo_path=kw.pop("repo_path", str(tmp_path / "repo")),
-            rollback_dir=kw.pop("rollback_dir", str(tmp_path / "rollback")),
-            state_store=kw.pop("state_store", store),
+            runtime=build_update_manager_runtime(
+                runner=kw.pop("runner", runner),
+                repo_path=kw.pop("repo_path", str(tmp_path / "repo")),
+                rollback_dir=kw.pop("rollback_dir", str(tmp_path / "rollback")),
+                state_store=kw.pop("state_store", store),
+            ),
         )
 
     return state_path, store, runner, _make_mgr

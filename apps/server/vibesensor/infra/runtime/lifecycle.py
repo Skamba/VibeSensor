@@ -12,7 +12,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
-import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +19,10 @@ from typing import Protocol
 
 from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.infra.runtime.shutdown_sequence import (
+    LifecycleShutdownIssue,
+    LifecycleShutdownSequence,
+)
 from vibesensor.infra.runtime.task_supervisor import TaskSupervisor
 from vibesensor.infra.runtime.udp_transport_lifecycle import StartUdpReceiver, UdpTransportLifecycle
 from vibesensor.shared.types.payload_types import LiveWsPayload
@@ -138,6 +141,7 @@ class LifecycleManager:
         "_background_tasks",
         "_health_state",
         "_runtime",
+        "_shutdown_sequence",
         "_task_supervisor",
         "_udp_transport_lifecycle",
     )
@@ -163,6 +167,12 @@ class LifecycleManager:
             monitor_task=self._task_supervisor.monitor_task,
             logger=LOGGER,
         )
+        self._shutdown_sequence = LifecycleShutdownSequence(
+            runtime=runtime,
+            background_tasks=self._background_tasks,
+            udp_transport_lifecycle=self._udp_transport_lifecycle,
+            logger=LOGGER,
+        )
 
     @property
     def tasks(self) -> list[asyncio.Task[object]]:
@@ -176,11 +186,8 @@ class LifecycleManager:
 
     def _validate_startup(self) -> None:
         """Run lightweight startup precondition checks (warnings only)."""
-        try:
-            db_path = self._runtime.history_db_path
-            data_dir = Path(db_path).parent if db_path else None
-        except (AttributeError, TypeError):
-            return
+        db_path = self._runtime.history_db_path
+        data_dir = Path(db_path).parent if isinstance(db_path, str | Path) else None
         if data_dir is None or str(db_path) == ":memory:":
             return
         try:
@@ -212,59 +219,20 @@ class LifecycleManager:
 
     async def stop(self) -> None:
         """Graceful shutdown with explicit ingress-stop and metrics-drain phases."""
-        self._stop_ingress()
-        await self._udp_transport_lifecycle.shutdown()
-        await self._background_tasks.cancel_all(timeout_s=15.0)
-        lingering_managed = await self._cancel_managed_jobs()
-        await self._drain_analysis()
-        await self._shutdown_resources()
-        self._report_lingering_tasks(lingering_managed)
+        shutdown = await self._shutdown_sequence.run()
+        self._report_shutdown_issues(shutdown.issues)
+        self._report_lingering_tasks(list(shutdown.lingering_managed))
 
-    def _stop_ingress(self) -> None:
-        try:
-            self._runtime.control_plane.close()
-        except OSError:
-            LOGGER.warning("Error closing control plane", exc_info=True)
-
-    async def _cancel_managed_jobs(self) -> list[asyncio.Task[None]]:
-        from vibesensor.infra.runtime.managed_job_shutdown import ManagedJobShutdown
-
-        managed_shutdown = ManagedJobShutdown(
-            [
-                self._runtime.update_manager,
-                self._runtime.esp_flash_manager,
-            ]
-        )
-        return await managed_shutdown.cancel(timeout_s=10.0)
-
-    async def _drain_analysis(self) -> None:
-        analysis_timeout_s = self._runtime.shutdown_analysis_timeout_s
-        shutdown_report = await asyncio.to_thread(
-            self._runtime.run_recorder.shutdown_report,
-            analysis_timeout_s,
-        )
-        if not shutdown_report.completed:
+    def _report_shutdown_issues(self, issues: tuple[LifecycleShutdownIssue, ...]) -> None:
+        for issue in issues:
             LOGGER.warning(
-                "Post-analysis did not finish within %.1fs on shutdown; "
-                "results for the last run may be lost. active_run_before_stop=%s "
-                "queue_depth=%d active_run=%s oldest_queue_age_s=%s write_error=%s",
-                analysis_timeout_s,
-                shutdown_report.active_run_id_before_stop,
-                shutdown_report.analysis_queue_depth,
-                shutdown_report.analysis_active_run_id,
-                shutdown_report.analysis_queue_oldest_age_s,
-                shutdown_report.write_error,
+                issue.message,
+                exc_info=(
+                    type(issue.exception),
+                    issue.exception,
+                    issue.exception.__traceback__,
+                ),
             )
-
-    async def _shutdown_resources(self) -> None:
-        try:
-            await asyncio.to_thread(self._runtime.worker_pool.shutdown, True)
-        except (OSError, RuntimeError):
-            LOGGER.warning("Error shutting down worker pool", exc_info=True)
-        try:
-            self._runtime.history_db.close()
-        except (sqlite3.Error, OSError):
-            LOGGER.warning("Error closing history DB", exc_info=True)
 
     def _report_lingering_tasks(
         self,

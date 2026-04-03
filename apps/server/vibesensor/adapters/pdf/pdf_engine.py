@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from io import BytesIO
 
 from reportlab.pdfgen.canvas import Canvas
@@ -16,23 +15,23 @@ from vibesensor.adapters.pdf.pdf_drawing import _draw_footer
 from vibesensor.adapters.pdf.pdf_page1 import _page1
 from vibesensor.adapters.pdf.pdf_style import PAGE_SIZE
 from vibesensor.adapters.pdf.render_planner import build_report_render_plan
+from vibesensor.adapters.pdf.report_document_validation import validate_report_document
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 
-LOGGER = logging.getLogger(__name__)
+__all__ = ["build_prepared_report_pdf", "build_report_pdf"]
+
+
+def build_prepared_report_pdf(prepared: PreparedReportInput) -> bytes:
+    """Render prepared report input through document assembly and the PDF adapter."""
+    from vibesensor.use_cases.history.report_document import build_report_document
+
+    return build_report_pdf(build_report_document(prepared))
 
 
 def build_report_pdf(data: ReportDocument) -> bytes:
     """Build the redesigned multi-page diagnostic report PDF."""
-    if not isinstance(data, ReportDocument):
-        raise TypeError(f"build_report_pdf expects ReportDocument, got {type(data).__name__}")
-    valid_tiers = frozenset({"A", "B", "C"})
-    if data.certainty_tier_key not in valid_tiers:
-        LOGGER.warning(
-            "Invalid certainty_tier_key %r; falling back to 'A'.",
-            data.certainty_tier_key,
-        )
-        data.certainty_tier_key = "A"
-    return _build_canvas_pdf(data)
+    return _build_canvas_pdf(validate_report_document(data))
 
 
 def _build_canvas_pdf(data: ReportDocument) -> bytes:

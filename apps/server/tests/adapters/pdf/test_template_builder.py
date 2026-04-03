@@ -20,6 +20,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     VerdictPageData,
 )
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
+from vibesensor.use_cases.history.report_document.assembly import ReportDocumentAssembly
 from vibesensor.use_cases.history.report_document.document_builder import (
     build_report_document_data,
 )
@@ -158,7 +159,7 @@ def _build(**overrides: object):
         "sections": _make_sections(**section_overrides),
     }
     defaults.update(overrides)
-    return build_report_document_data(**defaults)
+    return build_report_document_data(ReportDocumentAssembly(**defaults))
 
 
 def test_prepared_metadata_maps_to_template() -> None:
