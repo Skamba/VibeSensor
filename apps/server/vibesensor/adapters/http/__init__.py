@@ -42,7 +42,8 @@ def create_router(services: RouterDeps) -> APIRouter:
         create_settings_routes(
             services.settings.settings_store,
             services.settings.speed_source_service,
-            services.settings.gps_monitor,
+            services.settings.speed_status_service,
+            services.settings.obd_admin_service,
         ),
     )
     router.include_router(

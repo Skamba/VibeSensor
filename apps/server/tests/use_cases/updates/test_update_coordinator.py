@@ -96,12 +96,9 @@ async def test_execute_delegates_release_plan_and_execution(tmp_path: Path) -> N
         workflow_executor,
     ) = _build_coordinator(tmp_path)
     request = _wifi_request()
-    transport_session = object()
     release_plan = object()
     preparation.prepare.return_value = PreparedUpdateSession(
-        request=request,
         current_version="2026.4.3",
-        transport_session=transport_session,
     )
     release_planner.plan.return_value = release_plan
     workflow_executor.execute.return_value = UpdateExecutionOutcome.installed
@@ -111,10 +108,7 @@ async def test_execute_delegates_release_plan_and_execution(tmp_path: Path) -> N
     assert outcome == UpdateExecutionOutcome.installed
     preparation.prepare.assert_awaited_once_with(request)
     release_planner.plan.assert_awaited_once_with("2026.4.3")
-    workflow_executor.execute.assert_awaited_once_with(
-        release_plan,
-        transport_session=transport_session,
-    )
+    workflow_executor.execute.assert_awaited_once_with(release_plan)
 
 
 @pytest.mark.asyncio
@@ -127,9 +121,7 @@ async def test_execute_propagates_release_plan_failure(tmp_path: Path) -> None:
     ) = _build_coordinator(tmp_path)
     request = _wifi_request()
     preparation.prepare.return_value = PreparedUpdateSession(
-        request=request,
         current_version="2026.4.3",
-        transport_session=object(),
     )
     release_planner.plan.side_effect = UpdateReleaseError("release check failed")
 

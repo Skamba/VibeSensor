@@ -58,11 +58,13 @@ class HistoryExportServiceProtocol(Protocol):
 class SettingsSpeedServiceProtocol(Protocol):
     def status_snapshot(self) -> SpeedSourceStatusSnapshot: ...
 
+    def obd_status(self) -> ObdStatusSnapshot: ...
+
+
+class ObdAdminServiceProtocol(Protocol):
     def scan_obd_devices(self, *, timeout_s: int = ...) -> list[ObdDeviceSnapshot]: ...
 
     def pair_obd_device(self, mac_address: str) -> ObdDeviceSnapshot: ...
-
-    def obd_status(self) -> ObdStatusSnapshot: ...
 
 
 class SpeedSourceSettingsServiceProtocol(Protocol):
@@ -86,7 +88,8 @@ class TelemetryDeps:
 class SettingsDeps:
     settings_store: SettingsStore
     speed_source_service: SpeedSourceSettingsServiceProtocol
-    gps_monitor: SettingsSpeedServiceProtocol
+    speed_status_service: SettingsSpeedServiceProtocol
+    obd_admin_service: ObdAdminServiceProtocol
 
 
 @dataclass(slots=True)

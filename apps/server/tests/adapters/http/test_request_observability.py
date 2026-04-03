@@ -44,7 +44,14 @@ def test_request_logging_middleware_sets_response_header_and_logs_request(
 def test_request_id_flows_into_settings_audit_logs(caplog: pytest.LogCaptureFixture) -> None:
     app = FastAPI()
     install_request_logging_middleware(app)
-    app.include_router(create_settings_routes(SettingsStore(), MagicMock(), MagicMock()))
+    app.include_router(
+        create_settings_routes(
+            SettingsStore(),
+            MagicMock(),
+            MagicMock(),
+            MagicMock(),
+        )
+    )
 
     with caplog.at_level(logging.INFO):
         with TestClient(app) as client:
@@ -70,7 +77,7 @@ def test_request_id_flows_into_settings_audit_logs(caplog: pytest.LogCaptureFixt
     assert audit_log.after == "nl"
 
 
-def test_unhandled_errors_still_echo_request_id(caplog: pytest.LogCaptureFixture) -> None:
+def test_unhandled_errors_keep_request_id_in_logs(caplog: pytest.LogCaptureFixture) -> None:
     app = FastAPI()
     install_request_logging_middleware(app)
 
@@ -83,7 +90,7 @@ def test_unhandled_errors_still_echo_request_id(caplog: pytest.LogCaptureFixture
             response = client.get("/boom", headers={REQUEST_ID_HEADER: "failing-request"})
 
     assert response.status_code == 500
-    assert response.headers[REQUEST_ID_HEADER] == "failing-request"
+    assert response.headers.get(REQUEST_ID_HEADER) is None
     failure_log = _log_record(caplog, "http_request_failed")
     assert failure_log.request_id == "failing-request"
     assert failure_log.failure_kind == "programmer"

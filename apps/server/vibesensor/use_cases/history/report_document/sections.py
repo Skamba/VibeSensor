@@ -4,33 +4,21 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
-from vibesensor.shared.boundaries.reporting.contracts import (
-    PreparedAppendixADisplay,
-    PreparedAppendixBSummaryDisplay,
-    PreparedReportFacts,
-    PreparedVerdictDisplay,
-)
+from vibesensor.domain import Finding, TestRun
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import (
-    AppendixAData,
-    AppendixBData,
     AppendixCData,
     AppendixDData,
     DataTrustItem,
     FindingPresentation,
     MeasurementRow,
-    NextStep,
-    RankedCandidateRow,
     ReportLabelValueRow,
     TimelineGraphData,
     TimelineGraphInterval,
-    TopologyIntensityRow,
-    VerdictPageData,
 )
-from vibesensor.shared.report_presentation import display_location
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 
-from .measurements import _evidence_chain_rows, _sensor_observation_matrix_rows
+from .measurements import _evidence_chain_rows
 from .narrative_summaries import (
     _context_summary_text,
     _evidence_summary_text,
@@ -40,12 +28,9 @@ from .narrative_summaries import (
 )
 
 __all__ = [
-    "_build_appendix_a_data",
-    "_build_appendix_b_data",
     "_build_appendix_c_data",
     "_build_appendix_d_data",
     "_build_timeline_graph_data",
-    "_build_verdict_page_data",
     "_finding_to_presentation",
 ]
 
@@ -101,108 +86,6 @@ def _build_timeline_graph_data(
         duration_s=resolved_duration,
         speed_ceiling_kmh=speed_ceiling_kmh,
         intervals=tuple(intervals),
-    )
-
-
-def _build_verdict_page_data(
-    *,
-    verdict: PreparedVerdictDisplay,
-    proof_summary: str | None,
-    timeline_graph: TimelineGraphData | None,
-) -> VerdictPageData:
-    return VerdictPageData(
-        speed_window_label=verdict.speed_window_label,
-        suspected_source=verdict.suspected_source,
-        inspect_first=verdict.inspect_first,
-        action_status=verdict.action_status,
-        action_status_note=verdict.action_status_note,
-        reason_sentence=verdict.reason_sentence,
-        dominant_corner=verdict.dominant_corner,
-        runner_up_corner=verdict.runner_up_corner,
-        location_confidence=verdict.location_confidence,
-        coverage_label=verdict.coverage_label,
-        also_consider=verdict.also_consider,
-        proof_summary=proof_summary,
-        proof_caveat=verdict.proof_caveat,
-        proof_panel_title=verdict.proof_panel_title,
-        timeline_graph=timeline_graph,
-        footer_routes=verdict.footer_routes,
-    )
-
-
-def _build_appendix_a_data(
-    *,
-    appendix: PreparedAppendixADisplay,
-    next_steps: list[NextStep],
-) -> AppendixAData:
-    if appendix.mode == "recapture":
-        return AppendixAData(
-            mode="recapture",
-            capture_issues=list(appendix.capture_issues),
-            capture_changes=[step.action for step in next_steps],
-            capture_conditions=list(appendix.capture_conditions),
-        )
-    return AppendixAData(
-        mode="workflow",
-        primary_source=appendix.primary_source,
-        alternative_source=appendix.alternative_source,
-        why_primary_first=appendix.why_primary_first,
-        why_alternative_next=appendix.why_alternative_next,
-        next_if_clean=appendix.next_if_clean,
-        ranked_candidates=[
-            RankedCandidateRow(
-                source_name=row.source_name,
-                confidence_pct=row.confidence_pct,
-                inspect_first=row.inspect_first,
-                path_role=row.path_role,
-                reason=row.reason,
-            )
-            for row in appendix.ranked_candidates
-        ],
-    )
-
-
-def _build_appendix_b_data(
-    *,
-    aggregate: TestRun,
-    appendix: PreparedAppendixBSummaryDisplay,
-    sensor_locations: list[str],
-    sensor_intensity: list[LocationIntensitySummary],
-    tr: Callable[..., str],
-) -> AppendixBData:
-    ranked_rows = sorted(
-        sensor_intensity,
-        key=lambda row: (
-            row.p95_intensity_db if row.p95_intensity_db is not None else float("-inf"),
-        ),
-        reverse=True,
-    )
-    intensity_rows = [
-        TopologyIntensityRow(
-            location=display_location(row.location, short=False, tr=tr),
-            p95_db=row.p95_intensity_db,
-            coverage_state=(
-                tr("REPORT_COVERAGE_STATE_PARTIAL")
-                if row.partial_coverage or row.sample_coverage_warning
-                else tr("REPORT_COVERAGE_STATE_COMPLETE")
-            ),
-        )
-        for row in ranked_rows
-    ]
-    sensor_observation_rows = _sensor_observation_matrix_rows(
-        aggregate,
-        sensor_locations=sensor_locations,
-        tr=tr,
-    )
-    return AppendixBData(
-        dominant_corner=appendix.dominant_corner,
-        runner_up_corner=appendix.runner_up_corner,
-        dominance_ratio_text=appendix.dominance_ratio_text,
-        location_confidence=appendix.location_confidence,
-        coverage_label=appendix.coverage_label,
-        coverage_notes=list(appendix.coverage_notes),
-        intensity_rows=intensity_rows,
-        sensor_observation_rows=sensor_observation_rows,
     )
 
 

@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from math import isfinite
 
 from vibesensor.domain import Finding, TestRun
 from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting.document import (
     EvidenceChainRow,
     MeasurementRow,
-    SensorObservationCell,
-    SensorObservationMatrixRow,
 )
 from vibesensor.shared.boundaries.reporting.payload import NormalizedReportSummary
 from vibesensor.shared.report_presentation import (
@@ -19,12 +16,10 @@ from vibesensor.shared.report_presentation import (
     display_location,
     source_with_confidence,
 )
-from vibesensor.vibration_strength import percentile, relative_level_db_scalar
 
 __all__ = [
     "_evidence_chain_rows",
     "_measurement_rows",
-    "_sensor_observation_matrix_rows",
 ]
 
 
@@ -158,78 +153,3 @@ def _evidence_chain_rows(
             ),
         )
     return rows
-
-
-def _sensor_observation_matrix_rows(
-    aggregate: TestRun,
-    *,
-    sensor_locations: list[str],
-    tr: Callable[..., str],
-) -> list[SensorObservationMatrixRow]:
-    if not sensor_locations:
-        return []
-    sensor_labels = [display_location(location, short=True, tr=tr) for location in sensor_locations]
-    rows: list[SensorObservationMatrixRow] = []
-    for finding in aggregate.effective_top_causes()[:4]:
-        sensor_levels = _sensor_observation_levels(
-            finding,
-            sensor_labels=sensor_labels,
-            tr=tr,
-        )
-        if not any(cell.relative_level_db is not None for cell in sensor_levels):
-            continue
-        rows.append(
-            SensorObservationMatrixRow(
-                source_name=human_source(finding.suspected_source, tr=tr),
-                signal_label=candidate_signal_text(finding, tr=tr),
-                sensor_levels=sensor_levels,
-            )
-        )
-    return rows
-
-
-def _sensor_observation_levels(
-    finding: Finding,
-    *,
-    sensor_labels: list[str],
-    tr: Callable[..., str],
-) -> list[SensorObservationCell]:
-    matched_amps_by_location: dict[str, list[float]] = {}
-    for point in finding.matched_points:
-        amp = float(point.amp)
-        if not isfinite(amp) or amp < 0.0:
-            continue
-        location = display_location(point.location, short=True, tr=tr)
-        matched_amps_by_location.setdefault(location, []).append(amp)
-    representative_amps = {
-        location: percentile(sorted(values), 0.95)
-        for location, values in matched_amps_by_location.items()
-        if values
-    }
-    if not representative_amps:
-        strongest_location = str(finding.strongest_location or "").strip()
-        strongest_label = (
-            display_location(strongest_location, short=True, tr=tr) if strongest_location else None
-        )
-        return [
-            SensorObservationCell(
-                location=label,
-                relative_level_db=0.0 if label == strongest_label else None,
-            )
-            for label in sensor_labels
-        ]
-    strongest_amp = max(representative_amps.values())
-    return [
-        SensorObservationCell(
-            location=label,
-            relative_level_db=(
-                relative_level_db_scalar(
-                    representative_amps[label],
-                    strongest_amp,
-                )
-                if label in representative_amps
-                else None
-            ),
-        )
-        for label in sensor_labels
-    ]
