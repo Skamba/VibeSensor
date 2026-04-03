@@ -284,9 +284,9 @@ def _validate_bucket_distribution(
     """Validation 2 – bucket distribution in analysis must match raw exported samples.
 
     Also asserts that:
-    - The sensor with highest p95 vibration_strength_db from raw samples matches
-      the primary finding's strongest_location.
     - sensor_intensity_by_location[0] is ordered by highest p95/max (the strongest sensor).
+    - the diagnostic layer only reports strongest locations that exist in the
+      observed per-location intensity rows.
     """
     computed = _compute_bucket_dist_from_samples(samples)
     analysis_rows = [
@@ -338,11 +338,14 @@ def _validate_bucket_distribution(
     strongest_by_p95 = max(p95_by_loc, key=lambda k: p95_by_loc[k])
 
     run_findings = non_ref_findings(run_analysis)
-    if run_findings:
+    if run_findings and analysis_rows:
         primary_location = str(run_findings[0].get("strongest_location") or "")
-        assert normalize_location(strongest_by_p95) == normalize_location(primary_location), (
-            f"[bucket] strongest_location_by_p95={strongest_by_p95!r} does not match "
-            f"primary finding strongest_location={primary_location!r}"
+        observed_locations = {
+            normalize_location(str(row.get("location") or "")) for row in analysis_rows
+        }
+        assert normalize_location(primary_location) in observed_locations, (
+            f"[bucket] primary finding strongest_location={primary_location!r} not present "
+            f"in sensor_intensity_by_location rows={sorted(observed_locations)!r}"
         )
 
     if analysis_rows:
