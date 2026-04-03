@@ -56,7 +56,7 @@ def suitability_by_key(summary: dict) -> dict[str, dict]:
 
 
 def minimal_summary(**overrides: Any) -> dict:
-    """Return a bare-minimum summary dict suitable for ``map_summary``.
+    """Return a bare-minimum summary dict suitable for ``build_report_document``.
 
     Callers can override or extend any key via keyword arguments.
     """

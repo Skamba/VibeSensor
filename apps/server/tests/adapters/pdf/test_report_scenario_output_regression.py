@@ -10,7 +10,7 @@ from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 
 class TestPlotDataKeyFix:
@@ -75,7 +75,7 @@ class TestReportMetadataCompleteness:
             build_speed_sweep_samples(n=20, vib_db=18.0),
             include_samples=False,
         )
-        template = map_summary(prepare_report_input(summary))
+        template = build_report_document(prepare_report_input(summary))
         assert template.duration_text is not None
         assert template.sample_count > 0
         assert template.sensor_count >= 1
@@ -86,7 +86,7 @@ class TestReportMetadataCompleteness:
             build_speed_sweep_samples(n=40, peak_amp=0.06, vib_db=22.0),
             include_samples=False,
         )
-        template = map_summary(prepare_report_input(summary))
+        template = build_report_document(prepare_report_input(summary))
         for step in template.next_steps:
             assert step.action
 

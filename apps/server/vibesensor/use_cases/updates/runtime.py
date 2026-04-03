@@ -17,6 +17,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdateValidationConfig,
 )
+from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
 from vibesensor.use_cases.updates.recovery import InterruptedUpdateRecovery
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
@@ -177,10 +178,21 @@ def build_update_manager_runtime(
             firmware_refresher,
             restart_scheduler,
         ) = build_release_components(commands)
+
+        def current_version_provider() -> str:
+            from vibesensor import __version__ as current_version
+
+            return current_version
+
         return UpdateCoordinator(
-            tracker=tracker,
-            commands=commands,
-            transport_controller=UpdateTransportController(sessions=transport_sessions),
+            preparation=UpdatePreparationCoordinator(
+                tracker=tracker,
+                commands=commands,
+                transport_controller=UpdateTransportController(sessions=transport_sessions),
+                validation_config=validation_config,
+                current_version_provider=current_version_provider,
+                cancel_requested=executor.cancel_requested,
+            ),
             release_planner=UpdateReleasePlanner(
                 tracker=tracker,
                 resolver=resolver,
@@ -196,7 +208,6 @@ def build_update_manager_runtime(
                 cancel_requested=executor.cancel_requested,
             ),
             cancel_requested=executor.cancel_requested,
-            validation_config=validation_config,
         )
 
     lifecycle = UpdateJobLifecycleHandler(

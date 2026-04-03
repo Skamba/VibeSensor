@@ -13,7 +13,7 @@ from test_support import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 
 class TestPdfContentForDiagnosedScenario:
@@ -47,7 +47,7 @@ class TestPdfContentForDiagnosedScenario:
             lang="en",
             file_name="pdf_diag_test",
         )
-        pdf_bytes = build_report_pdf(map_summary(prepare_report_input(summary)))
+        pdf_bytes = build_report_pdf(build_report_document(prepare_report_input(summary)))
         text_lower = extract_pdf_text(pdf_bytes).lower()
         assert "vibesensor diagnostic report" in text_lower
         assert "what to do next" in text_lower
@@ -88,7 +88,7 @@ class TestPdfContentForDiagnosedScenario:
             file_name="pdf_nl_diag",
         )
         text_lower = extract_pdf_text(
-            build_report_pdf(map_summary(prepare_report_input(summary)))
+            build_report_pdf(build_report_document(prepare_report_input(summary)))
         ).lower()
         assert "vibesensor-diagnoserapport" in text_lower
         assert "wat nu te doen" in text_lower

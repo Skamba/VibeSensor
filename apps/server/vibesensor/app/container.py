@@ -39,7 +39,7 @@ from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.constants.dsp import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -59,7 +59,7 @@ from vibesensor.use_cases.updates.manager import UpdateManager
 LOGGER = logging.getLogger(__name__)
 
 
-def _build_pdf_bytes(document: ReportTemplateData) -> bytes:
+def _build_pdf_bytes(document: ReportDocument) -> bytes:
     """Render a prepared report document through the PDF adapter."""
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 

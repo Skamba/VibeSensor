@@ -4,7 +4,9 @@ The updater now has one explicit execution boundary per concern:
 
 - ``manager.py`` exposes the public API only.
 - ``runtime.py`` composes the concrete collaborators used by that facade.
-- ``coordinator.py`` owns only top-level sequencing.
+- ``preparation.py`` owns validation, transport preparation, and version
+  resolution for one run.
+- ``coordinator.py`` owns only release planning/execution sequencing.
 - ``release_planner.py`` interprets discovered release state into one execution plan.
 - ``transport_controller.py`` owns transport-session preparation.
 - ``workflow_executor.py`` owns plan execution while ``success_finalizer.py`` owns

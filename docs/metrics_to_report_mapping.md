@@ -3,8 +3,9 @@
 This document describes how every report field and visual element maps back
 to a specific persisted analysis metric/value.  The report renderer
 (`vibesensor.adapters.pdf`, entered through `vibesensor.adapters.pdf.pdf_engine`) must **never** recompute or infer analysis
-values; it reads exclusively from `ReportTemplateData` (built by
-`vibesensor.adapters.pdf.mapping.map_summary()` from a prepared report input).
+values; it reads exclusively from `ReportDocument` (built by
+`vibesensor.use_cases.history.report_document.build_report_document()` from a
+prepared report input).
 
 ## Data flow
 
@@ -12,9 +13,9 @@ values; it reads exclusively from `ReportTemplateData` (built by
 adapters.analysis_summary.summarize_run_data(meta, samples)
   → summary dict (persisted in history_db as a versioned analysis envelope)
     → use_cases.history.report_preparation.prepare_report_input(summary)
-      → adapters.pdf.mapping.map_summary(prepared_input)
-        → ReportTemplateData (rebuilt on demand)
-          → history_services.reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportTemplateData)
+      → use_cases.history.report_document.build_report_document(prepared_input)
+        → ReportDocument (rebuilt on demand)
+          → history_services.reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportDocument)
           → PDF bytes
 ```
 
@@ -26,7 +27,7 @@ report rendering can localize them at read time.
 
 ### Header panel
 
-| Report field         | ReportTemplateData field     | Analysis source key                | Unit / format            |
+| Report field         | ReportDocument field         | Analysis source key                | Unit / format            |
 |----------------------|------------------------------|------------------------------------|--------------------------|
 | Title                | `title`                      | i18n `DIAGNOSTIC_WORKSHEET`        | string                   |
 | Run date             | `run_datetime`               | `summary.report_date`              | `YYYY-MM-DD HH:MM:SS`   |
@@ -44,7 +45,7 @@ report rendering can localize them at read time.
 
 ### Observed Signature panel
 
-| Report field             | ReportTemplateData field                        | Analysis source                             | Unit / format                |
+| Report field             | ReportDocument field                            | Analysis source                             | Unit / format                |
 |--------------------------|-------------------------------------------------|---------------------------------------------|------------------------------|
 | Primary system           | `observed.primary_system`                       | `top_causes[0].source` → `_human_source()`  | i18n string                  |
 | Strongest sensor         | `observed.strongest_location`                   | `most_likely_origin.location` or `top_causes[0].strongest_location` | string |
@@ -56,7 +57,7 @@ report rendering can localize them at read time.
 
 ### Systems with Findings panel
 
-| Report field          | ReportTemplateData field              | Analysis source                           | Unit / format          |
+| Report field          | ReportDocument field                  | Analysis source                           | Unit / format          |
 |-----------------------|---------------------------------------|-------------------------------------------|------------------------|
 | System name           | `system_cards[].system_name`          | `top_causes[].source` → `_human_source()` | i18n string            |
 | Strongest location    | `system_cards[].strongest_location`   | `top_causes[].strongest_location`         | string                 |
@@ -71,7 +72,7 @@ report rendering can localize them at read time.
 
 ### Next Steps panel
 
-| Report field     | ReportTemplateData field         | Analysis source              | Unit / format  |
+| Report field     | ReportDocument field             | Analysis source              | Unit / format  |
 |------------------|----------------------------------|------------------------------|----------------|
 | Action           | `next_steps[].action`            | `test_plan[].what` (Tier B/C) or i18n guidance (Tier A) | string |
 | Why              | `next_steps[].why`               | `test_plan[].why`            | string         |
@@ -84,17 +85,17 @@ report rendering can localize them at read time.
 
 ### Data Trust panel
 
-| Report field | ReportTemplateData field       | Analysis source              | Unit / format       |
+| Report field | ReportDocument field           | Analysis source              | Unit / format       |
 |--------------|--------------------------------|------------------------------|---------------------|
 | Check        | `data_trust[].check`           | `run_suitability[].check`    | i18n string         |
 | State        | `data_trust[].state`           | `run_suitability[].state`    | "pass" / "warn"     |
 | Detail       | `data_trust[].detail`          | `run_suitability[].explanation` | string or None   |
 
-## Page 2 — Evidence & Diagnostics
+## Appendix pages — Evidence & Diagnostics
 
 ### Car Visual / Location Hotspots
 
-| Report field       | ReportTemplateData field          | Analysis source                              | Unit / format |
+| Report field       | ReportDocument field              | Analysis source                              | Unit / format |
 |--------------------|-----------------------------------|----------------------------------------------|---------------|
 | Location rows      | `location_hotspot_rows`           | Pre-computed from `findings[].matched_points` or `sensor_intensity_by_location` | list[dict] |
 | Hotspot unit       | `location_hotspot_rows[].unit`    | `"db"` | string |
@@ -103,7 +104,7 @@ report rendering can localize them at read time.
 
 ### Pattern Evidence panel
 
-| Report field         | ReportTemplateData field                        | Analysis source                        | Unit / format |
+| Report field         | ReportDocument field                            | Analysis source                        | Unit / format |
 |----------------------|-------------------------------------------------|----------------------------------------|---------------|
 | Matched systems      | `pattern_evidence.matched_systems`              | `top_causes[:3].source` → `_human_source()` | list[str] |
 | Strongest location   | `pattern_evidence.strongest_location`           | Same as `observed.strongest_location` | string |
@@ -117,7 +118,7 @@ report rendering can localize them at read time.
 
 ### Diagnostic Peaks table
 
-| Report field    | ReportTemplateData field   | Analysis source                      | Unit / format         |
+| Report field    | ReportDocument field       | Analysis source                      | Unit / format         |
 |-----------------|----------------------------|--------------------------------------|-----------------------|
 | Rank            | `peak_rows[].rank`         | `plots.peaks_table[].rank`           | int → string          |
 | System          | `peak_rows[].system`       | Inferred from `source`/`order_label` | i18n string           |

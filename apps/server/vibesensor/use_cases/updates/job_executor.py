@@ -7,7 +7,6 @@ from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
 
 BeforeStartCallback = Callable[[], None]
 CleanupCallback = Callable[[], Awaitable[None]]
-CleanupErrorCallback = Callable[[Exception], None]
 VoidCallback = Callable[[], None]
 WorkflowFactory = Callable[[], Awaitable[object]]
 TaskCoroutineFactory = Callable[[], Coroutine[object, object, None]]
@@ -64,7 +63,6 @@ class UpdateJobExecutor:
         on_timeout: VoidCallback,
         on_cancelled: VoidCallback,
         cleanup: CleanupCallback,
-        on_cleanup_error: CleanupErrorCallback,
     ) -> None:
         """Run the workflow with timeout/cancel handling and guaranteed cleanup."""
         primary_error: BaseException | None = None
@@ -86,7 +84,6 @@ class UpdateJobExecutor:
         except asyncio.CancelledError:
             raise
         except Exception as exc:
-            on_cleanup_error(exc)
             cleanup_error = exc
 
         if cancelled and cleanup_error is not None:

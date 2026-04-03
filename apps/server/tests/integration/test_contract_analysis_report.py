@@ -1,7 +1,7 @@
 """Contract bridge tests: Analysis → Report boundary.
 
 These tests validate that the output of ``summarize_run_data()`` can be
-prepared and accepted by ``map_summary()``. They are fast (<5 s),
+prepared and accepted by ``build_report_document()``. They are fast (<5 s),
 deterministic, and run in standard CI so schema drift between the two
 subsystems is caught early.
 """
@@ -20,13 +20,13 @@ from vibesensor.adapters.analysis_summary import (
     analysis_result_to_summary,
     summarize_run_data,
 )
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 from vibesensor.use_cases.history.report_document import (
-    map_summary,
+    build_report_document,
     prepare_report_input,
     resolve_primary_report_candidate,
 )
@@ -70,9 +70,9 @@ def _report_data_from_samples(
     samples: list[dict],
     *,
     lang: str,
-) -> ReportTemplateData:
+) -> ReportDocument:
     summary = summarize_run_data(meta, samples, lang=lang)
-    return map_summary(prepare_report_input(summary))
+    return build_report_document(prepare_report_input(summary))
 
 
 # ------------------------------------------------------------------
@@ -85,7 +85,7 @@ def test_analysis_output_accepted_by_report_mapper():
     meta, samples = _make_small_dataset()
     report_data = _report_data_from_samples(meta, samples, lang="en")
 
-    assert isinstance(report_data, ReportTemplateData)
+    assert isinstance(report_data, ReportDocument)
 
 
 def test_report_data_has_populated_fields():
@@ -111,7 +111,7 @@ def test_analysis_without_fault_maps_cleanly():
     samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30, speed_kmh=60.0)
     report_data = _report_data_from_samples(meta, samples, lang="en")
 
-    assert isinstance(report_data, ReportTemplateData)
+    assert isinstance(report_data, ReportDocument)
     assert report_data.lang == "en"
 
 
@@ -121,7 +121,7 @@ def test_multilingual_mapping():
     samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=20, speed_kmh=60.0)
     report_data = _report_data_from_samples(meta, samples, lang="nl")
 
-    assert isinstance(report_data, ReportTemplateData)
+    assert isinstance(report_data, ReportDocument)
     assert report_data.lang == "nl"
 
 

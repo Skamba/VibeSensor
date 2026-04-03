@@ -13,7 +13,7 @@ from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 pdfium = pytest.importorskip("pypdfium2")
 
@@ -84,7 +84,7 @@ def test_appendix_b_diagram_visual_audit_exports_screenshot(tmp_path: Path) -> N
         top_causes=[finding],
     )
 
-    pdf_bytes = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf_bytes = build_report_pdf(build_report_document(prepare_report_input(summary)))
     pdf_path = artifact_dir / "diagram_visual_audit_report.pdf"
     pdf_path.write_bytes(pdf_bytes)
 

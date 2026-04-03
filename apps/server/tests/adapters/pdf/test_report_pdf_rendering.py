@@ -10,7 +10,6 @@ from _report_pdf_test_helpers import (
     sample,
 )
 from pypdf import PdfReader
-from reportlab.pdfgen.canvas import Canvas
 from test_support.core import extract_pdf_text
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import (
@@ -23,12 +22,10 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.panels._panel_systems import _draw_system_card
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting.document import PartSuggestion, SystemFindingCard
 from vibesensor.shared.constants.units import KMH_TO_MPS
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
 
 def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
@@ -47,7 +44,7 @@ def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
     x0, y0, x1, y1 = extract_media_box(
         build_report_pdf(
-            map_summary(prepare_report_input(summarize_log(run_path))),
+            build_report_document(prepare_report_input(summarize_log(run_path))),
         )
     )
     width = x1 - x0
@@ -72,7 +69,8 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
     write_jsonl(run_path, records)
     summary = summarize_log(run_path, include_samples=False)
     assert summary["sensor_intensity_by_location"][0]["strength_bucket_distribution"]["total"] == 8
-    assert build_report_pdf(map_summary(prepare_report_input(summary))).startswith(b"%PDF")
+    rendered_pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
+    assert rendered_pdf.startswith(b"%PDF")
 
 
 def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> None:
@@ -93,7 +91,7 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
     write_jsonl(run_path, records)
     text_blob = extract_pdf_text(
         build_report_pdf(
-            map_summary(prepare_report_input(summarize_log(run_path))),
+            build_report_document(prepare_report_input(summarize_log(run_path))),
         ),
     )
     assert text_blob.count("What to do next") == 1
@@ -115,7 +113,7 @@ def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
     text_blob = extract_pdf_text(
         build_report_pdf(
-            map_summary(prepare_report_input(summarize_log(run_path, lang="nl"))),
+            build_report_document(prepare_report_input(summarize_log(run_path, lang="nl"))),
         ),
     )
     assert "Duur" in text_blob
@@ -145,7 +143,9 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
     records.append(RUN_END)
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
-    text_blob = extract_pdf_text(build_report_pdf(map_summary(prepare_report_input(summary))))
+    text_blob = extract_pdf_text(
+        build_report_pdf(build_report_document(prepare_report_input(summary)))
+    )
     assert "Firmware Version" in text_blob
     assert "esp-fw-1.2.3" in text_blob
 
@@ -196,7 +196,9 @@ def test_report_pdf_next_steps_do_not_leak_template_tokens() -> None:
         ],
     )
 
-    text_blob = extract_pdf_text(build_report_pdf(map_summary(prepare_report_input(summary))))
+    text_blob = extract_pdf_text(
+        build_report_pdf(build_report_document(prepare_report_input(summary)))
+    )
 
     assert "{wheel_focus}" not in text_blob
     assert "{speed_hint}" not in text_blob
@@ -250,7 +252,7 @@ def test_report_pdf_renders_sensor_observation_matrix_on_appendix_b() -> None:
         top_causes=[finding],
     )
 
-    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
+    pdf = build_report_pdf(build_report_document(prepare_report_input(summary)))
     reader = PdfReader(BytesIO(pdf))
 
     assert len(reader.pages) >= 3
@@ -302,7 +304,9 @@ def test_report_pdf_renders_run_timeline_graph_labels() -> None:
 
     page_one_text = " ".join(
         (
-            PdfReader(BytesIO(build_report_pdf(map_summary(prepare_report_input(summary)))))
+            PdfReader(
+                BytesIO(build_report_pdf(build_report_document(prepare_report_input(summary))))
+            )
             .pages[0]
             .extract_text()
             or ""
@@ -314,31 +318,6 @@ def test_report_pdf_renders_run_timeline_graph_labels() -> None:
     assert "run timeline" in page_one_text
     assert "speed" in page_one_text
     assert "detection windows" in page_one_text
-
-
-def test_report_pdf_compacts_actionable_system_cards() -> None:
-    long_location = (
-        "front-left wheel hub housing extended mount with additional bracket and balancing weight"
-    )
-    card = SystemFindingCard(
-        system_name="Wheel / Tire",
-        strongest_location=long_location,
-        pattern_summary="1.02 wheel order harmonic with sideband modulation",
-        parts=[
-            PartSuggestion(name="Front-left wheel bearing assembly with extended descriptor"),
-            PartSuggestion(name="Tire belt package"),
-        ],
-    )
-    buf = BytesIO()
-    canvas = Canvas(buf)
-    _draw_system_card(canvas, 40, 120, 160, 130, card, tr=lambda key: key)
-    canvas.save()
-    text = " ".join((PdfReader(BytesIO(buf.getvalue())).pages[0].extract_text() or "").split())
-
-    assert "PATTERN_SUMMARY: 1.02 wheel order harmonic with sideband modulation" in text
-    assert "WHAT_TO_CHECK_FIRST: Front-left wheel bearing assembly with extended descriptor" in text
-    assert "STRONGEST_SENSOR" not in text
-    assert long_location not in text
 
 
 def test_car_diagram_omits_sensor_labels() -> None:

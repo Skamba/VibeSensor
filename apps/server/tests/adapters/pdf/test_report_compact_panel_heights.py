@@ -25,8 +25,8 @@ from vibesensor.shared.boundaries.reporting.document import (
     DataTrustItem,
     NextStep,
     RankedCandidateRow,
+    ReportDocument,
     ReportLabelValueRow,
-    ReportTemplateData,
     VerdictPageData,
 )
 
@@ -36,7 +36,7 @@ def _tr(key: str, **kwargs: object) -> str:
 
 
 def test_estimate_actions_block_height_shrinks_for_short_content() -> None:
-    data = ReportTemplateData(
+    data = ReportDocument(
         lang="en",
         verdict_page=VerdictPageData(),
         next_steps=[
@@ -55,7 +55,7 @@ def test_estimate_actions_block_height_shrinks_for_short_content() -> None:
 def test_estimate_actions_block_height_stays_compact_for_two_preview_steps() -> None:
     width = PAGE_W - 2 * MARGIN
     actions_w = width - (width * 0.58) - GAP
-    data = ReportTemplateData(
+    data = ReportDocument(
         lang="en",
         verdict_page=VerdictPageData(),
         next_steps=[
@@ -76,7 +76,7 @@ def test_estimate_actions_block_height_stays_compact_for_two_preview_steps() -> 
 
 
 def test_estimate_appendix_c_lower_panels_shrink_for_short_content() -> None:
-    data = ReportTemplateData(
+    data = ReportDocument(
         lang="en",
         verdict_page=VerdictPageData(action_status_note="skip duplicate"),
         appendix_c=AppendixCData(
@@ -118,7 +118,7 @@ def test_estimate_appendix_c_lower_panels_shrink_for_short_content() -> None:
 
 
 def test_estimate_appendix_c_lower_panels_stay_tighter_for_unbalanced_card_content() -> None:
-    data = ReportTemplateData(
+    data = ReportDocument(
         lang="en",
         verdict_page=VerdictPageData(action_status_note="skip duplicate"),
         appendix_c=AppendixCData(
