@@ -19,7 +19,7 @@ from vibesensor.use_cases.updates.releases import factory as release_fetcher_fac
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
-    from vibesensor.use_cases.updates.status import UpdateStatusTracker
+    from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,28 +33,41 @@ class StagedServerRelease:
 class ServerReleaseStager:
     """Own temporary staging, download, and verification of server wheels."""
 
-    __slots__ = ("_rollback_dir", "_tracker")
+    __slots__ = ("_rollback_dir", "_status_controller", "_status_recorder")
 
-    def __init__(self, *, tracker: UpdateStatusTracker, rollback_dir: Path) -> None:
-        self._tracker = tracker
+    def __init__(
+        self,
+        *,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
+        rollback_dir: Path,
+    ) -> None:
+        self._status_controller = status_controller
+        self._status_recorder = status_recorder
         self._rollback_dir = rollback_dir
 
     @asynccontextmanager
     async def stage(self, release: ReleaseInfo) -> AsyncIterator[StagedServerRelease]:
-        self._tracker.transition(UpdatePhase.downloading)
-        self._tracker.log(f"Downloading release {release.tag}...")
+        self._status_controller.transition(UpdatePhase.downloading)
+        self._status_recorder.log(f"Downloading release {release.tag}...")
         staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
         try:
             wheel_path = await download_release(
-                self._tracker,
+                self._status_controller,
+                self._status_recorder,
                 self._rollback_dir,
                 release,
                 staging_dir,
             )
-            self._tracker.log(
+            self._status_recorder.log(
                 f"Downloaded {wheel_path.name} (sha256={getattr(release, 'sha256', '')})",
             )
-            await verify_download(self._tracker, release, wheel_path)
+            await verify_download(
+                self._status_controller,
+                self._status_recorder,
+                release,
+                wheel_path,
+            )
             yield StagedServerRelease(release=release, wheel_path=wheel_path)
         finally:
             active_error = sys.exc_info()[1]
@@ -71,7 +84,8 @@ class ServerReleaseStager:
 
 
 async def download_release(
-    tracker: UpdateStatusTracker,
+    status_controller: UpdateStatusController,
+    status_recorder: UpdateStatusRecorder,
     rollback_dir: Path,
     release: ReleaseInfo,
     staging_dir: Path,
@@ -82,12 +96,14 @@ async def download_release(
     try:
         return await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
     except (OSError, ValueError) as exc:
-        tracker.fail("downloading", f"Failed to download release: {exc}")
+        status_recorder.add_issue("downloading", f"Failed to download release: {exc}")
+        status_controller.mark_failed()
         raise UpdateReleaseError(f"Failed to download release: {exc}") from exc
 
 
 async def verify_download(
-    tracker: UpdateStatusTracker,
+    status_controller: UpdateStatusController,
+    status_recorder: UpdateStatusRecorder,
     release: ReleaseInfo,
     wheel_path: Path,
 ) -> None:
@@ -98,12 +114,13 @@ async def verify_download(
     actual_sha256 = await asyncio.to_thread(sha256_file, wheel_path)
     expected_sha256 = release.sha256.lower()
     if actual_sha256 == expected_sha256:
-        tracker.log(f"SHA-256 verified: {actual_sha256}")
+        status_recorder.log(f"SHA-256 verified: {actual_sha256}")
         return
-    tracker.fail(
+    status_recorder.add_issue(
         "downloading",
         "Downloaded wheel SHA-256 mismatch",
         f"expected={release.sha256} actual={actual_sha256}",
     )
-    tracker.log(f"SHA-256 mismatch: expected {release.sha256} but got {actual_sha256}")
+    status_controller.mark_failed()
+    status_recorder.log(f"SHA-256 mismatch: expected {release.sha256} but got {actual_sha256}")
     raise UpdateReleaseError("Downloaded wheel SHA-256 mismatch")

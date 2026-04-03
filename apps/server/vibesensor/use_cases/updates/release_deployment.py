@@ -7,35 +7,38 @@ from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.release_staging import StagedServerRelease
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
 
 
 class UpdateReleaseDeployer:
     """Own the system-mutating part of an update after staging succeeds."""
 
-    __slots__ = ("_firmware_refresher", "_installer", "_tracker")
+    __slots__ = ("_firmware_refresher", "_installer", "_status_controller", "_status_recorder")
 
     def __init__(
         self,
         *,
-        tracker: UpdateStatusTracker,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
         installer: UpdateInstaller,
         firmware_refresher: FirmwareRefresher,
     ) -> None:
-        self._tracker = tracker
+        self._status_controller = status_controller
+        self._status_recorder = status_recorder
         self._installer = installer
         self._firmware_refresher = firmware_refresher
 
     async def deploy(self, staged_release: StagedServerRelease) -> None:
         await self._firmware_refresher.refresh_esp_firmware(pinned_tag=staged_release.release.tag)
-        self._tracker.transition(UpdatePhase.installing)
-        self._tracker.log("Installing update...")
+        self._status_controller.transition(UpdatePhase.installing)
+        self._status_recorder.log("Installing update...")
         if not await self._installer.snapshot_for_rollback():
-            self._tracker.fail(
-                UpdatePhase.installing,
+            self._status_recorder.add_issue(
+                UpdatePhase.installing.value,
                 "Rollback snapshot could not be created",
                 "Install aborted before mutating the live environment",
             )
+            self._status_controller.mark_failed()
             raise UpdateReleaseError("Rollback snapshot could not be created")
         await self._installer.install_release(
             staged_release.wheel_path,

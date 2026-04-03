@@ -12,7 +12,7 @@ from vibesensor.use_cases.updates.releases import factory as release_fetcher_fac
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
-    from vibesensor.use_cases.updates.status import UpdateStatusTracker
+    from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
 
 __all__ = [
     "ServerReleaseResolver",
@@ -46,15 +46,23 @@ class UpdateReleaseResolution:
 class ServerReleaseResolver:
     """Own server release discovery independent from staging or install work."""
 
-    __slots__ = ("_rollback_dir", "_tracker")
+    __slots__ = ("_rollback_dir", "_status_controller", "_status_recorder")
 
-    def __init__(self, *, tracker: UpdateStatusTracker, rollback_dir: Path) -> None:
-        self._tracker = tracker
+    def __init__(
+        self,
+        *,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
+        rollback_dir: Path,
+    ) -> None:
+        self._status_controller = status_controller
+        self._status_recorder = status_recorder
         self._rollback_dir = rollback_dir
 
     async def resolve(self, current_version: str) -> UpdateReleaseResolution:
         release_check = await check_for_update(
-            self._tracker,
+            self._status_controller,
+            self._status_recorder,
             self._rollback_dir,
             current_version,
         )
@@ -66,7 +74,8 @@ class ServerReleaseResolver:
 
 
 async def check_for_update(
-    tracker: UpdateStatusTracker,
+    status_controller: UpdateStatusController,
+    status_recorder: UpdateStatusRecorder,
     rollback_dir: Path,
     current_version: str,
 ) -> UpdateReleaseCheck:
@@ -76,7 +85,8 @@ async def check_for_update(
     try:
         release = await asyncio.to_thread(fetcher.check_update_available, current_version)
     except (OSError, ValueError) as exc:
-        tracker.fail("checking", f"Failed to check for updates: {exc}")
+        status_recorder.add_issue("checking", f"Failed to check for updates: {exc}")
+        status_controller.mark_failed()
         raise UpdateReleaseError(f"Failed to check for updates: {exc}") from exc
     if release is not None:
         return UpdateReleaseCheck(release=release)
@@ -86,7 +96,7 @@ async def check_for_update(
         if isinstance(latest_release.tag, str):
             latest_tag = latest_release.tag
     except (OSError, ValueError) as exc:
-        tracker.log(
+        status_recorder.log(
             f"Could not resolve the latest release tag for ESP firmware sync: {exc}",
         )
     return UpdateReleaseCheck(release=None, latest_tag=latest_tag)

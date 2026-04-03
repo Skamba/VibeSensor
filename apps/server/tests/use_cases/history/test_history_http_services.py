@@ -19,6 +19,7 @@ from vibesensor.adapters.history import (
     project_history_insights,
 )
 from vibesensor.domain import CarSnapshot, RunStatus
+from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frame_from_mapping
 from vibesensor.shared.exceptions import AnalysisNotReadyError
@@ -32,7 +33,6 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
-from vibesensor.use_cases.history.report_preparation import prepare_persisted_report_input
 from vibesensor.use_cases.history.runs import HistoryRunService, raise_delete_run_error
 
 

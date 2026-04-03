@@ -443,7 +443,7 @@ _ALLOWED_ANALYSIS_SUMMARY_IMPORT_FILES = frozenset(
     {
         "adapters/analysis_summary.py",
         "use_cases/history/report_loader.py",
-        "use_cases/history/report_preparation.py",
+        "shared/boundaries/reporting/preparation.py",
     }
 )
 

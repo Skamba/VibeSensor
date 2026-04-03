@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateTransportError
 from vibesensor.use_cases.updates.models import UpdateRequest, UpdateValidationConfig
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
 from vibesensor.use_cases.updates.validation import validate_prerequisites
 
 if TYPE_CHECKING:
@@ -60,7 +60,8 @@ class UpdatePreparationCoordinator:
     __slots__ = (
         "_commands",
         "_current_version_provider",
-        "_tracker",
+        "_status_controller",
+        "_status_recorder",
         "_transport_sessions",
         "_validation_config",
     )
@@ -68,13 +69,15 @@ class UpdatePreparationCoordinator:
     def __init__(
         self,
         *,
-        tracker: UpdateStatusTracker,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
         commands: UpdateCommandExecutor,
         transport_sessions: UpdateTransportSessions,
         validation_config: UpdateValidationConfig,
         current_version_provider: CurrentVersionProvider,
     ) -> None:
-        self._tracker = tracker
+        self._status_controller = status_controller
+        self._status_recorder = status_recorder
         self._commands = commands
         self._transport_sessions = transport_sessions
         self._validation_config = validation_config
@@ -88,7 +91,8 @@ class UpdatePreparationCoordinator:
     async def _validate_request(self, request: UpdateRequest) -> ValidatedUpdateRequest:
         await validate_prerequisites(
             commands=self._commands,
-            tracker=self._tracker,
+            controller=self._status_controller,
+            recorder=self._status_recorder,
             config=self._validation_config,
             request=request,
         )

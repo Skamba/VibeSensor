@@ -5,11 +5,11 @@ import pytest
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_json_object,
 )
+from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
 from vibesensor.use_cases.history.report_document import (
     prepare_report_input,
     resolve_primary_report_candidate,
 )
-from vibesensor.use_cases.history.report_preparation import prepare_persisted_report_input
 
 
 def test_prepare_report_input_prefers_connected_sensor_locations() -> None:
@@ -135,7 +135,7 @@ def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
 def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import vibesensor.use_cases.history.report_preparation as report_preparation
+    import vibesensor.shared.boundaries.reporting.preparation as report_preparation
 
     analysis = persisted_analysis_from_json_object(
         {
@@ -165,7 +165,7 @@ def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(
     def _explode(*_args: object, **_kwargs: object) -> object:
         raise AssertionError("prepare_persisted_report_input should not use test_run_from_summary")
 
-    monkeypatch.setattr(report_preparation, "test_run_from_summary", _explode)
+    monkeypatch.setattr(report_preparation, "report_test_run_from_summary", _explode)
 
     prepared = report_preparation.prepare_persisted_report_input(analysis)
 

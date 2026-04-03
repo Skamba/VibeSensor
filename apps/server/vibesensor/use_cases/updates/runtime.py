@@ -23,6 +23,8 @@ from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartSchedule
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
+    UpdateStatusController,
+    UpdateStatusRecorder,
     UpdateStatusTracker,
     collect_runtime_details,
 )
@@ -53,6 +55,8 @@ UPDATE_SERVICE_NAME = "vibesensor.service"
 @dataclass(frozen=True, slots=True)
 class UpdateManagerRuntime:
     tracker: UpdateStatusTracker
+    status_controller: UpdateStatusController
+    recorder: UpdateStatusRecorder
     workflow_runner: UpdateWorkflowRunner
     usb_status_service: UsbInternetStatusReader
     transport_sessions: UpdateTransportSessions
@@ -92,27 +96,35 @@ def build_update_manager_runtime(
     )
     commands = _build_command_executor(
         runner=active_runner,
-        tracker=tracker,
+        recorder=tracker.recorder,
     )
     status_service = usb_internet_service or UsbInternetStatusService(runner=active_runner)
     transport_sessions = _build_transport_sessions(
         commands=commands,
         tracker=tracker,
+        status_controller=tracker.controller,
+        recorder=tracker.recorder,
         wifi_config=config.wifi_config,
         status_service=status_service,
     )
     workflow = _build_update_workflow(
         commands=commands,
         tracker=tracker,
+        status_controller=tracker.controller,
+        recorder=tracker.recorder,
         config=config,
         transport_sessions=transport_sessions,
     )
     return UpdateManagerRuntime(
         tracker=tracker,
+        status_controller=tracker.controller,
+        recorder=tracker.recorder,
         workflow_runner=UpdateWorkflowRunner(
-            tracker=tracker,
+            status_controller=tracker.controller,
+            status_recorder=tracker.recorder,
             cleanup=UpdateCleanupCoordinator(
-                tracker=tracker,
+                status_controller=tracker.controller,
+                status_recorder=tracker.recorder,
                 repo=config.repo,
                 logger=LOGGER,
             ),
@@ -172,28 +184,32 @@ def _build_status_tracker(
 def _build_command_executor(
     *,
     runner: CommandRunner,
-    tracker: UpdateStatusTracker,
+    recorder: UpdateStatusRecorder,
 ) -> UpdateCommandExecutor:
-    return UpdateCommandExecutor(runner=runner, tracker=tracker)
+    return UpdateCommandExecutor(runner=runner, recorder=recorder)
 
 
 def _build_transport_sessions(
     *,
     commands: UpdateCommandExecutor,
     tracker: UpdateStatusTracker,
+    status_controller: UpdateStatusController,
+    recorder: UpdateStatusRecorder,
     wifi_config: UpdateWifiConfig,
     status_service: UsbInternetStatusReader,
 ) -> UpdateTransportSessions:
     return UpdateTransportSessions(
         wifi=UpdateWifiSession(
             commands=commands,
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=recorder,
             config=wifi_config,
         ),
         usb_internet=UpdateUsbInternetSession(
             status_service=status_service,
             commands=commands,
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=recorder,
             config=wifi_config,
         ),
     )
@@ -203,6 +219,8 @@ def _build_release_components(
     *,
     commands: UpdateCommandExecutor,
     tracker: UpdateStatusTracker,
+    status_controller: UpdateStatusController,
+    recorder: UpdateStatusRecorder,
     config: UpdateRuntimeConfig,
 ) -> tuple[
     ServerReleaseResolver,
@@ -213,33 +231,37 @@ def _build_release_components(
 ]:
     firmware_refresher = FirmwareRefresher(
         commands=commands,
-        tracker=tracker,
+        status_recorder=recorder,
         repo=config.repo,
         timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
     )
     installer = UpdateInstaller(
         commands=commands,
-        tracker=tracker,
+        status_controller=status_controller,
+        status_recorder=recorder,
         config=config.installer_config,
     )
     return (
         ServerReleaseResolver(
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=recorder,
             rollback_dir=config.rollback_dir,
         ),
         ServerReleaseStager(
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=recorder,
             rollback_dir=config.rollback_dir,
         ),
         UpdateReleaseDeployer(
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=recorder,
             installer=installer,
             firmware_refresher=firmware_refresher,
         ),
         firmware_refresher,
         UpdateRestartScheduler(
             commands=commands,
-            tracker=tracker,
+            status_recorder=recorder,
             service_name=UPDATE_SERVICE_NAME,
             restart_unit=UPDATE_RESTART_UNIT,
         ),
@@ -250,6 +272,8 @@ def _build_update_workflow(
     *,
     commands: UpdateCommandExecutor,
     tracker: UpdateStatusTracker,
+    status_controller: UpdateStatusController,
+    recorder: UpdateStatusRecorder,
     config: UpdateRuntimeConfig,
     transport_sessions: UpdateTransportSessions,
 ) -> UpdateWorkflow:
@@ -267,18 +291,22 @@ def _build_update_workflow(
     ) = _build_release_components(
         commands=commands,
         tracker=tracker,
+        status_controller=status_controller,
+        recorder=recorder,
         config=config,
     )
     return UpdateWorkflow(
         preparation=UpdatePreparationCoordinator(
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=recorder,
             commands=commands,
             transport_sessions=transport_sessions,
             validation_config=config.validation_config,
             current_version_provider=current_version_provider,
         ),
         release_planner=UpdateReleasePlanner(
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=recorder,
             resolver=resolver,
         ),
         workflow_executor=UpdateWorkflowExecutor(
@@ -286,7 +314,7 @@ def _build_update_workflow(
             deployer=deployer,
             firmware_refresher=firmware_refresher,
             finalizer=UpdateSuccessFinalizer(
-                tracker=tracker,
+                status_recorder=recorder,
                 restart_scheduler=restart_scheduler,
             ),
         ),

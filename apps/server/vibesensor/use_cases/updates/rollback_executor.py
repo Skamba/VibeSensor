@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusRecorder
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallExecutor
 
 
@@ -13,7 +13,7 @@ class RollbackExecutor:
 
     __slots__ = (
         "_rollback_snapshots",
-        "_tracker",
+        "_status_recorder",
         "_wheel_install_executor",
         "_wheel_validator",
     )
@@ -21,18 +21,18 @@ class RollbackExecutor:
     def __init__(
         self,
         *,
-        tracker: UpdateStatusTracker,
+        status_recorder: UpdateStatusRecorder,
         rollback_snapshots: RollbackSnapshotStore,
         wheel_validator: WheelArtifactValidator,
         wheel_install_executor: WheelInstallExecutor,
     ) -> None:
-        self._tracker = tracker
+        self._status_recorder = status_recorder
         self._rollback_snapshots = rollback_snapshots
         self._wheel_validator = wheel_validator
         self._wheel_install_executor = wheel_install_executor
 
     async def rollback(self) -> bool:
-        self._tracker.log("Rolling back to previous version...")
+        self._status_recorder.log("Rolling back to previous version...")
         snapshot = self._rollback_snapshots.load_snapshot()
         if snapshot is None:
             return False

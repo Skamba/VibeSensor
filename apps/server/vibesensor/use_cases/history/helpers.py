@@ -8,7 +8,6 @@ routes layer translates domain exceptions to HTTP status codes.
 from __future__ import annotations
 
 import asyncio
-import re
 from collections.abc import Mapping
 from typing import cast
 
@@ -21,14 +20,6 @@ from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-
-_SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
-
-
-def safe_filename(name: str) -> str:
-    """Sanitize *name* for use in Content-Disposition headers and zip entry names."""
-    cleaned = _SAFE_FILENAME_RE.sub("_", name)[:200].lstrip(".")
-    return cleaned or "download"
 
 
 def resolve_run_language(run: StoredHistoryRun, requested: str | None) -> str:

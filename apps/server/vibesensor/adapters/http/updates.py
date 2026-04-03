@@ -7,7 +7,10 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Query
 
 from vibesensor.adapters.http._helpers import OpenAPIResponses
-from vibesensor.adapters.http.error_boundary import route_errors_to_http
+from vibesensor.adapters.http.error_boundary import (
+    http_exception_for_value_error,
+    route_errors_to_http,
+)
 from vibesensor.adapters.http.models import (
     EspFlashCancelResponse,
     EspFlashHistoryResponse,
@@ -81,12 +84,15 @@ def create_update_routes(
     )
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
         """Start an OTA software update using the supplied uplink Wi-Fi credentials."""
-        with route_errors_to_http():
-            update_manager.start(
-                ssid=req.ssid,
-                password=req.password,
-                transport=req.transport,
-            )
+        try:
+            with route_errors_to_http():
+                update_manager.start(
+                    ssid=req.ssid,
+                    password=req.password,
+                    transport=req.transport,
+                )
+        except ValueError as exc:
+            raise http_exception_for_value_error(exc, status_code=400) from exc
         return UpdateStartResponse(
             status="started",
             transport=req.transport.value,

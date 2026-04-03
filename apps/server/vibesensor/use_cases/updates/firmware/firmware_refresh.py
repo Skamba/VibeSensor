@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusRecorder
 from vibesensor.use_cases.updates.venv_paths import reinstall_python_executable
 
 __all__ = ["FirmwareRefresher"]
@@ -14,25 +14,25 @@ __all__ = ["FirmwareRefresher"]
 class FirmwareRefresher:
     """Refresh the updater firmware cache independently from install orchestration."""
 
-    __slots__ = ("_commands", "_repo", "_timeout_s", "_tracker")
+    __slots__ = ("_commands", "_repo", "_status_recorder", "_timeout_s")
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
-        tracker: UpdateStatusTracker,
+        status_recorder: UpdateStatusRecorder,
         repo: Path,
         timeout_s: float,
     ) -> None:
         self._commands = commands
-        self._tracker = tracker
+        self._status_recorder = status_recorder
         self._repo = repo
         self._timeout_s = timeout_s
 
     async def refresh_esp_firmware(self, pinned_tag: str = "") -> None:
         """Refresh the firmware cache, falling back to the current cache on failure."""
 
-        self._tracker.log("Refreshing ESP firmware cache...")
+        self._status_recorder.log("Refreshing ESP firmware cache...")
         venv_python = reinstall_python_executable(self._repo)
         refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
         refresh_args = ["--cache-dir", "/var/lib/vibesensor/firmware"]
@@ -55,11 +55,11 @@ class FirmwareRefresher:
             sudo=False,
         )
         if rc != 0:
-            self._tracker.add_issue(
+            self._status_recorder.add_issue(
                 "downloading",
                 f"ESP firmware cache refresh failed (exit {rc})",
                 stderr,
             )
-            self._tracker.log("ESP firmware refresh failed; continuing with existing cache")
+            self._status_recorder.log("ESP firmware refresh failed; continuing with existing cache")
             return
-        self._tracker.log("ESP firmware cache refresh completed successfully")
+        self._status_recorder.log("ESP firmware cache refresh completed successfully")

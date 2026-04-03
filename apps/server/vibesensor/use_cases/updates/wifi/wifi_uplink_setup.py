@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
@@ -35,17 +35,19 @@ def ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
 class UpdateUplinkProvisioner:
     """Create and configure the temporary Wi-Fi uplink connection for updates."""
 
-    __slots__ = ("_commands", "_config", "_tracker")
+    __slots__ = ("_commands", "_config", "_status_controller", "_status_recorder")
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
-        tracker: UpdateStatusTracker,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
         config: UpdateWifiConfig,
     ) -> None:
         self._commands = commands
-        self._tracker = tracker
+        self._status_controller = status_controller
+        self._status_recorder = status_recorder
         self._config = config
 
     async def prepare_uplink_connection(self, ssid: str, password: str) -> bool:
@@ -88,11 +90,12 @@ class UpdateUplinkProvisioner:
         security_modes = ssid_security_modes(stdout, ssid)
         if not security_modes:
             return True
-        self._tracker.fail(
+        self._status_recorder.add_issue(
             "connecting_wifi",
             "Wi-Fi password required for secured network",
             f"SSID '{ssid}' advertises security: {', '.join(sorted(security_modes))}",
         )
+        self._status_controller.mark_failed()
         return False
 
     async def _delete_existing_uplink_connections(self) -> None:
@@ -144,7 +147,12 @@ class UpdateUplinkProvisioner:
         )
         if rc == 0:
             return True
-        self._tracker.fail("connecting_wifi", "Failed to create uplink connection", stderr)
+        self._status_recorder.add_issue(
+            "connecting_wifi",
+            "Failed to create uplink connection",
+            stderr,
+        )
+        self._status_controller.mark_failed()
         return False
 
     async def _configure_uplink_connection(self) -> bool:
@@ -173,7 +181,8 @@ class UpdateUplinkProvisioner:
         )
         if rc == 0:
             return True
-        self._tracker.fail("connecting_wifi", "Failed to configure uplink", stderr)
+        self._status_recorder.add_issue("connecting_wifi", "Failed to configure uplink", stderr)
+        self._status_controller.mark_failed()
         await self._delete_uplink_connection()
         return False
 
@@ -197,7 +206,12 @@ class UpdateUplinkProvisioner:
         )
         if rc == 0:
             return True
-        self._tracker.fail("connecting_wifi", "Failed to set Wi-Fi credentials", stderr)
+        self._status_recorder.add_issue(
+            "connecting_wifi",
+            "Failed to set Wi-Fi credentials",
+            stderr,
+        )
+        self._status_controller.mark_failed()
         await self._delete_uplink_connection()
         return False
 
