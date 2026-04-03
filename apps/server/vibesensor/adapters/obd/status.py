@@ -1,4 +1,4 @@
-"""Status-presentation helpers for Bluetooth OBD monitoring."""
+"""Pure OBD runtime-fact projection helpers."""
 
 from __future__ import annotations
 
@@ -88,26 +88,5 @@ def build_obd_status_snapshot(
             if state.transport_connection_state == "disconnected"
             else None
         ),
-        debug_hint=_debug_hint(state),
+        helper_error=state.helper_error,
     )
-
-
-def _debug_hint(state: ObdMonitorStatusState) -> str | None:
-    helper_error = state.helper_error
-    if helper_error is not None:
-        if "password" in helper_error.lower() or "sudo" in helper_error.lower():
-            return "Install the Bluetooth OBD sudo helper and NOPASSWD sudoers entry on the Pi."
-        return "Bluetooth admin helper failed; try scan/pair again after power-cycling the adapter."
-    if state.configured_device_mac is None:
-        return (
-            "Pair a Bluetooth OBD adapter in Settings before selecting OBD-II as the speed source."
-        )
-    if not state.paired:
-        return "Re-run Bluetooth pairing; the configured adapter is no longer paired with the Pi."
-    if not state.trusted:
-        return "Trust the configured OBD adapter again so reconnects can succeed without prompts."
-    if state.rfcomm_channel is None:
-        return "Rescan the adapter after power-cycling it; no RFCOMM serial channel was advertised."
-    if state.transport_connection_state == "disconnected":
-        return "Keep the adapter powered and in range; VibeSensor will keep retrying automatically."
-    return None

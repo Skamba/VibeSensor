@@ -107,7 +107,6 @@ class RollbackSnapshotStore:
     def commit_snapshot_wheel(self, promotion: RollbackSnapshotPromotion) -> None:
         """Finalize a promoted rollback wheel after metadata succeeds."""
 
-        self._prune_legacy_wheels(promotion.wheel_path)
         if promotion.backup_path is not None:
             promotion.backup_path.unlink(missing_ok=True)
 
@@ -176,9 +175,3 @@ class RollbackSnapshotStore:
                 )
             return None
         return RollbackSnapshotMetadata(version=version, sha256=sha256)
-
-    def _prune_legacy_wheels(self, keep_path: Path) -> None:
-        for wheel_path in self._rollback_dir.glob("*.whl"):
-            if wheel_path == keep_path:
-                continue
-            wheel_path.unlink(missing_ok=True)

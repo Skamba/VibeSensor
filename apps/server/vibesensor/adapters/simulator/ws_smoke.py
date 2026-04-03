@@ -7,6 +7,7 @@ import time
 from typing import Any
 
 import websockets
+from websockets.exceptions import WebSocketException
 
 
 def _client_ids(payload: dict[str, Any]) -> list[str]:
@@ -59,7 +60,7 @@ async def run(
                     if len(client_ids) >= min_clients:
                         print(f"WS smoke OK: {len(client_ids)} clients visible")
                         return
-        except Exception as exc:  # noqa: BLE001
+        except (OSError, TimeoutError, WebSocketException, json.JSONDecodeError) as exc:
             last_exception = f"{type(exc).__name__}: {exc}"
             if debug:
                 print(f"[ws_smoke] connection/read error: {last_exception}")

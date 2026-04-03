@@ -1,18 +1,17 @@
-"""Public installer facade over focused updater artifact collaborators."""
+"""Low-level install, rollback, and snapshot primitives for updater workflows."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator
 from vibesensor.use_cases.updates.rollback_executor import RollbackExecutor
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
 from vibesensor.use_cases.updates.rollback_snapshot_builder import RollbackSnapshotBuilder
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
-from vibesensor.use_cases.updates.wheel_installation import WheelInstallExecutor
+from vibesensor.use_cases.updates.wheel_installation import WheelInstallExecutor, WheelInstallResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,13 +22,12 @@ class UpdateInstallerConfig:
 
 
 class UpdateInstaller:
-    """Own install policy while delegating execution to focused collaborators."""
+    """Expose install-time primitives without embedding rollback policy decisions."""
 
     __slots__ = (
         "_config",
         "_rollback_executor",
         "_rollback_snapshot_builder",
-        "_tracker",
         "_wheel_install_executor",
     )
 
@@ -42,7 +40,6 @@ class UpdateInstaller:
         config: UpdateInstallerConfig,
     ) -> None:
         self._config = config
-        self._tracker = status_recorder
         rollback_snapshots = RollbackSnapshotStore(config.rollback_dir, status_recorder)
         wheel_validator = WheelArtifactValidator(
             status_controller=status_controller,
@@ -73,24 +70,15 @@ class UpdateInstaller:
     async def snapshot_for_rollback(self) -> bool:
         return await self._rollback_snapshot_builder.snapshot_for_rollback()
 
-    async def install_release(self, wheel_path: Path, expected_version: str) -> None:
-        install_result = await self._wheel_install_executor.install_release(
+    async def install_release(
+        self,
+        wheel_path: Path,
+        expected_version: str,
+    ) -> WheelInstallResult:
+        return await self._wheel_install_executor.install_release(
             wheel_path,
             expected_version,
         )
-        if install_result.succeeded:
-            return
-        rollback_succeeded = False
-        if install_result.rollback_required:
-            self._tracker.log("Attempting rollback...")
-            rollback_succeeded = await self.rollback()
-        if rollback_succeeded:
-            raise UpdateReleaseError(
-                "Update install failed; rollback restored the previous version"
-            )
-        if install_result.rollback_required:
-            raise UpdateReleaseError("Update install failed and rollback did not complete")
-        raise UpdateReleaseError("Update install failed")
 
     async def rollback(self) -> bool:
         return await self._rollback_executor.rollback()

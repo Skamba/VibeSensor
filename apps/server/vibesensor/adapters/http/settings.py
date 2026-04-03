@@ -42,6 +42,7 @@ from vibesensor.adapters.http.models import (
     SpeedUnitRequest,
     SpeedUnitResponse,
 )
+from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
 from vibesensor.shared.types.car_config import (
     CarConfigPayload,
     CarConfigUpdatePayload,
@@ -215,7 +216,7 @@ def create_settings_routes(
             last_error=snapshot.last_error,
             last_raw_response=snapshot.last_raw_response,
             reconnect_delay_s=snapshot.reconnect_delay_s,
-            debug_hint=snapshot.debug_hint,
+            debug_hint=obd_debug_hint(snapshot),
         )
 
     def _car_upsert_payload(req: CarUpsertRequest) -> CarConfigUpdatePayload:

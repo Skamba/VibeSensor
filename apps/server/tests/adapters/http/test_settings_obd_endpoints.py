@@ -173,7 +173,6 @@ def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
         last_error=None,
         last_raw_response="410D0C",
         reconnect_delay_s=None,
-        debug_hint=None,
     )
 
     response = client.get("/api/settings/obd/status")

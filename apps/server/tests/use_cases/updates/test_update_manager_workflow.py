@@ -53,22 +53,19 @@ def _build_manager(
     tracker.status = status or UpdateJobStatus()
     recorder = MagicMock()
     status_controller = MagicMock()
-    recovery_session = AsyncMock()
     runtime = SimpleNamespace(
         tracker=tracker,
         recorder=recorder,
         status_controller=status_controller,
         workflow=MagicMock(),
+        startup_recovery=SimpleNamespace(recover=AsyncMock()),
         workflow_runner=SimpleNamespace(
             job_task=None,
             cancel=MagicMock(return_value=True),
             start=MagicMock(),
         ),
-        transport_sessions=SimpleNamespace(
-            for_transport=lambda _transport: recovery_session,
-        ),
     )
-    return UpdateManager(runtime=runtime), recovery_session.recover_interrupted_update
+    return UpdateManager(runtime=runtime), runtime.startup_recovery.recover
 
 
 @pytest.mark.asyncio
