@@ -92,6 +92,7 @@ class GitHubReleaseFetcher(GitHubAPIClient):
             # firmware binary in memory (Pi 3A+ has only 512 MB RAM).
             tmp_fd, tmp_path = tempfile.mkstemp(dir=str(dest.parent), suffix=".dl_tmp")
             fdopen_ok = False
+            downloaded = False
             try:
                 total = 0
                 with os.fdopen(tmp_fd, "wb") as tmp_f:
@@ -108,16 +109,14 @@ class GitHubReleaseFetcher(GitHubAPIClient):
                             )
                         tmp_f.write(chunk)
                 Path(tmp_path).replace(dest)
-            except BaseException:
-                # If os.fdopen() failed, the raw fd is still open; close it.
-                # Once os.fdopen() succeeds it owns the fd (closed by `with`).
+                downloaded = True
+            finally:
                 if not fdopen_ok:
                     with contextlib.suppress(OSError):
                         os.close(tmp_fd)
-                # Clean up partial temp file on any failure
-                with contextlib.suppress(OSError):
-                    Path(tmp_path).unlink()
-                raise
+                if not downloaded:
+                    with contextlib.suppress(OSError):
+                        Path(tmp_path).unlink()
 
     def find_release(self) -> GitHubReleasePayload:
         """Find the target release based on config (pinned tag, channel)."""
