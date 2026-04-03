@@ -7,8 +7,8 @@ def test_prepared_report_input_has_domain_aggregate() -> None:
     """Prepared report inputs must carry the reconstructed domain aggregate."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.use_cases.history.report_document import prepare_report_input
     from vibesensor.domain import TestRun
+    from vibesensor.use_cases.history.report_document import prepare_report_input
 
     summary = {
         "run_id": "test-context",
@@ -32,9 +32,12 @@ def test_prepared_report_input_has_domain_aggregate() -> None:
 
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
-    from vibesensor.use_cases.history.report_document import PrimaryCandidateContext, build_system_cards
     from vibesensor.domain import Finding, RunCapture, TestRun
     from vibesensor.report_i18n import tr
+    from vibesensor.use_cases.history.report_document import (
+        PrimaryCandidateContext,
+        build_system_cards,
+    )
 
     lang = "en"
     domain_f = Finding(
@@ -110,12 +113,12 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     """Primary-candidate resolution must derive values from the domain aggregate."""
     from test_support.findings import make_finding_payload
 
+    from vibesensor.domain import VibrationSource
+    from vibesensor.report_i18n import tr
     from vibesensor.use_cases.history.report_document import (
         prepare_report_input,
         resolve_primary_report_candidate,
     )
-    from vibesensor.domain import VibrationSource
-    from vibesensor.report_i18n import tr
 
     lang = "en"
     finding = make_finding_payload(

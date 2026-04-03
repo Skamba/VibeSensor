@@ -5,7 +5,6 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.shared.boundaries.reporting.document import AppendixBData, ReportTemplateData
 from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
@@ -20,6 +19,7 @@ from vibesensor.adapters.pdf.pdf_style import (
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting.document import AppendixBData, ReportTemplateData
 
 from .tables import _draw_table, _fmt_db, _fmt_relative_db
 

@@ -5,11 +5,6 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.shared.boundaries.reporting.document import (
-    AppendixAData,
-    NextStep,
-    ReportTemplateData,
-)
 from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
@@ -26,6 +21,11 @@ from vibesensor.adapters.pdf.pdf_text import (
     _draw_text,
 )
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting.document import (
+    AppendixAData,
+    NextStep,
+    ReportTemplateData,
+)
 
 from .action_matrix import draw_action_steps_continuation_page, draw_action_steps_panel
 from .guidance_page import draw_capture_guidance_page

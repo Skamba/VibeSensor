@@ -11,9 +11,9 @@ import pytest
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 
 pdfium = pytest.importorskip("pypdfium2")
 

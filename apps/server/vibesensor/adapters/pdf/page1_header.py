@@ -7,7 +7,6 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.adapters.pdf.page1_common import draw_label_value
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
@@ -21,6 +20,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     TEXT_CLR,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 
 __all__ = ["draw_header_strip", "draw_hero_block"]
 

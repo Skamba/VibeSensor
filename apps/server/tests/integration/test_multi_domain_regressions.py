@@ -11,7 +11,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.use_cases.history.report_document.presentation import order_label_human
 from vibesensor.domain import Finding, SpeedSourceKind, speed_bin_label
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
@@ -24,6 +23,7 @@ from vibesensor.use_cases.diagnostics.location_scoring import weighted_speed_win
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.statistics import compute_run_timing
+from vibesensor.use_cases.history.report_document.presentation import order_label_human
 from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 
 

@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from vibesensor.shared.boundaries.reporting.document import TimelineGraphData, TimelineGraphInterval
 from vibesensor.adapters.pdf.pdf_drawing import _hex
 from vibesensor.adapters.pdf.pdf_style import FONT, FONT_B, FS_SMALL, REPORT_COLORS
+from vibesensor.shared.boundaries.reporting.document import TimelineGraphData, TimelineGraphInterval
 
 __all__ = ["run_timeline_graph"]
 

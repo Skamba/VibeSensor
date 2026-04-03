@@ -12,7 +12,6 @@ import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples, summarize_run_data
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
@@ -23,6 +22,7 @@ from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_ma
 from vibesensor.shared.boundaries.sensor_frame_encoder import sensor_frame_to_json_object
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------

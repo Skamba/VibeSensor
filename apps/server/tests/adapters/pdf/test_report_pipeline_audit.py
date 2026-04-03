@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from vibesensor.report_i18n import tr
 from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 from vibesensor.use_cases.history.report_document.presentation import (
     peak_classification_text as _peak_classification_text,
 )
-from vibesensor.report_i18n import tr
 
 # ---------------------------------------------------------------------------
 # Helpers

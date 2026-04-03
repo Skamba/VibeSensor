@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
+from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
+from vibesensor.shared.boundaries.reporting.contracts import (
+    PreparedAppendixADisplay,
+    PreparedAppendixBSummaryDisplay,
+    PreparedReportFacts,
+    PreparedVerdictDisplay,
+)
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
@@ -21,14 +27,8 @@ from vibesensor.shared.boundaries.reporting.document import (
     TopologyIntensityRow,
     VerdictPageData,
 )
-from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
-from vibesensor.shared.boundaries.reporting.contracts import (
-    PreparedAppendixADisplay,
-    PreparedAppendixBSummaryDisplay,
-    PreparedReportFacts,
-    PreparedVerdictDisplay,
-)
 from vibesensor.shared.report_presentation import display_location
+from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 
 from .measurements import _evidence_chain_rows, _sensor_observation_matrix_rows
 from .narrative_summaries import (

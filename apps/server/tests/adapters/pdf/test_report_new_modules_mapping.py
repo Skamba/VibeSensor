@@ -19,14 +19,14 @@ from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.domain import VibrationOrigin
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.use_cases.diagnostics.run_analysis import (
     summarize_origin,
 )
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 
 
 def _sample(

@@ -7,7 +7,6 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.shared.boundaries.reporting.document import NextStep, ReportTemplateData
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT,
@@ -28,6 +27,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     observed_signature_row_count,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _wrap_lines
+from vibesensor.shared.boundaries.reporting.document import NextStep, ReportTemplateData
 
 
 def _draw_data_trust_panel(

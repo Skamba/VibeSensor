@@ -23,12 +23,6 @@ from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import (
-    NextStep,
-    ReportTemplateData,
-    VerdictPageData,
-)
 from vibesensor.adapters.pdf.panels._panel_diagram import (
     assert_aspect_preserved,
     fit_rect_preserve_aspect,
@@ -42,6 +36,12 @@ from vibesensor.adapters.pdf.pdf_style import (
     build_page2_layout,
     observed_signature_row_count,
 )
+from vibesensor.shared.boundaries.reporting.document import (
+    NextStep,
+    ReportTemplateData,
+    VerdictPageData,
+)
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 
 
 def _sample(

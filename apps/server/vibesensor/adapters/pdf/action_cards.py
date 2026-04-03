@@ -5,7 +5,6 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.shared.boundaries.reporting.document import NextStep
 from vibesensor.adapters.pdf.pdf_drawing import _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT_B,
@@ -17,6 +16,7 @@ from vibesensor.adapters.pdf.pdf_style import (
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text, _wrap_lines
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting.document import NextStep
 
 __all__ = [
     "draw_compact_action_card",

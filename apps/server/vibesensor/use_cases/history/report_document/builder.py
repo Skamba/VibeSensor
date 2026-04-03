@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.use_cases.history.report_document._candidate_resolver import (
-    PrimaryCandidateContext,
-    resolve_primary_report_candidate,
-)
-from vibesensor.use_cases.history.report_document._card_builder import build_system_cards
+from vibesensor.report_i18n import normalize_lang
+from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
     PatternEvidence,
@@ -16,12 +14,6 @@ from vibesensor.shared.boundaries.reporting.document import (
     ReportTemplateData,
     build_report_from_summary,
 )
-from vibesensor.use_cases.history.report_document.peak_table import build_peak_rows
-from vibesensor.use_cases.history.report_document.report_sections import build_data_trust, build_next_steps
-from vibesensor.use_cases.history.report_document.template_builder import build_template_data
-from vibesensor.report_i18n import normalize_lang
-from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.report_presentation import display_location
 from vibesensor.shared.time_utils import (
     format_timestamp_in_recorded_timezone,
@@ -29,6 +21,17 @@ from vibesensor.shared.time_utils import (
     utc_now_iso,
 )
 from vibesensor.shared.types.json_types import JsonValue
+from vibesensor.use_cases.history.report_document._candidate_resolver import (
+    PrimaryCandidateContext,
+    resolve_primary_report_candidate,
+)
+from vibesensor.use_cases.history.report_document._card_builder import build_system_cards
+from vibesensor.use_cases.history.report_document.peak_table import build_peak_rows
+from vibesensor.use_cases.history.report_document.report_sections import (
+    build_data_trust,
+    build_next_steps,
+)
+from vibesensor.use_cases.history.report_document.template_builder import build_template_data
 
 from .measurements import _measurement_rows
 from .narrative_summaries import _proof_summary_text
