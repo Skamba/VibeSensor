@@ -158,7 +158,7 @@ class UpdateManager:
             on_cancelled=self._lifecycle.handle_cancelled,
             on_unexpected=self._lifecycle.handle_unexpected,
             cleanup=self._lifecycle.cleanup_after_update,
-            on_cancelled_cleanup_error=self._lifecycle.handle_cancelled_cleanup_error,
+            on_cleanup_error=self._lifecycle.handle_cleanup_error,
         )
 
     async def _run_update_inner(

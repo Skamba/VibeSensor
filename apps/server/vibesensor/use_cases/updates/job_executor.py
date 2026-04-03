@@ -66,29 +66,35 @@ class UpdateJobExecutor:
         on_cancelled: VoidCallback,
         on_unexpected: UnexpectedCallback,
         cleanup: CleanupCallback,
-        on_cancelled_cleanup_error: CleanupErrorCallback,
+        on_cleanup_error: CleanupErrorCallback,
     ) -> None:
         """Run the workflow with timeout/cancel handling and guaranteed cleanup."""
+        primary_error: BaseException | None = None
         cancelled = False
         try:
             await asyncio.wait_for(workflow_factory(), timeout=timeout_s)
         except TimeoutError:
             on_timeout()
-        except asyncio.CancelledError:
+        except asyncio.CancelledError as exc:
             cancelled = True
             on_cancelled()
-            raise
+            primary_error = exc
         except Exception as exc:
             on_unexpected(exc)
+            primary_error = exc
+
+        cleanup_error: Exception | None = None
+        try:
+            await cleanup()
+        except asyncio.CancelledError:
             raise
-        finally:
-            if cancelled:
-                try:
-                    await cleanup()
-                except asyncio.CancelledError:
-                    raise
-                except Exception as exc:
-                    on_cancelled_cleanup_error(exc)
-                    raise
-            else:
-                await cleanup()
+        except Exception as exc:
+            on_cleanup_error(exc)
+            cleanup_error = exc
+
+        if cancelled and cleanup_error is not None:
+            raise cleanup_error
+        if primary_error is not None:
+            raise primary_error
+        if cleanup_error is not None:
+            raise cleanup_error
