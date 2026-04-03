@@ -23,15 +23,13 @@ class UpdateSuccessFinalizer:
         self._tracker = tracker
         self._restart_scheduler = restart_scheduler
 
-    async def complete(self, transport_session: UpdateTransportSession, *, message: str) -> bool:
-        if not await transport_session.complete_success(message):
-            return False
+    async def complete(self, transport_session: UpdateTransportSession, *, message: str) -> None:
+        await transport_session.complete_success(message)
         if await self._restart_scheduler.schedule():
-            return True
+            return
         self._tracker.add_issue(
             "done",
             "Backend restart was not scheduled automatically",
             "Run 'sudo systemctl restart vibesensor.service' manually",
         )
         self._tracker.log("Automatic backend restart scheduling failed")
-        return True

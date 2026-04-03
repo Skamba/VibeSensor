@@ -30,7 +30,11 @@ __all__ = [
     "PersistenceError",
     "ProcessingError",
     "ProtocolError",
+    "UpdateCancelledError",
     "UpdateCleanupError",
+    "UpdatePreparationError",
+    "UpdateReleaseError",
+    "UpdateTransportError",
     "RunNotFoundError",
     "UpdateError",
     "VibeSensorError",
@@ -67,6 +71,25 @@ class UpdateError(VibeSensorError):
 
 class UpdateCleanupError(UpdateError):
     """Updater cleanup failed after the main workflow had already exited."""
+
+
+class UpdatePreparationError(UpdateError):
+    """Update preflight or transport preparation failed."""
+
+
+class UpdateTransportError(UpdateError):
+    """Transport-specific update setup or finalization failed."""
+
+
+class UpdateReleaseError(UpdateError):
+    """Release discovery, staging, or installation failed."""
+
+
+class UpdateCancelledError(UpdateError):
+    """Update execution was cancelled intentionally."""
+
+    def __init__(self, message: str = "Update was cancelled") -> None:
+        super().__init__(message, status="cancelled")
 
 
 class RunNotFoundError(VibeSensorError):

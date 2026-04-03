@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.releases import factory as release_fetcher_factory
 
 if TYPE_CHECKING:
@@ -27,7 +28,6 @@ class UpdateReleaseCheck:
 
     release: ReleaseInfo | None
     latest_tag: str = ""
-    failed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,11 +37,10 @@ class UpdateReleaseResolution:
     current_version: str
     release: ReleaseInfo | None
     latest_tag: str = ""
-    failed: bool = False
 
     @property
     def update_available(self) -> bool:
-        return self.release is not None and not self.failed
+        return self.release is not None
 
 
 class ServerReleaseResolver:
@@ -63,7 +62,6 @@ class ServerReleaseResolver:
             current_version=current_version,
             release=release_check.release,
             latest_tag=release_check.latest_tag,
-            failed=release_check.failed,
         )
 
 
@@ -79,7 +77,7 @@ async def check_for_update(
         release = await asyncio.to_thread(fetcher.check_update_available, current_version)
     except (OSError, ValueError) as exc:
         tracker.fail("checking", f"Failed to check for updates: {exc}")
-        return UpdateReleaseCheck(release=None, failed=True)
+        raise UpdateReleaseError(f"Failed to check for updates: {exc}") from exc
     if release is not None:
         return UpdateReleaseCheck(release=release)
     latest_tag = ""

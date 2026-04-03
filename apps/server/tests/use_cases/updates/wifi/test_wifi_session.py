@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
+from vibesensor.shared.exceptions import UpdateTransportError
 from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdatePhase,
@@ -84,7 +85,7 @@ async def test_prepare_stops_hotspot_and_connects_uplink(tmp_path: Path) -> None
     session, runner, tracker = _build_session(tmp_path)
     tracker.start_job(_wifi_request(password="pass123"))
 
-    assert await session.prepare(_wifi_request(password="pass123")) is True
+    await session.prepare(_wifi_request(password="pass123"))
 
     commands = [" ".join(call[0]) for call in runner.calls]
     assert any("connection down VibeSensor-AP" in command for command in commands)
@@ -156,7 +157,7 @@ async def test_complete_success_restores_hotspot_and_marks_success(tmp_path: Pat
     session, _runner, tracker = _build_session(tmp_path)
     _seed_checked_phase(tracker)
 
-    assert await session.complete_success("Update completed successfully") is True
+    await session.complete_success("Update completed successfully")
 
     assert tracker.status.state == UpdateState.success
     assert tracker.status.phase == UpdatePhase.done
@@ -173,7 +174,8 @@ async def test_complete_success_marks_failed_when_restore_fails(tmp_path: Path) 
     _seed_checked_phase(tracker)
     runner.set_response("connection up VibeSensor-AP", 10, "", "failed")
 
-    assert await session.complete_success("Update completed successfully") is False
+    with pytest.raises(UpdateTransportError, match="Failed to restore hotspot after update"):
+        await session.complete_success("Update completed successfully")
 
     assert tracker.status.state == UpdateState.failed
     assert any(

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator
 from vibesensor.use_cases.updates.rollback_executor import RollbackExecutor
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
@@ -68,17 +69,24 @@ class UpdateInstaller:
     async def snapshot_for_rollback(self) -> bool:
         return await self._rollback_snapshot_builder.snapshot_for_rollback()
 
-    async def install_release(self, wheel_path: Path, expected_version: str) -> bool:
+    async def install_release(self, wheel_path: Path, expected_version: str) -> None:
         install_result = await self._wheel_install_executor.install_release(
             wheel_path,
             expected_version,
         )
         if install_result.succeeded:
-            return True
+            return
+        rollback_succeeded = False
         if install_result.rollback_required:
             self._tracker.log("Attempting rollback...")
-            await self.rollback()
-        return False
+            rollback_succeeded = await self.rollback()
+        if rollback_succeeded:
+            raise UpdateReleaseError(
+                "Update install failed; rollback restored the previous version"
+            )
+        if install_result.rollback_required:
+            raise UpdateReleaseError("Update install failed and rollback did not complete")
+        raise UpdateReleaseError("Update install failed")
 
     async def rollback(self) -> bool:
         return await self._rollback_executor.rollback()

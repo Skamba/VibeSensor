@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.models import (
     UpdatePhase,
     UpdateRequest,
@@ -40,7 +41,6 @@ async def test_plan_returns_refresh_only_plan_when_no_server_update_is_needed(
 ) -> None:
     planner, tracker, resolver = _planner(tmp_path)
     resolver.resolve.return_value = SimpleNamespace(
-        failed=False,
         release=None,
         latest_tag="server-v2026.4.3",
     )
@@ -59,7 +59,6 @@ async def test_plan_returns_install_plan_when_server_update_is_available(tmp_pat
     planner, tracker, resolver = _planner(tmp_path)
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4")
     resolver.resolve.return_value = SimpleNamespace(
-        failed=False,
         release=release,
         latest_tag="server-v2026.4.4",
     )
@@ -74,15 +73,11 @@ async def test_plan_returns_install_plan_when_server_update_is_available(tmp_pat
 
 
 @pytest.mark.asyncio
-async def test_plan_returns_none_when_release_resolution_failed(tmp_path: Path) -> None:
+async def test_plan_propagates_release_resolution_failure(tmp_path: Path) -> None:
     planner, tracker, resolver = _planner(tmp_path)
-    resolver.resolve.return_value = SimpleNamespace(
-        failed=True,
-        release=None,
-        latest_tag="server-v2026.4.3",
-    )
+    resolver.resolve.side_effect = UpdateReleaseError("release check failed")
 
-    plan = await planner.plan("2026.4.3")
+    with pytest.raises(UpdateReleaseError, match="release check failed"):
+        await planner.plan("2026.4.3")
 
-    assert plan is None
     assert tracker.status.phase.value == "checking"

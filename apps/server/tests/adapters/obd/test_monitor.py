@@ -89,7 +89,7 @@ def test_obd_monitor_prioritizes_rpm_and_keeps_speed_as_a_companion_poll() -> No
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.2)]
     assert monitor.resolve_speed().source == "obd2"
     assert monitor.resolve_speed().speed_mps == pytest.approx(40.0 / 3.6)
-    status = monitor.status_snapshot(refresh_admin=False)
+    status = monitor.status_snapshot()
     assert status.last_speed_kmh == pytest.approx(40.0)
     assert status.last_rpm == pytest.approx(0x1AF8 / 4.0)
     assert status.rpm_target_interval_ms == 50
@@ -131,7 +131,7 @@ def test_obd_monitor_keeps_last_good_rpm_until_the_rpm_reference_goes_stale() ->
     clock.now = 2.11
     assert monitor.engine_rpm is None
 
-    status = monitor.status_snapshot(refresh_admin=False)
+    status = monitor.status_snapshot()
     assert status.timeout_count == 1
     assert status.backoff_active is True
 
@@ -159,7 +159,7 @@ def test_obd_monitor_backs_off_and_stays_in_rpm_only_mode_when_speed_times_out()
     monitor._apply_poll_result(monitor._poll_cycle_blocking(session))
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.3)]
-    status = monitor.status_snapshot(refresh_admin=False)
+    status = monitor.status_snapshot()
     assert status.poll_mode == "rpm_only_backoff"
     assert status.backoff_active is True
     assert status.timeout_count == 1
@@ -192,6 +192,28 @@ def test_obd_monitor_resolves_stale_speed_to_manual_fallback() -> None:
     assert resolution.fallback_active is True
 
 
+def test_obd_status_snapshot_does_not_refresh_admin_state_implicitly() -> None:
+    admin_client = MagicMock()
+    monitor = OBDSpeedMonitor(
+        admin_client=admin_client,
+        session_factory=lambda: MagicMock(),
+        monotonic=lambda: 100.0,
+    )
+    monitor.apply_speed_source_settings(
+        effective_speed_kmh=None,
+        manual_source_selected=False,
+        selected_source="obd2",
+        obd_device_mac="00043e5a4a4d",
+        obd_device_name="OBDLink MX+",
+    )
+
+    status = monitor.status_snapshot()
+
+    admin_client.device_info.assert_not_called()
+    assert status.device_mac == "00043e5a4a4d"
+    assert status.paired is False
+
+
 def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
     admin_client = MagicMock()
     admin_client.device_info.side_effect = ExternalCommandError("sudo: a password is required")
@@ -208,7 +230,8 @@ def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
         obd_device_name="OBDLink MX+",
     )
 
-    status = monitor.status_snapshot(refresh_admin=True)
+    monitor.refresh_admin_state()
+    status = monitor.status_snapshot()
 
     assert "sudo" in str(status.last_error).lower()
     assert "sudo helper" in str(status.debug_hint).lower()

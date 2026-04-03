@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.release_resolution import (
     ServerReleaseResolver,
     UpdateReleaseCheck,
@@ -33,21 +34,17 @@ async def test_resolve_maps_update_check_fields(tmp_path: Path) -> None:
     assert resolution.current_version == "2026.4.3"
     assert resolution.release is release
     assert resolution.latest_tag == "server-v2026.4.4"
-    assert resolution.failed is False
     assert resolution.update_available is True
 
 
 @pytest.mark.asyncio
-async def test_resolve_preserves_failed_check_without_release(tmp_path: Path) -> None:
+async def test_resolve_propagates_release_check_failure(tmp_path: Path) -> None:
     tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
     resolver = ServerReleaseResolver(tracker=tracker, rollback_dir=tmp_path / "rollback")
 
     with patch(
         "vibesensor.use_cases.updates.release_resolution.check_for_update",
-        new=AsyncMock(return_value=UpdateReleaseCheck(release=None, failed=True)),
+        new=AsyncMock(side_effect=UpdateReleaseError("rate limited")),
     ):
-        resolution = await resolver.resolve("2026.4.3")
-
-    assert resolution.release is None
-    assert resolution.failed is True
-    assert resolution.update_available is False
+        with pytest.raises(UpdateReleaseError, match="rate limited"):
+            await resolver.resolve("2026.4.3")

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
+from vibesensor.shared.exceptions import UpdateTransportError
 from vibesensor.use_cases.updates.models import (
     UpdatePhase,
     UpdateRequest,
@@ -64,15 +65,16 @@ class UpdateWifiSession:
         self._tracker.log(f"Wi-Fi connected successfully (client DNS fallback={fallback})")
         return await self._readiness.wait_for_dns_ready()
 
-    async def prepare(self, request: UpdateRequest) -> bool:
+    async def prepare(self, request: UpdateRequest) -> None:
         """Prepare the updater's Wi-Fi transport before release work begins."""
 
         self._tracker.transition(UpdatePhase.stopping_hotspot)
         if not await self.stop_hotspot():
-            return False
+            raise UpdateTransportError("Failed to stop the hotspot before Wi-Fi update setup")
         self._tracker.transition(UpdatePhase.connecting_wifi)
         assert request.ssid is not None  # noqa: S101
-        return await self.connect_uplink(request.ssid, request.password)
+        if not await self.connect_uplink(request.ssid, request.password):
+            raise UpdateTransportError("Failed to prepare the Wi-Fi uplink for update")
 
     async def restore_hotspot(self) -> bool:
         """Restore the hotspot after update work completes or is interrupted."""
@@ -98,12 +100,12 @@ class UpdateWifiSession:
             )
             self._tracker.log("startup_recover: hotspot restore failed")
 
-    async def complete_success(self, message: str) -> bool:
+    async def complete_success(self, message: str) -> None:
         """Restore the hotspot and then finalize the Wi-Fi update as successful."""
 
         if self._tracker.status.transport != UpdateTransport.wifi:
             self._tracker.mark_success(message)
-            return True
+            return
         self._tracker.transition(UpdatePhase.restoring_hotspot)
         self._tracker.log("Restoring hotspot...")
         restored = await self.restore_hotspot()
@@ -112,9 +114,8 @@ class UpdateWifiSession:
                 UpdatePhase.restoring_hotspot,
                 "Failed to restore hotspot after update",
             )
-            return False
+            raise UpdateTransportError("Failed to restore hotspot after update")
         self._tracker.mark_success(message)
-        return True
 
     async def cleanup_after_update(self) -> None:
         """Restore hotspot ownership and attach cleanup diagnostics after a run."""

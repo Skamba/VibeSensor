@@ -8,6 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from vibesensor.use_cases.updates.cleanup import UpdateCleanupCoordinator
 from vibesensor.use_cases.updates.coordinator import UpdateCoordinator
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
@@ -157,7 +158,6 @@ def build_update_manager_runtime(
                 tracker=tracker,
                 installer=installer,
                 firmware_refresher=firmware_refresher,
-                cancel_requested=executor.cancel_requested,
             ),
             firmware_refresher,
             UpdateRestartScheduler(
@@ -191,7 +191,6 @@ def build_update_manager_runtime(
                 transport_controller=UpdateTransportController(sessions=transport_sessions),
                 validation_config=validation_config,
                 current_version_provider=current_version_provider,
-                cancel_requested=executor.cancel_requested,
             ),
             release_planner=UpdateReleasePlanner(
                 tracker=tracker,
@@ -205,16 +204,17 @@ def build_update_manager_runtime(
                     tracker=tracker,
                     restart_scheduler=restart_scheduler,
                 ),
-                cancel_requested=executor.cancel_requested,
             ),
-            cancel_requested=executor.cancel_requested,
         )
 
     lifecycle = UpdateJobLifecycleHandler(
         tracker=tracker,
-        repo=repo,
-        transport_sessions_factory=lambda: build_transport_sessions(),
-        logger=LOGGER,
+        cleanup=UpdateCleanupCoordinator(
+            tracker=tracker,
+            repo=repo,
+            transport_sessions_factory=lambda: build_transport_sessions(),
+            logger=LOGGER,
+        ),
     )
     recovery = InterruptedUpdateRecovery(
         tracker=tracker,

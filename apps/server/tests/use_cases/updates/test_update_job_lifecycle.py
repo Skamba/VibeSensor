@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 from _update_manager_test_helpers import setup_update_env
 
+from vibesensor.shared.exceptions import UpdateCleanupError
 from vibesensor.use_cases.updates.models import (
     UpdatePhase,
     UpdateRequest,
@@ -69,7 +70,7 @@ async def test_cleanup_re_raises_runtime_details_bug_after_finishing_cleanup(tmp
     manager.status.phase = UpdatePhase.installing
 
     with patch(
-        "vibesensor.use_cases.updates.job_lifecycle.collect_runtime_details",
+        "vibesensor.use_cases.updates.cleanup.collect_runtime_details",
         side_effect=TypeError("runtime bug"),
     ):
         with pytest.raises(TypeError, match="runtime bug"):
@@ -97,24 +98,32 @@ async def test_cleanup_re_raises_wifi_diagnostics_bug_after_finishing_cleanup(tm
 
 
 @pytest.mark.asyncio
-async def test_cleanup_logs_and_marks_failed_before_reraising(tmp_path, caplog) -> None:
+async def test_cleanup_wraps_operational_runtime_refresh_failure(tmp_path, caplog) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
     manager.status.state = UpdateState.running
     manager.status.phase = UpdatePhase.installing
 
     with (
         patch(
-            "vibesensor.use_cases.updates.job_lifecycle.collect_runtime_details",
-            side_effect=RuntimeError("cleanup bug"),
+            "vibesensor.use_cases.updates.cleanup.collect_runtime_details",
+            side_effect=OSError("runtime unavailable"),
         ),
         caplog.at_level("ERROR"),
-        pytest.raises(RuntimeError, match="cleanup bug"),
+        pytest.raises(
+            UpdateCleanupError,
+            match="Runtime details refresh failed: runtime unavailable",
+        ),
     ):
         await manager._runtime.lifecycle.cleanup_after_update()
 
     assert manager.status.state == UpdateState.failed
-    assert any(issue.message == "Cleanup failed: cleanup bug" for issue in manager.status.issues)
-    assert any(record.message == "update: cleanup error" for record in caplog.records)
+    assert any(
+        issue.message == "Runtime details refresh failed" and issue.detail == "runtime unavailable"
+        for issue in manager.status.issues
+    )
+    assert any(
+        record.message == "update: runtime details refresh error" for record in caplog.records
+    )
 
 
 @pytest.mark.asyncio

@@ -95,7 +95,7 @@ class SpeedSourceCoordinator:
         if self._selected_source_kind() is not SpeedSourceKind.OBD2:
             return self._gps_monitor.status_snapshot()
         resolution = self._obd_monitor.resolve_speed()
-        obd_status = self._obd_monitor.status_snapshot(refresh_admin=False)
+        obd_status = self._obd_monitor.status_snapshot()
         return SpeedSourceStatusSnapshot(
             gps_enabled=self._gps_monitor.gps_enabled,
             connection_state=obd_status.connection_state,
@@ -123,7 +123,8 @@ class SpeedSourceCoordinator:
         return self._obd_monitor.pair_device(mac_address)
 
     def obd_status(self) -> ObdStatusSnapshot:
-        return self._obd_monitor.status_snapshot(refresh_admin=True)
+        self._obd_monitor.refresh_admin_state()
+        return self._obd_monitor.status_snapshot()
 
     def set_manual_source_selected(self, selected: bool) -> None:
         self._gps_monitor.set_manual_source_selected(selected)
