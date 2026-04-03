@@ -34,7 +34,10 @@ def _minimal_summary(**overrides: object) -> dict[str, object]:
         "record_length": "0:05",
         "lang": "en",
         "report_date": "2025-01-01T10:00:00Z",
-        "metadata": {"active_car_snapshot": {"name": "Test Car"}},
+        "metadata": {
+            "run_id": "run-1",
+            "active_car_snapshot": {"name": "Test Car"},
+        },
         "findings": [],
         "top_causes": [],
         "speed_stats": {
@@ -66,6 +69,12 @@ def _minimal_summary(**overrides: object) -> dict[str, object]:
         "sensor_intensity_by_location": [],
     }
     base.update(overrides)
+    raw_metadata = base.get("metadata")
+    raw_run_id = str(base.get("run_id") or "").strip()
+    if isinstance(raw_metadata, dict) and raw_metadata and raw_run_id:
+        metadata = dict(raw_metadata)
+        metadata.setdefault("run_id", raw_run_id)
+        base["metadata"] = metadata
     return base
 
 

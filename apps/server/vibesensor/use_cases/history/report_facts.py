@@ -12,7 +12,6 @@ from vibesensor.domain import (
     SuitabilityCheck,
     TestRun,
     VibrationOrigin,
-    coerce_float,
 )
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.report_interpretation import (
@@ -24,10 +23,9 @@ from vibesensor.shared.boundaries.report_interpretation import (
     resolve_report_origin,
     tire_spec_text,
 )
-from vibesensor.shared.boundaries.report_payload_projection import (
-    active_sensor_locations,
-    phase_timeline_payload,
-    sensor_intensity_payload,
+from vibesensor.shared.boundaries.report_summary_codec import (
+    ReportTimelineInterval,
+    report_summary_from_mapping,
 )
 from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings
 from vibesensor.shared.run_context_warning import RunContextWarning, RunContextWarningsInput
@@ -79,46 +77,6 @@ class PreparedReportFacts:
     display: PreparedReportDisplayFacts
 
 
-@dataclass(frozen=True, slots=True)
-class ReportTimelineInterval:
-    """Prepared semantic snapshot for one report timeline interval."""
-
-    phase: str
-    start_t_s: float | None
-    end_t_s: float | None
-    speed_min_kmh: float | None
-    speed_max_kmh: float | None
-    has_fault_evidence: bool
-
-
-def _coerce_optional_float(value: object) -> float | None:
-    if value is None:
-        return None
-    try:
-        return coerce_float(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _timeline_intervals(payload: Mapping[str, object]) -> tuple[ReportTimelineInterval, ...]:
-    intervals: list[ReportTimelineInterval] = []
-    for row in phase_timeline_payload(payload):
-        phase = str(row.get("phase") or "").strip()
-        if not phase:
-            continue
-        intervals.append(
-            ReportTimelineInterval(
-                phase=phase,
-                start_t_s=_coerce_optional_float(row.get("start_t_s")),
-                end_t_s=_coerce_optional_float(row.get("end_t_s")),
-                speed_min_kmh=_coerce_optional_float(row.get("speed_min_kmh")),
-                speed_max_kmh=_coerce_optional_float(row.get("speed_max_kmh")),
-                has_fault_evidence=bool(row.get("has_fault_evidence")),
-            ),
-        )
-    return tuple(intervals)
-
-
 def prepare_report_facts(
     payload: Mapping[str, object],
     *,
@@ -127,14 +85,15 @@ def prepare_report_facts(
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportFacts:
     """Resolve semantic report facts shared by downstream PDF mapping."""
+    summary = report_summary_from_mapping(payload)
     prepared_language = str(normalize_lang(language or payload.get("lang")))
-    sensor_locations_active = active_sensor_locations(payload)
+    sensor_locations_active = summary.active_sensor_locations
     origin = resolve_report_origin(test_run)
     origin_location = normalize_origin_location(origin)
     config_snap = test_run.capture.setup.configuration_snapshot
     active_sensor_intensity = tuple(
         filter_active_sensor_intensity(
-            sensor_intensity_payload(payload),
+            summary.sensor_intensity_rows,
             sensor_locations_active,
         )
     )
@@ -168,7 +127,7 @@ def prepare_report_facts(
         suitability_checks=suitability_checks,
         warnings=warning_models,
     )
-    duration_text = str(payload.get("record_length") or "").strip() or None
+    duration_text = summary.record_length
     display = prepare_report_display_facts(
         aggregate=test_run,
         primary_candidate_facts=primary_candidate_facts,
@@ -190,8 +149,8 @@ def prepare_report_facts(
         origin_location=origin_location,
         sensor_locations_active=sensor_locations_active,
         duration_text=duration_text,
-        start_time_utc=str(payload.get("start_time_utc") or "").strip() or None,
-        end_time_utc=str(payload.get("end_time_utc") or "").strip() or None,
+        start_time_utc=summary.start_time_utc,
+        end_time_utc=summary.end_time_utc,
         sample_rate_hz=(
             f"{config_snap.raw_sample_rate_hz:g}"
             if config_snap.raw_sample_rate_hz is not None
@@ -213,6 +172,6 @@ def prepare_report_facts(
         alternative_source=alternative_source,
         alternative_source_visible=alternative_source_visible,
         confidence_gap_to_alternative=confidence_gap_to_alternative,
-        timeline_intervals=_timeline_intervals(payload),
+        timeline_intervals=summary.timeline_intervals,
         display=display,
     )

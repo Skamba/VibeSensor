@@ -21,6 +21,7 @@ def _summary() -> dict[str, object]:
         "sensor_count_used": 2,
         "lang": "en",
         "metadata": {
+            "run_id": "report-facts",
             "car_info": {"tire_spec": "205/55R16"},
             "sensor_model": "VS-1",
             "firmware_version": "1.2.3",
@@ -64,6 +65,7 @@ def _weak_spatial_order_summary(*, source: str, order_label: str) -> dict[str, o
         sensor_count_used=4,
         lang="en",
         metadata={
+            "run_id": f"weak-spatial-{source.replace('/', '-')}",
             "car_info": {"tire_spec": "205/55R16"},
             "sensor_model": "VS-1",
             "firmware_version": "1.2.3",

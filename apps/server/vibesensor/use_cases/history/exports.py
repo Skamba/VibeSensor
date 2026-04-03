@@ -131,6 +131,7 @@ class HistoryExportService:
         spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
             max_size=EXPORT_SPOOL_THRESHOLD,
         )
+        spool_built = False
         try:
             raw_csv_text = io.TextIOWrapper(spool, encoding="utf-8", newline="")
             writer = csv.DictWriter(
@@ -148,9 +149,10 @@ class HistoryExportService:
             raw_csv_text.flush()
             raw_csv_text.detach()
             spool.seek(0)
-        except BaseException:
-            spool.close()
-            raise
+            spool_built = True
+        finally:
+            if not spool_built:
+                spool.close()
         return spool, sample_count
 
 
