@@ -6,8 +6,9 @@ import asyncio
 from collections import OrderedDict
 from collections.abc import Callable
 
+from vibesensor.shared.types.report_cache import ReportPdfCacheKey
+
 REPORT_PDF_CACHE_MAX_ENTRIES = 16
-ReportPdfCacheKey = tuple[str, str, str | None, int, str, str]
 
 
 class HistoryReportPdfCache:

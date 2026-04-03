@@ -1,4 +1,4 @@
-"""Pure report-domain interpretation helpers for history/PDF workflows."""
+"""Pure report-domain projection helpers for history/PDF workflows."""
 
 from __future__ import annotations
 
@@ -17,6 +17,18 @@ from vibesensor.domain import (
     TireSpec,
     VibrationOrigin,
 )
+
+__all__ = [
+    "PrimaryReportFacts",
+    "collect_location_intensity",
+    "compute_location_hotspot_rows",
+    "filter_active_sensor_intensity",
+    "normalize_origin_location",
+    "resolve_primary_report_facts",
+    "resolve_report_origin",
+    "sensor_fallback_strength_db",
+    "tire_spec_text",
+]
 
 
 @dataclass(frozen=True, slots=True)

@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import sqlite3
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.history import (
@@ -39,10 +38,7 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingL
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
-
-if TYPE_CHECKING:
-    from vibesensor.use_cases.history.report_preparation import PreparedReportInput
+from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
 from vibesensor.shared.constants.dsp import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -51,6 +47,7 @@ from vibesensor.shared.constants.dsp import (
     WAVEFORM_DISPLAY_HZ,
 )
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
+from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService

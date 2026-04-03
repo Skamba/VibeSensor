@@ -24,13 +24,13 @@ from vibesensor.adapters.pdf.report_data import (
     VerdictPageData,
 )
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
-from vibesensor.shared.report_presentation import display_location
-from vibesensor.use_cases.history.report_display_facts import (
+from vibesensor.shared.boundaries.report_prepared_input import (
     PreparedAppendixADisplay,
     PreparedAppendixBSummaryDisplay,
+    PreparedReportFacts,
     PreparedVerdictDisplay,
 )
-from vibesensor.use_cases.history.report_facts import PreparedReportFacts
+from vibesensor.shared.report_presentation import display_location
 
 from .measurements import _evidence_chain_rows, _sensor_observation_matrix_rows
 from .narrative_summaries import (

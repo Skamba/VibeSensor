@@ -320,7 +320,7 @@ class TestReport:
         from vibesensor.adapters.pdf.mapping import prepare_report_input
         from vibesensor.adapters.pdf.report_data import build_report_from_renderer_payload
 
-        prepared = prepare_report_input({"run_id": "r1"})
+        prepared = prepare_report_input({"run_id": "r1", "findings": [], "top_causes": []})
         r = build_report_from_renderer_payload(
             prepared.renderer_payload,
             language=prepared.language,
@@ -333,7 +333,9 @@ class TestReport:
         from vibesensor.adapters.pdf.mapping import prepare_report_input
         from vibesensor.adapters.pdf.report_data import build_report_from_renderer_payload
 
-        prepared = prepare_report_input({"run_id": "r1", "duration_s": 45.0})
+        prepared = prepare_report_input(
+            {"run_id": "r1", "duration_s": 45.0, "findings": [], "top_causes": []}
+        )
         r = build_report_from_renderer_payload(
             prepared.renderer_payload,
             language=prepared.language,
@@ -534,7 +536,7 @@ class TestReportValidation:
         from vibesensor.adapters.pdf.mapping import prepare_report_input
         from vibesensor.adapters.pdf.report_data import build_report_from_renderer_payload
 
-        prepared = prepare_report_input({"run_id": ""})
+        prepared = prepare_report_input({"run_id": "", "findings": [], "top_causes": []})
         r = build_report_from_renderer_payload(
             prepared.renderer_payload,
             language=prepared.language,
