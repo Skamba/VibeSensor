@@ -23,8 +23,8 @@ from vibesensor.adapters.pdf.template_builder import build_template_data
 from vibesensor.domain import TestRun
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.report_presentation import display_location
 from vibesensor.shared.types.json_types import JsonValue
-from vibesensor.use_cases.history.report_display_facts.shared import _display_location
 from vibesensor.use_cases.history.report_facts import PreparedReportFacts
 from vibesensor.use_cases.history.report_preparation import (
     PreparedReportInput,
@@ -96,7 +96,7 @@ def _build_report_template_data(
         lang=lang,
     )
     observed = observed_signature(primary)
-    observed.strongest_location = _display_location(primary.primary_location, tr=tr)
+    observed.strongest_location = display_location(primary.primary_location, tr=tr)
     system_cards = build_system_cards(
         context,
         primary,

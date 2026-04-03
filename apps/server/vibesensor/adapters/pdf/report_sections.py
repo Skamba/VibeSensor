@@ -5,19 +5,15 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 
 from vibesensor.adapters.pdf.report_data import DataTrustItem, NextStep
-from vibesensor.domain import RecommendedAction
+from vibesensor.domain import RecommendedAction, SuitabilityCheck
 from vibesensor.report_i18n import (
     is_body_like_location,
     is_composite_location,
     is_i18n_ref,
     resolve_i18n,
 )
-from vibesensor.shared.types.history_analysis_contracts import (
-    RunSuitabilityCheck,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    SummaryWarningResponse as SummaryWarningPayload,
-)
+from vibesensor.shared.report_diagnostics import localized_diagnostics
+from vibesensor.shared.run_context_warning import RunContextWarning
 
 __all__ = [
     "build_data_trust",
@@ -193,45 +189,22 @@ def _resolve_optional_step_value(
 
 def build_data_trust(
     *,
-    suitability_checks: Sequence[RunSuitabilityCheck],
-    warnings: Sequence[SummaryWarningPayload],
+    suitability_checks: Sequence[SuitabilityCheck],
+    warnings: Sequence[RunContextWarning],
     lang: str,
     tr: Callable[..., str],
 ) -> list[DataTrustItem]:
     """Build the data-trust checklist from prepared report facts."""
-    data_trust: list[DataTrustItem] = []
-    for proj in suitability_checks:
-        data_trust.append(
-            DataTrustItem(
-                check=_resolve_check_text(proj.get("check_key"), lang=lang, tr=tr),
-                state=str(proj.get("state") or "warn"),
-                detail=_resolve_detail_text(proj.get("explanation"), lang=lang, tr=tr),
-            ),
+    return [
+        DataTrustItem(
+            check=diagnostic.label,
+            state=diagnostic.state,
+            detail=diagnostic.detail,
         )
-    for warning in warnings:
-        data_trust.append(
-            DataTrustItem(
-                check=_resolve_detail_text(warning.get("title"), lang=lang, tr=tr) or "",
-                state=str(warning.get("severity") or "warn"),
-                detail=_resolve_detail_text(warning.get("detail"), lang=lang, tr=tr),
-            ),
+        for diagnostic in localized_diagnostics(
+            suitability_checks=suitability_checks,
+            warnings=warnings,
+            lang=lang,
+            tr=tr,
         )
-    return data_trust
-
-
-def _resolve_check_text(value: object, *, lang: str, tr: Callable[..., str]) -> str:
-    """Resolve the checklist label text."""
-    if is_i18n_ref(value):
-        return resolve_i18n(lang, value, tr=tr)
-    if isinstance(value, str) and value.startswith("SUITABILITY_CHECK_"):
-        return str(tr(value))
-    return str(value or "")
-
-
-def _resolve_detail_text(value: object, *, lang: str, tr: Callable[..., str]) -> str | None:
-    """Resolve the checklist detail text."""
-    if is_i18n_ref(value) or isinstance(value, list):
-        resolved = resolve_i18n(lang, value, tr=tr).strip()
-    else:
-        resolved = str(value or "").strip()
-    return resolved or None
+    ]
