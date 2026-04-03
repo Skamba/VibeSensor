@@ -88,6 +88,19 @@ class RequestLoggingMiddleware:
                 ),
             )
             raise
+        except Exception:
+            LOGGER.exception(
+                "http_request_failed",
+                extra=log_extra(
+                    event="http_request_failed",
+                    failure_kind="programmer",
+                    method=method,
+                    path=path,
+                    status_code=status_code,
+                    duration_ms=round((perf_counter() - started_at) * 1000.0, 3),
+                ),
+            )
+            raise
         finally:
             if request_completed:
                 LOGGER.info(
