@@ -6,16 +6,12 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf.report_data import PatternEvidence
+from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import (
     format_timestamp_in_recorded_timezone,
     format_utc_timestamp,
     utc_now_iso,
-)
-from vibesensor.use_cases.history.report_preparation import (
-    PreparedReportInput,
-    ValidatedPreparedReportInput,
-    validate_prepared_report_input,
 )
 
 if TYPE_CHECKING:
@@ -87,19 +83,18 @@ def observed_signature(primary: PrimaryCandidateContext) -> PatternEvidence:
 
 
 def prepare_report_mapping_context(
-    prepared: PreparedReportInput | ValidatedPreparedReportInput,
+    prepared: PreparedReportInput,
 ) -> ReportMappingContext:
-    """Build the adapter-owned report mapping context from the validated handoff."""
-    validated = validate_prepared_report_input(prepared)
-    report_facts = validated.report_facts
-    report_date = validated.renderer_payload.report_date or utc_now_iso()
+    """Build the adapter-owned report mapping context from the canonical handoff."""
+    report_facts = prepared.report_facts
+    report_date = prepared.renderer_payload.report_date or utc_now_iso()
     date_str = format_timestamp_in_recorded_timezone(
         report_date,
-        validated.renderer_payload.recorded_utc_offset_seconds,
+        prepared.renderer_payload.recorded_utc_offset_seconds,
     ) or str(report_date)
     return ReportMappingContext(
-        car_name=validated.renderer_payload.car_name,
-        car_type=validated.renderer_payload.car_type,
+        car_name=prepared.renderer_payload.car_name,
+        car_type=prepared.renderer_payload.car_type,
         date_str=date_str,
         origin=report_facts.origin,
         origin_location=report_facts.origin_location,
@@ -112,5 +107,5 @@ def prepare_report_mapping_context(
         sample_count=report_facts.sample_count,
         sensor_model=report_facts.sensor_model,
         firmware_version=report_facts.firmware_version,
-        domain_aggregate=validated.domain_test_run,
+        domain_aggregate=prepared.domain_test_run,
     )

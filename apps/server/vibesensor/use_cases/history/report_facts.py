@@ -3,19 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
 
 from vibesensor.domain import (
-    LocationHotspotRow,
-    LocationIntensitySummary,
-    RecommendedAction,
-    SuitabilityCheck,
     TestRun,
-    VibrationOrigin,
 )
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.report_interpretation import (
-    PrimaryReportFacts,
+from vibesensor.shared.boundaries.report_prepared_input import PreparedReportFacts
+from vibesensor.shared.boundaries.report_projection import (
     compute_location_hotspot_rows,
     filter_active_sensor_intensity,
     normalize_origin_location,
@@ -24,57 +18,17 @@ from vibesensor.shared.boundaries.report_interpretation import (
     tire_spec_text,
 )
 from vibesensor.shared.boundaries.report_summary_codec import (
-    ReportTimelineInterval,
     report_summary_from_mapping,
 )
 from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings
-from vibesensor.shared.run_context_warning import RunContextWarning, RunContextWarningsInput
-from vibesensor.use_cases.history.report_display_facts import (
-    PreparedReportDisplayFacts,
-    prepare_report_display_facts,
-)
-from vibesensor.use_cases.history.report_fact_coverage import (
-    ReportCoverageSummary,
-    build_coverage_summary,
-)
+from vibesensor.shared.run_context_warning import RunContextWarningsInput
+from vibesensor.use_cases.history.report_display_mapping import prepare_report_display_facts
+from vibesensor.use_cases.history.report_fact_coverage import build_coverage_summary
 from vibesensor.use_cases.history.report_fact_decisions import (
-    ActionStatusKey,
-    LocationConfidenceKey,
     resolve_action_status_key,
     resolve_alternative_source,
     resolve_location_confidence_key,
 )
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedReportFacts:
-    """History-prepared semantic report facts consumed by the PDF adapter."""
-
-    origin: VibrationOrigin | None
-    origin_location: str
-    sensor_locations_active: tuple[str, ...]
-    duration_text: str | None
-    start_time_utc: str | None
-    end_time_utc: str | None
-    sample_rate_hz: str | None
-    tire_spec_text: str | None
-    sample_count: int
-    sensor_model: str | None
-    firmware_version: str | None
-    active_sensor_intensity: tuple[LocationIntensitySummary, ...]
-    location_hotspot_rows: tuple[LocationHotspotRow, ...]
-    primary_candidate_facts: PrimaryReportFacts
-    recommended_actions: tuple[RecommendedAction, ...]
-    suitability_checks: tuple[SuitabilityCheck, ...]
-    warnings: tuple[RunContextWarning, ...]
-    coverage_summary: ReportCoverageSummary
-    action_status_key: ActionStatusKey
-    location_confidence_key: LocationConfidenceKey
-    alternative_source: str | None
-    alternative_source_visible: bool
-    confidence_gap_to_alternative: float | None
-    timeline_intervals: tuple[ReportTimelineInterval, ...]
-    display: PreparedReportDisplayFacts
 
 
 def prepare_report_facts(

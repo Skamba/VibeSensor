@@ -23,14 +23,12 @@ from vibesensor.adapters.pdf.template_builder import build_template_data
 from vibesensor.domain import TestRun
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.report_prepared_input import (
+    PreparedReportFacts,
+    PreparedReportInput,
+)
 from vibesensor.shared.report_presentation import display_location
 from vibesensor.shared.types.json_types import JsonValue
-from vibesensor.use_cases.history.report_facts import PreparedReportFacts
-from vibesensor.use_cases.history.report_preparation import (
-    PreparedReportInput,
-    ValidatedPreparedReportInput,
-    validate_prepared_report_input,
-)
 
 from .measurements import _measurement_rows
 from .narrative_summaries import _proof_summary_text
@@ -49,17 +47,11 @@ __all__ = ["map_summary"]
 
 
 def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
-    """Map a prepared report input into the final report template data model.
-
-    Mapping begins by validating the prepared handoff once so the rest of the
-    PDF adapter consumes a mapping-ready shape with domain reconstruction and
-    report facts already guaranteed.
-    """
-    validated = validate_prepared_report_input(prepared)
-    context = prepare_report_mapping_context(validated)
-    lang = str(normalize_lang(validated.language))
+    """Map a canonical prepared report input into final report template data."""
+    context = prepare_report_mapping_context(prepared)
+    lang = str(normalize_lang(prepared.language))
     report = build_report_from_renderer_payload(
-        validated.renderer_payload,
+        prepared.renderer_payload,
         language=lang,
     )
 
@@ -67,18 +59,18 @@ def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
         return str(_tr(lang, key, **kw))
 
     return _build_report_template_data(
-        validated,
+        prepared,
         context=context,
         report=report,
         lang=lang,
         tr=tr,
-        test_run=validated.domain_test_run,
-        report_facts=validated.report_facts,
+        test_run=prepared.domain_test_run,
+        report_facts=prepared.report_facts,
     )
 
 
 def _build_report_template_data(
-    prepared: ValidatedPreparedReportInput,
+    prepared: PreparedReportInput,
     *,
     context: ReportMappingContext,
     report: Report,

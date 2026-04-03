@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun, VibrationSource
 from vibesensor.report_i18n import human_location, human_source, location_candidates
-from vibesensor.shared.boundaries.report_interpretation import PrimaryReportFacts
+from vibesensor.shared.boundaries.report_projection import PrimaryReportFacts
 
 __all__ = [
     "action_status_text",

@@ -9,10 +9,8 @@ from vibesensor.adapters.pdf._candidate_resolver import (
 from vibesensor.adapters.pdf._card_builder import build_system_cards, humanize_signatures
 from vibesensor.adapters.pdf.report_context import ReportMappingContext
 from vibesensor.adapters.pdf.report_data import Report
-from vibesensor.use_cases.history.report_preparation import (
-    PreparedReportInput,
-    prepare_report_input,
-)
+from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
+from vibesensor.use_cases.history.report_preparation import prepare_report_input
 
 from .pipeline import _build_report_template_data, map_summary
 from .sections import (
