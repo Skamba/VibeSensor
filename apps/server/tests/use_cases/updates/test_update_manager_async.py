@@ -437,7 +437,7 @@ class TestUpdateManagerAsync:
                 "vibesensor.use_cases.updates.job_lifecycle.collect_runtime_details",
                 side_effect=TypeError("runtime bug"),
             ),
-            caplog.at_level("WARNING"),
+            caplog.at_level("ERROR"),
         ):
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
@@ -446,9 +446,9 @@ class TestUpdateManagerAsync:
 
         assert manager.status.finished_at is not None
         assert manager.status.state == UpdateState.failed
+        assert any(rec.message == "update: cleanup error" for rec in caplog.records)
         assert any(
-            rec.message == "Update cleanup interrupted during cancellation"
-            for rec in caplog.records
+            issue.message == "Cleanup failed: runtime bug" for issue in manager.status.issues
         )
 
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:

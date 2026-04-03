@@ -100,8 +100,10 @@ class UpdateWifiOrchestrator:
         self._tracker.log("Restoring hotspot...")
         restored = await self.restore_hotspot()
         if not restored:
-            self._tracker.status.state = UpdateState.failed
-            self._tracker.persist()
+            self._tracker.fail(
+                UpdatePhase.restoring_hotspot,
+                "Failed to restore hotspot after update",
+            )
             return False
         self._tracker.mark_success(message)
         return True
@@ -113,7 +115,8 @@ class UpdateWifiOrchestrator:
             return
         status = self._tracker.status
         if status.state == UpdateState.running or status.phase in _HOTSPOT_RESTORE_PHASES:
-            self._tracker.transition(UpdatePhase.restoring_hotspot)
+            if status.state == UpdateState.running:
+                self._tracker.transition(UpdatePhase.restoring_hotspot)
             self._tracker.log("Restoring hotspot...")
             restored = await asyncio.shield(self.restore_hotspot())
             if not restored:

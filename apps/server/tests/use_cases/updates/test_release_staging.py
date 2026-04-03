@@ -6,13 +6,27 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
+
+
+def _seed_release_ready_state(tracker: UpdateStatusTracker) -> None:
+    tracker.start_job(
+        UpdateRequest(
+            transport=UpdateTransport.usb_internet,
+            ssid=None,
+            password="",
+        )
+    )
+    tracker.transition(UpdatePhase.connecting_usb_internet)
+    tracker.transition(UpdatePhase.checking)
 
 
 @pytest.mark.asyncio
 async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -> None:
     tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+    _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(tracker=tracker, rollback_dir=tmp_path / "rollback")
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="")
     staged_path: Path | None = None
@@ -46,6 +60,7 @@ async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -
 @pytest.mark.asyncio
 async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> None:
     tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+    _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(tracker=tracker, rollback_dir=tmp_path / "rollback")
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="bad")
 

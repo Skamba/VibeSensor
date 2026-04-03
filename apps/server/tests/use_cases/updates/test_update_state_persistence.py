@@ -22,7 +22,11 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import CommandRunner
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.status import (
+    UpdatePhaseTransitionError,
+    UpdateStateStore,
+    UpdateStatusTracker,
+)
 
 # ---------------------------------------------------------------------------
 # Fake runner (minimal; only records calls)
@@ -218,16 +222,27 @@ class TestUpdateStateStore:
         store = UpdateStateStore(path=path)
         assert store.load() is None
 
-    def test_load_normalizes_invalid_state_to_idle(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize(
+        "file_content",
+        [
+            pytest.param('{"state": "bogus", "phase": "idle", "transport": "wifi"}', id="state"),
+            pytest.param('{"state": "idle", "phase": "bogus", "transport": "wifi"}', id="phase"),
+            pytest.param(
+                '{"state": "idle", "phase": "idle", "transport": "bogus"}',
+                id="transport",
+            ),
+        ],
+    )
+    def test_load_rejects_unsupported_enum_values(
+        self,
+        tmp_path: Path,
+        file_content: str,
+    ) -> None:
         path = tmp_path / "state.json"
-        path.write_text('{"state": "bogus", "phase": "idle"}', encoding="utf-8")
+        path.write_text(file_content, encoding="utf-8")
         store = UpdateStateStore(path=path)
 
-        loaded = store.load()
-
-        assert loaded is not None
-        assert loaded.state == UpdateState.idle
-        assert loaded.phase == UpdatePhase.idle
+        assert store.load() is None
 
     def test_save_creates_parent_dirs(self, tmp_path: Path) -> None:
         path = tmp_path / "a" / "b" / "state.json"
@@ -375,6 +390,9 @@ class TestPersistenceDuringLifecycle:
                 password="",
             )
         )
+        tracker.transition(UpdatePhase.stopping_hotspot)
+        tracker.transition(UpdatePhase.connecting_wifi)
+        tracker.transition(UpdatePhase.checking)
         started_phase_at = tracker.status.phase_started_at
         started_updated_at = tracker.status.updated_at
         assert started_phase_at is not None
@@ -388,6 +406,23 @@ class TestPersistenceDuringLifecycle:
         assert tracker.status.updated_at is not None
         assert tracker.status.phase_started_at > started_phase_at
         assert tracker.status.updated_at >= tracker.status.phase_started_at
+
+    def test_invalid_phase_transition_raises(self, tmp_path: Path) -> None:
+        tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+
+        tracker.start_job(
+            UpdateRequest(
+                transport=UpdateTransport.wifi,
+                ssid="TestNet",
+                password="",
+            )
+        )
+
+        with pytest.raises(
+            UpdatePhaseTransitionError,
+            match="Invalid update phase transition: validating -> downloading",
+        ):
+            tracker.transition(UpdatePhase.downloading)
 
     def test_tracker_updates_in_memory_and_persists_on_flush(
         self,
