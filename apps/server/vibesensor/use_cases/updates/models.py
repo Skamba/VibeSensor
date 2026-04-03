@@ -24,28 +24,6 @@ class UpdateValidationConfig:
     min_free_disk_bytes: int
 
 
-def _coerce_update_state(value: object) -> UpdateState:
-    """Best-effort decode of persisted state values, defaulting to idle."""
-
-    if not isinstance(value, str):
-        return UpdateState.idle
-    try:
-        return UpdateState(value)
-    except ValueError:
-        return UpdateState.idle
-
-
-def _coerce_update_phase(value: object) -> UpdatePhase:
-    """Best-effort decode of persisted phase values, defaulting to idle."""
-
-    if not isinstance(value, str):
-        return UpdatePhase.idle
-    try:
-        return UpdatePhase(value)
-    except ValueError:
-        return UpdatePhase.idle
-
-
 class UpdateState(enum.StrEnum):
     """Top-level state of an OTA software update job."""
 
@@ -177,15 +155,37 @@ class UpdateJobStatusPayload(TypedDict):
     runtime: UpdateRuntimeDetailsPayload
 
 
-def _coerce_update_transport(value: object) -> UpdateTransport:
-    """Best-effort decode of persisted transport values, defaulting to Wi-Fi."""
+def _require_update_state(value: object) -> UpdateState:
+    """Decode a persisted update state or raise for unsupported values."""
 
     if not isinstance(value, str):
-        return UpdateTransport.wifi
+        raise ValueError(f"update state must be a string, got {type(value).__name__}")
+    try:
+        return UpdateState(value)
+    except ValueError as exc:
+        raise ValueError(f"Unsupported update state: {value!r}") from exc
+
+
+def _require_update_phase(value: object) -> UpdatePhase:
+    """Decode a persisted update phase or raise for unsupported values."""
+
+    if not isinstance(value, str):
+        raise ValueError(f"update phase must be a string, got {type(value).__name__}")
+    try:
+        return UpdatePhase(value)
+    except ValueError as exc:
+        raise ValueError(f"Unsupported update phase: {value!r}") from exc
+
+
+def _require_update_transport(value: object) -> UpdateTransport:
+    """Decode a persisted transport or raise for unsupported values."""
+
+    if not isinstance(value, str):
+        raise ValueError(f"update transport must be a string, got {type(value).__name__}")
     try:
         return UpdateTransport(value)
-    except ValueError:
-        return UpdateTransport.wifi
+    except ValueError as exc:
+        raise ValueError(f"Unsupported update transport: {value!r}") from exc
 
 
 def _coerce_bool(value: object) -> bool:
@@ -270,9 +270,11 @@ class UpdateJobStatus:
         ssid_raw = data.get("ssid")
         uplink_interface_raw = data.get("uplink_interface")
         return cls(
-            state=_coerce_update_state(data.get("state", "idle")),
-            phase=_coerce_update_phase(data.get("phase", "idle")),
-            transport=_coerce_update_transport(data.get("transport", UpdateTransport.wifi.value)),
+            state=_require_update_state(data.get("state", UpdateState.idle.value)),
+            phase=_require_update_phase(data.get("phase", UpdatePhase.idle.value)),
+            transport=_require_update_transport(
+                data.get("transport", UpdateTransport.wifi.value),
+            ),
             started_at=as_float_or_none(data.get("started_at")),
             finished_at=as_float_or_none(data.get("finished_at")),
             last_success_at=as_float_or_none(data.get("last_success_at")),

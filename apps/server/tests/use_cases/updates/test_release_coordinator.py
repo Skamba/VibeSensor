@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.release_coordinator import UpdateReleaseCoordinator
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
@@ -20,12 +21,25 @@ class _TransportSession:
         self.complete_success = AsyncMock(return_value=True)
 
 
+def _seed_release_ready_state(tracker: UpdateStatusTracker) -> None:
+    tracker.start_job(
+        UpdateRequest(
+            transport=UpdateTransport.usb_internet,
+            ssid=None,
+            password="",
+        )
+    )
+    tracker.transition(UpdatePhase.connecting_usb_internet)
+    tracker.transition(UpdatePhase.checking)
+
+
 def _build_coordinator(
     tmp_path: Path,
     *,
     cancel_requested=lambda: False,
 ) -> tuple[UpdateReleaseCoordinator, MagicMock, MagicMock, MagicMock]:
     tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+    _seed_release_ready_state(tracker)
     commands = MagicMock()
     commands.run = AsyncMock(return_value=(0, "", ""))
     installer = MagicMock()

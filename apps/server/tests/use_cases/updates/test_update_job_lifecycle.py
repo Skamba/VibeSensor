@@ -124,16 +124,16 @@ async def test_cleanup_skips_wifi_cleanup_for_usb_transport(tmp_path) -> None:
     assert manager.status.finished_at is not None
 
 
-def test_handle_cancelled_cleanup_error_logs_warning(tmp_path, caplog) -> None:
+def test_handle_cleanup_error_marks_failed_and_logs_exception(tmp_path, caplog) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
+    manager._tracker.start_job(_wifi_request("TestNet", ""))
 
-    with caplog.at_level("WARNING"):
+    with caplog.at_level("ERROR"):
         try:
             raise RuntimeError("cleanup bug")
         except RuntimeError as exc:
-            manager._lifecycle.handle_cancelled_cleanup_error(exc)
+            manager._lifecycle.handle_cleanup_error(exc)
 
-    assert any(
-        record.message == "Update cleanup interrupted during cancellation"
-        for record in caplog.records
-    )
+    assert manager.status.state == UpdateState.failed
+    assert any(issue.message == "Cleanup failed: cleanup bug" for issue in manager.status.issues)
+    assert any(record.message == "update: cleanup error" for record in caplog.records)
