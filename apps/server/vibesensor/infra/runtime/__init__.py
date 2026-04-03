@@ -11,7 +11,10 @@ Submodules
 - ``health_snapshot``: runtime health snapshot assembly for HTTP/read-side consumers
 - ``health_state``: mutable startup and background-task health state
 - ``registry_updates``: DATA-message dedup/reset bookkeeping
-- ``processing_loop``: ProcessingLoop (async tick loop + failure tracking)
+- ``processing_failures``: typed per-tick runtime failure categories
+- ``processing_failure_policy``: retry/backoff/escalation policy for processing failures
+- ``processing_state``: observable processing-loop health and timing state
+- ``processing_loop``: ProcessingLoop (async tick scheduling over execution + failure policy)
 - ``task_supervisor``: TaskSupervisor (managed restart policy + backoff)
 - ``udp_transport_lifecycle``: UdpTransportLifecycle (UDP startup + cleanup seam)
 - ``ws_broadcast``: WsBroadcastService (payload assembly + cache)
@@ -20,7 +23,7 @@ Submodules
 """
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
+from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 
 __all__ = [
     "ProcessingLoopState",
