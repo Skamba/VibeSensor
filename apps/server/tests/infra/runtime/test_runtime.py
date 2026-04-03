@@ -122,10 +122,8 @@ def _make_runtime(**overrides: Any):
     import vibesensor.infra.runtime as runtime_module
     from vibesensor.app.runtime_state import RuntimeState
     from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
-    from vibesensor.infra.runtime.processing_loop import (
-        ProcessingLoop,
-        ProcessingLoopState,
-    )
+    from vibesensor.infra.runtime.processing_loop import ProcessingLoop
+    from vibesensor.infra.runtime.processing_state import ProcessingLoopState
     from vibesensor.infra.runtime.ws_broadcast import (
         WsBroadcastService,
     )

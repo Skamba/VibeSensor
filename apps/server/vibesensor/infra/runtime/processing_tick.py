@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Protocol
 from vibesensor.shared.exceptions import ProcessingError
 from vibesensor.shared.ports import ClockSyncBroadcaster
 
+from .processing_failures import ProcessingFailureCategory, ProcessingTickFailure
+
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
@@ -19,15 +21,6 @@ _OPERATIONAL_PROCESSING_EXCEPTIONS = (OSError, ProcessingError)
 
 STALE_DATA_AGE_S = 2.0
 """Clients without fresh UDP data within this window are excluded from spectrum output."""
-
-
-class ProcessingLoopError(ProcessingError):
-    """Categorized processing-loop failure with a stable health-reporting key."""
-
-    def __init__(self, category: str, cause: Exception) -> None:
-        super().__init__(str(cause))
-        self.category = category
-        self.cause = cause
 
 
 class ProcessingTickState(Protocol):
@@ -68,7 +61,7 @@ class ProcessingTickRunner:
         if sync_clock:
             await self._sync_clock()
         compute_client_ids, sample_rates = self._collect_compute_clients()
-        await self._compute_and_publish(
+        await self._compute_and_evict_clients(
             compute_client_ids=compute_client_ids,
             sample_rates=sample_rates,
         )
@@ -79,7 +72,7 @@ class ProcessingTickRunner:
         try:
             await asyncio.to_thread(self._control_plane.broadcast_sync_clock)
         except OSError as exc:
-            raise ProcessingLoopError("sync_clock", exc) from exc
+            raise ProcessingTickFailure(ProcessingFailureCategory.SYNC_CLOCK, exc) from exc
 
     def _collect_compute_clients(self) -> tuple[list[str], dict[str, int]]:
         self._registry.evict_stale()
@@ -131,13 +124,13 @@ class ProcessingTickRunner:
             self._fft_n,
         )
 
-    async def _compute_and_publish(
+    async def _compute_and_evict_clients(
         self,
         *,
         compute_client_ids: list[str],
         sample_rates: dict[str, int],
     ) -> None:
-        compute_error: Exception | None = None
+        compute_failure: ProcessingTickFailure | None = None
         try:
             await asyncio.to_thread(
                 self._processor.compute_all,
@@ -145,19 +138,22 @@ class ProcessingTickRunner:
                 sample_rates_hz=sample_rates,
             )
         except _OPERATIONAL_PROCESSING_EXCEPTIONS as exc:
-            compute_error = exc
+            compute_failure = ProcessingTickFailure(
+                ProcessingFailureCategory.COMPUTE_ALL,
+                exc,
+            )
 
         try:
             self._processor.evict_clients(set(self._registry.active_client_ids()))
         except _OPERATIONAL_PROCESSING_EXCEPTIONS as exc:
-            if compute_error is not None:
+            if compute_failure is not None:
                 LOGGER.warning(
                     "Processing loop cleanup also failed after compute_all failure; "
                     "reporting compute_all as the primary error.",
                     exc_info=True,
                 )
-                raise ProcessingLoopError("compute_all", compute_error) from compute_error
-            raise ProcessingLoopError("publish_metrics", exc) from exc
+                raise compute_failure from compute_failure.cause
+            raise ProcessingTickFailure(ProcessingFailureCategory.EVICT_CLIENTS, exc) from exc
 
-        if compute_error is not None:
-            raise ProcessingLoopError("compute_all", compute_error) from compute_error
+        if compute_failure is not None:
+            raise compute_failure from compute_failure.cause
