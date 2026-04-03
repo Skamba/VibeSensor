@@ -234,6 +234,7 @@ class TestReportDataBuilderRecordedTimezone:
         summary = _make_summary(
             "2025-06-01T14:30:00Z",
             metadata={
+                "run_id": "run-123",
                 "active_car_snapshot": {"name": "TestCar"},
                 "recorded_utc_offset_seconds": 7200,
             },

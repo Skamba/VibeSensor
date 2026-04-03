@@ -296,7 +296,10 @@ class TestReport:
                 {"finding_id": "F001", "suspected_source": "bearing"},
                 {"finding_id": "F002", "suspected_source": "tire"},
             ],
-            "metadata": {"active_car_snapshot": {"name": "BMW 3", "type": "sedan"}},
+            "metadata": {
+                "run_id": "run-123",
+                "active_car_snapshot": {"name": "BMW 3", "type": "sedan"},
+            },
         }
         prepared = prepare_report_input(summary)
         r = build_report_from_renderer_payload(

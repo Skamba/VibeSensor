@@ -459,6 +459,7 @@ class TestPdfReportValidation:
         summary["sensor_model"] = long_sensor
         # Domain reconstruction reads sensor_model from metadata sub-dict
         if isinstance(summary.get("metadata"), dict):
+            summary["metadata"]["run_id"] = str(summary["run_id"])
             summary["metadata"]["sensor_model"] = long_sensor
         pdf_text = _extract_pdf_text(_build_pdf_from_summary(summary))
         assert "tailtoken-runid-12345" in pdf_text
