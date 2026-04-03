@@ -58,15 +58,14 @@ def test_handle_unexpected_marks_failed_and_logs_exception(tmp_path, caplog) -> 
 
 @pytest.mark.asyncio
 async def test_cleanup_records_hotspot_restore_failure(tmp_path) -> None:
-    manager, runner, _repo = setup_update_env(tmp_path)
-    manager.status.state = UpdateState.running
-    manager.status.phase = UpdatePhase.installing
-    runner.default_response = (1, "", "nmcli failed")
-
     with (
         patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
         patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_DELAY_S", 0),
     ):
+        manager, runner, _repo = setup_update_env(tmp_path)
+        manager.status.state = UpdateState.running
+        manager.status.phase = UpdatePhase.installing
+        runner.default_response = (1, "", "nmcli failed")
         await manager._lifecycle.cleanup_after_update()
 
     assert any(

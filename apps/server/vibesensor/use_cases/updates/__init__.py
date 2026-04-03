@@ -8,12 +8,19 @@ Module topology
 - **Facade**: ``manager.py`` — public ``UpdateManager`` API for routes and
   runtime lifecycle. Delegates update sequencing to ``workflow.py``.
 - **Workflow**: ``workflow.py`` — ``UpdateWorkflow`` runs the full update
-  sequence over validation, transport preparation, and release application.
+  sequence over validation, transport preparation, and release coordination.
 - **Transport sessions**: ``transport_sessions.py`` — canonical Wi-Fi and USB
   transport-session boundary used by workflow, cleanup, and startup recovery.
-- **Release application**: ``release_application.py`` — release discovery,
-  download, install, firmware refresh, and restart scheduling after transport
-  preparation succeeds.
+- **Release resolution**: ``release_resolution.py`` — decide whether a newer
+  server release should be installed and carry the canonical resolution result.
+- **Release staging**: ``release_staging.py`` — download and verify the wheel
+  artifact in a temporary staging area.
+- **Release deployment**: ``release_deployment.py`` — refresh firmware cache,
+  capture rollback state, and install the staged wheel.
+- **Restart scheduling**: ``restart_scheduler.py`` — schedule the backend
+  restart after a successful update.
+- **Release coordination**: ``release_coordinator.py`` — stitch resolution,
+  staging, deployment, transport success, and restart follow-up together.
 - **Recovery**: ``recovery.py`` — ``InterruptedUpdateRecovery`` collaborator
   for interrupted-job detection, cleanup, and persistence on startup.
 - **Validation**: ``validation.py`` — runtime prerequisite checks for tools,
