@@ -49,6 +49,19 @@ def _wifi_request(ssid: str = "TestNet", password: str = "") -> UpdateRequest:
     )
 
 
+def _seed_checked_phase(tracker: UpdateStatusTracker) -> None:
+    tracker.start_job(_wifi_request())
+    tracker.transition(UpdatePhase.stopping_hotspot)
+    tracker.transition(UpdatePhase.connecting_wifi)
+    tracker.transition(UpdatePhase.checking)
+
+
+def _seed_installing_phase(tracker: UpdateStatusTracker) -> None:
+    _seed_checked_phase(tracker)
+    tracker.transition(UpdatePhase.downloading)
+    tracker.transition(UpdatePhase.installing)
+
+
 @pytest.mark.asyncio
 async def test_recover_interrupted_update_cleans_uplink_and_restores_hotspot(
     tmp_path: Path,
@@ -69,6 +82,7 @@ async def test_recover_interrupted_update_cleans_uplink_and_restores_hotspot(
 @pytest.mark.asyncio
 async def test_prepare_stops_hotspot_and_connects_uplink(tmp_path: Path) -> None:
     orchestrator, runner, tracker = _build_orchestrator(tmp_path)
+    tracker.start_job(_wifi_request(password="pass123"))
 
     assert await orchestrator.prepare(_wifi_request(password="pass123")) is True
 
@@ -105,8 +119,7 @@ async def test_cleanup_restore_hotspot_records_issue_on_failure(tmp_path: Path) 
         restore_retries=1,
         restore_delay_s=0,
     )
-    tracker.start_job(_wifi_request())
-    tracker.transition(UpdatePhase.installing)
+    _seed_installing_phase(tracker)
     runner.set_response("connection up VibeSensor-AP", 10, "", "failed")
 
     await orchestrator.cleanup_after_update()
@@ -141,7 +154,7 @@ async def test_cleanup_after_update_collects_cleanup_diagnostics(tmp_path: Path)
 @pytest.mark.asyncio
 async def test_complete_success_restores_hotspot_and_marks_success(tmp_path: Path) -> None:
     orchestrator, _runner, tracker = _build_orchestrator(tmp_path)
-    tracker.start_job(_wifi_request())
+    _seed_checked_phase(tracker)
 
     assert await orchestrator.complete_success("Update completed successfully") is True
 
@@ -157,19 +170,21 @@ async def test_complete_success_marks_failed_when_restore_fails(tmp_path: Path) 
         restore_retries=1,
         restore_delay_s=0,
     )
-    tracker.start_job(_wifi_request())
+    _seed_checked_phase(tracker)
     runner.set_response("connection up VibeSensor-AP", 10, "", "failed")
 
     assert await orchestrator.complete_success("Update completed successfully") is False
 
     assert tracker.status.state == UpdateState.failed
+    assert any(
+        issue.message == "Failed to restore hotspot after update" for issue in tracker.status.issues
+    )
 
 
 @pytest.mark.asyncio
 async def test_cleanup_restore_orchestration_restores_hotspot_when_needed(tmp_path: Path) -> None:
     orchestrator, _runner, tracker = _build_orchestrator(tmp_path)
-    tracker.start_job(_wifi_request())
-    tracker.transition(UpdatePhase.installing)
+    _seed_installing_phase(tracker)
 
     await orchestrator.cleanup_after_update()
 
@@ -182,10 +197,23 @@ async def test_cleanup_restore_orchestration_skips_restore_when_no_longer_needed
     tmp_path: Path,
 ) -> None:
     orchestrator, runner, tracker = _build_orchestrator(tmp_path)
-    tracker.start_job(_wifi_request())
+    _seed_checked_phase(tracker)
     tracker.mark_success("done")
 
     await orchestrator.cleanup_after_update()
 
     commands = [" ".join(call[0]) for call in runner.calls]
     assert not any("connection up VibeSensor-AP" in command for command in commands)
+
+
+@pytest.mark.asyncio
+async def test_cleanup_restore_preserves_failure_phase(tmp_path: Path) -> None:
+    orchestrator, _runner, tracker = _build_orchestrator(tmp_path)
+    _seed_installing_phase(tracker)
+    tracker.fail(UpdatePhase.installing, "install failed")
+
+    await orchestrator.cleanup_after_update()
+
+    assert tracker.status.state == UpdateState.failed
+    assert tracker.status.phase == UpdatePhase.installing
+    assert any("Restoring hotspot..." in line for line in tracker.status.log_tail)

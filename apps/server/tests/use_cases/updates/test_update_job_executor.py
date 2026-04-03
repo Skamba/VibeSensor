@@ -71,9 +71,7 @@ async def test_run_timeout_calls_timeout_handler_and_cleanup() -> None:
         on_cancelled=lambda: events.append("cancelled"),
         on_unexpected=lambda exc: events.append(f"unexpected:{type(exc).__name__}"),
         cleanup=cleanup,
-        on_cancelled_cleanup_error=lambda exc: events.append(
-            f"cancelled-cleanup-error:{type(exc).__name__}"
-        ),
+        on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
     )
 
     assert events == ["timeout", "cleanup"]
@@ -99,12 +97,10 @@ async def test_run_surfaces_cancelled_cleanup_error() -> None:
             on_cancelled=lambda: events.append("cancelled"),
             on_unexpected=lambda exc: events.append(f"unexpected:{type(exc).__name__}"),
             cleanup=cleanup,
-            on_cancelled_cleanup_error=lambda exc: events.append(
-                f"cancelled-cleanup-error:{type(exc).__name__}"
-            ),
+            on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
         )
 
-    assert events == ["cancelled", "cleanup", "cancelled-cleanup-error:RuntimeError"]
+    assert events == ["cancelled", "cleanup", "cleanup-error:RuntimeError"]
 
 
 @pytest.mark.asyncio
@@ -126,9 +122,33 @@ async def test_run_reraises_unexpected_error_after_reporting_and_cleanup() -> No
             on_cancelled=lambda: events.append("cancelled"),
             on_unexpected=lambda exc: events.append(f"unexpected:{type(exc).__name__}"),
             cleanup=cleanup,
-            on_cancelled_cleanup_error=lambda exc: events.append(
-                f"cancelled-cleanup-error:{type(exc).__name__}"
-            ),
+            on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
         )
 
     assert events == ["unexpected:RuntimeError", "cleanup"]
+
+
+@pytest.mark.asyncio
+async def test_run_preserves_workflow_error_when_cleanup_also_fails() -> None:
+    executor = UpdateJobExecutor()
+    events: list[str] = []
+
+    async def broken_workflow() -> None:
+        raise RuntimeError("workflow bug")
+
+    async def cleanup() -> None:
+        events.append("cleanup")
+        raise RuntimeError("cleanup bug")
+
+    with pytest.raises(RuntimeError, match="workflow bug"):
+        await executor.run(
+            workflow_factory=lambda: broken_workflow(),
+            timeout_s=1.0,
+            on_timeout=lambda: events.append("timeout"),
+            on_cancelled=lambda: events.append("cancelled"),
+            on_unexpected=lambda exc: events.append(f"unexpected:{type(exc).__name__}"),
+            cleanup=cleanup,
+            on_cleanup_error=lambda exc: events.append(f"cleanup-error:{type(exc).__name__}"),
+        )
+
+    assert events == ["unexpected:RuntimeError", "cleanup", "cleanup-error:RuntimeError"]

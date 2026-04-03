@@ -41,7 +41,7 @@ Module topology
   ``rollback_snapshot.py`` (rollback metadata + stored wheels),
   ``runner.py`` (process execution and command helpers), and
   ``venv_paths.py`` (reinstall venv discovery).
-- **State**: ``status.py`` (progress tracking, persistent state store,
-  and runtime detail collection), ``models.py`` (data models and
+- **State**: ``status/`` (transition policy, progress tracking, persistent
+  state store, and runtime detail collection), ``models.py`` (data models and
   ``validate_update_request()`` request-shape validation).
 """
