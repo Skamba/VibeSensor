@@ -13,6 +13,7 @@ from io import BytesIO
 from _paths import SERVER_ROOT
 from pypdf import PdfReader
 
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     NextStep,
@@ -21,7 +22,6 @@ from vibesensor.shared.boundaries.reporting.document import (
     ReportTemplateData,
     VerdictPageData,
 )
-from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 # ---------------------------------------------------------------------------
 # 1.  Runtime import guard — verify the report package can be loaded

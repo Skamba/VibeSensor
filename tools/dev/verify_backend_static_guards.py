@@ -594,7 +594,7 @@ def _check_health_snapshot_moves_out_of_http_adapter() -> list[str]:
     return failures
 
 
-def _check_report_pdf_entrypoint_uses_prepared_input() -> list[str]:
+def _check_report_pdf_entrypoint_renders_report_document() -> list[str]:
     path = VIBESENSOR_DIR / "app" / "container.py"
     tree = _parse_python(path)
     if tree is None:
@@ -607,17 +607,17 @@ def _check_report_pdf_entrypoint_uses_prepared_input() -> list[str]:
             if not node.args.args:
                 violations.append(
                     f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
-                    "_build_pdf_bytes must accept PreparedReportInput"
+                    "_build_pdf_bytes must accept ReportTemplateData"
                 )
                 continue
             annotation = node.args.args[0].annotation
             if not (
                 isinstance(annotation, ast.Name)
-                and annotation.id == "PreparedReportInput"
+                and annotation.id == "ReportTemplateData"
             ):
                 violations.append(
                     f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
-                    "_build_pdf_bytes must accept PreparedReportInput"
+                    "_build_pdf_bytes must accept ReportTemplateData"
                 )
         if isinstance(node, ast.ImportFrom) and (
             node.module == "vibesensor.shared.types.history_analysis_contracts"
@@ -1689,8 +1689,8 @@ CHECKS: tuple[Check, ...] = (
         _check_health_snapshot_moves_out_of_http_adapter,
     ),
     (
-        "Report PDF entrypoint uses prepared input",
-        _check_report_pdf_entrypoint_uses_prepared_input,
+        "Report PDF entrypoint renders report document",
+        _check_report_pdf_entrypoint_renders_report_document,
     ),
     ("Domain modules avoid outer-layer imports", _collect_domain_import_violations),
     (

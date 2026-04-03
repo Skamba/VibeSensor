@@ -7,7 +7,6 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData, SystemFindingCard
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex, _safe
 from vibesensor.adapters.pdf.pdf_style import (
     FONT_B,
@@ -25,6 +24,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     observed_signature_row_count,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData, SystemFindingCard
 
 
 def _compact_part_names(card: SystemFindingCard, fallback: str) -> str:

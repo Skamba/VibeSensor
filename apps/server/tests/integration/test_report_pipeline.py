@@ -40,8 +40,8 @@ from test_support import (
     top_confidence,
 )
 
-from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -57,9 +57,13 @@ def _build_coordinator(
 
 @pytest.mark.asyncio
 async def test_execute_stops_after_validation_failure(tmp_path: Path) -> None:
-    coordinator, _tracker, transport_controller, release_planner, workflow_executor = _build_coordinator(
-        tmp_path,
-    )
+    (
+        coordinator,
+        _tracker,
+        transport_controller,
+        release_planner,
+        workflow_executor,
+    ) = _build_coordinator(tmp_path)
     request = _wifi_request()
 
     with patch(
@@ -75,9 +79,13 @@ async def test_execute_stops_after_validation_failure(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_execute_stops_when_transport_cannot_prepare(tmp_path: Path) -> None:
-    coordinator, _tracker, transport_controller, release_planner, workflow_executor = _build_coordinator(
-        tmp_path,
-    )
+    (
+        coordinator,
+        _tracker,
+        transport_controller,
+        release_planner,
+        workflow_executor,
+    ) = _build_coordinator(tmp_path)
     request = _wifi_request()
     transport_controller.prepare.return_value = None
 
@@ -95,7 +103,13 @@ async def test_execute_stops_when_transport_cannot_prepare(tmp_path: Path) -> No
 @pytest.mark.asyncio
 async def test_execute_honors_cancellation_after_transport_prepare(tmp_path: Path) -> None:
     cancel_results = iter((False, True))
-    coordinator, _tracker, transport_controller, release_planner, workflow_executor = _build_coordinator(
+    (
+        coordinator,
+        _tracker,
+        transport_controller,
+        release_planner,
+        workflow_executor,
+    ) = _build_coordinator(
         tmp_path,
         cancel_requested=lambda: next(cancel_results),
     )
@@ -116,9 +130,13 @@ async def test_execute_honors_cancellation_after_transport_prepare(tmp_path: Pat
 
 @pytest.mark.asyncio
 async def test_execute_delegates_release_plan_and_execution(tmp_path: Path) -> None:
-    coordinator, _tracker, transport_controller, release_planner, workflow_executor = _build_coordinator(
-        tmp_path,
-    )
+    (
+        coordinator,
+        _tracker,
+        transport_controller,
+        release_planner,
+        workflow_executor,
+    ) = _build_coordinator(tmp_path)
     request = _wifi_request()
     transport_session = object()
     release_plan = object()
@@ -144,9 +162,13 @@ async def test_execute_delegates_release_plan_and_execution(tmp_path: Path) -> N
 
 @pytest.mark.asyncio
 async def test_execute_stops_when_release_planner_returns_none(tmp_path: Path) -> None:
-    coordinator, _tracker, transport_controller, release_planner, workflow_executor = _build_coordinator(
-        tmp_path,
-    )
+    (
+        coordinator,
+        _tracker,
+        transport_controller,
+        release_planner,
+        workflow_executor,
+    ) = _build_coordinator(tmp_path)
     request = _wifi_request()
     transport_controller.prepare.return_value = object()
     release_planner.plan.return_value = None

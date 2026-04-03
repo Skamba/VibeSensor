@@ -87,7 +87,9 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
 
 
 @pytest.mark.asyncio
-async def test_execute_install_plan_stops_before_finalization_when_cancelled(tmp_path: Path) -> None:
+async def test_execute_install_plan_stops_before_finalization_when_cancelled(
+    tmp_path: Path,
+) -> None:
     cancel_results = iter((False, True))
     executor, stager, deployer, _firmware_refresher, finalizer = _executor(
         cancel_requested=lambda: next(cancel_results),

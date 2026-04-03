@@ -5,12 +5,6 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 
 from vibesensor.adapters.pdf.action_cards import estimate_detailed_action_card_height
-from vibesensor.shared.boundaries.reporting.document import (
-    AppendixAData,
-    NextStep,
-    ReportLabelValueRow,
-    ReportTemplateData,
-)
 from vibesensor.adapters.pdf.pdf_style import (
     FS_BODY,
     FS_SMALL,
@@ -26,6 +20,12 @@ from vibesensor.adapters.pdf.pdf_text import (
     _wrap_lines,
 )
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting.document import (
+    AppendixAData,
+    NextStep,
+    ReportLabelValueRow,
+    ReportTemplateData,
+)
 
 __all__ = [
     "_estimate_action_steps_panel_height",

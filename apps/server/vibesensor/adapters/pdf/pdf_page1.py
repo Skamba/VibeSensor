@@ -5,12 +5,12 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.adapters.pdf.page1_actions import draw_actions_block, estimate_actions_block_height
 from vibesensor.adapters.pdf.page1_header import draw_header_strip, draw_hero_block
 from vibesensor.adapters.pdf.page1_proof import draw_proof_block, draw_timeline_block
 from vibesensor.adapters.pdf.pdf_style import GAP, MARGIN, PAGE_H, PAGE_W
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.shared.types.json_types import JsonValue
 
 
