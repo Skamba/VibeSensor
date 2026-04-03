@@ -20,8 +20,10 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
-from vibesensor.adapters.pdf.models import (
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.domain import Finding
+from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixCData,
     AppendixDData,
@@ -33,11 +35,9 @@ from vibesensor.adapters.pdf.models import (
     ReportTemplateData,
     VerdictPageData,
 )
-from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.domain import Finding
-from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
 

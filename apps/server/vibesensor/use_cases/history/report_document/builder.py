@@ -1,27 +1,19 @@
-"""Top-level PDF mapping orchestration."""
+"""Top-level report-document assembly orchestration."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.adapters.pdf._candidate_resolver import (
-    PrimaryCandidateContext,
-    resolve_primary_report_candidate,
-)
-from vibesensor.adapters.pdf._card_builder import build_system_cards
-from vibesensor.adapters.pdf.models import (
+from vibesensor.report_i18n import normalize_lang
+from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
     PatternEvidence,
     Report,
     ReportTemplateData,
     build_report_from_summary,
 )
-from vibesensor.adapters.pdf.peak_table import build_peak_rows
-from vibesensor.adapters.pdf.report_sections import build_data_trust, build_next_steps
-from vibesensor.adapters.pdf.template_builder import build_template_data
-from vibesensor.report_i18n import normalize_lang
-from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.report_presentation import display_location
 from vibesensor.shared.time_utils import (
     format_timestamp_in_recorded_timezone,
@@ -29,6 +21,17 @@ from vibesensor.shared.time_utils import (
     utc_now_iso,
 )
 from vibesensor.shared.types.json_types import JsonValue
+from vibesensor.use_cases.history.report_document._candidate_resolver import (
+    PrimaryCandidateContext,
+    resolve_primary_report_candidate,
+)
+from vibesensor.use_cases.history.report_document._card_builder import build_system_cards
+from vibesensor.use_cases.history.report_document.peak_table import build_peak_rows
+from vibesensor.use_cases.history.report_document.report_sections import (
+    build_data_trust,
+    build_next_steps,
+)
+from vibesensor.use_cases.history.report_document.template_builder import build_template_data
 
 from .measurements import _measurement_rows
 from .narrative_summaries import _proof_summary_text
@@ -47,7 +50,7 @@ __all__ = ["map_summary"]
 
 
 def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
-    """Map a canonical prepared report input into final report template data."""
+    """Build the canonical report document from prepared report input."""
     lang = str(normalize_lang(prepared.language))
     report = build_report_from_summary(
         prepared.summary,

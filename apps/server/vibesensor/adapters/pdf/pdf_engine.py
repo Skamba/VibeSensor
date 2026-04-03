@@ -7,7 +7,6 @@ from io import BytesIO
 
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.adapters.pdf.pdf_appendices import (
     _appendix_a_page,
     _appendix_b_page,
@@ -18,6 +17,7 @@ from vibesensor.adapters.pdf.pdf_appendices import (
 from vibesensor.adapters.pdf.pdf_drawing import _draw_footer
 from vibesensor.adapters.pdf.pdf_page1 import _page1
 from vibesensor.adapters.pdf.pdf_style import PAGE_SIZE, PdfRenderContext
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 
 LOGGER = logging.getLogger(__name__)
 

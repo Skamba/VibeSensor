@@ -5,14 +5,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from math import isfinite
 
-from vibesensor.adapters.pdf.models import (
+from vibesensor.domain import Finding, TestRun
+from vibesensor.report_i18n import human_source
+from vibesensor.shared.boundaries.reporting.document import (
     EvidenceChainRow,
     MeasurementRow,
     SensorObservationCell,
     SensorObservationMatrixRow,
 )
-from vibesensor.domain import Finding, TestRun
-from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting.summary_codec import NormalizedReportSummary
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,

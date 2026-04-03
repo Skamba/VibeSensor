@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 
-from vibesensor.adapters.pdf.models import FindingPresentation, PeakRow
-from vibesensor.adapters.pdf.presentation import order_label_human, peak_classification_text
-from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.domain import VibrationSource
+from vibesensor.shared.boundaries.reporting.document import FindingPresentation, PeakRow
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.types.analysis_views import PeakTableRow
+from vibesensor.use_cases.history.report_document.presentation import (
+    order_label_human,
+    peak_classification_text,
+)
 
 __all__ = [
     "build_peak_rows",

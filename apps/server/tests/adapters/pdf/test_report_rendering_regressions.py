@@ -14,7 +14,11 @@ import vibesensor.adapters.pdf.page1_header as page1_header
 import vibesensor.adapters.pdf.panels._panel_header as panel_header
 import vibesensor.adapters.pdf.panels._panel_systems as panel_systems
 import vibesensor.adapters.pdf.panels._panel_trust_steps as panel_trust_steps
-from vibesensor.adapters.pdf.models import (
+from vibesensor.adapters.pdf.panels._panel_observations import _draw_additional_observations
+from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_next_steps_table
+from vibesensor.adapters.pdf.pdf_style import FONT, FS_H2, PdfRenderContext
+from vibesensor.report_i18n import tr as report_tr
+from vibesensor.shared.boundaries.reporting.document import (
     FindingPresentation,
     NextStep,
     PatternEvidence,
@@ -22,10 +26,6 @@ from vibesensor.adapters.pdf.models import (
     SystemFindingCard,
     VerdictPageData,
 )
-from vibesensor.adapters.pdf.panels._panel_observations import _draw_additional_observations
-from vibesensor.adapters.pdf.panels._panel_trust_steps import _draw_next_steps_table
-from vibesensor.adapters.pdf.pdf_style import FONT, FS_H2, PdfRenderContext
-from vibesensor.report_i18n import tr as report_tr
 
 
 def _make_canvas() -> Canvas:

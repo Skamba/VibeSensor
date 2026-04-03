@@ -8,9 +8,9 @@ from dataclasses import dataclass
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 
-from vibesensor.adapters.pdf.models import FindingPresentation, ReportTemplateData
 from vibesensor.domain import LocationHotspotRow
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting.document import FindingPresentation, ReportTemplateData
 from vibesensor.shared.types.json_types import JsonValue
 
 # ── Theme ────────────────────────────────────────────────────────────────────

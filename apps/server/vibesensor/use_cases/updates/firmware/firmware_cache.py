@@ -204,7 +204,7 @@ def refresh_cache_cli() -> None:
         meta = cache.refresh()
         print(f"Firmware cache refreshed: tag={meta.tag}, asset={meta.asset}")
         print(f"Source: {meta.source}, SHA256: {meta.sha256}")
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         print(f"ERROR: Firmware cache refresh failed: {exc}", file=sys.stderr)
         print(
             "Flashing will not work until an online update succeeds.",

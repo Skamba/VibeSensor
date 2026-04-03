@@ -4,24 +4,27 @@ from __future__ import annotations
 
 import pytest
 
-import vibesensor.adapters.pdf.peak_table as peak_table
-from vibesensor.adapters.pdf.models import FindingPresentation
-from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
-from vibesensor.adapters.pdf.peak_table import (
+import vibesensor.use_cases.history.report_document.peak_table as peak_table
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.shared.boundaries.reporting.document import FindingPresentation
+from vibesensor.use_cases.history.report_document.pattern_parts import (
+    parts_for_pattern,
+    why_parts_listed,
+)
+from vibesensor.use_cases.history.report_document.peak_table import (
     build_peak_row,
     peak_row_system_label,
 )
-from vibesensor.adapters.pdf.presentation import (
+from vibesensor.use_cases.history.report_document.presentation import (
     order_label_human,
     peak_classification_text,
     strength_label,
     strength_text,
 )
-from vibesensor.adapters.pdf.report_sections import (
+from vibesensor.use_cases.history.report_document.report_sections import (
     build_data_trust,
     build_next_steps,
 )
-from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 
 
 @pytest.mark.parametrize(

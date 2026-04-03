@@ -5,17 +5,19 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from vibesensor.adapters.pdf.models import (
+from vibesensor.domain import TestRun
+from vibesensor.report_i18n import human_source
+from vibesensor.shared.boundaries.reporting.document import (
     PartSuggestion,
     SystemFindingCard,
 )
-from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern
-from vibesensor.adapters.pdf.presentation import order_label_human
-from vibesensor.domain import TestRun
-from vibesensor.report_i18n import human_source
+from vibesensor.use_cases.history.report_document.pattern_parts import parts_for_pattern
+from vibesensor.use_cases.history.report_document.presentation import order_label_human
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
+    from vibesensor.use_cases.history.report_document._candidate_resolver import (
+        PrimaryCandidateContext,
+    )
 
 __all__ = [
     "build_system_cards",

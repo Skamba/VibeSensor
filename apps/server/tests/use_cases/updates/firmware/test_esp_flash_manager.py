@@ -45,12 +45,14 @@ class _FakeRunner(FlashCommandRunner):
         hang: bool = False,
         fail_erase: bool = False,
         fail_write: bool = False,
+        raise_os_error: bool = False,
     ) -> None:
         self.calls: list[list[str]] = []
         self.call_cwds: list[str] = []
         self.hang = hang
         self.fail_erase = fail_erase
         self.fail_write = fail_write
+        self.raise_os_error = raise_os_error
 
     async def run(
         self,
@@ -64,6 +66,8 @@ class _FakeRunner(FlashCommandRunner):
         self.calls.append(list(args))
         self.call_cwds.append(str(cwd))
         line_cb(f"running {' '.join(args)}")
+        if self.raise_os_error:
+            raise OSError("serial port disappeared")
         if self.hang:
             while not cancel_event.is_set():
                 await asyncio.sleep(0.05)
@@ -460,6 +464,20 @@ async def test_flash_fails_when_esptool_erase_step_fails(tmp_path: Path) -> None
     assert mgr.status.error == "Flash erase step failed"
     assert any("erase_flash" in " ".join(call) for call in runner.calls)
     assert not any("write_flash" in " ".join(call) for call in runner.calls)
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_patch_esptool_which")
+async def test_flash_fails_cleanly_for_operational_os_errors(tmp_path: Path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True)
+    mgr, _runner = _build_manager(cache_dir, runner=_FakeRunner(raise_os_error=True))
+
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "failed"
+    assert mgr.status.error == "Flash failed: serial port disappeared"
+    assert "serial port disappeared" in " ".join(mgr.logs_since(after=0)["lines"])
 
 
 @pytest.mark.asyncio

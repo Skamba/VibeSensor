@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 
-from vibesensor.adapters.pdf.models import DataTrustItem, NextStep
 from vibesensor.domain import RecommendedAction, SuitabilityCheck
 from vibesensor.report_i18n import (
     is_body_like_location,
@@ -12,6 +11,7 @@ from vibesensor.report_i18n import (
     is_i18n_ref,
     resolve_i18n,
 )
+from vibesensor.shared.boundaries.reporting.document import DataTrustItem, NextStep
 from vibesensor.shared.report_diagnostics import localized_diagnostics
 from vibesensor.shared.run_context_warning import RunContextWarning
 

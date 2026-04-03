@@ -11,10 +11,10 @@ from vibesensor.adapters.pdf.action_cards import (
     draw_compact_action_card,
     estimate_compact_action_card_height,
 )
-from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import FS_BODY, FS_SMALL, PANEL_HEADER_H, SUB_CLR
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 
 __all__ = ["draw_actions_block", "estimate_actions_block_height"]
 
