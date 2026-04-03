@@ -13,7 +13,7 @@ from test_support import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
+from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
 
 
 class TestPdfContentForDiagnosedScenario:

@@ -24,7 +24,8 @@ class _StaticUsbInternetService:
     def __init__(self, status: UsbInternetStatus) -> None:
         self._status = status
 
-    async def snapshot(self) -> UsbInternetStatus:
+    async def snapshot(self, *, activate: bool = False) -> UsbInternetStatus:
+        del activate
         return self._status
 
 

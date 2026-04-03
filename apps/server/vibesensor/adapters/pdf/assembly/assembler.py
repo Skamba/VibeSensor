@@ -6,24 +6,24 @@ from collections.abc import Callable
 
 from vibesensor.adapters.pdf._candidate_resolver import resolve_primary_report_candidate
 from vibesensor.adapters.pdf._card_builder import build_system_cards
+from vibesensor.adapters.pdf.models import (
+    NextStep,
+    Report,
+    ReportTemplateData,
+    build_report_from_renderer_payload,
+)
 from vibesensor.adapters.pdf.peak_table import build_peak_rows
 from vibesensor.adapters.pdf.report_context import (
     ReportMappingContext,
     observed_signature,
     prepare_report_mapping_context,
 )
-from vibesensor.adapters.pdf.report_data import (
-    NextStep,
-    Report,
-    ReportTemplateData,
-    build_report_from_renderer_payload,
-)
 from vibesensor.adapters.pdf.report_sections import build_data_trust, build_next_steps
 from vibesensor.adapters.pdf.template_builder import build_template_data
 from vibesensor.domain import TestRun
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.report_prepared_input import (
+from vibesensor.shared.boundaries.reporting.contracts import (
     PreparedReportFacts,
     PreparedReportInput,
 )

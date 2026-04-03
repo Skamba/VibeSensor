@@ -19,8 +19,8 @@ from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
-from vibesensor.adapters.pdf.report_data import ReportTemplateData
+from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
+from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.domain import VibrationOrigin
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation

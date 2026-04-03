@@ -8,8 +8,8 @@ from vibesensor.domain import (
     TestRun,
 )
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.report_prepared_input import PreparedReportFacts
-from vibesensor.shared.boundaries.report_projection import (
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
+from vibesensor.shared.boundaries.reporting.projection import (
     compute_location_hotspot_rows,
     filter_active_sensor_intensity,
     normalize_origin_location,
@@ -17,7 +17,7 @@ from vibesensor.shared.boundaries.report_projection import (
     resolve_report_origin,
     tire_spec_text,
 )
-from vibesensor.shared.boundaries.report_summary_codec import (
+from vibesensor.shared.boundaries.reporting.summary_codec import (
     report_summary_from_mapping,
 )
 from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -174,14 +175,18 @@ class TestUpdateManagerCancelledError:
         status.finished_at = None
         tracker = MagicMock()
         tracker.status = status
-        mgr._tracker = tracker
-        mgr._executor = UpdateJobExecutor(task_name="system-update")
-        mgr._lifecycle = MagicMock(
+        executor = UpdateJobExecutor(task_name="system-update")
+        lifecycle = MagicMock(
             handle_timeout=MagicMock(),
             handle_cancelled=MagicMock(),
             handle_unexpected=MagicMock(),
             cleanup_after_update=AsyncMock(return_value=None),
-            handle_cancelled_cleanup_error=MagicMock(),
+            handle_cleanup_error=MagicMock(),
+        )
+        mgr._runtime = SimpleNamespace(
+            tracker=tracker,
+            executor=executor,
+            lifecycle=lifecycle,
         )
 
         async def mock_inner(ssid, password):

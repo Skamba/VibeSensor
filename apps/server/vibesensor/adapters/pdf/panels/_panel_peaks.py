@@ -7,6 +7,7 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.adapters.pdf.pdf_drawing import _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT,
@@ -18,7 +19,6 @@ from vibesensor.adapters.pdf.pdf_style import (
     SUB_CLR,
     TEXT_CLR,
 )
-from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
 
 def _draw_peaks_table(

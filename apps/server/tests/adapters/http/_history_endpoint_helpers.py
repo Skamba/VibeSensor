@@ -42,7 +42,7 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 
 def _real_pdf_renderer(prepared: object) -> bytes:
     """Default test renderer wiring the real adapter pipeline."""
-    from vibesensor.adapters.pdf.mapping import PreparedReportInput, map_summary
+    from vibesensor.adapters.pdf.assembly import PreparedReportInput, map_summary
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
     assert isinstance(prepared, PreparedReportInput)

@@ -39,7 +39,7 @@ from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.constants.dsp import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -61,7 +61,7 @@ LOGGER = logging.getLogger(__name__)
 
 def _build_pdf_bytes(prepared: PreparedReportInput) -> bytes:
     """Compose adapters/pdf pipeline into a single callable for injection."""
-    from vibesensor.adapters.pdf.mapping import map_summary
+    from vibesensor.adapters.pdf.assembly import map_summary
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
     mapped = map_summary(prepared)

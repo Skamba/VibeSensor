@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
-from vibesensor.use_cases.updates.release_coordinator import UpdateReleaseCoordinator
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
+from vibesensor.use_cases.updates.release_workflow import UpdateReleaseWorkflow
 from vibesensor.use_cases.updates.releases import UpdateReleaseCheck
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
@@ -33,11 +33,11 @@ def _seed_release_ready_state(tracker: UpdateStatusTracker) -> None:
     tracker.transition(UpdatePhase.checking)
 
 
-def _build_coordinator(
+def _build_workflow(
     tmp_path: Path,
     *,
     cancel_requested=lambda: False,
-) -> tuple[UpdateReleaseCoordinator, MagicMock, MagicMock, MagicMock]:
+) -> tuple[UpdateReleaseWorkflow, MagicMock, MagicMock, MagicMock]:
     tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
     _seed_release_ready_state(tracker)
     commands = MagicMock()
@@ -47,7 +47,7 @@ def _build_coordinator(
     installer.install_release = AsyncMock(return_value=True)
     firmware_refresher = MagicMock()
     firmware_refresher.refresh_esp_firmware = AsyncMock()
-    coordinator = UpdateReleaseCoordinator(
+    workflow = UpdateReleaseWorkflow(
         tracker=tracker,
         resolver=ServerReleaseResolver(
             tracker=tracker,
@@ -72,14 +72,14 @@ def _build_coordinator(
         ),
         cancel_requested=cancel_requested,
     )
-    return coordinator, commands, installer, firmware_refresher
+    return workflow, commands, installer, firmware_refresher
 
 
 @pytest.mark.asyncio
 async def test_execute_marks_success_through_transport_when_already_up_to_date(
     tmp_path: Path,
 ) -> None:
-    coordinator, commands, installer, firmware_refresher = _build_coordinator(tmp_path)
+    workflow, commands, installer, firmware_refresher = _build_workflow(tmp_path)
     session = _TransportSession()
 
     with (
@@ -94,7 +94,7 @@ async def test_execute_marks_success_through_transport_when_already_up_to_date(
             ),
         ),
     ):
-        await coordinator.execute(session)
+        await workflow.execute(session)
 
     firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
         pinned_tag="server-v2026.4.3",
@@ -108,7 +108,7 @@ async def test_execute_marks_success_through_transport_when_already_up_to_date(
 
 @pytest.mark.asyncio
 async def test_execute_downloads_and_installs_before_transport_success(tmp_path: Path) -> None:
-    coordinator, commands, installer, firmware_refresher = _build_coordinator(tmp_path)
+    workflow, commands, installer, firmware_refresher = _build_workflow(tmp_path)
     session = _TransportSession()
     wheel_path = tmp_path / "release.whl"
     wheel_path.write_text("wheel", encoding="utf-8")
@@ -129,7 +129,7 @@ async def test_execute_downloads_and_installs_before_transport_success(tmp_path:
             new=AsyncMock(return_value=True),
         ),
     ):
-        await coordinator.execute(session)
+        await workflow.execute(session)
 
     firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
         pinned_tag="server-v2026.4.4",
@@ -144,7 +144,7 @@ async def test_execute_downloads_and_installs_before_transport_success(tmp_path:
 async def test_execute_does_not_schedule_restart_when_transport_finalize_fails(
     tmp_path: Path,
 ) -> None:
-    coordinator, commands, installer, firmware_refresher = _build_coordinator(tmp_path)
+    workflow, commands, installer, firmware_refresher = _build_workflow(tmp_path)
     session = _TransportSession()
     session.complete_success.return_value = False
     wheel_path = tmp_path / "release.whl"
@@ -166,7 +166,7 @@ async def test_execute_does_not_schedule_restart_when_transport_finalize_fails(
             new=AsyncMock(return_value=True),
         ),
     ):
-        await coordinator.execute(session)
+        await workflow.execute(session)
 
     firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
         pinned_tag="server-v2026.4.4",

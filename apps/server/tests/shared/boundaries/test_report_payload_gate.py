@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
+from vibesensor.shared.boundaries.reporting.payload_gate import has_projectable_report_payload
 
 
 def test_has_projectable_report_payload_accepts_findings_list() -> None:

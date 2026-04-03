@@ -13,8 +13,7 @@ from io import BytesIO
 from _paths import SERVER_ROOT
 from pypdf import PdfReader
 
-from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.pdf.report_data import (
+from vibesensor.adapters.pdf.models import (
     AppendixAData,
     NextStep,
     PatternEvidence,
@@ -22,6 +21,7 @@ from vibesensor.adapters.pdf.report_data import (
     ReportTemplateData,
     VerdictPageData,
 )
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 # ---------------------------------------------------------------------------
 # 1.  Runtime import guard — verify the report package can be loaded
@@ -68,7 +68,7 @@ def test_report_package_imports_without_shared_report_projection() -> None:
     """Importing ``vibesensor.adapters.pdf`` must not import report projection."""
     import vibesensor.adapters.pdf as pdf_pkg
 
-    report_projection_helper = "vibesensor.shared.boundaries.report_projection"
+    report_projection_helper = "vibesensor.shared.boundaries.reporting.projection"
     pdf_module_names = [f"vibesensor.adapters.pdf.{mod_path.stem}" for mod_path in _REPORT_MODULES]
     saved_attrs = {
         mod_path.stem: getattr(pdf_pkg, mod_path.stem, None) for mod_path in _REPORT_MODULES

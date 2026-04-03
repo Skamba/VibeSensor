@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.report_summary_codec import report_summary_from_mapping
+from vibesensor.shared.boundaries.reporting.summary_codec import report_summary_from_mapping
 
 
 def test_report_summary_from_mapping_defaults_without_nested_metadata() -> None:

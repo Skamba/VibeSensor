@@ -19,7 +19,7 @@ import pytest
 from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
+from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
 from vibesensor.cli.report import main as report_cli_main
 from vibesensor.use_cases.updates.firmware.firmware_cache import FirmwareCache
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher

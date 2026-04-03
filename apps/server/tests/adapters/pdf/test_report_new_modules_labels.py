@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 import vibesensor.adapters.pdf.peak_table as peak_table
+from vibesensor.adapters.pdf.models import FindingPresentation
 from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
 from vibesensor.adapters.pdf.peak_table import (
     build_peak_row,
@@ -16,7 +17,6 @@ from vibesensor.adapters.pdf.presentation import (
     strength_label,
     strength_text,
 )
-from vibesensor.adapters.pdf.report_data import FindingPresentation
 from vibesensor.adapters.pdf.report_sections import (
     build_data_trust,
     build_next_steps,

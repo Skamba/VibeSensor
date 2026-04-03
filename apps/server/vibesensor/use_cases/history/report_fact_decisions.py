@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding, SuitabilityCheck, TestRun
-from vibesensor.shared.boundaries.report_prepared_input import (
+from vibesensor.shared.boundaries.reporting.contracts import (
     ActionStatusKey,
     LocationConfidenceKey,
     ReportCoverageSummary,
 )
-from vibesensor.shared.boundaries.report_projection import PrimaryReportFacts
+from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.run_context_warning import RunContextWarning
 
 from .report_fact_coverage import primary_location_has_coverage_gap

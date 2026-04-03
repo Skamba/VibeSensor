@@ -3,17 +3,17 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding_payload
 
-from vibesensor.adapters.pdf import mapping as pdf_mapping
+from vibesensor.adapters.pdf import assembly as pdf_mapping
 from vibesensor.adapters.pdf.report_context import (
     ReportMappingContext,
     prepare_report_mapping_context,
 )
-from vibesensor.shared.boundaries import report_prepared_input as shared_report_prepared_input
-from vibesensor.shared.boundaries import report_projection as shared_report_projection
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_json_object,
 )
-from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
+from vibesensor.shared.boundaries.reporting import contracts as shared_report_prepared_input
+from vibesensor.shared.boundaries.reporting import projection as shared_report_projection
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.use_cases.history.report_preparation import (
     prepare_persisted_report_input,
     prepare_report_input,
