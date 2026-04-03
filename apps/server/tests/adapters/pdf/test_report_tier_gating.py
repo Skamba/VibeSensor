@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 from vibesensor.domain import ConfidenceAssessment
 
 # ---------------------------------------------------------------------------

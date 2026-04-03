@@ -5,7 +5,7 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import FS_BODY, GAP, MARGIN, PAGE_W, PANEL_HEADER_H, TEXT_CLR
 from vibesensor.adapters.pdf.pdf_text import _draw_text

@@ -7,7 +7,7 @@ from io import BytesIO
 
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.adapters.pdf.pdf_appendices import (
     _appendix_a_page,
     _appendix_b_page,

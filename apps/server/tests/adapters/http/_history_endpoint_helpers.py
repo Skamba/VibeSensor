@@ -40,13 +40,13 @@ from vibesensor.use_cases.history.reports import HistoryReportService, PdfRender
 from vibesensor.use_cases.history.runs import HistoryRunService
 
 
-def _real_pdf_renderer(prepared: object) -> bytes:
+def _real_pdf_renderer(document: object) -> bytes:
     """Default test renderer wiring the real adapter pipeline."""
-    from vibesensor.adapters.pdf.assembly import PreparedReportInput, map_summary
+    from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
-    assert isinstance(prepared, PreparedReportInput)
-    return build_report_pdf(map_summary(prepared))
+    assert isinstance(document, ReportTemplateData)
+    return build_report_pdf(document)
 
 
 def make_metadata(**overrides: Any) -> dict[str, Any]:

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
-from vibesensor.adapters.pdf.presentation import (
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.use_cases.history.report_document.presentation import (
     peak_classification_text as _peak_classification_text,
 )
 from vibesensor.report_i18n import tr

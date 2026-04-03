@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.adapters.pdf.assembly import prepare_report_input, resolve_primary_report_candidate
+from vibesensor.use_cases.history.report_document import prepare_report_input, resolve_primary_report_candidate
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_json_object,
 )

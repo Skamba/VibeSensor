@@ -5,7 +5,7 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import (
+from vibesensor.shared.boundaries.reporting.document import (
     ReportLabelValueRow,
 )
 from vibesensor.adapters.pdf.pdf_drawing import _hex

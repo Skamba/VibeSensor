@@ -12,8 +12,8 @@ The report generation pipeline has two distinct phases:
    → `vibesensor.adapters.pdf`) — loads the persisted analysis object, shapes
    runtime warnings and cache metadata, prepares one explicit
    `PreparedReportInput` with an authoritative reconstructed domain aggregate
-   plus precomputed semantic report facts, maps that prepared input to
-   `ReportTemplateData`, and renders a PDF. This phase performs **zero
+   plus precomputed semantic report facts, builds one canonical
+   `ReportTemplateData` document, and renders a PDF. This phase performs **zero
    analysis** — it only shapes persisted report data and formats pre-computed
    results.
 
@@ -25,8 +25,8 @@ Recording stops
       → run_analysis.py + analysis_pipeline.py + run_data_preparation.py + _summary_steps.py + _summary_result.py (preparation, phases, suitability, domain/result assembly)
       → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_summary]
       → findings.py + _reference_findings.py + _context_decode.py/_context_projection.py + _sample_metrics.py + _analysis_models.py + orders/{pipeline,matching,scoring,finding_builder,statistics,heuristics,settings}.py + peaks/{findings,accumulation,classification,scoring,finding_builder,statistics,settings,table}.py + signal_aggregation.py + top_cause_selection.py + plots.py
-    → map_summary() [vibesensor.adapters.pdf.assembly]
-      → assembler.py (summary/facts orchestration) + template_builder.py + peak_table.py + report_sections.py
+    → map_summary() [vibesensor.use_cases.history.report_document]
+      → builder.py (summary/facts orchestration) + template_builder.py + peak_table.py + report_sections.py
     → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
@@ -34,7 +34,7 @@ GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
     → HistoryReportRequestLoader.load_report_request() [vibesensor.use_cases.history.report_loader]
     → prepare_report_input() [vibesensor.use_cases.history.report_preparation]
     → _build_pdf_bytes() [vibesensor.app.container]
-      → map_summary(prepared_input) [vibesensor.adapters.pdf.mapping]
+      → map_summary(prepared_input) [vibesensor.use_cases.history.report_document]
       → build_report_pdf(data) [vibesensor.adapters.pdf.pdf_engine]
 ```
 
@@ -59,13 +59,8 @@ The `vibesensor.adapters.pdf` package contains **only** rendering code:
 | `pdf_style.py` | Page geometry, layout calculations, color tokens, styling constants, and render context |
 | `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
 | `pdf_diagram_render.py` | Diagram planning, drawing, and location normalization |
-| `models/` | Dataclass definitions (pure data) |
-| `assembly/assembler.py` | Thin mapper: `PreparedReportInput` → `ReportTemplateData` using canonical summary + prepared facts |
-| `template_builder.py` | Final field assignment from prepared inputs into `ReportTemplateData` |
-| `presentation.py` | Rendering-only label helpers (strength/order/classification text) |
-| `peak_table.py` | Peak-row builders for the report evidence table |
-| `report_sections.py` | Next-step and data-trust section builders |
-| `pattern_parts.py` | Pattern-to-parts suggestion helpers |
+| `pdf_appendices/` | Render appendix pages from the already assembled document |
+| `report_types.py` | Small render-local helper aliases only |
 
 **Rule:** Report modules must not import from `vibesensor.use_cases.diagnostics` at
 module level.  A guardrail test (`test_report_analysis_separation.py`)
@@ -73,10 +68,12 @@ enforces this.
 
 History-side report preparation now lives in
 `vibesensor.use_cases.history.report_preparation`, which owns the explicit
-`PreparedReportInput` seam passed into the PDF adapter, projectability gating,
-one-time `NormalizedReportSummary` decoding, domain reconstruction,
-filename/language normalization, and final prepared-input assembly. Semantic
-report-facts shaping now lives in the dedicated
+`PreparedReportInput` seam, projectability gating, one-time
+`NormalizedReportSummary` decoding, domain reconstruction, filename/language
+normalization, and final prepared-input assembly. Canonical report-document
+assembly lives in `vibesensor.use_cases.history.report_document`, which maps
+`PreparedReportInput` into the renderer-facing `ReportTemplateData`.
+Semantic report-facts shaping now lives in the dedicated
 `vibesensor.use_cases.history.report_facts` and
 `vibesensor.use_cases.history.report_display_facts` modules, which precompute
 the origin, active sensor intensity, hotspot rows, primary-candidate facts,
@@ -90,8 +87,9 @@ modules.
 
 ### ReportTemplateData schema
 
-`ReportTemplateData` (defined in `vibesensor.adapters.pdf.report_data`) is the
-rendering artifact.  It contains everything the PDF renderer
+`ReportTemplateData` (defined in
+`vibesensor.shared.boundaries.reporting.document`) is the canonical rendering
+artifact. It contains everything the PDF renderer
 needs:
 
 - **Display metadata**: title, dates, sensor info, version marker

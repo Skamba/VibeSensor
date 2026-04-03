@@ -5,7 +5,7 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import NextStep
+from vibesensor.shared.boundaries.reporting.document import NextStep
 from vibesensor.adapters.pdf.pdf_drawing import _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT_B,

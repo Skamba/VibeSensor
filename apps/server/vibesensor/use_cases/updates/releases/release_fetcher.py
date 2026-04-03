@@ -359,7 +359,7 @@ def fetch_latest_wheel_cli() -> None:
         whl = fetcher.download_wheel(release, dest_dir=args.dest)
         print(f"Downloaded: {whl}")
         print(f"SHA256: {release.sha256}")
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         LOGGER.exception("release fetch CLI failed")
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(1)

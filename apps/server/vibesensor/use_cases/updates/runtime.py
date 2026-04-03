@@ -19,6 +19,7 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.recovery import InterruptedUpdateRecovery
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
+from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
@@ -28,6 +29,8 @@ from vibesensor.use_cases.updates.status import (
     UpdateStatusTracker,
     collect_runtime_details,
 )
+from vibesensor.use_cases.updates.success_finalizer import UpdateSuccessFinalizer
+from vibesensor.use_cases.updates.transport_controller import UpdateTransportController
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 from vibesensor.use_cases.updates.usb_status import (
     UsbInternetStatusReader,
@@ -36,6 +39,7 @@ from vibesensor.use_cases.updates.usb_status import (
 from vibesensor.use_cases.updates.usb_transport import UpdateUsbInternetSession
 from vibesensor.use_cases.updates.validation import MIN_FREE_DISK_BYTES
 from vibesensor.use_cases.updates.wifi import UpdateWifiOrchestrator, build_default_wifi_config
+from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 
 LOGGER = logging.getLogger(__name__)
 
@@ -165,6 +169,7 @@ def build_update_manager_runtime(
 
     def build_coordinator() -> UpdateCoordinator:
         commands = build_command_executor()
+        transport_sessions = build_transport_sessions(commands=commands)
         (
             resolver,
             stager,
@@ -175,12 +180,21 @@ def build_update_manager_runtime(
         return UpdateCoordinator(
             tracker=tracker,
             commands=commands,
-            transport_sessions=build_transport_sessions(commands=commands),
-            resolver=resolver,
-            stager=stager,
-            deployer=deployer,
-            firmware_refresher=firmware_refresher,
-            restart_scheduler=restart_scheduler,
+            transport_controller=UpdateTransportController(sessions=transport_sessions),
+            release_planner=UpdateReleasePlanner(
+                tracker=tracker,
+                resolver=resolver,
+            ),
+            workflow_executor=UpdateWorkflowExecutor(
+                stager=stager,
+                deployer=deployer,
+                firmware_refresher=firmware_refresher,
+                finalizer=UpdateSuccessFinalizer(
+                    tracker=tracker,
+                    restart_scheduler=restart_scheduler,
+                ),
+                cancel_requested=executor.cancel_requested,
+            ),
             cancel_requested=executor.cancel_requested,
             validation_config=validation_config,
         )
