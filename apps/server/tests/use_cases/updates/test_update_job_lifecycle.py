@@ -98,7 +98,7 @@ async def test_cleanup_re_raises_wifi_diagnostics_bug_after_finishing_cleanup(tm
     manager.status.phase = UpdatePhase.installing
 
     with patch(
-        "vibesensor.use_cases.updates.wifi.wifi_orchestrator.parse_wifi_diagnostics",
+        "vibesensor.use_cases.updates.wifi.wifi_session.parse_wifi_diagnostics",
         side_effect=TypeError("diagnostics bug"),
     ):
         with pytest.raises(TypeError, match="diagnostics bug"):
@@ -116,7 +116,7 @@ async def test_cleanup_skips_wifi_cleanup_for_usb_transport(tmp_path) -> None:
     manager.status.phase = UpdatePhase.installing
 
     with patch(
-        "vibesensor.use_cases.updates.wifi.wifi_orchestrator.parse_wifi_diagnostics",
+        "vibesensor.use_cases.updates.wifi.wifi_session.parse_wifi_diagnostics",
         side_effect=AssertionError("Wi-Fi diagnostics should not run for USB transport"),
     ):
         await manager._runtime.lifecycle.cleanup_after_update()

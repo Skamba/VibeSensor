@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from vibesensor.use_cases.updates.models import UpdateExecutionOutcome
 from vibesensor.use_cases.updates.release_planner import (
     InstallServerReleasePlan,
     RefreshFirmwarePlan,
@@ -46,7 +47,7 @@ async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport(
 
     completed = await executor.execute(plan, transport_session=transport_session)
 
-    assert completed is True
+    assert completed == UpdateExecutionOutcome.refresh_only
     firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
         pinned_tag="server-v2026.4.3",
     )
@@ -76,7 +77,7 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
         transport_session=transport_session,
     )
 
-    assert completed is True
+    assert completed == UpdateExecutionOutcome.installed
     stager.stage.assert_called_once_with(release)
     deployer.deploy.assert_awaited_once_with(staged_release)
     finalizer.complete.assert_awaited_once_with(
@@ -109,6 +110,6 @@ async def test_execute_install_plan_stops_before_finalization_when_cancelled(
         transport_session=transport_session,
     )
 
-    assert completed is False
+    assert completed == UpdateExecutionOutcome.aborted
     deployer.deploy.assert_awaited_once_with(staged_release)
     finalizer.complete.assert_not_awaited()

@@ -4,7 +4,7 @@ import pytest
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.shared.boundaries.reporting.summary_codec import report_summary_from_mapping
+from vibesensor.shared.boundaries.reporting.payload import report_summary_from_mapping
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as build_test_run_from_summary,
 )

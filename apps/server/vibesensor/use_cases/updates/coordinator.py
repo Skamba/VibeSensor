@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.use_cases.updates.models import UpdateRequest, UpdateValidationConfig
+from vibesensor.use_cases.updates.models import (
+    UpdateExecutionOutcome,
+    UpdateRequest,
+    UpdateValidationConfig,
+)
 from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
@@ -45,19 +49,19 @@ class UpdateCoordinator:
         self._cancel_requested = cancel_requested
         self._validation_config = validation_config
 
-    async def execute(self, request: UpdateRequest) -> None:
+    async def execute(self, request: UpdateRequest) -> UpdateExecutionOutcome:
         if not await self._validate(request):
-            return
+            return UpdateExecutionOutcome.aborted
         transport_session = await self._transport_controller.prepare(request)
         if transport_session is None or self._cancelled():
-            return
+            return UpdateExecutionOutcome.aborted
 
         from vibesensor import __version__ as current_version
 
         plan = await self._release_planner.plan(current_version)
         if plan is None or self._cancelled():
-            return
-        await self._workflow_executor.execute(plan, transport_session=transport_session)
+            return UpdateExecutionOutcome.aborted
+        return await self._workflow_executor.execute(plan, transport_session=transport_session)
 
     async def _validate(self, request: UpdateRequest) -> bool:
         if not await validate_prerequisites(

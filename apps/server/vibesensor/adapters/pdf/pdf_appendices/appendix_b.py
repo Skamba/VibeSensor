@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
@@ -19,7 +21,7 @@ from vibesensor.adapters.pdf.pdf_style import (
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.document import AppendixBData, ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import AppendixBData
 
 from .tables import _draw_table, _fmt_db, _fmt_relative_db
 
@@ -28,43 +30,46 @@ __all__ = [
     "_has_appendix_b_content",
 ]
 
+if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.report_types import AppendixBRenderPlan
 
-def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
+
+def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
     title_y = _draw_title_bar(
         c,
-        title=_tr(data.lang, "REPORT_APPENDIX_B_TITLE"),
+        title=_tr(plan.lang, "REPORT_APPENDIX_B_TITLE"),
         width=PAGE_W - 2 * MARGIN,
         page_top=PAGE_H - MARGIN,
     )
-    appendix = data.appendix_b
+    appendix = plan.appendix
     width = PAGE_W - 2 * MARGIN
     top_h = 114 * mm
     left_w = width * 0.56
     right_w = width - left_w - GAP
     top_y = title_y - top_h
 
-    _draw_panel(c, MARGIN, top_y, left_w, top_h, _tr(data.lang, "REPORT_TOPOLOGY_MAP_TITLE"))
+    _draw_panel(c, MARGIN, top_y, left_w, top_h, _tr(plan.lang, "REPORT_TOPOLOGY_MAP_TITLE"))
     _draw_text(
         c,
         MARGIN + 4 * mm,
         top_y + top_h - PANEL_HEADER_H - 2 * mm,
         left_w - 8 * mm,
-        _tr(data.lang, "REPORT_TOPOLOGY_MAP_NOTE"),
+        _tr(plan.lang, "REPORT_TOPOLOGY_MAP_NOTE"),
         size=FS_SMALL,
         color=SUB_CLR,
         leading=FS_SMALL + 1.0,
         max_lines=1,
     )
     diagram = car_location_diagram(
-        data.top_causes or data.findings,
+        plan.top_causes or plan.findings,
         {
-            "sensor_locations": data.sensor_locations,
-            "sensor_intensity_by_location": data.sensor_intensity_by_location,
+            "sensor_locations": plan.sensor_locations,
+            "sensor_intensity_by_location": plan.sensor_intensity_by_location,
         },
-        data.location_hotspot_rows,
+        plan.location_hotspot_rows,
         content_width=left_w - 8 * mm,
-        tr=lambda key, **kw: _tr(data.lang, key, **kw),
-        text_fn=lambda en, nl: nl if data.lang == "nl" else en,
+        tr=lambda key, **kw: _tr(plan.lang, key, **kw),
+        text_fn=lambda en, nl: nl if plan.lang == "nl" else en,
         diagram_width=left_w - 12 * mm,
         diagram_height=top_h - 24 * mm,
     )
@@ -76,7 +81,7 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
         top_y,
         right_w,
         top_h,
-        _tr(data.lang, "REPORT_DOMINANCE_SUMMARY_TITLE"),
+        _tr(plan.lang, "REPORT_DOMINANCE_SUMMARY_TITLE"),
     )
     text_x = MARGIN + left_w + GAP + 4 * mm
     text_y = top_y + top_h - PANEL_HEADER_H - 2 * mm
@@ -85,8 +90,8 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
         text_x,
         text_y,
         right_w - 8 * mm,
-        _tr(data.lang, "REPORT_DOMINANT_CORNER_LABEL"),
-        appendix.dominant_corner or _tr(data.lang, "UNKNOWN"),
+        _tr(plan.lang, "REPORT_DOMINANT_CORNER_LABEL"),
+        appendix.dominant_corner or _tr(plan.lang, "UNKNOWN"),
     )
     if appendix.runner_up_corner:
         text_y = _draw_section_block(
@@ -94,7 +99,7 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
             text_x,
             text_y,
             right_w - 8 * mm,
-            _tr(data.lang, "REPORT_RUNNER_UP_CORNER_LABEL"),
+            _tr(plan.lang, "REPORT_RUNNER_UP_CORNER_LABEL"),
             appendix.runner_up_corner,
         )
     text_y = _draw_section_block(
@@ -102,8 +107,8 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
         text_x,
         text_y,
         right_w - 8 * mm,
-        _tr(data.lang, "REPORT_DOMINANCE_RATIO_LABEL"),
-        appendix.dominance_ratio_text or _tr(data.lang, "UNKNOWN"),
+        _tr(plan.lang, "REPORT_DOMINANCE_RATIO_LABEL"),
+        appendix.dominance_ratio_text or _tr(plan.lang, "UNKNOWN"),
     )
     if appendix.dominance_ratio_text:
         text_y = (
@@ -112,7 +117,7 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
                 text_x,
                 text_y,
                 right_w - 8 * mm,
-                _tr(data.lang, "REPORT_DOMINANCE_RATIO_NOTE"),
+                _tr(plan.lang, "REPORT_DOMINANCE_RATIO_NOTE"),
                 size=FS_SMALL,
                 color=SUB_CLR,
                 leading=FS_SMALL + 1.0,
@@ -125,16 +130,16 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
         text_x,
         text_y,
         right_w - 8 * mm,
-        _tr(data.lang, "REPORT_LOCATION_CONFIDENCE_LABEL"),
-        appendix.location_confidence or _tr(data.lang, "UNKNOWN"),
+        _tr(plan.lang, "REPORT_LOCATION_CONFIDENCE_LABEL"),
+        appendix.location_confidence or _tr(plan.lang, "UNKNOWN"),
     )
     text_y = _draw_section_block(
         c,
         text_x,
         text_y,
         right_w - 8 * mm,
-        _tr(data.lang, "REPORT_COVERAGE_LABEL"),
-        appendix.coverage_label or _tr(data.lang, "UNKNOWN"),
+        _tr(plan.lang, "REPORT_COVERAGE_LABEL"),
+        appendix.coverage_label or _tr(plan.lang, "UNKNOWN"),
         max_lines=3,
     )
     for note in appendix.coverage_notes[:3]:
@@ -162,7 +167,7 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
             bottom_y,
             width,
             bottom_h,
-            _tr(data.lang, "REPORT_SENSOR_OBSERVATION_MATRIX_TITLE"),
+            _tr(plan.lang, "REPORT_SENSOR_OBSERVATION_MATRIX_TITLE"),
         )
         table_top = (
             _draw_text(
@@ -170,7 +175,7 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
                 MARGIN + 4 * mm,
                 bottom_y + bottom_h - 13 * mm,
                 width - 8 * mm,
-                _tr(data.lang, "REPORT_SENSOR_OBSERVATION_MATRIX_NOTE"),
+                _tr(plan.lang, "REPORT_SENSOR_OBSERVATION_MATRIX_NOTE"),
                 size=FS_SMALL,
                 color=SUB_CLR,
                 leading=FS_SMALL + 1.0,
@@ -178,7 +183,7 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
             )
             - 1.2 * mm
         )
-        headers = [_tr(data.lang, "REPORT_SIGNAL_COLUMN")] + [
+        headers = [_tr(plan.lang, "REPORT_SIGNAL_COLUMN")] + [
             cell.location for cell in appendix.sensor_observation_rows[0].sensor_levels
         ]
         sensor_column_count = max(1, len(headers) - 1)
@@ -202,10 +207,10 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
         )
     else:
         _draw_panel(
-            c, MARGIN, bottom_y, width, bottom_h, _tr(data.lang, "REPORT_INTENSITY_LADDER_TITLE")
+            c, MARGIN, bottom_y, width, bottom_h, _tr(plan.lang, "REPORT_INTENSITY_LADDER_TITLE")
         )
         rows = [
-            [row.location, _fmt_db(row.p95_db), row.coverage_state or _tr(data.lang, "UNKNOWN")]
+            [row.location, _fmt_db(row.p95_db), row.coverage_state or _tr(plan.lang, "UNKNOWN")]
             for row in appendix.intensity_rows
         ]
         _draw_table(
@@ -215,9 +220,9 @@ def _appendix_b_page(c: Canvas, data: ReportTemplateData) -> None:
             w=width - 8 * mm,
             y_bottom=bottom_y + 4 * mm,
             headers=[
-                _tr(data.lang, "REPORT_LOCATION_COLUMN"),
-                _tr(data.lang, "REPORT_P95_DB_COLUMN"),
-                _tr(data.lang, "REPORT_COVERAGE_STATE_COLUMN"),
+                _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
+                _tr(plan.lang, "REPORT_P95_DB_COLUMN"),
+                _tr(plan.lang, "REPORT_COVERAGE_STATE_COLUMN"),
             ],
             rows=rows,
             col_widths=[0.42, 0.18, 0.40],

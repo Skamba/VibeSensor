@@ -10,9 +10,11 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.wifi.wifi import UpdateWifiController
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.wifi.wifi_diagnostics import parse_wifi_diagnostics
+from vibesensor.use_cases.updates.wifi.wifi_hotspot_recovery import UpdateHotspotRecovery
+from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
+from vibesensor.use_cases.updates.wifi.wifi_uplink_setup import UpdateUplinkProvisioner
 
 _HOTSPOT_RESTORE_PHASES = frozenset(
     {
@@ -26,10 +28,10 @@ _HOTSPOT_RESTORE_PHASES = frozenset(
 )
 
 
-class UpdateWifiOrchestrator:
-    """Transport-specific Wi-Fi session for updater startup, success, and cleanup."""
+class UpdateWifiSession:
+    """Wi-Fi transport session for updater startup, success, and cleanup."""
 
-    __slots__ = ("_controller", "_tracker")
+    __slots__ = ("_config", "_hotspot", "_readiness", "_tracker", "_uplink")
     transport = UpdateTransport.wifi
 
     def __init__(
@@ -40,21 +42,27 @@ class UpdateWifiOrchestrator:
         config: UpdateWifiConfig,
     ) -> None:
         self._tracker = tracker
-        self._controller = UpdateWifiController(
-            commands=commands,
-            tracker=tracker,
-            config=config,
-        )
+        self._config = config
+        self._hotspot = UpdateHotspotRecovery(commands=commands, tracker=tracker, config=config)
+        self._readiness = UpdateWifiReadiness(commands=commands, tracker=tracker, config=config)
+        self._uplink = UpdateUplinkProvisioner(commands=commands, tracker=tracker, config=config)
 
     async def stop_hotspot(self) -> bool:
         """Stop the hotspot before the updater attempts to join an uplink."""
 
-        return await self._controller.stop_hotspot()
+        return await self._hotspot.stop_hotspot()
 
     async def connect_uplink(self, ssid: str, password: str) -> bool:
         """Create and connect the transient uplink profile for this update run."""
 
-        return await self._controller.connect_uplink(ssid, password)
+        self._tracker.log(f"Connecting to Wi-Fi network: {ssid}")
+        if not await self._uplink.prepare_uplink_connection(ssid, password):
+            return False
+        if not await self._readiness.bring_uplink_up(ssid):
+            return False
+        fallback = self._config.uplink_fallback_dns
+        self._tracker.log(f"Wi-Fi connected successfully (client DNS fallback={fallback})")
+        return await self._readiness.wait_for_dns_ready()
 
     async def prepare(self, request: UpdateRequest) -> bool:
         """Prepare the updater's Wi-Fi transport before release work begins."""
@@ -69,7 +77,7 @@ class UpdateWifiOrchestrator:
     async def restore_hotspot(self) -> bool:
         """Restore the hotspot after update work completes or is interrupted."""
 
-        return await self._controller.restore_hotspot()
+        return await self._hotspot.restore_hotspot()
 
     async def recover_interrupted_update(self) -> None:
         """Recover updater Wi-Fi state after a previously interrupted job."""
@@ -77,7 +85,7 @@ class UpdateWifiOrchestrator:
         if self._tracker.status.transport != UpdateTransport.wifi:
             return
         self._tracker.log("startup_recover: cleaning up uplink connection")
-        await self._controller.cleanup_uplink()
+        await self._hotspot.cleanup_uplink()
 
         self._tracker.log("startup_recover: restoring hotspot")
         restored = await self.restore_hotspot()

@@ -7,8 +7,10 @@ from typing import TYPE_CHECKING
 
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
-from vibesensor.shared.boundaries.reporting.payload_gate import has_projectable_report_payload
-from vibesensor.shared.boundaries.reporting.summary_codec import report_summary_from_mapping
+from vibesensor.shared.boundaries.reporting.payload import (
+    report_summary_from_mapping,
+    require_projectable_report_payload,
+)
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_persisted_analysis,
     test_run_from_summary,
@@ -37,16 +39,9 @@ def _default_report_filename(payload: Mapping[str, object]) -> str:
     return f"{safe_filename(run_id)}_report.pdf"
 
 
-def _require_projectable_report_payload(payload: Mapping[str, object]) -> None:
-    if not has_projectable_report_payload(payload):
-        raise ValueError(
-            "Report payload must include findings or top_causes lists for report preparation"
-        )
-
-
 def _reconstruct_report_test_run(payload: Mapping[str, object]) -> TestRun:
     """Rebuild the report domain aggregate from one canonical projectable payload."""
-    _require_projectable_report_payload(payload)
+    require_projectable_report_payload(payload)
     return test_run_from_summary(payload)
 
 
@@ -105,7 +100,7 @@ def prepare_persisted_report_input(
     cache_key: ReportPdfCacheKey | None = None,
 ) -> PreparedReportInput:
     """Prepare a persisted history payload for domain-first report mapping."""
-    _require_projectable_report_payload(analysis)
+    require_projectable_report_payload(analysis)
     return _build_prepared_report_input(
         analysis,
         domain_test_run=test_run_from_persisted_analysis(analysis),

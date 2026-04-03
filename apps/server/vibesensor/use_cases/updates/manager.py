@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
+from vibesensor.shared.exceptions import UpdateError
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdateRequest,
@@ -78,12 +79,17 @@ class UpdateManager:
         self,
         request: UpdateRequest,
     ) -> None:
-        await self._runtime.executor.run(
-            workflow_factory=lambda: self._runtime.coordinator_factory().execute(request),
-            timeout_s=UPDATE_TIMEOUT_S,
-            on_timeout=lambda: self._runtime.lifecycle.handle_timeout(UPDATE_TIMEOUT_S),
-            on_cancelled=self._runtime.lifecycle.handle_cancelled,
-            on_unexpected=self._runtime.lifecycle.handle_unexpected,
-            cleanup=self._runtime.lifecycle.cleanup_after_update,
-            on_cleanup_error=self._runtime.lifecycle.handle_cleanup_error,
-        )
+        try:
+            await self._runtime.executor.run(
+                workflow_factory=lambda: self._runtime.coordinator_factory().execute(request),
+                timeout_s=UPDATE_TIMEOUT_S,
+                on_timeout=lambda: self._runtime.lifecycle.handle_timeout(UPDATE_TIMEOUT_S),
+                on_cancelled=self._runtime.lifecycle.handle_cancelled,
+                cleanup=self._runtime.lifecycle.cleanup_after_update,
+                on_cleanup_error=self._runtime.lifecycle.handle_cleanup_error,
+            )
+        except UpdateError:
+            raise
+        except Exception as exc:
+            self._runtime.lifecycle.handle_unexpected(exc)
+            raise

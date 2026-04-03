@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
@@ -24,7 +26,6 @@ from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     NextStep,
-    ReportTemplateData,
 )
 
 from .action_matrix import draw_action_steps_continuation_page, draw_action_steps_panel
@@ -38,52 +39,49 @@ from .tables import _draw_table
 
 __all__ = ["_appendix_a_page"]
 
+if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.report_types import AppendixAPageRenderPlan
+
 
 def _appendix_a_page(
     c: Canvas,
-    data: ReportTemplateData,
-    *,
-    steps: list[NextStep] | None = None,
-    start_number: int = 1,
-    continued: bool = False,
+    plan: AppendixAPageRenderPlan,
 ) -> None:
     title_key = (
         "REPORT_RECAPTURE_GUIDANCE_TITLE"
-        if data.appendix_a.mode == "recapture"
+        if plan.appendix.mode == "recapture"
         else "REPORT_APPENDIX_A_TITLE"
     )
     title_y = _draw_title_bar(
         c,
-        title=_tr(data.lang, title_key),
+        title=_tr(plan.lang, title_key),
         width=PAGE_W - 2 * MARGIN,
         page_top=PAGE_H - MARGIN,
     )
-    if data.appendix_a.mode == "recapture":
-        draw_capture_guidance_page(c, data, title_y)
-    elif continued:
+    if plan.appendix.mode == "recapture":
+        draw_capture_guidance_page(c, plan, title_y)
+    elif plan.continued:
         draw_action_steps_continuation_page(
             c,
-            steps=steps or [],
-            lang=data.lang,
+            steps=list(plan.steps),
+            lang=plan.lang,
             title_y=title_y,
-            start_number=start_number,
+            start_number=plan.start_number,
         )
     else:
         _draw_worksheet_page(
             c,
-            data.appendix_a,
-            data,
-            data.lang,
+            plan.appendix,
+            plan.lang,
             title_y,
-            steps=steps or data.next_steps,
-            start_number=start_number,
+            steps=list(plan.steps),
+            start_number=plan.start_number,
         )
 
 
 def _draw_worksheet_page(
     c: Canvas,
     appendix: AppendixAData,
-    data: ReportTemplateData,
     lang: str,
     title_y: float,
     *,

@@ -3,14 +3,13 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable, Coroutine
 
-from vibesensor.shared.exceptions import UpdateError
+from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
 
 BeforeStartCallback = Callable[[], None]
 CleanupCallback = Callable[[], Awaitable[None]]
-UnexpectedCallback = Callable[[Exception], None]
 CleanupErrorCallback = Callable[[Exception], None]
 VoidCallback = Callable[[], None]
-WorkflowFactory = Callable[[], Awaitable[None]]
+WorkflowFactory = Callable[[], Awaitable[object]]
 TaskCoroutineFactory = Callable[[], Coroutine[object, object, None]]
 
 
@@ -64,7 +63,6 @@ class UpdateJobExecutor:
         timeout_s: float,
         on_timeout: VoidCallback,
         on_cancelled: VoidCallback,
-        on_unexpected: UnexpectedCallback,
         cleanup: CleanupCallback,
         on_cleanup_error: CleanupErrorCallback,
     ) -> None:
@@ -80,7 +78,6 @@ class UpdateJobExecutor:
             on_cancelled()
             primary_error = exc
         except Exception as exc:
-            on_unexpected(exc)
             primary_error = exc
 
         cleanup_error: Exception | None = None
@@ -93,8 +90,8 @@ class UpdateJobExecutor:
             cleanup_error = exc
 
         if cancelled and cleanup_error is not None:
-            raise cleanup_error
+            raise UpdateCleanupError(f"Cleanup failed: {cleanup_error}") from cleanup_error
         if primary_error is not None:
             raise primary_error
         if cleanup_error is not None:
-            raise cleanup_error
+            raise UpdateCleanupError(f"Cleanup failed: {cleanup_error}") from cleanup_error

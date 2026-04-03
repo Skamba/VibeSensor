@@ -1,10 +1,16 @@
 from __future__ import annotations
 
-from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessSensorObservation
+from vibesensor.domain import AnalysisSettingsSnapshot, CaptureReadinessPolicy, RunContextSnapshot
+from vibesensor.use_cases.run.capture_readiness_observation import (
+    CaptureReadinessObservation,
+    CaptureReadinessSensorObservation,
+    CaptureReadinessSpeedObservation,
+)
 from vibesensor.use_cases.run.capture_readiness_state import (
     CaptureReadinessState,
     CaptureReadinessStateConfig,
     CaptureReadinessStateInput,
+    build_capture_readiness_state_input,
 )
 
 
@@ -98,3 +104,28 @@ def test_capture_readiness_state_clears_speed_history_when_sample_is_invalid() -
     assert len(first.speed_history) == 1
     assert len(second.speed_history) == 2
     assert reset.speed_history == ()
+
+
+def test_build_capture_readiness_state_input_filters_non_live_speed_samples() -> None:
+    observation = CaptureReadinessObservation(
+        observed_at_mono_s=100.0,
+        active_sensors=(_sensor(),),
+        run_context=RunContextSnapshot(
+            analysis_settings=AnalysisSettingsSnapshot(),
+            car=None,
+        ),
+        speed=CaptureReadinessSpeedObservation(
+            source="manual",
+            speed_kmh=80.0,
+            age_s=0.1,
+            fallback_active=False,
+        ),
+        obd=None,
+    )
+
+    state_input = build_capture_readiness_state_input(
+        policy=CaptureReadinessPolicy(),
+        observation=observation,
+    )
+
+    assert state_input.speed_sample_kmh is None
