@@ -34,9 +34,9 @@ from test_support.sample_scenarios import (
     make_transient_samples,
 )
 
-from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
+from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
+from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
 # ---------------------------------------------------------------------------
 # Type alias

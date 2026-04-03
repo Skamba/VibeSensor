@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern
-from vibesensor.adapters.pdf.presentation import order_label_human
-from vibesensor.adapters.pdf.report_data import (
+from vibesensor.adapters.pdf.models import (
     PartSuggestion,
     SystemFindingCard,
 )
+from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern
+from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.report_i18n import human_source
 
 if TYPE_CHECKING:

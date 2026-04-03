@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
+from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 

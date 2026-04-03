@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
+from vibesensor.adapters.pdf.models import PatternEvidence
 from vibesensor.adapters.pdf.pattern_parts import why_parts_listed
 from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.adapters.pdf.report_context import ReportMappingContext
-from vibesensor.adapters.pdf.report_data import PatternEvidence
 from vibesensor.domain import Finding, VibrationOrigin
 from vibesensor.report_i18n import human_source, resolve_i18n
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation

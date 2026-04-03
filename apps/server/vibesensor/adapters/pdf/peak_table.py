@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 
+from vibesensor.adapters.pdf.models import FindingPresentation, PeakRow
 from vibesensor.adapters.pdf.presentation import order_label_human, peak_classification_text
-from vibesensor.adapters.pdf.report_data import FindingPresentation, PeakRow
 from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.domain import VibrationSource
 from vibesensor.shared.json_utils import as_float_or_none as _as_float

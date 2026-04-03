@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from reportlab.graphics.shapes import Circle, PolyLine, Rect, String
 
+from vibesensor.adapters.pdf.models import TimelineGraphData, TimelineGraphInterval
 from vibesensor.adapters.pdf.pdf_drawing import _hex
 from vibesensor.adapters.pdf.pdf_style import REPORT_COLORS
 from vibesensor.adapters.pdf.pdf_timeline_render import run_timeline_graph
-from vibesensor.adapters.pdf.report_data import TimelineGraphData, TimelineGraphInterval
 
 
 def _color_hex(color: object) -> str | None:

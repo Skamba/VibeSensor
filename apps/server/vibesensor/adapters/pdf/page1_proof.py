@@ -7,6 +7,7 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.adapters.pdf.page1_common import draw_label_value
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
@@ -21,7 +22,6 @@ from vibesensor.adapters.pdf.pdf_style import (
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _wrap_lines
 from vibesensor.adapters.pdf.pdf_timeline_render import run_timeline_graph
-from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
 __all__ = ["draw_proof_block", "draw_timeline_block"]
 

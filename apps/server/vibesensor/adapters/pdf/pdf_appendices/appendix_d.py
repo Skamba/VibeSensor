@@ -5,10 +5,10 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.adapters.pdf.panels._panel_title_bar import _draw_title_bar
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import MARGIN, PAGE_H, PAGE_W, PANEL_HEADER_H
-from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.report_i18n import tr as _tr
 
 from .tables import _draw_traceability_row

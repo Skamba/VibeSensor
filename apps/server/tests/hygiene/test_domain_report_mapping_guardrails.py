@@ -7,7 +7,7 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
     """``prepare_report_mapping_context`` must consume a prepared domain aggregate."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.mapping import prepare_report_input
+    from vibesensor.adapters.pdf.assembly import prepare_report_input
     from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
     from vibesensor.domain import TestRun
 
@@ -37,7 +37,7 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
 
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
-    from vibesensor.adapters.pdf.mapping import (
+    from vibesensor.adapters.pdf.assembly import (
         PrimaryCandidateContext,
         ReportMappingContext,
         build_system_cards,
@@ -105,7 +105,7 @@ def test_map_summary_produces_report_with_domain_findings() -> None:
     """map_summary must produce report data using domain-first pipeline."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
+    from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
 
     summary = {
         "run_id": "test-map",
@@ -144,7 +144,7 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     """
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.mapping import (
+    from vibesensor.adapters.pdf.assembly import (
         prepare_report_input,
         resolve_primary_report_candidate,
     )
@@ -198,7 +198,7 @@ def test_prepared_report_input_no_longer_exposes_summary_payload() -> None:
     """Prepared report inputs must expose explicit fields instead of a raw summary dict."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.mapping import prepare_report_input
+    from vibesensor.adapters.pdf.assembly import prepare_report_input
 
     prepared = prepare_report_input(
         {
@@ -236,7 +236,7 @@ def test_next_steps_consume_prepared_actions() -> None:
 
 
 def test_mapping_module_no_longer_reexports_raw_summary_report_builder() -> None:
-    import vibesensor.adapters.pdf.mapping as mapping
+    import vibesensor.adapters.pdf.assembly as mapping
 
     assert not hasattr(mapping, "build_report_from_summary")
 
@@ -244,7 +244,7 @@ def test_mapping_module_no_longer_reexports_raw_summary_report_builder() -> None
 def test_mapping_section_builders_consume_prepared_display_facts() -> None:
     from inspect import signature
 
-    import vibesensor.adapters.pdf.mapping as mapping
+    import vibesensor.adapters.pdf.assembly as mapping
 
     verdict_params = signature(mapping._build_verdict_page_data).parameters
     assert "verdict" in verdict_params

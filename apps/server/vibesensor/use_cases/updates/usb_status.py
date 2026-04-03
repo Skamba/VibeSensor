@@ -2,26 +2,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol
 
-from vibesensor.use_cases.updates.models import (
-    UpdatePhase,
-    UpdateRequest,
-    UpdateTransport,
-    UsbInternetStatus,
-)
-from vibesensor.use_cases.updates.runner import (
-    CommandRunner,
-    UpdateCommandExecutor,
-    build_sudo_args,
-)
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
-from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
+from vibesensor.use_cases.updates.models import UsbInternetStatus
+from vibesensor.use_cases.updates.runner import CommandRunner, build_sudo_args
 
 _SYS_CLASS_NET = Path("/sys/class/net")
 _USB_NETWORK_DRIVERS = frozenset({"cdc_ether", "cdc_ncm", "ipheth", "rndis_host"})
 _USB_ACTIVATION_STATES = frozenset({"disconnected", "unavailable", "unknown"})
 _USB_ACTIVATION_WAIT_S = 15
+
+__all__ = [
+    "UsbInternetStatusReader",
+    "UsbInternetStatusService",
+    "parse_nmcli_device_status",
+]
+
+
+class UsbInternetStatusReader(Protocol):
+    async def snapshot(self, *, activate: bool = False) -> UsbInternetStatus: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,7 +101,7 @@ def _candidate_interfaces(*, sys_class_net: Path = _SYS_CLASS_NET) -> tuple[str,
     return tuple(candidates)
 
 
-def _parse_nmcli_device_status(stdout: str) -> dict[str, _NmcliDeviceStatus]:
+def parse_nmcli_device_status(stdout: str) -> dict[str, _NmcliDeviceStatus]:
     statuses: dict[str, _NmcliDeviceStatus] = {}
     for raw_line in stdout.splitlines():
         line = raw_line.strip()
@@ -249,7 +248,7 @@ class UsbInternetStatusService:
             ["nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status"],
             timeout=10,
         )
-        device_status = _parse_nmcli_device_status(stdout) if rc == 0 else {}
+        device_status = parse_nmcli_device_status(stdout) if rc == 0 else {}
         if rc != 0:
             nmcli_error = (stderr or stdout or f"exit {rc}").strip()
 
@@ -303,7 +302,7 @@ class UsbInternetStatusService:
                         ipv4_addresses=ipv4_addresses,
                         has_default_route=has_default_route,
                     ),
-                ),
+                )
             )
 
         return candidate_statuses
@@ -362,76 +361,3 @@ class UsbInternetStatusService:
                 diagnostic=f"{best.diagnostic} Auto-activation failed ({activation_error}).",
             )
         return _status_from_candidate(best)
-
-
-class UpdateUsbInternetOrchestrator:
-    """Validate and reuse an already-present USB internet uplink for updates."""
-
-    __slots__ = ("_readiness", "_status_service", "_tracker")
-    transport = UpdateTransport.usb_internet
-
-    def __init__(
-        self,
-        *,
-        status_service: UsbInternetStatusService,
-        commands: UpdateCommandExecutor,
-        tracker: UpdateStatusTracker,
-        config: UpdateWifiConfig,
-    ) -> None:
-        self._status_service = status_service
-        self._tracker = tracker
-        self._readiness = UpdateWifiReadiness(
-            commands=commands,
-            tracker=tracker,
-            config=config,
-        )
-
-    async def prepare(self, request: UpdateRequest) -> bool:
-        """Prepare USB internet transport before release work begins."""
-
-        del request
-        self._tracker.transition(UpdatePhase.connecting_usb_internet)
-        return await self.ensure_uplink_ready()
-
-    async def ensure_uplink_ready(self) -> bool:
-        if isinstance(self._status_service, UsbInternetStatusService):
-            status = await self._status_service.snapshot(activate=True)
-        else:
-            status = await self._status_service.snapshot()
-        if not status.detected:
-            self._tracker.fail(
-                UpdatePhase.connecting_usb_internet,
-                "USB internet not detected",
-                status.diagnostic,
-            )
-            return False
-        if not status.usable:
-            self._tracker.fail(
-                UpdatePhase.connecting_usb_internet,
-                "USB internet detected but not usable",
-                status.diagnostic,
-            )
-            return False
-        self._tracker.set_uplink_interface(status.interface_name)
-        if status.connection_name:
-            self._tracker.log(
-                f"Using existing USB internet connection '{status.connection_name}' on "
-                f"{status.interface_name}",
-            )
-        else:
-            self._tracker.log(f"Using existing USB internet on {status.interface_name}")
-        return await self._readiness.wait_for_dns_ready(
-            phase=UpdatePhase.connecting_usb_internet,
-            readiness_subject="USB internet",
-            failure_message="USB internet detected, but internet/DNS is not ready",
-        )
-
-    async def complete_success(self, message: str) -> bool:
-        self._tracker.mark_success(message)
-        return True
-
-    async def cleanup_after_update(self) -> None:
-        return None
-
-    async def recover_interrupted_update(self) -> None:
-        return None

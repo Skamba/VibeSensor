@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 from _update_manager_test_helpers import FakeRunner
 
-from vibesensor.use_cases.updates.usb_internet import (
+from vibesensor.use_cases.updates.usb_status import (
     UsbInternetStatusService,
-    _parse_nmcli_device_status,
+    parse_nmcli_device_status,
 )
 
 
@@ -92,7 +92,7 @@ class _UsbActivationFailureRunner(FakeRunner):
 
 
 def test_parse_nmcli_device_status_normalizes_missing_connection_name() -> None:
-    statuses = _parse_nmcli_device_status("usb0:ethernet:connected:--\n")
+    statuses = parse_nmcli_device_status("usb0:ethernet:connected:--\n")
 
     assert statuses["usb0"].interface_name == "usb0"
     assert statuses["usb0"].device_type == "ethernet"

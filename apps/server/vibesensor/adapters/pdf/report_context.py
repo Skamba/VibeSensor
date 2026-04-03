@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.adapters.pdf.report_data import PatternEvidence
-from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
+from vibesensor.adapters.pdf.models import PatternEvidence
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import (
     format_timestamp_in_recorded_timezone,
