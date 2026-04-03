@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from collections.abc import Callable
 from pathlib import Path
 
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
@@ -21,7 +20,11 @@ from vibesensor.use_cases.updates.models import (
     validate_update_request,
 )
 from vibesensor.use_cases.updates.recovery import InterruptedUpdateRecovery
-from vibesensor.use_cases.updates.release_application import UpdateReleaseApplication
+from vibesensor.use_cases.updates.release_coordinator import UpdateReleaseCoordinator
+from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
+from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
+from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
+from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
@@ -37,7 +40,6 @@ from vibesensor.use_cases.updates.validation import (
     MIN_FREE_DISK_BYTES,
 )
 from vibesensor.use_cases.updates.wifi import (
-    UpdateWifiConfig,
     UpdateWifiOrchestrator,
     build_default_wifi_config,
 )
@@ -52,73 +54,6 @@ DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
 
-CommandExecutorFactory = Callable[
-    [CommandRunner, UpdateStatusTracker],
-    UpdateCommandExecutor,
-]
-WifiOrchestratorFactory = Callable[
-    [UpdateCommandExecutor, UpdateStatusTracker, UpdateWifiConfig],
-    UpdateWifiOrchestrator,
-]
-InstallerFactory = Callable[
-    [UpdateCommandExecutor, UpdateStatusTracker, UpdateInstallerConfig],
-    UpdateInstaller,
-]
-FirmwareRefresherFactory = Callable[
-    [UpdateCommandExecutor, UpdateStatusTracker, Path, float],
-    FirmwareRefresher,
-]
-UsbInternetOrchestratorFactory = Callable[
-    [UsbInternetStatusService, UpdateCommandExecutor, UpdateStatusTracker, UpdateWifiConfig],
-    UpdateUsbInternetOrchestrator,
-]
-
-
-def _default_command_executor(
-    runner: CommandRunner,
-    tracker: UpdateStatusTracker,
-) -> UpdateCommandExecutor:
-    return UpdateCommandExecutor(runner=runner, tracker=tracker)
-
-
-def _default_wifi_orchestrator(
-    commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
-    config: UpdateWifiConfig,
-) -> UpdateWifiOrchestrator:
-    return UpdateWifiOrchestrator(commands=commands, tracker=tracker, config=config)
-
-
-def _default_installer(
-    commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
-    config: UpdateInstallerConfig,
-) -> UpdateInstaller:
-    return UpdateInstaller(commands=commands, tracker=tracker, config=config)
-
-
-def _default_firmware_refresher(
-    commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
-    repo: Path,
-    timeout_s: float,
-) -> FirmwareRefresher:
-    return FirmwareRefresher(commands=commands, tracker=tracker, repo=repo, timeout_s=timeout_s)
-
-
-def _default_usb_internet_orchestrator(
-    status_service: UsbInternetStatusService,
-    commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
-    config: UpdateWifiConfig,
-) -> UpdateUsbInternetOrchestrator:
-    return UpdateUsbInternetOrchestrator(
-        status_service=status_service,
-        commands=commands,
-        tracker=tracker,
-        config=config,
-    )
-
 
 class UpdateManager:
     """Public update API used by routes and runtime lifecycle."""
@@ -132,20 +67,15 @@ class UpdateManager:
         wifi_ifname: str = "wlan0",
         rollback_dir: str | None = None,
         state_store: UpdateStateStore | None = None,
-        command_executor_factory: CommandExecutorFactory = _default_command_executor,
-        wifi_orchestrator_factory: WifiOrchestratorFactory = _default_wifi_orchestrator,
-        installer_factory: InstallerFactory = _default_installer,
-        firmware_refresher_factory: FirmwareRefresherFactory = _default_firmware_refresher,
         usb_internet_service: UsbInternetStatusService | None = None,
-        usb_internet_orchestrator_factory: UsbInternetOrchestratorFactory = (
-            _default_usb_internet_orchestrator
-        ),
     ) -> None:
         self._runner = runner or CommandRunner()
         self._repo_path = repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor")
         self._repo = Path(self._repo_path)
-        self._ap_con_name = ap_con_name
-        self._wifi_ifname = wifi_ifname
+        self._wifi_config = build_default_wifi_config(
+            ap_con_name=ap_con_name,
+            wifi_ifname=wifi_ifname,
+        )
         self._rollback_dir = Path(
             rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR),
         )
@@ -157,16 +87,9 @@ class UpdateManager:
         )
         self._tracker.set_runtime(collect_runtime_details(self._repo))
         self._executor = UpdateJobExecutor(task_name="system-update")
-
-        # Store factories for collaborator construction.
-        self._command_executor_factory = command_executor_factory
-        self._wifi_orchestrator_factory = wifi_orchestrator_factory
-        self._installer_factory = installer_factory
-        self._firmware_refresher_factory = firmware_refresher_factory
         self._usb_internet_service = usb_internet_service or UsbInternetStatusService(
             runner=self._runner
         )
-        self._usb_internet_orchestrator_factory = usb_internet_orchestrator_factory
 
         self._lifecycle = UpdateJobLifecycleHandler(
             tracker=self._tracker,
@@ -252,49 +175,22 @@ class UpdateManager:
                 password=password or "",
             )
         )
+        workflow = self._build_workflow()
+        await workflow.execute(request)
+
+    def _build_workflow(self) -> UpdateWorkflow:
         commands = self._build_command_executor()
-        workflow = UpdateWorkflow(
+        return UpdateWorkflow(
             tracker=self._tracker,
             commands=commands,
             transport_sessions=self._build_transport_sessions(commands=commands),
-            release_application=self._build_release_application(commands),
+            release_coordinator=self._build_release_coordinator(commands),
             cancel_requested=self._executor.cancel_requested,
             validation_config=self._validation_config,
         )
-        await workflow.execute(request)
 
     def _build_command_executor(self) -> UpdateCommandExecutor:
-        return self._command_executor_factory(self._runner, self._tracker)
-
-    def _build_wifi_orchestrator(
-        self,
-        *,
-        commands: UpdateCommandExecutor | None = None,
-    ) -> UpdateWifiOrchestrator:
-        wifi_config = self._build_wifi_config()
-        return self._wifi_orchestrator_factory(
-            commands or self._build_command_executor(),
-            self._tracker,
-            wifi_config,
-        )
-
-    def _build_wifi_config(self) -> UpdateWifiConfig:
-        return build_default_wifi_config(
-            ap_con_name=self._ap_con_name,
-            wifi_ifname=self._wifi_ifname,
-        )
-
-    def _build_usb_internet_orchestrator(
-        self,
-        *,
-        commands: UpdateCommandExecutor | None = None,
-    ) -> UpdateUsbInternetOrchestrator:
-        return self._usb_internet_orchestrator_factory(
-            self._usb_internet_service,
-            commands or self._build_command_executor(),
-            self._tracker,
-            self._build_wifi_config(),
-        )
+        return UpdateCommandExecutor(runner=self._runner, tracker=self._tracker)
 
     def _build_transport_sessions(
         self,
@@ -303,49 +199,62 @@ class UpdateManager:
     ) -> UpdateTransportSessions:
         active_commands = commands or self._build_command_executor()
         return UpdateTransportSessions(
-            wifi=self._build_wifi_orchestrator(commands=active_commands),
-            usb_internet=self._build_usb_internet_orchestrator(commands=active_commands),
+            wifi=UpdateWifiOrchestrator(
+                commands=active_commands,
+                tracker=self._tracker,
+                config=self._wifi_config,
+            ),
+            usb_internet=UpdateUsbInternetOrchestrator(
+                status_service=self._usb_internet_service,
+                commands=active_commands,
+                tracker=self._tracker,
+                config=self._wifi_config,
+            ),
         )
-
-    def _build_installer(
-        self,
-        commands: UpdateCommandExecutor,
-    ) -> UpdateInstaller:
-        return self._installer_factory(commands, self._tracker, self._installer_config)
 
     def _build_firmware_refresher(
         self,
-        *,
-        commands: UpdateCommandExecutor | None = None,
+        commands: UpdateCommandExecutor,
     ) -> FirmwareRefresher:
-        return self._firmware_refresher_factory(
-            commands or self._build_command_executor(),
-            self._tracker,
-            self._repo,
-            ESP_FIRMWARE_REFRESH_TIMEOUT_S,
+        return FirmwareRefresher(
+            commands=commands,
+            tracker=self._tracker,
+            repo=self._repo,
+            timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
         )
 
-    def _build_release_application(
+    def _build_release_coordinator(
         self,
         commands: UpdateCommandExecutor,
-    ) -> UpdateReleaseApplication:
-        return UpdateReleaseApplication(
-            tracker=self._tracker,
+    ) -> UpdateReleaseCoordinator:
+        firmware_refresher = self._build_firmware_refresher(commands)
+        installer = UpdateInstaller(
             commands=commands,
-            installer=self._build_installer(commands),
-            firmware_refresher=self._build_firmware_refresher(commands=commands),
-            cancel_requested=self._executor.cancel_requested,
-            rollback_dir=self._rollback_dir,
-            service_name=UPDATE_SERVICE_NAME,
-            restart_unit=UPDATE_RESTART_UNIT,
+            tracker=self._tracker,
+            config=self._installer_config,
         )
-
-    async def _snapshot_for_rollback(self) -> bool:
-        commands = self._build_command_executor()
-        installer = self._build_installer(commands)
-        return await installer.snapshot_for_rollback()
-
-    async def _rollback(self) -> bool:
-        commands = self._build_command_executor()
-        installer = self._build_installer(commands)
-        return await installer.rollback()
+        return UpdateReleaseCoordinator(
+            tracker=self._tracker,
+            resolver=ServerReleaseResolver(
+                tracker=self._tracker,
+                rollback_dir=self._rollback_dir,
+            ),
+            stager=ServerReleaseStager(
+                tracker=self._tracker,
+                rollback_dir=self._rollback_dir,
+            ),
+            deployer=UpdateReleaseDeployer(
+                tracker=self._tracker,
+                installer=installer,
+                firmware_refresher=firmware_refresher,
+                cancel_requested=self._executor.cancel_requested,
+            ),
+            firmware_refresher=firmware_refresher,
+            restart_scheduler=UpdateRestartScheduler(
+                commands=commands,
+                tracker=self._tracker,
+                service_name=UPDATE_SERVICE_NAME,
+                restart_unit=UPDATE_RESTART_UNIT,
+            ),
+            cancel_requested=self._executor.cancel_requested,
+        )

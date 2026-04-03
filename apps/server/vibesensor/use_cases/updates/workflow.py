@@ -1,11 +1,11 @@
-"""Explicit update workflow over transport and release/application collaborators."""
+"""Explicit update workflow over transport and release collaborators."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
 from vibesensor.use_cases.updates.models import UpdateRequest
-from vibesensor.use_cases.updates.release_application import UpdateReleaseApplication
+from vibesensor.use_cases.updates.release_coordinator import UpdateReleaseCoordinator
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
@@ -18,7 +18,7 @@ class UpdateWorkflow:
     __slots__ = (
         "_cancel_requested",
         "_commands",
-        "_release_application",
+        "_release_coordinator",
         "_tracker",
         "_transport_sessions",
         "_validation_config",
@@ -30,14 +30,14 @@ class UpdateWorkflow:
         tracker: UpdateStatusTracker,
         commands: UpdateCommandExecutor,
         transport_sessions: UpdateTransportSessions,
-        release_application: UpdateReleaseApplication,
+        release_coordinator: UpdateReleaseCoordinator,
         cancel_requested: Callable[[], bool],
         validation_config: UpdateValidationConfig,
     ) -> None:
         self._tracker = tracker
         self._commands = commands
         self._transport_sessions = transport_sessions
-        self._release_application = release_application
+        self._release_coordinator = release_coordinator
         self._cancel_requested = cancel_requested
         self._validation_config = validation_config
 
@@ -51,7 +51,7 @@ class UpdateWorkflow:
             return
         if self._cancelled():
             return
-        await self._release_application.execute(transport_session)
+        await self._release_coordinator.execute(transport_session)
 
     async def _validate(self, request: UpdateRequest) -> bool:
         if not await validate_prerequisites(

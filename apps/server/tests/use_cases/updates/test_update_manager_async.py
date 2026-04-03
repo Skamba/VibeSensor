@@ -99,7 +99,7 @@ class TestUpdateManagerAsync:
             patch("shutil.which", mock_which),
             patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
             patch(
-                "vibesensor.use_cases.updates.release_application.check_for_update",
+                "vibesensor.use_cases.updates.release_resolution.check_for_update",
                 side_effect=AssertionError("check_for_update should not run without privileges"),
             ),
         ):
@@ -161,35 +161,35 @@ class TestUpdateManagerAsync:
         assert connect_calls["count"] >= 2
 
     async def test_dns_not_ready_fails_with_clear_issue(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path)
-        runner.set_response("socket.getaddrinfo", 1, "", "Temporary failure in name resolution")
         with (
             patch_release_fetcher() as mock_fetcher,
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_READY_MIN_WAIT_S", 0.05),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_RETRY_INTERVAL_S", 0.01),
         ):
+            manager, runner, _ = setup_update_env(tmp_path)
+            runner.set_response("socket.getaddrinfo", 1, "", "Temporary failure in name resolution")
             await run_update(manager)
             mock_fetcher.assert_not_called()
         assert manager.status.state == UpdateState.failed
 
     async def test_dns_probe_retries_then_update_continues(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path, seed_artifacts=True)
-        original_run = runner.run
         probe_attempts = {"count": 0}
-
-        async def run_with_dns_retry(args, *, timeout=30, env=None):
-            if "socket.getaddrinfo" in " ".join(args):
-                probe_attempts["count"] += 1
-                if probe_attempts["count"] < 3:
-                    return (1, "", "Temporary failure in name resolution")
-            return await original_run(args, timeout=timeout, env=env)
-
-        runner.run = run_with_dns_retry
         with (
             patch_release_fetcher() as mock_fetcher,
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_READY_MIN_WAIT_S", 0.2),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_RETRY_INTERVAL_S", 0.01),
         ):
+            manager, runner, _ = setup_update_env(tmp_path, seed_artifacts=True)
+            original_run = runner.run
+
+            async def run_with_dns_retry(args, *, timeout=30, env=None):
+                if "socket.getaddrinfo" in " ".join(args):
+                    probe_attempts["count"] += 1
+                    if probe_attempts["count"] < 3:
+                        return (1, "", "Temporary failure in name resolution")
+                return await original_run(args, timeout=timeout, env=env)
+
+            runner.run = run_with_dns_retry
             mock_fetcher.return_value.check_update_available.return_value = None
             await run_update(manager)
 
@@ -399,21 +399,21 @@ class TestUpdateManagerAsync:
         assert not any("VibeSensor-Uplink" in command for command in commands)
 
     async def test_timeout_handling(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path)
-        original_run = runner.run
-
-        async def slow_run(args, *, timeout=30, env=None):
-            if "connection up VibeSensor-Uplink" in " ".join(args):
-                await asyncio.sleep(300)
-                return (0, "", "")
-            return await original_run(args, timeout=timeout, env=env)
-
-        runner.run = slow_run
         with (
             patch("shutil.which", mock_which),
             patch("vibesensor.use_cases.updates.manager.UPDATE_TIMEOUT_S", 0.5),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
         ):
+            manager, runner, _ = setup_update_env(tmp_path)
+            original_run = runner.run
+
+            async def slow_run(args, *, timeout=30, env=None):
+                if "connection up VibeSensor-Uplink" in " ".join(args):
+                    await asyncio.sleep(300)
+                    return (0, "", "")
+                return await original_run(args, timeout=timeout, env=env)
+
+            runner.run = slow_run
             manager.start("TestNet", "pass")
             task = manager.job_task
             assert task is not None

@@ -345,12 +345,12 @@ class TestStartupRecovery:
         _, store, runner, make_mgr = update_env
         store.save(_running_status(UpdatePhase.downloading))
         runner.default_response = (1, "", "nmcli not found")
-        mgr = make_mgr()
 
         with (
             patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_DELAY_S", 0),
         ):
+            mgr = make_mgr()
             await mgr.startup_recover()
 
         assert mgr.status.state == UpdateState.failed
@@ -460,7 +460,7 @@ class TestPersistenceDuringLifecycle:
             patch("shutil.which", _mock_which),
             patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
             patch(
-                "vibesensor.use_cases.updates.release_application.check_for_update",
+                "vibesensor.use_cases.updates.release_resolution.check_for_update",
                 side_effect=AssertionError("check_for_update should not run without privileges"),
             ),
         ):
