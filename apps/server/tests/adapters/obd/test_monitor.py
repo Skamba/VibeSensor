@@ -9,6 +9,7 @@ import pytest
 from vibesensor.adapters.obd.elm327 import ObdTransportError
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.monitor import OBDSpeedMonitor
+from vibesensor.shared.operational_errors import ExternalCommandError
 
 
 class _FakeClock:
@@ -193,7 +194,7 @@ def test_obd_monitor_resolves_stale_speed_to_manual_fallback() -> None:
 
 def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
     admin_client = MagicMock()
-    admin_client.device_info.side_effect = RuntimeError("sudo: a password is required")
+    admin_client.device_info.side_effect = ExternalCommandError("sudo: a password is required")
     monitor = OBDSpeedMonitor(
         admin_client=admin_client,
         session_factory=lambda: MagicMock(),

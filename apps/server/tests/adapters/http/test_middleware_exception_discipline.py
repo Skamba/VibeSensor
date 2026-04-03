@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
+from vibesensor.shared.operational_errors import ServiceUnavailableError
 
 
 def _app_with_endpoint(endpoint):
@@ -46,3 +47,14 @@ def test_request_middleware_lets_programming_errors_propagate() -> None:
 
     assert response.status_code == 500
     assert response.text == "Internal Server Error"
+
+
+def test_request_middleware_maps_operational_errors_to_503() -> None:
+    async def failing_endpoint() -> None:
+        raise ServiceUnavailableError("dependency unavailable")
+
+    with TestClient(_app_with_endpoint(failing_endpoint), raise_server_exceptions=False) as client:
+        response = client.get("/")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "dependency unavailable"}

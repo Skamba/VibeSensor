@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Query
 
-from vibesensor.adapters.http._helpers import OpenAPIResponses, domain_errors_to_http
+from vibesensor.adapters.http._helpers import OpenAPIResponses
+from vibesensor.adapters.http.error_boundary import route_errors_to_http
 from vibesensor.adapters.http.models import (
     EspFlashCancelResponse,
     EspFlashHistoryResponse,
@@ -80,7 +81,7 @@ def create_update_routes(
     )
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
         """Start an OTA software update using the supplied uplink Wi-Fi credentials."""
-        with domain_errors_to_http():
+        with route_errors_to_http():
             update_manager.start(
                 ssid=req.ssid,
                 password=req.password,
@@ -112,7 +113,7 @@ def create_update_routes(
     )
     async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
         """Start a new ESP32 firmware flash job with either auto-detect or an explicit port."""
-        with domain_errors_to_http():
+        with route_errors_to_http():
             job_id = esp_flash_manager.start(port=req.port, auto_detect=req.auto_detect)
         return EspFlashStartResponse(status="started", job_id=job_id)
 
