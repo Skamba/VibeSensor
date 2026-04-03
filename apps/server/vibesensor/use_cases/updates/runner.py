@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.status import UpdateStatusTracker
+    from vibesensor.use_cases.updates.status import UpdateStatusRecorder
 
 LOGGER = logging.getLogger(__name__)
 
@@ -160,11 +160,11 @@ _SENSITIVE_KEYS: frozenset[str] = frozenset(
 class UpdateCommandExecutor:
     """Executes commands and reports logs through the update status tracker."""
 
-    __slots__ = ("_runner", "_tracker")
+    __slots__ = ("_recorder", "_runner")
 
-    def __init__(self, *, runner: CommandRunner, tracker: UpdateStatusTracker) -> None:
+    def __init__(self, *, runner: CommandRunner, recorder: UpdateStatusRecorder) -> None:
         self._runner = runner
-        self._tracker = tracker
+        self._recorder = recorder
 
     async def run(
         self,
@@ -176,17 +176,17 @@ class UpdateCommandExecutor:
         env: dict[str, str] | None = None,
     ) -> tuple[int, str, str]:
         full_args = build_sudo_args(args) if sudo else list(args)
-        command = " ".join(self._tracker.redacted_args(full_args, set(_SENSITIVE_KEYS)))
+        command = " ".join(self._recorder.redacted_args(full_args, set(_SENSITIVE_KEYS)))
         if len(command) > 500:
             command = f"{command[:497]}..."
-        self._tracker.log(f"[{phase}] $ {command or '<empty>'}")
+        self._recorder.log(f"[{phase}] $ {command or '<empty>'}")
         rc, stdout, stderr = await self._runner.run(full_args, timeout=timeout, env=env)
         stdout_s = stdout.strip()
         stderr_s = stderr.strip()
         if stdout_s:
-            self._tracker.log(f"[{phase}] stdout: {stdout_s[:500]}")
+            self._recorder.log(f"[{phase}] stdout: {stdout_s[:500]}")
         if stderr_s:
-            self._tracker.log(f"[{phase}] stderr: {stderr_s[:500]}")
+            self._recorder.log(f"[{phase}] stderr: {stderr_s[:500]}")
         if rc != 0:
-            self._tracker.log(f"[{phase}] exit code: {rc}")
+            self._recorder.log(f"[{phase}] exit code: {rc}")
         return rc, stdout, stderr

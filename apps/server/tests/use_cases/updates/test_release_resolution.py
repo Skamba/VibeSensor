@@ -5,19 +5,23 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from test_support.update_status import build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.release_resolution import (
     ServerReleaseResolver,
     UpdateReleaseCheck,
 )
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 
 
 @pytest.mark.asyncio
 async def test_resolve_maps_update_check_fields(tmp_path: Path) -> None:
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
-    resolver = ServerReleaseResolver(tracker=tracker, rollback_dir=tmp_path / "rollback")
+    status = build_update_status_harness(tmp_path / "state.json")
+    resolver = ServerReleaseResolver(
+        status_controller=status.controller,
+        status_recorder=status.recorder,
+        rollback_dir=tmp_path / "rollback",
+    )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4")
 
     with patch(
@@ -39,8 +43,12 @@ async def test_resolve_maps_update_check_fields(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_resolve_propagates_release_check_failure(tmp_path: Path) -> None:
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
-    resolver = ServerReleaseResolver(tracker=tracker, rollback_dir=tmp_path / "rollback")
+    status = build_update_status_harness(tmp_path / "state.json")
+    resolver = ServerReleaseResolver(
+        status_controller=status.controller,
+        status_recorder=status.recorder,
+        rollback_dir=tmp_path / "rollback",
+    )
 
     with patch(
         "vibesensor.use_cases.updates.release_resolution.check_for_update",

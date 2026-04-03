@@ -11,7 +11,7 @@ from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolve
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
-    from vibesensor.use_cases.updates.status import UpdateStatusTracker
+    from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
     from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
 
 __all__ = [
@@ -53,25 +53,27 @@ class PlannedUpdateWorkflow:
 class UpdateReleasePlanner:
     """Interpret resolved release state into one canonical execution plan."""
 
-    __slots__ = ("_resolver", "_tracker")
+    __slots__ = ("_resolver", "_status_controller", "_status_recorder")
 
     def __init__(
         self,
         *,
-        tracker: UpdateStatusTracker,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
         resolver: ServerReleaseResolver,
     ) -> None:
-        self._tracker = tracker
+        self._status_controller = status_controller
+        self._status_recorder = status_recorder
         self._resolver = resolver
 
     async def plan(self, prepared: PreparedUpdateWorkflow) -> PlannedUpdateWorkflow:
         current_version = prepared.current_version
-        self._tracker.transition(UpdatePhase.checking)
-        self._tracker.log("Checking for available updates...")
+        self._status_controller.transition(UpdatePhase.checking)
+        self._status_recorder.log("Checking for available updates...")
 
         resolution = await self._resolver.resolve(current_version)
         if resolution.release is None:
-            self._tracker.log(f"Already up-to-date (version={current_version})")
+            self._status_recorder.log(f"Already up-to-date (version={current_version})")
             return PlannedUpdateWorkflow(
                 transport_session=prepared.transport_session,
                 execution_plan=RefreshFirmwarePlan(
@@ -80,7 +82,7 @@ class UpdateReleasePlanner:
                 ),
             )
 
-        self._tracker.log(
+        self._status_recorder.log(
             f"Update available: {current_version} → {resolution.release.version}",
         )
         return PlannedUpdateWorkflow(

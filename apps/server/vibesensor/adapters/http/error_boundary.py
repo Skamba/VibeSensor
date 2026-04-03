@@ -20,6 +20,7 @@ from vibesensor.shared.operational_errors import OperationalError, ServiceUnavai
 
 __all__ = [
     "http_exception_for_operational_error",
+    "http_exception_for_value_error",
     "http_exception_for_vibesensor_error",
     "install_http_exception_handlers",
     "http_status_for_operational_error",
@@ -63,6 +64,15 @@ def http_exception_for_vibesensor_error(exc: VibeSensorError) -> HTTPException:
     return HTTPException(status_code=500, detail=str(exc))
 
 
+def http_exception_for_value_error(
+    exc: ValueError,
+    *,
+    status_code: int,
+) -> HTTPException:
+    """Convert one explicitly handled request-validation ValueError into HTTP."""
+    return HTTPException(status_code=status_code, detail=str(exc))
+
+
 def _json_response_for_http_exception(exc: HTTPException) -> JSONResponse:
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
@@ -91,7 +101,7 @@ def install_http_exception_handlers(app: FastAPI) -> None:
 
 
 @contextmanager
-def route_errors_to_http(*, catch_value_error: int | None = None) -> Iterator[None]:
+def route_errors_to_http() -> Iterator[None]:
     """Translate route-facing domain and operational errors into HTTP responses."""
 
     try:
@@ -100,7 +110,3 @@ def route_errors_to_http(*, catch_value_error: int | None = None) -> Iterator[No
         raise http_exception_for_vibesensor_error(exc) from exc
     except OperationalError as exc:
         raise http_exception_for_operational_error(exc) from exc
-    except ValueError as exc:
-        if catch_value_error is None:
-            raise
-        raise HTTPException(status_code=catch_value_error, detail=str(exc)) from exc

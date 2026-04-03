@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from test_support.update_status import build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.models import (
@@ -19,11 +20,12 @@ from vibesensor.use_cases.updates.release_planner import (
     RefreshFirmwarePlan,
     UpdateReleasePlanner,
 )
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
 def _planner(tmp_path: Path) -> tuple[UpdateReleasePlanner, UpdateStatusTracker, MagicMock]:
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+    status = build_update_status_harness(tmp_path / "state.json")
+    tracker = status.tracker
     tracker.start_job(
         UpdateRequest(
             transport=UpdateTransport.wifi,
@@ -34,7 +36,15 @@ def _planner(tmp_path: Path) -> tuple[UpdateReleasePlanner, UpdateStatusTracker,
     tracker.transition(UpdatePhase.connecting_usb_internet)
     resolver = MagicMock()
     resolver.resolve = AsyncMock()
-    return UpdateReleasePlanner(tracker=tracker, resolver=resolver), tracker, resolver
+    return (
+        UpdateReleasePlanner(
+            status_controller=status.controller,
+            status_recorder=status.recorder,
+            resolver=resolver,
+        ),
+        tracker,
+        resolver,
+    )
 
 
 def _prepared_workflow() -> PreparedUpdateWorkflow:

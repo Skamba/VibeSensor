@@ -58,7 +58,8 @@ class UpdateManager:
         status = self._runtime.tracker.status
         if status.state != UpdateState.running or status.finished_at is not None:
             return
-        self._runtime.tracker.mark_interrupted("Update interrupted by server restart")
+        self._runtime.recorder.add_issue("startup", "Update interrupted by server restart")
+        self._runtime.status_controller.mark_interrupted()
         transport_session = self._runtime.transport_sessions.for_transport(status.transport)
         await transport_session.recover_interrupted_update()
-        self._runtime.tracker.persist()
+        self._runtime.status_controller.persist()

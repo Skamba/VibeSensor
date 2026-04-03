@@ -7,14 +7,14 @@ import vibesensor.shared.boundaries.reporting as shared_reporting
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_json_object,
 )
-from vibesensor.shared.boundaries.reporting import PreparedReportInput
-from vibesensor.shared.boundaries.reporting import document as shared_report_document
-from vibesensor.shared.boundaries.reporting import projection as shared_report_projection
-from vibesensor.use_cases.history import report_document
-from vibesensor.use_cases.history.report_preparation import (
+from vibesensor.shared.boundaries.reporting import (
+    PreparedReportInput,
     prepare_persisted_report_input,
     prepare_report_input,
 )
+from vibesensor.shared.boundaries.reporting import document as shared_report_document
+from vibesensor.shared.boundaries.reporting import projection as shared_report_projection
+from vibesensor.use_cases.history import report_document
 
 
 def _prepared_report_input() -> PreparedReportInput:

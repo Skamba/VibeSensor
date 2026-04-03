@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from test_support.update_status import build_update_status_harness
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
 from vibesensor.shared.exceptions import UpdateTransportError
@@ -16,7 +17,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi import UpdateWifiSession, build_default_wifi_config
 
 
@@ -27,19 +28,20 @@ def _build_session(
     restore_delay_s: float = 0.01,
 ) -> tuple[UpdateWifiSession, FakeRunner, UpdateStatusTracker]:
     runner = FakeRunner()
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+    status = build_update_status_harness(tmp_path / "state.json")
     config = replace(
         build_default_wifi_config(ap_con_name="VibeSensor-AP", wifi_ifname="wlan0"),
         hotspot_restore_retries=restore_retries,
         hotspot_restore_delay_s=restore_delay_s,
     )
-    commands = UpdateCommandExecutor(runner=runner, tracker=tracker)
+    commands = UpdateCommandExecutor(runner=runner, recorder=status.recorder)
     session = UpdateWifiSession(
         commands=commands,
-        tracker=tracker,
+        status_controller=status.controller,
+        status_recorder=status.recorder,
         config=config,
     )
-    return session, runner, tracker
+    return session, runner, status.tracker
 
 
 def _wifi_request(ssid: str = "TestNet", password: str = "") -> UpdateRequest:
