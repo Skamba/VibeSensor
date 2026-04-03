@@ -10,7 +10,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     EvidenceChainRow,
     MeasurementRow,
 )
-from vibesensor.shared.boundaries.reporting.payload import NormalizedReportSummary
+from vibesensor.shared.boundaries.reporting.summary import NormalizedReportSummary
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,

@@ -1,13 +1,14 @@
-"""Prepared report presentation shaping from semantic report facts."""
+"""Report-document composition from semantic report facts."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 
 from vibesensor.domain import Finding, LocationIntensitySummary, SuitabilityCheck, TestRun
 from vibesensor.report_i18n import human_source
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportPresentation
+from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
@@ -46,15 +47,24 @@ from vibesensor.use_cases.history.report_observation_matrix import (
     build_sensor_observation_matrix_rows,
 )
 
-__all__ = ["prepare_report_presentation"]
+__all__ = ["ReportDocumentComposition", "compose_report_document"]
 
 
-def prepare_report_presentation(
+@dataclass(frozen=True, slots=True)
+class ReportDocumentComposition:
+    """Document-facing verdict and appendix content composed from report facts."""
+
+    verdict_page: VerdictPageData
+    appendix_a: AppendixAData
+    appendix_b: AppendixBData
+
+
+def compose_report_document(
     *,
     aggregate: TestRun,
     report_facts: PreparedReportFacts,
     lang: str,
-) -> PreparedReportPresentation:
+) -> ReportDocumentComposition:
     """Build presentation-specific report sections from prepared semantic facts."""
 
     def tr(key: str, **kw: JsonValue) -> str:
@@ -113,7 +123,7 @@ def prepare_report_presentation(
         warnings=report_facts.warnings,
         tr=tr,
     )
-    return PreparedReportPresentation(
+    return ReportDocumentComposition(
         verdict_page=_build_verdict_page_data(
             aggregate=aggregate,
             primary_candidate_facts=report_facts.primary_candidate_facts,

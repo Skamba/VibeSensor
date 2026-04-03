@@ -4,13 +4,13 @@ import pytest
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.shared.boundaries.reporting.payload import report_summary_from_mapping
+from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as build_test_run_from_summary,
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
+from vibesensor.use_cases.history.report_document import compose_report_document
 from vibesensor.use_cases.history.report_facts import prepare_report_facts
-from vibesensor.use_cases.history.report_presentation import prepare_report_presentation
 
 
 def _summary() -> dict[str, object]:
@@ -116,10 +116,10 @@ def _prepare_facts(summary: dict[str, object], **kwargs: object):
     )
 
 
-def _prepare_presentation(summary: dict[str, object]):
+def _prepare_composition(summary: dict[str, object]):
     test_run = build_test_run_from_summary(summary)
     assert test_run is not None
-    return prepare_report_presentation(
+    return compose_report_document(
         aggregate=test_run,
         report_facts=prepare_report_facts(
             summary,
@@ -188,16 +188,16 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
     assert facts.timeline_intervals[1].has_fault_evidence is True
 
 
-def test_prepare_report_presentation_builds_workflow_document_sections() -> None:
+def test_compose_report_document_builds_workflow_document_sections() -> None:
     summary = _summary()
-    presentation = _prepare_presentation(summary)
+    composition = _prepare_composition(summary)
 
-    assert presentation.verdict_page.action_status
-    assert presentation.verdict_page.suspected_source
-    assert presentation.appendix_a.mode == "workflow"
-    assert len(presentation.appendix_a.ranked_candidates) == 1
-    assert presentation.appendix_b.coverage_label == presentation.verdict_page.coverage_label
-    assert len(presentation.verdict_page.footer_routes) == 4
+    assert composition.verdict_page.action_status
+    assert composition.verdict_page.suspected_source
+    assert composition.appendix_a.mode == "workflow"
+    assert len(composition.appendix_a.ranked_candidates) == 1
+    assert composition.appendix_b.coverage_label == composition.verdict_page.coverage_label
+    assert len(composition.verdict_page.footer_routes) == 4
 
 
 @pytest.mark.parametrize(
@@ -230,13 +230,13 @@ def test_prepare_report_facts_keeps_weak_spatial_wheel_findings_on_recapture_pat
     assert facts.action_status_key == "recapture_before_acting"
 
 
-def test_prepare_report_presentation_builds_recapture_document_guidance() -> None:
+def test_compose_report_document_builds_recapture_document_guidance() -> None:
     summary = _weak_spatial_order_summary(source="wheel/tire", order_label="1x wheel order")
-    presentation = _prepare_presentation(summary)
+    composition = _prepare_composition(summary)
 
-    assert presentation.appendix_a.mode == "recapture"
-    assert presentation.appendix_a.capture_issues
-    assert presentation.appendix_a.capture_changes
-    assert presentation.appendix_a.capture_conditions
-    assert presentation.verdict_page.reason_sentence == presentation.appendix_a.capture_issues[0]
-    assert len(presentation.verdict_page.footer_routes) == 1
+    assert composition.appendix_a.mode == "recapture"
+    assert composition.appendix_a.capture_issues
+    assert composition.appendix_a.capture_changes
+    assert composition.appendix_a.capture_conditions
+    assert composition.verdict_page.reason_sentence == composition.appendix_a.capture_issues[0]
+    assert len(composition.verdict_page.footer_routes) == 1

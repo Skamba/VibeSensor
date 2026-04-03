@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
-from vibesensor.shared.boundaries.reporting.payload import NormalizedReportSummary
+from vibesensor.shared.boundaries.reporting.summary import NormalizedReportSummary
 
 from .appendices import AppendixAData, AppendixBData, AppendixCData, AppendixDData
 from .panels import DataTrustItem, NextStep, PatternEvidence, SystemFindingCard
