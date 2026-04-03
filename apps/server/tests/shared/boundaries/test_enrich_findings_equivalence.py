@@ -37,8 +37,9 @@ class TestEnrichFindingsEquivalence:
             strongest_location="front-left",
             signatures_observed=["1x wheel", "harmonic pattern"],
             location_hotspot={
-                "best_location": "front-left",
-                "alternative_locations": ["front-right"],
+                "top_location": "front-left",
+                "ambiguous_locations": ["front-right"],
+                "ambiguous_location": True,
                 "dominance_ratio": 2.5,
                 "weak_spatial_separation": False,
             },
@@ -121,8 +122,9 @@ class TestEnrichFindingsEquivalence:
             dominance_ratio=3.1,
             signatures_observed=["1x wheel", "2x wheel"],
             location_hotspot={
-                "best_location": "rear-right",
-                "alternative_locations": ["rear-left"],
+                "top_location": "rear-right",
+                "ambiguous_locations": ["rear-left"],
+                "ambiguous_location": True,
                 "dominance_ratio": 3.1,
                 "weak_spatial_separation": False,
             },

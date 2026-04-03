@@ -16,25 +16,24 @@ from vibesensor.shared.types.history_analysis_contracts import (
 )
 from vibesensor.shared.types.json_types import JsonValue
 
+_SOURCES_BY_VALUE: dict[str, VibrationSource] = {
+    str(source.value): source for source in VibrationSource
+}
+
 
 def location_hotspot_from_payload(payload: Mapping[str, object]) -> LocationHotspot:
     """Decode a persisted or transported hotspot payload into a domain object."""
-    alts = payload.get("alternative_locations") or payload.get("ambiguous_locations") or []
+    alts = payload.get("ambiguous_locations") or []
     if not isinstance(alts, (list, tuple)):
         alts = []
-    alt_strings = [str(a) for a in alts]
-
-    # Include second_location as an alternative if not already present
-    second_loc = str(payload.get("second_location") or "").strip()
-    if second_loc and second_loc not in alt_strings:
-        alt_strings.append(second_loc)
+    alt_strings = [str(a) for a in alts if str(a).strip()]
 
     return LocationHotspot(
-        strongest_location=str(payload.get("top_location", payload.get("location", "")) or ""),
+        strongest_location=str(payload.get("top_location") or ""),
         dominance_ratio=_as_float(payload.get("dominance_ratio")),
         localization_confidence=_as_float(payload.get("localization_confidence")),
         weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
-        ambiguous=bool(payload.get("ambiguous_location", payload.get("ambiguous", False))),
+        ambiguous=bool(payload.get("ambiguous_location", False)),
         alternative_locations=tuple(alt_strings),
         location_count=_as_int(payload.get("location_count")),
     )
@@ -49,24 +48,16 @@ __all__ = [
 
 def _source_from_payload(
     payload: Mapping[str, object],
-    *,
-    fallback: VibrationSource | None = None,
 ) -> VibrationSource:
-    """Resolve a suspected source, preferring the provided fallback when present."""
-    if fallback is not None:
-        return fallback
+    """Resolve a suspected source from the canonical payload field."""
     raw_source = str(payload.get("suspected_source") or "").strip().lower()
-    try:
-        return VibrationSource(raw_source)
-    except ValueError:
-        return VibrationSource.UNKNOWN
+    return _SOURCES_BY_VALUE.get(raw_source, VibrationSource.UNKNOWN)
 
 
 def vibration_origin_from_payload(
     payload: Mapping[str, object],
     *,
     hotspot: LocationHotspot | None = None,
-    suspected_source: VibrationSource | None = None,
     dominance_ratio: float | None = None,
     speed_band: str | None = None,
 ) -> VibrationOrigin:
@@ -78,7 +69,7 @@ def vibration_origin_from_payload(
 
     resolved_speed_band = speed_band
     if resolved_speed_band is None:
-        raw_speed_band = payload.get("strongest_speed_band") or payload.get("speed_band")
+        raw_speed_band = payload.get("strongest_speed_band")
         if raw_speed_band is not None:
             normalized_speed_band = str(raw_speed_band).strip()
             resolved_speed_band = normalized_speed_band or None
@@ -92,7 +83,7 @@ def vibration_origin_from_payload(
         dominant_phase = normalized_dominant_phase or None
 
     return VibrationOrigin.from_analysis_inputs(
-        suspected_source=_source_from_payload(payload, fallback=suspected_source),
+        suspected_source=_source_from_payload(payload),
         hotspot=resolved_hotspot,
         dominance_ratio=(
             dominance_ratio
