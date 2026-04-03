@@ -14,7 +14,7 @@ from vibesensor.adapters.http.models import (
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
+from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.use_cases.history.exports import HistoryExportDownload
 from vibesensor.use_cases.history.reports import HistoryReportPdf

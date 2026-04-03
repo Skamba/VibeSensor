@@ -34,7 +34,8 @@ from vibesensor.infra.config.speed_source_runtime import (
 )
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
+from vibesensor.infra.runtime.processing_loop import ProcessingLoop
+from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool

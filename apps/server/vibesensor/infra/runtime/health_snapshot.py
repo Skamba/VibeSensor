@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal, Protocol
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingHealth, ProcessingLoopState
+from vibesensor.infra.runtime.processing_state import ProcessingHealth, ProcessingLoopState
 from vibesensor.shared.types.health_snapshot import HealthSnapshotData, RunRecorderHealthSnapshot
 from vibesensor.shared.types.payload_types import IntakeStatsPayload
 
