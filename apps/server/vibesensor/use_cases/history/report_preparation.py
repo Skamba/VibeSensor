@@ -6,11 +6,11 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.report_payload_gate import has_projectable_report_payload
-from vibesensor.shared.boundaries.report_prepared_input import (
+from vibesensor.shared.boundaries.reporting.contracts import (
     PreparedReportInput,
     build_report_renderer_payload,
 )
+from vibesensor.shared.boundaries.reporting.payload_gate import has_projectable_report_payload
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_persisted_analysis,
     test_run_from_summary,

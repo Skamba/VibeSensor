@@ -1,4 +1,4 @@
-"""Coordinate release resolution, staging, deployment, and post-install restart."""
+"""Canonical release-side update workflow after transport preparation succeeds."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
 
 
-class UpdateReleaseCoordinator:
-    """Own the non-transport update flow once uplink preparation has succeeded."""
+class UpdateReleaseWorkflow:
+    """Own release discovery, staging, deployment, and successful completion."""
 
     __slots__ = (
         "_cancel_requested",

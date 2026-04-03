@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import LocationIntensitySummary, TestRun
-from vibesensor.shared.boundaries.report_prepared_input import ReportCoverageSummary
+from vibesensor.shared.boundaries.reporting.contracts import ReportCoverageSummary
 
 __all__ = [
     "ReportCoverageSummary",

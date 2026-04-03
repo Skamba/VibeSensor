@@ -2,6 +2,17 @@ from __future__ import annotations
 
 from reportlab.lib.units import mm
 
+from vibesensor.adapters.pdf.models import (
+    AppendixAData,
+    AppendixCData,
+    AppendixDData,
+    DataTrustItem,
+    NextStep,
+    RankedCandidateRow,
+    ReportLabelValueRow,
+    ReportTemplateData,
+    VerdictPageData,
+)
 from vibesensor.adapters.pdf.page1_actions import estimate_actions_block_height
 from vibesensor.adapters.pdf.pdf_appendices import (
     _estimate_action_steps_panel_height,
@@ -13,17 +24,6 @@ from vibesensor.adapters.pdf.pdf_appendices import (
     _worksheet_first_actions_panel_height,
 )
 from vibesensor.adapters.pdf.pdf_style import GAP, MARGIN, PAGE_H, PAGE_W, PANEL_HEADER_H
-from vibesensor.adapters.pdf.report_data import (
-    AppendixAData,
-    AppendixCData,
-    AppendixDData,
-    DataTrustItem,
-    NextStep,
-    RankedCandidateRow,
-    ReportLabelValueRow,
-    ReportTemplateData,
-    VerdictPageData,
-)
 from vibesensor.report_i18n import tr as i18n_tr
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.adapters.pdf.mapping import (
+from vibesensor.adapters.pdf.assembly import (
     prepare_report_input,
     resolve_primary_report_candidate,
 )

@@ -26,7 +26,7 @@ async def test_prepare_start_marks_job_running_and_tracks_secret(tmp_path) -> No
     manager, _runner, _repo = setup_update_env(tmp_path)
     request = _wifi_request()
 
-    manager._lifecycle.prepare_start(request)
+    manager._runtime.lifecycle.prepare_start(request)
 
     assert manager.status.state == UpdateState.running
     assert manager.status.phase == UpdatePhase.validating
@@ -35,9 +35,9 @@ async def test_prepare_start_marks_job_running_and_tracks_secret(tmp_path) -> No
 
 def test_handle_timeout_marks_failed_and_logs(tmp_path) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
-    manager._tracker.start_job(_wifi_request("TestNet", ""))
+    manager._runtime.tracker.start_job(_wifi_request("TestNet", ""))
 
-    manager._lifecycle.handle_timeout(12.5)
+    manager._runtime.lifecycle.handle_timeout(12.5)
 
     assert manager.status.state == UpdateState.failed
     assert any(issue.message == "Update timed out after 12.5s" for issue in manager.status.issues)
@@ -46,10 +46,10 @@ def test_handle_timeout_marks_failed_and_logs(tmp_path) -> None:
 
 def test_handle_unexpected_marks_failed_and_logs_exception(tmp_path, caplog) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
-    manager._tracker.start_job(_wifi_request("TestNet", ""))
+    manager._runtime.tracker.start_job(_wifi_request("TestNet", ""))
 
     with caplog.at_level("ERROR"):
-        manager._lifecycle.handle_unexpected(RuntimeError("boom"))
+        manager._runtime.lifecycle.handle_unexpected(RuntimeError("boom"))
 
     assert manager.status.state == UpdateState.failed
     assert any(issue.message == "Unexpected error: boom" for issue in manager.status.issues)
@@ -66,7 +66,7 @@ async def test_cleanup_records_hotspot_restore_failure(tmp_path) -> None:
         manager.status.state = UpdateState.running
         manager.status.phase = UpdatePhase.installing
         runner.default_response = (1, "", "nmcli failed")
-        await manager._lifecycle.cleanup_after_update()
+        await manager._runtime.lifecycle.cleanup_after_update()
 
     assert any(
         issue.message == "Failed to restore hotspot during cleanup"
@@ -85,7 +85,7 @@ async def test_cleanup_re_raises_runtime_details_bug_after_finishing_cleanup(tmp
         side_effect=TypeError("runtime bug"),
     ):
         with pytest.raises(TypeError, match="runtime bug"):
-            await manager._lifecycle.cleanup_after_update()
+            await manager._runtime.lifecycle.cleanup_after_update()
 
     assert manager.status.finished_at is not None
     assert manager.status.state == UpdateState.failed
@@ -102,7 +102,7 @@ async def test_cleanup_re_raises_wifi_diagnostics_bug_after_finishing_cleanup(tm
         side_effect=TypeError("diagnostics bug"),
     ):
         with pytest.raises(TypeError, match="diagnostics bug"):
-            await manager._lifecycle.cleanup_after_update()
+            await manager._runtime.lifecycle.cleanup_after_update()
 
     assert manager.status.finished_at is not None
     assert manager.status.state == UpdateState.failed
@@ -119,20 +119,20 @@ async def test_cleanup_skips_wifi_cleanup_for_usb_transport(tmp_path) -> None:
         "vibesensor.use_cases.updates.wifi.wifi_orchestrator.parse_wifi_diagnostics",
         side_effect=AssertionError("Wi-Fi diagnostics should not run for USB transport"),
     ):
-        await manager._lifecycle.cleanup_after_update()
+        await manager._runtime.lifecycle.cleanup_after_update()
 
     assert manager.status.finished_at is not None
 
 
 def test_handle_cleanup_error_marks_failed_and_logs_exception(tmp_path, caplog) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
-    manager._tracker.start_job(_wifi_request("TestNet", ""))
+    manager._runtime.tracker.start_job(_wifi_request("TestNet", ""))
 
     with caplog.at_level("ERROR"):
         try:
             raise RuntimeError("cleanup bug")
         except RuntimeError as exc:
-            manager._lifecycle.handle_cleanup_error(exc)
+            manager._runtime.lifecycle.handle_cleanup_error(exc)
 
     assert manager.status.state == UpdateState.failed
     assert any(issue.message == "Cleanup failed: cleanup bug" for issue in manager.status.issues)

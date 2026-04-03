@@ -9,9 +9,9 @@ from vibesensor.adapters.pdf.action_cards import (
     draw_detailed_action_card,
     estimate_detailed_action_card_height,
 )
+from vibesensor.adapters.pdf.models import AppendixAData, NextStep
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import MARGIN, PAGE_W, PANEL_HEADER_H
-from vibesensor.adapters.pdf.report_data import AppendixAData, NextStep
 from vibesensor.report_i18n import tr as _tr
 
 from .layout import (

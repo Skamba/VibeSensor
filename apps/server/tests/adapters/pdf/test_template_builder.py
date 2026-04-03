@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-from vibesensor.adapters.pdf.report_data import (
+from vibesensor.adapters.pdf.models import (
     DataTrustItem,
     FindingPresentation,
     NextStep,
@@ -19,8 +19,8 @@ from vibesensor.adapters.pdf.template_builder import build_template_data
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
 if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.models import ReportTemplateData
     from vibesensor.adapters.pdf.report_context import ReportMappingContext
-    from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
 
 @dataclass

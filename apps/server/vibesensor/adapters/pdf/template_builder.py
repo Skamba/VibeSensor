@@ -8,8 +8,7 @@ while the orchestration layer (``mapping.py``) handles section resolution.
 from __future__ import annotations
 
 from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-from vibesensor.adapters.pdf.report_context import ReportMappingContext
-from vibesensor.adapters.pdf.report_data import (
+from vibesensor.adapters.pdf.models import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
@@ -24,6 +23,7 @@ from vibesensor.adapters.pdf.report_data import (
     SystemFindingCard,
     VerdictPageData,
 )
+from vibesensor.adapters.pdf.report_context import ReportMappingContext
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
 
