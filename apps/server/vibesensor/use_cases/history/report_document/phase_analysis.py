@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.domain import Finding, TestRun, speed_band_sort_key
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
+from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.report_presentation import display_location
 

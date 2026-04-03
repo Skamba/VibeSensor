@@ -1,4 +1,4 @@
-"""Canonical prepared report boundary shared by history and PDF mapping."""
+"""Semantic prepared reporting facts shared across presentation and rendering."""
 
 from __future__ import annotations
 
@@ -11,21 +11,11 @@ if TYPE_CHECKING:
         LocationIntensitySummary,
         RecommendedAction,
         SuitabilityCheck,
-        TestRun,
         VibrationOrigin,
     )
-    from vibesensor.shared.boundaries.reporting.document import (
-        AppendixAData,
-        AppendixBData,
-        VerdictPageData,
-    )
-    from vibesensor.shared.boundaries.reporting.payload import (
-        NormalizedReportSummary,
-        ReportTimelineInterval,
-    )
+    from vibesensor.shared.boundaries.reporting.payload import ReportTimelineInterval
     from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
     from vibesensor.shared.run_context_warning import RunContextWarning
-    from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 
 ActionStatusKey = Literal["recapture_before_acting", "action_ready_caution", "action_ready"]
 LocationConfidenceKey = Literal["weak", "mixed", "strong"]
@@ -34,7 +24,6 @@ __all__ = [
     "ActionStatusKey",
     "LocationConfidenceKey",
     "PreparedReportFacts",
-    "PreparedReportInput",
     "ReportCoverageSummary",
 ]
 
@@ -51,7 +40,7 @@ class ReportCoverageSummary:
 
 @dataclass(frozen=True, slots=True)
 class PreparedReportFacts:
-    """Semantic report facts consumed by the PDF adapter."""
+    """Semantic report facts independent from presentation-specific sections."""
 
     origin: VibrationOrigin | None
     origin_location: str
@@ -77,18 +66,3 @@ class PreparedReportFacts:
     alternative_source_visible: bool
     confidence_gap_to_alternative: float | None
     timeline_intervals: tuple[ReportTimelineInterval, ...]
-    verdict_page: VerdictPageData
-    appendix_a: AppendixAData
-    appendix_b: AppendixBData
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedReportInput:
-    """Mapping-ready report handoff with one canonical internal shape."""
-
-    summary: NormalizedReportSummary
-    language: str
-    filename: str
-    domain_test_run: TestRun
-    report_facts: PreparedReportFacts
-    cache_key: ReportPdfCacheKey | None = None

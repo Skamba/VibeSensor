@@ -6,11 +6,8 @@ from time import perf_counter
 
 from fastapi import FastAPI
 from starlette.datastructures import Headers, MutableHeaders
-from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from vibesensor.adapters.http.error_boundary import http_exception_for_operational_error
-from vibesensor.shared.operational_errors import OperationalError
 from vibesensor.shared.structured_logging import (
     REQUEST_ID_HEADER,
     bind_request_id,
@@ -62,27 +59,6 @@ class RequestLoggingMiddleware:
             await self.app(scope, receive, _send_with_request_id)
         except asyncio.CancelledError:
             raise
-        except OperationalError as exc:
-            request_failed = True
-            LOGGER.exception(
-                "http_request_failed",
-                extra=log_extra(
-                    event="http_request_failed",
-                    failure_kind="operational",
-                    method=method,
-                    path=path,
-                    status_code=status_code,
-                    duration_ms=round((perf_counter() - started_at) * 1000.0, 3),
-                ),
-            )
-            if response_started:
-                raise
-            http_error = http_exception_for_operational_error(exc)
-            operational_response = JSONResponse(
-                status_code=http_error.status_code,
-                content={"detail": http_error.detail},
-            )
-            await operational_response(scope, receive, _send_with_request_id)
         except Exception:
             request_failed = True
             LOGGER.exception(

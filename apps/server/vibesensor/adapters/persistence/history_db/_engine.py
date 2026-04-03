@@ -306,7 +306,7 @@ class SQLiteHistoryEngine:
                 backup_conn.close()
             temp_path.chmod(0o600)
             temp_path.replace(backup_path)
-        except Exception:
+        except (OSError, sqlite3.Error):
             temp_path.unlink(missing_ok=True)
             raise
         LOGGER.warning(

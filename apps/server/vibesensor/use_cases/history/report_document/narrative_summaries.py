@@ -6,7 +6,10 @@ from collections.abc import Callable
 
 from vibesensor.domain import TestRun
 from vibesensor.report_i18n import human_source
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
+from vibesensor.shared.boundaries.reporting import (
+    PreparedReportFacts,
+    PreparedReportPresentation,
+)
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,
@@ -33,6 +36,7 @@ def _proof_summary_text(
     aggregate: TestRun,
     primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
+    presentation: PreparedReportPresentation,
     *,
     tr: Callable[..., str],
 ) -> str:
@@ -45,7 +49,7 @@ def _proof_summary_text(
         return sequence_summary
     ratio = report_facts.primary_candidate_facts.dominance_ratio
     location = display_location(primary.primary_location, tr=tr)
-    runner_up = report_facts.appendix_b.runner_up_corner
+    runner_up = presentation.appendix_b.runner_up_corner
     if ratio is not None:
         if runner_up is not None:
             return tr(
@@ -64,16 +68,17 @@ def _proof_summary_text(
 
 def _run_limits_summary_text(
     report_facts: PreparedReportFacts,
+    presentation: PreparedReportPresentation,
     *,
     tr: Callable[..., str],
 ) -> str:
-    speed_window = str(report_facts.verdict_page.speed_window_label or "").strip() or tr("UNKNOWN")
+    speed_window = str(presentation.verdict_page.speed_window_label or "").strip() or tr("UNKNOWN")
     if (
         report_facts.action_status_key == "action_ready_caution"
         and report_facts.alternative_source_visible
     ):
         return tr("REPORT_RUN_LIMITS_RECAPTURE_RECIPE", speed=speed_window)
-    note = report_facts.verdict_page.proof_caveat
+    note = presentation.verdict_page.proof_caveat
     return note or tr("REPORT_CAPTURE_ISSUE_GENERIC")
 
 

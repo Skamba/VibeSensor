@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vibesensor.use_cases.updates.cleanup import UpdateCleanupCoordinator
-from vibesensor.use_cases.updates.coordinator import UpdateCoordinator
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
@@ -31,7 +30,6 @@ from vibesensor.use_cases.updates.status import (
     collect_runtime_details,
 )
 from vibesensor.use_cases.updates.success_finalizer import UpdateSuccessFinalizer
-from vibesensor.use_cases.updates.transport_lifecycle import UpdateTransportLifecycle
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 from vibesensor.use_cases.updates.usb_status import (
     UsbInternetStatusReader,
@@ -57,9 +55,16 @@ class UpdateManagerRuntime:
     tracker: UpdateStatusTracker
     executor: UpdateJobExecutor
     lifecycle: UpdateJobLifecycleHandler
-    transport_lifecycle: UpdateTransportLifecycle
     usb_status_service: UsbInternetStatusReader
-    coordinator_factory: Callable[[], UpdateCoordinator]
+    build_transport_sessions: Callable[[UpdateCommandExecutor | None], UpdateTransportSessions]
+    build_run_runtime: Callable[[], UpdateRunRuntime]
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateRunRuntime:
+    preparation: UpdatePreparationCoordinator
+    release_planner: UpdateReleasePlanner
+    workflow_executor: UpdateWorkflowExecutor
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,12 +111,7 @@ def build_update_manager_runtime(
         wifi_config=config.wifi_config,
         usb_internet_service=usb_internet_service,
     )
-    transport_lifecycle = _build_transport_lifecycle(
-        tracker=tracker,
-        transport_runtime=transport_runtime,
-        runner=active_runner,
-    )
-    coordinator_factory = _build_coordinator_factory(
+    build_run_runtime = _build_run_runtime_factory(
         runner=active_runner,
         tracker=tracker,
         config=config,
@@ -120,15 +120,14 @@ def build_update_manager_runtime(
     lifecycle = _build_lifecycle(
         tracker=tracker,
         repo=config.repo,
-        transport_lifecycle=transport_lifecycle,
     )
     return UpdateManagerRuntime(
         tracker=tracker,
         executor=executor,
         lifecycle=lifecycle,
-        transport_lifecycle=transport_lifecycle,
         usb_status_service=transport_runtime.usb_status_service,
-        coordinator_factory=coordinator_factory,
+        build_transport_sessions=transport_runtime.build_sessions,
+        build_run_runtime=build_run_runtime,
     )
 
 
@@ -266,24 +265,21 @@ def _build_release_components(
     )
 
 
-def _build_coordinator_factory(
+def _build_run_runtime_factory(
     *,
     runner: CommandRunner,
     tracker: UpdateStatusTracker,
     config: UpdateRuntimeConfig,
     transport_runtime: UpdateTransportRuntime,
-) -> Callable[[], UpdateCoordinator]:
+) -> Callable[[], UpdateRunRuntime]:
     def current_version_provider() -> str:
         from vibesensor import __version__ as current_version
 
         return current_version
 
-    def build_coordinator() -> UpdateCoordinator:
+    def build_run_runtime() -> UpdateRunRuntime:
         commands = _build_command_executor(runner=runner, tracker=tracker)
-        workflow_transport_lifecycle = UpdateTransportLifecycle(
-            tracker=tracker,
-            sessions_factory=lambda: transport_runtime.build_sessions(commands),
-        )
+        transport_sessions = transport_runtime.build_sessions(commands)
         (
             resolver,
             stager,
@@ -295,11 +291,11 @@ def _build_coordinator_factory(
             tracker=tracker,
             config=config,
         )
-        return UpdateCoordinator(
+        return UpdateRunRuntime(
             preparation=UpdatePreparationCoordinator(
                 tracker=tracker,
                 commands=commands,
-                transport_lifecycle=workflow_transport_lifecycle,
+                transport_sessions=transport_sessions,
                 validation_config=config.validation_config,
                 current_version_provider=current_version_provider,
             ),
@@ -314,40 +310,23 @@ def _build_coordinator_factory(
                 finalizer=UpdateSuccessFinalizer(
                     tracker=tracker,
                     restart_scheduler=restart_scheduler,
-                    transport_lifecycle=workflow_transport_lifecycle,
                 ),
             ),
         )
 
-    return build_coordinator
+    return build_run_runtime
 
 
 def _build_lifecycle(
     *,
     tracker: UpdateStatusTracker,
     repo: Path,
-    transport_lifecycle: UpdateTransportLifecycle,
 ) -> UpdateJobLifecycleHandler:
     return UpdateJobLifecycleHandler(
         tracker=tracker,
         cleanup=UpdateCleanupCoordinator(
             tracker=tracker,
             repo=repo,
-            transport_lifecycle=transport_lifecycle,
             logger=LOGGER,
-        ),
-    )
-
-
-def _build_transport_lifecycle(
-    *,
-    tracker: UpdateStatusTracker,
-    transport_runtime: UpdateTransportRuntime,
-    runner: CommandRunner,
-) -> UpdateTransportLifecycle:
-    return UpdateTransportLifecycle(
-        tracker=tracker,
-        sessions_factory=lambda: transport_runtime.build_sessions(
-            _build_command_executor(runner=runner, tracker=tracker)
         ),
     )
