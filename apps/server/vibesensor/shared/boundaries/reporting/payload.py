@@ -6,7 +6,12 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import cast
 
-from vibesensor.domain import LocationIntensitySummary, coerce_float, coerce_int
+from vibesensor.domain import LocationIntensitySummary
+from vibesensor.shared.boundaries._codec_helpers import (
+    coerce_count,
+    optional_float,
+    text_or_none,
+)
 from vibesensor.shared.boundaries.location_hotspot_codec import (
     location_intensity_summaries_from_rows,
 )
@@ -79,12 +84,12 @@ def report_summary_from_mapping(payload: Mapping[str, object]) -> NormalizedRepo
         run_id=_summary_run_id(payload, typed_metadata),
         metadata=typed_metadata,
         report_date=_summary_report_date(payload, typed_metadata),
-        duration_s=_optional_float(payload.get("duration_s")),
-        record_length=_normalized_text(payload.get("record_length")),
-        start_time_utc=_normalized_text(payload.get("start_time_utc")),
-        end_time_utc=_normalized_text(payload.get("end_time_utc")),
-        sample_count=_coerce_count(payload.get("rows")),
-        sensor_count=_coerce_count(payload.get("sensor_count_used")),
+        duration_s=optional_float(payload.get("duration_s")),
+        record_length=text_or_none(payload.get("record_length")),
+        start_time_utc=text_or_none(payload.get("start_time_utc")),
+        end_time_utc=text_or_none(payload.get("end_time_utc")),
+        sample_count=coerce_count(payload.get("rows")),
+        sensor_count=coerce_count(payload.get("sensor_count_used")),
         active_sensor_locations=_active_sensor_locations(payload),
         sensor_intensity_rows=_sensor_intensity_rows(payload),
         peak_table_rows=_peak_table_rows(payload),
@@ -98,8 +103,8 @@ def _summary_run_metadata(payload: Mapping[str, object]) -> RunMetadata | None:
         return None
     if not metadata_payload:
         return None
-    top_level_run_id = _normalized_text(payload.get("run_id"))
-    metadata_run_id = _normalized_text(metadata_payload.get("run_id"))
+    top_level_run_id = text_or_none(payload.get("run_id"))
+    metadata_run_id = text_or_none(metadata_payload.get("run_id"))
     if metadata_run_id is None:
         raise ValueError("report summary metadata must include canonical nested run_id")
     if top_level_run_id is not None and metadata_run_id != top_level_run_id:
@@ -108,7 +113,7 @@ def _summary_run_metadata(payload: Mapping[str, object]) -> RunMetadata | None:
 
 
 def _summary_run_id(payload: Mapping[str, object], metadata: RunMetadata | None) -> str:
-    raw_run_id = _normalized_text(payload.get("run_id"))
+    raw_run_id = text_or_none(payload.get("run_id"))
     if raw_run_id is not None:
         return raw_run_id
     if metadata is not None and metadata.run_id:
@@ -117,8 +122,8 @@ def _summary_run_id(payload: Mapping[str, object], metadata: RunMetadata | None)
 
 
 def _summary_report_date(payload: Mapping[str, object], metadata: RunMetadata | None) -> str | None:
-    return _normalized_text(payload.get("report_date")) or (
-        _normalized_text(metadata.report_date) if metadata is not None else None
+    return text_or_none(payload.get("report_date")) or (
+        text_or_none(metadata.report_date) if metadata is not None else None
     )
 
 
@@ -157,42 +162,17 @@ def _timeline_intervals(payload: Mapping[str, object]) -> tuple[ReportTimelineIn
     for row in raw_timeline:
         if not isinstance(row, Mapping):
             continue
-        phase = _normalized_text(row.get("phase"))
+        phase = text_or_none(row.get("phase"))
         if phase is None:
             continue
         intervals.append(
             ReportTimelineInterval(
                 phase=phase,
-                start_t_s=_optional_float(row.get("start_t_s")),
-                end_t_s=_optional_float(row.get("end_t_s")),
-                speed_min_kmh=_optional_float(row.get("speed_min_kmh")),
-                speed_max_kmh=_optional_float(row.get("speed_max_kmh")),
+                start_t_s=optional_float(row.get("start_t_s")),
+                end_t_s=optional_float(row.get("end_t_s")),
+                speed_min_kmh=optional_float(row.get("speed_min_kmh")),
+                speed_max_kmh=optional_float(row.get("speed_max_kmh")),
                 has_fault_evidence=bool(row.get("has_fault_evidence")),
             )
         )
     return tuple(intervals)
-
-
-def _normalized_text(value: object) -> str | None:
-    if not isinstance(value, str):
-        return None
-    text = value.strip()
-    return text or None
-
-
-def _optional_float(value: object) -> float | None:
-    if value is None:
-        return None
-    try:
-        return coerce_float(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _coerce_count(value: object) -> int:
-    if value is None:
-        return 0
-    try:
-        return coerce_int(value)
-    except (TypeError, ValueError):
-        return 0

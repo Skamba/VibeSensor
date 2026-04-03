@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from collections.abc import Awaitable, Callable, Coroutine
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
@@ -15,20 +16,15 @@ TaskCoroutineFactory = Callable[[], Coroutine[object, object, None]]
 class UpdateJobExecutor:
     """Own update task lifecycle mechanics apart from the update workflow itself."""
 
-    __slots__ = ("_cancel_event", "_task", "_task_name")
+    __slots__ = ("_task", "_task_name")
 
     def __init__(self, *, task_name: str = "system-update") -> None:
         self._task_name = task_name
         self._task: asyncio.Task[None] | None = None
-        self._cancel_event = asyncio.Event()
 
     @property
     def job_task(self) -> asyncio.Task[None] | None:
         return self._task
-
-    def cancel_requested(self) -> bool:
-        """Return whether cancellation has been requested for the active job."""
-        return self._cancel_event.is_set()
 
     def start(
         self,
@@ -39,7 +35,6 @@ class UpdateJobExecutor:
         """Start a new update task after running any synchronous pre-start hook."""
         if self._task is not None and not self._task.done():
             raise UpdateError("Update already in progress", status="conflict")
-        self._cancel_event.clear()
         if before_start is not None:
             before_start()
         self._task = asyncio.get_running_loop().create_task(
@@ -48,10 +43,9 @@ class UpdateJobExecutor:
         )
 
     def cancel(self) -> bool:
-        """Request cancellation for the active task and signal the cancel event."""
+        """Request cancellation for the active task."""
         if self._task is None or self._task.done():
             return False
-        self._cancel_event.set()
         self._task.cancel()
         return True
 
@@ -65,30 +59,26 @@ class UpdateJobExecutor:
         cleanup: CleanupCallback,
     ) -> None:
         """Run the workflow with timeout/cancel handling and guaranteed cleanup."""
-        primary_error: BaseException | None = None
-        cancelled = False
         try:
             await asyncio.wait_for(workflow_factory(), timeout=timeout_s)
         except TimeoutError:
             on_timeout()
-        except asyncio.CancelledError as exc:
-            cancelled = True
+        except asyncio.CancelledError:
             on_cancelled()
-            primary_error = exc
-        except Exception as exc:
-            primary_error = exc
+            raise
+        finally:
+            await self._cleanup_after_workflow(cleanup)
 
-        cleanup_error: Exception | None = None
+    async def _cleanup_after_workflow(self, cleanup: CleanupCallback) -> None:
+        active_error = sys.exc_info()[1]
         try:
             await cleanup()
         except asyncio.CancelledError:
             raise
-        except Exception as exc:
-            cleanup_error = exc
-
-        if cancelled and cleanup_error is not None:
-            raise UpdateCleanupError(f"Cleanup failed: {cleanup_error}") from cleanup_error
-        if primary_error is not None:
-            raise primary_error
-        if cleanup_error is not None:
-            raise UpdateCleanupError(f"Cleanup failed: {cleanup_error}") from cleanup_error
+        except (OSError, RuntimeError, UpdateError) as exc:
+            if isinstance(active_error, asyncio.CancelledError):
+                raise UpdateCleanupError(f"Cleanup failed after cancellation: {exc}") from exc
+            if active_error is not None:
+                active_error.add_note(f"Cleanup also failed: {exc}")
+                return
+            raise UpdateCleanupError(f"Cleanup failed: {exc}") from exc

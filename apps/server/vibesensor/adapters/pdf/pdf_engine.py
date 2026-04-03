@@ -15,7 +15,7 @@ from vibesensor.adapters.pdf.pdf_appendices import (
 from vibesensor.adapters.pdf.pdf_drawing import _draw_footer
 from vibesensor.adapters.pdf.pdf_page1 import _page1
 from vibesensor.adapters.pdf.pdf_style import PAGE_SIZE
-from vibesensor.adapters.pdf.report_types import build_report_render_plan
+from vibesensor.adapters.pdf.render_planner import build_report_render_plan
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 
 LOGGER = logging.getLogger(__name__)

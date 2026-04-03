@@ -12,11 +12,11 @@ class UpdateTransportSession(Protocol):
 
     transport: UpdateTransport
 
-    async def prepare(self, request: UpdateRequest) -> bool:
+    async def prepare(self, request: UpdateRequest) -> None:
         """Prepare this transport for an update run before release work starts."""
         ...
 
-    async def complete_success(self, message: str) -> bool:
+    async def complete_success(self, message: str) -> None:
         """Finalize a successful update for this transport."""
         ...
 

@@ -6,6 +6,10 @@ from dataclasses import dataclass, field
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 from vibesensor.shared.boundaries.reporting.document import (
+    AppendixAData,
+    AppendixBData,
+    AppendixCData,
+    AppendixDData,
     DataTrustItem,
     FindingPresentation,
     NextStep,
@@ -13,10 +17,14 @@ from vibesensor.shared.boundaries.reporting.document import (
     PeakRow,
     Report,
     SystemFindingCard,
+    VerdictPageData,
 )
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 from vibesensor.use_cases.history.report_document.document_builder import (
     build_report_document_data,
+)
+from vibesensor.use_cases.history.report_document.resolved_sections import (
+    ResolvedReportDocumentSections,
 )
 
 
@@ -92,26 +100,62 @@ def _make_primary(**overrides: object) -> PrimaryCandidateContext:
     return PrimaryCandidateContext(**defaults)
 
 
-def _build(**overrides: object):
-    """Build a ReportDocument with sensible defaults, allowing overrides."""
+def _make_sections(**overrides: object) -> ResolvedReportDocumentSections:
     defaults: dict[str, object] = {
-        "prepared": _make_prepared(),
-        "report": _make_report(),
         "report_date_text": "2026-01-01 12:00:00 UTC",
         "report_start_time_utc": "2026-01-01T12:00:00Z",
         "report_end_time_utc": "2026-01-01T12:01:00Z",
-        "primary": _make_primary(),
         "title": "Test Report",
+        "primary": _make_primary(),
         "observed": PatternEvidence(),
-        "system_cards": [],
-        "next_steps": [],
-        "data_trust": [],
+        "system_cards": (),
+        "next_steps": (),
+        "data_trust": (),
         "pattern_evidence": PatternEvidence(),
-        "peak_rows": [],
-        "findings": [],
-        "top_causes": [],
-        "sensor_intensity": [],
-        "hotspot_rows": [],
+        "peak_rows": (),
+        "findings": (),
+        "top_causes": (),
+        "sensor_intensity": (),
+        "hotspot_rows": (),
+        "verdict_page": VerdictPageData(),
+        "appendix_a": AppendixAData(),
+        "appendix_b": AppendixBData(),
+        "appendix_c": AppendixCData(),
+        "appendix_d": AppendixDData(),
+    }
+    defaults.update(overrides)
+    return ResolvedReportDocumentSections(**defaults)
+
+
+def _build(**overrides: object):
+    """Build a ReportDocument with sensible defaults, allowing overrides."""
+    section_keys = {
+        "report_date_text",
+        "report_start_time_utc",
+        "report_end_time_utc",
+        "title",
+        "primary",
+        "observed",
+        "system_cards",
+        "next_steps",
+        "data_trust",
+        "pattern_evidence",
+        "peak_rows",
+        "findings",
+        "top_causes",
+        "sensor_intensity",
+        "hotspot_rows",
+        "verdict_page",
+        "appendix_a",
+        "appendix_b",
+        "appendix_c",
+        "appendix_d",
+    }
+    section_overrides = {key: overrides.pop(key) for key in tuple(overrides) if key in section_keys}
+    defaults: dict[str, object] = {
+        "prepared": _make_prepared(),
+        "report": _make_report(),
+        "sections": _make_sections(**section_overrides),
     }
     defaults.update(overrides)
     return build_report_document_data(**defaults)
@@ -132,9 +176,11 @@ def test_prepared_metadata_maps_to_template() -> None:
     )
     result = _build(
         prepared=prepared,
-        report_date_text="2026-03-25 10:00:00 UTC",
-        report_start_time_utc="2026-03-25T10:00:00Z",
-        report_end_time_utc="2026-03-25T10:01:30Z",
+        sections=_make_sections(
+            report_date_text="2026-03-25 10:00:00 UTC",
+            report_start_time_utc="2026-03-25T10:00:00Z",
+            report_end_time_utc="2026-03-25T10:01:30Z",
+        ),
     )
 
     assert result.run_datetime == "2026-03-25 10:00:00 UTC"

@@ -5,6 +5,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from vibesensor.shared.exceptions import (
+    UpdatePreparationError,
+    UpdateReleaseError,
+    UpdateTransportError,
+)
 from vibesensor.use_cases.updates.coordinator import UpdateCoordinator
 from vibesensor.use_cases.updates.models import (
     UpdateExecutionOutcome,
@@ -24,8 +29,6 @@ def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateReq
 
 def _build_coordinator(
     tmp_path: Path,
-    *,
-    cancel_requested=lambda: False,
 ) -> tuple[
     UpdateCoordinator,
     MagicMock,
@@ -42,7 +45,6 @@ def _build_coordinator(
         preparation=preparation,
         release_planner=release_planner,
         workflow_executor=workflow_executor,
-        cancel_requested=cancel_requested,
     )
     return coordinator, preparation, release_planner, workflow_executor
 
@@ -57,10 +59,10 @@ async def test_execute_stops_after_validation_failure(tmp_path: Path) -> None:
     ) = _build_coordinator(tmp_path)
     request = _wifi_request()
 
-    preparation.prepare.return_value = None
-    outcome = await coordinator.execute(request)
+    preparation.prepare.side_effect = UpdatePreparationError("validation failed")
 
-    assert outcome == UpdateExecutionOutcome.aborted
+    with pytest.raises(UpdatePreparationError, match="validation failed"):
+        await coordinator.execute(request)
     preparation.prepare.assert_awaited_once_with(request)
     release_planner.plan.assert_not_awaited()
     workflow_executor.execute.assert_not_awaited()
@@ -75,37 +77,11 @@ async def test_execute_stops_when_transport_cannot_prepare(tmp_path: Path) -> No
         workflow_executor,
     ) = _build_coordinator(tmp_path)
     request = _wifi_request()
-    preparation.prepare.return_value = None
+    preparation.prepare.side_effect = UpdateTransportError("transport failed")
 
-    outcome = await coordinator.execute(request)
+    with pytest.raises(UpdateTransportError, match="transport failed"):
+        await coordinator.execute(request)
 
-    assert outcome == UpdateExecutionOutcome.aborted
-    preparation.prepare.assert_awaited_once_with(request)
-    release_planner.plan.assert_not_awaited()
-    workflow_executor.execute.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_execute_honors_cancellation_after_transport_prepare(tmp_path: Path) -> None:
-    (
-        coordinator,
-        preparation,
-        release_planner,
-        workflow_executor,
-    ) = _build_coordinator(
-        tmp_path,
-        cancel_requested=lambda: True,
-    )
-    request = _wifi_request()
-    preparation.prepare.return_value = PreparedUpdateSession(
-        request=request,
-        current_version="2026.4.3",
-        transport_session=object(),
-    )
-
-    outcome = await coordinator.execute(request)
-
-    assert outcome == UpdateExecutionOutcome.aborted
     preparation.prepare.assert_awaited_once_with(request)
     release_planner.plan.assert_not_awaited()
     workflow_executor.execute.assert_not_awaited()
@@ -142,7 +118,7 @@ async def test_execute_delegates_release_plan_and_execution(tmp_path: Path) -> N
 
 
 @pytest.mark.asyncio
-async def test_execute_stops_when_release_planner_returns_none(tmp_path: Path) -> None:
+async def test_execute_propagates_release_plan_failure(tmp_path: Path) -> None:
     (
         coordinator,
         preparation,
@@ -155,10 +131,10 @@ async def test_execute_stops_when_release_planner_returns_none(tmp_path: Path) -
         current_version="2026.4.3",
         transport_session=object(),
     )
-    release_planner.plan.return_value = None
+    release_planner.plan.side_effect = UpdateReleaseError("release check failed")
 
-    outcome = await coordinator.execute(request)
-
-    assert outcome == UpdateExecutionOutcome.aborted
+    with pytest.raises(UpdateReleaseError, match="release check failed"):
+        await coordinator.execute(request)
+    preparation.prepare.assert_awaited_once_with(request)
     release_planner.plan.assert_awaited_once_with("2026.4.3")
     workflow_executor.execute.assert_not_awaited()

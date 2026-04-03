@@ -53,13 +53,11 @@ class UpdateReleasePlanner:
         self._tracker = tracker
         self._resolver = resolver
 
-    async def plan(self, current_version: str) -> ReleaseExecutionPlan | None:
+    async def plan(self, current_version: str) -> ReleaseExecutionPlan:
         self._tracker.transition(UpdatePhase.checking)
         self._tracker.log("Checking for available updates...")
 
         resolution = await self._resolver.resolve(current_version)
-        if resolution.failed:
-            return None
         if resolution.release is None:
             self._tracker.log(f"Already up-to-date (version={current_version})")
             return RefreshFirmwarePlan(

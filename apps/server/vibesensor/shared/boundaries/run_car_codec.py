@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from vibesensor.shared.boundaries._codec_helpers import text_or_none
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_schema import RunCarMetadata
 
@@ -19,10 +20,10 @@ def run_car_metadata_from_mapping(payload: object) -> RunCarMetadata | None:
     if not isinstance(payload, Mapping):
         return None
     run_car = RunCarMetadata(
-        car_id=_text_or_none(payload.get("id")),
-        name=_text_or_none(payload.get("name")),
-        car_type=_text_or_none(payload.get("type")),
-        variant=_text_or_none(payload.get("variant")),
+        car_id=text_or_none(payload.get("id")),
+        name=text_or_none(payload.get("name")),
+        car_type=text_or_none(payload.get("type")),
+        variant=text_or_none(payload.get("variant")),
     )
     if (
         run_car.car_id is None
@@ -45,10 +46,3 @@ def run_car_metadata_to_json_object(run_car: RunCarMetadata | None) -> JsonObjec
         "type": run_car.car_type,
         "variant": run_car.variant,
     }
-
-
-def _text_or_none(value: object) -> str | None:
-    if not isinstance(value, str):
-        return None
-    text = value.strip()
-    return text or None
