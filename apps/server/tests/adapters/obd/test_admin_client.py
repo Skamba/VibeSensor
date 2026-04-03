@@ -7,6 +7,7 @@ import pytest
 
 from vibesensor.adapters.obd import admin_client as admin_client_module
 from vibesensor.adapters.obd.admin_client import CommandResult, ObdAdminClient
+from vibesensor.shared.operational_errors import ExternalCommandError
 
 
 def test_scan_devices_invokes_sudo_helper_and_parses_json(tmp_path: Path) -> None:
@@ -44,7 +45,7 @@ def test_scan_devices_invokes_sudo_helper_and_parses_json(tmp_path: Path) -> Non
     assert devices[0].rfcomm_channel == 1
 
 
-def test_pair_device_raises_runtime_error_from_helper_json(tmp_path: Path) -> None:
+def test_pair_device_raises_operational_error_from_helper_json(tmp_path: Path) -> None:
     helper_script = tmp_path / "vibesensor_obd_admin.py"
 
     def runner(argv: list[str], timeout_s: int) -> CommandResult:
@@ -57,7 +58,7 @@ def test_pair_device_raises_runtime_error_from_helper_json(tmp_path: Path) -> No
 
     client = ObdAdminClient(helper_script=helper_script, runner=runner)
 
-    with pytest.raises(RuntimeError, match="Bluetooth OBD pairing failed"):
+    with pytest.raises(ExternalCommandError, match="Bluetooth OBD pairing failed"):
         client.pair_device("00043e5a4a4d")
 
 
@@ -75,7 +76,7 @@ def test_scan_devices_reports_noninteractive_sudo_failure_cleanly(tmp_path: Path
     client = ObdAdminClient(helper_script=helper_script, runner=runner)
 
     with pytest.raises(
-        RuntimeError,
+        ExternalCommandError,
         match="Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry",
     ):
         client.scan_devices()
@@ -94,7 +95,7 @@ def test_scan_devices_still_reports_invalid_json_when_stdout_is_malformed(tmp_pa
 
     client = ObdAdminClient(helper_script=helper_script, runner=runner)
 
-    with pytest.raises(RuntimeError, match="Bluetooth OBD helper returned invalid JSON"):
+    with pytest.raises(ExternalCommandError, match="Bluetooth OBD helper returned invalid JSON"):
         client.scan_devices()
 
 

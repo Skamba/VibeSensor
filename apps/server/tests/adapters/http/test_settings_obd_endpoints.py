@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.adapters.http.settings import create_settings_routes
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+from vibesensor.shared.operational_errors import ExternalCommandError
 
 
 def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock]:
@@ -60,7 +61,7 @@ def test_scan_obd_devices_endpoint_returns_serialized_devices() -> None:
 
 def test_scan_obd_devices_endpoint_returns_structured_runtime_error_detail() -> None:
     client, _, _, speed_service = _build_client()
-    speed_service.scan_obd_devices.side_effect = RuntimeError(
+    speed_service.scan_obd_devices.side_effect = ExternalCommandError(
         "Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry "
         "to run non-interactively."
     )
@@ -74,6 +75,19 @@ def test_scan_obd_devices_endpoint_returns_structured_runtime_error_detail() -> 
             "to run non-interactively."
         )
     }
+
+
+def test_pair_obd_device_endpoint_returns_503_for_operational_failure() -> None:
+    client, _, _, speed_service = _build_client()
+    speed_service.pair_obd_device.side_effect = ExternalCommandError("Bluetooth OBD helper failed")
+
+    response = client.post(
+        "/api/settings/obd/pair",
+        json={"mac_address": "00:04:3E:5A:4A:4D"},
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Bluetooth OBD helper failed"}
 
 
 def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:

@@ -9,9 +9,9 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from vibesensor.adapters.http._helpers import (
     OpenAPIResponses,
-    domain_errors_to_http,
     normalize_run_id_or_400,
 )
+from vibesensor.adapters.http.error_boundary import route_errors_to_http
 from vibesensor.adapters.http.models import (
     DeleteHistoryRunResponse,
     HistoryInsightsAnalyzingResponse,
@@ -96,7 +96,7 @@ def create_history_routes(
     async def get_history_run(run_id: str) -> HistoryRunResponse:
         """Return full metadata and analysis payloads for a single recorded run."""
         run_id = normalize_run_id_or_400(run_id)
-        with domain_errors_to_http():
+        with route_errors_to_http():
             return await run_service.get_run(run_id)
 
     @router.get(
@@ -115,7 +115,7 @@ def create_history_routes(
     ) -> HistoryInsightsResponse | JSONResponse:
         """Return localized post-analysis findings, or a 202 while analysis is still running."""
         run_id = normalize_run_id_or_400(run_id)
-        with domain_errors_to_http():
+        with route_errors_to_http():
             result = await run_service.get_insights(run_id, requested_lang=lang)
         if result is None:
             analyzing_response = HistoryInsightsAnalyzingResponse(run_id=run_id, status="analyzing")
@@ -133,7 +133,7 @@ def create_history_routes(
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
         """Delete a persisted run and its derived artifacts from history storage."""
         run_id = normalize_run_id_or_400(run_id)
-        with domain_errors_to_http():
+        with route_errors_to_http():
             return await run_service.delete_run(run_id)
 
     # -- report PDF ------------------------------------------------------------
@@ -155,7 +155,7 @@ def create_history_routes(
     ) -> Response:
         """Build and download the PDF diagnostic report for a persisted run."""
         run_id = normalize_run_id_or_400(run_id)
-        with domain_errors_to_http():
+        with route_errors_to_http():
             pdf = await report_service.build_pdf(run_id, lang)
         pdf_headers = {
             "Content-Disposition": f'attachment; filename="{pdf.filename}"',
@@ -176,7 +176,7 @@ def create_history_routes(
     async def export_history_run(run_id: str) -> StreamingResponse:
         """Build and stream the ZIP export bundle for a persisted run."""
         run_id = normalize_run_id_or_400(run_id)
-        with domain_errors_to_http():
+        with route_errors_to_http():
             export = await export_service.build_export(run_id)
         return StreamingResponse(
             content=export.iter_bytes(),
