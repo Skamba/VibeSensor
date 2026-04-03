@@ -5,7 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.domain import Finding, TestRun
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
+from vibesensor.shared.boundaries.reporting import (
+    PreparedReportFacts,
+    PreparedReportPresentation,
+)
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixCData,
     AppendixDData,
@@ -95,6 +98,7 @@ def _build_appendix_c_data(
     aggregate: TestRun,
     measurements: list[MeasurementRow],
     report_facts: PreparedReportFacts,
+    presentation: PreparedReportPresentation,
     data_trust: list[DataTrustItem],
     tr: Callable[..., str],
 ) -> AppendixCData:
@@ -111,7 +115,11 @@ def _build_appendix_c_data(
         evidence_summary=_evidence_summary_text(aggregate, primary, report_facts, tr=tr),
         measurement_guide=tr("REPORT_MEASUREMENT_GUIDE"),
         context_summary=_context_summary_text(primary, report_facts, tr=tr),
-        limits_summary=_run_limits_summary_text(report_facts, tr=tr),
+        limits_summary=_run_limits_summary_text(
+            report_facts,
+            presentation,
+            tr=tr,
+        ),
         speed_band_summary=speed_summary,
         phase_summary=_phase_summary_text(aggregate, report_facts, tr=tr),
         observations=_observation_texts(aggregate, tr=tr),

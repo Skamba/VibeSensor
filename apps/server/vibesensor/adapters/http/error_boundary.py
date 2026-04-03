@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
@@ -19,6 +20,8 @@ from vibesensor.shared.operational_errors import OperationalError, ServiceUnavai
 
 __all__ = [
     "http_exception_for_operational_error",
+    "http_exception_for_vibesensor_error",
+    "install_http_exception_handlers",
     "http_status_for_operational_error",
     "route_errors_to_http",
 ]
@@ -41,29 +44,60 @@ def http_exception_for_operational_error(exc: OperationalError) -> HTTPException
     )
 
 
+def http_exception_for_vibesensor_error(exc: VibeSensorError) -> HTTPException:
+    """Convert one domain/runtime error into an HTTPException."""
+
+    if isinstance(exc, RunNotFoundError):
+        return HTTPException(status_code=404, detail=str(exc))
+    if isinstance(exc, AnalysisNotReadyError):
+        status_map = {"in_progress": 409, "active": 409, "error": 422, "unavailable": 422}
+        return HTTPException(
+            status_code=status_map.get(exc.status, 409),
+            detail=str(exc),
+        )
+    if isinstance(exc, (ConfigurationError, ProtocolError)):
+        return HTTPException(status_code=400, detail=str(exc))
+    if isinstance(exc, UpdateError):
+        status_code = 409 if exc.status == "conflict" else 500
+        return HTTPException(status_code=status_code, detail=str(exc))
+    return HTTPException(status_code=500, detail=str(exc))
+
+
+def _json_response_for_http_exception(exc: HTTPException) -> JSONResponse:
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
+def install_http_exception_handlers(app: FastAPI) -> None:
+    """Install explicit HTTP exception handlers at the FastAPI boundary."""
+
+    async def _operational_handler(
+        _request: Request,
+        exc: Exception,
+    ) -> JSONResponse:
+        if not isinstance(exc, OperationalError):
+            raise TypeError(f"Expected OperationalError handler input, got {type(exc).__name__}")
+        return _json_response_for_http_exception(http_exception_for_operational_error(exc))
+
+    async def _domain_handler(
+        _request: Request,
+        exc: Exception,
+    ) -> JSONResponse:
+        if not isinstance(exc, VibeSensorError):
+            raise TypeError(f"Expected VibeSensorError handler input, got {type(exc).__name__}")
+        return _json_response_for_http_exception(http_exception_for_vibesensor_error(exc))
+
+    app.add_exception_handler(OperationalError, _operational_handler)
+    app.add_exception_handler(VibeSensorError, _domain_handler)
+
+
 @contextmanager
 def route_errors_to_http(*, catch_value_error: int | None = None) -> Iterator[None]:
     """Translate route-facing domain and operational errors into HTTP responses."""
 
     try:
         yield
-    except RunNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except AnalysisNotReadyError as exc:
-        status_map = {"in_progress": 409, "active": 409, "error": 422, "unavailable": 422}
-        raise HTTPException(
-            status_code=status_map.get(exc.status, 409),
-            detail=str(exc),
-        ) from exc
-    except ConfigurationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except ProtocolError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except UpdateError as exc:
-        status_code = 409 if exc.status == "conflict" else 500
-        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
     except VibeSensorError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise http_exception_for_vibesensor_error(exc) from exc
     except OperationalError as exc:
         raise http_exception_for_operational_error(exc) from exc
     except ValueError as exc:

@@ -39,7 +39,7 @@ from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.constants.dsp import (
     FFT_N,

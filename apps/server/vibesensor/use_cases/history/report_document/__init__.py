@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import Report, ReportDocument
 from vibesensor.use_cases.history.report_preparation import (
     prepare_persisted_report_input,

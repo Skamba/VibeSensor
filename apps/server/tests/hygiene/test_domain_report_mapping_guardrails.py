@@ -210,13 +210,23 @@ def test_report_facts_hold_canonical_document_sections_without_builder_shims() -
     from dataclasses import fields
 
     import vibesensor.use_cases.history.report_document as mapping
-    from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
+    from vibesensor.shared.boundaries.reporting import (
+        PreparedReportFacts,
+        PreparedReportInput,
+        PreparedReportPresentation,
+    )
 
     fact_fields = {field.name for field in fields(PreparedReportFacts)}
-    assert "verdict_page" in fact_fields
-    assert "appendix_a" in fact_fields
-    assert "appendix_b" in fact_fields
-    assert "display" not in fact_fields
+    assert "verdict_page" not in fact_fields
+    assert "appendix_a" not in fact_fields
+    assert "appendix_b" not in fact_fields
+    assert "presentation" not in fact_fields
+
+    input_fields = {field.name for field in fields(PreparedReportInput)}
+    assert "presentation" in input_fields
+
+    presentation_fields = {field.name for field in fields(PreparedReportPresentation)}
+    assert presentation_fields == {"verdict_page", "appendix_a", "appendix_b"}
 
     assert not hasattr(mapping, "_build_verdict_page_data")
     assert not hasattr(mapping, "_build_appendix_a_data")

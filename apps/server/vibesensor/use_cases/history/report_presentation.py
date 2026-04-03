@@ -1,4 +1,4 @@
-"""Prepared report section mapping."""
+"""Prepared report presentation shaping from semantic report facts."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from collections.abc import Callable, Sequence
 from vibesensor.domain import Finding, LocationIntensitySummary, SuitabilityCheck, TestRun
 from vibesensor.report_i18n import human_source
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportPresentation
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
@@ -45,118 +46,114 @@ from vibesensor.use_cases.history.report_observation_matrix import (
     build_sensor_observation_matrix_rows,
 )
 
-__all__ = ["prepare_report_sections"]
+__all__ = ["prepare_report_presentation"]
 
 
-def prepare_report_sections(
+def prepare_report_presentation(
     *,
     aggregate: TestRun,
-    primary_candidate_facts: PrimaryReportFacts,
-    active_sensor_intensity: Sequence[LocationIntensitySummary],
-    duration_text: str | None,
-    action_status_key: str,
-    location_confidence_key: str,
-    alternative_source_visible: bool,
-    expected_locations: Sequence[str],
-    active_locations: Sequence[str],
-    missing_locations: Sequence[str],
-    partial_locations: Sequence[str],
-    suitability_checks: Sequence[SuitabilityCheck],
-    warnings: Sequence[RunContextWarning],
+    report_facts: PreparedReportFacts,
     lang: str,
-) -> tuple[VerdictPageData, AppendixAData, AppendixBData]:
+) -> PreparedReportPresentation:
+    """Build presentation-specific report sections from prepared semantic facts."""
+
     def tr(key: str, **kw: JsonValue) -> str:
         return str(_tr(lang, key, **kw))
 
+    coverage = report_facts.coverage_summary
     resolved_coverage_label = coverage_label(
-        expected_locations=expected_locations,
-        active_locations=active_locations,
-        missing_locations=missing_locations,
-        partial_locations=partial_locations,
+        expected_locations=coverage.expected_locations,
+        active_locations=coverage.active_locations,
+        missing_locations=coverage.missing_locations,
+        partial_locations=coverage.partial_locations,
         tr=tr,
     )
     resolved_coverage_notes = coverage_notes(
-        missing_locations=missing_locations,
-        partial_locations=partial_locations,
+        missing_locations=coverage.missing_locations,
+        partial_locations=coverage.partial_locations,
         tr=tr,
     )
-    resolved_runner_up_corner = runner_up_corner(active_sensor_intensity, tr=tr)
+    resolved_runner_up_corner = runner_up_corner(
+        report_facts.active_sensor_intensity,
+        tr=tr,
+    )
     proof_caveat = proof_caveat_text(
-        primary_candidate_facts=primary_candidate_facts,
-        action_status_key=action_status_key,
-        location_confidence_key=location_confidence_key,
+        primary_candidate_facts=report_facts.primary_candidate_facts,
+        action_status_key=report_facts.action_status_key,
+        location_confidence_key=report_facts.location_confidence_key,
         tr=tr,
     )
     ranked_candidates = _build_ranked_candidates(aggregate, tr=tr)
     recapture_issues = _recapture_issue_lines(
         aggregate=aggregate,
-        primary_candidate_facts=primary_candidate_facts,
-        location_confidence_key=location_confidence_key,
-        suitability_checks=suitability_checks,
-        warnings=warnings,
+        primary_candidate_facts=report_facts.primary_candidate_facts,
+        location_confidence_key=report_facts.location_confidence_key,
+        suitability_checks=report_facts.suitability_checks,
+        warnings=report_facts.warnings,
         lang=lang,
         tr=tr,
     )
     recapture_actions = _recapture_actions(
         aggregate=aggregate,
-        primary_candidate_facts=primary_candidate_facts,
-        location_confidence_key=location_confidence_key,
-        expected_locations=expected_locations,
-        active_locations=active_locations,
-        suitability_checks=suitability_checks,
-        warnings=warnings,
+        primary_candidate_facts=report_facts.primary_candidate_facts,
+        location_confidence_key=report_facts.location_confidence_key,
+        expected_locations=coverage.expected_locations,
+        active_locations=coverage.active_locations,
+        suitability_checks=report_facts.suitability_checks,
+        warnings=report_facts.warnings,
         tr=tr,
     )
     recapture_conditions = _recapture_condition_lines(
         aggregate=aggregate,
-        primary_candidate_facts=primary_candidate_facts,
-        location_confidence_key=location_confidence_key,
-        expected_locations=expected_locations,
-        active_locations=active_locations,
-        suitability_checks=suitability_checks,
-        warnings=warnings,
+        primary_candidate_facts=report_facts.primary_candidate_facts,
+        location_confidence_key=report_facts.location_confidence_key,
+        expected_locations=coverage.expected_locations,
+        active_locations=coverage.active_locations,
+        suitability_checks=report_facts.suitability_checks,
+        warnings=report_facts.warnings,
         tr=tr,
     )
-    verdict_page = _build_verdict_page_data(
-        aggregate=aggregate,
-        primary_candidate_facts=primary_candidate_facts,
-        duration_text=duration_text,
-        action_status_key=action_status_key,
-        location_confidence_key=location_confidence_key,
-        alternative_source_visible=alternative_source_visible,
-        active_locations=active_locations,
-        coverage_label=resolved_coverage_label,
-        runner_up_corner=resolved_runner_up_corner,
-        proof_caveat=proof_caveat,
-        recapture_issues=recapture_issues,
-        suitability_checks=suitability_checks,
-        warnings=warnings,
-        lang=lang,
-        tr=tr,
+    return PreparedReportPresentation(
+        verdict_page=_build_verdict_page_data(
+            aggregate=aggregate,
+            primary_candidate_facts=report_facts.primary_candidate_facts,
+            duration_text=report_facts.duration_text,
+            action_status_key=report_facts.action_status_key,
+            location_confidence_key=report_facts.location_confidence_key,
+            alternative_source_visible=report_facts.alternative_source_visible,
+            active_locations=coverage.active_locations,
+            coverage_label=resolved_coverage_label,
+            runner_up_corner=resolved_runner_up_corner,
+            proof_caveat=proof_caveat,
+            recapture_issues=recapture_issues,
+            suitability_checks=report_facts.suitability_checks,
+            warnings=report_facts.warnings,
+            lang=lang,
+            tr=tr,
+        ),
+        appendix_a=_build_appendix_a_data(
+            aggregate=aggregate,
+            action_status_key=report_facts.action_status_key,
+            alternative_source_visible=report_facts.alternative_source_visible,
+            ranked_candidates=ranked_candidates,
+            recapture_issues=recapture_issues,
+            recapture_actions=recapture_actions,
+            recapture_conditions=recapture_conditions,
+            tr=tr,
+        ),
+        appendix_b=_build_appendix_b_data(
+            aggregate=aggregate,
+            primary_candidate_facts=report_facts.primary_candidate_facts,
+            active_sensor_intensity=report_facts.active_sensor_intensity,
+            action_status_key=report_facts.action_status_key,
+            location_confidence_key=report_facts.location_confidence_key,
+            active_locations=coverage.active_locations,
+            runner_up_corner=resolved_runner_up_corner,
+            coverage_label=resolved_coverage_label,
+            coverage_notes=resolved_coverage_notes,
+            tr=tr,
+        ),
     )
-    appendix_a = _build_appendix_a_data(
-        aggregate=aggregate,
-        action_status_key=action_status_key,
-        alternative_source_visible=alternative_source_visible,
-        ranked_candidates=ranked_candidates,
-        recapture_issues=recapture_issues,
-        recapture_actions=recapture_actions,
-        recapture_conditions=recapture_conditions,
-        tr=tr,
-    )
-    appendix_b = _build_appendix_b_data(
-        aggregate=aggregate,
-        primary_candidate_facts=primary_candidate_facts,
-        active_sensor_intensity=active_sensor_intensity,
-        action_status_key=action_status_key,
-        location_confidence_key=location_confidence_key,
-        active_locations=active_locations,
-        runner_up_corner=resolved_runner_up_corner,
-        coverage_label=resolved_coverage_label,
-        coverage_notes=resolved_coverage_notes,
-        tr=tr,
-    )
-    return verdict_page, appendix_a, appendix_b
 
 
 def _build_verdict_page_data(

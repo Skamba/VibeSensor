@@ -79,8 +79,6 @@ class UpdateWifiSession:
     async def abort_preparation(self) -> None:
         """Rollback partial Wi-Fi setup after transport preparation fails."""
 
-        if self._tracker.status.transport != UpdateTransport.wifi:
-            return
         await self._cleanup_and_restore_hotspot(
             prefix="prepare_abort",
             failure_message="Failed to restore hotspot after transport preparation failure",
@@ -94,8 +92,6 @@ class UpdateWifiSession:
     async def recover_interrupted_update(self) -> None:
         """Recover updater Wi-Fi state after a previously interrupted job."""
 
-        if self._tracker.status.transport != UpdateTransport.wifi:
-            return
         await self._cleanup_and_restore_hotspot(
             prefix="startup_recover",
             failure_message="Failed to restore hotspot after interrupted update",
@@ -104,9 +100,6 @@ class UpdateWifiSession:
     async def complete_success(self, message: str) -> None:
         """Restore the hotspot and then finalize the Wi-Fi update as successful."""
 
-        if self._tracker.status.transport != UpdateTransport.wifi:
-            self._tracker.mark_success(message)
-            return
         self._tracker.transition(UpdatePhase.restoring_hotspot)
         self._tracker.log("Restoring hotspot...")
         restored = await self.restore_hotspot()
@@ -121,8 +114,6 @@ class UpdateWifiSession:
     async def cleanup_after_update(self) -> None:
         """Restore hotspot ownership and attach cleanup diagnostics after a run."""
 
-        if self._tracker.status.transport != UpdateTransport.wifi:
-            return
         status = self._tracker.status
         if status.state == UpdateState.running or status.phase in _HOTSPOT_RESTORE_PHASES:
             if status.state == UpdateState.running:

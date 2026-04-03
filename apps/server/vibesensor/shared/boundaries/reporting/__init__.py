@@ -1,12 +1,12 @@
 """Canonical reporting boundary package."""
 
-from .contracts import (
+from .facts import (
     ActionStatusKey,
     LocationConfidenceKey,
     PreparedReportFacts,
-    PreparedReportInput,
     ReportCoverageSummary,
 )
+from .input import PreparedReportInput
 from .payload import (
     NormalizedReportSummary,
     ReportTimelineInterval,
@@ -14,6 +14,7 @@ from .payload import (
     report_summary_from_mapping,
     require_projectable_report_payload,
 )
+from .presentation import PreparedReportPresentation
 from .projection import (
     PrimaryReportFacts,
     collect_location_intensity,
@@ -32,6 +33,7 @@ __all__ = [
     "NormalizedReportSummary",
     "PreparedReportFacts",
     "PreparedReportInput",
+    "PreparedReportPresentation",
     "PrimaryReportFacts",
     "ReportCoverageSummary",
     "ReportTimelineInterval",

@@ -22,6 +22,10 @@ def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateReq
     )
 
 
+def _cleanup_session(manager, *, transport: UpdateTransport = UpdateTransport.wifi):
+    return manager._runtime.build_transport_sessions(None).for_transport(transport)
+
+
 @pytest.mark.asyncio
 async def test_prepare_start_marks_job_running_and_tracks_secret(tmp_path) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
@@ -55,7 +59,7 @@ async def test_cleanup_records_hotspot_restore_failure(tmp_path) -> None:
         manager.status.state = UpdateState.running
         manager.status.phase = UpdatePhase.installing
         runner.default_response = (1, "", "nmcli failed")
-        await manager._runtime.lifecycle.cleanup_after_update()
+        await manager._runtime.lifecycle.cleanup_after_update(_cleanup_session(manager))
 
     assert any(
         issue.message == "Failed to restore hotspot during cleanup"
@@ -74,7 +78,7 @@ async def test_cleanup_re_raises_runtime_details_bug_after_finishing_cleanup(tmp
         side_effect=TypeError("runtime bug"),
     ):
         with pytest.raises(TypeError, match="runtime bug"):
-            await manager._runtime.lifecycle.cleanup_after_update()
+            await manager._runtime.lifecycle.cleanup_after_update(_cleanup_session(manager))
 
     assert manager.status.finished_at is not None
     assert manager.status.state == UpdateState.failed
@@ -91,7 +95,7 @@ async def test_cleanup_re_raises_wifi_diagnostics_bug_after_finishing_cleanup(tm
         side_effect=TypeError("diagnostics bug"),
     ):
         with pytest.raises(TypeError, match="diagnostics bug"):
-            await manager._runtime.lifecycle.cleanup_after_update()
+            await manager._runtime.lifecycle.cleanup_after_update(_cleanup_session(manager))
 
     assert manager.status.finished_at is not None
     assert manager.status.state == UpdateState.failed
@@ -114,7 +118,7 @@ async def test_cleanup_wraps_operational_runtime_refresh_failure(tmp_path, caplo
             match="Runtime details refresh failed: runtime unavailable",
         ),
     ):
-        await manager._runtime.lifecycle.cleanup_after_update()
+        await manager._runtime.lifecycle.cleanup_after_update(_cleanup_session(manager))
 
     assert manager.status.state == UpdateState.failed
     assert any(
@@ -137,6 +141,8 @@ async def test_cleanup_skips_wifi_cleanup_for_usb_transport(tmp_path) -> None:
         "vibesensor.use_cases.updates.wifi.wifi_session.parse_wifi_diagnostics",
         side_effect=AssertionError("Wi-Fi diagnostics should not run for USB transport"),
     ):
-        await manager._runtime.lifecycle.cleanup_after_update()
+        await manager._runtime.lifecycle.cleanup_after_update(
+            _cleanup_session(manager, transport=UpdateTransport.usb_internet),
+        )
 
     assert manager.status.finished_at is not None

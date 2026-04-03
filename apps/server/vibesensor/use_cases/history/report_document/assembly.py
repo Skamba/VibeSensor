@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import Report, build_report_from_summary
 from vibesensor.shared.types.json_types import JsonValue
 

@@ -3,13 +3,13 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding_payload
 
+import vibesensor.shared.boundaries.reporting as shared_reporting
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_json_object,
 )
-from vibesensor.shared.boundaries.reporting import contracts as shared_report_prepared_input
+from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.boundaries.reporting import document as shared_report_document
 from vibesensor.shared.boundaries.reporting import projection as shared_report_projection
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.use_cases.history import report_document
 from vibesensor.use_cases.history.report_preparation import (
     prepare_persisted_report_input,
@@ -52,8 +52,9 @@ def _prepared_report_input() -> PreparedReportInput:
 def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
     prepared = _prepared_report_input()
 
-    assert isinstance(prepared, shared_report_prepared_input.PreparedReportInput)
-    assert isinstance(prepared.report_facts, shared_report_prepared_input.PreparedReportFacts)
+    assert isinstance(prepared, shared_reporting.PreparedReportInput)
+    assert isinstance(prepared.report_facts, shared_reporting.PreparedReportFacts)
+    assert isinstance(prepared.presentation, shared_reporting.PreparedReportPresentation)
     assert isinstance(
         prepared.report_facts.primary_candidate_facts,
         shared_report_projection.PrimaryReportFacts,
@@ -102,5 +103,5 @@ def test_prepare_persisted_report_input_rejects_non_projectable_payload() -> Non
 
 
 def test_report_document_reexports_boundary_types() -> None:
-    assert report_document.PreparedReportInput is shared_report_prepared_input.PreparedReportInput
+    assert report_document.PreparedReportInput is shared_reporting.PreparedReportInput
     assert report_document.Report is shared_report_document.Report

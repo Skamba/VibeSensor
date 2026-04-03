@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import zipfile
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -17,6 +18,7 @@ from _update_manager_test_helpers import (
 )
 
 from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
+from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
 from vibesensor.use_cases.updates.status import collect_runtime_details
 
 
@@ -436,7 +438,24 @@ class TestUpdateManagerAsync:
             ),
             caplog.at_level("ERROR"),
         ):
-            object.__setattr__(manager._runtime, "coordinator_factory", lambda: mock_coordinator)
+            object.__setattr__(
+                manager._runtime,
+                "build_run_runtime",
+                lambda: SimpleNamespace(
+                    preparation=SimpleNamespace(
+                        prepare=AsyncMock(
+                            return_value=PreparedUpdateWorkflow(
+                                current_version="2025.6.15",
+                                transport_session=AsyncMock(),
+                            )
+                        )
+                    ),
+                    release_planner=SimpleNamespace(
+                        plan=AsyncMock(side_effect=asyncio.CancelledError())
+                    ),
+                    workflow_executor=mock_coordinator,
+                ),
+            )
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
             await manager.job_task
@@ -462,7 +481,24 @@ class TestUpdateManagerAsync:
             "vibesensor.use_cases.updates.cleanup.collect_runtime_details",
             side_effect=TypeError("runtime bug"),
         ):
-            object.__setattr__(manager._runtime, "coordinator_factory", lambda: mock_coordinator)
+            object.__setattr__(
+                manager._runtime,
+                "build_run_runtime",
+                lambda: SimpleNamespace(
+                    preparation=SimpleNamespace(
+                        prepare=AsyncMock(
+                            return_value=PreparedUpdateWorkflow(
+                                current_version="2025.6.15",
+                                transport_session=AsyncMock(),
+                            )
+                        )
+                    ),
+                    release_planner=SimpleNamespace(
+                        plan=AsyncMock(side_effect=asyncio.CancelledError())
+                    ),
+                    workflow_executor=mock_coordinator,
+                ),
+            )
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
             with pytest.raises(TypeError, match="runtime bug"):

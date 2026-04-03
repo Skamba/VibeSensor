@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.payload import (
     report_summary_from_mapping,
     require_projectable_report_payload,
@@ -23,6 +23,7 @@ from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 from vibesensor.use_cases.history.helpers import safe_filename
 from vibesensor.use_cases.history.report_facts import prepare_report_facts
+from vibesensor.use_cases.history.report_presentation import prepare_report_presentation
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
@@ -64,6 +65,11 @@ def _build_prepared_report_input(
         language=prepared_language,
         warnings=warnings,
     )
+    presentation = prepare_report_presentation(
+        aggregate=domain_test_run,
+        report_facts=report_facts,
+        lang=prepared_language,
+    )
     return PreparedReportInput(
         summary=summary,
         language=prepared_language,
@@ -71,6 +77,7 @@ def _build_prepared_report_input(
         domain_test_run=domain_test_run,
         cache_key=cache_key,
         report_facts=report_facts,
+        presentation=presentation,
     )
 
 

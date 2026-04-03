@@ -7,8 +7,8 @@ from vibesensor.use_cases.updates.models import UpdateExecutionOutcome
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_planner import (
     InstallServerReleasePlan,
+    PlannedUpdateWorkflow,
     RefreshFirmwarePlan,
-    ReleaseExecutionPlan,
 )
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.success_finalizer import UpdateSuccessFinalizer
@@ -36,25 +36,42 @@ class UpdateWorkflowExecutor:
 
     async def execute(
         self,
-        plan: ReleaseExecutionPlan,
+        workflow: PlannedUpdateWorkflow,
     ) -> UpdateExecutionOutcome:
+        plan = workflow.execution_plan
         if isinstance(plan, RefreshFirmwarePlan):
-            return await self._execute_refresh_only(plan)
-        return await self._execute_install(plan)
+            return await self._execute_refresh_only(
+                workflow=workflow,
+                plan=plan,
+            )
+        return await self._execute_install(
+            workflow=workflow,
+            plan=plan,
+        )
 
     async def _execute_refresh_only(
         self,
+        *,
+        workflow: PlannedUpdateWorkflow,
         plan: RefreshFirmwarePlan,
     ) -> UpdateExecutionOutcome:
         await self._firmware_refresher.refresh_esp_firmware(pinned_tag=plan.latest_tag)
-        await self._finalizer.complete(message="No server update needed; ESP firmware checked")
+        await self._finalizer.complete(
+            workflow.transport_session,
+            message="No server update needed; ESP firmware checked",
+        )
         return UpdateExecutionOutcome.refresh_only
 
     async def _execute_install(
         self,
+        *,
+        workflow: PlannedUpdateWorkflow,
         plan: InstallServerReleasePlan,
     ) -> UpdateExecutionOutcome:
         async with self._stager.stage(plan.release) as staged_release:
             await self._deployer.deploy(staged_release)
-        await self._finalizer.complete(message="Update completed successfully")
+        await self._finalizer.complete(
+            workflow.transport_session,
+            message="Update completed successfully",
+        )
         return UpdateExecutionOutcome.installed
