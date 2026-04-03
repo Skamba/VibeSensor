@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
 from vibesensor.adapters.obd.polling import ObdPollingSnapshot
 from vibesensor.adapters.obd.status import ObdMonitorStatusState, build_obd_status_snapshot
 
@@ -17,7 +18,7 @@ def _polling_snapshot(*, backoff_active: bool = True) -> ObdPollingSnapshot:
     )
 
 
-def test_build_obd_status_snapshot_reports_disconnect_hint() -> None:
+def test_build_obd_status_snapshot_keeps_runtime_facts_and_http_hint_separate() -> None:
     status = build_obd_status_snapshot(
         ObdMonitorStatusState(
             effective_connection_state="disconnected",
@@ -51,7 +52,8 @@ def test_build_obd_status_snapshot_reports_disconnect_hint() -> None:
     assert status.poll_mode is None
     assert status.backoff_active is True
     assert status.reconnect_delay_s == 4.0
-    assert "retrying automatically" in str(status.debug_hint).lower()
+    assert obd_debug_hint(status) is not None
+    assert "retrying automatically" in str(obd_debug_hint(status)).lower()
 
 
 def test_build_obd_status_snapshot_hides_obd_only_fields_when_not_selected() -> None:

@@ -57,7 +57,6 @@ def _obd_status_snapshot() -> ObdStatusSnapshot:
         last_error=None,
         last_raw_response="410D0C",
         reconnect_delay_s=None,
-        debug_hint=None,
     )
 
 

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
 from vibesensor.adapters.obd.elm327 import ObdTransportError
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.monitor import OBDSpeedMonitor
@@ -234,4 +235,4 @@ def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
     status = monitor.status_snapshot()
 
     assert "sudo" in str(status.last_error).lower()
-    assert "sudo helper" in str(status.debug_hint).lower()
+    assert "sudo helper" in str(obd_debug_hint(status)).lower()
