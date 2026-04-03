@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import zipfile
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from _update_manager_test_helpers import (
@@ -427,19 +427,17 @@ class TestUpdateManagerAsync:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
+        mock_coordinator = MagicMock()
+        mock_coordinator.execute = AsyncMock(side_effect=asyncio.CancelledError())
 
         with (
-            patch.object(
-                manager,
-                "_run_update_inner",
-                AsyncMock(side_effect=asyncio.CancelledError()),
-            ),
             patch(
                 "vibesensor.use_cases.updates.job_lifecycle.collect_runtime_details",
                 side_effect=TypeError("runtime bug"),
             ),
             caplog.at_level("ERROR"),
         ):
+            object.__setattr__(manager._runtime, "coordinator_factory", lambda: mock_coordinator)
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
             with pytest.raises(TypeError, match="runtime bug"):

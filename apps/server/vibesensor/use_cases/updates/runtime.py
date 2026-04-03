@@ -8,6 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from vibesensor.use_cases.updates.coordinator import UpdateCoordinator
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
@@ -16,12 +17,10 @@ from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdateValidationConfig,
 )
-from vibesensor.use_cases.updates.operation import UpdateOperation
 from vibesensor.use_cases.updates.recovery import InterruptedUpdateRecovery
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
-from vibesensor.use_cases.updates.release_workflow import UpdateReleaseWorkflow
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import (
@@ -54,7 +53,7 @@ class UpdateManagerRuntime:
     lifecycle: UpdateJobLifecycleHandler
     recovery: InterruptedUpdateRecovery
     usb_status_service: UsbInternetStatusReader
-    operation_factory: Callable[[], UpdateOperation]
+    coordinator_factory: Callable[[], UpdateCoordinator]
 
 
 def build_update_manager_runtime(
@@ -120,7 +119,15 @@ def build_update_manager_runtime(
             ),
         )
 
-    def build_release_workflow(commands: UpdateCommandExecutor) -> UpdateReleaseWorkflow:
+    def build_release_components(
+        commands: UpdateCommandExecutor,
+    ) -> tuple[
+        ServerReleaseResolver,
+        ServerReleaseStager,
+        UpdateReleaseDeployer,
+        FirmwareRefresher,
+        UpdateRestartScheduler,
+    ]:
         firmware_refresher = FirmwareRefresher(
             commands=commands,
             tracker=tracker,
@@ -132,39 +139,48 @@ def build_update_manager_runtime(
             tracker=tracker,
             config=installer_config,
         )
-        return UpdateReleaseWorkflow(
-            tracker=tracker,
-            resolver=ServerReleaseResolver(
+        return (
+            ServerReleaseResolver(
                 tracker=tracker,
                 rollback_dir=resolved_rollback_dir,
             ),
-            stager=ServerReleaseStager(
+            ServerReleaseStager(
                 tracker=tracker,
                 rollback_dir=resolved_rollback_dir,
             ),
-            deployer=UpdateReleaseDeployer(
+            UpdateReleaseDeployer(
                 tracker=tracker,
                 installer=installer,
                 firmware_refresher=firmware_refresher,
                 cancel_requested=executor.cancel_requested,
             ),
-            firmware_refresher=firmware_refresher,
-            restart_scheduler=UpdateRestartScheduler(
+            firmware_refresher,
+            UpdateRestartScheduler(
                 commands=commands,
                 tracker=tracker,
                 service_name=UPDATE_SERVICE_NAME,
                 restart_unit=UPDATE_RESTART_UNIT,
             ),
-            cancel_requested=executor.cancel_requested,
         )
 
-    def build_operation() -> UpdateOperation:
+    def build_coordinator() -> UpdateCoordinator:
         commands = build_command_executor()
-        return UpdateOperation(
+        (
+            resolver,
+            stager,
+            deployer,
+            firmware_refresher,
+            restart_scheduler,
+        ) = build_release_components(commands)
+        return UpdateCoordinator(
             tracker=tracker,
             commands=commands,
             transport_sessions=build_transport_sessions(commands=commands),
-            release_workflow=build_release_workflow(commands),
+            resolver=resolver,
+            stager=stager,
+            deployer=deployer,
+            firmware_refresher=firmware_refresher,
+            restart_scheduler=restart_scheduler,
             cancel_requested=executor.cancel_requested,
             validation_config=validation_config,
         )
@@ -185,5 +201,5 @@ def build_update_manager_runtime(
         lifecycle=lifecycle,
         recovery=recovery,
         usb_status_service=status_service,
-        operation_factory=build_operation,
+        coordinator_factory=build_coordinator,
     )

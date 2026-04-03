@@ -13,7 +13,7 @@ from .appendices import (
     SensorObservationMatrixRow,
     TopologyIntensityRow,
 )
-from .document import Report, ReportTemplateData, build_report_from_renderer_payload
+from .document import Report, ReportTemplateData, build_report_from_summary
 from .panels import DataTrustItem, NextStep, PartSuggestion, PatternEvidence, SystemFindingCard
 from .sections import (
     FindingPresentation,
@@ -47,5 +47,5 @@ __all__ = [
     "TimelineGraphInterval",
     "TopologyIntensityRow",
     "VerdictPageData",
-    "build_report_from_renderer_payload",
+    "build_report_from_summary",
 ]

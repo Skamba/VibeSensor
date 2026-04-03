@@ -26,7 +26,6 @@ from vibesensor.adapters.pdf.assembly import (
     resolve_primary_report_candidate,
 )
 from vibesensor.adapters.pdf.models import ReportTemplateData
-from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
@@ -146,10 +145,8 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
     assert prepared.report_facts is not None
     assert prepared.domain_test_run.speed_profile is not None
 
-    context = prepare_report_mapping_context(prepared)
-
     primary = resolve_primary_report_candidate(
-        context=context,
+        aggregate=prepared.domain_test_run,
         facts=prepared.report_facts.primary_candidate_facts,
         tr=lambda key, **_kw: key,
         lang="en",

@@ -15,14 +15,12 @@ from vibesensor.adapters.pdf.models import (
     MeasurementRow,
     NextStep,
     RankedCandidateRow,
-    Report,
     ReportLabelValueRow,
     TimelineGraphData,
     TimelineGraphInterval,
     TopologyIntensityRow,
     VerdictPageData,
 )
-from vibesensor.adapters.pdf.report_context import ReportMappingContext
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
 from vibesensor.shared.boundaries.reporting.contracts import (
     PreparedAppendixADisplay,
@@ -240,30 +238,35 @@ def _build_appendix_c_data(
 
 def _build_appendix_d_data(
     *,
-    context: ReportMappingContext,
-    report: Report,
+    date_str: str,
+    run_id: str,
+    tire_spec_text: str | None,
+    sensor_model: str | None,
+    firmware_version: str | None,
+    sample_count: int,
+    sample_rate_hz: str | None,
     tr: Callable[..., str],
 ) -> AppendixDData:
     rows = [
-        ReportLabelValueRow(label=tr("RUN_DATE"), value=context.date_str),
-        ReportLabelValueRow(label=tr("RUN_ID"), value=report.run_id),
-        ReportLabelValueRow(label=tr("TIRE_SIZE"), value=context.tire_spec_text or tr("UNKNOWN")),
+        ReportLabelValueRow(label=tr("RUN_DATE"), value=date_str),
+        ReportLabelValueRow(label=tr("RUN_ID"), value=run_id),
+        ReportLabelValueRow(label=tr("TIRE_SIZE"), value=tire_spec_text or tr("UNKNOWN")),
     ]
-    sensor_model = str(context.sensor_model or "").strip()
+    sensor_model = str(sensor_model or "").strip()
     if sensor_model and sensor_model.casefold() != tr("UNKNOWN").casefold():
         rows.append(ReportLabelValueRow(label=tr("SENSOR_MODEL"), value=sensor_model))
-    firmware_version = str(context.firmware_version or "").strip()
+    firmware_version = str(firmware_version or "").strip()
     if firmware_version and firmware_version.casefold() not in {"none", tr("UNKNOWN").casefold()}:
         rows.append(ReportLabelValueRow(label=tr("FIRMWARE_VERSION"), value=firmware_version))
     rows.extend(
         [
             ReportLabelValueRow(
                 label=tr("REPORT_ANALYSIS_ROWS_LABEL"),
-                value=str(context.sample_count),
+                value=str(sample_count),
             ),
             ReportLabelValueRow(
                 label=tr("RAW_SAMPLE_RATE_HZ_LABEL"),
-                value=context.sample_rate_hz or tr("UNKNOWN"),
+                value=sample_rate_hz or tr("UNKNOWN"),
             ),
         ]
     )

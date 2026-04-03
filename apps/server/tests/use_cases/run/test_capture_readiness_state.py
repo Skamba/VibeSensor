@@ -1,97 +1,97 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-from vibesensor.domain import CaptureReadinessPolicy, RunContextSnapshot
-from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessObservation
-from vibesensor.use_cases.run.capture_readiness_state import CaptureReadinessState
-
-
-@dataclass(slots=True)
-class _TrackedClient:
-    client_id: str = "client-1"
-    name: str = "Front left"
-    firmware_version: str = "1.0.0"
-    sample_rate_hz: int = 800
-    location_code: str = "front_left_wheel"
-    frames_total: int = 0
-    frames_dropped: int = 0
-    queue_overflow_drops: int = 0
-    server_queue_drops: int = 0
-    parse_errors: int = 0
+from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessSensorObservation
+from vibesensor.use_cases.run.capture_readiness_state import (
+    CaptureReadinessState,
+    CaptureReadinessStateConfig,
+    CaptureReadinessStateInput,
+)
 
 
-@dataclass(frozen=True, slots=True)
-class _SpeedStatus:
-    speed_source: str = "gps"
-    effective_speed_kmh: float | None = 80.0
-    last_update_age_s: float | None = 0.2
-    fallback_active: bool = False
-
-
-def _observation(
+def _sensor(
     *,
-    now_mono: float,
-    active_clients: tuple[_TrackedClient, ...],
-    speed_status: _SpeedStatus | None = None,
-) -> CaptureReadinessObservation:
-    return CaptureReadinessObservation(
-        observed_at_mono_s=now_mono,
-        active_clients=active_clients,
-        run_context=RunContextSnapshot(),
-        speed_status=speed_status,
-        obd_status=None,
+    location_code: str = "front_left_wheel",
+    frames_dropped: int = 0,
+) -> CaptureReadinessSensorObservation:
+    return CaptureReadinessSensorObservation(
+        client_id="client-1",
+        location_code=location_code,
+        frames_dropped=frames_dropped,
+        queue_overflow_drops=0,
+        server_queue_drops=0,
+        parse_errors=0,
     )
 
 
 def test_capture_readiness_state_tracks_integrity_quiet_window() -> None:
     state = CaptureReadinessState(
-        policy=CaptureReadinessPolicy(integrity_quiet_period_s=10.0),
+        config=CaptureReadinessStateConfig(
+            integrity_quiet_period_s=10.0,
+            stable_speed_dwell_s=8.0,
+        ),
     )
-    client = _TrackedClient()
+    client = _sensor()
 
-    initial = state.observe(_observation(now_mono=100.0, active_clients=(client,)))
+    initial = state.observe(
+        CaptureReadinessStateInput(
+            observed_at_mono_s=100.0,
+            active_sensors=(client,),
+            speed_sample_kmh=None,
+        )
+    )
     assert not initial.integrity.active
     assert initial.integrity.quiet_period_remaining_s is None
 
     issue = state.observe(
-        _observation(
-            now_mono=104.0,
-            active_clients=(_TrackedClient(frames_dropped=2),),
+        CaptureReadinessStateInput(
+            observed_at_mono_s=104.0,
+            active_sensors=(_sensor(frames_dropped=2),),
+            speed_sample_kmh=None,
         )
     )
     assert issue.integrity.active
     assert issue.integrity.frames_dropped == 2
     assert issue.integrity.quiet_period_remaining_s == 10.0
 
-    expired = state.observe(_observation(now_mono=115.0, active_clients=(client,)))
+    expired = state.observe(
+        CaptureReadinessStateInput(
+            observed_at_mono_s=115.0,
+            active_sensors=(client,),
+            speed_sample_kmh=None,
+        )
+    )
     assert not expired.integrity.active
     assert expired.integrity.quiet_period_remaining_s is None
 
 
 def test_capture_readiness_state_clears_speed_history_when_sample_is_invalid() -> None:
-    state = CaptureReadinessState()
-    client = _TrackedClient()
+    state = CaptureReadinessState(
+        config=CaptureReadinessStateConfig(
+            integrity_quiet_period_s=10.0,
+            stable_speed_dwell_s=8.0,
+        ),
+    )
+    client = _sensor()
 
     first = state.observe(
-        _observation(
-            now_mono=100.0,
-            active_clients=(client,),
-            speed_status=_SpeedStatus(effective_speed_kmh=80.0),
+        CaptureReadinessStateInput(
+            observed_at_mono_s=100.0,
+            active_sensors=(client,),
+            speed_sample_kmh=80.0,
         )
     )
     second = state.observe(
-        _observation(
-            now_mono=104.0,
-            active_clients=(client,),
-            speed_status=_SpeedStatus(effective_speed_kmh=82.0),
+        CaptureReadinessStateInput(
+            observed_at_mono_s=104.0,
+            active_sensors=(client,),
+            speed_sample_kmh=82.0,
         )
     )
     reset = state.observe(
-        _observation(
-            now_mono=108.0,
-            active_clients=(client,),
-            speed_status=_SpeedStatus(effective_speed_kmh=10.0),
+        CaptureReadinessStateInput(
+            observed_at_mono_s=108.0,
+            active_sensors=(client,),
+            speed_sample_kmh=None,
         )
     )
 

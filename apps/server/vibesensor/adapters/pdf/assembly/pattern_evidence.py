@@ -8,8 +8,7 @@ from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
 from vibesensor.adapters.pdf.models import PatternEvidence
 from vibesensor.adapters.pdf.pattern_parts import why_parts_listed
 from vibesensor.adapters.pdf.presentation import order_label_human
-from vibesensor.adapters.pdf.report_context import ReportMappingContext
-from vibesensor.domain import Finding, VibrationOrigin
+from vibesensor.domain import Finding, TestRun, VibrationOrigin
 from vibesensor.report_i18n import human_source, resolve_i18n
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.shared.report_presentation import display_location
@@ -22,20 +21,19 @@ __all__ = [
 
 
 def build_pattern_evidence(
-    context: ReportMappingContext,
+    *,
+    aggregate: TestRun,
+    origin: VibrationOrigin | None,
     primary: PrimaryCandidateContext,
     lang: str,
     tr: Callable[..., str],
 ) -> PatternEvidence:
     """Build the pattern-evidence block for the report template."""
-
-    aggregate = context.domain_aggregate
-    assert aggregate is not None
     effective = aggregate.effective_top_causes()
     domain_primary = effective[0] if effective else aggregate.primary_finding
     systems_raw = [human_source(str(f.suspected_source), tr=tr) for f in effective[:3]]
     systems = list(dict.fromkeys(systems_raw))
-    interpretation = resolve_interpretation(context.origin, lang=lang, tr=tr)
+    interpretation = resolve_interpretation(origin, lang=lang, tr=tr)
     source_for_why, order_label_for_why = resolve_parts_context(
         primary.primary_candidate,
         domain_finding=domain_primary,

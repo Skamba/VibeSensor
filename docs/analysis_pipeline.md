@@ -197,8 +197,8 @@ rebuild `ReportTemplateData` from the persisted summary on demand via
 `use_cases/history/report_preparation.py:prepare_report_input()`, which
 reconstructs the domain aggregate and assembles the prepared report handoff,
 `use_cases/history/report_facts.py:prepare_report_facts()`, which precomputes
-semantic report facts, and `adapters/pdf/mapping.py:map_summary()`, which
-stays focused on adapter-local mapping and rendering data assembly.
+semantic report facts, and `adapters/pdf/assembly/assembler.py:map_summary()`,
+which stays focused on adapter-local mapping and rendering data assembly.
 
 Persisted post-stop analysis strength/intensity outputs are dB-only.
 Raw ingest/sample acceleration fields may still be expressed in g.
@@ -212,8 +212,8 @@ Raw ingest/sample acceleration fields may still be expressed in g.
 3. If the new output is needed by the renderer, add any report-facing shaping
    in `use_cases/history/report_facts.py` or
    `use_cases/history/report_preparation.py`, then update
-   `adapters/pdf/mapping.py:map_summary()` and `ReportTemplateData`. Keep
-   semantic interpretation on the history/preparation side rather than in
+   `adapters/pdf/assembly/assembler.py:map_summary()` and `ReportTemplateData`.
+   Keep semantic interpretation on the history/preparation side rather than in
    `adapters/pdf/*`.
 4. Export any new public symbol from `use_cases/diagnostics/__init__.py`.
 5. Run `pytest apps/server/tests/` to verify tests still pass.

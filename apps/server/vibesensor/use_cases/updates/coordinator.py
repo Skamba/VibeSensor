@@ -1,52 +1,72 @@
-"""Canonical release-side update workflow after transport preparation succeeds."""
+"""Canonical end-to-end update coordination boundary."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
-from vibesensor.use_cases.updates.models import UpdatePhase
+from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateValidationConfig
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
+from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
+from vibesensor.use_cases.updates.transport_sessions import (
+    UpdateTransportSession,
+    UpdateTransportSessions,
+)
+from vibesensor.use_cases.updates.validation import validate_prerequisites
 
 
-class UpdateReleaseWorkflow:
-    """Own release discovery, staging, deployment, and successful completion."""
+class UpdateCoordinator:
+    """Own validation, transport preparation, release work, and success finalization."""
 
     __slots__ = (
         "_cancel_requested",
+        "_commands",
         "_deployer",
         "_firmware_refresher",
         "_resolver",
         "_restart_scheduler",
         "_stager",
         "_tracker",
+        "_transport_sessions",
+        "_validation_config",
     )
 
     def __init__(
         self,
         *,
         tracker: UpdateStatusTracker,
+        commands: UpdateCommandExecutor,
+        transport_sessions: UpdateTransportSessions,
         resolver: ServerReleaseResolver,
         stager: ServerReleaseStager,
         deployer: UpdateReleaseDeployer,
         firmware_refresher: FirmwareRefresher,
         restart_scheduler: UpdateRestartScheduler,
         cancel_requested: Callable[[], bool],
+        validation_config: UpdateValidationConfig,
     ) -> None:
         self._tracker = tracker
+        self._commands = commands
+        self._transport_sessions = transport_sessions
         self._resolver = resolver
         self._stager = stager
         self._deployer = deployer
         self._firmware_refresher = firmware_refresher
         self._restart_scheduler = restart_scheduler
         self._cancel_requested = cancel_requested
+        self._validation_config = validation_config
 
-    async def execute(self, transport_session: UpdateTransportSession) -> None:
+    async def execute(self, request: UpdateRequest) -> None:
+        if not await self._validate(request):
+            return
+        transport_session = await self._prepare_transport(request)
+        if transport_session is None or self._cancelled():
+            return
+
         self._tracker.transition(UpdatePhase.checking)
         self._tracker.log("Checking for available updates...")
         from vibesensor import __version__ as current_version
@@ -67,14 +87,35 @@ class UpdateReleaseWorkflow:
         )
         if self._cancelled():
             return
+
         async with self._stager.stage(resolution.release) as staged_release:
             if staged_release is None or self._cancelled():
                 return
             if not await self._deployer.deploy(staged_release):
                 return
+
         if self._cancelled():
             return
         await self._finalize_success(transport_session)
+
+    async def _validate(self, request: UpdateRequest) -> bool:
+        if not await validate_prerequisites(
+            commands=self._commands,
+            tracker=self._tracker,
+            config=self._validation_config,
+            request=request,
+        ):
+            return False
+        return not self._cancelled()
+
+    async def _prepare_transport(
+        self,
+        request: UpdateRequest,
+    ) -> UpdateTransportSession | None:
+        transport_session = self._transport_sessions.for_request(request)
+        if not await transport_session.prepare(request):
+            return None
+        return transport_session
 
     async def _complete_current_version(
         self,

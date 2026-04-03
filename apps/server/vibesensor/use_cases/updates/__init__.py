@@ -4,8 +4,7 @@ The updater now has one explicit execution boundary per concern:
 
 - ``manager.py`` exposes the public API only.
 - ``runtime.py`` composes the concrete collaborators used by that facade.
-- ``operation.py`` runs validation plus transport preparation before release work.
-- ``release_workflow.py`` owns release discovery, staging, deployment, and success finalization.
+- ``coordinator.py`` owns validation, transport preparation, release work, and success finalization.
 - ``transport_sessions.py`` defines the transport-session interface used by
   lifecycle, recovery, and execution.
 - ``usb_status.py`` inspects Linux/NetworkManager state for USB internet readiness.

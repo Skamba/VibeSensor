@@ -284,7 +284,7 @@ class TestReport:
 
     def test_from_summary(self) -> None:
         from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_renderer_payload
+        from vibesensor.adapters.pdf.models import build_report_from_summary
 
         summary: dict[str, object] = {
             "run_id": "run-123",
@@ -303,8 +303,8 @@ class TestReport:
             },
         }
         prepared = prepare_report_input(summary)
-        r = build_report_from_renderer_payload(
-            prepared.renderer_payload,
+        r = build_report_from_summary(
+            prepared.summary,
             language=str(summary["lang"]),
         )
         assert r.run_id == "run-123"
@@ -318,11 +318,11 @@ class TestReport:
 
     def test_from_summary_minimal(self) -> None:
         from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_renderer_payload
+        from vibesensor.adapters.pdf.models import build_report_from_summary
 
         prepared = prepare_report_input({"run_id": "r1", "findings": [], "top_causes": []})
-        r = build_report_from_renderer_payload(
-            prepared.renderer_payload,
+        r = build_report_from_summary(
+            prepared.summary,
             language=prepared.language,
         )
         assert r.run_id == "r1"
@@ -331,13 +331,13 @@ class TestReport:
 
     def test_from_summary_short_duration(self) -> None:
         from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_renderer_payload
+        from vibesensor.adapters.pdf.models import build_report_from_summary
 
         prepared = prepare_report_input(
             {"run_id": "r1", "duration_s": 45.0, "findings": [], "top_causes": []}
         )
-        r = build_report_from_renderer_payload(
-            prepared.renderer_payload,
+        r = build_report_from_summary(
+            prepared.summary,
             language=prepared.language,
         )
         assert r.duration_s == 45.0
@@ -534,18 +534,18 @@ class TestReportValidation:
 
     def test_from_summary_empty_run_id_gets_fallback(self) -> None:
         from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_renderer_payload
+        from vibesensor.adapters.pdf.models import build_report_from_summary
 
         prepared = prepare_report_input({"run_id": "", "findings": [], "top_causes": []})
-        r = build_report_from_renderer_payload(
-            prepared.renderer_payload,
+        r = build_report_from_summary(
+            prepared.summary,
             language=prepared.language,
         )
         assert r.run_id == "unknown"
 
     def test_from_summary_creates_metadata(self) -> None:
         from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_renderer_payload
+        from vibesensor.adapters.pdf.models import build_report_from_summary
 
         summary: dict[str, object] = {
             "run_id": "run-1",
@@ -558,8 +558,8 @@ class TestReportValidation:
             ],
         }
         prepared = prepare_report_input(summary)
-        r = build_report_from_renderer_payload(
-            prepared.renderer_payload,
+        r = build_report_from_summary(
+            prepared.summary,
             language=prepared.language,
         )
         assert r.run_id == "run-1"
