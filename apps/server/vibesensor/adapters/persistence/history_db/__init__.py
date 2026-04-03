@@ -180,31 +180,6 @@ class HistoryDB:
     def _schema_version(self) -> int:
         return self._engine._schema_version()
 
-    def _migration_step(self, version: int) -> tuple[int, Callable[[], None]] | None:
-        return self._engine._migration_step(version)
-
-    def _migration_backup_path(self, version: int) -> Path:
-        return self._engine._migration_backup_path(version)
-
-    def _create_migration_backup(self, version: int) -> Path:
-        return self._engine._create_migration_backup(version)
-
-    def _restore_migration_backup(self, backup_path: Path) -> None:
-        self._engine._restore_migration_backup(backup_path)
-
-    @staticmethod
-    def _has_runs_column(cur: sqlite3.Cursor, column_name: str) -> bool:
-        return SQLiteHistoryEngine._has_runs_column(cur, column_name)
-
-    def _migrate_v8_to_v9_case_id(self) -> None:
-        self._engine._migrate_v8_to_v9_case_id()
-
-    def _migrate_v9_to_v10_settings_table(self) -> None:
-        self._engine._migrate_v9_to_v10_settings_table()
-
-    def _migrate_v10_to_v11_persisted_analysis_version(self) -> None:
-        self._engine._migrate_v10_to_v11_persisted_analysis_version()
-
     def _run_startup_quick_check(self) -> None:
         run_startup_quick_check(
             cursor_provider=self._cursor,

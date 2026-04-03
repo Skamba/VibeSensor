@@ -382,6 +382,7 @@ def create_settings_routes(
     @router.get("/api/settings/obd/status", response_model=ObdStatusResponse)
     async def get_obd_status() -> ObdStatusResponse:
         """Return detailed Bluetooth OBD runtime/admin status for diagnostics."""
+        await asyncio.to_thread(obd_admin_service.refresh_obd_status)
         return _obd_status_response(await asyncio.to_thread(speed_status_service.obd_status))
 
     # -- sensors ---------------------------------------------------------------

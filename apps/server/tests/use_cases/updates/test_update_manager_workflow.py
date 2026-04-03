@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from vibesensor.shared.exceptions import UpdatePreparationError, UpdateReleaseError
-from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
@@ -15,6 +14,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
+from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowContext
 
 
 def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateRequest:
@@ -28,14 +28,9 @@ def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateReq
 def _build_manager(
     *,
     status: UpdateJobStatus | None = None,
-) -> tuple[UpdateManager, AsyncMock, AsyncMock, AsyncMock, AsyncMock, AsyncMock]:
+) -> tuple[UpdateManager, AsyncMock, AsyncMock, AsyncMock, AsyncMock]:
     tracker = MagicMock()
     tracker.status = status or UpdateJobStatus()
-    lifecycle = MagicMock(
-        handle_timeout=MagicMock(),
-        handle_cancelled=MagicMock(),
-        cleanup_after_update=AsyncMock(return_value=None),
-    )
     preparation = MagicMock()
     preparation.prepare = AsyncMock()
     release_planner = MagicMock()
@@ -45,14 +40,17 @@ def _build_manager(
     recovery_session = AsyncMock()
     runtime = SimpleNamespace(
         tracker=tracker,
-        executor=UpdateJobExecutor(task_name="system-update"),
-        lifecycle=lifecycle,
+        workflow_runner=SimpleNamespace(
+            job_task=None,
+            cancel=MagicMock(return_value=True),
+            start=MagicMock(),
+        ),
         build_run_runtime=lambda: SimpleNamespace(
             preparation=preparation,
             release_planner=release_planner,
             workflow_executor=workflow_executor,
         ),
-        build_transport_sessions=lambda *_args, **_kwargs: SimpleNamespace(
+        build_transport_sessions=lambda: SimpleNamespace(
             for_transport=lambda _transport: recovery_session,
         ),
     )
@@ -61,27 +59,26 @@ def _build_manager(
         preparation.prepare,
         release_planner.plan,
         workflow_executor.execute,
-        lifecycle.cleanup_after_update,
         recovery_session.recover_interrupted_update,
     )
 
 
 @pytest.mark.asyncio
 async def test_run_update_stops_after_preparation_failure() -> None:
-    manager, prepare, plan, execute, cleanup, _recover = _build_manager()
+    manager, prepare, plan, execute, _recover = _build_manager()
     prepare.side_effect = UpdatePreparationError("validation failed")
 
-    await manager._run_update(_wifi_request())
+    with pytest.raises(UpdatePreparationError, match="validation failed"):
+        await manager._run_update(UpdateWorkflowContext(), _wifi_request())
 
     prepare.assert_awaited_once()
     plan.assert_not_awaited()
     execute.assert_not_awaited()
-    cleanup.assert_awaited_once_with(None)
 
 
 @pytest.mark.asyncio
 async def test_run_update_carries_resolved_transport_session_through_cleanup() -> None:
-    manager, prepare, plan, execute, cleanup, _recover = _build_manager()
+    manager, prepare, plan, execute, _recover = _build_manager()
     transport_session = AsyncMock()
     prepared = PreparedUpdateWorkflow(
         current_version="2026.4.3",
@@ -90,18 +87,19 @@ async def test_run_update_carries_resolved_transport_session_through_cleanup() -
     planned = object()
     prepare.return_value = prepared
     plan.return_value = planned
+    context = UpdateWorkflowContext()
 
-    await manager._run_update(_wifi_request())
+    await manager._run_update(context, _wifi_request())
 
     prepare.assert_awaited_once()
     plan.assert_awaited_once_with(prepared)
     execute.assert_awaited_once_with(planned)
-    cleanup.assert_awaited_once_with(transport_session)
+    assert context.transport_session is transport_session
 
 
 @pytest.mark.asyncio
 async def test_run_update_cleans_up_prepared_session_after_release_failure() -> None:
-    manager, prepare, plan, execute, cleanup, _recover = _build_manager()
+    manager, prepare, plan, execute, _recover = _build_manager()
     transport_session = AsyncMock()
     prepared = PreparedUpdateWorkflow(
         current_version="2026.4.3",
@@ -110,15 +108,15 @@ async def test_run_update_cleans_up_prepared_session_after_release_failure() -> 
     prepare.return_value = prepared
     plan.side_effect = UpdateReleaseError("release check failed")
 
-    await manager._run_update(_wifi_request())
+    with pytest.raises(UpdateReleaseError, match="release check failed"):
+        await manager._run_update(UpdateWorkflowContext(), _wifi_request())
 
     execute.assert_not_awaited()
-    cleanup.assert_awaited_once_with(transport_session)
 
 
 @pytest.mark.asyncio
 async def test_startup_recover_uses_persisted_transport_session() -> None:
-    manager, _prepare, _plan, _execute, _cleanup, recover = _build_manager(
+    manager, _prepare, _plan, _execute, recover = _build_manager(
         status=UpdateJobStatus(
             state=UpdateState.running,
             transport=UpdateTransport.usb_internet,
