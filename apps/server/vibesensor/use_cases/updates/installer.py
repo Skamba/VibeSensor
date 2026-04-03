@@ -60,7 +60,6 @@ class UpdateInstaller:
         )
         self._rollback_executor = RollbackExecutor(
             tracker=tracker,
-            rollback_dir=config.rollback_dir,
             rollback_snapshots=rollback_snapshots,
             wheel_validator=wheel_validator,
             wheel_install_executor=self._wheel_install_executor,

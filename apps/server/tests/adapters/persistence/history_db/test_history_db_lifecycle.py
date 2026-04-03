@@ -187,7 +187,7 @@ def test_schema_version_future_fails_fast(tmp_path: Path) -> None:
     conn.commit()
     conn.close()
 
-    with pytest.raises(RuntimeError, match="Cannot downgrade"):
+    with pytest.raises(RuntimeError, match="newer than supported"):
         HistoryDB(db_path)
 
 

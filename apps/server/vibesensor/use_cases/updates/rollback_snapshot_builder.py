@@ -35,24 +35,21 @@ class RollbackSnapshotBuilder:
         self._rollback_dir = rollback_dir
         self._rollback_snapshots = rollback_snapshots
 
-    def _existing_local_rollback_wheel(self, *, current_version: str) -> Path | None:
-        candidates = sorted(
-            self._rollback_dir.glob(f"vibesensor-{current_version}-*.whl"),
-            reverse=True,
+    def _existing_snapshot_wheel(self, *, current_version: str) -> Path | None:
+        snapshot = self._rollback_snapshots.load_snapshot(report_issues=False)
+        if snapshot is None:
+            return None
+        errors = wheel_metadata_validation_errors(
+            snapshot.wheel_path,
+            expected_name="vibesensor",
+            expected_version=current_version,
         )
-        for candidate in candidates:
-            errors = wheel_metadata_validation_errors(
-                candidate,
-                expected_name="vibesensor",
-                expected_version=current_version,
-            )
-            if not errors:
-                self._tracker.log(
-                    f"Reusing existing local rollback wheel {candidate.name}",
-                )
-                return candidate
+        if snapshot.metadata.version == current_version and not errors:
+            self._tracker.log("Reusing existing rollback snapshot wheel")
+            return snapshot.wheel_path
+        if errors:
             self._tracker.log(
-                f"Ignoring existing rollback wheel {candidate.name}: {'; '.join(errors)}",
+                f"Ignoring existing rollback snapshot wheel: {'; '.join(errors)}",
             )
         return None
 
@@ -165,28 +162,26 @@ class RollbackSnapshotBuilder:
         from vibesensor.use_cases.updates.artifact_validation import sha256_file
 
         rollback_sha256 = sha256_file(rollback_wheel)
-        promoted_wheel = self._rollback_dir / rollback_wheel.name
-        if rollback_wheel != promoted_wheel:
-            rollback_wheel.replace(promoted_wheel)
+        promotion = self._rollback_snapshots.replace_snapshot_wheel(rollback_wheel)
         try:
             self._rollback_snapshots.write_metadata(
                 RollbackSnapshotMetadata(
                     version=current_version,
-                    wheel_name=promoted_wheel.name,
                     sha256=rollback_sha256,
                 ),
             )
         except OSError as exc:
+            self._rollback_snapshots.rollback_snapshot_wheel(promotion)
             self._tracker.add_issue(
                 "installing",
                 "Rollback metadata could not be written",
                 str(exc),
             )
             return False
-        self._rollback_snapshots.prune_wheels(keep_name=promoted_wheel.name)
+        self._rollback_snapshots.commit_snapshot_wheel(promotion)
         self._tracker.log(
             "Rollback snapshot created successfully "
-            f"(wheel={promoted_wheel.name}, sha256={rollback_sha256})",
+            f"(version={current_version}, sha256={rollback_sha256})",
         )
         return True
 
@@ -196,7 +191,7 @@ class RollbackSnapshotBuilder:
         from vibesensor import __version__ as current_version
 
         self._tracker.log(f"Creating rollback snapshot (version={current_version})")
-        if existing_wheel := self._existing_local_rollback_wheel(current_version=current_version):
+        if existing_wheel := self._existing_snapshot_wheel(current_version=current_version):
             return self._write_rollback_snapshot(
                 rollback_wheel=existing_wheel,
                 current_version=current_version,
@@ -218,10 +213,6 @@ class RollbackSnapshotBuilder:
                     venv_python=venv_python,
                 )
             if rollback_wheel is None:
-                (self._rollback_dir / "rollback_version.txt").write_text(
-                    current_version,
-                    encoding="utf-8",
-                )
                 return False
             return self._write_rollback_snapshot(
                 rollback_wheel=rollback_wheel,
