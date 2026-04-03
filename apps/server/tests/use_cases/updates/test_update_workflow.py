@@ -28,18 +28,18 @@ def _build_workflow(
     tmp_path: Path,
     *,
     cancel_requested,
-    release_application: AsyncMock | None = None,
+    release_coordinator: AsyncMock | None = None,
 ) -> tuple[UpdateWorkflow, _Session, _Session, AsyncMock]:
     tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
     wifi = _Session(UpdateTransport.wifi)
     usb_internet = _Session(UpdateTransport.usb_internet)
     sessions = UpdateTransportSessions(wifi=wifi, usb_internet=usb_internet)
-    release = release_application or AsyncMock()
+    release = release_coordinator or AsyncMock()
     workflow = UpdateWorkflow(
         tracker=tracker,
         commands=MagicMock(),
         transport_sessions=sessions,
-        release_application=release,
+        release_coordinator=release,
         cancel_requested=cancel_requested,
         validation_config=UpdateValidationConfig(
             rollback_dir=tmp_path / "rollback",
