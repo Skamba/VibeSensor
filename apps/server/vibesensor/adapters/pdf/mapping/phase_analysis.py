@@ -6,7 +6,7 @@ from collections.abc import Callable
 
 from vibesensor.domain import Finding, TestRun, speed_band_sort_key
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
-from vibesensor.use_cases.history.report_display_facts.shared import _display_location
+from vibesensor.shared.report_presentation import display_location
 from vibesensor.use_cases.history.report_facts import PreparedReportFacts
 
 __all__ = [
@@ -126,8 +126,8 @@ def _same_display_location(
     tr: Callable[..., str],
 ) -> bool:
     return (
-        _display_location(lhs, short=False, tr=tr).strip().lower()
-        == _display_location(rhs, short=False, tr=tr).strip().lower()
+        display_location(lhs, short=False, tr=tr).strip().lower()
+        == display_location(rhs, short=False, tr=tr).strip().lower()
     )
 
 

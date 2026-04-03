@@ -117,7 +117,15 @@ def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
             "findings": [],
             "top_causes": [],
             "plots": {"peaks_table": [{"rank": 1, "strength_db": 12.0}]},
-            "warnings": [{"code": "PERSISTED_ONLY"}],
+            "warnings": [
+                {
+                    "code": "PERSISTED_ONLY",
+                    "severity": "warn",
+                    "applies_to": "report",
+                    "title": "Persisted warning",
+                    "detail": "cached",
+                }
+            ],
         }
     )
 
@@ -125,7 +133,7 @@ def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
 
     assert prepared.renderer_payload.run_id == "persisted-run"
     assert prepared.report_facts is not None
-    assert [warning["code"] for warning in prepared.report_facts.warnings] == ["PERSISTED_ONLY"]
+    assert [warning.code for warning in prepared.report_facts.warnings] == ["PERSISTED_ONLY"]
 
 
 def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(

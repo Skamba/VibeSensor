@@ -12,7 +12,7 @@ from vibesensor.adapters.pdf.report_data import PatternEvidence
 from vibesensor.domain import Finding, VibrationOrigin
 from vibesensor.report_i18n import human_source, resolve_i18n
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
-from vibesensor.use_cases.history.report_display_facts.shared import _display_location
+from vibesensor.shared.report_presentation import display_location
 
 __all__ = [
     "build_pattern_evidence",
@@ -25,7 +25,7 @@ def build_pattern_evidence(
     context: ReportMappingContext,
     primary: PrimaryCandidateContext,
     lang: str,
-    tr: Callable,
+    tr: Callable[..., str],
 ) -> PatternEvidence:
     """Build the pattern-evidence block for the report template."""
 
@@ -43,7 +43,7 @@ def build_pattern_evidence(
     )
     return PatternEvidence(
         matched_systems=systems,
-        strongest_location=_display_location(primary.primary_location, tr=tr),
+        strongest_location=display_location(primary.primary_location, tr=tr),
         speed_band=primary.primary_speed,
         strength_label=primary.strength_text,
         strength_peak_db=primary.strength_db,

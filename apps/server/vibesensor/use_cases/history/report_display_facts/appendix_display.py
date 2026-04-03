@@ -6,6 +6,11 @@ from collections.abc import Callable, Sequence
 
 from vibesensor.domain import TestRun
 from vibesensor.shared.boundaries.report_interpretation import PrimaryReportFacts
+from vibesensor.shared.report_presentation import (
+    display_location,
+    location_confidence_text,
+    presented_location_confidence_key,
+)
 
 from .candidate_display import next_if_primary_clean
 from .models import (
@@ -13,7 +18,6 @@ from .models import (
     PreparedAppendixBSummaryDisplay,
     PreparedRankedCandidateDisplay,
 )
-from .shared import _display_location, _location_confidence_text, _presented_location_confidence_key
 
 __all__ = [
     "build_appendix_a_display",
@@ -108,11 +112,11 @@ def build_appendix_b_display(
         else tr("REPORT_DOMINANCE_RATIO_UNKNOWN")
     )
     return PreparedAppendixBSummaryDisplay(
-        dominant_corner=_display_location(primary_candidate_facts.primary_location, tr=tr),
+        dominant_corner=display_location(primary_candidate_facts.primary_location, tr=tr),
         runner_up_corner=runner_up_corner,
         dominance_ratio_text=dominance_ratio_text,
-        location_confidence=_location_confidence_text(
-            _presented_location_confidence_key(
+        location_confidence=location_confidence_text(
+            presented_location_confidence_key(
                 action_status_key=action_status_key,
                 location_confidence_key=location_confidence_key,
             ),
