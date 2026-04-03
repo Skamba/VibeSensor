@@ -21,12 +21,14 @@ from vibesensor.use_cases.updates.models import (
     validate_update_request,
 )
 from vibesensor.use_cases.updates.recovery import InterruptedUpdateRecovery
+from vibesensor.use_cases.updates.release_application import UpdateReleaseApplication
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
     UpdateStatusTracker,
     collect_runtime_details,
 )
+from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 from vibesensor.use_cases.updates.usb_internet import (
     UpdateUsbInternetOrchestrator,
     UsbInternetStatusService,
@@ -169,12 +171,12 @@ class UpdateManager:
         self._lifecycle = UpdateJobLifecycleHandler(
             tracker=self._tracker,
             repo=self._repo,
-            wifi_factory=self._build_wifi_orchestrator,
+            transport_sessions_factory=lambda: self._build_transport_sessions(),
             logger=LOGGER,
         )
         self._recovery = InterruptedUpdateRecovery(
             tracker=self._tracker,
-            wifi_factory=self._build_wifi_orchestrator,
+            transport_sessions_factory=lambda: self._build_transport_sessions(),
         )
 
         # Build config objects once — shared by workflow, snapshot, and rollback.
@@ -255,15 +257,10 @@ class UpdateManager:
         workflow = UpdateWorkflow(
             tracker=self._tracker,
             commands=commands,
-            wifi=self._build_wifi_orchestrator(commands=commands),
-            usb_internet=self._build_usb_internet_orchestrator(commands=commands),
-            installer=self._build_installer(commands),
-            firmware_refresher=self._build_firmware_refresher(commands=commands),
+            transport_sessions=self._build_transport_sessions(commands=commands),
+            release_application=self._build_release_application(commands),
             cancel_requested=self._executor.cancel_requested,
             validation_config=self._validation_config,
-            rollback_dir=self._rollback_dir,
-            service_name=UPDATE_SERVICE_NAME,
-            restart_unit=UPDATE_RESTART_UNIT,
         )
         await workflow.execute(request)
 
@@ -300,6 +297,17 @@ class UpdateManager:
             self._build_wifi_config(),
         )
 
+    def _build_transport_sessions(
+        self,
+        *,
+        commands: UpdateCommandExecutor | None = None,
+    ) -> UpdateTransportSessions:
+        active_commands = commands or self._build_command_executor()
+        return UpdateTransportSessions(
+            wifi=self._build_wifi_orchestrator(commands=active_commands),
+            usb_internet=self._build_usb_internet_orchestrator(commands=active_commands),
+        )
+
     def _build_installer(
         self,
         commands: UpdateCommandExecutor,
@@ -316,6 +324,21 @@ class UpdateManager:
             self._tracker,
             self._repo,
             self._installer_config.firmware_refresh_timeout_s,
+        )
+
+    def _build_release_application(
+        self,
+        commands: UpdateCommandExecutor,
+    ) -> UpdateReleaseApplication:
+        return UpdateReleaseApplication(
+            tracker=self._tracker,
+            commands=commands,
+            installer=self._build_installer(commands),
+            firmware_refresher=self._build_firmware_refresher(commands=commands),
+            cancel_requested=self._executor.cancel_requested,
+            rollback_dir=self._rollback_dir,
+            service_name=UPDATE_SERVICE_NAME,
+            restart_unit=UPDATE_RESTART_UNIT,
         )
 
     async def _snapshot_for_rollback(self) -> bool:
