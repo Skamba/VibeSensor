@@ -353,24 +353,3 @@ def _stddev(values: tuple[float, ...]) -> float:
 
 def _is_finite_number(value: object) -> bool:
     return isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool) and math.isfinite(value)
-
-
-def speed_history_sample(
-    *,
-    policy: CaptureReadinessPolicy,
-    observation: CaptureReadinessObservation,
-) -> float | None:
-    speed = observation.speed
-    if speed is None:
-        return None
-    if (
-        speed.source not in policy.live_speed_sources
-        or speed.fallback_active
-        or speed.age_s is None
-        or speed.age_s > policy.max_speed_age_s
-        or not _is_finite_number(speed.speed_kmh)
-        or speed.speed_kmh is None
-        or speed.speed_kmh < policy.min_ready_speed_kmh
-    ):
-        return None
-    return float(speed.speed_kmh)

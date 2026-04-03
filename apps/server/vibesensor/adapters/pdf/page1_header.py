@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
@@ -20,14 +21,16 @@ from vibesensor.adapters.pdf.pdf_style import (
     TEXT_CLR,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height
-from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
+
+if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.report_types import Page1RenderPlan
 
 __all__ = ["draw_header_strip", "draw_hero_block"]
 
 
 def draw_header_strip(
     c: Canvas,
-    data: ReportTemplateData,
+    plan: Page1RenderPlan,
     *,
     tr: Callable[..., str],
     x: float,
@@ -40,17 +43,17 @@ def draw_header_strip(
     )
     c.setFillColor(_hex(REPORT_COLORS["brand"]))
     c.setFont(FONT_B, FS_H2)
-    c.drawString(x + 4 * mm, y + h - 5.5 * mm, data.title or tr("REPORT_FOOTER_TITLE"))
+    c.drawString(x + 4 * mm, y + h - 5.5 * mm, plan.title or tr("REPORT_FOOTER_TITLE"))
 
     values = [
-        (tr("RUN_DATE"), data.run_datetime or tr("UNKNOWN")),
+        (tr("RUN_DATE"), plan.run_datetime or tr("UNKNOWN")),
         (
             tr("CAR_LABEL"),
-            " — ".join(part for part in (data.car_name, data.car_type) if part) or tr("UNKNOWN"),
+            " — ".join(part for part in (plan.car_name, plan.car_type) if part) or tr("UNKNOWN"),
         ),
-        (tr("DURATION"), data.duration_text or tr("UNKNOWN")),
-        (tr("SENSORS_LABEL"), str(data.sensor_count or 0)),
-        (tr("SPEED_BAND"), data.verdict_page.speed_window_label or tr("UNKNOWN")),
+        (tr("DURATION"), plan.duration_text or tr("UNKNOWN")),
+        (tr("SENSORS_LABEL"), str(plan.sensor_count or 0)),
+        (tr("SPEED_BAND"), plan.verdict_page.speed_window_label or tr("UNKNOWN")),
     ]
     inner_x = x + 4 * mm
     top_y = y + h - 12.0 * mm
@@ -151,7 +154,7 @@ def _draw_action_status_callout(
 
 def draw_hero_block(
     c: Canvas,
-    data: ReportTemplateData,
+    plan: Page1RenderPlan,
     *,
     tr: Callable[..., str],
     x: float,
@@ -159,7 +162,7 @@ def draw_hero_block(
     w: float,
     h: float,
 ) -> None:
-    verdict = data.verdict_page
+    verdict = plan.verdict_page
     _draw_panel(c, x, y, w, h, fill="#ffffff")
     inner_x = x + 5 * mm
     inner_y = y + h - 6.0 * mm

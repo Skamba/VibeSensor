@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 from vibesensor.domain import CaptureReadiness, CaptureReadinessPolicy
-from vibesensor.use_cases.run.capture_readiness_evaluator import (
-    evaluate_capture_readiness,
-    speed_history_sample,
-)
+from vibesensor.use_cases.run.capture_readiness_evaluator import evaluate_capture_readiness
 from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessObservation
 from vibesensor.use_cases.run.capture_readiness_state import (
     CaptureReadinessState,
     CaptureReadinessStateConfig,
-    CaptureReadinessStateInput,
+    build_capture_readiness_state_input,
 )
 
 __all__ = ["CaptureReadinessTracker"]
@@ -31,13 +28,9 @@ class CaptureReadinessTracker:
 
     def evaluate(self, observation: CaptureReadinessObservation) -> CaptureReadiness:
         state = self._state.observe(
-            CaptureReadinessStateInput(
-                observed_at_mono_s=observation.observed_at_mono_s,
-                active_sensors=observation.active_sensors,
-                speed_sample_kmh=speed_history_sample(
-                    policy=self._policy,
-                    observation=observation,
-                ),
+            build_capture_readiness_state_input(
+                policy=self._policy,
+                observation=observation,
             ),
         )
         return evaluate_capture_readiness(

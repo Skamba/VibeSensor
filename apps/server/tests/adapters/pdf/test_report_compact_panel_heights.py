@@ -13,6 +13,10 @@ from vibesensor.adapters.pdf.pdf_appendices import (
     _worksheet_first_actions_panel_height,
 )
 from vibesensor.adapters.pdf.pdf_style import GAP, MARGIN, PAGE_H, PAGE_W, PANEL_HEADER_H
+from vibesensor.adapters.pdf.report_types import (
+    build_appendix_c_render_plan,
+    build_page1_render_plan,
+)
 from vibesensor.report_i18n import tr as i18n_tr
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
@@ -42,7 +46,7 @@ def test_estimate_actions_block_height_shrinks_for_short_content() -> None:
     page_top = PAGE_H - MARGIN
     content_bottom = MARGIN + 8 * mm
     main_h = page_top - content_bottom - (26 * mm) - (40 * mm) - (2 * GAP)
-    actions_h = estimate_actions_block_height(data, tr=_tr, w=78 * mm)
+    actions_h = estimate_actions_block_height(build_page1_render_plan(data), tr=_tr, w=78 * mm)
 
     assert actions_h < main_h
     assert actions_h >= PANEL_HEADER_H
@@ -65,7 +69,7 @@ def test_estimate_actions_block_height_stays_compact_for_two_preview_steps() -> 
         ],
     )
 
-    actions_h = estimate_actions_block_height(data, tr=_tr, w=actions_w)
+    actions_h = estimate_actions_block_height(build_page1_render_plan(data), tr=_tr, w=actions_w)
 
     assert actions_h < 55 * mm
     assert actions_h >= PANEL_HEADER_H
@@ -104,9 +108,10 @@ def test_estimate_appendix_c_lower_panels_shrink_for_short_content() -> None:
         ),
     )
 
-    context_h = _estimate_appendix_c_context_panel_height(data, width=44 * mm)
-    suitability_h = _estimate_appendix_c_suitability_panel_height(data, width=56 * mm)
-    trace_h = _estimate_appendix_c_trace_panel_height(data, width=72 * mm)
+    plan = build_appendix_c_render_plan(data)
+    context_h = _estimate_appendix_c_context_panel_height(plan, width=44 * mm)
+    suitability_h = _estimate_appendix_c_suitability_panel_height(plan, width=56 * mm)
+    trace_h = _estimate_appendix_c_trace_panel_height(plan, width=72 * mm)
 
     assert max(context_h, suitability_h, trace_h) < 90 * mm
     assert min(context_h, suitability_h, trace_h) >= 34 * mm
@@ -178,9 +183,10 @@ def test_estimate_appendix_c_lower_panels_stay_tighter_for_unbalanced_card_conte
     suitability_w = width * 0.31
     trace_w = width - context_w - suitability_w - (2 * GAP)
 
-    context_h = _estimate_appendix_c_context_panel_height(data, width=context_w)
-    suitability_h = _estimate_appendix_c_suitability_panel_height(data, width=suitability_w)
-    trace_h = _estimate_appendix_c_trace_panel_height(data, width=trace_w)
+    plan = build_appendix_c_render_plan(data)
+    context_h = _estimate_appendix_c_context_panel_height(plan, width=context_w)
+    suitability_h = _estimate_appendix_c_suitability_panel_height(plan, width=suitability_w)
+    trace_h = _estimate_appendix_c_trace_panel_height(plan, width=trace_w)
 
     assert context_h < trace_h
     assert suitability_h < trace_h

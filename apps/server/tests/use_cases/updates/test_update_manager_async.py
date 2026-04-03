@@ -16,6 +16,7 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
+from vibesensor.shared.exceptions import UpdateCleanupError
 from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
 from vibesensor.use_cases.updates.status import collect_runtime_details
 
@@ -147,9 +148,8 @@ class TestUpdateManagerAsync:
                 new=AsyncMock(return_value=None),
             ),
             patch(
-                "vibesensor.use_cases.updates.releases.release_fetcher.ServerReleaseFetcher",
+                "vibesensor.use_cases.updates.releases.factory.build_server_release_fetcher",
             ) as mock_fetcher,
-            patch("vibesensor.use_cases.updates.releases.release_fetcher.ReleaseFetcherConfig"),
             patch("vibesensor._version.__version__", "2025.6.15"),
         ):
             mock_fetcher.return_value.check_update_available.return_value = None
@@ -440,7 +440,7 @@ class TestUpdateManagerAsync:
             object.__setattr__(manager._runtime, "coordinator_factory", lambda: mock_coordinator)
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
-            with pytest.raises(TypeError, match="runtime bug"):
+            with pytest.raises(UpdateCleanupError, match="Cleanup failed: runtime bug"):
                 await manager.job_task
 
         assert manager.status.finished_at is not None

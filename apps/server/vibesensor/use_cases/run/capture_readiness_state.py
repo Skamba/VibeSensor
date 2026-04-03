@@ -6,9 +6,14 @@ import math
 from collections import deque
 from dataclasses import dataclass
 
-from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessSensorObservation
+from vibesensor.domain import CaptureReadinessPolicy
+from vibesensor.use_cases.run.capture_readiness_observation import (
+    CaptureReadinessObservation,
+    CaptureReadinessSensorObservation,
+)
 
 __all__ = [
+    "build_capture_readiness_state_input",
     "CaptureReadinessState",
     "CaptureReadinessStateConfig",
     "CaptureReadinessStateInput",
@@ -51,6 +56,41 @@ class CaptureReadinessStateInput:
     observed_at_mono_s: float
     active_sensors: tuple[CaptureReadinessSensorObservation, ...]
     speed_sample_kmh: float | None
+
+
+def build_capture_readiness_state_input(
+    *,
+    policy: CaptureReadinessPolicy,
+    observation: CaptureReadinessObservation,
+) -> CaptureReadinessStateInput:
+    """Project one observation into the canonical rolling-state input shape."""
+
+    return CaptureReadinessStateInput(
+        observed_at_mono_s=observation.observed_at_mono_s,
+        active_sensors=observation.active_sensors,
+        speed_sample_kmh=_state_speed_sample_kmh(policy=policy, observation=observation),
+    )
+
+
+def _state_speed_sample_kmh(
+    *,
+    policy: CaptureReadinessPolicy,
+    observation: CaptureReadinessObservation,
+) -> float | None:
+    speed = observation.speed
+    if speed is None:
+        return None
+    if (
+        speed.source not in policy.live_speed_sources
+        or speed.fallback_active
+        or speed.age_s is None
+        or speed.age_s > policy.max_speed_age_s
+        or not _is_finite_number(speed.speed_kmh)
+        or speed.speed_kmh is None
+        or speed.speed_kmh < policy.min_ready_speed_kmh
+    ):
+        return None
+    return float(speed.speed_kmh)
 
 
 class CaptureReadinessState:
@@ -177,3 +217,7 @@ class CaptureReadinessState:
         ):
             self._speed_history.popleft()
         return tuple(self._speed_history)
+
+
+def _is_finite_number(value: object) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)

@@ -1,15 +1,11 @@
-"""Release discovery helpers for updater workflows."""
+"""GitHub release fetch and validation helpers for updater workflows."""
 
-from vibesensor.use_cases.updates.releases.releases import (
-    UpdateReleaseCheck,
-    check_for_update,
-    download_release,
-    verify_download,
-)
+from . import release_validation
+from .release_fetcher import ReleaseFetcherConfig, ReleaseInfo, ServerReleaseFetcher
 
 __all__ = [
-    "UpdateReleaseCheck",
-    "check_for_update",
-    "download_release",
-    "verify_download",
+    "ReleaseFetcherConfig",
+    "ReleaseInfo",
+    "ServerReleaseFetcher",
+    "release_validation",
 ]

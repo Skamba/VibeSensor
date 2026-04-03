@@ -12,7 +12,13 @@ from .contracts import (
     PreparedVerdictDisplay,
     ReportCoverageSummary,
 )
-from .payload_gate import has_projectable_report_payload
+from .payload import (
+    NormalizedReportSummary,
+    ReportTimelineInterval,
+    has_projectable_report_payload,
+    report_summary_from_mapping,
+    require_projectable_report_payload,
+)
 from .projection import (
     PrimaryReportFacts,
     collect_location_intensity,
@@ -23,11 +29,6 @@ from .projection import (
     resolve_report_origin,
     sensor_fallback_strength_db,
     tire_spec_text,
-)
-from .summary_codec import (
-    NormalizedReportSummary,
-    ReportTimelineInterval,
-    report_summary_from_mapping,
 )
 
 __all__ = [
@@ -50,6 +51,7 @@ __all__ = [
     "has_projectable_report_payload",
     "normalize_origin_location",
     "report_summary_from_mapping",
+    "require_projectable_report_payload",
     "resolve_primary_report_facts",
     "resolve_report_origin",
     "sensor_fallback_strength_db",

@@ -7,6 +7,7 @@ import pytest
 
 from vibesensor.use_cases.updates.coordinator import UpdateCoordinator
 from vibesensor.use_cases.updates.models import (
+    UpdateExecutionOutcome,
     UpdateRequest,
     UpdateTransport,
     UpdateValidationConfig,
@@ -70,8 +71,9 @@ async def test_execute_stops_after_validation_failure(tmp_path: Path) -> None:
         "vibesensor.use_cases.updates.coordinator.validate_prerequisites",
         new=AsyncMock(return_value=False),
     ):
-        await coordinator.execute(request)
+        outcome = await coordinator.execute(request)
 
+    assert outcome == UpdateExecutionOutcome.aborted
     transport_controller.prepare.assert_not_awaited()
     release_planner.plan.assert_not_awaited()
     workflow_executor.execute.assert_not_awaited()
@@ -93,8 +95,9 @@ async def test_execute_stops_when_transport_cannot_prepare(tmp_path: Path) -> No
         "vibesensor.use_cases.updates.coordinator.validate_prerequisites",
         new=AsyncMock(return_value=True),
     ):
-        await coordinator.execute(request)
+        outcome = await coordinator.execute(request)
 
+    assert outcome == UpdateExecutionOutcome.aborted
     transport_controller.prepare.assert_awaited_once_with(request)
     release_planner.plan.assert_not_awaited()
     workflow_executor.execute.assert_not_awaited()
@@ -121,8 +124,9 @@ async def test_execute_honors_cancellation_after_transport_prepare(tmp_path: Pat
         "vibesensor.use_cases.updates.coordinator.validate_prerequisites",
         new=AsyncMock(return_value=True),
     ):
-        await coordinator.execute(request)
+        outcome = await coordinator.execute(request)
 
+    assert outcome == UpdateExecutionOutcome.aborted
     transport_controller.prepare.assert_awaited_once_with(request)
     release_planner.plan.assert_not_awaited()
     workflow_executor.execute.assert_not_awaited()
@@ -142,6 +146,7 @@ async def test_execute_delegates_release_plan_and_execution(tmp_path: Path) -> N
     release_plan = object()
     transport_controller.prepare.return_value = transport_session
     release_planner.plan.return_value = release_plan
+    workflow_executor.execute.return_value = UpdateExecutionOutcome.installed
 
     with (
         patch(
@@ -150,8 +155,9 @@ async def test_execute_delegates_release_plan_and_execution(tmp_path: Path) -> N
         ),
         patch("vibesensor.__version__", "2026.4.3"),
     ):
-        await coordinator.execute(request)
+        outcome = await coordinator.execute(request)
 
+    assert outcome == UpdateExecutionOutcome.installed
     transport_controller.prepare.assert_awaited_once_with(request)
     release_planner.plan.assert_awaited_once_with("2026.4.3")
     workflow_executor.execute.assert_awaited_once_with(
@@ -180,7 +186,8 @@ async def test_execute_stops_when_release_planner_returns_none(tmp_path: Path) -
         ),
         patch("vibesensor.__version__", "2026.4.3"),
     ):
-        await coordinator.execute(request)
+        outcome = await coordinator.execute(request)
 
+    assert outcome == UpdateExecutionOutcome.aborted
     release_planner.plan.assert_awaited_once_with("2026.4.3")
     workflow_executor.execute.assert_not_awaited()

@@ -1,10 +1,38 @@
-"""Tests for the canonical typed report-summary boundary codec."""
+"""Tests for the canonical report payload boundary."""
 
 from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.reporting.summary_codec import report_summary_from_mapping
+from vibesensor.shared.boundaries.reporting.payload import (
+    has_projectable_report_payload,
+    report_summary_from_mapping,
+    require_projectable_report_payload,
+)
+
+
+def test_has_projectable_report_payload_accepts_findings_list() -> None:
+    assert has_projectable_report_payload({"findings": []}) is True
+
+
+def test_has_projectable_report_payload_accepts_top_causes_list() -> None:
+    assert has_projectable_report_payload({"top_causes": []}) is True
+
+
+def test_has_projectable_report_payload_rejects_missing_projection_lists() -> None:
+    assert has_projectable_report_payload({"run_id": "no-projection"}) is False
+
+
+def test_has_projectable_report_payload_rejects_non_list_projection_values() -> None:
+    assert has_projectable_report_payload({"findings": {}, "top_causes": None}) is False
+
+
+def test_require_projectable_report_payload_raises_for_non_projectable_payload() -> None:
+    with pytest.raises(
+        ValueError,
+        match="Report payload must include findings or top_causes lists for report preparation",
+    ):
+        require_projectable_report_payload({"run_id": "no-projection"})
 
 
 def test_report_summary_from_mapping_defaults_without_nested_metadata() -> None:

@@ -9,7 +9,7 @@ from vibesensor.shared.boundaries.analysis_summary_projection import (
     project_analysis_summary,
     project_persisted_analysis,
 )
-from vibesensor.shared.boundaries.reporting.payload_gate import has_projectable_report_payload
+from vibesensor.shared.boundaries.reporting.payload import has_projectable_report_payload
 from vibesensor.shared.boundaries.run_metadata_codec import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
