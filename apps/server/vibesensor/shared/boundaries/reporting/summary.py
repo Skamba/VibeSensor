@@ -1,4 +1,4 @@
-"""Canonical reporting payload boundary for history and PDF preparation."""
+"""Canonical reporting summary boundary for history and PDF preparation."""
 
 from __future__ import annotations
 

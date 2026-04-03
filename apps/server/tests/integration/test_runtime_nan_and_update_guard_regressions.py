@@ -21,8 +21,8 @@ from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.updates.firmware.firmware_bundle import dir_sha256
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
-from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
+from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowContext
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
@@ -166,27 +166,22 @@ class TestUpdateManagerCancelledError:
 
     @pytest.mark.asyncio
     async def test_cancelled_error_is_reraised(self):
-        """_run_update should re-raise CancelledError."""
-        mgr = UpdateManager.__new__(UpdateManager)
-        mgr._runtime = SimpleNamespace(
-            build_run_runtime=lambda: SimpleNamespace(
-                preparation=SimpleNamespace(
-                    prepare=AsyncMock(
-                        return_value=PreparedUpdateWorkflow(
-                            current_version="2026.4.3",
-                            transport_session=AsyncMock(),
-                        )
+        """The canonical update workflow should re-raise CancelledError."""
+        workflow = UpdateWorkflow(
+            preparation=SimpleNamespace(
+                prepare=AsyncMock(
+                    return_value=PreparedUpdateWorkflow(
+                        current_version="2026.4.3",
+                        transport_session=AsyncMock(),
                     )
-                ),
-                release_planner=SimpleNamespace(
-                    plan=AsyncMock(side_effect=asyncio.CancelledError())
-                ),
-                workflow_executor=MagicMock(),
+                )
             ),
+            release_planner=SimpleNamespace(plan=AsyncMock(side_effect=asyncio.CancelledError())),
+            workflow_executor=MagicMock(),
         )
 
         with pytest.raises(asyncio.CancelledError):
-            await mgr._run_update(UpdateWorkflowContext(), MagicMock())
+            await workflow.run(context=UpdateWorkflowContext(), request=MagicMock())
 
 
 # ── 7. dir_sha256 uses separators ────────────────────────────────────────

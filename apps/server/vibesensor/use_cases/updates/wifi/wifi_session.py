@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 
 from vibesensor.shared.exceptions import UpdateTransportError
 from vibesensor.use_cases.updates.models import (
+    UpdateJobStatus,
     UpdatePhase,
     UpdateRequest,
     UpdateState,
@@ -29,6 +31,23 @@ _HOTSPOT_RESTORE_PHASES = frozenset(
 )
 
 
+@dataclass(frozen=True, slots=True)
+class WifiHotspotCleanupPlan:
+    """Interpret updater status into one hotspot-cleanup control plan."""
+
+    restore_hotspot: bool
+    transition_to_restore_phase: bool
+
+
+def _cleanup_plan(status: UpdateJobStatus) -> WifiHotspotCleanupPlan:
+    if status.state == UpdateState.running:
+        return WifiHotspotCleanupPlan(restore_hotspot=True, transition_to_restore_phase=True)
+    return WifiHotspotCleanupPlan(
+        restore_hotspot=status.phase in _HOTSPOT_RESTORE_PHASES,
+        transition_to_restore_phase=False,
+    )
+
+
 class UpdateWifiSession:
     """Wi-Fi transport session for updater startup, success, and cleanup."""
 
@@ -48,12 +67,12 @@ class UpdateWifiSession:
         self._readiness = UpdateWifiReadiness(commands=commands, tracker=tracker, config=config)
         self._uplink = UpdateUplinkProvisioner(commands=commands, tracker=tracker, config=config)
 
-    async def stop_hotspot(self) -> bool:
+    async def _stop_hotspot(self) -> bool:
         """Stop the hotspot before the updater attempts to join an uplink."""
 
         return await self._hotspot.stop_hotspot()
 
-    async def connect_uplink(self, ssid: str, password: str) -> bool:
+    async def _connect_uplink(self, ssid: str, password: str) -> bool:
         """Create and connect the transient uplink profile for this update run."""
 
         self._tracker.log(f"Connecting to Wi-Fi network: {ssid}")
@@ -69,11 +88,11 @@ class UpdateWifiSession:
         """Prepare the updater's Wi-Fi transport before release work begins."""
 
         self._tracker.transition(UpdatePhase.stopping_hotspot)
-        if not await self.stop_hotspot():
+        if not await self._stop_hotspot():
             raise UpdateTransportError("Failed to stop the hotspot before Wi-Fi update setup")
         self._tracker.transition(UpdatePhase.connecting_wifi)
         assert request.ssid is not None  # noqa: S101
-        if not await self.connect_uplink(request.ssid, request.password):
+        if not await self._connect_uplink(request.ssid, request.password):
             raise UpdateTransportError("Failed to prepare the Wi-Fi uplink for update")
 
     async def abort_preparation(self) -> None:
@@ -84,7 +103,7 @@ class UpdateWifiSession:
             failure_message="Failed to restore hotspot after transport preparation failure",
         )
 
-    async def restore_hotspot(self) -> bool:
+    async def _restore_hotspot(self) -> bool:
         """Restore the hotspot after update work completes or is interrupted."""
 
         return await self._hotspot.restore_hotspot()
@@ -102,7 +121,7 @@ class UpdateWifiSession:
 
         self._tracker.transition(UpdatePhase.restoring_hotspot)
         self._tracker.log("Restoring hotspot...")
-        restored = await self.restore_hotspot()
+        restored = await self._restore_hotspot()
         if not restored:
             self._tracker.fail(
                 UpdatePhase.restoring_hotspot,
@@ -115,11 +134,12 @@ class UpdateWifiSession:
         """Restore hotspot ownership and attach cleanup diagnostics after a run."""
 
         status = self._tracker.status
-        if status.state == UpdateState.running or status.phase in _HOTSPOT_RESTORE_PHASES:
-            if status.state == UpdateState.running:
+        plan = _cleanup_plan(status)
+        if plan.restore_hotspot:
+            if plan.transition_to_restore_phase:
                 self._tracker.transition(UpdatePhase.restoring_hotspot)
             self._tracker.log("Restoring hotspot...")
-            restored = await asyncio.shield(self.restore_hotspot())
+            restored = await asyncio.shield(self._restore_hotspot())
             if not restored:
                 self._tracker.add_issue("cleanup", "Failed to restore hotspot during cleanup")
                 self._tracker.log("Cleanup hotspot restore failed")
@@ -134,7 +154,7 @@ class UpdateWifiSession:
         self._tracker.log(f"{prefix}: cleaning up uplink connection")
         await self._hotspot.cleanup_uplink()
         self._tracker.log(f"{prefix}: restoring hotspot")
-        restored = await self.restore_hotspot()
+        restored = await self._restore_hotspot()
         if restored:
             self._tracker.log(f"{prefix}: hotspot restored successfully")
             return

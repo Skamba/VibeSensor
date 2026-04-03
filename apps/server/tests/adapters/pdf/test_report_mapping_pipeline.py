@@ -51,15 +51,21 @@ def _prepared_report_input() -> PreparedReportInput:
 
 def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
     prepared = _prepared_report_input()
+    composition = report_document.compose_report_document(
+        aggregate=prepared.domain_test_run,
+        report_facts=prepared.report_facts,
+        lang=prepared.language,
+    )
 
     assert isinstance(prepared, shared_reporting.PreparedReportInput)
     assert isinstance(prepared.report_facts, shared_reporting.PreparedReportFacts)
-    assert isinstance(prepared.presentation, shared_reporting.PreparedReportPresentation)
     assert isinstance(
         prepared.report_facts.primary_candidate_facts,
         shared_report_projection.PrimaryReportFacts,
     )
+    assert isinstance(composition, report_document.ReportDocumentComposition)
     assert not hasattr(prepared, "renderer_payload")
+    assert not hasattr(prepared, "presentation")
 
 
 def test_prepare_report_input_exposes_canonical_summary_boundary() -> None:

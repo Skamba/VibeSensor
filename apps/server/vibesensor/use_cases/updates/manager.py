@@ -6,14 +6,12 @@ import asyncio
 
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
-    UpdateRequest,
     UpdateState,
     UpdateTransport,
     UsbInternetStatus,
     validate_update_request,
 )
 from vibesensor.use_cases.updates.runtime import UpdateManagerRuntime
-from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowContext
 
 
 class UpdateManager:
@@ -47,9 +45,9 @@ class UpdateManager:
         request = validate_update_request(ssid, password, transport=transport)
         self._runtime.workflow_runner.start(
             request=request,
-            workflow=lambda context: self._run_update(
-                context,
-                request,
+            workflow=lambda context: self._runtime.workflow.run(
+                context=context,
+                request=request,
             ),
         )
 
@@ -61,22 +59,6 @@ class UpdateManager:
         if status.state != UpdateState.running or status.finished_at is not None:
             return
         self._runtime.tracker.mark_interrupted("Update interrupted by server restart")
-        await (
-            self._runtime.build_transport_sessions()
-            .for_transport(
-                status.transport,
-            )
-            .recover_interrupted_update()
-        )
+        transport_session = self._runtime.transport_sessions.for_transport(status.transport)
+        await transport_session.recover_interrupted_update()
         self._runtime.tracker.persist()
-
-    async def _run_update(
-        self,
-        context: UpdateWorkflowContext,
-        request: UpdateRequest,
-    ) -> None:
-        run_runtime = self._runtime.build_run_runtime()
-        prepared = await run_runtime.preparation.prepare(request)
-        context.transport_session = prepared.transport_session
-        planned = await run_runtime.release_planner.plan(prepared)
-        await run_runtime.workflow_executor.execute(planned)
