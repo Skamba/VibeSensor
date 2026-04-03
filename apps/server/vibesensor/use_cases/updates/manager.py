@@ -6,7 +6,6 @@ import asyncio
 
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
-    UpdateState,
     UpdateTransport,
     UsbInternetStatus,
     validate_update_request,
@@ -55,11 +54,4 @@ class UpdateManager:
         return self._runtime.workflow_runner.cancel()
 
     async def startup_recover(self) -> None:
-        status = self._runtime.tracker.status
-        if status.state != UpdateState.running or status.finished_at is not None:
-            return
-        self._runtime.recorder.add_issue("startup", "Update interrupted by server restart")
-        self._runtime.status_controller.mark_interrupted()
-        transport_session = self._runtime.transport_sessions.for_transport(status.transport)
-        await transport_session.recover_interrupted_update()
-        self._runtime.status_controller.persist()
+        await self._runtime.startup_recovery.recover()

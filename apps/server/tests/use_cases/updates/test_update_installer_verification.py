@@ -8,7 +8,6 @@ from unittest.mock import patch
 import pytest
 from test_support.update_status import build_update_status_harness
 
-from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.artifact_validation import (
     WheelArtifactValidator,
     read_wheel_metadata,
@@ -190,7 +189,7 @@ async def test_snapshot_for_rollback_falls_back_to_package_index_download(
 
 
 @pytest.mark.asyncio
-async def test_snapshot_for_rollback_prunes_legacy_named_wheels(
+async def test_snapshot_for_rollback_keeps_existing_wheels_untouched(
     tmp_path: Path,
 ) -> None:
     installer, commands, _tracker = _make_installer(tmp_path)
@@ -204,7 +203,11 @@ async def test_snapshot_for_rollback_prunes_legacy_named_wheels(
         assert await installer.snapshot_for_rollback() is True
 
     wheels = sorted(path.name for path in rollback_dir.glob("*.whl"))
-    assert wheels == ["rollback_snapshot.whl"]
+    assert wheels == [
+        "rollback_snapshot.whl",
+        "vibesensor-2025.6.12-py3-none-any.whl",
+        "vibesensor-2025.6.13-py3-none-any.whl",
+    ]
 
 
 @pytest.mark.asyncio
@@ -268,8 +271,9 @@ async def test_install_release_rejects_corrupt_downloaded_wheel(tmp_path: Path) 
     broken_wheel = tmp_path / "broken.whl"
     broken_wheel.write_text("not a wheel", encoding="utf-8")
 
-    with pytest.raises(UpdateReleaseError, match="Update install failed"):
-        await installer.install_release(broken_wheel, "2025.6.15")
+    result = await installer.install_release(broken_wheel, "2025.6.15")
+
+    assert result == WheelInstallResult(succeeded=False, rollback_required=False)
     assert tracker.status.state.value == "failed"
     assert not commands.calls
     assert any(issue.message == "Downloaded wheel is corrupt" for issue in tracker.status.issues)
@@ -463,8 +467,9 @@ async def test_install_release_rejects_incompatible_environment_before_pip_insta
         "",
     )
 
-    with pytest.raises(UpdateReleaseError, match="Update install failed"):
-        await installer.install_release(wheel_path, "2025.6.15")
+    result = await installer.install_release(wheel_path, "2025.6.15")
+
+    assert result == WheelInstallResult(succeeded=False, rollback_required=False)
     assert tracker.status.state.value == "failed"
     assert any(
         issue.message == "Downloaded wheel is incompatible with the current environment"

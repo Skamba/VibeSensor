@@ -176,18 +176,19 @@ class PostAnalysisWorker:
         worker = self._analysis_thread
         if worker is None or not worker.is_alive():
             worker = Thread(
-                target=self._run_worker_guarded,
+                target=self._run_worker_boundary,
                 name="metrics-post-analysis-worker",
                 daemon=True,
             )
             self._analysis_thread = worker
             worker.start()
 
-    def _run_worker_guarded(self) -> None:
+    def _run_worker_boundary(self) -> None:
         try:
             self._worker_loop()
-        except Exception as exc:
-            self._handle_unexpected_worker_failure(exc)
+        finally:
+            with self._lock:
+                self._analysis_thread = None
 
     def _worker_loop(self) -> None:
         while True:
@@ -195,28 +196,23 @@ class PostAnalysisWorker:
                 if self._shutdown_event.is_set():
                     self._state.active_run_id = None
                     self._state.active_started_at = None
-                    self._analysis_thread = None
                     return
                 run_id = self._state.start_next(started_at=time.time())
                 if run_id is None:
-                    self._analysis_thread = None
                     return
-            self._run_post_analysis(run_id)
+            try:
+                self._run_post_analysis(run_id)
+            except Exception as exc:
+                self._handle_unexpected_run_failure(run_id, exc)
+                return
             with self._lock:
                 self._state.finish_active(run_id)
 
-    def _handle_unexpected_worker_failure(self, exc: Exception) -> None:
+    def _handle_unexpected_run_failure(self, run_id: str, exc: Exception) -> None:
         with self._lock:
-            run_id = self._state.active_run_id
             dropped_queued_runs = self._state.snapshot().queue_depth
-            if run_id is not None:
-                self._state.finish_active(run_id)
+            self._state.finish_active(run_id)
             self._state.clear_pending()
-            self._analysis_thread = None
-
-        if run_id is None:
-            LOGGER.exception("Unexpected error in analysis worker outside an active run")
-            return
 
         completed_error = self._unexpected_failure_recorder.record(run_id=run_id, exc=exc)
         with self._lock:

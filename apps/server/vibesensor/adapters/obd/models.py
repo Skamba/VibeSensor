@@ -46,4 +46,4 @@ class ObdStatusSnapshot:
     last_error: str | None
     last_raw_response: str | None
     reconnect_delay_s: float | None
-    debug_hint: str | None
+    helper_error: str | None = None
