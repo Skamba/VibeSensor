@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
+from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
 from vibesensor.adapters.http.settings import create_settings_routes
 from vibesensor.infra.config.settings_store import SettingsStore
@@ -96,10 +97,11 @@ def test_unhandled_errors_keep_request_id_in_logs(caplog: pytest.LogCaptureFixtu
     assert failure_log.failure_kind == "programmer"
 
 
-def test_unhandled_operational_errors_return_503_and_log_operational_kind(
+def test_operational_errors_use_http_handlers_and_keep_request_id(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     app = FastAPI()
+    install_http_exception_handlers(app)
     install_request_logging_middleware(app)
 
     @app.get("/dependency-down")
@@ -116,9 +118,10 @@ def test_unhandled_operational_errors_return_503_and_log_operational_kind(
     assert response.status_code == 503
     assert response.json() == {"detail": "helper unavailable"}
     assert response.headers[REQUEST_ID_HEADER] == "operational-request"
-    failure_log = _log_record(caplog, "http_request_failed")
-    assert failure_log.request_id == "operational-request"
-    assert failure_log.failure_kind == "operational"
+    request_log = _log_record(caplog, "http_request")
+    assert request_log.request_id == "operational-request"
+    assert request_log.status_code == 503
+    assert all(rec.message != "http_request_failed" for rec in caplog.records)
 
 
 def test_http_exception_keeps_status_code_and_request_id(caplog: pytest.LogCaptureFixture) -> None:
