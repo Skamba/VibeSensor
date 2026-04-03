@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from vibesensor.use_cases.updates.models import UpdateRequest, UpdateTransport
+from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest, UpdateTransport
 
 
 class UpdateTransportSession(Protocol):
@@ -54,3 +54,6 @@ class UpdateTransportSessions:
 
     def for_transport(self, transport: UpdateTransport) -> UpdateTransportSession:
         return self._sessions[transport]
+
+    def for_status(self, status: UpdateJobStatus) -> UpdateTransportSession:
+        return self.for_transport(status.transport)

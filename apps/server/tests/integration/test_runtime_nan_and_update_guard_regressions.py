@@ -24,6 +24,7 @@ from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheCo
 from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdateState
+from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
 
@@ -187,8 +188,19 @@ class TestUpdateManagerCancelledError:
             tracker=tracker,
             executor=executor,
             lifecycle=lifecycle,
-            coordinator_factory=lambda: SimpleNamespace(
-                execute=AsyncMock(side_effect=asyncio.CancelledError()),
+            build_run_runtime=lambda: SimpleNamespace(
+                preparation=SimpleNamespace(
+                    prepare=AsyncMock(
+                        return_value=PreparedUpdateWorkflow(
+                            current_version="2026.4.3",
+                            transport_session=AsyncMock(),
+                        )
+                    )
+                ),
+                release_planner=SimpleNamespace(
+                    plan=AsyncMock(side_effect=asyncio.CancelledError())
+                ),
+                workflow_executor=MagicMock(),
             ),
         )
 

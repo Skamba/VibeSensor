@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from vibesensor.use_cases.updates.cleanup import UpdateCleanupCoordinator
 from vibesensor.use_cases.updates.models import UpdateRequest
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
+
+if TYPE_CHECKING:
+    from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
 
 
 class UpdateJobLifecycleHandler:
@@ -31,9 +36,12 @@ class UpdateJobLifecycleHandler:
         self._tracker.fail("cancelled", "Update was cancelled")
         self._tracker.log("Update cancelled")
 
-    async def cleanup_after_update(self) -> None:
+    async def cleanup_after_update(
+        self,
+        transport_session: UpdateTransportSession | None,
+    ) -> None:
         try:
-            await self._cleanup.run()
+            await self._cleanup.run(transport_session)
         finally:
             self._tracker.clear_secrets()
             self._tracker.finish_cleanup()
