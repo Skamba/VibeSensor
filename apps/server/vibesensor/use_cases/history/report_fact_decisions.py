@@ -5,12 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Literal
 
-from vibesensor.domain import Finding, TestRun
+from vibesensor.domain import Finding, SuitabilityCheck, TestRun
 from vibesensor.shared.boundaries.report_interpretation import PrimaryReportFacts
-from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
-from vibesensor.shared.types.history_analysis_contracts import (
-    SummaryWarningResponse as SummaryWarningPayload,
-)
+from vibesensor.shared.run_context_warning import RunContextWarning
 
 from .report_fact_coverage import ReportCoverageSummary, primary_location_has_coverage_gap
 
@@ -90,9 +87,9 @@ def resolve_alternative_source(
     return None, False, None
 
 
-def _is_blocking_suitability(check: RunSuitabilityCheck) -> bool:
-    key = str(check.get("check_key") or "").strip().upper()
-    state = str(check.get("state") or "").strip().lower()
+def _is_blocking_suitability(check: SuitabilityCheck) -> bool:
+    key = check.check_key.strip().upper()
+    state = check.state.strip().lower()
     if state in {"fail", "error"}:
         return True
     return (
@@ -107,17 +104,12 @@ def _is_blocking_suitability(check: RunSuitabilityCheck) -> bool:
 
 def _has_nonblocking_caution_signals(
     *,
-    suitability_checks: Sequence[RunSuitabilityCheck],
-    warnings: Sequence[SummaryWarningPayload],
+    suitability_checks: Sequence[SuitabilityCheck],
+    warnings: Sequence[RunContextWarning],
 ) -> bool:
-    if any(
-        str(warning.get("severity") or "").strip().lower() in {"warn", "error"}
-        for warning in warnings
-    ):
+    if any(warning.severity.strip().lower() in {"warn", "error"} for warning in warnings):
         return True
-    return any(
-        str(check.get("state") or "").strip().lower() != "pass" for check in suitability_checks
-    )
+    return any(check.state.strip().lower() != "pass" for check in suitability_checks)
 
 
 def _allows_system_level_caution_with_weak_location(
@@ -144,8 +136,8 @@ def resolve_action_status_key(
     primary_candidate_facts: PrimaryReportFacts,
     location_confidence_key: LocationConfidenceKey,
     alternative_source_visible: bool,
-    suitability_checks: Sequence[RunSuitabilityCheck],
-    warnings: Sequence[SummaryWarningPayload],
+    suitability_checks: Sequence[SuitabilityCheck],
+    warnings: Sequence[RunContextWarning],
 ) -> ActionStatusKey:
     """Resolve the typed action-status bucket for report display."""
 

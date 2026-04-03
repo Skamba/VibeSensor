@@ -24,12 +24,12 @@ from vibesensor.adapters.pdf.report_data import (
     VerdictPageData,
 )
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
+from vibesensor.shared.report_presentation import display_location
 from vibesensor.use_cases.history.report_display_facts import (
     PreparedAppendixADisplay,
     PreparedAppendixBSummaryDisplay,
     PreparedVerdictDisplay,
 )
-from vibesensor.use_cases.history.report_display_facts.shared import _display_location
 from vibesensor.use_cases.history.report_facts import PreparedReportFacts
 
 from .measurements import _evidence_chain_rows, _sensor_observation_matrix_rows
@@ -181,7 +181,7 @@ def _build_appendix_b_data(
     )
     intensity_rows = [
         TopologyIntensityRow(
-            location=_display_location(row.location, short=False, tr=tr),
+            location=display_location(row.location, short=False, tr=tr),
             p95_db=row.p95_intensity_db,
             coverage_state=(
                 tr("REPORT_COVERAGE_STATE_PARTIAL")

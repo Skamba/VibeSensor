@@ -9,15 +9,12 @@ from vibesensor.domain import (
     LocationHotspotRow,
     LocationIntensitySummary,
     RecommendedAction,
+    SuitabilityCheck,
     TestRun,
     VibrationOrigin,
     coerce_float,
 )
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.report_facts_projection import (
-    report_suitability_checks,
-    report_warning_payloads,
-)
 from vibesensor.shared.boundaries.report_interpretation import (
     PrimaryReportFacts,
     compute_location_hotspot_rows,
@@ -32,11 +29,8 @@ from vibesensor.shared.boundaries.report_payload_projection import (
     phase_timeline_payload,
     sensor_intensity_payload,
 )
-from vibesensor.shared.run_context_warning import RunContextWarningsInput
-from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
-from vibesensor.shared.types.history_analysis_contracts import (
-    SummaryWarningResponse as SummaryWarningPayload,
-)
+from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings
+from vibesensor.shared.run_context_warning import RunContextWarning, RunContextWarningsInput
 from vibesensor.use_cases.history.report_display_facts import (
     PreparedReportDisplayFacts,
     prepare_report_display_facts,
@@ -73,8 +67,8 @@ class PreparedReportFacts:
     location_hotspot_rows: tuple[LocationHotspotRow, ...]
     primary_candidate_facts: PrimaryReportFacts
     recommended_actions: tuple[RecommendedAction, ...]
-    suitability_checks: tuple[RunSuitabilityCheck, ...]
-    warnings: tuple[SummaryWarningPayload, ...]
+    suitability_checks: tuple[SuitabilityCheck, ...]
+    warnings: tuple[RunContextWarning, ...]
     coverage_summary: ReportCoverageSummary
     action_status_key: ActionStatusKey
     location_confidence_key: LocationConfidenceKey
@@ -151,7 +145,7 @@ def prepare_report_facts(
         sensor_intensity=active_sensor_intensity,
     )
     suitability_checks = report_suitability_checks(test_run.suitability)
-    warning_payloads = report_warning_payloads(payload, warnings=warnings)
+    warning_models = report_warnings(payload, warnings=warnings)
     coverage_summary = build_coverage_summary(
         test_run=test_run,
         sensor_locations_active=sensor_locations_active,
@@ -172,7 +166,7 @@ def prepare_report_facts(
         location_confidence_key=location_confidence_key,
         alternative_source_visible=alternative_source_visible,
         suitability_checks=suitability_checks,
-        warnings=warning_payloads,
+        warnings=warning_models,
     )
     duration_text = str(payload.get("record_length") or "").strip() or None
     display = prepare_report_display_facts(
@@ -188,7 +182,7 @@ def prepare_report_facts(
         missing_locations=coverage_summary.missing_locations,
         partial_locations=coverage_summary.partial_locations,
         suitability_checks=suitability_checks,
-        warnings=warning_payloads,
+        warnings=warning_models,
         lang=prepared_language,
     )
     return PreparedReportFacts(
@@ -212,7 +206,7 @@ def prepare_report_facts(
         primary_candidate_facts=primary_candidate_facts,
         recommended_actions=test_run.recommended_actions,
         suitability_checks=suitability_checks,
-        warnings=warning_payloads,
+        warnings=warning_models,
         coverage_summary=coverage_summary,
         action_status_key=action_status_key,
         location_confidence_key=location_confidence_key,

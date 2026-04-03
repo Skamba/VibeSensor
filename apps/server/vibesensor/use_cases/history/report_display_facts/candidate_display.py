@@ -6,14 +6,14 @@ from collections.abc import Callable
 
 from vibesensor.domain import Finding, TestRun
 from vibesensor.report_i18n import human_source
+from vibesensor.shared.report_presentation import (
+    candidate_signal_text,
+    confidence_pct_text,
+    display_location,
+    uses_shared_overlap_wording,
+)
 
 from .models import PreparedRankedCandidateDisplay
-from .shared import (
-    _candidate_signal_text,
-    _confidence_pct_text,
-    _display_location,
-    _uses_shared_overlap_wording,
-)
 
 __all__ = [
     "build_ranked_candidates",
@@ -33,13 +33,13 @@ def build_ranked_candidates(
         use_shared_overlap_wording = (
             index > 0
             and primary_finding is not None
-            and _uses_shared_overlap_wording(primary_finding, finding, tr=tr)
+            and uses_shared_overlap_wording(primary_finding, finding, tr=tr)
         )
         rows.append(
             PreparedRankedCandidateDisplay(
                 source_name=human_source(finding.suspected_source, tr=tr),
-                confidence_pct=_confidence_pct_text(finding),
-                inspect_first=_display_location(finding.strongest_location, tr=tr),
+                confidence_pct=confidence_pct_text(finding),
+                inspect_first=display_location(finding.strongest_location, tr=tr),
                 path_role=f"{index + 1}. {_path_role_text(index, tr=tr)}",
                 reason=_candidate_reason_text(
                     finding,
@@ -60,7 +60,7 @@ def next_if_primary_clean(
     if len(candidates) < 2:
         return None
     alternative = candidates[1]
-    use_shared_overlap_wording = _uses_shared_overlap_wording(candidates[0], alternative, tr=tr)
+    use_shared_overlap_wording = uses_shared_overlap_wording(candidates[0], alternative, tr=tr)
     return _candidate_reason_text(
         alternative,
         tr=tr,
@@ -82,8 +82,8 @@ def _candidate_reason_text(
         ).strip()
         or str(finding.strongest_speed_band or "").strip()
     )
-    location = _display_location(finding.strongest_location, tr=tr)
-    signal = _candidate_signal_text(finding, tr=tr)
+    location = display_location(finding.strongest_location, tr=tr)
+    signal = candidate_signal_text(finding, tr=tr)
     if use_shared_overlap_wording:
         return tr(
             "REPORT_CANDIDATE_REASON_OVERLAP",
