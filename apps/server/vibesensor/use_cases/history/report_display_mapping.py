@@ -1,4 +1,4 @@
-"""Prepared report display-fact mapping."""
+"""Prepared report section mapping."""
 
 from __future__ import annotations
 
@@ -7,12 +7,12 @@ from collections.abc import Callable, Sequence
 from vibesensor.domain import Finding, LocationIntensitySummary, SuitabilityCheck, TestRun
 from vibesensor.report_i18n import human_source
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting.contracts import (
-    PreparedAppendixADisplay,
-    PreparedAppendixBSummaryDisplay,
-    PreparedRankedCandidateDisplay,
-    PreparedReportDisplayFacts,
-    PreparedVerdictDisplay,
+from vibesensor.shared.boundaries.reporting.document import (
+    AppendixAData,
+    AppendixBData,
+    RankedCandidateRow,
+    TopologyIntensityRow,
+    VerdictPageData,
 )
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.report_diagnostics import (
@@ -41,11 +41,14 @@ from vibesensor.shared.report_presentation import (
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
 from vibesensor.shared.types.json_types import JsonValue
+from vibesensor.use_cases.history.report_observation_matrix import (
+    build_sensor_observation_matrix_rows,
+)
 
-__all__ = ["prepare_report_display_facts"]
+__all__ = ["prepare_report_sections"]
 
 
-def prepare_report_display_facts(
+def prepare_report_sections(
     *,
     aggregate: TestRun,
     primary_candidate_facts: PrimaryReportFacts,
@@ -61,7 +64,7 @@ def prepare_report_display_facts(
     suitability_checks: Sequence[SuitabilityCheck],
     warnings: Sequence[RunContextWarning],
     lang: str,
-) -> PreparedReportDisplayFacts:
+) -> tuple[VerdictPageData, AppendixAData, AppendixBData]:
     def tr(key: str, **kw: JsonValue) -> str:
         return str(_tr(lang, key, **kw))
 
@@ -114,7 +117,7 @@ def prepare_report_display_facts(
         warnings=warnings,
         tr=tr,
     )
-    verdict = _build_verdict_display(
+    verdict_page = _build_verdict_page_data(
         aggregate=aggregate,
         primary_candidate_facts=primary_candidate_facts,
         duration_text=duration_text,
@@ -131,7 +134,7 @@ def prepare_report_display_facts(
         lang=lang,
         tr=tr,
     )
-    appendix_a = _build_appendix_a_display(
+    appendix_a = _build_appendix_a_data(
         aggregate=aggregate,
         action_status_key=action_status_key,
         alternative_source_visible=alternative_source_visible,
@@ -141,23 +144,22 @@ def prepare_report_display_facts(
         recapture_conditions=recapture_conditions,
         tr=tr,
     )
-    appendix_b = _build_appendix_b_display(
+    appendix_b = _build_appendix_b_data(
+        aggregate=aggregate,
         primary_candidate_facts=primary_candidate_facts,
+        active_sensor_intensity=active_sensor_intensity,
         action_status_key=action_status_key,
         location_confidence_key=location_confidence_key,
+        active_locations=active_locations,
         runner_up_corner=resolved_runner_up_corner,
         coverage_label=resolved_coverage_label,
         coverage_notes=resolved_coverage_notes,
         tr=tr,
     )
-    return PreparedReportDisplayFacts(
-        verdict=verdict,
-        appendix_a=appendix_a,
-        appendix_b=appendix_b,
-    )
+    return verdict_page, appendix_a, appendix_b
 
 
-def _build_verdict_display(
+def _build_verdict_page_data(
     *,
     aggregate: TestRun,
     primary_candidate_facts: PrimaryReportFacts,
@@ -174,9 +176,9 @@ def _build_verdict_display(
     warnings: Sequence[RunContextWarning],
     lang: str,
     tr: Callable[..., str],
-) -> PreparedVerdictDisplay:
+) -> VerdictPageData:
     recapture_before_acting = action_status_key == "recapture_before_acting"
-    return PreparedVerdictDisplay(
+    return VerdictPageData(
         speed_window_label=str(primary_candidate_facts.primary_speed or "").strip() or None,
         suspected_source=(
             tr("REPORT_INCONCLUSIVE_SOURCE")
@@ -376,30 +378,30 @@ def _primary_source_text(
     return human_source(primary_candidate_facts.primary_source, tr=tr)
 
 
-def _build_appendix_a_display(
+def _build_appendix_a_data(
     *,
     aggregate: TestRun,
     action_status_key: str,
     alternative_source_visible: bool,
-    ranked_candidates: Sequence[PreparedRankedCandidateDisplay],
+    ranked_candidates: Sequence[RankedCandidateRow],
     recapture_issues: Sequence[str],
     recapture_actions: Sequence[str],
     recapture_conditions: Sequence[str],
     tr: Callable[..., str],
-) -> PreparedAppendixADisplay:
+) -> AppendixAData:
     recapture_before_acting = action_status_key == "recapture_before_acting"
     if recapture_before_acting:
-        return PreparedAppendixADisplay(
+        return AppendixAData(
             mode="recapture",
             primary_source=None,
             alternative_source=None,
             why_primary_first=None,
             why_alternative_next=None,
             next_if_clean=None,
-            ranked_candidates=(),
-            capture_issues=tuple(recapture_issues),
-            capture_changes=tuple(recapture_actions),
-            capture_conditions=tuple(recapture_conditions),
+            ranked_candidates=[],
+            capture_issues=list(recapture_issues),
+            capture_changes=list(recapture_actions),
+            capture_conditions=list(recapture_conditions),
         )
 
     primary_source = (
@@ -426,7 +428,7 @@ def _build_appendix_a_display(
         if alternative_source_visible and len(ranked_candidates) > 1
         else None
     )
-    return PreparedAppendixADisplay(
+    return AppendixAData(
         mode="workflow",
         primary_source=primary_source,
         alternative_source=alternative_source,
@@ -437,23 +439,26 @@ def _build_appendix_a_display(
             else None
         ),
         next_if_clean=_next_if_primary_clean(aggregate, tr=tr),
-        ranked_candidates=tuple(ranked_candidates),
-        capture_issues=(),
-        capture_changes=(),
-        capture_conditions=(),
+        ranked_candidates=list(ranked_candidates),
+        capture_issues=[],
+        capture_changes=[],
+        capture_conditions=[],
     )
 
 
-def _build_appendix_b_display(
+def _build_appendix_b_data(
     *,
+    aggregate: TestRun,
     primary_candidate_facts: PrimaryReportFacts,
+    active_sensor_intensity: Sequence[LocationIntensitySummary],
     action_status_key: str,
     location_confidence_key: str,
+    active_locations: Sequence[str],
     runner_up_corner: str | None,
     coverage_label: str,
     coverage_notes: Sequence[str],
     tr: Callable[..., str],
-) -> PreparedAppendixBSummaryDisplay:
+) -> AppendixBData:
     dominance_ratio_text = (
         tr(
             "REPORT_DOMINANCE_RATIO_TEXT",
@@ -462,7 +467,26 @@ def _build_appendix_b_display(
         if primary_candidate_facts.dominance_ratio is not None
         else tr("REPORT_DOMINANCE_RATIO_UNKNOWN")
     )
-    return PreparedAppendixBSummaryDisplay(
+    ranked_rows = sorted(
+        active_sensor_intensity,
+        key=lambda row: (
+            row.p95_intensity_db if row.p95_intensity_db is not None else float("-inf"),
+        ),
+        reverse=True,
+    )
+    intensity_rows = [
+        TopologyIntensityRow(
+            location=display_location(row.location, short=False, tr=tr),
+            p95_db=row.p95_intensity_db,
+            coverage_state=(
+                tr("REPORT_COVERAGE_STATE_PARTIAL")
+                if row.partial_coverage or row.sample_coverage_warning
+                else tr("REPORT_COVERAGE_STATE_COMPLETE")
+            ),
+        )
+        for row in ranked_rows
+    ]
+    return AppendixBData(
         dominant_corner=display_location(primary_candidate_facts.primary_location, tr=tr),
         runner_up_corner=runner_up_corner,
         dominance_ratio_text=dominance_ratio_text,
@@ -474,7 +498,13 @@ def _build_appendix_b_display(
             tr=tr,
         ),
         coverage_label=coverage_label,
-        coverage_notes=tuple(coverage_notes),
+        coverage_notes=list(coverage_notes),
+        intensity_rows=intensity_rows,
+        sensor_observation_rows=build_sensor_observation_matrix_rows(
+            aggregate,
+            sensor_locations=list(active_locations),
+            tr=tr,
+        ),
     )
 
 
@@ -482,9 +512,9 @@ def _build_ranked_candidates(
     aggregate: TestRun,
     *,
     tr: Callable[..., str],
-) -> tuple[PreparedRankedCandidateDisplay, ...]:
+) -> tuple[RankedCandidateRow, ...]:
     candidates = list(aggregate.effective_top_causes()[:3])
-    rows: list[PreparedRankedCandidateDisplay] = []
+    rows: list[RankedCandidateRow] = []
     primary_finding = candidates[0] if candidates else None
     for index, finding in enumerate(candidates):
         use_shared_overlap_wording = (
@@ -493,7 +523,7 @@ def _build_ranked_candidates(
             and uses_shared_overlap_wording(primary_finding, finding, tr=tr)
         )
         rows.append(
-            PreparedRankedCandidateDisplay(
+            RankedCandidateRow(
                 source_name=human_source(finding.suspected_source, tr=tr),
                 confidence_pct=confidence_pct_text(finding),
                 inspect_first=display_location(finding.strongest_location, tr=tr),

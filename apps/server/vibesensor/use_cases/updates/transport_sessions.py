@@ -16,6 +16,10 @@ class UpdateTransportSession(Protocol):
         """Prepare this transport for an update run before release work starts."""
         ...
 
+    async def abort_preparation(self) -> None:
+        """Rollback any partial transport setup after prepare-time failure."""
+        ...
+
     async def complete_success(self, message: str) -> None:
         """Finalize a successful update for this transport."""
         ...

@@ -49,7 +49,7 @@ def test_runtime_applier_pushes_current_speed_source_to_monitor() -> None:
         }
     )
 
-    SpeedSourceRuntimeApplier(speed_monitor=monitor).apply(store.speed_source_config())
+    SpeedSourceRuntimeApplier(speed_control=monitor).apply(store.speed_source_config())
 
     assert monitor.calls == [
         {
@@ -76,7 +76,7 @@ def test_runtime_applier_keeps_live_source_manual_fallback_and_obd_device() -> N
         }
     )
 
-    SpeedSourceRuntimeApplier(speed_monitor=monitor).apply(store.speed_source_config())
+    SpeedSourceRuntimeApplier(speed_control=monitor).apply(store.speed_source_config())
 
     assert monitor.calls == [
         {
@@ -95,7 +95,7 @@ def test_speed_source_service_updates_store_and_runtime() -> None:
     monitor = _FakeSpeedSourceSync()
     service = SpeedSourceSettingsService(
         settings_store=store,
-        runtime_applier=SpeedSourceRuntimeApplier(speed_monitor=monitor),
+        runtime_applier=SpeedSourceRuntimeApplier(speed_control=monitor),
     )
 
     result = service.update_speed_source({"speedSource": "manual", "manualSpeedKph": 42})

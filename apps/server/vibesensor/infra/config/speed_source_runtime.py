@@ -19,15 +19,15 @@ __all__ = [
 class SpeedSourceRuntimeApplier:
     """Push a canonical speed-source config into long-lived runtime monitors."""
 
-    __slots__ = ("_speed_monitor",)
+    __slots__ = ("_speed_control",)
 
-    def __init__(self, *, speed_monitor: SpeedSourceSync | None) -> None:
-        self._speed_monitor = speed_monitor
+    def __init__(self, *, speed_control: SpeedSourceSync | None) -> None:
+        self._speed_control = speed_control
 
     def apply(self, config: SpeedSourceConfig) -> None:
-        if self._speed_monitor is None:
+        if self._speed_control is None:
             return
-        self._speed_monitor.apply_speed_source_settings(
+        self._speed_control.apply_speed_source_settings(
             effective_speed_kmh=config.manual_speed_kph,
             manual_source_selected=config.manual_source_selected,
             stale_timeout_s=config.stale_timeout_s,

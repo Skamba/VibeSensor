@@ -37,6 +37,9 @@ class UpdateUsbInternetSession:
         if not await self.ensure_uplink_ready():
             raise UpdateTransportError("Failed to prepare the USB internet uplink for update")
 
+    async def abort_preparation(self) -> None:
+        return None
+
     async def ensure_uplink_ready(self) -> bool:
         status = await self._status_service.snapshot(activate=True)
         if not status.detected:

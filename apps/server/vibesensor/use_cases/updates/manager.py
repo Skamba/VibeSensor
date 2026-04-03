@@ -55,8 +55,11 @@ class UpdateManager:
         return self._runtime.executor.cancel()
 
     async def startup_recover(self) -> None:
-        if self._runtime.recovery.needs_recovery():
-            await self._runtime.recovery.recover()
+        if not self._runtime.transport_lifecycle.needs_recovery():
+            return
+        self._runtime.tracker.mark_interrupted("Update interrupted by server restart")
+        await self._runtime.transport_lifecycle.recover_interrupted_update()
+        self._runtime.tracker.persist()
 
     async def _run_update(
         self,

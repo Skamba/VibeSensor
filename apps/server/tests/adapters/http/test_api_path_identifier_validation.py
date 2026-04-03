@@ -53,8 +53,8 @@ def _settings_test_client() -> tuple[TestClient, MagicMock]:
         ],
         active_car_id="car-1",
     )
-    gps_monitor = MagicMock()
-    gps_monitor.status_snapshot.return_value = SpeedSourceStatusSnapshot(
+    speed_status_service = MagicMock()
+    speed_status_service.status_snapshot.return_value = SpeedSourceStatusSnapshot(
         gps_enabled=True,
         connection_state="connected",
         device="/dev/ttyUSB0",
@@ -75,7 +75,14 @@ def _settings_test_client() -> tuple[TestClient, MagicMock]:
     )
 
     app = FastAPI()
-    app.include_router(create_settings_routes(settings_store, speed_source_service, gps_monitor))
+    app.include_router(
+        create_settings_routes(
+            settings_store,
+            speed_source_service,
+            speed_status_service,
+            MagicMock(),
+        )
+    )
     return TestClient(app), settings_store
 
 

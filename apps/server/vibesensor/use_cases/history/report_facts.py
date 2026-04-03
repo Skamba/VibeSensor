@@ -20,7 +20,7 @@ from vibesensor.shared.boundaries.reporting.projection import (
 )
 from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
-from vibesensor.use_cases.history.report_display_mapping import prepare_report_display_facts
+from vibesensor.use_cases.history.report_display_mapping import prepare_report_sections
 from vibesensor.use_cases.history.report_fact_coverage import build_coverage_summary
 from vibesensor.use_cases.history.report_fact_decisions import (
     resolve_action_status_key,
@@ -80,7 +80,7 @@ def prepare_report_facts(
         warnings=warning_models,
     )
     duration_text = summary.record_length
-    display = prepare_report_display_facts(
+    verdict_page, appendix_a, appendix_b = prepare_report_sections(
         aggregate=test_run,
         primary_candidate_facts=primary_candidate_facts,
         active_sensor_intensity=active_sensor_intensity,
@@ -125,5 +125,7 @@ def prepare_report_facts(
         alternative_source_visible=alternative_source_visible,
         confidence_gap_to_alternative=confidence_gap_to_alternative,
         timeline_intervals=summary.timeline_intervals,
-        display=display,
+        verdict_page=verdict_page,
+        appendix_a=appendix_a,
+        appendix_b=appendix_b,
     )

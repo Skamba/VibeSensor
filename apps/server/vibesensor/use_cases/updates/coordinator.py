@@ -27,7 +27,4 @@ class UpdateCoordinator:
     async def execute(self, request: UpdateRequest) -> UpdateExecutionOutcome:
         prepared = await self._preparation.prepare(request)
         plan = await self._release_planner.plan(prepared.current_version)
-        return await self._workflow_executor.execute(
-            plan,
-            transport_session=prepared.transport_session,
-        )
+        return await self._workflow_executor.execute(plan)

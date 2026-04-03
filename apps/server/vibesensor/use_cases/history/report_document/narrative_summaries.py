@@ -45,7 +45,7 @@ def _proof_summary_text(
         return sequence_summary
     ratio = report_facts.primary_candidate_facts.dominance_ratio
     location = display_location(primary.primary_location, tr=tr)
-    runner_up = report_facts.display.appendix_b.runner_up_corner
+    runner_up = report_facts.appendix_b.runner_up_corner
     if ratio is not None:
         if runner_up is not None:
             return tr(
@@ -67,15 +67,13 @@ def _run_limits_summary_text(
     *,
     tr: Callable[..., str],
 ) -> str:
-    speed_window = str(report_facts.display.verdict.speed_window_label or "").strip() or tr(
-        "UNKNOWN"
-    )
+    speed_window = str(report_facts.verdict_page.speed_window_label or "").strip() or tr("UNKNOWN")
     if (
         report_facts.action_status_key == "action_ready_caution"
         and report_facts.alternative_source_visible
     ):
         return tr("REPORT_RUN_LIMITS_RECAPTURE_RECIPE", speed=speed_window)
-    note = report_facts.display.verdict.proof_caveat
+    note = report_facts.verdict_page.proof_caveat
     return note or tr("REPORT_CAPTURE_ISSUE_GENERIC")
 
 

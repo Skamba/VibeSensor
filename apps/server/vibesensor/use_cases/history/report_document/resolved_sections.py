@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 from vibesensor.shared.boundaries.reporting.contracts import (
@@ -45,12 +45,9 @@ from .measurements import _measurement_rows
 from .narrative_summaries import _proof_summary_text
 from .pattern_evidence import build_pattern_evidence
 from .sections import (
-    _build_appendix_a_data,
-    _build_appendix_b_data,
     _build_appendix_c_data,
     _build_appendix_d_data,
     _build_timeline_graph_data,
-    _build_verdict_page_data,
     _finding_to_presentation,
 )
 
@@ -153,10 +150,6 @@ def resolve_report_document_sections(
     )
     proof_summary = _proof_summary_text(test_run, primary, report_facts, tr=tr)
     timeline_graph = _build_timeline_graph_data(report_facts, duration_s=report.duration_s)
-    appendix_a = _build_appendix_a_data(
-        appendix=report_facts.display.appendix_a,
-        next_steps=list(next_steps),
-    )
     sensor_intensity = tuple(report_facts.active_sensor_intensity)
     return ResolvedReportDocumentSections(
         report_date_text=report_date_text,
@@ -174,19 +167,13 @@ def resolve_report_document_sections(
         top_causes=top_causes,
         sensor_intensity=sensor_intensity,
         hotspot_rows=tuple(report_facts.location_hotspot_rows),
-        verdict_page=_build_verdict_page_data(
-            verdict=report_facts.display.verdict,
+        verdict_page=replace(
+            report_facts.verdict_page,
             proof_summary=proof_summary,
             timeline_graph=timeline_graph,
         ),
-        appendix_a=appendix_a,
-        appendix_b=_build_appendix_b_data(
-            aggregate=test_run,
-            appendix=report_facts.display.appendix_b,
-            sensor_locations=list(report_facts.sensor_locations_active),
-            sensor_intensity=list(sensor_intensity),
-            tr=tr,
-        ),
+        appendix_a=report_facts.appendix_a,
+        appendix_b=report_facts.appendix_b,
         appendix_c=_build_appendix_c_data(
             primary=primary,
             aggregate=test_run,
@@ -217,9 +204,7 @@ def _resolve_next_steps(
     tr: Callable[..., str],
 ) -> tuple[NextStep, ...]:
     if recapture_mode:
-        return tuple(
-            NextStep(action=action) for action in report_facts.display.appendix_a.capture_changes
-        )
+        return tuple(NextStep(action=action) for action in report_facts.appendix_a.capture_changes)
     return tuple(
         build_next_steps(
             recommended_actions=report_facts.recommended_actions,
