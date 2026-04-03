@@ -13,14 +13,12 @@ from vibesensor.adapters.pdf.report_data import (
 )
 from vibesensor.domain import Finding, TestRun
 from vibesensor.report_i18n import human_source
-from vibesensor.use_cases.history.report_display_facts.shared import (
-    _candidate_signal_text,
-    _display_location,
-    _source_with_confidence,
+from vibesensor.shared.report_presentation import (
+    candidate_signal_text,
+    display_location,
+    source_with_confidence,
 )
-from vibesensor.use_cases.history.report_preparation import (
-    ValidatedPreparedReportInput,
-)
+from vibesensor.use_cases.history.report_preparation import ValidatedPreparedReportInput
 from vibesensor.vibration_strength import percentile, relative_level_db_scalar
 
 __all__ = [
@@ -67,7 +65,7 @@ def _measurement_rows(
             peak_db_value = row.get("p95_intensity_db")
         strength_db_value = row.get("strength_db")
         signal_label = (
-            _candidate_signal_text(matched_finding, tr=tr)
+            candidate_signal_text(matched_finding, tr=tr)
             if matched_finding is not None
             else _measurement_signal_label(row, tr=tr)
         )
@@ -94,7 +92,7 @@ def _measurement_rows(
                 ),
                 speed_window=str(row.get("typical_speed_band") or "").strip() or None,
                 dominant_location=(
-                    _display_location(matched_finding.strongest_location, tr=tr)
+                    display_location(matched_finding.strongest_location, tr=tr)
                     if matched_finding is not None
                     else None
                 ),
@@ -143,8 +141,8 @@ def _evidence_chain_rows(
         )
         rows.append(
             EvidenceChainRow(
-                source_name=_source_with_confidence(finding, tr=tr),
-                supporting_signal_label=_candidate_signal_text(finding, tr=tr),
+                source_name=source_with_confidence(finding, tr=tr),
+                supporting_signal_label=candidate_signal_text(finding, tr=tr),
                 measurement_refs=refs,
                 matched_evidence_window_count=_matched_evidence_window_count(finding),
                 speed_window=(
@@ -155,7 +153,7 @@ def _evidence_chain_rows(
                     ).strip()
                     or None
                 ),
-                dominant_location=_display_location(finding.strongest_location, tr=tr),
+                dominant_location=display_location(finding.strongest_location, tr=tr),
                 ambiguity_note=ambiguity_note,
             ),
         )
@@ -170,9 +168,7 @@ def _sensor_observation_matrix_rows(
 ) -> list[SensorObservationMatrixRow]:
     if not sensor_locations:
         return []
-    sensor_labels = [
-        _display_location(location, short=True, tr=tr) for location in sensor_locations
-    ]
+    sensor_labels = [display_location(location, short=True, tr=tr) for location in sensor_locations]
     rows: list[SensorObservationMatrixRow] = []
     for finding in aggregate.effective_top_causes()[:4]:
         sensor_levels = _sensor_observation_levels(
@@ -185,7 +181,7 @@ def _sensor_observation_matrix_rows(
         rows.append(
             SensorObservationMatrixRow(
                 source_name=human_source(finding.suspected_source, tr=tr),
-                signal_label=_candidate_signal_text(finding, tr=tr),
+                signal_label=candidate_signal_text(finding, tr=tr),
                 sensor_levels=sensor_levels,
             )
         )
@@ -203,7 +199,7 @@ def _sensor_observation_levels(
         amp = float(point.amp)
         if not isfinite(amp) or amp < 0.0:
             continue
-        location = _display_location(point.location, short=True, tr=tr)
+        location = display_location(point.location, short=True, tr=tr)
         matched_amps_by_location.setdefault(location, []).append(amp)
     representative_amps = {
         location: percentile(sorted(values), 0.95)
@@ -213,7 +209,7 @@ def _sensor_observation_levels(
     if not representative_amps:
         strongest_location = str(finding.strongest_location or "").strip()
         strongest_label = (
-            _display_location(strongest_location, short=True, tr=tr) if strongest_location else None
+            display_location(strongest_location, short=True, tr=tr) if strongest_location else None
         )
         return [
             SensorObservationCell(

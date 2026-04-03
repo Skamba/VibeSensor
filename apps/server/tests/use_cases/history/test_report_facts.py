@@ -7,6 +7,7 @@ from test_support.report_helpers import minimal_summary
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as build_test_run_from_summary,
 )
+from vibesensor.shared.run_context_warning import RunContextWarning
 from vibesensor.use_cases.history.report_facts import prepare_report_facts
 
 
@@ -114,7 +115,7 @@ def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
     assert facts.firmware_version == "1.2.3"
 
 
-def test_prepare_report_facts_shapes_warning_payloads() -> None:
+def test_prepare_report_facts_keeps_canonical_warning_models() -> None:
     summary = _summary()
     test_run = build_test_run_from_summary(summary)
     assert test_run is not None
@@ -122,10 +123,18 @@ def test_prepare_report_facts_shapes_warning_payloads() -> None:
     facts = prepare_report_facts(
         summary,
         test_run=test_run,
-        warnings=[{"code": "PERSISTED_ONLY", "severity": "warning", "message": "cached"}],
+        warnings=[
+            RunContextWarning(
+                code="PERSISTED_ONLY",
+                severity="warn",
+                applies_to="report",
+                title="Cached warning",
+                detail="cached",
+            )
+        ],
     )
 
-    assert [warning["code"] for warning in facts.warnings] == ["PERSISTED_ONLY"]
+    assert [warning.code for warning in facts.warnings] == ["PERSISTED_ONLY"]
 
 
 def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:

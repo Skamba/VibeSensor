@@ -7,10 +7,10 @@ from collections.abc import Callable
 from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
 from vibesensor.domain import TestRun
 from vibesensor.report_i18n import human_source
-from vibesensor.use_cases.history.report_display_facts.shared import (
-    _candidate_signal_text,
-    _display_location,
-    _uses_shared_overlap_wording,
+from vibesensor.shared.report_presentation import (
+    candidate_signal_text,
+    display_location,
+    uses_shared_overlap_wording,
 )
 from vibesensor.use_cases.history.report_facts import PreparedReportFacts
 
@@ -44,7 +44,7 @@ def _proof_summary_text(
     if sequence_summary is not None:
         return sequence_summary
     ratio = report_facts.primary_candidate_facts.dominance_ratio
-    location = _display_location(primary.primary_location, tr=tr)
+    location = display_location(primary.primary_location, tr=tr)
     runner_up = report_facts.display.appendix_b.runner_up_corner
     if ratio is not None:
         if runner_up is not None:
@@ -90,7 +90,7 @@ def _evidence_summary_text(
     matched_windows = report_facts.primary_candidate_facts.matched_evidence_window_count
     speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
     source = primary.primary_system
-    location = _display_location(primary.primary_location, tr=tr)
+    location = display_location(primary.primary_location, tr=tr)
     sequential_summary = _same_source_temporal_evidence_summary(
         aggregate,
         report_facts,
@@ -110,7 +110,7 @@ def _evidence_summary_text(
     )
     if alternative is not None and matched_windows is not None:
         if alternative_finding is not None:
-            if _uses_shared_overlap_wording(effective_causes[0], alternative_finding, tr=tr):
+            if uses_shared_overlap_wording(effective_causes[0], alternative_finding, tr=tr):
                 return tr(
                     "REPORT_EVIDENCE_SUMMARY_ALT_OVERLAP",
                     source=source,
@@ -119,8 +119,8 @@ def _evidence_summary_text(
                     location=location,
                     alternative=alternative,
                 )
-            alternative_signal = _candidate_signal_text(alternative_finding, tr=tr)
-            alternative_location = _display_location(alternative_finding.strongest_location, tr=tr)
+            alternative_signal = candidate_signal_text(alternative_finding, tr=tr)
+            alternative_location = display_location(alternative_finding.strongest_location, tr=tr)
             alternative_speed = (
                 str(
                     alternative_finding.evidence.focused_speed_band
@@ -227,7 +227,7 @@ def _observation_texts(aggregate: TestRun, *, tr: Callable[..., str]) -> list[st
             continue
         text = tr(
             "REPORT_OBSERVATION_TRANSIENT",
-            location=_display_location(location, short=False, tr=tr),
+            location=display_location(location, short=False, tr=tr),
         )
         if text not in observations:
             observations.append(text)
@@ -244,8 +244,8 @@ def _same_source_temporal_proof_summary(
     if pair is None:
         return None
     first, second = pair
-    first_location = _display_location(first.strongest_location, tr=tr)
-    second_location = _display_location(second.strongest_location, tr=tr)
+    first_location = display_location(first.strongest_location, tr=tr)
+    second_location = display_location(second.strongest_location, tr=tr)
     first_phase = _finding_phase_label(first, report_facts, tr=tr)
     second_phase = _finding_phase_label(second, report_facts, tr=tr)
     if first_phase and second_phase and first_phase != second_phase:
@@ -274,8 +274,8 @@ def _same_source_temporal_evidence_summary(
         return None
     first, second = pair
     source = human_source(first.suspected_source, tr=tr)
-    first_location = _display_location(first.strongest_location, tr=tr)
-    second_location = _display_location(second.strongest_location, tr=tr)
+    first_location = display_location(first.strongest_location, tr=tr)
+    second_location = display_location(second.strongest_location, tr=tr)
     first_phase = _finding_phase_label(first, report_facts, tr=tr)
     second_phase = _finding_phase_label(second, report_facts, tr=tr)
     if first_phase and second_phase and first_phase != second_phase:
@@ -305,8 +305,8 @@ def _same_source_temporal_phase_summary(
     if pair is None:
         return None
     first, second = pair
-    first_location = _display_location(first.strongest_location, tr=tr)
-    second_location = _display_location(second.strongest_location, tr=tr)
+    first_location = display_location(first.strongest_location, tr=tr)
+    second_location = display_location(second.strongest_location, tr=tr)
     first_phase = _finding_phase_label(first, report_facts, tr=tr)
     second_phase = _finding_phase_label(second, report_facts, tr=tr)
     if first_phase and second_phase and first_phase != second_phase:
