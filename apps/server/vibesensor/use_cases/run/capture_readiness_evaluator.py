@@ -8,8 +8,10 @@ from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck, CaptureRe
 from vibesensor.shared.constants.analysis import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
-from vibesensor.shared.ports import TrackedClient
-from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessObservation
+from vibesensor.use_cases.run.capture_readiness_observation import (
+    CaptureReadinessObservation,
+    CaptureReadinessSensorObservation,
+)
 from vibesensor.use_cases.run.capture_readiness_state import (
     CaptureReadinessStateSnapshot,
     IntegrityState,
@@ -28,7 +30,7 @@ def evaluate_capture_readiness(
     state: CaptureReadinessStateSnapshot,
 ) -> CaptureReadiness:
     checks: CaptureReadinessCheckTuple = (
-        _sensors_check(policy, observation.active_clients, state.integrity),
+        _sensors_check(policy, observation.active_sensors, state.integrity),
         _reference_check(policy, observation),
         _speed_check(policy, observation, state.speed_history),
     )
@@ -42,10 +44,10 @@ def evaluate_capture_readiness(
 
 def _sensors_check(
     policy: CaptureReadinessPolicy,
-    active_clients: tuple[TrackedClient, ...],
+    active_sensors: tuple[CaptureReadinessSensorObservation, ...],
     integrity: IntegrityState,
 ) -> CaptureReadinessCheck:
-    live_sensor_count = len(active_clients)
+    live_sensor_count = len(active_sensors)
     if live_sensor_count == 0:
         return CaptureReadinessCheck(
             check_key="sensors_ready",
@@ -54,7 +56,9 @@ def _sensors_check(
             details=(("live_sensor_count", 0),),
         )
 
-    unassigned_count = sum(1 for client in active_clients if not client.location_code.strip())
+    unassigned_count = sum(
+        1 for sensor in active_sensors if not str(getattr(sensor, "location_code", "")).strip()
+    )
     if unassigned_count > 0:
         return CaptureReadinessCheck(
             check_key="sensors_ready",
@@ -108,8 +112,8 @@ def _reference_check(
     observation: CaptureReadinessObservation,
 ) -> CaptureReadinessCheck:
     run_context = observation.run_context
-    speed_status = observation.speed_status
-    obd_status = observation.obd_status
+    speed = observation.speed
+    obd = observation.obd
     if not run_context.has_car_context:
         return CaptureReadinessCheck(
             check_key="reference_ready",
@@ -125,14 +129,14 @@ def _reference_check(
             reason_key="order_reference_incomplete",
         )
 
-    if speed_status is None:
+    if speed is None:
         return CaptureReadinessCheck(
             check_key="reference_ready",
             state="fail",
             reason_key="speed_source_missing",
         )
 
-    speed_source = str(speed_status.speed_source)
+    speed_source = speed.source
     if speed_source not in policy.live_speed_sources:
         return CaptureReadinessCheck(
             check_key="reference_ready",
@@ -141,7 +145,7 @@ def _reference_check(
             details=(("speed_source", speed_source),),
         )
 
-    if speed_status.fallback_active:
+    if speed.fallback_active:
         return CaptureReadinessCheck(
             check_key="reference_ready",
             state="fail",
@@ -149,7 +153,7 @@ def _reference_check(
             details=(("speed_source", speed_source),),
         )
 
-    last_update_age_s = speed_status.last_update_age_s
+    last_update_age_s = speed.age_s
     if last_update_age_s is None or last_update_age_s > policy.max_speed_age_s:
         return CaptureReadinessCheck(
             check_key="reference_ready",
@@ -161,7 +165,7 @@ def _reference_check(
             ),
         )
 
-    effective_speed_kmh = speed_status.effective_speed_kmh
+    effective_speed_kmh = speed.speed_kmh
     if (
         not _is_finite_number(effective_speed_kmh)
         or effective_speed_kmh is None
@@ -182,14 +186,14 @@ def _reference_check(
                 reason_key="order_reference_incomplete",
                 details=(("speed_source", speed_source),),
             )
-        if obd_status is None or not _is_finite_number(obd_status.last_rpm):
+        if obd is None or not _is_finite_number(obd.rpm):
             return CaptureReadinessCheck(
                 check_key="reference_ready",
                 state="fail",
                 reason_key="obd_rpm_missing",
                 details=(("speed_source", speed_source),),
             )
-        rpm_age_s = obd_status.rpm_sample_age_s
+        rpm_age_s = obd.rpm_age_s
         if rpm_age_s is None or rpm_age_s > policy.max_obd_rpm_age_s:
             return CaptureReadinessCheck(
                 check_key="reference_ready",
@@ -207,7 +211,7 @@ def _reference_check(
         reason_key="reference_ready",
         details=(
             ("speed_source", speed_source),
-            ("speed_kmh", round(speed_status.effective_speed_kmh or 0.0, 2)),
+            ("speed_kmh", round(speed.speed_kmh or 0.0, 2)),
             ("last_update_age_s", round(last_update_age_s or 0.0, 2)),
         ),
     )
@@ -218,21 +222,21 @@ def _speed_check(
     observation: CaptureReadinessObservation,
     speed_history: tuple[SpeedObservation, ...],
 ) -> CaptureReadinessCheck:
-    speed_status = observation.speed_status
-    if speed_status is None:
+    speed = observation.speed
+    if speed is None:
         return CaptureReadinessCheck(
             check_key="speed_stable",
             state="fail",
             reason_key="speed_sample_missing",
         )
 
-    speed_source = str(speed_status.speed_source)
-    speed_kmh = speed_status.effective_speed_kmh
+    speed_source = speed.source
+    speed_kmh = speed.speed_kmh
     if (
         speed_source not in policy.live_speed_sources
-        or speed_status.fallback_active
-        or speed_status.last_update_age_s is None
-        or speed_status.last_update_age_s > policy.max_speed_age_s
+        or speed.fallback_active
+        or speed.age_s is None
+        or speed.age_s > policy.max_speed_age_s
         or not _is_finite_number(speed_kmh)
     ):
         return CaptureReadinessCheck(
@@ -349,3 +353,24 @@ def _stddev(values: tuple[float, ...]) -> float:
 
 def _is_finite_number(value: object) -> bool:
     return isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def speed_history_sample(
+    *,
+    policy: CaptureReadinessPolicy,
+    observation: CaptureReadinessObservation,
+) -> float | None:
+    speed = observation.speed
+    if speed is None:
+        return None
+    if (
+        speed.source not in policy.live_speed_sources
+        or speed.fallback_active
+        or speed.age_s is None
+        or speed.age_s > policy.max_speed_age_s
+        or not _is_finite_number(speed.speed_kmh)
+        or speed.speed_kmh is None
+        or speed.speed_kmh < policy.min_ready_speed_kmh
+    ):
+        return None
+    return float(speed.speed_kmh)

@@ -7,11 +7,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf.presentation import strength_label, strength_text
-from vibesensor.domain import ConfidenceAssessment, Finding
+from vibesensor.domain import ConfidenceAssessment, Finding, TestRun
 from vibesensor.report_i18n import human_source
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.pdf.report_context import ReportMappingContext
     from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 
 __all__ = [
@@ -45,13 +44,13 @@ class PrimaryCandidateContext:
 
 def resolve_primary_report_candidate(
     *,
-    context: ReportMappingContext,
+    aggregate: TestRun,
     facts: PrimaryReportFacts,
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:
     """Resolve the primary candidate and all derived certainty fields."""
-    primary_candidate = facts.domain_primary or context.top_report_candidate()
+    primary_candidate = facts.domain_primary or _top_report_candidate(aggregate)
     primary_system = (
         human_source(facts.primary_source, tr=tr) if facts.primary_source else tr("UNKNOWN")
     )
@@ -97,3 +96,13 @@ def resolve_primary_report_candidate(
         certainty_reason=certainty_reason,
         tier=tier,
     )
+
+
+def _top_report_candidate(aggregate: TestRun) -> Finding | None:
+    effective = aggregate.effective_top_causes()
+    if effective:
+        return effective[0]
+    non_reference_findings = aggregate.non_reference_findings
+    if non_reference_findings:
+        return non_reference_findings[0]
+    return aggregate.findings[0] if aggregate.findings else None

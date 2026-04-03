@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
-
-from vibesensor.shared.boundaries.reporting.summary_codec import report_summary_from_mapping
 
 if TYPE_CHECKING:
     from vibesensor.domain import (
@@ -18,9 +15,11 @@ if TYPE_CHECKING:
         VibrationOrigin,
     )
     from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
-    from vibesensor.shared.boundaries.reporting.summary_codec import ReportTimelineInterval
+    from vibesensor.shared.boundaries.reporting.summary_codec import (
+        NormalizedReportSummary,
+        ReportTimelineInterval,
+    )
     from vibesensor.shared.run_context_warning import RunContextWarning
-    from vibesensor.shared.types.analysis_views import PeakTableRow
     from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 
 ActionStatusKey = Literal["recapture_before_acting", "action_ready_caution", "action_ready"]
@@ -35,47 +34,9 @@ __all__ = [
     "PreparedReportDisplayFacts",
     "PreparedReportFacts",
     "PreparedReportInput",
-    "PreparedReportRendererPayload",
     "PreparedVerdictDisplay",
     "ReportCoverageSummary",
-    "build_report_renderer_payload",
 ]
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedReportRendererPayload:
-    """Minimal renderer-edge payload prepared from summary or persisted analysis."""
-
-    run_id: str
-    car_name: str | None
-    car_type: str | None
-    report_date: str | None
-    duration_s: float | None
-    sample_count: int
-    sensor_count: int
-    peak_table_rows: tuple[PeakTableRow, ...]
-    recorded_utc_offset_seconds: int | None = None
-
-
-def build_report_renderer_payload(
-    payload: Mapping[str, object],
-) -> PreparedReportRendererPayload:
-    """Return the normalized renderer-edge payload derived from a report summary."""
-    summary = report_summary_from_mapping(payload)
-    typed_metadata = summary.metadata
-    return PreparedReportRendererPayload(
-        run_id=summary.run_id,
-        car_name=typed_metadata.car_name if typed_metadata is not None else None,
-        car_type=typed_metadata.car_type if typed_metadata is not None else None,
-        report_date=summary.report_date,
-        duration_s=summary.duration_s,
-        sample_count=summary.sample_count,
-        sensor_count=summary.sensor_count,
-        peak_table_rows=summary.peak_table_rows,
-        recorded_utc_offset_seconds=(
-            typed_metadata.recorded_utc_offset_seconds if typed_metadata is not None else None
-        ),
-    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -181,7 +142,7 @@ class PreparedReportFacts:
 class PreparedReportInput:
     """Mapping-ready report handoff with one canonical internal shape."""
 
-    renderer_payload: PreparedReportRendererPayload
+    summary: NormalizedReportSummary
     language: str
     filename: str
     domain_test_run: TestRun

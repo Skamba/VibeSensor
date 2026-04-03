@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportRendererPayload
+from vibesensor.shared.boundaries.reporting.summary_codec import NormalizedReportSummary
 
 from .appendices import AppendixAData, AppendixBData, AppendixCData, AppendixDData
 from .panels import DataTrustItem, NextStep, PatternEvidence, SystemFindingCard
@@ -14,7 +14,7 @@ from .sections import FindingPresentation, PeakRow, VerdictPageData
 __all__ = [
     "Report",
     "ReportTemplateData",
-    "build_report_from_renderer_payload",
+    "build_report_from_summary",
 ]
 
 
@@ -77,19 +77,20 @@ class ReportTemplateData:
     appendix_d: AppendixDData = field(default_factory=AppendixDData)
 
 
-def build_report_from_renderer_payload(
-    renderer_payload: PreparedReportRendererPayload,
+def build_report_from_summary(
+    summary: NormalizedReportSummary,
     *,
     language: str,
 ) -> Report:
-    """Create a ``Report`` metadata object from the prepared renderer payload."""
+    """Create a ``Report`` metadata object from the canonical report summary."""
+    metadata = summary.metadata
     return Report(
-        run_id=renderer_payload.run_id or "unknown",
+        run_id=summary.run_id or "unknown",
         lang=language,
-        car_name=renderer_payload.car_name,
-        car_type=renderer_payload.car_type,
-        report_date=renderer_payload.report_date,
-        duration_s=renderer_payload.duration_s,
-        sample_count=renderer_payload.sample_count,
-        sensor_count=renderer_payload.sensor_count,
+        car_name=metadata.car_name if metadata is not None else None,
+        car_type=metadata.car_type if metadata is not None else None,
+        report_date=summary.report_date,
+        duration_s=summary.duration_s,
+        sample_count=summary.sample_count,
+        sensor_count=summary.sensor_count,
     )

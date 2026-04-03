@@ -6,11 +6,9 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.reporting.contracts import (
-    PreparedReportInput,
-    build_report_renderer_payload,
-)
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.payload_gate import has_projectable_report_payload
+from vibesensor.shared.boundaries.reporting.summary_codec import report_summary_from_mapping
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_persisted_analysis,
     test_run_from_summary,
@@ -63,15 +61,16 @@ def _build_prepared_report_input(
 ) -> PreparedReportInput:
     """Assemble the canonical report handoff for downstream PDF rendering."""
     prepared_language = str(normalize_lang(language or payload.get("lang")))
-    renderer_payload = build_report_renderer_payload(payload)
+    summary = report_summary_from_mapping(payload)
     report_facts = prepare_report_facts(
         payload,
+        summary=summary,
         test_run=domain_test_run,
         language=prepared_language,
         warnings=warnings,
     )
     return PreparedReportInput(
-        renderer_payload=renderer_payload,
+        summary=summary,
         language=prepared_language,
         filename=filename or _default_report_filename(payload),
         domain_test_run=domain_test_run,

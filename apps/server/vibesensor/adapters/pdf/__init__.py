@@ -9,11 +9,12 @@ Import analysis symbols from ``vibesensor.use_cases.diagnostics`` directly.
 Module topology
 ---------------
 - **Models**: ``models/`` (document, panel, section, and appendix dataclasses).
-- **Assembly**: ``assembly/`` plus ``report_context.py`` (prepared report input
-  -> ``ReportTemplateData`` document assembly).
-- **Context helpers**: ``_candidate_resolver.py`` (primary candidate),
-  ``_card_builder.py`` (system cards and signature humanization).
-- **Assembly helpers**: ``peak_table.py``, ``report_sections.py``,
+- **Assembly**: ``assembly/`` (prepared report input -> ``ReportTemplateData``
+  document assembly).
+- **Assembly helpers**: ``_candidate_resolver.py`` (primary candidate),
+  ``_card_builder.py`` (system cards and signature humanization),
+  ``pattern_evidence.py`` / ``measurements.py`` / ``sections.py``.
+- **Rendering helpers**: ``peak_table.py``, ``report_sections.py``,
   ``presentation.py``, ``pattern_parts.py``.
 - **Engine**: ``pdf_engine.py`` (public entry, page orchestration, pagination).
 - **Pages**: ``pdf_page1.py``, ``pdf_page2.py`` (thin page composers over the
