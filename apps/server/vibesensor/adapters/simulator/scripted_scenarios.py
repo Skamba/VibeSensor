@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import asyncio
 
-from vibesensor.adapters.simulator import scripted_scenario_library as _scenario_library
+from vibesensor.adapters.simulator import scripted_scenario_catalog as _scenario_catalog
 from vibesensor.adapters.simulator import scripted_targeting as _targeting
+from vibesensor.adapters.simulator.scripted_scenario_models import PhasePulse, phase_speed_kmh
 from vibesensor.adapters.simulator.scripted_speed_sync import apply_scripted_speed
 from vibesensor.adapters.simulator.sim_client import SimClient
 
 __all__ = ["run_scripted_scenario"]
 
 
-def _pulse_order_key(pulse: _scenario_library.PhasePulse) -> float:
+def _pulse_order_key(pulse: PhasePulse) -> float:
     return pulse.at_s
 
 
@@ -24,7 +25,7 @@ async def run_scripted_scenario(
     server_check_timeout: float,
     speed_update_period_s: float = 0.5,
 ) -> None:
-    scenario = _scenario_library.SCRIPTED_SCENARIOS[scenario_name]
+    scenario = _scenario_catalog.get_scripted_scenario(scenario_name)
     loop = asyncio.get_running_loop()
     server_speed_sync_enabled = True
     cycle = 0
@@ -53,7 +54,7 @@ async def run_scripted_scenario(
                     for client in _targeting.target_clients(clients, pulse.target):
                         client.pulse(pulse.strength)
 
-                speed_kmh = _scenario_library.phase_speed_kmh(phase, elapsed_s)
+                speed_kmh = phase_speed_kmh(phase, elapsed_s)
                 if (
                     last_speed_kmh is None
                     or abs(speed_kmh - last_speed_kmh) >= 0.5

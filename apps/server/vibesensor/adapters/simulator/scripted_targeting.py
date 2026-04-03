@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.adapters.simulator.scripted_scenario_library import ScenarioPhase
+from vibesensor.adapters.simulator.scripted_scenario_models import ScenarioPhase
 from vibesensor.adapters.simulator.sim_client import SimClient
 from vibesensor.adapters.simulator.sim_scene import _normalize_wheel_slot
 
