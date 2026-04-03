@@ -17,6 +17,7 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
+from vibesensor.shared.exceptions import UpdateCleanupError
 from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
 from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
 from vibesensor.use_cases.updates.status import collect_runtime_details
@@ -403,7 +404,7 @@ class TestUpdateManagerAsync:
     async def test_timeout_handling(self, tmp_path) -> None:
         with (
             patch("shutil.which", mock_which),
-            patch("vibesensor.use_cases.updates.manager.UPDATE_TIMEOUT_S", 0.5),
+            patch("vibesensor.use_cases.updates.runtime.UPDATE_TIMEOUT_S", 0.5),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
         ):
             manager, runner, _ = setup_update_env(tmp_path)
@@ -458,7 +459,14 @@ class TestUpdateManagerAsync:
             )
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
-            await manager.job_task
+            with pytest.raises(
+                UpdateCleanupError,
+                match=(
+                    "Cleanup failed after cancellation: "
+                    "Runtime details refresh failed: runtime unavailable"
+                ),
+            ):
+                await manager.job_task
 
         assert manager.status.finished_at is not None
         assert manager.status.state == UpdateState.failed

@@ -94,7 +94,7 @@ def test_observation_service_switches_to_obd_status_and_resolution() -> None:
     obd_monitor.status_snapshot.assert_called_once_with()
 
 
-def test_observation_service_refreshes_admin_state_for_obd_status() -> None:
+def test_observation_service_obd_status_is_side_effect_free() -> None:
     gps_monitor = MagicMock()
     obd_monitor = MagicMock()
     expected_status = _obd_status_snapshot()
@@ -113,8 +113,18 @@ def test_observation_service_refreshes_admin_state_for_obd_status() -> None:
     status = services.observation.obd_status()
 
     assert status == expected_status
-    obd_monitor.refresh_admin_state.assert_called_once_with()
+    obd_monitor.refresh_admin_state.assert_not_called()
     obd_monitor.status_snapshot.assert_called_once_with()
+
+
+def test_admin_service_refreshes_obd_status_explicitly() -> None:
+    gps_monitor = MagicMock()
+    obd_monitor = MagicMock()
+    services = build_speed_source_services(gps_monitor=gps_monitor, obd_monitor=obd_monitor)
+
+    services.admin.refresh_obd_status()
+
+    obd_monitor.refresh_admin_state.assert_called_once_with()
 
 
 def test_admin_service_delegates_scan_and_pair_to_obd_monitor() -> None:

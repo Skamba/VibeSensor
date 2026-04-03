@@ -21,10 +21,9 @@ from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.updates.firmware.firmware_bundle import dir_sha256
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
-from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
 from vibesensor.use_cases.updates.manager import UpdateManager
-from vibesensor.use_cases.updates.models import UpdateState
 from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
+from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowContext
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
 
@@ -169,25 +168,7 @@ class TestUpdateManagerCancelledError:
     async def test_cancelled_error_is_reraised(self):
         """_run_update should re-raise CancelledError."""
         mgr = UpdateManager.__new__(UpdateManager)
-        status = MagicMock()
-        status.phase = MagicMock()
-        status.state = UpdateState.running
-        status.issues = []
-        status.finished_at = None
-        tracker = MagicMock()
-        tracker.status = status
-        executor = UpdateJobExecutor(task_name="system-update")
-        lifecycle = MagicMock(
-            handle_timeout=MagicMock(),
-            handle_cancelled=MagicMock(),
-            handle_unexpected=MagicMock(),
-            cleanup_after_update=AsyncMock(return_value=None),
-            handle_cleanup_error=MagicMock(),
-        )
         mgr._runtime = SimpleNamespace(
-            tracker=tracker,
-            executor=executor,
-            lifecycle=lifecycle,
             build_run_runtime=lambda: SimpleNamespace(
                 preparation=SimpleNamespace(
                     prepare=AsyncMock(
@@ -205,7 +186,7 @@ class TestUpdateManagerCancelledError:
         )
 
         with pytest.raises(asyncio.CancelledError):
-            await mgr._run_update(SimpleNamespace())
+            await mgr._run_update(UpdateWorkflowContext(), MagicMock())
 
 
 # ── 7. dir_sha256 uses separators ────────────────────────────────────────

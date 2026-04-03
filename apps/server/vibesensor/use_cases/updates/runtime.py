@@ -11,8 +11,6 @@ from pathlib import Path
 from vibesensor.use_cases.updates.cleanup import UpdateCleanupCoordinator
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
-from vibesensor.use_cases.updates.job_executor import UpdateJobExecutor
-from vibesensor.use_cases.updates.job_lifecycle import UpdateJobLifecycleHandler
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdateValidationConfig,
@@ -40,9 +38,11 @@ from vibesensor.use_cases.updates.validation import MIN_FREE_DISK_BYTES
 from vibesensor.use_cases.updates.wifi import UpdateWifiSession, build_default_wifi_config
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
+from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowRunner
 
 LOGGER = logging.getLogger(__name__)
 
+UPDATE_TIMEOUT_S = 600
 REINSTALL_OP_TIMEOUT_S = 180
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
@@ -53,10 +53,9 @@ UPDATE_SERVICE_NAME = "vibesensor.service"
 @dataclass(frozen=True, slots=True)
 class UpdateManagerRuntime:
     tracker: UpdateStatusTracker
-    executor: UpdateJobExecutor
-    lifecycle: UpdateJobLifecycleHandler
+    workflow_runner: UpdateWorkflowRunner
     usb_status_service: UsbInternetStatusReader
-    build_transport_sessions: Callable[[UpdateCommandExecutor | None], UpdateTransportSessions]
+    build_transport_sessions: Callable[[], UpdateTransportSessions]
     build_run_runtime: Callable[[], UpdateRunRuntime]
 
 
@@ -79,7 +78,7 @@ class UpdateRuntimeConfig:
 @dataclass(frozen=True, slots=True)
 class UpdateTransportRuntime:
     usb_status_service: UsbInternetStatusReader
-    build_sessions: Callable[[UpdateCommandExecutor | None], UpdateTransportSessions]
+    build_sessions: Callable[[], UpdateTransportSessions]
 
 
 def build_update_manager_runtime(
@@ -104,7 +103,6 @@ def build_update_manager_runtime(
         repo=config.repo,
         state_store=active_state_store,
     )
-    executor = UpdateJobExecutor(task_name="system-update")
     transport_runtime = _build_transport_runtime(
         runner=active_runner,
         tracker=tracker,
@@ -117,14 +115,17 @@ def build_update_manager_runtime(
         config=config,
         transport_runtime=transport_runtime,
     )
-    lifecycle = _build_lifecycle(
-        tracker=tracker,
-        repo=config.repo,
-    )
     return UpdateManagerRuntime(
         tracker=tracker,
-        executor=executor,
-        lifecycle=lifecycle,
+        workflow_runner=UpdateWorkflowRunner(
+            tracker=tracker,
+            cleanup=UpdateCleanupCoordinator(
+                tracker=tracker,
+                repo=config.repo,
+                logger=LOGGER,
+            ),
+            timeout_s=UPDATE_TIMEOUT_S,
+        ),
         usb_status_service=transport_runtime.usb_status_service,
         build_transport_sessions=transport_runtime.build_sessions,
         build_run_runtime=build_run_runtime,
@@ -193,28 +194,43 @@ def _build_transport_runtime(
 ) -> UpdateTransportRuntime:
     status_service = usb_internet_service or UsbInternetStatusService(runner=runner)
 
-    def build_sessions(commands: UpdateCommandExecutor | None = None) -> UpdateTransportSessions:
-        active_commands = commands or _build_command_executor(
+    def build_sessions() -> UpdateTransportSessions:
+        commands = _build_command_executor(
             runner=runner,
             tracker=tracker,
         )
-        return UpdateTransportSessions(
-            wifi=UpdateWifiSession(
-                commands=active_commands,
-                tracker=tracker,
-                config=wifi_config,
-            ),
-            usb_internet=UpdateUsbInternetSession(
-                status_service=status_service,
-                commands=active_commands,
-                tracker=tracker,
-                config=wifi_config,
-            ),
+        return _build_transport_sessions(
+            commands=commands,
+            tracker=tracker,
+            wifi_config=wifi_config,
+            status_service=status_service,
         )
 
     return UpdateTransportRuntime(
         usb_status_service=status_service,
         build_sessions=build_sessions,
+    )
+
+
+def _build_transport_sessions(
+    *,
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    wifi_config: UpdateWifiConfig,
+    status_service: UsbInternetStatusReader,
+) -> UpdateTransportSessions:
+    return UpdateTransportSessions(
+        wifi=UpdateWifiSession(
+            commands=commands,
+            tracker=tracker,
+            config=wifi_config,
+        ),
+        usb_internet=UpdateUsbInternetSession(
+            status_service=status_service,
+            commands=commands,
+            tracker=tracker,
+            config=wifi_config,
+        ),
     )
 
 
@@ -279,7 +295,12 @@ def _build_run_runtime_factory(
 
     def build_run_runtime() -> UpdateRunRuntime:
         commands = _build_command_executor(runner=runner, tracker=tracker)
-        transport_sessions = transport_runtime.build_sessions(commands)
+        transport_sessions = _build_transport_sessions(
+            commands=commands,
+            tracker=tracker,
+            wifi_config=config.wifi_config,
+            status_service=transport_runtime.usb_status_service,
+        )
         (
             resolver,
             stager,
@@ -315,18 +336,3 @@ def _build_run_runtime_factory(
         )
 
     return build_run_runtime
-
-
-def _build_lifecycle(
-    *,
-    tracker: UpdateStatusTracker,
-    repo: Path,
-) -> UpdateJobLifecycleHandler:
-    return UpdateJobLifecycleHandler(
-        tracker=tracker,
-        cleanup=UpdateCleanupCoordinator(
-            tracker=tracker,
-            repo=repo,
-            logger=LOGGER,
-        ),
-    )
