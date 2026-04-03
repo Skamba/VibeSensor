@@ -1,11 +1,11 @@
-"""Coverage helpers for prepared history report facts."""
+"""Coverage helpers for prepared reporting facts."""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 
 from vibesensor.domain import LocationIntensitySummary, TestRun
-from vibesensor.shared.boundaries.reporting import ReportCoverageSummary
+from vibesensor.shared.boundaries.reporting.facts import ReportCoverageSummary
 
 __all__ = [
     "ReportCoverageSummary",
@@ -45,7 +45,6 @@ def build_coverage_summary(
     sensor_intensity: Sequence[LocationIntensitySummary],
 ) -> ReportCoverageSummary:
     """Build normalized coverage facts from the run and active sensors."""
-
     expected_locations = _resolve_expected_sensor_locations(test_run) or _ordered_unique(
         tuple(sensor_locations_active)
     )
@@ -76,7 +75,6 @@ def primary_location_has_coverage_gap(
     coverage_summary: ReportCoverageSummary,
 ) -> bool:
     """Return whether the primary location lands in missing or partial coverage."""
-
     token = _normalized_location_token(primary_location)
     if not token:
         return False

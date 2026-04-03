@@ -5,24 +5,26 @@ import time
 
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 
 class UpdateWifiReadiness:
     """Wait for the transient uplink connection to become usable for updates."""
 
-    __slots__ = ("_commands", "_config", "_tracker")
+    __slots__ = ("_commands", "_config", "_status_controller", "_status_recorder")
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
-        tracker: UpdateStatusTracker,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
         config: UpdateWifiConfig,
     ) -> None:
         self._commands = commands
-        self._tracker = tracker
+        self._status_controller = status_controller
+        self._status_recorder = status_recorder
         self._config = config
 
     async def bring_uplink_up(self, ssid: str) -> bool:
@@ -48,7 +50,7 @@ class UpdateWifiReadiness:
                 return True
             if "No network with SSID" not in (stderr or ""):
                 break
-            self._tracker.log(
+            self._status_recorder.log(
                 f"SSID '{ssid}' not found on connect attempt {attempt}; rescanning and retrying",
             )
             await self._commands.run(
@@ -70,11 +72,12 @@ class UpdateWifiReadiness:
                 sudo=True,
             )
             await asyncio.sleep(2.0)
-        self._tracker.fail(
+        self._status_recorder.add_issue(
             "connecting_wifi",
             f"Failed to connect to Wi-Fi '{ssid}'",
             stderr,
         )
+        self._status_controller.mark_failed()
         return False
 
     async def wait_for_dns_ready(
@@ -86,7 +89,7 @@ class UpdateWifiReadiness:
     ) -> bool:
         """Wait for DNS resolution to succeed before download work begins."""
 
-        self._tracker.log(
+        self._status_recorder.log(
             f"Validating {readiness_subject} internet/DNS readiness for at least "
             f"{int(self._config.dns_ready_min_wait_s)}s...",
         )
@@ -111,14 +114,14 @@ class UpdateWifiReadiness:
                 sudo=False,
             )
             if rc == 0:
-                self._tracker.log(f"DNS probe succeeded on attempt {attempt}")
+                self._status_recorder.log(f"DNS probe succeeded on attempt {attempt}")
                 return True
             last_error = (stderr or stdout or f"exit {rc}").strip()
             if time.monotonic() >= deadline:
                 break
             await asyncio.sleep(self._config.dns_retry_interval_s)
-        self._tracker.fail(
-            phase,
+        self._status_recorder.add_issue(
+            phase.value if isinstance(phase, UpdatePhase) else phase,
             failure_message,
             (
                 "Waited at least "
@@ -127,4 +130,5 @@ class UpdateWifiReadiness:
                 f"Last probe error: {last_error or 'unknown'}"
             ),
         )
+        self._status_controller.mark_failed()
         return False

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.exceptions import AnalysisNotReadyError
+from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_records import StoredHistoryRun
@@ -18,7 +19,6 @@ from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.helpers import (
     async_require_run,
     resolve_run_language,
-    safe_filename,
 )
 
 _PERSISTED_REPORT_MODE_TOKEN = "none"

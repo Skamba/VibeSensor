@@ -5,11 +5,12 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from test_support.update_status import build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
 def _seed_release_ready_state(tracker: UpdateStatusTracker) -> None:
@@ -26,13 +27,24 @@ def _seed_release_ready_state(tracker: UpdateStatusTracker) -> None:
 
 @pytest.mark.asyncio
 async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -> None:
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+    status = build_update_status_harness(tmp_path / "state.json")
+    tracker = status.tracker
     _seed_release_ready_state(tracker)
-    stager = ServerReleaseStager(tracker=tracker, rollback_dir=tmp_path / "rollback")
+    stager = ServerReleaseStager(
+        status_controller=status.controller,
+        status_recorder=status.recorder,
+        rollback_dir=tmp_path / "rollback",
+    )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="")
     staged_path: Path | None = None
 
-    async def _download_release(_tracker, _rollback_dir, _release, staging_dir: Path) -> Path:
+    async def _download_release(
+        _controller,
+        _recorder,
+        _rollback_dir,
+        _release,
+        staging_dir: Path,
+    ) -> Path:
         nonlocal staged_path
         staged_path = staging_dir / "release.whl"
         staged_path.write_text("wheel", encoding="utf-8")
@@ -60,13 +72,24 @@ async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -
 
 @pytest.mark.asyncio
 async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> None:
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+    status = build_update_status_harness(tmp_path / "state.json")
+    tracker = status.tracker
     _seed_release_ready_state(tracker)
-    stager = ServerReleaseStager(tracker=tracker, rollback_dir=tmp_path / "rollback")
+    stager = ServerReleaseStager(
+        status_controller=status.controller,
+        status_recorder=status.recorder,
+        rollback_dir=tmp_path / "rollback",
+    )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="bad")
     staged_dir: Path | None = None
 
-    async def _download_release(_tracker, _rollback_dir, _release, staging_dir: Path) -> Path:
+    async def _download_release(
+        _controller,
+        _recorder,
+        _rollback_dir,
+        _release,
+        staging_dir: Path,
+    ) -> Path:
         nonlocal staged_dir
         staged_dir = staging_dir
         wheel_path = staging_dir / "release.whl"

@@ -5,7 +5,10 @@ from __future__ import annotations
 import pytest
 from fastapi import HTTPException
 
-from vibesensor.adapters.http.error_boundary import route_errors_to_http
+from vibesensor.adapters.http.error_boundary import (
+    http_exception_for_value_error,
+    route_errors_to_http,
+)
 from vibesensor.shared.exceptions import (
     ConfigurationError,
     ProtocolError,
@@ -18,7 +21,7 @@ from vibesensor.shared.operational_errors import OperationalError, ServiceUnavai
 def test_configuration_error_caught_as_vibesensor_error() -> None:
     """ConfigurationError maps to HTTP 400."""
     with pytest.raises(HTTPException) as exc_info:
-        with route_errors_to_http(catch_value_error=400):
+        with route_errors_to_http():
             raise ConfigurationError("bad config")
     assert exc_info.value.status_code == 400
 
@@ -37,12 +40,17 @@ def test_update_error_conflict_maps_to_409() -> None:
     assert exc_info.value.status_code == 409
 
 
-def test_plain_value_error_still_caught() -> None:
-    """A plain ValueError is still caught by the except ValueError fallback."""
-    with pytest.raises(HTTPException) as exc_info:
-        with route_errors_to_http(catch_value_error=400):
+def test_plain_value_error_propagates_past_route_boundary() -> None:
+    """A plain ValueError must be handled explicitly by the route that owns it."""
+    with pytest.raises(ValueError, match="not a number"):
+        with route_errors_to_http():
             raise ValueError("not a number")
-    assert exc_info.value.status_code == 400
+
+
+def test_http_exception_for_value_error_maps_explicit_request_failures() -> None:
+    exc = http_exception_for_value_error(ValueError("not a number"), status_code=400)
+    assert exc.status_code == 400
+    assert exc.detail == "not a number"
 
 
 def test_service_unavailable_error_maps_to_503() -> None:

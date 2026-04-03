@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from test_support.update_status import build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.artifact_validation import (
@@ -17,7 +18,7 @@ from vibesensor.use_cases.updates.artifact_validation import (
 from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult
 
 
@@ -113,11 +114,13 @@ def _make_installer(
     python_path.write_text("#!/bin/sh\n", encoding="utf-8")
     python_path.chmod(0o755)
     (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /tmp\n")
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "update_status.json"))
+    status = build_update_status_harness(tmp_path / "update_status.json")
+    tracker = status.tracker
     commands = RecordingCommands()
     installer = UpdateInstaller(
         commands=commands,
-        tracker=tracker,
+        status_controller=status.controller,
+        status_recorder=status.recorder,
         config=UpdateInstallerConfig(
             repo=repo,
             rollback_dir=tmp_path / "rollback",
@@ -362,8 +365,12 @@ async def test_rollback_invalid_snapshot_wheel_fails(tmp_path: Path) -> None:
 
 
 def test_wheel_validator_rejects_corrupt_wheel_without_installer(tmp_path: Path) -> None:
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "update_status.json"))
-    validator = WheelArtifactValidator(tracker)
+    status = build_update_status_harness(tmp_path / "update_status.json")
+    tracker = status.tracker
+    validator = WheelArtifactValidator(
+        status_controller=status.controller,
+        status_recorder=status.recorder,
+    )
     broken_wheel = tmp_path / "broken.whl"
     broken_wheel.write_text("not a wheel", encoding="utf-8")
 
@@ -379,8 +386,12 @@ def test_wheel_validator_rejects_corrupt_wheel_without_installer(tmp_path: Path)
 
 
 def test_wheel_validator_rejects_invalid_metadata_requirement(tmp_path: Path) -> None:
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "update_status.json"))
-    validator = WheelArtifactValidator(tracker)
+    status = build_update_status_harness(tmp_path / "update_status.json")
+    tracker = status.tracker
+    validator = WheelArtifactValidator(
+        status_controller=status.controller,
+        status_recorder=status.recorder,
+    )
     wheel_path = tmp_path / "broken-metadata.whl"
     _build_fake_wheel(
         wheel_path,
@@ -510,7 +521,7 @@ async def test_firmware_refresher_uses_module_fallback_without_installer(tmp_pat
     installer, commands, tracker = _make_installer(tmp_path)
     refresher = FirmwareRefresher(
         commands=commands,
-        tracker=tracker,
+        status_recorder=tracker.recorder,
         repo=installer._config.repo,
         timeout_s=30,
     )

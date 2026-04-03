@@ -3,10 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from test_support.update_status import build_update_status_harness
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi.wifi_config import build_default_wifi_config
 from vibesensor.use_cases.updates.wifi.wifi_uplink_setup import (
     UpdateUplinkProvisioner,
@@ -18,14 +19,15 @@ def _build_uplink_provisioner(
     tmp_path: Path,
 ) -> tuple[UpdateUplinkProvisioner, FakeRunner, UpdateStatusTracker]:
     runner = FakeRunner()
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
-    commands = UpdateCommandExecutor(runner=runner, tracker=tracker)
+    status = build_update_status_harness(tmp_path / "state.json")
+    commands = UpdateCommandExecutor(runner=runner, recorder=status.recorder)
     provisioner = UpdateUplinkProvisioner(
         commands=commands,
-        tracker=tracker,
+        status_controller=status.controller,
+        status_recorder=status.recorder,
         config=build_default_wifi_config(ap_con_name="VibeSensor-AP", wifi_ifname="wlan0"),
     )
-    return provisioner, runner, tracker
+    return provisioner, runner, status.tracker
 
 
 def test_ssid_security_modes_handles_escaped_ssids() -> None:
