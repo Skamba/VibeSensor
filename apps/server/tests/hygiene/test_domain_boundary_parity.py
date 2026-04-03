@@ -115,9 +115,7 @@ class TestLocationHotspotParity:
         "ambiguous": "ambiguous_location",
         "alternative_locations": "ambiguous_locations",
     }
-    PAYLOAD_ONLY: set[str] = {
-        "second_location",  # derived from alternatives during serialisation
-    }
+    PAYLOAD_ONLY: set[str] = set()
 
     def test_all_domain_fields_covered(self) -> None:
         dc = _dc_fields(LocationHotspot)
@@ -224,7 +222,7 @@ class TestFindingPayloadCoverage:
         "finding_key": ["finding_key"],
         "suspected_source": ["suspected_source"],
         "confidence": ["confidence"],
-        "frequency_hz": ["frequency_hz_or_order"],
+        "frequency_hz": ["frequency_hz"],
         "order": ["order"],
         "severity": ["severity"],
         "strongest_location": ["strongest_location"],

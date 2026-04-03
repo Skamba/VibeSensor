@@ -1697,6 +1697,8 @@ export interface components {
             finding_key?: string | null;
             /** Finding Kind */
             finding_kind?: string | null;
+            /** Frequency Hz */
+            frequency_hz?: number | null;
             /** Frequency Hz Or Order */
             frequency_hz_or_order: number | string;
             location_hotspot?: components["schemas"]["LocationHotspotPayload"] | null;
@@ -2136,8 +2138,6 @@ export interface components {
             localization_confidence?: number | null;
             /** Location Count */
             location_count?: number | null;
-            /** Second Location */
-            second_location?: string | null;
             /** Top Location */
             top_location?: string | null;
             /** Weak Spatial Separation */

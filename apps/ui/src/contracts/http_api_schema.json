@@ -2632,6 +2632,17 @@
             ],
             "title": "Finding Kind"
           },
+          "frequency_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Hz"
+          },
           "frequency_hz_or_order": {
             "anyOf": [
               {
@@ -3933,17 +3944,6 @@
               }
             ],
             "title": "Location Count"
-          },
-          "second_location": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Second Location"
           },
           "top_location": {
             "anyOf": [

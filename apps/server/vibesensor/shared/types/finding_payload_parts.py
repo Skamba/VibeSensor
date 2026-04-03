@@ -36,6 +36,7 @@ class FindingCorePayload(TypedDict, total=False):
     finding_key: str | None
     suspected_source: Required[str]
     confidence: Required[float | None]
+    frequency_hz: float | None
     finding_kind: str | None
     severity: str | None
     matched_points: list[MatchedPoint]

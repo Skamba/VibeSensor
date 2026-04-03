@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import FindingEvidence, coerce_float
+from vibesensor.domain import FindingEvidence
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
 __all__ = ["finding_evidence_from_mapping"]
 
@@ -13,30 +14,18 @@ def finding_evidence_from_mapping(payload: Mapping[str, object]) -> FindingEvide
     """Decode a canonical evidence payload into a domain ``FindingEvidence``."""
 
     def _float(key: str) -> float:
-        raw = payload.get(key)
-        if raw is None:
-            return 0.0
-        try:
-            return coerce_float(raw)
-        except (TypeError, ValueError):
-            return 0.0
+        return _as_float(payload.get(key)) or 0.0
 
     def _float_or_none(key: str) -> float | None:
-        raw = payload.get(key)
-        if raw is None:
-            return None
-        try:
-            return coerce_float(raw)
-        except (TypeError, ValueError):
-            return None
+        return _as_float(payload.get(key))
 
     phase_conf = payload.get("per_phase_confidence")
     phase_items: tuple[tuple[str, float], ...] = ()
     if isinstance(phase_conf, dict):
         phase_items = tuple(
-            (str(key), float(value))
+            (str(key), confidence)
             for key, value in sorted(phase_conf.items())
-            if isinstance(value, (int, float))
+            if (confidence := _as_float(value)) is not None
         )
 
     focused_speed_band = payload.get("focused_speed_band")

@@ -221,7 +221,7 @@ class TestFindingDomainObject:
             "finding_id": "F001",
             "suspected_source": "wheel/tire",
             "confidence": 0.85,
-            "frequency_hz_or_order": 42.5,
+            "frequency_hz": 42.5,
             "order": "1x",
             "severity": "high",
             "strongest_location": "FL",
