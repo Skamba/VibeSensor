@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -37,6 +36,7 @@ from vibesensor.use_cases.updates.usb_transport import UpdateUsbInternetSession
 from vibesensor.use_cases.updates.validation import MIN_FREE_DISK_BYTES
 from vibesensor.use_cases.updates.wifi import UpdateWifiSession, build_default_wifi_config
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
+from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowRunner
 
@@ -55,15 +55,8 @@ class UpdateManagerRuntime:
     tracker: UpdateStatusTracker
     workflow_runner: UpdateWorkflowRunner
     usb_status_service: UsbInternetStatusReader
-    build_transport_sessions: Callable[[], UpdateTransportSessions]
-    build_run_runtime: Callable[[], UpdateRunRuntime]
-
-
-@dataclass(frozen=True, slots=True)
-class UpdateRunRuntime:
-    preparation: UpdatePreparationCoordinator
-    release_planner: UpdateReleasePlanner
-    workflow_executor: UpdateWorkflowExecutor
+    transport_sessions: UpdateTransportSessions
+    workflow: UpdateWorkflow
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,12 +66,6 @@ class UpdateRuntimeConfig:
     wifi_config: UpdateWifiConfig
     installer_config: UpdateInstallerConfig
     validation_config: UpdateValidationConfig
-
-
-@dataclass(frozen=True, slots=True)
-class UpdateTransportRuntime:
-    usb_status_service: UsbInternetStatusReader
-    build_sessions: Callable[[], UpdateTransportSessions]
 
 
 def build_update_manager_runtime(
@@ -103,17 +90,22 @@ def build_update_manager_runtime(
         repo=config.repo,
         state_store=active_state_store,
     )
-    transport_runtime = _build_transport_runtime(
+    commands = _build_command_executor(
         runner=active_runner,
+        tracker=tracker,
+    )
+    status_service = usb_internet_service or UsbInternetStatusService(runner=active_runner)
+    transport_sessions = _build_transport_sessions(
+        commands=commands,
         tracker=tracker,
         wifi_config=config.wifi_config,
-        usb_internet_service=usb_internet_service,
+        status_service=status_service,
     )
-    build_run_runtime = _build_run_runtime_factory(
-        runner=active_runner,
+    workflow = _build_update_workflow(
+        commands=commands,
         tracker=tracker,
         config=config,
-        transport_runtime=transport_runtime,
+        transport_sessions=transport_sessions,
     )
     return UpdateManagerRuntime(
         tracker=tracker,
@@ -126,9 +118,9 @@ def build_update_manager_runtime(
             ),
             timeout_s=UPDATE_TIMEOUT_S,
         ),
-        usb_status_service=transport_runtime.usb_status_service,
-        build_transport_sessions=transport_runtime.build_sessions,
-        build_run_runtime=build_run_runtime,
+        usb_status_service=status_service,
+        transport_sessions=transport_sessions,
+        workflow=workflow,
     )
 
 
@@ -183,33 +175,6 @@ def _build_command_executor(
     tracker: UpdateStatusTracker,
 ) -> UpdateCommandExecutor:
     return UpdateCommandExecutor(runner=runner, tracker=tracker)
-
-
-def _build_transport_runtime(
-    *,
-    runner: CommandRunner,
-    tracker: UpdateStatusTracker,
-    wifi_config: UpdateWifiConfig,
-    usb_internet_service: UsbInternetStatusReader | None,
-) -> UpdateTransportRuntime:
-    status_service = usb_internet_service or UsbInternetStatusService(runner=runner)
-
-    def build_sessions() -> UpdateTransportSessions:
-        commands = _build_command_executor(
-            runner=runner,
-            tracker=tracker,
-        )
-        return _build_transport_sessions(
-            commands=commands,
-            tracker=tracker,
-            wifi_config=wifi_config,
-            status_service=status_service,
-        )
-
-    return UpdateTransportRuntime(
-        usb_status_service=status_service,
-        build_sessions=build_sessions,
-    )
 
 
 def _build_transport_sessions(
@@ -281,58 +246,48 @@ def _build_release_components(
     )
 
 
-def _build_run_runtime_factory(
+def _build_update_workflow(
     *,
-    runner: CommandRunner,
+    commands: UpdateCommandExecutor,
     tracker: UpdateStatusTracker,
     config: UpdateRuntimeConfig,
-    transport_runtime: UpdateTransportRuntime,
-) -> Callable[[], UpdateRunRuntime]:
+    transport_sessions: UpdateTransportSessions,
+) -> UpdateWorkflow:
     def current_version_provider() -> str:
         from vibesensor import __version__ as current_version
 
         return current_version
 
-    def build_run_runtime() -> UpdateRunRuntime:
-        commands = _build_command_executor(runner=runner, tracker=tracker)
-        transport_sessions = _build_transport_sessions(
-            commands=commands,
+    (
+        resolver,
+        stager,
+        deployer,
+        firmware_refresher,
+        restart_scheduler,
+    ) = _build_release_components(
+        commands=commands,
+        tracker=tracker,
+        config=config,
+    )
+    return UpdateWorkflow(
+        preparation=UpdatePreparationCoordinator(
             tracker=tracker,
-            wifi_config=config.wifi_config,
-            status_service=transport_runtime.usb_status_service,
-        )
-        (
-            resolver,
-            stager,
-            deployer,
-            firmware_refresher,
-            restart_scheduler,
-        ) = _build_release_components(
             commands=commands,
+            transport_sessions=transport_sessions,
+            validation_config=config.validation_config,
+            current_version_provider=current_version_provider,
+        ),
+        release_planner=UpdateReleasePlanner(
             tracker=tracker,
-            config=config,
-        )
-        return UpdateRunRuntime(
-            preparation=UpdatePreparationCoordinator(
+            resolver=resolver,
+        ),
+        workflow_executor=UpdateWorkflowExecutor(
+            stager=stager,
+            deployer=deployer,
+            firmware_refresher=firmware_refresher,
+            finalizer=UpdateSuccessFinalizer(
                 tracker=tracker,
-                commands=commands,
-                transport_sessions=transport_sessions,
-                validation_config=config.validation_config,
-                current_version_provider=current_version_provider,
+                restart_scheduler=restart_scheduler,
             ),
-            release_planner=UpdateReleasePlanner(
-                tracker=tracker,
-                resolver=resolver,
-            ),
-            workflow_executor=UpdateWorkflowExecutor(
-                stager=stager,
-                deployer=deployer,
-                firmware_refresher=firmware_refresher,
-                finalizer=UpdateSuccessFinalizer(
-                    tracker=tracker,
-                    restart_scheduler=restart_scheduler,
-                ),
-            ),
-        )
-
-    return build_run_runtime
+        ),
+    )

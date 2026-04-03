@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.reporting.payload import (
+from vibesensor.shared.boundaries.reporting.summary import (
     has_projectable_report_payload,
     report_summary_from_mapping,
     require_projectable_report_payload,

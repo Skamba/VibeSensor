@@ -7,14 +7,6 @@ from .facts import (
     ReportCoverageSummary,
 )
 from .input import PreparedReportInput
-from .payload import (
-    NormalizedReportSummary,
-    ReportTimelineInterval,
-    has_projectable_report_payload,
-    report_summary_from_mapping,
-    require_projectable_report_payload,
-)
-from .presentation import PreparedReportPresentation
 from .projection import (
     PrimaryReportFacts,
     collect_location_intensity,
@@ -26,6 +18,13 @@ from .projection import (
     sensor_fallback_strength_db,
     tire_spec_text,
 )
+from .summary import (
+    NormalizedReportSummary,
+    ReportTimelineInterval,
+    has_projectable_report_payload,
+    report_summary_from_mapping,
+    require_projectable_report_payload,
+)
 
 __all__ = [
     "ActionStatusKey",
@@ -33,7 +32,6 @@ __all__ = [
     "NormalizedReportSummary",
     "PreparedReportFacts",
     "PreparedReportInput",
-    "PreparedReportPresentation",
     "PrimaryReportFacts",
     "ReportCoverageSummary",
     "ReportTimelineInterval",

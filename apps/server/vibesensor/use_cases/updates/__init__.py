@@ -3,10 +3,12 @@
 The updater now has one explicit run-scoped workflow boundary per concern:
 
 - ``manager.py`` exposes the public API only.
-- ``runtime.py`` composes the concrete collaborators used by that facade and
-  builds one run-scoped workflow bundle at a time.
-- ``preparation.py`` owns validation, transport preparation, and version
-  resolution for one run while returning the resolved transport session
+- ``runtime.py`` composes one canonical runtime graph with shared transport
+  sessions, status tracking, and workflow collaborators.
+- ``workflow.py`` owns request-scoped orchestration across preparation,
+  planning, and execution.
+- ``preparation.py`` owns validation, transport preparation, and current-version
+  observation for one run while returning the resolved transport session
   explicitly.
 - ``release_planner.py`` interprets discovered release state into one canonical
   execution plan tied to that prepared session.
