@@ -27,6 +27,10 @@ if TYPE_CHECKING:
     from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
+    from vibesensor.shared.types.speed_source_config import (
+        SpeedSourcePayload,
+        SpeedSourceUpdatePayload,
+    )
 
 
 class HistoryRunServiceProtocol(Protocol):
@@ -61,6 +65,12 @@ class SettingsSpeedServiceProtocol(Protocol):
     def obd_status(self) -> ObdStatusSnapshot: ...
 
 
+class SpeedSourceSettingsServiceProtocol(Protocol):
+    def get_speed_source(self) -> SpeedSourcePayload: ...
+
+    def update_speed_source(self, data: SpeedSourceUpdatePayload) -> SpeedSourcePayload: ...
+
+
 @dataclass(slots=True)
 class TelemetryDeps:
     processing_loop_state: ProcessingLoopState
@@ -75,6 +85,7 @@ class TelemetryDeps:
 @dataclass(slots=True)
 class SettingsDeps:
     settings_store: SettingsStore
+    speed_source_service: SpeedSourceSettingsServiceProtocol
     gps_monitor: SettingsSpeedServiceProtocol
 
 

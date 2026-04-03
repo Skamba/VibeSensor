@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from vibesensor.domain import CarSnapshot
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
+from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 
 
 def _active_car_snapshot() -> CarSnapshot:
@@ -28,6 +29,21 @@ def _run_context(mutable_fake_settings):
     )
 
 
+def _observation(
+    *,
+    fake_registry,
+    fake_gps_monitor,
+    mutable_fake_settings,
+    now_mono: float,
+):
+    return observe_capture_readiness(
+        registry=fake_registry,
+        run_context=_run_context(mutable_fake_settings),
+        speed_provider=fake_gps_monitor,
+        now_mono=now_mono,
+    )
+
+
 def test_capture_readiness_passes_after_stable_dwell(
     fake_registry,
     fake_gps_monitor,
@@ -43,10 +59,12 @@ def test_capture_readiness_passes_after_stable_dwell(
     for now_mono in (100.0, 104.0, 108.0):
         snapshots.append(
             tracker.evaluate(
-                registry=fake_registry,
-                run_context=_run_context(mutable_fake_settings),
-                speed_provider=fake_gps_monitor,
-                now_mono=now_mono,
+                _observation(
+                    fake_registry=fake_registry,
+                    fake_gps_monitor=fake_gps_monitor,
+                    mutable_fake_settings=mutable_fake_settings,
+                    now_mono=now_mono,
+                )
             )
         )
 
@@ -69,10 +87,12 @@ def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     fake_gps_monitor.resolved_source = "obd2"
 
     tracker.evaluate(
-        registry=fake_registry,
-        run_context=_run_context(mutable_fake_settings),
-        speed_provider=fake_gps_monitor,
-        now_mono=200.0,
+        _observation(
+            fake_registry=fake_registry,
+            fake_gps_monitor=fake_gps_monitor,
+            mutable_fake_settings=mutable_fake_settings,
+            now_mono=200.0,
+        )
     )
 
     active_client = fake_registry.get("active")
@@ -80,20 +100,24 @@ def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     active_client.frames_dropped = 2
 
     blocked = tracker.evaluate(
-        registry=fake_registry,
-        run_context=_run_context(mutable_fake_settings),
-        speed_provider=fake_gps_monitor,
-        now_mono=204.0,
+        _observation(
+            fake_registry=fake_registry,
+            fake_gps_monitor=fake_gps_monitor,
+            mutable_fake_settings=mutable_fake_settings,
+            now_mono=204.0,
+        )
     )
     sensors_check = next(check for check in blocked.checks if check.check_key == "sensors_ready")
     assert sensors_check.state == "fail"
     assert sensors_check.reason_key == "recent_integrity_events"
 
     recovered = tracker.evaluate(
-        registry=fake_registry,
-        run_context=_run_context(mutable_fake_settings),
-        speed_provider=fake_gps_monitor,
-        now_mono=215.0,
+        _observation(
+            fake_registry=fake_registry,
+            fake_gps_monitor=fake_gps_monitor,
+            mutable_fake_settings=mutable_fake_settings,
+            now_mono=215.0,
+        )
     )
     sensors_check = next(check for check in recovered.checks if check.check_key == "sensors_ready")
     assert sensors_check.state == "warn"
@@ -111,10 +135,12 @@ def test_capture_readiness_blocks_without_fresh_reference(
     fake_gps_monitor.resolved_source = "manual"
 
     readiness = tracker.evaluate(
-        registry=fake_registry,
-        run_context=_run_context(mutable_fake_settings),
-        speed_provider=fake_gps_monitor,
-        now_mono=300.0,
+        _observation(
+            fake_registry=fake_registry,
+            fake_gps_monitor=fake_gps_monitor,
+            mutable_fake_settings=mutable_fake_settings,
+            now_mono=300.0,
+        )
     )
 
     reference_check = next(

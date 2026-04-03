@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
+from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
 
 if TYPE_CHECKING:
     from vibesensor.app.runtime_state import RuntimeState
@@ -120,8 +121,8 @@ class _StubSettingsStore:
     def __init__(self) -> None:
         self.snapshot_calls = 0
 
-    def get_speed_source(self) -> dict[str, Any]:
-        return {"speedSource": "gps"}
+    def speed_source_config(self) -> SpeedSourceConfig:
+        return SpeedSourceConfig.default()
 
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         self.snapshot_calls += 1

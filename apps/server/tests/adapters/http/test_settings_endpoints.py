@@ -75,6 +75,7 @@ def _settings_router(fake_state):
     fake_state.settings_store.get_cars.return_value = _make_cars_snapshot()
     return create_settings_routes(
         fake_state.settings_store,
+        fake_state.speed_source_service,
         fake_state.gps_monitor,
     ), fake_state
 
@@ -215,7 +216,7 @@ class TestSpeedSourceEndpoint:
 
         from vibesensor.adapters.http.models import SpeedSourceRequest
 
-        state.settings_store.update_speed_source.return_value = {
+        state.speed_source_service.update_speed_source.return_value = {
             "speedSource": "manual",
             "manualSpeedKph": 42.0,
             "staleTimeoutS": 15.0,
@@ -223,7 +224,7 @@ class TestSpeedSourceEndpoint:
 
         await endpoint(req=SpeedSourceRequest(speed_source="manual", manual_speed_kph=42.0))
 
-        state.settings_store.update_speed_source.assert_called_once_with(
+        state.speed_source_service.update_speed_source.assert_called_once_with(
             {"speedSource": "manual", "manualSpeedKph": 42.0}
         )
 
@@ -234,7 +235,7 @@ class TestSpeedSourceEndpoint:
 
         from vibesensor.adapters.http.models import SpeedSourceRequest
 
-        state.settings_store.update_speed_source.side_effect = ValueError(
+        state.speed_source_service.update_speed_source.side_effect = ValueError(
             "SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph"
         )
 

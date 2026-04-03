@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Protocol
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSource, SpeedSourceKind
+from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
@@ -17,7 +17,7 @@ from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_config import SensorConfigUpdatePayload, SensorsByMacPayload
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource, SpeedSourcePayload
+from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource, SpeedSourceConfig
 
 __all__ = [
     "ActiveCarReader",
@@ -107,9 +107,7 @@ class SettingsReader(Protocol):
 class SpeedSourceSettingsReader(Protocol):
     """Read-only speed-source access needed by runtime/broadcast settings consumers."""
 
-    def speed_source(self) -> SpeedSource: ...
-
-    def get_speed_source(self) -> SpeedSourcePayload: ...
+    def speed_source_config(self) -> SpeedSourceConfig: ...
 
 
 class SensorSettingsWriter(Protocol):

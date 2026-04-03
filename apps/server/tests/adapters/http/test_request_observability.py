@@ -43,7 +43,7 @@ def test_request_logging_middleware_sets_response_header_and_logs_request(
 def test_request_id_flows_into_settings_audit_logs(caplog: pytest.LogCaptureFixture) -> None:
     app = FastAPI()
     install_request_logging_middleware(app)
-    app.include_router(create_settings_routes(SettingsStore(), MagicMock()))
+    app.include_router(create_settings_routes(SettingsStore(), MagicMock(), MagicMock()))
 
     with caplog.at_level(logging.INFO):
         with TestClient(app) as client:

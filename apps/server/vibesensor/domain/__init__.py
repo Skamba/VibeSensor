@@ -36,7 +36,7 @@ RunSuitability
 
 from ._numeric import coerce_float, coerce_int
 from .analysis_settings import AnalysisSettingsSnapshot
-from .capture_readiness import CaptureReadiness, CaptureReadinessCheck
+from .capture_readiness import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
 from .car import Car, CarSnapshot
 from .confidence_assessment import ConfidenceAssessment
 from .diagnostic_case import DiagnosticCase, Symptom
@@ -74,6 +74,7 @@ __all__ = [
     "Car",
     "CaptureReadiness",
     "CaptureReadinessCheck",
+    "CaptureReadinessPolicy",
     "DiagnosticCase",
     "Run",
     "TestRun",

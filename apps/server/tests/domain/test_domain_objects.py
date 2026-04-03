@@ -17,6 +17,7 @@ from vibesensor.domain import (
     Sensor,
     SensorPlacement,
     SpeedSource,
+    SpeedSourceKind,
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
 
@@ -402,7 +403,7 @@ class TestBridgeMethods:
         from vibesensor.infra.config.settings_store import SettingsStore
 
         store = SettingsStore()
-        assert store.speed_source().is_gps
+        assert store.speed_source_config().speed_source == SpeedSourceKind.GPS
         assert store.active_car() is None
         assert store.sensors() == []
 

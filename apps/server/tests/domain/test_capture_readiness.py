@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck
+from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
 
 
 def test_capture_readiness_check_properties_and_details_dict() -> None:
@@ -28,3 +28,11 @@ def test_capture_readiness_filters_failed_and_warning_checks() -> None:
 
     assert tuple(check.check_key for check in readiness.warning_checks) == ("sensors_ready",)
     assert tuple(check.check_key for check in readiness.failed_checks) == ("speed_stable",)
+
+
+def test_capture_readiness_policy_defaults_cover_live_speed_sources() -> None:
+    policy = CaptureReadinessPolicy()
+
+    assert policy.min_ready_speed_kmh == 20.0
+    assert policy.max_speed_age_s == 2.0
+    assert policy.live_speed_sources == ("gps", "obd2")
