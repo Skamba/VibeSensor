@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from test_support.update_status import build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdatePreparationError
 from vibesensor.use_cases.updates.models import (
@@ -10,7 +11,6 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
     UpdateValidationConfig,
 )
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 from vibesensor.use_cases.updates.validation import validate_prerequisites
 
 
@@ -28,7 +28,8 @@ class _Commands:
 
 @pytest.mark.asyncio
 async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_path: Path) -> None:
-    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
+    status = build_update_status_harness(tmp_path / "state.json")
+    tracker = status.tracker
 
     def _raise_probe(rollback_dir: Path) -> None:
         raise OSError("readonly")
@@ -42,7 +43,8 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
     with pytest.raises(UpdatePreparationError, match="Rollback directory is not writable"):
         await validate_prerequisites(
             commands=_Commands(),
-            tracker=tracker,
+            controller=status.controller,
+            recorder=status.recorder,
             config=UpdateValidationConfig(
                 rollback_dir=tmp_path / "rollback",
                 min_free_disk_bytes=1,

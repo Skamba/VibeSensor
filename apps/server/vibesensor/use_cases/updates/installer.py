@@ -11,7 +11,7 @@ from vibesensor.use_cases.updates.rollback_executor import RollbackExecutor
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
 from vibesensor.use_cases.updates.rollback_snapshot_builder import RollbackSnapshotBuilder
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallExecutor
 
 
@@ -37,29 +37,34 @@ class UpdateInstaller:
         self,
         *,
         commands: UpdateCommandExecutor,
-        tracker: UpdateStatusTracker,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
         config: UpdateInstallerConfig,
     ) -> None:
         self._config = config
-        self._tracker = tracker
-        rollback_snapshots = RollbackSnapshotStore(config.rollback_dir, tracker)
-        wheel_validator = WheelArtifactValidator(tracker)
+        self._tracker = status_recorder
+        rollback_snapshots = RollbackSnapshotStore(config.rollback_dir, status_recorder)
+        wheel_validator = WheelArtifactValidator(
+            status_controller=status_controller,
+            status_recorder=status_recorder,
+        )
         self._wheel_install_executor = WheelInstallExecutor(
             commands=commands,
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=status_recorder,
             repo=config.repo,
             reinstall_timeout_s=config.reinstall_timeout_s,
             wheel_validator=wheel_validator,
         )
         self._rollback_snapshot_builder = RollbackSnapshotBuilder(
             commands=commands,
-            tracker=tracker,
+            status_recorder=status_recorder,
             repo=config.repo,
             rollback_dir=config.rollback_dir,
             rollback_snapshots=rollback_snapshots,
         )
         self._rollback_executor = RollbackExecutor(
-            tracker=tracker,
+            status_recorder=status_recorder,
             rollback_snapshots=rollback_snapshots,
             wheel_validator=wheel_validator,
             wheel_install_executor=self._wheel_install_executor,

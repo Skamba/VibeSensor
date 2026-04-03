@@ -9,7 +9,7 @@ from pathlib import Path
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
-from vibesensor.use_cases.history.report_document import prepare_report_input
+from vibesensor.shared.boundaries.reporting import prepare_report_input
 
 
 def parse_args() -> argparse.Namespace:

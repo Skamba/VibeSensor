@@ -21,10 +21,12 @@ def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateReq
 
 @pytest.mark.asyncio
 async def test_start_rejects_concurrent_job() -> None:
-    tracker = MagicMock()
+    controller = MagicMock()
+    recorder = MagicMock()
     cleanup = AsyncMock()
     runner = UpdateWorkflowRunner(
-        tracker=tracker,
+        status_controller=controller,
+        status_recorder=recorder,
         cleanup=cleanup,
         timeout_s=10.0,
     )
@@ -47,16 +49,18 @@ async def test_start_rejects_concurrent_job() -> None:
     assert runner.cancel() is True
     with contextlib.suppress(asyncio.CancelledError):
         await task
-    tracker.start_job.assert_called_once_with(request)
-    tracker.track_secret.assert_called_once_with(request.password)
+    controller.start_job.assert_called_once_with(request)
+    recorder.track_secret.assert_called_once_with(request.password)
 
 
 @pytest.mark.asyncio
 async def test_timeout_marks_failure_and_runs_cleanup() -> None:
-    tracker = MagicMock()
+    controller = MagicMock()
+    recorder = MagicMock()
     cleanup = AsyncMock()
     runner = UpdateWorkflowRunner(
-        tracker=tracker,
+        status_controller=controller,
+        status_recorder=recorder,
         cleanup=cleanup,
         timeout_s=0.01,
     )
@@ -69,20 +73,23 @@ async def test_timeout_marks_failure_and_runs_cleanup() -> None:
     assert task is not None
     await task
 
-    tracker.fail.assert_any_call("timeout", "Update timed out after 0.01s")
-    tracker.log.assert_any_call("Update timed out after 0.01s")
+    recorder.add_issue.assert_any_call("timeout", "Update timed out after 0.01s")
+    recorder.log.assert_any_call("Update timed out after 0.01s")
+    controller.mark_failed.assert_called_once_with()
     cleanup.run.assert_awaited_once_with(None)
-    tracker.clear_secrets.assert_called_once_with()
-    tracker.finish_cleanup.assert_called_once_with()
+    recorder.clear_secrets.assert_called_once_with()
+    controller.finish_cleanup.assert_called_once_with()
 
 
 @pytest.mark.asyncio
 async def test_operational_cleanup_failure_adds_note_to_workflow_error() -> None:
-    tracker = MagicMock()
+    controller = MagicMock()
+    recorder = MagicMock()
     cleanup = AsyncMock()
     cleanup.run.side_effect = UpdateCleanupError("transport cleanup failed")
     runner = UpdateWorkflowRunner(
-        tracker=tracker,
+        status_controller=controller,
+        status_recorder=recorder,
         cleanup=cleanup,
         timeout_s=10.0,
     )
@@ -98,17 +105,19 @@ async def test_operational_cleanup_failure_adds_note_to_workflow_error() -> None
         await task
 
     assert exc_info.value.__notes__ == ["Cleanup also failed: transport cleanup failed"]
-    tracker.clear_secrets.assert_called_once_with()
-    tracker.finish_cleanup.assert_called_once_with()
+    recorder.clear_secrets.assert_called_once_with()
+    controller.finish_cleanup.assert_called_once_with()
 
 
 @pytest.mark.asyncio
 async def test_unexpected_cleanup_bug_propagates_instead_of_being_hidden() -> None:
-    tracker = MagicMock()
+    controller = MagicMock()
+    recorder = MagicMock()
     cleanup = AsyncMock()
     cleanup.run.side_effect = TypeError("cleanup bug")
     runner = UpdateWorkflowRunner(
-        tracker=tracker,
+        status_controller=controller,
+        status_recorder=recorder,
         cleanup=cleanup,
         timeout_s=10.0,
     )
@@ -123,5 +132,5 @@ async def test_unexpected_cleanup_bug_propagates_instead_of_being_hidden() -> No
     with pytest.raises(TypeError, match="cleanup bug"):
         await task
 
-    tracker.clear_secrets.assert_called_once_with()
-    tracker.finish_cleanup.assert_called_once_with()
+    recorder.clear_secrets.assert_called_once_with()
+    controller.finish_cleanup.assert_called_once_with()

@@ -51,9 +51,13 @@ def _build_manager(
 ) -> tuple[UpdateManager, AsyncMock]:
     tracker = MagicMock()
     tracker.status = status or UpdateJobStatus()
+    recorder = MagicMock()
+    status_controller = MagicMock()
     recovery_session = AsyncMock()
     runtime = SimpleNamespace(
         tracker=tracker,
+        recorder=recorder,
+        status_controller=status_controller,
         workflow=MagicMock(),
         workflow_runner=SimpleNamespace(
             job_task=None,

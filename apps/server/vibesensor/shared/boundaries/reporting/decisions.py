@@ -1,19 +1,18 @@
-"""Decision logic for prepared history report facts."""
+"""Decision logic for prepared reporting facts."""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding, SuitabilityCheck, TestRun
-from vibesensor.shared.boundaries.reporting import (
+from vibesensor.shared.boundaries.reporting.coverage import primary_location_has_coverage_gap
+from vibesensor.shared.boundaries.reporting.facts import (
     ActionStatusKey,
     LocationConfidenceKey,
     ReportCoverageSummary,
 )
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.run_context_warning import RunContextWarning
-
-from .report_fact_coverage import primary_location_has_coverage_gap
 
 __all__ = [
     "ActionStatusKey",
@@ -30,7 +29,6 @@ def resolve_location_confidence_key(
     coverage_summary: ReportCoverageSummary,
 ) -> LocationConfidenceKey:
     """Resolve one typed location-confidence bucket for the report."""
-
     hotspot = primary_candidate_facts.location_hotspot
     dominance_ratio = primary_candidate_facts.dominance_ratio
     primary_gap = primary_location_has_coverage_gap(
@@ -64,7 +62,6 @@ def resolve_alternative_source(
     primary_candidate_facts: PrimaryReportFacts,
 ) -> tuple[str | None, bool, float | None]:
     """Resolve the visible alternative source and its confidence gap."""
-
     candidates = _relevant_source_candidates(aggregate)
     primary = primary_candidate_facts.domain_primary
     if primary is None:
@@ -141,7 +138,6 @@ def resolve_action_status_key(
     warnings: Sequence[RunContextWarning],
 ) -> ActionStatusKey:
     """Resolve the typed action-status bucket for report display."""
-
     primary = primary_candidate_facts.domain_primary
     if primary is None or primary_candidate_facts.primary_source is None:
         return "recapture_before_acting"

@@ -10,7 +10,7 @@ from vibesensor.use_cases.updates.models import (
     UsbInternetStatus,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
@@ -60,7 +60,7 @@ def _classify_usb_internet(status: UsbInternetStatus) -> UsbInternetReadinessDec
 class UpdateUsbInternetSession:
     """Validate and reuse an already-present USB internet uplink for updates."""
 
-    __slots__ = ("_readiness", "_status_service", "_tracker")
+    __slots__ = ("_readiness", "_status_controller", "_status_recorder", "_status_service")
     transport = UpdateTransport.usb_internet
 
     def __init__(
@@ -68,20 +68,23 @@ class UpdateUsbInternetSession:
         *,
         status_service: UsbInternetStatusReader,
         commands: UpdateCommandExecutor,
-        tracker: UpdateStatusTracker,
+        status_controller: UpdateStatusController,
+        status_recorder: UpdateStatusRecorder,
         config: UpdateWifiConfig,
     ) -> None:
         self._status_service = status_service
-        self._tracker = tracker
+        self._status_controller = status_controller
+        self._status_recorder = status_recorder
         self._readiness = UpdateWifiReadiness(
             commands=commands,
-            tracker=tracker,
+            status_controller=status_controller,
+            status_recorder=status_recorder,
             config=config,
         )
 
     async def prepare(self, request: UpdateRequest) -> None:
         del request
-        self._tracker.transition(UpdatePhase.connecting_usb_internet)
+        self._status_controller.transition(UpdatePhase.connecting_usb_internet)
         if not await self.ensure_uplink_ready():
             raise UpdateTransportError("Failed to prepare the USB internet uplink for update")
 
@@ -91,15 +94,16 @@ class UpdateUsbInternetSession:
     async def ensure_uplink_ready(self) -> bool:
         decision = _classify_usb_internet(await self._status_service.snapshot(activate=True))
         if not decision.usable:
-            self._tracker.fail(
-                UpdatePhase.connecting_usb_internet,
+            self._status_recorder.add_issue(
+                UpdatePhase.connecting_usb_internet.value,
                 str(decision.issue_message),
                 decision.detail,
             )
+            self._status_controller.mark_failed()
             return False
-        self._tracker.set_uplink_interface(decision.interface_name)
+        self._status_controller.set_uplink_interface(decision.interface_name)
         if decision.log_message is not None:
-            self._tracker.log(decision.log_message)
+            self._status_recorder.log(decision.log_message)
         return await self._readiness.wait_for_dns_ready(
             phase=UpdatePhase.connecting_usb_internet,
             readiness_subject="USB internet",
@@ -107,7 +111,9 @@ class UpdateUsbInternetSession:
         )
 
     async def complete_success(self, message: str) -> None:
-        self._tracker.mark_success(message)
+        self._status_controller.mark_success()
+        self._status_recorder.log(message)
+        self._status_controller.persist()
 
     async def cleanup_after_update(self) -> None:
         return None

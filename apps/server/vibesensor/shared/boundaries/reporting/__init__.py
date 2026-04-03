@@ -5,8 +5,10 @@ from .facts import (
     LocationConfidenceKey,
     PreparedReportFacts,
     ReportCoverageSummary,
+    prepare_report_facts,
 )
 from .input import PreparedReportInput
+from .preparation import prepare_persisted_report_input, prepare_report_input
 from .projection import (
     PrimaryReportFacts,
     collect_location_intensity,
@@ -40,6 +42,9 @@ __all__ = [
     "filter_active_sensor_intensity",
     "has_projectable_report_payload",
     "normalize_origin_location",
+    "prepare_persisted_report_input",
+    "prepare_report_facts",
+    "prepare_report_input",
     "report_summary_from_mapping",
     "require_projectable_report_payload",
     "resolve_primary_report_facts",
