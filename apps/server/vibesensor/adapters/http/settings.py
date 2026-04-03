@@ -52,7 +52,10 @@ from vibesensor.shared.types.speed_source_config import SpeedSourceUpdatePayload
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
-    from vibesensor.adapters.http.dependencies import SettingsSpeedServiceProtocol
+    from vibesensor.adapters.http.dependencies import (
+        SettingsSpeedServiceProtocol,
+        SpeedSourceSettingsServiceProtocol,
+    )
     from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
     from vibesensor.infra.config.settings_store import SettingsStore
 
@@ -104,6 +107,7 @@ _OBD_ADMIN_RESPONSES: OpenAPIResponses = {
 
 def create_settings_routes(
     settings_store: SettingsStore,
+    speed_source_service: SpeedSourceSettingsServiceProtocol,
     gps_monitor: SettingsSpeedServiceProtocol,
 ) -> APIRouter:
     """Create and return the device-settings API routes."""
@@ -313,7 +317,7 @@ def create_settings_routes(
     @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
     async def get_speed_source() -> SpeedSourceResponse:
         """Return the persisted speed-source configuration used for order tracking."""
-        return _speed_source_response(settings_store.get_speed_source())
+        return _speed_source_response(speed_source_service.get_speed_source())
 
     @router.put(
         "/api/settings/speed-source",
@@ -325,7 +329,7 @@ def create_settings_routes(
         payload = _speed_source_update_payload(req)
         with domain_errors_to_http(catch_value_error=400):
             result = await asyncio.to_thread(
-                settings_store.update_speed_source,
+                speed_source_service.update_speed_source,
                 payload,
             )
         return _speed_source_response(result)
@@ -361,7 +365,7 @@ def create_settings_routes(
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         persisted = await asyncio.to_thread(
-            settings_store.update_speed_source,
+            speed_source_service.update_speed_source,
             {
                 "obdDeviceMac": device.mac_address,
                 "obdDeviceName": device.name,

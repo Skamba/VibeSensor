@@ -20,6 +20,7 @@ from vibesensor.shared.ports import (
 from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
+from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
 from vibesensor.use_cases.run.persistence_writer import (
     _APPEND_RETRY_DELAYS_S,
@@ -213,10 +214,12 @@ class RunRecorder:
             capture_readiness = None
             if not enabled or run_id is None:
                 capture_readiness = self._capture_readiness.evaluate(
-                    registry=self.registry,
-                    run_context=self._live_run_context_snapshot(),
-                    speed_provider=self.gps_monitor,
-                    now_mono=time.monotonic(),
+                    observe_capture_readiness(
+                        registry=self.registry,
+                        run_context=self._live_run_context_snapshot(),
+                        speed_provider=self.gps_monitor,
+                        now_mono=time.monotonic(),
+                    )
                 )
         return build_run_recorder_status(
             enabled=enabled,

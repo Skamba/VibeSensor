@@ -8,7 +8,6 @@ import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.infra.config.settings_runtime import SettingsRuntimeApplier
 from vibesensor.infra.config.settings_store import (
     PersistenceError,
     SettingsStore,
@@ -363,41 +362,35 @@ def test_store_persists_with_protocol_shaped_snapshot_store() -> None:
     assert snap["activeCarId"] == car_id
 
 
-def test_store_syncs_speed_source_with_protocol_shaped_monitor() -> None:
-    gps_monitor = FakeSpeedSourceSync()
+def test_store_exposes_canonical_speed_source_config_copy() -> None:
     store = SettingsStore()
-    store.bind_speed_source_sync(
-        SettingsRuntimeApplier(
-            gps_monitor=gps_monitor,
-            speed_source_reader=store,
-        ).apply_speed_source
-    )
+    snapshot = store.speed_source_config()
 
-    store.update_speed_source(
-        {
-            "speedSource": "manual",
-            "manualSpeedKph": 80,
-            "staleTimeoutS": 17,
-        }
-    )
+    snapshot.speed_source = "manual"
 
-    assert gps_monitor.manual_selected is True
-    assert gps_monitor.override_kmh == pytest.approx(80.0)
-    assert gps_monitor.stale_timeout_s == pytest.approx(17.0)
-    assert gps_monitor.calls == ["apply"]
+    assert store.get_speed_source()["speedSource"] == "gps"
 
 
-def test_store_syncs_live_speed_source_fallback_and_obd_device() -> None:
-    gps_monitor = FakeSpeedSourceSync()
+def test_store_persist_speed_source_replaces_runtime_config() -> None:
     store = SettingsStore()
-    store.bind_speed_source_sync(
-        SettingsRuntimeApplier(
-            gps_monitor=gps_monitor,
-            speed_source_reader=store,
-        ).apply_speed_source
+    persisted = store.persist_speed_source(
+        store.preview_speed_source_update(
+            {
+                "speedSource": "manual",
+                "manualSpeedKph": 80,
+                "staleTimeoutS": 17,
+            }
+        )
     )
 
-    store.update_speed_source(
+    assert persisted.manual_source_selected is True
+    assert persisted.manual_speed_kph == pytest.approx(80.0)
+    assert store.get_speed_source()["staleTimeoutS"] == pytest.approx(17.0)
+
+
+def test_store_update_speed_source_keeps_boundary_payload_shape() -> None:
+    store = SettingsStore()
+    result = store.update_speed_source(
         {
             "speedSource": "obd2",
             "manualSpeedKph": 61,
@@ -407,13 +400,10 @@ def test_store_syncs_live_speed_source_fallback_and_obd_device() -> None:
         }
     )
 
-    assert gps_monitor.manual_selected is False
-    assert gps_monitor.override_kmh == pytest.approx(61.0)
-    assert gps_monitor.stale_timeout_s == pytest.approx(14.0)
-    assert gps_monitor.selected_source == "obd2"
-    assert gps_monitor.obd_device_mac == "00043e5a4a4d"
-    assert gps_monitor.obd_device_name == "OBDLink MX+"
-    assert gps_monitor.calls == ["apply"]
+    assert result["speedSource"] == "obd2"
+    assert result["manualSpeedKph"] == pytest.approx(61.0)
+    assert result["obdDeviceMac"] == "00043e5a4a4d"
+    assert result["obdDeviceName"] == "OBDLink MX+"
 
 
 def test_parse_manual_speed_returns_none_for_invalid() -> None:

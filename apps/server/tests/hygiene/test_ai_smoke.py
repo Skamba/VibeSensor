@@ -62,6 +62,7 @@ def test_smoke_health_route_registered() -> None:
     state.settings = SimpleNamespace(
         gps_monitor=placeholder,
         settings_store=placeholder,
+        speed_source_service=placeholder,
     )
     state.history = SimpleNamespace(
         export_service=placeholder,

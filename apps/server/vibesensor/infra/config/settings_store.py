@@ -39,7 +39,6 @@ from vibesensor.domain import (
     Car,
     CarSnapshot,
     Sensor,
-    SpeedSource,
 )
 from vibesensor.infra.config.car_settings import (
     CarSettingsService,
@@ -128,7 +127,6 @@ class SettingsStore:
         """Initialise the settings store, loading persisted settings from *db* if provided."""
         self._lock = RLock()
         self._db = db
-        self._after_speed_source_change: Callable[[], None] | None = None
         self._car_state = CarSettingsState()
         self._sensor_state = SensorSettingsState()
         self._speed_cfg = SpeedSourceConfig.default()
@@ -207,10 +205,6 @@ class SettingsStore:
         """Return the current typed analysis snapshot derived from the active car."""
         return analysis_settings_snapshot_from_aspects(self.active_car_aspects())
 
-    def bind_speed_source_sync(self, callback: Callable[[], None]) -> None:
-        """Register the runtime speed-source applier used after persisted updates."""
-        self._after_speed_source_change = callback
-
     # -- full snapshot ---------------------------------------------------------
 
     def snapshot(self) -> SettingsSnapshotPayload:
@@ -256,26 +250,27 @@ class SettingsStore:
     def delete_car(self, car_id: str) -> CarsSnapshot:
         return self._car_settings.delete_car(car_id)
 
-    # -- domain-object accessors -----------------------------------------------
-
-    def speed_source(self) -> SpeedSource:
-        """Return the current speed source as a domain ``SpeedSource`` value object."""
-        with self._lock:
-            return self._speed_cfg.to_speed_source()
-
     def sensors(self) -> list[Sensor]:
         """Return all configured sensors as domain ``Sensor`` value objects."""
         return self._sensor_settings.sensors()
 
     # -- speed source ----------------------------------------------------------
 
-    def get_speed_source(self) -> SpeedSourcePayload:
+    def speed_source_config(self) -> SpeedSourceConfig:
         with self._lock:
-            return self._speed_cfg.to_dict()
+            return self._speed_cfg.copy()
 
-    def update_speed_source(self, data: SpeedSourceUpdatePayload) -> SpeedSourcePayload:
+    def get_speed_source(self) -> SpeedSourcePayload:
+        return self.speed_source_config().to_dict()
+
+    def preview_speed_source_update(self, data: SpeedSourceUpdatePayload) -> SpeedSourceConfig:
+        return self.speed_source_config().updated(data)
+
+    def persist_speed_source(self, config: SpeedSourceConfig) -> SpeedSourceConfig:
+        next_config = config.copy()
+
         def _apply(_previous: SpeedSourcePayload) -> bool:
-            self._speed_cfg.apply_update(data)
+            self._speed_cfg = next_config.copy()
             return True
 
         return self._update_with_rollback(
@@ -287,13 +282,15 @@ class SettingsStore:
                 SpeedSourceConfig.from_dict(previous),
             ),
             audit_log=lambda previous: _log_settings_change(
-                action="update_speed_source",
+                action="persist_speed_source",
                 before=previous,
-                after=self._speed_cfg.to_dict(),
+                after=next_config.to_dict(),
             ),
-            after_persist=self._after_speed_source_change,
-            result=self._speed_cfg.to_dict,
+            result=self.speed_source_config,
         )
+
+    def update_speed_source(self, data: SpeedSourceUpdatePayload) -> SpeedSourcePayload:
+        return self.persist_speed_source(self.preview_speed_source_update(data)).to_dict()
 
     # -- sensors ---------------------------------------------------------------
 
