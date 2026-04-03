@@ -9,13 +9,15 @@ import pytest
 
 import vibesensor.adapters.simulator.scripted_scenarios as scripted_scenarios
 from vibesensor.adapters.simulator import scripted_speed_sync
-from vibesensor.adapters.simulator.scripted_scenario_library import (
+from vibesensor.adapters.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
+    scripted_scenario_names,
+)
+from vibesensor.adapters.simulator.scripted_scenario_models import (
     PhaseOverride,
     PhasePulse,
     ScenarioPhase,
     ScriptedScenario,
-    scripted_scenario_names,
 )
 from vibesensor.adapters.simulator.scripted_scenarios import run_scripted_scenario
 from vibesensor.adapters.simulator.scripted_targeting import apply_phase
@@ -50,7 +52,7 @@ def _make_clients() -> list[_FakeSimClient]:
     ]
 
 
-def test_scripted_scenario_library_exposes_ten_complex_runs() -> None:
+def test_scripted_scenario_catalog_exposes_ten_complex_runs() -> None:
     assert {
         "accel-front-left-surge",
         "coastdown-rear-right-rumble",

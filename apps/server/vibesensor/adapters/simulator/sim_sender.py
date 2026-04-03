@@ -15,7 +15,7 @@ from vibesensor.adapters.simulator.commands import (
     choose_default_profile,
 )
 from vibesensor.adapters.simulator.profiles import DEFAULT_ORDER_HZ, DEFAULT_SPEED_KMH
-from vibesensor.adapters.simulator.scripted_scenario_library import (
+from vibesensor.adapters.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
     is_scripted_scenario,
     scripted_scenario_help,
