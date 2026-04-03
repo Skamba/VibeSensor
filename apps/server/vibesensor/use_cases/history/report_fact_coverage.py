@@ -3,25 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
 
 from vibesensor.domain import LocationIntensitySummary, TestRun
+from vibesensor.shared.boundaries.report_prepared_input import ReportCoverageSummary
 
 __all__ = [
     "ReportCoverageSummary",
     "build_coverage_summary",
     "primary_location_has_coverage_gap",
 ]
-
-
-@dataclass(frozen=True, slots=True)
-class ReportCoverageSummary:
-    """Coverage facts used by report preparation and rendering."""
-
-    expected_locations: tuple[str, ...]
-    active_locations: tuple[str, ...]
-    missing_locations: tuple[str, ...]
-    partial_locations: tuple[str, ...]
 
 
 def _normalized_location_token(value: object) -> str:

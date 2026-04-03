@@ -13,12 +13,12 @@ from vibesensor.adapters.pdf.report_data import (
 )
 from vibesensor.domain import Finding, TestRun
 from vibesensor.report_i18n import human_source
+from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,
     source_with_confidence,
 )
-from vibesensor.use_cases.history.report_preparation import ValidatedPreparedReportInput
 from vibesensor.vibration_strength import percentile, relative_level_db_scalar
 
 __all__ = [
@@ -40,7 +40,7 @@ def _measurement_signal_label(row: dict[str, object] | object, *, tr: Callable[.
 
 
 def _measurement_rows(
-    prepared: ValidatedPreparedReportInput,
+    prepared: PreparedReportInput,
     *,
     aggregate: TestRun,
     tr: Callable[..., str],

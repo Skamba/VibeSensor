@@ -12,7 +12,7 @@ from vibesensor.report_i18n import human_source
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_context import ReportMappingContext
-    from vibesensor.shared.boundaries.report_interpretation import PrimaryReportFacts
+    from vibesensor.shared.boundaries.report_projection import PrimaryReportFacts
 
 __all__ = [
     "PrimaryCandidateContext",

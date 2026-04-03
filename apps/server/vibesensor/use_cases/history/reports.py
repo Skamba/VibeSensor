@@ -10,13 +10,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
-from vibesensor.use_cases.history.report_preparation import (
-    PreparedReportInput,
-    prepare_persisted_report_input,
-)
+from vibesensor.use_cases.history.report_preparation import prepare_persisted_report_input
 
 #: Callable that turns a prepared report input into PDF bytes.
 PdfRendererFn = Callable[[PreparedReportInput], bytes]

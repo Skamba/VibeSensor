@@ -38,7 +38,7 @@ __all__ = [
 from dataclasses import dataclass, field
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
-from vibesensor.shared.boundaries.report_renderer_payload import PreparedReportRendererPayload
+from vibesensor.shared.boundaries.report_prepared_input import PreparedReportRendererPayload
 
 # ---------------------------------------------------------------------------
 # Data model
