@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-from vibesensor.adapters.pdf.report_context import ReportMappingContext
-from vibesensor.adapters.pdf.report_data import (
+from vibesensor.adapters.pdf.models import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
@@ -23,8 +22,9 @@ from vibesensor.adapters.pdf.report_data import (
     TopologyIntensityRow,
     VerdictPageData,
 )
+from vibesensor.adapters.pdf.report_context import ReportMappingContext
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
-from vibesensor.shared.boundaries.report_prepared_input import (
+from vibesensor.shared.boundaries.reporting.contracts import (
     PreparedAppendixADisplay,
     PreparedAppendixBSummaryDisplay,
     PreparedReportFacts,

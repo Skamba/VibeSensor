@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-from vibesensor.shared.boundaries.report_summary_codec import report_summary_from_mapping
+from vibesensor.shared.boundaries.reporting.summary_codec import report_summary_from_mapping
 
 if TYPE_CHECKING:
     from vibesensor.domain import (
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
         TestRun,
         VibrationOrigin,
     )
-    from vibesensor.shared.boundaries.report_projection import PrimaryReportFacts
-    from vibesensor.shared.boundaries.report_summary_codec import ReportTimelineInterval
+    from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+    from vibesensor.shared.boundaries.reporting.summary_codec import ReportTimelineInterval
     from vibesensor.shared.run_context_warning import RunContextWarning
     from vibesensor.shared.types.analysis_views import PeakTableRow
     from vibesensor.shared.types.report_cache import ReportPdfCacheKey

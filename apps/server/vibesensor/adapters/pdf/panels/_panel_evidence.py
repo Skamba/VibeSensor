@@ -7,6 +7,7 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.adapters.pdf.models import PatternEvidence
 from vibesensor.adapters.pdf.pdf_drawing import (
     _cert_display,
     _draw_panel,
@@ -22,7 +23,6 @@ from vibesensor.adapters.pdf.pdf_style import (
     WARN_CLR,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_kv, _draw_section_block, _draw_text
-from vibesensor.adapters.pdf.report_data import PatternEvidence
 
 
 def _draw_pattern_evidence(

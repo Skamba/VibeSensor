@@ -5,6 +5,9 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.adapters.pdf.models import (
+    ReportLabelValueRow,
+)
 from vibesensor.adapters.pdf.pdf_drawing import _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT,
@@ -18,9 +21,6 @@ from vibesensor.adapters.pdf.pdf_style import (
 from vibesensor.adapters.pdf.pdf_text import (
     _draw_text,
     _wrap_lines,
-)
-from vibesensor.adapters.pdf.report_data import (
-    ReportLabelValueRow,
 )
 
 __all__ = ["_draw_table", "_draw_traceability_row", "_fmt_db", "_fmt_hz", "_fmt_relative_db"]

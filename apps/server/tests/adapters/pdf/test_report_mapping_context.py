@@ -6,7 +6,7 @@ import pytest
 from test_support.findings import make_finding_payload
 
 from vibesensor.adapters.pdf import report_context
-from vibesensor.adapters.pdf.mapping import (
+from vibesensor.adapters.pdf.assembly import (
     PrimaryCandidateContext,
     ReportMappingContext,
     prepare_report_input,

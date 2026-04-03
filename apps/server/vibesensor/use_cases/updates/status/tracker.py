@@ -14,11 +14,10 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line
 
+from .log_buffer import UpdateLogBuffer
+from .secret_redactor import UpdateSecretRedactor
 from .state_machine import UpdatePhaseStateMachine, UpdatePhaseTransitionError
 from .state_store import UpdateStateStore
-
-_LOG_TAIL_MAX = 200
-_LOG_TAIL_TRIM_TO = 100
 
 
 def _phase_name(phase: UpdatePhase | str) -> str:
@@ -30,7 +29,13 @@ def _phase_name(phase: UpdatePhase | str) -> str:
 class UpdateStatusTracker:
     """Own update job state, persistence, redaction, and issue reporting."""
 
-    __slots__ = ("_phase_state_machine", "_redact_secrets", "_state_store", "_status")
+    __slots__ = (
+        "_log_buffer",
+        "_phase_state_machine",
+        "_secret_redactor",
+        "_state_store",
+        "_status",
+    )
 
     def __init__(
         self,
@@ -38,10 +43,13 @@ class UpdateStatusTracker:
         state_store: UpdateStateStore,
         status: UpdateJobStatus | None = None,
         phase_state_machine: UpdatePhaseStateMachine | None = None,
+        log_buffer: UpdateLogBuffer | None = None,
+        secret_redactor: UpdateSecretRedactor | None = None,
     ) -> None:
         self._state_store = state_store
         self._status = status or UpdateJobStatus()
-        self._redact_secrets: set[str] = set()
+        self._log_buffer = log_buffer or UpdateLogBuffer()
+        self._secret_redactor = secret_redactor or UpdateSecretRedactor()
         self._phase_state_machine = phase_state_machine or UpdatePhaseStateMachine()
 
     @property
@@ -97,49 +105,25 @@ class UpdateStatusTracker:
         self.persist()
 
     def track_secret(self, secret: str) -> None:
-        self._redact_secrets = {secret} if secret else set()
+        self._secret_redactor.track(secret)
 
     def clear_secrets(self) -> None:
-        self._redact_secrets.clear()
+        self._secret_redactor.clear()
 
     def redact(self, text: str) -> str:
-        redacted = text
-        for secret in self._redact_secrets:
-            if secret:
-                redacted = redacted.replace(secret, "***")
-        return redacted
+        return self._secret_redactor.redact(text)
 
     def redacted_args(self, args: list[str], sensitive_keys: set[str]) -> list[str]:
-        """Redact positional values that follow sensitive command-line flags."""
-
-        redacted: list[str] = []
-        hide_next = False
-        for raw_arg in args:
-            arg = str(raw_arg)
-            if hide_next:
-                redacted.append("***")
-                hide_next = False
-                continue
-            if arg.lower() in sensitive_keys:
-                redacted.append(arg)
-                hide_next = True
-                continue
-            if self._redact_secrets and arg in self._redact_secrets:
-                redacted.append("***")
-                continue
-            redacted.append(arg)
-        return redacted
+        return self._secret_redactor.redacted_args(args, sensitive_keys)
 
     def log(self, msg: str) -> None:
         sanitized = self.redact(sanitize_log_line(msg))
-        log_tail = self._status.log_tail
-        log_tail.append(sanitized)
-        if len(log_tail) > _LOG_TAIL_MAX:
-            del log_tail[:-_LOG_TAIL_TRIM_TO]
+        self._log_buffer.append(self._status, sanitized)
         self._touch()
 
     def add_issue(self, phase: UpdatePhase | str, message: str, detail: str = "") -> None:
-        self._status.issues.append(
+        self._log_buffer.add_issue(
+            self._status,
             UpdateIssue(
                 phase=_phase_name(phase),
                 message=self.redact(message),
@@ -149,15 +133,16 @@ class UpdateStatusTracker:
         self._touch()
 
     def extend_issues(self, issues: list[UpdateIssue]) -> None:
-        for issue in issues:
-            self._status.issues.append(
-                UpdateIssue(
-                    phase=issue.phase,
-                    message=self.redact(issue.message),
-                    detail=self.redact(issue.detail),
-                ),
+        rewritten = [
+            UpdateIssue(
+                phase=issue.phase,
+                message=self.redact(issue.message),
+                detail=self.redact(issue.detail),
             )
-        if issues:
+            for issue in issues
+        ]
+        if rewritten:
+            self._log_buffer.extend_issues(self._status, rewritten)
             self._touch()
 
     def fail(self, phase: UpdatePhase | str, message: str, detail: str = "") -> None:
@@ -169,7 +154,10 @@ class UpdateStatusTracker:
     def mark_interrupted(self, message: str) -> None:
         self._status.state = UpdateState.failed
         self._status.finished_at = time.time()
-        self._status.issues.append(UpdateIssue(phase="startup", message=message))
+        self._log_buffer.add_issue(
+            self._status,
+            UpdateIssue(phase="startup", message=message),
+        )
         self._touch()
         self.persist()
 

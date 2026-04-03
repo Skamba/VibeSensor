@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from math import isfinite
 
-from vibesensor.adapters.pdf.report_data import (
+from vibesensor.adapters.pdf.models import (
     EvidenceChainRow,
     MeasurementRow,
     SensorObservationCell,
@@ -13,7 +13,7 @@ from vibesensor.adapters.pdf.report_data import (
 )
 from vibesensor.domain import Finding, TestRun
 from vibesensor.report_i18n import human_source
-from vibesensor.shared.boundaries.report_prepared_input import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,

@@ -7,14 +7,14 @@ from collections.abc import Callable, Sequence
 from vibesensor.domain import Finding, LocationIntensitySummary, SuitabilityCheck, TestRun
 from vibesensor.report_i18n import human_source
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.report_prepared_input import (
+from vibesensor.shared.boundaries.reporting.contracts import (
     PreparedAppendixADisplay,
     PreparedAppendixBSummaryDisplay,
     PreparedRankedCandidateDisplay,
     PreparedReportDisplayFacts,
     PreparedVerdictDisplay,
 )
-from vibesensor.shared.boundaries.report_projection import PrimaryReportFacts
+from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.report_diagnostics import (
     check_state,
     first_nonpass_detail,

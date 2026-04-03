@@ -7,9 +7,9 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.adapters.pdf.models import FindingPresentation
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import FONT, MUTED_CLR, SOFT_BG
-from vibesensor.adapters.pdf.report_data import FindingPresentation
 from vibesensor.report_i18n import human_source
 
 

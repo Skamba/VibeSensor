@@ -1,66 +1,36 @@
-"""Pure policy evaluation for live capture readiness."""
+"""Pure readiness interpretation over observation and rolling state."""
 
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
 
 from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
 from vibesensor.shared.constants.analysis import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.ports import TrackedClient
-from vibesensor.use_cases.run.capture_readiness_observation import (
-    CaptureReadinessObservation,
-    SpeedStatusSnapshotView,
+from vibesensor.use_cases.run.capture_readiness_observation import CaptureReadinessObservation
+from vibesensor.use_cases.run.capture_readiness_state import (
+    CaptureReadinessStateSnapshot,
+    IntegrityState,
+    SpeedObservation,
 )
 
-__all__ = [
-    "ClientCounterSnapshot",
-    "IntegrityState",
-    "SpeedObservation",
-    "evaluate_capture_readiness",
-    "speed_history_sample",
-]
+__all__ = ["evaluate_capture_readiness"]
 
 type CaptureReadinessCheckTuple = tuple[CaptureReadinessCheck, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class SpeedObservation:
-    observed_at_mono_s: float
-    speed_kmh: float
-
-
-@dataclass(frozen=True, slots=True)
-class ClientCounterSnapshot:
-    frames_dropped: int
-    queue_overflow_drops: int
-    server_queue_drops: int
-    parse_errors: int
-
-
-@dataclass(frozen=True, slots=True)
-class IntegrityState:
-    active: bool
-    frames_dropped: int
-    queue_overflow_drops: int
-    server_queue_drops: int
-    parse_errors: int
-    quiet_period_remaining_s: float | None
 
 
 def evaluate_capture_readiness(
     *,
     policy: CaptureReadinessPolicy,
     observation: CaptureReadinessObservation,
-    integrity: IntegrityState,
-    speed_history: tuple[SpeedObservation, ...],
+    state: CaptureReadinessStateSnapshot,
 ) -> CaptureReadiness:
     checks: CaptureReadinessCheckTuple = (
-        _sensors_check(policy, observation.active_clients, integrity),
+        _sensors_check(policy, observation.active_clients, state.integrity),
         _reference_check(policy, observation),
-        _speed_check(policy, observation, speed_history),
+        _speed_check(policy, observation, state.speed_history),
     )
     is_ready = not any(check.failed for check in checks)
     overall_check = _overall_check(checks, is_ready)
@@ -68,28 +38,6 @@ def evaluate_capture_readiness(
         is_ready=is_ready,
         checks=(*checks, overall_check),
     )
-
-
-def speed_history_sample(
-    *,
-    policy: CaptureReadinessPolicy,
-    speed_status: SpeedStatusSnapshotView | None,
-) -> float | None:
-    if speed_status is None:
-        return None
-    speed_source = str(speed_status.speed_source)
-    speed_kmh = speed_status.effective_speed_kmh
-    if (
-        speed_source not in policy.live_speed_sources
-        or speed_status.fallback_active
-        or speed_status.last_update_age_s is None
-        or speed_status.last_update_age_s > policy.max_speed_age_s
-        or not _is_finite_number(speed_kmh)
-        or speed_kmh is None
-        or speed_kmh < policy.min_ready_speed_kmh
-    ):
-        return None
-    return float(speed_kmh)
 
 
 def _sensors_check(
