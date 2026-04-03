@@ -19,9 +19,13 @@ def _make_minimal_summary(
 ) -> dict[str, object]:
     """Return a minimal summary dict that ``map_summary`` can process."""
     base: dict[str, object] = {
+        "run_id": "audit-run",
         "lang": "en",
         "report_date": "2025-01-01T00:00:00",
-        "metadata": {"active_car_snapshot": {"name": "Test Car"}},
+        "metadata": {
+            "run_id": "audit-run",
+            "active_car_snapshot": {"name": "Test Car"},
+        },
         "findings": [],
         "top_causes": [],
         "speed_stats": {},
@@ -41,6 +45,12 @@ def _make_minimal_summary(
     }
     if overrides:
         base.update(overrides)
+    raw_metadata = base.get("metadata")
+    raw_run_id = str(base.get("run_id") or "").strip()
+    if isinstance(raw_metadata, dict) and raw_metadata and raw_run_id:
+        metadata = dict(raw_metadata)
+        metadata.setdefault("run_id", raw_run_id)
+        base["metadata"] = metadata
     return base
 
 

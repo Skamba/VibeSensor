@@ -196,6 +196,7 @@ class TestPrepareReportMappingContext:
                 "run_id": "report-context-metadata",
                 "lang": "en",
                 "metadata": {
+                    "run_id": "report-context-metadata",
                     "active_car_snapshot": {
                         "name": "Track Car",
                         "type": "coupe",

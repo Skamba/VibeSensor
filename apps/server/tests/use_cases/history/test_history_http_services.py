@@ -191,11 +191,12 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
                 }
             ],
             "metadata": {
+                "run_id": "run-1",
                 "active_car_snapshot": {
                     "id": "car-a",
                     "name": "Track Car",
                     "type": "coupe",
-                }
+                },
             },
         },
     )
