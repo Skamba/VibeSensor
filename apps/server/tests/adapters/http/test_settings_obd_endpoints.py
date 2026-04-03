@@ -148,7 +148,7 @@ def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
 
 
 def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
-    client, _, _, speed_status_service, _obd_admin_service = _build_client()
+    client, _, _, speed_status_service, obd_admin_service = _build_client()
     speed_status_service.obd_status.return_value = ObdStatusSnapshot(
         configured_device_mac="00043e5a4a4d",
         configured_device_name="OBDLink MX+",
@@ -185,4 +185,5 @@ def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
     assert body["rpm_target_interval_ms"] == 75
     assert body["poll_mode"] == "rpm_only_backoff"
     assert body["backoff_active"] is True
+    obd_admin_service.refresh_obd_status.assert_called_once_with()
     speed_status_service.obd_status.assert_called_once_with()

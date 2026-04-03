@@ -11,6 +11,7 @@ from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.artifact_validation import (
     WheelArtifactValidator,
     read_wheel_metadata,
+    sha256_file,
     wheel_dependency_issues,
 )
 from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
@@ -131,18 +132,14 @@ async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) ->
     installer, commands, _tracker = _make_installer(tmp_path)
     commands.local_wheel_version = "2025.6.14"
     rollback_dir = tmp_path / "rollback"
-    rollback_dir.mkdir()
-    wheel_path = rollback_dir / "vibesensor-2025.6.14-py3-none-any.whl"
-    _build_fake_wheel(wheel_path, version="2025.6.14")
 
     with patch("vibesensor.__version__", "2025.6.14"):
         assert await installer.snapshot_for_rollback() is True
 
     metadata = json.loads((rollback_dir / "rollback_snapshot.json").read_text(encoding="utf-8"))
     assert metadata["version"] == "2025.6.14"
-    assert metadata["wheel_name"] == wheel_path.name
     assert len(metadata["sha256"]) == 64
-    assert commands.calls == []
+    assert (rollback_dir / "rollback_snapshot.whl").is_file()
 
 
 @pytest.mark.asyncio
@@ -190,7 +187,7 @@ async def test_snapshot_for_rollback_falls_back_to_package_index_download(
 
 
 @pytest.mark.asyncio
-async def test_snapshot_for_rollback_keeps_latest_previous_wheel_as_secondary_fallback(
+async def test_snapshot_for_rollback_prunes_legacy_named_wheels(
     tmp_path: Path,
 ) -> None:
     installer, commands, _tracker = _make_installer(tmp_path)
@@ -203,11 +200,8 @@ async def test_snapshot_for_rollback_keeps_latest_previous_wheel_as_secondary_fa
     with patch("vibesensor.__version__", "2025.6.14"):
         assert await installer.snapshot_for_rollback() is True
 
-    wheels = sorted(path.name for path in rollback_dir.glob("vibesensor-*.whl"))
-    assert wheels == [
-        "vibesensor-2025.6.13-py3-none-any.whl",
-        "vibesensor-2025.6.14-py3-none-any.whl",
-    ]
+    wheels = sorted(path.name for path in rollback_dir.glob("*.whl"))
+    assert wheels == ["rollback_snapshot.whl"]
 
 
 @pytest.mark.asyncio
@@ -224,6 +218,42 @@ async def test_snapshot_for_rollback_fails_when_metadata_write_fails(tmp_path: P
         assert await installer.snapshot_for_rollback() is False
 
     assert not (rollback_dir / "rollback_snapshot.json").exists()
+    assert not (rollback_dir / "rollback_snapshot.whl").exists()
+    assert any(
+        issue.message == "Rollback metadata could not be written" for issue in tracker.status.issues
+    )
+
+
+@pytest.mark.asyncio
+async def test_snapshot_for_rollback_preserves_previous_snapshot_when_metadata_write_fails(
+    tmp_path: Path,
+) -> None:
+    installer, commands, tracker = _make_installer(tmp_path)
+    commands.local_wheel_version = "2025.6.14"
+    rollback_dir = tmp_path / "rollback"
+    rollback_dir.mkdir()
+    previous_wheel = rollback_dir / "rollback_snapshot.whl"
+    _build_fake_wheel(previous_wheel, version="2025.6.13")
+    (rollback_dir / "rollback_snapshot.json").write_text(
+        json.dumps(
+            {
+                "version": "2025.6.13",
+                "sha256": sha256_file(previous_wheel),
+            },
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with (
+        patch("vibesensor.__version__", "2025.6.14"),
+        patch.object(RollbackSnapshotStore, "write_metadata", side_effect=OSError("disk full")),
+    ):
+        assert await installer.snapshot_for_rollback() is False
+
+    assert read_wheel_metadata(previous_wheel).version == "2025.6.13"
+    metadata = json.loads((rollback_dir / "rollback_snapshot.json").read_text(encoding="utf-8"))
+    assert metadata["version"] == "2025.6.13"
     assert any(
         issue.message == "Rollback metadata could not be written" for issue in tracker.status.issues
     )
@@ -247,13 +277,12 @@ async def test_rollback_rejects_checksum_mismatch(tmp_path: Path) -> None:
     installer, commands, tracker = _make_installer(tmp_path)
     rollback_dir = tmp_path / "rollback"
     rollback_dir.mkdir()
-    wheel_path = rollback_dir / "vibesensor-2025.6.14-py3-none-any.whl"
+    wheel_path = rollback_dir / "rollback_snapshot.whl"
     _build_fake_wheel(wheel_path, version="2025.6.14")
     (rollback_dir / "rollback_snapshot.json").write_text(
         json.dumps(
             {
                 "version": "2025.6.14",
-                "wheel_name": wheel_path.name,
                 "sha256": "0" * 64,
             },
         )
@@ -264,83 +293,71 @@ async def test_rollback_rejects_checksum_mismatch(tmp_path: Path) -> None:
     assert await installer.rollback() is False
     assert not commands.calls
     assert any(
-        issue.message == "Rollback wheel checksum mismatch" for issue in tracker.status.issues
+        issue.message == "Rollback snapshot wheel checksum mismatch"
+        for issue in tracker.status.issues
     )
 
 
 @pytest.mark.asyncio
-async def test_rollback_without_metadata_uses_valid_newest_wheel(tmp_path: Path) -> None:
+async def test_rollback_without_metadata_fails_explicitly(tmp_path: Path) -> None:
     installer, commands, tracker = _make_installer(tmp_path)
     rollback_dir = tmp_path / "rollback"
     rollback_dir.mkdir()
-    wheel_path = rollback_dir / "vibesensor-2025.6.14-py3-none-any.whl"
+    wheel_path = rollback_dir / "rollback_snapshot.whl"
     _build_fake_wheel(wheel_path, version="2025.6.14")
-    commands.set_response("from vibesensor import __version__", 0, "2025.6.14\n", "")
 
-    assert await installer.rollback() is True
+    assert await installer.rollback() is False
+    assert not commands.calls
     assert any(
-        "pip install --force-reinstall --no-deps" in " ".join(call[0]) for call in commands.calls
-    )
-    assert tracker.status.issues == []
-    assert any(
-        "Rollback metadata missing; falling back to newest rollback wheel without checksum pin"
-        in line
-        for line in tracker.status.log_tail
+        issue.message == "Rollback snapshot metadata is missing" for issue in tracker.status.issues
     )
 
 
 @pytest.mark.asyncio
-async def test_rollback_missing_primary_wheel_uses_secondary_fallback(tmp_path: Path) -> None:
+async def test_rollback_missing_snapshot_wheel_fails(tmp_path: Path) -> None:
     installer, commands, tracker = _make_installer(tmp_path)
     rollback_dir = tmp_path / "rollback"
     rollback_dir.mkdir()
-    older_wheel = rollback_dir / "vibesensor-2025.6.13-py3-none-any.whl"
-    _build_fake_wheel(older_wheel, version="2025.6.13")
     (rollback_dir / "rollback_snapshot.json").write_text(
         json.dumps(
             {
                 "version": "2025.6.14",
-                "wheel_name": "vibesensor-2025.6.14-py3-none-any.whl",
                 "sha256": "1" * 64,
             },
         )
         + "\n",
         encoding="utf-8",
     )
-    commands.set_response("from vibesensor import __version__", 0, "2025.6.13\n", "")
 
-    assert await installer.rollback() is True
-    assert any(str(older_wheel) in " ".join(call[0]) for call in commands.calls)
-    assert any("Using fallback rollback wheel" in line for line in tracker.status.log_tail)
+    assert await installer.rollback() is False
+    assert not commands.calls
+    assert any(
+        issue.message == "Rollback snapshot wheel is missing" for issue in tracker.status.issues
+    )
 
 
 @pytest.mark.asyncio
-async def test_rollback_invalid_primary_wheel_uses_secondary_fallback(tmp_path: Path) -> None:
+async def test_rollback_invalid_snapshot_wheel_fails(tmp_path: Path) -> None:
     installer, commands, tracker = _make_installer(tmp_path)
     rollback_dir = tmp_path / "rollback"
     rollback_dir.mkdir()
-    newer_wheel = rollback_dir / "vibesensor-2025.6.14-py3-none-any.whl"
-    older_wheel = rollback_dir / "vibesensor-2025.6.13-py3-none-any.whl"
-    _build_fake_wheel(newer_wheel, version="2025.6.14")
-    _build_fake_wheel(older_wheel, version="2025.6.13")
+    snapshot_wheel = rollback_dir / "rollback_snapshot.whl"
+    snapshot_wheel.write_text("not a wheel", encoding="utf-8")
     (rollback_dir / "rollback_snapshot.json").write_text(
         json.dumps(
             {
                 "version": "2025.6.14",
-                "wheel_name": newer_wheel.name,
                 "sha256": "0" * 64,
             },
         )
         + "\n",
         encoding="utf-8",
     )
-    commands.set_response("from vibesensor import __version__", 0, "2025.6.13\n", "")
 
-    assert await installer.rollback() is True
-    assert any(str(older_wheel) in " ".join(call[0]) for call in commands.calls)
+    assert await installer.rollback() is False
+    assert not commands.calls
     assert any(
-        "Primary rollback snapshot could not be used; trying older rollback wheel" in line
-        for line in tracker.status.log_tail
+        issue.message == "Rollback snapshot wheel is corrupt" for issue in tracker.status.issues
     )
 
 

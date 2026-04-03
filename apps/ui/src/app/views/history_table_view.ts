@@ -5,6 +5,7 @@ import {
   renderInlineStatePanel,
   renderTableEmptyRow,
 } from "./dom_helpers";
+import { buildHistoryTableRowsViewModel } from "./history_table_presenters";
 import { renderHistoryTableRows } from "./history_table_row_renderers";
 
 export interface HistoryTableViewParams {
@@ -47,7 +48,13 @@ export function renderHistoryTable(
   container: HTMLElement,
   params: HistoryTableViewParams,
 ): void {
-  container.innerHTML = renderHistoryTableRows(params);
+  container.innerHTML = renderHistoryTableRows(
+    buildHistoryTableRowsViewModel(params),
+    {
+      escapeHtml: params.escapeHtml,
+      historyExportUrl: params.historyExportUrl,
+    },
+  );
 }
 
 export function getHistoryTableAction(

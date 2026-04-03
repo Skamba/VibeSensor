@@ -108,7 +108,6 @@ class SpeedSourceObservationService:
         )
 
     def obd_status(self) -> ObdStatusSnapshot:
-        self._obd_monitor.refresh_admin_state()
         return self._obd_monitor.status_snapshot()
 
     @staticmethod
@@ -137,6 +136,9 @@ class SpeedSourceAdminService:
 
     def pair_obd_device(self, mac_address: str) -> ObdDeviceSnapshot:
         return self._obd_monitor.pair_device(mac_address)
+
+    def refresh_obd_status(self) -> None:
+        self._obd_monitor.refresh_admin_state()
 
 
 class SpeedSourceControlService:

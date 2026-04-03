@@ -1,177 +1,89 @@
-import type {
-  FindingPayload,
-  HistoryEntry,
-  HistoryInsightWarningPayload,
-  HistoryInsightsPayload,
-} from "../../api/types";
-import { HISTORY_HEATMAP_POSITIONS } from "../../config";
-import type { RunDetail } from "../ui_app_state";
-import { heatColor, normalizeUnit } from "../features/heat_utils";
-import type { HistoryTableViewParams } from "./history_table_view";
+import type { HistoryRowViewModel, HistorySummaryChipTone } from "./history_table_models";
 
-type LocationIntensityRow = HistoryInsightsPayload["sensor_intensity_by_location"][number];
-
-const VISIBLE_FINDING_LIMIT = 5;
-const SOURCE_LABEL_KEYS: Record<string, string> = {
-  wheel_tire: "history.source.wheel_tire",
-  driveline: "history.source.driveline",
-  engine: "history.source.engine",
-  body_resonance: "history.source.body_resonance",
-  transient_impact: "history.source.transient_impact",
-  baseline_noise: "history.source.baseline_noise",
-  unknown_resonance: "history.source.unknown_resonance",
+type HistoryTableRendererParams = {
+  escapeHtml: (value: unknown) => string;
+  historyExportUrl: (runId: string) => string;
 };
 
-const EMPTY_RUN_DETAIL: RunDetail = {
-  preview: null,
-  previewLoading: false,
-  previewError: "",
-  insights: null,
-  insightsLoading: false,
-  insightsError: "",
-  pdfLoading: false,
-  pdfError: "",
-};
-
-type HistoryRowStatusBadge = {
-  label: string;
-  variant: "ok" | "warn" | "bad" | "muted";
-};
-
-type HistoryFindingTone = "success" | "warn" | "neutral";
-
-function summarizeFindings(summary: HistoryInsightsPayload | null): FindingPayload[] {
-  return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
-}
-
-function summarizeWarnings(payload: HistoryInsightsPayload | null): HistoryInsightWarningPayload[] {
-  return payload?.warnings ?? [];
-}
-
-function normalizedSourceKey(source: unknown): string {
-  return String(source ?? "").trim().toLowerCase();
-}
-
-function humanizeSourceFallback(sourceKey: string): string {
-  return sourceKey
-    .split(/[_-]+/g)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function formatSourceLabel(source: unknown, t: HistoryTableViewParams["t"]): string {
-  const raw = String(source ?? "").trim();
-  const key = normalizedSourceKey(source);
-  if (!key) {
-    return t("report.missing");
+function chipModifier(tone: HistorySummaryChipTone): string {
+  switch (tone) {
+    case "default":
+      return "";
+    case "source":
+      return " history-row__summary-chip--source";
+    default:
+      return ` history-row__summary-chip--${tone}`;
   }
-  const labelKey = SOURCE_LABEL_KEYS[key];
-  if (labelKey) {
-    return t(labelKey);
-  }
-  return /^[a-z0-9_-]+$/.test(raw) ? humanizeSourceFallback(key) : raw;
 }
 
-function isInconclusiveSource(source: unknown): boolean {
-  const key = normalizedSourceKey(source);
-  return key === "" || key === "unknown_resonance" || key === "baseline_noise";
-}
-
-function isInconclusiveFinding(finding: FindingPayload | null): boolean {
-  return finding !== null && isInconclusiveSource(finding.suspected_source);
-}
-
-function normalizeLogLocationKey(location: unknown): string {
-  const raw = String(location || "")
-    .toLowerCase()
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!raw) return "";
-  if (raw.includes("front left") && raw.includes("wheel")) return "front-left wheel";
-  if (raw.includes("front right") && raw.includes("wheel")) return "front-right wheel";
-  if (raw.includes("rear left") && raw.includes("wheel")) return "rear-left wheel";
-  if (raw.includes("rear right") && raw.includes("wheel")) return "rear-right wheel";
-  if (raw.includes("engine")) return "engine bay";
-  if (raw.includes("drive") && raw.includes("tunnel")) return "driveshaft tunnel";
-  if (raw.includes("driver") && raw.includes("seat")) return "driver seat";
-  if (raw.includes("trunk")) return "trunk";
-  return raw;
-}
-
-function sensorIntensityRows(summary: HistoryInsightsPayload | null): LocationIntensityRow[] {
-  return summary?.sensor_intensity_by_location ?? [];
-}
-
-function metricFromLocationStat(row: LocationIntensityRow): number | null {
-  const value = Number(row.p95_intensity_db ?? row.mean_intensity_db ?? row.max_intensity_db);
-  return Number.isFinite(value) ? value : null;
-}
-
-function humanizeHeatmapLocationKey(key: string): string {
-  return key
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function renderPreviewHeatmap(
-  summary: HistoryInsightsPayload,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
+function renderSummaryChips(
+  chips: HistoryRowViewModel["summaryChips"],
+  escapeHtml: HistoryTableRendererParams["escapeHtml"],
 ): string {
-  const { escapeHtml, fmt, t } = params;
-  const statsRows = sensorIntensityRows(summary);
-  const metricByLocation: Record<string, number> = {};
-  const labelByLocation: Record<string, string> = {};
-  for (const row of statsRows) {
-    const key = normalizeLogLocationKey(row.location);
-    const metric = metricFromLocationStat(row);
-    const label = String(row.location ?? "").trim();
-    if (key && typeof metric === "number" && Number.isFinite(metric)) {
-      metricByLocation[key] = metric;
-    }
-    if (key && label) {
-      labelByLocation[key] = label;
-    }
+  return `<div class="history-row__summary-chips">${chips
+    .map(
+      (chip) =>
+        `<span class="history-row__summary-chip${chipModifier(chip.tone)}">${escapeHtml(chip.text)}</span>`,
+    )
+    .join("")}</div>`;
+}
+
+function renderCollapsedRowActions(
+  row: HistoryRowViewModel,
+  params: HistoryTableRendererParams,
+): string {
+  const { escapeHtml } = params;
+  if (row.collapsedAction.hintText) {
+    return `<div class="history-row__action-hint">${escapeHtml(row.collapsedAction.hintText)}</div>`;
   }
-  const values = Object.values(metricByLocation).filter((value) => typeof value === "number");
-  const min = values.length ? Math.min(...values) : null;
-  const max = values.length ? Math.max(...values) : null;
-  const knownPositionKeys = new Set<string>(HISTORY_HEATMAP_POSITIONS.map((point) => point.key));
-  const strongestValue = values.length ? Math.max(...values) : null;
-  const zones = HISTORY_HEATMAP_POSITIONS
-    .map((point) => {
-      const value = metricByLocation[point.key];
-      const label = labelByLocation[point.key] || humanizeHeatmapLocationKey(point.key);
-      const hasValue = typeof value === "number" && Number.isFinite(value);
-      if (!hasValue || min === null || max === null) {
+  return `
+      <div class="table-actions history-row__actions">
+        <button class="btn btn--muted" data-run-action="download-pdf" data-run="${escapeHtml(row.runId)}" ${row.collapsedAction.pdfLoading ? "disabled" : ""}>${escapeHtml(row.collapsedAction.pdfLabel ?? "")}</button>
+      </div>
+    `;
+}
+
+function renderHeatmap(
+  heatmap: NonNullable<HistoryRowViewModel["details"]>["heatmap"],
+  escapeHtml: HistoryTableRendererParams["escapeHtml"],
+): string {
+  if (heatmap.stateMessage) {
+    const messageClass =
+      heatmap.stateTone === "error" ? "history-inline-error" : "subtle";
+    return `
+      <div class="history-heatmap">
+        <div class="history-heatmap__header">
+          <div class="history-heatmap__title">${escapeHtml(heatmap.title)}</div>
+        </div>
+        <p class="${messageClass}">${escapeHtml(heatmap.stateMessage)}</p>
+      </div>
+    `;
+  }
+  const zones = heatmap.zones
+    .map((zone) => {
+      if (zone.valueLabel === null || zone.accentColor === null || zone.fillPercent === null) {
         return `
           <div
             class="history-heatmap__zone history-heatmap__zone--empty"
-            data-location-key="${escapeHtml(point.key)}"
-            style="grid-area:${point.area}"
-            title="${escapeHtml(label)}"
+            data-location-key="${escapeHtml(zone.key)}"
+            style="grid-area:${zone.gridArea}"
+            title="${escapeHtml(zone.label)}"
           >
-            <div class="history-heatmap__zone-label">${escapeHtml(label)}</div>
-            <div class="history-heatmap__zone-value history-heatmap__zone-value--empty">${escapeHtml(t("report.missing"))}</div>
+            <div class="history-heatmap__zone-label">${escapeHtml(zone.label)}</div>
+            <div class="history-heatmap__zone-value history-heatmap__zone-value--empty">${escapeHtml(zone.valueLabel)}</div>
             <div class="history-heatmap__zone-meter" aria-hidden="true"></div>
           </div>
         `;
       }
-      const norm = normalizeUnit(value, min, max);
-      const fill = heatColor(norm);
-      const valueLabel = `${fmt(value, 1)} dB`;
-      const isStrongest = strongestValue !== null && value === strongestValue;
       return `
         <div
-          class="history-heatmap__zone${isStrongest ? " history-heatmap__zone--strongest" : ""}"
-          data-location-key="${escapeHtml(point.key)}"
-          style="grid-area:${point.area};--history-heatmap-accent:${fill};--history-heatmap-fill:${Math.round(norm * 100)}%;"
-          title="${escapeHtml(label)}: ${escapeHtml(valueLabel)}"
+          class="history-heatmap__zone${zone.strongest ? " history-heatmap__zone--strongest" : ""}"
+          data-location-key="${escapeHtml(zone.key)}"
+          style="grid-area:${zone.gridArea};--history-heatmap-accent:${zone.accentColor};--history-heatmap-fill:${zone.fillPercent}%;"
+          title="${escapeHtml(zone.label)}: ${escapeHtml(zone.valueLabel)}"
         >
-          <div class="history-heatmap__zone-label">${escapeHtml(label)}</div>
-          <div class="history-heatmap__zone-value">${escapeHtml(valueLabel)}</div>
+          <div class="history-heatmap__zone-label">${escapeHtml(zone.label)}</div>
+          <div class="history-heatmap__zone-value">${escapeHtml(zone.valueLabel)}</div>
           <div class="history-heatmap__zone-meter" aria-hidden="true">
             <span class="history-heatmap__zone-meter-fill"></span>
           </div>
@@ -179,21 +91,15 @@ function renderPreviewHeatmap(
       `;
     })
     .join("");
-  const unmappedSummary = Object.keys(metricByLocation)
-    .filter((key) => !knownPositionKeys.has(key))
-    .map((key) => {
-      const label = labelByLocation[key] || humanizeHeatmapLocationKey(key);
-      const value = metricByLocation[key];
-      return `<div class="history-heatmap__extra-chip">${escapeHtml(label)} · ${escapeHtml(`${fmt(value, 1)} dB`)}</div>`;
-    })
-    .join("");
-  const extrasMarkup = unmappedSummary
-    ? `<div class="history-heatmap__extras">${unmappedSummary}</div>`
+  const extrasMarkup = heatmap.extras.length
+    ? `<div class="history-heatmap__extras">${heatmap.extras
+        .map((extra) => `<div class="history-heatmap__extra-chip">${escapeHtml(extra)}</div>`)
+        .join("")}</div>`
     : "";
   return `
       <div class="history-heatmap">
         <div class="history-heatmap__header">
-          <div class="history-heatmap__title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
+          <div class="history-heatmap__title">${escapeHtml(heatmap.title)}</div>
         </div>
         <div class="history-heatmap__grid">${zones}</div>
         ${extrasMarkup}
@@ -201,387 +107,122 @@ function renderPreviewHeatmap(
     `;
 }
 
-function confidenceText(
-  finding: FindingPayload,
-  params: Pick<HistoryTableViewParams, "fmt" | "t">,
+function renderPrimaryFinding(
+  primary: NonNullable<NonNullable<HistoryRowViewModel["details"]>["insights"]["primary"]>,
+  escapeHtml: HistoryTableRendererParams["escapeHtml"],
 ): string {
-  const { fmt, t } = params;
-  const value = typeof finding.confidence_pct === "string" && finding.confidence_pct.trim()
-    ? finding.confidence_pct
-    : typeof finding.confidence === "number" && Number.isFinite(finding.confidence)
-      ? fmt(finding.confidence, 2)
-      : "--";
-  return t("report.confidence", { value });
-}
-
-function findingTone(finding: FindingPayload | null): HistoryFindingTone {
-  const tone = String(finding?.confidence_tone ?? "").toLowerCase();
-  if (tone === "success" || tone === "warn") {
-    return tone;
-  }
-  return "neutral";
-}
-
-function findingSignatureText(
-  finding: FindingPayload,
-  params: Pick<HistoryTableViewParams, "fmt">,
-): string {
-  const raw = finding.frequency_hz_or_order;
-  if (typeof raw === "number" && Number.isFinite(raw)) {
-    return `${params.fmt(raw, 1)} Hz`;
-  }
-  const text = String(raw ?? "").trim();
-  return text || "--";
-}
-
-function shouldShowNextStep(finding: FindingPayload | null): boolean {
-  if (!finding) {
-    return false;
-  }
-  if (isInconclusiveFinding(finding)) {
-    return false;
-  }
-  if (findingTone(finding) === "success") {
-    return true;
-  }
-  return typeof finding.confidence === "number" && Number.isFinite(finding.confidence) && finding.confidence >= 0.85;
-}
-
-function findingLocationText(
-  finding: FindingPayload,
-  summary: HistoryInsightsPayload | null,
-  t: HistoryTableViewParams["t"],
-): string {
-  return finding.strongest_location
-    || summary?.most_likely_origin?.location
-    || t("report.missing");
-}
-
-function findingSpeedBandText(
-  finding: FindingPayload,
-  summary: HistoryInsightsPayload | null,
-  t: HistoryTableViewParams["t"],
-): string {
-  return finding.strongest_speed_band
-    || summary?.most_likely_origin?.speed_band
-    || t("report.missing");
-}
-
-function historyRowSummary(detail: RunDetail): HistoryInsightsPayload | null {
-  return detail.insights ?? detail.preview;
-}
-
-function historyRowStatusBadge(
-  run: HistoryEntry,
-  detail: RunDetail,
-  t: HistoryTableViewParams["t"],
-): HistoryRowStatusBadge {
-  const summary = historyRowSummary(detail);
-  switch (run.status) {
-    case "complete":
-      return { label: t("history.row_status.complete"), variant: "ok" };
-    case "analyzing":
-      return summary !== null
-        ? { label: t("history.row_status.preview_ready"), variant: "ok" }
-        : { label: t("history.row_status.analyzing"), variant: "warn" };
-    case "recording":
-      return { label: t("history.row_status.recording"), variant: "warn" };
-    case "error":
-      return { label: t("history.row_status.error"), variant: "bad" };
-    default:
-      return { label: run.status || t("report.missing"), variant: "muted" };
-  }
-}
-
-function historyRowDurationSeconds(
-  run: HistoryEntry,
-  detail: RunDetail,
-): number | null {
-  const summary = historyRowSummary(detail);
-  const summaryDuration = Number(summary?.duration_s);
-  if (Number.isFinite(summaryDuration) && summaryDuration >= 0) {
-    return summaryDuration;
-  }
-  const startMs = Date.parse(run.start_time_utc);
-  const endIso = run.end_time_utc ?? summary?.end_time_utc ?? null;
-  const endMs = endIso ? Date.parse(endIso) : Number.NaN;
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) {
-    return null;
-  }
-  return (endMs - startMs) / 1000;
-}
-
-function historyRowCarName(
-  run: HistoryEntry,
-  t: HistoryTableViewParams["t"],
-): string {
-  const value = typeof run.car_name === "string" ? run.car_name.trim() : "";
-  return value || t("history.car_missing");
-}
-
-function historyRunDisplayTitle(
-  run: HistoryEntry,
-  t: HistoryTableViewParams["t"],
-): string {
-  const carName = historyRowCarName(run, t);
-  return carName === t("history.car_missing") ? run.run_id : carName;
-}
-
-function renderCollapsedRowSummary(
-  run: HistoryEntry,
-  detail: RunDetail,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "formatInt" | "t">,
-): string {
-  const { escapeHtml, fmt, formatInt, t } = params;
-  const summary = historyRowSummary(detail);
-  const primaryFinding = summarizeFindings(summary)[0] ?? null;
-  const statusBadge = historyRowStatusBadge(run, detail, t);
-  const chips: string[] = [
-    `<span class="history-row__summary-chip history-row__summary-chip--${statusBadge.variant}">${escapeHtml(statusBadge.label)}</span>`,
-  ];
-  const source = summary?.most_likely_origin?.suspected_source || primaryFinding?.suspected_source || "";
-  const sourceLabel = primaryFinding && isInconclusiveFinding(primaryFinding)
-    ? t("history.row_source_inconclusive")
-    : (source ? formatSourceLabel(source, t) : "");
-  if (sourceLabel) {
-    chips.push(
-      `<span class="history-row__summary-chip history-row__summary-chip--source">${escapeHtml(sourceLabel)}</span>`,
-    );
-  }
-  if (primaryFinding) {
-    chips.push(`<span class="history-row__summary-chip">${escapeHtml(confidenceText(primaryFinding, params))}</span>`);
-  } else if (run.status === "complete" && detail.previewLoading) {
-    chips.push(
-      `<span class="history-row__summary-chip history-row__summary-chip--muted">${escapeHtml(t("history.row_summary_loading"))}</span>`,
-    );
-  } else if (run.status === "complete" && summary) {
-    chips.push(
-      `<span class="history-row__summary-chip history-row__summary-chip--muted">${escapeHtml(t("history.row_no_findings"))}</span>`,
-    );
-  }
-  if (run.status === "error" && run.error_message) {
-    chips.push(
-      `<span class="history-row__summary-chip history-row__summary-chip--muted">${escapeHtml(run.error_message)}</span>`,
-    );
-  }
-  const durationSeconds = historyRowDurationSeconds(run, detail);
-  if (durationSeconds !== null) {
-    chips.push(
-      `<span class="history-row__summary-chip">${escapeHtml(t("history.summary_size"))}: ${escapeHtml(fmt(durationSeconds, 1))} s</span>`,
-    );
-  }
-  const sensorCount = Number(summary?.sensor_count_used);
-  if (Number.isFinite(sensorCount) && sensorCount > 0) {
-    chips.push(
-      `<span class="history-row__summary-chip">${escapeHtml(t("history.summary_sensor_count"))}: ${escapeHtml(formatInt(sensorCount))}</span>`,
-    );
-  }
-  return `<div class="history-row__summary-chips">${chips.join("")}</div>`;
-}
-
-function renderCollapsedRowActions(
-  run: HistoryEntry,
-  detail: RunDetail,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "t">,
-): string {
-  const { escapeHtml, t } = params;
-  const reportReady = run.status === "complete" && (detail.insights !== null || detail.preview !== null);
-  if (!reportReady) {
-    return `<div class="history-row__action-hint">${escapeHtml(t("history.quick_report_pending"))}</div>`;
-  }
-  const pdfLabel = detail.pdfLoading ? t("history.generating_pdf") : t("history.generate_pdf");
-  return `
-      <div class="table-actions history-row__actions">
-        <button class="btn btn--muted" data-run-action="download-pdf" data-run="${escapeHtml(run.run_id)}" ${detail.pdfLoading ? "disabled" : ""}>${escapeHtml(pdfLabel)}</button>
-      </div>
-    `;
-}
-
-function renderDetailManagementFooter(
-  runId: string,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "historyExportUrl" | "t">,
-): string {
-  const { escapeHtml, historyExportUrl, t } = params;
-  return `
-      <div class="history-details-footer">
-        <div class="history-details-footer__copy">
-          <div class="history-details-footer__eyebrow">${escapeHtml(t("history.run_actions_title"))}</div>
-          <div class="history-details-footer__body">${escapeHtml(t("history.run_actions_body"))}</div>
-        </div>
-        <div class="history-details-footer__actions">
-          <a class="btn btn--muted" href="${historyExportUrl(runId)}" download="${escapeHtml(runId)}.zip" data-run-action="download-raw" data-run="${escapeHtml(runId)}">${escapeHtml(t("history.export"))}</a>
-          <button class="btn btn--danger-quiet" data-run-action="delete-run" data-run="${escapeHtml(runId)}">${escapeHtml(t("history.delete"))}</button>
-        </div>
-      </div>
-    `;
-}
-
-function renderInsightsOverview(
-  summary: HistoryInsightsPayload,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
-): string {
-  const { escapeHtml, t } = params;
-  const findings = summarizeFindings(summary);
-  const primary = findings[0];
-  if (!primary) {
-    return "";
-  }
-  const inconclusive = isInconclusiveFinding(primary);
-  const headline = inconclusive
-    ? t("history.inconclusive_title")
-    : formatSourceLabel(primary.suspected_source, t);
-  const explanation = String(
-    primary.evidence_summary
-    ?? summary.most_likely_origin?.explanation
-    ?? (inconclusive ? t("history.inconclusive_body") : ""),
-  );
-  const location = findingLocationText(primary, summary, t);
-  const speedBand = findingSpeedBandText(primary, summary, t);
-  const signature = findingSignatureText(primary, params);
-  const confidence = confidenceText(primary, params);
-  const tone = findingTone(primary);
-  const nextStep = inconclusive
-    ? t("history.inconclusive_next_step")
-    : shouldShowNextStep(primary) && location !== t("report.missing")
-    ? t("history.findings_next_step", { location })
-    : "";
-  const nextStepLabel = inconclusive
-    ? t("history.inconclusive_next_step_label")
-    : t("history.findings_next_step_label");
-  const eyebrow = inconclusive ? t("history.capture_verdict") : t("history.primary_diagnosis");
   return `
       <div class="history-findings-overview">
         <div class="history-findings-overview__header">
-          <div class="history-findings-overview__eyebrow">${escapeHtml(eyebrow)}</div>
+          <div class="history-findings-overview__eyebrow">${escapeHtml(primary.eyebrow)}</div>
         </div>
-        <div class="history-diagnosis-card history-diagnosis-card--${tone}">
+        <div class="history-diagnosis-card history-diagnosis-card--${primary.tone}">
           <div class="history-diagnosis-card__header">
             <div class="history-diagnosis-card__copy">
-              <div class="history-findings-overview__headline">${escapeHtml(headline)}</div>
-              <div class="history-diagnosis-card__signature">${escapeHtml(signature)}</div>
+              <div class="history-findings-overview__headline">${escapeHtml(primary.headline)}</div>
+              <div class="history-diagnosis-card__signature">${escapeHtml(primary.signature)}</div>
             </div>
-            <span class="history-diagnosis-card__confidence history-diagnosis-card__confidence--${tone}">${escapeHtml(confidence)}</span>
+            <span class="history-diagnosis-card__confidence history-diagnosis-card__confidence--${primary.tone}">${escapeHtml(primary.confidence)}</span>
           </div>
-          ${explanation ? `<p class="history-findings-overview__explanation">${escapeHtml(explanation)}</p>` : ""}
-          <div class="history-findings-overview__chips">
-            <div class="history-findings-chip">
-              <span class="history-findings-chip__label">${escapeHtml(t("history.findings_location"))}</span>
-              <strong>${escapeHtml(location)}</strong>
-            </div>
-            <div class="history-findings-chip">
-              <span class="history-findings-chip__label">${escapeHtml(t("history.findings_speed_band"))}</span>
-              <strong>${escapeHtml(speedBand)}</strong>
-            </div>
-            <div class="history-findings-chip">
-              <span class="history-findings-chip__label">${escapeHtml(t("history.findings_signature"))}</span>
-              <strong>${escapeHtml(signature)}</strong>
-            </div>
-          </div>
-          ${nextStep
-    ? `<div class="history-diagnosis-card__next-step"><span class="history-diagnosis-card__next-step-label">${escapeHtml(nextStepLabel)}</span><strong>${escapeHtml(nextStep)}</strong></div>`
-    : ""}
+          ${primary.explanation ? `<p class="history-findings-overview__explanation">${escapeHtml(primary.explanation)}</p>` : ""}
+          <div class="history-findings-overview__chips">${primary.chips
+            .map(
+              (chip) => `
+                <div class="history-findings-chip">
+                  <span class="history-findings-chip__label">${escapeHtml(chip.label)}</span>
+                  <strong>${escapeHtml(chip.value)}</strong>
+                </div>
+              `,
+            )
+            .join("")}</div>
+          ${primary.nextStep && primary.nextStepLabel
+            ? `<div class="history-diagnosis-card__next-step"><span class="history-diagnosis-card__next-step-label">${escapeHtml(primary.nextStepLabel)}</span><strong>${escapeHtml(primary.nextStep)}</strong></div>`
+            : ""}
         </div>
       </div>
     `;
 }
 
-function renderSecondaryFindingCard(
-  finding: FindingPayload,
-  summary: HistoryInsightsPayload,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
+function renderSecondaryFinding(
+  finding: NonNullable<HistoryRowViewModel["details"]>["insights"]["visibleSecondary"][number],
+  escapeHtml: HistoryTableRendererParams["escapeHtml"],
 ): string {
-  const { escapeHtml, t } = params;
-  const source = formatSourceLabel(finding.suspected_source, t);
-  const confidence = confidenceText(finding, params);
-  const location = findingLocationText(finding, summary, t);
-  const speedBand = findingSpeedBandText(finding, summary, t);
-  const signature = findingSignatureText(finding, params);
-  const evidenceSummary = String(finding.evidence_summary ?? "");
-  const tone = findingTone(finding);
   return `
-      <li class="history-finding-card history-finding-card--secondary history-finding-card--${tone}">
+      <li class="history-finding-card history-finding-card--secondary history-finding-card--${finding.tone}">
         <div class="history-finding-card__header">
           <div class="history-finding-card__title-group">
-            <strong class="history-finding-card__title">${escapeHtml(source)}</strong>
-            <span class="history-finding-card__signal">${escapeHtml(signature)}</span>
+            <strong class="history-finding-card__title">${escapeHtml(finding.source)}</strong>
+            <span class="history-finding-card__signal">${escapeHtml(finding.signature)}</span>
           </div>
-          <span class="history-finding-card__confidence history-finding-card__confidence--${tone}">${escapeHtml(confidence)}</span>
+          <span class="history-finding-card__confidence history-finding-card__confidence--${finding.tone}">${escapeHtml(finding.confidence)}</span>
         </div>
         <div class="history-finding-card__meta">
           <div class="history-finding-card__meta-item">
-            <span class="history-finding-card__label">${escapeHtml(t("history.findings_location"))}</span>
-            <strong>${escapeHtml(location)}</strong>
+            <span class="history-finding-card__label">${escapeHtml(finding.locationLabel)}</span>
+            <strong>${escapeHtml(finding.location)}</strong>
           </div>
           <div class="history-finding-card__meta-item">
-            <span class="history-finding-card__label">${escapeHtml(t("history.findings_speed_band"))}</span>
-            <strong>${escapeHtml(speedBand)}</strong>
+            <span class="history-finding-card__label">${escapeHtml(finding.speedBandLabel)}</span>
+            <strong>${escapeHtml(finding.speedBand)}</strong>
           </div>
         </div>
-        <p class="history-finding-card__summary">${escapeHtml(evidenceSummary)}</p>
+        <p class="history-finding-card__summary">${escapeHtml(finding.evidenceSummary)}</p>
       </li>`;
 }
 
-function renderInsightsBlock(
-  detail: RunDetail,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "fmt" | "t">,
+function renderInsights(
+  insights: NonNullable<HistoryRowViewModel["details"]>["insights"],
+  escapeHtml: HistoryTableRendererParams["escapeHtml"],
 ): string {
-  const { escapeHtml, t } = params;
-  const loadedInsights = detail.insights ?? detail.preview;
-  const findings = summarizeFindings(loadedInsights);
-  const loading = detail.insightsLoading || (detail.previewLoading && loadedInsights === null);
-  const secondaryFindings = loadedInsights ? findings.slice(1) : [];
-  const visibleSecondaryFindings = secondaryFindings.slice(0, 2);
-  const hiddenSecondaryFindings = secondaryFindings.slice(2);
-  const findingsMarkup = loadedInsights && findings.length
-    ? `
-        ${renderInsightsOverview(loadedInsights, params)}
-        ${secondaryFindings.length
+  let body = `<div class="history-panel-state">${escapeHtml(insights.stateMessage ?? "")}</div>`;
+  if (insights.primary) {
+    body = `${renderPrimaryFinding(insights.primary, escapeHtml)}${insights.secondaryTitle
       ? `
             <div class="history-secondary-findings">
-              <div class="history-secondary-findings__title">${escapeHtml(t("history.secondary_candidates_title"))}</div>
+              <div class="history-secondary-findings__title">${escapeHtml(insights.secondaryTitle)}</div>
               <ul class="history-findings-list history-findings-list--secondary">
-                ${visibleSecondaryFindings.map((finding) => renderSecondaryFindingCard(finding, loadedInsights, params)).join("")}
+                ${insights.visibleSecondary
+                  .map((finding) => renderSecondaryFinding(finding, escapeHtml))
+                  .join("")}
               </ul>
-              ${hiddenSecondaryFindings.length
-        ? `
-                  <details class="history-secondary-findings__more">
-                    <summary>${escapeHtml(t("history.show_more_findings", { count: hiddenSecondaryFindings.length }))}</summary>
-                    <ul class="history-findings-list history-findings-list--secondary">
-                      ${hiddenSecondaryFindings.map((finding) => renderSecondaryFindingCard(finding, loadedInsights, params)).join("")}
-                    </ul>
-                  </details>
-                `
-        : ""}
+              ${insights.hiddenSecondary.length && insights.showMoreLabel
+                ? `
+                    <details class="history-secondary-findings__more">
+                      <summary>${escapeHtml(insights.showMoreLabel)}</summary>
+                      <ul class="history-findings-list history-findings-list--secondary">
+                        ${insights.hiddenSecondary
+                          .map((finding) => renderSecondaryFinding(finding, escapeHtml))
+                          .join("")}
+                      </ul>
+                    </details>
+                  `
+                : ""}
             </div>
           `
-      : ""}
-      `
-    : `<ul class="history-findings-list history-findings-list--secondary"><li class="history-finding-card history-finding-card--empty">${escapeHtml(t("report.no_findings_for_run"))}</li></ul>`;
+      : ""}`;
+  } else if (insights.emptyMessage) {
+    body = `<ul class="history-findings-list history-findings-list--secondary"><li class="history-finding-card history-finding-card--empty">${escapeHtml(insights.emptyMessage)}</li></ul>`;
+  }
   return `
       <div class="history-insights-block">
         <div class="history-panel-header">
-          <div class="history-panel-header__eyebrow">${escapeHtml(t("history.findings_title"))}</div>
+          <div class="history-panel-header__eyebrow">${escapeHtml(insights.headerEyebrow)}</div>
         </div>
-        ${loadedInsights
-    ? findingsMarkup
-    : `<div class="history-panel-state">${escapeHtml(loading ? t("history.loading_insights") : t("history.findings_pending"))}</div>`}
+        ${body}
       </div>
     `;
 }
 
-function renderWarningBanners(
-  detail: RunDetail,
-  params: Pick<HistoryTableViewParams, "escapeHtml">,
+function renderWarnings(
+  warnings: NonNullable<HistoryRowViewModel["details"]>["warnings"],
+  escapeHtml: HistoryTableRendererParams["escapeHtml"],
 ): string {
-  const { escapeHtml } = params;
-  const warnings = summarizeWarnings(detail.preview).concat(summarizeWarnings(detail.insights));
-  const uniqueWarnings = warnings.filter(
-    (warning, index) => warnings.findIndex((candidate) => candidate.code === warning.code) === index,
-  );
-  if (!uniqueWarnings.length) return "";
+  if (!warnings.length) {
+    return "";
+  }
   return `
       <div class="history-warning-list">
-        ${uniqueWarnings
+        ${warnings
           .map((warning) => {
             const detailText = warning.detail
               ? `<div class="history-warning-banner__detail">${escapeHtml(warning.detail)}</div>`
@@ -593,157 +234,113 @@ function renderWarningBanners(
     `;
 }
 
-function renderRunDetailsRow(
-  run: HistoryEntry,
-  detail: RunDetail,
-  params: HistoryTableViewParams,
+function renderDetails(
+  row: HistoryRowViewModel,
+  details: NonNullable<HistoryRowViewModel["details"]>,
+  params: HistoryTableRendererParams,
 ): string {
-  const { escapeHtml, fmt, fmtTs, formatInt, t } = params;
-  const summary = detail.preview ?? detail.insights;
-  const detailTitle = historyRunDisplayTitle(run, t);
-  const hasDiagnosis = Boolean(detail.insights || detail.preview);
-  const showReloadAction = hasDiagnosis || Boolean(detail.insightsError);
-  const showLoadingStatus = detail.insightsLoading || (detail.previewLoading && !hasDiagnosis);
-  const insightsCtaLabel = hasDiagnosis ? t("history.reload_insights") : t("history.load_insights");
-  const insightsError = detail.insightsError
-    ? `<span class="history-inline-error">${escapeHtml(detail.insightsError)}</span>`
-    : "";
-  const runSummary = summary
-    ? [
-        `${t("report.run_id")}: ${run.run_id}`,
-        `${t("history.summary_created")}: ${fmtTs(summary.start_time_utc as string)}`,
-        `${t("history.summary_updated")}: ${fmtTs(run.end_time_utc ?? "")}`,
-        `${t("history.summary_size")}: ${fmt(summary.duration_s as number, 1)} s`,
-        `${t("history.summary_sensor_count")}: ${formatInt(summary.sensor_count_used as number)}`,
-      ].join(" · ")
-    : "";
-  let heatmapMarkup = "";
-  if (detail.previewLoading) {
-    heatmapMarkup = `
-      <div class="history-heatmap">
-        <div class="history-heatmap__header">
-          <div class="history-heatmap__title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
-        </div>
-        <p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>
-      </div>
-    `;
-  } else if (detail.previewError) {
-    heatmapMarkup = `
-      <div class="history-heatmap">
-        <div class="history-heatmap__header">
-          <div class="history-heatmap__title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
-        </div>
-        <p class="history-inline-error">${escapeHtml(detail.previewError)}</p>
-      </div>
-    `;
-  } else if (summary) {
-    heatmapMarkup = renderPreviewHeatmap(summary, params);
-  } else {
-    heatmapMarkup = `
-      <div class="history-heatmap">
-        <div class="history-heatmap__header">
-          <div class="history-heatmap__title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
-        </div>
-        <p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>
-      </div>
-    `;
-  }
+  const { escapeHtml, historyExportUrl } = params;
+  const heatmapMarkup = renderHeatmap(details.heatmap, escapeHtml);
   return `
       <tr class="history-details-row">
         <td colspan="4">
           <div class="history-details-card">
             <div class="history-details-header">
               <div class="history-details-header__copy">
-                <div class="history-details-header__eyebrow">${escapeHtml(t("history.details_title"))}</div>
-                <div class="history-details-header__title">${escapeHtml(detailTitle)}</div>
-                ${runSummary ? `<div class="history-run-summary">${escapeHtml(runSummary)}</div>` : ""}
+                <div class="history-details-header__eyebrow">${escapeHtml(details.titleEyebrow)}</div>
+                <div class="history-details-header__title">${escapeHtml(details.title)}</div>
+                ${details.runSummary ? `<div class="history-run-summary">${escapeHtml(details.runSummary)}</div>` : ""}
               </div>
               <div class="history-details-header__actions">
-                ${showReloadAction
-    ? `<button class="btn btn--muted" data-run-action="load-insights" ${detail.insightsLoading ? "disabled" : ""}>${escapeHtml(detail.insightsLoading ? t("history.loading_insights") : insightsCtaLabel)}</button>`
-    : showLoadingStatus
-      ? `<div class="history-details-header__status">${escapeHtml(t("history.loading_insights"))}</div>`
-      : ""}
-                ${insightsError}
+                ${details.reloadActionLabel
+                  ? `<button class="btn btn--muted" data-run-action="load-insights" ${details.reloadActionDisabled ? "disabled" : ""}>${escapeHtml(details.reloadActionLabel)}</button>`
+                  : details.loadingStatusText
+                    ? `<div class="history-details-header__status">${escapeHtml(details.loadingStatusText)}</div>`
+                    : ""}
+                ${details.insightsError ? `<span class="history-inline-error">${escapeHtml(details.insightsError)}</span>` : ""}
               </div>
             </div>
-            ${renderWarningBanners(detail, params)}
+            ${renderWarnings(details.warnings, escapeHtml)}
             <div class="history-results-layout">
-              ${renderInsightsBlock(detail, params)}
+              ${renderInsights(details.insights, escapeHtml)}
               <div class="history-evidence-column">
                 <div class="history-evidence-panel">
                   ${heatmapMarkup}
                 </div>
               </div>
             </div>
-            ${renderDetailManagementFooter(run.run_id, params)}
+            <div class="history-details-footer">
+              <div class="history-details-footer__copy">
+                <div class="history-details-footer__eyebrow">${escapeHtml(details.footerEyebrow)}</div>
+                <div class="history-details-footer__body">${escapeHtml(details.footerBody)}</div>
+              </div>
+              <div class="history-details-footer__actions">
+                <a class="btn btn--muted" href="${historyExportUrl(row.runId)}" download="${escapeHtml(row.runId)}.zip" data-run-action="download-raw" data-run="${escapeHtml(row.runId)}">${escapeHtml(details.exportLabel)}</a>
+                <button class="btn btn--danger-quiet" data-run-action="delete-run" data-run="${escapeHtml(row.runId)}">${escapeHtml(details.deleteLabel)}</button>
+              </div>
+            </div>
           </div>
         </td>
       </tr>
     `;
 }
 
-export function renderHistoryTableRows(params: HistoryTableViewParams): string {
-  const { runs, expandedRunId, runDetailsById, escapeHtml, fmtTs, formatInt, t } = params;
-  const rows: string[] = [];
-  for (const run of runs) {
-    const detail = runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL;
-    const rowError = detail.pdfError ? `<div class="history-inline-error">${escapeHtml(detail.pdfError)}</div>` : "";
-    const isExpanded = expandedRunId === run.run_id;
-    const toggleLabel = isExpanded ? t("history.close_diagnosis") : t("history.open_diagnosis");
-    const toggleTitle = isExpanded
-      ? t("history.close_diagnosis_for_run", { runId: run.run_id })
-      : t("history.open_diagnosis_for_run", { runId: run.run_id });
-    const startedAtText = fmtTs(run.start_time_utc);
-    const carName = historyRowCarName(run, t);
-    rows.push(`
-        <tr class="history-row${isExpanded ? " history-row--expanded" : ""}" data-run-row="1" data-run="${escapeHtml(run.run_id)}">
+export function renderHistoryTableRows(
+  rows: HistoryRowViewModel[],
+  params: HistoryTableRendererParams,
+): string {
+  const { escapeHtml } = params;
+  return rows
+    .flatMap((row) => {
+      const rowError = row.pdfError
+        ? `<div class="history-inline-error">${escapeHtml(row.pdfError)}</div>`
+        : "";
+      const renderedRow = `
+        <tr class="history-row${row.isExpanded ? " history-row--expanded" : ""}" data-run-row="1" data-run="${escapeHtml(row.runId)}">
           <td class="history-row__primary-cell">
             <div class="history-row__run">
               <div class="history-row__run-heading">
                 <div class="history-row__car-context">
-                  <span class="history-row__car-label">${escapeHtml(t("history.car_label"))}</span>
-                  <span class="history-row__car-name">${escapeHtml(carName)}</span>
+                  <span class="history-row__car-label">${escapeHtml(row.carLabel)}</span>
+                  <span class="history-row__car-name">${escapeHtml(row.carName)}</span>
                 </div>
-                <div class="history-row__run-id">${escapeHtml(run.run_id)}</div>
+                <div class="history-row__run-id">${escapeHtml(row.runId)}</div>
               </div>
-              ${renderCollapsedRowSummary(run, detail, params)}
+              ${renderSummaryChips(row.summaryChips, escapeHtml)}
               <div class="history-row__detail-affordance">
                 <button
                   type="button"
-                  class="history-row__toggle${isExpanded ? " history-row__toggle--expanded" : ""}"
+                  class="history-row__toggle${row.isExpanded ? " history-row__toggle--expanded" : ""}"
                   data-run-toggle="details"
-                  data-run="${escapeHtml(run.run_id)}"
-                  aria-expanded="${isExpanded ? "true" : "false"}"
-                  aria-label="${escapeHtml(toggleTitle)}"
-                  title="${escapeHtml(toggleTitle)}"
+                  data-run="${escapeHtml(row.runId)}"
+                  aria-expanded="${row.isExpanded ? "true" : "false"}"
+                  aria-label="${escapeHtml(row.toggleTitle)}"
+                  title="${escapeHtml(row.toggleTitle)}"
                 >
                   <span class="history-row__toggle-icon" aria-hidden="true"></span>
                   <span class="history-row__toggle-copy">
-                    <span class="history-row__toggle-title">${escapeHtml(toggleLabel)}</span>
-                    <span class="history-row__toggle-hint">${escapeHtml(t("history.preview_available"))}</span>
+                    <span class="history-row__toggle-title">${escapeHtml(row.toggleLabel)}</span>
+                    <span class="history-row__toggle-hint">${escapeHtml(row.previewHint)}</span>
                   </span>
                 </button>
               </div>
             </div>
           </td>
           <td class="history-row__meta-cell history-row__meta-cell--started">
-            <span class="history-row__meta-label">${escapeHtml(t("history.table.updated"))}</span>
-            <span class="history-row__meta-value">${escapeHtml(startedAtText)}</span>
+            <span class="history-row__meta-label">${escapeHtml(row.startedLabel)}</span>
+            <span class="history-row__meta-value">${escapeHtml(row.startedAtText)}</span>
           </td>
           <td class="history-row__meta-cell history-row__meta-cell--samples numeric">
-            <span class="history-row__meta-label">${escapeHtml(t("history.table.size"))}</span>
-            <span class="history-row__meta-value">${escapeHtml(formatInt(run.sample_count))}</span>
+            <span class="history-row__meta-label">${escapeHtml(row.sizeLabel)}</span>
+            <span class="history-row__meta-value">${escapeHtml(row.sampleCountText)}</span>
           </td>
           <td class="history-row__meta-cell history-row__meta-cell--actions">
-            <span class="history-row__meta-label">${escapeHtml(t("history.quick_report"))}</span>
-            ${renderCollapsedRowActions(run, detail, params)}
+            <span class="history-row__meta-label">${escapeHtml(row.quickReportLabel)}</span>
+            ${renderCollapsedRowActions(row, params)}
             ${rowError}
           </td>
-        </tr>`);
-    if (isExpanded) {
-      rows.push(renderRunDetailsRow(run, detail, params));
-    }
-  }
-  return rows.join("");
+        </tr>`;
+      return row.details ? [renderedRow, renderDetails(row, row.details, params)] : [renderedRow];
+    })
+    .join("");
 }
