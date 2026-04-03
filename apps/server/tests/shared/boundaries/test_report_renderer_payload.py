@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.report_renderer_payload import (
+from vibesensor.shared.boundaries.report_prepared_input import (
     PreparedReportRendererPayload,
     build_report_renderer_payload,
 )

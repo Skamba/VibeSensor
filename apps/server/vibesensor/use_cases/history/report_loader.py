@@ -13,13 +13,13 @@ from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import is_json_array
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.helpers import (
     async_require_run,
     resolve_run_language,
     safe_filename,
 )
-from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey
 
 _PERSISTED_REPORT_MODE_TOKEN = "none"
 
