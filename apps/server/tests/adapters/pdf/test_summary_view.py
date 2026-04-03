@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.pdf.assembly import prepare_report_input
 from vibesensor.domain import (
     Finding,
     LocationHotspot,
@@ -21,6 +20,7 @@ from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as _test_run_from_summary,
 )
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.use_cases.history.report_document import prepare_report_input
 
 
 def _minimal_summary(**overrides: object) -> dict[str, object]:

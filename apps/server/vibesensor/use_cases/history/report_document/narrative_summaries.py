@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
 from vibesensor.domain import TestRun
 from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting.contracts import PreparedReportFacts
@@ -13,6 +12,7 @@ from vibesensor.shared.report_presentation import (
     display_location,
     uses_shared_overlap_wording,
 )
+from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 
 from .phase_analysis import (
     _finding_phase_label,

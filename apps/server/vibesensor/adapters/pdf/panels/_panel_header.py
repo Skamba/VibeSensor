@@ -7,7 +7,6 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.adapters.pdf.pdf_drawing import (
     _cert_display,
     _draw_panel,
@@ -41,6 +40,7 @@ from vibesensor.adapters.pdf.pdf_text import (
     _draw_text,
     _kv_consumed_height,
 )
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 
 
 def _first_check_target(data: ReportTemplateData, *, fallback: str) -> str:

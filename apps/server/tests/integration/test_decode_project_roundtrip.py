@@ -21,19 +21,19 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.history import build_projected_run_details_json
-from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
-from vibesensor.adapters.pdf.models import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_to_json_object,
 )
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import AnalysisResult, RunAnalysis
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 
 # -- helpers ---------------------------------------------------------------
 

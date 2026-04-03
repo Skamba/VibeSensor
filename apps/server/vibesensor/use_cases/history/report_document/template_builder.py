@@ -7,8 +7,9 @@ the orchestration layer handles section resolution.
 
 from __future__ import annotations
 
-from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-from vibesensor.adapters.pdf.models import (
+from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
@@ -23,8 +24,7 @@ from vibesensor.adapters.pdf.models import (
     SystemFindingCard,
     VerdictPageData,
 )
-from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 
 
 def build_template_data(

@@ -1,17 +1,20 @@
-"""Report assembly over prepared report inputs and PDF document models."""
+"""Canonical report-document assembly above the PDF renderer boundary."""
 
 from __future__ import annotations
 
-from vibesensor.adapters.pdf._candidate_resolver import (
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.shared.boundaries.reporting.document import Report, ReportTemplateData
+from vibesensor.use_cases.history.report_preparation import (
+    prepare_persisted_report_input,
+    prepare_report_input,
+)
+
+from ._candidate_resolver import (
     PrimaryCandidateContext,
     resolve_primary_report_candidate,
 )
-from vibesensor.adapters.pdf._card_builder import build_system_cards, humanize_signatures
-from vibesensor.adapters.pdf.models import Report
-from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
-from vibesensor.use_cases.history.report_preparation import prepare_report_input
-
-from .assembler import _build_report_template_data, map_summary
+from ._card_builder import build_system_cards, humanize_signatures
+from .builder import _build_report_template_data, map_summary
 from .sections import (
     _build_appendix_a_data,
     _build_appendix_b_data,
@@ -22,9 +25,10 @@ from .sections import (
 )
 
 __all__ = [
-    "PrimaryCandidateContext",
     "PreparedReportInput",
+    "PrimaryCandidateContext",
     "Report",
+    "ReportTemplateData",
     "_build_appendix_a_data",
     "_build_appendix_b_data",
     "_build_appendix_c_data",
@@ -35,6 +39,7 @@ __all__ = [
     "build_system_cards",
     "humanize_signatures",
     "map_summary",
+    "prepare_persisted_report_input",
     "prepare_report_input",
     "resolve_primary_report_candidate",
 ]
