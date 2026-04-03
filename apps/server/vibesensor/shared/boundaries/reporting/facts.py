@@ -13,8 +13,8 @@ if TYPE_CHECKING:
         SuitabilityCheck,
         VibrationOrigin,
     )
-    from vibesensor.shared.boundaries.reporting.payload import ReportTimelineInterval
     from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+    from vibesensor.shared.boundaries.reporting.summary import ReportTimelineInterval
     from vibesensor.shared.run_context_warning import RunContextWarning
 
 ActionStatusKey = Literal["recapture_before_acting", "action_ready_caution", "action_ready"]

@@ -4,7 +4,7 @@ import asyncio
 import hashlib
 import zipfile
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from _update_manager_test_helpers import (
@@ -19,7 +19,6 @@ from _update_manager_test_helpers import (
 
 from vibesensor.shared.exceptions import UpdateCleanupError
 from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
-from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
 from vibesensor.use_cases.updates.status import collect_runtime_details
 
 
@@ -429,8 +428,6 @@ class TestUpdateManagerAsync:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
-        mock_coordinator = MagicMock()
-        mock_coordinator.execute = AsyncMock(side_effect=asyncio.CancelledError())
 
         with (
             patch(
@@ -441,21 +438,8 @@ class TestUpdateManagerAsync:
         ):
             object.__setattr__(
                 manager._runtime,
-                "build_run_runtime",
-                lambda: SimpleNamespace(
-                    preparation=SimpleNamespace(
-                        prepare=AsyncMock(
-                            return_value=PreparedUpdateWorkflow(
-                                current_version="2025.6.15",
-                                transport_session=AsyncMock(),
-                            )
-                        )
-                    ),
-                    release_planner=SimpleNamespace(
-                        plan=AsyncMock(side_effect=asyncio.CancelledError())
-                    ),
-                    workflow_executor=mock_coordinator,
-                ),
+                "workflow",
+                SimpleNamespace(run=AsyncMock(side_effect=asyncio.CancelledError())),
             )
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
@@ -482,8 +466,6 @@ class TestUpdateManagerAsync:
         tmp_path,
     ) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
-        mock_coordinator = MagicMock()
-        mock_coordinator.execute = AsyncMock(side_effect=asyncio.CancelledError())
 
         with patch(
             "vibesensor.use_cases.updates.cleanup.collect_runtime_details",
@@ -491,21 +473,8 @@ class TestUpdateManagerAsync:
         ):
             object.__setattr__(
                 manager._runtime,
-                "build_run_runtime",
-                lambda: SimpleNamespace(
-                    preparation=SimpleNamespace(
-                        prepare=AsyncMock(
-                            return_value=PreparedUpdateWorkflow(
-                                current_version="2025.6.15",
-                                transport_session=AsyncMock(),
-                            )
-                        )
-                    ),
-                    release_planner=SimpleNamespace(
-                        plan=AsyncMock(side_effect=asyncio.CancelledError())
-                    ),
-                    workflow_executor=mock_coordinator,
-                ),
+                "workflow",
+                SimpleNamespace(run=AsyncMock(side_effect=asyncio.CancelledError())),
             )
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None

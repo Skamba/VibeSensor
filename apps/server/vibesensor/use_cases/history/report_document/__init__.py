@@ -16,6 +16,7 @@ from ._candidate_resolver import (
 from ._card_builder import build_system_cards, humanize_signatures
 from .assembly import ReportDocumentAssembly, assemble_report_document
 from .builder import build_report_document
+from .composition import ReportDocumentComposition, compose_report_document
 from .sections import (
     _build_appendix_c_data,
     _build_appendix_d_data,
@@ -26,6 +27,7 @@ __all__ = [
     "PreparedReportInput",
     "PrimaryCandidateContext",
     "Report",
+    "ReportDocumentComposition",
     "ReportDocumentAssembly",
     "ReportDocument",
     "_build_appendix_c_data",
@@ -35,6 +37,7 @@ __all__ = [
     "build_system_cards",
     "humanize_signatures",
     "build_report_document",
+    "compose_report_document",
     "prepare_persisted_report_input",
     "prepare_report_input",
     "resolve_primary_report_candidate",

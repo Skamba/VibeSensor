@@ -9,7 +9,6 @@ from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 from vibesensor.shared.boundaries.reporting import (
     PreparedReportFacts,
     PreparedReportInput,
-    PreparedReportPresentation,
 )
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
@@ -36,6 +35,10 @@ from vibesensor.use_cases.history.report_document._candidate_resolver import (
     resolve_primary_report_candidate,
 )
 from vibesensor.use_cases.history.report_document._card_builder import build_system_cards
+from vibesensor.use_cases.history.report_document.composition import (
+    ReportDocumentComposition,
+    compose_report_document,
+)
 from vibesensor.use_cases.history.report_document.peak_table import build_peak_rows
 from vibesensor.use_cases.history.report_document.report_sections import (
     build_data_trust,
@@ -92,7 +95,11 @@ def resolve_report_document_sections(
 
     test_run = prepared.domain_test_run
     report_facts = prepared.report_facts
-    presentation = prepared.presentation
+    composition = compose_report_document(
+        aggregate=test_run,
+        report_facts=report_facts,
+        lang=lang,
+    )
     report_date_text = _report_date_text(prepared)
     primary = resolve_primary_report_candidate(
         aggregate=test_run,
@@ -122,7 +129,7 @@ def resolve_report_document_sections(
     next_steps = _resolve_next_steps(
         primary=primary,
         report_facts=report_facts,
-        presentation=presentation,
+        composition=composition,
         recapture_mode=recapture_mode,
         lang=lang,
         tr=tr,
@@ -155,7 +162,7 @@ def resolve_report_document_sections(
         test_run,
         primary,
         report_facts,
-        presentation,
+        composition,
         tr=tr,
     )
     timeline_graph = _build_timeline_graph_data(report_facts, duration_s=report.duration_s)
@@ -177,18 +184,18 @@ def resolve_report_document_sections(
         sensor_intensity=sensor_intensity,
         hotspot_rows=tuple(report_facts.location_hotspot_rows),
         verdict_page=replace(
-            presentation.verdict_page,
+            composition.verdict_page,
             proof_summary=proof_summary,
             timeline_graph=timeline_graph,
         ),
-        appendix_a=presentation.appendix_a,
-        appendix_b=presentation.appendix_b,
+        appendix_a=composition.appendix_a,
+        appendix_b=composition.appendix_b,
         appendix_c=_build_appendix_c_data(
             primary=primary,
             aggregate=test_run,
             measurements=measurements,
             report_facts=report_facts,
-            presentation=presentation,
+            composition=composition,
             data_trust=list(data_trust),
             tr=tr,
         ),
@@ -209,13 +216,13 @@ def _resolve_next_steps(
     *,
     primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
-    presentation: PreparedReportPresentation,
+    composition: ReportDocumentComposition,
     recapture_mode: bool,
     lang: str,
     tr: Callable[..., str],
 ) -> tuple[NextStep, ...]:
     if recapture_mode:
-        return tuple(NextStep(action=action) for action in presentation.appendix_a.capture_changes)
+        return tuple(NextStep(action=action) for action in composition.appendix_a.capture_changes)
     return tuple(
         build_next_steps(
             recommended_actions=report_facts.recommended_actions,

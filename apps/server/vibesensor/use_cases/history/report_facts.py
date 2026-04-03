@@ -8,7 +8,6 @@ from vibesensor.domain import (
     TestRun,
 )
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
-from vibesensor.shared.boundaries.reporting.payload import NormalizedReportSummary
 from vibesensor.shared.boundaries.reporting.projection import (
     compute_location_hotspot_rows,
     filter_active_sensor_intensity,
@@ -17,6 +16,7 @@ from vibesensor.shared.boundaries.reporting.projection import (
     resolve_report_origin,
     tire_spec_text,
 )
+from vibesensor.shared.boundaries.reporting.summary import NormalizedReportSummary
 from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.use_cases.history.report_fact_coverage import build_coverage_summary

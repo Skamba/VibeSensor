@@ -22,7 +22,9 @@ if TYPE_CHECKING:
 __all__ = [
     "CurrentVersionProvider",
     "PreparedUpdateWorkflow",
+    "PreparedTransportSession",
     "UpdatePreparationCoordinator",
+    "ValidatedUpdateRequest",
 ]
 
 CurrentVersionProvider = Callable[[], str]
@@ -33,6 +35,22 @@ class PreparedUpdateWorkflow:
     """Validated update workflow state with one resolved transport session."""
 
     current_version: str
+    transport_session: UpdateTransportSession
+
+
+@dataclass(frozen=True, slots=True)
+class ValidatedUpdateRequest:
+    """Validated request paired with its canonical transport session."""
+
+    request: UpdateRequest
+    transport_session: UpdateTransportSession
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedTransportSession:
+    """Transport-prepared request state before runtime version observation."""
+
+    request: UpdateRequest
     transport_session: UpdateTransportSession
 
 
@@ -63,21 +81,43 @@ class UpdatePreparationCoordinator:
         self._current_version_provider = current_version_provider
 
     async def prepare(self, request: UpdateRequest) -> PreparedUpdateWorkflow:
+        validated = await self._validate_request(request)
+        prepared_transport = await self._prepare_transport(validated)
+        return self._observe_current_version(prepared_transport)
+
+    async def _validate_request(self, request: UpdateRequest) -> ValidatedUpdateRequest:
         await validate_prerequisites(
             commands=self._commands,
             tracker=self._tracker,
             config=self._validation_config,
             request=request,
         )
-        transport_session = self._transport_sessions.for_request(request)
+        return ValidatedUpdateRequest(
+            request=request,
+            transport_session=self._transport_sessions.for_request(request),
+        )
+
+    async def _prepare_transport(
+        self,
+        validated: ValidatedUpdateRequest,
+    ) -> PreparedTransportSession:
         try:
-            await transport_session.prepare(request)
+            await validated.transport_session.prepare(validated.request)
         except UpdateTransportError:
-            await self._abort_preparation(transport_session)
+            await self._abort_preparation(validated.transport_session)
             raise
+        return PreparedTransportSession(
+            request=validated.request,
+            transport_session=validated.transport_session,
+        )
+
+    def _observe_current_version(
+        self,
+        prepared: PreparedTransportSession,
+    ) -> PreparedUpdateWorkflow:
         return PreparedUpdateWorkflow(
             current_version=self._current_version_provider(),
-            transport_session=transport_session,
+            transport_session=prepared.transport_session,
         )
 
     async def _abort_preparation(self, transport_session: UpdateTransportSession) -> None:
