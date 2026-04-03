@@ -99,7 +99,7 @@ class TestUpdateManagerAsync:
             patch("shutil.which", mock_which),
             patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
             patch(
-                "vibesensor.use_cases.updates.workflow.check_for_update",
+                "vibesensor.use_cases.updates.release_application.check_for_update",
                 side_effect=AssertionError("check_for_update should not run without privileges"),
             ),
         ):

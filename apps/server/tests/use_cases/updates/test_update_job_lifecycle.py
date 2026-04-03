@@ -109,6 +109,22 @@ async def test_cleanup_re_raises_wifi_diagnostics_bug_after_finishing_cleanup(tm
     assert manager.status.state == UpdateState.failed
 
 
+@pytest.mark.asyncio
+async def test_cleanup_skips_wifi_cleanup_for_usb_transport(tmp_path) -> None:
+    manager, _runner, _repo = setup_update_env(tmp_path)
+    manager.status.transport = UpdateTransport.usb_internet
+    manager.status.state = UpdateState.running
+    manager.status.phase = UpdatePhase.installing
+
+    with patch(
+        "vibesensor.use_cases.updates.wifi.wifi_orchestrator.parse_wifi_diagnostics",
+        side_effect=AssertionError("Wi-Fi diagnostics should not run for USB transport"),
+    ):
+        await manager._lifecycle.cleanup_after_update()
+
+    assert manager.status.finished_at is not None
+
+
 def test_handle_cancelled_cleanup_error_logs_warning(tmp_path, caplog) -> None:
     manager, _runner, _repo = setup_update_env(tmp_path)
 

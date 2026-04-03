@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.use_cases.updates.models import UpdatePhase, UsbInternetStatus
+from vibesensor.use_cases.updates.models import (
+    UpdatePhase,
+    UpdateRequest,
+    UpdateTransport,
+    UsbInternetStatus,
+)
 from vibesensor.use_cases.updates.runner import (
     CommandRunner,
     UpdateCommandExecutor,
@@ -363,6 +368,7 @@ class UpdateUsbInternetOrchestrator:
     """Validate and reuse an already-present USB internet uplink for updates."""
 
     __slots__ = ("_readiness", "_status_service", "_tracker")
+    transport = UpdateTransport.usb_internet
 
     def __init__(
         self,
@@ -379,6 +385,13 @@ class UpdateUsbInternetOrchestrator:
             tracker=tracker,
             config=config,
         )
+
+    async def prepare(self, request: UpdateRequest) -> bool:
+        """Prepare USB internet transport before release work begins."""
+
+        del request
+        self._tracker.transition(UpdatePhase.connecting_usb_internet)
+        return await self.ensure_uplink_ready()
 
     async def ensure_uplink_ready(self) -> bool:
         if isinstance(self._status_service, UsbInternetStatusService):
@@ -412,3 +425,13 @@ class UpdateUsbInternetOrchestrator:
             readiness_subject="USB internet",
             failure_message="USB internet detected, but internet/DNS is not ready",
         )
+
+    async def complete_success(self, message: str) -> bool:
+        self._tracker.mark_success(message)
+        return True
+
+    async def cleanup_after_update(self) -> None:
+        return None
+
+    async def recover_interrupted_update(self) -> None:
+        return None
