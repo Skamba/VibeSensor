@@ -14,7 +14,8 @@ from ._candidate_resolver import (
     resolve_primary_report_candidate,
 )
 from ._card_builder import build_system_cards, humanize_signatures
-from .builder import _build_report_document, build_report_document
+from .assembly import ReportDocumentAssembly, assemble_report_document
+from .builder import build_report_document
 from .sections import (
     _build_appendix_a_data,
     _build_appendix_b_data,
@@ -28,14 +29,15 @@ __all__ = [
     "PreparedReportInput",
     "PrimaryCandidateContext",
     "Report",
+    "ReportDocumentAssembly",
     "ReportDocument",
     "_build_appendix_a_data",
     "_build_appendix_b_data",
     "_build_appendix_c_data",
     "_build_appendix_d_data",
-    "_build_report_document",
     "_build_timeline_graph_data",
     "_build_verdict_page_data",
+    "assemble_report_document",
     "build_system_cards",
     "humanize_signatures",
     "build_report_document",

@@ -5,6 +5,7 @@ from __future__ import annotations
 from io import BytesIO
 from pathlib import Path
 
+import pytest
 from _report_pdf_test_helpers import (
     extract_media_box,
     sample,
@@ -24,6 +25,7 @@ from test_support.report_helpers import (
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
 
@@ -318,6 +320,11 @@ def test_report_pdf_renders_run_timeline_graph_labels() -> None:
     assert "run timeline" in page_one_text
     assert "speed" in page_one_text
     assert "detection windows" in page_one_text
+
+
+def test_report_pdf_rejects_invalid_certainty_tier_key() -> None:
+    with pytest.raises(ValueError, match="certainty_tier_key"):
+        build_report_pdf(ReportDocument(certainty_tier_key="Z"))
 
 
 def test_car_diagram_omits_sensor_labels() -> None:

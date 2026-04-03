@@ -21,6 +21,7 @@ from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
     "NormalizedReportSummary",
+    "ReportSummaryNormalizer",
     "ReportTimelineInterval",
     "has_projectable_report_payload",
     "report_summary_from_mapping",
@@ -59,6 +60,109 @@ class NormalizedReportSummary:
     timeline_intervals: tuple[ReportTimelineInterval, ...]
 
 
+class ReportSummaryNormalizer:
+    """Normalize one summary payload into the canonical report-side typed shape."""
+
+    __slots__ = ("_metadata", "_payload")
+
+    def __init__(self, payload: Mapping[str, object]) -> None:
+        self._payload = payload
+        self._metadata = self._summary_run_metadata()
+
+    def normalize(self) -> NormalizedReportSummary:
+        return NormalizedReportSummary(
+            run_id=self._summary_run_id(),
+            metadata=self._metadata,
+            report_date=self._summary_report_date(),
+            duration_s=optional_float(self._payload.get("duration_s")),
+            record_length=text_or_none(self._payload.get("record_length")),
+            start_time_utc=text_or_none(self._payload.get("start_time_utc")),
+            end_time_utc=text_or_none(self._payload.get("end_time_utc")),
+            sample_count=coerce_count(self._payload.get("rows")),
+            sensor_count=coerce_count(self._payload.get("sensor_count_used")),
+            active_sensor_locations=self._active_sensor_locations(),
+            sensor_intensity_rows=self._sensor_intensity_rows(),
+            peak_table_rows=self._peak_table_rows(),
+            timeline_intervals=self._timeline_intervals(),
+        )
+
+    def _summary_run_metadata(self) -> RunMetadata | None:
+        metadata_payload = self._payload.get("metadata")
+        if not isinstance(metadata_payload, Mapping):
+            return None
+        if not metadata_payload:
+            return None
+        top_level_run_id = text_or_none(self._payload.get("run_id"))
+        metadata_run_id = text_or_none(metadata_payload.get("run_id"))
+        if metadata_run_id is None:
+            raise ValueError("report summary metadata must include canonical nested run_id")
+        if top_level_run_id is not None and metadata_run_id != top_level_run_id:
+            raise ValueError("report summary metadata run_id must match the top-level run_id")
+        return run_metadata_from_mapping(metadata_payload)
+
+    def _summary_run_id(self) -> str:
+        raw_run_id = text_or_none(self._payload.get("run_id"))
+        if raw_run_id is not None:
+            return raw_run_id
+        if self._metadata is not None and self._metadata.run_id:
+            return self._metadata.run_id
+        return "unknown"
+
+    def _summary_report_date(self) -> str | None:
+        return text_or_none(self._payload.get("report_date")) or (
+            text_or_none(self._metadata.report_date) if self._metadata is not None else None
+        )
+
+    def _active_sensor_locations(self) -> tuple[str, ...]:
+        connected = self._payload.get("sensor_locations_connected_throughout")
+        locations = connected if isinstance(connected, list) else []
+        active = tuple(str(location).strip() for location in locations if str(location).strip())
+        if active:
+            return active
+        fallback = self._payload.get("sensor_locations")
+        fallback_locations = fallback if isinstance(fallback, list) else []
+        return tuple(
+            str(location).strip() for location in fallback_locations if str(location).strip()
+        )
+
+    def _sensor_intensity_rows(self) -> tuple[LocationIntensitySummary, ...]:
+        raw_rows = self._payload.get("sensor_intensity_by_location")
+        rows = raw_rows if isinstance(raw_rows, list) else []
+        return tuple(location_intensity_summaries_from_rows(rows))
+
+    def _peak_table_rows(self) -> tuple[PeakTableRow, ...]:
+        plots = self._payload.get("plots")
+        if not isinstance(plots, Mapping):
+            return ()
+        raw_rows = plots.get("peaks_table")
+        if not isinstance(raw_rows, list):
+            return ()
+        return tuple(cast(PeakTableRow, row) for row in raw_rows if isinstance(row, Mapping))
+
+    def _timeline_intervals(self) -> tuple[ReportTimelineInterval, ...]:
+        raw_timeline = self._payload.get("phase_timeline")
+        if not isinstance(raw_timeline, list):
+            return ()
+        intervals: list[ReportTimelineInterval] = []
+        for row in raw_timeline:
+            if not isinstance(row, Mapping):
+                continue
+            phase = text_or_none(row.get("phase"))
+            if phase is None:
+                continue
+            intervals.append(
+                ReportTimelineInterval(
+                    phase=phase,
+                    start_t_s=optional_float(row.get("start_t_s")),
+                    end_t_s=optional_float(row.get("end_t_s")),
+                    speed_min_kmh=optional_float(row.get("speed_min_kmh")),
+                    speed_max_kmh=optional_float(row.get("speed_max_kmh")),
+                    has_fault_evidence=bool(row.get("has_fault_evidence")),
+                )
+            )
+        return tuple(intervals)
+
+
 def has_projectable_report_payload(payload: Mapping[str, object]) -> bool:
     """Return whether *payload* has the minimum shape needed for report projection."""
 
@@ -79,100 +183,4 @@ def require_projectable_report_payload(payload: Mapping[str, object]) -> None:
 def report_summary_from_mapping(payload: Mapping[str, object]) -> NormalizedReportSummary:
     """Normalize one summary payload into the canonical report-side typed shape."""
 
-    typed_metadata = _summary_run_metadata(payload)
-    return NormalizedReportSummary(
-        run_id=_summary_run_id(payload, typed_metadata),
-        metadata=typed_metadata,
-        report_date=_summary_report_date(payload, typed_metadata),
-        duration_s=optional_float(payload.get("duration_s")),
-        record_length=text_or_none(payload.get("record_length")),
-        start_time_utc=text_or_none(payload.get("start_time_utc")),
-        end_time_utc=text_or_none(payload.get("end_time_utc")),
-        sample_count=coerce_count(payload.get("rows")),
-        sensor_count=coerce_count(payload.get("sensor_count_used")),
-        active_sensor_locations=_active_sensor_locations(payload),
-        sensor_intensity_rows=_sensor_intensity_rows(payload),
-        peak_table_rows=_peak_table_rows(payload),
-        timeline_intervals=_timeline_intervals(payload),
-    )
-
-
-def _summary_run_metadata(payload: Mapping[str, object]) -> RunMetadata | None:
-    metadata_payload = payload.get("metadata")
-    if not isinstance(metadata_payload, Mapping):
-        return None
-    if not metadata_payload:
-        return None
-    top_level_run_id = text_or_none(payload.get("run_id"))
-    metadata_run_id = text_or_none(metadata_payload.get("run_id"))
-    if metadata_run_id is None:
-        raise ValueError("report summary metadata must include canonical nested run_id")
-    if top_level_run_id is not None and metadata_run_id != top_level_run_id:
-        raise ValueError("report summary metadata run_id must match the top-level run_id")
-    return run_metadata_from_mapping(metadata_payload)
-
-
-def _summary_run_id(payload: Mapping[str, object], metadata: RunMetadata | None) -> str:
-    raw_run_id = text_or_none(payload.get("run_id"))
-    if raw_run_id is not None:
-        return raw_run_id
-    if metadata is not None and metadata.run_id:
-        return metadata.run_id
-    return "unknown"
-
-
-def _summary_report_date(payload: Mapping[str, object], metadata: RunMetadata | None) -> str | None:
-    return text_or_none(payload.get("report_date")) or (
-        text_or_none(metadata.report_date) if metadata is not None else None
-    )
-
-
-def _active_sensor_locations(payload: Mapping[str, object]) -> tuple[str, ...]:
-    connected = payload.get("sensor_locations_connected_throughout")
-    locations = connected if isinstance(connected, list) else []
-    active = tuple(str(location).strip() for location in locations if str(location).strip())
-    if active:
-        return active
-    fallback = payload.get("sensor_locations")
-    fallback_locations = fallback if isinstance(fallback, list) else []
-    return tuple(str(location).strip() for location in fallback_locations if str(location).strip())
-
-
-def _sensor_intensity_rows(payload: Mapping[str, object]) -> tuple[LocationIntensitySummary, ...]:
-    raw_rows = payload.get("sensor_intensity_by_location")
-    rows = raw_rows if isinstance(raw_rows, list) else []
-    return tuple(location_intensity_summaries_from_rows(rows))
-
-
-def _peak_table_rows(payload: Mapping[str, object]) -> tuple[PeakTableRow, ...]:
-    plots = payload.get("plots")
-    if not isinstance(plots, Mapping):
-        return ()
-    raw_rows = plots.get("peaks_table")
-    if not isinstance(raw_rows, list):
-        return ()
-    return tuple(cast(PeakTableRow, row) for row in raw_rows if isinstance(row, Mapping))
-
-
-def _timeline_intervals(payload: Mapping[str, object]) -> tuple[ReportTimelineInterval, ...]:
-    raw_timeline = payload.get("phase_timeline")
-    if not isinstance(raw_timeline, list):
-        return ()
-    intervals: list[ReportTimelineInterval] = []
-    for row in raw_timeline:
-        if not isinstance(row, Mapping):
-            continue
-        phase = text_or_none(row.get("phase"))
-        if phase is None:
-            continue
-        intervals.append(
-            ReportTimelineInterval(
-                phase=phase,
-                start_t_s=optional_float(row.get("start_t_s")),
-                end_t_s=optional_float(row.get("end_t_s")),
-                speed_min_kmh=optional_float(row.get("speed_min_kmh")),
-                speed_max_kmh=optional_float(row.get("speed_max_kmh")),
-                has_fault_evidence=bool(row.get("has_fault_evidence")),
-            )
-        )
-    return tuple(intervals)
+    return ReportSummaryNormalizer(payload).normalize()
