@@ -217,7 +217,6 @@ class _FakeGPSMonitor:
             last_error=None,
             last_raw_response=None,
             reconnect_delay_s=None,
-            debug_hint=None,
         )
 
 

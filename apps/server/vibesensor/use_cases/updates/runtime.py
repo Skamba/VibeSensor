@@ -16,11 +16,15 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
 from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
+from vibesensor.use_cases.updates.release_installation import (
+    UpdateReleaseInstallationCoordinator,
+)
 from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
+from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
     UpdateStatusController,
@@ -60,6 +64,7 @@ class UpdateManagerRuntime:
     workflow_runner: UpdateWorkflowRunner
     usb_status_service: UsbInternetStatusReader
     transport_sessions: UpdateTransportSessions
+    startup_recovery: UpdateStartupRecoveryCoordinator
     workflow: UpdateWorkflow
 
 
@@ -132,6 +137,12 @@ def build_update_manager_runtime(
         ),
         usb_status_service=status_service,
         transport_sessions=transport_sessions,
+        startup_recovery=UpdateStartupRecoveryCoordinator(
+            tracker=tracker,
+            status_controller=tracker.controller,
+            status_recorder=tracker.recorder,
+            transport_sessions=transport_sessions,
+        ),
         workflow=workflow,
     )
 
@@ -218,7 +229,6 @@ def _build_transport_sessions(
 def _build_release_components(
     *,
     commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
     status_controller: UpdateStatusController,
     recorder: UpdateStatusRecorder,
     config: UpdateRuntimeConfig,
@@ -241,6 +251,11 @@ def _build_release_components(
         status_recorder=recorder,
         config=config.installer_config,
     )
+    installation = UpdateReleaseInstallationCoordinator(
+        installer=installer,
+        status_controller=status_controller,
+        status_recorder=recorder,
+    )
     return (
         ServerReleaseResolver(
             status_controller=status_controller,
@@ -253,9 +268,7 @@ def _build_release_components(
             rollback_dir=config.rollback_dir,
         ),
         UpdateReleaseDeployer(
-            status_controller=status_controller,
-            status_recorder=recorder,
-            installer=installer,
+            installation=installation,
             firmware_refresher=firmware_refresher,
         ),
         firmware_refresher,
@@ -290,7 +303,6 @@ def _build_update_workflow(
         restart_scheduler,
     ) = _build_release_components(
         commands=commands,
-        tracker=tracker,
         status_controller=status_controller,
         recorder=recorder,
         config=config,
