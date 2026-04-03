@@ -1,4 +1,4 @@
-"""Public updater facade over the updater runtime composition."""
+"""Public updater facade over a prebuilt updater runtime."""
 
 from __future__ import annotations
 
@@ -12,10 +12,7 @@ from vibesensor.use_cases.updates.models import (
     UsbInternetStatus,
     validate_update_request,
 )
-from vibesensor.use_cases.updates.runner import CommandRunner
-from vibesensor.use_cases.updates.runtime import build_update_manager_runtime
-from vibesensor.use_cases.updates.status import UpdateStateStore
-from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
+from vibesensor.use_cases.updates.runtime import UpdateManagerRuntime
 
 UPDATE_TIMEOUT_S = 600
 
@@ -26,23 +23,9 @@ class UpdateManager:
     def __init__(
         self,
         *,
-        runner: CommandRunner | None = None,
-        repo_path: str | None = None,
-        ap_con_name: str = "VibeSensor-AP",
-        wifi_ifname: str = "wlan0",
-        rollback_dir: str | None = None,
-        state_store: UpdateStateStore | None = None,
-        usb_internet_service: UsbInternetStatusReader | None = None,
+        runtime: UpdateManagerRuntime,
     ) -> None:
-        self._runtime = build_update_manager_runtime(
-            runner=runner,
-            repo_path=repo_path,
-            ap_con_name=ap_con_name,
-            wifi_ifname=wifi_ifname,
-            rollback_dir=rollback_dir,
-            state_store=state_store,
-            usb_internet_service=usb_internet_service,
-        )
+        self._runtime = runtime
 
     @property
     def status(self) -> UpdateJobStatus:

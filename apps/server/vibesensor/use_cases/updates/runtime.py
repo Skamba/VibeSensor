@@ -41,6 +41,7 @@ from vibesensor.use_cases.updates.usb_status import (
 from vibesensor.use_cases.updates.usb_transport import UpdateUsbInternetSession
 from vibesensor.use_cases.updates.validation import MIN_FREE_DISK_BYTES
 from vibesensor.use_cases.updates.wifi import UpdateWifiSession, build_default_wifi_config
+from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 
 LOGGER = logging.getLogger(__name__)
@@ -62,6 +63,21 @@ class UpdateManagerRuntime:
     coordinator_factory: Callable[[], UpdateCoordinator]
 
 
+@dataclass(frozen=True, slots=True)
+class UpdateRuntimeConfig:
+    repo: Path
+    rollback_dir: Path
+    wifi_config: UpdateWifiConfig
+    installer_config: UpdateInstallerConfig
+    validation_config: UpdateValidationConfig
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateTransportRuntime:
+    usb_status_service: UsbInternetStatusReader
+    build_sessions: Callable[[UpdateCommandExecutor | None], UpdateTransportSessions]
+
+
 def build_update_manager_runtime(
     *,
     runner: CommandRunner | None = None,
@@ -73,44 +89,118 @@ def build_update_manager_runtime(
     usb_internet_service: UsbInternetStatusReader | None = None,
 ) -> UpdateManagerRuntime:
     active_runner = runner or CommandRunner()
+    config = _resolve_runtime_config(
+        repo_path=repo_path,
+        rollback_dir=rollback_dir,
+        ap_con_name=ap_con_name,
+        wifi_ifname=wifi_ifname,
+    )
+    active_state_store = state_store or UpdateStateStore()
+    tracker = _build_status_tracker(
+        repo=config.repo,
+        state_store=active_state_store,
+    )
+    executor = UpdateJobExecutor(task_name="system-update")
+    transport_runtime = _build_transport_runtime(
+        runner=active_runner,
+        tracker=tracker,
+        wifi_config=config.wifi_config,
+        usb_internet_service=usb_internet_service,
+    )
+    coordinator_factory = _build_coordinator_factory(
+        runner=active_runner,
+        tracker=tracker,
+        config=config,
+        transport_runtime=transport_runtime,
+    )
+    lifecycle = _build_lifecycle(
+        tracker=tracker,
+        repo=config.repo,
+        transport_runtime=transport_runtime,
+        runner=active_runner,
+    )
+    recovery = _build_recovery(
+        tracker=tracker,
+        transport_runtime=transport_runtime,
+        runner=active_runner,
+    )
+    return UpdateManagerRuntime(
+        tracker=tracker,
+        executor=executor,
+        lifecycle=lifecycle,
+        recovery=recovery,
+        usb_status_service=transport_runtime.usb_status_service,
+        coordinator_factory=coordinator_factory,
+    )
+
+
+def _resolve_runtime_config(
+    *,
+    repo_path: str | None,
+    rollback_dir: str | None,
+    ap_con_name: str,
+    wifi_ifname: str,
+) -> UpdateRuntimeConfig:
     repo = Path(repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor"))
+    resolved_rollback_dir = Path(
+        rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR),
+    )
     wifi_config = build_default_wifi_config(
         ap_con_name=ap_con_name,
         wifi_ifname=wifi_ifname,
     )
-    resolved_rollback_dir = Path(
-        rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR),
+    return UpdateRuntimeConfig(
+        repo=repo,
+        rollback_dir=resolved_rollback_dir,
+        wifi_config=wifi_config,
+        installer_config=UpdateInstallerConfig(
+            repo=repo,
+            rollback_dir=resolved_rollback_dir,
+            reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
+        ),
+        validation_config=UpdateValidationConfig(
+            rollback_dir=resolved_rollback_dir,
+            min_free_disk_bytes=MIN_FREE_DISK_BYTES,
+        ),
     )
-    active_state_store = state_store or UpdateStateStore()
-    loaded = active_state_store.load()
+
+
+def _build_status_tracker(
+    *,
+    repo: Path,
+    state_store: UpdateStateStore,
+) -> UpdateStatusTracker:
+    loaded = state_store.load()
     tracker = UpdateStatusTracker(
-        state_store=active_state_store,
+        state_store=state_store,
         status=loaded if loaded is not None else UpdateJobStatus(),
     )
     tracker.set_runtime(collect_runtime_details(repo))
-    executor = UpdateJobExecutor(task_name="system-update")
-    status_service = usb_internet_service or UsbInternetStatusService(
-        runner=active_runner,
-    )
+    return tracker
 
-    installer_config = UpdateInstallerConfig(
-        repo=repo,
-        rollback_dir=resolved_rollback_dir,
-        reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
-    )
-    validation_config = UpdateValidationConfig(
-        rollback_dir=resolved_rollback_dir,
-        min_free_disk_bytes=MIN_FREE_DISK_BYTES,
-    )
 
-    def build_command_executor() -> UpdateCommandExecutor:
-        return UpdateCommandExecutor(runner=active_runner, tracker=tracker)
+def _build_command_executor(
+    *,
+    runner: CommandRunner,
+    tracker: UpdateStatusTracker,
+) -> UpdateCommandExecutor:
+    return UpdateCommandExecutor(runner=runner, tracker=tracker)
 
-    def build_transport_sessions(
-        *,
-        commands: UpdateCommandExecutor | None = None,
-    ) -> UpdateTransportSessions:
-        active_commands = commands or build_command_executor()
+
+def _build_transport_runtime(
+    *,
+    runner: CommandRunner,
+    tracker: UpdateStatusTracker,
+    wifi_config: UpdateWifiConfig,
+    usb_internet_service: UsbInternetStatusReader | None,
+) -> UpdateTransportRuntime:
+    status_service = usb_internet_service or UsbInternetStatusService(runner=runner)
+
+    def build_sessions(commands: UpdateCommandExecutor | None = None) -> UpdateTransportSessions:
+        active_commands = commands or _build_command_executor(
+            runner=runner,
+            tracker=tracker,
+        )
         return UpdateTransportSessions(
             wifi=UpdateWifiSession(
                 commands=active_commands,
@@ -125,71 +215,91 @@ def build_update_manager_runtime(
             ),
         )
 
-    def build_release_components(
-        commands: UpdateCommandExecutor,
-    ) -> tuple[
-        ServerReleaseResolver,
-        ServerReleaseStager,
-        UpdateReleaseDeployer,
-        FirmwareRefresher,
-        UpdateRestartScheduler,
-    ]:
-        firmware_refresher = FirmwareRefresher(
+    return UpdateTransportRuntime(
+        usb_status_service=status_service,
+        build_sessions=build_sessions,
+    )
+
+
+def _build_release_components(
+    *,
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateRuntimeConfig,
+) -> tuple[
+    ServerReleaseResolver,
+    ServerReleaseStager,
+    UpdateReleaseDeployer,
+    FirmwareRefresher,
+    UpdateRestartScheduler,
+]:
+    firmware_refresher = FirmwareRefresher(
+        commands=commands,
+        tracker=tracker,
+        repo=config.repo,
+        timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
+    )
+    installer = UpdateInstaller(
+        commands=commands,
+        tracker=tracker,
+        config=config.installer_config,
+    )
+    return (
+        ServerReleaseResolver(
+            tracker=tracker,
+            rollback_dir=config.rollback_dir,
+        ),
+        ServerReleaseStager(
+            tracker=tracker,
+            rollback_dir=config.rollback_dir,
+        ),
+        UpdateReleaseDeployer(
+            tracker=tracker,
+            installer=installer,
+            firmware_refresher=firmware_refresher,
+        ),
+        firmware_refresher,
+        UpdateRestartScheduler(
             commands=commands,
             tracker=tracker,
-            repo=repo,
-            timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
-        )
-        installer = UpdateInstaller(
-            commands=commands,
-            tracker=tracker,
-            config=installer_config,
-        )
-        return (
-            ServerReleaseResolver(
-                tracker=tracker,
-                rollback_dir=resolved_rollback_dir,
-            ),
-            ServerReleaseStager(
-                tracker=tracker,
-                rollback_dir=resolved_rollback_dir,
-            ),
-            UpdateReleaseDeployer(
-                tracker=tracker,
-                installer=installer,
-                firmware_refresher=firmware_refresher,
-            ),
-            firmware_refresher,
-            UpdateRestartScheduler(
-                commands=commands,
-                tracker=tracker,
-                service_name=UPDATE_SERVICE_NAME,
-                restart_unit=UPDATE_RESTART_UNIT,
-            ),
-        )
+            service_name=UPDATE_SERVICE_NAME,
+            restart_unit=UPDATE_RESTART_UNIT,
+        ),
+    )
+
+
+def _build_coordinator_factory(
+    *,
+    runner: CommandRunner,
+    tracker: UpdateStatusTracker,
+    config: UpdateRuntimeConfig,
+    transport_runtime: UpdateTransportRuntime,
+) -> Callable[[], UpdateCoordinator]:
+    def current_version_provider() -> str:
+        from vibesensor import __version__ as current_version
+
+        return current_version
 
     def build_coordinator() -> UpdateCoordinator:
-        commands = build_command_executor()
-        transport_sessions = build_transport_sessions(commands=commands)
+        commands = _build_command_executor(runner=runner, tracker=tracker)
+        transport_sessions = transport_runtime.build_sessions(commands)
         (
             resolver,
             stager,
             deployer,
             firmware_refresher,
             restart_scheduler,
-        ) = build_release_components(commands)
-
-        def current_version_provider() -> str:
-            from vibesensor import __version__ as current_version
-
-            return current_version
-
+        ) = _build_release_components(
+            commands=commands,
+            tracker=tracker,
+            config=config,
+        )
         return UpdateCoordinator(
             preparation=UpdatePreparationCoordinator(
                 tracker=tracker,
                 commands=commands,
                 transport_controller=UpdateTransportController(sessions=transport_sessions),
-                validation_config=validation_config,
+                validation_config=config.validation_config,
                 current_version_provider=current_version_provider,
             ),
             release_planner=UpdateReleasePlanner(
@@ -207,24 +317,38 @@ def build_update_manager_runtime(
             ),
         )
 
-    lifecycle = UpdateJobLifecycleHandler(
+    return build_coordinator
+
+
+def _build_lifecycle(
+    *,
+    tracker: UpdateStatusTracker,
+    repo: Path,
+    transport_runtime: UpdateTransportRuntime,
+    runner: CommandRunner,
+) -> UpdateJobLifecycleHandler:
+    return UpdateJobLifecycleHandler(
         tracker=tracker,
         cleanup=UpdateCleanupCoordinator(
             tracker=tracker,
             repo=repo,
-            transport_sessions_factory=lambda: build_transport_sessions(),
+            transport_sessions_factory=lambda: transport_runtime.build_sessions(
+                _build_command_executor(runner=runner, tracker=tracker)
+            ),
             logger=LOGGER,
         ),
     )
-    recovery = InterruptedUpdateRecovery(
+
+
+def _build_recovery(
+    *,
+    tracker: UpdateStatusTracker,
+    transport_runtime: UpdateTransportRuntime,
+    runner: CommandRunner,
+) -> InterruptedUpdateRecovery:
+    return InterruptedUpdateRecovery(
         tracker=tracker,
-        transport_sessions_factory=lambda: build_transport_sessions(),
-    )
-    return UpdateManagerRuntime(
-        tracker=tracker,
-        executor=executor,
-        lifecycle=lifecycle,
-        recovery=recovery,
-        usb_status_service=status_service,
-        coordinator_factory=build_coordinator,
+        transport_sessions_factory=lambda: transport_runtime.build_sessions(
+            _build_command_executor(runner=runner, tracker=tracker)
+        ),
     )

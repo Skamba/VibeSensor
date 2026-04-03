@@ -22,6 +22,7 @@ from vibesensor.adapters.http.dependencies import (
     TelemetryDeps,
     UpdateDeps,
 )
+from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
 from vibesensor.domain import RunStatus
 from vibesensor.infra.runtime import RuntimeHealthState
 from vibesensor.shared.boundaries.run_metadata_codec import (
@@ -40,13 +41,12 @@ from vibesensor.use_cases.history.reports import HistoryReportService, PdfRender
 from vibesensor.use_cases.history.runs import HistoryRunService
 
 
-def _real_pdf_renderer(document: object) -> bytes:
+def _real_pdf_renderer(prepared: object) -> bytes:
     """Default test renderer wiring the real adapter pipeline."""
-    from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-    from vibesensor.shared.boundaries.reporting.document import ReportDocument
+    from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 
-    assert isinstance(document, ReportDocument)
-    return build_report_pdf(document)
+    assert isinstance(prepared, PreparedReportInput)
+    return build_prepared_report_pdf(prepared)
 
 
 def make_metadata(**overrides: Any) -> dict[str, Any]:
