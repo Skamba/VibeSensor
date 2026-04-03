@@ -186,7 +186,10 @@ class TestReportCliErrorHandling:
         run_file.write_text('{"event": "meta"}\n')
 
         with (
-            patch("vibesensor.cli.report.summarize_log", return_value={"some": "summary"}),
+            patch(
+                "vibesensor.cli.report.summarize_log",
+                return_value={"run_id": "cli-report", "findings": [], "top_causes": []},
+            ),
             patch(
                 "vibesensor.cli.report.build_report_pdf",
                 side_effect=RuntimeError("PDF engine failed"),
@@ -205,7 +208,10 @@ class TestReportCliErrorHandling:
         run_file.write_text('{"event": "meta"}\n')
 
         with (
-            patch("vibesensor.cli.report.summarize_log", return_value={"some": "summary"}),
+            patch(
+                "vibesensor.cli.report.summarize_log",
+                return_value={"run_id": "cli-report", "findings": [], "top_causes": []},
+            ),
             patch("vibesensor.cli.report.build_report_pdf", return_value=b"%PDF-1.4 fake"),
             patch("vibesensor.cli.report.map_summary", return_value={}),
             patch(
