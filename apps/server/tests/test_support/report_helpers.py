@@ -61,6 +61,7 @@ def minimal_summary(**overrides: Any) -> dict:
     Callers can override or extend any key via keyword arguments.
     """
     base: dict = {
+        "run_id": "run-01",
         "metadata": {},
         "report_date": "",
         "record_length": "",
@@ -80,6 +81,12 @@ def minimal_summary(**overrides: Any) -> dict:
         "plots": {},
     }
     base.update(overrides)
+    raw_metadata = base.get("metadata")
+    raw_run_id = str(base.get("run_id") or "").strip()
+    if isinstance(raw_metadata, dict) and raw_metadata and raw_run_id:
+        metadata = dict(raw_metadata)
+        metadata.setdefault("run_id", raw_run_id)
+        base["metadata"] = metadata
     return base
 
 

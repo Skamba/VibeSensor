@@ -12,6 +12,7 @@ def test_build_report_renderer_payload_cleans_metadata_and_date() -> None:
     payload = {
         "run_id": "run-123",
         "metadata": {
+            "run_id": "run-123",
             "active_car_snapshot": {
                 "name": "  Track Car  ",
                 "type": " coupe ",
@@ -95,7 +96,10 @@ def test_build_report_renderer_payload_drops_invalid_recorded_offset() -> None:
     renderer_payload = build_report_renderer_payload(
         {
             "run_id": "bad-offset",
-            "metadata": {"recorded_utc_offset_seconds": "bad"},
+            "metadata": {
+                "run_id": "bad-offset",
+                "recorded_utc_offset_seconds": "bad",
+            },
         },
     )
 

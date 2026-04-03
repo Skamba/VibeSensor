@@ -5,11 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from vibesensor.shared.boundaries.report_payload_projection import (
-    coerce_count,
-    peak_table_rows,
-    report_duration_s,
-    summary_run_metadata,
+from vibesensor.shared.boundaries.report_summary_codec import (
+    report_summary_from_mapping,
 )
 from vibesensor.shared.types.analysis_views import PeakTableRow
 
@@ -38,32 +35,18 @@ def build_report_renderer_payload(
     payload: Mapping[str, object],
 ) -> PreparedReportRendererPayload:
     """Return the normalized renderer-edge payload derived from a report summary."""
-    raw_run_id = str(payload.get("run_id") or "").strip()
-    typed_metadata = summary_run_metadata(payload)
-    rows = payload.get("rows")
-    sample_count = coerce_count(rows)
-    sensor_count_raw = payload.get("sensor_count_used")
-    sensor_count = coerce_count(sensor_count_raw)
-    report_date_str = _normalized_report_date(payload.get("report_date"))
-    if report_date_str is None and typed_metadata is not None:
-        report_date_str = _normalized_report_date(typed_metadata.report_date)
+    summary = report_summary_from_mapping(payload)
+    typed_metadata = summary.metadata
     return PreparedReportRendererPayload(
-        run_id=raw_run_id or (typed_metadata.run_id if typed_metadata is not None else "unknown"),
+        run_id=summary.run_id,
         car_name=typed_metadata.car_name if typed_metadata is not None else None,
         car_type=typed_metadata.car_type if typed_metadata is not None else None,
-        report_date=report_date_str,
-        duration_s=report_duration_s(payload),
-        sample_count=sample_count,
-        sensor_count=sensor_count,
-        peak_table_rows=peak_table_rows(payload),
+        report_date=summary.report_date,
+        duration_s=summary.duration_s,
+        sample_count=summary.sample_count,
+        sensor_count=summary.sensor_count,
+        peak_table_rows=summary.peak_table_rows,
         recorded_utc_offset_seconds=(
             typed_metadata.recorded_utc_offset_seconds if typed_metadata is not None else None
         ),
     )
-
-
-def _normalized_report_date(value: object) -> str | None:
-    if not isinstance(value, str):
-        return None
-    normalized_report_date = value.strip()
-    return normalized_report_date or None
