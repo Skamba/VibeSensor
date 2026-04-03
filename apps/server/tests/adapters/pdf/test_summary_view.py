@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from vibesensor.adapters.pdf.assembly import prepare_report_input
-from vibesensor.adapters.pdf.report_context import prepare_report_mapping_context
 from vibesensor.domain import (
     Finding,
     LocationHotspot,
@@ -273,15 +272,15 @@ class TestSummaryHelpers:
         prepared = prepare_report_input(_minimal_summary())
         assert prepared.domain_test_run is not None
         assert prepared.report_facts is not None
-        ctx = prepare_report_mapping_context(prepared)
-        assert ctx.sensor_locations_active == ["front_left"]
+        assert prepared.summary.active_sensor_locations == ("front_left",)
+        assert prepared.report_facts.sensor_locations_active == ("front_left",)
 
     def test_sensor_locations_active_fallback(self) -> None:
         prepared = prepare_report_input(_minimal_summary(sensor_locations_connected_throughout=[]))
         assert prepared.domain_test_run is not None
         assert prepared.report_facts is not None
-        ctx = prepare_report_mapping_context(prepared)
-        assert "front_left" in ctx.sensor_locations_active
+        assert "front_left" in prepared.summary.active_sensor_locations
+        assert "front_left" in prepared.report_facts.sensor_locations_active
 
     def test_boundary_test_plan_payload_projects_semantic_action_fields(self) -> None:
         projected = step_payloads_from_plan(

@@ -76,11 +76,10 @@ class UpdateManager:
 
     async def _run_update(
         self,
-        request_or_ssid: UpdateRequest | str,
-        password: str | None = None,
+        request: UpdateRequest,
     ) -> None:
         await self._runtime.executor.run(
-            workflow_factory=lambda: self._run_update_inner(request_or_ssid, password),
+            workflow_factory=lambda: self._runtime.coordinator_factory().execute(request),
             timeout_s=UPDATE_TIMEOUT_S,
             on_timeout=lambda: self._runtime.lifecycle.handle_timeout(UPDATE_TIMEOUT_S),
             on_cancelled=self._runtime.lifecycle.handle_cancelled,
@@ -88,20 +87,3 @@ class UpdateManager:
             cleanup=self._runtime.lifecycle.cleanup_after_update,
             on_cleanup_error=self._runtime.lifecycle.handle_cleanup_error,
         )
-
-    async def _run_update_inner(
-        self,
-        request_or_ssid: UpdateRequest | str,
-        password: str | None = None,
-    ) -> None:
-        request = (
-            request_or_ssid
-            if isinstance(request_or_ssid, UpdateRequest)
-            else UpdateRequest(
-                transport=UpdateTransport.wifi,
-                ssid=request_or_ssid,
-                password=password or "",
-            )
-        )
-        operation = self._runtime.operation_factory()
-        await operation.execute(request)

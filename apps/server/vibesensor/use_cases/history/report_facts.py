@@ -17,9 +17,7 @@ from vibesensor.shared.boundaries.reporting.projection import (
     resolve_report_origin,
     tire_spec_text,
 )
-from vibesensor.shared.boundaries.reporting.summary_codec import (
-    report_summary_from_mapping,
-)
+from vibesensor.shared.boundaries.reporting.summary_codec import NormalizedReportSummary
 from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.use_cases.history.report_display_mapping import prepare_report_display_facts
@@ -34,12 +32,12 @@ from vibesensor.use_cases.history.report_fact_decisions import (
 def prepare_report_facts(
     payload: Mapping[str, object],
     *,
+    summary: NormalizedReportSummary,
     test_run: TestRun,
     language: str | None = None,
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportFacts:
     """Resolve semantic report facts shared by downstream PDF mapping."""
-    summary = report_summary_from_mapping(payload)
     prepared_language = str(normalize_lang(language or payload.get("lang")))
     sensor_locations_active = summary.active_sensor_locations
     origin = resolve_report_origin(test_run)

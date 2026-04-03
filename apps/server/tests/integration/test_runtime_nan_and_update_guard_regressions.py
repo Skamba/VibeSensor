@@ -187,15 +187,13 @@ class TestUpdateManagerCancelledError:
             tracker=tracker,
             executor=executor,
             lifecycle=lifecycle,
+            coordinator_factory=lambda: SimpleNamespace(
+                execute=AsyncMock(side_effect=asyncio.CancelledError()),
+            ),
         )
 
-        async def mock_inner(ssid, password):
-            raise asyncio.CancelledError()
-
-        mgr._run_update_inner = mock_inner
-
         with pytest.raises(asyncio.CancelledError):
-            await mgr._run_update("ssid", "pass")
+            await mgr._run_update(SimpleNamespace())
 
 
 # ── 7. dir_sha256 uses separators ────────────────────────────────────────

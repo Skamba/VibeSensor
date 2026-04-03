@@ -1,8 +1,8 @@
 """Focused builder for ReportTemplateData field mapping.
 
-Owns the mapping from resolved report sections and context into a
-``ReportTemplateData`` instance.  Keeps the mapping explicit and testable
-while the orchestration layer (``mapping.py``) handles section resolution.
+Owns the mapping from resolved report sections and prepared report inputs into
+``ReportTemplateData``. Keeps the field assignment explicit and testable while
+the orchestration layer handles section resolution.
 """
 
 from __future__ import annotations
@@ -23,14 +23,17 @@ from vibesensor.adapters.pdf.models import (
     SystemFindingCard,
     VerdictPageData,
 )
-from vibesensor.adapters.pdf.report_context import ReportMappingContext
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
+from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
 
 
 def build_template_data(
     *,
-    context: ReportMappingContext,
+    prepared: PreparedReportInput,
     report: Report,
+    report_date_text: str,
+    report_start_time_utc: str | None,
+    report_end_time_utc: str | None,
     primary: PrimaryCandidateContext,
     title: str,
     observed: PatternEvidence,
@@ -55,22 +58,26 @@ def build_template_data(
     before this function is called.  This builder only performs field
     assignment and simple fallback defaults so it stays easily testable.
     """
+    report_facts = prepared.report_facts
+    summary_metadata = prepared.summary.metadata
     return ReportTemplateData(
         title=title,
-        run_datetime=context.date_str,
+        run_datetime=report_date_text,
         run_id=report.run_id,
-        duration_text=context.duration_text,
-        start_time_utc=context.start_time_utc,
-        end_time_utc=context.end_time_utc,
-        sample_rate_hz=context.sample_rate_hz,
-        tire_spec_text=context.tire_spec_text,
-        sample_count=context.sample_count,
+        duration_text=report_facts.duration_text,
+        start_time_utc=report_start_time_utc,
+        end_time_utc=report_end_time_utc,
+        sample_rate_hz=report_facts.sample_rate_hz,
+        tire_spec_text=report_facts.tire_spec_text,
+        sample_count=report_facts.sample_count,
         sensor_count=primary.sensor_count,
-        sensor_locations=context.sensor_locations_active,
-        sensor_model=context.sensor_model,
-        firmware_version=context.firmware_version,
-        car_name=report.car_name or context.car_name,
-        car_type=report.car_type or context.car_type,
+        sensor_locations=list(report_facts.sensor_locations_active),
+        sensor_model=report_facts.sensor_model,
+        firmware_version=report_facts.firmware_version,
+        car_name=report.car_name
+        or (summary_metadata.car_name if summary_metadata is not None else None),
+        car_type=report.car_type
+        or (summary_metadata.car_type if summary_metadata is not None else None),
         observed=observed,
         system_cards=system_cards,
         next_steps=next_steps,

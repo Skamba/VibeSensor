@@ -9,10 +9,8 @@ from .contracts import (
     PreparedReportDisplayFacts,
     PreparedReportFacts,
     PreparedReportInput,
-    PreparedReportRendererPayload,
     PreparedVerdictDisplay,
     ReportCoverageSummary,
-    build_report_renderer_payload,
 )
 from .payload_gate import has_projectable_report_payload
 from .projection import (
@@ -42,12 +40,10 @@ __all__ = [
     "PreparedReportDisplayFacts",
     "PreparedReportFacts",
     "PreparedReportInput",
-    "PreparedReportRendererPayload",
     "PreparedVerdictDisplay",
     "PrimaryReportFacts",
     "ReportCoverageSummary",
     "ReportTimelineInterval",
-    "build_report_renderer_payload",
     "collect_location_intensity",
     "compute_location_hotspot_rows",
     "filter_active_sensor_intensity",

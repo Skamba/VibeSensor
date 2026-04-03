@@ -4,6 +4,7 @@ import pytest
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
+from vibesensor.shared.boundaries.reporting.summary_codec import report_summary_from_mapping
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as build_test_run_from_summary,
 )
@@ -103,12 +104,20 @@ def _weak_spatial_order_summary(*, source: str, order_label: str) -> dict[str, o
     )
 
 
-def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
-    summary = _summary()
+def _prepare_facts(summary: dict[str, object], **kwargs: object):
     test_run = build_test_run_from_summary(summary)
     assert test_run is not None
+    return prepare_report_facts(
+        summary,
+        summary=report_summary_from_mapping(summary),
+        test_run=test_run,
+        **kwargs,
+    )
 
-    facts = prepare_report_facts(summary, test_run=test_run)
+
+def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
+    summary = _summary()
+    facts = _prepare_facts(summary)
 
     assert facts.sensor_locations_active == ("front_left",)
     assert [row.location for row in facts.active_sensor_intensity] == ["front_left"]
@@ -119,12 +128,8 @@ def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
 
 def test_prepare_report_facts_keeps_canonical_warning_models() -> None:
     summary = _summary()
-    test_run = build_test_run_from_summary(summary)
-    assert test_run is not None
-
-    facts = prepare_report_facts(
+    facts = _prepare_facts(
         summary,
-        test_run=test_run,
         warnings=[
             RunContextWarning(
                 code="PERSISTED_ONLY",
@@ -159,10 +164,7 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
             "has_fault_evidence": True,
         },
     ]
-    test_run = build_test_run_from_summary(summary)
-    assert test_run is not None
-
-    facts = prepare_report_facts(summary, test_run=test_run)
+    facts = _prepare_facts(summary)
 
     assert len(facts.timeline_intervals) == 2
     assert facts.timeline_intervals[0].phase == "cruise"
@@ -173,10 +175,7 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
 
 def test_prepare_report_facts_precomputes_workflow_display_sections() -> None:
     summary = _summary()
-    test_run = build_test_run_from_summary(summary)
-    assert test_run is not None
-
-    facts = prepare_report_facts(summary, test_run=test_run)
+    facts = _prepare_facts(summary)
 
     assert facts.display.verdict.action_status
     assert facts.display.verdict.suspected_source
@@ -198,10 +197,7 @@ def test_prepare_report_facts_keeps_weak_spatial_system_order_findings_on_cautio
     order_label: str,
 ) -> None:
     summary = _weak_spatial_order_summary(source=source, order_label=order_label)
-    test_run = build_test_run_from_summary(summary)
-    assert test_run is not None
-
-    facts = prepare_report_facts(summary, test_run=test_run)
+    facts = _prepare_facts(summary)
     primary = facts.primary_candidate_facts.domain_primary
 
     assert primary is not None
@@ -213,10 +209,7 @@ def test_prepare_report_facts_keeps_weak_spatial_system_order_findings_on_cautio
 
 def test_prepare_report_facts_keeps_weak_spatial_wheel_findings_on_recapture_path() -> None:
     summary = _weak_spatial_order_summary(source="wheel/tire", order_label="1x wheel order")
-    test_run = build_test_run_from_summary(summary)
-    assert test_run is not None
-
-    facts = prepare_report_facts(summary, test_run=test_run)
+    facts = _prepare_facts(summary)
 
     assert facts.location_confidence_key == "weak"
     assert facts.action_status_key == "recapture_before_acting"
@@ -224,10 +217,7 @@ def test_prepare_report_facts_keeps_weak_spatial_wheel_findings_on_recapture_pat
 
 def test_prepare_report_facts_precomputes_recapture_display_guidance() -> None:
     summary = _weak_spatial_order_summary(source="wheel/tire", order_label="1x wheel order")
-    test_run = build_test_run_from_summary(summary)
-    assert test_run is not None
-
-    facts = prepare_report_facts(summary, test_run=test_run)
+    facts = _prepare_facts(summary)
 
     assert facts.display.appendix_a.mode == "recapture"
     assert facts.display.appendix_a.capture_issues
