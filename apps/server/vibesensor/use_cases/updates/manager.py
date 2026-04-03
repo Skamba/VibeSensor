@@ -184,7 +184,6 @@ class UpdateManager:
             repo=self._repo,
             rollback_dir=self._rollback_dir,
             reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
-            firmware_refresh_timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
         )
         self._validation_config = UpdateValidationConfig(
             rollback_dir=self._rollback_dir,
@@ -323,7 +322,7 @@ class UpdateManager:
             commands or self._build_command_executor(),
             self._tracker,
             self._repo,
-            self._installer_config.firmware_refresh_timeout_s,
+            ESP_FIRMWARE_REFRESH_TIMEOUT_S,
         )
 
     def _build_release_application(

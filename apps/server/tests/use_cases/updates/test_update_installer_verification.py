@@ -16,6 +16,7 @@ from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefre
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult
 
 
 class RecordingCommands:
@@ -119,7 +120,6 @@ def _make_installer(
             repo=repo,
             rollback_dir=tmp_path / "rollback",
             reinstall_timeout_s=30,
-            firmware_refresh_timeout_s=30,
         ),
     )
     return installer, commands, tracker
@@ -442,6 +442,47 @@ async def test_install_release_rejects_incompatible_environment_before_pip_insta
     assert not any(
         "pip install --force-reinstall --no-deps" in " ".join(call[0]) for call in commands.calls
     )
+
+
+@pytest.mark.asyncio
+async def test_wheel_install_executor_only_requests_rollback_after_mutating_failure(
+    tmp_path: Path,
+) -> None:
+    installer, commands, _tracker = _make_installer(tmp_path)
+    wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+    _build_fake_wheel(
+        wheel_path,
+        version="2025.6.15",
+        requires_dist=("missingdep>=1",),
+    )
+    commands.set_response(
+        "missingdep",
+        0,
+        (
+            '{"python_full_version":"3.14.3","marker_environment":{"python_full_version":"3.14.3",'
+            '"python_version":"3.14","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
+        ),
+        "",
+    )
+
+    compatibility_result = await installer._wheel_install_executor.install_release(
+        wheel_path,
+        "2025.6.15",
+    )
+
+    assert compatibility_result == WheelInstallResult(succeeded=False, rollback_required=False)
+
+    second_installer, second_commands, _second_tracker = _make_installer(tmp_path / "second")
+    second_wheel = tmp_path / "second" / "vibesensor-2025.6.15-py3-none-any.whl"
+    _build_fake_wheel(second_wheel, version="2025.6.15")
+    second_commands.set_response("pip install --force-reinstall --no-deps", 1, "", "install failed")
+
+    install_result = await second_installer._wheel_install_executor.install_release(
+        second_wheel,
+        "2025.6.15",
+    )
+
+    assert install_result == WheelInstallResult(succeeded=False, rollback_required=True)
 
 
 @pytest.mark.asyncio
