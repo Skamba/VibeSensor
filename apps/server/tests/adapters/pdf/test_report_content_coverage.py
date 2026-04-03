@@ -20,8 +20,8 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
-from vibesensor.adapters.pdf.models import (
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixCData,
     AppendixDData,

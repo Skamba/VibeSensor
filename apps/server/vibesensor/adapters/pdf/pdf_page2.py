@@ -5,7 +5,7 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import NextStep, ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import NextStep, ReportTemplateData
 from vibesensor.adapters.pdf.panels._panel_diagram import _draw_car_visual_panel
 from vibesensor.adapters.pdf.panels._panel_evidence import _draw_pattern_evidence
 from vibesensor.adapters.pdf.panels._panel_observations import _draw_additional_observations

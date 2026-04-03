@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-from vibesensor.adapters.pdf.models import (
+from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
+from vibesensor.shared.boundaries.reporting.document import (
     DataTrustItem,
     FindingPresentation,
     NextStep,
@@ -14,7 +14,7 @@ from vibesensor.adapters.pdf.models import (
     Report,
     SystemFindingCard,
 )
-from vibesensor.adapters.pdf.template_builder import build_template_data
+from vibesensor.use_cases.history.report_document.template_builder import build_template_data
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
 

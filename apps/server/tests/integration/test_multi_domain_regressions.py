@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.adapters.pdf.presentation import order_label_human
+from vibesensor.use_cases.history.report_document.presentation import order_label_human
 from vibesensor.domain import Finding, SpeedSourceKind, speed_bin_label
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr

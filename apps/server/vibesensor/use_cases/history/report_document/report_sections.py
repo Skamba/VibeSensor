@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 
-from vibesensor.adapters.pdf.models import DataTrustItem, NextStep
+from vibesensor.shared.boundaries.reporting.document import DataTrustItem, NextStep
 from vibesensor.domain import RecommendedAction, SuitabilityCheck
 from vibesensor.report_i18n import (
     is_body_like_location,

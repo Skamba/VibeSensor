@@ -21,8 +21,8 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.history import build_projected_run_details_json
-from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
-from vibesensor.adapters.pdf.models import ReportTemplateData
+from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
+from vibesensor.shared.boundaries.reporting.document import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary

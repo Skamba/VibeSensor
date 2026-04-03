@@ -3,13 +3,14 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding_payload
 
-from vibesensor.adapters.pdf import assembly as pdf_mapping
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_json_object,
 )
 from vibesensor.shared.boundaries.reporting import contracts as shared_report_prepared_input
+from vibesensor.shared.boundaries.reporting import document as shared_report_document
 from vibesensor.shared.boundaries.reporting import projection as shared_report_projection
 from vibesensor.shared.boundaries.reporting.contracts import PreparedReportInput
+from vibesensor.use_cases.history import report_document
 from vibesensor.use_cases.history.report_preparation import (
     prepare_persisted_report_input,
     prepare_report_input,
@@ -100,5 +101,6 @@ def test_prepare_persisted_report_input_rejects_non_projectable_payload() -> Non
         prepare_persisted_report_input(analysis)
 
 
-def test_pdf_mapping_reexports_boundary_prepared_input() -> None:
-    assert pdf_mapping.PreparedReportInput is shared_report_prepared_input.PreparedReportInput
+def test_report_document_reexports_boundary_types() -> None:
+    assert report_document.PreparedReportInput is shared_report_prepared_input.PreparedReportInput
+    assert report_document.Report is shared_report_document.Report

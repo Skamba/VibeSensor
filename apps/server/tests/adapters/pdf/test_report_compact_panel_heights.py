@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from reportlab.lib.units import mm
 
-from vibesensor.adapters.pdf.models import (
+from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixCData,
     AppendixDData,

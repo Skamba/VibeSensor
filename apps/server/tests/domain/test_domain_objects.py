@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.adapters.pdf.assembly import Report
+from vibesensor.use_cases.history.report_document import Report
 from vibesensor.domain import (
     Car,
     Finding,
@@ -283,8 +283,8 @@ class TestReport:
             r.title = "new"
 
     def test_from_summary(self) -> None:
-        from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_summary
+        from vibesensor.use_cases.history.report_document import prepare_report_input
+        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
 
         summary: dict[str, object] = {
             "run_id": "run-123",
@@ -317,8 +317,8 @@ class TestReport:
         assert r.duration_s == 125.0
 
     def test_from_summary_minimal(self) -> None:
-        from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_summary
+        from vibesensor.use_cases.history.report_document import prepare_report_input
+        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
 
         prepared = prepare_report_input({"run_id": "r1", "findings": [], "top_causes": []})
         r = build_report_from_summary(
@@ -330,8 +330,8 @@ class TestReport:
         assert r.car_name is None
 
     def test_from_summary_short_duration(self) -> None:
-        from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_summary
+        from vibesensor.use_cases.history.report_document import prepare_report_input
+        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
 
         prepared = prepare_report_input(
             {"run_id": "r1", "duration_s": 45.0, "findings": [], "top_causes": []}
@@ -533,8 +533,8 @@ class TestReportValidation:
         assert r.duration_s == 0.0
 
     def test_from_summary_empty_run_id_gets_fallback(self) -> None:
-        from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_summary
+        from vibesensor.use_cases.history.report_document import prepare_report_input
+        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
 
         prepared = prepare_report_input({"run_id": "", "findings": [], "top_causes": []})
         r = build_report_from_summary(
@@ -544,8 +544,8 @@ class TestReportValidation:
         assert r.run_id == "unknown"
 
     def test_from_summary_creates_metadata(self) -> None:
-        from vibesensor.adapters.pdf.assembly import prepare_report_input
-        from vibesensor.adapters.pdf.models import build_report_from_summary
+        from vibesensor.use_cases.history.report_document import prepare_report_input
+        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
 
         summary: dict[str, object] = {
             "run_id": "run-1",

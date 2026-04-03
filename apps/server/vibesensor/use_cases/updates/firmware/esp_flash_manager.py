@@ -316,7 +316,7 @@ class EspFlashManager:
                 error="Flash cancelled (server shutdown)",
             )
             raise
-        except Exception as exc:
+        except (OSError, ValueError) as exc:
             self._status.exit_code = 1
             self._append_log(str(exc))
             self._finalize(state=EspFlashState.failed, error=f"Flash failed: {exc}")

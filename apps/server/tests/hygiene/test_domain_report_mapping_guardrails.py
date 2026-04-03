@@ -7,7 +7,7 @@ def test_prepared_report_input_has_domain_aggregate() -> None:
     """Prepared report inputs must carry the reconstructed domain aggregate."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.assembly import prepare_report_input
+    from vibesensor.use_cases.history.report_document import prepare_report_input
     from vibesensor.domain import TestRun
 
     summary = {
@@ -32,7 +32,7 @@ def test_prepared_report_input_has_domain_aggregate() -> None:
 
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
-    from vibesensor.adapters.pdf.assembly import PrimaryCandidateContext, build_system_cards
+    from vibesensor.use_cases.history.report_document import PrimaryCandidateContext, build_system_cards
     from vibesensor.domain import Finding, RunCapture, TestRun
     from vibesensor.report_i18n import tr
 
@@ -77,7 +77,7 @@ def test_map_summary_produces_report_with_domain_findings() -> None:
     """map_summary must produce report data using domain-first pipeline."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.assembly import map_summary, prepare_report_input
+    from vibesensor.use_cases.history.report_document import map_summary, prepare_report_input
 
     summary = {
         "run_id": "test-map",
@@ -110,7 +110,7 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     """Primary-candidate resolution must derive values from the domain aggregate."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.assembly import (
+    from vibesensor.use_cases.history.report_document import (
         prepare_report_input,
         resolve_primary_report_candidate,
     )
@@ -156,7 +156,7 @@ def test_prepared_report_input_exposes_canonical_summary_boundary() -> None:
     """Prepared report inputs must expose explicit typed fields instead of raw dict state."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.assembly import prepare_report_input
+    from vibesensor.use_cases.history.report_document import prepare_report_input
 
     prepared = prepare_report_input(
         {
@@ -186,7 +186,7 @@ def test_next_steps_consume_prepared_actions() -> None:
     """``build_next_steps`` must accept prepared actions, not summary dicts."""
     from inspect import signature
 
-    from vibesensor.adapters.pdf.report_sections import build_next_steps
+    from vibesensor.use_cases.history.report_document.report_sections import build_next_steps
 
     params = signature(build_next_steps).parameters
     assert "recommended_actions" in params
@@ -195,7 +195,7 @@ def test_next_steps_consume_prepared_actions() -> None:
 
 
 def test_mapping_module_no_longer_reexports_raw_summary_report_builder() -> None:
-    import vibesensor.adapters.pdf.assembly as mapping
+    import vibesensor.use_cases.history.report_document as mapping
 
     assert not hasattr(mapping, "build_report_from_summary")
 
@@ -203,7 +203,7 @@ def test_mapping_module_no_longer_reexports_raw_summary_report_builder() -> None
 def test_mapping_section_builders_consume_prepared_display_facts() -> None:
     from inspect import signature
 
-    import vibesensor.adapters.pdf.assembly as mapping
+    import vibesensor.use_cases.history.report_document as mapping
 
     verdict_params = signature(mapping._build_verdict_page_data).parameters
     assert "verdict" in verdict_params

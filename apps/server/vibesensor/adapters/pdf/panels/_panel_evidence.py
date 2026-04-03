@@ -7,7 +7,7 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import PatternEvidence
+from vibesensor.shared.boundaries.reporting.document import PatternEvidence
 from vibesensor.adapters.pdf.pdf_drawing import (
     _cert_display,
     _draw_panel,

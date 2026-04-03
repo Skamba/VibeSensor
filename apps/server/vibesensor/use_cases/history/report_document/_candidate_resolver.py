@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.adapters.pdf.presentation import strength_label, strength_text
+from vibesensor.use_cases.history.report_document.presentation import strength_label, strength_text
 from vibesensor.domain import ConfidenceAssessment, Finding, TestRun
 from vibesensor.report_i18n import human_source
 

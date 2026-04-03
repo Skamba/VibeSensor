@@ -7,7 +7,7 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf.models import FindingPresentation, ReportTemplateData
+from vibesensor.shared.boundaries.reporting.document import FindingPresentation, ReportTemplateData
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import BMW_LENGTH_MM as _BMW_LENGTH_MM

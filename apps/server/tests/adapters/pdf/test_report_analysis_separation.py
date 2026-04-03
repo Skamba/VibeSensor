@@ -13,7 +13,7 @@ from io import BytesIO
 from _paths import SERVER_ROOT
 from pypdf import PdfReader
 
-from vibesensor.adapters.pdf.models import (
+from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     NextStep,
     PatternEvidence,

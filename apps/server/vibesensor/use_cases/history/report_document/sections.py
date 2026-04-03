@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
-from vibesensor.adapters.pdf.models import (
+from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
+from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
     AppendixCData,

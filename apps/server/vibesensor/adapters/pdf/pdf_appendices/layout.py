@@ -5,7 +5,7 @@ from __future__ import annotations
 from reportlab.lib.units import mm
 
 from vibesensor.adapters.pdf.action_cards import estimate_detailed_action_card_height
-from vibesensor.adapters.pdf.models import (
+from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     NextStep,
     ReportLabelValueRow,
