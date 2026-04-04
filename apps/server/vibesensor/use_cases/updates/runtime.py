@@ -27,11 +27,8 @@ from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRef
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
-    UpdateStatusController,
-    UpdateStatusRecorder,
-    UpdateStatusServices,
     UpdateStatusTracker,
-    build_update_status_services,
+    build_update_status_tracker,
     collect_runtime_details,
 )
 from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
@@ -84,39 +81,37 @@ def build_update_manager(
         wifi_ifname=wifi_ifname,
     )
     active_state_store = state_store or UpdateStateStore()
-    status_services = _build_status_services(
+    status = _build_status_tracker(
         repo=config.repo,
         state_store=active_state_store,
     )
     commands = _build_command_executor(
         runner=active_runner,
-        status=status_services.tracker,
+        status=status,
     )
     status_service = usb_internet_service or UsbInternetStatusService(runner=active_runner)
     transport_sessions = _build_transport_sessions(
         commands=commands,
-        status=status_services.tracker,
+        status=status,
         wifi_config=config.wifi_config,
         status_service=status_service,
     )
     transport_coordinator = UpdateTransportCoordinator(
         sessions=transport_sessions,
-        status=status_services.tracker,
+        status=status,
         logger=LOGGER,
     )
     workflow = _build_update_workflow(
         commands=commands,
-        status=status_services.tracker,
-        status_controller=status_services.controller,
-        recorder=status_services.recorder,
+        status=status,
         config=config,
         transport_coordinator=transport_coordinator,
     )
     return UpdateManager(
-        status_services=status_services,
+        status=status,
         usb_status_service=status_service,
         startup_recovery=UpdateStartupRecoveryCoordinator(
-            status=status_services.tracker,
+            status=status,
             transport_coordinator=transport_coordinator,
         ),
         workflow=workflow,
@@ -155,18 +150,18 @@ def _resolve_runtime_config(
     )
 
 
-def _build_status_services(
+def _build_status_tracker(
     *,
     repo: Path,
     state_store: UpdateStateStore,
-) -> UpdateStatusServices:
+) -> UpdateStatusTracker:
     loaded = state_store.load()
-    status_services = build_update_status_services(
+    status = build_update_status_tracker(
         state_store=state_store,
         status=loaded,
     )
-    status_services.recorder.set_runtime(collect_runtime_details(repo))
-    return status_services
+    status.set_runtime(collect_runtime_details(repo))
+    return status
 
 
 def _build_command_executor(
@@ -203,8 +198,6 @@ def _build_release_components(
     *,
     commands: UpdateCommandExecutor,
     status: UpdateStatusTracker,
-    status_controller: UpdateStatusController,
-    recorder: UpdateStatusRecorder,
     config: UpdateRuntimeConfig,
 ) -> tuple[
     ServerReleaseResolver,
@@ -215,14 +208,13 @@ def _build_release_components(
 ]:
     firmware_refresher = FirmwareRefresher(
         commands=commands,
-        status_recorder=recorder,
+        status=status,
         repo=config.repo,
         timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
     )
     installer = UpdateInstaller(
         commands=commands,
-        status_controller=status_controller,
-        status_recorder=recorder,
+        status=status,
         config=config.installer_config,
     )
     installation = UpdateReleaseInstallationCoordinator(
@@ -245,7 +237,7 @@ def _build_release_components(
         firmware_refresher,
         UpdateRestartScheduler(
             commands=commands,
-            status_recorder=recorder,
+            status=status,
             service_name=UPDATE_SERVICE_NAME,
             restart_unit=UPDATE_RESTART_UNIT,
         ),
@@ -256,8 +248,6 @@ def _build_update_workflow(
     *,
     commands: UpdateCommandExecutor,
     status: UpdateStatusTracker,
-    status_controller: UpdateStatusController,
-    recorder: UpdateStatusRecorder,
     config: UpdateRuntimeConfig,
     transport_coordinator: UpdateTransportCoordinator,
 ) -> UpdateWorkflow:
@@ -275,8 +265,6 @@ def _build_update_workflow(
     ) = _build_release_components(
         commands=commands,
         status=status,
-        status_controller=status_controller,
-        recorder=recorder,
         config=config,
     )
     return UpdateWorkflow(

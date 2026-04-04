@@ -15,7 +15,7 @@ async def test_schedule_uses_systemd_run_when_available(tmp_path) -> None:
     commands.run = AsyncMock(return_value=(0, "", ""))
     scheduler = UpdateRestartScheduler(
         commands=commands,
-        status_recorder=status.recorder,
+        status=status,
         service_name="vibesensor.service",
         restart_unit="vibesensor-post-update-restart",
     )
@@ -31,7 +31,7 @@ async def test_schedule_falls_back_to_direct_systemctl_restart(tmp_path) -> None
     commands.run = AsyncMock(side_effect=[(1, "", "boom"), (0, "", "")])
     scheduler = UpdateRestartScheduler(
         commands=commands,
-        status_recorder=status.recorder,
+        status=status,
         service_name="vibesensor.service",
         restart_unit="vibesensor-post-update-restart",
     )

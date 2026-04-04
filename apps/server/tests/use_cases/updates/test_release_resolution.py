@@ -15,7 +15,7 @@ from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolve
 async def test_resolve_returns_release_without_latest_tag_lookup(tmp_path: Path) -> None:
     status = build_update_status_harness(tmp_path / "state.json")
     resolver = ServerReleaseResolver(
-        status=status.tracker,
+        status=status,
         rollback_dir=tmp_path / "rollback",
     )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4")
@@ -39,7 +39,7 @@ async def test_resolve_returns_release_without_latest_tag_lookup(tmp_path: Path)
 async def test_resolve_uses_latest_tag_when_no_update_is_available(tmp_path: Path) -> None:
     status = build_update_status_harness(tmp_path / "state.json")
     resolver = ServerReleaseResolver(
-        status=status.tracker,
+        status=status,
         rollback_dir=tmp_path / "rollback",
     )
     fetcher = MagicMock()
@@ -62,7 +62,7 @@ async def test_resolve_uses_latest_tag_when_no_update_is_available(tmp_path: Pat
 async def test_resolve_propagates_release_check_failure(tmp_path: Path) -> None:
     status = build_update_status_harness(tmp_path / "state.json")
     resolver = ServerReleaseResolver(
-        status=status.tracker,
+        status=status,
         rollback_dir=tmp_path / "rollback",
     )
     fetcher = MagicMock()

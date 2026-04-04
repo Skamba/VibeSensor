@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from test_support.update_status import UpdateStatusHarness, build_update_status_harness
+from test_support.update_status import build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdatePreparationError, UpdateTransportError
 from vibesensor.use_cases.updates.models import (
@@ -14,6 +14,7 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 
@@ -30,7 +31,7 @@ def _build_preparation(
     tmp_path: Path,
     *,
     current_version: str = "2026.4.3",
-) -> tuple[UpdatePreparationCoordinator, UpdateStatusHarness, AsyncMock]:
+) -> tuple[UpdatePreparationCoordinator, UpdateStatusTracker, AsyncMock]:
     status = build_update_status_harness(tmp_path / "state.json")
     transport_session = AsyncMock()
     transport_coordinator = UpdateTransportCoordinator(
@@ -38,11 +39,11 @@ def _build_preparation(
             spec=UpdateTransportSessions,
             for_request=MagicMock(return_value=transport_session),
         ),
-        status=status.tracker,
+        status=status,
         logger=MagicMock(),
     )
     preparation = UpdatePreparationCoordinator(
-        status=status.tracker,
+        status=status,
         commands=MagicMock(),
         transport_coordinator=transport_coordinator,
         validation_config=UpdateValidationConfig(

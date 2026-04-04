@@ -5,14 +5,15 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from test_support.update_status import UpdateStatusHarness, build_update_status_harness
+from test_support.update_status import build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
-def _seed_release_ready_state(tracker: UpdateStatusHarness) -> None:
+def _seed_release_ready_state(tracker: UpdateStatusTracker) -> None:
     tracker.start_job(
         UpdateRequest(
             transport=UpdateTransport.usb_internet,
@@ -26,8 +27,7 @@ def _seed_release_ready_state(tracker: UpdateStatusHarness) -> None:
 
 @pytest.mark.asyncio
 async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -> None:
-    status = build_update_status_harness(tmp_path / "state.json")
-    tracker = status.tracker
+    tracker = build_update_status_harness(tmp_path / "state.json")
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(
         status=tracker,
@@ -66,8 +66,7 @@ async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -
 
 @pytest.mark.asyncio
 async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> None:
-    status = build_update_status_harness(tmp_path / "state.json")
-    tracker = status.tracker
+    tracker = build_update_status_harness(tmp_path / "state.json")
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(
         status=tracker,

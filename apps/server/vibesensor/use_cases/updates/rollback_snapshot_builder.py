@@ -11,7 +11,7 @@ from vibesensor.use_cases.updates.rollback_snapshot import (
     RollbackSnapshotStore,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.venv_paths import reinstall_python_executable
 
 
@@ -23,20 +23,20 @@ class RollbackSnapshotBuilder:
         "_repo",
         "_rollback_dir",
         "_rollback_snapshots",
-        "_status_recorder",
+        "_status",
     )
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
         repo: Path,
         rollback_dir: Path,
         rollback_snapshots: RollbackSnapshotStore,
     ) -> None:
         self._commands = commands
-        self._status_recorder = status_recorder
+        self._status = status
         self._repo = repo
         self._rollback_dir = rollback_dir
         self._rollback_snapshots = rollback_snapshots
@@ -51,10 +51,10 @@ class RollbackSnapshotBuilder:
             expected_version=current_version,
         )
         if snapshot.metadata.version == current_version and not errors:
-            self._status_recorder.log("Reusing existing rollback snapshot wheel")
+            self._status.log("Reusing existing rollback snapshot wheel")
             return snapshot.wheel_path
         if errors:
-            self._status_recorder.log(
+            self._status.log(
                 f"Ignoring existing rollback snapshot wheel: {'; '.join(errors)}",
             )
         return None
@@ -75,11 +75,11 @@ class RollbackSnapshotBuilder:
             )
             if not errors:
                 return rollback_wheel
-            self._status_recorder.log(
+            self._status.log(
                 f"{source_label} produced unusable wheel {rollback_wheel.name}: "
                 f"{'; '.join(errors)}",
             )
-        self._status_recorder.log(
+        self._status.log(
             f"{source_label} did not produce a usable wheel for {current_version}",
         )
         return None
@@ -93,7 +93,7 @@ class RollbackSnapshotBuilder:
     ) -> Path | None:
         package_dir = self._repo / "apps" / "server"
         if not (package_dir / "pyproject.toml").is_file():
-            self._status_recorder.log(
+            self._status.log(
                 f"Local rollback wheel build skipped: {package_dir / 'pyproject.toml'} not found",
             )
             return None
@@ -114,7 +114,7 @@ class RollbackSnapshotBuilder:
             sudo=False,
         )
         if rc != 0:
-            self._status_recorder.log(
+            self._status.log(
                 "Local rollback wheel build failed "
                 f"(exit {rc}); falling back to package-index download: {stderr}",
             )
@@ -149,7 +149,7 @@ class RollbackSnapshotBuilder:
             sudo=False,
         )
         if rc != 0:
-            self._status_recorder.log(
+            self._status.log(
                 f"Package-index rollback download failed (exit {rc}): {stderr}",
             )
             return None
@@ -178,14 +178,14 @@ class RollbackSnapshotBuilder:
             )
         except OSError as exc:
             self._rollback_snapshots.rollback_snapshot_wheel(promotion)
-            self._status_recorder.add_issue(
+            self._status.add_issue(
                 "installing",
                 "Rollback metadata could not be written",
                 str(exc),
             )
             return False
         self._rollback_snapshots.commit_snapshot_wheel(promotion)
-        self._status_recorder.log(
+        self._status.log(
             "Rollback snapshot created successfully "
             f"(version={current_version}, sha256={rollback_sha256})",
         )
@@ -196,7 +196,7 @@ class RollbackSnapshotBuilder:
         venv_python = reinstall_python_executable(self._repo)
         from vibesensor import __version__ as current_version
 
-        self._status_recorder.log(f"Creating rollback snapshot (version={current_version})")
+        self._status.log(f"Creating rollback snapshot (version={current_version})")
         if existing_wheel := self._existing_snapshot_wheel(current_version=current_version):
             return self._write_rollback_snapshot(
                 rollback_wheel=existing_wheel,

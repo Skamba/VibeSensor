@@ -27,11 +27,9 @@ def _build_manager(
     tracker = MagicMock()
     tracker.status = MagicMock()
     tracker.status.state = UpdateState.running
-    services = MagicMock()
-    services.tracker = tracker
     workflow_run = AsyncMock()
     manager = UpdateManager(
-        status_services=services,
+        status=tracker,
         workflow=SimpleNamespace(run=workflow_run),
         startup_recovery=SimpleNamespace(recover=AsyncMock()),
         usb_status_service=MagicMock(),

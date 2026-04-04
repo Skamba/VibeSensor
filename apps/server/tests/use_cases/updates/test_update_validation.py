@@ -28,8 +28,7 @@ class _Commands:
 
 @pytest.mark.asyncio
 async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_path: Path) -> None:
-    status = build_update_status_harness(tmp_path / "state.json")
-    tracker = status.tracker
+    tracker = build_update_status_harness(tmp_path / "state.json")
 
     def _raise_probe(rollback_dir: Path) -> None:
         raise OSError("readonly")
