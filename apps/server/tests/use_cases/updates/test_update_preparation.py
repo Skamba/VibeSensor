@@ -12,10 +12,8 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
     UpdateValidationConfig,
 )
-from vibesensor.use_cases.updates.preparation import (
-    PreparedUpdateWorkflow,
-    UpdatePreparationCoordinator,
-)
+from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
+from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 
@@ -91,7 +89,7 @@ async def test_prepare_stops_when_transport_cannot_prepare(tmp_path: Path) -> No
 
 
 @pytest.mark.asyncio
-async def test_prepare_returns_canonical_prepared_workflow(tmp_path: Path) -> None:
+async def test_prepare_returns_canonical_prepared_run(tmp_path: Path) -> None:
     preparation, _tracker, transport_session = _build_preparation(
         tmp_path,
         current_version="2026.4.9",
@@ -105,6 +103,6 @@ async def test_prepare_returns_canonical_prepared_workflow(tmp_path: Path) -> No
     ):
         prepared = await preparation.prepare(request)
 
-    assert isinstance(prepared, PreparedUpdateWorkflow)
+    assert isinstance(prepared, PreparedUpdateRun)
     assert prepared.current_version == "2026.4.9"
-    assert prepared.transport.session is transport_session
+    assert prepared.transport_session is transport_session

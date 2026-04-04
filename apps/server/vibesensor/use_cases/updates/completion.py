@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.status import UpdateStatusRecorder
-from vibesensor.use_cases.updates.transport_coordinator import (
-    PreparedUpdateTransport,
-    UpdateTransportCoordinator,
-)
+from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
+from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
 
 __all__ = ["UpdateCompletionCoordinator"]
 
@@ -30,11 +28,14 @@ class UpdateCompletionCoordinator:
 
     async def complete(
         self,
-        transport: PreparedUpdateTransport,
+        transport_session: UpdateTransportSession,
         *,
         message: str,
     ) -> None:
-        await self._transport_coordinator.complete_success(transport, message=message)
+        await self._transport_coordinator.complete_success(
+            transport_session,
+            message=message,
+        )
         if await self._restart_scheduler.schedule():
             return
         self._status_recorder.add_issue(

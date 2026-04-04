@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
-from vibesensor.use_cases.updates.models import UpdateRequest, UpdateTransport
-from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowContext, UpdateWorkflowRunner
+from vibesensor.use_cases.updates.models import UpdateRequest, UpdateState, UpdateTransport
+from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowRunner
 
 
 def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateRequest:
@@ -23,18 +23,16 @@ def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateReq
 async def test_start_rejects_concurrent_job() -> None:
     controller = MagicMock()
     recorder = MagicMock()
-    cleanup = AsyncMock()
     runner = UpdateWorkflowRunner(
         status_controller=controller,
         status_recorder=recorder,
-        cleanup=cleanup,
         timeout_s=10.0,
     )
     request = _wifi_request()
     started = asyncio.Event()
     release = asyncio.Event()
 
-    async def running_workflow(_context: UpdateWorkflowContext) -> None:
+    async def running_workflow() -> None:
         started.set()
         await release.wait()
 
@@ -54,18 +52,16 @@ async def test_start_rejects_concurrent_job() -> None:
 
 
 @pytest.mark.asyncio
-async def test_timeout_marks_failure_and_runs_cleanup() -> None:
+async def test_timeout_marks_failure_and_finishes_lifecycle() -> None:
     controller = MagicMock()
     recorder = MagicMock()
-    cleanup = AsyncMock()
     runner = UpdateWorkflowRunner(
         status_controller=controller,
         status_recorder=recorder,
-        cleanup=cleanup,
         timeout_s=0.01,
     )
 
-    async def slow_workflow(_context: UpdateWorkflowContext) -> None:
+    async def slow_workflow() -> None:
         await asyncio.sleep(1.0)
 
     runner.start(request=_wifi_request(), workflow=slow_workflow)
@@ -76,60 +72,53 @@ async def test_timeout_marks_failure_and_runs_cleanup() -> None:
     recorder.add_issue.assert_any_call("timeout", "Update timed out after 0.01s")
     recorder.log.assert_any_call("Update timed out after 0.01s")
     controller.mark_failed.assert_called_once_with()
-    cleanup.run.assert_awaited_once_with(None)
     recorder.clear_secrets.assert_called_once_with()
     controller.finish_cleanup.assert_called_once_with()
 
 
 @pytest.mark.asyncio
-async def test_operational_cleanup_failure_adds_note_to_workflow_error() -> None:
+async def test_update_error_marks_failure_without_propagating() -> None:
     controller = MagicMock()
+    controller.status.state = UpdateState.running
     recorder = MagicMock()
-    cleanup = AsyncMock()
-    cleanup.run.side_effect = UpdateCleanupError("transport cleanup failed")
     runner = UpdateWorkflowRunner(
         status_controller=controller,
         status_recorder=recorder,
-        cleanup=cleanup,
         timeout_s=10.0,
     )
 
-    async def broken_workflow(_context: UpdateWorkflowContext) -> None:
-        raise RuntimeError("workflow bug")
+    async def broken_workflow() -> None:
+        raise UpdateError("transport failed")
 
     runner.start(request=_wifi_request(), workflow=broken_workflow)
     task = runner.job_task
     assert task is not None
+    await task
 
-    with pytest.raises(RuntimeError, match="workflow bug") as exc_info:
-        await task
-
-    assert exc_info.value.__notes__ == ["Cleanup also failed: transport cleanup failed"]
+    recorder.add_issue.assert_any_call("workflow", "transport failed")
+    controller.mark_failed.assert_called_once_with()
     recorder.clear_secrets.assert_called_once_with()
     controller.finish_cleanup.assert_called_once_with()
 
 
 @pytest.mark.asyncio
-async def test_unexpected_cleanup_bug_propagates_instead_of_being_hidden() -> None:
+async def test_cleanup_error_propagates_explicitly() -> None:
     controller = MagicMock()
     recorder = MagicMock()
-    cleanup = AsyncMock()
-    cleanup.run.side_effect = TypeError("cleanup bug")
     runner = UpdateWorkflowRunner(
         status_controller=controller,
         status_recorder=recorder,
-        cleanup=cleanup,
         timeout_s=10.0,
     )
 
-    async def broken_workflow(_context: UpdateWorkflowContext) -> None:
-        raise RuntimeError("workflow bug")
+    async def broken_workflow() -> None:
+        raise UpdateCleanupError("transport cleanup failed")
 
     runner.start(request=_wifi_request(), workflow=broken_workflow)
     task = runner.job_task
     assert task is not None
 
-    with pytest.raises(TypeError, match="cleanup bug"):
+    with pytest.raises(UpdateCleanupError, match="transport cleanup failed"):
         await task
 
     recorder.clear_secrets.assert_called_once_with()

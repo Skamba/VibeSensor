@@ -7,7 +7,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.use_cases.updates.cleanup import UpdateCleanupCoordinator
+from vibesensor.use_cases.updates.cleanup import UpdateTransportCleanupCoordinator
 from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
@@ -25,6 +25,7 @@ from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolve
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
+from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRefresher
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
@@ -123,13 +124,6 @@ def build_update_manager_runtime(
         workflow_runner=UpdateWorkflowRunner(
             status_controller=status_services.controller,
             status_recorder=status_services.recorder,
-            cleanup=UpdateCleanupCoordinator(
-                status_controller=status_services.controller,
-                status_recorder=status_services.recorder,
-                transport_coordinator=transport_coordinator,
-                repo=config.repo,
-                logger=LOGGER,
-            ),
             timeout_s=UPDATE_TIMEOUT_S,
         ),
         usb_status_service=status_service,
@@ -324,5 +318,17 @@ def _build_update_workflow(
                 status_recorder=recorder,
                 restart_scheduler=restart_scheduler,
             ),
+        ),
+        transport_cleanup=UpdateTransportCleanupCoordinator(
+            status_controller=status_controller,
+            status_recorder=recorder,
+            transport_coordinator=transport_coordinator,
+            logger=LOGGER,
+        ),
+        runtime_details_refresher=UpdateRuntimeDetailsRefresher(
+            status_controller=status_controller,
+            status_recorder=recorder,
+            repo=config.repo,
+            logger=LOGGER,
         ),
     )

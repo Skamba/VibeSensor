@@ -21,10 +21,8 @@ from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.updates.firmware.firmware_bundle import dir_sha256
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
-from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
-from vibesensor.use_cases.updates.transport_coordinator import PreparedUpdateTransport
+from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.workflow import UpdateWorkflow
-from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowContext
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
 
@@ -171,21 +169,20 @@ class TestUpdateManagerCancelledError:
         workflow = UpdateWorkflow(
             preparation=SimpleNamespace(
                 prepare=AsyncMock(
-                    return_value=PreparedUpdateWorkflow(
+                    return_value=PreparedUpdateRun(
                         current_version="2026.4.3",
-                        transport=PreparedUpdateTransport(
-                            request=MagicMock(),
-                            session=AsyncMock(),
-                        ),
+                        transport_session=AsyncMock(),
                     )
                 )
             ),
             release_planner=SimpleNamespace(plan=AsyncMock(side_effect=asyncio.CancelledError())),
             workflow_executor=MagicMock(),
+            transport_cleanup=SimpleNamespace(run=AsyncMock()),
+            runtime_details_refresher=SimpleNamespace(refresh=AsyncMock()),
         )
 
         with pytest.raises(asyncio.CancelledError):
-            await workflow.run(context=UpdateWorkflowContext(), request=MagicMock())
+            await workflow.run(request=MagicMock())
 
 
 # ── 7. dir_sha256 uses separators ────────────────────────────────────────
