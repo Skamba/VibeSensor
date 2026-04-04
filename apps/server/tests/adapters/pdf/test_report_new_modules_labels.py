@@ -7,6 +7,12 @@ import pytest
 import vibesensor.use_cases.history.report_document.peak_table as peak_table
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.shared.boundaries.reporting import FindingPresentation
+from vibesensor.shared.report_presentation import (
+    order_label_human,
+    peak_classification_text,
+    strength_label,
+    strength_text,
+)
 from vibesensor.use_cases.history.report_document.pattern_parts import (
     parts_for_pattern,
     why_parts_listed,
@@ -14,12 +20,6 @@ from vibesensor.use_cases.history.report_document.pattern_parts import (
 from vibesensor.use_cases.history.report_document.peak_table import (
     build_peak_row,
     peak_row_system_label,
-)
-from vibesensor.use_cases.history.report_document.presentation import (
-    order_label_human,
-    peak_classification_text,
-    strength_label,
-    strength_text,
 )
 from vibesensor.use_cases.history.report_document.report_sections import (
     build_data_trust,
