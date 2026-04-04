@@ -7,18 +7,19 @@ import contextlib
 import logging
 import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from typing import Protocol
 
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "build_sudo_args",
+    "CommandExecutionReporter",
+    "CommandExecutionResult",
     "CommandRunner",
     "UpdateCommandExecutor",
+    "UpdateStatusCommandReporter",
     "build_privilege_probe_args",
     "sanitize_log_line",
 ]
@@ -94,6 +95,28 @@ def sanitize_log_line(line: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+@dataclass(frozen=True, slots=True)
+class CommandExecutionResult:
+    """One completed updater command execution."""
+
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+class CommandExecutionReporter(Protocol):
+    """Observe one updater command before and after execution."""
+
+    def command_started(self, *, phase: str, args: list[str]) -> None: ...
+
+    def command_finished(
+        self,
+        *,
+        phase: str,
+        result: CommandExecutionResult,
+    ) -> None: ...
+
+
 class CommandRunner:
     """Execute shell commands.  Override for testing."""
 
@@ -143,7 +166,7 @@ class CommandRunner:
 
 
 # ---------------------------------------------------------------------------
-# Command executor (wraps runner with logging + sudo)
+# Command executor
 # ---------------------------------------------------------------------------
 
 _SENSITIVE_KEYS: frozenset[str] = frozenset(
@@ -152,19 +175,56 @@ _SENSITIVE_KEYS: frozenset[str] = frozenset(
         "psk",
         "secret",
         "key",
+        "wifi-sec.psk",
         "802-11-wireless-security.psk",
     },
 )
 
 
-class UpdateCommandExecutor:
-    """Execute commands and report logs through the canonical update status boundary."""
+class _UpdateCommandStatusSink(Protocol):
+    def log(self, message: str) -> None: ...
 
-    __slots__ = ("_runner", "_status")
+    def redacted_args(self, args: list[str], sensitive_keys: set[str]) -> list[str]: ...
 
-    def __init__(self, *, runner: CommandRunner, status: UpdateStatusTracker) -> None:
-        self._runner = runner
+
+class UpdateStatusCommandReporter:
+    """Render updater command telemetry through the canonical status sink."""
+
+    __slots__ = ("_status",)
+
+    def __init__(self, *, status: _UpdateCommandStatusSink) -> None:
         self._status = status
+
+    def command_started(self, *, phase: str, args: list[str]) -> None:
+        command = " ".join(self._status.redacted_args(args, set(_SENSITIVE_KEYS)))
+        if len(command) > 500:
+            command = f"{command[:497]}..."
+        self._status.log(f"[{phase}] $ {command or '<empty>'}")
+
+    def command_finished(self, *, phase: str, result: CommandExecutionResult) -> None:
+        stdout_s = result.stdout.strip()
+        stderr_s = result.stderr.strip()
+        if stdout_s:
+            self._status.log(f"[{phase}] stdout: {stdout_s[:500]}")
+        if stderr_s:
+            self._status.log(f"[{phase}] stderr: {stderr_s[:500]}")
+        if result.returncode != 0:
+            self._status.log(f"[{phase}] exit code: {result.returncode}")
+
+
+class UpdateCommandExecutor:
+    """Execute updater commands and optionally report telemetry through a separate reporter."""
+
+    __slots__ = ("_reporter", "_runner")
+
+    def __init__(
+        self,
+        *,
+        runner: CommandRunner,
+        reporter: CommandExecutionReporter | None = None,
+    ) -> None:
+        self._runner = runner
+        self._reporter = reporter
 
     async def run(
         self,
@@ -174,19 +234,12 @@ class UpdateCommandExecutor:
         phase: str,
         sudo: bool = False,
         env: dict[str, str] | None = None,
-    ) -> tuple[int, str, str]:
+    ) -> CommandExecutionResult:
         full_args = build_sudo_args(args) if sudo else list(args)
-        command = " ".join(self._status.redacted_args(full_args, set(_SENSITIVE_KEYS)))
-        if len(command) > 500:
-            command = f"{command[:497]}..."
-        self._status.log(f"[{phase}] $ {command or '<empty>'}")
+        if self._reporter is not None:
+            self._reporter.command_started(phase=phase, args=full_args)
         rc, stdout, stderr = await self._runner.run(full_args, timeout=timeout, env=env)
-        stdout_s = stdout.strip()
-        stderr_s = stderr.strip()
-        if stdout_s:
-            self._status.log(f"[{phase}] stdout: {stdout_s[:500]}")
-        if stderr_s:
-            self._status.log(f"[{phase}] stderr: {stderr_s[:500]}")
-        if rc != 0:
-            self._status.log(f"[{phase}] exit code: {rc}")
-        return rc, stdout, stderr
+        result = CommandExecutionResult(returncode=rc, stdout=stdout, stderr=stderr)
+        if self._reporter is not None:
+            self._reporter.command_finished(phase=phase, result=result)
+        return result

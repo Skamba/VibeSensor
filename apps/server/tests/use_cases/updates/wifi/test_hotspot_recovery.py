@@ -28,7 +28,7 @@ def _build_recovery(
         build_default_wifi_config(ap_con_name="VibeSensor-AP", wifi_ifname="wlan0"),
         hotspot_restore_delay_s=delay_s,
     )
-    commands = UpdateCommandExecutor(runner=runner, status=status)
+    commands = UpdateCommandExecutor(runner=runner)
     recovery = UpdateHotspotRecovery(
         commands=commands,
         status=status,
