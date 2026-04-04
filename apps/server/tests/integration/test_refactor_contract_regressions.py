@@ -26,12 +26,10 @@ from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_ma
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
-from vibesensor.use_cases.updates.releases.release_fetcher import (
-    GitHubAPIClient,
-    ReleaseFetcherConfig,
-    ReleaseInfo,
-    ServerReleaseFetcher,
-)
+from vibesensor.use_cases.updates.releases.github_api import GitHubApiClient
+from vibesensor.use_cases.updates.releases.models import ReleaseFetcherConfig, ReleaseInfo
+from vibesensor.use_cases.updates.releases.release_fetcher import ServerReleaseFetcher
+from vibesensor.use_cases.updates.releases.version_policy import select_update_release
 
 # ---------------------------------------------------------------------------
 # Shared constants / fixtures
@@ -187,43 +185,44 @@ class TestRunStatus:
 
 
 # ---------------------------------------------------------------------------
-# Fix 4+5: GitHubAPIClient base class
+# Fix 4+5: shared GitHub API client composition
 # ---------------------------------------------------------------------------
 
 
-class TestGitHubAPIClient:
-    """Verify shared base class works for both fetcher types."""
+class TestGitHubApiClient:
+    """Verify both updater fetchers share the same GitHub API client surface."""
 
     def test_api_headers_no_token(self) -> None:
-        client = GitHubAPIClient()
-        headers = client._api_headers()
+        client = GitHubApiClient()
+        headers = client.api_headers()
         assert "Accept" in headers
         assert "Authorization" not in headers
 
     def test_api_headers_with_token(self) -> None:
-        client = GitHubAPIClient()
-        client._github_token = "gh-token-123"
-        headers = client._api_headers()
+        client = GitHubApiClient(token="gh-token-123")
+        headers = client.api_headers()
         assert headers["Authorization"] == "Bearer gh-token-123"
 
-    def test_server_fetcher_inherits(self) -> None:
-        assert issubclass(ServerReleaseFetcher, GitHubAPIClient)
-
-    def test_firmware_fetcher_inherits(self) -> None:
-        assert issubclass(GitHubReleaseFetcher, GitHubAPIClient)
-
-    def test_api_get_validates_https(self) -> None:
-        client = GitHubAPIClient()
+    def test_build_request_validates_https(self) -> None:
+        client = GitHubApiClient()
         with pytest.raises(ValueError, match="non-HTTPS"):
-            client._api_get("http://insecure.example.com/api")
+            client.build_request("http://insecure.example.com/api")
 
     def test_server_fetcher_context(self) -> None:
-        fetcher = ServerReleaseFetcher(ReleaseFetcherConfig(server_repo="owner/repo"))
-        assert fetcher._api_context == "release"
+        client = GitHubApiClient(context="release")
+        fetcher = ServerReleaseFetcher(
+            ReleaseFetcherConfig(server_repo="owner/repo"),
+            client=client,
+        )
+        assert fetcher._client.context == "release"
 
     def test_firmware_fetcher_context(self) -> None:
-        fetcher = GitHubReleaseFetcher(FirmwareCacheConfig(cache_dir="/tmp/test"))
-        assert fetcher._api_context == "firmware"
+        client = GitHubApiClient(context="firmware")
+        fetcher = GitHubReleaseFetcher(
+            FirmwareCacheConfig(cache_dir="/tmp/test"),
+            client=client,
+        )
+        assert fetcher._client.context == "firmware"
 
 
 # ---------------------------------------------------------------------------
@@ -321,9 +320,6 @@ class TestVersionComparisonWarning:
         """When packaging cannot parse versions, a warning should be logged
         instead of silently swallowing the exception.
         """
-        config = ReleaseFetcherConfig(server_repo="owner/repo")
-        fetcher = ServerReleaseFetcher(config)
-
         fake_release = ReleaseInfo(
             tag="server-v!!!INVALID!!!",
             version="!!!INVALID!!!",
@@ -331,11 +327,11 @@ class TestVersionComparisonWarning:
             asset_url="https://api.github.com/repos/owner/repo/releases/assets/1",
         )
 
-        with (
-            patch.object(fetcher, "find_latest_release", return_value=fake_release),
-            patch("vibesensor.use_cases.updates.releases.release_fetcher.LOGGER") as mock_logger,
-        ):
-            result = fetcher.check_update_available("1.0.0")
+        with patch("vibesensor.use_cases.updates.releases.version_policy.LOGGER") as mock_logger:
+            result = select_update_release(
+                current_version="1.0.0",
+                latest_release=fake_release,
+            )
 
         # Should still return the release (treating unparseable as update)
         assert result is not None

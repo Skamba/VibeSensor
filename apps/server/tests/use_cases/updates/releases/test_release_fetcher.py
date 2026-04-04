@@ -1,24 +1,22 @@
-"""Tests for release_fetcher module."""
+"""Tests for updater server release helpers."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.use_cases.updates.releases.release_fetcher import (
+from vibesensor.use_cases.updates.releases.github_api import GitHubApiClient, validate_https_url
+from vibesensor.use_cases.updates.releases.models import (
     GitHubRelease,
     GitHubReleaseAsset,
     ReleaseFetcherConfig,
     ReleaseInfo,
-    ServerReleaseFetcher,
-    validate_https_url,
+    resolve_release_fetcher_config,
 )
-
-# ---------------------------------------------------------------------------
-# URL validation
-# ---------------------------------------------------------------------------
+from vibesensor.use_cases.updates.releases.release_fetcher import ServerReleaseFetcher
+from vibesensor.use_cases.updates.releases.version_policy import select_update_release
 
 
 class TestValidateUrl:
@@ -38,39 +36,30 @@ class TestValidateUrl:
             validate_https_url(url)
 
 
-# ---------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------
-
-
 class TestReleaseFetcherConfig:
-    def test_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("VIBESENSOR_SERVER_REPO", raising=False)
-        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
-        monkeypatch.delenv("VIBESENSOR_ROLLBACK_DIR", raising=False)
+    def test_defaults(self) -> None:
         config = ReleaseFetcherConfig()
         assert config.server_repo == "Skamba/VibeSensor"
         assert config.github_token == ""
         assert config.rollback_dir == "/var/lib/vibesensor/rollback"
 
-    def test_env_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_resolve_uses_environment(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("VIBESENSOR_SERVER_REPO", "test/repo")
         monkeypatch.setenv("GITHUB_TOKEN", "ghp_test123")
         monkeypatch.setenv("VIBESENSOR_ROLLBACK_DIR", "/tmp/rollback")
-        config = ReleaseFetcherConfig()
+
+        config = resolve_release_fetcher_config()
+
         assert config.server_repo == "test/repo"
         assert config.github_token == "ghp_test123"
         assert config.rollback_dir == "/tmp/rollback"
 
-    def test_explicit_overrides_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_resolve_prefers_explicit_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("VIBESENSOR_SERVER_REPO", "env/repo")
-        config = ReleaseFetcherConfig(server_repo="explicit/repo")
+
+        config = resolve_release_fetcher_config(server_repo="explicit/repo")
+
         assert config.server_repo == "explicit/repo"
-
-
-# ---------------------------------------------------------------------------
-# ReleaseInfo
-# ---------------------------------------------------------------------------
 
 
 class TestReleaseInfo:
@@ -83,10 +72,15 @@ class TestReleaseInfo:
             sha256="abc123",
             published_at="2025-06-15T02:00:00Z",
         )
-        d = info.to_dict()
-        assert d["tag"] == "server-v2025.6.15"
-        assert d["version"] == "2025.6.15"
-        assert d["sha256"] == "abc123"
+
+        assert info.to_dict() == {
+            "tag": "server-v2025.6.15",
+            "version": "2025.6.15",
+            "asset_name": "vibesensor-2025.6.15-py3-none-any.whl",
+            "asset_url": "https://api.github.com/repos/Skamba/VibeSensor/releases/assets/123",
+            "sha256": "abc123",
+            "published_at": "2025-06-15T02:00:00Z",
+        }
 
 
 class TestGitHubReleaseAsset:
@@ -147,9 +141,18 @@ class TestGitHubRelease:
         )
 
 
-# ---------------------------------------------------------------------------
-# ServerReleaseFetcher
-# ---------------------------------------------------------------------------
+class TestGitHubApiClient:
+    def test_api_headers_without_token(self) -> None:
+        headers = GitHubApiClient().api_headers()
+
+        assert "Authorization" not in headers
+        assert headers["Accept"] == "application/vnd.github+json"
+
+    def test_api_headers_with_token(self) -> None:
+        headers = GitHubApiClient(token="ghp_test").api_headers()
+
+        assert headers["Authorization"] == "Bearer ghp_test"
+
 
 MOCK_RELEASES = [
     {
@@ -189,14 +192,22 @@ MOCK_RELEASES = [
 
 
 class TestServerReleaseFetcher:
-    def _make_fetcher(self) -> ServerReleaseFetcher:
-        config = ReleaseFetcherConfig(server_repo="Skamba/VibeSensor")
-        return ServerReleaseFetcher(config)
+    def _make_fetcher(
+        self,
+        *,
+        client: GitHubApiClient | None = None,
+    ) -> ServerReleaseFetcher:
+        return ServerReleaseFetcher(
+            ReleaseFetcherConfig(server_repo="Skamba/VibeSensor"),
+            client=client,
+        )
 
     def test_find_latest_release(self) -> None:
-        fetcher = self._make_fetcher()
-        with patch.object(fetcher, "_api_get", return_value=MOCK_RELEASES):
-            release = fetcher.find_latest_release()
+        client = MagicMock(spec=GitHubApiClient)
+        client.get_json.return_value = MOCK_RELEASES
+        fetcher = self._make_fetcher(client=client)
+        release = fetcher.find_latest_release()
+
         assert release.tag == "server-v2025.6.15"
         assert release.version == "2025.6.15"
         assert release.asset_name == "vibesensor-2025.6.15-py3-none-any.whl"
@@ -213,9 +224,11 @@ class TestServerReleaseFetcher:
             },
             *MOCK_RELEASES,
         ]
-        fetcher = self._make_fetcher()
-        with patch.object(fetcher, "_api_get", return_value=releases):
-            release = fetcher.find_latest_release()
+        client = MagicMock(spec=GitHubApiClient)
+        client.get_json.return_value = releases
+        fetcher = self._make_fetcher(client=client)
+        release = fetcher.find_latest_release()
+
         assert release.tag == "server-v2025.6.15"
 
     def test_find_latest_rejects_malformed_release_rows(self) -> None:
@@ -228,11 +241,11 @@ class TestServerReleaseFetcher:
             },
             *MOCK_RELEASES,
         ]
-        fetcher = self._make_fetcher()
-        with (
-            patch.object(fetcher, "_api_get", return_value=releases),
-            pytest.raises(ValueError, match="Unexpected GitHub API response format"),
-        ):
+        client = MagicMock(spec=GitHubApiClient)
+        client.get_json.return_value = releases
+        fetcher = self._make_fetcher(client=client)
+
+        with pytest.raises(ValueError, match="Unexpected GitHub API response format"):
             fetcher.find_latest_release()
 
     @pytest.mark.parametrize(
@@ -252,37 +265,23 @@ class TestServerReleaseFetcher:
             pytest.param([], id="empty-releases"),
         ],
     )
-    def test_find_latest_no_server_release(self, releases: list[dict]) -> None:
-        fetcher = self._make_fetcher()
-        with (
-            patch.object(fetcher, "_api_get", return_value=releases),
-            pytest.raises(ValueError, match="No server release found"),
-        ):
+    def test_find_latest_no_server_release(self, releases: list[dict[str, object]]) -> None:
+        client = MagicMock(spec=GitHubApiClient)
+        client.get_json.return_value = releases
+        fetcher = self._make_fetcher(client=client)
+
+        with pytest.raises(ValueError, match="No server release found"):
             fetcher.find_latest_release()
 
     def test_find_latest_rejects_non_array_api_response(self) -> None:
-        fetcher = self._make_fetcher()
-        with (
-            patch.object(fetcher, "_api_get", return_value={"unexpected": "object"}),
-            pytest.raises(ValueError, match="Unexpected GitHub API response format"),
-        ):
+        client = MagicMock(spec=GitHubApiClient)
+        client.get_json.return_value = {"unexpected": "object"}
+        fetcher = self._make_fetcher(client=client)
+
+        with pytest.raises(ValueError, match="Unexpected GitHub API response format"):
             fetcher.find_latest_release()
 
-    def test_check_update_available_newer(self) -> None:
-        fetcher = self._make_fetcher()
-        with patch.object(fetcher, "_api_get", return_value=MOCK_RELEASES):
-            result = fetcher.check_update_available("2025.6.14")
-        assert result is not None
-        assert result.version == "2025.6.15"
-
-    def test_check_update_available_up_to_date(self) -> None:
-        fetcher = self._make_fetcher()
-        with patch.object(fetcher, "_api_get", return_value=MOCK_RELEASES):
-            result = fetcher.check_update_available("2025.6.15")
-        assert result is None
-
     def test_download_wheel(self, tmp_path: Path) -> None:
-        fetcher = self._make_fetcher()
         release = ReleaseInfo(
             tag="server-v2025.6.15",
             version="2025.6.15",
@@ -290,24 +289,68 @@ class TestServerReleaseFetcher:
             asset_url="https://api.github.com/assets/456",
         )
         wheel_content = b"fake-wheel-content"
-        with patch.object(fetcher, "_download_asset") as mock_dl:
-            mock_dl.side_effect = lambda url, dest: dest.write_bytes(wheel_content)
-            path = fetcher.download_wheel(release, dest_dir=tmp_path)
+
+        class _DownloadFetcher(ServerReleaseFetcher):
+            def _download_asset(self, url: str, dest: Path) -> None:
+                del url
+                dest.write_bytes(wheel_content)
+
+        fetcher = _DownloadFetcher(ReleaseFetcherConfig(server_repo="Skamba/VibeSensor"))
+        path = fetcher.download_wheel(release, dest_dir=tmp_path)
+
         assert path.exists()
         assert path.name == "vibesensor-2025.6.15-py3-none-any.whl"
         assert path.read_bytes() == wheel_content
-        assert release.sha256  # Should be populated after download
+        assert release.sha256
 
-    def test_api_headers_without_token(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
-        config = ReleaseFetcherConfig(server_repo="a/b", github_token="")
-        fetcher = ServerReleaseFetcher(config)
-        headers = fetcher._api_headers()
-        assert "Authorization" not in headers
-        assert headers["Accept"] == "application/vnd.github+json"
 
-    def test_api_headers_with_token(self) -> None:
-        config = ReleaseFetcherConfig(server_repo="a/b", github_token="ghp_test")
-        fetcher = ServerReleaseFetcher(config)
-        headers = fetcher._api_headers()
-        assert headers["Authorization"] == "Bearer ghp_test"
+class TestVersionPolicy:
+    def test_select_update_release_returns_newer_release(self) -> None:
+        release = ReleaseInfo(
+            tag="server-v2025.6.15",
+            version="2025.6.15",
+            asset_name="vibesensor-2025.6.15-py3-none-any.whl",
+            asset_url="https://api.github.com/assets/456",
+        )
+
+        assert (
+            select_update_release(
+                current_version="2025.6.14",
+                latest_release=release,
+            )
+            is release
+        )
+
+    def test_select_update_release_skips_matching_version(self) -> None:
+        release = ReleaseInfo(
+            tag="server-v2025.6.15",
+            version="2025.6.15",
+            asset_name="vibesensor-2025.6.15-py3-none-any.whl",
+            asset_url="https://api.github.com/assets/456",
+        )
+
+        assert (
+            select_update_release(
+                current_version="2025.6.15",
+                latest_release=release,
+            )
+            is None
+        )
+
+    def test_select_update_release_logs_warning_on_unparseable_version(self) -> None:
+        release = ReleaseInfo(
+            tag="server-v!!!INVALID!!!",
+            version="!!!INVALID!!!",
+            asset_name="vibesensor-0.0.0-py3-none-any.whl",
+            asset_url="https://api.github.com/repos/owner/repo/releases/assets/1",
+        )
+
+        with patch("vibesensor.use_cases.updates.releases.version_policy.LOGGER") as mock_logger:
+            result = select_update_release(
+                current_version="1.0.0",
+                latest_release=release,
+            )
+
+        assert result is release
+        mock_logger.warning.assert_called_once()
+        assert "Could not compare versions" in mock_logger.warning.call_args[0][0]

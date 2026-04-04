@@ -24,7 +24,9 @@ The updater now has one explicit run-scoped workflow boundary per concern:
 - ``finalization.py`` owns unconditional transport cleanup and runtime refresh.
 - ``transport/`` owns prepared-transport interfaces, transport coordination,
   transport-neutral uplink readiness, and USB transport execution behavior.
-- ``usb_status.py`` inspects Linux/NetworkManager state for USB internet readiness.
+- ``usb_status.py`` owns the USB internet readiness service facade, while
+  ``usb_status_inspection.py`` and ``usb_status_evaluation.py`` split raw
+  Linux/NM probing from readiness ranking and diagnostics.
 - ``wifi/`` owns Wi-Fi-specific transport execution.
 - ``status/`` owns state transitions, persistence, logging buffers, secret
   redaction, and the explicit tracker used by manager/runtime composition.

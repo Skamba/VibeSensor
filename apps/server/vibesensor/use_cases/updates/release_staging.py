@@ -74,6 +74,7 @@ class ServerReleaseStager:
         except OSError as exc:
             cleanup_error = UpdateCleanupError(
                 f"Failed to remove staged release directory: {exc}",
+                phase="cleanup",
             )
             if prior_error is not None:
                 prior_error.add_note(str(cleanup_error))
@@ -89,8 +90,10 @@ class ServerReleaseStager:
         try:
             return await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
         except (OSError, ValueError) as exc:
-            self._status.fail("downloading", f"Failed to download release: {exc}")
-            raise UpdateReleaseError(f"Failed to download release: {exc}") from exc
+            raise UpdateReleaseError(
+                f"Failed to download release: {exc}",
+                phase=UpdatePhase.downloading.value,
+            ) from exc
 
     async def _verify_download(self, release: ReleaseInfo, wheel_path: Path) -> None:
         """Verify SHA-256 digest of a downloaded wheel."""
@@ -102,12 +105,9 @@ class ServerReleaseStager:
         if actual_sha256 == expected_sha256:
             self._status.log(f"SHA-256 verified: {actual_sha256}")
             return
-        self._status.fail(
-            "downloading",
+        raise UpdateReleaseError(
             "Downloaded wheel SHA-256 mismatch",
-            f"expected={release.sha256} actual={actual_sha256}",
+            phase=UpdatePhase.downloading.value,
+            detail=f"expected={release.sha256} actual={actual_sha256}",
+            log_message=f"SHA-256 mismatch: expected {release.sha256} but got {actual_sha256}",
         )
-        self._status.log(
-            f"SHA-256 mismatch: expected {release.sha256} but got {actual_sha256}",
-        )
-        raise UpdateReleaseError("Downloaded wheel SHA-256 mismatch")

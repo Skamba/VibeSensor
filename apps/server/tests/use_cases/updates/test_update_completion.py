@@ -11,11 +11,13 @@ from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
 async def test_completion_finishes_transport_then_schedules_restart() -> None:
     restart_scheduler = MagicMock()
     restart_scheduler.schedule = AsyncMock(return_value=True)
+    reporter = MagicMock()
     status = MagicMock()
     prepared_transport = MagicMock()
     prepared_transport.complete_success = AsyncMock()
     coordinator = UpdateCompletionCoordinator(
         restart_scheduler=restart_scheduler,
+        reporter=reporter,
         status=status,
     )
 
@@ -24,9 +26,8 @@ async def test_completion_finishes_transport_then_schedules_restart() -> None:
         message="Update completed successfully",
     )
 
-    prepared_transport.complete_success.assert_awaited_once_with(
-        "Update completed successfully",
-    )
+    prepared_transport.complete_success.assert_awaited_once_with()
+    reporter.mark_success.assert_called_once_with("Update completed successfully")
     restart_scheduler.schedule.assert_awaited_once_with()
     status.add_issue.assert_not_called()
     status.log.assert_not_called()
@@ -36,11 +37,13 @@ async def test_completion_finishes_transport_then_schedules_restart() -> None:
 async def test_completion_records_issue_when_restart_scheduling_fails() -> None:
     restart_scheduler = MagicMock()
     restart_scheduler.schedule = AsyncMock(return_value=False)
+    reporter = MagicMock()
     status = MagicMock()
     prepared_transport = MagicMock()
     prepared_transport.complete_success = AsyncMock()
     coordinator = UpdateCompletionCoordinator(
         restart_scheduler=restart_scheduler,
+        reporter=reporter,
         status=status,
     )
 
@@ -49,7 +52,8 @@ async def test_completion_records_issue_when_restart_scheduling_fails() -> None:
         message="No server update needed; ESP firmware checked",
     )
 
-    prepared_transport.complete_success.assert_awaited_once_with(
+    prepared_transport.complete_success.assert_awaited_once_with()
+    reporter.mark_success.assert_called_once_with(
         "No server update needed; ESP firmware checked",
     )
     status.add_issue.assert_called_once_with(
