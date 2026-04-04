@@ -6,15 +6,12 @@ import asyncio
 import sys
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
 from vibesensor.use_cases.updates.cleanup import UpdateCleanupCoordinator
 from vibesensor.use_cases.updates.models import UpdateRequest, UpdateState
 from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
-
-if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
+from vibesensor.use_cases.updates.transport_coordinator import PreparedUpdateTransport
 
 __all__ = ["UpdateWorkflowContext", "UpdateWorkflowRunner"]
 
@@ -25,7 +22,7 @@ ManagedUpdateWorkflow = Callable[["UpdateWorkflowContext"], Awaitable[None]]
 class UpdateWorkflowContext:
     """Mutable run-scoped workflow state shared with cleanup sequencing."""
 
-    transport_session: UpdateTransportSession | None = None
+    transport: PreparedUpdateTransport | None = None
 
 
 class UpdateWorkflowRunner:
@@ -111,15 +108,15 @@ class UpdateWorkflowRunner:
             self._status_recorder.log("Update cancelled")
             raise
         finally:
-            await self._cleanup_after_workflow(context.transport_session)
+            await self._cleanup_after_workflow(context.transport)
 
     async def _cleanup_after_workflow(
         self,
-        transport_session: UpdateTransportSession | None,
+        transport: PreparedUpdateTransport | None,
     ) -> None:
         active_error = sys.exc_info()[1]
         try:
-            await self._cleanup.run(transport_session)
+            await self._cleanup.run(transport)
         except asyncio.CancelledError:
             raise
         except UpdateCleanupError as exc:

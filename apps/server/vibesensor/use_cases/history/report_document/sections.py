@@ -42,7 +42,7 @@ def _build_timeline_graph_data(
     duration_s: float | None,
 ) -> TimelineGraphData | None:
     max_interval_end = max(
-        (interval.end_t_s or 0.0 for interval in report_facts.timeline_intervals),
+        (interval.end_t_s or 0.0 for interval in report_facts.run.timeline_intervals),
         default=0.0,
     )
     resolved_duration = max(float(duration_s or 0.0), max_interval_end)
@@ -51,7 +51,7 @@ def _build_timeline_graph_data(
     intervals: list[TimelineGraphInterval] = []
     max_speed = 0.0
     ordered_intervals = sorted(
-        report_facts.timeline_intervals,
+        report_facts.run.timeline_intervals,
         key=lambda interval: (
             interval.start_t_s is None,
             interval.start_t_s or 0.0,

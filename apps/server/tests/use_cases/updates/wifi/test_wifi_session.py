@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from test_support.update_status import build_update_status_harness
+from test_support.update_status import UpdateStatusHarness, build_update_status_harness
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
 from vibesensor.shared.exceptions import UpdateTransportError
@@ -17,7 +17,6 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi import UpdateWifiSession, build_default_wifi_config
 
 
@@ -26,7 +25,7 @@ def _build_session(
     *,
     restore_retries: int = 3,
     restore_delay_s: float = 0.01,
-) -> tuple[UpdateWifiSession, FakeRunner, UpdateStatusTracker]:
+) -> tuple[UpdateWifiSession, FakeRunner, UpdateStatusHarness]:
     runner = FakeRunner()
     status = build_update_status_harness(tmp_path / "state.json")
     config = replace(
@@ -52,14 +51,14 @@ def _wifi_request(ssid: str = "TestNet", password: str = "") -> UpdateRequest:
     )
 
 
-def _seed_checked_phase(tracker: UpdateStatusTracker) -> None:
+def _seed_checked_phase(tracker: UpdateStatusHarness) -> None:
     tracker.start_job(_wifi_request())
     tracker.transition(UpdatePhase.stopping_hotspot)
     tracker.transition(UpdatePhase.connecting_wifi)
     tracker.transition(UpdatePhase.checking)
 
 
-def _seed_installing_phase(tracker: UpdateStatusTracker) -> None:
+def _seed_installing_phase(tracker: UpdateStatusHarness) -> None:
     _seed_checked_phase(tracker)
     tracker.transition(UpdatePhase.downloading)
     tracker.transition(UpdatePhase.installing)

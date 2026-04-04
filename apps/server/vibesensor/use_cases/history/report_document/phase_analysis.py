@@ -34,7 +34,7 @@ def _ordered_timeline_phase_keys(
 ) -> tuple[str, ...]:
     phase_keys: list[str] = []
     ordered_intervals = sorted(
-        report_facts.timeline_intervals,
+        report_facts.run.timeline_intervals,
         key=lambda interval: (
             interval.start_t_s is None,
             interval.start_t_s or 0.0,

@@ -305,11 +305,13 @@ class TestPostAnalysisWorkerErrorHandling:
         release_failure.set()
         assert worker.wait(timeout_s=3.0)
         assert seen == []
-        assert errors == ["post-analysis failed for run run-fail: first run fails"]
+        assert errors == ["post-analysis worker bug for run run-fail: first run fails"]
 
         snapshot = worker.snapshot()
         assert snapshot.last_completed_run_id == "run-fail"
-        assert snapshot.last_completed_error == "first run fails"
+        assert (
+            snapshot.last_completed_error == "Unexpected post-analysis worker bug: first run fails"
+        )
         assert snapshot.queue_depth == 0
 
         worker.schedule("run-recovered")
@@ -341,9 +343,11 @@ class TestPostAnalysisWorkerErrorHandling:
 
         snapshot = worker.snapshot()
         assert snapshot.last_completed_run_id == "run-unexpected"
-        assert snapshot.last_completed_error == "worker boom"
-        assert errors == ["post-analysis failed for run run-unexpected: worker boom"]
-        assert stored_errors == [("run-unexpected", "worker boom")]
+        assert snapshot.last_completed_error == "Unexpected post-analysis worker bug: worker boom"
+        assert errors == ["post-analysis worker bug for run run-unexpected: worker boom"]
+        assert stored_errors == [
+            ("run-unexpected", "Unexpected post-analysis worker bug: worker boom")
+        ]
 
     def test_worker_retries_retryable_failure_until_success(
         self,

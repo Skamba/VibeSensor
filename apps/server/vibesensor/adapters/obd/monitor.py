@@ -11,7 +11,6 @@ from vibesensor.adapters.obd.admin_runtime import ObdAdminRuntime
 from vibesensor.adapters.obd.connection_runtime import ObdConnectionRuntime
 from vibesensor.adapters.obd.elm327 import Elm327Session
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
-from vibesensor.adapters.obd.polling import ObdPollResult
 from vibesensor.adapters.obd.runtime_controller import ObdRuntimeController
 from vibesensor.domain import SpeedSourceKind
 
@@ -74,14 +73,6 @@ class OBDSpeedMonitor:
     def engine_rpm_source(self) -> str | None:
         return self._runtime.engine_rpm_source
 
-    @property
-    def _speed_snapshot(self) -> tuple[float | None, float | None]:
-        return self._runtime.speed_snapshot
-
-    @_speed_snapshot.setter
-    def _speed_snapshot(self, value: tuple[float | None, float | None]) -> None:
-        self._runtime.speed_snapshot = value
-
     def resolve_speed(self) -> SpeedResolution:
         return self._runtime.resolve_speed()
 
@@ -131,35 +122,3 @@ class OBDSpeedMonitor:
 
     async def run(self) -> None:
         await self._connection_runtime.run()
-
-    def _connect_blocking(
-        self,
-        mac_address: str,
-        configured_name: str | None,
-    ) -> tuple[Elm327Session, ObdDeviceSnapshot]:
-        return self._connection_runtime._connect_blocking(mac_address, configured_name)
-
-    def _poll_cycle_blocking(self, session: Elm327Session) -> ObdPollResult:
-        return self._connection_runtime._poll_cycle_blocking(session)
-
-    def _apply_poll_result(self, result: ObdPollResult) -> None:
-        self._runtime.apply_poll_result(result)
-
-    def _apply_device_snapshot(self, snapshot: ObdDeviceSnapshot) -> None:
-        self._runtime.apply_device_snapshot(snapshot)
-
-    def _set_connection_state(
-        self,
-        state: str,
-        *,
-        error: str | None,
-        reconnect_delay_s: float | None = None,
-    ) -> None:
-        self._runtime.set_connection_state(
-            state,
-            error=error,
-            reconnect_delay_s=reconnect_delay_s,
-        )
-
-    def _reset_poll_schedule(self) -> None:
-        self._runtime.reset_poll_schedule()

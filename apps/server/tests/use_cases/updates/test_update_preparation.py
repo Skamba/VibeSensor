@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from test_support.update_status import build_update_status_harness
+from test_support.update_status import UpdateStatusHarness, build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdatePreparationError, UpdateTransportError
 from vibesensor.use_cases.updates.models import (
@@ -16,7 +16,7 @@ from vibesensor.use_cases.updates.preparation import (
     PreparedUpdateWorkflow,
     UpdatePreparationCoordinator,
 )
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 
 
@@ -32,24 +32,27 @@ def _build_preparation(
     tmp_path: Path,
     *,
     current_version: str = "2026.4.3",
-) -> tuple[UpdatePreparationCoordinator, UpdateStatusTracker, AsyncMock]:
+) -> tuple[UpdatePreparationCoordinator, UpdateStatusHarness, AsyncMock]:
     status = build_update_status_harness(tmp_path / "state.json")
     transport_session = AsyncMock()
+    transport_coordinator = UpdateTransportCoordinator(
+        sessions=MagicMock(
+            spec=UpdateTransportSessions,
+            for_request=MagicMock(return_value=transport_session),
+        ),
+    )
     preparation = UpdatePreparationCoordinator(
         status_controller=status.controller,
         status_recorder=status.recorder,
         commands=MagicMock(),
-        transport_sessions=MagicMock(
-            spec=UpdateTransportSessions,
-            for_request=MagicMock(return_value=transport_session),
-        ),
+        transport_coordinator=transport_coordinator,
         validation_config=UpdateValidationConfig(
             rollback_dir=tmp_path / "rollback",
             min_free_disk_bytes=1,
         ),
         current_version_provider=lambda: current_version,
     )
-    return preparation, status.tracker, transport_session
+    return preparation, status, transport_session
 
 
 @pytest.mark.asyncio
@@ -104,4 +107,4 @@ async def test_prepare_returns_canonical_prepared_workflow(tmp_path: Path) -> No
 
     assert isinstance(prepared, PreparedUpdateWorkflow)
     assert prepared.current_version == "2026.4.9"
-    assert prepared.transport_session is transport_session
+    assert prepared.transport.session is transport_session

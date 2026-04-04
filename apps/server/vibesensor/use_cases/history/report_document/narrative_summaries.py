@@ -45,7 +45,7 @@ def _proof_summary_text(
     )
     if sequence_summary is not None:
         return sequence_summary
-    ratio = report_facts.primary_candidate_facts.dominance_ratio
+    ratio = report_facts.decision.primary_candidate.dominance_ratio
     location = display_location(primary.primary_location, tr=tr)
     runner_up = composition.appendix_b.runner_up_corner
     if ratio is not None:
@@ -72,8 +72,8 @@ def _run_limits_summary_text(
 ) -> str:
     speed_window = str(composition.verdict_page.speed_window_label or "").strip() or tr("UNKNOWN")
     if (
-        report_facts.action_status_key == "action_ready_caution"
-        and report_facts.alternative_source_visible
+        report_facts.decision.action_status_key == "action_ready_caution"
+        and report_facts.decision.alternative_source_visible
     ):
         return tr("REPORT_RUN_LIMITS_RECAPTURE_RECIPE", speed=speed_window)
     note = composition.verdict_page.proof_caveat
@@ -88,7 +88,7 @@ def _evidence_summary_text(
     tr: Callable[..., str],
 ) -> str:
     effective_causes = aggregate.effective_top_causes()
-    matched_windows = report_facts.primary_candidate_facts.matched_evidence_window_count
+    matched_windows = report_facts.decision.primary_candidate.matched_evidence_window_count
     speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
     source = primary.primary_system
     location = display_location(primary.primary_location, tr=tr)
@@ -100,13 +100,14 @@ def _evidence_summary_text(
     if sequential_summary is not None:
         return sequential_summary
     alternative = (
-        human_source(report_facts.alternative_source, tr=tr)
-        if report_facts.alternative_source_visible and report_facts.alternative_source is not None
+        human_source(report_facts.decision.alternative_source, tr=tr)
+        if report_facts.decision.alternative_source_visible
+        and report_facts.decision.alternative_source is not None
         else None
     )
     alternative_finding = (
         effective_causes[1]
-        if report_facts.alternative_source_visible and len(effective_causes) > 1
+        if report_facts.decision.alternative_source_visible and len(effective_causes) > 1
         else None
     )
     if alternative is not None and matched_windows is not None:
@@ -171,7 +172,7 @@ def _context_summary_text(
     tr: Callable[..., str],
 ) -> str:
     speed_window = str(primary.primary_speed or "").strip() or tr("UNKNOWN")
-    coverage = report_facts.coverage_summary
+    coverage = report_facts.sensor.coverage
     expected = (
         len(coverage.expected_locations) or len(coverage.active_locations) or primary.sensor_count
     )

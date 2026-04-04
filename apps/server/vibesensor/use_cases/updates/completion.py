@@ -1,35 +1,40 @@
-"""Success-finalization boundary for update workflows."""
+"""Success completion boundary for updater workflows."""
 
 from __future__ import annotations
 
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.status import UpdateStatusRecorder
-from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
+from vibesensor.use_cases.updates.transport_coordinator import (
+    PreparedUpdateTransport,
+    UpdateTransportCoordinator,
+)
 
-__all__ = ["UpdateSuccessFinalizer"]
+__all__ = ["UpdateCompletionCoordinator"]
 
 
-class UpdateSuccessFinalizer:
-    """Finalize successful update execution without owning install or transport prep."""
+class UpdateCompletionCoordinator:
+    """Finalize successful workflows after install/refresh work is done."""
 
-    __slots__ = ("_restart_scheduler", "_status_recorder")
+    __slots__ = ("_restart_scheduler", "_status_recorder", "_transport_coordinator")
 
     def __init__(
         self,
         *,
+        transport_coordinator: UpdateTransportCoordinator,
         status_recorder: UpdateStatusRecorder,
         restart_scheduler: UpdateRestartScheduler,
     ) -> None:
+        self._transport_coordinator = transport_coordinator
         self._status_recorder = status_recorder
         self._restart_scheduler = restart_scheduler
 
     async def complete(
         self,
-        transport_session: UpdateTransportSession,
+        transport: PreparedUpdateTransport,
         *,
         message: str,
     ) -> None:
-        await transport_session.complete_success(message)
+        await self._transport_coordinator.complete_success(transport, message=message)
         if await self._restart_scheduler.schedule():
             return
         self._status_recorder.add_issue(

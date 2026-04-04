@@ -25,7 +25,7 @@ class UpdateManager:
 
     @property
     def status(self) -> UpdateJobStatus:
-        return self._runtime.tracker.status
+        return self._runtime.status_services.status
 
     @property
     def job_task(self) -> asyncio.Task[None] | None:
