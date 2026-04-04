@@ -24,9 +24,6 @@ from vibesensor.adapters.history import build_projected_run_details_json
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
-    persisted_analysis_to_json_object,
-)
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
@@ -157,7 +154,7 @@ def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None
 
     analysis_blob = run.analysis
     assert analysis_blob is not None
-    reconstructed = _reproject(persisted_analysis_to_json_object(analysis_blob))
+    reconstructed = _reproject(analysis_blob.to_json_object())
 
     direct_meaning = _extract_domain_meaning(direct_summary)
     reloaded_meaning = _extract_domain_meaning(reconstructed)
@@ -187,7 +184,7 @@ def test_report_from_reconstructed_aggregate(tmp_path: Path) -> None:
 
     analysis_blob = run.analysis
     assert analysis_blob is not None
-    reconstructed = _reproject(persisted_analysis_to_json_object(analysis_blob))
+    reconstructed = _reproject(analysis_blob.to_json_object())
 
     direct_report = build_report_document(prepare_report_input(direct_summary))
     reloaded_report = build_report_document(prepare_report_input(reconstructed))
@@ -246,7 +243,7 @@ def test_cross_boundary_domain_meaning_consistency(tmp_path: Path) -> None:
 
     analysis_blob = run.analysis
     assert analysis_blob is not None
-    reconstructed = _reproject(persisted_analysis_to_json_object(analysis_blob))
+    reconstructed = _reproject(analysis_blob.to_json_object())
 
     # 1. Summary-level consistency
     direct_meaning = _extract_domain_meaning(direct_summary)

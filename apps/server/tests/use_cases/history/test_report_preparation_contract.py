@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
-    persisted_analysis_from_json_object,
-)
 from vibesensor.shared.boundaries.reporting import (
     prepare_persisted_report_input,
     prepare_report_input,
 )
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import (
     resolve_primary_report_candidate,
 )
@@ -93,7 +91,7 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
 def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    analysis = persisted_analysis_from_json_object(
+    analysis = PersistedAnalysis.from_json_object(
         {
             "run_id": "persisted-run",
             "lang": "en",
@@ -140,7 +138,7 @@ def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(
 ) -> None:
     import vibesensor.shared.boundaries.reporting.preparation as report_preparation
 
-    analysis = persisted_analysis_from_json_object(
+    analysis = PersistedAnalysis.from_json_object(
         {
             "run_id": "persisted-run",
             "lang": "en",

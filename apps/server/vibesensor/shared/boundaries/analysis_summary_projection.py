@@ -7,7 +7,6 @@ from typing import cast
 
 from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-from vibesensor.shared.boundaries.persisted_analysis_codec import persisted_analysis_to_json_object
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.test_plan_projection import (
     _has_structured_step_content,
@@ -54,6 +53,6 @@ def project_persisted_analysis(
     analysis: PersistedAnalysis,
 ) -> tuple[JsonObject, TestRun]:
     """Reconstruct and re-serialize storage-owned persisted analysis."""
-    payload = persisted_analysis_to_json_object(analysis)
+    payload = analysis.to_json_object()
     test_run = test_run_from_persisted_analysis(analysis)
     return _project_analysis_payload(payload, test_run=test_run), test_run
