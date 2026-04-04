@@ -13,7 +13,8 @@ from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
+from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document
 
 pdfium = pytest.importorskip("pypdfium2")
 

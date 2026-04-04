@@ -27,13 +27,14 @@ from vibesensor.shared.boundaries.analysis_summary_projection import project_ana
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_to_json_object,
 )
+from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import AnalysisResult, RunAnalysis
-from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document
 
 # -- helpers ---------------------------------------------------------------
 

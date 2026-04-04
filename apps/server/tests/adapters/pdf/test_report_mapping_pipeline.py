@@ -107,5 +107,5 @@ def test_prepare_persisted_report_input_rejects_non_projectable_payload() -> Non
 
 
 def test_report_document_reexports_boundary_types() -> None:
-    assert report_document.PreparedReportInput is shared_reporting.PreparedReportInput
-    assert report_document.Report is shared_report_document.Report
+    assert not hasattr(report_document, "PreparedReportInput")
+    assert not hasattr(report_document, "Report")

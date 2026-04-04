@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
+from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document
 
 _ORDER_TOP_CAUSE: dict[str, object] = {
     "finding_id": "F_ORDER",
