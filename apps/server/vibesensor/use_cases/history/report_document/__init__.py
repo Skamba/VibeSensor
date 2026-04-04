@@ -7,7 +7,7 @@ from ._candidate_resolver import (
     resolve_primary_report_candidate,
 )
 from ._card_builder import build_system_cards, humanize_signatures
-from .composition import build_report_document
+from .builder import build_report_document
 
 __all__ = [
     "PrimaryCandidateContext",
