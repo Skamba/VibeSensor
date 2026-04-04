@@ -14,10 +14,8 @@ from vibesensor.domain import (
     OrderReferenceSpec,
     RunContextSnapshot,
 )
-from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+from vibesensor.shared.boundaries.codecs import (
     analysis_settings_snapshot_from_mapping,
-)
-from vibesensor.shared.boundaries.summary_snapshot_codec import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )

@@ -5,11 +5,11 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
-from vibesensor.shared.boundaries.strength_metrics_codec import strength_peak_payloads
+from vibesensor.shared.boundaries.codecs import strength_peak_payloads
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
-from .sensor_frame_value_codec import (
+from .codecs.sensor_frame_values import (
     SensorFrameDecodeError,
     build_sensor_frame,
     strength_bucket,

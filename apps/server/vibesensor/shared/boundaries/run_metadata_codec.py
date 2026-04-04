@@ -6,11 +6,11 @@ import logging
 from collections.abc import Mapping
 
 from vibesensor.domain import Symptom
-from vibesensor.shared.boundaries._codec_helpers import text_or_none
-from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
+from vibesensor.shared.boundaries.codecs import (
     analysis_settings_snapshot_from_mapping,
     analysis_settings_snapshot_to_metadata,
 )
+from vibesensor.shared.boundaries.codecs.scalars import text_or_none
 from vibesensor.shared.boundaries.run_car_codec import (
     run_car_metadata_from_mapping,
     run_car_metadata_to_json_object,
