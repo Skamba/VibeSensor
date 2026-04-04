@@ -3,18 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import replace
 
-from vibesensor.domain import TestRun
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
-    AppendixBData,
     NextStep,
     ReportDocument,
-    VerdictPageData,
 )
 from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
 from vibesensor.shared.report_presentation import (
@@ -38,7 +35,12 @@ from .narrative_summaries import _proof_summary_text
 from .pattern_evidence import build_pattern_evidence
 from .peak_table import build_peak_rows
 from .report_sections import build_data_trust, build_next_steps
-from .section_context import ReportSectionContext
+from .section_context import (
+    AppendixAContext,
+    AppendixBContext,
+    AppendixCContext,
+    VerdictPageContext,
+)
 from .sections import _build_appendix_c_data, _build_timeline_graph_data, _build_traceability_rows
 from .verdict_page import build_observed_signature, build_verdict_page_data
 from .workflow_appendix import (
@@ -48,16 +50,6 @@ from .workflow_appendix import (
 )
 
 __all__ = ["compose_report_document"]
-
-
-@dataclass(frozen=True, slots=True)
-class _ReportDocumentSections:
-    """Document-facing sections composed before final report assembly."""
-
-    section_context: ReportSectionContext
-    verdict_page: VerdictPageData
-    appendix_a: AppendixAData
-    appendix_b: AppendixBData
 
 
 def compose_report_document(prepared: PreparedReportInput) -> ReportDocument:
@@ -74,10 +66,91 @@ def compose_report_document(prepared: PreparedReportInput) -> ReportDocument:
     sensor_facts = report_facts.sensor
     decision_facts = report_facts.decision
     prepared_findings = report_facts.findings
-    sections = _compose_report_document_sections(
+    coverage = sensor_facts.coverage
+    active_locations = tuple(coverage.active_locations)
+    coverage_label_text = coverage_label(
+        expected_locations=coverage.expected_locations,
+        active_locations=coverage.active_locations,
+        missing_locations=coverage.missing_locations,
+        partial_locations=coverage.partial_locations,
+        tr=tr,
+    )
+    coverage_notes_items = tuple(
+        coverage_notes(
+            missing_locations=coverage.missing_locations,
+            partial_locations=coverage.partial_locations,
+            tr=tr,
+        )
+    )
+    proof_caveat = proof_caveat_text(
+        primary_candidate_facts=decision_facts.primary_candidate,
+        action_status_key=decision_facts.action_status_key,
+        location_confidence_key=decision_facts.location_confidence_key,
+        tr=tr,
+    )
+    runner_up = runner_up_corner(sensor_facts.active_intensity, tr=tr)
+    speed_window_label = str(decision_facts.primary_candidate.primary_speed or "").strip() or None
+    recapture = build_recapture_assessment(
         aggregate=test_run,
-        report_facts=report_facts,
+        primary_candidate_facts=decision_facts.primary_candidate,
+        location_confidence_key=decision_facts.location_confidence_key,
+        expected_locations=coverage.expected_locations,
+        active_locations=coverage.active_locations,
+        suitability_checks=decision_facts.suitability_checks,
+        warnings=decision_facts.warnings,
         lang=lang,
+        tr=tr,
+    )
+    verdict_context = VerdictPageContext(
+        action_status_key=decision_facts.action_status_key,
+        location_confidence_key=decision_facts.location_confidence_key,
+        alternative_source_visible=decision_facts.alternative_source_visible,
+        active_locations=active_locations,
+        coverage_label=coverage_label_text,
+        proof_caveat=proof_caveat,
+        runner_up_corner=runner_up,
+        speed_window_label=speed_window_label,
+        recapture=recapture,
+    )
+    appendix_a_context = AppendixAContext(
+        action_status_key=decision_facts.action_status_key,
+        alternative_source_visible=decision_facts.alternative_source_visible,
+        ranked_candidates=build_ranked_candidates(test_run, tr=tr),
+        recapture=recapture,
+    )
+    appendix_b_context = AppendixBContext(
+        action_status_key=decision_facts.action_status_key,
+        location_confidence_key=decision_facts.location_confidence_key,
+        active_locations=active_locations,
+        coverage_label=coverage_label_text,
+        coverage_notes=coverage_notes_items,
+        runner_up_corner=runner_up,
+    )
+    appendix_c_context = AppendixCContext(
+        speed_window_label=speed_window_label,
+        proof_caveat=proof_caveat,
+    )
+    verdict_page = build_verdict_page_data(
+        aggregate=test_run,
+        primary_candidate_facts=decision_facts.primary_candidate,
+        duration_text=run_facts.duration_text,
+        verdict_context=verdict_context,
+        suitability_checks=decision_facts.suitability_checks,
+        warnings=decision_facts.warnings,
+        lang=lang,
+        tr=tr,
+    )
+    appendix_a = build_appendix_a_data(
+        aggregate=test_run,
+        appendix_context=appendix_a_context,
+        tr=tr,
+    )
+    appendix_b = build_appendix_b_data(
+        aggregate=test_run,
+        primary_candidate_facts=decision_facts.primary_candidate,
+        active_sensor_intensity=sensor_facts.active_intensity,
+        appendix_context=appendix_b_context,
+        tr=tr,
     )
     primary = resolve_primary_report_candidate(
         aggregate=test_run,
@@ -95,13 +168,13 @@ def compose_report_document(prepared: PreparedReportInput) -> ReportDocument:
         test_run,
         primary,
         report_facts,
-        runner_up_corner=sections.section_context.runner_up_corner,
+        runner_up_corner=verdict_context.runner_up_corner,
         tr=tr,
     )
     run_datetime = _report_date_text(run_facts)
     findings = list(prepared_findings.all_findings)
     verdict_page = replace(
-        sections.verdict_page,
+        verdict_page,
         proof_summary=proof_summary,
         timeline_graph=_build_timeline_graph_data(
             report_facts,
@@ -135,7 +208,7 @@ def compose_report_document(prepared: PreparedReportInput) -> ReportDocument:
             _resolve_next_steps(
                 primary=primary,
                 report_facts=report_facts,
-                appendix_a=sections.appendix_a,
+                appendix_a=appendix_a,
                 lang=lang,
                 tr=tr,
             )
@@ -161,8 +234,8 @@ def compose_report_document(prepared: PreparedReportInput) -> ReportDocument:
         sensor_intensity_by_location=list(sensor_facts.active_intensity),
         location_hotspot_rows=list(sensor_facts.location_hotspot_rows),
         verdict_page=verdict_page,
-        appendix_a=sections.appendix_a,
-        appendix_b=sections.appendix_b,
+        appendix_a=appendix_a,
+        appendix_b=appendix_b,
         appendix_c=_build_appendix_c_data(
             primary=primary,
             aggregate=test_run,
@@ -172,7 +245,7 @@ def compose_report_document(prepared: PreparedReportInput) -> ReportDocument:
                 tr=tr,
             ),
             report_facts=report_facts,
-            section_context=sections.section_context,
+            appendix_context=appendix_c_context,
             data_trust=list(data_trust),
             tr=tr,
         ),
@@ -187,106 +260,6 @@ def compose_report_document(prepared: PreparedReportInput) -> ReportDocument:
                 sample_rate_hz=run_facts.sample_rate_hz,
                 tr=tr,
             )
-        ),
-    )
-
-
-def _compose_report_document_sections(
-    *,
-    aggregate: TestRun,
-    report_facts: PreparedReportFacts,
-    lang: str,
-) -> _ReportDocumentSections:
-    """Build presentation-specific report sections from prepared semantic facts."""
-
-    def tr(key: str, **kw: JsonValue) -> str:
-        return str(_tr(lang, key, **kw))
-
-    run_facts = report_facts.run
-    sensor_facts = report_facts.sensor
-    decision_facts = report_facts.decision
-    section_context = _build_report_section_context(
-        aggregate=aggregate,
-        report_facts=report_facts,
-        lang=lang,
-        tr=tr,
-    )
-    return _ReportDocumentSections(
-        section_context=section_context,
-        verdict_page=build_verdict_page_data(
-            aggregate=aggregate,
-            primary_candidate_facts=decision_facts.primary_candidate,
-            duration_text=run_facts.duration_text,
-            section_context=section_context,
-            suitability_checks=decision_facts.suitability_checks,
-            warnings=decision_facts.warnings,
-            lang=lang,
-            tr=tr,
-        ),
-        appendix_a=build_appendix_a_data(
-            aggregate=aggregate,
-            section_context=section_context,
-            tr=tr,
-        ),
-        appendix_b=build_appendix_b_data(
-            aggregate=aggregate,
-            primary_candidate_facts=decision_facts.primary_candidate,
-            active_sensor_intensity=sensor_facts.active_intensity,
-            section_context=section_context,
-            tr=tr,
-        ),
-    )
-
-
-def _build_report_section_context(
-    *,
-    aggregate: TestRun,
-    report_facts: PreparedReportFacts,
-    lang: str,
-    tr: Callable[..., str],
-) -> ReportSectionContext:
-    sensor_facts = report_facts.sensor
-    decision_facts = report_facts.decision
-    coverage = sensor_facts.coverage
-    return ReportSectionContext(
-        action_status_key=decision_facts.action_status_key,
-        location_confidence_key=decision_facts.location_confidence_key,
-        alternative_source_visible=decision_facts.alternative_source_visible,
-        active_locations=tuple(coverage.active_locations),
-        coverage_label=coverage_label(
-            expected_locations=coverage.expected_locations,
-            active_locations=coverage.active_locations,
-            missing_locations=coverage.missing_locations,
-            partial_locations=coverage.partial_locations,
-            tr=tr,
-        ),
-        coverage_notes=tuple(
-            coverage_notes(
-                missing_locations=coverage.missing_locations,
-                partial_locations=coverage.partial_locations,
-                tr=tr,
-            )
-        ),
-        proof_caveat=proof_caveat_text(
-            primary_candidate_facts=decision_facts.primary_candidate,
-            action_status_key=decision_facts.action_status_key,
-            location_confidence_key=decision_facts.location_confidence_key,
-            tr=tr,
-        ),
-        runner_up_corner=runner_up_corner(sensor_facts.active_intensity, tr=tr),
-        speed_window_label=str(decision_facts.primary_candidate.primary_speed or "").strip()
-        or None,
-        ranked_candidates=build_ranked_candidates(aggregate, tr=tr),
-        recapture=build_recapture_assessment(
-            aggregate=aggregate,
-            primary_candidate_facts=decision_facts.primary_candidate,
-            location_confidence_key=decision_facts.location_confidence_key,
-            expected_locations=coverage.expected_locations,
-            active_locations=coverage.active_locations,
-            suitability_checks=decision_facts.suitability_checks,
-            warnings=decision_facts.warnings,
-            lang=lang,
-            tr=tr,
         ),
     )
 

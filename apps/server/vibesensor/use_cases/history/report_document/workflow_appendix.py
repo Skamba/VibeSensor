@@ -21,7 +21,7 @@ from vibesensor.shared.report_presentation import (
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
 
-from .section_context import RecaptureAssessment, ReportSectionContext
+from .section_context import AppendixAContext, RecaptureAssessment
 
 __all__ = [
     "build_appendix_a_data",
@@ -33,11 +33,11 @@ __all__ = [
 def build_appendix_a_data(
     *,
     aggregate: TestRun,
-    section_context: ReportSectionContext,
+    appendix_context: AppendixAContext,
     tr: Callable[..., str],
 ) -> AppendixAData:
-    ranked_candidates = section_context.ranked_candidates
-    recapture_before_acting = section_context.action_status_key == "recapture_before_acting"
+    ranked_candidates = appendix_context.ranked_candidates
+    recapture_before_acting = appendix_context.action_status_key == "recapture_before_acting"
     if recapture_before_acting:
         return AppendixAData(
             mode="recapture",
@@ -47,9 +47,9 @@ def build_appendix_a_data(
             why_alternative_next=None,
             next_if_clean=None,
             ranked_candidates=[],
-            capture_issues=list(section_context.recapture.issues),
-            capture_changes=list(section_context.recapture.actions),
-            capture_conditions=list(section_context.recapture.conditions),
+            capture_issues=list(appendix_context.recapture.issues),
+            capture_changes=list(appendix_context.recapture.actions),
+            capture_conditions=list(appendix_context.recapture.conditions),
         )
 
     primary_source = (
@@ -69,11 +69,11 @@ def build_appendix_a_data(
             source=ranked_candidates[1].source_name,
             confidence=ranked_candidates[1].confidence_pct,
         )
-        if section_context.alternative_source_visible
+        if appendix_context.alternative_source_visible
         and len(ranked_candidates) > 1
         and ranked_candidates[1].confidence_pct
         else ranked_candidates[1].source_name
-        if section_context.alternative_source_visible and len(ranked_candidates) > 1
+        if appendix_context.alternative_source_visible and len(ranked_candidates) > 1
         else None
     )
     return AppendixAData(
@@ -83,7 +83,7 @@ def build_appendix_a_data(
         why_primary_first=ranked_candidates[0].reason if ranked_candidates else None,
         why_alternative_next=(
             ranked_candidates[1].reason
-            if section_context.alternative_source_visible and len(ranked_candidates) > 1
+            if appendix_context.alternative_source_visible and len(ranked_candidates) > 1
             else None
         ),
         next_if_clean=_next_if_primary_clean(aggregate, tr=tr),
