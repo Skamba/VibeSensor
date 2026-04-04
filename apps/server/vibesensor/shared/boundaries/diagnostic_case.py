@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import Car
-from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
+from vibesensor.domain.diagnostic_case import DiagnosticCase
 from vibesensor.shared.boundaries import test_run_reconstruction as _test_run_reconstruction
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.run_metadata_projection import (
@@ -39,8 +38,8 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
             accel_scale_g_per_lsb=None,
         )
     )
-    car = car_from_metadata(typed_metadata)
-    symptoms = (symptom_from_metadata(typed_metadata),)
+    car = car_from_run_metadata(typed_metadata)
+    symptoms = (symptom_from_run_metadata(typed_metadata),)
     test_run = _test_run_reconstruction.test_run_from_summary(summary)
     case = DiagnosticCase(
         case_id=_require_authoritative_case_id(summary),
@@ -49,14 +48,3 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
         test_plan=test_run.test_plan,
     )
     return case.add_run(test_run)
-
-
-def car_from_metadata(metadata: RunMetadata) -> Car | None:
-    """Build optional case-scoped car context from canonical run metadata."""
-
-    return car_from_run_metadata(metadata)
-
-
-def symptom_from_metadata(metadata: RunMetadata) -> Symptom:
-    """Build case symptom context from run metadata at a boundary seam."""
-    return symptom_from_run_metadata(metadata)

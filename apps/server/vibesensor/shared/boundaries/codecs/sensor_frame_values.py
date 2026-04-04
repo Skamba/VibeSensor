@@ -6,15 +6,13 @@ import math
 from collections.abc import Sequence
 
 from vibesensor.shared.boundaries.codecs.strength_metrics import strength_peaks_from_sequence
-from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none, safe_json_loads
+from vibesensor.shared.json_utils import safe_json_loads
 from vibesensor.shared.types.json_types import JsonArray, JsonObject, is_json_array
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
     "SensorFrameDecodeError",
     "build_sensor_frame",
-    "optional_float",
-    "optional_int",
     "strict_optional_float",
     "strict_optional_int",
     "strength_bucket",
@@ -99,11 +97,6 @@ def text_value(value: object) -> str:
     return str(value or "")
 
 
-def optional_float(value: object, *, field: str, source: str) -> float | None:
-    del field, source
-    return as_float_or_none(value)
-
-
 def strict_optional_float(value: object, *, field: str, source: str) -> float | None:
     if value in (None, ""):
         return None
@@ -128,11 +121,6 @@ def strict_optional_float(value: object, *, field: str, source: str) -> float | 
             detail=f"expected float-compatible value, got {type(value).__name__}",
         ) from exc
     return numeric if math.isfinite(numeric) else None
-
-
-def optional_int(value: object, *, field: str, source: str) -> int | None:
-    del field, source
-    return as_int_or_none(value)
 
 
 def strict_optional_int(value: object, *, field: str, source: str) -> int | None:

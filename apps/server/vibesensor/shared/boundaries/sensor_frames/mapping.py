@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
+from vibesensor.shared.boundaries.codecs.scalars import optional_float, optional_int
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -12,8 +13,6 @@ from ..codecs import strength_peak_payloads
 from ..codecs.sensor_frame_values import (
     SensorFrameDecodeError,
     build_sensor_frame,
-    optional_float,
-    optional_int,
     strength_bucket,
     strict_optional_float,
     strict_optional_int,
