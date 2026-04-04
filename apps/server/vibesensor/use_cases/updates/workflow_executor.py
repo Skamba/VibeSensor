@@ -14,7 +14,7 @@ from vibesensor.use_cases.updates.run_models import (
 )
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
-from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
+from vibesensor.use_cases.updates.transport_sessions import ManagedUpdateTransportSession
 
 __all__ = ["UpdateWorkflowExecutor"]
 
@@ -92,7 +92,7 @@ class UpdateWorkflowExecutor:
 
     async def _complete_success(
         self,
-        transport_session: UpdateTransportSession,
+        transport_session: ManagedUpdateTransportSession,
         *,
         message: str,
     ) -> None:
