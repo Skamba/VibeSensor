@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import shutil
-import sys
 import tempfile
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -49,25 +48,37 @@ class ServerReleaseStager:
         self._status.transition(UpdatePhase.downloading)
         self._status.log(f"Downloading release {release.tag}...")
         staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
+        prior_error: BaseException | None = None
         try:
-            wheel_path = await self._download_release(release, staging_dir)
-            self._status.log(
-                f"Downloaded {wheel_path.name} (sha256={getattr(release, 'sha256', '')})",
-            )
-            await self._verify_download(release, wheel_path)
-            yield StagedServerRelease(release=release, wheel_path=wheel_path)
-        finally:
-            active_error = sys.exc_info()[1]
             try:
-                shutil.rmtree(staging_dir)
-            except OSError as exc:
-                cleanup_error = UpdateCleanupError(
-                    f"Failed to remove staged release directory: {exc}",
+                wheel_path = await self._download_release(release, staging_dir)
+                self._status.log(
+                    f"Downloaded {wheel_path.name} (sha256={getattr(release, 'sha256', '')})",
                 )
-                if active_error is not None:
-                    active_error.add_note(str(cleanup_error))
-                else:
-                    raise cleanup_error from exc
+                await self._verify_download(release, wheel_path)
+                yield StagedServerRelease(release=release, wheel_path=wheel_path)
+            except BaseException as exc:
+                prior_error = exc
+                raise
+        finally:
+            self._cleanup_staging_dir(staging_dir, prior_error=prior_error)
+
+    def _cleanup_staging_dir(
+        self,
+        staging_dir: Path,
+        *,
+        prior_error: BaseException | None,
+    ) -> None:
+        try:
+            shutil.rmtree(staging_dir)
+        except OSError as exc:
+            cleanup_error = UpdateCleanupError(
+                f"Failed to remove staged release directory: {exc}",
+            )
+            if prior_error is not None:
+                prior_error.add_note(str(cleanup_error))
+                return
+            raise cleanup_error from exc
 
     async def _download_release(self, release: ReleaseInfo, staging_dir: Path) -> Path:
         """Download a release wheel to *staging_dir*."""
