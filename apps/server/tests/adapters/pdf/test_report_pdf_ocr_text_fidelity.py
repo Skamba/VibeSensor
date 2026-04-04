@@ -13,7 +13,8 @@ from test_support.report_helpers import write_jsonl
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
+from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document
 
 pdfium = pytest.importorskip("pypdfium2")
 RapidOCR = pytest.importorskip("rapidocr_onnxruntime").RapidOCR

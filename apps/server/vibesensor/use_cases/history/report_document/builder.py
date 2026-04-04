@@ -10,19 +10,7 @@ from vibesensor.shared.boundaries.reporting.document import (
 
 from .composition import compose_report_document_context
 
-__all__ = ["ReportDocumentBuilder", "build_report_document", "build_report_document_data"]
-
-
-class ReportDocumentBuilder:
-    """Build the canonical report document from one precomposed immutable context."""
-
-    __slots__ = ("_prepared",)
-
-    def __init__(self, prepared: PreparedReportInput) -> None:
-        self._prepared = prepared
-
-    def build(self) -> ReportDocument:
-        return build_report_document_data(compose_report_document_context(self._prepared))
+__all__ = ["build_report_document", "build_report_document_data"]
 
 
 def build_report_document_data(context: ReportDocumentContext) -> ReportDocument:
@@ -67,4 +55,4 @@ def build_report_document_data(context: ReportDocumentContext) -> ReportDocument
 def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
     """Build the canonical report document from prepared report input."""
 
-    return ReportDocumentBuilder(prepared).build()
+    return build_report_document_data(compose_report_document_context(prepared))
