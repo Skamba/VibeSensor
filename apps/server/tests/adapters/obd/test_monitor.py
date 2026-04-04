@@ -11,6 +11,7 @@ from vibesensor.adapters.obd.connection_runtime import ObdConnectionRuntime
 from vibesensor.adapters.obd.elm327 import ObdTransportError
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.monitor import OBDSpeedMonitor
+from vibesensor.adapters.obd.polling import ObdPidFailureKind, ObdPidPollResult, ObdPollResult
 from vibesensor.adapters.obd.runtime_controller import ObdRuntimeController
 from vibesensor.shared.operational_errors import ExternalCommandError
 
@@ -63,9 +64,7 @@ def _connected_runtime(
         monotonic=clock,
     )
     connected_session, device = connection_runtime._connect_blocking("00043e5a4a4d", "OBDLink MX+")
-    runtime.apply_device_snapshot(device)
-    runtime.reset_poll_schedule()
-    runtime.set_connection_state("connected", error=None)
+    runtime.mark_connected(device)
     return runtime, connection_runtime, connected_session
 
 
@@ -92,9 +91,9 @@ def test_obd_monitor_prioritizes_rpm_and_keeps_speed_as_a_companion_poll() -> No
 
     session.request.side_effect = request
 
-    runtime.apply_poll_result(connection_runtime._poll_cycle_blocking(session))
+    runtime.apply_poll_cycle(connection_runtime._poll_cycle_blocking(session))
     clock.now = started_at + 0.05
-    runtime.apply_poll_result(connection_runtime._poll_cycle_blocking(session))
+    runtime.apply_poll_cycle(connection_runtime._poll_cycle_blocking(session))
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.2)]
     assert runtime.resolve_speed().source == "obd2"
@@ -131,9 +130,9 @@ def test_obd_monitor_keeps_last_good_rpm_until_the_rpm_reference_goes_stale() ->
 
     session.request.side_effect = request
 
-    runtime.apply_poll_result(connection_runtime._poll_cycle_blocking(session))
+    runtime.apply_poll_cycle(connection_runtime._poll_cycle_blocking(session))
     clock.now = 0.05
-    runtime.apply_poll_result(connection_runtime._poll_cycle_blocking(session))
+    runtime.apply_poll_cycle(connection_runtime._poll_cycle_blocking(session))
 
     assert runtime.engine_rpm == pytest.approx(0x1AF8 / 4.0)
     clock.now = 1.99
@@ -165,8 +164,8 @@ def test_obd_monitor_backs_off_and_stays_in_rpm_only_mode_when_speed_times_out()
 
     session.request.side_effect = request
 
-    runtime.apply_poll_result(connection_runtime._poll_cycle_blocking(session))
-    runtime.apply_poll_result(connection_runtime._poll_cycle_blocking(session))
+    runtime.apply_poll_cycle(connection_runtime._poll_cycle_blocking(session))
+    runtime.apply_poll_cycle(connection_runtime._poll_cycle_blocking(session))
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.3)]
     status = runtime.status_snapshot()
@@ -194,7 +193,7 @@ def test_obd_runtime_resolves_stale_speed_to_manual_fallback() -> None:
         obd_device_name="OBDLink MX+",
     )
     runtime.speed_snapshot = (10.0, 90.0)
-    runtime.set_connection_state("connected", error=None)
+    runtime.mark_connected()
 
     resolution = runtime.resolve_speed()
 
@@ -246,6 +245,32 @@ def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
 
     assert "sudo" in str(status.last_error).lower()
     assert "sudo helper" in str(obd_debug_hint(status)).lower()
+
+
+def test_obd_runtime_marks_disconnected_after_fatal_poll_cycle() -> None:
+    clock = _FakeClock()
+    runtime, _, _ = _connected_runtime(clock=clock)
+
+    connection_lost = runtime.apply_poll_cycle(
+        ObdPollResult(
+            rpm=ObdPidPollResult(
+                value=None,
+                raw_response=None,
+                error="PID 010C request failed: Session is not connected",
+                duration_s=0.05,
+                executed=True,
+                failure_kind=ObdPidFailureKind.FATAL_TRANSPORT,
+            ),
+            speed=ObdPidPollResult.skipped(),
+        ),
+        reconnect_delay_s=4.0,
+    )
+
+    assert connection_lost is True
+    status = runtime.status_snapshot()
+    assert status.connection_state == "disconnected"
+    assert status.last_error == "PID 010C request failed: Session is not connected"
+    assert status.reconnect_delay_s == 4.0
 
 
 def test_connect_blocking_closes_session_and_propagates_transport_error() -> None:
