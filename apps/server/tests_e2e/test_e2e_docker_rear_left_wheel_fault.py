@@ -24,6 +24,7 @@ from tests_e2e.e2e_helpers import (
     wait_for,
     wait_run_status,
 )
+from vibesensor.vibration_strength import percentile
 
 pytestmark = pytest.mark.e2e
 
@@ -152,7 +153,7 @@ def _compute_bucket_dist_from_samples(samples: list[dict]) -> dict[str, dict]:
 
 
 def _compute_p95_by_location(samples: list[dict]) -> dict[str, float]:
-    """Compute p95 of vibration_strength_db per location, ignoring None/negative values."""
+    """Compute p95 by location using the production percentile helper."""
     vals_by_loc: dict[str, list[float]] = {}
     for sample in samples:
         if not isinstance(sample, dict):
@@ -169,9 +170,7 @@ def _compute_p95_by_location(samples: list[dict]) -> dict[str, float]:
     result: dict[str, float] = {}
     for loc, vals in vals_by_loc.items():
         if vals:
-            sv = sorted(vals)
-            idx = max(0, int(math.ceil(len(sv) * 0.95)) - 1)
-            result[loc] = sv[idx]
+            result[loc] = percentile(sorted(vals), 0.95)
     return result
 
 
