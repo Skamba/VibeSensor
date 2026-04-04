@@ -13,6 +13,9 @@ from vibesensor.adapters.obd.elm327 import Elm327Session, ObdTransportError
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.polling import ObdPollResult, execute_poll_plan
 from vibesensor.adapters.obd.runtime_connection_control import ObdRuntimeConnectionControl
+from vibesensor.adapters.obd.runtime_connection_observation import (
+    ObdRuntimeConnectionObservation,
+)
 from vibesensor.shared.operational_errors import OperationalError, ServiceUnavailableError
 
 __all__ = ["ObdConnectionExecutor", "ObdConnectionLoopState"]
@@ -37,6 +40,7 @@ class ObdConnectionExecutor:
 
     __slots__ = (
         "_admin_client",
+        "_connection_observation",
         "_connection_control",
         "_monotonic",
         "_session_factory",
@@ -47,12 +51,14 @@ class ObdConnectionExecutor:
         self,
         *,
         admin_client: ObdAdminClient,
+        connection_observation: ObdRuntimeConnectionObservation,
         connection_control: ObdRuntimeConnectionControl,
         session_factory: SessionFactory,
         monotonic: MonotonicFn = time.monotonic,
         sleep: SleepFn = asyncio.sleep,
     ) -> None:
         self._admin_client = admin_client
+        self._connection_observation = connection_observation
         self._connection_control = connection_control
         self._session_factory = session_factory
         self._monotonic = monotonic
@@ -203,7 +209,7 @@ class ObdConnectionExecutor:
                 session.close()
 
     def _poll_cycle_blocking(self, session: Elm327Session) -> ObdPollResult:
-        plan = self._connection_control.prepare_poll()
+        plan = self._connection_observation.prepare_poll()
         return execute_poll_plan(session, plan=plan, monotonic=self._monotonic)
 
     async def _close_session_if_needed(
