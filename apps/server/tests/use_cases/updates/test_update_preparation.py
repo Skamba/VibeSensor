@@ -32,9 +32,9 @@ def _build_preparation(
     current_version: str = "2026.4.3",
 ) -> tuple[UpdatePreparationCoordinator, UpdateStatusTracker, AsyncMock, AsyncMock]:
     status = build_update_status_harness(tmp_path / "state.json")
-    transport_session = AsyncMock()
+    prepared_transport = AsyncMock()
     transport_coordinator = MagicMock(spec=UpdateTransportCoordinator)
-    transport_coordinator.prepare = AsyncMock(return_value=transport_session)
+    transport_coordinator.prepare = AsyncMock(return_value=prepared_transport)
     preparation = UpdatePreparationCoordinator(
         status=status,
         commands=MagicMock(),
@@ -45,12 +45,12 @@ def _build_preparation(
         ),
         current_version_provider=lambda: current_version,
     )
-    return preparation, status, transport_session, transport_coordinator
+    return preparation, status, prepared_transport, transport_coordinator
 
 
 @pytest.mark.asyncio
 async def test_prepare_stops_after_validation_failure(tmp_path: Path) -> None:
-    preparation, _tracker, _transport_session, transport_coordinator = _build_preparation(tmp_path)
+    preparation, _tracker, _prepared_transport, transport_coordinator = _build_preparation(tmp_path)
 
     with (
         patch(
@@ -66,7 +66,7 @@ async def test_prepare_stops_after_validation_failure(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_prepare_stops_when_transport_cannot_prepare(tmp_path: Path) -> None:
-    preparation, _tracker, _transport_session, transport_coordinator = _build_preparation(tmp_path)
+    preparation, _tracker, _prepared_transport, transport_coordinator = _build_preparation(tmp_path)
     request = _wifi_request()
     transport_coordinator.prepare.side_effect = UpdateTransportError("transport failed")
 
@@ -84,7 +84,7 @@ async def test_prepare_stops_when_transport_cannot_prepare(tmp_path: Path) -> No
 
 @pytest.mark.asyncio
 async def test_prepare_returns_canonical_prepared_run(tmp_path: Path) -> None:
-    preparation, _tracker, transport_session, transport_coordinator = _build_preparation(
+    preparation, _tracker, prepared_transport, transport_coordinator = _build_preparation(
         tmp_path,
         current_version="2026.4.9",
     )
@@ -99,4 +99,4 @@ async def test_prepare_returns_canonical_prepared_run(tmp_path: Path) -> None:
     assert isinstance(prepared, PreparedUpdateRun)
     assert prepared.current_version == "2026.4.9"
     transport_coordinator.prepare.assert_awaited_once_with(request)
-    assert prepared.transport_session is transport_session
+    assert prepared.prepared_transport is prepared_transport
