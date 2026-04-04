@@ -4,7 +4,7 @@ import pytest
 
 from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.order_bands import (
     build_diagnostic_settings,

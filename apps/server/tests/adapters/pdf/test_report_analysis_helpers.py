@@ -4,7 +4,7 @@ import pytest
 
 from vibesensor.domain import speed_band_sort_key, speed_bin_label
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.constants.analysis import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float

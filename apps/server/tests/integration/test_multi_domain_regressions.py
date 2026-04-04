@@ -15,7 +15,7 @@ from vibesensor.domain import Finding, SpeedSourceKind, speed_bin_label
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
 from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata

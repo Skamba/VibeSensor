@@ -15,7 +15,7 @@ from vibesensor.shared.boundaries.run_metadata_codec import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult

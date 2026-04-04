@@ -12,7 +12,7 @@ from vibesensor.shared.boundaries.codecs import (
     speed_profile_summary_from_mapping,
 )
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as _reconstruct,
 )
