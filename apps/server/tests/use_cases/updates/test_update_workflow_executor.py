@@ -28,8 +28,8 @@ def _executor() -> tuple[
     MagicMock,
 ]:
     stager = MagicMock()
-    deployer = MagicMock()
-    deployer.deploy = AsyncMock(return_value=True)
+    deployment = MagicMock()
+    deployment.deploy = AsyncMock(return_value=True)
     firmware_refresher = MagicMock()
     firmware_refresher.refresh_esp_firmware = AsyncMock()
     restart_scheduler = MagicMock()
@@ -39,7 +39,7 @@ def _executor() -> tuple[
     transport_coordinator.complete_success = AsyncMock(return_value=True)
     executor = UpdateWorkflowExecutor(
         stager=stager,
-        deployer=deployer,
+        deployment=deployment,
         firmware_refresher=firmware_refresher,
         restart_scheduler=restart_scheduler,
         status=status,
@@ -48,7 +48,7 @@ def _executor() -> tuple[
     return (
         executor,
         stager,
-        deployer,
+        deployment,
         firmware_refresher,
         restart_scheduler,
         status,
@@ -68,7 +68,7 @@ async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport(
     (
         executor,
         stager,
-        deployer,
+        deployment,
         firmware_refresher,
         restart_scheduler,
         status,
@@ -94,7 +94,7 @@ async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport(
     )
     restart_scheduler.schedule.assert_awaited_once_with()
     status.add_issue.assert_not_called()
-    deployer.deploy.assert_not_awaited()
+    deployment.deploy.assert_not_awaited()
     assert not stager.stage.called
 
 
@@ -103,7 +103,7 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
     (
         executor,
         stager,
-        deployer,
+        deployment,
         firmware_refresher,
         restart_scheduler,
         status,
@@ -130,7 +130,7 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
 
     assert completed == UpdateExecutionOutcome.installed
     stager.stage.assert_called_once_with(release)
-    deployer.deploy.assert_awaited_once_with(staged_release)
+    deployment.deploy.assert_awaited_once_with(staged_release)
     transport_coordinator.complete_success.assert_awaited_once_with(
         workflow.prepared.transport_session,
         message="Update completed successfully",
@@ -147,7 +147,7 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
     (
         executor,
         stager,
-        deployer,
+        deployment,
         _firmware_refresher,
         restart_scheduler,
         _status,
@@ -162,7 +162,7 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
         yield staged_release
 
     stager.stage.side_effect = stage
-    deployer.deploy.side_effect = UpdateReleaseError("install failed")
+    deployment.deploy.side_effect = UpdateReleaseError("install failed")
 
     with pytest.raises(UpdateReleaseError, match="install failed"):
         await executor.execute(
@@ -174,7 +174,7 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
             ),
         )
 
-    deployer.deploy.assert_awaited_once_with(staged_release)
+    deployment.deploy.assert_awaited_once_with(staged_release)
     transport_coordinator.complete_success.assert_not_awaited()
     restart_scheduler.schedule.assert_not_awaited()
 
@@ -184,7 +184,7 @@ async def test_execute_records_issue_when_restart_scheduling_fails() -> None:
     (
         executor,
         _stager,
-        _deployer,
+        _deployment,
         firmware_refresher,
         restart_scheduler,
         status,

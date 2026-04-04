@@ -1,26 +1,57 @@
-"""Deploy a staged server release into the live installation."""
+"""Deploy a staged server release through one rollback-aware mutation boundary."""
 
 from __future__ import annotations
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
-from vibesensor.use_cases.updates.release_installation import UpdateReleaseInstallationCoordinator
+from vibesensor.use_cases.updates.installer import UpdateInstaller
+from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.release_staging import StagedServerRelease
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
+
+__all__ = ["UpdateReleaseDeploymentCoordinator"]
 
 
-class UpdateReleaseDeployer:
-    """Own the system-mutating part of an update after staging succeeds."""
+class UpdateReleaseDeploymentCoordinator:
+    """Own staged-release mutation order, install policy, and rollback handling."""
 
-    __slots__ = ("_firmware_refresher", "_installation")
+    __slots__ = ("_firmware_refresher", "_installer", "_status")
 
     def __init__(
         self,
         *,
-        installation: UpdateReleaseInstallationCoordinator,
+        installer: UpdateInstaller,
         firmware_refresher: FirmwareRefresher,
+        status: UpdateStatusTracker,
     ) -> None:
-        self._installation = installation
+        self._installer = installer
         self._firmware_refresher = firmware_refresher
+        self._status = status
 
     async def deploy(self, staged_release: StagedServerRelease) -> None:
+        self._status.transition(UpdatePhase.installing)
+        self._status.log("Installing update...")
+        if not await self._installer.snapshot_for_rollback():
+            self._status.fail(
+                UpdatePhase.installing.value,
+                "Rollback snapshot could not be created",
+                "Install aborted before mutating the live environment",
+            )
+            raise UpdateReleaseError("Rollback snapshot could not be created")
         await self._firmware_refresher.refresh_esp_firmware(pinned_tag=staged_release.release.tag)
-        await self._installation.install(staged_release)
+        install_result = await self._installer.install_release(
+            staged_release.wheel_path,
+            str(staged_release.release.version),
+        )
+        if install_result.succeeded:
+            return
+        if not install_result.rollback_required:
+            raise UpdateReleaseError("Update install failed")
+
+        self._status.log("Attempting rollback...")
+        rollback_succeeded = await self._installer.rollback()
+        if rollback_succeeded:
+            raise UpdateReleaseError(
+                "Update install failed; rollback restored the previous version",
+            )
+        raise UpdateReleaseError("Update install failed and rollback did not complete")
