@@ -14,9 +14,8 @@ from vibesensor.use_cases.updates.models import (
     UpdateValidationConfig,
 )
 from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
-from vibesensor.use_cases.updates.release_deployment import UpdateReleaseDeployer
-from vibesensor.use_cases.updates.release_installation import (
-    UpdateReleaseInstallationCoordinator,
+from vibesensor.use_cases.updates.release_deployment import (
+    UpdateReleaseDeploymentCoordinator,
 )
 from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
@@ -202,7 +201,7 @@ def _build_release_components(
 ) -> tuple[
     ServerReleaseResolver,
     ServerReleaseStager,
-    UpdateReleaseDeployer,
+    UpdateReleaseDeploymentCoordinator,
     FirmwareRefresher,
     UpdateRestartScheduler,
 ]:
@@ -217,10 +216,6 @@ def _build_release_components(
         status=status,
         config=config.installer_config,
     )
-    installation = UpdateReleaseInstallationCoordinator(
-        installer=installer,
-        status=status,
-    )
     return (
         ServerReleaseResolver(
             status=status,
@@ -230,9 +225,10 @@ def _build_release_components(
             status=status,
             rollback_dir=config.rollback_dir,
         ),
-        UpdateReleaseDeployer(
-            installation=installation,
+        UpdateReleaseDeploymentCoordinator(
+            installer=installer,
             firmware_refresher=firmware_refresher,
+            status=status,
         ),
         firmware_refresher,
         UpdateRestartScheduler(
@@ -259,7 +255,7 @@ def _build_update_workflow(
     (
         resolver,
         stager,
-        deployer,
+        deployment,
         firmware_refresher,
         restart_scheduler,
     ) = _build_release_components(
@@ -281,7 +277,7 @@ def _build_update_workflow(
         ),
         workflow_executor=UpdateWorkflowExecutor(
             stager=stager,
-            deployer=deployer,
+            deployment=deployment,
             firmware_refresher=firmware_refresher,
             restart_scheduler=restart_scheduler,
             status=status,
