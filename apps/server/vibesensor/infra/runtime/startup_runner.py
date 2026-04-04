@@ -110,7 +110,7 @@ class StartupRunner:
             ),
             StartupPhase(
                 "obd-speed",
-                lambda: self._start_background(lambda: r.obd_monitor.run(), "obd-speed"),
+                lambda: self._start_background(lambda: r.obd_runner.run(), "obd-speed"),
             ),
             StartupPhase(
                 "update-startup-recover",

@@ -135,9 +135,9 @@ def _make_runtime(**overrides: Any):
     worker_pool = overrides.pop("worker_pool", MagicMock())
     settings_store = overrides.pop("settings_store", MagicMock())
     gps_monitor = overrides.pop("gps_monitor", MagicMock())
-    obd_monitor = overrides.pop("obd_monitor", MagicMock())
-    if not isinstance(getattr(obd_monitor, "run", None), AsyncMock):
-        obd_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
+    obd_runner = overrides.pop("obd_runner", MagicMock())
+    if not isinstance(getattr(obd_runner, "run", None), AsyncMock):
+        obd_runner.run = AsyncMock(side_effect=asyncio.CancelledError)
     history_db = overrides.pop("history_db", MagicMock())
     diagnostics = overrides.pop("run_recorder", MagicMock())
     update_manager = overrides.pop("update_manager", MagicMock())
@@ -152,7 +152,7 @@ def _make_runtime(**overrides: Any):
         worker_pool=worker_pool,
         settings_store=settings_store,
         gps_monitor=gps_monitor,
-        obd_monitor=obd_monitor,
+        obd_runner=obd_runner,
         history_db=history_db,
         processing_loop_state=processing_state,
         health_state=health_state,
@@ -197,7 +197,7 @@ def _make_runtime(**overrides: Any):
         ws_broadcast=rt.ws_broadcast,
         run_recorder=diagnostics,
         gps_monitor=gps_monitor,
-        obd_monitor=obd_monitor,
+        obd_runner=obd_runner,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
         worker_pool=worker_pool,
@@ -593,13 +593,12 @@ def test_runtime_state_has_public_attribute(attr: str) -> None:
 def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None:
     """RuntimeState should expose existing shared ports for read-side services."""
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-    from vibesensor.adapters.obd.monitor import OBDSpeedMonitor
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.app import runtime_state as runtime_state_module
     from vibesensor.app.runtime_state import RuntimeState
     from vibesensor.app.settings import AppConfig
-    from vibesensor.infra.runtime.lifecycle import LifecycleHistoryDb
+    from vibesensor.infra.runtime.lifecycle import LifecycleHistoryDb, LifecycleObdRunner
     from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource
 
     hints = get_type_hints(
@@ -608,8 +607,8 @@ def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None
             **vars(runtime_state_module),
             "AppConfig": AppConfig,
             "GPSSpeedMonitor": GPSSpeedMonitor,
-            "OBDSpeedMonitor": OBDSpeedMonitor,
             "LifecycleHistoryDb": LifecycleHistoryDb,
+            "LifecycleObdRunner": LifecycleObdRunner,
             "UDPControlPlane": UDPControlPlane,
             "WebSocketHub": WebSocketHub,
         },

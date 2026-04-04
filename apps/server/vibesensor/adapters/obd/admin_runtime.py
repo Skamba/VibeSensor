@@ -5,7 +5,7 @@ from __future__ import annotations
 from vibesensor.adapters.obd.admin_client import ObdAdminClient
 from vibesensor.adapters.obd.admin_state import observe_configured_obd_device
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
-from vibesensor.adapters.obd.runtime_controller import ObdRuntimeController
+from vibesensor.adapters.obd.runtime_connection_state import ObdRuntimeConnectionState
 
 __all__ = ["ObdAdminRuntime"]
 
@@ -19,10 +19,10 @@ class ObdAdminRuntime:
         self,
         *,
         admin_client: ObdAdminClient,
-        runtime: ObdRuntimeController,
+        connection_state: ObdRuntimeConnectionState,
     ) -> None:
         self._admin_client = admin_client
-        self._runtime = runtime
+        self._runtime = connection_state
 
     def scan_devices(self, *, timeout_s: int = 8) -> list[ObdDeviceSnapshot]:
         return self._admin_client.scan_devices(timeout_s=timeout_s)
