@@ -17,7 +17,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+    from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 __all__ = [
     "WheelArtifactValidator",
@@ -179,16 +179,14 @@ def wheel_dependency_issues(
 class WheelArtifactValidator:
     """Validate updater wheel artifacts through explicit status services."""
 
-    __slots__ = ("_status_controller", "_status_recorder")
+    __slots__ = ("_status",)
 
     def __init__(
         self,
         *,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
     ) -> None:
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
+        self._status = status
 
     def _report_failure(
         self,
@@ -199,10 +197,10 @@ class WheelArtifactValidator:
         fatal: bool,
     ) -> None:
         if fatal:
-            self._status_recorder.add_issue(phase, message, detail)
-            self._status_controller.mark_failed()
+            self._status.add_issue(phase, message, detail)
+            self._status.mark_failed()
         else:
-            self._status_recorder.add_issue(phase, message, detail)
+            self._status.add_issue(phase, message, detail)
 
     def validate_wheel(
         self,
