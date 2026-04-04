@@ -7,7 +7,7 @@ from dataclasses import replace
 from test_support.findings import make_finding_payload
 
 from vibesensor.domain import Finding, VibrationSource
-from vibesensor.shared.boundaries.analysis_summary_projection import (
+from vibesensor.shared.boundaries.analysis_payloads import (
     project_analysis_summary,
     project_persisted_analysis,
 )
@@ -153,7 +153,7 @@ def test_project_analysis_summary_uses_list_sensor_locations_for_fallback_confid
 def test_project_persisted_analysis_uses_persisted_reconstruction_path(
     monkeypatch,
 ) -> None:
-    import vibesensor.shared.boundaries.analysis_summary_projection as projection
+    import vibesensor.shared.boundaries.analysis_payloads.projection as projection
 
     analysis = PersistedAnalysis.from_json_object(
         {

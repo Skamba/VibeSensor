@@ -8,11 +8,11 @@ from test_support import standard_metadata
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
-from vibesensor.shared.boundaries.test_run_reconstruction import (
+from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as _decode_test_run,
 )
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 

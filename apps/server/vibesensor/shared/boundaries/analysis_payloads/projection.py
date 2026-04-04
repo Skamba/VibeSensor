@@ -12,13 +12,11 @@ from vibesensor.shared.boundaries.test_plan_projection import (
     _has_structured_step_content,
     step_payloads_from_plan,
 )
-from vibesensor.shared.boundaries.test_run_reconstruction import (
-    test_run_from_persisted_analysis,
-    test_run_from_summary,
-)
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+
+from .reconstruction import test_run_from_persisted_analysis, test_run_from_summary
 
 __all__ = ["project_analysis_summary", "project_persisted_analysis"]
 

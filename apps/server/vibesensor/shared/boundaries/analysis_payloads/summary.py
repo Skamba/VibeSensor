@@ -1,13 +1,10 @@
-"""Pure boundary serializer for converting analysis results into AnalysisSummary."""
+"""Serialize diagnostics results into persisted analysis-summary payloads."""
 
 from __future__ import annotations
 
 from copy import deepcopy
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.shared.boundaries.analysis_summary_contracts import (
-    AnalysisResultLike,
-)
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_to_json_objects
 from vibesensor.shared.boundaries.summary_serialization import (
@@ -23,6 +20,10 @@ from vibesensor.shared.run_context_warning import (
 )
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
+
+from .contracts import AnalysisResultLike
+
+__all__ = ["analysis_result_to_summary", "analysis_summary_with_warnings"]
 
 
 def _amp_metric_values(accel_stats: AccelStatisticsLike) -> list[float]:

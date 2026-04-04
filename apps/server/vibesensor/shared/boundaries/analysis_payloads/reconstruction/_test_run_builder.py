@@ -1,4 +1,4 @@
-"""Persisted-summary to TestRun reconstruction helpers."""
+"""Analysis-summary and persisted-analysis reconstruction helpers."""
 
 from __future__ import annotations
 
