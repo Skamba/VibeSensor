@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
-    from vibesensor.use_cases.updates.transport_sessions import ManagedUpdateTransportSession
+    from vibesensor.use_cases.updates.transport_lifecycles import PreparedUpdateTransport
 
 __all__ = [
     "InstallServerReleasePlan",
@@ -20,10 +20,10 @@ __all__ = [
 
 @dataclass(frozen=True, slots=True)
 class PreparedUpdateRun:
-    """Validated updater state with one prepared transport session."""
+    """Validated updater state with one prepared transport handle."""
 
     current_version: str
-    transport_session: ManagedUpdateTransportSession
+    prepared_transport: PreparedUpdateTransport
 
 
 @dataclass(frozen=True, slots=True)

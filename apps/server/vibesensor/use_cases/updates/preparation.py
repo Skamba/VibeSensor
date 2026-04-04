@@ -51,5 +51,5 @@ class UpdatePreparationCoordinator:
         )
         return PreparedUpdateRun(
             current_version=self._current_version_provider(),
-            transport_session=await self._transport_coordinator.prepare(request),
+            prepared_transport=await self._transport_coordinator.prepare(request),
         )

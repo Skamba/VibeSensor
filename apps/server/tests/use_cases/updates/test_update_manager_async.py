@@ -440,7 +440,7 @@ class TestUpdateManagerAsync:
                 new=AsyncMock(
                     return_value=SimpleNamespace(
                         current_version="2026.4.3",
-                        transport_session=AsyncMock(),
+                        prepared_transport=AsyncMock(),
                     )
                 ),
             ),
@@ -488,7 +488,7 @@ class TestUpdateManagerAsync:
                 new=AsyncMock(
                     return_value=SimpleNamespace(
                         current_version="2026.4.3",
-                        transport_session=AsyncMock(),
+                        prepared_transport=AsyncMock(),
                     )
                 ),
             ),

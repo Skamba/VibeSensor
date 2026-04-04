@@ -25,7 +25,6 @@ def _executor() -> tuple[
     MagicMock,
     MagicMock,
     MagicMock,
-    MagicMock,
 ]:
     stager = MagicMock()
     deployment = MagicMock()
@@ -35,15 +34,12 @@ def _executor() -> tuple[
     restart_scheduler = MagicMock()
     restart_scheduler.schedule = AsyncMock(return_value=True)
     status = MagicMock()
-    transport_coordinator = MagicMock()
-    transport_coordinator.complete_success = AsyncMock(return_value=True)
     executor = UpdateWorkflowExecutor(
         stager=stager,
         deployment=deployment,
         firmware_refresher=firmware_refresher,
         restart_scheduler=restart_scheduler,
         status=status,
-        transport_coordinator=transport_coordinator,
     )
     return (
         executor,
@@ -52,14 +48,19 @@ def _executor() -> tuple[
         firmware_refresher,
         restart_scheduler,
         status,
-        transport_coordinator,
     )
 
 
-def _prepared_run(session: object) -> PreparedUpdateRun:
+def _prepared_transport() -> MagicMock:
+    prepared_transport = MagicMock()
+    prepared_transport.complete_success = AsyncMock()
+    return prepared_transport
+
+
+def _prepared_run(prepared_transport: object) -> PreparedUpdateRun:
     return PreparedUpdateRun(
         current_version="2026.4.3",
-        transport_session=session,
+        prepared_transport=prepared_transport,
     )
 
 
@@ -72,11 +73,10 @@ async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport(
         firmware_refresher,
         restart_scheduler,
         status,
-        transport_coordinator,
     ) = _executor()
-    transport_session = object()
+    prepared_transport = _prepared_transport()
     workflow = PlannedUpdateRun(
-        prepared=_prepared_run(transport_session),
+        prepared=_prepared_run(prepared_transport),
         execution_plan=RefreshFirmwarePlan(
             latest_tag="server-v2026.4.3",
         ),
@@ -88,9 +88,8 @@ async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport(
     firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
         pinned_tag="server-v2026.4.3",
     )
-    transport_coordinator.complete_success.assert_awaited_once_with(
-        transport_session,
-        message="No server update needed; ESP firmware checked",
+    prepared_transport.complete_success.assert_awaited_once_with(
+        "No server update needed; ESP firmware checked",
     )
     restart_scheduler.schedule.assert_awaited_once_with()
     status.add_issue.assert_not_called()
@@ -107,11 +106,10 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
         firmware_refresher,
         restart_scheduler,
         status,
-        transport_coordinator,
     ) = _executor()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
     staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
-    transport_session = object()
+    prepared_transport = _prepared_transport()
 
     @asynccontextmanager
     async def stage(_release: object):
@@ -120,8 +118,8 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
     stager.stage.side_effect = stage
 
     completed = await executor.execute(
-        workflow := PlannedUpdateRun(
-            prepared=_prepared_run(transport_session),
+        PlannedUpdateRun(
+            prepared=_prepared_run(prepared_transport),
             execution_plan=InstallServerReleasePlan(
                 release=release,
             ),
@@ -131,9 +129,8 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
     assert completed == UpdateExecutionOutcome.installed
     stager.stage.assert_called_once_with(release)
     deployment.deploy.assert_awaited_once_with(staged_release)
-    transport_coordinator.complete_success.assert_awaited_once_with(
-        workflow.prepared.transport_session,
-        message="Update completed successfully",
+    prepared_transport.complete_success.assert_awaited_once_with(
+        "Update completed successfully",
     )
     restart_scheduler.schedule.assert_awaited_once_with()
     status.add_issue.assert_not_called()
@@ -151,11 +148,10 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
         _firmware_refresher,
         restart_scheduler,
         _status,
-        transport_coordinator,
     ) = _executor()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
     staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
-    transport_session = object()
+    prepared_transport = _prepared_transport()
 
     @asynccontextmanager
     async def stage(_release: object):
@@ -167,7 +163,7 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
     with pytest.raises(UpdateReleaseError, match="install failed"):
         await executor.execute(
             PlannedUpdateRun(
-                prepared=_prepared_run(transport_session),
+                prepared=_prepared_run(prepared_transport),
                 execution_plan=InstallServerReleasePlan(
                     release=release,
                 ),
@@ -175,7 +171,7 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
         )
 
     deployment.deploy.assert_awaited_once_with(staged_release)
-    transport_coordinator.complete_success.assert_not_awaited()
+    prepared_transport.complete_success.assert_not_awaited()
     restart_scheduler.schedule.assert_not_awaited()
 
 
@@ -188,14 +184,13 @@ async def test_execute_records_issue_when_restart_scheduling_fails() -> None:
         firmware_refresher,
         restart_scheduler,
         status,
-        transport_coordinator,
     ) = _executor()
     restart_scheduler.schedule.return_value = False
-    transport_session = object()
+    prepared_transport = _prepared_transport()
 
     completed = await executor.execute(
         PlannedUpdateRun(
-            prepared=_prepared_run(transport_session),
+            prepared=_prepared_run(prepared_transport),
             execution_plan=RefreshFirmwarePlan(
                 latest_tag="server-v2026.4.3",
             ),
@@ -206,9 +201,8 @@ async def test_execute_records_issue_when_restart_scheduling_fails() -> None:
     firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
         pinned_tag="server-v2026.4.3",
     )
-    transport_coordinator.complete_success.assert_awaited_once_with(
-        transport_session,
-        message="No server update needed; ESP firmware checked",
+    prepared_transport.complete_success.assert_awaited_once_with(
+        "No server update needed; ESP firmware checked",
     )
     status.add_issue.assert_called_once_with(
         "done",
