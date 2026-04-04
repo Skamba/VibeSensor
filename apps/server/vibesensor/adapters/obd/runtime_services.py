@@ -1,4 +1,4 @@
-"""Focused Bluetooth OBD runtime services over shared runtime state."""
+"""Focused Bluetooth OBD runtime role builders over shared runtime state."""
 
 from __future__ import annotations
 
@@ -19,7 +19,13 @@ from vibesensor.adapters.obd.runtime_projection import ObdRuntimeProjection
 from vibesensor.adapters.obd.runtime_settings import ObdRuntimeSettings
 from vibesensor.adapters.obd.runtime_store import MonotonicFn, ObdRuntimeStore
 
-__all__ = ["ObdRuntimeServices", "build_obd_runtime"]
+__all__ = [
+    "ObdRuntime",
+    "ObdRuntimeConnection",
+    "ObdRuntimeControl",
+    "ObdRuntimeObservation",
+    "build_obd_runtime",
+]
 
 _DEFAULT_POLL_INTERVAL_S = 0.75
 _RPM_STALE_TIMEOUT_S = 2.0
@@ -29,15 +35,35 @@ SessionFactory = Callable[[], Elm327Session]
 
 
 @dataclass(frozen=True, slots=True)
-class ObdRuntimeServices:
-    """Focused OBD services exposed to the rest of the application."""
+class ObdRuntimeObservation:
+    """Read-only OBD observation surface."""
 
     facts: ObdRuntimeFacts
     projection: ObdRuntimeProjection
-    control: ObdRuntimeSettings
+
+
+@dataclass(frozen=True, slots=True)
+class ObdRuntimeControl:
+    """Configuration and admin-control surface."""
+
+    settings: ObdRuntimeSettings
     admin: ObdAdminRuntime
-    connection_control: ObdRuntimeConnectionControl
+
+
+@dataclass(frozen=True, slots=True)
+class ObdRuntimeConnection:
+    """Connection execution surface."""
+
     runner: ObdConnectionRuntime
+
+
+@dataclass(frozen=True, slots=True)
+class ObdRuntime:
+    """Role-grouped OBD runtime surfaces for callers."""
+
+    observation: ObdRuntimeObservation
+    control: ObdRuntimeControl
+    connection: ObdRuntimeConnection
 
 
 def build_obd_runtime(
@@ -46,8 +72,8 @@ def build_obd_runtime(
     session_factory: SessionFactory | None = None,
     monotonic: MonotonicFn = time.monotonic,
     poll_interval_s: float = _DEFAULT_POLL_INTERVAL_S,
-) -> ObdRuntimeServices:
-    """Build focused OBD services over one shared runtime store."""
+) -> ObdRuntime:
+    """Build role-grouped OBD runtime surfaces over one shared runtime store."""
 
     resolved_admin_client = ObdAdminClient() if admin_client is None else admin_client
     resolved_session_factory = Elm327Session if session_factory is None else session_factory
@@ -59,20 +85,25 @@ def build_obd_runtime(
     )
     connection_control = ObdRuntimeConnectionControl(store=store)
     connection_observation = ObdRuntimeConnectionObservation(store=store)
-    return ObdRuntimeServices(
-        facts=ObdRuntimeFacts(store=store),
-        projection=ObdRuntimeProjection(store=store),
-        control=ObdRuntimeSettings(store=store),
-        admin=ObdAdminRuntime(
-            admin_client=resolved_admin_client,
-            store=store,
+    return ObdRuntime(
+        observation=ObdRuntimeObservation(
+            facts=ObdRuntimeFacts(store=store),
+            projection=ObdRuntimeProjection(store=store),
         ),
-        connection_control=connection_control,
-        runner=ObdConnectionRuntime(
-            admin_client=resolved_admin_client,
-            connection_observation=connection_observation,
-            connection_control=connection_control,
-            session_factory=resolved_session_factory,
-            monotonic=monotonic,
+        control=ObdRuntimeControl(
+            settings=ObdRuntimeSettings(store=store),
+            admin=ObdAdminRuntime(
+                admin_client=resolved_admin_client,
+                store=store,
+            ),
+        ),
+        connection=ObdRuntimeConnection(
+            runner=ObdConnectionRuntime(
+                admin_client=resolved_admin_client,
+                connection_observation=connection_observation,
+                connection_control=connection_control,
+                session_factory=resolved_session_factory,
+                monotonic=monotonic,
+            ),
         ),
     )
