@@ -4,8 +4,10 @@ The updater now has one explicit run-scoped workflow boundary per concern:
 
 - ``manager.py`` owns the public update-job runtime lifecycle: start, cancel,
   task supervision, timeout handling, and startup recovery.
-- ``runtime.py`` composes one canonical manager instance with explicit status
-  services, transport lifecycle coordination, and workflow collaborators.
+- ``runtime.py`` is the public updater-runtime facade that returns one canonical
+  manager instance.
+- ``runtime_services.py`` owns focused config resolution plus the status,
+  transport, release, and workflow builder clusters used by that facade.
 - ``run_models.py`` holds the canonical prepared/planned run models shared
   across the workflow.
 - ``workflow.py`` owns request-scoped orchestration across preparation,
