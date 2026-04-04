@@ -4,7 +4,6 @@ from .appendices import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
-    AppendixDData,
     EvidenceChainRow,
     MeasurementRow,
     RankedCandidateRow,
@@ -13,7 +12,6 @@ from .appendices import (
     SensorObservationMatrixRow,
     TopologyIntensityRow,
 )
-from .context import ReportDocumentContext
 from .document import Report, ReportDocument
 from .panels import DataTrustItem, NextStep, PartSuggestion, PatternEvidence, SystemFindingCard
 from .sections import (
@@ -27,7 +25,6 @@ __all__ = [
     "AppendixAData",
     "AppendixBData",
     "AppendixCData",
-    "AppendixDData",
     "DataTrustItem",
     "EvidenceChainRow",
     "MeasurementRow",
@@ -37,7 +34,6 @@ __all__ = [
     "PeakRow",
     "RankedCandidateRow",
     "Report",
-    "ReportDocumentContext",
     "ReportLabelValueRow",
     "ReportDocument",
     "SensorObservationCell",

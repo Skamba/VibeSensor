@@ -139,6 +139,6 @@ def build_appendix_c_render_plan(data: ReportDocument) -> AppendixCRenderPlan:
     return AppendixCRenderPlan(
         lang=data.lang,
         appendix=data.appendix_c,
-        trace_rows=tuple(data.appendix_d.rows),
+        trace_rows=tuple(data.traceability_rows),
         action_status_note=data.verdict_page.action_status_note,
     )

@@ -27,7 +27,6 @@ from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixCData,
-    AppendixDData,
     MeasurementRow,
     NextStep,
     PatternEvidence,
@@ -390,7 +389,7 @@ def test_full_report_template_contains_peak_db_column_labels() -> None:
             ],
             speed_band_summary="Repeated energy stayed strongest in the 50-60 km/h window.",
         ),
-        appendix_d=AppendixDData(rows=[ReportLabelValueRow(label="Run ID", value="run-1")]),
+        traceability_rows=[ReportLabelValueRow(label="Run ID", value="run-1")],
         next_steps=[NextStep(action="Check wheel balance")],
     )
 

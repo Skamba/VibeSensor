@@ -21,7 +21,6 @@ from vibesensor.report_i18n import tr as i18n_tr
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixCData,
-    AppendixDData,
     DataTrustItem,
     NextStep,
     RankedCandidateRow,
@@ -98,14 +97,12 @@ def test_estimate_appendix_c_lower_panels_shrink_for_short_content() -> None:
                 ),
             ],
         ),
-        appendix_d=AppendixDData(
-            rows=[
-                ReportLabelValueRow(
-                    label="Evidence",
-                    value="One short traceability note.",
-                ),
-            ],
-        ),
+        traceability_rows=[
+            ReportLabelValueRow(
+                label="Evidence",
+                value="One short traceability note.",
+            ),
+        ],
     )
 
     plan = build_appendix_c_render_plan(data)
@@ -165,17 +162,15 @@ def test_estimate_appendix_c_lower_panels_stay_tighter_for_unbalanced_card_conte
                 ),
             ],
         ),
-        appendix_d=AppendixDData(
-            rows=[
-                ReportLabelValueRow(label="Run date", value="2026-04-01 01:05:30 UTC"),
-                ReportLabelValueRow(label="Run ID", value="a2d18c88451f4d688b61e60b48d9949b"),
-                ReportLabelValueRow(label="tire size", value="285/30R21"),
-                ReportLabelValueRow(label="Sensor Model", value="ADXL345"),
-                ReportLabelValueRow(label="Firmware Version", value="sim-0.2"),
-                ReportLabelValueRow(label="Analysis rows", value="124"),
-                ReportLabelValueRow(label="Raw Sample Rate (Hz)", value="800"),
-            ],
-        ),
+        traceability_rows=[
+            ReportLabelValueRow(label="Run date", value="2026-04-01 01:05:30 UTC"),
+            ReportLabelValueRow(label="Run ID", value="a2d18c88451f4d688b61e60b48d9949b"),
+            ReportLabelValueRow(label="tire size", value="285/30R21"),
+            ReportLabelValueRow(label="Sensor Model", value="ADXL345"),
+            ReportLabelValueRow(label="Firmware Version", value="sim-0.2"),
+            ReportLabelValueRow(label="Analysis rows", value="124"),
+            ReportLabelValueRow(label="Raw Sample Rate (Hz)", value="800"),
+        ],
     )
 
     width = PAGE_W - 2 * MARGIN
