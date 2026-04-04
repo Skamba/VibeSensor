@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from vibesensor.shared.exceptions import UpdateReleaseError
+from vibesensor.use_cases.updates.firmware import FirmwareRefreshResult
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.release_deployment import (
     UpdateReleaseDeploymentCoordinator,
@@ -32,7 +33,9 @@ def _make_coordinator() -> tuple[
     installer.install_release = AsyncMock()
     installer.rollback = AsyncMock()
     firmware_refresher = MagicMock()
-    firmware_refresher.refresh_esp_firmware = AsyncMock()
+    firmware_refresher.refresh_esp_firmware = AsyncMock(
+        return_value=FirmwareRefreshResult.success(),
+    )
     status = MagicMock()
     return (
         UpdateReleaseDeploymentCoordinator(
@@ -78,8 +81,9 @@ async def test_deploy_snapshots_before_firmware_refresh(tmp_path: Path) -> None:
         events.append("snapshot")
         return True
 
-    async def refresh_esp_firmware(*, pinned_tag: str) -> None:
+    async def refresh_esp_firmware(*, pinned_tag: str) -> FirmwareRefreshResult:
         events.append(f"firmware:{pinned_tag}")
+        return FirmwareRefreshResult.success()
 
     async def install_release(wheel_path: Path, expected_version: str) -> WheelInstallResult:
         events.append(f"install:{wheel_path.name}:{expected_version}")
@@ -114,6 +118,33 @@ async def test_deploy_raises_plain_failure_without_rollback_for_non_mutating_rej
     installer.rollback.assert_not_awaited()
     status.fail.assert_not_called()
     status.log.assert_any_call("Installing update...")
+
+
+@pytest.mark.asyncio
+async def test_deploy_continues_install_when_cache_refresh_fails() -> None:
+    coordinator, installer, _firmware_refresher, status = _make_coordinator()
+    installer.snapshot_for_rollback.return_value = True
+    installer.install_release.return_value = WheelInstallResult(
+        succeeded=True,
+        rollback_required=False,
+    )
+    _firmware_refresher.refresh_esp_firmware.return_value = FirmwareRefreshResult.failure(
+        message="ESP firmware cache refresh failed (exit 1)",
+        detail="cache unavailable",
+    )
+
+    await coordinator.deploy(_staged_release())
+
+    status.add_issue.assert_called_once_with(
+        UpdatePhase.downloading,
+        "ESP firmware cache refresh failed (exit 1)",
+        "cache unavailable",
+    )
+    status.log.assert_any_call("ESP firmware refresh failed; continuing with existing cache")
+    installer.install_release.assert_awaited_once_with(
+        Path("/tmp/vibesensor.whl"),
+        "2025.6.15",
+    )
 
 
 @pytest.mark.asyncio
