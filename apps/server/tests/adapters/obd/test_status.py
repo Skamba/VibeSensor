@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
 from vibesensor.adapters.obd.polling import ObdPollingSnapshot
-from vibesensor.adapters.obd.status import ObdMonitorStatusState, build_obd_status_snapshot
+from vibesensor.adapters.obd.status import ObdRuntimeStatusFacts, build_obd_status_snapshot
 
 
 def _polling_snapshot(*, backoff_active: bool = True) -> ObdPollingSnapshot:
@@ -20,11 +20,8 @@ def _polling_snapshot(*, backoff_active: bool = True) -> ObdPollingSnapshot:
 
 def test_build_obd_status_snapshot_keeps_runtime_facts_and_http_hint_separate() -> None:
     status = build_obd_status_snapshot(
-        ObdMonitorStatusState(
-            effective_connection_state="disconnected",
+        ObdRuntimeStatusFacts(
             transport_connection_state="disconnected",
-            configured_device_mac="00043e5a4a4d",
-            configured_device_name="OBDLink MX+",
             device_mac=None,
             device_name=None,
             paired=True,
@@ -34,12 +31,15 @@ def test_build_obd_status_snapshot_keeps_runtime_facts_and_http_hint_separate() 
             speed_snapshot=(10.0, 90.0),
             engine_rpm=1726.0,
             engine_rpm_ts=99.0,
-            obd_selected=True,
-            last_error="link down",
+            last_runtime_error="link down",
             helper_error=None,
             reconnect_delay_s=4.0,
             polling=_polling_snapshot(),
         ),
+        configured_device_mac="00043e5a4a4d",
+        configured_device_name="OBDLink MX+",
+        effective_connection_state="disconnected",
+        obd_selected=True,
         now_mono=100.0,
     )
 
@@ -58,11 +58,8 @@ def test_build_obd_status_snapshot_keeps_runtime_facts_and_http_hint_separate() 
 
 def test_build_obd_status_snapshot_hides_obd_only_fields_when_not_selected() -> None:
     status = build_obd_status_snapshot(
-        ObdMonitorStatusState(
-            effective_connection_state="connected",
+        ObdRuntimeStatusFacts(
             transport_connection_state="connected",
-            configured_device_mac="00043e5a4a4d",
-            configured_device_name="OBDLink MX+",
             device_mac="00043e5a4a4d",
             device_name="OBDLink MX+",
             paired=True,
@@ -72,12 +69,15 @@ def test_build_obd_status_snapshot_hides_obd_only_fields_when_not_selected() -> 
             speed_snapshot=(10.0, 90.0),
             engine_rpm=1726.0,
             engine_rpm_ts=99.0,
-            obd_selected=False,
-            last_error=None,
+            last_runtime_error=None,
             helper_error=None,
             reconnect_delay_s=1.0,
             polling=_polling_snapshot(),
         ),
+        configured_device_mac="00043e5a4a4d",
+        configured_device_name="OBDLink MX+",
+        effective_connection_state="connected",
+        obd_selected=False,
         now_mono=100.0,
     )
 

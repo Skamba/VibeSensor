@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from vibesensor.adapters.obd.admin_state import ObdAdminObservation
-from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.polling import ObdPidPollResult, ObdPollingCadence, ObdPollResult
-from vibesensor.adapters.obd.status import ObdMonitorStatusState, build_obd_status_snapshot
+from vibesensor.adapters.obd.status import ObdRuntimeStatusFacts
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import KMH_TO_MPS
 
@@ -75,9 +75,7 @@ class ObdRuntimeState:
     def last_error(self) -> str | None:
         return self._last_error
 
-    def engine_rpm(self, *, now: float, obd_selected: bool) -> float | None:
-        if not obd_selected:
-            return None
+    def engine_rpm(self, *, now: float) -> float | None:
         if (
             not isinstance(self._engine_rpm, NUMERIC_TYPES)
             or isinstance(self._engine_rpm, bool)
@@ -166,38 +164,27 @@ class ObdRuntimeState:
         if clear_runtime_error:
             self._last_error = None
 
-    def status_snapshot(
+    def status_facts(
         self,
         *,
-        configured_device_mac: str | None,
-        configured_device_name: str | None,
-        effective_connection_state: str,
-        obd_selected: bool,
-        now: float,
+        engine_rpm: float | None,
         polling: ObdPollingCadence,
-    ) -> ObdStatusSnapshot:
-        return build_obd_status_snapshot(
-            ObdMonitorStatusState(
-                effective_connection_state=effective_connection_state,
-                transport_connection_state=self._connection_state,
-                configured_device_mac=configured_device_mac,
-                configured_device_name=configured_device_name,
-                device_mac=self._device_mac,
-                device_name=self._device_name,
-                paired=self._paired,
-                trusted=self._trusted,
-                connected=self._device_connected,
-                rfcomm_channel=self._rfcomm_channel,
-                speed_snapshot=self._speed_snapshot,
-                engine_rpm=self.engine_rpm(now=now, obd_selected=obd_selected),
-                engine_rpm_ts=self._engine_rpm_ts,
-                obd_selected=obd_selected,
-                last_error=self._last_error or self._last_admin_error,
-                helper_error=self._last_admin_error,
-                reconnect_delay_s=self._current_reconnect_delay,
-                polling=polling.snapshot(),
-            ),
-            now_mono=now,
+    ) -> ObdRuntimeStatusFacts:
+        return ObdRuntimeStatusFacts(
+            transport_connection_state=self._connection_state,
+            device_mac=self._device_mac,
+            device_name=self._device_name,
+            paired=self._paired,
+            trusted=self._trusted,
+            connected=self._device_connected,
+            rfcomm_channel=self._rfcomm_channel,
+            speed_snapshot=self._speed_snapshot,
+            engine_rpm=engine_rpm,
+            engine_rpm_ts=self._engine_rpm_ts,
+            last_runtime_error=self._last_error,
+            helper_error=self._last_admin_error,
+            reconnect_delay_s=self._current_reconnect_delay,
+            polling=polling.snapshot(),
         )
 
     @staticmethod

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.adapters.obd.admin_client import ObdAdminClient
 from vibesensor.adapters.obd.admin_state import observe_configured_obd_device
-from vibesensor.adapters.obd.runtime_connection_state import ObdRuntimeConnectionState
+from vibesensor.adapters.obd.runtime_admin_state import ObdRuntimeAdminState
 
 __all__ = ["ObdAdminRuntime"]
 
@@ -18,10 +18,10 @@ class ObdAdminRuntime:
         self,
         *,
         admin_client: ObdAdminClient,
-        connection_state: ObdRuntimeConnectionState,
+        admin_state: ObdRuntimeAdminState,
     ) -> None:
         self._admin_client = admin_client
-        self._runtime = connection_state
+        self._runtime = admin_state
 
     def refresh_configured_device(self) -> None:
         configured_mac = self._runtime.configured_device_mac_snapshot()

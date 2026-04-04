@@ -62,7 +62,7 @@ async def test_executor_marks_disconnected_and_backs_off_after_connect_failure()
         ),
     )
 
-    status = parts.observation.status_snapshot()
+    status = parts.projection.status_snapshot()
     assert sleeps == [2.0]
     assert status.connection_state == "disconnected"
     assert status.last_error == "rfcomm busy"
@@ -96,7 +96,7 @@ async def test_executor_closes_session_and_backs_off_after_poll_connection_loss(
         step=ObdConnectionStep(kind=ObdConnectionStepKind.POLL),
     )
 
-    status = parts.observation.status_snapshot()
+    status = parts.projection.status_snapshot()
     parts.session.close.assert_called_once_with()
     assert sleeps == [4.0]
     assert status.connection_state == "disconnected"
