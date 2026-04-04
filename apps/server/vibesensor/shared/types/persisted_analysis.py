@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import cast
 
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis_contracts import PersistedAnalysisPayload
 
 __all__ = [
@@ -32,6 +34,19 @@ class PersistedAnalysis(Mapping[str, object]):
 
     def __len__(self) -> int:
         return len(self.payload)
+
+    @classmethod
+    def from_json_object(cls, payload: Mapping[str, object]) -> PersistedAnalysis:
+        """Create a persisted-analysis value object from an in-memory JSON mapping."""
+
+        return cls(
+            payload=deepcopy(cast(PersistedAnalysisPayload, dict(payload))),
+        )
+
+    def to_json_object(self) -> JsonObject:
+        """Return a deep-copied JSON payload for in-memory consumers."""
+
+        return cast(JsonObject, deepcopy(self.payload))
 
     @property
     def language(self) -> str:

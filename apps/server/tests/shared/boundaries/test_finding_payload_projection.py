@@ -5,11 +5,7 @@ from __future__ import annotations
 import vibesensor.shared.boundaries.finding as boundary_finding
 from vibesensor.domain import Finding, FindingEvidence, OrderMatchObservation, VibrationSource
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.finding_encoder import (
-    _finding_core_payload_from_domain,
-    _finding_presentation_payload_from_domain,
-    finding_payload_from_domain,
-)
+from vibesensor.shared.boundaries.finding import finding_payload_from_domain
 
 
 def test_projection_emits_canonical_amplitude_metric_shape() -> None:
@@ -110,8 +106,8 @@ def test_projection_serializes_matched_points_with_boundary_shape() -> None:
     ]
 
 
-def test_projection_emits_frequency_hz_in_core_payload() -> None:
-    core_payload = _finding_core_payload_from_domain(
+def test_projection_emits_frequency_hz_in_canonical_payload() -> None:
+    payload = finding_payload_from_domain(
         Finding(
             finding_id="F_HZ",
             suspected_source=VibrationSource.WHEEL_TIRE,
@@ -119,10 +115,10 @@ def test_projection_emits_frequency_hz_in_core_payload() -> None:
         )
     )
 
-    assert core_payload["frequency_hz"] == 41.0
+    assert payload["frequency_hz"] == 41.0
 
 
-def test_projection_separates_core_and_presentation_metadata_before_composing() -> None:
+def test_projection_keeps_canonical_domain_and_presentation_fields_together() -> None:
     finding = Finding(
         finding_id="F_ORDER",
         suspected_source=VibrationSource.WHEEL_TIRE,
@@ -145,27 +141,15 @@ def test_projection_separates_core_and_presentation_metadata_before_composing() 
         sensor_count=2,
     )
 
-    core_payload = _finding_core_payload_from_domain(finding)
-    presentation_payload = _finding_presentation_payload_from_domain(finding)
     payload = finding_payload_from_domain(finding)
 
-    assert "evidence_summary" not in core_payload
-    assert "frequency_hz_or_order" not in core_payload
-    assert "amplitude_metric" not in core_payload
-    assert "confidence_tone" not in core_payload
-
-    assert "finding_id" not in presentation_payload
-    assert "strongest_location" not in presentation_payload
-    assert presentation_payload["evidence_summary"] == "Strong wheel-order correlation"
-    assert presentation_payload["confidence_tone"] == finding.confidence_assessment.tone
-    assert "frequency_hz" not in core_payload
-
-    assert payload == {**core_payload, **presentation_payload}
+    assert payload["finding_id"] == "F_ORDER"
+    assert payload["strongest_location"] == "rear-right"
+    assert payload["evidence_summary"] == "Strong wheel-order correlation"
+    assert payload["confidence_tone"] == finding.confidence_assessment.tone
+    assert payload["amplitude_metric"]["value"] == 22.3
+    assert payload["frequency_hz_or_order"] == ""
 
 
-def test_boundary_module_no_longer_owns_encoder_private_helpers() -> None:
-    assert not hasattr(boundary_finding, "_finding_core_payload_from_domain")
-    assert not hasattr(boundary_finding, "_finding_presentation_payload_from_domain")
-    assert not hasattr(boundary_finding, "matched_point_from_observation")
-    assert not hasattr(boundary_finding, "step_payload_from_action")
-    assert not hasattr(boundary_finding, "step_payloads_from_plan")
+def test_boundary_module_exposes_only_the_public_finding_codec_api() -> None:
+    assert boundary_finding.__all__ == ["finding_from_payload", "finding_payload_from_domain"]

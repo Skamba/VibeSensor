@@ -1,4 +1,4 @@
-"""Finding/origin reconstruction helpers for persisted summaries."""
+"""Primary-origin enrichment helpers for reconstructed persisted summaries."""
 
 from __future__ import annotations
 
@@ -6,24 +6,9 @@ from collections.abc import Mapping
 from dataclasses import replace
 
 from vibesensor.domain import Finding, LocationHotspot, VibrationOrigin
-from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
-__all__ = [
-    "enrich_findings",
-    "enrich_primary_origin_from_summary",
-]
-
-
-def enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
-    if not isinstance(raw_findings, list):
-        return ()
-    enriched: list[Finding] = []
-    for payload in raw_findings:
-        if not isinstance(payload, Mapping):
-            continue
-        enriched.append(finding_from_payload(payload))
-    return tuple(enriched)
+__all__ = ["enrich_primary_origin_from_summary"]
 
 
 def _matches_finding(candidate: Finding, target: Finding) -> bool:
