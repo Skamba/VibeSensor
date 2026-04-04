@@ -54,15 +54,17 @@ async def test_deploy_aborts_before_live_mutation_when_snapshot_fails() -> None:
     coordinator, installer, firmware_refresher, status = _make_coordinator()
     installer.snapshot_for_rollback.return_value = False
 
-    with pytest.raises(UpdateReleaseError, match="Rollback snapshot could not be created"):
+    with pytest.raises(
+        UpdateReleaseError,
+        match="Rollback snapshot could not be created",
+    ) as excinfo:
         await coordinator.deploy(_staged_release())
 
     status.transition.assert_called_once_with(UpdatePhase.installing)
-    status.fail.assert_called_once_with(
-        UpdatePhase.installing.value,
-        "Rollback snapshot could not be created",
-        "Install aborted before mutating the live environment",
-    )
+    assert excinfo.value.phase == UpdatePhase.installing.value
+    assert excinfo.value.detail == "Install aborted before mutating the live environment"
+    status.fail.assert_not_called()
+    status.log.assert_called_once_with("Installing update...")
     installer.install_release.assert_not_awaited()
     installer.rollback.assert_not_awaited()
     firmware_refresher.refresh_esp_firmware.assert_not_awaited()

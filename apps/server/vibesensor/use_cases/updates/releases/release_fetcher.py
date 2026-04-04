@@ -1,191 +1,42 @@
-"""Server release fetcher: download wheel artifacts from GitHub Releases.
-
-Follows the same patterns as :mod:`firmware_cache` for GitHub API access,
-HTTPS-only validation, and atomic staging.
-
-Release tag convention: ``server-v<CalVer>``  (e.g. ``server-v2025.6.15``).
-Asset pattern: ``vibesensor-*.whl``.
-"""
+"""Server release fetcher for wheel artifacts from GitHub Releases."""
 
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import os
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
-from urllib.request import Request, urlopen
+from urllib.request import urlopen
 
-from packaging.version import Version
+from vibesensor.shared.types.json_types import is_json_array
 
-from vibesensor.shared.constants.github import GITHUB_REPO
-from vibesensor.shared.types.json_types import JsonValue, is_json_array, is_json_object
+from .github_api import DOWNLOAD_CHUNK_BYTES, GitHubApiClient
+from .models import GitHubRelease, GitHubReleaseAsset, ReleaseFetcherConfig, ReleaseInfo
 
 LOGGER = logging.getLogger(__name__)
 
-_DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
-
-DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
-# Shared chunk size for both server and firmware GitHub asset downloads.
-
 _HASH_CHUNK_BYTES = 65536  # 64 KB per hash update
 
-
-@dataclass
-class ReleaseFetcherConfig:
-    """Configuration for fetching server releases from GitHub."""
-
-    server_repo: str = ""
-    github_token: str = ""
-    rollback_dir: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.server_repo:
-            self.server_repo = os.environ.get("VIBESENSOR_SERVER_REPO", GITHUB_REPO)
-        if not self.github_token:
-            self.github_token = os.environ.get("GITHUB_TOKEN", "")
-        if not self.rollback_dir:
-            self.rollback_dir = os.environ.get("VIBESENSOR_ROLLBACK_DIR", _DEFAULT_ROLLBACK_DIR)
+__all__ = ["ServerReleaseFetcher"]
 
 
-@dataclass
-class ReleaseInfo:
-    """Metadata about a discovered server release."""
-
-    tag: str
-    version: str
-    asset_name: str
-    asset_url: str
-    sha256: str = ""
-    published_at: str = ""
-
-    def to_dict(self) -> dict[str, str]:
-        """Serialise discovered release metadata for status or debug output."""
-
-        return {
-            "tag": self.tag,
-            "version": self.version,
-            "asset_name": self.asset_name,
-            "asset_url": self.asset_url,
-            "sha256": self.sha256,
-            "published_at": self.published_at,
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class GitHubReleaseAsset:
-    """Typed GitHub asset row used by the server release fetcher."""
-
-    name: str
-    url: str
-
-    @classmethod
-    def from_api_payload(cls, raw: object) -> GitHubReleaseAsset | None:
-        """Decode one GitHub asset payload into the typed helper model."""
-
-        if not is_json_object(raw):
-            return None
-        name = raw.get("name")
-        url = raw.get("url")
-        if not isinstance(name, str) or not isinstance(url, str):
-            return None
-        return cls(name=name, url=url)
-
-
-@dataclass(frozen=True, slots=True)
-class GitHubRelease:
-    """Typed GitHub release row used by the server release fetcher."""
-
-    tag_name: str
-    draft: bool
-    prerelease: bool
-    published_at: str
-    assets: tuple[GitHubReleaseAsset, ...]
-
-    @classmethod
-    def from_api_payload(cls, raw: object) -> GitHubRelease | None:
-        """Decode one GitHub release payload into the typed helper model."""
-
-        if not is_json_object(raw):
-            return None
-        tag_name = raw.get("tag_name")
-        draft = raw.get("draft")
-        prerelease = raw.get("prerelease")
-        assets_raw = raw.get("assets")
-        if (
-            not isinstance(tag_name, str)
-            or not isinstance(draft, bool)
-            or not isinstance(prerelease, bool)
-            or not is_json_array(assets_raw)
-        ):
-            return None
-        published_at_raw = raw.get("published_at")
-        assets: list[GitHubReleaseAsset] = []
-        for item in assets_raw:
-            asset = GitHubReleaseAsset.from_api_payload(item)
-            if asset is None:
-                return None
-            assets.append(asset)
-        return cls(
-            tag_name=tag_name,
-            draft=draft,
-            prerelease=prerelease,
-            published_at=published_at_raw if isinstance(published_at_raw, str) else "",
-            assets=tuple(assets),
-        )
-
-
-def validate_https_url(url: str, *, context: str = "operation") -> None:
-    """Raise ``ValueError`` if *url* does not use the HTTPS scheme."""
-    if not url.startswith("https://"):
-        raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
-
-
-def github_api_headers(token: str = "") -> dict[str, str]:
-    """Build standard GitHub REST API request headers.
-
-    If *token* is non-empty it is included as a Bearer authorization header.
-    Used by both :class:`ServerReleaseFetcher` and
-    :class:`~vibesensor.use_cases.updates.firmware.firmware_release_fetcher.GitHubReleaseFetcher`
-    so that the header construction lives in one place.
-    """
-    headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    return headers
-
-
-class GitHubAPIClient:
-    """Shared base for classes that call the GitHub REST API.
-
-    Subclasses must set ``_github_token`` and ``_api_context`` before
-    calling any API methods.
-    """
-
-    _github_token: str = ""
-    _api_context: str = "github"
-
-    def _api_headers(self) -> dict[str, str]:
-        return github_api_headers(self._github_token)
-
-    def _api_get(self, url: str) -> JsonValue:
-        """GET *url* and return the parsed JSON response."""
-        validate_https_url(url, context=self._api_context)
-        req = Request(url, headers=self._api_headers())
-        with urlopen(req, timeout=30) as resp:
-            result: JsonValue = json.loads(resp.read().decode("utf-8"))
-            return result
-
-
-class ServerReleaseFetcher(GitHubAPIClient):
+class ServerReleaseFetcher:
     """Fetch server wheel releases from GitHub Releases."""
 
-    def __init__(self, config: ReleaseFetcherConfig | None = None) -> None:
-        self._config = config or ReleaseFetcherConfig()
-        self._github_token = self._config.github_token
-        self._api_context = "release"
+    __slots__ = ("_client", "_config")
+
+    def __init__(
+        self,
+        config: ReleaseFetcherConfig,
+        *,
+        client: GitHubApiClient | None = None,
+    ) -> None:
+        self._config = config
+        self._client = client or GitHubApiClient(
+            token=config.github_token,
+            context="release",
+        )
 
     _MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024  # 200 MB hard limit
     _MAX_DOWNLOAD_MB = _MAX_DOWNLOAD_BYTES // (1024 * 1024)
@@ -193,10 +44,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
     def _download_asset(self, url: str, dest: Path) -> None:
         """Stream a release asset to disk with an upper size bound."""
 
-        validate_https_url(url, context="release")
-        headers = self._api_headers()
-        headers["Accept"] = "application/octet-stream"
-        req = Request(url, headers=headers)
+        req = self._client.build_request(url, accept="application/octet-stream")
         tmp = dest.with_suffix(".tmp")
         max_bytes = self._MAX_DOWNLOAD_BYTES
         chunk_size = DOWNLOAD_CHUNK_BYTES
@@ -230,7 +78,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
         owner, repo = self._config.server_repo.split("/", 1)
         url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page=50"
         LOGGER.info("Querying releases from %s/%s", owner, repo)
-        releases_raw = self._api_get(url)
+        releases_raw = self._client.get_json(url)
         if not is_json_array(releases_raw):
             raise ValueError("Unexpected GitHub API response format")
         releases: list[GitHubRelease] = []
@@ -298,68 +146,3 @@ class ServerReleaseFetcher(GitHubAPIClient):
         release.sha256 = sha
         LOGGER.info("Downloaded %s (sha256=%s)", release.asset_name, sha)
         return dest
-
-    def check_update_available(self, current_version: str) -> ReleaseInfo | None:
-        """Check if a newer release is available.
-
-        Returns :class:`ReleaseInfo` if a newer version exists, ``None``
-        if already up-to-date or the latest release is older.
-        Raises on API errors.
-        """
-        release = self.find_latest_release()
-        if release.version == current_version:
-            LOGGER.info("Already up-to-date (version=%s)", current_version)
-            return None
-        # Guard against suggesting downgrades: compare versions so that only
-        # genuinely newer releases are reported.
-        try:
-            if Version(release.version) <= Version(current_version):
-                LOGGER.info(
-                    "Latest release %s is not newer than current %s; skipping",
-                    release.version,
-                    current_version,
-                )
-                return None
-        except ValueError:
-            # If versions are unparseable, fall through and treat any difference as an update.
-            LOGGER.warning(
-                "Could not compare versions %r vs %r; treating as update",
-                release.version,
-                current_version,
-                exc_info=True,
-            )
-        LOGGER.info(
-            "Update available: %s → %s",
-            current_version,
-            release.version,
-        )
-        return release
-
-
-def fetch_latest_wheel_cli() -> None:
-    """CLI entry point: fetch the latest server release wheel."""
-    import argparse
-    import sys
-
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
-    parser = argparse.ArgumentParser(
-        description="Fetch the latest VibeSensor server wheel from GitHub Releases",
-    )
-    parser.add_argument("--repo", default="", help="GitHub owner/repo")
-    parser.add_argument("--dest", default=".", help="Destination directory for the wheel")
-    args = parser.parse_args()
-
-    config = ReleaseFetcherConfig(server_repo=args.repo)
-    fetcher = ServerReleaseFetcher(config)
-
-    try:
-        release = fetcher.find_latest_release()
-        print(f"Latest release: {release.tag} ({release.version})")
-        whl = fetcher.download_wheel(release, dest_dir=args.dest)
-        print(f"Downloaded: {whl}")
-        print(f"SHA256: {release.sha256}")
-    except (OSError, ValueError) as exc:
-        LOGGER.exception("release fetch CLI failed")
-        print(f"ERROR: {exc}", file=sys.stderr)
-        sys.exit(1)

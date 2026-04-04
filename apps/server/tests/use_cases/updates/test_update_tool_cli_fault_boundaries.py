@@ -5,7 +5,7 @@ import sys
 import pytest
 
 from vibesensor.use_cases.updates.firmware.firmware_cache import refresh_cache_cli
-from vibesensor.use_cases.updates.releases.release_fetcher import fetch_latest_wheel_cli
+from vibesensor.use_cases.updates.releases.cli import fetch_latest_wheel_cli
 
 
 def test_fetch_latest_wheel_cli_exits_for_operational_value_error(
@@ -22,7 +22,7 @@ def test_fetch_latest_wheel_cli_exits_for_operational_value_error(
             raise ValueError("bad release metadata")
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.updates.releases.release_fetcher.ServerReleaseFetcher",
+        "vibesensor.use_cases.updates.releases.cli.ServerReleaseFetcher",
         _BrokenFetcher,
     )
 
@@ -46,7 +46,7 @@ def test_fetch_latest_wheel_cli_allows_programmer_errors_to_surface(
             raise AssertionError("programmer bug")
 
     monkeypatch.setattr(
-        "vibesensor.use_cases.updates.releases.release_fetcher.ServerReleaseFetcher",
+        "vibesensor.use_cases.updates.releases.cli.ServerReleaseFetcher",
         _BrokenFetcher,
     )
 

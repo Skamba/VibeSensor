@@ -13,6 +13,7 @@ from vibesensor.use_cases.updates.runner import (
 from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
     UpdateStatusTracker,
+    UpdateTerminalStateReporter,
     build_update_status_tracker,
     collect_runtime_details,
 )
@@ -23,6 +24,7 @@ __all__ = ["UpdateRuntimeCore", "build_update_runtime_core"]
 @dataclass(frozen=True, slots=True)
 class UpdateRuntimeCore:
     status: UpdateStatusTracker
+    reporter: UpdateTerminalStateReporter
     commands: UpdateCommandExecutor
 
 
@@ -40,7 +42,11 @@ def build_update_runtime_core(
         runner=runner,
         reporter=UpdateStatusCommandReporter(status=status),
     )
-    return UpdateRuntimeCore(status=status, commands=commands)
+    return UpdateRuntimeCore(
+        status=status,
+        reporter=UpdateTerminalStateReporter(status=status),
+        commands=commands,
+    )
 
 
 def _build_status_tracker(

@@ -32,12 +32,11 @@ class UpdateReleaseDeploymentCoordinator:
         self._status.transition(UpdatePhase.installing)
         self._status.log("Installing update...")
         if not await self._installer.snapshot_for_rollback():
-            self._status.fail(
-                UpdatePhase.installing.value,
+            raise UpdateReleaseError(
                 "Rollback snapshot could not be created",
-                "Install aborted before mutating the live environment",
+                phase=UpdatePhase.installing.value,
+                detail="Install aborted before mutating the live environment",
             )
-            raise UpdateReleaseError("Rollback snapshot could not be created")
         refresh_result = await self._firmware_refresher.refresh_esp_firmware(
             pinned_tag=staged_release.release.tag,
         )

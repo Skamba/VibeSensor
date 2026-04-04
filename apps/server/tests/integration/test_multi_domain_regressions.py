@@ -7,7 +7,6 @@ condition and asserting the corrected behavior.
 from __future__ import annotations
 
 from datetime import UTC
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -24,7 +23,8 @@ from vibesensor.use_cases.diagnostics.location_scoring import weighted_speed_win
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.statistics import compute_run_timing
-from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo, ServerReleaseFetcher
+from vibesensor.use_cases.updates.releases.models import ReleaseInfo
+from vibesensor.use_cases.updates.releases.version_policy import select_update_release
 
 
 def _make_release_info(version: str) -> ReleaseInfo:
@@ -107,21 +107,23 @@ class TestBug04SpeedBinLabelNonFinite:
 
 
 # ---------------------------------------------------------------------------
-# Bug 5: check_update_available suggests downgrades as updates
+# Bug 5: version policy suggests downgrades as updates
 # ---------------------------------------------------------------------------
 
 
 class TestBug05ReleaseVersionComparison:
     def test_downgrade_returns_none(self) -> None:
-        fetcher = ServerReleaseFetcher.__new__(ServerReleaseFetcher)
-        fetcher.find_latest_release = MagicMock(return_value=_make_release_info("2024.1.0"))
-        result = fetcher.check_update_available("2025.6.0")
+        result = select_update_release(
+            current_version="2025.6.0",
+            latest_release=_make_release_info("2024.1.0"),
+        )
         assert result is None
 
     def test_upgrade_returns_release(self) -> None:
-        fetcher = ServerReleaseFetcher.__new__(ServerReleaseFetcher)
-        fetcher.find_latest_release = MagicMock(return_value=_make_release_info("2026.1.0"))
-        result = fetcher.check_update_available("2025.6.0")
+        result = select_update_release(
+            current_version="2025.6.0",
+            latest_release=_make_release_info("2026.1.0"),
+        )
         assert result is not None
         assert result.version == "2026.1.0"
 

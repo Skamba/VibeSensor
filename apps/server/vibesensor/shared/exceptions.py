@@ -64,9 +64,20 @@ class ProtocolError(VibeSensorError):
 class UpdateError(VibeSensorError):
     """OTA update system failure."""
 
-    def __init__(self, message: str, *, status: str = "error") -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        status: str = "error",
+        phase: str | None = None,
+        detail: str = "",
+        log_message: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.status = status
+        self.phase = phase
+        self.detail = detail
+        self.log_message = log_message
 
 
 class UpdateCleanupError(UpdateError):
@@ -89,7 +100,12 @@ class UpdateCancelledError(UpdateError):
     """Update execution was cancelled intentionally."""
 
     def __init__(self, message: str = "Update was cancelled") -> None:
-        super().__init__(message, status="cancelled")
+        super().__init__(
+            message,
+            status="cancelled",
+            phase="cancelled",
+            log_message="Update cancelled",
+        )
 
 
 class RunNotFoundError(VibeSensorError):

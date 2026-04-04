@@ -49,7 +49,7 @@ vibesensor-ws-smoke = "vibesensor.adapters.simulator.ws_smoke:main"
 vibesensor-config-preflight = "vibesensor.cli.preflight:main"
 vibesensor-fw-refresh = "vibesensor.use_cases.updates.firmware.firmware_cache:refresh_cache_cli"
 vibesensor-fw-info = "vibesensor.use_cases.updates.firmware.firmware_cache:cache_info_cli"
-vibesensor-release-fetch = "vibesensor.use_cases.updates.releases.release_fetcher:fetch_latest_wheel_cli"
+vibesensor-release-fetch = "vibesensor.use_cases.updates.releases.cli:fetch_latest_wheel_cli"
 
 [tool.setuptools.dynamic]
 version = {attr = "vibesensor._version.__version__"}
