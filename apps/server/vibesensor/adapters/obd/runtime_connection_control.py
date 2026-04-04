@@ -1,10 +1,9 @@
-"""Connection-loop mutation and planning surface over shared Bluetooth OBD state."""
+"""Connection-loop mutation surface over shared Bluetooth OBD state."""
 
 from __future__ import annotations
 
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
-from vibesensor.adapters.obd.polling import ObdPollPlan, ObdPollResult
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.adapters.obd.polling import ObdPollResult
 
 from .runtime_store import ObdRuntimeStore
 
@@ -12,24 +11,12 @@ __all__ = ["ObdRuntimeConnectionControl"]
 
 
 class ObdRuntimeConnectionControl:
-    """Own connection-loop planning and mutation over shared policy, polling, and state."""
+    """Own connection-loop state mutation over shared policy, polling, and state."""
 
     __slots__ = ("_store",)
 
     def __init__(self, *, store: ObdRuntimeStore) -> None:
         self._store = store
-
-    def configured_device_snapshot(self) -> tuple[SpeedSourceKind, str | None, str | None]:
-        with self._store._lock:
-            return self._store.policy.config_snapshot()
-
-    def next_wait_s(self) -> float:
-        with self._store._lock:
-            return self._store.polling.next_wait_s(now=self._store.monotonic())
-
-    def prepare_poll(self) -> ObdPollPlan:
-        with self._store._lock:
-            return self._store.polling.prepare_poll(now=self._store.monotonic())
 
     def apply_poll_cycle(
         self,
