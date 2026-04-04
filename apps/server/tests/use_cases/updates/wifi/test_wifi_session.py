@@ -70,7 +70,7 @@ async def test_recover_interrupted_update_cleans_uplink_and_restores_hotspot(
 ) -> None:
     session, runner, tracker = _build_session(tmp_path)
 
-    await session.recover_interrupted_update()
+    await session.recover_interrupted_update(tracker.status)
 
     commands = [" ".join(call[0]) for call in runner.calls]
     assert any("connection down VibeSensor-Uplink" in command for command in commands)
@@ -86,12 +86,13 @@ async def test_prepare_stops_hotspot_and_connects_uplink(tmp_path: Path) -> None
     session, runner, tracker = _build_session(tmp_path)
     tracker.start_job(_wifi_request(password="pass123"))
 
-    await session.prepare(_wifi_request(password="pass123"))
+    prepared_transport = await session.prepare(_wifi_request(password="pass123"))
 
     commands = [" ".join(call[0]) for call in runner.calls]
     assert any("connection down VibeSensor-AP" in command for command in commands)
     assert any("connection add type wifi" in command for command in commands)
     assert tracker.status.phase == UpdatePhase.connecting_wifi
+    assert prepared_transport is session
 
 
 @pytest.mark.asyncio
@@ -103,7 +104,7 @@ async def test_recover_interrupted_update_records_restore_failure(tmp_path: Path
     )
     runner.set_response("connection up VibeSensor-AP", 10, "", "failed")
 
-    await session.recover_interrupted_update()
+    await session.recover_interrupted_update(tracker.status)
 
     assert any(
         issue.message == "Failed to restore hotspot after interrupted update"

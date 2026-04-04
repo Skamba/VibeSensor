@@ -35,7 +35,7 @@ from vibesensor.use_cases.updates.status import (
     collect_runtime_details,
 )
 from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
-from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
+from vibesensor.use_cases.updates.transport_lifecycles import UpdateTransportLifecycles
 from vibesensor.use_cases.updates.usb_status import (
     UsbInternetStatusReader,
     UsbInternetStatusService,
@@ -93,14 +93,14 @@ def build_update_manager(
         status=status,
     )
     status_service = usb_internet_service or UsbInternetStatusService(runner=active_runner)
-    transport_sessions = _build_transport_sessions(
+    transport_lifecycles = _build_transport_lifecycles(
         commands=commands,
         status=status,
         wifi_config=config.wifi_config,
         status_service=status_service,
     )
     transport_coordinator = UpdateTransportCoordinator(
-        sessions=transport_sessions,
+        lifecycles=transport_lifecycles,
         status=status,
         logger=LOGGER,
     )
@@ -178,14 +178,14 @@ def _build_command_executor(
     )
 
 
-def _build_transport_sessions(
+def _build_transport_lifecycles(
     *,
     commands: UpdateCommandExecutor,
     status: UpdateStatusTracker,
     wifi_config: UpdateWifiConfig,
     status_service: UsbInternetStatusReader,
-) -> UpdateTransportSessions:
-    return UpdateTransportSessions(
+) -> UpdateTransportLifecycles:
+    return UpdateTransportLifecycles(
         wifi=UpdateWifiSession(
             commands=commands,
             status=status,
@@ -288,7 +288,6 @@ def _build_update_workflow(
             firmware_refresher=firmware_refresher,
             restart_scheduler=restart_scheduler,
             status=status,
-            transport_coordinator=transport_coordinator,
         ),
         transport_coordinator=transport_coordinator,
         runtime_details_refresher=UpdateRuntimeDetailsRefresher(

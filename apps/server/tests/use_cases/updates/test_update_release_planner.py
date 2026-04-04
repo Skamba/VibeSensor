@@ -48,7 +48,7 @@ def _planner(tmp_path: Path) -> tuple[UpdateReleasePlanner, UpdateStatusTracker,
 def _prepared_run() -> PreparedUpdateRun:
     return PreparedUpdateRun(
         current_version="2026.4.3",
-        transport_session=object(),
+        prepared_transport=object(),
     )
 
 

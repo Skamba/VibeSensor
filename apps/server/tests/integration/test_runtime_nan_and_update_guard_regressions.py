@@ -171,7 +171,7 @@ class TestUpdateManagerCancelledError:
                 prepare=AsyncMock(
                     return_value=PreparedUpdateRun(
                         current_version="2026.4.3",
-                        transport_session=AsyncMock(),
+                        prepared_transport=AsyncMock(),
                     )
                 )
             ),
