@@ -166,7 +166,7 @@ def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(
     def _explode(*_args: object, **_kwargs: object) -> object:
         raise AssertionError("prepare_persisted_report_input should not use test_run_from_summary")
 
-    monkeypatch.setattr(report_preparation, "report_test_run_from_summary", _explode)
+    monkeypatch.setattr(report_preparation, "test_run_from_summary", _explode)
 
     prepared = report_preparation.prepare_persisted_report_input(analysis)
 
