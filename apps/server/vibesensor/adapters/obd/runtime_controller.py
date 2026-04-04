@@ -158,14 +158,23 @@ class ObdRuntimeController:
         with self._lock:
             return self._polling.prepare_poll(now=self._monotonic())
 
-    def apply_poll_result(self, result: ObdPollResult) -> None:
+    def apply_poll_cycle(
+        self,
+        result: ObdPollResult,
+        *,
+        reconnect_delay_s: float | None = None,
+    ) -> bool:
         now = self._monotonic()
         with self._lock:
             self._runtime_state.apply_poll_result(result, now=now, polling=self._polling)
-
-    def apply_device_snapshot(self, snapshot: ObdDeviceSnapshot) -> None:
-        with self._lock:
-            self._runtime_state.apply_device_snapshot(snapshot)
+            if not result.connection_lost:
+                return False
+            self._runtime_state.set_connection_state(
+                "disconnected",
+                error=self._runtime_state.last_error,
+                reconnect_delay_s=reconnect_delay_s,
+            )
+            return True
 
     def apply_admin_observation(
         self,
@@ -179,20 +188,29 @@ class ObdRuntimeController:
                 observation=observation,
             )
 
-    def set_connection_state(
+    def mark_connecting(self) -> None:
+        with self._lock:
+            self._runtime_state.set_connection_state(
+                "connecting",
+                error=None,
+            )
+
+    def mark_connected(self, snapshot: ObdDeviceSnapshot | None = None) -> None:
+        with self._lock:
+            if snapshot is not None:
+                self._runtime_state.apply_device_snapshot(snapshot)
+            self._polling.reset(now=self._monotonic())
+            self._runtime_state.set_connection_state("connected", error=None)
+
+    def mark_disconnected(
         self,
-        state: str,
         *,
         error: str | None,
         reconnect_delay_s: float | None = None,
     ) -> None:
         with self._lock:
             self._runtime_state.set_connection_state(
-                state,
+                "disconnected",
                 error=error,
                 reconnect_delay_s=reconnect_delay_s,
             )
-
-    def reset_poll_schedule(self) -> None:
-        with self._lock:
-            self._polling.reset(now=self._monotonic())
