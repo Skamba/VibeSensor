@@ -246,3 +246,67 @@ def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
 
     assert "sudo" in str(status.last_error).lower()
     assert "sudo helper" in str(obd_debug_hint(status)).lower()
+
+
+def test_connect_blocking_closes_session_and_propagates_transport_error() -> None:
+    clock = _FakeClock()
+    admin_client = MagicMock()
+    admin_client.device_info.return_value = ObdDeviceSnapshot(
+        mac_address="00043e5a4a4d",
+        name="OBDLink MX+",
+        paired=True,
+        trusted=True,
+        connected=False,
+        rfcomm_channel=1,
+    )
+    session = MagicMock()
+    session.initialize.side_effect = ObdTransportError("no prompt from adapter")
+    runtime = ObdRuntimeController(
+        monotonic=clock,
+        poll_interval_s=0.75,
+        initial_reconnect_delay_s=1.0,
+        engine_rpm_stale_timeout_s=2.0,
+    )
+    connection_runtime = ObdConnectionRuntime(
+        admin_client=admin_client,
+        runtime=runtime,
+        session_factory=lambda: session,
+        monotonic=clock,
+    )
+
+    with pytest.raises(ObdTransportError, match="no prompt from adapter"):
+        connection_runtime._connect_blocking("00043e5a4a4d", "OBDLink MX+")
+
+    session.close.assert_called_once_with()
+
+
+def test_connect_blocking_closes_session_and_propagates_unexpected_runtime_error() -> None:
+    clock = _FakeClock()
+    admin_client = MagicMock()
+    admin_client.device_info.return_value = ObdDeviceSnapshot(
+        mac_address="00043e5a4a4d",
+        name="OBDLink MX+",
+        paired=True,
+        trusted=True,
+        connected=False,
+        rfcomm_channel=1,
+    )
+    session = MagicMock()
+    session.initialize.side_effect = RuntimeError("session bug")
+    runtime = ObdRuntimeController(
+        monotonic=clock,
+        poll_interval_s=0.75,
+        initial_reconnect_delay_s=1.0,
+        engine_rpm_stale_timeout_s=2.0,
+    )
+    connection_runtime = ObdConnectionRuntime(
+        admin_client=admin_client,
+        runtime=runtime,
+        session_factory=lambda: session,
+        monotonic=clock,
+    )
+
+    with pytest.raises(RuntimeError, match="session bug"):
+        connection_runtime._connect_blocking("00043e5a4a4d", "OBDLink MX+")
+
+    session.close.assert_called_once_with()

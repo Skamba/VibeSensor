@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from vibesensor.adapters.obd.admin_client import ObdAdminClient
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
+from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.operational_errors import OperationalError
 
 __all__ = ["ObdAdminObservation", "observe_configured_obd_device"]
@@ -30,6 +31,6 @@ def observe_configured_obd_device(
         return ObdAdminObservation(snapshot=None, helper_error=None)
     try:
         snapshot = admin_client.device_info(configured_mac)
-    except OperationalError as exc:
-        return ObdAdminObservation(snapshot=None, helper_error=str(exc))
+    except (OperationalError, OSError) as exc:
+        return ObdAdminObservation(snapshot=None, helper_error=bounded_failure_message(exc))
     return ObdAdminObservation(snapshot=snapshot, helper_error=None)

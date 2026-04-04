@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateTransportError
 from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_sessions import (
     UpdateTransportSession,
     UpdateTransportSessions,
@@ -17,10 +19,18 @@ __all__ = ["UpdateTransportCoordinator"]
 class UpdateTransportCoordinator:
     """Resolve and drive transport lifecycle side effects through one boundary."""
 
-    __slots__ = ("_sessions",)
+    __slots__ = ("_logger", "_sessions", "_status")
 
-    def __init__(self, *, sessions: UpdateTransportSessions) -> None:
+    def __init__(
+        self,
+        *,
+        sessions: UpdateTransportSessions,
+        status: UpdateStatusTracker,
+        logger: logging.Logger,
+    ) -> None:
         self._sessions = sessions
+        self._status = status
+        self._logger = logger
 
     async def prepare(self, request: UpdateRequest) -> UpdateTransportSession:
         session = self._sessions.for_request(request)
@@ -45,7 +55,12 @@ class UpdateTransportCoordinator:
     ) -> None:
         if transport_session is None:
             return
-        await transport_session.cleanup_after_update()
+        try:
+            await transport_session.cleanup_after_update()
+        except (OSError, UpdateError) as exc:
+            self._status.fail("cleanup", "Transport cleanup failed", str(exc))
+            self._logger.exception("update: transport cleanup error")
+            raise UpdateCleanupError(f"Transport cleanup failed: {exc}") from exc
 
     async def recover_interrupted(self, status: UpdateJobStatus) -> None:
         await self._sessions.for_status(status).recover_interrupted_update()

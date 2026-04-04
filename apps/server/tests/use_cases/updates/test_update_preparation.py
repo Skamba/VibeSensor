@@ -38,10 +38,11 @@ def _build_preparation(
             spec=UpdateTransportSessions,
             for_request=MagicMock(return_value=transport_session),
         ),
+        status=status.tracker,
+        logger=MagicMock(),
     )
     preparation = UpdatePreparationCoordinator(
-        status_controller=status.controller,
-        status_recorder=status.recorder,
+        status=status.tracker,
         commands=MagicMock(),
         transport_coordinator=transport_coordinator,
         validation_config=UpdateValidationConfig(

@@ -7,12 +7,12 @@ import sys
 from dataclasses import dataclass
 
 from vibesensor.shared.exceptions import UpdateCleanupError
-from vibesensor.use_cases.updates.cleanup import UpdateTransportCleanupCoordinator
 from vibesensor.use_cases.updates.models import UpdateRequest
 from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
 from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRefresher
+from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 
 __all__ = ["UpdateWorkflow"]
@@ -25,7 +25,7 @@ class UpdateWorkflow:
     preparation: UpdatePreparationCoordinator
     release_planner: UpdateReleasePlanner
     workflow_executor: UpdateWorkflowExecutor
-    transport_cleanup: UpdateTransportCleanupCoordinator
+    transport_coordinator: UpdateTransportCoordinator
     runtime_details_refresher: UpdateRuntimeDetailsRefresher
 
     async def run(
@@ -44,7 +44,7 @@ class UpdateWorkflow:
     async def _finalize(self, prepared: PreparedUpdateRun | None) -> None:
         active_error = sys.exc_info()[1]
         try:
-            await self.transport_cleanup.run(
+            await self.transport_coordinator.cleanup_after_update(
                 None if prepared is None else prepared.transport_session,
             )
             await self.runtime_details_refresher.refresh()

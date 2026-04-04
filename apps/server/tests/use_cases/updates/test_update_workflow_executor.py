@@ -18,21 +18,42 @@ from vibesensor.use_cases.updates.run_models import (
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 
 
-def _executor() -> tuple[UpdateWorkflowExecutor, MagicMock, MagicMock, MagicMock, MagicMock]:
+def _executor() -> tuple[
+    UpdateWorkflowExecutor,
+    MagicMock,
+    MagicMock,
+    MagicMock,
+    MagicMock,
+    MagicMock,
+    MagicMock,
+]:
     stager = MagicMock()
     deployer = MagicMock()
     deployer.deploy = AsyncMock(return_value=True)
     firmware_refresher = MagicMock()
     firmware_refresher.refresh_esp_firmware = AsyncMock()
-    completion = MagicMock()
-    completion.complete = AsyncMock(return_value=True)
+    restart_scheduler = MagicMock()
+    restart_scheduler.schedule = AsyncMock(return_value=True)
+    status = MagicMock()
+    transport_coordinator = MagicMock()
+    transport_coordinator.complete_success = AsyncMock(return_value=True)
     executor = UpdateWorkflowExecutor(
         stager=stager,
         deployer=deployer,
         firmware_refresher=firmware_refresher,
-        completion=completion,
+        restart_scheduler=restart_scheduler,
+        status=status,
+        transport_coordinator=transport_coordinator,
     )
-    return executor, stager, deployer, firmware_refresher, completion
+    return (
+        executor,
+        stager,
+        deployer,
+        firmware_refresher,
+        restart_scheduler,
+        status,
+        transport_coordinator,
+    )
 
 
 def _prepared_run(session: object) -> PreparedUpdateRun:
@@ -44,7 +65,15 @@ def _prepared_run(session: object) -> PreparedUpdateRun:
 
 @pytest.mark.asyncio
 async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport() -> None:
-    executor, stager, deployer, firmware_refresher, completion = _executor()
+    (
+        executor,
+        stager,
+        deployer,
+        firmware_refresher,
+        restart_scheduler,
+        status,
+        transport_coordinator,
+    ) = _executor()
     transport_session = object()
     workflow = PlannedUpdateRun(
         prepared=_prepared_run(transport_session),
@@ -59,17 +88,27 @@ async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport(
     firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
         pinned_tag="server-v2026.4.3",
     )
-    completion.complete.assert_awaited_once_with(
+    transport_coordinator.complete_success.assert_awaited_once_with(
         transport_session,
         message="No server update needed; ESP firmware checked",
     )
+    restart_scheduler.schedule.assert_awaited_once_with()
+    status.add_issue.assert_not_called()
     deployer.deploy.assert_not_awaited()
     assert not stager.stage.called
 
 
 @pytest.mark.asyncio
 async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_path: Path) -> None:
-    executor, stager, deployer, firmware_refresher, completion = _executor()
+    (
+        executor,
+        stager,
+        deployer,
+        firmware_refresher,
+        restart_scheduler,
+        status,
+        transport_coordinator,
+    ) = _executor()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
     staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
     transport_session = object()
@@ -92,10 +131,12 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
     assert completed == UpdateExecutionOutcome.installed
     stager.stage.assert_called_once_with(release)
     deployer.deploy.assert_awaited_once_with(staged_release)
-    completion.complete.assert_awaited_once_with(
+    transport_coordinator.complete_success.assert_awaited_once_with(
         workflow.prepared.transport_session,
         message="Update completed successfully",
     )
+    restart_scheduler.schedule.assert_awaited_once_with()
+    status.add_issue.assert_not_called()
     firmware_refresher.refresh_esp_firmware.assert_not_awaited()
 
 
@@ -103,7 +144,15 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
 async def test_execute_install_plan_propagates_deploy_failure_before_finalization(
     tmp_path: Path,
 ) -> None:
-    executor, stager, deployer, _firmware_refresher, completion = _executor()
+    (
+        executor,
+        stager,
+        deployer,
+        _firmware_refresher,
+        restart_scheduler,
+        _status,
+        transport_coordinator,
+    ) = _executor()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
     staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
     transport_session = object()
@@ -126,4 +175,44 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
         )
 
     deployer.deploy.assert_awaited_once_with(staged_release)
-    completion.complete.assert_not_awaited()
+    transport_coordinator.complete_success.assert_not_awaited()
+    restart_scheduler.schedule.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_execute_records_issue_when_restart_scheduling_fails() -> None:
+    (
+        executor,
+        _stager,
+        _deployer,
+        firmware_refresher,
+        restart_scheduler,
+        status,
+        transport_coordinator,
+    ) = _executor()
+    restart_scheduler.schedule.return_value = False
+    transport_session = object()
+
+    completed = await executor.execute(
+        PlannedUpdateRun(
+            prepared=_prepared_run(transport_session),
+            execution_plan=RefreshFirmwarePlan(
+                latest_tag="server-v2026.4.3",
+            ),
+        ),
+    )
+
+    assert completed == UpdateExecutionOutcome.refresh_only
+    firmware_refresher.refresh_esp_firmware.assert_awaited_once_with(
+        pinned_tag="server-v2026.4.3",
+    )
+    transport_coordinator.complete_success.assert_awaited_once_with(
+        transport_session,
+        message="No server update needed; ESP firmware checked",
+    )
+    status.add_issue.assert_called_once_with(
+        "done",
+        "Backend restart was not scheduled automatically",
+        "Run 'sudo systemctl restart vibesensor.service' manually",
+    )
+    status.log.assert_called_once_with("Automatic backend restart scheduling failed")

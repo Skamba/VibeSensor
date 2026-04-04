@@ -15,7 +15,7 @@ if TYPE_CHECKING:
         ReleaseInfo,
         ServerReleaseFetcher,
     )
-    from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+    from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 __all__ = ["ServerReleaseResolver", "UpdateReleaseResolution"]
 
@@ -36,17 +36,15 @@ class UpdateReleaseResolution:
 class ServerReleaseResolver:
     """Own server release discovery independent from staging or install work."""
 
-    __slots__ = ("_rollback_dir", "_status_controller", "_status_recorder")
+    __slots__ = ("_rollback_dir", "_status")
 
     def __init__(
         self,
         *,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
         rollback_dir: Path,
     ) -> None:
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
+        self._status = status
         self._rollback_dir = rollback_dir
 
     async def resolve(self, current_version: str) -> UpdateReleaseResolution:
@@ -73,15 +71,14 @@ class ServerReleaseResolver:
         try:
             return await asyncio.to_thread(fetcher.check_update_available, current_version)
         except (OSError, ValueError) as exc:
-            self._status_recorder.add_issue("checking", f"Failed to check for updates: {exc}")
-            self._status_controller.mark_failed()
+            self._status.fail("checking", f"Failed to check for updates: {exc}")
             raise UpdateReleaseError(f"Failed to check for updates: {exc}") from exc
 
     async def _latest_tag(self, fetcher: ServerReleaseFetcher) -> str:
         try:
             latest_release = await asyncio.to_thread(fetcher.find_latest_release)
         except (OSError, ValueError) as exc:
-            self._status_recorder.log(
+            self._status.log(
                 f"Could not resolve the latest release tag for ESP firmware sync: {exc}",
             )
             return ""

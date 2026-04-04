@@ -10,11 +10,10 @@ from vibesensor.shared.boundaries.reporting import PreparedReportFacts, Prepared
 from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
     PatternEvidence,
-    Report,
     ReportDocument,
     ReportDocumentContext,
-    build_report_from_summary,
 )
+from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
 from vibesensor.shared.report_presentation import display_location
 from vibesensor.shared.time_utils import (
     format_timestamp_in_recorded_timezone,
@@ -35,7 +34,6 @@ from .sections import (
     _build_appendix_c_data,
     _build_appendix_d_data,
     _build_timeline_graph_data,
-    _finding_to_presentation,
 )
 
 __all__ = ["ReportDocumentBuilder", "build_report_document", "build_report_document_data"]
@@ -51,20 +49,17 @@ class ReportDocumentBuilder:
         self._lang = str(normalize_lang(prepared.language))
 
     def build(self) -> ReportDocument:
-        report = build_report_from_summary(
-            self._prepared.summary,
-            language=self._lang,
-        )
-        context = self._build_context(report)
+        context = self._build_context()
         return build_report_document_data(context)
 
-    def _build_context(self, report: Report) -> ReportDocumentContext:
+    def _build_context(self) -> ReportDocumentContext:
         prepared = self._prepared
         test_run = prepared.domain_test_run
         report_facts = prepared.report_facts
         run_facts = report_facts.run
         sensor_facts = report_facts.sensor
         decision_facts = report_facts.decision
+        prepared_findings = report_facts.findings
         tr = self._tr
         composition = compose_report_document(
             aggregate=test_run,
@@ -94,11 +89,10 @@ class ReportDocumentBuilder:
             lang=self._lang,
             tr=tr,
         )
-        findings = tuple(_finding_to_presentation(finding) for finding in test_run.findings)
         peak_rows = tuple(
             build_peak_rows(
-                prepared.summary.peak_table_rows,
-                findings=list(findings),
+                run_facts.peak_table_rows,
+                findings=list(prepared_findings.all_findings),
                 lang=self._lang,
                 tr=tr,
             )
@@ -112,8 +106,8 @@ class ReportDocumentBuilder:
         )
         return ReportDocumentContext(
             title=tr("REPORT_FOOTER_TITLE"),
-            run_datetime=self._report_date_text(prepared),
-            run_id=report.run_id,
+            run_datetime=self._report_date_text(run_facts),
+            run_id=run_facts.run_id,
             duration_text=run_facts.duration_text,
             start_time_utc=format_utc_timestamp(run_facts.start_time_utc),
             end_time_utc=format_utc_timestamp(run_facts.end_time_utc),
@@ -124,18 +118,8 @@ class ReportDocumentBuilder:
             sensor_locations=tuple(sensor_facts.active_locations),
             sensor_model=run_facts.sensor_model,
             firmware_version=run_facts.firmware_version,
-            car_name=report.car_name
-            or (
-                prepared.summary.metadata.car_name
-                if prepared.summary.metadata is not None
-                else None
-            ),
-            car_type=report.car_type
-            or (
-                prepared.summary.metadata.car_type
-                if prepared.summary.metadata is not None
-                else None
-            ),
+            car_name=run_facts.car_name,
+            car_type=run_facts.car_type,
             observed=observed,
             system_cards=tuple(
                 build_system_cards(
@@ -155,10 +139,8 @@ class ReportDocumentBuilder:
             peak_rows=peak_rows,
             language=self._lang,
             certainty_tier_key=primary.tier,
-            findings=findings,
-            top_causes=tuple(
-                _finding_to_presentation(finding) for finding in test_run.effective_top_causes()
-            ),
+            findings=prepared_findings.all_findings,
+            top_causes=prepared_findings.top_causes,
             sensor_intensity_by_location=tuple(sensor_facts.active_intensity),
             location_hotspot_rows=tuple(sensor_facts.location_hotspot_rows),
             verdict_page=replace(
@@ -166,7 +148,7 @@ class ReportDocumentBuilder:
                 proof_summary=proof_summary,
                 timeline_graph=_build_timeline_graph_data(
                     report_facts,
-                    duration_s=report.duration_s,
+                    duration_s=run_facts.duration_s,
                 ),
             ),
             appendix_a=composition.appendix_a,
@@ -175,7 +157,7 @@ class ReportDocumentBuilder:
                 primary=primary,
                 aggregate=test_run,
                 measurements=_measurement_rows(
-                    prepared.summary,
+                    run_facts,
                     aggregate=test_run,
                     tr=tr,
                 ),
@@ -185,8 +167,8 @@ class ReportDocumentBuilder:
                 tr=tr,
             ),
             appendix_d=_build_appendix_d_data(
-                date_str=self._report_date_text(prepared),
-                run_id=report.run_id,
+                date_str=self._report_date_text(run_facts),
+                run_id=run_facts.run_id,
                 tire_spec_text=run_facts.tire_spec_text,
                 sensor_model=run_facts.sensor_model,
                 firmware_version=run_facts.firmware_version,
@@ -233,16 +215,11 @@ class ReportDocumentBuilder:
             certainty_reason=primary.certainty_reason,
         )
 
-    def _report_date_text(self, prepared: PreparedReportInput) -> str:
-        report_date = prepared.summary.report_date or utc_now_iso()
-        recorded_offset_seconds = (
-            prepared.summary.metadata.recorded_utc_offset_seconds
-            if prepared.summary.metadata is not None
-            else None
-        )
+    def _report_date_text(self, run_facts: ReportRunFacts) -> str:
+        report_date = run_facts.report_date or utc_now_iso()
         return format_timestamp_in_recorded_timezone(
             report_date,
-            recorded_offset_seconds,
+            run_facts.recorded_utc_offset_seconds,
         ) or str(report_date)
 
     def _tr(self, key: str, **kw: JsonValue) -> str:

@@ -185,7 +185,7 @@ def test_prepared_report_input_exposes_canonical_summary_boundary() -> None:
 
     assert not hasattr(prepared, "analysis_summary")
     assert not hasattr(prepared, "renderer_payload")
-    assert prepared.summary.run_id == "guardrails"
+    assert prepared.report_facts.run.run_id == "guardrails"
 
 
 def test_next_steps_consume_prepared_actions() -> None:
@@ -223,6 +223,7 @@ def test_report_facts_hold_canonical_document_sections_without_builder_shims() -
     assert "presentation" not in fact_fields
 
     input_fields = {field.name for field in fields(PreparedReportInput)}
+    assert "summary" not in input_fields
     assert "presentation" not in input_fields
 
     composition_fields = {field.name for field in fields(ReportDocumentComposition)}
