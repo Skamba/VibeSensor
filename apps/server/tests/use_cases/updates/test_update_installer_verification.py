@@ -14,7 +14,7 @@ from vibesensor.use_cases.updates.artifact_validation import (
     sha256_file,
     wheel_dependency_issues,
 )
-from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
+from vibesensor.use_cases.updates.firmware import FirmwareRefresher, FirmwareRefreshResult
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
 from vibesensor.use_cases.updates.runner import CommandExecutionResult
@@ -531,7 +531,7 @@ async def test_firmware_refresher_uses_module_fallback_without_installer(tmp_pat
         timeout_s=30,
     )
 
-    await refresher.refresh_esp_firmware("server-v2025.6.15")
+    result = await refresher.refresh_esp_firmware("server-v2025.6.15")
 
     assert any(
         call[0][:3]
@@ -543,3 +543,4 @@ async def test_firmware_refresher_uses_module_fallback_without_installer(tmp_pat
         and call[0][-2:] == ["--tag", "server-v2025.6.15"]
         for call in commands.calls
     )
+    assert result == FirmwareRefreshResult.success()
