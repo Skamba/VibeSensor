@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.persisted_analysis_codec import persisted_analysis_to_json_object
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -80,7 +79,7 @@ class StoredHistoryRun:
         if self.case_id is not None:
             payload["case_id"] = self.case_id
         if self.analysis is not None:
-            payload["analysis"] = persisted_analysis_to_json_object(self.analysis)
+            payload["analysis"] = self.analysis.to_json_object()
         if self.analysis_corrupt:
             payload["analysis_corrupt"] = True
         if self.error_message is not None:

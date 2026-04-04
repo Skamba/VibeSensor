@@ -19,9 +19,6 @@ from vibesensor.adapters.analysis_summary import (
 )
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
-    persisted_analysis_to_json_object,
-)
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.constants.units import KMH_TO_MPS
@@ -102,7 +99,7 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
     assert run is not None
     analysis = run.analysis
     assert analysis is not None
-    projected, _ = project_analysis_summary(persisted_analysis_to_json_object(analysis))
+    projected, _ = project_analysis_summary(analysis.to_json_object())
     return dict(projected)
 
 

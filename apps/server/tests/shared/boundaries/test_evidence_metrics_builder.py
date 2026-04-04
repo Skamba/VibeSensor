@@ -1,4 +1,4 @@
-"""Tests for the evidence-metrics builder extracted from finding_encoder."""
+"""Tests for the evidence-metrics builder used by the finding boundary codec."""
 
 from __future__ import annotations
 

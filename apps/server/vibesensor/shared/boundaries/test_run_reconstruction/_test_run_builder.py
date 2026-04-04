@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 
-from vibesensor.domain import coerce_int
+from vibesensor.domain import Finding, coerce_int
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.run_capture import RunCapture, RunSetup
 from vibesensor.domain.sensor import Sensor
@@ -18,6 +18,7 @@ from vibesensor.shared.boundaries.codecs import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )
+from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.boundaries.run_capture_codec import (
     configuration_snapshot_from_run_metadata,
 )
@@ -25,7 +26,7 @@ from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_ma
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
-from ._finding_reconstruction import enrich_findings, enrich_primary_origin_from_summary
+from ._origin_enrichment import enrich_primary_origin_from_summary
 
 __all__ = ["test_run_from_persisted_analysis", "test_run_from_summary"]
 
@@ -93,11 +94,19 @@ def _summary_sensor_locations(summary: Mapping[str, object]) -> list[str]:
     return [str(location).strip() for location in raw_locations if str(location).strip()]
 
 
+def _findings_from_payloads(raw_findings: object) -> tuple[Finding, ...]:
+    if not isinstance(raw_findings, list):
+        return ()
+    return tuple(
+        finding_from_payload(payload) for payload in raw_findings if isinstance(payload, Mapping)
+    )
+
+
 def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
     metadata = payload.get("metadata")
     meta = metadata if isinstance(metadata, Mapping) else {}
-    findings = enrich_findings(payload.get("findings"))
-    top_causes = enrich_findings(payload.get("top_causes"))
+    findings = _findings_from_payloads(payload.get("findings"))
+    top_causes = _findings_from_payloads(payload.get("top_causes"))
     if top_causes:
         merged = list(findings)
         for tc in top_causes:
