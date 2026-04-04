@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.shared.boundaries.reporting.findings import FindingPresentation
-
 __all__ = [
-    "FindingPresentation",
     "PeakRow",
     "TimelineGraphData",
     "TimelineGraphInterval",
