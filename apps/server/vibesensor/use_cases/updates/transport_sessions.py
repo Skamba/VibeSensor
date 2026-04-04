@@ -1,27 +1,40 @@
-"""Canonical transport-session boundary for update job control flow."""
+"""Canonical updater transport boundaries for active setup and passive validation."""
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest, UpdateTransport
 
+__all__ = [
+    "ManagedUpdateTransportSession",
+    "SetupUpdateTransportSession",
+    "UpdateTransportSessions",
+    "ValidatingUpdateTransportSession",
+]
 
-class UpdateTransportSession(Protocol):
-    """One transport-specific update session with a uniform lifecycle."""
+
+@runtime_checkable
+class ManagedUpdateTransportSession(Protocol):
+    """Post-prepare transport surface used by the main update workflow."""
 
     transport: UpdateTransport
 
+    async def complete_success(self, message: str) -> None:
+        """Finalize a successful update for this transport."""
+        ...
+
+
+@runtime_checkable
+class SetupUpdateTransportSession(ManagedUpdateTransportSession, Protocol):
+    """Transport that must actively set up and later unwind update-owned state."""
+
     async def prepare(self, request: UpdateRequest) -> None:
-        """Prepare this transport for an update run before release work starts."""
+        """Prepare this transport before release work starts."""
         ...
 
     async def abort_preparation(self) -> None:
         """Rollback any partial transport setup after prepare-time failure."""
-        ...
-
-    async def complete_success(self, message: str) -> None:
-        """Finalize a successful update for this transport."""
         ...
 
     async def cleanup_after_update(self) -> None:
@@ -33,27 +46,41 @@ class UpdateTransportSession(Protocol):
         ...
 
 
+@runtime_checkable
+class ValidatingUpdateTransportSession(ManagedUpdateTransportSession, Protocol):
+    """Transport that reuses an existing uplink and only validates readiness."""
+
+    async def validate(self, request: UpdateRequest) -> None:
+        """Validate an already-live transport before release work starts."""
+        ...
+
+
+type PreparingUpdateTransportSession = (
+    SetupUpdateTransportSession | ValidatingUpdateTransportSession
+)
+
+
 class UpdateTransportSessions:
-    """Resolve canonical transport sessions from requests or persisted state."""
+    """Resolve canonical updater transports from requests or persisted state."""
 
     __slots__ = ("_sessions",)
 
     def __init__(
         self,
         *,
-        wifi: UpdateTransportSession,
-        usb_internet: UpdateTransportSession,
+        wifi: SetupUpdateTransportSession,
+        usb_internet: ValidatingUpdateTransportSession,
     ) -> None:
-        self._sessions: dict[UpdateTransport, UpdateTransportSession] = {
+        self._sessions: dict[UpdateTransport, PreparingUpdateTransportSession] = {
             UpdateTransport.wifi: wifi,
             UpdateTransport.usb_internet: usb_internet,
         }
 
-    def for_request(self, request: UpdateRequest) -> UpdateTransportSession:
-        return self.for_transport(request.transport)
+    def for_request(self, request: UpdateRequest) -> PreparingUpdateTransportSession:
+        return self._sessions[request.transport]
 
-    def for_transport(self, transport: UpdateTransport) -> UpdateTransportSession:
+    def for_transport(self, transport: UpdateTransport) -> ManagedUpdateTransportSession:
         return self._sessions[transport]
 
-    def for_status(self, status: UpdateJobStatus) -> UpdateTransportSession:
+    def for_status(self, status: UpdateJobStatus) -> ManagedUpdateTransportSession:
         return self.for_transport(status.transport)
