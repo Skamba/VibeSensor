@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from vibesensor.shared.exceptions import UpdateTransportError
 from vibesensor.use_cases.updates.models import (
@@ -12,10 +13,12 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
+from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepError
+from vibesensor.use_cases.updates.transport.uplink_readiness import UpdateUplinkReadiness
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
-from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
-from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
+
+if TYPE_CHECKING:
+    from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,7 +78,7 @@ class UpdateUsbInternetSession:
     ) -> None:
         self._status_service = status_service
         self._status = status
-        self._readiness = UpdateWifiReadiness(
+        self._readiness = UpdateUplinkReadiness(
             commands=commands,
             status=status,
             config=config,

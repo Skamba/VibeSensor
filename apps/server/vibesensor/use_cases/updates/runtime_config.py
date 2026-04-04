@@ -1,0 +1,60 @@
+"""Updater runtime configuration resolution."""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+
+from vibesensor.use_cases.updates.installer import UpdateInstallerConfig
+from vibesensor.use_cases.updates.models import UpdateValidationConfig
+from vibesensor.use_cases.updates.validation import MIN_FREE_DISK_BYTES
+from vibesensor.use_cases.updates.wifi.wifi_config import (
+    UpdateWifiConfig,
+    build_default_wifi_config,
+)
+
+__all__ = ["UpdateRuntimeConfig", "resolve_update_runtime_config"]
+
+REINSTALL_OP_TIMEOUT_S = 180
+DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateRuntimeConfig:
+    repo: Path
+    rollback_dir: Path
+    wifi_config: UpdateWifiConfig
+    installer_config: UpdateInstallerConfig
+    validation_config: UpdateValidationConfig
+
+
+def resolve_update_runtime_config(
+    *,
+    repo_path: str | None,
+    rollback_dir: str | None,
+    ap_con_name: str,
+    wifi_ifname: str,
+) -> UpdateRuntimeConfig:
+    repo = Path(repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor"))
+    resolved_rollback_dir = Path(
+        rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR),
+    )
+    wifi_config = build_default_wifi_config(
+        ap_con_name=ap_con_name,
+        wifi_ifname=wifi_ifname,
+    )
+    return UpdateRuntimeConfig(
+        repo=repo,
+        rollback_dir=resolved_rollback_dir,
+        wifi_config=wifi_config,
+        installer_config=UpdateInstallerConfig(
+            repo=repo,
+            rollback_dir=resolved_rollback_dir,
+            reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
+        ),
+        validation_config=UpdateValidationConfig(
+            rollback_dir=resolved_rollback_dir,
+            min_free_disk_bytes=MIN_FREE_DISK_BYTES,
+        ),
+    )

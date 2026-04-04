@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-import sys
 
 from vibesensor.shared.exceptions import UpdateCleanupError
 from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRefresher
-from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
-from vibesensor.use_cases.updates.transport_lifecycles import PreparedUpdateTransport
+from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
+from vibesensor.use_cases.updates.transport.lifecycles import PreparedUpdateTransport
 
 __all__ = ["UpdateWorkflowFinalizer"]
 
@@ -27,16 +26,20 @@ class UpdateWorkflowFinalizer:
         self._transport_coordinator = transport_coordinator
         self._runtime_details_refresher = runtime_details_refresher
 
-    async def finalize(self, prepared_transport: PreparedUpdateTransport | None) -> None:
-        active_error = sys.exc_info()[1]
+    async def finalize(
+        self,
+        prepared_transport: PreparedUpdateTransport | None,
+        *,
+        prior_error: BaseException | None = None,
+    ) -> None:
         try:
             await self._transport_coordinator.cleanup_after_update(prepared_transport)
             await self._runtime_details_refresher.refresh()
         except asyncio.CancelledError:
             raise
         except UpdateCleanupError as exc:
-            if active_error is None:
+            if prior_error is None:
                 raise
-            if isinstance(active_error, asyncio.CancelledError):
+            if isinstance(prior_error, asyncio.CancelledError):
                 raise UpdateCleanupError(f"Cleanup failed after cancellation: {exc}") from exc
-            active_error.add_note(f"Cleanup also failed: {exc}")
+            prior_error.add_note(f"Cleanup also failed: {exc}")
