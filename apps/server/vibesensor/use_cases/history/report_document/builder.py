@@ -1,229 +1,28 @@
-"""Canonical report-document builder from prepared report inputs."""
+"""Canonical context-to-document mapping for report rendering."""
 
 from __future__ import annotations
 
-from dataclasses import replace
-
-from vibesensor.report_i18n import normalize_lang
-from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportInput
+from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import (
-    NextStep,
-    PatternEvidence,
     ReportDocument,
     ReportDocumentContext,
 )
-from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
-from vibesensor.shared.report_presentation import display_location
-from vibesensor.shared.time_utils import (
-    format_timestamp_in_recorded_timezone,
-    format_utc_timestamp,
-    utc_now_iso,
-)
-from vibesensor.shared.types.json_types import JsonValue
 
-from ._candidate_resolver import PrimaryCandidateContext, resolve_primary_report_candidate
-from ._card_builder import build_system_cards
-from .composition import ReportDocumentComposition, compose_report_document
-from .measurements import _measurement_rows
-from .narrative_summaries import _proof_summary_text
-from .pattern_evidence import build_pattern_evidence
-from .peak_table import build_peak_rows
-from .report_sections import build_data_trust, build_next_steps
-from .sections import (
-    _build_appendix_c_data,
-    _build_appendix_d_data,
-    _build_timeline_graph_data,
-)
+from .composition import compose_report_document_context
 
 __all__ = ["ReportDocumentBuilder", "build_report_document", "build_report_document_data"]
 
 
 class ReportDocumentBuilder:
-    """Build the canonical report document through one immutable assembly context."""
+    """Build the canonical report document from one precomposed immutable context."""
 
-    __slots__ = ("_lang", "_prepared")
+    __slots__ = ("_prepared",)
 
     def __init__(self, prepared: PreparedReportInput) -> None:
         self._prepared = prepared
-        self._lang = str(normalize_lang(prepared.language))
 
     def build(self) -> ReportDocument:
-        context = self._build_context()
-        return build_report_document_data(context)
-
-    def _build_context(self) -> ReportDocumentContext:
-        prepared = self._prepared
-        test_run = prepared.domain_test_run
-        report_facts = prepared.report_facts
-        run_facts = report_facts.run
-        sensor_facts = report_facts.sensor
-        decision_facts = report_facts.decision
-        prepared_findings = report_facts.findings
-        tr = self._tr
-        composition = compose_report_document(
-            aggregate=test_run,
-            report_facts=report_facts,
-            lang=self._lang,
-        )
-        primary = resolve_primary_report_candidate(
-            aggregate=test_run,
-            facts=decision_facts.primary_candidate,
-            tr=tr,
-            lang=self._lang,
-        )
-        observed = self._observed_signature(primary)
-        observed.strongest_location = display_location(primary.primary_location, tr=tr)
-        data_trust = tuple(
-            build_data_trust(
-                suitability_checks=decision_facts.suitability_checks,
-                warnings=decision_facts.warnings,
-                lang=self._lang,
-                tr=tr,
-            )
-        )
-        pattern_evidence = build_pattern_evidence(
-            aggregate=test_run,
-            origin=run_facts.origin,
-            primary=primary,
-            lang=self._lang,
-            tr=tr,
-        )
-        peak_rows = tuple(
-            build_peak_rows(
-                run_facts.peak_table_rows,
-                findings=list(prepared_findings.all_findings),
-                lang=self._lang,
-                tr=tr,
-            )
-        )
-        proof_summary = _proof_summary_text(
-            test_run,
-            primary,
-            report_facts,
-            composition,
-            tr=tr,
-        )
-        return ReportDocumentContext(
-            title=tr("REPORT_FOOTER_TITLE"),
-            run_datetime=self._report_date_text(run_facts),
-            run_id=run_facts.run_id,
-            duration_text=run_facts.duration_text,
-            start_time_utc=format_utc_timestamp(run_facts.start_time_utc),
-            end_time_utc=format_utc_timestamp(run_facts.end_time_utc),
-            sample_rate_hz=run_facts.sample_rate_hz,
-            tire_spec_text=run_facts.tire_spec_text,
-            sample_count=run_facts.sample_count,
-            sensor_count=primary.sensor_count,
-            sensor_locations=tuple(sensor_facts.active_locations),
-            sensor_model=run_facts.sensor_model,
-            firmware_version=run_facts.firmware_version,
-            car_name=run_facts.car_name,
-            car_type=run_facts.car_type,
-            observed=observed,
-            system_cards=tuple(
-                build_system_cards(
-                    test_run,
-                    primary,
-                    self._lang,
-                    tr,
-                )
-            ),
-            next_steps=self._resolve_next_steps(
-                primary=primary,
-                report_facts=report_facts,
-                composition=composition,
-            ),
-            data_trust=data_trust,
-            pattern_evidence=pattern_evidence,
-            peak_rows=peak_rows,
-            language=self._lang,
-            certainty_tier_key=primary.tier,
-            findings=prepared_findings.all_findings,
-            top_causes=prepared_findings.top_causes,
-            sensor_intensity_by_location=tuple(sensor_facts.active_intensity),
-            location_hotspot_rows=tuple(sensor_facts.location_hotspot_rows),
-            verdict_page=replace(
-                composition.verdict_page,
-                proof_summary=proof_summary,
-                timeline_graph=_build_timeline_graph_data(
-                    report_facts,
-                    duration_s=run_facts.duration_s,
-                ),
-            ),
-            appendix_a=composition.appendix_a,
-            appendix_b=composition.appendix_b,
-            appendix_c=_build_appendix_c_data(
-                primary=primary,
-                aggregate=test_run,
-                measurements=_measurement_rows(
-                    run_facts,
-                    aggregate=test_run,
-                    tr=tr,
-                ),
-                report_facts=report_facts,
-                composition=composition,
-                data_trust=list(data_trust),
-                tr=tr,
-            ),
-            appendix_d=_build_appendix_d_data(
-                date_str=self._report_date_text(run_facts),
-                run_id=run_facts.run_id,
-                tire_spec_text=run_facts.tire_spec_text,
-                sensor_model=run_facts.sensor_model,
-                firmware_version=run_facts.firmware_version,
-                sample_count=run_facts.sample_count,
-                sample_rate_hz=run_facts.sample_rate_hz,
-                tr=tr,
-            ),
-        )
-
-    def _resolve_next_steps(
-        self,
-        *,
-        primary: PrimaryCandidateContext,
-        report_facts: PreparedReportFacts,
-        composition: ReportDocumentComposition,
-    ) -> tuple[NextStep, ...]:
-        recapture_mode = report_facts.decision.action_status_key == "recapture_before_acting"
-        if recapture_mode:
-            return tuple(
-                NextStep(action=action) for action in composition.appendix_a.capture_changes
-            )
-        return tuple(
-            build_next_steps(
-                recommended_actions=report_facts.decision.recommended_actions,
-                primary_source=primary.primary_source,
-                primary_location=primary.primary_location,
-                tier=primary.tier,
-                cert_reason=primary.certainty_reason or self._tr("REPORT_CAPTURE_ISSUE_GENERIC"),
-                recapture_mode=recapture_mode,
-                lang=self._lang,
-                tr=self._tr,
-            )
-        )
-
-    def _observed_signature(self, primary: PrimaryCandidateContext) -> PatternEvidence:
-        return PatternEvidence(
-            primary_system=primary.primary_system,
-            strongest_location=primary.primary_location,
-            speed_band=primary.primary_speed,
-            strength_label=primary.strength_text,
-            strength_peak_db=primary.strength_db,
-            certainty_label=primary.certainty_label_text,
-            certainty_pct=primary.certainty_pct,
-            certainty_reason=primary.certainty_reason,
-        )
-
-    def _report_date_text(self, run_facts: ReportRunFacts) -> str:
-        report_date = run_facts.report_date or utc_now_iso()
-        return format_timestamp_in_recorded_timezone(
-            report_date,
-            run_facts.recorded_utc_offset_seconds,
-        ) or str(report_date)
-
-    def _tr(self, key: str, **kw: JsonValue) -> str:
-        return str(_tr(self._lang, key, **kw))
+        return build_report_document_data(compose_report_document_context(self._prepared))
 
 
 def build_report_document_data(context: ReportDocumentContext) -> ReportDocument:
