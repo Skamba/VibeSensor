@@ -70,7 +70,10 @@ def compose_report_document(
     def tr(key: str, **kw: JsonValue) -> str:
         return str(_tr(lang, key, **kw))
 
-    coverage = report_facts.coverage_summary
+    run_facts = report_facts.run
+    sensor_facts = report_facts.sensor
+    decision_facts = report_facts.decision
+    coverage = sensor_facts.coverage
     resolved_coverage_label = coverage_label(
         expected_locations=coverage.expected_locations,
         active_locations=coverage.active_locations,
@@ -84,67 +87,67 @@ def compose_report_document(
         tr=tr,
     )
     resolved_runner_up_corner = runner_up_corner(
-        report_facts.active_sensor_intensity,
+        sensor_facts.active_intensity,
         tr=tr,
     )
     proof_caveat = proof_caveat_text(
-        primary_candidate_facts=report_facts.primary_candidate_facts,
-        action_status_key=report_facts.action_status_key,
-        location_confidence_key=report_facts.location_confidence_key,
+        primary_candidate_facts=decision_facts.primary_candidate,
+        action_status_key=decision_facts.action_status_key,
+        location_confidence_key=decision_facts.location_confidence_key,
         tr=tr,
     )
     ranked_candidates = _build_ranked_candidates(aggregate, tr=tr)
     recapture_issues = _recapture_issue_lines(
         aggregate=aggregate,
-        primary_candidate_facts=report_facts.primary_candidate_facts,
-        location_confidence_key=report_facts.location_confidence_key,
-        suitability_checks=report_facts.suitability_checks,
-        warnings=report_facts.warnings,
+        primary_candidate_facts=decision_facts.primary_candidate,
+        location_confidence_key=decision_facts.location_confidence_key,
+        suitability_checks=decision_facts.suitability_checks,
+        warnings=decision_facts.warnings,
         lang=lang,
         tr=tr,
     )
     recapture_actions = _recapture_actions(
         aggregate=aggregate,
-        primary_candidate_facts=report_facts.primary_candidate_facts,
-        location_confidence_key=report_facts.location_confidence_key,
+        primary_candidate_facts=decision_facts.primary_candidate,
+        location_confidence_key=decision_facts.location_confidence_key,
         expected_locations=coverage.expected_locations,
         active_locations=coverage.active_locations,
-        suitability_checks=report_facts.suitability_checks,
-        warnings=report_facts.warnings,
+        suitability_checks=decision_facts.suitability_checks,
+        warnings=decision_facts.warnings,
         tr=tr,
     )
     recapture_conditions = _recapture_condition_lines(
         aggregate=aggregate,
-        primary_candidate_facts=report_facts.primary_candidate_facts,
-        location_confidence_key=report_facts.location_confidence_key,
+        primary_candidate_facts=decision_facts.primary_candidate,
+        location_confidence_key=decision_facts.location_confidence_key,
         expected_locations=coverage.expected_locations,
         active_locations=coverage.active_locations,
-        suitability_checks=report_facts.suitability_checks,
-        warnings=report_facts.warnings,
+        suitability_checks=decision_facts.suitability_checks,
+        warnings=decision_facts.warnings,
         tr=tr,
     )
     return ReportDocumentComposition(
         verdict_page=_build_verdict_page_data(
             aggregate=aggregate,
-            primary_candidate_facts=report_facts.primary_candidate_facts,
-            duration_text=report_facts.duration_text,
-            action_status_key=report_facts.action_status_key,
-            location_confidence_key=report_facts.location_confidence_key,
-            alternative_source_visible=report_facts.alternative_source_visible,
+            primary_candidate_facts=decision_facts.primary_candidate,
+            duration_text=run_facts.duration_text,
+            action_status_key=decision_facts.action_status_key,
+            location_confidence_key=decision_facts.location_confidence_key,
+            alternative_source_visible=decision_facts.alternative_source_visible,
             active_locations=coverage.active_locations,
             coverage_label=resolved_coverage_label,
             runner_up_corner=resolved_runner_up_corner,
             proof_caveat=proof_caveat,
             recapture_issues=recapture_issues,
-            suitability_checks=report_facts.suitability_checks,
-            warnings=report_facts.warnings,
+            suitability_checks=decision_facts.suitability_checks,
+            warnings=decision_facts.warnings,
             lang=lang,
             tr=tr,
         ),
         appendix_a=_build_appendix_a_data(
             aggregate=aggregate,
-            action_status_key=report_facts.action_status_key,
-            alternative_source_visible=report_facts.alternative_source_visible,
+            action_status_key=decision_facts.action_status_key,
+            alternative_source_visible=decision_facts.alternative_source_visible,
             ranked_candidates=ranked_candidates,
             recapture_issues=recapture_issues,
             recapture_actions=recapture_actions,
@@ -153,10 +156,10 @@ def compose_report_document(
         ),
         appendix_b=_build_appendix_b_data(
             aggregate=aggregate,
-            primary_candidate_facts=report_facts.primary_candidate_facts,
-            active_sensor_intensity=report_facts.active_sensor_intensity,
-            action_status_key=report_facts.action_status_key,
-            location_confidence_key=report_facts.location_confidence_key,
+            primary_candidate_facts=decision_facts.primary_candidate,
+            active_sensor_intensity=sensor_facts.active_intensity,
+            action_status_key=decision_facts.action_status_key,
+            location_confidence_key=decision_facts.location_confidence_key,
             active_locations=coverage.active_locations,
             runner_up_corner=resolved_runner_up_corner,
             coverage_label=resolved_coverage_label,

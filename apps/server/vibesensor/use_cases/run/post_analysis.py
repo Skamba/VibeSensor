@@ -23,7 +23,7 @@ from vibesensor.use_cases.run.post_analysis_executor import (
     execute_post_analysis,
 )
 from vibesensor.use_cases.run.post_analysis_failures import (
-    UnexpectedPostAnalysisFailureRecorder,
+    UnexpectedPostAnalysisBugRecorder,
 )
 from vibesensor.use_cases.run.post_analysis_outcomes import (
     PostAnalysisExecutionResult,
@@ -79,7 +79,7 @@ class PostAnalysisWorker:
         self._error_cb = error_callback or (lambda _msg: None)
         self._clear_error_cb = clear_error_callback or (lambda: None)
         self._analysis_runner = analysis_runner
-        self._unexpected_failure_recorder = UnexpectedPostAnalysisFailureRecorder(
+        self._unexpected_bug_recorder = UnexpectedPostAnalysisBugRecorder(
             history_db=history_db,
             error_callback=self._error_cb,
         )
@@ -203,23 +203,22 @@ class PostAnalysisWorker:
             try:
                 self._run_post_analysis(run_id)
             except Exception as exc:
-                self._handle_unexpected_run_failure(run_id, exc)
+                self._handle_unexpected_run_bug(run_id, exc)
                 return
             with self._lock:
                 self._state.finish_active(run_id)
 
-    def _handle_unexpected_run_failure(self, run_id: str, exc: Exception) -> None:
+    def _handle_unexpected_run_bug(self, run_id: str, exc: Exception) -> None:
         with self._lock:
             dropped_queued_runs = self._state.snapshot().queue_depth
             self._state.finish_active(run_id)
             self._state.clear_pending()
 
-        completed_error = self._unexpected_failure_recorder.record(run_id=run_id, exc=exc)
+        recorded_bug = self._unexpected_bug_recorder.record_bug(run_id=run_id, exc=exc)
         with self._lock:
-            self._state.mark_completed(run_id, error=completed_error)
+            self._state.mark_completed(run_id, error=recorded_bug.completed_error)
         LOGGER.error(
-            "Halting post-analysis worker after unexpected error in run %s; "
-            "cleared %d queued run(s)",
+            "Halting post-analysis worker after unexpected bug in run %s; cleared %d queued run(s)",
             run_id,
             dropped_queued_runs,
         )

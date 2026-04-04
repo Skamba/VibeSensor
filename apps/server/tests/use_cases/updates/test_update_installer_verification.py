@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from test_support.update_status import build_update_status_harness
+from test_support.update_status import UpdateStatusHarness, build_update_status_harness
 
 from vibesensor.use_cases.updates.artifact_validation import (
     WheelArtifactValidator,
@@ -17,7 +17,6 @@ from vibesensor.use_cases.updates.artifact_validation import (
 from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult
 
 
@@ -94,7 +93,7 @@ def _build_fake_wheel(
 
 def _make_installer(
     tmp_path: Path,
-) -> tuple[UpdateInstaller, RecordingCommands, UpdateStatusTracker]:
+) -> tuple[UpdateInstaller, RecordingCommands, UpdateStatusHarness]:
     repo = tmp_path / "repo"
     server_dir = repo / "apps" / "server"
     (server_dir / ".venv" / "bin").mkdir(parents=True)

@@ -28,7 +28,8 @@ Recording stops
       → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_summary]
       → findings.py + _reference_findings.py + _context_decode.py/_context_projection.py + _sample_metrics.py + _analysis_models.py + orders/{pipeline,matching,scoring,finding_builder,statistics,heuristics,settings}.py + peaks/{findings,accumulation,classification,scoring,finding_builder,statistics,settings,table}.py + signal_aggregation.py + top_cause_selection.py + plots.py
     → build_report_document() [vibesensor.use_cases.history.report_document]
-      → builder.py (summary/facts orchestration) + document_builder.py + peak_table.py + report_sections.py
+      → builder.py (prepared-input to document context) + composition.py +
+        sections.py + report_sections.py + peak_table.py
     → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
@@ -71,8 +72,14 @@ Canonical report preparation now lives in
 `vibesensor.shared.boundaries.reporting`, which owns the explicit
 `PreparedReportInput` seam, projectability gating, one-time
 `NormalizedReportSummary` decoding, domain reconstruction, filename/language
-normalization, semantic fact assembly, coverage/decision helpers, and final
-prepared-input assembly. Canonical report-document assembly lives in
+normalization, and grouped semantic fact assembly:
+
+- `facts.py` builds `PreparedReportFacts(run=..., sensor=..., decision=...)`
+- `sensor_facts.py` owns sensor/coverage shaping
+- `decision_facts.py` owns primary-candidate, warning, and action-decision shaping
+- `projection.py` owns primary-candidate/origin projection only
+
+Canonical report-document assembly lives in
 `vibesensor.use_cases.history.report_document`, which maps `PreparedReportInput`
 into the renderer-facing `ReportDocument`. Pure report-domain interpretation
 that reads domain findings/test runs but does not perform i18n or PDF dataclass
@@ -117,9 +124,10 @@ needs:
 2. Add a corresponding field to `ReportDocument` in
    `vibesensor.shared.boundaries.reporting.document`.
 3. If the new section needs report-specific shaping, add it under
-   `vibesensor.shared.boundaries.reporting` (`facts.py`, `coverage.py`,
-   `decisions.py`, `reconstruction.py`, or `preparation.py` as appropriate),
-   then populate the final renderer field in `build_report_document()` in
+   `vibesensor.shared.boundaries.reporting` (`facts.py`, `sensor_facts.py`,
+   `decision_facts.py`, `projection.py`, `reconstruction.py`, or
+   `preparation.py` as appropriate), then populate the final renderer field in
+   `build_report_document()` in
    `vibesensor.use_cases.history.report_document`.
    Keep the default report-request/cache path driven only by persisted run data
    and persisted analysis. If a feature needs to compare a historical run

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 from time import perf_counter
 
 from fastapi import FastAPI
@@ -19,6 +20,36 @@ from vibesensor.shared.structured_logging import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _failure_kind_for_request_error(exc: BaseException) -> str:
+    if isinstance(exc, OperationalError):
+        return "operational"
+    if isinstance(exc, VibeSensorError):
+        return "domain"
+    return "programmer"
+
+
+def _log_request_failure(
+    *,
+    exc: BaseException,
+    method: str,
+    path: str,
+    status_code: int,
+    duration_ms: float,
+) -> None:
+    extra = log_extra(
+        event="http_request_failed",
+        failure_kind=_failure_kind_for_request_error(exc),
+        method=method,
+        path=path,
+        status_code=status_code,
+        duration_ms=duration_ms,
+    )
+    if isinstance(exc, OperationalError):
+        LOGGER.warning("http_request_failed", extra=extra)
+        return
+    LOGGER.exception("http_request_failed", extra=extra)
 
 
 class RequestLoggingMiddleware:
@@ -62,47 +93,10 @@ class RequestLoggingMiddleware:
             request_completed = True
         except asyncio.CancelledError:
             raise
-        except OperationalError:
-            LOGGER.warning(
-                "http_request_failed",
-                extra=log_extra(
-                    event="http_request_failed",
-                    failure_kind="operational",
-                    method=method,
-                    path=path,
-                    status_code=status_code,
-                    duration_ms=round((perf_counter() - started_at) * 1000.0, 3),
-                ),
-            )
-            raise
-        except VibeSensorError:
-            LOGGER.exception(
-                "http_request_failed",
-                extra=log_extra(
-                    event="http_request_failed",
-                    failure_kind="domain",
-                    method=method,
-                    path=path,
-                    status_code=status_code,
-                    duration_ms=round((perf_counter() - started_at) * 1000.0, 3),
-                ),
-            )
-            raise
-        except Exception:
-            LOGGER.exception(
-                "http_request_failed",
-                extra=log_extra(
-                    event="http_request_failed",
-                    failure_kind="programmer",
-                    method=method,
-                    path=path,
-                    status_code=status_code,
-                    duration_ms=round((perf_counter() - started_at) * 1000.0, 3),
-                ),
-            )
-            raise
         finally:
-            if request_completed:
+            duration_ms = round((perf_counter() - started_at) * 1000.0, 3)
+            active_error = sys.exc_info()[1]
+            if active_error is None and request_completed:
                 LOGGER.info(
                     "http_request",
                     extra=log_extra(
@@ -110,8 +104,16 @@ class RequestLoggingMiddleware:
                         method=method,
                         path=path,
                         status_code=status_code,
-                        duration_ms=round((perf_counter() - started_at) * 1000.0, 3),
+                        duration_ms=duration_ms,
                     ),
+                )
+            elif active_error is not None:
+                _log_request_failure(
+                    exc=active_error,
+                    method=method,
+                    path=path,
+                    status_code=status_code,
+                    duration_ms=duration_ms,
                 )
             reset_request_id(token)
 

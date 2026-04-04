@@ -228,7 +228,7 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
     ]
     assert request.cache_key[-1] == "none"
     assert prepared.report_facts is not None
-    assert [warning.code for warning in prepared.report_facts.warnings] == [
+    assert [warning.code for warning in prepared.report_facts.decision.warnings] == [
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
     ]
     assert prepared.domain_test_run is not None

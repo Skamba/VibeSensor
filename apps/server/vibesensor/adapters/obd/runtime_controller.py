@@ -10,6 +10,10 @@ from vibesensor.adapters.gps.speed_resolution import SpeedResolution
 from vibesensor.adapters.obd.admin_state import ObdAdminObservation
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
 from vibesensor.adapters.obd.polling import ObdPollingCadence, ObdPollPlan, ObdPollResult
+from vibesensor.adapters.obd.runtime_control import (
+    apply_runtime_control_decision,
+    resolve_runtime_control_decision,
+)
 from vibesensor.adapters.obd.runtime_policy import ObdRuntimePolicy
 from vibesensor.adapters.obd.runtime_state import ObdRuntimeState
 from vibesensor.domain import SpeedSourceKind
@@ -109,16 +113,10 @@ class ObdRuntimeController:
                 obd_device_mac=obd_device_mac,
                 obd_device_name=obd_device_name,
             )
-            if update.configured_device_changed:
-                self._runtime_state.reset_observed_device_state(clear_runtime_error=True)
-                if update.obd_selected and not update.configured_device_missing:
-                    self._runtime_state.set_connection_state("disconnected", error=None)
-            if update.configured_device_missing:
-                self._runtime_state.set_connection_state("disconnected", error=None)
-                self._runtime_state.reset_observed_device_state(clear_runtime_error=True)
-            elif not update.obd_selected:
-                self._runtime_state.set_connection_state("idle", error=None)
-                self._runtime_state.reset_observed_device_state(clear_runtime_error=True)
+            apply_runtime_control_decision(
+                self._runtime_state,
+                resolve_runtime_control_decision(update),
+            )
             return update.applied_speed_kmh
 
     def set_manual_source_selected(self, selected: bool) -> None:

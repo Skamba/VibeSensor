@@ -5,15 +5,26 @@ from __future__ import annotations
 import logging
 import sqlite3
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.ports import RunPersistence
 
 LOGGER = logging.getLogger(__name__)
 
+__all__ = ["UnexpectedPostAnalysisBug", "UnexpectedPostAnalysisBugRecorder"]
 
-class UnexpectedPostAnalysisFailureRecorder:
-    """Persist and surface unexpected worker failures outside queue/thread control."""
+
+@dataclass(frozen=True, slots=True)
+class UnexpectedPostAnalysisBug:
+    """Recorded bug details from the outer post-analysis worker safeguard."""
+
+    completed_error: str
+    callback_error: str
+
+
+class UnexpectedPostAnalysisBugRecorder:
+    """Persist and surface unexpected worker bugs outside operational post-analysis paths."""
 
     __slots__ = ("_error_cb", "_history_db")
 
@@ -26,12 +37,19 @@ class UnexpectedPostAnalysisFailureRecorder:
         self._history_db = history_db
         self._error_cb = error_callback
 
-    def record(self, *, run_id: str, exc: Exception) -> str:
-        completed_error = bounded_failure_message(exc)
-        self._store_analysis_error(run_id=run_id, completed_error=completed_error)
-        self._error_cb(f"post-analysis failed for run {run_id}: {completed_error}")
-        LOGGER.exception("Unexpected error in analysis worker for run %s", run_id)
-        return completed_error
+    def record_bug(self, *, run_id: str, exc: Exception) -> UnexpectedPostAnalysisBug:
+        detail = bounded_failure_message(exc)
+        recorded_bug = UnexpectedPostAnalysisBug(
+            completed_error=f"Unexpected post-analysis worker bug: {detail}",
+            callback_error=f"post-analysis worker bug for run {run_id}: {detail}",
+        )
+        self._store_analysis_error(
+            run_id=run_id,
+            completed_error=recorded_bug.completed_error,
+        )
+        self._error_cb(recorded_bug.callback_error)
+        LOGGER.exception("Unexpected post-analysis worker bug for run %s", run_id)
+        return recorded_bug
 
     def _store_analysis_error(self, *, run_id: str, completed_error: str) -> None:
         db = self._history_db

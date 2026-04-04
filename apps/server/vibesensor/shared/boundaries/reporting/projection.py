@@ -1,33 +1,25 @@
-"""Pure report-domain projection helpers for history/PDF workflows."""
+"""Primary-candidate projection helpers for history/PDF workflows."""
 
 from __future__ import annotations
 
-from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
-from statistics import mean as _mean
 
 from vibesensor.domain import (
     Finding,
     FindingEvidence,
     LocationHotspot,
-    LocationHotspotRow,
     LocationIntensitySummary,
     TestRun,
-    TireSpec,
     VibrationOrigin,
 )
+from vibesensor.shared.boundaries.reporting.sensor_facts import sensor_fallback_strength_db
 
 __all__ = [
     "PrimaryReportFacts",
-    "collect_location_intensity",
-    "compute_location_hotspot_rows",
-    "filter_active_sensor_intensity",
     "normalize_origin_location",
     "resolve_primary_report_facts",
     "resolve_report_origin",
-    "sensor_fallback_strength_db",
-    "tire_spec_text",
 ]
 
 
@@ -65,77 +57,6 @@ def normalize_origin_location(origin: VibrationOrigin | None) -> str:
         return ""
     raw = origin.projected_location.strip()
     return "" if raw.lower() == "unknown" else raw
-
-
-def collect_location_intensity(
-    sensor_intensity: Sequence[LocationIntensitySummary],
-) -> dict[str, list[float]]:
-    """Collect per-location intensity values from summary sensor intensity rows."""
-    amp_by_location: dict[str, list[float]] = defaultdict(list)
-    for row in sensor_intensity:
-        location = row.location.strip()
-        p95 = row.p95_intensity_db if row.p95_intensity_db is not None else row.mean_intensity_db
-        if location and p95 is not None and p95 > 0:
-            amp_by_location[location].append(p95)
-    return amp_by_location
-
-
-def compute_location_hotspot_rows(
-    sensor_intensity: Sequence[LocationIntensitySummary],
-) -> list[LocationHotspotRow]:
-    """Pre-compute location hotspot rows from sensor intensity data."""
-    if not sensor_intensity:
-        return []
-    amp_by_location = collect_location_intensity(sensor_intensity)
-    hotspot_rows = [
-        LocationHotspotRow(
-            location=location,
-            count=len(amps),
-            unit="db",
-            peak_value=max(amps),
-            mean_value=_mean(amps),
-        )
-        for location, amps in amp_by_location.items()
-    ]
-    hotspot_rows.sort(
-        key=lambda row: (row.peak_value, row.mean_value),
-        reverse=True,
-    )
-    return hotspot_rows
-
-
-def sensor_fallback_strength_db(
-    sensor_intensity: Sequence[LocationIntensitySummary],
-) -> float | None:
-    """Return the best sensor-intensity dB as a last-resort fallback."""
-    return max(
-        (row.p95_intensity_db for row in sensor_intensity if row.p95_intensity_db is not None),
-        default=None,
-    )
-
-
-def tire_spec_text(tire_spec: TireSpec | None) -> str | None:
-    """Format tire specification text from canonical typed tire geometry."""
-
-    if tire_spec is None:
-        return None
-    if tire_spec.width_mm <= 0 or tire_spec.aspect_pct <= 0 or tire_spec.rim_in <= 0:
-        return None
-    return f"{tire_spec.width_mm:g}/{tire_spec.aspect_pct:g}R{tire_spec.rim_in:g}"
-
-
-def filter_active_sensor_intensity(
-    raw_sensor_intensity_all: Sequence[LocationIntensitySummary],
-    sensor_locations_active: Sequence[str],
-) -> list[LocationIntensitySummary]:
-    """Filter sensor intensity rows to only active locations."""
-    active_locations = set(sensor_locations_active)
-    rows: list[LocationIntensitySummary] = []
-    for row in raw_sensor_intensity_all:
-        if active_locations and row.location not in active_locations:
-            continue
-        rows.append(row)
-    return rows
 
 
 def resolve_primary_report_facts(
