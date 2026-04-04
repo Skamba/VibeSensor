@@ -8,7 +8,7 @@ from vibesensor.use_cases.updates.models import UpdateRequest, UpdateValidationC
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
+from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.validation import validate_prerequisites
 
 __all__ = ["CurrentVersionProvider", "UpdatePreparationCoordinator"]

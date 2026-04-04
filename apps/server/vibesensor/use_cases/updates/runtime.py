@@ -5,14 +5,14 @@ from __future__ import annotations
 import logging
 
 from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.release_runtime import build_update_release_runtime
 from vibesensor.use_cases.updates.runner import CommandRunner
-from vibesensor.use_cases.updates.runtime_services import (
-    build_update_runtime_services,
-    build_update_workflow,
-    resolve_update_runtime_config,
-)
+from vibesensor.use_cases.updates.runtime_config import resolve_update_runtime_config
+from vibesensor.use_cases.updates.runtime_core import build_update_runtime_core
 from vibesensor.use_cases.updates.status import UpdateStateStore
+from vibesensor.use_cases.updates.transport.runtime import build_update_transport_runtime
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
+from vibesensor.use_cases.updates.workflow_runtime import build_update_workflow
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,24 +37,35 @@ def build_update_manager(
         wifi_ifname=wifi_ifname,
     )
     active_state_store = state_store or UpdateStateStore()
-    services = build_update_runtime_services(
+    core = build_update_runtime_core(
         runner=active_runner,
-        config=config,
+        repo=config.repo,
         state_store=active_state_store,
+    )
+    transport = build_update_transport_runtime(
+        runner=active_runner,
+        commands=core.commands,
+        status=core.status,
+        wifi_config=config.wifi_config,
         usb_internet_service=usb_internet_service,
         logger=LOGGER,
     )
-    workflow = build_update_workflow(
-        commands=services.commands,
-        status=services.status,
+    release = build_update_release_runtime(
+        commands=core.commands,
+        status=core.status,
         config=config,
-        transport_coordinator=services.transport_coordinator,
+    )
+    workflow = build_update_workflow(
+        core=core,
+        config=config,
+        transport=transport,
+        release=release,
         logger=LOGGER,
     )
     return UpdateManager(
-        status=services.status,
-        usb_status_service=services.usb_status_service,
-        startup_recovery=services.startup_recovery,
+        status=core.status,
+        usb_status_service=transport.usb_status_service,
+        startup_recovery=transport.startup_recovery,
         workflow=workflow,
         timeout_s=UPDATE_TIMEOUT_S,
     )

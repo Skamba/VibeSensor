@@ -90,7 +90,9 @@ async def test_workflow_stops_after_preparation_failure_and_finalizes_without_tr
     prepare.assert_awaited_once()
     plan.assert_not_awaited()
     execute.assert_not_awaited()
-    finalize.assert_awaited_once_with(None)
+    finalize.assert_awaited_once()
+    assert finalize.await_args.args == (None,)
+    assert isinstance(finalize.await_args.kwargs["prior_error"], UpdatePreparationError)
 
 
 @pytest.mark.asyncio
@@ -110,7 +112,7 @@ async def test_workflow_finalizes_the_prepared_transport_handle() -> None:
     prepare.assert_awaited_once()
     plan.assert_awaited_once_with(prepared)
     execute.assert_awaited_once_with(planned)
-    finalize.assert_awaited_once_with(prepared_transport)
+    finalize.assert_awaited_once_with(prepared_transport, prior_error=None)
 
 
 @pytest.mark.asyncio
@@ -127,7 +129,9 @@ async def test_workflow_stops_after_release_failure_and_finalizes_prepared_trans
         await workflow.run(request=_wifi_request())
 
     execute.assert_not_awaited()
-    finalize.assert_awaited_once_with(prepared_transport)
+    finalize.assert_awaited_once()
+    assert finalize.await_args.args == (prepared_transport,)
+    assert isinstance(finalize.await_args.kwargs["prior_error"], UpdateReleaseError)
 
 
 @pytest.mark.asyncio
