@@ -5,16 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
-from vibesensor.shared.boundaries.reporting.summary import NormalizedReportSummary
 
+from ..findings import FindingPresentation
 from .appendices import AppendixAData, AppendixBData, AppendixCData, AppendixDData
 from .panels import DataTrustItem, NextStep, PatternEvidence, SystemFindingCard
-from .sections import FindingPresentation, PeakRow, VerdictPageData
+from .sections import PeakRow, VerdictPageData
 
 __all__ = [
     "Report",
     "ReportDocument",
-    "build_report_from_summary",
 ]
 
 
@@ -75,22 +74,3 @@ class ReportDocument:
     appendix_b: AppendixBData = field(default_factory=AppendixBData)
     appendix_c: AppendixCData = field(default_factory=AppendixCData)
     appendix_d: AppendixDData = field(default_factory=AppendixDData)
-
-
-def build_report_from_summary(
-    summary: NormalizedReportSummary,
-    *,
-    language: str,
-) -> Report:
-    """Create a ``Report`` metadata object from the canonical report summary."""
-    metadata = summary.metadata
-    return Report(
-        run_id=summary.run_id or "unknown",
-        lang=language,
-        car_name=metadata.car_name if metadata is not None else None,
-        car_type=metadata.car_type if metadata is not None else None,
-        report_date=summary.report_date,
-        duration_s=summary.duration_s,
-        sample_count=summary.sample_count,
-        sensor_count=summary.sensor_count,
-    )

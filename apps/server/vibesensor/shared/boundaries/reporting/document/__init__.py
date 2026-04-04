@@ -14,10 +14,9 @@ from .appendices import (
     TopologyIntensityRow,
 )
 from .context import ReportDocumentContext
-from .document import Report, ReportDocument, build_report_from_summary
+from .document import Report, ReportDocument
 from .panels import DataTrustItem, NextStep, PartSuggestion, PatternEvidence, SystemFindingCard
 from .sections import (
-    FindingPresentation,
     PeakRow,
     TimelineGraphData,
     TimelineGraphInterval,
@@ -31,7 +30,6 @@ __all__ = [
     "AppendixDData",
     "DataTrustItem",
     "EvidenceChainRow",
-    "FindingPresentation",
     "MeasurementRow",
     "NextStep",
     "PartSuggestion",
@@ -49,5 +47,4 @@ __all__ = [
     "TimelineGraphInterval",
     "TopologyIntensityRow",
     "VerdictPageData",
-    "build_report_from_summary",
 ]
