@@ -177,7 +177,7 @@ class TestUpdateManagerCancelledError:
             ),
             release_planner=SimpleNamespace(plan=AsyncMock(side_effect=asyncio.CancelledError())),
             workflow_executor=MagicMock(),
-            transport_cleanup=SimpleNamespace(run=AsyncMock()),
+            transport_coordinator=SimpleNamespace(cleanup_after_update=AsyncMock()),
             runtime_details_refresher=SimpleNamespace(refresh=AsyncMock()),
         )
 
