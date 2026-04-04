@@ -516,8 +516,8 @@ class TestPersistenceDuringLifecycle:
             patch("shutil.which", _mock_which),
             patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
             patch(
-                "vibesensor.use_cases.updates.release_resolution.check_for_update",
-                side_effect=AssertionError("check_for_update should not run without privileges"),
+                "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver._check_for_update",
+                side_effect=AssertionError("release resolution should not run without privileges"),
             ),
         ):
             mgr.start("TestNet", "")

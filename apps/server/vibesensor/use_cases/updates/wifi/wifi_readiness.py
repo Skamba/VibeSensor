@@ -5,29 +5,28 @@ import time
 
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusRecorder
+from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 
 class UpdateWifiReadiness:
     """Wait for the transient uplink connection to become usable for updates."""
 
-    __slots__ = ("_commands", "_config", "_status_controller", "_status_recorder")
+    __slots__ = ("_commands", "_config", "_status_recorder")
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
-        status_controller: UpdateStatusController,
         status_recorder: UpdateStatusRecorder,
         config: UpdateWifiConfig,
     ) -> None:
         self._commands = commands
-        self._status_controller = status_controller
         self._status_recorder = status_recorder
         self._config = config
 
-    async def bring_uplink_up(self, ssid: str) -> bool:
+    async def bring_uplink_up(self, ssid: str) -> None:
         """Bring the prepared uplink connection up, retrying on scan lag."""
 
         rc = 1
@@ -47,7 +46,7 @@ class UpdateWifiReadiness:
                 sudo=True,
             )
             if rc == 0:
-                return True
+                return
             if "No network with SSID" not in (stderr or ""):
                 break
             self._status_recorder.log(
@@ -72,13 +71,11 @@ class UpdateWifiReadiness:
                 sudo=True,
             )
             await asyncio.sleep(2.0)
-        self._status_recorder.add_issue(
-            "connecting_wifi",
-            f"Failed to connect to Wi-Fi '{ssid}'",
-            stderr,
+        raise UpdateTransportStepError(
+            phase=UpdatePhase.connecting_wifi,
+            message=f"Failed to connect to Wi-Fi '{ssid}'",
+            detail=stderr,
         )
-        self._status_controller.mark_failed()
-        return False
 
     async def wait_for_dns_ready(
         self,
@@ -86,7 +83,7 @@ class UpdateWifiReadiness:
         phase: UpdatePhase | str = UpdatePhase.connecting_wifi,
         readiness_subject: str = "uplink",
         failure_message: str = "Connected to Wi-Fi, but internet/DNS is not ready",
-    ) -> bool:
+    ) -> None:
         """Wait for DNS resolution to succeed before download work begins."""
 
         self._status_recorder.log(
@@ -115,20 +112,18 @@ class UpdateWifiReadiness:
             )
             if rc == 0:
                 self._status_recorder.log(f"DNS probe succeeded on attempt {attempt}")
-                return True
+                return
             last_error = (stderr or stdout or f"exit {rc}").strip()
             if time.monotonic() >= deadline:
                 break
             await asyncio.sleep(self._config.dns_retry_interval_s)
-        self._status_recorder.add_issue(
-            phase.value if isinstance(phase, UpdatePhase) else phase,
-            failure_message,
-            (
+        raise UpdateTransportStepError(
+            phase=phase,
+            message=failure_message,
+            detail=(
                 "Waited at least "
                 f"{int(self._config.dns_ready_min_wait_s)} seconds for DNS resolution "
                 f"({self._config.dns_probe_host}) before starting the updater. "
                 f"Last probe error: {last_error or 'unknown'}"
             ),
         )
-        self._status_controller.mark_failed()
-        return False

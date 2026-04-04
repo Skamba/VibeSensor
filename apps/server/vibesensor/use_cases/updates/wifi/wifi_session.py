@@ -13,6 +13,7 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.wifi.wifi_diagnostics import parse_wifi_diagnostics
 from vibesensor.use_cases.updates.wifi.wifi_hotspot_recovery import UpdateHotspotRecovery
@@ -79,14 +80,11 @@ class UpdateWifiSession:
         )
         self._readiness = UpdateWifiReadiness(
             commands=commands,
-            status_controller=status_controller,
             status_recorder=status_recorder,
             config=config,
         )
         self._uplink = UpdateUplinkProvisioner(
             commands=commands,
-            status_controller=status_controller,
-            status_recorder=status_recorder,
             config=config,
         )
 
@@ -95,19 +93,21 @@ class UpdateWifiSession:
 
         return await self._hotspot.stop_hotspot()
 
-    async def _connect_uplink(self, ssid: str, password: str) -> bool:
+    async def _connect_uplink(self, ssid: str, password: str) -> None:
         """Create and connect the transient uplink profile for this update run."""
 
         self._status_recorder.log(f"Connecting to Wi-Fi network: {ssid}")
-        if not await self._uplink.prepare_uplink_connection(ssid, password):
-            return False
-        if not await self._readiness.bring_uplink_up(ssid):
-            return False
+        await self._uplink.prepare_uplink_connection(ssid, password)
+        await self._readiness.bring_uplink_up(ssid)
         fallback = self._config.uplink_fallback_dns
         self._status_recorder.log(
             f"Wi-Fi connected successfully (client DNS fallback={fallback})",
         )
-        return await self._readiness.wait_for_dns_ready()
+        await self._readiness.wait_for_dns_ready()
+
+    def _record_transport_failure(self, exc: UpdateTransportStepError) -> None:
+        self._status_recorder.add_issue(exc.phase, str(exc), exc.detail)
+        self._status_controller.mark_failed()
 
     async def prepare(self, request: UpdateRequest) -> None:
         """Prepare the updater's Wi-Fi transport before release work begins."""
@@ -117,8 +117,11 @@ class UpdateWifiSession:
             raise UpdateTransportError("Failed to stop the hotspot before Wi-Fi update setup")
         self._status_controller.transition(UpdatePhase.connecting_wifi)
         assert request.ssid is not None  # noqa: S101
-        if not await self._connect_uplink(request.ssid, request.password):
-            raise UpdateTransportError("Failed to prepare the Wi-Fi uplink for update")
+        try:
+            await self._connect_uplink(request.ssid, request.password)
+        except UpdateTransportStepError as exc:
+            self._record_transport_failure(exc)
+            raise UpdateTransportError("Failed to prepare the Wi-Fi uplink for update") from exc
 
     async def abort_preparation(self) -> None:
         """Rollback partial Wi-Fi setup after transport preparation fails."""

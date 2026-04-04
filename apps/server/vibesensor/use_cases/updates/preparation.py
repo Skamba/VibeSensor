@@ -3,32 +3,17 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 
 from vibesensor.use_cases.updates.models import UpdateRequest, UpdateValidationConfig
+from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
-from vibesensor.use_cases.updates.transport_coordinator import (
-    PreparedUpdateTransport,
-    UpdateTransportCoordinator,
-)
+from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.validation import validate_prerequisites
 
-__all__ = [
-    "CurrentVersionProvider",
-    "PreparedUpdateWorkflow",
-    "UpdatePreparationCoordinator",
-]
+__all__ = ["CurrentVersionProvider", "UpdatePreparationCoordinator"]
 
 CurrentVersionProvider = Callable[[], str]
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedUpdateWorkflow:
-    """Validated update workflow state with one prepared transport lifecycle."""
-
-    current_version: str
-    transport: PreparedUpdateTransport
 
 
 class UpdatePreparationCoordinator:
@@ -60,7 +45,7 @@ class UpdatePreparationCoordinator:
         self._validation_config = validation_config
         self._current_version_provider = current_version_provider
 
-    async def prepare(self, request: UpdateRequest) -> PreparedUpdateWorkflow:
+    async def prepare(self, request: UpdateRequest) -> PreparedUpdateRun:
         await validate_prerequisites(
             commands=self._commands,
             controller=self._status_controller,
@@ -68,7 +53,7 @@ class UpdatePreparationCoordinator:
             config=self._validation_config,
             request=request,
         )
-        return PreparedUpdateWorkflow(
+        return PreparedUpdateRun(
             current_version=self._current_version_provider(),
-            transport=await self._transport_coordinator.prepare(request),
+            transport_session=await self._transport_coordinator.prepare(request),
         )
