@@ -8,7 +8,7 @@ def test_prepared_report_input_has_domain_aggregate() -> None:
     from test_support.findings import make_finding_payload
 
     from vibesensor.domain import TestRun
-    from vibesensor.use_cases.history.report_document import prepare_report_input
+    from vibesensor.shared.boundaries.reporting import prepare_report_input
 
     summary = {
         "run_id": "test-context",
@@ -80,10 +80,8 @@ def test_build_report_document_produces_report_with_domain_findings() -> None:
     """build_report_document must produce report data using domain-first pipeline."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.use_cases.history.report_document import (
-        build_report_document,
-        prepare_report_input,
-    )
+    from vibesensor.shared.boundaries.reporting import prepare_report_input
+    from vibesensor.use_cases.history.report_document import build_report_document
 
     summary = {
         "run_id": "test-map",
@@ -118,8 +116,8 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
 
     from vibesensor.domain import VibrationSource
     from vibesensor.report_i18n import tr
+    from vibesensor.shared.boundaries.reporting import prepare_report_input
     from vibesensor.use_cases.history.report_document import (
-        prepare_report_input,
         resolve_primary_report_candidate,
     )
 
@@ -162,7 +160,7 @@ def test_prepared_report_input_exposes_canonical_summary_boundary() -> None:
     """Prepared report inputs must expose explicit typed fields instead of raw dict state."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.use_cases.history.report_document import prepare_report_input
+    from vibesensor.shared.boundaries.reporting import prepare_report_input
 
     prepared = prepare_report_input(
         {

@@ -31,12 +31,13 @@ from vibesensor.adapters.pdf.pdf_style import (
     build_page1_layout,
     observed_signature_row_count,
 )
+from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
     ReportDocument,
     VerdictPageData,
 )
-from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document
 
 
 def _sample(

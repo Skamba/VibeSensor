@@ -5,9 +5,11 @@ import pytest
 from vibesensor.shared.boundaries.persisted_analysis_codec import (
     persisted_analysis_from_json_object,
 )
-from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
-from vibesensor.use_cases.history.report_document import (
+from vibesensor.shared.boundaries.reporting import (
+    prepare_persisted_report_input,
     prepare_report_input,
+)
+from vibesensor.use_cases.history.report_document import (
     resolve_primary_report_candidate,
 )
 
