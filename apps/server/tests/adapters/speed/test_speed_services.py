@@ -71,12 +71,14 @@ def test_observation_service_switches_to_obd_status_and_resolution() -> None:
     obd_observation.resolve_speed.return_value = SpeedResolution(12.0, False, "obd2")
     obd_observation.status_snapshot.return_value = _obd_status_snapshot()
     obd_observation.stale_timeout_s = 8.0
-    obd_admin = MagicMock()
+    obd_device_admin = MagicMock()
+    obd_status_refresher = MagicMock()
     obd_control = MagicMock()
     services = build_speed_source_services(
         gps_monitor=gps_monitor,
         obd_observation=obd_observation,
-        obd_admin=obd_admin,
+        obd_device_admin=obd_device_admin,
+        obd_status_refresher=obd_status_refresher,
         obd_control=obd_control,
     )
 
@@ -96,7 +98,7 @@ def test_observation_service_switches_to_obd_status_and_resolution() -> None:
     assert status.device == "OBDLink MX+ (00043e5a4a4d)"
     assert status.raw_speed_kmh == pytest.approx(43.2)
     assert status.speed_source == "obd2"
-    obd_admin.refresh_configured_device.assert_not_called()
+    obd_status_refresher.refresh_configured_device.assert_not_called()
     obd_observation.status_snapshot.assert_called_once_with()
 
 
@@ -108,7 +110,8 @@ def test_observation_service_obd_status_is_side_effect_free() -> None:
     services = build_speed_source_services(
         gps_monitor=gps_monitor,
         obd_observation=obd_observation,
-        obd_admin=MagicMock(),
+        obd_device_admin=MagicMock(),
+        obd_status_refresher=MagicMock(),
         obd_control=MagicMock(),
     )
 
@@ -129,22 +132,23 @@ def test_observation_service_obd_status_is_side_effect_free() -> None:
 
 def test_admin_service_refreshes_obd_status_explicitly() -> None:
     gps_monitor = MagicMock()
-    obd_admin = MagicMock()
+    obd_status_refresher = MagicMock()
     services = build_speed_source_services(
         gps_monitor=gps_monitor,
         obd_observation=MagicMock(),
-        obd_admin=obd_admin,
+        obd_device_admin=MagicMock(),
+        obd_status_refresher=obd_status_refresher,
         obd_control=MagicMock(),
     )
 
     services.admin.refresh_obd_status()
 
-    obd_admin.refresh_configured_device.assert_called_once_with()
+    obd_status_refresher.refresh_configured_device.assert_called_once_with()
 
 
-def test_admin_service_delegates_scan_and_pair_to_obd_admin_runtime() -> None:
+def test_admin_service_delegates_scan_and_pair_to_obd_device_admin() -> None:
     gps_monitor = MagicMock()
-    obd_admin = MagicMock()
+    obd_device_admin = MagicMock()
     device = ObdDeviceSnapshot(
         mac_address="00043e5a4a4d",
         name="OBDLink MX+",
@@ -153,12 +157,13 @@ def test_admin_service_delegates_scan_and_pair_to_obd_admin_runtime() -> None:
         connected=False,
         rfcomm_channel=1,
     )
-    obd_admin.scan_devices.return_value = [device]
-    obd_admin.pair_device.return_value = device
+    obd_device_admin.scan_devices.return_value = [device]
+    obd_device_admin.pair_device.return_value = device
     services = build_speed_source_services(
         gps_monitor=gps_monitor,
         obd_observation=MagicMock(),
-        obd_admin=obd_admin,
+        obd_device_admin=obd_device_admin,
+        obd_status_refresher=MagicMock(),
         obd_control=MagicMock(),
     )
 
@@ -167,5 +172,5 @@ def test_admin_service_delegates_scan_and_pair_to_obd_admin_runtime() -> None:
 
     assert scanned == [device]
     assert paired == device
-    obd_admin.scan_devices.assert_called_once_with(timeout_s=8)
-    obd_admin.pair_device.assert_called_once_with("00043e5a4a4d")
+    obd_device_admin.scan_devices.assert_called_once_with(timeout_s=8)
+    obd_device_admin.pair_device.assert_called_once_with("00043e5a4a4d")
