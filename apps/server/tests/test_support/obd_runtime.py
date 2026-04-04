@@ -8,7 +8,6 @@ from vibesensor.adapters.obd.admin_runtime import ObdAdminRuntime
 from vibesensor.adapters.obd.connection_executor import ObdConnectionExecutor
 from vibesensor.adapters.obd.connection_runtime import ObdConnectionRuntime
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
-from vibesensor.adapters.obd.runtime_admin_state import ObdRuntimeAdminState
 from vibesensor.adapters.obd.runtime_connection_control import ObdRuntimeConnectionControl
 from vibesensor.adapters.obd.runtime_connection_observation import (
     ObdRuntimeConnectionObservation,
@@ -70,7 +69,6 @@ def build_obd_runtime_parts(
     )
     connection_control = ObdRuntimeConnectionControl(store=store)
     connection_observation = ObdRuntimeConnectionObservation(store=store)
-    admin_state = ObdRuntimeAdminState(store=store)
     executor = ObdConnectionExecutor(
         admin_client=admin,
         connection_observation=connection_observation,
@@ -94,7 +92,7 @@ def build_obd_runtime_parts(
         connection_control=connection_control,
         admin=ObdAdminRuntime(
             admin_client=admin,
-            admin_state=admin_state,
+            store=store,
         ),
         executor=executor,
         runner=runner,
