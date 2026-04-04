@@ -20,6 +20,7 @@ from vibesensor.adapters.analysis_summary import (
     analysis_result_to_summary,
     summarize_run_data,
 )
+from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
@@ -27,7 +28,6 @@ from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_in
 from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 from vibesensor.use_cases.history.report_document import (
     build_report_document,
-    prepare_report_input,
     resolve_primary_report_candidate,
 )
 

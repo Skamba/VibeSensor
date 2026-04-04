@@ -7,10 +7,11 @@ from test_support.sample_scenarios import build_speed_sweep_samples, make_sample
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
-from vibesensor.use_cases.history.report_document import build_report_document, prepare_report_input
+from vibesensor.use_cases.history.report_document import build_report_document
 
 
 class TestPlotDataKeyFix:
