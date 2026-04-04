@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from vibesensor.domain.diagnostic_case import DiagnosticCase
-from vibesensor.shared.boundaries import test_run_reconstruction as _test_run_reconstruction
+from vibesensor.shared.boundaries.analysis_payloads import reconstruction as _reconstruction
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.run_metadata_projection import (
     car_from_run_metadata,
@@ -40,7 +40,7 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
     )
     car = car_from_run_metadata(typed_metadata)
     symptoms = (symptom_from_run_metadata(typed_metadata),)
-    test_run = _test_run_reconstruction.test_run_from_summary(summary)
+    test_run = _reconstruction.test_run_from_summary(summary)
     case = DiagnosticCase(
         case_id=_require_authoritative_case_id(summary),
         car=car,

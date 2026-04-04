@@ -22,11 +22,11 @@ from vibesensor.domain import (
     SuitabilityCheck,
     TestRun,
 )
+from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+    test_run_from_summary as reconstruct_test_run_from_summary,
+)
 from vibesensor.shared.boundaries.finding import (
     finding_from_payload,
-)
-from vibesensor.shared.boundaries.test_run_reconstruction import (
-    test_run_from_summary as reconstruct_test_run_from_summary,
 )
 
 
