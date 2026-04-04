@@ -43,14 +43,14 @@ def test_obd_observation_prioritizes_rpm_and_keeps_speed_as_a_companion_poll() -
 
     parts.session.request.side_effect = request
 
-    parts.connection_state.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
     clock.now = started_at + 0.05
-    parts.connection_state.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.2)]
-    assert parts.observation.resolve_speed().source == "obd2"
-    assert parts.observation.resolve_speed().speed_mps == pytest.approx(40.0 / 3.6)
-    status = parts.observation.status_snapshot()
+    assert parts.projection.resolve_speed().source == "obd2"
+    assert parts.projection.resolve_speed().speed_mps == pytest.approx(40.0 / 3.6)
+    status = parts.projection.status_snapshot()
     assert status.last_speed_kmh == pytest.approx(40.0)
     assert status.last_rpm == pytest.approx(0x1AF8 / 4.0)
     assert status.rpm_target_interval_ms == 50
@@ -82,17 +82,17 @@ def test_obd_observation_keeps_last_good_rpm_until_the_reference_goes_stale() ->
 
     parts.session.request.side_effect = request
 
-    parts.connection_state.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
     clock.now = 0.05
-    parts.connection_state.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
 
-    assert parts.observation.engine_rpm == pytest.approx(0x1AF8 / 4.0)
+    assert parts.facts.engine_rpm == pytest.approx(0x1AF8 / 4.0)
     clock.now = 1.99
-    assert parts.observation.engine_rpm == pytest.approx(0x1AF8 / 4.0)
+    assert parts.facts.engine_rpm == pytest.approx(0x1AF8 / 4.0)
     clock.now = 2.11
-    assert parts.observation.engine_rpm is None
+    assert parts.facts.engine_rpm is None
 
-    status = parts.observation.status_snapshot()
+    status = parts.projection.status_snapshot()
     assert status.timeout_count == 1
     assert status.backoff_active is True
 
@@ -116,11 +116,11 @@ def test_obd_connection_state_backs_off_and_stays_in_rpm_only_mode_when_speed_ti
 
     parts.session.request.side_effect = request
 
-    parts.connection_state.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
-    parts.connection_state.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
+    parts.connection_control.apply_poll_cycle(parts.executor._poll_cycle_blocking(parts.session))
 
     assert calls == [("010C", 0.2), ("010D", 0.2), ("010C", 0.3)]
-    status = parts.observation.status_snapshot()
+    status = parts.projection.status_snapshot()
     assert status.poll_mode == "rpm_only_backoff"
     assert status.backoff_active is True
     assert status.timeout_count == 1
@@ -129,7 +129,7 @@ def test_obd_connection_state_backs_off_and_stays_in_rpm_only_mode_when_speed_ti
     assert status.request_rtt_ms is not None
 
 
-def test_obd_runtime_observation_resolves_stale_speed_to_manual_fallback() -> None:
+def test_obd_runtime_projection_resolves_stale_speed_to_manual_fallback() -> None:
     parts = _build_runtime_parts(clock=lambda: 100.0)
     parts.settings.apply_speed_source_settings(
         effective_speed_kmh=54.0,
@@ -140,9 +140,9 @@ def test_obd_runtime_observation_resolves_stale_speed_to_manual_fallback() -> No
         obd_device_name="OBDLink MX+",
     )
     parts.store.state.speed_snapshot = (10.0, 90.0)
-    parts.connection_state.mark_connected()
+    parts.connection_control.mark_connected()
 
-    resolution = parts.observation.resolve_speed()
+    resolution = parts.projection.resolve_speed()
 
     assert resolution.source == "fallback_manual"
     assert resolution.speed_mps == pytest.approx(54.0 / 3.6)
@@ -160,7 +160,7 @@ def test_obd_status_snapshot_does_not_refresh_admin_state_implicitly() -> None:
         obd_device_name="OBDLink MX+",
     )
 
-    status = parts.observation.status_snapshot()
+    status = parts.projection.status_snapshot()
 
     admin_client.device_info.assert_not_called()
     assert status.device_mac == "00043e5a4a4d"
@@ -180,7 +180,7 @@ def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
     )
 
     parts.admin.refresh_configured_device()
-    status = parts.observation.status_snapshot()
+    status = parts.projection.status_snapshot()
 
     assert "sudo" in str(status.last_error).lower()
     assert "sudo helper" in str(obd_debug_hint(status)).lower()
@@ -190,7 +190,7 @@ def test_obd_connection_state_marks_disconnected_after_fatal_poll_cycle() -> Non
     clock = _FakeClock()
     parts = _connected_runtime_parts(clock=clock)
 
-    connection_lost = parts.connection_state.apply_poll_cycle(
+    connection_lost = parts.connection_control.apply_poll_cycle(
         ObdPollResult(
             rpm=ObdPidPollResult(
                 value=None,
@@ -206,7 +206,7 @@ def test_obd_connection_state_marks_disconnected_after_fatal_poll_cycle() -> Non
     )
 
     assert connection_lost is True
-    status = parts.observation.status_snapshot()
+    status = parts.projection.status_snapshot()
     assert status.connection_state == "disconnected"
     assert status.last_error == "PID 010C request failed: Session is not connected"
     assert status.reconnect_delay_s == 4.0
@@ -238,7 +238,8 @@ def test_connect_blocking_keeps_initialized_session_open() -> None:
     parts = _connected_runtime_parts(clock=clock)
 
     assert parts.runner is not None
-    assert parts.observation is not None
+    assert parts.facts is not None
+    assert parts.projection is not None
     parts.session.initialize.assert_called_once_with()
     assert parts.session.close.call_count == 0
 

@@ -8,8 +8,10 @@ from vibesensor.adapters.obd.admin_runtime import ObdAdminRuntime
 from vibesensor.adapters.obd.connection_executor import ObdConnectionExecutor
 from vibesensor.adapters.obd.connection_runtime import ObdConnectionRuntime
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
-from vibesensor.adapters.obd.runtime_connection_state import ObdRuntimeConnectionState
-from vibesensor.adapters.obd.runtime_observation import ObdRuntimeObservation
+from vibesensor.adapters.obd.runtime_admin_state import ObdRuntimeAdminState
+from vibesensor.adapters.obd.runtime_connection_control import ObdRuntimeConnectionControl
+from vibesensor.adapters.obd.runtime_facts import ObdRuntimeFacts
+from vibesensor.adapters.obd.runtime_projection import ObdRuntimeProjection
 from vibesensor.adapters.obd.runtime_settings import ObdRuntimeSettings
 from vibesensor.adapters.obd.runtime_store import ObdRuntimeStore
 
@@ -28,9 +30,10 @@ class FakeClock:
 @dataclass(slots=True)
 class ObdRuntimeParts:
     store: ObdRuntimeStore
-    observation: ObdRuntimeObservation
+    facts: ObdRuntimeFacts
+    projection: ObdRuntimeProjection
     settings: ObdRuntimeSettings
-    connection_state: ObdRuntimeConnectionState
+    connection_control: ObdRuntimeConnectionControl
     admin: ObdAdminRuntime
     executor: ObdConnectionExecutor
     runner: ObdConnectionRuntime
@@ -62,28 +65,30 @@ def build_obd_runtime_parts(
         initial_reconnect_delay_s=1.0,
         engine_rpm_stale_timeout_s=2.0,
     )
-    connection_state = ObdRuntimeConnectionState(store=store)
+    connection_control = ObdRuntimeConnectionControl(store=store)
+    admin_state = ObdRuntimeAdminState(store=store)
     executor = ObdConnectionExecutor(
         admin_client=admin,
-        connection_state=connection_state,
+        connection_control=connection_control,
         session_factory=lambda: resolved_session,
         monotonic=clock,
         **({} if sleep is None else {"sleep": sleep}),
     )
     runner = ObdConnectionRuntime(
         admin_client=admin,
-        connection_state=connection_state,
+        connection_control=connection_control,
         session_factory=lambda: resolved_session,
         monotonic=clock,
     )
     return ObdRuntimeParts(
         store=store,
-        observation=ObdRuntimeObservation(store=store),
+        facts=ObdRuntimeFacts(store=store),
+        projection=ObdRuntimeProjection(store=store),
         settings=ObdRuntimeSettings(store=store),
-        connection_state=connection_state,
+        connection_control=connection_control,
         admin=ObdAdminRuntime(
             admin_client=admin,
-            connection_state=connection_state,
+            admin_state=admin_state,
         ),
         executor=executor,
         runner=runner,
@@ -114,5 +119,5 @@ def build_connected_obd_runtime_parts(
         obd_device_name="OBDLink MX+",
     )
     _, device = parts.executor._connect_blocking("00043e5a4a4d", "OBDLink MX+")
-    parts.connection_state.mark_connected(device)
+    parts.connection_control.mark_connected(device)
     return parts
