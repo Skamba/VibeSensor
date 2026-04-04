@@ -38,13 +38,13 @@ class UpdateRestartScheduler:
             ["systemctl", "restart", self._service_name],
         ]
         for command in restart_attempts:
-            rc, _, _ = await self._commands.run(
+            result = await self._commands.run(
                 command,
                 phase="done",
                 timeout=30,
                 sudo=True,
             )
-            if rc == 0:
+            if result.returncode == 0:
                 self._status.log("Scheduled backend service restart")
                 return True
         return False

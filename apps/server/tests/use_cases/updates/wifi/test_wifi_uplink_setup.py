@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from test_support.update_status import build_update_status_harness
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
@@ -16,9 +15,9 @@ from vibesensor.use_cases.updates.wifi.wifi_uplink_setup import (
 
 
 def _build_uplink_provisioner(tmp_path: Path) -> tuple[UpdateUplinkProvisioner, FakeRunner]:
+    del tmp_path
     runner = FakeRunner()
-    status = build_update_status_harness(tmp_path / "state.json")
-    commands = UpdateCommandExecutor(runner=runner, status=status)
+    commands = UpdateCommandExecutor(runner=runner)
     provisioner = UpdateUplinkProvisioner(
         commands=commands,
         config=build_default_wifi_config(ap_con_name="VibeSensor-AP", wifi_ifname="wlan0"),

@@ -48,17 +48,17 @@ class FirmwareRefresher:
             if not Path(refresh_exe).is_file()
             else [refresh_exe, *refresh_args]
         )
-        rc, _, stderr = await self._commands.run(
+        result = await self._commands.run(
             refresh_cmd,
             phase="downloading",
             timeout=self._timeout_s,
             sudo=False,
         )
-        if rc != 0:
+        if result.returncode != 0:
             self._status.add_issue(
                 "downloading",
-                f"ESP firmware cache refresh failed (exit {rc})",
-                stderr,
+                f"ESP firmware cache refresh failed (exit {result.returncode})",
+                result.stderr,
             )
             self._status.log("ESP firmware refresh failed; continuing with existing cache")
             return

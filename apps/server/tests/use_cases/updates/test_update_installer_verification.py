@@ -17,6 +17,7 @@ from vibesensor.use_cases.updates.artifact_validation import (
 from vibesensor.use_cases.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
+from vibesensor.use_cases.updates.runner import CommandExecutionResult
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult
 
@@ -24,12 +25,17 @@ from vibesensor.use_cases.updates.wheel_installation import WheelInstallResult
 class RecordingCommands:
     def __init__(self) -> None:
         self.calls: list[tuple[list[str], str]] = []
-        self.responses: list[tuple[str, tuple[int, str, str]]] = []
-        self.default_response: tuple[int, str, str] = (0, "", "")
+        self.responses: list[tuple[str, CommandExecutionResult]] = []
+        self.default_response = CommandExecutionResult(returncode=0, stdout="", stderr="")
         self.local_wheel_version: str = ""
 
     def set_response(self, match_substr: str, rc: int, stdout: str = "", stderr: str = "") -> None:
-        self.responses.append((match_substr, (rc, stdout, stderr)))
+        self.responses.append(
+            (
+                match_substr,
+                CommandExecutionResult(returncode=rc, stdout=stdout, stderr=stderr),
+            ),
+        )
 
     async def run(
         self,
@@ -39,7 +45,7 @@ class RecordingCommands:
         phase: str,
         sudo: bool = False,
         env: dict[str, str] | None = None,
-    ) -> tuple[int, str, str]:
+    ) -> CommandExecutionResult:
         del timeout, sudo, env
         self.calls.append((list(args), phase))
         joined = " ".join(args)
