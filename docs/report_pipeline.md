@@ -74,7 +74,8 @@ Canonical report preparation now lives in
 `NormalizedReportSummary` decoding, domain reconstruction, filename/language
 normalization, and grouped semantic fact assembly:
 
-- `facts.py` builds `PreparedReportFacts(run=..., sensor=..., decision=...)`
+- `facts.py` builds `PreparedReportFacts(run=..., sensor=..., decision=..., findings=...)`
+- `findings.py` owns report-facing finding/top-cause presentation shaping
 - `sensor_facts.py` owns sensor/coverage shaping
 - `decision_facts.py` owns primary-candidate, warning, and action-decision shaping
 - `projection.py` owns primary-candidate/origin projection only

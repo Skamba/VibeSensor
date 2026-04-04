@@ -43,8 +43,7 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
     with pytest.raises(UpdatePreparationError, match="Rollback directory is not writable"):
         await validate_prerequisites(
             commands=_Commands(),
-            controller=status.controller,
-            recorder=status.recorder,
+            status=tracker,
             config=UpdateValidationConfig(
                 rollback_dir=tmp_path / "rollback",
                 min_free_disk_bytes=1,

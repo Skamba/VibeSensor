@@ -7,7 +7,7 @@ from collections.abc import Callable
 from vibesensor.use_cases.updates.models import UpdateRequest, UpdateValidationConfig
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.validation import validate_prerequisites
 
@@ -22,8 +22,7 @@ class UpdatePreparationCoordinator:
     __slots__ = (
         "_commands",
         "_current_version_provider",
-        "_status_controller",
-        "_status_recorder",
+        "_status",
         "_transport_coordinator",
         "_validation_config",
     )
@@ -31,15 +30,13 @@ class UpdatePreparationCoordinator:
     def __init__(
         self,
         *,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
         commands: UpdateCommandExecutor,
         transport_coordinator: UpdateTransportCoordinator,
         validation_config: UpdateValidationConfig,
         current_version_provider: CurrentVersionProvider,
     ) -> None:
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
+        self._status = status
         self._commands = commands
         self._transport_coordinator = transport_coordinator
         self._validation_config = validation_config
@@ -48,8 +45,7 @@ class UpdatePreparationCoordinator:
     async def prepare(self, request: UpdateRequest) -> PreparedUpdateRun:
         await validate_prerequisites(
             commands=self._commands,
-            controller=self._status_controller,
-            recorder=self._status_recorder,
+            status=self._status,
             config=self._validation_config,
             request=request,
         )

@@ -10,7 +10,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     EvidenceChainRow,
     MeasurementRow,
 )
-from vibesensor.shared.boundaries.reporting.summary import NormalizedReportSummary
+from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
 from vibesensor.shared.report_presentation import (
     candidate_signal_text,
     display_location,
@@ -35,7 +35,7 @@ def _measurement_signal_label(row: dict[str, object] | object, *, tr: Callable[.
 
 
 def _measurement_rows(
-    summary: NormalizedReportSummary,
+    run_facts: ReportRunFacts,
     *,
     aggregate: TestRun,
     tr: Callable[..., str],
@@ -48,7 +48,7 @@ def _measurement_rows(
             finding_by_source[source_key] = top_finding
     primary_finding = top_findings[0] if top_findings else None
     rows: list[MeasurementRow] = []
-    for index, row in enumerate(summary.peak_table_rows[:4], start=1):
+    for index, row in enumerate(run_facts.peak_table_rows[:4], start=1):
         source_key = str(row.get("suspected_source") or "").strip().lower()
         matched_finding: Finding | None = finding_by_source.get(source_key)
         if matched_finding is None and primary_finding is not None:

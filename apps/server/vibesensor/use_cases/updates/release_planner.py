@@ -14,7 +14,7 @@ from vibesensor.use_cases.updates.run_models import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+    from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 __all__ = ["UpdateReleasePlanner"]
 
@@ -22,27 +22,25 @@ __all__ = ["UpdateReleasePlanner"]
 class UpdateReleasePlanner:
     """Interpret resolved release state into one canonical execution plan."""
 
-    __slots__ = ("_resolver", "_status_controller", "_status_recorder")
+    __slots__ = ("_resolver", "_status")
 
     def __init__(
         self,
         *,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
         resolver: ServerReleaseResolver,
     ) -> None:
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
+        self._status = status
         self._resolver = resolver
 
     async def plan(self, prepared: PreparedUpdateRun) -> PlannedUpdateRun:
         current_version = prepared.current_version
-        self._status_controller.transition(UpdatePhase.checking)
-        self._status_recorder.log("Checking for available updates...")
+        self._status.transition(UpdatePhase.checking)
+        self._status.log("Checking for available updates...")
 
         resolution = await self._resolver.resolve(current_version)
         if resolution.release is None:
-            self._status_recorder.log(f"Already up-to-date (version={current_version})")
+            self._status.log(f"Already up-to-date (version={current_version})")
             return PlannedUpdateRun(
                 prepared=prepared,
                 execution_plan=RefreshFirmwarePlan(
@@ -50,7 +48,7 @@ class UpdateReleasePlanner:
                 ),
             )
 
-        self._status_recorder.log(
+        self._status.log(
             f"Update available: {current_version} → {resolution.release.version}",
         )
         return PlannedUpdateRun(

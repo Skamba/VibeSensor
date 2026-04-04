@@ -20,6 +20,7 @@ from vibesensor.shared.operational_errors import OperationalError, ServiceUnavai
 
 __all__ = [
     "http_exception_for_operational_error",
+    "http_status_for_analysis_not_ready_error",
     "http_exception_for_value_error",
     "http_exception_for_vibesensor_error",
     "install_http_exception_handlers",
@@ -45,15 +46,24 @@ def http_exception_for_operational_error(exc: OperationalError) -> HTTPException
     )
 
 
+def http_status_for_analysis_not_ready_error(exc: AnalysisNotReadyError) -> int:
+    """Return the HTTP status code for one analysis-readiness failure."""
+
+    if exc.status in {"in_progress", "active"}:
+        return 409
+    if exc.status in {"error", "unavailable"}:
+        return 422
+    return 500
+
+
 def http_exception_for_vibesensor_error(exc: VibeSensorError) -> HTTPException:
     """Convert one domain/runtime error into an HTTPException."""
 
     if isinstance(exc, RunNotFoundError):
         return HTTPException(status_code=404, detail=str(exc))
     if isinstance(exc, AnalysisNotReadyError):
-        status_map = {"in_progress": 409, "active": 409, "error": 422, "unavailable": 422}
         return HTTPException(
-            status_code=status_map.get(exc.status, 409),
+            status_code=http_status_for_analysis_not_ready_error(exc),
             detail=str(exc),
         )
     if isinstance(exc, (ConfigurationError, ProtocolError)):

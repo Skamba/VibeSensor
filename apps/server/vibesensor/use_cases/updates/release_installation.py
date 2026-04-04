@@ -6,7 +6,7 @@ from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.installer import UpdateInstaller
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.release_staging import StagedServerRelease
-from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 __all__ = ["UpdateReleaseInstallationCoordinator"]
 
@@ -14,29 +14,26 @@ __all__ = ["UpdateReleaseInstallationCoordinator"]
 class UpdateReleaseInstallationCoordinator:
     """Own install-time snapshot, install, and rollback policy for staged releases."""
 
-    __slots__ = ("_installer", "_status_controller", "_status_recorder")
+    __slots__ = ("_installer", "_status")
 
     def __init__(
         self,
         *,
         installer: UpdateInstaller,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
     ) -> None:
         self._installer = installer
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
+        self._status = status
 
     async def install(self, staged_release: StagedServerRelease) -> None:
-        self._status_controller.transition(UpdatePhase.installing)
-        self._status_recorder.log("Installing update...")
+        self._status.transition(UpdatePhase.installing)
+        self._status.log("Installing update...")
         if not await self._installer.snapshot_for_rollback():
-            self._status_recorder.add_issue(
+            self._status.fail(
                 UpdatePhase.installing.value,
                 "Rollback snapshot could not be created",
                 "Install aborted before mutating the live environment",
             )
-            self._status_controller.mark_failed()
             raise UpdateReleaseError("Rollback snapshot could not be created")
 
         install_result = await self._installer.install_release(
@@ -48,7 +45,7 @@ class UpdateReleaseInstallationCoordinator:
         if not install_result.rollback_required:
             raise UpdateReleaseError("Update install failed")
 
-        self._status_recorder.log("Attempting rollback...")
+        self._status.log("Attempting rollback...")
         rollback_succeeded = await self._installer.rollback()
         if rollback_succeeded:
             raise UpdateReleaseError(

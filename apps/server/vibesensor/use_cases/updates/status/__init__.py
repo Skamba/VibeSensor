@@ -9,6 +9,7 @@ from .session import UpdateStatusSession
 from .state_controller import UpdateStatusController
 from .state_machine import UpdatePhaseStateMachine, UpdatePhaseTransitionError
 from .state_store import DEFAULT_STATE_PATH, UpdateStateStore
+from .tracker import UpdateStatusTracker
 
 __all__ = [
     "DEFAULT_STATE_PATH",
@@ -21,6 +22,7 @@ __all__ = [
     "UpdateStatusServices",
     "UpdateStatusSession",
     "UpdateStateStore",
+    "UpdateStatusTracker",
     "build_update_status_services",
     "collect_runtime_details",
     "hash_tree",

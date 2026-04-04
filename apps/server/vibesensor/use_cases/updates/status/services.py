@@ -13,6 +13,7 @@ from .session import UpdateStatusSession
 from .state_controller import UpdateStatusController
 from .state_machine import UpdatePhaseStateMachine
 from .state_store import UpdateStateStore
+from .tracker import UpdateStatusTracker
 
 __all__ = ["UpdateStatusServices", "build_update_status_services"]
 
@@ -24,6 +25,7 @@ class UpdateStatusServices:
     session: UpdateStatusSession
     controller: UpdateStatusController
     recorder: UpdateStatusRecorder
+    tracker: UpdateStatusTracker
 
     @property
     def status(self) -> UpdateJobStatus:
@@ -44,15 +46,21 @@ def build_update_status_services(
         state_store=state_store,
         status=status,
     )
+    controller = UpdateStatusController(
+        session=session,
+        phase_state_machine=phase_state_machine,
+    )
+    recorder = UpdateStatusRecorder(
+        session=session,
+        log_buffer=log_buffer,
+        secret_redactor=secret_redactor,
+    )
     return UpdateStatusServices(
         session=session,
-        controller=UpdateStatusController(
-            session=session,
-            phase_state_machine=phase_state_machine,
-        ),
-        recorder=UpdateStatusRecorder(
-            session=session,
-            log_buffer=log_buffer,
-            secret_redactor=secret_redactor,
+        controller=controller,
+        recorder=recorder,
+        tracker=UpdateStatusTracker(
+            controller=controller,
+            recorder=recorder,
         ),
     )
