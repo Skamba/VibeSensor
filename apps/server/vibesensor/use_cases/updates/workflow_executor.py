@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.models import UpdateExecutionOutcome
@@ -14,6 +15,7 @@ from vibesensor.use_cases.updates.run_models import (
     PlannedUpdateRun,
     RefreshFirmwarePlan,
 )
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 __all__ = ["UpdateWorkflowExecutor"]
 
@@ -26,6 +28,7 @@ class UpdateWorkflowExecutor:
         "_deployment",
         "_firmware_refresher",
         "_stager",
+        "_status",
     )
 
     def __init__(
@@ -35,11 +38,13 @@ class UpdateWorkflowExecutor:
         stager: ServerReleaseStager,
         deployment: UpdateReleaseDeploymentCoordinator,
         firmware_refresher: FirmwareRefresher,
+        status: UpdateStatusTracker,
     ) -> None:
         self._completion = completion
         self._stager = stager
         self._deployment = deployment
         self._firmware_refresher = firmware_refresher
+        self._status = status
 
     async def execute(
         self,
@@ -62,7 +67,17 @@ class UpdateWorkflowExecutor:
         workflow: PlannedUpdateRun,
         plan: RefreshFirmwarePlan,
     ) -> UpdateExecutionOutcome:
-        await self._firmware_refresher.refresh_esp_firmware(pinned_tag=plan.latest_tag)
+        refresh_result = await self._firmware_refresher.refresh_esp_firmware(
+            pinned_tag=plan.latest_tag,
+        )
+        if not refresh_result.succeeded:
+            self._status.fail(
+                refresh_result.phase,
+                refresh_result.message,
+                refresh_result.detail,
+                log_message="ESP firmware refresh failed; refresh-only update did not complete",
+            )
+            raise UpdateReleaseError(refresh_result.message)
         await self._completion.complete_success(
             workflow.prepared.prepared_transport,
             message="No server update needed; ESP firmware checked",

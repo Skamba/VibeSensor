@@ -38,7 +38,16 @@ class UpdateReleaseDeploymentCoordinator:
                 "Install aborted before mutating the live environment",
             )
             raise UpdateReleaseError("Rollback snapshot could not be created")
-        await self._firmware_refresher.refresh_esp_firmware(pinned_tag=staged_release.release.tag)
+        refresh_result = await self._firmware_refresher.refresh_esp_firmware(
+            pinned_tag=staged_release.release.tag,
+        )
+        if not refresh_result.succeeded:
+            self._status.add_issue(
+                refresh_result.phase,
+                refresh_result.message,
+                refresh_result.detail,
+            )
+            self._status.log("ESP firmware refresh failed; continuing with existing cache")
         install_result = await self._installer.install_release(
             staged_release.wheel_path,
             str(staged_release.release.version),
