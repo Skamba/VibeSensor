@@ -48,6 +48,7 @@ def build_update_workflow(
             stager=release.stager,
             deployment=release.deployment,
             firmware_refresher=release.firmware_refresher,
+            status=core.status,
         ),
         finalizer=UpdateWorkflowFinalizer(
             transport_coordinator=transport.coordinator,

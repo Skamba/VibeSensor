@@ -2,17 +2,48 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
+from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.venv_paths import reinstall_python_executable
 
-__all__ = ["FirmwareRefresher"]
+__all__ = ["FirmwareRefreshResult", "FirmwareRefresher"]
+
+
+@dataclass(frozen=True, slots=True)
+class FirmwareRefreshResult:
+    """Explicit firmware-cache refresh outcome returned to workflow callers."""
+
+    succeeded: bool
+    phase: UpdatePhase = UpdatePhase.downloading
+    message: str = ""
+    detail: str = ""
+
+    @classmethod
+    def success(cls) -> FirmwareRefreshResult:
+        return cls(succeeded=True)
+
+    @classmethod
+    def failure(
+        cls,
+        *,
+        message: str,
+        detail: str = "",
+        phase: UpdatePhase = UpdatePhase.downloading,
+    ) -> FirmwareRefreshResult:
+        return cls(
+            succeeded=False,
+            phase=phase,
+            message=message,
+            detail=detail,
+        )
 
 
 class FirmwareRefresher:
-    """Refresh the updater firmware cache independently from install orchestration."""
+    """Run one firmware-cache refresh command and return an explicit outcome."""
 
     __slots__ = ("_commands", "_repo", "_status", "_timeout_s")
 
@@ -29,8 +60,8 @@ class FirmwareRefresher:
         self._repo = repo
         self._timeout_s = timeout_s
 
-    async def refresh_esp_firmware(self, pinned_tag: str = "") -> None:
-        """Refresh the firmware cache, falling back to the current cache on failure."""
+    async def refresh_esp_firmware(self, pinned_tag: str = "") -> FirmwareRefreshResult:
+        """Refresh the firmware cache and return the explicit outcome."""
 
         self._status.log("Refreshing ESP firmware cache...")
         venv_python = reinstall_python_executable(self._repo)
@@ -55,11 +86,9 @@ class FirmwareRefresher:
             sudo=False,
         )
         if result.returncode != 0:
-            self._status.add_issue(
-                "downloading",
-                f"ESP firmware cache refresh failed (exit {result.returncode})",
-                result.stderr,
+            return FirmwareRefreshResult.failure(
+                message=f"ESP firmware cache refresh failed (exit {result.returncode})",
+                detail=result.stderr,
             )
-            self._status.log("ESP firmware refresh failed; continuing with existing cache")
-            return
         self._status.log("ESP firmware cache refresh completed successfully")
+        return FirmwareRefreshResult.success()
