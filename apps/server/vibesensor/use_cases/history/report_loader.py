@@ -1,4 +1,4 @@
-"""Persisted history-report loading and request shaping."""
+"""Persisted history-report loading and canonical prepared-report handoff."""
 
 from __future__ import annotations
 
@@ -6,14 +6,16 @@ import json
 from dataclasses import dataclass
 
 from vibesensor.domain import RunStatus
+from vibesensor.shared.boundaries.reporting import (
+    PreparedReportInput,
+    prepare_persisted_report_input,
+)
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import is_json_array
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.helpers import (
@@ -26,17 +28,24 @@ _PERSISTED_REPORT_MODE_TOKEN = "none"
 
 @dataclass(frozen=True)
 class HistoryReportRequest:
-    """Resolved persisted report context ready for cache lookup and preparation."""
+    """Resolved persisted report request with a canonical prepared report input."""
 
-    cache_key: ReportPdfCacheKey
-    filename: str
-    language: str
-    analysis: PersistedAnalysis
-    warnings: RunContextWarningsInput
+    prepared: PreparedReportInput
+
+    @property
+    def cache_key(self) -> ReportPdfCacheKey:
+        cache_key = self.prepared.cache_key
+        if cache_key is None:
+            raise RuntimeError("Persisted history report requests must carry a cache key")
+        return cache_key
+
+    @property
+    def filename(self) -> str:
+        return self.prepared.filename
 
 
 class HistoryReportRequestLoader:
-    """Load persisted report data and shape it for PDF generation."""
+    """Load persisted report data and prepare the canonical report input."""
 
     __slots__ = ("_history_db",)
 
@@ -70,12 +79,15 @@ class HistoryReportRequestLoader:
             run_id,
             report_language,
         )
+        filename = f"{safe_filename(run_id)}_report.pdf"
         return HistoryReportRequest(
-            cache_key=cache_key,
-            filename=f"{safe_filename(run_id)}_report.pdf",
-            language=report_language,
-            analysis=analysis,
-            warnings=warnings,
+            prepared=prepare_persisted_report_input(
+                analysis,
+                warnings=warnings,
+                filename=filename,
+                language=report_language,
+                cache_key=cache_key,
+            ),
         )
 
     @staticmethod

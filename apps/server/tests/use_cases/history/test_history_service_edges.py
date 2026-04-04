@@ -161,7 +161,7 @@ async def test_report_loader_uses_requested_lang_when_persisted_lang_is_blank() 
 
     request = await loader.load_report_request("run/1 sample", " NL ")
 
-    assert request.language == "nl"
+    assert request.prepared.language == "nl"
     assert request.cache_key[1] == "nl"
     assert request.filename == "run_1_sample_report.pdf"
 

@@ -10,10 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from vibesensor.shared.boundaries.reporting import (
-    PreparedReportInput,
-    prepare_persisted_report_input,
-)
+from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
@@ -57,14 +54,6 @@ class HistoryReportService:
 
         pdf = await self._pdf_cache.get_or_build(
             request.cache_key,
-            lambda: self._pdf_renderer(
-                prepare_persisted_report_input(
-                    request.analysis,
-                    warnings=request.warnings,
-                    filename=request.filename,
-                    language=request.language,
-                    cache_key=request.cache_key,
-                )
-            ),
+            lambda: self._pdf_renderer(request.prepared),
         )
         return HistoryReportPdf(content=pdf, filename=request.filename)
