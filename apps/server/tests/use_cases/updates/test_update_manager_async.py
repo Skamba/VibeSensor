@@ -102,8 +102,8 @@ class TestUpdateManagerAsync:
             patch("shutil.which", mock_which),
             patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
             patch(
-                "vibesensor.use_cases.updates.release_resolution.check_for_update",
-                side_effect=AssertionError("check_for_update should not run without privileges"),
+                "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver._check_for_update",
+                side_effect=AssertionError("release resolution should not run without privileges"),
             ),
         ):
             await run_update(manager, "TestNet", "pass")
@@ -431,16 +431,26 @@ class TestUpdateManagerAsync:
 
         with (
             patch(
-                "vibesensor.use_cases.updates.cleanup.collect_runtime_details",
+                "vibesensor.use_cases.updates.runtime_refresh.collect_runtime_details",
                 side_effect=OSError("runtime unavailable"),
+            ),
+            patch.object(
+                type(manager._runtime.workflow.preparation),
+                "prepare",
+                new=AsyncMock(
+                    return_value=SimpleNamespace(
+                        current_version="2026.4.3",
+                        transport_session=AsyncMock(),
+                    )
+                ),
+            ),
+            patch.object(
+                type(manager._runtime.workflow.release_planner),
+                "plan",
+                new=AsyncMock(side_effect=asyncio.CancelledError()),
             ),
             caplog.at_level("ERROR"),
         ):
-            object.__setattr__(
-                manager._runtime,
-                "workflow",
-                SimpleNamespace(run=AsyncMock(side_effect=asyncio.CancelledError())),
-            )
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
             with pytest.raises(
@@ -467,15 +477,27 @@ class TestUpdateManagerAsync:
     ) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
 
-        with patch(
-            "vibesensor.use_cases.updates.cleanup.collect_runtime_details",
-            side_effect=TypeError("runtime bug"),
+        with (
+            patch(
+                "vibesensor.use_cases.updates.runtime_refresh.collect_runtime_details",
+                side_effect=TypeError("runtime bug"),
+            ),
+            patch.object(
+                type(manager._runtime.workflow.preparation),
+                "prepare",
+                new=AsyncMock(
+                    return_value=SimpleNamespace(
+                        current_version="2026.4.3",
+                        transport_session=AsyncMock(),
+                    )
+                ),
+            ),
+            patch.object(
+                type(manager._runtime.workflow.release_planner),
+                "plan",
+                new=AsyncMock(side_effect=asyncio.CancelledError()),
+            ),
         ):
-            object.__setattr__(
-                manager._runtime,
-                "workflow",
-                SimpleNamespace(run=AsyncMock(side_effect=asyncio.CancelledError())),
-            )
             manager.start("TestNet", "pass123")
             assert manager.job_task is not None
             with pytest.raises(TypeError, match="runtime bug"):

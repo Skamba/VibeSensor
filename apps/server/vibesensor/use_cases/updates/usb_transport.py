@@ -11,6 +11,7 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
@@ -77,7 +78,6 @@ class UpdateUsbInternetSession:
         self._status_recorder = status_recorder
         self._readiness = UpdateWifiReadiness(
             commands=commands,
-            status_controller=status_controller,
             status_recorder=status_recorder,
             config=config,
         )
@@ -85,26 +85,30 @@ class UpdateUsbInternetSession:
     async def prepare(self, request: UpdateRequest) -> None:
         del request
         self._status_controller.transition(UpdatePhase.connecting_usb_internet)
-        if not await self.ensure_uplink_ready():
-            raise UpdateTransportError("Failed to prepare the USB internet uplink for update")
+        try:
+            await self.ensure_uplink_ready()
+        except UpdateTransportStepError as exc:
+            self._status_recorder.add_issue(exc.phase, str(exc), exc.detail)
+            self._status_controller.mark_failed()
+            raise UpdateTransportError(
+                "Failed to prepare the USB internet uplink for update"
+            ) from exc
 
     async def abort_preparation(self) -> None:
         return None
 
-    async def ensure_uplink_ready(self) -> bool:
+    async def ensure_uplink_ready(self) -> None:
         decision = _classify_usb_internet(await self._status_service.snapshot(activate=True))
         if not decision.usable:
-            self._status_recorder.add_issue(
-                UpdatePhase.connecting_usb_internet.value,
-                str(decision.issue_message),
-                decision.detail,
+            raise UpdateTransportStepError(
+                phase=UpdatePhase.connecting_usb_internet,
+                message=str(decision.issue_message),
+                detail=decision.detail,
             )
-            self._status_controller.mark_failed()
-            return False
         self._status_controller.set_uplink_interface(decision.interface_name)
         if decision.log_message is not None:
             self._status_recorder.log(decision.log_message)
-        return await self._readiness.wait_for_dns_ready(
+        await self._readiness.wait_for_dns_ready(
             phase=UpdatePhase.connecting_usb_internet,
             readiness_subject="USB internet",
             failure_message="USB internet detected, but internet/DNS is not ready",

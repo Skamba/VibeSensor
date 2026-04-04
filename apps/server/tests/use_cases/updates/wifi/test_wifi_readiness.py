@@ -5,10 +5,11 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
-from test_support.update_status import UpdateStatusHarness, build_update_status_harness
+from test_support.update_status import build_update_status_harness
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
+from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.wifi.wifi_config import build_default_wifi_config
 from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
 
@@ -18,7 +19,7 @@ def _build_readiness(
     *,
     dns_ready_min_wait_s: float = 0.05,
     dns_retry_interval_s: float = 0.01,
-) -> tuple[UpdateWifiReadiness, FakeRunner, UpdateStatusHarness]:
+) -> tuple[UpdateWifiReadiness, FakeRunner]:
     runner = FakeRunner()
     status = build_update_status_harness(tmp_path / "state.json")
     config = replace(
@@ -29,11 +30,10 @@ def _build_readiness(
     commands = UpdateCommandExecutor(runner=runner, recorder=status.recorder)
     readiness = UpdateWifiReadiness(
         commands=commands,
-        status_controller=status.controller,
         status_recorder=status.recorder,
         config=config,
     )
-    return readiness, runner, status.tracker
+    return readiness, runner
 
 
 @pytest.mark.asyncio
@@ -41,7 +41,7 @@ async def test_bring_uplink_up_retries_ssid_not_found_then_succeeds(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    readiness, runner, tracker = _build_readiness(tmp_path)
+    readiness, runner = _build_readiness(tmp_path)
     original_run = runner.run
     connect_calls = {"count": 0}
 
@@ -57,21 +57,19 @@ async def test_bring_uplink_up_retries_ssid_not_found_then_succeeds(
     sleep = AsyncMock(return_value=None)
     monkeypatch.setattr("vibesensor.use_cases.updates.wifi.wifi_readiness.asyncio.sleep", sleep)
 
-    assert await readiness.bring_uplink_up("TestNet")
+    await readiness.bring_uplink_up("TestNet")
     assert connect_calls["count"] == 2
     assert sleep.await_count == 1
-    assert not tracker.status.issues
     assert any("dev wifi list ifname wlan0" in " ".join(call[0]) for call in runner.calls)
 
 
 @pytest.mark.asyncio
-async def test_wait_for_dns_ready_reports_clear_failure(tmp_path: Path) -> None:
-    readiness, runner, tracker = _build_readiness(tmp_path)
+async def test_wait_for_dns_ready_raises_clear_failure(tmp_path: Path) -> None:
+    readiness, runner = _build_readiness(tmp_path)
     runner.set_response("socket.getaddrinfo", 1, "", "Temporary failure in name resolution")
 
-    assert not await readiness.wait_for_dns_ready()
-    assert any(
-        issue.message == "Connected to Wi-Fi, but internet/DNS is not ready"
-        and "Temporary failure in name resolution" in (issue.detail or "")
-        for issue in tracker.status.issues
-    )
+    with pytest.raises(UpdateTransportStepError) as exc_info:
+        await readiness.wait_for_dns_ready()
+
+    assert str(exc_info.value) == "Connected to Wi-Fi, but internet/DNS is not ready"
+    assert "Temporary failure in name resolution" in exc_info.value.detail

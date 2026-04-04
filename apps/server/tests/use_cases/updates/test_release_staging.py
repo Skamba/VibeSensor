@@ -37,26 +37,22 @@ async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="")
     staged_path: Path | None = None
 
-    async def _download_release(
-        _controller,
-        _recorder,
-        _rollback_dir,
-        _release,
-        staging_dir: Path,
-    ) -> Path:
+    async def _download_release(_release: object, staging_dir: Path) -> Path:
         nonlocal staged_path
         staged_path = staging_dir / "release.whl"
         staged_path.write_text("wheel", encoding="utf-8")
         return staged_path
 
     with (
-        patch(
-            "vibesensor.use_cases.updates.release_staging.download_release",
-            new=_download_release,
+        patch.object(
+            ServerReleaseStager,
+            "_download_release",
+            new=AsyncMock(side_effect=_download_release),
         ),
-        patch(
-            "vibesensor.use_cases.updates.release_staging.verify_download",
-            new=AsyncMock(return_value=True),
+        patch.object(
+            ServerReleaseStager,
+            "_verify_download",
+            new=AsyncMock(return_value=None),
         ),
     ):
         async with stager.stage(release) as staged:
@@ -82,13 +78,7 @@ async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> Non
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="bad")
     staged_dir: Path | None = None
 
-    async def _download_release(
-        _controller,
-        _recorder,
-        _rollback_dir,
-        _release,
-        staging_dir: Path,
-    ) -> Path:
+    async def _download_release(_release: object, staging_dir: Path) -> Path:
         nonlocal staged_dir
         staged_dir = staging_dir
         wheel_path = staging_dir / "release.whl"
@@ -96,12 +86,14 @@ async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> Non
         return wheel_path
 
     with (
-        patch(
-            "vibesensor.use_cases.updates.release_staging.download_release",
-            new=_download_release,
+        patch.object(
+            ServerReleaseStager,
+            "_download_release",
+            new=AsyncMock(side_effect=_download_release),
         ),
-        patch(
-            "vibesensor.use_cases.updates.release_staging.verify_download",
+        patch.object(
+            ServerReleaseStager,
+            "_verify_download",
             new=AsyncMock(side_effect=UpdateReleaseError("checksum mismatch")),
         ),
         pytest.raises(UpdateReleaseError, match="checksum mismatch"),

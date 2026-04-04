@@ -8,17 +8,13 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from vibesensor.shared.exceptions import UpdateReleaseError
-from vibesensor.use_cases.updates.models import (
-    UpdateExecutionOutcome,
-    UpdateRequest,
-    UpdateTransport,
-)
-from vibesensor.use_cases.updates.release_planner import (
+from vibesensor.use_cases.updates.models import UpdateExecutionOutcome
+from vibesensor.use_cases.updates.run_models import (
     InstallServerReleasePlan,
-    PlannedUpdateWorkflow,
+    PlannedUpdateRun,
+    PreparedUpdateRun,
     RefreshFirmwarePlan,
 )
-from vibesensor.use_cases.updates.transport_coordinator import PreparedUpdateTransport
 from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 
 
@@ -39,14 +35,10 @@ def _executor() -> tuple[UpdateWorkflowExecutor, MagicMock, MagicMock, MagicMock
     return executor, stager, deployer, firmware_refresher, completion
 
 
-def _prepared_transport(session: object) -> PreparedUpdateTransport:
-    return PreparedUpdateTransport(
-        request=UpdateRequest(
-            transport=UpdateTransport.usb_internet,
-            ssid=None,
-            password="",
-        ),
-        session=session,
+def _prepared_run(session: object) -> PreparedUpdateRun:
+    return PreparedUpdateRun(
+        current_version="2026.4.3",
+        transport_session=session,
     )
 
 
@@ -54,10 +46,9 @@ def _prepared_transport(session: object) -> PreparedUpdateTransport:
 async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport() -> None:
     executor, stager, deployer, firmware_refresher, completion = _executor()
     transport_session = object()
-    workflow = PlannedUpdateWorkflow(
-        transport=_prepared_transport(transport_session),
+    workflow = PlannedUpdateRun(
+        prepared=_prepared_run(transport_session),
         execution_plan=RefreshFirmwarePlan(
-            current_version="2026.4.3",
             latest_tag="server-v2026.4.3",
         ),
     )
@@ -69,7 +60,7 @@ async def test_execute_refresh_plan_refreshes_firmware_then_finalizes_transport(
         pinned_tag="server-v2026.4.3",
     )
     completion.complete.assert_awaited_once_with(
-        workflow.transport,
+        transport_session,
         message="No server update needed; ESP firmware checked",
     )
     deployer.deploy.assert_not_awaited()
@@ -90,10 +81,9 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
     stager.stage.side_effect = stage
 
     completed = await executor.execute(
-        workflow := PlannedUpdateWorkflow(
-            transport=_prepared_transport(transport_session),
+        workflow := PlannedUpdateRun(
+            prepared=_prepared_run(transport_session),
             execution_plan=InstallServerReleasePlan(
-                current_version="2026.4.3",
                 release=release,
             ),
         ),
@@ -103,7 +93,7 @@ async def test_execute_install_plan_stages_and_deploys_before_finalization(tmp_p
     stager.stage.assert_called_once_with(release)
     deployer.deploy.assert_awaited_once_with(staged_release)
     completion.complete.assert_awaited_once_with(
-        workflow.transport,
+        workflow.prepared.transport_session,
         message="Update completed successfully",
     )
     firmware_refresher.refresh_esp_firmware.assert_not_awaited()
@@ -127,10 +117,9 @@ async def test_execute_install_plan_propagates_deploy_failure_before_finalizatio
 
     with pytest.raises(UpdateReleaseError, match="install failed"):
         await executor.execute(
-            PlannedUpdateWorkflow(
-                transport=_prepared_transport(transport_session),
+            PlannedUpdateRun(
+                prepared=_prepared_run(transport_session),
                 execution_plan=InstallServerReleasePlan(
-                    current_version="2026.4.3",
                     release=release,
                 ),
             ),
