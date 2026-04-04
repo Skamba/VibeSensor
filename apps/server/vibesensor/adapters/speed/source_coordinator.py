@@ -42,11 +42,13 @@ class ObdObservation(Protocol):
     def status_snapshot(self) -> ObdStatusSnapshot: ...
 
 
-class ObdAdmin(Protocol):
+class ObdDeviceAdmin(Protocol):
     def scan_devices(self, *, timeout_s: int = ...) -> list[ObdDeviceSnapshot]: ...
 
     def pair_device(self, mac_address: str) -> ObdDeviceSnapshot: ...
 
+
+class ObdConfiguredDeviceRefresher(Protocol):
     def refresh_configured_device(self) -> None: ...
 
 
@@ -153,19 +155,25 @@ class SpeedSourceObservationService:
 class SpeedSourceAdminService:
     """Admin-only Bluetooth OBD actions."""
 
-    __slots__ = ("_obd_admin",)
+    __slots__ = ("_obd_device_admin", "_obd_status_refresher")
 
-    def __init__(self, *, obd_admin: ObdAdmin) -> None:
-        self._obd_admin = obd_admin
+    def __init__(
+        self,
+        *,
+        obd_device_admin: ObdDeviceAdmin,
+        obd_status_refresher: ObdConfiguredDeviceRefresher,
+    ) -> None:
+        self._obd_device_admin = obd_device_admin
+        self._obd_status_refresher = obd_status_refresher
 
     def scan_obd_devices(self, *, timeout_s: int = 8) -> list[ObdDeviceSnapshot]:
-        return self._obd_admin.scan_devices(timeout_s=timeout_s)
+        return self._obd_device_admin.scan_devices(timeout_s=timeout_s)
 
     def pair_obd_device(self, mac_address: str) -> ObdDeviceSnapshot:
-        return self._obd_admin.pair_device(mac_address)
+        return self._obd_device_admin.pair_device(mac_address)
 
     def refresh_obd_status(self) -> None:
-        self._obd_admin.refresh_configured_device()
+        self._obd_status_refresher.refresh_configured_device()
 
 
 class SpeedSourceControlService:
@@ -244,7 +252,8 @@ def build_speed_source_services(
     *,
     gps_monitor: GPSSpeedMonitor,
     obd_observation: ObdObservation,
-    obd_admin: ObdAdmin,
+    obd_device_admin: ObdDeviceAdmin,
+    obd_status_refresher: ObdConfiguredDeviceRefresher,
     obd_control: SpeedSourceSync,
 ) -> SpeedSourceServices:
     selected_source = _SelectedSourceState()
@@ -254,7 +263,10 @@ def build_speed_source_services(
             obd_observation=obd_observation,
             selected_source=selected_source,
         ),
-        admin=SpeedSourceAdminService(obd_admin=obd_admin),
+        admin=SpeedSourceAdminService(
+            obd_device_admin=obd_device_admin,
+            obd_status_refresher=obd_status_refresher,
+        ),
         control=SpeedSourceControlService(
             gps_monitor=gps_monitor,
             obd_control=obd_control,

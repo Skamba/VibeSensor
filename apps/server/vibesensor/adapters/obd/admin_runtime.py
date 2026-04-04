@@ -1,17 +1,16 @@
-"""Admin-side observation and control for Bluetooth OBD monitoring."""
+"""Configured-device OBD admin observation over runtime state."""
 
 from __future__ import annotations
 
 from vibesensor.adapters.obd.admin_client import ObdAdminClient
 from vibesensor.adapters.obd.admin_state import observe_configured_obd_device
-from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.runtime_connection_state import ObdRuntimeConnectionState
 
 __all__ = ["ObdAdminRuntime"]
 
 
 class ObdAdminRuntime:
-    """Own privileged OBD admin actions separately from live connection control."""
+    """Refresh configured-device admin state without exposing raw client actions."""
 
     __slots__ = ("_admin_client", "_runtime")
 
@@ -23,12 +22,6 @@ class ObdAdminRuntime:
     ) -> None:
         self._admin_client = admin_client
         self._runtime = connection_state
-
-    def scan_devices(self, *, timeout_s: int = 8) -> list[ObdDeviceSnapshot]:
-        return self._admin_client.scan_devices(timeout_s=timeout_s)
-
-    def pair_device(self, mac_address: str) -> ObdDeviceSnapshot:
-        return self._admin_client.pair_device(mac_address)
 
     def refresh_configured_device(self) -> None:
         configured_mac = self._runtime.configured_device_mac_snapshot()
