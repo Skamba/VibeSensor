@@ -194,7 +194,7 @@ def _make_state(
         worker_pool=_SENTINEL,
         settings_store=settings_store,
         gps_monitor=gps_monitor,
-        obd_monitor=_SENTINEL,
+        obd_runner=_SENTINEL,
         history_db=_SENTINEL,
         processing_loop_state=processing_state,
         health_state=health_state,
