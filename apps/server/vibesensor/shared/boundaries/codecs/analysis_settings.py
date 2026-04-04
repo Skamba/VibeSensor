@@ -10,6 +10,7 @@ from vibesensor.shared.analysis_settings_schema import (
     ANALYSIS_SETTINGS_FIELDS,
     sanitize_analysis_settings,
 )
+from vibesensor.shared.boundaries.codecs.scalars import float_or
 from vibesensor.shared.types.json_types import JsonObject
 
 type ScalarSettingValue = int | float | bool | str
@@ -49,21 +50,21 @@ def analysis_settings_snapshot_from_mapping(payload: object) -> AnalysisSettings
     if not isinstance(payload, Mapping):
         return AnalysisSettingsSnapshot()
     return AnalysisSettingsSnapshot(
-        tire_width_mm=_float_or(payload.get("tire_width_mm")),
-        tire_aspect_pct=_float_or(payload.get("tire_aspect_pct")),
-        rim_in=_float_or(payload.get("rim_in")),
-        final_drive_ratio=_float_or(payload.get("final_drive_ratio")),
-        current_gear_ratio=_float_or(payload.get("current_gear_ratio")),
-        wheel_bandwidth_pct=_float_or(payload.get("wheel_bandwidth_pct")),
-        driveshaft_bandwidth_pct=_float_or(payload.get("driveshaft_bandwidth_pct")),
-        engine_bandwidth_pct=_float_or(payload.get("engine_bandwidth_pct")),
-        speed_uncertainty_pct=_float_or(payload.get("speed_uncertainty_pct")),
-        tire_diameter_uncertainty_pct=_float_or(payload.get("tire_diameter_uncertainty_pct")),
-        final_drive_uncertainty_pct=_float_or(payload.get("final_drive_uncertainty_pct")),
-        gear_uncertainty_pct=_float_or(payload.get("gear_uncertainty_pct")),
-        min_abs_band_hz=_float_or(payload.get("min_abs_band_hz")),
-        max_band_half_width_pct=_float_or(payload.get("max_band_half_width_pct")),
-        tire_deflection_factor=_float_or(payload.get("tire_deflection_factor"), default=1.0),
+        tire_width_mm=float_or(payload.get("tire_width_mm")),
+        tire_aspect_pct=float_or(payload.get("tire_aspect_pct")),
+        rim_in=float_or(payload.get("rim_in")),
+        final_drive_ratio=float_or(payload.get("final_drive_ratio")),
+        current_gear_ratio=float_or(payload.get("current_gear_ratio")),
+        wheel_bandwidth_pct=float_or(payload.get("wheel_bandwidth_pct")),
+        driveshaft_bandwidth_pct=float_or(payload.get("driveshaft_bandwidth_pct")),
+        engine_bandwidth_pct=float_or(payload.get("engine_bandwidth_pct")),
+        speed_uncertainty_pct=float_or(payload.get("speed_uncertainty_pct")),
+        tire_diameter_uncertainty_pct=float_or(payload.get("tire_diameter_uncertainty_pct")),
+        final_drive_uncertainty_pct=float_or(payload.get("final_drive_uncertainty_pct")),
+        gear_uncertainty_pct=float_or(payload.get("gear_uncertainty_pct")),
+        min_abs_band_hz=float_or(payload.get("min_abs_band_hz")),
+        max_band_half_width_pct=float_or(payload.get("max_band_half_width_pct")),
+        tire_deflection_factor=float_or(payload.get("tire_deflection_factor"), default=1.0),
     )
 
 
@@ -93,24 +94,6 @@ def _analysis_settings_values(
     snapshot: AnalysisSettingsSnapshot,
 ) -> tuple[tuple[str, float], ...]:
     return tuple((key, read_value(snapshot)) for key, read_value in _ANALYSIS_SETTINGS_PAIRS)
-
-
-def _float_or(value: object, default: float = 0.0) -> float:
-    if value is None or isinstance(value, bool):
-        return default
-    if isinstance(value, int | float):
-        numeric = float(value)
-        return numeric if math.isfinite(numeric) else default
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return default
-        try:
-            numeric = float(text)
-        except ValueError:
-            return default
-        return numeric if math.isfinite(numeric) else default
-    return default
 
 
 __all__ = [

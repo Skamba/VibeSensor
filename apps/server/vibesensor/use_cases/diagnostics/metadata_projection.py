@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
-    ScalarSettings,
-    analysis_settings_snapshot_items,
-)
+from vibesensor.shared.boundaries.codecs import ScalarSettings, analysis_settings_snapshot_items
 from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [

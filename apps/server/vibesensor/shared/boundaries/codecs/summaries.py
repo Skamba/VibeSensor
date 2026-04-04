@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Mapping
 
 from vibesensor.domain import DrivingPhaseSummary, SpeedProfileSummary
+from vibesensor.shared.boundaries.codecs.scalars import optional_float
 from vibesensor.shared.types.json_types import JsonObject
 
 __all__ = [
@@ -21,11 +21,11 @@ def speed_profile_summary_from_mapping(payload: object) -> SpeedProfileSummary:
     if not isinstance(payload, Mapping):
         return SpeedProfileSummary()
     return SpeedProfileSummary(
-        min_kmh=_opt_float(payload.get("min_kmh")),
-        max_kmh=_opt_float(payload.get("max_kmh")),
-        mean_kmh=_opt_float(payload.get("mean_kmh")),
-        stddev_kmh=_opt_float(payload.get("stddev_kmh")),
-        range_kmh=_opt_float(payload.get("range_kmh")),
+        min_kmh=optional_float(payload.get("min_kmh")),
+        max_kmh=optional_float(payload.get("max_kmh")),
+        mean_kmh=optional_float(payload.get("mean_kmh")),
+        stddev_kmh=optional_float(payload.get("stddev_kmh")),
+        range_kmh=optional_float(payload.get("range_kmh")),
         steady_speed=_bool_or(payload.get("steady_speed")),
         sample_count=_int_or(payload.get("sample_count")),
     )
@@ -72,7 +72,7 @@ def driving_phase_summary_from_mapping(payload: object) -> DrivingPhaseSummary:
         return phase_counts.get(phase_key, 0) > 0
 
     def _pct_fallback(key: str, phase_key: str) -> float:
-        value = _float_from(payload.get(key))
+        value = optional_float(payload.get(key))
         if value is not None or key in payload:
             return value or 0.0
         return phase_pcts.get(phase_key, 0.0)
@@ -105,21 +105,8 @@ def driving_phase_summary_to_payload(summary: DrivingPhaseSummary) -> JsonObject
     }
 
 
-def _opt_float(value: object) -> float | None:
-    parsed = _float_from(value)
-    return parsed if parsed is not None else None
-
-
 def _float_from(value: object) -> float | None:
-    if value is None or isinstance(value, bool):
-        return None
-    if isinstance(value, (int, float, str)):
-        try:
-            parsed = float(value)
-        except (TypeError, ValueError):
-            return None
-        return parsed if math.isfinite(parsed) else None
-    return None
+    return optional_float(value)
 
 
 def _int_from(value: object) -> int | None:
