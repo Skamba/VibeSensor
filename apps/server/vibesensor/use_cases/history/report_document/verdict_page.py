@@ -22,6 +22,7 @@ from vibesensor.shared.report_presentation import (
 from vibesensor.shared.run_context_warning import RunContextWarning
 
 from ._candidate_resolver import PrimaryCandidateContext
+from .section_context import ReportSectionContext
 
 __all__ = ["build_observed_signature", "build_verdict_page_data"]
 
@@ -48,22 +49,15 @@ def build_verdict_page_data(
     aggregate: TestRun,
     primary_candidate_facts: PrimaryReportFacts,
     duration_text: str | None,
-    action_status_key: str,
-    location_confidence_key: str,
-    alternative_source_visible: bool,
-    active_locations: Sequence[str],
-    coverage_label: str,
-    runner_up_corner: str | None,
-    proof_caveat: str | None,
-    recapture_issues: Sequence[str],
+    section_context: ReportSectionContext,
     suitability_checks: Sequence[SuitabilityCheck],
     warnings: Sequence[RunContextWarning],
     lang: str,
     tr: Callable[..., str],
 ) -> VerdictPageData:
-    recapture_before_acting = action_status_key == "recapture_before_acting"
+    recapture_before_acting = section_context.action_status_key == "recapture_before_acting"
     return VerdictPageData(
-        speed_window_label=str(primary_candidate_facts.primary_speed or "").strip() or None,
+        speed_window_label=section_context.speed_window_label,
         suspected_source=(
             tr("REPORT_INCONCLUSIVE_SOURCE")
             if recapture_before_acting
@@ -74,50 +68,50 @@ def build_verdict_page_data(
             if recapture_before_acting
             else display_location(primary_candidate_facts.primary_location, tr=tr)
         ),
-        action_status=action_status_text(action_status_key, tr=tr),
+        action_status=action_status_text(section_context.action_status_key, tr=tr),
         action_status_note=_action_status_note_text(
             aggregate=aggregate,
             primary_candidate_facts=primary_candidate_facts,
-            action_status_key=action_status_key,
-            location_confidence_key=location_confidence_key,
-            alternative_source_visible=alternative_source_visible,
+            action_status_key=section_context.action_status_key,
+            location_confidence_key=section_context.location_confidence_key,
+            alternative_source_visible=section_context.alternative_source_visible,
             suitability_checks=suitability_checks,
             warnings=warnings,
             lang=lang,
             tr=tr,
         ),
         reason_sentence=(
-            recapture_issues[0]
-            if recapture_before_acting and recapture_issues
+            section_context.recapture.issues[0]
+            if recapture_before_acting and section_context.recapture.issues
             else _build_primary_reason_sentence(
                 primary_candidate_facts=primary_candidate_facts,
-                active_locations=active_locations,
+                active_locations=section_context.active_locations,
                 duration_text=duration_text,
                 tr=tr,
             )
         ),
         dominant_corner=display_location(primary_candidate_facts.primary_location, tr=tr),
-        runner_up_corner=runner_up_corner,
+        runner_up_corner=section_context.runner_up_corner,
         location_confidence=_location_confidence_display_text(
             primary_candidate_facts=primary_candidate_facts,
-            action_status_key=action_status_key,
-            location_confidence_key=location_confidence_key,
-            alternative_source_visible=alternative_source_visible,
+            action_status_key=section_context.action_status_key,
+            location_confidence_key=section_context.location_confidence_key,
+            alternative_source_visible=section_context.alternative_source_visible,
             dominance_ratio=primary_candidate_facts.dominance_ratio,
             suitability_checks=suitability_checks,
             warnings=warnings,
             lang=lang,
             tr=tr,
         ),
-        coverage_label=coverage_label,
+        coverage_label=section_context.coverage_label,
         also_consider=(
             source_with_confidence(aggregate.effective_top_causes()[1], tr=tr)
             if not recapture_before_acting
-            and alternative_source_visible
+            and section_context.alternative_source_visible
             and len(aggregate.effective_top_causes()) > 1
             else None
         ),
-        proof_caveat=proof_caveat,
+        proof_caveat=section_context.proof_caveat,
         proof_panel_title=(
             tr("REPORT_PROOF_PANEL_TITLE_INCONCLUSIVE")
             if recapture_before_acting

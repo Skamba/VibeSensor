@@ -16,6 +16,8 @@ from vibesensor.use_cases.history.report_observation_matrix import (
     build_sensor_observation_matrix_rows,
 )
 
+from .section_context import ReportSectionContext
+
 __all__ = ["build_appendix_b_data"]
 
 
@@ -24,12 +26,7 @@ def build_appendix_b_data(
     aggregate: TestRun,
     primary_candidate_facts: PrimaryReportFacts,
     active_sensor_intensity: Sequence[LocationIntensitySummary],
-    action_status_key: str,
-    location_confidence_key: str,
-    active_locations: Sequence[str],
-    runner_up_corner: str | None,
-    coverage_label: str,
-    coverage_notes: Sequence[str],
+    section_context: ReportSectionContext,
     tr: Callable[..., str],
 ) -> AppendixBData:
     dominance_ratio_text = (
@@ -61,21 +58,21 @@ def build_appendix_b_data(
     ]
     return AppendixBData(
         dominant_corner=display_location(primary_candidate_facts.primary_location, tr=tr),
-        runner_up_corner=runner_up_corner,
+        runner_up_corner=section_context.runner_up_corner,
         dominance_ratio_text=dominance_ratio_text,
         location_confidence=location_confidence_text(
             presented_location_confidence_key(
-                action_status_key=action_status_key,
-                location_confidence_key=location_confidence_key,
+                action_status_key=section_context.action_status_key,
+                location_confidence_key=section_context.location_confidence_key,
             ),
             tr=tr,
         ),
-        coverage_label=coverage_label,
-        coverage_notes=list(coverage_notes),
+        coverage_label=section_context.coverage_label,
+        coverage_notes=list(section_context.coverage_notes),
         intensity_rows=intensity_rows,
         sensor_observation_rows=build_sensor_observation_matrix_rows(
             aggregate,
-            sensor_locations=list(active_locations),
+            sensor_locations=list(section_context.active_locations),
             tr=tr,
         ),
     )
