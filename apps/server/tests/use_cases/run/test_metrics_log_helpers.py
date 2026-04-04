@@ -469,15 +469,16 @@ def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
     def _status():
         return logger.status().last_completed_run_error
 
-    assert wait_until(lambda: _status() == "analysis exploded", timeout_s=2.0)
+    expected_worker_bug = "Unexpected post-analysis worker bug: analysis exploded"
+    assert wait_until(lambda: _status() == expected_worker_bug, timeout_s=2.0)
     status = logger.status()
-    assert status.last_completed_run_error == "analysis exploded"
-    assert status.write_error == f"post-analysis failed for run {run_id}: analysis exploded"
+    assert status.last_completed_run_error == expected_worker_bug
+    assert status.write_error == f"post-analysis worker bug for run {run_id}: analysis exploded"
     run = history_db.get_run(run_id)
     assert run is not None
     assert run.analysis is None
     assert run.status.value == "error"
-    assert run.error_message == "analysis exploded"
+    assert run.error_message == expected_worker_bug
 
 
 def test_post_analysis_burst_uses_single_daemon_worker(
