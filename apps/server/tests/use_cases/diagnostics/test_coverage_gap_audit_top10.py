@@ -18,7 +18,7 @@ from vibesensor.domain import (
 )
 from vibesensor.shared.boundaries.codecs import strength_peak_payloads
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )

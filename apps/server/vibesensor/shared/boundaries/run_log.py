@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_decoder import (
+from vibesensor.shared.boundaries.sensor_frames import (
     SensorFrameDecodeError,
     sensor_frame_from_mapping,
 )
