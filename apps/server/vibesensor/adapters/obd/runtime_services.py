@@ -10,8 +10,10 @@ from vibesensor.adapters.obd.admin_client import ObdAdminClient
 from vibesensor.adapters.obd.admin_runtime import ObdAdminRuntime
 from vibesensor.adapters.obd.connection_runtime import ObdConnectionRuntime
 from vibesensor.adapters.obd.elm327 import Elm327Session
-from vibesensor.adapters.obd.runtime_connection_state import ObdRuntimeConnectionState
-from vibesensor.adapters.obd.runtime_observation import ObdRuntimeObservation
+from vibesensor.adapters.obd.runtime_admin_state import ObdRuntimeAdminState
+from vibesensor.adapters.obd.runtime_connection_control import ObdRuntimeConnectionControl
+from vibesensor.adapters.obd.runtime_facts import ObdRuntimeFacts
+from vibesensor.adapters.obd.runtime_projection import ObdRuntimeProjection
 from vibesensor.adapters.obd.runtime_settings import ObdRuntimeSettings
 from vibesensor.adapters.obd.runtime_store import MonotonicFn, ObdRuntimeStore
 
@@ -28,10 +30,11 @@ SessionFactory = Callable[[], Elm327Session]
 class ObdRuntimeServices:
     """Focused OBD services exposed to the rest of the application."""
 
-    observation: ObdRuntimeObservation
+    facts: ObdRuntimeFacts
+    projection: ObdRuntimeProjection
     control: ObdRuntimeSettings
     admin: ObdAdminRuntime
-    connection_state: ObdRuntimeConnectionState
+    connection_control: ObdRuntimeConnectionControl
     runner: ObdConnectionRuntime
 
 
@@ -52,18 +55,20 @@ def build_obd_runtime(
         initial_reconnect_delay_s=_INITIAL_RECONNECT_DELAY_S,
         engine_rpm_stale_timeout_s=_RPM_STALE_TIMEOUT_S,
     )
-    connection_state = ObdRuntimeConnectionState(store=store)
+    connection_control = ObdRuntimeConnectionControl(store=store)
+    admin_state = ObdRuntimeAdminState(store=store)
     return ObdRuntimeServices(
-        observation=ObdRuntimeObservation(store=store),
+        facts=ObdRuntimeFacts(store=store),
+        projection=ObdRuntimeProjection(store=store),
         control=ObdRuntimeSettings(store=store),
         admin=ObdAdminRuntime(
             admin_client=resolved_admin_client,
-            connection_state=connection_state,
+            admin_state=admin_state,
         ),
-        connection_state=connection_state,
+        connection_control=connection_control,
         runner=ObdConnectionRuntime(
             admin_client=resolved_admin_client,
-            connection_state=connection_state,
+            connection_control=connection_control,
             session_factory=resolved_session_factory,
             monotonic=monotonic,
         ),

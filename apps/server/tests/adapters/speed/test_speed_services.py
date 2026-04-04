@@ -67,16 +67,18 @@ def test_observation_service_switches_to_obd_status_and_resolution() -> None:
     gps_monitor.status_snapshot.return_value = _gps_status_snapshot()
     gps_monitor.apply_speed_source_settings.return_value = None
 
-    obd_observation = MagicMock()
-    obd_observation.resolve_speed.return_value = SpeedResolution(12.0, False, "obd2")
-    obd_observation.status_snapshot.return_value = _obd_status_snapshot()
-    obd_observation.stale_timeout_s = 8.0
+    obd_facts = MagicMock()
+    obd_projection = MagicMock()
+    obd_projection.resolve_speed.return_value = SpeedResolution(12.0, False, "obd2")
+    obd_projection.status_snapshot.return_value = _obd_status_snapshot()
+    obd_projection.stale_timeout_s = 8.0
     obd_device_admin = MagicMock()
     obd_status_refresher = MagicMock()
     obd_control = MagicMock()
     services = build_speed_source_services(
         gps_monitor=gps_monitor,
-        obd_observation=obd_observation,
+        obd_facts=obd_facts,
+        obd_projection=obd_projection,
         obd_device_admin=obd_device_admin,
         obd_status_refresher=obd_status_refresher,
         obd_control=obd_control,
@@ -99,17 +101,19 @@ def test_observation_service_switches_to_obd_status_and_resolution() -> None:
     assert status.raw_speed_kmh == pytest.approx(43.2)
     assert status.speed_source == "obd2"
     obd_status_refresher.refresh_configured_device.assert_not_called()
-    obd_observation.status_snapshot.assert_called_once_with()
+    obd_projection.status_snapshot.assert_called_once_with()
 
 
 def test_observation_service_obd_status_is_side_effect_free() -> None:
     gps_monitor = MagicMock()
-    obd_observation = MagicMock()
+    obd_facts = MagicMock()
+    obd_projection = MagicMock()
     expected_status = _obd_status_snapshot()
-    obd_observation.status_snapshot.return_value = expected_status
+    obd_projection.status_snapshot.return_value = expected_status
     services = build_speed_source_services(
         gps_monitor=gps_monitor,
-        obd_observation=obd_observation,
+        obd_facts=obd_facts,
+        obd_projection=obd_projection,
         obd_device_admin=MagicMock(),
         obd_status_refresher=MagicMock(),
         obd_control=MagicMock(),
@@ -127,7 +131,7 @@ def test_observation_service_obd_status_is_side_effect_free() -> None:
     status = services.observation.obd_status()
 
     assert status == expected_status
-    obd_observation.status_snapshot.assert_called_once_with()
+    obd_projection.status_snapshot.assert_called_once_with()
 
 
 def test_admin_service_refreshes_obd_status_explicitly() -> None:
@@ -135,7 +139,8 @@ def test_admin_service_refreshes_obd_status_explicitly() -> None:
     obd_status_refresher = MagicMock()
     services = build_speed_source_services(
         gps_monitor=gps_monitor,
-        obd_observation=MagicMock(),
+        obd_facts=MagicMock(),
+        obd_projection=MagicMock(),
         obd_device_admin=MagicMock(),
         obd_status_refresher=obd_status_refresher,
         obd_control=MagicMock(),
@@ -161,7 +166,8 @@ def test_admin_service_delegates_scan_and_pair_to_obd_device_admin() -> None:
     obd_device_admin.pair_device.return_value = device
     services = build_speed_source_services(
         gps_monitor=gps_monitor,
-        obd_observation=MagicMock(),
+        obd_facts=MagicMock(),
+        obd_projection=MagicMock(),
         obd_device_admin=obd_device_admin,
         obd_status_refresher=MagicMock(),
         obd_control=MagicMock(),
