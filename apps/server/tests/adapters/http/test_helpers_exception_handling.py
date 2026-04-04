@@ -7,9 +7,11 @@ from fastapi import HTTPException
 
 from vibesensor.adapters.http.error_boundary import (
     http_exception_for_value_error,
+    http_status_for_analysis_not_ready_error,
     route_errors_to_http,
 )
 from vibesensor.shared.exceptions import (
+    AnalysisNotReadyError,
     ConfigurationError,
     ProtocolError,
     UpdateError,
@@ -73,3 +75,25 @@ def test_operational_error_base_maps_to_500() -> None:
         with route_errors_to_http():
             raise OperationalError("operational failure")
     assert exc_info.value.status_code == 500
+
+
+@pytest.mark.parametrize(
+    ("status", "expected_status_code"),
+    [
+        ("in_progress", 409),
+        ("active", 409),
+        ("error", 422),
+        ("unavailable", 422),
+        ("unexpected", 500),
+    ],
+)
+def test_analysis_not_ready_status_mapping_is_explicit(
+    status: str,
+    expected_status_code: int,
+) -> None:
+    assert (
+        http_status_for_analysis_not_ready_error(
+            AnalysisNotReadyError("analysis unavailable", status=status),
+        )
+        == expected_status_code
+    )

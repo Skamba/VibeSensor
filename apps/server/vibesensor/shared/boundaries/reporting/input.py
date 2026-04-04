@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
     from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
-    from vibesensor.shared.boundaries.reporting.summary import NormalizedReportSummary
     from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 
 __all__ = ["PreparedReportInput"]
@@ -16,9 +15,8 @@ __all__ = ["PreparedReportInput"]
 
 @dataclass(frozen=True, slots=True)
 class PreparedReportInput:
-    """Mapping-ready report handoff with canonical summary, domain, and semantic facts."""
+    """Mapping-ready report handoff with canonical domain and semantic facts."""
 
-    summary: NormalizedReportSummary
     language: str
     filename: str
     domain_test_run: TestRun

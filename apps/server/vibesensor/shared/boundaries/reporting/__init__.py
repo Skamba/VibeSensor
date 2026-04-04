@@ -8,6 +8,7 @@ from .facts import (
     ReportRunFacts,
     prepare_report_facts,
 )
+from .findings import FindingPresentation, PreparedReportFindings
 from .input import PreparedReportInput
 from .preparation import prepare_persisted_report_input, prepare_report_input
 from .projection import (
@@ -27,9 +28,11 @@ from .summary import (
 
 __all__ = [
     "ActionStatusKey",
+    "FindingPresentation",
     "LocationConfidenceKey",
     "NormalizedReportSummary",
     "PreparedReportFacts",
+    "PreparedReportFindings",
     "PreparedReportInput",
     "PrimaryReportFacts",
     "ReportDecisionFacts",

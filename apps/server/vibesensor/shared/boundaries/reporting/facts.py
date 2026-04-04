@@ -12,17 +12,23 @@ if TYPE_CHECKING:
         VibrationOrigin,
     )
     from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
+    from vibesensor.shared.boundaries.reporting.findings import PreparedReportFindings
     from vibesensor.shared.boundaries.reporting.sensor_facts import ReportSensorFacts
     from vibesensor.shared.boundaries.reporting.summary import (
         NormalizedReportSummary,
         ReportTimelineInterval,
     )
     from vibesensor.shared.run_context_warning import RunContextWarningsInput
+    from vibesensor.shared.types.analysis_views import PeakTableRow
 
 from vibesensor.shared.boundaries.reporting.decision_facts import (
     ActionStatusKey,
     LocationConfidenceKey,
     build_report_decision_facts,
+)
+from vibesensor.shared.boundaries.reporting.findings import (
+    PreparedReportFindings,
+    prepare_report_findings,
 )
 from vibesensor.shared.boundaries.reporting.projection import (
     normalize_origin_location,
@@ -43,17 +49,25 @@ __all__ = [
 class ReportRunFacts:
     """Run-scoped report facts independent from sensor and decision shaping."""
 
+    run_id: str
     origin: VibrationOrigin | None
     origin_location: str
+    report_date: str | None
+    recorded_utc_offset_seconds: int | None
+    duration_s: float | None
     duration_text: str | None
     start_time_utc: str | None
     end_time_utc: str | None
     sample_rate_hz: str | None
     tire_spec_text: str | None
     sample_count: int
+    sensor_count: int
     sensor_model: str | None
     firmware_version: str | None
+    car_name: str | None
+    car_type: str | None
     timeline_intervals: tuple[ReportTimelineInterval, ...]
+    peak_table_rows: tuple[PeakTableRow, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +77,7 @@ class PreparedReportFacts:
     run: ReportRunFacts
     sensor: ReportSensorFacts
     decision: ReportDecisionFacts
+    findings: PreparedReportFindings
 
 
 def prepare_report_facts(
@@ -91,8 +106,16 @@ def prepare_report_facts(
     )
     return PreparedReportFacts(
         run=ReportRunFacts(
+            run_id=summary.run_id,
             origin=origin,
             origin_location=origin_location,
+            report_date=summary.report_date,
+            recorded_utc_offset_seconds=(
+                summary.metadata.recorded_utc_offset_seconds
+                if summary.metadata is not None
+                else None
+            ),
+            duration_s=summary.duration_s,
             duration_text=summary.record_length,
             start_time_utc=summary.start_time_utc,
             end_time_utc=summary.end_time_utc,
@@ -103,12 +126,17 @@ def prepare_report_facts(
             ),
             tire_spec_text=_tire_spec_text(config_snap.tire_spec),
             sample_count=test_run.capture.sample_count,
+            sensor_count=summary.sensor_count,
             sensor_model=config_snap.sensor_model,
             firmware_version=config_snap.firmware_version,
+            car_name=summary.metadata.car_name if summary.metadata is not None else None,
+            car_type=summary.metadata.car_type if summary.metadata is not None else None,
             timeline_intervals=summary.timeline_intervals,
+            peak_table_rows=summary.peak_table_rows,
         ),
         sensor=sensor_facts,
         decision=decision_facts,
+        findings=prepare_report_findings(test_run),
     )
 
 

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.domain import Finding, TestRun
+from vibesensor.domain import TestRun
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixCData,
     AppendixDData,
     DataTrustItem,
-    FindingPresentation,
     MeasurementRow,
     ReportLabelValueRow,
     TimelineGraphData,
@@ -32,7 +31,6 @@ __all__ = [
     "_build_appendix_c_data",
     "_build_appendix_d_data",
     "_build_timeline_graph_data",
-    "_finding_to_presentation",
 ]
 
 
@@ -160,16 +158,3 @@ def _build_appendix_d_data(
         ]
     )
     return AppendixDData(rows=rows)
-
-
-def _finding_to_presentation(f: Finding) -> FindingPresentation:
-    """Convert a domain ``Finding`` to a presentation-ready snapshot."""
-    return FindingPresentation(
-        suspected_source=str(f.suspected_source),
-        severity=f.severity,
-        strongest_location=f.strongest_location,
-        peak_classification=f.peaks.classification,
-        order=f.order,
-        frequency_hz=f.frequency_hz,
-        effective_confidence=f.effective_confidence,
-    )

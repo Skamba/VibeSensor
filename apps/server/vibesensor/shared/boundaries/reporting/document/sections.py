@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from vibesensor.shared.boundaries.reporting.findings import FindingPresentation
+
 __all__ = [
     "FindingPresentation",
     "PeakRow",
@@ -78,16 +80,3 @@ class VerdictPageData:
     proof_panel_title: str | None = None
     footer_routes: tuple[str, ...] = ()
     timeline_graph: TimelineGraphData | None = None
-
-
-@dataclass(frozen=True)
-class FindingPresentation:
-    """Presentation-ready snapshot of a domain Finding for the PDF renderer."""
-
-    suspected_source: str = ""
-    severity: str = ""
-    strongest_location: str | None = None
-    peak_classification: str = ""
-    order: str = ""
-    frequency_hz: float | None = None
-    effective_confidence: float = 0.0

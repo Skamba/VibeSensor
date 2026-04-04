@@ -435,7 +435,7 @@ class TestUpdateManagerAsync:
                 side_effect=OSError("runtime unavailable"),
             ),
             patch.object(
-                type(manager._runtime.workflow.preparation),
+                type(manager._workflow.preparation),
                 "prepare",
                 new=AsyncMock(
                     return_value=SimpleNamespace(
@@ -445,7 +445,7 @@ class TestUpdateManagerAsync:
                 ),
             ),
             patch.object(
-                type(manager._runtime.workflow.release_planner),
+                type(manager._workflow.release_planner),
                 "plan",
                 new=AsyncMock(side_effect=asyncio.CancelledError()),
             ),
@@ -483,7 +483,7 @@ class TestUpdateManagerAsync:
                 side_effect=TypeError("runtime bug"),
             ),
             patch.object(
-                type(manager._runtime.workflow.preparation),
+                type(manager._workflow.preparation),
                 "prepare",
                 new=AsyncMock(
                     return_value=SimpleNamespace(
@@ -493,7 +493,7 @@ class TestUpdateManagerAsync:
                 ),
             ),
             patch.object(
-                type(manager._runtime.workflow.release_planner),
+                type(manager._workflow.release_planner),
                 "plan",
                 new=AsyncMock(side_effect=asyncio.CancelledError()),
             ),

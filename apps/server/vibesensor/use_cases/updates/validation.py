@@ -17,19 +17,17 @@ from vibesensor.use_cases.updates.runner import (
     UpdateCommandExecutor,
     build_privilege_probe_args,
 )
-from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
 
 
 def _fail_validation(
-    controller: UpdateStatusController,
-    recorder: UpdateStatusRecorder,
+    status: UpdateStatusTracker,
     message: str,
     detail: str = "",
 ) -> UpdatePreparationError:
-    recorder.add_issue("validating", message, detail)
-    controller.mark_failed()
+    status.fail("validating", message, detail)
     return UpdatePreparationError(message)
 
 
@@ -63,19 +61,18 @@ def _disk_check_path(rollback_dir: Path) -> Path:
 async def validate_prerequisites(
     *,
     commands: UpdateCommandExecutor,
-    controller: UpdateStatusController,
-    recorder: UpdateStatusRecorder,
+    status: UpdateStatusTracker,
     config: UpdateValidationConfig,
     request: UpdateRequest,
 ) -> None:
     """Validate tool availability, privilege access, and disk space."""
     if request.transport == UpdateTransport.wifi:
-        recorder.log(f"Starting update with SSID: {request.ssid}")
+        status.log(f"Starting update with SSID: {request.ssid}")
     else:
-        recorder.log("Starting update using existing USB internet")
+        status.log("Starting update using existing USB internet")
     for tool in ("nmcli", "python3"):
         if not shutil.which(tool):
-            raise _fail_validation(controller, recorder, f"Required tool not found: {tool}")
+            raise _fail_validation(status, f"Required tool not found: {tool}")
 
     if os.geteuid() != 0:
         rc, _, _ = await commands.run(
@@ -86,8 +83,7 @@ async def validate_prerequisites(
         )
         if rc != 0:
             raise _fail_validation(
-                controller,
-                recorder,
+                status,
                 "Insufficient privileges",
                 (
                     "Cannot run updater privileged commands non-interactively. "
@@ -99,8 +95,7 @@ async def validate_prerequisites(
         _probe_rollback_dir(config.rollback_dir)
     except OSError as exc:
         raise _fail_validation(
-            controller,
-            recorder,
+            status,
             "Rollback directory is not writable",
             f"{config.rollback_dir}: {exc}",
         ) from exc
@@ -112,14 +107,12 @@ async def validate_prerequisites(
             free_mb = free_bytes // (1024 * 1024)
             min_mb = config.min_free_disk_bytes // (1024 * 1024)
             raise _fail_validation(
-                controller,
-                recorder,
+                status,
                 f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
             )
     except OSError as exc:
         raise _fail_validation(
-            controller,
-            recorder,
+            status,
             "Could not verify free disk space",
             str(exc),
         ) from exc

@@ -5,7 +5,7 @@ import time
 
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
@@ -13,17 +13,17 @@ from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 class UpdateWifiReadiness:
     """Wait for the transient uplink connection to become usable for updates."""
 
-    __slots__ = ("_commands", "_config", "_status_recorder")
+    __slots__ = ("_commands", "_config", "_status")
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
         config: UpdateWifiConfig,
     ) -> None:
         self._commands = commands
-        self._status_recorder = status_recorder
+        self._status = status
         self._config = config
 
     async def bring_uplink_up(self, ssid: str) -> None:
@@ -49,7 +49,7 @@ class UpdateWifiReadiness:
                 return
             if "No network with SSID" not in (stderr or ""):
                 break
-            self._status_recorder.log(
+            self._status.log(
                 f"SSID '{ssid}' not found on connect attempt {attempt}; rescanning and retrying",
             )
             await self._commands.run(
@@ -86,7 +86,7 @@ class UpdateWifiReadiness:
     ) -> None:
         """Wait for DNS resolution to succeed before download work begins."""
 
-        self._status_recorder.log(
+        self._status.log(
             f"Validating {readiness_subject} internet/DNS readiness for at least "
             f"{int(self._config.dns_ready_min_wait_s)}s...",
         )
@@ -111,7 +111,7 @@ class UpdateWifiReadiness:
                 sudo=False,
             )
             if rc == 0:
-                self._status_recorder.log(f"DNS probe succeeded on attempt {attempt}")
+                self._status.log(f"DNS probe succeeded on attempt {attempt}")
                 return
             last_error = (stderr or stdout or f"exit {rc}").strip()
             if time.monotonic() >= deadline:

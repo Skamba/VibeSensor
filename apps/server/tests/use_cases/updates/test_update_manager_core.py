@@ -12,19 +12,17 @@ from _update_manager_test_helpers import FakeRunner, cancel_task, mock_which
 from vibesensor.shared.exceptions import ConfigurationError, UpdateError
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateState
-from vibesensor.use_cases.updates.runtime import build_update_manager_runtime
+from vibesensor.use_cases.updates.runtime import build_update_manager
 from vibesensor.use_cases.updates.status import UpdateStateStore
 
 
 class TestUpdateManager:
     def make_manager(self, *, runner: FakeRunner | None = None) -> tuple[UpdateManager, FakeRunner]:
         active_runner = runner or FakeRunner()
-        manager = UpdateManager(
-            runtime=build_update_manager_runtime(
-                runner=active_runner,
-                repo_path="/tmp/fakerepo",
-                state_store=UpdateStateStore(Path(tempfile.mkdtemp()) / "update_status.json"),
-            ),
+        manager = build_update_manager(
+            runner=active_runner,
+            repo_path="/tmp/fakerepo",
+            state_store=UpdateStateStore(Path(tempfile.mkdtemp()) / "update_status.json"),
         )
         return manager, active_runner
 

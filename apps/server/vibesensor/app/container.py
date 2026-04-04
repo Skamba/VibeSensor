@@ -55,8 +55,7 @@ from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
-from vibesensor.use_cases.updates.manager import UpdateManager
-from vibesensor.use_cases.updates.runtime import build_update_manager_runtime
+from vibesensor.use_cases.updates.runtime import build_update_manager
 
 LOGGER = logging.getLogger(__name__)
 
@@ -250,12 +249,10 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))
 
     # update manager
-    update_manager = UpdateManager(
-        runtime=build_update_manager_runtime(
-            ap_con_name=config.ap.con_name,
-            wifi_ifname=config.ap.ifname,
-            rollback_dir=str(config.update.rollback_dir),
-        ),
+    update_manager = build_update_manager(
+        ap_con_name=config.ap.con_name,
+        wifi_ifname=config.ap.ifname,
+        rollback_dir=str(config.update.rollback_dir),
     )
 
     esp_flash_manager = EspFlashManager()
