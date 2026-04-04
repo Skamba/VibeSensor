@@ -19,7 +19,6 @@ from vibesensor.adapters.history import (
     project_history_insights,
 )
 from vibesensor.domain import CarSnapshot, RunStatus
-from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frame_from_mapping
 from vibesensor.shared.exceptions import AnalysisNotReadyError
@@ -171,7 +170,7 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
 
     assert request.filename == "run-1_report.pdf"
     assert request.cache_key[1] == "nl"
-    assert request.analysis.language == "nl"
+    assert request.prepared.language == "nl"
 
 
 @pytest.mark.asyncio
@@ -212,13 +211,7 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
     )
 
     request = await loader.load_report_request("run-1", "en")
-    prepared = prepare_persisted_report_input(
-        request.analysis,
-        warnings=request.warnings,
-        filename=request.filename,
-        language=request.language,
-        cache_key=request.cache_key,
-    )
+    prepared = request.prepared
 
     stored_analysis = loader._history_db.get_run("run-1")
     assert stored_analysis is not None
