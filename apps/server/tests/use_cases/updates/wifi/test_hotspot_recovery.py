@@ -5,10 +5,11 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
-from test_support.update_status import UpdateStatusHarness, build_update_status_harness
+from test_support.update_status import build_update_status_harness
 from use_cases.updates._update_manager_test_helpers import FakeRunner
 
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi.wifi_config import (
     HOTSPOT_RESTORE_RETRIES,
     build_default_wifi_config,
@@ -20,20 +21,20 @@ def _build_recovery(
     tmp_path: Path,
     *,
     delay_s: float = 0.01,
-) -> tuple[UpdateHotspotRecovery, FakeRunner, UpdateStatusHarness]:
+) -> tuple[UpdateHotspotRecovery, FakeRunner, UpdateStatusTracker]:
     runner = FakeRunner()
     status = build_update_status_harness(tmp_path / "state.json")
     config = replace(
         build_default_wifi_config(ap_con_name="VibeSensor-AP", wifi_ifname="wlan0"),
         hotspot_restore_delay_s=delay_s,
     )
-    commands = UpdateCommandExecutor(runner=runner, status=status.tracker)
+    commands = UpdateCommandExecutor(runner=runner, status=status)
     recovery = UpdateHotspotRecovery(
         commands=commands,
-        status=status.tracker,
+        status=status,
         config=config,
     )
-    return recovery, runner, status.tracker
+    return recovery, runner, status
 
 
 @pytest.mark.asyncio

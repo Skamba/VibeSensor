@@ -1,29 +1,16 @@
-"""Update status boundary: persistence, transitions, and recording services."""
+"""Update status boundary: canonical status surface plus persistence helpers."""
 
-from .log_buffer import UpdateLogBuffer
-from .run_recorder import UpdateStatusRecorder
 from .runtime_details import collect_runtime_details, hash_tree
-from .secret_redactor import UpdateSecretRedactor
-from .services import UpdateStatusServices, build_update_status_services
-from .session import UpdateStatusSession
-from .state_controller import UpdateStatusController
-from .state_machine import UpdatePhaseStateMachine, UpdatePhaseTransitionError
+from .state_machine import UpdatePhaseTransitionError
 from .state_store import DEFAULT_STATE_PATH, UpdateStateStore
-from .tracker import UpdateStatusTracker
+from .tracker import UpdateStatusTracker, build_update_status_tracker
 
 __all__ = [
     "DEFAULT_STATE_PATH",
-    "UpdateLogBuffer",
-    "UpdatePhaseStateMachine",
     "UpdatePhaseTransitionError",
-    "UpdateSecretRedactor",
-    "UpdateStatusController",
-    "UpdateStatusRecorder",
-    "UpdateStatusServices",
-    "UpdateStatusSession",
     "UpdateStateStore",
     "UpdateStatusTracker",
-    "build_update_status_services",
+    "build_update_status_tracker",
     "collect_runtime_details",
     "hash_tree",
 ]

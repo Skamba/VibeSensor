@@ -15,7 +15,7 @@ from vibesensor.use_cases.updates.artifact_validation import (
     wheel_dependency_issues,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.venv_paths import reinstall_python_executable
 
 _TARGET_ENV_SNAPSHOT_SCRIPT = "\n".join(
@@ -59,8 +59,7 @@ class WheelInstallExecutor:
         "_commands",
         "_reinstall_timeout_s",
         "_repo",
-        "_status_controller",
-        "_status_recorder",
+        "_status",
         "_wheel_validator",
     )
 
@@ -68,15 +67,13 @@ class WheelInstallExecutor:
         self,
         *,
         commands: UpdateCommandExecutor,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
         repo: Path,
         reinstall_timeout_s: float,
         wheel_validator: WheelArtifactValidator,
     ) -> None:
         self._commands = commands
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
+        self._status = status
         self._repo = repo
         self._reinstall_timeout_s = reinstall_timeout_s
         self._wheel_validator = wheel_validator
@@ -111,12 +108,12 @@ class WheelInstallExecutor:
             sudo=False,
         )
         if rc != 0:
-            self._status_recorder.add_issue(
+            self._status.add_issue(
                 "installing",
                 f"Wheel install failed (exit {rc})",
                 stderr,
             )
-            self._status_controller.mark_failed()
+            self._status.mark_failed()
             return WheelInstallResult(succeeded=False, rollback_required=True)
 
         installed_version = await self._verify_installed_version(
@@ -126,8 +123,8 @@ class WheelInstallExecutor:
         if installed_version is None:
             return WheelInstallResult(succeeded=False, rollback_required=True)
 
-        self._status_recorder.log(f"Installed vibesensor {expected_version}")
-        self._status_recorder.log(f"Verified installed version: {installed_version}")
+        self._status.log(f"Installed vibesensor {expected_version}")
+        self._status.log(f"Verified installed version: {installed_version}")
         return WheelInstallResult(succeeded=True)
 
     async def install_rollback_wheel(self, wheel_path: Path, *, expected_version: str) -> bool:
@@ -149,7 +146,7 @@ class WheelInstallExecutor:
             sudo=False,
         )
         if rc != 0:
-            self._status_recorder.add_issue(
+            self._status.add_issue(
                 "installing",
                 f"Rollback install failed (exit {rc})",
                 stderr,
@@ -164,7 +161,7 @@ class WheelInstallExecutor:
             return False
 
         if expected_version and rolled_back_version != expected_version:
-            self._status_recorder.add_issue(
+            self._status.add_issue(
                 "installing",
                 "Rolled-back version label mismatch",
                 (
@@ -174,11 +171,11 @@ class WheelInstallExecutor:
                     "possible wheel naming issue or pip normalisation difference"
                 ),
             )
-            self._status_recorder.log(
+            self._status.log(
                 "WARNING: rolled-back version mismatch "
                 f"(wheel={expected_version}, import={rolled_back_version})",
             )
-        self._status_recorder.log(
+        self._status.log(
             f"Rolled back to {wheel_path.name} (verified version={rolled_back_version})",
         )
         return True
@@ -211,22 +208,22 @@ class WheelInstallExecutor:
             sudo=False,
         )
         if rc != 0:
-            self._status_recorder.add_issue(
+            self._status.add_issue(
                 "installing",
                 f"Could not validate wheel dependency compatibility (exit {rc})",
                 stderr or stdout,
             )
-            self._status_controller.mark_failed()
+            self._status.mark_failed()
             return False
         try:
             snapshot = json.loads(stdout or "{}")
         except json.JSONDecodeError:
-            self._status_recorder.add_issue(
+            self._status.add_issue(
                 "installing",
                 "Could not parse wheel dependency compatibility results",
                 stdout or stderr,
             )
-            self._status_controller.mark_failed()
+            self._status.mark_failed()
             return False
 
         marker_environment_raw = snapshot.get("marker_environment", {})
@@ -235,12 +232,12 @@ class WheelInstallExecutor:
             installed_versions_raw,
             dict,
         ):
-            self._status_recorder.add_issue(
+            self._status.add_issue(
                 "installing",
                 "Could not parse wheel dependency compatibility results",
                 stdout or stderr,
             )
-            self._status_controller.mark_failed()
+            self._status.mark_failed()
             return False
         issues = wheel_dependency_issues(
             metadata,
@@ -257,14 +254,14 @@ class WheelInstallExecutor:
             },
         )
         if issues:
-            self._status_recorder.add_issue(
+            self._status.add_issue(
                 "installing",
                 "Downloaded wheel is incompatible with the current environment",
                 "; ".join(issues),
             )
-            self._status_controller.mark_failed()
+            self._status.mark_failed()
             return False
-        self._status_recorder.log(
+        self._status.log(
             "Validated wheel dependency compatibility against target environment",
         )
         return True
@@ -286,8 +283,8 @@ class WheelInstallExecutor:
             return stdout.strip()
         message = f"{failure_message_prefix} (exit {rc})"
         if fatal:
-            self._status_recorder.add_issue("installing", message, stderr)
-            self._status_controller.mark_failed()
+            self._status.add_issue("installing", message, stderr)
+            self._status.mark_failed()
         else:
-            self._status_recorder.add_issue("installing", message, stderr)
+            self._status.add_issue("installing", message, stderr)
         return None
