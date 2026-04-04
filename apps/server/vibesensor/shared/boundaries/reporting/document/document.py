@@ -7,7 +7,12 @@ from dataclasses import dataclass, field
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
 from ..findings import FindingPresentation
-from .appendices import AppendixAData, AppendixBData, AppendixCData, AppendixDData
+from .appendices import (
+    AppendixAData,
+    AppendixBData,
+    AppendixCData,
+    ReportLabelValueRow,
+)
 from .panels import DataTrustItem, NextStep, PatternEvidence, SystemFindingCard
 from .sections import PeakRow, VerdictPageData
 
@@ -73,4 +78,4 @@ class ReportDocument:
     appendix_a: AppendixAData = field(default_factory=AppendixAData)
     appendix_b: AppendixBData = field(default_factory=AppendixBData)
     appendix_c: AppendixCData = field(default_factory=AppendixCData)
-    appendix_d: AppendixDData = field(default_factory=AppendixDData)
+    traceability_rows: list[ReportLabelValueRow] = field(default_factory=list)
