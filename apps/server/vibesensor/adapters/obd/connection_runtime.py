@@ -165,20 +165,22 @@ class ObdConnectionRuntime:
             raise ServiceUnavailableError("Bluetooth OBD adapter exposes no RFCOMM serial channel")
         session = self._session_factory()
         session.connect(mac_address, info.rfcomm_channel)
-        try:
-            session.initialize()
-        except (OSError, OperationalError, ObdTransportError):
-            session.close()
-            raise
-        except Exception:
-            session.close()
-            raise
+        self._initialize_session(session)
         device = replace(
             info,
             name=info.name or configured_name,
             connected=True,
         )
         return session, device
+
+    def _initialize_session(self, session: Elm327Session) -> None:
+        initialized = False
+        try:
+            session.initialize()
+            initialized = True
+        finally:
+            if not initialized:
+                session.close()
 
     def _poll_cycle_blocking(self, session: Elm327Session) -> ObdPollResult:
         plan = self._runtime.prepare_poll()

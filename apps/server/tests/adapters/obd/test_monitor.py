@@ -280,6 +280,16 @@ def test_connect_blocking_closes_session_and_propagates_transport_error() -> Non
     session.close.assert_called_once_with()
 
 
+def test_connect_blocking_keeps_initialized_session_open() -> None:
+    clock = _FakeClock()
+    runtime, connection_runtime, session = _connected_runtime(clock=clock)
+
+    assert connection_runtime is not None
+    assert runtime is not None
+    session.initialize.assert_called_once_with()
+    assert session.close.call_count == 0
+
+
 def test_connect_blocking_closes_session_and_propagates_unexpected_runtime_error() -> None:
     clock = _FakeClock()
     admin_client = MagicMock()
