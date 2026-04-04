@@ -4,15 +4,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from threading import RLock
+from typing import Protocol
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.gps.speed_resolution import SpeedResolution
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
-from vibesensor.adapters.obd.monitor import OBDSpeedMonitor
 from vibesensor.domain import SpeedSourceKind
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
+from vibesensor.shared.ports import SpeedSourceSync
 
 __all__ = [
     "SpeedSourceAdminService",
@@ -21,6 +22,32 @@ __all__ = [
     "SpeedSourceServices",
     "build_speed_source_services",
 ]
+
+
+class ObdObservation(Protocol):
+    @property
+    def speed_mps(self) -> float | None: ...
+
+    @property
+    def stale_timeout_s(self) -> float: ...
+
+    @property
+    def engine_rpm(self) -> float | None: ...
+
+    @property
+    def engine_rpm_source(self) -> str | None: ...
+
+    def resolve_speed(self) -> SpeedResolution: ...
+
+    def status_snapshot(self) -> ObdStatusSnapshot: ...
+
+
+class ObdAdmin(Protocol):
+    def scan_devices(self, *, timeout_s: int = ...) -> list[ObdDeviceSnapshot]: ...
+
+    def pair_device(self, mac_address: str) -> ObdDeviceSnapshot: ...
+
+    def refresh_configured_device(self) -> None: ...
 
 
 class _SelectedSourceState:
@@ -42,23 +69,23 @@ class _SelectedSourceState:
 class SpeedSourceObservationService:
     """Read-side view over the selected live speed source."""
 
-    __slots__ = ("_gps_monitor", "_obd_monitor", "_selected_source")
+    __slots__ = ("_gps_monitor", "_obd_observation", "_selected_source")
 
     def __init__(
         self,
         *,
         gps_monitor: GPSSpeedMonitor,
-        obd_monitor: OBDSpeedMonitor,
+        obd_observation: ObdObservation,
         selected_source: _SelectedSourceState,
     ) -> None:
         self._gps_monitor = gps_monitor
-        self._obd_monitor = obd_monitor
+        self._obd_observation = obd_observation
         self._selected_source = selected_source
 
     @property
     def speed_mps(self) -> float | None:
         if self._selected_source.get() is SpeedSourceKind.OBD2:
-            return self._obd_monitor.speed_mps
+            return self._obd_observation.speed_mps
         return self._gps_monitor.speed_mps
 
     @property
@@ -69,24 +96,24 @@ class SpeedSourceObservationService:
     def engine_rpm(self) -> float | None:
         if self._selected_source.get() is not SpeedSourceKind.OBD2:
             return None
-        return self._obd_monitor.engine_rpm
+        return self._obd_observation.engine_rpm
 
     @property
     def engine_rpm_source(self) -> str | None:
         if self._selected_source.get() is not SpeedSourceKind.OBD2:
             return None
-        return self._obd_monitor.engine_rpm_source
+        return self._obd_observation.engine_rpm_source
 
     def resolve_speed(self) -> SpeedResolution:
         if self._selected_source.get() is SpeedSourceKind.OBD2:
-            return self._obd_monitor.resolve_speed()
+            return self._obd_observation.resolve_speed()
         return self._gps_monitor.resolve_speed()
 
     def status_snapshot(self) -> SpeedSourceStatusSnapshot:
         if self._selected_source.get() is not SpeedSourceKind.OBD2:
             return self._gps_monitor.status_snapshot()
-        resolution = self._obd_monitor.resolve_speed()
-        obd_status = self._obd_monitor.status_snapshot()
+        resolution = self._obd_observation.resolve_speed()
+        obd_status = self._obd_observation.status_snapshot()
         return SpeedSourceStatusSnapshot(
             gps_enabled=self._gps_monitor.gps_enabled,
             connection_state=obd_status.connection_state,
@@ -104,11 +131,11 @@ class SpeedSourceObservationService:
             reconnect_delay_s=obd_status.reconnect_delay_s,
             fallback_active=resolution.fallback_active,
             speed_source=resolution.source,
-            stale_timeout_s=self._obd_monitor.stale_timeout_s,
+            stale_timeout_s=self._obd_observation.stale_timeout_s,
         )
 
     def obd_status(self) -> ObdStatusSnapshot:
-        return self._obd_monitor.status_snapshot()
+        return self._obd_observation.status_snapshot()
 
     @staticmethod
     def _format_device(snapshot: ObdStatusSnapshot) -> str | None:
@@ -126,35 +153,35 @@ class SpeedSourceObservationService:
 class SpeedSourceAdminService:
     """Admin-only Bluetooth OBD actions."""
 
-    __slots__ = ("_obd_monitor",)
+    __slots__ = ("_obd_admin",)
 
-    def __init__(self, *, obd_monitor: OBDSpeedMonitor) -> None:
-        self._obd_monitor = obd_monitor
+    def __init__(self, *, obd_admin: ObdAdmin) -> None:
+        self._obd_admin = obd_admin
 
     def scan_obd_devices(self, *, timeout_s: int = 8) -> list[ObdDeviceSnapshot]:
-        return self._obd_monitor.scan_devices(timeout_s=timeout_s)
+        return self._obd_admin.scan_devices(timeout_s=timeout_s)
 
     def pair_obd_device(self, mac_address: str) -> ObdDeviceSnapshot:
-        return self._obd_monitor.pair_device(mac_address)
+        return self._obd_admin.pair_device(mac_address)
 
     def refresh_obd_status(self) -> None:
-        self._obd_monitor.refresh_admin_state()
+        self._obd_admin.refresh_configured_device()
 
 
 class SpeedSourceControlService:
     """Runtime control surface for applying persisted speed-source settings."""
 
-    __slots__ = ("_gps_monitor", "_obd_monitor", "_selected_source")
+    __slots__ = ("_gps_monitor", "_obd_control", "_selected_source")
 
     def __init__(
         self,
         *,
         gps_monitor: GPSSpeedMonitor,
-        obd_monitor: OBDSpeedMonitor,
+        obd_control: SpeedSourceSync,
         selected_source: _SelectedSourceState,
     ) -> None:
         self._gps_monitor = gps_monitor
-        self._obd_monitor = obd_monitor
+        self._obd_control = obd_control
         self._selected_source = selected_source
 
     def apply_speed_source_settings(
@@ -178,7 +205,7 @@ class SpeedSourceControlService:
             manual_source_selected=manual_source_selected,
             stale_timeout_s=stale_timeout_s,
         )
-        self._obd_monitor.apply_speed_source_settings(
+        self._obd_control.apply_speed_source_settings(
             effective_speed_kmh=effective_speed_kmh,
             manual_source_selected=manual_source_selected,
             stale_timeout_s=stale_timeout_s,
@@ -190,11 +217,11 @@ class SpeedSourceControlService:
 
     def set_manual_source_selected(self, selected: bool) -> None:
         self._gps_monitor.set_manual_source_selected(selected)
-        self._obd_monitor.set_manual_source_selected(selected)
+        self._obd_control.set_manual_source_selected(selected)
 
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
         applied = self._gps_monitor.set_speed_override_kmh(speed_kmh)
-        self._obd_monitor.set_speed_override_kmh(speed_kmh)
+        self._obd_control.set_speed_override_kmh(speed_kmh)
         return applied
 
     def set_fallback_settings(
@@ -203,7 +230,7 @@ class SpeedSourceControlService:
         **kwargs: object,
     ) -> None:
         self._gps_monitor.set_fallback_settings(stale_timeout_s=stale_timeout_s, **kwargs)
-        self._obd_monitor.set_fallback_settings(stale_timeout_s=stale_timeout_s, **kwargs)
+        self._obd_control.set_fallback_settings(stale_timeout_s=stale_timeout_s, **kwargs)
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,19 +243,21 @@ class SpeedSourceServices:
 def build_speed_source_services(
     *,
     gps_monitor: GPSSpeedMonitor,
-    obd_monitor: OBDSpeedMonitor,
+    obd_observation: ObdObservation,
+    obd_admin: ObdAdmin,
+    obd_control: SpeedSourceSync,
 ) -> SpeedSourceServices:
     selected_source = _SelectedSourceState()
     return SpeedSourceServices(
         observation=SpeedSourceObservationService(
             gps_monitor=gps_monitor,
-            obd_monitor=obd_monitor,
+            obd_observation=obd_observation,
             selected_source=selected_source,
         ),
-        admin=SpeedSourceAdminService(obd_monitor=obd_monitor),
+        admin=SpeedSourceAdminService(obd_admin=obd_admin),
         control=SpeedSourceControlService(
             gps_monitor=gps_monitor,
-            obd_monitor=obd_monitor,
+            obd_control=obd_control,
             selected_source=selected_source,
         ),
     )

@@ -29,7 +29,7 @@ def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock]:
     runtime.ws_broadcast.on_tick = MagicMock()
     runtime.run_recorder.run = AsyncMock()
     runtime.gps_monitor.run = AsyncMock()
-    runtime.obd_monitor.run = AsyncMock()
+    runtime.obd_runner.run = AsyncMock()
     runtime.update_manager.startup_recover = AsyncMock()
 
     task_supervisor = MagicMock()
