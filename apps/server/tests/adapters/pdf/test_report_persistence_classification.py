@@ -6,7 +6,7 @@ import pytest
 from _report_persistence_helpers import build_findings, findings_at_freq, uniform_samples
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
 from vibesensor.use_cases.diagnostics.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,

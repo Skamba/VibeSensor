@@ -29,8 +29,10 @@ from vibesensor.shared.boundaries.run_metadata_codec import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frame_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_encoder import sensor_frame_to_json_object
+from vibesensor.shared.boundaries.sensor_frames import (
+    sensor_frame_from_mapping,
+    sensor_frame_to_json_object,
+)
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
