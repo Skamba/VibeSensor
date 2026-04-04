@@ -6,8 +6,10 @@ The updater now has one explicit run-scoped workflow boundary per concern:
   task supervision, timeout handling, and startup recovery.
 - ``runtime.py`` is the public updater-runtime facade that returns one canonical
   manager instance.
-- ``runtime_services.py`` owns focused config resolution plus the status,
-  transport, release, and workflow builder clusters used by that facade.
+- ``runtime_config.py`` owns runtime config resolution.
+- ``runtime_core.py`` owns status-tracker and command-executor assembly.
+- ``release_runtime.py`` owns release-specific runtime assembly.
+- ``workflow_runtime.py`` owns workflow assembly from the focused runtime bundles.
 - ``run_models.py`` holds the canonical prepared/planned run models shared
   across the workflow.
 - ``workflow.py`` owns request-scoped orchestration across preparation,
@@ -20,13 +22,10 @@ The updater now has one explicit run-scoped workflow boundary per concern:
 - ``workflow_executor.py`` owns plan execution only.
 - ``completion.py`` owns post-success transport completion and restart follow-up.
 - ``finalization.py`` owns unconditional transport cleanup and runtime refresh.
-- ``transport_lifecycles.py`` defines the prepared-transport and lifecycle
-  interfaces plus request/status-based transport resolution.
-- ``transport_coordinator.py`` owns lifecycle selection, prepare-time rollback,
-  cleanup error wrapping, and interrupted-run recovery.
+- ``transport/`` owns prepared-transport interfaces, transport coordination,
+  transport-neutral uplink readiness, and USB transport execution behavior.
 - ``usb_status.py`` inspects Linux/NetworkManager state for USB internet readiness.
-- ``usb_transport.py`` owns USB transport execution behavior.
 - ``wifi/`` owns Wi-Fi-specific transport execution.
 - ``status/`` owns state transitions, persistence, logging buffers, secret
-  redaction, and the explicit service bundle used by manager/runtime composition.
+  redaction, and the explicit tracker used by manager/runtime composition.
 """

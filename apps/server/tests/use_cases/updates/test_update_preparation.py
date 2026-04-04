@@ -15,7 +15,7 @@ from vibesensor.use_cases.updates.models import (
 from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
+from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 
 
 def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateRequest:

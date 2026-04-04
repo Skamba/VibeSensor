@@ -1010,6 +1010,10 @@ _UPDATES_ROOT_FORBIDDEN_MODULES = frozenset(
         "firmware_refresh.py",
         "firmware_release_fetcher.py",
         "firmware_types.py",
+        "transport_coordinator.py",
+        "transport_failures.py",
+        "transport_lifecycles.py",
+        "usb_transport.py",
         "wifi.py",
         "wifi_config.py",
         "wifi_diagnostics.py",
@@ -1031,7 +1035,7 @@ def _check_updates_package_subpackages() -> list[str]:
             failures.append(
                 f"{(updates_dir / module_name).relative_to(REPO_ROOT)} should live under a focused updates subpackage"
             )
-    for package_name in ("firmware", "wifi", "releases"):
+    for package_name in ("firmware", "transport", "wifi", "releases"):
         init_path = updates_dir / package_name / "__init__.py"
         if not init_path.exists():
             failures.append(

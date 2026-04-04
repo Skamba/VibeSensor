@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import re
 
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
@@ -36,15 +38,17 @@ def ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
 class UpdateUplinkProvisioner:
     """Create and configure the temporary Wi-Fi uplink connection for updates."""
 
-    __slots__ = ("_commands", "_config")
+    __slots__ = ("_commands", "_config", "_status")
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
+        status: UpdateStatusTracker,
         config: UpdateWifiConfig,
     ) -> None:
         self._commands = commands
+        self._status = status
         self._config = config
 
     async def prepare_uplink_connection(self, ssid: str, password: str) -> None:
@@ -57,6 +61,56 @@ class UpdateUplinkProvisioner:
         await self._configure_uplink_connection()
         if password:
             await self._apply_wifi_password(password)
+
+    async def bring_uplink_up(self, ssid: str) -> None:
+        """Bring the prepared uplink connection up, retrying on scan lag."""
+
+        connect_result = None
+        for attempt in range(1, self._config.uplink_connect_retries + 1):
+            connect_result = await self._commands.run(
+                [
+                    "nmcli",
+                    "--wait",
+                    str(self._config.uplink_connect_wait_s),
+                    "connection",
+                    "up",
+                    self._config.uplink_connection_name,
+                ],
+                phase="connecting_wifi",
+                timeout=float(self._config.uplink_connect_wait_s + 10),
+                sudo=True,
+            )
+            if connect_result.returncode == 0:
+                return
+            if "No network with SSID" not in (connect_result.stderr or ""):
+                break
+            self._status.log(
+                f"SSID '{ssid}' not found on connect attempt {attempt}; rescanning and retrying",
+            )
+            await self._commands.run(
+                [
+                    "nmcli",
+                    "-t",
+                    "-f",
+                    "SSID,SIGNAL,CHAN,FREQ",
+                    "dev",
+                    "wifi",
+                    "list",
+                    "ifname",
+                    self._config.wifi_ifname,
+                    "--rescan",
+                    "yes",
+                ],
+                phase="connecting_wifi",
+                timeout=self._config.nmcli_timeout_s,
+                sudo=True,
+            )
+            await asyncio.sleep(2.0)
+        raise UpdateTransportStepError(
+            phase=UpdatePhase.connecting_wifi,
+            message=f"Failed to connect to Wi-Fi '{ssid}'",
+            detail="" if connect_result is None else connect_result.stderr,
+        )
 
     async def _validate_open_network(self, ssid: str) -> None:
         """Reject blank-password attempts when the scanned SSID is secured."""

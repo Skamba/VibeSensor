@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import logging
-import sys
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateTransportError
 from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_lifecycles import (
+from vibesensor.use_cases.updates.transport.lifecycles import (
     PreparedUpdateTransport,
     UpdateTransportLifecycle,
     UpdateTransportLifecycles,
@@ -37,8 +36,11 @@ class UpdateTransportCoordinator:
         lifecycle = self._lifecycles.for_request(request)
         try:
             return await lifecycle.prepare(request)
-        except UpdateTransportError:
-            await self._abort_preparation(lifecycle)
+        except UpdateTransportError as exc:
+            await self._abort_preparation(
+                lifecycle,
+                prior_error=exc,
+            )
             raise
 
     async def cleanup_after_update(
@@ -57,13 +59,17 @@ class UpdateTransportCoordinator:
     async def recover_interrupted(self, status: UpdateJobStatus) -> None:
         await self._lifecycles.for_status(status).recover_interrupted_update(status)
 
-    async def _abort_preparation(self, lifecycle: UpdateTransportLifecycle) -> None:
-        active_error = sys.exc_info()[1]
+    async def _abort_preparation(
+        self,
+        lifecycle: UpdateTransportLifecycle,
+        *,
+        prior_error: BaseException | None,
+    ) -> None:
         try:
             await lifecycle.abort_preparation()
         except (OSError, UpdateError) as exc:
-            if active_error is not None:
-                active_error.add_note(
+            if prior_error is not None:
+                prior_error.add_note(
                     f"Transport rollback after preparation failure also failed: {exc}",
                 )
                 return

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
-    from vibesensor.use_cases.updates.transport_lifecycles import PreparedUpdateTransport
+    from vibesensor.use_cases.updates.transport.lifecycles import PreparedUpdateTransport
 
 __all__ = [
     "InstallServerReleasePlan",

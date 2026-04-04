@@ -28,7 +28,7 @@ async def test_finalizer_cleans_up_transport_then_refreshes_runtime() -> None:
 
 
 @pytest.mark.asyncio
-async def test_finalizer_adds_cleanup_note_to_active_failure() -> None:
+async def test_finalizer_adds_cleanup_note_to_prior_failure() -> None:
     transport_coordinator = MagicMock()
     transport_coordinator.cleanup_after_update = AsyncMock(
         side_effect=UpdateCleanupError("transport cleanup failed"),
@@ -39,15 +39,11 @@ async def test_finalizer_adds_cleanup_note_to_active_failure() -> None:
         transport_coordinator=transport_coordinator,
         runtime_details_refresher=runtime_details_refresher,
     )
+    workflow_error = RuntimeError("workflow bug")
 
-    with pytest.raises(RuntimeError, match="workflow bug") as exc_info:
-        try:
-            raise RuntimeError("workflow bug")
-        except RuntimeError:
-            await finalizer.finalize(MagicMock())
-            raise
+    await finalizer.finalize(MagicMock(), prior_error=workflow_error)
 
-    assert exc_info.value.__notes__ == ["Cleanup also failed: transport cleanup failed"]
+    assert workflow_error.__notes__ == ["Cleanup also failed: transport cleanup failed"]
     runtime_details_refresher.refresh.assert_not_awaited()
 
 
@@ -68,7 +64,4 @@ async def test_finalizer_raises_cleanup_error_when_cleanup_fails_after_cancellat
         UpdateCleanupError,
         match="Cleanup failed after cancellation: transport cleanup failed",
     ):
-        try:
-            raise asyncio.CancelledError
-        except asyncio.CancelledError:
-            await finalizer.finalize(MagicMock())
+        await finalizer.finalize(MagicMock(), prior_error=asyncio.CancelledError())

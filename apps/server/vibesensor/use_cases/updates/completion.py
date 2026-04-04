@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_lifecycles import PreparedUpdateTransport
+from vibesensor.use_cases.updates.transport.lifecycles import PreparedUpdateTransport
 
 __all__ = ["UpdateCompletionCoordinator"]
 

@@ -145,7 +145,7 @@ class TestUpdateManagerAsync:
         with (
             patch("shutil.which", mock_which),
             patch(
-                "vibesensor.use_cases.updates.wifi.wifi_readiness.asyncio.sleep",
+                "vibesensor.use_cases.updates.wifi.wifi_uplink_setup.asyncio.sleep",
                 new=AsyncMock(return_value=None),
             ),
             patch(
