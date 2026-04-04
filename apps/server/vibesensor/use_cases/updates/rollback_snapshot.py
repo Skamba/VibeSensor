@@ -8,7 +8,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.use_cases.updates.status import UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 __all__ = ["RollbackSnapshot", "RollbackSnapshotMetadata", "RollbackSnapshotStore"]
 
@@ -39,11 +39,11 @@ class RollbackSnapshotPromotion:
 class RollbackSnapshotStore:
     """Persist one canonical rollback snapshot wheel plus its metadata."""
 
-    __slots__ = ("_rollback_dir", "_status_recorder")
+    __slots__ = ("_rollback_dir", "_status")
 
-    def __init__(self, rollback_dir: Path, status_recorder: UpdateStatusRecorder) -> None:
+    def __init__(self, rollback_dir: Path, status: UpdateStatusTracker) -> None:
         self._rollback_dir = rollback_dir
-        self._status_recorder = status_recorder
+        self._status = status
 
     def _metadata_path(self) -> Path:
         """Return the canonical JSON metadata path for rollback snapshot state."""
@@ -136,7 +136,7 @@ class RollbackSnapshotStore:
         wheel_path = self.snapshot_wheel_path()
         if not wheel_path.is_file():
             if report_issues:
-                self._status_recorder.add_issue(
+                self._status.add_issue(
                     "installing",
                     "Rollback snapshot wheel is missing",
                     str(wheel_path),
@@ -148,7 +148,7 @@ class RollbackSnapshotStore:
         metadata_path = self._metadata_path()
         if not metadata_path.is_file():
             if report_issues:
-                self._status_recorder.add_issue(
+                self._status.add_issue(
                     "installing",
                     "Rollback snapshot metadata is missing",
                     str(metadata_path),
@@ -158,7 +158,7 @@ class RollbackSnapshotStore:
             raw = json.loads(metadata_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
             if report_issues:
-                self._status_recorder.add_issue(
+                self._status.add_issue(
                     "installing",
                     "Rollback snapshot metadata is unreadable",
                     f"{metadata_path}: {exc}",
@@ -168,7 +168,7 @@ class RollbackSnapshotStore:
         sha256 = str(raw.get("sha256") or "")
         if not version or not sha256:
             if report_issues:
-                self._status_recorder.add_issue(
+                self._status.add_issue(
                     "installing",
                     "Rollback snapshot metadata is incomplete",
                     f"{metadata_path} is missing version or sha256",

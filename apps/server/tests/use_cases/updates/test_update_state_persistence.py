@@ -10,7 +10,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from test_support.update_status import UpdateStatusHarness
 
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import (
@@ -27,7 +26,7 @@ from vibesensor.use_cases.updates.runtime import build_update_manager
 from vibesensor.use_cases.updates.status import (
     UpdatePhaseTransitionError,
     UpdateStateStore,
-    build_update_status_services,
+    build_update_status_tracker,
 )
 
 # ---------------------------------------------------------------------------
@@ -383,12 +382,7 @@ class TestPersistenceDuringLifecycle:
     def test_phase_transition_updates_phase_started_and_updated_at(self, tmp_path: Path) -> None:
         state_path = tmp_path / "state.json"
         store = UpdateStateStore(path=state_path)
-        services = build_update_status_services(state_store=store)
-        tracker = UpdateStatusHarness(
-            services=services,
-            controller=services.controller,
-            recorder=services.recorder,
-        )
+        tracker = build_update_status_tracker(state_store=store)
 
         tracker.start_job(
             UpdateRequest(
@@ -415,13 +409,8 @@ class TestPersistenceDuringLifecycle:
         assert tracker.status.updated_at >= tracker.status.phase_started_at
 
     def test_invalid_phase_transition_raises(self, tmp_path: Path) -> None:
-        services = build_update_status_services(
+        tracker = build_update_status_tracker(
             state_store=UpdateStateStore(tmp_path / "state.json"),
-        )
-        tracker = UpdateStatusHarness(
-            services=services,
-            controller=services.controller,
-            recorder=services.recorder,
         )
 
         tracker.start_job(
@@ -444,12 +433,7 @@ class TestPersistenceDuringLifecycle:
     ) -> None:
         state_path = tmp_path / "state.json"
         store = UpdateStateStore(path=state_path)
-        services = build_update_status_services(state_store=store)
-        tracker = UpdateStatusHarness(
-            services=services,
-            controller=services.controller,
-            recorder=services.recorder,
-        )
+        tracker = build_update_status_tracker(state_store=store)
 
         tracker.start_job(
             UpdateRequest(

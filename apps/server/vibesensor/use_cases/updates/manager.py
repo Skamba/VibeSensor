@@ -14,7 +14,7 @@ from vibesensor.use_cases.updates.models import (
     validate_update_request,
 )
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
-from vibesensor.use_cases.updates.status import UpdateStatusServices
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
 from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 
@@ -25,14 +25,14 @@ class UpdateManager:
     def __init__(
         self,
         *,
-        status_services: UpdateStatusServices,
+        status: UpdateStatusTracker,
         workflow: UpdateWorkflow,
         startup_recovery: UpdateStartupRecoveryCoordinator,
         usb_status_service: UsbInternetStatusReader,
         timeout_s: float,
         task_name: str = "system-update",
     ) -> None:
-        self._status = status_services.tracker
+        self._status = status
         self._workflow = workflow
         self._startup_recovery = startup_recovery
         self._usb_status_service = usb_status_service
