@@ -9,8 +9,8 @@ from test_support.update_status import build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdateTransportError
 from vibesensor.use_cases.updates.models import UpdateRequest, UpdateTransport
-from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
-from vibesensor.use_cases.updates.transport_lifecycles import UpdateTransportLifecycles
+from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
+from vibesensor.use_cases.updates.transport.lifecycles import UpdateTransportLifecycles
 
 
 def _request(transport: UpdateTransport) -> UpdateRequest:

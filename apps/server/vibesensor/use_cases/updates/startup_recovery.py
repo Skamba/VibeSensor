@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.use_cases.updates.models import UpdateState
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
+from vibesensor.use_cases.updates.transport.coordinator import UpdateTransportCoordinator
 
 __all__ = ["UpdateStartupRecoveryCoordinator"]
 

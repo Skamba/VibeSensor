@@ -13,11 +13,11 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
+from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepError
+from vibesensor.use_cases.updates.transport.uplink_readiness import UpdateUplinkReadiness
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.wifi.wifi_diagnostics import parse_wifi_diagnostics
 from vibesensor.use_cases.updates.wifi.wifi_hotspot_recovery import UpdateHotspotRecovery
-from vibesensor.use_cases.updates.wifi.wifi_readiness import UpdateWifiReadiness
 from vibesensor.use_cases.updates.wifi.wifi_uplink_setup import UpdateUplinkProvisioner
 
 _HOTSPOT_RESTORE_PHASES = frozenset(
@@ -54,8 +54,8 @@ class UpdateWifiSession:
 
     __slots__ = (
         "_config",
+        "_dns_readiness",
         "_hotspot",
-        "_readiness",
         "_status",
         "_uplink",
     )
@@ -75,13 +75,14 @@ class UpdateWifiSession:
             status=status,
             config=config,
         )
-        self._readiness = UpdateWifiReadiness(
+        self._dns_readiness = UpdateUplinkReadiness(
             commands=commands,
             status=status,
             config=config,
         )
         self._uplink = UpdateUplinkProvisioner(
             commands=commands,
+            status=status,
             config=config,
         )
 
@@ -95,12 +96,12 @@ class UpdateWifiSession:
 
         self._status.log(f"Connecting to Wi-Fi network: {ssid}")
         await self._uplink.prepare_uplink_connection(ssid, password)
-        await self._readiness.bring_uplink_up(ssid)
+        await self._uplink.bring_uplink_up(ssid)
         fallback = self._config.uplink_fallback_dns
         self._status.log(
             f"Wi-Fi connected successfully (client DNS fallback={fallback})",
         )
-        await self._readiness.wait_for_dns_ready()
+        await self._dns_readiness.wait_for_dns_ready()
 
     def _record_transport_failure(self, exc: UpdateTransportStepError) -> None:
         self._status.fail(exc.phase, str(exc), exc.detail)
