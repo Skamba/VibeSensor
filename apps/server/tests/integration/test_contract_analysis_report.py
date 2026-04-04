@@ -147,7 +147,7 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
 
     primary = resolve_primary_report_candidate(
         aggregate=prepared.domain_test_run,
-        facts=prepared.report_facts.primary_candidate_facts,
+        facts=prepared.report_facts.decision.primary_candidate,
         tr=lambda key, **_kw: key,
         lang="en",
     )

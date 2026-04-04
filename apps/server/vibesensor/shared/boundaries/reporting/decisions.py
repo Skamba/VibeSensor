@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Literal
 
 from vibesensor.domain import Finding, SuitabilityCheck, TestRun
-from vibesensor.shared.boundaries.reporting.coverage import primary_location_has_coverage_gap
-from vibesensor.shared.boundaries.reporting.facts import (
-    ActionStatusKey,
-    LocationConfidenceKey,
-    ReportCoverageSummary,
-)
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+from vibesensor.shared.boundaries.reporting.sensor_facts import (
+    ReportCoverageSummary,
+    primary_location_has_coverage_gap,
+)
 from vibesensor.shared.run_context_warning import RunContextWarning
+
+ActionStatusKey = Literal["recapture_before_acting", "action_ready_caution", "action_ready"]
+LocationConfidenceKey = Literal["weak", "mixed", "strong"]
 
 __all__ = [
     "ActionStatusKey",

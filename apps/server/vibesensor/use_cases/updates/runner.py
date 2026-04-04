@@ -158,7 +158,7 @@ _SENSITIVE_KEYS: frozenset[str] = frozenset(
 
 
 class UpdateCommandExecutor:
-    """Executes commands and reports logs through the update status tracker."""
+    """Execute commands and report logs through the canonical status recorder."""
 
     __slots__ = ("_recorder", "_runner")
 

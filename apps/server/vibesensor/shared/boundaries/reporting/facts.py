@@ -4,53 +4,47 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from vibesensor.domain import (
-        LocationHotspotRow,
-        LocationIntensitySummary,
-        RecommendedAction,
-        SuitabilityCheck,
         TestRun,
         VibrationOrigin,
     )
-    from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+    from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
+    from vibesensor.shared.boundaries.reporting.sensor_facts import ReportSensorFacts
     from vibesensor.shared.boundaries.reporting.summary import (
         NormalizedReportSummary,
         ReportTimelineInterval,
     )
-    from vibesensor.shared.run_context_warning import RunContextWarning, RunContextWarningsInput
+    from vibesensor.shared.run_context_warning import RunContextWarningsInput
 
-ActionStatusKey = Literal["recapture_before_acting", "action_ready_caution", "action_ready"]
-LocationConfidenceKey = Literal["weak", "mixed", "strong"]
+from vibesensor.shared.boundaries.reporting.decision_facts import (
+    ActionStatusKey,
+    LocationConfidenceKey,
+    build_report_decision_facts,
+)
+from vibesensor.shared.boundaries.reporting.projection import (
+    normalize_origin_location,
+    resolve_report_origin,
+)
+from vibesensor.shared.boundaries.reporting.sensor_facts import build_report_sensor_facts
 
 __all__ = [
     "ActionStatusKey",
     "LocationConfidenceKey",
     "PreparedReportFacts",
-    "ReportCoverageSummary",
+    "ReportRunFacts",
     "prepare_report_facts",
 ]
 
 
 @dataclass(frozen=True, slots=True)
-class ReportCoverageSummary:
-    """Coverage facts used by report preparation and rendering."""
-
-    expected_locations: tuple[str, ...]
-    active_locations: tuple[str, ...]
-    missing_locations: tuple[str, ...]
-    partial_locations: tuple[str, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedReportFacts:
-    """Semantic report facts independent from presentation-specific sections."""
+class ReportRunFacts:
+    """Run-scoped report facts independent from sensor and decision shaping."""
 
     origin: VibrationOrigin | None
     origin_location: str
-    sensor_locations_active: tuple[str, ...]
     duration_text: str | None
     start_time_utc: str | None
     end_time_utc: str | None
@@ -59,19 +53,16 @@ class PreparedReportFacts:
     sample_count: int
     sensor_model: str | None
     firmware_version: str | None
-    active_sensor_intensity: tuple[LocationIntensitySummary, ...]
-    location_hotspot_rows: tuple[LocationHotspotRow, ...]
-    primary_candidate_facts: PrimaryReportFacts
-    recommended_actions: tuple[RecommendedAction, ...]
-    suitability_checks: tuple[SuitabilityCheck, ...]
-    warnings: tuple[RunContextWarning, ...]
-    coverage_summary: ReportCoverageSummary
-    action_status_key: ActionStatusKey
-    location_confidence_key: LocationConfidenceKey
-    alternative_source: str | None
-    alternative_source_visible: bool
-    confidence_gap_to_alternative: float | None
     timeline_intervals: tuple[ReportTimelineInterval, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedReportFacts:
+    """Canonical grouped report facts for run, sensor, and decision concerns."""
+
+    run: ReportRunFacts
+    sensor: ReportSensorFacts
+    decision: ReportDecisionFacts
 
 
 def prepare_report_facts(
@@ -83,89 +74,49 @@ def prepare_report_facts(
     warnings: RunContextWarningsInput = None,
 ) -> PreparedReportFacts:
     """Resolve semantic report facts shared by downstream PDF mapping."""
-    from vibesensor.shared.boundaries.reporting.coverage import build_coverage_summary
-    from vibesensor.shared.boundaries.reporting.decisions import (
-        resolve_action_status_key,
-        resolve_alternative_source,
-        resolve_location_confidence_key,
-    )
-    from vibesensor.shared.boundaries.reporting.projection import (
-        compute_location_hotspot_rows,
-        filter_active_sensor_intensity,
-        normalize_origin_location,
-        resolve_primary_report_facts,
-        resolve_report_origin,
-        tire_spec_text,
-    )
-    from vibesensor.shared.report_diagnostics import report_suitability_checks, report_warnings
-
-    sensor_locations_active = summary.active_sensor_locations
     origin = resolve_report_origin(test_run)
     origin_location = normalize_origin_location(origin)
     config_snap = test_run.capture.setup.configuration_snapshot
-    active_sensor_intensity = tuple(
-        filter_active_sensor_intensity(
-            summary.sensor_intensity_rows,
-            sensor_locations_active,
-        )
-    )
-    primary_candidate_facts = resolve_primary_report_facts(
-        aggregate=test_run,
-        origin_location=origin_location,
-        sensor_locations_active=sensor_locations_active,
-        sensor_intensity=active_sensor_intensity,
-    )
-    suitability_checks = report_suitability_checks(test_run.suitability)
-    warning_models = report_warnings(payload, warnings=warnings)
-    coverage_summary = build_coverage_summary(
+    sensor_facts = build_report_sensor_facts(
         test_run=test_run,
-        sensor_locations_active=sensor_locations_active,
-        sensor_intensity=active_sensor_intensity,
+        sensor_locations_active=summary.active_sensor_locations,
+        sensor_intensity=summary.sensor_intensity_rows,
     )
-    location_confidence_key = resolve_location_confidence_key(
-        primary_candidate_facts=primary_candidate_facts,
-        coverage_summary=coverage_summary,
-    )
-    alternative_source, alternative_source_visible, confidence_gap_to_alternative = (
-        resolve_alternative_source(
-            test_run,
-            primary_candidate_facts=primary_candidate_facts,
-        )
-    )
-    action_status_key = resolve_action_status_key(
-        primary_candidate_facts=primary_candidate_facts,
-        location_confidence_key=location_confidence_key,
-        alternative_source_visible=alternative_source_visible,
-        suitability_checks=suitability_checks,
-        warnings=warning_models,
+    decision_facts = build_report_decision_facts(
+        payload,
+        test_run=test_run,
+        origin_location=origin_location,
+        sensor_facts=sensor_facts,
+        warnings=warnings,
     )
     return PreparedReportFacts(
-        origin=origin,
-        origin_location=origin_location,
-        sensor_locations_active=sensor_locations_active,
-        duration_text=summary.record_length,
-        start_time_utc=summary.start_time_utc,
-        end_time_utc=summary.end_time_utc,
-        sample_rate_hz=(
-            f"{config_snap.raw_sample_rate_hz:g}"
-            if config_snap.raw_sample_rate_hz is not None
-            else None
+        run=ReportRunFacts(
+            origin=origin,
+            origin_location=origin_location,
+            duration_text=summary.record_length,
+            start_time_utc=summary.start_time_utc,
+            end_time_utc=summary.end_time_utc,
+            sample_rate_hz=(
+                f"{config_snap.raw_sample_rate_hz:g}"
+                if config_snap.raw_sample_rate_hz is not None
+                else None
+            ),
+            tire_spec_text=_tire_spec_text(config_snap.tire_spec),
+            sample_count=test_run.capture.sample_count,
+            sensor_model=config_snap.sensor_model,
+            firmware_version=config_snap.firmware_version,
+            timeline_intervals=summary.timeline_intervals,
         ),
-        tire_spec_text=tire_spec_text(config_snap.tire_spec),
-        sample_count=test_run.capture.sample_count,
-        sensor_model=config_snap.sensor_model,
-        firmware_version=config_snap.firmware_version,
-        active_sensor_intensity=active_sensor_intensity,
-        location_hotspot_rows=tuple(compute_location_hotspot_rows(active_sensor_intensity)),
-        primary_candidate_facts=primary_candidate_facts,
-        recommended_actions=test_run.recommended_actions,
-        suitability_checks=suitability_checks,
-        warnings=warning_models,
-        coverage_summary=coverage_summary,
-        action_status_key=action_status_key,
-        location_confidence_key=location_confidence_key,
-        alternative_source=alternative_source,
-        alternative_source_visible=alternative_source_visible,
-        confidence_gap_to_alternative=confidence_gap_to_alternative,
-        timeline_intervals=summary.timeline_intervals,
+        sensor=sensor_facts,
+        decision=decision_facts,
     )
+
+
+def _tire_spec_text(tire_spec: object) -> str | None:
+    from vibesensor.domain import TireSpec
+
+    if not isinstance(tire_spec, TireSpec):
+        return None
+    if tire_spec.width_mm <= 0 or tire_spec.aspect_pct <= 0 or tire_spec.rim_in <= 0:
+        return None
+    return f"{tire_spec.width_mm:g}/{tire_spec.aspect_pct:g}R{tire_spec.rim_in:g}"

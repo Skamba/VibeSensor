@@ -6,9 +6,9 @@ from vibesensor.use_cases.updates.models import UpdateState
 from vibesensor.use_cases.updates.status import (
     UpdateStatusController,
     UpdateStatusRecorder,
-    UpdateStatusTracker,
+    UpdateStatusSession,
 )
-from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
+from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
 
 __all__ = ["UpdateStartupRecoveryCoordinator"]
 
@@ -16,27 +16,31 @@ __all__ = ["UpdateStartupRecoveryCoordinator"]
 class UpdateStartupRecoveryCoordinator:
     """Recover transport-owned updater state after an interrupted server restart."""
 
-    __slots__ = ("_status_controller", "_status_recorder", "_tracker", "_transport_sessions")
+    __slots__ = (
+        "_status_controller",
+        "_status_recorder",
+        "_status_session",
+        "_transport_coordinator",
+    )
 
     def __init__(
         self,
         *,
-        tracker: UpdateStatusTracker,
+        status_session: UpdateStatusSession,
         status_controller: UpdateStatusController,
         status_recorder: UpdateStatusRecorder,
-        transport_sessions: UpdateTransportSessions,
+        transport_coordinator: UpdateTransportCoordinator,
     ) -> None:
-        self._tracker = tracker
+        self._status_session = status_session
         self._status_controller = status_controller
         self._status_recorder = status_recorder
-        self._transport_sessions = transport_sessions
+        self._transport_coordinator = transport_coordinator
 
     async def recover(self) -> None:
-        status = self._tracker.status
+        status = self._status_session.status
         if status.state != UpdateState.running or status.finished_at is not None:
             return
         self._status_recorder.add_issue("startup", "Update interrupted by server restart")
         self._status_controller.mark_interrupted()
-        transport_session = self._transport_sessions.for_status(status)
-        await transport_session.recover_interrupted_update()
+        await self._transport_coordinator.recover_interrupted(status)
         self._status_controller.persist()

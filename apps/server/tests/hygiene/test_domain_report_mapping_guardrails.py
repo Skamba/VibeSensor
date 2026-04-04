@@ -148,7 +148,7 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     prepared = prepare_report_input(summary)
     primary = resolve_primary_report_candidate(
         aggregate=prepared.domain_test_run,
-        facts=prepared.report_facts.primary_candidate_facts,
+        facts=prepared.report_facts.decision.primary_candidate,
         tr=lambda key, **kw: tr(lang, key, **kw),
         lang=lang,
     )

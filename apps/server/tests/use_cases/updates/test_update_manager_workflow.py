@@ -14,6 +14,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
+from vibesensor.use_cases.updates.transport_coordinator import PreparedUpdateTransport
 from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowContext
 
@@ -49,12 +50,12 @@ def _build_manager(
     *,
     status: UpdateJobStatus | None = None,
 ) -> tuple[UpdateManager, AsyncMock]:
-    tracker = MagicMock()
-    tracker.status = status or UpdateJobStatus()
+    status_services = MagicMock()
+    status_services.status = status or UpdateJobStatus()
     recorder = MagicMock()
     status_controller = MagicMock()
     runtime = SimpleNamespace(
-        tracker=tracker,
+        status_services=status_services,
         recorder=recorder,
         status_controller=status_controller,
         workflow=MagicMock(),
@@ -87,7 +88,10 @@ async def test_workflow_carries_resolved_transport_session_through_context() -> 
     transport_session = AsyncMock()
     prepared = PreparedUpdateWorkflow(
         current_version="2026.4.3",
-        transport_session=transport_session,
+        transport=PreparedUpdateTransport(
+            request=_wifi_request(),
+            session=transport_session,
+        ),
     )
     planned = object()
     prepare.return_value = prepared
@@ -99,7 +103,7 @@ async def test_workflow_carries_resolved_transport_session_through_context() -> 
     prepare.assert_awaited_once()
     plan.assert_awaited_once_with(prepared)
     execute.assert_awaited_once_with(planned)
-    assert context.transport_session is transport_session
+    assert context.transport is prepared.transport
 
 
 @pytest.mark.asyncio
@@ -108,7 +112,10 @@ async def test_workflow_stops_after_release_failure() -> None:
     transport_session = AsyncMock()
     prepare.return_value = PreparedUpdateWorkflow(
         current_version="2026.4.3",
-        transport_session=transport_session,
+        transport=PreparedUpdateTransport(
+            request=_wifi_request(),
+            session=transport_session,
+        ),
     )
     plan.side_effect = UpdateReleaseError("release check failed")
 

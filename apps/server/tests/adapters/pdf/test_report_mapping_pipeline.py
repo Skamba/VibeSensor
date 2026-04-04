@@ -60,7 +60,7 @@ def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
     assert isinstance(prepared, shared_reporting.PreparedReportInput)
     assert isinstance(prepared.report_facts, shared_reporting.PreparedReportFacts)
     assert isinstance(
-        prepared.report_facts.primary_candidate_facts,
+        prepared.report_facts.decision.primary_candidate,
         shared_report_projection.PrimaryReportFacts,
     )
     assert isinstance(composition, report_document.ReportDocumentComposition)
