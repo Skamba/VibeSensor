@@ -214,7 +214,7 @@ def test_report_facts_hold_canonical_document_sections_without_builder_shims() -
         PreparedReportFacts,
         PreparedReportInput,
     )
-    from vibesensor.use_cases.history.report_document import ReportDocumentComposition
+    from vibesensor.shared.boundaries.reporting.document import ReportDocumentContext
 
     fact_fields = {field.name for field in fields(PreparedReportFacts)}
     assert "verdict_page" not in fact_fields
@@ -226,8 +226,16 @@ def test_report_facts_hold_canonical_document_sections_without_builder_shims() -
     assert "summary" not in input_fields
     assert "presentation" not in input_fields
 
-    composition_fields = {field.name for field in fields(ReportDocumentComposition)}
-    assert composition_fields == {"verdict_page", "appendix_a", "appendix_b"}
+    context_fields = {field.name for field in fields(ReportDocumentContext)}
+    assert {
+        "verdict_page",
+        "appendix_a",
+        "appendix_b",
+        "appendix_c",
+        "appendix_d",
+    } <= context_fields
+    assert not hasattr(mapping, "ReportDocumentComposition")
+    assert not hasattr(mapping, "compose_report_document")
 
     assert not hasattr(mapping, "_build_verdict_page_data")
     assert not hasattr(mapping, "_build_appendix_a_data")
