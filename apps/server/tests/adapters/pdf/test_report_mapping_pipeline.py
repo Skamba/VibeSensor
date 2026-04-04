@@ -51,7 +51,7 @@ def _prepared_report_input() -> PreparedReportInput:
 
 def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
     prepared = _prepared_report_input()
-    context = report_document.compose_report_document_context(prepared)
+    document = report_document.build_report_document(prepared)
 
     assert isinstance(prepared, shared_reporting.PreparedReportInput)
     assert isinstance(prepared.report_facts, shared_reporting.PreparedReportFacts)
@@ -59,7 +59,7 @@ def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
         prepared.report_facts.decision.primary_candidate,
         shared_report_projection.PrimaryReportFacts,
     )
-    assert isinstance(context, shared_report_document.ReportDocumentContext)
+    assert isinstance(document, shared_report_document.ReportDocument)
     assert not hasattr(prepared, "renderer_payload")
     assert not hasattr(prepared, "presentation")
 
@@ -109,3 +109,5 @@ def test_prepare_persisted_report_input_rejects_non_projectable_payload() -> Non
 def test_report_document_reexports_boundary_types() -> None:
     assert not hasattr(report_document, "PreparedReportInput")
     assert not hasattr(report_document, "Report")
+    assert not hasattr(report_document, "build_report_document_data")
+    assert not hasattr(report_document, "compose_report_document_context")

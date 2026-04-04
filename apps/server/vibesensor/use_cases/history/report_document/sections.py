@@ -8,7 +8,6 @@ from vibesensor.domain import TestRun
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixCData,
-    AppendixDData,
     DataTrustItem,
     MeasurementRow,
     ReportLabelValueRow,
@@ -28,7 +27,7 @@ from .narrative_summaries import (
 
 __all__ = [
     "_build_appendix_c_data",
-    "_build_appendix_d_data",
+    "_build_traceability_rows",
     "_build_timeline_graph_data",
 ]
 
@@ -124,7 +123,7 @@ def _build_appendix_c_data(
     )
 
 
-def _build_appendix_d_data(
+def _build_traceability_rows(
     *,
     date_str: str,
     run_id: str,
@@ -134,7 +133,7 @@ def _build_appendix_d_data(
     sample_count: int,
     sample_rate_hz: str | None,
     tr: Callable[..., str],
-) -> AppendixDData:
+) -> list[ReportLabelValueRow]:
     rows = [
         ReportLabelValueRow(label=tr("RUN_DATE"), value=date_str),
         ReportLabelValueRow(label=tr("RUN_ID"), value=run_id),
@@ -158,4 +157,4 @@ def _build_appendix_d_data(
             ),
         ]
     )
-    return AppendixDData(rows=rows)
+    return rows

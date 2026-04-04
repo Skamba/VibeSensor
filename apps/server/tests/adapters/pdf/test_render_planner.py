@@ -5,7 +5,6 @@ from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
-    AppendixDData,
     NextStep,
     ReportDocument,
     ReportLabelValueRow,
@@ -20,7 +19,7 @@ def _document(**overrides: object) -> ReportDocument:
         "appendix_a": AppendixAData(mode="workflow"),
         "appendix_b": AppendixBData(dominant_corner="Front Left"),
         "appendix_c": AppendixCData(),
-        "appendix_d": AppendixDData(rows=[ReportLabelValueRow(label="Run ID", value="run-001")]),
+        "traceability_rows": [ReportLabelValueRow(label="Run ID", value="run-001")],
     }
     defaults.update(overrides)
     return ReportDocument(**defaults)

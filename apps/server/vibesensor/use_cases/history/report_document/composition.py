@@ -1,4 +1,4 @@
-"""Canonical report-document context composition from prepared report facts."""
+"""Canonical report-document composition from prepared report facts."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
     NextStep,
-    ReportDocumentContext,
+    ReportDocument,
     VerdictPageData,
 )
 from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
@@ -38,7 +38,7 @@ from .narrative_summaries import _proof_summary_text
 from .pattern_evidence import build_pattern_evidence
 from .peak_table import build_peak_rows
 from .report_sections import build_data_trust, build_next_steps
-from .sections import _build_appendix_c_data, _build_appendix_d_data, _build_timeline_graph_data
+from .sections import _build_appendix_c_data, _build_timeline_graph_data, _build_traceability_rows
 from .verdict_page import build_observed_signature, build_verdict_page_data
 from .workflow_appendix import (
     build_appendix_a_data,
@@ -54,20 +54,20 @@ from .workflow_appendix import (
     recapture_issue_lines as build_recapture_issue_lines,
 )
 
-__all__ = ["compose_report_document_context"]
+__all__ = ["build_report_document"]
 
 
 @dataclass(frozen=True, slots=True)
 class _ReportDocumentSections:
-    """Document-facing sections composed before final ReportDocument mapping."""
+    """Document-facing sections composed before final report assembly."""
 
     verdict_page: VerdictPageData
     appendix_a: AppendixAData
     appendix_b: AppendixBData
 
 
-def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocumentContext:
-    """Compose the full immutable ReportDocumentContext from prepared report input."""
+def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
+    """Compose the canonical report document directly from prepared report input."""
 
     lang = str(normalize_lang(prepared.language))
 
@@ -106,7 +106,7 @@ def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocu
         runner_up_corner=sections.appendix_b.runner_up_corner,
         tr=tr,
     )
-    return ReportDocumentContext(
+    return ReportDocument(
         title=tr("REPORT_FOOTER_TITLE"),
         run_datetime=_report_date_text(run_facts),
         run_id=run_facts.run_id,
@@ -117,13 +117,13 @@ def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocu
         tire_spec_text=run_facts.tire_spec_text,
         sample_count=run_facts.sample_count,
         sensor_count=primary.sensor_count,
-        sensor_locations=tuple(sensor_facts.active_locations),
+        sensor_locations=list(sensor_facts.active_locations),
         sensor_model=run_facts.sensor_model,
         firmware_version=run_facts.firmware_version,
         car_name=run_facts.car_name,
         car_type=run_facts.car_type,
         observed=build_observed_signature(primary, tr=tr),
-        system_cards=tuple(
+        system_cards=list(
             build_system_cards(
                 test_run,
                 primary,
@@ -131,14 +131,16 @@ def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocu
                 tr,
             )
         ),
-        next_steps=_resolve_next_steps(
-            primary=primary,
-            report_facts=report_facts,
-            appendix_a=sections.appendix_a,
-            lang=lang,
-            tr=tr,
+        next_steps=list(
+            _resolve_next_steps(
+                primary=primary,
+                report_facts=report_facts,
+                appendix_a=sections.appendix_a,
+                lang=lang,
+                tr=tr,
+            )
         ),
-        data_trust=data_trust,
+        data_trust=list(data_trust),
         pattern_evidence=build_pattern_evidence(
             aggregate=test_run,
             origin=run_facts.origin,
@@ -146,7 +148,7 @@ def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocu
             lang=lang,
             tr=tr,
         ),
-        peak_rows=tuple(
+        peak_rows=list(
             build_peak_rows(
                 run_facts.peak_table_rows,
                 findings=list(prepared_findings.all_findings),
@@ -154,12 +156,12 @@ def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocu
                 tr=tr,
             )
         ),
-        language=lang,
+        lang=lang,
         certainty_tier_key=primary.tier,
-        findings=prepared_findings.all_findings,
-        top_causes=prepared_findings.top_causes,
-        sensor_intensity_by_location=tuple(sensor_facts.active_intensity),
-        location_hotspot_rows=tuple(sensor_facts.location_hotspot_rows),
+        findings=list(prepared_findings.all_findings),
+        top_causes=list(prepared_findings.top_causes),
+        sensor_intensity_by_location=list(sensor_facts.active_intensity),
+        location_hotspot_rows=list(sensor_facts.location_hotspot_rows),
         verdict_page=replace(
             sections.verdict_page,
             proof_summary=proof_summary,
@@ -184,7 +186,7 @@ def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocu
             data_trust=list(data_trust),
             tr=tr,
         ),
-        appendix_d=_build_appendix_d_data(
+        traceability_rows=_build_traceability_rows(
             date_str=_report_date_text(run_facts),
             run_id=run_facts.run_id,
             tire_spec_text=run_facts.tire_spec_text,
