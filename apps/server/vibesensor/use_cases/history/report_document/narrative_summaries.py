@@ -14,7 +14,6 @@ from vibesensor.shared.report_presentation import (
 )
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
 
-from .composition import ReportDocumentComposition
 from .phase_analysis import (
     _finding_phase_label,
     _same_source_temporal_pair,
@@ -34,8 +33,8 @@ def _proof_summary_text(
     aggregate: TestRun,
     primary: PrimaryCandidateContext,
     report_facts: PreparedReportFacts,
-    composition: ReportDocumentComposition,
     *,
+    runner_up_corner: str | None,
     tr: Callable[..., str],
 ) -> str:
     sequence_summary = _same_source_temporal_proof_summary(
@@ -47,7 +46,7 @@ def _proof_summary_text(
         return sequence_summary
     ratio = report_facts.decision.primary_candidate.dominance_ratio
     location = display_location(primary.primary_location, tr=tr)
-    runner_up = composition.appendix_b.runner_up_corner
+    runner_up = runner_up_corner
     if ratio is not None:
         if runner_up is not None:
             return tr(
@@ -66,18 +65,18 @@ def _proof_summary_text(
 
 def _run_limits_summary_text(
     report_facts: PreparedReportFacts,
-    composition: ReportDocumentComposition,
     *,
+    speed_window_label: str | None,
+    proof_caveat: str | None,
     tr: Callable[..., str],
 ) -> str:
-    speed_window = str(composition.verdict_page.speed_window_label or "").strip() or tr("UNKNOWN")
+    speed_window = str(speed_window_label or "").strip() or tr("UNKNOWN")
     if (
         report_facts.decision.action_status_key == "action_ready_caution"
         and report_facts.decision.alternative_source_visible
     ):
         return tr("REPORT_RUN_LIMITS_RECAPTURE_RECIPE", speed=speed_window)
-    note = composition.verdict_page.proof_caveat
-    return note or tr("REPORT_CAPTURE_ISSUE_GENERIC")
+    return proof_caveat or tr("REPORT_CAPTURE_ISSUE_GENERIC")
 
 
 def _evidence_summary_text(

@@ -1,21 +1,25 @@
-"""Report-document composition from semantic report facts."""
+"""Canonical report-document context composition from prepared report facts."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from vibesensor.domain import Finding, LocationIntensitySummary, SuitabilityCheck, TestRun
-from vibesensor.report_i18n import human_source
+from vibesensor.report_i18n import human_source, normalize_lang
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.reporting import PreparedReportFacts
+from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
+    NextStep,
+    PatternEvidence,
     RankedCandidateRow,
+    ReportDocumentContext,
     TopologyIntensityRow,
     VerdictPageData,
 )
+from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.report_diagnostics import (
     check_state,
@@ -42,29 +46,174 @@ from vibesensor.shared.report_presentation import (
     uses_shared_overlap_wording,
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
+from vibesensor.shared.time_utils import (
+    format_timestamp_in_recorded_timezone,
+    format_utc_timestamp,
+    utc_now_iso,
+)
 from vibesensor.shared.types.json_types import JsonValue
 from vibesensor.use_cases.history.report_observation_matrix import (
     build_sensor_observation_matrix_rows,
 )
 
-__all__ = ["ReportDocumentComposition", "compose_report_document"]
+from ._candidate_resolver import PrimaryCandidateContext, resolve_primary_report_candidate
+from ._card_builder import build_system_cards
+from .measurements import _measurement_rows
+from .narrative_summaries import _proof_summary_text
+from .pattern_evidence import build_pattern_evidence
+from .peak_table import build_peak_rows
+from .report_sections import build_data_trust, build_next_steps
+from .sections import _build_appendix_c_data, _build_appendix_d_data, _build_timeline_graph_data
+
+__all__ = ["compose_report_document_context"]
 
 
 @dataclass(frozen=True, slots=True)
-class ReportDocumentComposition:
-    """Document-facing verdict and appendix content composed from report facts."""
+class _ReportDocumentSections:
+    """Document-facing sections composed before final ReportDocument mapping."""
 
     verdict_page: VerdictPageData
     appendix_a: AppendixAData
     appendix_b: AppendixBData
 
 
-def compose_report_document(
+def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocumentContext:
+    """Compose the full immutable ReportDocumentContext from prepared report input."""
+
+    lang = str(normalize_lang(prepared.language))
+
+    def tr(key: str, **kw: JsonValue) -> str:
+        return str(_tr(lang, key, **kw))
+
+    test_run = prepared.domain_test_run
+    report_facts = prepared.report_facts
+    run_facts = report_facts.run
+    sensor_facts = report_facts.sensor
+    decision_facts = report_facts.decision
+    prepared_findings = report_facts.findings
+    sections = _compose_report_document_sections(
+        aggregate=test_run,
+        report_facts=report_facts,
+        lang=lang,
+    )
+    primary = resolve_primary_report_candidate(
+        aggregate=test_run,
+        facts=decision_facts.primary_candidate,
+        tr=tr,
+        lang=lang,
+    )
+    data_trust = tuple(
+        build_data_trust(
+            suitability_checks=decision_facts.suitability_checks,
+            warnings=decision_facts.warnings,
+            lang=lang,
+            tr=tr,
+        )
+    )
+    proof_summary = _proof_summary_text(
+        test_run,
+        primary,
+        report_facts,
+        runner_up_corner=sections.appendix_b.runner_up_corner,
+        tr=tr,
+    )
+    return ReportDocumentContext(
+        title=tr("REPORT_FOOTER_TITLE"),
+        run_datetime=_report_date_text(run_facts),
+        run_id=run_facts.run_id,
+        duration_text=run_facts.duration_text,
+        start_time_utc=format_utc_timestamp(run_facts.start_time_utc),
+        end_time_utc=format_utc_timestamp(run_facts.end_time_utc),
+        sample_rate_hz=run_facts.sample_rate_hz,
+        tire_spec_text=run_facts.tire_spec_text,
+        sample_count=run_facts.sample_count,
+        sensor_count=primary.sensor_count,
+        sensor_locations=tuple(sensor_facts.active_locations),
+        sensor_model=run_facts.sensor_model,
+        firmware_version=run_facts.firmware_version,
+        car_name=run_facts.car_name,
+        car_type=run_facts.car_type,
+        observed=_observed_signature(primary, tr=tr),
+        system_cards=tuple(
+            build_system_cards(
+                test_run,
+                primary,
+                lang,
+                tr,
+            )
+        ),
+        next_steps=_resolve_next_steps(
+            primary=primary,
+            report_facts=report_facts,
+            appendix_a=sections.appendix_a,
+            lang=lang,
+            tr=tr,
+        ),
+        data_trust=data_trust,
+        pattern_evidence=build_pattern_evidence(
+            aggregate=test_run,
+            origin=run_facts.origin,
+            primary=primary,
+            lang=lang,
+            tr=tr,
+        ),
+        peak_rows=tuple(
+            build_peak_rows(
+                run_facts.peak_table_rows,
+                findings=list(prepared_findings.all_findings),
+                lang=lang,
+                tr=tr,
+            )
+        ),
+        language=lang,
+        certainty_tier_key=primary.tier,
+        findings=prepared_findings.all_findings,
+        top_causes=prepared_findings.top_causes,
+        sensor_intensity_by_location=tuple(sensor_facts.active_intensity),
+        location_hotspot_rows=tuple(sensor_facts.location_hotspot_rows),
+        verdict_page=replace(
+            sections.verdict_page,
+            proof_summary=proof_summary,
+            timeline_graph=_build_timeline_graph_data(
+                report_facts,
+                duration_s=run_facts.duration_s,
+            ),
+        ),
+        appendix_a=sections.appendix_a,
+        appendix_b=sections.appendix_b,
+        appendix_c=_build_appendix_c_data(
+            primary=primary,
+            aggregate=test_run,
+            measurements=_measurement_rows(
+                run_facts,
+                aggregate=test_run,
+                tr=tr,
+            ),
+            report_facts=report_facts,
+            speed_window_label=sections.verdict_page.speed_window_label,
+            proof_caveat=sections.verdict_page.proof_caveat,
+            data_trust=list(data_trust),
+            tr=tr,
+        ),
+        appendix_d=_build_appendix_d_data(
+            date_str=_report_date_text(run_facts),
+            run_id=run_facts.run_id,
+            tire_spec_text=run_facts.tire_spec_text,
+            sensor_model=run_facts.sensor_model,
+            firmware_version=run_facts.firmware_version,
+            sample_count=run_facts.sample_count,
+            sample_rate_hz=run_facts.sample_rate_hz,
+            tr=tr,
+        ),
+    )
+
+
+def _compose_report_document_sections(
     *,
     aggregate: TestRun,
     report_facts: PreparedReportFacts,
     lang: str,
-) -> ReportDocumentComposition:
+) -> _ReportDocumentSections:
     """Build presentation-specific report sections from prepared semantic facts."""
 
     def tr(key: str, **kw: JsonValue) -> str:
@@ -126,7 +275,7 @@ def compose_report_document(
         warnings=decision_facts.warnings,
         tr=tr,
     )
-    return ReportDocumentComposition(
+    return _ReportDocumentSections(
         verdict_page=_build_verdict_page_data(
             aggregate=aggregate,
             primary_candidate_facts=decision_facts.primary_candidate,
@@ -167,6 +316,56 @@ def compose_report_document(
             tr=tr,
         ),
     )
+
+
+def _resolve_next_steps(
+    *,
+    primary: PrimaryCandidateContext,
+    report_facts: PreparedReportFacts,
+    appendix_a: AppendixAData,
+    lang: str,
+    tr: Callable[..., str],
+) -> tuple[NextStep, ...]:
+    recapture_mode = report_facts.decision.action_status_key == "recapture_before_acting"
+    if recapture_mode:
+        return tuple(NextStep(action=action) for action in appendix_a.capture_changes)
+    return tuple(
+        build_next_steps(
+            recommended_actions=report_facts.decision.recommended_actions,
+            primary_source=primary.primary_source,
+            primary_location=primary.primary_location,
+            tier=primary.tier,
+            cert_reason=primary.certainty_reason or tr("REPORT_CAPTURE_ISSUE_GENERIC"),
+            recapture_mode=recapture_mode,
+            lang=lang,
+            tr=tr,
+        )
+    )
+
+
+def _observed_signature(
+    primary: PrimaryCandidateContext,
+    *,
+    tr: Callable[..., str],
+) -> PatternEvidence:
+    return PatternEvidence(
+        primary_system=primary.primary_system,
+        strongest_location=display_location(primary.primary_location, tr=tr),
+        speed_band=primary.primary_speed,
+        strength_label=primary.strength_text,
+        strength_peak_db=primary.strength_db,
+        certainty_label=primary.certainty_label_text,
+        certainty_pct=primary.certainty_pct,
+        certainty_reason=primary.certainty_reason,
+    )
+
+
+def _report_date_text(run_facts: ReportRunFacts) -> str:
+    report_date = run_facts.report_date or utc_now_iso()
+    return format_timestamp_in_recorded_timezone(
+        report_date,
+        run_facts.recorded_utc_offset_seconds,
+    ) or str(report_date)
 
 
 def _build_verdict_page_data(
