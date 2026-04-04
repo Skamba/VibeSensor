@@ -17,13 +17,13 @@ from vibesensor.report_i18n import tr
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
+from vibesensor.shared.report_presentation import order_label_human
 from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
 from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics.location_scoring import weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.statistics import compute_run_timing
-from vibesensor.use_cases.history.report_document.presentation import order_label_human
 from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 
 

@@ -126,10 +126,8 @@ def test_speed_profile_used_by_confidence_assessment() -> None:
     """
     from tests._paths import SERVER_ROOT
 
-    strength_labels_path = (
-        SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "report_document" / "presentation.py"
-    )
-    source = strength_labels_path.read_text()
+    report_presentation_path = SERVER_ROOT / "vibesensor" / "shared" / "report_presentation.py"
+    source = report_presentation_path.read_text()
     assert "certainty_label" not in source, (
         "certainty_label was deleted; ConfidenceAssessment.assess() is the replacement"
     )
