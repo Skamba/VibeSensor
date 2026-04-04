@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from vibesensor.adapters.obd.admin_helper import (
-    BluetoothObdAdminHelper,
+from vibesensor.adapters.obd.admin_device_parsing import (
     parse_bluetooth_device_info,
     parse_bluetooth_scan_events,
 )
+from vibesensor.adapters.obd.admin_helper import BluetoothObdAdminHelper
 
 
 def test_parse_bluetooth_device_info_prefers_local_name_over_mac_alias() -> None:

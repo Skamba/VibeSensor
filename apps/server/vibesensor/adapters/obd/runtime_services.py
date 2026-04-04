@@ -10,7 +10,6 @@ from vibesensor.adapters.obd.admin_client import ObdAdminClient
 from vibesensor.adapters.obd.admin_runtime import ObdAdminRuntime
 from vibesensor.adapters.obd.connection_runtime import ObdConnectionRuntime
 from vibesensor.adapters.obd.elm327 import Elm327Session
-from vibesensor.adapters.obd.runtime_admin_state import ObdRuntimeAdminState
 from vibesensor.adapters.obd.runtime_connection_control import ObdRuntimeConnectionControl
 from vibesensor.adapters.obd.runtime_connection_observation import (
     ObdRuntimeConnectionObservation,
@@ -60,14 +59,13 @@ def build_obd_runtime(
     )
     connection_control = ObdRuntimeConnectionControl(store=store)
     connection_observation = ObdRuntimeConnectionObservation(store=store)
-    admin_state = ObdRuntimeAdminState(store=store)
     return ObdRuntimeServices(
         facts=ObdRuntimeFacts(store=store),
         projection=ObdRuntimeProjection(store=store),
         control=ObdRuntimeSettings(store=store),
         admin=ObdAdminRuntime(
             admin_client=resolved_admin_client,
-            admin_state=admin_state,
+            store=store,
         ),
         connection_control=connection_control,
         runner=ObdConnectionRuntime(
