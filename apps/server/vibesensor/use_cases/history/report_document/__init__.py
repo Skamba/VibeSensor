@@ -19,21 +19,20 @@ from ._candidate_resolver import (
 )
 from ._card_builder import build_system_cards, humanize_signatures
 from .builder import ReportDocumentBuilder, build_report_document, build_report_document_data
-from .composition import ReportDocumentComposition, compose_report_document
+from .composition import compose_report_document_context
 
 __all__ = [
     "PreparedReportInput",
     "PrimaryCandidateContext",
     "Report",
     "ReportDocumentBuilder",
-    "ReportDocumentComposition",
     "ReportDocument",
     "ReportDocumentContext",
     "build_system_cards",
     "humanize_signatures",
     "build_report_document",
     "build_report_document_data",
-    "compose_report_document",
+    "compose_report_document_context",
     "prepare_persisted_report_input",
     "prepare_report_input",
     "resolve_primary_report_candidate",
