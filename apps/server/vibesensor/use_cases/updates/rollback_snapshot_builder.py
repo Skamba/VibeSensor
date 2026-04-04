@@ -97,7 +97,7 @@ class RollbackSnapshotBuilder:
                 f"Local rollback wheel build skipped: {package_dir / 'pyproject.toml'} not found",
             )
             return None
-        rc, _, stderr = await self._commands.run(
+        result = await self._commands.run(
             [
                 venv_python,
                 "-m",
@@ -113,10 +113,11 @@ class RollbackSnapshotBuilder:
             timeout=60,
             sudo=False,
         )
-        if rc != 0:
+        if result.returncode != 0:
             self._status.log(
                 "Local rollback wheel build failed "
-                f"(exit {rc}); falling back to package-index download: {stderr}",
+                f"(exit {result.returncode}); falling back to package-index download: "
+                f"{result.stderr}",
             )
             return None
         return self._select_staged_rollback_wheel(
@@ -132,7 +133,7 @@ class RollbackSnapshotBuilder:
         stage_dir: Path,
         venv_python: str,
     ) -> Path | None:
-        rc, _, stderr = await self._commands.run(
+        result = await self._commands.run(
             [
                 venv_python,
                 "-m",
@@ -148,9 +149,10 @@ class RollbackSnapshotBuilder:
             timeout=60,
             sudo=False,
         )
-        if rc != 0:
+        if result.returncode != 0:
             self._status.log(
-                f"Package-index rollback download failed (exit {rc}): {stderr}",
+                f"Package-index rollback download failed (exit {result.returncode}): "
+                f"{result.stderr}",
             )
             return None
         return self._select_staged_rollback_wheel(

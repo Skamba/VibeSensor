@@ -11,6 +11,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateTransport,
     UpdateValidationConfig,
 )
+from vibesensor.use_cases.updates.runner import CommandExecutionResult
 from vibesensor.use_cases.updates.validation import validate_prerequisites
 
 
@@ -23,7 +24,7 @@ def _mock_which(name: str) -> str | None:
 class _Commands:
     async def run(self, args, *, timeout, phase, sudo=False, env=None):
         del args, timeout, phase, sudo, env
-        return (0, "", "")
+        return CommandExecutionResult(returncode=0, stdout="", stderr="")
 
 
 @pytest.mark.asyncio

@@ -27,13 +27,13 @@ class UpdateHotspotRecovery:
         """Stop the hotspot before attempting an uplink connection."""
 
         self._status.log("Stopping hotspot...")
-        rc, _, _ = await self._commands.run(
+        result = await self._commands.run(
             ["nmcli", "connection", "down", self._config.ap_con_name],
             phase="stopping_hotspot",
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
-        if rc != 0:
+        if result.returncode != 0:
             self._status.log("Hotspot down returned non-zero; may already be inactive")
         return True
 
@@ -58,16 +58,18 @@ class UpdateHotspotRecovery:
 
         await self.cleanup_uplink()
         for attempt in range(1, self._config.hotspot_restore_retries + 1):
-            rc, _, _ = await self._commands.run(
+            result = await self._commands.run(
                 ["nmcli", "connection", "up", self._config.ap_con_name],
                 phase="restore",
                 timeout=self._config.nmcli_timeout_s,
                 sudo=True,
             )
-            if rc == 0:
+            if result.returncode == 0:
                 self._status.log(f"Hotspot restored on attempt {attempt}")
                 return True
-            self._status.log(f"Hotspot restore attempt {attempt} failed (rc={rc})")
+            self._status.log(
+                f"Hotspot restore attempt {attempt} failed (rc={result.returncode})",
+            )
             if attempt < self._config.hotspot_restore_retries:
                 await asyncio.sleep(self._config.hotspot_restore_delay_s)
         self._status.add_issue(

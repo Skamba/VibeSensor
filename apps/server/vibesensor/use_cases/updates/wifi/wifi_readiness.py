@@ -29,10 +29,9 @@ class UpdateWifiReadiness:
     async def bring_uplink_up(self, ssid: str) -> None:
         """Bring the prepared uplink connection up, retrying on scan lag."""
 
-        rc = 1
-        stderr = ""
+        connect_result = None
         for attempt in range(1, self._config.uplink_connect_retries + 1):
-            rc, _, stderr = await self._commands.run(
+            connect_result = await self._commands.run(
                 [
                     "nmcli",
                     "--wait",
@@ -45,9 +44,9 @@ class UpdateWifiReadiness:
                 timeout=float(self._config.uplink_connect_wait_s + 10),
                 sudo=True,
             )
-            if rc == 0:
+            if connect_result.returncode == 0:
                 return
-            if "No network with SSID" not in (stderr or ""):
+            if "No network with SSID" not in (connect_result.stderr or ""):
                 break
             self._status.log(
                 f"SSID '{ssid}' not found on connect attempt {attempt}; rescanning and retrying",
@@ -74,7 +73,7 @@ class UpdateWifiReadiness:
         raise UpdateTransportStepError(
             phase=UpdatePhase.connecting_wifi,
             message=f"Failed to connect to Wi-Fi '{ssid}'",
-            detail=stderr,
+            detail="" if connect_result is None else connect_result.stderr,
         )
 
     async def wait_for_dns_ready(
@@ -104,16 +103,18 @@ class UpdateWifiReadiness:
         ]
         while True:
             attempt += 1
-            rc, stdout, stderr = await self._commands.run(
+            probe_result = await self._commands.run(
                 probe_cmd,
                 phase=str(phase),
                 timeout=5,
                 sudo=False,
             )
-            if rc == 0:
+            if probe_result.returncode == 0:
                 self._status.log(f"DNS probe succeeded on attempt {attempt}")
                 return
-            last_error = (stderr or stdout or f"exit {rc}").strip()
+            last_error = (
+                probe_result.stderr or probe_result.stdout or f"exit {probe_result.returncode}"
+            ).strip()
             if time.monotonic() >= deadline:
                 break
             await asyncio.sleep(self._config.dns_retry_interval_s)

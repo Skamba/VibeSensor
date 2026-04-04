@@ -21,7 +21,11 @@ from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
-from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
+from vibesensor.use_cases.updates.runner import (
+    CommandRunner,
+    UpdateCommandExecutor,
+    UpdateStatusCommandReporter,
+)
 from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRefresher
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
 from vibesensor.use_cases.updates.status import (
@@ -168,7 +172,10 @@ def _build_command_executor(
     runner: CommandRunner,
     status: UpdateStatusTracker,
 ) -> UpdateCommandExecutor:
-    return UpdateCommandExecutor(runner=runner, status=status)
+    return UpdateCommandExecutor(
+        runner=runner,
+        reporter=UpdateStatusCommandReporter(status=status),
+    )
 
 
 def _build_transport_sessions(

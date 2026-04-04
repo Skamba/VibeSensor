@@ -6,13 +6,16 @@ import pytest
 from test_support.update_status import build_update_status_harness
 
 from vibesensor.use_cases.updates.restart_scheduler import UpdateRestartScheduler
+from vibesensor.use_cases.updates.runner import CommandExecutionResult
 
 
 @pytest.mark.asyncio
 async def test_schedule_uses_systemd_run_when_available(tmp_path) -> None:
     status = build_update_status_harness(tmp_path / "state.json")
     commands = MagicMock()
-    commands.run = AsyncMock(return_value=(0, "", ""))
+    commands.run = AsyncMock(
+        return_value=CommandExecutionResult(returncode=0, stdout="", stderr=""),
+    )
     scheduler = UpdateRestartScheduler(
         commands=commands,
         status=status,
@@ -28,7 +31,12 @@ async def test_schedule_uses_systemd_run_when_available(tmp_path) -> None:
 async def test_schedule_falls_back_to_direct_systemctl_restart(tmp_path) -> None:
     status = build_update_status_harness(tmp_path / "state.json")
     commands = MagicMock()
-    commands.run = AsyncMock(side_effect=[(1, "", "boom"), (0, "", "")])
+    commands.run = AsyncMock(
+        side_effect=[
+            CommandExecutionResult(returncode=1, stdout="", stderr="boom"),
+            CommandExecutionResult(returncode=0, stdout="", stderr=""),
+        ],
+    )
     scheduler = UpdateRestartScheduler(
         commands=commands,
         status=status,

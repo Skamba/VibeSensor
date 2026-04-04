@@ -61,7 +61,7 @@ class UpdateUplinkProvisioner:
     async def _validate_open_network(self, ssid: str) -> None:
         """Reject blank-password attempts when the scanned SSID is secured."""
 
-        rc, stdout, _ = await self._commands.run(
+        scan_result = await self._commands.run(
             [
                 "nmcli",
                 "-t",
@@ -79,9 +79,9 @@ class UpdateUplinkProvisioner:
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
-        if rc != 0:
+        if scan_result.returncode != 0:
             return
-        security_modes = ssid_security_modes(stdout, ssid)
+        security_modes = ssid_security_modes(scan_result.stdout, ssid)
         if not security_modes:
             return
         raise UpdateTransportStepError(
@@ -93,15 +93,15 @@ class UpdateUplinkProvisioner:
     async def _delete_existing_uplink_connections(self) -> None:
         """Remove any stale transient uplink profiles before recreating them."""
 
-        rc, stdout, _ = await self._commands.run(
+        connection_list = await self._commands.run(
             ["nmcli", "-t", "-f", "UUID,NAME", "connection", "show"],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
-        if rc != 0:
+        if connection_list.returncode != 0:
             return
-        for line in stdout.splitlines():
+        for line in connection_list.stdout.splitlines():
             if not line:
                 continue
             uuid, _, name = line.partition(":")
@@ -117,7 +117,7 @@ class UpdateUplinkProvisioner:
     async def _create_uplink_connection(self, ssid: str) -> None:
         """Create a new transient uplink profile for the requested SSID."""
 
-        rc, _, stderr = await self._commands.run(
+        create_result = await self._commands.run(
             [
                 "nmcli",
                 "connection",
@@ -137,18 +137,18 @@ class UpdateUplinkProvisioner:
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
-        if rc == 0:
+        if create_result.returncode == 0:
             return
         raise UpdateTransportStepError(
             phase=UpdatePhase.connecting_wifi,
             message="Failed to create uplink connection",
-            detail=stderr,
+            detail=create_result.stderr,
         )
 
     async def _configure_uplink_connection(self) -> None:
         """Apply the non-secret updater defaults to the uplink profile."""
 
-        rc, _, stderr = await self._commands.run(
+        configure_result = await self._commands.run(
             [
                 "nmcli",
                 "connection",
@@ -169,19 +169,19 @@ class UpdateUplinkProvisioner:
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
-        if rc == 0:
+        if configure_result.returncode == 0:
             return
         await self._delete_uplink_connection()
         raise UpdateTransportStepError(
             phase=UpdatePhase.connecting_wifi,
             message="Failed to configure uplink",
-            detail=stderr,
+            detail=configure_result.stderr,
         )
 
     async def _apply_wifi_password(self, password: str) -> None:
         """Apply WPA-PSK credentials to the transient uplink profile."""
 
-        rc, _, stderr = await self._commands.run(
+        password_result = await self._commands.run(
             [
                 "nmcli",
                 "connection",
@@ -196,13 +196,13 @@ class UpdateUplinkProvisioner:
             timeout=self._config.nmcli_timeout_s,
             sudo=True,
         )
-        if rc == 0:
+        if password_result.returncode == 0:
             return
         await self._delete_uplink_connection()
         raise UpdateTransportStepError(
             phase=UpdatePhase.connecting_wifi,
             message="Failed to set Wi-Fi credentials",
-            detail=stderr,
+            detail=password_result.stderr,
         )
 
     async def _delete_uplink_connection(self) -> None:

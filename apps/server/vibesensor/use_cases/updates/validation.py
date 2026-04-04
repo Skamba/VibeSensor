@@ -75,13 +75,13 @@ async def validate_prerequisites(
             raise _fail_validation(status, f"Required tool not found: {tool}")
 
     if os.geteuid() != 0:
-        rc, _, _ = await commands.run(
+        result = await commands.run(
             build_privilege_probe_args(),
             phase="validating",
             timeout=5,
             sudo=True,
         )
-        if rc != 0:
+        if result.returncode != 0:
             raise _fail_validation(
                 status,
                 "Insufficient privileges",

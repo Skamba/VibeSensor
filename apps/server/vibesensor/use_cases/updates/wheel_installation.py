@@ -93,7 +93,7 @@ class WheelInstallExecutor:
         if not await self._validate_dependency_compatibility(wheel_path, venv_python=venv_python):
             return WheelInstallResult(succeeded=False)
 
-        rc, _, stderr = await self._commands.run(
+        install_result = await self._commands.run(
             [
                 venv_python,
                 "-m",
@@ -107,11 +107,11 @@ class WheelInstallExecutor:
             timeout=self._reinstall_timeout_s,
             sudo=False,
         )
-        if rc != 0:
+        if install_result.returncode != 0:
             self._status.add_issue(
                 "installing",
-                f"Wheel install failed (exit {rc})",
-                stderr,
+                f"Wheel install failed (exit {install_result.returncode})",
+                install_result.stderr,
             )
             self._status.mark_failed()
             return WheelInstallResult(succeeded=False, rollback_required=True)
@@ -131,7 +131,7 @@ class WheelInstallExecutor:
         """Install a previously captured rollback wheel without recursive fallback."""
 
         venv_python = reinstall_python_executable(self._repo)
-        rc, _, stderr = await self._commands.run(
+        rollback_result = await self._commands.run(
             [
                 venv_python,
                 "-m",
@@ -145,11 +145,11 @@ class WheelInstallExecutor:
             timeout=self._reinstall_timeout_s,
             sudo=False,
         )
-        if rc != 0:
+        if rollback_result.returncode != 0:
             self._status.add_issue(
                 "installing",
-                f"Rollback install failed (exit {rc})",
-                stderr,
+                f"Rollback install failed (exit {rollback_result.returncode})",
+                rollback_result.stderr,
             )
             return False
 
@@ -196,7 +196,7 @@ class WheelInstallExecutor:
         if not metadata.requires_python and not requirement_names:
             return True
 
-        rc, stdout, stderr = await self._commands.run(
+        dependency_check = await self._commands.run(
             [
                 venv_python,
                 "-c",
@@ -207,21 +207,24 @@ class WheelInstallExecutor:
             timeout=30,
             sudo=False,
         )
-        if rc != 0:
+        if dependency_check.returncode != 0:
             self._status.add_issue(
                 "installing",
-                f"Could not validate wheel dependency compatibility (exit {rc})",
-                stderr or stdout,
+                (
+                    "Could not validate wheel dependency compatibility "
+                    f"(exit {dependency_check.returncode})"
+                ),
+                dependency_check.stderr or dependency_check.stdout,
             )
             self._status.mark_failed()
             return False
         try:
-            snapshot = json.loads(stdout or "{}")
+            snapshot = json.loads(dependency_check.stdout or "{}")
         except json.JSONDecodeError:
             self._status.add_issue(
                 "installing",
                 "Could not parse wheel dependency compatibility results",
-                stdout or stderr,
+                dependency_check.stdout or dependency_check.stderr,
             )
             self._status.mark_failed()
             return False
@@ -235,7 +238,7 @@ class WheelInstallExecutor:
             self._status.add_issue(
                 "installing",
                 "Could not parse wheel dependency compatibility results",
-                stdout or stderr,
+                dependency_check.stdout or dependency_check.stderr,
             )
             self._status.mark_failed()
             return False
@@ -273,18 +276,18 @@ class WheelInstallExecutor:
         fatal: bool,
     ) -> str | None:
         venv_python = reinstall_python_executable(self._repo)
-        rc, stdout, stderr = await self._commands.run(
+        version_check = await self._commands.run(
             [venv_python, "-c", "from vibesensor import __version__; print(__version__)"],
             phase="installing",
             timeout=30,
             sudo=False,
         )
-        if rc == 0:
-            return stdout.strip()
-        message = f"{failure_message_prefix} (exit {rc})"
+        if version_check.returncode == 0:
+            return version_check.stdout.strip()
+        message = f"{failure_message_prefix} (exit {version_check.returncode})"
         if fatal:
-            self._status.add_issue("installing", message, stderr)
+            self._status.add_issue("installing", message, version_check.stderr)
             self._status.mark_failed()
         else:
-            self._status.add_issue("installing", message, stderr)
+            self._status.add_issue("installing", message, version_check.stderr)
         return None
