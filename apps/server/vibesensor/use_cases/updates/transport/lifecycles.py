@@ -18,8 +18,8 @@ class PreparedUpdateTransport(Protocol):
 
     transport: UpdateTransport
 
-    async def complete_success(self, message: str) -> None:
-        """Finalize a successful update for this transport."""
+    async def complete_success(self) -> None:
+        """Finalize a successful update for this transport before status reporting."""
         ...
 
     async def cleanup_after_update(self) -> None:

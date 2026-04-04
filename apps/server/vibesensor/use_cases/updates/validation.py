@@ -23,12 +23,10 @@ MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
 
 
 def _fail_validation(
-    status: UpdateStatusTracker,
     message: str,
     detail: str = "",
 ) -> UpdatePreparationError:
-    status.fail("validating", message, detail)
-    return UpdatePreparationError(message)
+    return UpdatePreparationError(message, phase="validating", detail=detail)
 
 
 def _probe_rollback_dir(rollback_dir: Path) -> None:
@@ -72,7 +70,7 @@ async def validate_prerequisites(
         status.log("Starting update using existing USB internet")
     for tool in ("nmcli", "python3"):
         if not shutil.which(tool):
-            raise _fail_validation(status, f"Required tool not found: {tool}")
+            raise _fail_validation(f"Required tool not found: {tool}")
 
     if os.geteuid() != 0:
         result = await commands.run(
@@ -83,7 +81,6 @@ async def validate_prerequisites(
         )
         if result.returncode != 0:
             raise _fail_validation(
-                status,
                 "Insufficient privileges",
                 (
                     "Cannot run updater privileged commands non-interactively. "
@@ -95,7 +92,6 @@ async def validate_prerequisites(
         _probe_rollback_dir(config.rollback_dir)
     except OSError as exc:
         raise _fail_validation(
-            status,
             "Rollback directory is not writable",
             f"{config.rollback_dir}: {exc}",
         ) from exc
@@ -107,12 +103,10 @@ async def validate_prerequisites(
             free_mb = free_bytes // (1024 * 1024)
             min_mb = config.min_free_disk_bytes // (1024 * 1024)
             raise _fail_validation(
-                status,
                 f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
             )
     except OSError as exc:
         raise _fail_validation(
-            status,
             "Could not verify free disk space",
             str(exc),
         ) from exc

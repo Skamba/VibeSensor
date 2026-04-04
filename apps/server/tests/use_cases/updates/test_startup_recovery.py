@@ -15,18 +15,22 @@ def _make_recovery(
     MagicMock,
     AsyncMock,
     MagicMock,
+    MagicMock,
 ]:
     status_tracker = MagicMock()
     status_tracker.status = status
+    reporter = MagicMock()
     transport_coordinator = MagicMock()
     transport_coordinator.recover_interrupted = AsyncMock()
     return (
         UpdateStartupRecoveryCoordinator(
             status=status_tracker,
+            reporter=reporter,
             transport_coordinator=transport_coordinator,
         ),
         transport_coordinator,
         transport_coordinator.recover_interrupted,
+        reporter,
         status_tracker,
     )
 
@@ -37,6 +41,7 @@ async def test_recover_skips_non_running_jobs() -> None:
         coordinator,
         transport_coordinator,
         recover,
+        reporter,
         status_tracker,
     ) = _make_recovery(UpdateJobStatus(state=UpdateState.idle))
 
@@ -44,7 +49,7 @@ async def test_recover_skips_non_running_jobs() -> None:
 
     transport_coordinator.recover_interrupted.assert_not_called()
     recover.assert_not_awaited()
-    status_tracker.mark_interrupted.assert_not_called()
+    reporter.mark_interrupted.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -53,6 +58,7 @@ async def test_recover_marks_interrupted_and_recovers_transport() -> None:
         coordinator,
         transport_coordinator,
         recover,
+        reporter,
         status_tracker,
     ) = _make_recovery(
         UpdateJobStatus(
@@ -69,4 +75,4 @@ async def test_recover_marks_interrupted_and_recovers_transport() -> None:
             transport=UpdateTransport.usb_internet,
         ),
     )
-    status_tracker.mark_interrupted.assert_called_once_with("Update interrupted by server restart")
+    reporter.mark_interrupted.assert_called_once_with("Update interrupted by server restart")

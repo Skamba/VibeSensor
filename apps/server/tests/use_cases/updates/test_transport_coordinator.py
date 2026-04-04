@@ -42,8 +42,8 @@ class _RecordingTransportLifecycle:
     async def abort_preparation(self) -> None:
         self.calls.append("abort")
 
-    async def complete_success(self, message: str) -> None:
-        self.calls.append(f"success:{message}")
+    async def complete_success(self) -> None:
+        self.calls.append("success")
 
     async def cleanup_after_update(self) -> None:
         self.calls.append("cleanup")
@@ -66,7 +66,6 @@ def _coordinator(
             usb_internet=usb_internet
             or _RecordingTransportLifecycle(transport=UpdateTransport.usb_internet),
         ),
-        status=status,
         logger=MagicMock(),
     ), status
 

@@ -64,12 +64,14 @@ def _build_manager(
 ) -> tuple[UpdateManager, AsyncMock]:
     tracker = MagicMock()
     tracker.status = status or UpdateJobStatus()
+    reporter = MagicMock()
     runtime = SimpleNamespace(
         recover=AsyncMock(),
     )
     return (
         UpdateManager(
             status=tracker,
+            reporter=reporter,
             workflow=MagicMock(),
             startup_recovery=runtime,
             usb_status_service=MagicMock(),

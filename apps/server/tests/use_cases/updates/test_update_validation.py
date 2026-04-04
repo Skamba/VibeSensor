@@ -40,7 +40,10 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
         _raise_probe,
     )
 
-    with pytest.raises(UpdatePreparationError, match="Rollback directory is not writable"):
+    with pytest.raises(
+        UpdatePreparationError,
+        match="Rollback directory is not writable",
+    ) as excinfo:
         await validate_prerequisites(
             commands=_Commands(),
             status=tracker,
@@ -55,7 +58,7 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
             ),
         )
 
-    assert tracker.status.state.value == "failed"
-    assert any(
-        issue.message == "Rollback directory is not writable" for issue in tracker.status.issues
-    )
+    assert excinfo.value.phase == "validating"
+    assert "readonly" in excinfo.value.detail
+    assert tracker.status.state.value == "idle"
+    assert tracker.status.issues == []

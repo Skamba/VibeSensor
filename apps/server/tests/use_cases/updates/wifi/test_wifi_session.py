@@ -155,19 +155,21 @@ async def test_cleanup_after_update_collects_cleanup_diagnostics(tmp_path: Path)
 
 
 @pytest.mark.asyncio
-async def test_complete_success_restores_hotspot_and_marks_success(tmp_path: Path) -> None:
+async def test_complete_success_restores_hotspot_without_marking_terminal_state(
+    tmp_path: Path,
+) -> None:
     session, _runner, tracker = _build_session(tmp_path)
     _seed_checked_phase(tracker)
 
-    await session.complete_success("Update completed successfully")
+    await session.complete_success()
 
-    assert tracker.status.state == UpdateState.success
-    assert tracker.status.phase == UpdatePhase.done
-    assert any("Update completed successfully" in line for line in tracker.status.log_tail)
+    assert tracker.status.state == UpdateState.running
+    assert tracker.status.phase == UpdatePhase.restoring_hotspot
+    assert any("Restoring hotspot..." in line for line in tracker.status.log_tail)
 
 
 @pytest.mark.asyncio
-async def test_complete_success_marks_failed_when_restore_fails(tmp_path: Path) -> None:
+async def test_complete_success_raises_when_restore_fails(tmp_path: Path) -> None:
     session, runner, tracker = _build_session(
         tmp_path,
         restore_retries=1,
@@ -177,11 +179,14 @@ async def test_complete_success_marks_failed_when_restore_fails(tmp_path: Path) 
     runner.set_response("connection up VibeSensor-AP", 10, "", "failed")
 
     with pytest.raises(UpdateTransportError, match="Failed to restore hotspot after update"):
-        await session.complete_success("Update completed successfully")
+        await session.complete_success()
 
-    assert tracker.status.state == UpdateState.failed
+    assert tracker.status.state == UpdateState.running
+    assert tracker.status.phase == UpdatePhase.restoring_hotspot
     assert any(
-        issue.message == "Failed to restore hotspot after update" for issue in tracker.status.issues
+        issue.phase == UpdatePhase.restoring_hotspot.value
+        and issue.message == "Failed to restore hotspot after retries"
+        for issue in tracker.status.issues
     )
 
 

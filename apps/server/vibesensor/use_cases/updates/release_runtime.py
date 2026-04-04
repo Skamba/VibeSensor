@@ -51,7 +51,6 @@ def build_update_release_runtime(
     )
     return UpdateReleaseRuntime(
         resolver=ServerReleaseResolver(
-            status=status,
             rollback_dir=config.rollback_dir,
         ),
         stager=ServerReleaseStager(

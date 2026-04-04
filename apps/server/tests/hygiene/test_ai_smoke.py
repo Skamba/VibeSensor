@@ -233,7 +233,7 @@ def test_smoke_server_pyproject_includes_esptool_for_esp_flash() -> None:
     assert "vibesensor.use_cases.updates.firmware.firmware_cache:cache_info_cli" in text, (
         "Firmware cache info CLI entry point must target the firmware package module"
     )
-    assert "vibesensor.use_cases.updates.releases.release_fetcher:fetch_latest_wheel_cli" in text, (
+    assert "vibesensor.use_cases.updates.releases.cli:fetch_latest_wheel_cli" in text, (
         "Server release fetch CLI entry point must target the releases package module"
     )
 

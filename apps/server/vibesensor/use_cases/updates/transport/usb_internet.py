@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.exceptions import UpdateTransportError
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdatePhase,
@@ -86,13 +85,7 @@ class UpdateUsbInternetSession:
 
     async def prepare(self, _request: UpdateRequest) -> UpdateUsbInternetSession:
         self._status.transition(UpdatePhase.connecting_usb_internet)
-        try:
-            await self.ensure_uplink_ready()
-        except UpdateTransportStepError as exc:
-            self._status.fail(exc.phase, str(exc), exc.detail)
-            raise UpdateTransportError(
-                "Failed to prepare the USB internet uplink for update"
-            ) from exc
+        await self.ensure_uplink_ready()
         return self
 
     async def abort_preparation(self) -> None:
@@ -115,8 +108,8 @@ class UpdateUsbInternetSession:
             failure_message="USB internet detected, but internet/DNS is not ready",
         )
 
-    async def complete_success(self, message: str) -> None:
-        self._status.mark_success(message)
+    async def complete_success(self) -> None:
+        return None
 
     async def cleanup_after_update(self) -> None:
         pass

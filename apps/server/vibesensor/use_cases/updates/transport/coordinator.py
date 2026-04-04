@@ -6,7 +6,6 @@ import logging
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateTransportError
 from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.lifecycles import (
     PreparedUpdateTransport,
     UpdateTransportLifecycle,
@@ -19,17 +18,15 @@ __all__ = ["UpdateTransportCoordinator"]
 class UpdateTransportCoordinator:
     """Resolve transport lifecycles, return prepared handles, and wrap cleanup errors."""
 
-    __slots__ = ("_lifecycles", "_logger", "_status")
+    __slots__ = ("_lifecycles", "_logger")
 
     def __init__(
         self,
         *,
         lifecycles: UpdateTransportLifecycles,
-        status: UpdateStatusTracker,
         logger: logging.Logger,
     ) -> None:
         self._lifecycles = lifecycles
-        self._status = status
         self._logger = logger
 
     async def prepare(self, request: UpdateRequest) -> PreparedUpdateTransport:
@@ -52,9 +49,12 @@ class UpdateTransportCoordinator:
         try:
             await prepared_transport.cleanup_after_update()
         except (OSError, UpdateError) as exc:
-            self._status.fail("cleanup", "Transport cleanup failed", str(exc))
             self._logger.exception("update: transport cleanup error")
-            raise UpdateCleanupError(f"Transport cleanup failed: {exc}") from exc
+            raise UpdateCleanupError(
+                "Transport cleanup failed",
+                phase="cleanup",
+                detail=str(exc),
+            ) from exc
 
     async def recover_interrupted(self, status: UpdateJobStatus) -> None:
         await self._lifecycles.for_status(status).recover_interrupted_update(status)

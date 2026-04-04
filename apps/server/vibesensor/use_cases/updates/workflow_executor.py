@@ -15,7 +15,6 @@ from vibesensor.use_cases.updates.run_models import (
     PlannedUpdateRun,
     RefreshFirmwarePlan,
 )
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 __all__ = ["UpdateWorkflowExecutor"]
 
@@ -23,13 +22,7 @@ __all__ = ["UpdateWorkflowExecutor"]
 class UpdateWorkflowExecutor:
     """Execute a prepared release plan while delegating side effects to focused collaborators."""
 
-    __slots__ = (
-        "_completion",
-        "_deployment",
-        "_firmware_refresher",
-        "_stager",
-        "_status",
-    )
+    __slots__ = ("_completion", "_deployment", "_firmware_refresher", "_stager")
 
     def __init__(
         self,
@@ -38,13 +31,11 @@ class UpdateWorkflowExecutor:
         stager: ServerReleaseStager,
         deployment: UpdateReleaseDeploymentCoordinator,
         firmware_refresher: FirmwareRefresher,
-        status: UpdateStatusTracker,
     ) -> None:
         self._completion = completion
         self._stager = stager
         self._deployment = deployment
         self._firmware_refresher = firmware_refresher
-        self._status = status
 
     async def execute(
         self,
@@ -71,13 +62,12 @@ class UpdateWorkflowExecutor:
             pinned_tag=plan.latest_tag,
         )
         if not refresh_result.succeeded:
-            self._status.fail(
-                refresh_result.phase,
+            raise UpdateReleaseError(
                 refresh_result.message,
-                refresh_result.detail,
+                phase=refresh_result.phase,
+                detail=refresh_result.detail,
                 log_message="ESP firmware refresh failed; refresh-only update did not complete",
             )
-            raise UpdateReleaseError(refresh_result.message)
         await self._completion.complete_success(
             workflow.prepared.prepared_transport,
             message="No server update needed; ESP firmware checked",
