@@ -141,7 +141,8 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     speed_services = build_speed_source_services(
         gps_monitor=gps_monitor,
         obd_observation=obd_runtime.observation,
-        obd_admin=obd_runtime.admin,
+        obd_device_admin=obd_admin_client,
+        obd_status_refresher=obd_runtime.admin,
         obd_control=obd_runtime.control,
     )
     settings_store = SettingsStore(db=history.settings_snapshot_repository)
