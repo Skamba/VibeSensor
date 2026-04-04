@@ -45,7 +45,7 @@ class UpdateWorkflow:
         active_error = sys.exc_info()[1]
         try:
             await self.transport_coordinator.cleanup_after_update(
-                None if prepared is None else prepared.transport_session,
+                None if prepared is None else prepared.prepared_transport,
             )
             await self.runtime_details_refresher.refresh()
         except asyncio.CancelledError:

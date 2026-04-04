@@ -100,12 +100,12 @@ async def test_workflow_stops_after_preparation_failure_and_finalizes_without_tr
 
 
 @pytest.mark.asyncio
-async def test_workflow_finalizes_the_prepared_transport_session() -> None:
+async def test_workflow_finalizes_the_prepared_transport_handle() -> None:
     workflow, prepare, plan, execute, cleanup, refresh = _build_workflow()
-    transport_session = AsyncMock()
+    prepared_transport = AsyncMock()
     prepared = PreparedUpdateRun(
         current_version="2026.4.3",
-        transport_session=transport_session,
+        prepared_transport=prepared_transport,
     )
     planned = object()
     prepare.return_value = prepared
@@ -116,17 +116,17 @@ async def test_workflow_finalizes_the_prepared_transport_session() -> None:
     prepare.assert_awaited_once()
     plan.assert_awaited_once_with(prepared)
     execute.assert_awaited_once_with(planned)
-    cleanup.assert_awaited_once_with(transport_session)
+    cleanup.assert_awaited_once_with(prepared_transport)
     refresh.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio
 async def test_workflow_stops_after_release_failure_and_finalizes_prepared_transport() -> None:
     workflow, prepare, plan, execute, cleanup, refresh = _build_workflow()
-    transport_session = AsyncMock()
+    prepared_transport = AsyncMock()
     prepare.return_value = PreparedUpdateRun(
         current_version="2026.4.3",
-        transport_session=transport_session,
+        prepared_transport=prepared_transport,
     )
     plan.side_effect = UpdateReleaseError("release check failed")
 
@@ -134,17 +134,17 @@ async def test_workflow_stops_after_release_failure_and_finalizes_prepared_trans
         await workflow.run(request=_wifi_request())
 
     execute.assert_not_awaited()
-    cleanup.assert_awaited_once_with(transport_session)
+    cleanup.assert_awaited_once_with(prepared_transport)
     refresh.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio
 async def test_workflow_adds_cleanup_note_to_workflow_bug() -> None:
     workflow, prepare, plan, execute, cleanup, refresh = _build_workflow()
-    transport_session = AsyncMock()
+    prepared_transport = AsyncMock()
     prepare.return_value = PreparedUpdateRun(
         current_version="2026.4.3",
-        transport_session=transport_session,
+        prepared_transport=prepared_transport,
     )
     plan.return_value = object()
     execute.side_effect = RuntimeError("workflow bug")
@@ -158,7 +158,7 @@ async def test_workflow_adds_cleanup_note_to_workflow_bug() -> None:
 
 
 @pytest.mark.asyncio
-async def test_startup_recover_uses_persisted_transport_session() -> None:
+async def test_startup_recover_uses_persisted_transport() -> None:
     manager, recover = _build_manager(
         status=UpdateJobStatus(
             state=UpdateState.running,

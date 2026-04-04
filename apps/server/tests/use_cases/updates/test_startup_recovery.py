@@ -48,7 +48,7 @@ async def test_recover_skips_non_running_jobs() -> None:
 
 
 @pytest.mark.asyncio
-async def test_recover_marks_interrupted_and_recovers_transport_session() -> None:
+async def test_recover_marks_interrupted_and_recovers_transport() -> None:
     (
         coordinator,
         transport_coordinator,

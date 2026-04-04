@@ -16,12 +16,12 @@ The updater now has one explicit run-scoped workflow boundary per concern:
 - ``release_planner.py`` interprets discovered release state into one canonical
   execution plan tied to that prepared session.
 - ``workflow_executor.py`` owns plan execution plus success/restart finalization
-  against the explicit prepared transport.
+  against the explicit prepared transport handle.
 - ``runtime_refresh.py`` refreshes runtime/build metadata after workflow exit.
-- ``transport_sessions.py`` defines the transport-session interface and request/
-  status-based resolution boundary.
-- ``transport_coordinator.py`` owns prepare/cleanup/recovery/success transport
-  lifecycle sequencing against those transport sessions.
+- ``transport_lifecycles.py`` defines the prepared-transport and lifecycle
+  interfaces plus request/status-based transport resolution.
+- ``transport_coordinator.py`` owns lifecycle selection, prepare-time rollback,
+  cleanup error wrapping, and interrupted-run recovery.
 - ``usb_status.py`` inspects Linux/NetworkManager state for USB internet readiness.
 - ``usb_transport.py`` owns USB transport execution behavior.
 - ``wifi/`` owns Wi-Fi-specific transport execution.

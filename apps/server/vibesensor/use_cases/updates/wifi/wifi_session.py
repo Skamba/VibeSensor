@@ -105,7 +105,7 @@ class UpdateWifiSession:
     def _record_transport_failure(self, exc: UpdateTransportStepError) -> None:
         self._status.fail(exc.phase, str(exc), exc.detail)
 
-    async def prepare(self, request: UpdateRequest) -> None:
+    async def prepare(self, request: UpdateRequest) -> UpdateWifiSession:
         """Prepare the updater's Wi-Fi transport before release work begins."""
 
         self._status.transition(UpdatePhase.stopping_hotspot)
@@ -118,6 +118,7 @@ class UpdateWifiSession:
         except UpdateTransportStepError as exc:
             self._record_transport_failure(exc)
             raise UpdateTransportError("Failed to prepare the Wi-Fi uplink for update") from exc
+        return self
 
     async def abort_preparation(self) -> None:
         """Rollback partial Wi-Fi setup after transport preparation fails."""
@@ -132,7 +133,7 @@ class UpdateWifiSession:
 
         return await self._hotspot.restore_hotspot()
 
-    async def recover_interrupted_update(self) -> None:
+    async def recover_interrupted_update(self, _status: UpdateJobStatus) -> None:
         """Recover updater Wi-Fi state after a previously interrupted job."""
 
         await self._cleanup_and_restore_hotspot(

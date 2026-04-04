@@ -15,8 +15,7 @@ from vibesensor.use_cases.updates.run_models import (
     RefreshFirmwarePlan,
 )
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
-from vibesensor.use_cases.updates.transport_sessions import ManagedUpdateTransportSession
+from vibesensor.use_cases.updates.transport_lifecycles import PreparedUpdateTransport
 
 __all__ = ["UpdateWorkflowExecutor"]
 
@@ -30,7 +29,6 @@ class UpdateWorkflowExecutor:
         "_restart_scheduler",
         "_stager",
         "_status",
-        "_transport_coordinator",
     )
 
     def __init__(
@@ -41,14 +39,12 @@ class UpdateWorkflowExecutor:
         firmware_refresher: FirmwareRefresher,
         restart_scheduler: UpdateRestartScheduler,
         status: UpdateStatusTracker,
-        transport_coordinator: UpdateTransportCoordinator,
     ) -> None:
         self._stager = stager
         self._deployment = deployment
         self._firmware_refresher = firmware_refresher
         self._restart_scheduler = restart_scheduler
         self._status = status
-        self._transport_coordinator = transport_coordinator
 
     async def execute(
         self,
@@ -73,7 +69,7 @@ class UpdateWorkflowExecutor:
     ) -> UpdateExecutionOutcome:
         await self._firmware_refresher.refresh_esp_firmware(pinned_tag=plan.latest_tag)
         await self._complete_success(
-            workflow.prepared.transport_session,
+            workflow.prepared.prepared_transport,
             message="No server update needed; ESP firmware checked",
         )
         return UpdateExecutionOutcome.refresh_only
@@ -87,21 +83,18 @@ class UpdateWorkflowExecutor:
         async with self._stager.stage(plan.release) as staged_release:
             await self._deployment.deploy(staged_release)
         await self._complete_success(
-            workflow.prepared.transport_session,
+            workflow.prepared.prepared_transport,
             message="Update completed successfully",
         )
         return UpdateExecutionOutcome.installed
 
     async def _complete_success(
         self,
-        transport_session: ManagedUpdateTransportSession,
+        prepared_transport: PreparedUpdateTransport,
         *,
         message: str,
     ) -> None:
-        await self._transport_coordinator.complete_success(
-            transport_session,
-            message=message,
-        )
+        await prepared_transport.complete_success(message)
         if await self._restart_scheduler.schedule():
             return
         self._status.add_issue(
