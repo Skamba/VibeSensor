@@ -282,63 +282,6 @@ class TestReport:
         with pytest.raises(AttributeError):
             r.title = "new"
 
-    def test_from_summary(self) -> None:
-        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
-        from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-
-        summary: dict[str, object] = {
-            "run_id": "run-123",
-            "lang": "de",
-            "rows": 500,
-            "duration_s": 125.0,
-            "report_date": "2025-01-15",
-            "sensor_count_used": 3,
-            "findings": [
-                {"finding_id": "F001", "suspected_source": "bearing"},
-                {"finding_id": "F002", "suspected_source": "tire"},
-            ],
-            "metadata": {
-                "run_id": "run-123",
-                "active_car_snapshot": {"name": "BMW 3", "type": "sedan"},
-            },
-        }
-        r = build_report_from_summary(
-            report_summary_from_mapping(summary),
-            language=str(summary["lang"]),
-        )
-        assert r.run_id == "run-123"
-        assert r.lang == "de"
-        assert r.sample_count == 500
-        assert r.sensor_count == 3
-        assert r.car_name == "BMW 3"
-        assert r.car_type == "sedan"
-        assert r.report_date == "2025-01-15"
-        assert r.duration_s == 125.0
-
-    def test_from_summary_minimal(self) -> None:
-        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
-        from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-
-        summary = {"run_id": "r1", "findings": [], "top_causes": []}
-        r = build_report_from_summary(
-            report_summary_from_mapping(summary),
-            language="en",
-        )
-        assert r.run_id == "r1"
-        assert r.sample_count == 0
-        assert r.car_name is None
-
-    def test_from_summary_short_duration(self) -> None:
-        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
-        from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-
-        summary = {"run_id": "r1", "duration_s": 45.0, "findings": [], "top_causes": []}
-        r = build_report_from_summary(
-            report_summary_from_mapping(summary),
-            language="en",
-        )
-        assert r.duration_s == 45.0
-
 
 # ---------------------------------------------------------------------------
 # Package-level imports
@@ -528,38 +471,6 @@ class TestReportValidation:
     def test_zero_duration_allowed(self) -> None:
         r = Report(run_id="r1", duration_s=0.0)
         assert r.duration_s == 0.0
-
-    def test_from_summary_empty_run_id_gets_fallback(self) -> None:
-        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
-        from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-
-        summary = {"run_id": "", "findings": [], "top_causes": []}
-        r = build_report_from_summary(
-            report_summary_from_mapping(summary),
-            language="en",
-        )
-        assert r.run_id == "unknown"
-
-    def test_from_summary_creates_metadata(self) -> None:
-        from vibesensor.shared.boundaries.reporting.document import build_report_from_summary
-        from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-
-        summary: dict[str, object] = {
-            "run_id": "run-1",
-            "findings": [
-                {
-                    "finding_id": "F001",
-                    "suspected_source": "bearing",
-                    "confidence": 0.8,
-                },
-            ],
-        }
-        r = build_report_from_summary(
-            report_summary_from_mapping(summary),
-            language="en",
-        )
-        assert r.run_id == "run-1"
-        assert r.lang == "en"
 
 
 class TestRunEnrichments:

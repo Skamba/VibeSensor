@@ -5,11 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
+from vibesensor.shared.boundaries.reporting import FindingPresentation
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
     AppendixCData,
-    FindingPresentation,
     NextStep,
     ReportDocument,
     ReportLabelValueRow,

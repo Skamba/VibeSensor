@@ -6,9 +6,10 @@ from dataclasses import dataclass
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
+from ..findings import FindingPresentation
 from .appendices import AppendixAData, AppendixBData, AppendixCData, AppendixDData
 from .panels import DataTrustItem, NextStep, PatternEvidence, SystemFindingCard
-from .sections import FindingPresentation, PeakRow, VerdictPageData
+from .sections import PeakRow, VerdictPageData
 
 __all__ = ["ReportDocumentContext"]
 
