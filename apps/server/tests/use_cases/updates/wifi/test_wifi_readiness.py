@@ -27,10 +27,10 @@ def _build_readiness(
         dns_ready_min_wait_s=dns_ready_min_wait_s,
         dns_retry_interval_s=dns_retry_interval_s,
     )
-    commands = UpdateCommandExecutor(runner=runner, recorder=status.recorder)
+    commands = UpdateCommandExecutor(runner=runner, status=status.tracker)
     readiness = UpdateWifiReadiness(
         commands=commands,
-        status_recorder=status.recorder,
+        status=status.tracker,
         config=config,
     )
     return readiness, runner

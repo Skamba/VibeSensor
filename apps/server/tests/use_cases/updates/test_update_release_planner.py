@@ -37,8 +37,7 @@ def _planner(tmp_path: Path) -> tuple[UpdateReleasePlanner, UpdateStatusHarness,
     resolver.resolve = AsyncMock()
     return (
         UpdateReleasePlanner(
-            status_controller=status.controller,
-            status_recorder=status.recorder,
+            status=tracker,
             resolver=resolver,
         ),
         tracker,

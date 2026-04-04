@@ -10,7 +10,7 @@ from vibesensor.use_cases.updates.models import (
     UsbInternetStatus,
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
@@ -61,7 +61,7 @@ def _classify_usb_internet(status: UsbInternetStatus) -> UsbInternetReadinessDec
 class UpdateUsbInternetSession:
     """Validate and reuse an already-present USB internet uplink for updates."""
 
-    __slots__ = ("_readiness", "_status_controller", "_status_recorder", "_status_service")
+    __slots__ = ("_readiness", "_status", "_status_service")
     transport = UpdateTransport.usb_internet
 
     def __init__(
@@ -69,27 +69,24 @@ class UpdateUsbInternetSession:
         *,
         status_service: UsbInternetStatusReader,
         commands: UpdateCommandExecutor,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
         config: UpdateWifiConfig,
     ) -> None:
         self._status_service = status_service
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
+        self._status = status
         self._readiness = UpdateWifiReadiness(
             commands=commands,
-            status_recorder=status_recorder,
+            status=status,
             config=config,
         )
 
     async def prepare(self, request: UpdateRequest) -> None:
         del request
-        self._status_controller.transition(UpdatePhase.connecting_usb_internet)
+        self._status.transition(UpdatePhase.connecting_usb_internet)
         try:
             await self.ensure_uplink_ready()
         except UpdateTransportStepError as exc:
-            self._status_recorder.add_issue(exc.phase, str(exc), exc.detail)
-            self._status_controller.mark_failed()
+            self._status.fail(exc.phase, str(exc), exc.detail)
             raise UpdateTransportError(
                 "Failed to prepare the USB internet uplink for update"
             ) from exc
@@ -105,9 +102,9 @@ class UpdateUsbInternetSession:
                 message=str(decision.issue_message),
                 detail=decision.detail,
             )
-        self._status_controller.set_uplink_interface(decision.interface_name)
+        self._status.set_uplink_interface(decision.interface_name)
         if decision.log_message is not None:
-            self._status_recorder.log(decision.log_message)
+            self._status.log(decision.log_message)
         await self._readiness.wait_for_dns_ready(
             phase=UpdatePhase.connecting_usb_internet,
             readiness_subject="USB internet",
@@ -115,9 +112,7 @@ class UpdateUsbInternetSession:
         )
 
     async def complete_success(self, message: str) -> None:
-        self._status_controller.mark_success()
-        self._status_recorder.log(message)
-        self._status_controller.persist()
+        self._status.mark_success(message)
 
     async def cleanup_after_update(self) -> None:
         return None

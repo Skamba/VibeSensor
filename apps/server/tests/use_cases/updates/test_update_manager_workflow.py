@@ -43,8 +43,8 @@ def _build_workflow() -> tuple[
     release_planner.plan = AsyncMock()
     workflow_executor = MagicMock()
     workflow_executor.execute = AsyncMock()
-    transport_cleanup = MagicMock()
-    transport_cleanup.run = AsyncMock()
+    transport_coordinator = MagicMock()
+    transport_coordinator.cleanup_after_update = AsyncMock()
     runtime_details_refresher = MagicMock()
     runtime_details_refresher.refresh = AsyncMock()
     return (
@@ -52,13 +52,13 @@ def _build_workflow() -> tuple[
             preparation=preparation,
             release_planner=release_planner,
             workflow_executor=workflow_executor,
-            transport_cleanup=transport_cleanup,
+            transport_coordinator=transport_coordinator,
             runtime_details_refresher=runtime_details_refresher,
         ),
         preparation.prepare,
         release_planner.plan,
         workflow_executor.execute,
-        transport_cleanup.run,
+        transport_coordinator.cleanup_after_update,
         runtime_details_refresher.refresh,
     )
 
@@ -70,16 +70,18 @@ def _build_manager(
     status_services = MagicMock()
     status_services.status = status or UpdateJobStatus()
     runtime = SimpleNamespace(
-        status_services=status_services,
-        workflow=MagicMock(),
-        startup_recovery=SimpleNamespace(recover=AsyncMock()),
-        workflow_runner=SimpleNamespace(
-            job_task=None,
-            cancel=MagicMock(return_value=True),
-            start=MagicMock(),
-        ),
+        recover=AsyncMock(),
     )
-    return UpdateManager(runtime=runtime), runtime.startup_recovery.recover
+    return (
+        UpdateManager(
+            status_services=status_services,
+            workflow=MagicMock(),
+            startup_recovery=runtime,
+            usb_status_service=MagicMock(),
+            timeout_s=10.0,
+        ),
+        runtime.recover,
+    )
 
 
 @pytest.mark.asyncio

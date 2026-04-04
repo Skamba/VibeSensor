@@ -54,7 +54,6 @@ def _build_prepared_report_input(
         warnings=warnings,
     )
     return PreparedReportInput(
-        summary=summary,
         language=prepared_language,
         filename=filename or _default_report_filename(payload),
         domain_test_run=domain_test_run,

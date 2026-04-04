@@ -12,9 +12,8 @@ from vibesensor.adapters.http.dependencies import (
     TelemetryDeps,
     UpdateDeps,
 )
-from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdateTransport
-from vibesensor.use_cases.updates.runtime import build_update_manager_runtime
+from vibesensor.use_cases.updates.runtime import build_update_manager
 from vibesensor.use_cases.updates.status import UpdateStateStore
 
 
@@ -45,10 +44,8 @@ class TestUpdateApiEndpoints:
                 export_service=placeholder,
             ),
             updates=UpdateDeps(
-                update_manager=UpdateManager(
-                    runtime=build_update_manager_runtime(
-                        state_store=UpdateStateStore(tmp_path / "update_status.json"),
-                    ),
+                update_manager=build_update_manager(
+                    state_store=UpdateStateStore(tmp_path / "update_status.json"),
                 ),
                 esp_flash_manager=MagicMock(),
             ),

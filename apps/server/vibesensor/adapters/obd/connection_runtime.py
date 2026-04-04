@@ -14,7 +14,7 @@ from vibesensor.adapters.obd.connection_plan import (
     ObdConnectionStepKind,
     plan_connection_step,
 )
-from vibesensor.adapters.obd.elm327 import Elm327Session
+from vibesensor.adapters.obd.elm327 import Elm327Session, ObdTransportError
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.polling import ObdPollResult, execute_poll_plan
 from vibesensor.adapters.obd.runtime_controller import ObdRuntimeController
@@ -91,7 +91,7 @@ class ObdConnectionRuntime:
                             step.mac_address,
                             step.configured_name,
                         )
-                    except (OperationalError, RuntimeError) as exc:
+                    except (OperationalError, OSError, ObdTransportError) as exc:
                         self._runtime.set_connection_state(
                             "disconnected",
                             error=str(exc),
@@ -167,7 +167,10 @@ class ObdConnectionRuntime:
         session.connect(mac_address, info.rfcomm_channel)
         try:
             session.initialize()
-        except (OSError, OperationalError, RuntimeError):
+        except (OSError, OperationalError, ObdTransportError):
+            session.close()
+            raise
+        except Exception:
             session.close()
             raise
         device = replace(

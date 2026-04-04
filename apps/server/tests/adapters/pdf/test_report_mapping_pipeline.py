@@ -68,12 +68,14 @@ def test_prepare_report_input_returns_mapping_ready_boundary_types() -> None:
     assert not hasattr(prepared, "presentation")
 
 
-def test_prepare_report_input_exposes_canonical_summary_boundary() -> None:
+def test_prepare_report_input_exposes_canonical_report_facts() -> None:
     prepared = _prepared_report_input()
 
-    assert prepared.summary.run_id == "prepared-contract"
-    assert prepared.summary.sample_count == 32
-    assert prepared.summary.sensor_count == 2
+    assert prepared.report_facts.run.run_id == "prepared-contract"
+    assert prepared.report_facts.run.sample_count == 32
+    assert prepared.report_facts.run.sensor_count == 2
+    assert len(prepared.report_facts.findings.all_findings) == 1
+    assert len(prepared.report_facts.findings.top_causes) == 1
 
 
 def test_prepare_report_input_rejects_non_projectable_payload() -> None:

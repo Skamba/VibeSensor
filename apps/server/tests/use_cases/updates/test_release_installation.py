@@ -25,44 +25,43 @@ def _make_coordinator() -> tuple[
     UpdateReleaseInstallationCoordinator,
     MagicMock,
     MagicMock,
-    MagicMock,
 ]:
     installer = MagicMock()
     installer.snapshot_for_rollback = AsyncMock()
     installer.install_release = AsyncMock()
     installer.rollback = AsyncMock()
-    status_controller = MagicMock()
-    status_recorder = MagicMock()
+    status = MagicMock()
     return (
         UpdateReleaseInstallationCoordinator(
             installer=installer,
-            status_controller=status_controller,
-            status_recorder=status_recorder,
+            status=status,
         ),
         installer,
-        status_controller,
-        status_recorder,
+        status,
     )
 
 
 @pytest.mark.asyncio
 async def test_install_aborts_before_live_mutation_when_snapshot_fails() -> None:
-    coordinator, installer, status_controller, status_recorder = _make_coordinator()
+    coordinator, installer, status = _make_coordinator()
     installer.snapshot_for_rollback.return_value = False
 
     with pytest.raises(UpdateReleaseError, match="Rollback snapshot could not be created"):
         await coordinator.install(_staged_release())
 
-    status_controller.transition.assert_called_once_with(UpdatePhase.installing)
-    status_controller.mark_failed.assert_called_once_with()
+    status.transition.assert_called_once_with(UpdatePhase.installing)
+    status.fail.assert_called_once_with(
+        UpdatePhase.installing.value,
+        "Rollback snapshot could not be created",
+        "Install aborted before mutating the live environment",
+    )
     installer.install_release.assert_not_awaited()
     installer.rollback.assert_not_awaited()
-    status_recorder.add_issue.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_install_raises_plain_failure_without_rollback_for_non_mutating_rejection() -> None:
-    coordinator, installer, status_controller, status_recorder = _make_coordinator()
+    coordinator, installer, status = _make_coordinator()
     installer.snapshot_for_rollback.return_value = True
     installer.install_release.return_value = WheelInstallResult(
         succeeded=False,
@@ -73,13 +72,13 @@ async def test_install_raises_plain_failure_without_rollback_for_non_mutating_re
         await coordinator.install(_staged_release())
 
     installer.rollback.assert_not_awaited()
-    status_controller.mark_failed.assert_not_called()
-    status_recorder.log.assert_called_once_with("Installing update...")
+    status.fail.assert_not_called()
+    status.log.assert_any_call("Installing update...")
 
 
 @pytest.mark.asyncio
 async def test_install_attempts_rollback_after_mutating_failure() -> None:
-    coordinator, installer, _status_controller, status_recorder = _make_coordinator()
+    coordinator, installer, status = _make_coordinator()
     installer.snapshot_for_rollback.return_value = True
     installer.install_release.return_value = WheelInstallResult(
         succeeded=False,
@@ -94,4 +93,4 @@ async def test_install_attempts_rollback_after_mutating_failure() -> None:
         await coordinator.install(_staged_release())
 
     installer.rollback.assert_awaited_once_with()
-    status_recorder.log.assert_any_call("Attempting rollback...")
+    status.log.assert_any_call("Attempting rollback...")

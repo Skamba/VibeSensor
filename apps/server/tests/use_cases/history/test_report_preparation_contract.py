@@ -30,7 +30,6 @@ def test_prepare_report_input_prefers_connected_sensor_locations() -> None:
             "run_suitability": [],
         },
     )
-    assert prepared.summary.active_sensor_locations == ("rear-right",)
     assert prepared.report_facts.sensor.active_locations == ("rear-right",)
     assert not hasattr(prepared, "renderer_payload")
 
@@ -128,7 +127,7 @@ def test_prepare_persisted_report_input_does_not_roundtrip_through_summary(
 
     prepared = prepare_persisted_report_input(analysis)
 
-    assert prepared.summary.run_id == "persisted-run"
+    assert prepared.report_facts.run.run_id == "persisted-run"
     assert [warning.code for warning in prepared.report_facts.decision.warnings] == [
         "PERSISTED_ONLY"
     ]
@@ -197,5 +196,5 @@ def test_prepare_report_input_tolerates_invalid_count_strings() -> None:
         }
     )
 
-    assert prepared.summary.sample_count == 0
-    assert prepared.summary.sensor_count == 0
+    assert prepared.report_facts.run.sample_count == 0
+    assert prepared.report_facts.run.sensor_count == 0

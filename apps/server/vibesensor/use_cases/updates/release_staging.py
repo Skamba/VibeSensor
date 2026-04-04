@@ -19,7 +19,7 @@ from vibesensor.use_cases.updates.releases import factory as release_fetcher_fac
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
-    from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+    from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,27 +33,25 @@ class StagedServerRelease:
 class ServerReleaseStager:
     """Own temporary staging, download, and verification of server wheels."""
 
-    __slots__ = ("_rollback_dir", "_status_controller", "_status_recorder")
+    __slots__ = ("_rollback_dir", "_status")
 
     def __init__(
         self,
         *,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
+        status: UpdateStatusTracker,
         rollback_dir: Path,
     ) -> None:
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
+        self._status = status
         self._rollback_dir = rollback_dir
 
     @asynccontextmanager
     async def stage(self, release: ReleaseInfo) -> AsyncIterator[StagedServerRelease]:
-        self._status_controller.transition(UpdatePhase.downloading)
-        self._status_recorder.log(f"Downloading release {release.tag}...")
+        self._status.transition(UpdatePhase.downloading)
+        self._status.log(f"Downloading release {release.tag}...")
         staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
         try:
             wheel_path = await self._download_release(release, staging_dir)
-            self._status_recorder.log(
+            self._status.log(
                 f"Downloaded {wheel_path.name} (sha256={getattr(release, 'sha256', '')})",
             )
             await self._verify_download(release, wheel_path)
@@ -80,8 +78,7 @@ class ServerReleaseStager:
         try:
             return await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
         except (OSError, ValueError) as exc:
-            self._status_recorder.add_issue("downloading", f"Failed to download release: {exc}")
-            self._status_controller.mark_failed()
+            self._status.fail("downloading", f"Failed to download release: {exc}")
             raise UpdateReleaseError(f"Failed to download release: {exc}") from exc
 
     async def _verify_download(self, release: ReleaseInfo, wheel_path: Path) -> None:
@@ -92,15 +89,14 @@ class ServerReleaseStager:
         actual_sha256 = await asyncio.to_thread(sha256_file, wheel_path)
         expected_sha256 = release.sha256.lower()
         if actual_sha256 == expected_sha256:
-            self._status_recorder.log(f"SHA-256 verified: {actual_sha256}")
+            self._status.log(f"SHA-256 verified: {actual_sha256}")
             return
-        self._status_recorder.add_issue(
+        self._status.fail(
             "downloading",
             "Downloaded wheel SHA-256 mismatch",
             f"expected={release.sha256} actual={actual_sha256}",
         )
-        self._status_controller.mark_failed()
-        self._status_recorder.log(
+        self._status.log(
             f"SHA-256 mismatch: expected {release.sha256} but got {actual_sha256}",
         )
         raise UpdateReleaseError("Downloaded wheel SHA-256 mismatch")

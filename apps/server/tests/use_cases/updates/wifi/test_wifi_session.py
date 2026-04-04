@@ -33,11 +33,10 @@ def _build_session(
         hotspot_restore_retries=restore_retries,
         hotspot_restore_delay_s=restore_delay_s,
     )
-    commands = UpdateCommandExecutor(runner=runner, recorder=status.recorder)
+    commands = UpdateCommandExecutor(runner=runner, status=status.tracker)
     session = UpdateWifiSession(
         commands=commands,
-        status_controller=status.controller,
-        status_recorder=status.recorder,
+        status=status.tracker,
         config=config,
     )
     return session, runner, status.tracker

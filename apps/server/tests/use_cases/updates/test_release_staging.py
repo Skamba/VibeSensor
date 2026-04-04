@@ -30,8 +30,7 @@ async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -
     tracker = status.tracker
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(
-        status_controller=status.controller,
-        status_recorder=status.recorder,
+        status=tracker,
         rollback_dir=tmp_path / "rollback",
     )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="")
@@ -71,8 +70,7 @@ async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> Non
     tracker = status.tracker
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(
-        status_controller=status.controller,
-        status_recorder=status.recorder,
+        status=tracker,
         rollback_dir=tmp_path / "rollback",
     )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="bad")

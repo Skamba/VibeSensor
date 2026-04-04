@@ -18,7 +18,7 @@ from vibesensor.use_cases.updates.wifi.wifi_uplink_setup import (
 def _build_uplink_provisioner(tmp_path: Path) -> tuple[UpdateUplinkProvisioner, FakeRunner]:
     runner = FakeRunner()
     status = build_update_status_harness(tmp_path / "state.json")
-    commands = UpdateCommandExecutor(runner=runner, recorder=status.recorder)
+    commands = UpdateCommandExecutor(runner=runner, status=status.tracker)
     provisioner = UpdateUplinkProvisioner(
         commands=commands,
         config=build_default_wifi_config(ap_con_name="VibeSensor-AP", wifi_ifname="wlan0"),
