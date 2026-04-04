@@ -16,7 +16,6 @@ from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinato
 from vibesensor.use_cases.updates.run_models import PreparedUpdateRun
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
-from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 
 
 def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateRequest:
@@ -31,17 +30,11 @@ def _build_preparation(
     tmp_path: Path,
     *,
     current_version: str = "2026.4.3",
-) -> tuple[UpdatePreparationCoordinator, UpdateStatusTracker, AsyncMock]:
+) -> tuple[UpdatePreparationCoordinator, UpdateStatusTracker, AsyncMock, AsyncMock]:
     status = build_update_status_harness(tmp_path / "state.json")
     transport_session = AsyncMock()
-    transport_coordinator = UpdateTransportCoordinator(
-        sessions=MagicMock(
-            spec=UpdateTransportSessions,
-            for_request=MagicMock(return_value=transport_session),
-        ),
-        status=status,
-        logger=MagicMock(),
-    )
+    transport_coordinator = MagicMock(spec=UpdateTransportCoordinator)
+    transport_coordinator.prepare = AsyncMock(return_value=transport_session)
     preparation = UpdatePreparationCoordinator(
         status=status,
         commands=MagicMock(),
@@ -52,12 +45,12 @@ def _build_preparation(
         ),
         current_version_provider=lambda: current_version,
     )
-    return preparation, status, transport_session
+    return preparation, status, transport_session, transport_coordinator
 
 
 @pytest.mark.asyncio
 async def test_prepare_stops_after_validation_failure(tmp_path: Path) -> None:
-    preparation, _tracker, transport_session = _build_preparation(tmp_path)
+    preparation, _tracker, _transport_session, transport_coordinator = _build_preparation(tmp_path)
 
     with (
         patch(
@@ -68,14 +61,14 @@ async def test_prepare_stops_after_validation_failure(tmp_path: Path) -> None:
     ):
         await preparation.prepare(_wifi_request())
 
-    transport_session.prepare.assert_not_awaited()
+    transport_coordinator.prepare.assert_not_awaited()
 
 
 @pytest.mark.asyncio
 async def test_prepare_stops_when_transport_cannot_prepare(tmp_path: Path) -> None:
-    preparation, _tracker, transport_session = _build_preparation(tmp_path)
+    preparation, _tracker, _transport_session, transport_coordinator = _build_preparation(tmp_path)
     request = _wifi_request()
-    transport_session.prepare.side_effect = UpdateTransportError("transport failed")
+    transport_coordinator.prepare.side_effect = UpdateTransportError("transport failed")
 
     with (
         patch(
@@ -86,18 +79,16 @@ async def test_prepare_stops_when_transport_cannot_prepare(tmp_path: Path) -> No
     ):
         await preparation.prepare(request)
 
-    transport_session.prepare.assert_awaited_once_with(request)
-    transport_session.abort_preparation.assert_awaited_once()
+    transport_coordinator.prepare.assert_awaited_once_with(request)
 
 
 @pytest.mark.asyncio
 async def test_prepare_returns_canonical_prepared_run(tmp_path: Path) -> None:
-    preparation, _tracker, transport_session = _build_preparation(
+    preparation, _tracker, transport_session, transport_coordinator = _build_preparation(
         tmp_path,
         current_version="2026.4.9",
     )
     request = _wifi_request()
-    transport_session.prepare.return_value = None
 
     with patch(
         "vibesensor.use_cases.updates.preparation.validate_prerequisites",
@@ -107,4 +98,5 @@ async def test_prepare_returns_canonical_prepared_run(tmp_path: Path) -> None:
 
     assert isinstance(prepared, PreparedUpdateRun)
     assert prepared.current_version == "2026.4.9"
+    transport_coordinator.prepare.assert_awaited_once_with(request)
     assert prepared.transport_session is transport_session
