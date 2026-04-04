@@ -17,22 +17,21 @@ def _make_recovery(
     MagicMock,
     MagicMock,
 ]:
-    tracker = MagicMock()
-    tracker.status = status
+    status_session = MagicMock()
+    status_session.status = status
     status_controller = MagicMock()
     status_recorder = MagicMock()
-    session = AsyncMock()
-    transport_sessions = MagicMock()
-    transport_sessions.for_status.return_value = session
+    transport_coordinator = MagicMock()
+    transport_coordinator.recover_interrupted = AsyncMock()
     return (
         UpdateStartupRecoveryCoordinator(
-            tracker=tracker,
+            status_session=status_session,
             status_controller=status_controller,
             status_recorder=status_recorder,
-            transport_sessions=transport_sessions,
+            transport_coordinator=transport_coordinator,
         ),
-        transport_sessions,
-        session.recover_interrupted_update,
+        transport_coordinator,
+        transport_coordinator.recover_interrupted,
         status_controller,
         status_recorder,
     )
@@ -40,13 +39,17 @@ def _make_recovery(
 
 @pytest.mark.asyncio
 async def test_recover_skips_non_running_jobs() -> None:
-    coordinator, transport_sessions, recover, status_controller, status_recorder = _make_recovery(
-        UpdateJobStatus(state=UpdateState.idle),
-    )
+    (
+        coordinator,
+        transport_coordinator,
+        recover,
+        status_controller,
+        status_recorder,
+    ) = _make_recovery(UpdateJobStatus(state=UpdateState.idle))
 
     await coordinator.recover()
 
-    transport_sessions.for_status.assert_not_called()
+    transport_coordinator.recover_interrupted.assert_not_called()
     recover.assert_not_awaited()
     status_controller.mark_interrupted.assert_not_called()
     status_recorder.add_issue.assert_not_called()
@@ -54,7 +57,13 @@ async def test_recover_skips_non_running_jobs() -> None:
 
 @pytest.mark.asyncio
 async def test_recover_marks_interrupted_and_recovers_transport_session() -> None:
-    coordinator, transport_sessions, recover, status_controller, status_recorder = _make_recovery(
+    (
+        coordinator,
+        transport_coordinator,
+        recover,
+        status_controller,
+        status_recorder,
+    ) = _make_recovery(
         UpdateJobStatus(
             state=UpdateState.running,
             transport=UpdateTransport.usb_internet,
@@ -63,8 +72,12 @@ async def test_recover_marks_interrupted_and_recovers_transport_session() -> Non
 
     await coordinator.recover()
 
-    transport_sessions.for_status.assert_called_once()
-    recover.assert_awaited_once_with()
+    transport_coordinator.recover_interrupted.assert_awaited_once_with(
+        UpdateJobStatus(
+            state=UpdateState.running,
+            transport=UpdateTransport.usb_internet,
+        ),
+    )
     status_recorder.add_issue.assert_called_once_with(
         "startup",
         "Update interrupted by server restart",

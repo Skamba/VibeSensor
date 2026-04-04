@@ -5,15 +5,14 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from test_support.update_status import build_update_status_harness
+from test_support.update_status import UpdateStatusHarness, build_update_status_harness
 
 from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateRequest, UpdateTransport
 from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
-def _seed_release_ready_state(tracker: UpdateStatusTracker) -> None:
+def _seed_release_ready_state(tracker: UpdateStatusHarness) -> None:
     tracker.start_job(
         UpdateRequest(
             transport=UpdateTransport.usb_internet,

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from vibesensor.domain import Finding, LocationIntensitySummary, RunCapture, TestRun
-from vibesensor.shared.boundaries.reporting.projection import (
-    resolve_primary_report_facts,
-    sensor_fallback_strength_db,
-)
+from vibesensor.shared.boundaries.reporting.projection import resolve_primary_report_facts
+from vibesensor.shared.boundaries.reporting.sensor_facts import sensor_fallback_strength_db
 
 
 def _make_test_run(

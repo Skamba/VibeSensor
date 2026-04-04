@@ -22,6 +22,7 @@ from vibesensor.use_cases.updates.firmware.firmware_bundle import dir_sha256
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
 from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
+from vibesensor.use_cases.updates.transport_coordinator import PreparedUpdateTransport
 from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 from vibesensor.use_cases.updates.workflow_runner import UpdateWorkflowContext
 
@@ -172,7 +173,10 @@ class TestUpdateManagerCancelledError:
                 prepare=AsyncMock(
                     return_value=PreparedUpdateWorkflow(
                         current_version="2026.4.3",
-                        transport_session=AsyncMock(),
+                        transport=PreparedUpdateTransport(
+                            request=MagicMock(),
+                            session=AsyncMock(),
+                        ),
                     )
                 )
             ),

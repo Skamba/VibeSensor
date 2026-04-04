@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
 from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolver
+from vibesensor.use_cases.updates.transport_coordinator import PreparedUpdateTransport
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
     from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
-    from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSession
 
 __all__ = [
     "InstallServerReleasePlan",
@@ -46,7 +46,7 @@ type ReleaseExecutionPlan = RefreshFirmwarePlan | InstallServerReleasePlan
 class PlannedUpdateWorkflow:
     """Release plan coupled to the already-prepared transport session."""
 
-    transport_session: UpdateTransportSession
+    transport: PreparedUpdateTransport
     execution_plan: ReleaseExecutionPlan
 
 
@@ -75,7 +75,7 @@ class UpdateReleasePlanner:
         if resolution.release is None:
             self._status_recorder.log(f"Already up-to-date (version={current_version})")
             return PlannedUpdateWorkflow(
-                transport_session=prepared.transport_session,
+                transport=prepared.transport,
                 execution_plan=RefreshFirmwarePlan(
                     current_version=current_version,
                     latest_tag=resolution.latest_tag,
@@ -86,7 +86,7 @@ class UpdateReleasePlanner:
             f"Update available: {current_version} → {resolution.release.version}",
         )
         return PlannedUpdateWorkflow(
-            transport_session=prepared.transport_session,
+            transport=prepared.transport,
             execution_plan=InstallServerReleasePlan(
                 current_version=current_version,
                 release=resolution.release,

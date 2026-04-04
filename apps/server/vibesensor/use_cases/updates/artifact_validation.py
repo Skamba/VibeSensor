@@ -177,7 +177,7 @@ def wheel_dependency_issues(
 
 
 class WheelArtifactValidator:
-    """Validate updater wheel artifacts and report failures through the status tracker."""
+    """Validate updater wheel artifacts through explicit status services."""
 
     __slots__ = ("_status_controller", "_status_recorder")
 

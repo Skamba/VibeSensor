@@ -134,11 +134,11 @@ def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
     summary = _summary()
     facts = _prepare_facts(summary)
 
-    assert facts.sensor_locations_active == ("front_left",)
-    assert [row.location for row in facts.active_sensor_intensity] == ["front_left"]
-    assert facts.sample_rate_hz == "400"
-    assert facts.sensor_model == "VS-1"
-    assert facts.firmware_version == "1.2.3"
+    assert facts.sensor.active_locations == ("front_left",)
+    assert [row.location for row in facts.sensor.active_intensity] == ["front_left"]
+    assert facts.run.sample_rate_hz == "400"
+    assert facts.run.sensor_model == "VS-1"
+    assert facts.run.firmware_version == "1.2.3"
 
 
 def test_prepare_report_facts_keeps_canonical_warning_models() -> None:
@@ -156,7 +156,7 @@ def test_prepare_report_facts_keeps_canonical_warning_models() -> None:
         ],
     )
 
-    assert [warning.code for warning in facts.warnings] == ["PERSISTED_ONLY"]
+    assert [warning.code for warning in facts.decision.warnings] == ["PERSISTED_ONLY"]
 
 
 def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
@@ -181,11 +181,11 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
     ]
     facts = _prepare_facts(summary)
 
-    assert len(facts.timeline_intervals) == 2
-    assert facts.timeline_intervals[0].phase == "cruise"
-    assert facts.timeline_intervals[0].speed_max_kmh == 62.0
-    assert facts.timeline_intervals[1].phase == "accel"
-    assert facts.timeline_intervals[1].has_fault_evidence is True
+    assert len(facts.run.timeline_intervals) == 2
+    assert facts.run.timeline_intervals[0].phase == "cruise"
+    assert facts.run.timeline_intervals[0].speed_max_kmh == 62.0
+    assert facts.run.timeline_intervals[1].phase == "accel"
+    assert facts.run.timeline_intervals[1].has_fault_evidence is True
 
 
 def test_compose_report_document_builds_workflow_document_sections() -> None:
@@ -213,21 +213,21 @@ def test_prepare_report_facts_keeps_weak_spatial_system_order_findings_on_cautio
 ) -> None:
     summary = _weak_spatial_order_summary(source=source, order_label=order_label)
     facts = _prepare_facts(summary)
-    primary = facts.primary_candidate_facts.domain_primary
+    primary = facts.decision.primary_candidate.domain_primary
 
     assert primary is not None
     assert primary.confidence_assessment is not None
     assert primary.confidence_assessment.tier == "B"
-    assert facts.location_confidence_key == "weak"
-    assert facts.action_status_key == "action_ready_caution"
+    assert facts.decision.location_confidence_key == "weak"
+    assert facts.decision.action_status_key == "action_ready_caution"
 
 
 def test_prepare_report_facts_keeps_weak_spatial_wheel_findings_on_recapture_path() -> None:
     summary = _weak_spatial_order_summary(source="wheel/tire", order_label="1x wheel order")
     facts = _prepare_facts(summary)
 
-    assert facts.location_confidence_key == "weak"
-    assert facts.action_status_key == "recapture_before_acting"
+    assert facts.decision.location_confidence_key == "weak"
+    assert facts.decision.action_status_key == "recapture_before_acting"
 
 
 def test_compose_report_document_builds_recapture_document_guidance() -> None:

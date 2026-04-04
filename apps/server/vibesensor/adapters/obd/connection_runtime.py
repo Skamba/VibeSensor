@@ -8,11 +8,16 @@ from collections.abc import Callable
 from dataclasses import replace
 
 from vibesensor.adapters.obd.admin_client import ObdAdminClient
+from vibesensor.adapters.obd.connection_plan import (
+    ObdConnectionLoopSnapshot,
+    ObdConnectionStep,
+    ObdConnectionStepKind,
+    plan_connection_step,
+)
 from vibesensor.adapters.obd.elm327 import Elm327Session
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.polling import ObdPollResult, execute_poll_plan
 from vibesensor.adapters.obd.runtime_controller import ObdRuntimeController
-from vibesensor.domain import SpeedSourceKind
 from vibesensor.shared.operational_errors import OperationalError, ServiceUnavailableError
 
 __all__ = ["ObdConnectionRuntime"]
@@ -54,34 +59,37 @@ class ObdConnectionRuntime:
         reconnect_delay = _INITIAL_RECONNECT_DELAY_S
         try:
             while True:
-                selected_source, configured_mac, configured_name = (
-                    self._runtime.configured_device_snapshot()
+                step = self._plan_loop_step(
+                    session=session,
+                    session_device_mac=session_device_mac,
                 )
-                if selected_source is not SpeedSourceKind.OBD2:
+                session, session_device_mac = await self._close_session_if_needed(
+                    session=session,
+                    session_device_mac=session_device_mac,
+                    close_session=step.close_session,
+                )
+                if step.kind is ObdConnectionStepKind.IDLE:
                     reconnect_delay = _INITIAL_RECONNECT_DELAY_S
-                    session, session_device_mac = await self._idle(session)
-                    await asyncio.sleep(_IDLE_POLL_S)
+                    await asyncio.sleep(step.sleep_s)
                     continue
-                if configured_mac is None:
+                if step.kind is ObdConnectionStepKind.MISSING_CONFIG:
                     self._runtime.set_connection_state(
                         "disconnected",
-                        error="No configured Bluetooth OBD adapter",
+                        error=step.error,
                     )
                     reconnect_delay = _INITIAL_RECONNECT_DELAY_S
-                    session, session_device_mac = await self._idle(session)
-                    await asyncio.sleep(_IDLE_POLL_S)
+                    await asyncio.sleep(step.sleep_s)
                     continue
-                if session is not None and session_device_mac != configured_mac:
-                    await asyncio.to_thread(session.close)
-                    session = None
-                    session_device_mac = None
-                if session is None:
+                if step.kind is ObdConnectionStepKind.REPLACE_SESSION:
+                    continue
+                if step.kind is ObdConnectionStepKind.CONNECT:
+                    assert step.mac_address is not None
                     self._runtime.set_connection_state("connecting", error=None)
                     try:
                         session, device = await asyncio.to_thread(
                             self._connect_blocking,
-                            configured_mac,
-                            configured_name,
+                            step.mac_address,
+                            step.configured_name,
                         )
                     except (OperationalError, RuntimeError) as exc:
                         self._runtime.set_connection_state(
@@ -97,9 +105,9 @@ class ObdConnectionRuntime:
                     self._runtime.apply_device_snapshot(device)
                     self._runtime.reset_poll_schedule()
                     self._runtime.set_connection_state("connected", error=None)
-                wait_s = self._runtime.next_wait_s()
-                if wait_s > 0:
-                    await asyncio.sleep(wait_s)
+                    continue
+                if step.kind is ObdConnectionStepKind.WAIT:
+                    await asyncio.sleep(step.sleep_s)
                     continue
                 assert session is not None
                 poll_result = await asyncio.to_thread(self._poll_cycle_blocking, session)
@@ -119,6 +127,29 @@ class ObdConnectionRuntime:
             if session is not None:
                 await asyncio.to_thread(session.close)
             raise
+
+    def _plan_loop_step(
+        self,
+        *,
+        session: Elm327Session | None,
+        session_device_mac: str | None,
+    ) -> ObdConnectionStep:
+        (
+            selected_source,
+            configured_mac,
+            configured_name,
+        ) = self._runtime.configured_device_snapshot()
+        return plan_connection_step(
+            ObdConnectionLoopSnapshot(
+                selected_source=selected_source,
+                configured_mac=configured_mac,
+                configured_name=configured_name,
+                has_session=session is not None,
+                session_device_mac=session_device_mac,
+                poll_wait_s=self._runtime.next_wait_s() if session is not None else None,
+            ),
+            idle_poll_s=_IDLE_POLL_S,
+        )
 
     def _connect_blocking(
         self,
@@ -150,10 +181,14 @@ class ObdConnectionRuntime:
         plan = self._runtime.prepare_poll()
         return execute_poll_plan(session, plan=plan, monotonic=self._monotonic)
 
-    async def _idle(
+    async def _close_session_if_needed(
         self,
+        *,
         session: Elm327Session | None,
+        session_device_mac: str | None,
+        close_session: bool,
     ) -> tuple[Elm327Session | None, str | None]:
-        if session is not None:
+        if close_session and session is not None:
             await asyncio.to_thread(session.close)
-        return None, None
+            return None, None
+        return session, session_device_mac

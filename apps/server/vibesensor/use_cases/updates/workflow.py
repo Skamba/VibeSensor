@@ -28,6 +28,6 @@ class UpdateWorkflow:
         request: UpdateRequest,
     ) -> None:
         prepared = await self.preparation.prepare(request)
-        context.transport_session = prepared.transport_session
+        context.transport = prepared.transport
         planned = await self.release_planner.plan(prepared)
         await self.workflow_executor.execute(planned)

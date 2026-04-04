@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vibesensor.use_cases.updates.cleanup import UpdateCleanupCoordinator
+from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.models import (
@@ -29,10 +30,11 @@ from vibesensor.use_cases.updates.status import (
     UpdateStateStore,
     UpdateStatusController,
     UpdateStatusRecorder,
-    UpdateStatusTracker,
+    UpdateStatusServices,
+    build_update_status_services,
     collect_runtime_details,
 )
-from vibesensor.use_cases.updates.success_finalizer import UpdateSuccessFinalizer
+from vibesensor.use_cases.updates.transport_coordinator import UpdateTransportCoordinator
 from vibesensor.use_cases.updates.transport_sessions import UpdateTransportSessions
 from vibesensor.use_cases.updates.usb_status import (
     UsbInternetStatusReader,
@@ -58,12 +60,9 @@ UPDATE_SERVICE_NAME = "vibesensor.service"
 
 @dataclass(frozen=True, slots=True)
 class UpdateManagerRuntime:
-    tracker: UpdateStatusTracker
-    status_controller: UpdateStatusController
-    recorder: UpdateStatusRecorder
+    status_services: UpdateStatusServices
     workflow_runner: UpdateWorkflowRunner
     usb_status_service: UsbInternetStatusReader
-    transport_sessions: UpdateTransportSessions
     startup_recovery: UpdateStartupRecoveryCoordinator
     workflow: UpdateWorkflow
 
@@ -95,53 +94,50 @@ def build_update_manager_runtime(
         wifi_ifname=wifi_ifname,
     )
     active_state_store = state_store or UpdateStateStore()
-    tracker = _build_status_tracker(
+    status_services = _build_status_services(
         repo=config.repo,
         state_store=active_state_store,
     )
     commands = _build_command_executor(
         runner=active_runner,
-        recorder=tracker.recorder,
+        recorder=status_services.recorder,
     )
     status_service = usb_internet_service or UsbInternetStatusService(runner=active_runner)
     transport_sessions = _build_transport_sessions(
         commands=commands,
-        tracker=tracker,
-        status_controller=tracker.controller,
-        recorder=tracker.recorder,
+        status_controller=status_services.controller,
+        recorder=status_services.recorder,
         wifi_config=config.wifi_config,
         status_service=status_service,
     )
+    transport_coordinator = UpdateTransportCoordinator(sessions=transport_sessions)
     workflow = _build_update_workflow(
         commands=commands,
-        tracker=tracker,
-        status_controller=tracker.controller,
-        recorder=tracker.recorder,
+        status_controller=status_services.controller,
+        recorder=status_services.recorder,
         config=config,
-        transport_sessions=transport_sessions,
+        transport_coordinator=transport_coordinator,
     )
     return UpdateManagerRuntime(
-        tracker=tracker,
-        status_controller=tracker.controller,
-        recorder=tracker.recorder,
+        status_services=status_services,
         workflow_runner=UpdateWorkflowRunner(
-            status_controller=tracker.controller,
-            status_recorder=tracker.recorder,
+            status_controller=status_services.controller,
+            status_recorder=status_services.recorder,
             cleanup=UpdateCleanupCoordinator(
-                status_controller=tracker.controller,
-                status_recorder=tracker.recorder,
+                status_controller=status_services.controller,
+                status_recorder=status_services.recorder,
+                transport_coordinator=transport_coordinator,
                 repo=config.repo,
                 logger=LOGGER,
             ),
             timeout_s=UPDATE_TIMEOUT_S,
         ),
         usb_status_service=status_service,
-        transport_sessions=transport_sessions,
         startup_recovery=UpdateStartupRecoveryCoordinator(
-            tracker=tracker,
-            status_controller=tracker.controller,
-            status_recorder=tracker.recorder,
-            transport_sessions=transport_sessions,
+            status_session=status_services.session,
+            status_controller=status_services.controller,
+            status_recorder=status_services.recorder,
+            transport_coordinator=transport_coordinator,
         ),
         workflow=workflow,
     )
@@ -178,18 +174,18 @@ def _resolve_runtime_config(
     )
 
 
-def _build_status_tracker(
+def _build_status_services(
     *,
     repo: Path,
     state_store: UpdateStateStore,
-) -> UpdateStatusTracker:
+) -> UpdateStatusServices:
     loaded = state_store.load()
-    tracker = UpdateStatusTracker(
+    status_services = build_update_status_services(
         state_store=state_store,
         status=loaded if loaded is not None else UpdateJobStatus(),
     )
-    tracker.set_runtime(collect_runtime_details(repo))
-    return tracker
+    status_services.recorder.set_runtime(collect_runtime_details(repo))
+    return status_services
 
 
 def _build_command_executor(
@@ -203,7 +199,6 @@ def _build_command_executor(
 def _build_transport_sessions(
     *,
     commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
     status_controller: UpdateStatusController,
     recorder: UpdateStatusRecorder,
     wifi_config: UpdateWifiConfig,
@@ -284,11 +279,10 @@ def _build_release_components(
 def _build_update_workflow(
     *,
     commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
     status_controller: UpdateStatusController,
     recorder: UpdateStatusRecorder,
     config: UpdateRuntimeConfig,
-    transport_sessions: UpdateTransportSessions,
+    transport_coordinator: UpdateTransportCoordinator,
 ) -> UpdateWorkflow:
     def current_version_provider() -> str:
         from vibesensor import __version__ as current_version
@@ -312,7 +306,7 @@ def _build_update_workflow(
             status_controller=status_controller,
             status_recorder=recorder,
             commands=commands,
-            transport_sessions=transport_sessions,
+            transport_coordinator=transport_coordinator,
             validation_config=config.validation_config,
             current_version_provider=current_version_provider,
         ),
@@ -325,7 +319,8 @@ def _build_update_workflow(
             stager=stager,
             deployer=deployer,
             firmware_refresher=firmware_refresher,
-            finalizer=UpdateSuccessFinalizer(
+            completion=UpdateCompletionCoordinator(
+                transport_coordinator=transport_coordinator,
                 status_recorder=recorder,
                 restart_scheduler=restart_scheduler,
             ),

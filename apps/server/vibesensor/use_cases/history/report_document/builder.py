@@ -62,6 +62,9 @@ class ReportDocumentBuilder:
         prepared = self._prepared
         test_run = prepared.domain_test_run
         report_facts = prepared.report_facts
+        run_facts = report_facts.run
+        sensor_facts = report_facts.sensor
+        decision_facts = report_facts.decision
         tr = self._tr
         composition = compose_report_document(
             aggregate=test_run,
@@ -70,7 +73,7 @@ class ReportDocumentBuilder:
         )
         primary = resolve_primary_report_candidate(
             aggregate=test_run,
-            facts=report_facts.primary_candidate_facts,
+            facts=decision_facts.primary_candidate,
             tr=tr,
             lang=self._lang,
         )
@@ -78,15 +81,15 @@ class ReportDocumentBuilder:
         observed.strongest_location = display_location(primary.primary_location, tr=tr)
         data_trust = tuple(
             build_data_trust(
-                suitability_checks=report_facts.suitability_checks,
-                warnings=report_facts.warnings,
+                suitability_checks=decision_facts.suitability_checks,
+                warnings=decision_facts.warnings,
                 lang=self._lang,
                 tr=tr,
             )
         )
         pattern_evidence = build_pattern_evidence(
             aggregate=test_run,
-            origin=report_facts.origin,
+            origin=run_facts.origin,
             primary=primary,
             lang=self._lang,
             tr=tr,
@@ -111,16 +114,16 @@ class ReportDocumentBuilder:
             title=tr("REPORT_FOOTER_TITLE"),
             run_datetime=self._report_date_text(prepared),
             run_id=report.run_id,
-            duration_text=report_facts.duration_text,
-            start_time_utc=format_utc_timestamp(report_facts.start_time_utc),
-            end_time_utc=format_utc_timestamp(report_facts.end_time_utc),
-            sample_rate_hz=report_facts.sample_rate_hz,
-            tire_spec_text=report_facts.tire_spec_text,
-            sample_count=report_facts.sample_count,
+            duration_text=run_facts.duration_text,
+            start_time_utc=format_utc_timestamp(run_facts.start_time_utc),
+            end_time_utc=format_utc_timestamp(run_facts.end_time_utc),
+            sample_rate_hz=run_facts.sample_rate_hz,
+            tire_spec_text=run_facts.tire_spec_text,
+            sample_count=run_facts.sample_count,
             sensor_count=primary.sensor_count,
-            sensor_locations=tuple(report_facts.sensor_locations_active),
-            sensor_model=report_facts.sensor_model,
-            firmware_version=report_facts.firmware_version,
+            sensor_locations=tuple(sensor_facts.active_locations),
+            sensor_model=run_facts.sensor_model,
+            firmware_version=run_facts.firmware_version,
             car_name=report.car_name
             or (
                 prepared.summary.metadata.car_name
@@ -156,8 +159,8 @@ class ReportDocumentBuilder:
             top_causes=tuple(
                 _finding_to_presentation(finding) for finding in test_run.effective_top_causes()
             ),
-            sensor_intensity_by_location=tuple(report_facts.active_sensor_intensity),
-            location_hotspot_rows=tuple(report_facts.location_hotspot_rows),
+            sensor_intensity_by_location=tuple(sensor_facts.active_intensity),
+            location_hotspot_rows=tuple(sensor_facts.location_hotspot_rows),
             verdict_page=replace(
                 composition.verdict_page,
                 proof_summary=proof_summary,
@@ -184,11 +187,11 @@ class ReportDocumentBuilder:
             appendix_d=_build_appendix_d_data(
                 date_str=self._report_date_text(prepared),
                 run_id=report.run_id,
-                tire_spec_text=report_facts.tire_spec_text,
-                sensor_model=report_facts.sensor_model,
-                firmware_version=report_facts.firmware_version,
-                sample_count=report_facts.sample_count,
-                sample_rate_hz=report_facts.sample_rate_hz,
+                tire_spec_text=run_facts.tire_spec_text,
+                sensor_model=run_facts.sensor_model,
+                firmware_version=run_facts.firmware_version,
+                sample_count=run_facts.sample_count,
+                sample_rate_hz=run_facts.sample_rate_hz,
                 tr=tr,
             ),
         )
@@ -200,14 +203,14 @@ class ReportDocumentBuilder:
         report_facts: PreparedReportFacts,
         composition: ReportDocumentComposition,
     ) -> tuple[NextStep, ...]:
-        recapture_mode = report_facts.action_status_key == "recapture_before_acting"
+        recapture_mode = report_facts.decision.action_status_key == "recapture_before_acting"
         if recapture_mode:
             return tuple(
                 NextStep(action=action) for action in composition.appendix_a.capture_changes
             )
         return tuple(
             build_next_steps(
-                recommended_actions=report_facts.recommended_actions,
+                recommended_actions=report_facts.decision.recommended_actions,
                 primary_source=primary.primary_source,
                 primary_location=primary.primary_location,
                 tier=primary.tier,
