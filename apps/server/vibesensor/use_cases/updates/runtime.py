@@ -7,6 +7,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
+from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.manager import UpdateManager
@@ -283,16 +285,20 @@ def _build_update_workflow(
             resolver=resolver,
         ),
         workflow_executor=UpdateWorkflowExecutor(
+            completion=UpdateCompletionCoordinator(
+                restart_scheduler=restart_scheduler,
+                status=status,
+            ),
             stager=stager,
             deployment=deployment,
             firmware_refresher=firmware_refresher,
-            restart_scheduler=restart_scheduler,
-            status=status,
         ),
-        transport_coordinator=transport_coordinator,
-        runtime_details_refresher=UpdateRuntimeDetailsRefresher(
-            status=status,
-            repo=config.repo,
-            logger=LOGGER,
+        finalizer=UpdateWorkflowFinalizer(
+            transport_coordinator=transport_coordinator,
+            runtime_details_refresher=UpdateRuntimeDetailsRefresher(
+                status=status,
+                repo=config.repo,
+                logger=LOGGER,
+            ),
         ),
     )
