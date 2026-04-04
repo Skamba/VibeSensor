@@ -7,7 +7,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from urllib.request import Request, urlopen
+from urllib.request import urlopen
 
 from vibesensor.shared.types.json_types import JsonObject, is_json_array, is_json_object
 from vibesensor.use_cases.updates.firmware.firmware_types import (
@@ -15,10 +15,9 @@ from vibesensor.use_cases.updates.firmware.firmware_types import (
     GitHubReleaseAssetPayload,
     GitHubReleasePayload,
 )
-from vibesensor.use_cases.updates.releases.release_fetcher import (
+from vibesensor.use_cases.updates.releases.github_api import (
     DOWNLOAD_CHUNK_BYTES,
-    GitHubAPIClient,
-    validate_https_url,
+    GitHubApiClient,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -74,19 +73,25 @@ def is_firmware_asset_name(name: str) -> bool:
     return name.startswith(_FW_ASSET_PREFIX) and name.endswith(_FW_ASSET_SUFFIX)
 
 
-class GitHubReleaseFetcher(GitHubAPIClient):
+class GitHubReleaseFetcher:
     """Fetch firmware bundles from GitHub Releases."""
 
-    def __init__(self, config: FirmwareCacheConfig) -> None:
+    __slots__ = ("_client", "_config")
+
+    def __init__(
+        self,
+        config: FirmwareCacheConfig,
+        *,
+        client: GitHubApiClient | None = None,
+    ) -> None:
         self._config = config
-        self._github_token = config.github_token
-        self._api_context = "firmware"
+        self._client = client or GitHubApiClient(
+            token=config.github_token,
+            context="firmware",
+        )
 
     def _download_asset(self, url: str, dest: Path) -> None:
-        validate_https_url(url, context="firmware")
-        headers = self._api_headers()
-        headers["Accept"] = "application/octet-stream"
-        req = Request(url, headers=headers)
+        req = self._client.build_request(url, accept="application/octet-stream")
         with urlopen(req, timeout=120) as resp:
             # Stream directly to a temp file to avoid buffering the entire
             # firmware binary in memory (Pi 3A+ has only 512 MB RAM).
@@ -126,13 +131,13 @@ class GitHubReleaseFetcher(GitHubAPIClient):
         if self._config.pinned_tag:
             url = f"{base}/tags/{self._config.pinned_tag}"
             LOGGER.info("Fetching pinned release: %s", self._config.pinned_tag)
-            release = self._api_get(url)
+            release = self._client.get_json(url)
             if not is_json_object(release):
                 raise ValueError("Unexpected GitHub API response format")
             return _coerce_release_payload(release)
 
         LOGGER.info("Fetching releases for channel '%s'", self._config.channel)
-        releases = self._api_get(f"{base}?per_page=50")
+        releases = self._client.get_json(f"{base}?per_page=50")
         if not isinstance(releases, list):
             raise ValueError("Unexpected GitHub API response format")
 

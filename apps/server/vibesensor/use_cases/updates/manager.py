@@ -8,13 +8,15 @@ from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdateRequest,
-    UpdateState,
     UpdateTransport,
     UsbInternetStatus,
     validate_update_request,
 )
 from vibesensor.use_cases.updates.startup_recovery import UpdateStartupRecoveryCoordinator
-from vibesensor.use_cases.updates.status import UpdateStatusTracker
+from vibesensor.use_cases.updates.status import (
+    UpdateStatusTracker,
+    UpdateTerminalStateReporter,
+)
 from vibesensor.use_cases.updates.usb_status import UsbInternetStatusReader
 from vibesensor.use_cases.updates.workflow import UpdateWorkflow
 
@@ -26,6 +28,7 @@ class UpdateManager:
         self,
         *,
         status: UpdateStatusTracker,
+        reporter: UpdateTerminalStateReporter,
         workflow: UpdateWorkflow,
         startup_recovery: UpdateStartupRecoveryCoordinator,
         usb_status_service: UsbInternetStatusReader,
@@ -33,6 +36,7 @@ class UpdateManager:
         task_name: str = "system-update",
     ) -> None:
         self._status = status
+        self._reporter = reporter
         self._workflow = workflow
         self._startup_recovery = startup_recovery
         self._usb_status_service = usb_status_service
@@ -83,20 +87,16 @@ class UpdateManager:
                 self._workflow.run(request=request),
                 timeout=self._timeout_s,
             )
-        except UpdateCleanupError:
+        except UpdateCleanupError as exc:
+            self._reporter.fail(exc, default_phase="cleanup")
             raise
         except UpdateError as exc:
-            if self.status.state is UpdateState.running:
-                self._status.fail("workflow", str(exc))
+            self._reporter.fail(exc, default_phase="workflow")
             return
         except TimeoutError:
-            self._status.fail(
-                "timeout",
-                f"Update timed out after {self._timeout_s}s",
-                log_message=f"Update timed out after {self._timeout_s}s",
-            )
+            self._reporter.fail_timeout(timeout_s=self._timeout_s)
         except asyncio.CancelledError:
-            self._status.fail("cancelled", "Update was cancelled", log_message="Update cancelled")
+            self._reporter.fail_cancelled()
             raise
         finally:
             self._status.clear_secrets()

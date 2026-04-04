@@ -43,12 +43,12 @@ def build_update_workflow(
         workflow_executor=UpdateWorkflowExecutor(
             completion=UpdateCompletionCoordinator(
                 restart_scheduler=release.restart_scheduler,
+                reporter=core.reporter,
                 status=core.status,
             ),
             stager=release.stager,
             deployment=release.deployment,
             firmware_refresher=release.firmware_refresher,
-            status=core.status,
         ),
         finalizer=UpdateWorkflowFinalizer(
             transport_coordinator=transport.coordinator,

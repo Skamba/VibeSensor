@@ -35,11 +35,10 @@ class UpdateRuntimeDetailsRefresher:
         try:
             runtime_details = await asyncio.to_thread(collect_runtime_details, self._repo)
         except (OSError, UpdateError) as exc:
-            self._status.fail(
-                "cleanup",
-                "Runtime details refresh failed",
-                str(exc),
-            )
             self._logger.exception("update: runtime details refresh error")
-            raise UpdateCleanupError(f"Runtime details refresh failed: {exc}") from exc
+            raise UpdateCleanupError(
+                "Runtime details refresh failed",
+                phase="cleanup",
+                detail=str(exc),
+            ) from exc
         self._status.set_runtime(runtime_details)

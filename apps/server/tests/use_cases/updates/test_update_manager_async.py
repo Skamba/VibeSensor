@@ -56,7 +56,7 @@ class TestUpdateManagerAsync:
 
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
             fetcher = mock_fetcher.return_value
-            fetcher.check_update_available.return_value = mock_release
+            fetcher.find_latest_release.return_value = mock_release
             fetcher.download_wheel.return_value = mock_wheel_path
             runner.set_response("from vibesensor import __version__", 0, "2025.6.15", "")
             await run_update(manager)
@@ -80,11 +80,7 @@ class TestUpdateManagerAsync:
 
     async def test_already_up_to_date(self, tmp_path) -> None:
         manager, runner, _repo = setup_update_env(tmp_path, seed_artifacts=True)
-        with patch_release_fetcher() as mock_fetcher:
-            fetcher = mock_fetcher.return_value
-            fetcher.check_update_available.return_value = None
-            latest_release = type("Latest", (), {"tag": "server-v2025.6.15"})()
-            fetcher.find_latest_release.return_value = latest_release
+        with patch_release_fetcher():
             await run_update(manager)
 
         assert manager.status.state == UpdateState.success
@@ -102,7 +98,7 @@ class TestUpdateManagerAsync:
             patch("shutil.which", mock_which),
             patch("vibesensor.use_cases.updates.validation.os.geteuid", return_value=1000),
             patch(
-                "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver._check_for_update",
+                "vibesensor.use_cases.updates.release_resolution.ServerReleaseResolver.resolve",
                 side_effect=AssertionError("release resolution should not run without privileges"),
             ),
         ):
@@ -151,9 +147,9 @@ class TestUpdateManagerAsync:
             patch(
                 "vibesensor.use_cases.updates.releases.factory.build_server_release_fetcher",
             ) as mock_fetcher,
-            patch("vibesensor._version.__version__", "2025.6.15"),
+            patch("vibesensor.__version__", "2025.6.15"),
         ):
-            mock_fetcher.return_value.check_update_available.return_value = None
+            mock_fetcher.return_value.find_latest_release.return_value = make_mock_release()
             manager.start("TestNet", "pass123")
             task = manager.job_task
             assert task is not None
@@ -177,7 +173,7 @@ class TestUpdateManagerAsync:
     async def test_dns_probe_retries_then_update_continues(self, tmp_path) -> None:
         probe_attempts = {"count": 0}
         with (
-            patch_release_fetcher() as mock_fetcher,
+            patch_release_fetcher(),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_READY_MIN_WAIT_S", 0.2),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_RETRY_INTERVAL_S", 0.01),
         ):
@@ -192,7 +188,6 @@ class TestUpdateManagerAsync:
                 return await original_run(args, timeout=timeout, env=env)
 
             runner.run = run_with_dns_retry
-            mock_fetcher.return_value.check_update_available.return_value = None
             await run_update(manager)
 
         assert manager.status.state == UpdateState.success
@@ -207,8 +202,7 @@ class TestUpdateManagerAsync:
 
     async def test_password_is_applied_via_connection_modify(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path, seed_artifacts=True)
-        with patch_release_fetcher() as mock_fetcher:
-            mock_fetcher.return_value.check_update_available.return_value = None
+        with patch_release_fetcher():
             await run_update(manager, "Pim", "tomaat123")
         assert any(
             "connection modify VibeSensor-Uplink "
@@ -221,7 +215,7 @@ class TestUpdateManagerAsync:
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
             mock_release = make_mock_release(sha256="abc")
             fetcher = mock_fetcher.return_value
-            fetcher.check_update_available.return_value = mock_release
+            fetcher.find_latest_release.return_value = mock_release
             fetcher.download_wheel.side_effect = OSError("Network error")
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
@@ -237,7 +231,7 @@ class TestUpdateManagerAsync:
 
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
             fetcher = mock_fetcher.return_value
-            fetcher.check_update_available.return_value = make_mock_release(sha256=wheel_sha256)
+            fetcher.find_latest_release.return_value = make_mock_release(sha256=wheel_sha256)
             fetcher.download_wheel.return_value = fake_wheel
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
@@ -256,7 +250,7 @@ class TestUpdateManagerAsync:
             ),
         ):
             fetcher = mock_fetcher.return_value
-            fetcher.check_update_available.return_value = make_mock_release(sha256=wheel_sha256)
+            fetcher.find_latest_release.return_value = make_mock_release(sha256=wheel_sha256)
             fetcher.download_wheel.return_value = fake_wheel
             await run_update(manager, "TestNet", "pass")
 
@@ -292,7 +286,7 @@ class TestUpdateManagerAsync:
 
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
             fetcher = mock_fetcher.return_value
-            fetcher.check_update_available.return_value = make_mock_release(sha256="0" * 64)
+            fetcher.find_latest_release.return_value = make_mock_release(sha256="0" * 64)
             fetcher.download_wheel.return_value = fake_wheel
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
@@ -307,8 +301,7 @@ class TestUpdateManagerAsync:
     async def test_password_never_in_logs(self, tmp_path) -> None:
         secret = "SuperSecret!Password#2024"
         manager, _runner, _ = setup_update_env(tmp_path)
-        with patch_release_fetcher() as mock_fetcher:
-            mock_fetcher.return_value.check_update_available.return_value = None
+        with patch_release_fetcher():
             await run_update(manager, "TestNet", secret)
         serialized = str(manager.status.to_payload())
         assert secret not in serialized
@@ -352,11 +345,7 @@ class TestUpdateManagerAsync:
             seed_artifacts=True,
             usb_internet_service=usb_service,
         )
-        with patch_release_fetcher() as mock_fetcher:
-            fetcher = mock_fetcher.return_value
-            fetcher.check_update_available.return_value = None
-            latest_release = type("Latest", (), {"tag": "server-v2025.6.15"})()
-            fetcher.find_latest_release.return_value = latest_release
+        with patch_release_fetcher():
             await run_update(manager, transport=UpdateTransport.usb_internet)
 
         assert manager.status.state == UpdateState.success
@@ -455,18 +444,15 @@ class TestUpdateManagerAsync:
             assert manager.job_task is not None
             with pytest.raises(
                 UpdateCleanupError,
-                match=(
-                    "Cleanup failed after cancellation: "
-                    "Runtime details refresh failed: runtime unavailable"
-                ),
+                match="Cleanup failed after cancellation: Runtime details refresh failed",
             ):
                 await manager.job_task
 
         assert manager.status.finished_at is not None
         assert manager.status.state == UpdateState.failed
         assert any(
-            issue.message == "Runtime details refresh failed"
-            and issue.detail == "runtime unavailable"
+            issue.message == "Cleanup failed after cancellation: Runtime details refresh failed"
+            and issue.detail == ""
             for issue in manager.status.issues
         )
         assert any(rec.message == "update: runtime details refresh error" for rec in caplog.records)
@@ -509,7 +495,7 @@ class TestUpdateManagerAsync:
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
-            mock_fetcher.return_value.check_update_available.side_effect = OSError(
+            mock_fetcher.return_value.find_latest_release.side_effect = OSError(
                 "API rate limit exceeded",
             )
             await run_update(manager, "TestNet", "pass")

@@ -3,17 +3,23 @@ from __future__ import annotations
 import io
 import zipfile
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
 from vibesensor.use_cases.updates.firmware.firmware_bundle import safe_extractall
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
+from vibesensor.use_cases.updates.releases.github_api import GitHubApiClient
 
 
-def _make_fetcher(channel: str = "stable") -> GitHubReleaseFetcher:
+def _make_fetcher(
+    channel: str = "stable",
+    *,
+    client: GitHubApiClient | None = None,
+) -> GitHubReleaseFetcher:
     config = FirmwareCacheConfig(firmware_repo="Skamba/VibeSensor", channel=channel)
-    return GitHubReleaseFetcher(config)
+    return GitHubReleaseFetcher(config, client=client)
 
 
 def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
@@ -101,15 +107,14 @@ def test_find_release_prefers_combined_release_assets(
     expected_tag: str,
     releases: list[dict],
 ) -> None:
-    fetcher = _make_fetcher(channel)
-    fetcher._api_get = lambda _url: releases
+    client = MagicMock(spec=GitHubApiClient)
+    client.get_json.return_value = releases
+    fetcher = _make_fetcher(channel, client=client)
     selected = fetcher.find_release()
     assert selected["tag_name"] == expected_tag
 
 
 def test_find_release_raises_when_no_firmware_assets() -> None:
-    fetcher = _make_fetcher()
-
     releases = [
         {
             "tag_name": "server-v2026.2.27",
@@ -124,7 +129,9 @@ def test_find_release_raises_when_no_firmware_assets() -> None:
         },
     ]
 
-    fetcher._api_get = lambda _url: releases
+    client = MagicMock(spec=GitHubApiClient)
+    client.get_json.return_value = releases
+    fetcher = _make_fetcher(client=client)
 
     with pytest.raises(ValueError, match="No eligible firmware release found"):
         fetcher.find_release()

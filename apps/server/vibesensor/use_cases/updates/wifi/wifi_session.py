@@ -13,7 +13,6 @@ from vibesensor.use_cases.updates.models import (
 )
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
-from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.transport.uplink_readiness import UpdateUplinkReadiness
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 from vibesensor.use_cases.updates.wifi.wifi_diagnostics import parse_wifi_diagnostics
@@ -103,22 +102,18 @@ class UpdateWifiSession:
         )
         await self._dns_readiness.wait_for_dns_ready()
 
-    def _record_transport_failure(self, exc: UpdateTransportStepError) -> None:
-        self._status.fail(exc.phase, str(exc), exc.detail)
-
     async def prepare(self, request: UpdateRequest) -> UpdateWifiSession:
         """Prepare the updater's Wi-Fi transport before release work begins."""
 
         self._status.transition(UpdatePhase.stopping_hotspot)
         if not await self._stop_hotspot():
-            raise UpdateTransportError("Failed to stop the hotspot before Wi-Fi update setup")
+            raise UpdateTransportError(
+                "Failed to stop the hotspot before Wi-Fi update setup",
+                phase=UpdatePhase.stopping_hotspot.value,
+            )
         self._status.transition(UpdatePhase.connecting_wifi)
         assert request.ssid is not None  # noqa: S101
-        try:
-            await self._connect_uplink(request.ssid, request.password)
-        except UpdateTransportStepError as exc:
-            self._record_transport_failure(exc)
-            raise UpdateTransportError("Failed to prepare the Wi-Fi uplink for update") from exc
+        await self._connect_uplink(request.ssid, request.password)
         return self
 
     async def abort_preparation(self) -> None:
@@ -142,19 +137,17 @@ class UpdateWifiSession:
             failure_message="Failed to restore hotspot after interrupted update",
         )
 
-    async def complete_success(self, message: str) -> None:
+    async def complete_success(self) -> None:
         """Restore the hotspot and then finalize the Wi-Fi update as successful."""
 
         self._status.transition(UpdatePhase.restoring_hotspot)
         self._status.log("Restoring hotspot...")
         restored = await self._restore_hotspot()
         if not restored:
-            self._status.fail(
-                UpdatePhase.restoring_hotspot.value,
+            raise UpdateTransportError(
                 "Failed to restore hotspot after update",
+                phase=UpdatePhase.restoring_hotspot.value,
             )
-            raise UpdateTransportError("Failed to restore hotspot after update")
-        self._status.mark_success(message)
 
     async def cleanup_after_update(self) -> None:
         """Restore hotspot ownership and attach cleanup diagnostics after a run."""

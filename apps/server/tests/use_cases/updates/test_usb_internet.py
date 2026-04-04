@@ -5,10 +5,8 @@ from pathlib import Path
 import pytest
 from _update_manager_test_helpers import FakeRunner
 
-from vibesensor.use_cases.updates.usb_status import (
-    UsbInternetStatusService,
-    parse_nmcli_device_status,
-)
+from vibesensor.use_cases.updates.usb_status import UsbInternetStatusService
+from vibesensor.use_cases.updates.usb_status_inspection import parse_nmcli_device_status
 
 
 def _make_usb_interface(
