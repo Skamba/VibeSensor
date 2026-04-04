@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_summary
+from vibesensor.shared.boundaries.analysis_payloads import analysis_result_to_summary
 from vibesensor.shared.json_utils import payload_object_from_json
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.json_types import JsonObject

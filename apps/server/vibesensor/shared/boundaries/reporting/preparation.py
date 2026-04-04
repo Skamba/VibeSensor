@@ -6,15 +6,15 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from vibesensor.report_i18n import normalize_lang
+from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+    test_run_from_persisted_analysis,
+    test_run_from_summary,
+)
 from vibesensor.shared.boundaries.reporting.facts import prepare_report_facts
 from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.summary import (
     report_summary_from_mapping,
     require_projectable_report_payload,
-)
-from vibesensor.shared.boundaries.test_run_reconstruction import (
-    test_run_from_persisted_analysis,
-    test_run_from_summary,
 )
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.run_context_warning import RunContextWarningsInput

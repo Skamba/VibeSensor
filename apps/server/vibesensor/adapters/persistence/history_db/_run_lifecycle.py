@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
+from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_to_storage_json_object,
 )
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object

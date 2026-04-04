@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import cast
 
-from vibesensor.shared.boundaries.analysis_summary_projection import (
+from vibesensor.shared.boundaries.analysis_payloads import (
     project_analysis_summary,
     project_persisted_analysis,
 )

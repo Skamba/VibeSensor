@@ -8,7 +8,7 @@ from contextlib import AbstractContextManager
 from datetime import UTC, datetime
 
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
+from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_from_storage_json_object,
 )
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
