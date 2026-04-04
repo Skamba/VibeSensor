@@ -80,8 +80,7 @@ class UpdateUsbInternetSession:
             config=config,
         )
 
-    async def prepare(self, request: UpdateRequest) -> None:
-        del request
+    async def validate(self, _request: UpdateRequest) -> None:
         self._status.transition(UpdatePhase.connecting_usb_internet)
         try:
             await self.ensure_uplink_ready()
@@ -90,9 +89,6 @@ class UpdateUsbInternetSession:
             raise UpdateTransportError(
                 "Failed to prepare the USB internet uplink for update"
             ) from exc
-
-    async def abort_preparation(self) -> None:
-        return None
 
     async def ensure_uplink_ready(self) -> None:
         decision = _classify_usb_internet(await self._status_service.snapshot(activate=True))
@@ -113,9 +109,3 @@ class UpdateUsbInternetSession:
 
     async def complete_success(self, message: str) -> None:
         self._status.mark_success(message)
-
-    async def cleanup_after_update(self) -> None:
-        return None
-
-    async def recover_interrupted_update(self) -> None:
-        return None
