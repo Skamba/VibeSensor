@@ -7,6 +7,13 @@ Guidance stack
 - `docs/ai/repo-map.md` is the repo map for layout, entry points, and stable ownership boundaries; it is not a second workflow or policy guide.
 - Do not create additional guidance files in `docs/ai/`.
 
+Execution philosophy
+- Be decisive, direct, and completion-oriented. Attack large tasks aggressively; do not narrow scope because the work is broad or invasive.
+- Large scope is not itself a blocker. Decompose and execute in waves until the work is done. Do not stop at analysis, planning, or partial implementation.
+- Breaking internal-only interfaces is acceptable and preferred when the result is cleaner. The repo controls both producers and consumers; coordinated breaking refactors are the right default, not the exception.
+- Do not preserve deprecated aliases, old DTO shapes, fallback branches, or legacy config forms unless a real external consumer is confirmed. The cleaner current architecture wins.
+- Full execution-completion rules and anti-hedging guidance live in `.github/instructions/general.instructions.md`.
+
 Repository overview
 - VibeSensor: Python backend (`apps/server/`), TypeScript/Vite dashboard (`apps/ui/`), ESP32 firmware (`firmware/esp/`), Pi image build (`infra/pi-image/`).
 - Key runtime artifacts: `docker-compose.yml` (local stack), `apps/server/pyproject.toml` (backend packaging and CLI entry points).

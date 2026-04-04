@@ -10,7 +10,7 @@ Agent workflow
 - Scan the blast radius for similar in-scope issues and fix them in the same run.
 - Prefer extending and hardening existing logic over adding parallel implementations.
 - When a larger refactor or other major in-scope change is the clearest path to better long-term maintainability, prefer that over a narrowly local patch that preserves poor structure.
-- Analysis-first default: examine the issue from multiple angles, choose the strongest approach, and deliver the smallest validated **complete** in-scope fix that addresses root cause and nearby in-scope blast radius.
+- Analysis-first default: examine the issue from multiple angles, choose the strongest approach, and deliver the most direct, validated, **complete** in-scope fix that addresses root cause and nearby in-scope blast radius.
 - Avoid symptom-only patches. Prefer fixes that make sense to a human maintainer and reduce future maintenance burden in the touched area.
 - Avoid over-conservative blocking behavior: do not hold a clear fix for exhaustive hypothetical analysis.
 - Use bounded risk rather than risk avoidance: keep changes reversible, validate early, and recover quickly on failures.
@@ -21,6 +21,9 @@ Agent workflow
   3. a real blocker exists (credentials/hardware/external dependency),
   4. the user explicitly asks to pause.
 - Long, thorough runs are allowed and preferred for deeper tasks; multi-hour runs are acceptable when needed to complete in-scope work well.
+- Execution-completion bias: the default mode is to finish the requested work entirely, not to make progress toward it. Do not stop at analysis, planning, or partial implementation. Do not treat "first green test pass" as completion if architectural residue remains.
+- Task size is not a blocker. Large tasks must be decomposed and executed in full, not narrowed or deferred. When a task is large, split it into strong execution buckets and work through all of them in the same run.
+- Anti-hedging rule: do not write or think with language like "this is probably too large for one session", "I'll do as much as possible", "maybe just inspect first and continue later", "I should keep the first pass small", "this is huge so I'll narrow scope", or "I should avoid coordinated breaking changes unless absolutely necessary". Replace those defaults with: decompose → execute → continue until done.
 - Context/noise control:
   - avoid scanning generated/build/cache/vendor artifacts unless debugging them (`artifacts/`, `.cache/`, `node_modules/`, `dist/`, `.venv/`, `.pytest_cache/`, `.ruff_cache/`),
   - use focused file reads and scoped searches,
@@ -35,6 +38,10 @@ Complexity hygiene
 - Maintain one definition for each default value; do not duplicate defaults across files.
 - Do not add forward-extensibility machinery (overflow columns, plugin hooks, generic registries) until a concrete second consumer exists.
 - Prefer flat, direct structures. Only introduce grouping or wrapping when more than three consumers benefit from the indirection.
+- Aggressive simplification: remove wrappers, shims, compatibility adapters, and transitional architecture when they no longer serve a real consumer. Do not preserve them out of caution or habit.
+- Aggressive consolidation: collapse toward one canonical code path. Dead code, obsolete fallback branches, and duplicate implementations must be deleted outright, not archived or left behind.
+- Aggressive caller updates: when a refactor requires touching many files or all callers, touch all of them. Coordinated, invasive changes that produce a cleaner result are preferred over partial migrations that leave residue in place.
+- Aggressive deletion of dead code and transitional architecture is preferred. Do not keep migration scaffolding, deprecated aliases, or old DTO shapes once they are no longer consumed.
 - Route handlers must be thin HTTP translators. Extract business logic into service functions that are independently testable.
 - Do not create duplicate API endpoints for the same operation.
 - Do not duplicate utility functions across modules. Maintain one implementation and import from it. Exception: standalone tooling scripts (e.g. ``tools/build_ui_static.py``) that must run without the server package installed may carry a local copy; mark it with a comment pointing at the primary source.
@@ -57,7 +64,7 @@ Validation (always required)
 - If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests in the same change set so they validate current behavior instead of pinning obsolete internals.
 - After any backend or frontend change, exercise the local Docker stack with the commands listed in copilot-instructions (compose up + simulator), confirm `http://127.0.0.1` updates live (`:8000` fallback if `:80` is not serving), then verify updates stop once the simulator stops; inspect container logs if needed.
 - Breaking changes are allowed when intentional.
-- No-backward-compatibility policy: we own the full codebase end to end. Do not add or preserve backward-compatibility layers (deprecated paths, adapters, fallbacks, shims, version-bridging logic, or legacy schema support) unless explicitly asked. Remove them when encountered. Standardize on the current contract, schema, config, and runtime path. Do not add new compatibility code "just in case". If compatibility seems necessary, flag it explicitly rather than implementing it silently.
+- No-backward-compatibility policy: we own the full codebase end to end. Do not add or preserve backward-compatibility layers (deprecated paths, adapters, fallbacks, shims, version-bridging logic, or legacy schema support) unless explicitly asked. Remove them when encountered. Standardize on the current contract, schema, config, and runtime path. Do not add new compatibility code "just in case". If compatibility seems necessary, flag it explicitly rather than implementing it silently. Internal-only backward compatibility is never the default: when the repo controls both producers and consumers, coordinated breaking changes are preferred over preserving old shapes. The cleaner current architecture always wins over old migration scaffolding.
 
 Docs (`docs/`)
 - Keep `docs/` short and focused. Add design changes (e.g. report layout) to `docs/design_language.md`.
