@@ -8,11 +8,14 @@ from typing import TYPE_CHECKING
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.reporting.facts import prepare_report_facts
 from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
-from vibesensor.shared.boundaries.reporting.reconstruction import (
-    report_test_run_from_persisted_analysis,
-    report_test_run_from_summary,
+from vibesensor.shared.boundaries.reporting.summary import (
+    report_summary_from_mapping,
+    require_projectable_report_payload,
 )
-from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
+from vibesensor.shared.boundaries.test_run_reconstruction import (
+    test_run_from_persisted_analysis,
+    test_run_from_summary,
+)
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
@@ -70,9 +73,10 @@ def prepare_report_input(
     cache_key: ReportPdfCacheKey | None = None,
 ) -> PreparedReportInput:
     """Prepare a direct summary payload for domain-first report mapping."""
+    require_projectable_report_payload(analysis_summary)
     return _build_prepared_report_input(
         analysis_summary,
-        domain_test_run=report_test_run_from_summary(analysis_summary),
+        domain_test_run=test_run_from_summary(analysis_summary),
         filename=filename,
         language=language,
         cache_key=cache_key,
@@ -88,9 +92,10 @@ def prepare_persisted_report_input(
     cache_key: ReportPdfCacheKey | None = None,
 ) -> PreparedReportInput:
     """Prepare a persisted history payload for domain-first report mapping."""
+    require_projectable_report_payload(analysis)
     return _build_prepared_report_input(
         analysis,
-        domain_test_run=report_test_run_from_persisted_analysis(analysis),
+        domain_test_run=test_run_from_persisted_analysis(analysis),
         filename=filename,
         language=language,
         cache_key=cache_key,
