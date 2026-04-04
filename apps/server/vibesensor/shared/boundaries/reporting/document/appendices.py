@@ -10,7 +10,6 @@ __all__ = [
     "AppendixAData",
     "AppendixBData",
     "AppendixCData",
-    "AppendixDData",
     "EvidenceChainRow",
     "MeasurementRow",
     "RankedCandidateRow",
@@ -138,10 +137,3 @@ class AppendixCData:
     phase_summary: str | None = None
     observations: list[str] = field(default_factory=list)
     suitability_items: list[DataTrustItem] = field(default_factory=list)
-
-
-@dataclass
-class AppendixDData:
-    """Traceability appendix content."""
-
-    rows: list[ReportLabelValueRow] = field(default_factory=list)

@@ -40,7 +40,7 @@ def build_report_render_plan(data: ReportDocument) -> ReportPdfRenderPlan:
 
 
 def _appendix_a_page_plans(data: ReportDocument) -> tuple[AppendixAPageRenderPlan, ...]:
-    trace_rows = tuple(data.appendix_d.rows)
+    trace_rows = tuple(data.traceability_rows)
     if data.appendix_a.mode == "recapture":
         return (
             AppendixAPageRenderPlan(
