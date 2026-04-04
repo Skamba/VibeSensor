@@ -1,19 +1,18 @@
-"""Connection/admin mutation surface over shared Bluetooth OBD runtime state."""
+"""Connection-loop mutation and planning surface over shared Bluetooth OBD state."""
 
 from __future__ import annotations
 
-from vibesensor.adapters.obd.admin_state import ObdAdminObservation
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 from vibesensor.adapters.obd.polling import ObdPollPlan, ObdPollResult
 from vibesensor.domain import SpeedSourceKind
 
 from .runtime_store import ObdRuntimeStore
 
-__all__ = ["ObdRuntimeConnectionState"]
+__all__ = ["ObdRuntimeConnectionControl"]
 
 
-class ObdRuntimeConnectionState:
-    """Own connection-loop/admin mutation over shared policy, polling, and observed state."""
+class ObdRuntimeConnectionControl:
+    """Own connection-loop planning and mutation over shared policy, polling, and state."""
 
     __slots__ = ("_store",)
 
@@ -23,10 +22,6 @@ class ObdRuntimeConnectionState:
     def configured_device_snapshot(self) -> tuple[SpeedSourceKind, str | None, str | None]:
         with self._store._lock:
             return self._store.policy.config_snapshot()
-
-    def configured_device_mac_snapshot(self) -> str | None:
-        with self._store._lock:
-            return self._store.policy.configured_device_mac
 
     def next_wait_s(self) -> float:
         with self._store._lock:
@@ -57,18 +52,6 @@ class ObdRuntimeConnectionState:
                 reconnect_delay_s=reconnect_delay_s,
             )
             return True
-
-    def apply_admin_observation(
-        self,
-        configured_mac: str | None,
-        observation: ObdAdminObservation,
-    ) -> None:
-        with self._store._lock:
-            self._store.state.apply_admin_observation(
-                observed_configured_mac=configured_mac,
-                current_configured_mac=self._store.policy.configured_device_mac,
-                observation=observation,
-            )
 
     def mark_connecting(self) -> None:
         with self._store._lock:

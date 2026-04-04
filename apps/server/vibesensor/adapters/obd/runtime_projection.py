@@ -1,17 +1,18 @@
-"""Read-side observation and status projection for Bluetooth OBD runtime state."""
+"""Policy-derived Bluetooth OBD status and speed projection over runtime facts."""
 
 from __future__ import annotations
 
 from vibesensor.adapters.gps.speed_resolution import SpeedResolution
 from vibesensor.adapters.obd.models import ObdStatusSnapshot
+from vibesensor.adapters.obd.status import build_obd_status_snapshot
 
 from .runtime_store import ObdRuntimeStore
 
-__all__ = ["ObdRuntimeObservation"]
+__all__ = ["ObdRuntimeProjection"]
 
 
-class ObdRuntimeObservation:
-    """Read-only view over live OBD speed, RPM, and status facts."""
+class ObdRuntimeProjection:
+    """Project effective OBD status and speed from raw facts plus policy."""
 
     __slots__ = ("_store",)
 
@@ -19,27 +20,9 @@ class ObdRuntimeObservation:
         self._store = store
 
     @property
-    def speed_mps(self) -> float | None:
-        with self._store._lock:
-            return self._store.state.speed_mps
-
-    @property
     def stale_timeout_s(self) -> float:
         with self._store._lock:
             return self._store.policy.stale_timeout_s
-
-    @property
-    def engine_rpm(self) -> float | None:
-        now = self._store.monotonic()
-        with self._store._lock:
-            return self._store.state.engine_rpm(
-                now=now,
-                obd_selected=self._store.policy.obd_selected,
-            )
-
-    @property
-    def engine_rpm_source(self) -> str | None:
-        return "obd2" if self.engine_rpm is not None else None
 
     def resolve_speed(self) -> SpeedResolution:
         with self._store._lock:
@@ -49,9 +32,13 @@ class ObdRuntimeObservation:
             )
 
     def status_snapshot(self) -> ObdStatusSnapshot:
+        now = self._store.monotonic()
         with self._store._lock:
-            now = self._store.monotonic()
-            return self._store.state.status_snapshot(
+            return build_obd_status_snapshot(
+                self._store.state.status_facts(
+                    engine_rpm=self._store.state.engine_rpm(now=now),
+                    polling=self._store.polling,
+                ),
                 configured_device_mac=self._store.policy.configured_device_mac,
                 configured_device_name=self._store.policy.configured_device_name,
                 effective_connection_state=self._store.policy.effective_connection_state(
@@ -59,6 +46,5 @@ class ObdRuntimeObservation:
                     speed_snapshot=self._store.state.speed_snapshot,
                 ),
                 obd_selected=self._store.policy.obd_selected,
-                now=now,
-                polling=self._store.polling,
+                now_mono=now,
             )

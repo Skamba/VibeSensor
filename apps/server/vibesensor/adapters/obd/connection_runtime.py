@@ -17,7 +17,7 @@ from vibesensor.adapters.obd.connection_plan import (
     plan_connection_step,
 )
 from vibesensor.adapters.obd.elm327 import Elm327Session
-from vibesensor.adapters.obd.runtime_connection_state import ObdRuntimeConnectionState
+from vibesensor.adapters.obd.runtime_connection_control import ObdRuntimeConnectionControl
 
 __all__ = ["ObdConnectionRuntime"]
 
@@ -31,7 +31,7 @@ class ObdConnectionRuntime:
     """Own session lifecycle, reconnect behavior, and blocking poll execution."""
 
     __slots__ = (
-        "_connection_state",
+        "_connection_control",
         "_executor",
     )
 
@@ -39,14 +39,14 @@ class ObdConnectionRuntime:
         self,
         *,
         admin_client: ObdAdminClient,
-        connection_state: ObdRuntimeConnectionState,
+        connection_control: ObdRuntimeConnectionControl,
         session_factory: SessionFactory,
         monotonic: MonotonicFn = time.monotonic,
     ) -> None:
-        self._connection_state = connection_state
+        self._connection_control = connection_control
         self._executor = ObdConnectionExecutor(
             admin_client=admin_client,
-            connection_state=connection_state,
+            connection_control=connection_control,
             session_factory=session_factory,
             monotonic=monotonic,
         )
@@ -77,7 +77,7 @@ class ObdConnectionRuntime:
             selected_source,
             configured_mac,
             configured_name,
-        ) = self._connection_state.configured_device_snapshot()
+        ) = self._connection_control.configured_device_snapshot()
         return plan_connection_step(
             ObdConnectionLoopSnapshot(
                 selected_source=selected_source,
@@ -85,7 +85,9 @@ class ObdConnectionRuntime:
                 configured_name=configured_name,
                 has_session=session is not None,
                 session_device_mac=session_device_mac,
-                poll_wait_s=(self._connection_state.next_wait_s() if session is not None else None),
+                poll_wait_s=(
+                    self._connection_control.next_wait_s() if session is not None else None
+                ),
             ),
             idle_poll_s=_IDLE_POLL_S,
         )
