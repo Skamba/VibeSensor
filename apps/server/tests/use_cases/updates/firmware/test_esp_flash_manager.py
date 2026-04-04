@@ -262,6 +262,17 @@ def test_cache_info_no_firmware(tmp_path: Path) -> None:
     assert _firmware_cache(cache_dir).info()["status"] == "no_firmware"
 
 
+def test_cache_info_reports_corrupt_metadata_explicitly(tmp_path: Path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True)
+    (cache_dir / "current" / "_meta.json").write_text("{not-json", encoding="utf-8")
+
+    info = _firmware_cache(cache_dir).info()
+
+    assert info["status"] == "metadata_invalid"
+    assert info["source"] == "downloaded"
+    assert "metadata is corrupt" in info["message"]
+
+
 # ── Flash Manager Tests (using cached bundles) ──
 
 
@@ -336,6 +347,22 @@ async def test_flash_fails_fast_when_no_firmware_available(tmp_path: Path) -> No
     assert mgr.status.state.value == "failed"
     assert "No firmware bundle available" in str(mgr.status.error)
     assert any("updater" in line.lower() for line in mgr.logs_since(after=0)["lines"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_patch_esptool_which")
+async def test_flash_fails_when_bundle_metadata_is_corrupt(tmp_path: Path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True)
+    (cache_dir / "current" / "_meta.json").write_text("{not-json", encoding="utf-8")
+    mgr, runner = _build_manager(cache_dir)
+
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+
+    assert mgr.status.state.value == "failed"
+    assert "metadata is corrupt" in str(mgr.status.error)
+    assert not any("erase_flash" in call for call in runner.calls)
 
 
 @pytest.mark.asyncio

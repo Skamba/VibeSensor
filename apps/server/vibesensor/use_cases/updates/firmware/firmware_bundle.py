@@ -143,8 +143,8 @@ def read_meta(bundle_dir: Path) -> BundleMeta | None:
         return None
     try:
         data = _read_json_file(meta_path)
-    except (json.JSONDecodeError, OSError):
-        return None
+    except (json.JSONDecodeError, OSError) as exc:
+        raise ValueError(f"Firmware bundle metadata is corrupt in {bundle_dir}: {exc}") from exc
     return BundleMeta(
         tag=str(data.get("tag", "")),
         asset=str(data.get("asset", "")),

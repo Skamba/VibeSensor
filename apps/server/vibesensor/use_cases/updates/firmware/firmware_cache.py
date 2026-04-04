@@ -100,7 +100,15 @@ class FirmwareCache:
         tag = release.get("tag_name", "")
         LOGGER.info("Selected release: %s", tag)
 
-        current_meta = read_meta(self.current_dir) if self.current_dir.is_dir() else None
+        current_meta: BundleMeta | None = None
+        if self.current_dir.is_dir():
+            try:
+                current_meta = read_meta(self.current_dir)
+            except ValueError:
+                LOGGER.warning(
+                    "Current firmware cache metadata is invalid; continuing with refresh",
+                    exc_info=True,
+                )
         if current_meta and current_meta.tag == tag:
             LOGGER.info("Cache is already current (tag=%s). No download needed.", tag)
             return current_meta
@@ -166,14 +174,25 @@ class FirmwareCache:
                     "Run the updater while online or reinstall Pi image."
                 ),
             }
-        meta = read_meta(bundle) or BundleMeta()
+        source = "downloaded" if bundle == self.current_dir else "baseline"
+        try:
+            meta = read_meta(bundle)
+        except ValueError as exc:
+            return {
+                "status": "metadata_invalid",
+                "message": str(exc),
+                "source": source,
+                "cache_dir": str(self._cache_dir),
+                "bundle_path": str(bundle),
+            }
+        resolved_meta = meta or BundleMeta(source=source)
         return {
             "status": "ok",
-            "source": meta.source or ("downloaded" if bundle == self.current_dir else "baseline"),
-            "tag": meta.tag,
-            "asset": meta.asset,
-            "timestamp": meta.timestamp,
-            "sha256": meta.sha256,
+            "source": resolved_meta.source or source,
+            "tag": resolved_meta.tag,
+            "asset": resolved_meta.asset,
+            "timestamp": resolved_meta.timestamp,
+            "sha256": resolved_meta.sha256,
             "cache_dir": str(self._cache_dir),
             "bundle_path": str(bundle),
         }
