@@ -14,14 +14,14 @@ from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries import run_suitability as _run_suitability_boundary
+from vibesensor.shared.boundaries.codecs import (
+    driving_phase_summary_from_mapping,
+    speed_profile_summary_from_mapping,
+)
 from vibesensor.shared.boundaries.run_capture_codec import (
     configuration_snapshot_from_run_metadata,
 )
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.summary_snapshot_codec import (
-    driving_phase_summary_from_mapping,
-    speed_profile_summary_from_mapping,
-)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 

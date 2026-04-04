@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from vibesensor.domain import LocationIntensitySummary
-from vibesensor.shared.boundaries._codec_helpers import (
+from vibesensor.shared.boundaries.codecs.scalars import (
     coerce_count,
     optional_float,
     text_or_none,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
-from vibesensor.shared.boundaries.strength_metrics_codec import strength_peaks_from_sequence
+from vibesensor.shared.boundaries.codecs.strength_metrics import strength_peaks_from_sequence
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none, safe_json_loads
 from vibesensor.shared.types.json_types import JsonArray, JsonObject, is_json_array
 from vibesensor.shared.types.sensor_frame import SensorFrame

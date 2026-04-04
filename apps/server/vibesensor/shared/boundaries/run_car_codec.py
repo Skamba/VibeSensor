@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.shared.boundaries._codec_helpers import text_or_none
+from vibesensor.shared.boundaries.codecs.scalars import text_or_none
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_schema import RunCarMetadata
 

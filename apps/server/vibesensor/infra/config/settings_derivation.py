@@ -6,9 +6,7 @@ from collections.abc import Callable, Mapping
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
-from vibesensor.shared.boundaries.analysis_settings_snapshot_codec import (
-    analysis_settings_snapshot_from_mapping,
-)
+from vibesensor.shared.boundaries.codecs import analysis_settings_snapshot_from_mapping
 from vibesensor.shared.ports import SettingsReader
 
 __all__ = [

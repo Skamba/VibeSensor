@@ -101,6 +101,34 @@ def test_report_summary_from_mapping_projects_canonical_metadata_and_rows() -> N
     assert summary.timeline_intervals[0].speed_min_kmh == 58.0
 
 
+def test_report_summary_from_mapping_drops_non_finite_summary_scalars() -> None:
+    summary = report_summary_from_mapping(
+        {
+            "duration_s": float("inf"),
+            "rows": float("nan"),
+            "sensor_count_used": float("-inf"),
+            "phase_timeline": [
+                {
+                    "phase": "cruise",
+                    "start_t_s": float("nan"),
+                    "end_t_s": float("inf"),
+                    "speed_min_kmh": float("-inf"),
+                    "speed_max_kmh": float("nan"),
+                }
+            ],
+        }
+    )
+
+    assert summary.duration_s is None
+    assert summary.sample_count == 0
+    assert summary.sensor_count == 0
+    assert len(summary.timeline_intervals) == 1
+    assert summary.timeline_intervals[0].start_t_s is None
+    assert summary.timeline_intervals[0].end_t_s is None
+    assert summary.timeline_intervals[0].speed_min_kmh is None
+    assert summary.timeline_intervals[0].speed_max_kmh is None
+
+
 def test_report_summary_from_mapping_rejects_nonempty_metadata_without_nested_run_id() -> None:
     with pytest.raises(
         ValueError, match="report summary metadata must include canonical nested run_id"
