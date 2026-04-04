@@ -21,27 +21,23 @@ from vibesensor.shared.report_presentation import (
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
 
+from .section_context import RecaptureAssessment, ReportSectionContext
+
 __all__ = [
     "build_appendix_a_data",
     "build_ranked_candidates",
-    "recapture_actions",
-    "recapture_condition_lines",
-    "recapture_issue_lines",
+    "build_recapture_assessment",
 ]
 
 
 def build_appendix_a_data(
     *,
     aggregate: TestRun,
-    action_status_key: str,
-    alternative_source_visible: bool,
-    ranked_candidates: Sequence[RankedCandidateRow],
-    recapture_issues: Sequence[str],
-    recapture_actions: Sequence[str],
-    recapture_conditions: Sequence[str],
+    section_context: ReportSectionContext,
     tr: Callable[..., str],
 ) -> AppendixAData:
-    recapture_before_acting = action_status_key == "recapture_before_acting"
+    ranked_candidates = section_context.ranked_candidates
+    recapture_before_acting = section_context.action_status_key == "recapture_before_acting"
     if recapture_before_acting:
         return AppendixAData(
             mode="recapture",
@@ -51,9 +47,9 @@ def build_appendix_a_data(
             why_alternative_next=None,
             next_if_clean=None,
             ranked_candidates=[],
-            capture_issues=list(recapture_issues),
-            capture_changes=list(recapture_actions),
-            capture_conditions=list(recapture_conditions),
+            capture_issues=list(section_context.recapture.issues),
+            capture_changes=list(section_context.recapture.actions),
+            capture_conditions=list(section_context.recapture.conditions),
         )
 
     primary_source = (
@@ -73,11 +69,11 @@ def build_appendix_a_data(
             source=ranked_candidates[1].source_name,
             confidence=ranked_candidates[1].confidence_pct,
         )
-        if alternative_source_visible
+        if section_context.alternative_source_visible
         and len(ranked_candidates) > 1
         and ranked_candidates[1].confidence_pct
         else ranked_candidates[1].source_name
-        if alternative_source_visible and len(ranked_candidates) > 1
+        if section_context.alternative_source_visible and len(ranked_candidates) > 1
         else None
     )
     return AppendixAData(
@@ -87,7 +83,7 @@ def build_appendix_a_data(
         why_primary_first=ranked_candidates[0].reason if ranked_candidates else None,
         why_alternative_next=(
             ranked_candidates[1].reason
-            if alternative_source_visible and len(ranked_candidates) > 1
+            if section_context.alternative_source_visible and len(ranked_candidates) > 1
             else None
         ),
         next_if_clean=_next_if_primary_clean(aggregate, tr=tr),
@@ -128,18 +124,47 @@ def build_ranked_candidates(
     return tuple(rows)
 
 
-def recapture_issue_lines(
+def build_recapture_assessment(
     *,
     aggregate: TestRun,
     primary_candidate_facts: PrimaryReportFacts,
     location_confidence_key: str,
+    expected_locations: Sequence[str],
+    active_locations: Sequence[str],
     suitability_checks: Sequence[SuitabilityCheck],
     warnings: Sequence[RunContextWarning],
     lang: str,
     tr: Callable[..., str],
-) -> tuple[str, ...]:
+) -> RecaptureAssessment:
+    expected = len(expected_locations) or len(active_locations)
+    source_overlap = has_source_overlap(aggregate, tr=tr)
+    weak_location = location_confidence_key == "weak"
+    mixed_location = location_confidence_key == "mixed"
+    transient_primary = is_transient_primary(primary_candidate_facts)
+    speed_variation_nonpass = (
+        check_state(suitability_checks, "SUITABILITY_CHECK_SPEED_VARIATION") != "pass"
+    )
+    sensor_coverage_nonpass = (
+        weak_location
+        or mixed_location
+        or check_state(suitability_checks, "SUITABILITY_CHECK_SENSOR_COVERAGE") != "pass"
+    )
+    reference_incomplete = (
+        primary_candidate_facts.has_reference_gaps
+        or check_state(suitability_checks, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS") != "pass"
+        or has_warning_code(warnings, "reference_context_incomplete")
+    )
+    diagnostic_details = tuple(
+        nonpass_detail_lines(
+            suitability_checks=suitability_checks,
+            warnings=warnings,
+            lang=lang,
+            tr=tr,
+        )
+    )
+
     issues: list[str] = []
-    if has_source_overlap(aggregate, tr=tr):
+    if source_overlap:
         ranked = list(aggregate.effective_top_causes()[:2])
         if len(ranked) > 1:
             append_unique_line(
@@ -150,18 +175,13 @@ def recapture_issue_lines(
                     alternative=human_source(ranked[1].suspected_source, tr=tr),
                 ),
             )
-    if location_confidence_key == "weak":
+    if weak_location:
         append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_WEAK_LOCATION"))
-    elif location_confidence_key == "mixed":
+    elif mixed_location:
         append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_MIXED_LOCATION"))
-    if is_transient_primary(primary_candidate_facts):
+    if transient_primary:
         append_unique_line(issues, tr("REPORT_RECAPTURE_ISSUE_TRANSIENT"))
-    for detail in nonpass_detail_lines(
-        suitability_checks=suitability_checks,
-        warnings=warnings,
-        lang=lang,
-        tr=tr,
-    ):
+    for detail in diagnostic_details:
         append_unique_line(issues, detail)
     if not issues:
         note = proof_caveat_text(
@@ -171,38 +191,17 @@ def recapture_issue_lines(
             tr=tr,
         )
         append_unique_line(issues, note or tr("REPORT_CAPTURE_ISSUE_GENERIC"))
-    return tuple(issues[:4])
 
-
-def recapture_actions(
-    *,
-    aggregate: TestRun,
-    primary_candidate_facts: PrimaryReportFacts,
-    location_confidence_key: str,
-    expected_locations: Sequence[str],
-    active_locations: Sequence[str],
-    suitability_checks: Sequence[SuitabilityCheck],
-    warnings: Sequence[RunContextWarning],
-    tr: Callable[..., str],
-) -> tuple[str, ...]:
-    expected = len(expected_locations) or len(active_locations)
     actions: list[str] = []
-    if has_source_overlap(aggregate, tr=tr):
+    if source_overlap:
         append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_COMPARE_PATHS"))
-    if check_state(suitability_checks, "SUITABILITY_CHECK_SPEED_VARIATION") != "pass":
+    if speed_variation_nonpass:
         append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_STEADY_HOLD"))
-    if is_transient_primary(primary_candidate_facts):
+    if transient_primary:
         append_unique_line(actions, tr("REPORT_RECAPTURE_ACTION_REPEAT_EVENT"))
-    if (
-        location_confidence_key in {"weak", "mixed"}
-        or check_state(suitability_checks, "SUITABILITY_CHECK_SENSOR_COVERAGE") != "pass"
-    ):
+    if sensor_coverage_nonpass:
         append_unique_line(actions, tr("TIER_A_CAPTURE_MORE_SENSORS"))
-    if (
-        primary_candidate_facts.has_reference_gaps
-        or check_state(suitability_checks, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS") != "pass"
-        or has_warning_code(warnings, "reference_context_incomplete")
-    ):
+    if reference_incomplete:
         append_unique_line(actions, tr("TIER_A_CAPTURE_REFERENCE_DATA"))
     if not actions:
         append_unique_line(actions, tr("TIER_A_CAPTURE_WIDER_SPEED"))
@@ -210,47 +209,34 @@ def recapture_actions(
             actions,
             tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected),
         )
-    return tuple(actions[:4])
 
-
-def recapture_condition_lines(
-    *,
-    aggregate: TestRun,
-    primary_candidate_facts: PrimaryReportFacts,
-    location_confidence_key: str,
-    expected_locations: Sequence[str],
-    active_locations: Sequence[str],
-    suitability_checks: Sequence[SuitabilityCheck],
-    warnings: Sequence[RunContextWarning],
-    tr: Callable[..., str],
-) -> tuple[str, ...]:
-    expected = len(expected_locations) or len(active_locations)
-    lines: list[str] = []
-    if check_state(suitability_checks, "SUITABILITY_CHECK_SPEED_VARIATION") != "pass":
-        append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_STEADY_HOLD"))
-    if has_source_overlap(aggregate, tr=tr):
-        append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_COMPARE_PATHS"))
-    if is_transient_primary(primary_candidate_facts):
-        append_unique_line(lines, tr("REPORT_RECAPTURE_CONDITION_REPEAT_EVENT"))
-    if (
-        location_confidence_key in {"weak", "mixed"}
-        or check_state(suitability_checks, "SUITABILITY_CHECK_SENSOR_COVERAGE") != "pass"
-    ):
+    conditions: list[str] = []
+    if speed_variation_nonpass:
+        append_unique_line(conditions, tr("REPORT_RECAPTURE_CONDITION_STEADY_HOLD"))
+    if source_overlap:
+        append_unique_line(conditions, tr("REPORT_RECAPTURE_CONDITION_COMPARE_PATHS"))
+    if transient_primary:
+        append_unique_line(conditions, tr("REPORT_RECAPTURE_CONDITION_REPEAT_EVENT"))
+    if sensor_coverage_nonpass:
         append_unique_line(
-            lines,
+            conditions,
             tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected),
         )
-    if (
-        primary_candidate_facts.has_reference_gaps
-        or check_state(suitability_checks, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS") != "pass"
-        or has_warning_code(warnings, "reference_context_incomplete")
-    ):
-        append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_REFERENCE"))
-    if not lines:
-        append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_STEADY"))
-        append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected))
-        append_unique_line(lines, tr("REPORT_CAPTURE_CONDITION_REFERENCE"))
-    return tuple(lines[:4])
+    if reference_incomplete:
+        append_unique_line(conditions, tr("REPORT_CAPTURE_CONDITION_REFERENCE"))
+    if not conditions:
+        append_unique_line(conditions, tr("REPORT_CAPTURE_CONDITION_STEADY"))
+        append_unique_line(
+            conditions,
+            tr("REPORT_CAPTURE_CONDITION_FULL_COVERAGE", expected=expected),
+        )
+        append_unique_line(conditions, tr("REPORT_CAPTURE_CONDITION_REFERENCE"))
+
+    return RecaptureAssessment(
+        issues=tuple(issues[:4]),
+        actions=tuple(actions[:4]),
+        conditions=tuple(conditions[:4]),
+    )
 
 
 def _next_if_primary_clean(
