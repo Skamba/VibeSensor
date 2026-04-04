@@ -91,7 +91,7 @@ in order. Each step runs exactly once per analysis invocation.
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
 | 11 | App-result construction | `build_analysis_result` | `_summary_result` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
 | 12 | Plot generation | `_plot_data`, `top_peaks_table_rows` | `_summary_result`, plots, `peaks/table.py` | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
-| 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `shared/boundaries/analysis_summary.py`, `adapters/analysis_summary.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
+| 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `shared/boundaries/analysis_payloads/summary.py`, `adapters/analysis_summary.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
 ## Module Responsibilities
 
@@ -140,7 +140,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `speed_profile_helpers.py` | ~150 | Speed-profile construction and phase/speed summary helpers |
 | `plots.py` | ~300 | Chart data shaping orchestration over diagnostics-local value objects: time-series extraction plus FFT/spectrogram assembly |
 | `adapters/analysis_summary.py` | ~60 | Edge-facing wrappers (`summarize_run_data()`, `summarize_log()`) that call diagnostics and then serialize the result |
-| `shared/boundaries/analysis_summary.py` | ~120 | Pure boundary serializer from app-level `AnalysisResult` to persisted `AnalysisSummary` |
+| `shared/boundaries/analysis_payloads/summary.py` | ~120 | Pure boundary serializer from app-level `AnalysisResult` to persisted `AnalysisSummary` |
 | `shared/boundaries/summary_serialization/` | ~350 | Low-level serialization seam package from domain/app diagnostics value objects to persisted `AnalysisSummary` payload fragments (`_contracts.py`, `_findings.py`, `_plots.py`, `_summary.py`) |
 
 ## Data Flow

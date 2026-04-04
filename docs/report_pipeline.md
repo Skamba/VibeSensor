@@ -6,7 +6,7 @@ The report generation pipeline has two distinct phases:
 
 1. **Post-stop analysis** (`vibesensor.use_cases.diagnostics`) — runs once when a recording
    ends, producing an app-level `AnalysisResult`. The serialized summary dict is
-   then created at the boundary by `vibesensor.shared.boundaries.analysis_summary`
+   then created at the boundary by `vibesensor.shared.boundaries.analysis_payloads`
    / `vibesensor.adapters.analysis_summary`.
 2. **History request loading + reporting-boundary preparation + rendering**
      (`vibesensor.use_cases.history` →
@@ -25,11 +25,11 @@ Recording stops
     → build_post_analysis_summary() [vibesensor.use_cases.run.post_analysis]
       → RunAnalysis(...).summarize() [vibesensor.use_cases.diagnostics.run_analysis]
       → run_analysis.py + analysis_pipeline.py + run_data_preparation.py + _summary_steps.py + _summary_result.py (preparation, phases, suitability, domain/result assembly)
-      → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_summary]
+      → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_payloads.summary]
       → findings.py + _reference_findings.py + _context_decode.py/_context_projection.py + _sample_metrics.py + _analysis_models.py + orders/{pipeline,matching,scoring,finding_builder,statistics,heuristics,settings}.py + peaks/{findings,accumulation,classification,scoring,finding_builder,statistics,settings,table}.py + signal_aggregation.py + top_cause_selection.py + plots.py
     → build_report_document() [vibesensor.use_cases.history.report_document]
-      → builder.py (prepared-input to document context) + composition.py +
-        sections.py + report_sections.py + peak_table.py
+      → builder.py + document_context.py + composition.py + appendix_c.py +
+        timeline_graph.py + traceability.py + report_sections.py + peak_table.py
     → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
@@ -119,7 +119,7 @@ needs:
 
 1. Add any new diagnostics output to `RunAnalysis` / `AnalysisResult` in
    `vibesensor.use_cases.diagnostics`, then project it in
-   `vibesensor.shared.boundaries.analysis_summary.analysis_result_to_summary()`
+   `vibesensor.shared.boundaries.analysis_payloads.analysis_result_to_summary()`
    (or the adapter wrappers in `vibesensor.adapters.analysis_summary` if the
    change only affects the serialized edge helper).
 2. Add a corresponding field to `ReportDocument` in

@@ -223,7 +223,9 @@ def _assert_unit_consistency(rd: ReportDocument) -> None:
 def _assert_certainty_tier_consistent(rd: ReportDocument, summary: dict) -> None:
     """Assert the tier stored in report matches ConfidenceAssessment.tier."""
     from vibesensor.domain import ConfidenceAssessment
-    from vibesensor.shared.boundaries.test_run_reconstruction import test_run_from_summary
+    from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+        test_run_from_summary,
+    )
     from vibesensor.shared.report_presentation import strength_label
 
     test_run = test_run_from_summary(summary)

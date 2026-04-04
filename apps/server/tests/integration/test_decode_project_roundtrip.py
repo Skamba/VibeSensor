@@ -23,7 +23,7 @@ from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.history import build_projected_run_details_json
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
-from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
+from vibesensor.shared.boundaries.analysis_payloads import project_analysis_summary
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping

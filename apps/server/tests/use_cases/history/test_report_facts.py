@@ -4,11 +4,11 @@ import pytest
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.shared.boundaries.reporting import prepare_report_facts, prepare_report_input
-from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-from vibesensor.shared.boundaries.test_run_reconstruction import (
+from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
     test_run_from_summary as build_test_run_from_summary,
 )
+from vibesensor.shared.boundaries.reporting import prepare_report_facts, prepare_report_input
+from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
 from vibesensor.shared.run_context_warning import RunContextWarning
 from vibesensor.use_cases.history.report_document import build_report_document
 
