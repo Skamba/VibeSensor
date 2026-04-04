@@ -12,6 +12,9 @@ from vibesensor.adapters.obd.connection_runtime import ObdConnectionRuntime
 from vibesensor.adapters.obd.elm327 import Elm327Session
 from vibesensor.adapters.obd.runtime_admin_state import ObdRuntimeAdminState
 from vibesensor.adapters.obd.runtime_connection_control import ObdRuntimeConnectionControl
+from vibesensor.adapters.obd.runtime_connection_observation import (
+    ObdRuntimeConnectionObservation,
+)
 from vibesensor.adapters.obd.runtime_facts import ObdRuntimeFacts
 from vibesensor.adapters.obd.runtime_projection import ObdRuntimeProjection
 from vibesensor.adapters.obd.runtime_settings import ObdRuntimeSettings
@@ -56,6 +59,7 @@ def build_obd_runtime(
         engine_rpm_stale_timeout_s=_RPM_STALE_TIMEOUT_S,
     )
     connection_control = ObdRuntimeConnectionControl(store=store)
+    connection_observation = ObdRuntimeConnectionObservation(store=store)
     admin_state = ObdRuntimeAdminState(store=store)
     return ObdRuntimeServices(
         facts=ObdRuntimeFacts(store=store),
@@ -68,6 +72,7 @@ def build_obd_runtime(
         connection_control=connection_control,
         runner=ObdConnectionRuntime(
             admin_client=resolved_admin_client,
+            connection_observation=connection_observation,
             connection_control=connection_control,
             session_factory=resolved_session_factory,
             monotonic=monotonic,
