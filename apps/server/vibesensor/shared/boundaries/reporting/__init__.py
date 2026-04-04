@@ -1,6 +1,8 @@
 """Canonical reporting boundary package."""
 
-from .decision_facts import ReportDecisionFacts
+# Summary normalization and projectable-payload gates.
+# Fact projections and prepared fact groups.
+from .decision_facts import ReportDecisionFacts, build_report_decision_facts
 from .facts import (
     ActionStatusKey,
     LocationConfidenceKey,
@@ -10,6 +12,8 @@ from .facts import (
 )
 from .findings import FindingPresentation, PreparedReportFindings
 from .input import PreparedReportInput
+
+# Reconstructed prepared-input entrypoints.
 from .preparation import prepare_persisted_report_input, prepare_report_input
 from .projection import (
     PrimaryReportFacts,
@@ -28,6 +32,7 @@ from .summary import (
 
 __all__ = [
     "ActionStatusKey",
+    "build_report_decision_facts",
     "FindingPresentation",
     "LocationConfidenceKey",
     "NormalizedReportSummary",
