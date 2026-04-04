@@ -140,11 +140,11 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     obd_runtime = build_obd_runtime(admin_client=obd_admin_client)
     speed_services = build_speed_source_services(
         gps_monitor=gps_monitor,
-        obd_facts=obd_runtime.facts,
-        obd_projection=obd_runtime.projection,
+        obd_facts=obd_runtime.observation.facts,
+        obd_projection=obd_runtime.observation.projection,
         obd_device_admin=obd_admin_client,
-        obd_status_refresher=obd_runtime.admin,
-        obd_control=obd_runtime.control,
+        obd_status_refresher=obd_runtime.control.admin,
+        obd_control=obd_runtime.control.settings,
     )
     settings_store = SettingsStore(db=history.settings_snapshot_repository)
     settings_reader = SettingsDerivationService(
@@ -269,7 +269,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         worker_pool=worker_pool,
         settings_store=settings_reader,
         gps_monitor=gps_monitor,
-        obd_runner=obd_runtime.runner,
+        obd_runner=obd_runtime.connection.runner,
         history_db=history_lifecycle,
         processing_loop_state=processing_loop_state,
         health_state=health_state,
