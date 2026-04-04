@@ -3,12 +3,9 @@ from __future__ import annotations
 from test_support.findings import make_finding_payload
 
 from vibesensor.shared.boundaries.reporting import PreparedReportInput, prepare_report_input
+from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.use_cases.history import report_document
-from vibesensor.use_cases.history.report_document.builder import build_report_document_data
-from vibesensor.use_cases.history.report_document.composition import (
-    ReportDocumentContext,
-    compose_report_document_context,
-)
+from vibesensor.use_cases.history.report_document.composition import compose_report_document
 
 
 def _prepared_report_input() -> PreparedReportInput:
@@ -40,12 +37,11 @@ def _prepared_report_input() -> PreparedReportInput:
     )
 
 
-def test_report_document_context_is_canonical_pre_render_state() -> None:
+def test_compose_report_document_returns_canonical_document() -> None:
     prepared = _prepared_report_input()
 
-    context = compose_report_document_context(prepared)
-    rebuilt_document = build_report_document_data(context)
+    document = compose_report_document(prepared)
 
-    assert isinstance(context, ReportDocumentContext)
-    assert context.sensor_locations == ("rear-right",)
-    assert rebuilt_document == report_document.build_report_document(prepared)
+    assert isinstance(document, ReportDocument)
+    assert document.sensor_locations == ["rear-right"]
+    assert document == report_document.build_report_document(prepared)

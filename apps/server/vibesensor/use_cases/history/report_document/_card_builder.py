@@ -11,8 +11,8 @@ from vibesensor.shared.boundaries.reporting.document import (
     PartSuggestion,
     SystemFindingCard,
 )
+from vibesensor.shared.report_presentation import order_label_human
 from vibesensor.use_cases.history.report_document.pattern_parts import parts_for_pattern
-from vibesensor.use_cases.history.report_document.presentation import order_label_human
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.history.report_document._candidate_resolver import (

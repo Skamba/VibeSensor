@@ -8,11 +8,8 @@ from vibesensor.domain import VibrationSource
 from vibesensor.shared.boundaries.reporting import FindingPresentation
 from vibesensor.shared.boundaries.reporting.document import PeakRow
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.report_presentation import order_label_human, peak_classification_text
 from vibesensor.shared.types.analysis_views import PeakTableRow
-from vibesensor.use_cases.history.report_document.presentation import (
-    order_label_human,
-    peak_classification_text,
-)
 
 __all__ = [
     "build_peak_rows",
