@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 
-from vibesensor.shared.boundaries.sensor_frame_row_codec import (
+from vibesensor.shared.boundaries.sensor_frames import (
     SENSOR_FRAME_FIELD_NAMES,
     sensor_frame_from_row,
     sensor_frame_to_row_values,
