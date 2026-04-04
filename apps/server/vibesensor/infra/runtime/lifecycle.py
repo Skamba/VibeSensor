@@ -83,7 +83,7 @@ class LifecycleGpsMonitor(Protocol):
     async def run(self, *, host: str, port: int) -> object: ...
 
 
-class LifecycleObdMonitor(Protocol):
+class LifecycleObdRunner(Protocol):
     async def run(self) -> object: ...
 
 
@@ -124,7 +124,7 @@ class LifecycleRuntime:
     ws_broadcast: LifecycleWsBroadcast
     run_recorder: LifecycleRunRecorder
     gps_monitor: LifecycleGpsMonitor
-    obd_monitor: LifecycleObdMonitor
+    obd_runner: LifecycleObdRunner
     update_manager: LifecycleUpdateManager
     esp_flash_manager: LifecycleManagedJobs
     worker_pool: LifecycleWorkerPool

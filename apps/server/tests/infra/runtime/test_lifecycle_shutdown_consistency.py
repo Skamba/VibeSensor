@@ -45,7 +45,7 @@ def _make_lifecycle() -> LifecycleManager:
             ),
         ),
         gps_monitor=MagicMock(),
-        obd_monitor=MagicMock(),
+        obd_runner=MagicMock(),
         update_manager=MagicMock(job_task=None),
         esp_flash_manager=MagicMock(job_task=None),
         worker_pool=MagicMock(),

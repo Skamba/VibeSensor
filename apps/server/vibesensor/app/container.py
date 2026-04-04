@@ -16,7 +16,7 @@ from vibesensor.adapters.http.dependencies import (
     TelemetryDeps,
     UpdateDeps,
 )
-from vibesensor.adapters.obd import ObdAdminClient, OBDSpeedMonitor
+from vibesensor.adapters.obd import ObdAdminClient, build_obd_runtime
 from vibesensor.adapters.persistence.history_db import (
     HistoryPersistenceAdapters,
     create_history_persistence_adapters,
@@ -137,10 +137,12 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     history_lifecycle = history.lifecycle
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
     obd_admin_client = ObdAdminClient()
-    obd_monitor = OBDSpeedMonitor(admin_client=obd_admin_client)
+    obd_runtime = build_obd_runtime(admin_client=obd_admin_client)
     speed_services = build_speed_source_services(
         gps_monitor=gps_monitor,
-        obd_monitor=obd_monitor,
+        obd_observation=obd_runtime.observation,
+        obd_admin=obd_runtime.admin,
+        obd_control=obd_runtime.control,
     )
     settings_store = SettingsStore(db=history.settings_snapshot_repository)
     settings_reader = SettingsDerivationService(
@@ -265,7 +267,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         worker_pool=worker_pool,
         settings_store=settings_reader,
         gps_monitor=gps_monitor,
-        obd_monitor=obd_monitor,
+        obd_runner=obd_runtime.runner,
         history_db=history_lifecycle,
         processing_loop_state=processing_loop_state,
         health_state=health_state,
