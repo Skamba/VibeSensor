@@ -112,6 +112,8 @@ class ObdRuntimeState:
             self._engine_rpm = float(result.rpm.value)
             self._engine_rpm_ts = rpm_sample_time
         self._last_error = result.rpm.error or result.speed.error
+        if result.connection_lost:
+            return
         self._device_connected = True
         self._connection_state = "connected"
         self._current_reconnect_delay = self._initial_reconnect_delay_s

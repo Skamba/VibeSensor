@@ -73,8 +73,7 @@ class ObdConnectionRuntime:
                     await asyncio.sleep(step.sleep_s)
                     continue
                 if step.kind is ObdConnectionStepKind.MISSING_CONFIG:
-                    self._runtime.set_connection_state(
-                        "disconnected",
+                    self._runtime.mark_disconnected(
                         error=step.error,
                     )
                     reconnect_delay = _INITIAL_RECONNECT_DELAY_S
@@ -84,7 +83,7 @@ class ObdConnectionRuntime:
                     continue
                 if step.kind is ObdConnectionStepKind.CONNECT:
                     assert step.mac_address is not None
-                    self._runtime.set_connection_state("connecting", error=None)
+                    self._runtime.mark_connecting()
                     try:
                         session, device = await asyncio.to_thread(
                             self._connect_blocking,
@@ -92,8 +91,7 @@ class ObdConnectionRuntime:
                             step.configured_name,
                         )
                     except (OperationalError, OSError, ObdTransportError) as exc:
-                        self._runtime.set_connection_state(
-                            "disconnected",
+                        self._runtime.mark_disconnected(
                             error=str(exc),
                             reconnect_delay_s=reconnect_delay,
                         )
@@ -102,25 +100,21 @@ class ObdConnectionRuntime:
                         continue
                     session_device_mac = device.mac_address
                     reconnect_delay = _INITIAL_RECONNECT_DELAY_S
-                    self._runtime.apply_device_snapshot(device)
-                    self._runtime.reset_poll_schedule()
-                    self._runtime.set_connection_state("connected", error=None)
+                    self._runtime.mark_connected(device)
                     continue
                 if step.kind is ObdConnectionStepKind.WAIT:
                     await asyncio.sleep(step.sleep_s)
                     continue
                 assert session is not None
                 poll_result = await asyncio.to_thread(self._poll_cycle_blocking, session)
-                self._runtime.apply_poll_result(poll_result)
-                if poll_result.connection_lost:
+                connection_lost = self._runtime.apply_poll_cycle(
+                    poll_result,
+                    reconnect_delay_s=reconnect_delay,
+                )
+                if connection_lost:
                     await asyncio.to_thread(session.close)
                     session = None
                     session_device_mac = None
-                    self._runtime.set_connection_state(
-                        "disconnected",
-                        error=self._runtime.status_snapshot().last_error,
-                        reconnect_delay_s=reconnect_delay,
-                    )
                     await asyncio.sleep(reconnect_delay)
                     reconnect_delay = min(reconnect_delay * 2.0, _MAX_RECONNECT_DELAY_S)
         except asyncio.CancelledError:
