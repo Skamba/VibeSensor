@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError, UpdateTransportError
 from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdateRequest
@@ -12,15 +11,7 @@ from vibesensor.use_cases.updates.transport_sessions import (
     UpdateTransportSessions,
 )
 
-__all__ = ["PreparedUpdateTransport", "UpdateTransportCoordinator"]
-
-
-@dataclass(frozen=True, slots=True)
-class PreparedUpdateTransport:
-    """Prepared transport state shared across updater workflow phases."""
-
-    request: UpdateRequest
-    session: UpdateTransportSession
+__all__ = ["UpdateTransportCoordinator"]
 
 
 class UpdateTransportCoordinator:
@@ -31,27 +22,30 @@ class UpdateTransportCoordinator:
     def __init__(self, *, sessions: UpdateTransportSessions) -> None:
         self._sessions = sessions
 
-    async def prepare(self, request: UpdateRequest) -> PreparedUpdateTransport:
+    async def prepare(self, request: UpdateRequest) -> UpdateTransportSession:
         session = self._sessions.for_request(request)
         try:
             await session.prepare(request)
         except UpdateTransportError:
             await self._abort_preparation(session)
             raise
-        return PreparedUpdateTransport(request=request, session=session)
+        return session
 
     async def complete_success(
         self,
-        transport: PreparedUpdateTransport,
+        transport_session: UpdateTransportSession,
         *,
         message: str,
     ) -> None:
-        await transport.session.complete_success(message)
+        await transport_session.complete_success(message)
 
-    async def cleanup_after_update(self, transport: PreparedUpdateTransport | None) -> None:
-        if transport is None:
+    async def cleanup_after_update(
+        self,
+        transport_session: UpdateTransportSession | None,
+    ) -> None:
+        if transport_session is None:
             return
-        await transport.session.cleanup_after_update()
+        await transport_session.cleanup_after_update()
 
     async def recover_interrupted(self, status: UpdateJobStatus) -> None:
         await self._sessions.for_status(status).recover_interrupted_update()

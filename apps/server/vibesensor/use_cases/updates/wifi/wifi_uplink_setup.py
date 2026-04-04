@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import re
 
+from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStatusController, UpdateStatusRecorder
+from vibesensor.use_cases.updates.transport_failures import UpdateTransportStepError
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
@@ -35,36 +36,29 @@ def ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
 class UpdateUplinkProvisioner:
     """Create and configure the temporary Wi-Fi uplink connection for updates."""
 
-    __slots__ = ("_commands", "_config", "_status_controller", "_status_recorder")
+    __slots__ = ("_commands", "_config")
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
-        status_controller: UpdateStatusController,
-        status_recorder: UpdateStatusRecorder,
         config: UpdateWifiConfig,
     ) -> None:
         self._commands = commands
-        self._status_controller = status_controller
-        self._status_recorder = status_recorder
         self._config = config
 
-    async def prepare_uplink_connection(self, ssid: str, password: str) -> bool:
+    async def prepare_uplink_connection(self, ssid: str, password: str) -> None:
         """Create the transient uplink profile and apply any required credentials."""
 
-        if not password and not await self._validate_open_network(ssid):
-            return False
+        if not password:
+            await self._validate_open_network(ssid)
         await self._delete_existing_uplink_connections()
-        if not await self._create_uplink_connection(ssid):
-            return False
-        if not await self._configure_uplink_connection():
-            return False
-        if password and not await self._apply_wifi_password(password):
-            return False
-        return True
+        await self._create_uplink_connection(ssid)
+        await self._configure_uplink_connection()
+        if password:
+            await self._apply_wifi_password(password)
 
-    async def _validate_open_network(self, ssid: str) -> bool:
+    async def _validate_open_network(self, ssid: str) -> None:
         """Reject blank-password attempts when the scanned SSID is secured."""
 
         rc, stdout, _ = await self._commands.run(
@@ -86,17 +80,15 @@ class UpdateUplinkProvisioner:
             sudo=True,
         )
         if rc != 0:
-            return True
+            return
         security_modes = ssid_security_modes(stdout, ssid)
         if not security_modes:
-            return True
-        self._status_recorder.add_issue(
-            "connecting_wifi",
-            "Wi-Fi password required for secured network",
-            f"SSID '{ssid}' advertises security: {', '.join(sorted(security_modes))}",
+            return
+        raise UpdateTransportStepError(
+            phase=UpdatePhase.connecting_wifi,
+            message="Wi-Fi password required for secured network",
+            detail=f"SSID '{ssid}' advertises security: {', '.join(sorted(security_modes))}",
         )
-        self._status_controller.mark_failed()
-        return False
 
     async def _delete_existing_uplink_connections(self) -> None:
         """Remove any stale transient uplink profiles before recreating them."""
@@ -122,7 +114,7 @@ class UpdateUplinkProvisioner:
                 sudo=True,
             )
 
-    async def _create_uplink_connection(self, ssid: str) -> bool:
+    async def _create_uplink_connection(self, ssid: str) -> None:
         """Create a new transient uplink profile for the requested SSID."""
 
         rc, _, stderr = await self._commands.run(
@@ -146,16 +138,14 @@ class UpdateUplinkProvisioner:
             sudo=True,
         )
         if rc == 0:
-            return True
-        self._status_recorder.add_issue(
-            "connecting_wifi",
-            "Failed to create uplink connection",
-            stderr,
+            return
+        raise UpdateTransportStepError(
+            phase=UpdatePhase.connecting_wifi,
+            message="Failed to create uplink connection",
+            detail=stderr,
         )
-        self._status_controller.mark_failed()
-        return False
 
-    async def _configure_uplink_connection(self) -> bool:
+    async def _configure_uplink_connection(self) -> None:
         """Apply the non-secret updater defaults to the uplink profile."""
 
         rc, _, stderr = await self._commands.run(
@@ -180,13 +170,15 @@ class UpdateUplinkProvisioner:
             sudo=True,
         )
         if rc == 0:
-            return True
-        self._status_recorder.add_issue("connecting_wifi", "Failed to configure uplink", stderr)
-        self._status_controller.mark_failed()
+            return
         await self._delete_uplink_connection()
-        return False
+        raise UpdateTransportStepError(
+            phase=UpdatePhase.connecting_wifi,
+            message="Failed to configure uplink",
+            detail=stderr,
+        )
 
-    async def _apply_wifi_password(self, password: str) -> bool:
+    async def _apply_wifi_password(self, password: str) -> None:
         """Apply WPA-PSK credentials to the transient uplink profile."""
 
         rc, _, stderr = await self._commands.run(
@@ -205,15 +197,13 @@ class UpdateUplinkProvisioner:
             sudo=True,
         )
         if rc == 0:
-            return True
-        self._status_recorder.add_issue(
-            "connecting_wifi",
-            "Failed to set Wi-Fi credentials",
-            stderr,
-        )
-        self._status_controller.mark_failed()
+            return
         await self._delete_uplink_connection()
-        return False
+        raise UpdateTransportStepError(
+            phase=UpdatePhase.connecting_wifi,
+            message="Failed to set Wi-Fi credentials",
+            detail=stderr,
+        )
 
     async def _delete_uplink_connection(self) -> None:
         """Delete the transient uplink profile after a partial setup failure."""

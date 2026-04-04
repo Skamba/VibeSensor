@@ -44,10 +44,7 @@ class UpdateManager:
         request = validate_update_request(ssid, password, transport=transport)
         self._runtime.workflow_runner.start(
             request=request,
-            workflow=lambda context: self._runtime.workflow.run(
-                context=context,
-                request=request,
-            ),
+            workflow=lambda: self._runtime.workflow.run(request=request),
         )
 
     def cancel(self) -> bool:

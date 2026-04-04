@@ -13,14 +13,13 @@ from vibesensor.use_cases.updates.models import (
     UpdateRequest,
     UpdateTransport,
 )
-from vibesensor.use_cases.updates.preparation import PreparedUpdateWorkflow
-from vibesensor.use_cases.updates.release_planner import (
+from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
+from vibesensor.use_cases.updates.run_models import (
     InstallServerReleasePlan,
-    PlannedUpdateWorkflow,
+    PlannedUpdateRun,
+    PreparedUpdateRun,
     RefreshFirmwarePlan,
-    UpdateReleasePlanner,
 )
-from vibesensor.use_cases.updates.transport_coordinator import PreparedUpdateTransport
 
 
 def _planner(tmp_path: Path) -> tuple[UpdateReleasePlanner, UpdateStatusHarness, MagicMock]:
@@ -47,17 +46,10 @@ def _planner(tmp_path: Path) -> tuple[UpdateReleasePlanner, UpdateStatusHarness,
     )
 
 
-def _prepared_workflow() -> PreparedUpdateWorkflow:
-    return PreparedUpdateWorkflow(
+def _prepared_run() -> PreparedUpdateRun:
+    return PreparedUpdateRun(
         current_version="2026.4.3",
-        transport=PreparedUpdateTransport(
-            request=UpdateRequest(
-                transport=UpdateTransport.wifi,
-                ssid="TestNet",
-                password="secret",
-            ),
-            session=object(),
-        ),
+        transport_session=object(),
     )
 
 
@@ -71,11 +63,11 @@ async def test_plan_returns_refresh_only_plan_when_no_server_update_is_needed(
         latest_tag="server-v2026.4.3",
     )
 
-    planned = await planner.plan(_prepared_workflow())
+    planned = await planner.plan(_prepared_run())
 
-    assert isinstance(planned, PlannedUpdateWorkflow)
+    assert isinstance(planned, PlannedUpdateRun)
     assert isinstance(planned.execution_plan, RefreshFirmwarePlan)
-    assert planned.execution_plan.current_version == "2026.4.3"
+    assert planned.prepared.current_version == "2026.4.3"
     assert planned.execution_plan.latest_tag == "server-v2026.4.3"
     assert tracker.status.phase.value == "checking"
     assert any("Already up-to-date" in line for line in tracker.status.log_tail)
@@ -90,10 +82,10 @@ async def test_plan_returns_install_plan_when_server_update_is_available(tmp_pat
         latest_tag="server-v2026.4.4",
     )
 
-    planned = await planner.plan(_prepared_workflow())
+    planned = await planner.plan(_prepared_run())
 
     assert isinstance(planned.execution_plan, InstallServerReleasePlan)
-    assert planned.execution_plan.current_version == "2026.4.3"
+    assert planned.prepared.current_version == "2026.4.3"
     assert planned.execution_plan.release is release
     assert tracker.status.phase.value == "checking"
     assert any("Update available: 2026.4.3 → 2026.4.4" in line for line in tracker.status.log_tail)
@@ -105,6 +97,6 @@ async def test_plan_propagates_release_resolution_failure(tmp_path: Path) -> Non
     resolver.resolve.side_effect = UpdateReleaseError("release check failed")
 
     with pytest.raises(UpdateReleaseError, match="release check failed"):
-        await planner.plan(_prepared_workflow())
+        await planner.plan(_prepared_run())
 
     assert tracker.status.phase.value == "checking"
