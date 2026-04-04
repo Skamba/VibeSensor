@@ -1,22 +1,28 @@
-"""Canonical report-document composition from prepared report facts."""
+"""Compose canonical pre-render report state from prepared report input."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
-from vibesensor.domain import TestRun
+from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary, TestRun
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts, PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixBData,
+    AppendixCData,
+    DataTrustItem,
     NextStep,
-    ReportDocument,
+    PatternEvidence,
+    PeakRow,
+    ReportLabelValueRow,
+    SystemFindingCard,
     VerdictPageData,
 )
 from vibesensor.shared.boundaries.reporting.facts import ReportRunFacts
+from vibesensor.shared.boundaries.reporting.findings import FindingPresentation
 from vibesensor.shared.report_presentation import (
     coverage_label,
     coverage_notes,
@@ -54,7 +60,7 @@ from .workflow_appendix import (
     recapture_issue_lines as build_recapture_issue_lines,
 )
 
-__all__ = ["build_report_document"]
+__all__ = ["ReportDocumentContext", "compose_report_document_context"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,8 +72,46 @@ class _ReportDocumentSections:
     appendix_b: AppendixBData
 
 
-def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
-    """Compose the canonical report document directly from prepared report input."""
+@dataclass(frozen=True, slots=True)
+class ReportDocumentContext:
+    """Canonical pre-render report state composed before PDF document mapping."""
+
+    title: str
+    run_datetime: str
+    run_id: str
+    duration_text: str | None
+    start_time_utc: str | None
+    end_time_utc: str | None
+    sample_rate_hz: str | None
+    tire_spec_text: str | None
+    sample_count: int
+    sensor_count: int
+    sensor_locations: tuple[str, ...]
+    sensor_model: str | None
+    firmware_version: str | None
+    car_name: str | None
+    car_type: str | None
+    observed: PatternEvidence
+    system_cards: tuple[SystemFindingCard, ...]
+    next_steps: tuple[NextStep, ...]
+    data_trust: tuple[DataTrustItem, ...]
+    pattern_evidence: PatternEvidence
+    peak_rows: tuple[PeakRow, ...]
+    lang: str
+    certainty_tier_key: str
+    findings: tuple[FindingPresentation, ...]
+    top_causes: tuple[FindingPresentation, ...]
+    sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
+    location_hotspot_rows: tuple[LocationHotspotRow, ...]
+    verdict_page: VerdictPageData
+    appendix_a: AppendixAData
+    appendix_b: AppendixBData
+    appendix_c: AppendixCData
+    traceability_rows: tuple[ReportLabelValueRow, ...]
+
+
+def compose_report_document_context(prepared: PreparedReportInput) -> ReportDocumentContext:
+    """Compose the canonical pre-render report context from prepared report input."""
 
     lang = str(normalize_lang(prepared.language))
 
@@ -106,9 +150,19 @@ def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
         runner_up_corner=sections.appendix_b.runner_up_corner,
         tr=tr,
     )
-    return ReportDocument(
+    run_datetime = _report_date_text(run_facts)
+    findings = tuple(prepared_findings.all_findings)
+    verdict_page = replace(
+        sections.verdict_page,
+        proof_summary=proof_summary,
+        timeline_graph=_build_timeline_graph_data(
+            report_facts,
+            duration_s=run_facts.duration_s,
+        ),
+    )
+    return ReportDocumentContext(
         title=tr("REPORT_FOOTER_TITLE"),
-        run_datetime=_report_date_text(run_facts),
+        run_datetime=run_datetime,
         run_id=run_facts.run_id,
         duration_text=run_facts.duration_text,
         start_time_utc=format_utc_timestamp(run_facts.start_time_utc),
@@ -117,13 +171,13 @@ def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
         tire_spec_text=run_facts.tire_spec_text,
         sample_count=run_facts.sample_count,
         sensor_count=primary.sensor_count,
-        sensor_locations=list(sensor_facts.active_locations),
+        sensor_locations=tuple(sensor_facts.active_locations),
         sensor_model=run_facts.sensor_model,
         firmware_version=run_facts.firmware_version,
         car_name=run_facts.car_name,
         car_type=run_facts.car_type,
         observed=build_observed_signature(primary, tr=tr),
-        system_cards=list(
+        system_cards=tuple(
             build_system_cards(
                 test_run,
                 primary,
@@ -131,16 +185,14 @@ def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
                 tr,
             )
         ),
-        next_steps=list(
-            _resolve_next_steps(
-                primary=primary,
-                report_facts=report_facts,
-                appendix_a=sections.appendix_a,
-                lang=lang,
-                tr=tr,
-            )
+        next_steps=_resolve_next_steps(
+            primary=primary,
+            report_facts=report_facts,
+            appendix_a=sections.appendix_a,
+            lang=lang,
+            tr=tr,
         ),
-        data_trust=list(data_trust),
+        data_trust=data_trust,
         pattern_evidence=build_pattern_evidence(
             aggregate=test_run,
             origin=run_facts.origin,
@@ -148,28 +200,21 @@ def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
             lang=lang,
             tr=tr,
         ),
-        peak_rows=list(
+        peak_rows=tuple(
             build_peak_rows(
                 run_facts.peak_table_rows,
-                findings=list(prepared_findings.all_findings),
+                findings=list(findings),
                 lang=lang,
                 tr=tr,
             )
         ),
         lang=lang,
         certainty_tier_key=primary.tier,
-        findings=list(prepared_findings.all_findings),
-        top_causes=list(prepared_findings.top_causes),
-        sensor_intensity_by_location=list(sensor_facts.active_intensity),
-        location_hotspot_rows=list(sensor_facts.location_hotspot_rows),
-        verdict_page=replace(
-            sections.verdict_page,
-            proof_summary=proof_summary,
-            timeline_graph=_build_timeline_graph_data(
-                report_facts,
-                duration_s=run_facts.duration_s,
-            ),
-        ),
+        findings=findings,
+        top_causes=tuple(prepared_findings.top_causes),
+        sensor_intensity_by_location=tuple(sensor_facts.active_intensity),
+        location_hotspot_rows=tuple(sensor_facts.location_hotspot_rows),
+        verdict_page=verdict_page,
         appendix_a=sections.appendix_a,
         appendix_b=sections.appendix_b,
         appendix_c=_build_appendix_c_data(
@@ -186,15 +231,17 @@ def build_report_document(prepared: PreparedReportInput) -> ReportDocument:
             data_trust=list(data_trust),
             tr=tr,
         ),
-        traceability_rows=_build_traceability_rows(
-            date_str=_report_date_text(run_facts),
-            run_id=run_facts.run_id,
-            tire_spec_text=run_facts.tire_spec_text,
-            sensor_model=run_facts.sensor_model,
-            firmware_version=run_facts.firmware_version,
-            sample_count=run_facts.sample_count,
-            sample_rate_hz=run_facts.sample_rate_hz,
-            tr=tr,
+        traceability_rows=tuple(
+            _build_traceability_rows(
+                date_str=run_datetime,
+                run_id=run_facts.run_id,
+                tire_spec_text=run_facts.tire_spec_text,
+                sensor_model=run_facts.sensor_model,
+                firmware_version=run_facts.firmware_version,
+                sample_count=run_facts.sample_count,
+                sample_rate_hz=run_facts.sample_rate_hz,
+                tr=tr,
+            )
         ),
     )
 
