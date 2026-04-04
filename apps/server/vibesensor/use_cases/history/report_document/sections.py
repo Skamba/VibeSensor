@@ -24,7 +24,7 @@ from .narrative_summaries import (
     _phase_summary_text,
     _run_limits_summary_text,
 )
-from .section_context import ReportSectionContext
+from .section_context import AppendixCContext
 
 __all__ = [
     "_build_appendix_c_data",
@@ -93,7 +93,7 @@ def _build_appendix_c_data(
     aggregate: TestRun,
     measurements: list[MeasurementRow],
     report_facts: PreparedReportFacts,
-    section_context: ReportSectionContext,
+    appendix_context: AppendixCContext,
     data_trust: list[DataTrustItem],
     tr: Callable[..., str],
 ) -> AppendixCData:
@@ -112,8 +112,8 @@ def _build_appendix_c_data(
         context_summary=_context_summary_text(primary, report_facts, tr=tr),
         limits_summary=_run_limits_summary_text(
             report_facts,
-            speed_window_label=section_context.speed_window_label,
-            proof_caveat=section_context.proof_caveat,
+            speed_window_label=appendix_context.speed_window_label,
+            proof_caveat=appendix_context.proof_caveat,
             tr=tr,
         ),
         speed_band_summary=speed_summary,
