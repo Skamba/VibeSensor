@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
-from .sensor_frame_value_codec import (
+from .codecs.sensor_frame_values import (
     SensorFrameDecodeError,
     build_sensor_frame,
     optional_float,

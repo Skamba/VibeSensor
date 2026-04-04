@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import cast
 
-from vibesensor.shared.boundaries.strength_metrics_codec import strength_peak_payloads
+from vibesensor.shared.boundaries.codecs import strength_peak_payloads
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.shared.types.sensor_frame import SensorFrame
 

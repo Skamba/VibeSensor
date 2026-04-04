@@ -7,12 +7,12 @@ from test_support import build_speed_sweep_fault_samples, standard_metadata
 
 from vibesensor.adapters.analysis_summary import summarize_sensor_frames
 from vibesensor.domain import SpeedProfile
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
-from vibesensor.shared.boundaries.summary_snapshot_codec import (
+from vibesensor.shared.boundaries.codecs import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )
+from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.sensor_frame_decoder import sensor_frames_from_mappings
 from vibesensor.shared.boundaries.test_run_reconstruction import (
     test_run_from_summary as _reconstruct,
 )

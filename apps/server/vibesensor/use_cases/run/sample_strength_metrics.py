@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.domain.strength_metrics import StrengthMetrics
-from vibesensor.shared.boundaries.strength_metrics_codec import strength_metrics_from_mapping
+from vibesensor.shared.boundaries.codecs import strength_metrics_from_mapping
 from vibesensor.shared.types.payload_types import ClientMetrics
 
 __all__ = ["dominant_hz_from_strength", "extract_strength_data"]

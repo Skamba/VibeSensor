@@ -11,7 +11,7 @@ from vibesensor.domain import (
     Signature,
     VibrationSource,
 )
-from vibesensor.shared.boundaries.finding_evidence_codec import finding_evidence_from_mapping
+from vibesensor.shared.boundaries.codecs import finding_evidence_from_mapping
 from vibesensor.shared.boundaries.order_match_codec import order_match_observations_from_sequence
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,

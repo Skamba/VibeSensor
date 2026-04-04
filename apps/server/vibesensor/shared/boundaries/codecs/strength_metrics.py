@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Mapping, Sequence
 
 from vibesensor.domain import StrengthMetrics, StrengthPeak
+from vibesensor.shared.boundaries.codecs.scalars import float_or, optional_float, text_or_none
 from vibesensor.shared.types.json_types import JsonObject
 
 
@@ -15,10 +15,10 @@ def strength_peak_from_mapping(payload: object) -> StrengthPeak:
     if not isinstance(payload, Mapping):
         return StrengthPeak()
     return StrengthPeak(
-        hz=_float_or(payload, "hz"),
-        amp=_float_or(payload, "amp"),
-        vibration_strength_db=_float_or_none(payload, "vibration_strength_db"),
-        strength_bucket=_text_or_none(payload, "strength_bucket"),
+        hz=float_or(payload.get("hz")),
+        amp=float_or(payload.get("amp")),
+        vibration_strength_db=optional_float(payload.get("vibration_strength_db")),
+        strength_bucket=text_or_none(payload.get("strength_bucket")),
     )
 
 
@@ -74,55 +74,9 @@ def strength_metrics_from_mapping(payload: object) -> StrengthMetrics:
     if not isinstance(payload, Mapping):
         return StrengthMetrics()
     return StrengthMetrics(
-        vibration_strength_db=_float_or_none(payload, "vibration_strength_db"),
-        peak_amp_g=_float_or_none(payload, "peak_amp_g"),
-        noise_floor_amp_g=_float_or_none(payload, "noise_floor_amp_g"),
-        strength_bucket=_text_or_none(payload, "strength_bucket"),
+        vibration_strength_db=optional_float(payload.get("vibration_strength_db")),
+        peak_amp_g=optional_float(payload.get("peak_amp_g")),
+        noise_floor_amp_g=optional_float(payload.get("noise_floor_amp_g")),
+        strength_bucket=text_or_none(payload.get("strength_bucket")),
         top_peaks=strength_peaks_from_sequence(payload.get("top_peaks"), keep_invalid=True),
     )
-
-
-def _float_or(payload: Mapping[str, object], key: str, default: float = 0.0) -> float:
-    value = payload.get(key)
-    if value is None or isinstance(value, bool):
-        return default
-    if isinstance(value, int | float):
-        numeric = float(value)
-        return numeric if math.isfinite(numeric) else default
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return default
-        try:
-            numeric = float(text)
-        except ValueError:
-            return default
-        return numeric if math.isfinite(numeric) else default
-    return default
-
-
-def _float_or_none(payload: Mapping[str, object], key: str) -> float | None:
-    value = payload.get(key)
-    if value is None or isinstance(value, bool):
-        return None
-    if isinstance(value, int | float):
-        numeric = float(value)
-        return numeric if math.isfinite(numeric) else None
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return None
-        try:
-            numeric = float(text)
-        except ValueError:
-            return None
-        return numeric if math.isfinite(numeric) else None
-    return None
-
-
-def _text_or_none(payload: Mapping[str, object], key: str) -> str | None:
-    value = payload.get(key)
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None

@@ -12,11 +12,11 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, StrengthMetrics
-from vibesensor.shared.boundaries.sensor_frame_encoder import sensor_frame_to_json_object
-from vibesensor.shared.boundaries.strength_metrics_codec import (
+from vibesensor.shared.boundaries.codecs import (
     strength_metrics_from_mapping,
     strength_peak_payloads,
 )
+from vibesensor.shared.boundaries.sensor_frame_encoder import sensor_frame_to_json_object
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.run_metadata_builder import (
