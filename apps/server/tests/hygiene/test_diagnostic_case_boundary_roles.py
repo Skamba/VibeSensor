@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import Car, SpeedProfile, Symptom
-from vibesensor.shared.boundaries import diagnostic_case
+from vibesensor.shared.boundaries import diagnostic_case, run_metadata_projection
 from vibesensor.use_cases.diagnostics import _analysis_result_builder, run_data_preparation
 
 
@@ -11,8 +11,10 @@ def test_diagnostic_case_boundary_does_not_expose_domain_factories() -> None:
     assert callable(SpeedProfile.from_stats)
     assert not hasattr(Car, "from_metadata")
     assert not hasattr(Symptom, "from_metadata")
-    assert callable(diagnostic_case.car_from_metadata)
-    assert callable(diagnostic_case.symptom_from_metadata)
+    assert not hasattr(diagnostic_case, "car_from_metadata")
+    assert not hasattr(diagnostic_case, "symptom_from_metadata")
+    assert callable(run_metadata_projection.car_from_run_metadata)
+    assert callable(run_metadata_projection.symptom_from_run_metadata)
     assert not hasattr(diagnostic_case, "speed_profile_from_stats")
     assert not hasattr(diagnostic_case, "case_context_from_metadata")
     assert not hasattr(diagnostic_case, "project_analysis_summary")

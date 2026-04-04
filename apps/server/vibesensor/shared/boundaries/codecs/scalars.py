@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 
-__all__ = ["coerce_count", "float_or", "optional_float", "text_or_none"]
+__all__ = ["coerce_count", "float_or", "optional_float", "optional_int", "text_or_none"]
 
 
 def text_or_none(value: object) -> str | None:
@@ -14,8 +14,24 @@ def text_or_none(value: object) -> str | None:
     return text or None
 
 
-def optional_float(value: object) -> float | None:
+def optional_float(
+    value: object,
+    *,
+    field: str | None = None,
+    source: str | None = None,
+) -> float | None:
+    del field, source
     return as_float_or_none(value)
+
+
+def optional_int(
+    value: object,
+    *,
+    field: str | None = None,
+    source: str | None = None,
+) -> int | None:
+    del field, source
+    return as_int_or_none(value)
 
 
 def float_or(value: object, default: float = 0.0) -> float:
