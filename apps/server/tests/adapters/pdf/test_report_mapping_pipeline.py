@@ -4,9 +4,6 @@ import pytest
 from test_support.findings import make_finding_payload
 
 import vibesensor.shared.boundaries.reporting as shared_reporting
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
-    persisted_analysis_from_json_object,
-)
 from vibesensor.shared.boundaries.reporting import (
     PreparedReportInput,
     prepare_persisted_report_input,
@@ -14,6 +11,7 @@ from vibesensor.shared.boundaries.reporting import (
 )
 from vibesensor.shared.boundaries.reporting import document as shared_report_document
 from vibesensor.shared.boundaries.reporting import projection as shared_report_projection
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history import report_document
 
 
@@ -90,7 +88,7 @@ def test_prepare_report_input_rejects_non_projectable_payload() -> None:
 
 
 def test_prepare_persisted_report_input_rejects_non_projectable_payload() -> None:
-    analysis = persisted_analysis_from_json_object(
+    analysis = PersistedAnalysis.from_json_object(
         {
             "run_id": "persisted-non-projectable",
             "lang": "en",

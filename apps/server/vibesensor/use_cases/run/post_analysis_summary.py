@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 from vibesensor.shared.boundaries.analysis_summary import analysis_result_to_summary
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
-    persisted_analysis_from_summary,
-)
 from vibesensor.shared.json_utils import payload_object_from_json
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.json_types import JsonObject
@@ -87,7 +84,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
             explanation=explanation,
         )
 
-    return persisted_analysis_from_summary(summary_payload)
+    return PersistedAnalysis.from_json_object(summary_payload)
 
 
 def _post_analysis_sample_rate_hz(run: PostAnalysisRunInput) -> int | None:
