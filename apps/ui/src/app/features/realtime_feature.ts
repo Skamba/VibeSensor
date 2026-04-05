@@ -18,16 +18,17 @@ import {
 } from "../../api";
 import { defaultLocationCodes } from "../../constants";
 import {
-  getInlineStateAction,
   renderInlineStatePanel,
   type InlineStateActionVariant,
 } from "../views/dom_helpers";
 import {
-  getRealtimeSensorTableClickAction,
-  getRealtimeSensorTableLocationChange,
   renderRealtimeSensorOverview,
   renderRealtimeSensorTable,
 } from "../views/realtime_sensor_table_view";
+import {
+  bindRealtimeFeatureInteractions,
+  type RealtimeLoggingSummaryAction,
+} from "../views/realtime_feature_bindings";
 import { createPollingController } from "./polling_controller";
 import { classifyDataFreshness } from "./data_freshness";
 import { createRealtimeSensorState } from "./realtime_sensor_state";
@@ -216,7 +217,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   };
 
   type RecordingSummaryAction = {
-    action: "open-history" | "open-cars" | "open-add-car" | "open-sensors" | "open-speed-source";
+    action: RealtimeLoggingSummaryAction;
     label: string;
     variant?: InlineStateActionVariant;
   };
@@ -1114,52 +1115,42 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       loggingStatusPolling.start();
     }
     syncLoggingElapsedTimer();
-    els.startLoggingBtn?.addEventListener("click", () => void startLogging());
-    els.stopLoggingBtn?.addEventListener("click", () => void stopLogging());
-    els.loggingSummary?.addEventListener("click", (event) => {
-      const action = getInlineStateAction(event.target);
-      if (!action) {
-        return;
-      }
-      event.preventDefault();
-      event.stopPropagation();
-      if (action === "open-history") {
-        activatePrimaryView("historyView");
-        return;
-      }
-      if (action === "open-add-car") {
-        openCarsView({ openWizard: true });
-        return;
-      }
-      if (action === "open-cars") {
-        openCarsView();
-        return;
-      }
-      if (action === "open-sensors") {
-        openSettingsView("sensorsTab");
-        return;
-      }
-      if (action === "open-speed-source") {
+    bindRealtimeFeatureInteractions(els, {
+      onStartLogging: () => {
+        void startLogging();
+      },
+      onStopLogging: () => {
+        void stopLogging();
+      },
+      onLoggingSummaryAction: (action) => {
+        if (action === "open-history") {
+          activatePrimaryView("historyView");
+          return;
+        }
+        if (action === "open-add-car") {
+          openCarsView({ openWizard: true });
+          return;
+        }
+        if (action === "open-cars") {
+          openCarsView();
+          return;
+        }
+        if (action === "open-sensors") {
+          openSettingsView("sensorsTab");
+          return;
+        }
         openSettingsView("speedSourceTab");
-      }
-    });
-    els.sensorsSettingsBody?.addEventListener("change", (event) => {
-      const change = getRealtimeSensorTableLocationChange(event.target);
-      if (!change) {
-        return;
-      }
-      void setClientLocation(change.clientId, change.locationCode);
-    });
-    els.sensorsSettingsBody?.addEventListener("click", (event) => {
-      const action = getRealtimeSensorTableClickAction(event.target);
-      if (!action) {
-        return;
-      }
-      if (action.type === "identify") {
-        void identifyClient(action.clientId);
-        return;
-      }
-      void removeClient(action.clientId);
+      },
+      onSensorLocationChange: (change) => {
+        void setClientLocation(change.clientId, change.locationCode);
+      },
+      onSensorTableAction: (action) => {
+        if (action.type === "identify") {
+          void identifyClient(action.clientId);
+          return;
+        }
+        void removeClient(action.clientId);
+      },
     });
   }
 

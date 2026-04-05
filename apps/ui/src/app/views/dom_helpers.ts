@@ -71,6 +71,17 @@ export function getInlineStateAction(target: EventTarget | null): string | null 
     ?.getAttribute("data-inline-state-action") ?? null;
 }
 
+export function getTypedInlineStateAction<const TAction extends string>(
+  target: EventTarget | null,
+  allowedActions: readonly TAction[],
+): TAction | null {
+  const action = getInlineStateAction(target);
+  if (!action) {
+    return null;
+  }
+  return allowedActions.find((allowedAction) => allowedAction === action) ?? null;
+}
+
 export function formatEpochTimestamp(epoch: number | null | undefined): string {
   if (epoch === null || epoch === undefined || !Number.isFinite(epoch)) {
     return "—";

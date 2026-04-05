@@ -1,10 +1,12 @@
 import type { CarRecord } from "../../api/types";
+import type { UiSettingsDom } from "../dom/settings_dom";
 import { getCarCompleteness } from "../car_selection_state";
 import {
   closestFromTarget,
   renderInlineStatePanel,
   renderTableEmptyRow,
 } from "./dom_helpers";
+import { bindViewEvent, type ViewDisposer } from "./dom_event_bindings";
 
 export interface SettingsCarListViewParams {
   cars: CarRecord[];
@@ -175,4 +177,16 @@ export function getSettingsCarListAction(
     type,
     carId,
   };
+}
+
+export function bindSettingsCarListActions(
+  dom: Pick<UiSettingsDom, "carListBody">,
+  handlers: { onAction(action: SettingsCarListAction): void },
+): ViewDisposer {
+  return bindViewEvent(dom.carListBody, "click", (event: MouseEvent) => {
+    const action = getSettingsCarListAction(event.target);
+    if (action) {
+      handlers.onAction(action);
+    }
+  });
 }

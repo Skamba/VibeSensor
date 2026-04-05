@@ -16,6 +16,10 @@ import type { FeatureDepsBase } from "../feature_deps_base";
 import { createPollingController } from "./polling_controller";
 import { setSettingsFeedback } from "../views/settings_feedback";
 import {
+  bindSettingsSpeedSourceInteractions,
+  type SettingsSpeedSourceInteraction,
+} from "../views/settings_speed_source_bindings";
+import {
   type DisplayedSpeedSourceMode,
   deriveDisplayedSpeedSourceMode,
   isManualLikeSpeedSource,
@@ -25,7 +29,6 @@ import type { SettingsState } from "../ui_app_state";
 
 const SPEED_SOURCE_KINDS = ["gps", "manual", "obd2"] as const satisfies readonly SpeedSourceKind[];
 const OBD_BACKGROUND_RESCAN_DELAY_MS = 2_000;
-const TAB_NAVIGATION_KEYS = new Set(["Enter", " ", "ArrowRight", "ArrowLeft", "Home", "End"]);
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
   dom: UiSettingsDom;
@@ -93,6 +96,12 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
     els.speedSourceRadios.forEach((radio) => {
       radio.removeAttribute("aria-invalid");
     });
+    setSettingsFeedback(els.speedSourceSaveFeedback, null);
+  }
+
+  function clearObdSelectionFeedback(): void {
+    els.speedSourceChoiceObd?.classList.remove("speed-source-choice--error");
+    els.speedSourceRadios.find((radio) => radio.value === "obd2")?.removeAttribute("aria-invalid");
     setSettingsFeedback(els.speedSourceSaveFeedback, null);
   }
 
@@ -546,58 +555,40 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
   }
 
   function bindHandlers(): void {
-    els.speedSourceRadios.forEach((radio) => {
-      radio.addEventListener("change", () => {
-        speedSourceDraftDirty = true;
-        clearSpeedSourceFeedback();
-        syncSpeedSourceSelectionUi();
-      });
-    });
-    els.manualSpeedInput?.addEventListener("input", () => {
-      clearInputFeedback(els.manualSpeedInput, els.manualSpeedFeedback);
-      setSettingsFeedback(els.speedSourceSaveFeedback, null);
-    });
-    els.staleTimeoutInput?.addEventListener("input", () => {
-      clearInputFeedback(els.staleTimeoutInput, els.staleTimeoutFeedback);
-      setSettingsFeedback(els.speedSourceSaveFeedback, null);
-    });
-    els.saveSpeedSourceBtn?.addEventListener("click", saveSpeedSourceFromInputs);
-    els.scanObdDevicesBtn?.addEventListener("click", () => {
-      els.speedSourceChoiceObd?.classList.remove("speed-source-choice--error");
-      els.speedSourceRadios.find((radio) => radio.value === "obd2")?.removeAttribute("aria-invalid");
-      setSettingsFeedback(els.speedSourceSaveFeedback, null);
-      void scanObdDevices();
-    });
-    els.settingsTabs.forEach((tab) => {
-      tab.addEventListener("click", scheduleObdBackgroundRescanSync);
-      tab.addEventListener("keydown", (event) => {
-        if (TAB_NAVIGATION_KEYS.has(event.key)) {
-          scheduleObdBackgroundRescanSync();
+    bindSettingsSpeedSourceInteractions(els, shellDom, {
+      onAction: (action: SettingsSpeedSourceInteraction) => {
+        if (action.type === "speed-source-changed") {
+          speedSourceDraftDirty = true;
+          clearSpeedSourceFeedback();
+          syncSpeedSourceSelectionUi();
+          return;
         }
-      });
-    });
-    shellDom.menuButtons.forEach((button) => {
-      button.addEventListener("click", scheduleObdBackgroundRescanSync);
-      button.addEventListener("keydown", (event) => {
-        if (TAB_NAVIGATION_KEYS.has(event.key)) {
-          scheduleObdBackgroundRescanSync();
+        if (action.type === "manual-speed-input") {
+          clearInputFeedback(els.manualSpeedInput, els.manualSpeedFeedback);
+          setSettingsFeedback(els.speedSourceSaveFeedback, null);
+          return;
         }
-      });
-    });
-    els.obdDeviceList?.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) {
-        return;
-      }
-      const button = target.closest<HTMLButtonElement>("[data-obd-pair-mac]");
-      const macAddress = button?.dataset.obdPairMac;
-      if (!macAddress) {
-        return;
-      }
-      els.speedSourceChoiceObd?.classList.remove("speed-source-choice--error");
-      els.speedSourceRadios.find((radio) => radio.value === "obd2")?.removeAttribute("aria-invalid");
-      setSettingsFeedback(els.speedSourceSaveFeedback, null);
-      void pairObdDevice(macAddress);
+        if (action.type === "stale-timeout-input") {
+          clearInputFeedback(els.staleTimeoutInput, els.staleTimeoutFeedback);
+          setSettingsFeedback(els.speedSourceSaveFeedback, null);
+          return;
+        }
+        if (action.type === "save") {
+          saveSpeedSourceFromInputs();
+          return;
+        }
+        if (action.type === "scan-obd-devices") {
+          clearObdSelectionFeedback();
+          void scanObdDevices();
+          return;
+        }
+        if (action.type === "navigate-context") {
+          scheduleObdBackgroundRescanSync();
+          return;
+        }
+        clearObdSelectionFeedback();
+        void pairObdDevice(action.macAddress);
+      },
     });
   }
 

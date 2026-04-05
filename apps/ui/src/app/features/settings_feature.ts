@@ -17,7 +17,7 @@ import {
   setActiveSettingsCar,
 } from "../../api";
 import {
-  getSettingsCarListAction,
+  bindSettingsCarListActions,
   renderSettingsCarList,
 } from "../views/settings_car_list_view";
 import { renderInlineStatePanel } from "../views/dom_helpers";
@@ -402,31 +402,28 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function bindCarListEvents(): void {
-    if (!els.carListBody) return;
-    els.carListBody.addEventListener("click", (event) => {
-      const action = getSettingsCarListAction(event.target);
-      if (!action) {
-        return;
-      }
-      if (action.type === "add") {
-        carsDom.addCarBtn.click();
-        return;
-      }
-      if (action.type === "activate") {
-        if (action.carId) {
-          void handleActivateCar(action.carId);
+    bindSettingsCarListActions(els, {
+      onAction: (action) => {
+        if (action.type === "add") {
+          carsDom.addCarBtn.click();
+          return;
         }
-        return;
-      }
-      if (action.type === "complete") {
-        if (action.carId) {
-          void handleCompleteCar(action.carId);
+        if (action.type === "activate") {
+          if (action.carId) {
+            void handleActivateCar(action.carId);
+          }
+          return;
         }
-        return;
-      }
-      if (action.carId) {
-        void handleDeleteCar(action.carId);
-      }
+        if (action.type === "complete") {
+          if (action.carId) {
+            void handleCompleteCar(action.carId);
+          }
+          return;
+        }
+        if (action.carId) {
+          void handleDeleteCar(action.carId);
+        }
+      },
     });
   }
 
