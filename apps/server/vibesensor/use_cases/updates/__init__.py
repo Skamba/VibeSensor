@@ -20,6 +20,10 @@ The updater now has one explicit run-scoped workflow boundary per concern:
 - ``workflow_executor.py`` owns plan dispatch and success completion.
 - ``completion.py`` owns post-success transport completion and restart follow-up.
 - ``finalization.py`` owns unconditional transport cleanup and runtime refresh.
+- ``privilege.py`` owns sudo/privilege-escalation helpers used by command
+  execution and transport modules.
+- ``runner.py`` owns command execution primitives (``CommandRunner``,
+  ``UpdateCommandExecutor``), command reporting, and log-line sanitisation.
 - ``transport/`` owns prepared-transport interfaces, transport coordination,
   transport-neutral uplink readiness, and USB transport execution behavior.
 - ``usb_status.py`` owns the USB internet readiness service facade, while

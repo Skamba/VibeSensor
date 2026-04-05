@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-import vibesensor.use_cases.updates.runner as update_runner
+import vibesensor.use_cases.updates.privilege as update_privilege
 from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
@@ -102,17 +102,17 @@ class TestSudoWrapperDiscovery:
         wrapper.write_text("#!/usr/bin/env bash\n")
         wrapper.chmod(0o755)
 
-        monkeypatch.setattr(update_runner.os, "geteuid", lambda: 1000)
+        monkeypatch.setattr(update_privilege.os, "geteuid", lambda: 1000)
         monkeypatch.setenv("VIBESENSOR_UPDATE_SUDO_WRAPPER", os.fspath(wrapper))
         monkeypatch.delenv("VIBESENSOR_REPO_PATH", raising=False)
-        monkeypatch.setattr(update_runner, "_DEFAULT_INSTALL_REPO", tmp_path / "missing-install")
+        monkeypatch.setattr(update_privilege, "_DEFAULT_INSTALL_REPO", tmp_path / "missing-install")
         monkeypatch.setattr(
-            update_runner,
+            update_privilege,
             "_SOURCE_TREE_WRAPPER_SCRIPT",
             tmp_path / "missing-source-wrapper.sh",
         )
 
-        assert update_runner._sudo_prefix() == ["sudo", "-n", os.fspath(wrapper)]
+        assert update_privilege._sudo_prefix() == ["sudo", "-n", os.fspath(wrapper)]
 
     def test_sudo_prefix_uses_packaged_install_layout(self, monkeypatch, tmp_path) -> None:
         repo_root = tmp_path / "repo"
@@ -121,14 +121,14 @@ class TestSudoWrapperDiscovery:
         wrapper.write_text("#!/usr/bin/env bash\n")
         wrapper.chmod(0o755)
 
-        monkeypatch.setattr(update_runner.os, "geteuid", lambda: 1000)
+        monkeypatch.setattr(update_privilege.os, "geteuid", lambda: 1000)
         monkeypatch.delenv("VIBESENSOR_UPDATE_SUDO_WRAPPER", raising=False)
         monkeypatch.delenv("VIBESENSOR_REPO_PATH", raising=False)
-        monkeypatch.setattr(update_runner, "_DEFAULT_INSTALL_REPO", repo_root)
+        monkeypatch.setattr(update_privilege, "_DEFAULT_INSTALL_REPO", repo_root)
         monkeypatch.setattr(
-            update_runner,
+            update_privilege,
             "_SOURCE_TREE_WRAPPER_SCRIPT",
             tmp_path / "missing-source-wrapper.sh",
         )
 
-        assert update_runner._sudo_prefix() == ["sudo", "-n", os.fspath(wrapper)]
+        assert update_privilege._sudo_prefix() == ["sudo", "-n", os.fspath(wrapper)]
