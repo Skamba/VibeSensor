@@ -339,7 +339,6 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     if (panel) {
       renderUpdateStatusPanel(panel, status, health, {
         t,
-        escapeHtml,
         selectedTransport: selectedTransport(),
       });
     }
