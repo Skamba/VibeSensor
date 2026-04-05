@@ -707,6 +707,90 @@ def _check_ws_broadcast_uses_projection_module() -> list[str]:
     return failures
 
 
+def _check_runtime_settings_use_explicit_reader_ports() -> list[str]:
+    ports_path = VIBESENSOR_DIR / "shared" / "ports.py"
+    container_path = VIBESENSOR_DIR / "app" / "container.py"
+    runtime_state_path = VIBESENSOR_DIR / "app" / "runtime_state.py"
+    logger_path = VIBESENSOR_DIR / "use_cases" / "run" / "logger.py"
+    recorder_runtime_path = (
+        VIBESENSOR_DIR / "use_cases" / "run" / "_recorder_runtime.py"
+    )
+    recorder_types_path = VIBESENSOR_DIR / "use_cases" / "run" / "_recorder_types.py"
+    metadata_path = VIBESENSOR_DIR / "use_cases" / "run" / "run_metadata_builder.py"
+    ports_source = _read_text(ports_path)
+    container_source = _read_text(container_path)
+    runtime_state_source = _read_text(runtime_state_path)
+    logger_source = _read_text(logger_path)
+    recorder_runtime_source = _read_text(recorder_runtime_path)
+    recorder_types_source = _read_text(recorder_types_path)
+    metadata_source = _read_text(metadata_path)
+    failures: list[str] = []
+    if (
+        "class LanguageReader(Protocol):" not in ports_source
+        or "def language(self) -> LanguageCode: ..." not in ports_source
+    ):
+        failures.append(
+            f"{ports_path.relative_to(REPO_ROOT)} must define a focused LanguageReader protocol for runtime-facing language access"
+        )
+    if (
+        "language_provider" in container_source
+        or "_language_provider" in container_source
+    ):
+        failures.append(
+            f"{container_path.relative_to(REPO_ROOT)} must not use ad hoc language-provider lambdas once runtime reader ports exist"
+        )
+    for marker in (
+        "language_reader: LanguageReader",
+        "language_reader=self.ui_preferences",
+        "language_reader=runtime_settings.language_reader",
+    ):
+        if marker not in container_source:
+            failures.append(
+                f"{container_path.relative_to(REPO_ROOT)} must wire explicit runtime language-reader ports ({marker})"
+            )
+    if (
+        "settings_store: SettingsReader" in runtime_state_source
+        or "settings_reader: SettingsReader" not in runtime_state_source
+    ):
+        failures.append(
+            f"{runtime_state_path.relative_to(REPO_ROOT)} must expose RuntimeState.settings_reader instead of the old settings_store alias"
+        )
+    for marker in (
+        "settings_reader: SettingsReader | None = None",
+        "language_reader: LanguageReader | None = None",
+        "self._settings_reader = settings_reader",
+        "self._language_reader = language_reader",
+    ):
+        if marker not in logger_source:
+            failures.append(
+                f"{logger_path.relative_to(REPO_ROOT)} must keep the recorder wired to explicit reader collaborators ({marker})"
+            )
+    if "_settings_store" in logger_source or "_language_provider" in logger_source:
+        failures.append(
+            f"{logger_path.relative_to(REPO_ROOT)} must not keep the old runtime settings/language aliases once explicit readers are in place"
+        )
+    if (
+        "settings_store: SettingsReader | None" in recorder_runtime_source
+        or "settings_reader: SettingsReader | None" not in recorder_runtime_source
+    ):
+        failures.append(
+            f"{recorder_runtime_path.relative_to(REPO_ROOT)} must refer to the recorder's focused settings_reader seam"
+        )
+    if "language_reader=recorder._language_reader" not in recorder_types_source:
+        failures.append(
+            f"{recorder_types_path.relative_to(REPO_ROOT)} must forward the recorder's explicit language_reader into run metadata building"
+        )
+    if (
+        "language_reader: LanguageReader | None = None" not in metadata_source
+        or 'metadata.language = str(language_reader.language).strip().lower() or "en"'
+        not in metadata_source
+    ):
+        failures.append(
+            f"{metadata_path.relative_to(REPO_ROOT)} must build run metadata from the explicit LanguageReader port"
+        )
+    return failures
+
+
 def _check_report_pdf_entrypoint_renders_report_document() -> list[str]:
     path = VIBESENSOR_DIR / "app" / "container.py"
     tree = _parse_python(path)
@@ -1821,6 +1905,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "WsBroadcast uses projection module",
         _check_ws_broadcast_uses_projection_module,
+    ),
+    (
+        "Runtime settings use explicit reader ports",
+        _check_runtime_settings_use_explicit_reader_ports,
     ),
     (
         "Report PDF entrypoint renders report document",

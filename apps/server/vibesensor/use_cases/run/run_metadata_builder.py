@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.ports import ClientTracker
+from vibesensor.shared.ports import ClientTracker, LanguageReader
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.run_schema import RunCarMetadata, RunMetadata
 
@@ -76,7 +74,7 @@ def build_run_metadata(
     fft_window_size_samples: int,
     accel_scale_g_per_lsb: float | None,
     active_car_snapshot: CarSnapshot | None = None,
-    language_provider: Callable[[], str] | None = None,
+    language_reader: LanguageReader | None = None,
     recorded_utc_offset_seconds: int | None = None,
 ) -> RunMetadata:
     """Assemble comprehensive typed run metadata."""
@@ -102,8 +100,8 @@ def build_run_metadata(
     metadata.analysis_settings = analysis_settings_snapshot
     metadata.car = run_car_metadata
     metadata.incomplete_for_order_analysis = not order_reference_context_complete(metadata)
-    if language_provider is not None:
-        metadata.language = str(language_provider()).strip().lower() or "en"
+    if language_reader is not None:
+        metadata.language = str(language_reader.language).strip().lower() or "en"
     return metadata
 
 

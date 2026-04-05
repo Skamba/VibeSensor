@@ -155,7 +155,7 @@ def _make_runtime(**overrides: Any):
     processor = overrides.pop("processor", _StubProcessor())
     control_plane = overrides.pop("control_plane", MagicMock())
     worker_pool = overrides.pop("worker_pool", MagicMock())
-    settings_store = overrides.pop("settings_store", MagicMock())
+    settings_reader = overrides.pop("settings_reader", MagicMock())
     gps_monitor = overrides.pop("gps_monitor", MagicMock())
     obd_runner = overrides.pop("obd_runner", MagicMock())
     if not isinstance(getattr(obd_runner, "run", None), AsyncMock):
@@ -173,7 +173,7 @@ def _make_runtime(**overrides: Any):
         processor=processor,
         control_plane=control_plane,
         worker_pool=worker_pool,
-        settings_store=settings_store,
+        settings_reader=settings_reader,
         gps_monitor=gps_monitor,
         obd_runner=obd_runner,
         history_db=history_db,
@@ -600,7 +600,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     history_db.close.assert_called_once()
 
 
-@pytest.mark.parametrize("attr", ["settings_store", "processing_loop", "ws_broadcast"])
+@pytest.mark.parametrize("attr", ["settings_reader", "processing_loop", "ws_broadcast"])
 def test_runtime_state_has_public_attribute(attr: str) -> None:
     """Canonical import path should expose key public attributes."""
     from vibesensor.app.runtime_state import RuntimeState
@@ -633,4 +633,4 @@ def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None
     )
     assert hints["registry"] is ClientTracker
     assert hints["processor"] is SignalSource
-    assert hints["settings_store"] is SettingsReader
+    assert hints["settings_reader"] is SettingsReader
