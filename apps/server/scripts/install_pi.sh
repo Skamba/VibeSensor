@@ -7,6 +7,8 @@ SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor.service"
 HOTSPOT_SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot.service"
 HOTSPOT_HEAL_SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot-self-heal.service"
 HOTSPOT_HEAL_TIMER_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot-self-heal.timer"
+SERVER_PYPROJECT="${PI_DIR}/pyproject.toml"
+RUNTIME_POLICY_DOC="docs/runtime_support_matrix.md"
 VENV_DIR="${PI_DIR}/.venv"
 SKIP_SERVICE_START="${VIBESENSOR_SKIP_SERVICE_START:-0}"
 
@@ -40,6 +42,39 @@ run_as_service_user() {
   fi
 }
 
+read_supported_python_floor() {
+  local floor
+  floor="$(
+    sed -n 's/^requires-python = ">=\([0-9][0-9]*\.[0-9][0-9]*\)"$/\1/p' "${SERVER_PYPROJECT}" | head -n 1
+  )"
+  if [ -z "${floor}" ]; then
+    echo "ERROR: Could not determine the supported Python floor from ${SERVER_PYPROJECT}." >&2
+    exit 1
+  fi
+  printf '%s\n' "${floor}"
+}
+
+validate_supported_python() {
+  local python_bin="$1"
+  local supported_floor actual_version actual_major actual_minor required_major required_minor
+  supported_floor="$(read_supported_python_floor)"
+  actual_version="$("${python_bin}" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")')"
+  IFS=. read -r actual_major actual_minor _ <<<"${actual_version}"
+  IFS=. read -r required_major required_minor <<<"${supported_floor}"
+
+  if [ -z "${actual_major:-}" ] || [ -z "${actual_minor:-}" ]; then
+    echo "ERROR: Could not parse the installed python3 version reported by ${python_bin}: ${actual_version}" >&2
+    exit 1
+  fi
+
+  if [ "${actual_major}" -lt "${required_major}" ] || {
+    [ "${actual_major}" -eq "${required_major}" ] && [ "${actual_minor}" -lt "${required_minor}" ];
+  }; then
+    echo "ERROR: install_pi.sh requires python3 >= ${supported_floor}; found ${actual_version} at ${python_bin}. See ${RUNTIME_POLICY_DOC} for the supported Raspberry Pi runtime policy." >&2
+    exit 1
+  fi
+}
+
 run_as_root apt-get update
 run_as_root apt-get install -y \
   python3 \
@@ -53,7 +88,14 @@ run_as_root apt-get install -y \
   gpsd \
   gpsd-clients
 
-python3 -m venv "${VENV_DIR}"
+PYTHON_BIN="$(command -v python3 || true)"
+if [ -z "${PYTHON_BIN}" ]; then
+  echo "ERROR: python3 is not available after package installation." >&2
+  exit 1
+fi
+validate_supported_python "${PYTHON_BIN}"
+
+"${PYTHON_BIN}" -m venv "${VENV_DIR}"
 "${VENV_DIR}/bin/pip" install --upgrade pip
 "${VENV_DIR}/bin/pip" install -e "${PI_DIR}"
 "${VENV_DIR}/bin/vibesensor-config-preflight" "${PI_DIR}/config.pi.yaml" >/dev/null
