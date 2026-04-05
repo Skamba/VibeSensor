@@ -1,4 +1,4 @@
-import type { ObdStatusPayload, SpeedSourceStatusPayload } from "../../api/types";
+import type { ObdStatusPayload, SpeedSourceStatusPayload } from "../../transport/http_models";
 import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
 import {
   GPS_POLL_FAST_MS,

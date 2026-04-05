@@ -1,4 +1,4 @@
-import type { AnalysisSettingsRequest, AnalysisSettingsPayload } from "../../api/types";
+import type { AnalysisSettingsRequest, AnalysisSettingsPayload } from "../../transport/http_models";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { UiSettingsDom } from "../dom/settings_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";

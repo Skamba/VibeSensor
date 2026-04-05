@@ -1,4 +1,4 @@
-import type { UsbInternetStatusPayload } from "../../api/types";
+import type { UsbInternetStatusPayload } from "../../transport/http_models";
 import { createElementNode, renderChildren } from "./dom_render";
 import { createStatusGridRowElement } from "./dom_helpers";
 

@@ -1,5 +1,5 @@
-import type { LocationOption } from "../../api/types";
-import type { AdaptedClient } from "../../server_payload";
+import type { LocationOption } from "../../transport/http_models";
+import type { AdaptedClient } from "../../transport/live_models";
 import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
 
 export interface RealtimeSensorTableViewParams {

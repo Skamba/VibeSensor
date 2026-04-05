@@ -1,0 +1,48 @@
+import {
+  EXPECTED_SCHEMA_VERSION,
+  type StrengthMetricsPayload,
+  type WsClientInfo,
+  type WsOrderBand,
+  type WsRotationalSpeedValue,
+  type WsRotationalSpeeds,
+} from "../contracts/ws_payload_types";
+
+export const EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION = EXPECTED_SCHEMA_VERSION;
+
+export type StrengthMetrics = StrengthMetricsPayload;
+
+export interface SpectrumClientData {
+  freq: number[];
+  strength_metrics: StrengthMetrics;
+  combined: number[];
+}
+
+export type AdaptedClient = Pick<
+  WsClientInfo,
+  | "id"
+  | "name"
+  | "connected"
+  | "mac_address"
+  | "location_code"
+  | "last_seen_age_ms"
+  | "dropped_frames"
+  | "frames_total"
+  | "frame_samples"
+  | "sample_rate_hz"
+  | "firmware_version"
+>;
+
+export type RotationalSpeedValue = WsRotationalSpeedValue;
+
+export type RotationalSpeeds = WsRotationalSpeeds;
+
+export type OrderBand = WsOrderBand;
+
+export interface AdaptedPayload {
+  clients: AdaptedClient[];
+  speed_mps: number | null;
+  rotational_speeds: RotationalSpeeds | null;
+  spectra: {
+    clients: Record<string, SpectrumClientData>;
+  } | null;
+}

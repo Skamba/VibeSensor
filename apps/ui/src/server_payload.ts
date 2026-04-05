@@ -1,43 +1,10 @@
 import {
   EXPECTED_SCHEMA_VERSION,
   type LiveWsPayload,
-  type WsClientInfo,
-  type WsOrderBand,
-  type WsRotationalSpeedValue,
-  type WsRotationalSpeeds,
 } from "./contracts/ws_payload_types";
-import type { SpectrumClientData } from "./app/ui_app_state";
+import { cloneTransportValue } from "./transport/clone";
+import type { AdaptedClient, AdaptedPayload, SpectrumClientData } from "./transport/live_models";
 import { validateLiveWsPayload } from "./ws_payload_validator";
-
-export type AdaptedClient = Pick<
-  WsClientInfo,
-  | "id"
-  | "name"
-  | "connected"
-  | "mac_address"
-  | "location_code"
-  | "last_seen_age_ms"
-  | "dropped_frames"
-  | "frames_total"
-  | "frame_samples"
-  | "sample_rate_hz"
-  | "firmware_version"
->;
-
-export type RotationalSpeedValue = WsRotationalSpeedValue;
-
-export type RotationalSpeeds = WsRotationalSpeeds;
-
-export type OrderBand = WsOrderBand;
-
-export type AdaptedPayload = {
-  clients: AdaptedClient[];
-  speed_mps: number | null;
-  rotational_speeds: RotationalSpeeds | null;
-  spectra: {
-    clients: Record<string, SpectrumClientData>;
-  } | null;
-};
 
 function hasCompleteSpectrumData(
   freq: number[],
@@ -63,7 +30,7 @@ function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectr
     adaptedClients[clientId] = {
       freq,
       combined,
-      strength_metrics: strengthMetrics,
+      strength_metrics: cloneTransportValue(strengthMetrics),
     };
   }
 
@@ -92,9 +59,11 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
   warnOnUnknownSchemaVersion(validatedPayload.schema_version);
 
   return {
-    clients: validatedPayload.clients,
+    clients: validatedPayload.clients.map((client) => cloneTransportValue<AdaptedClient>(client)),
     speed_mps: validatedPayload.speed_mps,
-    rotational_speeds: validatedPayload.rotational_speeds,
+    rotational_speeds: validatedPayload.rotational_speeds
+      ? cloneTransportValue(validatedPayload.rotational_speeds)
+      : null,
     spectra: adaptSpectra(validatedPayload.spectra),
   };
 }

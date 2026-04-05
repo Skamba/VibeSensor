@@ -1,5 +1,5 @@
 import type { UiHistoryDom } from "../dom/history_dom";
-import type { HistoryEntry } from "../../api/types";
+import type { HistoryEntry } from "../../transport/http_models";
 import type { RunDetail } from "../ui_app_state";
 import {
   closestFromTarget,
