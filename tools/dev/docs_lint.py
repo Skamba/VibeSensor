@@ -176,7 +176,8 @@ def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list
     instruction_files = sorted(
         path
         for path in markdown_files
-        if path.startswith(".github/instructions/") and path.endswith(".instructions.md")
+        if path.startswith(".github/instructions/")
+        and path.endswith(".instructions.md")
     )
 
     docs_ai_files = {path for path in markdown_files if path.startswith("docs/ai/")}
@@ -215,9 +216,7 @@ def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list
             )
         for path in instruction_files:
             if path not in copilot_text:
-                issues.append(
-                    f".github/copilot-instructions.md must point to {path}"
-                )
+                issues.append(f".github/copilot-instructions.md must point to {path}")
 
     repo_map_text = _read_text(repo_root, "docs/ai/repo-map.md")
     if repo_map_text is None:
