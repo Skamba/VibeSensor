@@ -80,8 +80,11 @@ source-of-truth export commands remain the only writers for those files.
 | `app/runtime/ui_spectrum_controller.ts` | Spectrum chart lifecycle, overlays, order-band calculation, and animation |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
 | `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view binders |
+| `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and delegated event bindings together |
+| `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
 | `app/views/` | Focused DOM rendering, render-helper composition, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and update panels |
+| `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived panel state, DOM rendering, elapsed-timer sync, and cross-view navigation clicks |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
 | `api.ts` | REST API facade that returns local transport DTOs while `api/types.ts` stays the generated HTTP boundary |
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
@@ -112,6 +115,10 @@ locators once in `ui_runtime_dom.ts`, then passes those local surfaces into the
 owning runtime controllers and into `app_feature_bundle.ts`. That bundle
 creates the concrete features, wires their explicit cross-feature ports, and
 returns only the shell, transport, and startup contracts the runtime needs.
+Realtime now follows that same split explicitly: `realtime_feature.ts` is the
+thin facade, `realtime_feature_workflow.ts` owns the controller-style polling
+and mutation flow, and `realtime_feature_presenter.ts` owns realtime-specific
+DOM rendering and navigation actions.
 `app/views/` still owns focused HTML rendering helpers, the shared low-level DOM
 render helper, typed event-target decoding, and disposable delegated listener
 binders for reusable multi-action panels.
