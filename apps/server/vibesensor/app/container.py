@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.history import (
@@ -11,8 +12,10 @@ from vibesensor.adapters.history import (
 )
 from vibesensor.adapters.http.dependencies import (
     HistoryDeps,
+    ObdAdminServiceProtocol,
     RouterDeps,
     SettingsDeps,
+    SettingsSpeedServiceProtocol,
     TelemetryDeps,
     UpdateDeps,
 )
@@ -55,13 +58,11 @@ from vibesensor.shared.constants.dsp import (
 )
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.shared.ports import (
-    AnalysisSettingsStore,
-    CarSettingsStore,
     SensorMetadataReader,
-    SensorMetadataStore,
+    SettingsReader,
+    SettingsSnapshotPersistence,
     SpeedSourceSettingsReader,
-    SpeedSourceSettingsStore,
-    UiPreferencesStore,
+    SpeedSourceSync,
 )
 from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 from vibesensor.use_cases.history.exports import HistoryExportService
@@ -72,6 +73,59 @@ from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashMana
 from vibesensor.use_cases.updates.runtime import build_update_manager
 
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeSettingsDeps:
+    """Focused settings readers/providers needed by long-lived runtime collaborators."""
+
+    settings_reader: SettingsReader
+    speed_source_reader: SpeedSourceSettingsReader
+    sensor_metadata_reader: SensorMetadataReader
+    language_provider: Callable[[], str]
+
+
+@dataclass(slots=True)
+class SettingsServiceBundle:
+    """Explicit settings wiring bundle for runtime and HTTP assembly."""
+
+    coordinator: SettingsPersistenceCoordinator
+    car_settings: CarSettingsService
+    analysis_settings: ActiveCarAnalysisSettingsService
+    sensor_metadata_store: SensorSettingsService
+    speed_source_settings: PersistedSpeedSourceSettingsService
+    ui_preferences: UiPreferencesService
+    settings_reader: SettingsDerivationService
+    speed_source_service: SpeedSourceSettingsService
+    language_provider: Callable[[], str]
+
+    def runtime_deps(self) -> RuntimeSettingsDeps:
+        """Return the focused runtime readers/providers derived from this bundle."""
+
+        return RuntimeSettingsDeps(
+            settings_reader=self.settings_reader,
+            speed_source_reader=self.speed_source_settings,
+            sensor_metadata_reader=self.sensor_metadata_store,
+            language_provider=self.language_provider,
+        )
+
+    def http_settings_deps(
+        self,
+        *,
+        speed_status_service: SettingsSpeedServiceProtocol,
+        obd_admin_service: ObdAdminServiceProtocol,
+    ) -> SettingsDeps:
+        """Return the focused HTTP settings dependency group."""
+
+        return SettingsDeps(
+            car_settings=self.car_settings,
+            analysis_settings=self.analysis_settings,
+            sensor_metadata_store=self.sensor_metadata_store,
+            ui_preferences=self.ui_preferences,
+            speed_source_service=self.speed_source_service,
+            speed_status_service=speed_status_service,
+            obd_admin_service=obd_admin_service,
+        )
 
 
 def _build_pdf_bytes(document: ReportDocument) -> bytes:
@@ -137,6 +191,64 @@ def create_history_db(
     return history
 
 
+def build_settings_service_bundle(
+    *,
+    snapshot_repository: SettingsSnapshotPersistence | None,
+    speed_control: SpeedSourceSync | None,
+) -> SettingsServiceBundle:
+    """Build the explicit settings bundle used by runtime and HTTP assembly."""
+
+    coordinator = SettingsPersistenceCoordinator(db=snapshot_repository)
+    car_settings = CarSettingsService(
+        lock=coordinator.lock,
+        state=coordinator.car_state,
+        update_with_rollback=coordinator.update_with_rollback,
+    )
+    analysis_settings = ActiveCarAnalysisSettingsService(
+        active_car_aspects=car_settings.active_car_aspects,
+        update_active_car_aspects=car_settings.update_active_car_aspects,
+    )
+    sensor_metadata_store = SensorSettingsService(
+        lock=coordinator.lock,
+        state=coordinator.sensor_state,
+        update_with_rollback=coordinator.update_with_rollback,
+    )
+    speed_source_settings = PersistedSpeedSourceSettingsService(
+        lock=coordinator.lock,
+        state=coordinator.speed_source_state,
+        update_with_rollback=coordinator.update_with_rollback,
+    )
+    ui_preferences = UiPreferencesService(
+        lock=coordinator.lock,
+        state=coordinator.ui_preferences_state,
+        update_with_rollback=coordinator.update_with_rollback,
+    )
+    settings_reader = SettingsDerivationService(
+        active_car_aspects=car_settings.active_car_aspects,
+        active_car_snapshot=car_settings.active_car_snapshot,
+    )
+
+    def _language_provider() -> str:
+        return ui_preferences.language
+
+    return SettingsServiceBundle(
+        coordinator=coordinator,
+        car_settings=car_settings,
+        analysis_settings=analysis_settings,
+        sensor_metadata_store=sensor_metadata_store,
+        speed_source_settings=speed_source_settings,
+        ui_preferences=ui_preferences,
+        settings_reader=settings_reader,
+        speed_source_service=SpeedSourceSettingsService(
+            settings_store=speed_source_settings,
+            runtime_applier=SpeedSourceRuntimeApplier(
+                speed_control=speed_control,
+            ),
+        ),
+        language_provider=_language_provider,
+    )
+
+
 def build_runtime(config: AppConfig) -> AppRuntime:
     """Construct all services and return the app runtime bundle."""
     accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
@@ -160,48 +272,11 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         obd_status_refresher=obd_runtime.control.admin,
         obd_control=obd_runtime.control.settings,
     )
-    settings_persistence = SettingsPersistenceCoordinator(db=history.settings_snapshot_repository)
-    car_settings_service = CarSettingsService(
-        lock=settings_persistence.lock,
-        state=settings_persistence.car_state,
-        update_with_rollback=settings_persistence.update_with_rollback,
+    settings_services = build_settings_service_bundle(
+        snapshot_repository=history.settings_snapshot_repository,
+        speed_control=speed_services.control,
     )
-    analysis_settings_service = ActiveCarAnalysisSettingsService(
-        active_car_aspects=car_settings_service.active_car_aspects,
-        update_active_car_aspects=car_settings_service.update_active_car_aspects,
-    )
-    sensor_metadata_service = SensorSettingsService(
-        lock=settings_persistence.lock,
-        state=settings_persistence.sensor_state,
-        update_with_rollback=settings_persistence.update_with_rollback,
-    )
-    speed_source_settings_service = PersistedSpeedSourceSettingsService(
-        lock=settings_persistence.lock,
-        state=settings_persistence.speed_source_state,
-        update_with_rollback=settings_persistence.update_with_rollback,
-    )
-    ui_preferences_service = UiPreferencesService(
-        lock=settings_persistence.lock,
-        state=settings_persistence.ui_preferences_state,
-        update_with_rollback=settings_persistence.update_with_rollback,
-    )
-    car_settings: CarSettingsStore = car_settings_service
-    analysis_settings: AnalysisSettingsStore = analysis_settings_service
-    sensor_metadata_store: SensorMetadataStore = sensor_metadata_service
-    sensor_metadata_reader: SensorMetadataReader = sensor_metadata_store
-    speed_source_store: SpeedSourceSettingsStore = speed_source_settings_service
-    speed_source_reader: SpeedSourceSettingsReader = speed_source_store
-    ui_preferences: UiPreferencesStore = ui_preferences_service
-    settings_reader = SettingsDerivationService(
-        active_car_aspects=car_settings_service.active_car_aspects,
-        active_car_snapshot=car_settings_service.active_car_snapshot,
-    )
-    speed_source_service = SpeedSourceSettingsService(
-        settings_store=speed_source_store,
-        runtime_applier=SpeedSourceRuntimeApplier(
-            speed_control=speed_services.control,
-        ),
-    )
+    runtime_settings = settings_services.runtime_deps()
 
     # persistence services
     history_run_service = HistoryRunService(
@@ -216,7 +291,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     )
     run_service = ProjectedHistoryRunService(
         history_run_service,
-        current_car_reader=settings_reader,
+        current_car_reader=settings_services.settings_reader,
     )
     export_service = ProjectedHistoryExportService(history_export_service)
 
@@ -264,9 +339,9 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         processor=processor,
         gps_monitor=speed_services.observation,
         gps_enabled=config.gps.gps_enabled,
-        settings_reader=settings_reader,
-        speed_source_reader=speed_source_reader,
-        sensor_metadata_reader=sensor_metadata_reader,
+        settings_reader=runtime_settings.settings_reader,
+        speed_source_reader=runtime_settings.speed_source_reader,
+        sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
     )
 
     # run recorder
@@ -284,9 +359,9 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         gps_monitor=speed_services.observation,
         processor=processor,
         history_db=history_db,
-        settings_store=settings_reader,
-        sensor_metadata_reader=sensor_metadata_reader,
-        language_provider=lambda: ui_preferences.language,
+        settings_store=runtime_settings.settings_reader,
+        sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
+        language_provider=runtime_settings.language_provider,
     )
 
     # requeue stale analysis runs
@@ -312,7 +387,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         processor=processor,
         control_plane=control_plane,
         worker_pool=worker_pool,
-        settings_store=settings_reader,
+        settings_store=runtime_settings.settings_reader,
         gps_monitor=gps_monitor,
         obd_runner=obd_runtime.connection.runner,
         history_db=history_lifecycle,
@@ -335,12 +410,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             run_recorder=run_recorder,
             ws_hub=ws_hub,
         ),
-        settings=SettingsDeps(
-            car_settings=car_settings,
-            analysis_settings=analysis_settings,
-            sensor_metadata_store=sensor_metadata_store,
-            ui_preferences=ui_preferences,
-            speed_source_service=speed_source_service,
+        settings=settings_services.http_settings_deps(
             speed_status_service=speed_services.observation,
             obd_admin_service=speed_services.admin,
         ),
@@ -354,5 +424,5 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             esp_flash_manager=esp_flash_manager,
         ),
     )
-    speed_source_service.sync_all()
+    settings_services.speed_source_service.sync_all()
     return AppRuntime(lifecycle=lifecycle, router=router)

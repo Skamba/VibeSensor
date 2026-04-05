@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from vibesensor.app.container import build_settings_service_bundle
 from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
 from vibesensor.infra.config.sensor_settings import SensorSettingsService
@@ -34,43 +35,18 @@ def build_settings_services(
 ) -> PersistedSettingsServices:
     """Build the focused persisted settings services used by production wiring."""
 
-    coordinator = SettingsPersistenceCoordinator(db=db)
-    car_settings = CarSettingsService(
-        lock=coordinator.lock,
-        state=coordinator.car_state,
-        update_with_rollback=coordinator.update_with_rollback,
-    )
-    analysis_settings = ActiveCarAnalysisSettingsService(
-        active_car_aspects=car_settings.active_car_aspects,
-        update_active_car_aspects=car_settings.update_active_car_aspects,
-    )
-    sensor_settings = SensorSettingsService(
-        lock=coordinator.lock,
-        state=coordinator.sensor_state,
-        update_with_rollback=coordinator.update_with_rollback,
-    )
-    speed_source_settings = PersistedSpeedSourceSettingsService(
-        lock=coordinator.lock,
-        state=coordinator.speed_source_state,
-        update_with_rollback=coordinator.update_with_rollback,
-    )
-    ui_preferences = UiPreferencesService(
-        lock=coordinator.lock,
-        state=coordinator.ui_preferences_state,
-        update_with_rollback=coordinator.update_with_rollback,
-    )
-    settings_reader = SettingsDerivationService(
-        active_car_aspects=car_settings.active_car_aspects,
-        active_car_snapshot=car_settings.active_car_snapshot,
+    services = build_settings_service_bundle(
+        snapshot_repository=db,
+        speed_control=None,
     )
     return PersistedSettingsServices(
-        coordinator=coordinator,
-        car_settings=car_settings,
-        analysis_settings=analysis_settings,
-        sensor_settings=sensor_settings,
-        speed_source_settings=speed_source_settings,
-        ui_preferences=ui_preferences,
-        settings_reader=settings_reader,
+        coordinator=services.coordinator,
+        car_settings=services.car_settings,
+        analysis_settings=services.analysis_settings,
+        sensor_settings=services.sensor_metadata_store,
+        speed_source_settings=services.speed_source_settings,
+        ui_preferences=services.ui_preferences,
+        settings_reader=services.settings_reader,
     )
 
 
