@@ -50,13 +50,19 @@ def install_pi_text() -> str:
 def test_smoke_health_route_registered() -> None:
     state = MagicMock()
     placeholder = MagicMock()
-    state.telemetry = SimpleNamespace(
-        control_plane=placeholder,
+    state.health = SimpleNamespace(
         health_state=placeholder,
         processing_loop_state=placeholder,
         processor=placeholder,
         registry=placeholder,
         run_recorder=placeholder,
+    )
+    state.live = SimpleNamespace(
+        control_plane=placeholder,
+        processor=placeholder,
+        registry=placeholder,
+        run_recorder=placeholder,
+        sensor_metadata_store=placeholder,
         ws_hub=placeholder,
     )
     state.settings = SimpleNamespace(

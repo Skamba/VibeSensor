@@ -11,15 +11,16 @@ from vibesensor.adapters.history import (
     ProjectedHistoryRunService,
 )
 from vibesensor.adapters.http.dependencies import (
+    HealthDeps,
     HistoryDeps,
     HistoryExportServiceProtocol,
     HistoryReportServiceProtocol,
     HistoryRunServiceProtocol,
+    LiveDeps,
     ObdAdminServiceProtocol,
     RouterDeps,
     SettingsDeps,
     SettingsSpeedServiceProtocol,
-    TelemetryDeps,
     UpdateDeps,
 )
 from vibesensor.adapters.obd import ObdAdminClient, ObdRuntime, build_obd_runtime
@@ -64,6 +65,7 @@ from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.shared.ports import (
     LanguageReader,
     SensorMetadataReader,
+    SensorMetadataStore,
     SettingsReader,
     SettingsSnapshotPersistence,
     SpeedSourceSettingsReader,
@@ -173,15 +175,25 @@ class LiveRuntimeBundle:
     ws_broadcast: WsBroadcastService
     run_recorder: RunRecorder
 
-    def telemetry_deps(self, *, health_state: RuntimeHealthState) -> TelemetryDeps:
-        """Return the focused HTTP telemetry dependency group."""
+    def http_health_deps(self, *, health_state: RuntimeHealthState) -> HealthDeps:
+        """Return the focused HTTP health dependency group."""
 
-        return TelemetryDeps(
+        return HealthDeps(
             processing_loop_state=self.processing_loop_state,
             health_state=health_state,
             processor=self.processor,
             registry=self.registry,
+            run_recorder=self.run_recorder,
+        )
+
+    def http_live_deps(self, *, sensor_metadata_store: SensorMetadataStore) -> LiveDeps:
+        """Return the focused HTTP live-runtime dependency group."""
+
+        return LiveDeps(
+            registry=self.registry,
             control_plane=self.control_plane,
+            sensor_metadata_store=sensor_metadata_store,
+            processor=self.processor,
             run_recorder=self.run_recorder,
             ws_hub=self.ws_hub,
         )
@@ -498,11 +510,15 @@ def build_router_deps(
 ) -> RouterDeps:
     """Build the grouped HTTP route dependency bundle."""
 
+    settings = settings_services.http_settings_deps(
+        speed_status_service=speed_runtime.speed_services.observation,
+        obd_admin_service=speed_runtime.speed_services.admin,
+    )
     return RouterDeps(
-        telemetry=live_runtime.telemetry_deps(health_state=health_state),
-        settings=settings_services.http_settings_deps(
-            speed_status_service=speed_runtime.speed_services.observation,
-            obd_admin_service=speed_runtime.speed_services.admin,
+        health=live_runtime.http_health_deps(health_state=health_state),
+        settings=settings,
+        live=live_runtime.http_live_deps(
+            sensor_metadata_store=settings.sensor_metadata_store,
         ),
         history=history_services.http_deps(),
         updates=updates,

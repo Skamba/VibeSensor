@@ -6,10 +6,11 @@ import pytest
 from pydantic import ValidationError
 
 from vibesensor.adapters.http.dependencies import (
+    HealthDeps,
     HistoryDeps,
+    LiveDeps,
     RouterDeps,
     SettingsDeps,
-    TelemetryDeps,
     UpdateDeps,
 )
 from vibesensor.use_cases.updates.models import UpdateTransport
@@ -22,24 +23,31 @@ class TestUpdateApiEndpoints:
         from vibesensor.adapters.http import create_router
 
         placeholder = MagicMock()
+        settings = SettingsDeps(
+            car_settings=placeholder,
+            analysis_settings=placeholder,
+            sensor_metadata_store=placeholder,
+            ui_preferences=placeholder,
+            speed_source_service=placeholder,
+            speed_status_service=placeholder,
+            obd_admin_service=placeholder,
+        )
         state = RouterDeps(
-            telemetry=TelemetryDeps(
+            health=HealthDeps(
                 processing_loop_state=placeholder,
                 health_state=placeholder,
                 processor=placeholder,
                 registry=placeholder,
+                run_recorder=placeholder,
+            ),
+            settings=settings,
+            live=LiveDeps(
+                registry=placeholder,
                 control_plane=placeholder,
+                sensor_metadata_store=settings.sensor_metadata_store,
+                processor=placeholder,
                 run_recorder=placeholder,
                 ws_hub=placeholder,
-            ),
-            settings=SettingsDeps(
-                car_settings=placeholder,
-                analysis_settings=placeholder,
-                sensor_metadata_store=placeholder,
-                ui_preferences=placeholder,
-                speed_source_service=placeholder,
-                speed_status_service=placeholder,
-                obd_admin_service=placeholder,
             ),
             history=HistoryDeps(
                 run_service=placeholder,

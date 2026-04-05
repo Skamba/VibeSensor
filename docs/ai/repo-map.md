@@ -7,7 +7,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 
 - Backend app: `apps/server/vibesensor/app/bootstrap.py`
 - Backend service wiring: `apps/server/vibesensor/app/container.py`
-- Backend route assembly: `apps/server/vibesensor/adapters/http/__init__.py`
+- Backend route assembly: `apps/server/vibesensor/adapters/http/router.py` with domain bundles in `adapters/http/route_bundles.py`
 - UI app entry: `apps/ui/src/main.ts`
 - UI runtime/composition root: `apps/ui/src/app/ui_app_runtime.ts`
 - UI runtime owners: `apps/ui/src/app/runtime/`
@@ -30,7 +30,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 ## Backend package layout
 
 - `app/`: startup, dependency wiring, runtime state, and config loading.
-- `adapters/http/`: API route groups, grouped route dependencies, and HTTP-specific Pydantic request/response models under `adapters/http/models/`.
+- `adapters/http/`: API route groups, bundle-level router assembly (`router.py`, `route_bundles.py`), grouped route dependencies, and HTTP-specific Pydantic request/response models under `adapters/http/models/`.
 - `adapters/websocket/hub.py`: live WebSocket fan-out and payload delivery.
 - `adapters/persistence/`: SQLite history storage and static car-library loading.
 - `adapters/pdf/`: report mapping and PDF rendering, with grouped panel renderers under `adapters/pdf/panels/`. See `docs/report_pipeline.md` for the report flow.
