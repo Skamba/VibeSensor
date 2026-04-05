@@ -11,15 +11,19 @@ import type { UiHistoryDom } from "../src/app/dom/history_dom";
 import type { UiShellDom } from "../src/app/dom/shell_dom";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
 import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
+import {
+  findByAttribute,
+  findByClass,
+  installFakeDomGlobals,
+  type FakeElement,
+  FakeHTMLElement,
+} from "./dom_render_test_support";
 
 type ButtonStub = HTMLButtonElement & {
   disabled: boolean;
 };
 
-type TextElementStub = HTMLElement & {
-  innerHTML: string;
-  textContent: string;
-};
+let restoreDom = () => undefined;
 
 function createButton(): ButtonStub {
   return {
@@ -30,25 +34,19 @@ function createButton(): ButtonStub {
   } as unknown as ButtonStub;
 }
 
-function createTextElement(): TextElementStub {
-  return {
-    innerHTML: "",
-    textContent: "",
-    addEventListener() {
-      /* no-op */
-    },
-  } as unknown as TextElementStub;
+function createTextElement(tagName = "DIV"): HTMLElement {
+  return new FakeHTMLElement(tagName) as unknown as HTMLElement;
 }
 
 function createHistoryElements(): {
   dom: UiHistoryDom;
   els: UiHistoryDom;
-  historySummary: TextElementStub;
-  historyTableBody: TextElementStub;
+  historySummary: FakeElement;
+  historyTableBody: FakeElement;
   deleteAllRunsBtn: ButtonStub;
 } {
-  const historySummary = createTextElement();
-  const historyTableBody = createTextElement();
+  const historySummary = createTextElement("DIV") as unknown as FakeElement;
+  const historyTableBody = createTextElement("TBODY") as unknown as FakeElement;
   const deleteAllRunsBtn = createButton();
   const dom = {
     historySummary,
@@ -166,8 +164,30 @@ function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string
   return state.history.runDetailsById[runId];
 }
 
+function expectSingleByClass(root: FakeElement, className: string): FakeElement {
+  const matches = findByClass(root, className);
+  expect(matches, `Expected exactly one .${className} element`).toHaveLength(1);
+  return matches[0];
+}
+
+function expectSingleByAttribute(
+  root: FakeElement,
+  attributeName: string,
+  expectedValue: string,
+): FakeElement {
+  const matches = findByAttribute(root, attributeName, expectedValue);
+  expect(matches, `Expected exactly one [${attributeName}="${expectedValue}"] element`).toHaveLength(1);
+  return matches[0];
+}
+
 test.beforeEach(() => {
   installWindowGlobal();
+  restoreDom = installFakeDomGlobals();
+});
+
+test.afterEach(() => {
+  restoreDom();
+  restoreDom = () => undefined;
 });
 
 test("history list module refreshes runs and renders table state", async () => {
@@ -206,16 +226,18 @@ test("history list module refreshes runs and renders table state", async () => {
 
   expect(state.history.runs).toHaveLength(1);
   expect(historySummary.textContent).toContain("history.available_count");
-  expect(historyTableBody.innerHTML).toContain("run-001");
-  expect(historyTableBody.innerHTML).toContain('data-run-toggle="details"');
-  expect(historyTableBody.innerHTML).toContain('aria-expanded="false"');
-  expect(historyTableBody.innerHTML).toContain("history.row_status.complete");
-  expect(historyTableBody.innerHTML).toContain("history.summary_size");
-  expect(historyTableBody.innerHTML).toContain("Track Car");
-  expect(historyTableBody.innerHTML).toContain("history.car_label");
-  expect(historyTableBody.innerHTML).toContain("history.preview_available");
-  expect(historyTableBody.innerHTML).toContain("history.open_diagnosis");
-  expect(historyTableBody.innerHTML).not.toContain('data-run-action="delete-run"');
+  const row = expectSingleByAttribute(historyTableBody, "data-run-row", "1");
+  const toggle = expectSingleByAttribute(row, "data-run-toggle", "details");
+  const summaryChips = findByClass(row, "history-row__summary-chip").map((chip) => chip.textContent);
+  expect(row.getAttribute("data-run")).toBe("run-001");
+  expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  expect(summaryChips).toContain("history.row_status.complete");
+  expect(summaryChips.some((chip) => chip.includes("history.summary_size"))).toBe(true);
+  expect(row.textContent).toContain("Track Car");
+  expect(row.textContent).toContain("history.car_label");
+  expect(toggle.textContent).toContain("history.preview_available");
+  expect(toggle.textContent).toContain("history.open_diagnosis");
+  expect(findByAttribute(historyTableBody, "data-run-action", "delete-run")).toHaveLength(0);
   expect(deleteAllRunsBtn.disabled).toBe(false);
 });
 
@@ -358,20 +380,28 @@ test("history list rendering promotes loaded findings ahead of supporting statis
 
   module.renderHistoryTable();
 
-  expect(historyTableBody.innerHTML).toContain("history.details_title");
-  expect(historyTableBody.innerHTML).toContain("history.primary_diagnosis");
-  expect(historyTableBody.innerHTML).toContain("history-evidence-column");
-  expect(historyTableBody.innerHTML).toContain('data-location-key="front-right wheel"');
-  expect(historyTableBody.innerHTML).toContain("32.0 dB");
-  expect(historyTableBody.innerHTML).toContain("Front-right wheel imbalance");
-  expect(historyTableBody.innerHTML).toContain("history.findings_signature");
-  expect(historyTableBody.innerHTML).toContain("history.secondary_candidates_title");
-  expect(historyTableBody.innerHTML).not.toContain("history.findings_loaded");
-  expect(historyTableBody.innerHTML).toContain("Secondary driveline contribution");
-  expect(historyTableBody.innerHTML).not.toContain("history.preview_stats_title");
-  expect(historyTableBody.innerHTML).toContain("history.findings_next_step_label");
-  expect(historyTableBody.innerHTML).toContain("history.run_actions_title");
-  expect(historyTableBody.innerHTML).toContain('data-run-action="delete-run"');
+  expect(expectSingleByClass(historyTableBody, "history-details-header__eyebrow").textContent)
+    .toBe("history.details_title");
+  expect(expectSingleByClass(historyTableBody, "history-findings-overview__eyebrow").textContent)
+    .toBe("history.primary_diagnosis");
+  expect(findByClass(historyTableBody, "history-evidence-column")).toHaveLength(1);
+  expect(expectSingleByAttribute(historyTableBody, "data-location-key", "front-right wheel").textContent)
+    .toContain("32.0 dB");
+  expect(expectSingleByClass(historyTableBody, "history-findings-overview__headline").textContent)
+    .toBe("Front-right wheel imbalance");
+  expect(findByClass(historyTableBody, "history-findings-chip__label").map((label) => label.textContent))
+    .toContain("history.findings_signature");
+  expect(expectSingleByClass(historyTableBody, "history-secondary-findings__title").textContent)
+    .toBe("history.secondary_candidates_title");
+  expect(historyTableBody.textContent).not.toContain("history.findings_loaded");
+  expect(findByClass(historyTableBody, "history-finding-card__title").map((title) => title.textContent))
+    .toContain("Secondary driveline contribution");
+  expect(historyTableBody.textContent).not.toContain("history.preview_stats_title");
+  expect(expectSingleByClass(historyTableBody, "history-diagnosis-card__next-step-label").textContent)
+    .toBe("history.findings_next_step_label");
+  expect(expectSingleByClass(historyTableBody, "history-details-footer__eyebrow").textContent)
+    .toBe("history.run_actions_title");
+  expect(findByAttribute(historyTableBody, "data-run-action", "delete-run")).toHaveLength(1);
 });
 
 test("history feature preloads collapsed row context for completed runs", async () => {
@@ -413,8 +443,9 @@ test("history feature preloads collapsed row context for completed runs", async 
     globalThis.fetch = originalFetch;
   }
 
-  expect(historyTableBody.innerHTML).toContain("Front-right wheel imbalance");
-  expect(historyTableBody.innerHTML).toContain("report.confidence");
+  const summaryChips = findByClass(historyTableBody, "history-row__summary-chip").map((chip) => chip.textContent);
+  expect(summaryChips).toContain("Front-right wheel imbalance");
+  expect(summaryChips.some((chip) => chip.includes("report.confidence"))).toBe(true);
   expect(requests).toEqual([
     "/api/history",
     "/api/history/run-001/insights?lang=en",
