@@ -5,15 +5,14 @@ from __future__ import annotations
 import logging
 
 import pytest
-
-from vibesensor.infra.config.settings_store import SettingsStore
+from test_support.settings_services import build_settings_services
 
 
 def test_set_language_logs_audit_record(caplog: pytest.LogCaptureFixture) -> None:
-    store = SettingsStore()
+    services = build_settings_services()
 
-    with caplog.at_level(logging.INFO, logger="vibesensor.infra.config.settings_store"):
-        store.set_language("nl")
+    with caplog.at_level(logging.INFO, logger="vibesensor.infra.config.ui_preferences"):
+        services.ui_preferences.set_language("nl")
 
     record = next(
         rec
@@ -27,10 +26,10 @@ def test_set_language_logs_audit_record(caplog: pytest.LogCaptureFixture) -> Non
 
 
 def test_add_car_logs_audit_record(caplog: pytest.LogCaptureFixture) -> None:
-    store = SettingsStore()
+    services = build_settings_services()
 
     with caplog.at_level(logging.INFO, logger="vibesensor.infra.config.car_settings"):
-        created = store.add_car({"name": "Track Car", "type": "coupe"})
+        created = services.car_settings.add_car({"name": "Track Car", "type": "coupe"})
 
     record = next(
         rec

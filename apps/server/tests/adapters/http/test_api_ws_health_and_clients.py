@@ -299,20 +299,21 @@ async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    from test_support.settings_services import build_settings_services
+
     from vibesensor.adapters.http.clients import create_client_routes
     from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.adapters.udp.protocol import HelloMessage
-    from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.runtime.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
-    initial_settings = SettingsStore(db=db)
-    initial_settings.set_sensor(
+    initial_settings = build_settings_services(db=db)
+    initial_settings.sensor_settings.set_sensor(
         "00:11:22:33:44:55",
         {"name": "Rear Left Wheel", "location_code": "rear_left_wheel"},
     )
 
-    settings_store = SettingsStore(db=db)
+    settings_store = build_settings_services(db=db).sensor_settings
     registry = ClientRegistry(db=db)
     registry.update_from_hello(
         HelloMessage(

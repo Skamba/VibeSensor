@@ -16,14 +16,14 @@ from __future__ import annotations
 import contextlib
 import math
 import sqlite3
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
 import pytest
 from pydantic import ValidationError
+from test_support.settings_services import build_settings_services
 
 from vibesensor.adapters.http.models import CarUpsertRequest, SensorRequest, SpeedSourceRequest
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs
@@ -187,25 +187,24 @@ class TestSettingsStoreRollbackSafety:
         """After a failed persist, the car should be restored
         to its original state (same content).
         """
-        store = SettingsStore(db=None)
-        car_data = store.add_car({"name": "TestCar", "type": "sedan"})
+        services = build_settings_services()
+        car_data = services.car_settings.add_car({"name": "TestCar", "type": "sedan"})
         car_id = car_data.cars[0]["id"]
 
         # Set as active so the public current-car snapshot reflects the target car.
-        store.set_active_car(car_id)
+        services.car_settings.set_active_car(car_id)
 
-        original_snapshot = store.active_car_snapshot()
+        original_snapshot = services.car_settings.active_car_snapshot()
         assert original_snapshot is not None
         original_aspects = dict(original_snapshot.aspects)
+        services.coordinator._db = MagicMock()
+        services.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
 
         # Force persist to fail with PersistenceError (triggers rollback)
-        with (
-            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
-            contextlib.suppress(PersistenceError),
-        ):
-            store.update_car(car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}})
+        with contextlib.suppress(PersistenceError):
+            services.car_settings.update_car(car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}})
 
-        restored_snapshot = store.active_car_snapshot()
+        restored_snapshot = services.car_settings.active_car_snapshot()
         assert restored_snapshot is not None
         assert dict(restored_snapshot.aspects) == original_aspects
 

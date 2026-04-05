@@ -545,13 +545,21 @@ def _check_summary_payload_uses_build_context() -> list[str]:
     return failures
 
 
-def _check_settings_store_uses_shared_update_helper() -> list[str]:
-    settings_path = VIBESENSOR_DIR / "infra" / "config" / "settings_store.py"
+def _check_settings_services_use_shared_update_helper() -> list[str]:
+    settings_path = VIBESENSOR_DIR / "infra" / "config" / "settings_persistence.py"
     car_settings_path = VIBESENSOR_DIR / "infra" / "config" / "car_settings.py"
+    sensor_settings_path = VIBESENSOR_DIR / "infra" / "config" / "sensor_settings.py"
+    speed_source_settings_path = (
+        VIBESENSOR_DIR / "infra" / "config" / "speed_source_settings.py"
+    )
     transaction_path = VIBESENSOR_DIR / "infra" / "config" / "settings_transaction.py"
+    ui_preferences_path = VIBESENSOR_DIR / "infra" / "config" / "ui_preferences.py"
     settings_source = _read_text(settings_path)
     car_settings_source = _read_text(car_settings_path)
+    sensor_settings_source = _read_text(sensor_settings_path)
+    speed_source_settings_source = _read_text(speed_source_settings_path)
     transaction_source = _read_text(transaction_path)
+    ui_preferences_source = _read_text(ui_preferences_path)
     failures: list[str] = []
     if (
         "from vibesensor.infra.config.settings_transaction import update_with_rollback"
@@ -571,6 +579,18 @@ def _check_settings_store_uses_shared_update_helper() -> list[str]:
     if "except PersistenceError" in car_settings_source:
         failures.append(
             f"{car_settings_path.relative_to(REPO_ROOT)} must delegate rollback handling to settings_transaction"
+        )
+    if "except PersistenceError" in sensor_settings_source:
+        failures.append(
+            f"{sensor_settings_path.relative_to(REPO_ROOT)} must delegate rollback handling to settings_transaction"
+        )
+    if "except PersistenceError" in speed_source_settings_source:
+        failures.append(
+            f"{speed_source_settings_path.relative_to(REPO_ROOT)} must delegate rollback handling to settings_transaction"
+        )
+    if "except PersistenceError" in ui_preferences_source:
+        failures.append(
+            f"{ui_preferences_path.relative_to(REPO_ROOT)} must delegate rollback handling to settings_transaction"
         )
     return failures
 
@@ -1695,7 +1715,7 @@ CHECKS: tuple[Check, ...] = (
     ),
     (
         "SettingsStore uses one rollback helper",
-        _check_settings_store_uses_shared_update_helper,
+        _check_settings_services_use_shared_update_helper,
     ),
     (
         "Health snapshot assembly stays out of HTTP adapters",

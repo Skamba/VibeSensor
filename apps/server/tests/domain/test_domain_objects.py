@@ -342,12 +342,14 @@ class TestBridgeMethods:
         assert p.label == "Custom Spot"
 
     def test_settings_store_domain_accessors(self) -> None:
-        from vibesensor.infra.config.settings_store import SettingsStore
+        from test_support.settings_services import build_settings_services
 
-        store = SettingsStore()
-        assert store.speed_source_config().speed_source == SpeedSourceKind.GPS
-        assert store.active_car() is None
-        assert store.sensors() == []
+        services = build_settings_services()
+        assert (
+            services.speed_source_settings.speed_source_config().speed_source == SpeedSourceKind.GPS
+        )
+        assert services.car_settings.active_car() is None
+        assert services.sensor_settings.sensors() == []
 
     def test_finding_payload_is_distinct_from_domain_finding(self) -> None:
         """FindingPayload is the analysis TypedDict; domain Finding is the dataclass."""
