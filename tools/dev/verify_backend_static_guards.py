@@ -77,6 +77,19 @@ def _scan_imports(path: Path) -> list[tuple[int, str, tuple[str, ...], int]]:
     return imports
 
 
+def _attribute_access_lines(path: Path, attr_name: str) -> list[int]:
+    tree = _parse_python(path)
+    if tree is None:
+        return []
+    return sorted(
+        {
+            node.lineno
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Attribute) and node.attr == attr_name
+        }
+    )
+
+
 def _check_backend_tests_do_not_use_source_introspection() -> list[str]:
     patterns = {
         "inspect.getsource(": "inspect.getsource",
@@ -651,6 +664,117 @@ def _check_clients_http_adapter_uses_protocol_dependencies() -> list[str]:
             failures.append(
                 f"{dependencies_path.relative_to(REPO_ROOT)} must define focused client adapter protocols ({marker})"
             )
+    return failures
+
+
+def _check_route_facing_http_modules_avoid_infra_imports() -> list[str]:
+    http_dir = VIBESENSOR_DIR / "adapters" / "http"
+    target_paths = [
+        http_dir / "clients.py",
+        http_dir / "router.py",
+        http_dir / "route_bundles.py",
+        *sorted((http_dir / "settings").glob("*.py")),
+    ]
+    failures: list[str] = []
+    for path in target_paths:
+        for lineno, module, _names, level in _scan_imports(path):
+            if level or not module or not module.startswith("vibesensor.infra"):
+                continue
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)}:{lineno}: route-facing HTTP modules must depend on adapter/shared ports instead of importing infra collaborators directly ({module})"
+            )
+    return failures
+
+
+def _check_http_route_modules_stay_split_and_focused() -> list[str]:
+    http_dir = VIBESENSOR_DIR / "adapters" / "http"
+    settings_legacy_path = http_dir / "settings.py"
+    settings_init_path = http_dir / "settings" / "__init__.py"
+    route_bundles_path = http_dir / "route_bundles.py"
+    router_path = http_dir / "router.py"
+    clients_path = http_dir / "clients.py"
+    failures: list[str] = []
+    if settings_legacy_path.exists():
+        failures.append(
+            f"{settings_legacy_path.relative_to(REPO_ROOT)} should not exist; settings routes belong under adapters/http/settings/"
+        )
+    line_limits = {
+        settings_init_path: 120,
+        route_bundles_path: 140,
+        router_path: 60,
+        clients_path: 220,
+    }
+    for path, limit in line_limits.items():
+        line_count = len(_read_text(path).splitlines())
+        if line_count > limit:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} should stay focused after the route split (currently {line_count} lines; limit {limit})"
+            )
+    for path, description in (
+        (settings_init_path, "settings micro-router composition"),
+        (route_bundles_path, "route-bundle composition"),
+        (router_path, "top-level router composition"),
+    ):
+        if "@router." in _read_text(path):
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} should stay {description} only; endpoint decorators belong in leaf route modules"
+            )
+    if "/api/settings/" in _read_text(clients_path):
+        failures.append(
+            f"{clients_path.relative_to(REPO_ROOT)} must stay client-focused instead of reabsorbing settings endpoints"
+        )
+    return failures
+
+
+def _check_sensor_metadata_writes_stay_in_settings_boundary() -> list[str]:
+    ports_path = VIBESENSOR_DIR / "shared" / "ports.py"
+    http_dir = VIBESENSOR_DIR / "adapters" / "http"
+    clients_path = http_dir / "clients.py"
+    settings_sensors_path = http_dir / "settings" / "sensors.py"
+    ports_source = _read_text(ports_path)
+    failures: list[str] = []
+    for marker in (
+        "class SensorMetadataStore(SensorMetadataReader, Protocol):",
+        "def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload: ...",
+        "def assign_sensor_location(self, sensor_id: str, location_code: str) -> SensorsByMacPayload: ...",
+        "def remove_sensor(self, mac: str) -> bool: ...",
+    ):
+        if marker not in ports_source:
+            failures.append(
+                f"{ports_path.relative_to(REPO_ROOT)} must keep the canonical SensorMetadataStore write surface ({marker})"
+            )
+    if not _attribute_access_lines(clients_path, "assign_sensor_location"):
+        failures.append(
+            f"{clients_path.relative_to(REPO_ROOT)} must delegate client location writes through assign_sensor_location()"
+        )
+    for attr_name in ("set_sensor", "remove_sensor"):
+        attr_lines = _attribute_access_lines(clients_path, attr_name)
+        if attr_lines:
+            failures.append(
+                f"{clients_path.relative_to(REPO_ROOT)} must not call {attr_name} directly; client routes should delegate through assign_sensor_location() (lines {attr_lines})"
+            )
+    if not _attribute_access_lines(settings_sensors_path, "set_sensor"):
+        failures.append(
+            f"{settings_sensors_path.relative_to(REPO_ROOT)} must own persisted sensor upserts through set_sensor()"
+        )
+    if not _attribute_access_lines(settings_sensors_path, "remove_sensor"):
+        failures.append(
+            f"{settings_sensors_path.relative_to(REPO_ROOT)} must own persisted sensor deletes through remove_sensor()"
+        )
+    if _attribute_access_lines(settings_sensors_path, "assign_sensor_location"):
+        failures.append(
+            f"{settings_sensors_path.relative_to(REPO_ROOT)} should keep raw sensor CRUD separate from client-location assignment"
+        )
+    allowed_write_paths = {clients_path, settings_sensors_path}
+    for path in _python_files(http_dir):
+        if path in allowed_write_paths:
+            continue
+        for attr_name in ("set_sensor", "assign_sensor_location", "remove_sensor"):
+            attr_lines = _attribute_access_lines(path, attr_name)
+            if attr_lines:
+                failures.append(
+                    f"{path.relative_to(REPO_ROOT)} must not write sensor metadata directly; keep writes in settings/sensors.py and client-location delegation in clients.py ({attr_name} at lines {attr_lines})"
+                )
     return failures
 
 
@@ -1901,6 +2025,18 @@ CHECKS: tuple[Check, ...] = (
     (
         "Clients HTTP adapter uses protocol deps",
         _check_clients_http_adapter_uses_protocol_dependencies,
+    ),
+    (
+        "Route-facing HTTP modules avoid infra imports",
+        _check_route_facing_http_modules_avoid_infra_imports,
+    ),
+    (
+        "HTTP route modules stay split and focused",
+        _check_http_route_modules_stay_split_and_focused,
+    ),
+    (
+        "Sensor metadata writes stay in settings boundary",
+        _check_sensor_metadata_writes_stay_in_settings_boundary,
     ),
     (
         "WsBroadcast uses projection module",
