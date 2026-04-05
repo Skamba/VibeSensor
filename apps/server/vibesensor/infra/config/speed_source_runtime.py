@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.infra.config.settings_store import SettingsStore
-from vibesensor.shared.ports import SpeedSourceSync
+from vibesensor.shared.ports import SpeedSourceSettingsStore, SpeedSourceSync
 from vibesensor.shared.types.speed_source_config import (
     SpeedSourceConfig,
     SpeedSourcePayload,
@@ -45,7 +44,7 @@ class SpeedSourceSettingsService:
     def __init__(
         self,
         *,
-        settings_store: SettingsStore,
+        settings_store: SpeedSourceSettingsStore,
         runtime_applier: SpeedSourceRuntimeApplier,
     ) -> None:
         self._settings_store = settings_store
