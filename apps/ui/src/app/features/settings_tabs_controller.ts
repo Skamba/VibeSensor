@@ -1,6 +1,8 @@
-import type { UiDomElements } from "../ui_dom_registry";
+import type { UiSettingsDom } from "../dom/settings_dom";
 
-function setActiveSettingsTab(els: UiDomElements, tabId: string): void {
+type UiSettingsTabsDom = Pick<UiSettingsDom, "settingsTabs" | "settingsTabPanels">;
+
+function setActiveSettingsTab(els: UiSettingsTabsDom, tabId: string): void {
   els.settingsTabs.forEach((tab) => {
     const isActive = tab.getAttribute("data-settings-tab") === tabId;
     tab.classList.toggle("active", isActive);
@@ -14,12 +16,12 @@ function setActiveSettingsTab(els: UiDomElements, tabId: string): void {
   });
 }
 
-function activateSettingsTabButton(els: UiDomElements, tab: HTMLElement): void {
+function activateSettingsTabButton(els: UiSettingsTabsDom, tab: HTMLElement): void {
   const tabId = tab.getAttribute("data-settings-tab");
   if (tabId) setActiveSettingsTab(els, tabId);
 }
 
-export function bindSettingsTabs(els: UiDomElements): void {
+export function bindSettingsTabs(els: UiSettingsTabsDom): void {
   const activateTabByIndex = (index: number): void => {
     if (!els.settingsTabs.length) return;
     const safeIndex = ((index % els.settingsTabs.length) + els.settingsTabs.length) % els.settingsTabs.length;

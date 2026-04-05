@@ -7,8 +7,9 @@ import {
   downloadBlobFile,
 } from "../src/app/features/history_download_delete_module";
 import { createHistoryListModule } from "../src/app/features/history_list_module";
+import type { UiHistoryDom } from "../src/app/dom/history_dom";
+import type { UiShellDom } from "../src/app/dom/shell_dom";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
-import type { UiDomElements } from "../src/app/ui_dom_registry";
 import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
 
 type ButtonStub = HTMLButtonElement & {
@@ -40,7 +41,8 @@ function createTextElement(): TextElementStub {
 }
 
 function createHistoryElements(): {
-  els: UiDomElements;
+  dom: UiHistoryDom;
+  els: UiHistoryDom;
   historySummary: TextElementStub;
   historyTableBody: TextElementStub;
   deleteAllRunsBtn: ButtonStub;
@@ -48,12 +50,14 @@ function createHistoryElements(): {
   const historySummary = createTextElement();
   const historyTableBody = createTextElement();
   const deleteAllRunsBtn = createButton();
+  const dom = {
+    historySummary,
+    historyTableBody,
+    deleteAllRunsBtn,
+  } as unknown as UiHistoryDom;
   return {
-    els: {
-      historySummary,
-      historyTableBody,
-      deleteAllRunsBtn,
-    } as unknown as UiDomElements,
+    dom,
+    els: dom,
     historySummary,
     historyTableBody,
     deleteAllRunsBtn,
@@ -168,7 +172,7 @@ test.beforeEach(() => {
 
 test("history list module refreshes runs and renders table state", async () => {
   const state = createAppState();
-  const { els, historySummary, historyTableBody, deleteAllRunsBtn } = createHistoryElements();
+  const { dom, historySummary, historyTableBody, deleteAllRunsBtn } = createHistoryElements();
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
     const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
@@ -182,7 +186,7 @@ test("history list module refreshes runs and renders table state", async () => {
 
   const module = createHistoryListModule({
     history: state.history,
-    els,
+    dom,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     fmt: (value, digits = 0) => Number(value).toFixed(digits),
@@ -218,7 +222,7 @@ test("history list module refreshes runs and renders table state", async () => {
 test("history detail module loads preview and reloads expanded run on language change", async () => {
   const state = createAppState();
   state.history.expandedRunId = null;
-  const { els } = createHistoryElements();
+  createHistoryElements();
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
@@ -237,7 +241,6 @@ test("history detail module loads preview and reloads expanded run on language c
   const module = createHistoryDetailModule({
     history: state.history,
     getLanguage: () => state.shell.lang,
-    els,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     ensureRunDetail: (runId) => ensureRunDetail(state, runId),
@@ -278,7 +281,7 @@ test("history detail module loads preview and reloads expanded run on language c
 
 test("history detail module treats analyzing insights responses as not-yet-available", async () => {
   const state = createAppState();
-  const { els } = createHistoryElements();
+  createHistoryElements();
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
@@ -294,7 +297,6 @@ test("history detail module treats analyzing insights responses as not-yet-avail
   const module = createHistoryDetailModule({
     history: state.history,
     getLanguage: () => state.shell.lang,
-    els,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     ensureRunDetail: (runId) => ensureRunDetail(state, runId),
@@ -338,11 +340,11 @@ test("history list rendering promotes loaded findings ahead of supporting statis
     pdfLoading: false,
     pdfError: "",
   };
-  const { els, historyTableBody } = createHistoryElements();
+  const { dom, historyTableBody } = createHistoryElements();
 
   const module = createHistoryListModule({
     history: state.history,
-    els,
+    dom,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     fmt: (value, digits = 0) => Number(value).toFixed(digits),
@@ -374,7 +376,7 @@ test("history list rendering promotes loaded findings ahead of supporting statis
 
 test("history feature preloads collapsed row context for completed runs", async () => {
   const state = createAppState();
-  const { els, historyTableBody } = createHistoryElements();
+  const { dom, historyTableBody } = createHistoryElements();
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
@@ -390,9 +392,10 @@ test("history feature preloads collapsed row context for completed runs", async 
   }) as typeof fetch;
 
   const feature = createHistoryFeature({
+    dom,
+    shellDom: { menuButtons: [] } as Pick<UiShellDom, "menuButtons">,
     history: state.history,
     getLanguage: () => state.shell.lang,
-    els,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     showError: () => {

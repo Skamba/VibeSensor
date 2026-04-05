@@ -4,7 +4,7 @@ import type {
   UpdateStartRequestPayload,
   UpdateStatusPayload,
 } from "../../api/types";
-import type { UiDomElements } from "../ui_dom_registry";
+import type { UiUpdateDom } from "../dom/update_dom";
 import { formatEpochTimestamp, renderStatusGridRow } from "./dom_helpers";
 
 const STATE_VARIANT: Readonly<Record<string, string>> = {
@@ -761,7 +761,7 @@ function renderLogTail(
 
 export function syncUpdateControls(
   els: Pick<
-    UiDomElements,
+    UiUpdateDom,
     | "updateStartBtn"
     | "updateCancelBtn"
     | "updateSsidInput"

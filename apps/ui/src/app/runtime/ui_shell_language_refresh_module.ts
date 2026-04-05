@@ -1,7 +1,7 @@
 import type { HistoryFeature } from "../features/history_feature";
 import type { RealtimeFeature } from "../features/realtime_feature";
 import type { SettingsFeature } from "../features/settings_feature";
-import type { UiDomElements } from "../ui_dom_registry";
+import type { UiShellDom } from "../dom/shell_dom";
 import type { AppState } from "../ui_app_state";
 
 export interface UiShellLanguageRefreshFeaturePorts {
@@ -12,7 +12,7 @@ export interface UiShellLanguageRefreshFeaturePorts {
 
 export interface UiShellLanguageRefreshModuleDeps {
   state: AppState;
-  els: UiDomElements;
+  dom: UiShellDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   renderSpeedReadout: () => void;
   renderWsState: () => void;
@@ -36,11 +36,11 @@ export function createUiShellLanguageRefreshModule(
           element.textContent = deps.t(key);
         }
       });
-      if (deps.els.languageSelect) {
-        deps.els.languageSelect.value = deps.state.shell.lang;
+      if (deps.dom.languageSelect) {
+        deps.dom.languageSelect.value = deps.state.shell.lang;
       }
-      if (deps.els.speedUnitSelect) {
-        deps.els.speedUnitSelect.value = deps.state.shell.speedUnit;
+      if (deps.dom.speedUnitSelect) {
+        deps.dom.speedUnitSelect.value = deps.state.shell.speedUnit;
       }
       deps.state.realtime.locationOptions = features.realtime.buildLocationOptions(deps.state.realtime.locationCodes);
       deps.state.realtime.sensorsSettingsSignature = "";

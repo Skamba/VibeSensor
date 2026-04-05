@@ -8,6 +8,7 @@ import type {
   CarLibraryModel,
   CarLibraryVariant,
 } from "../../api";
+import type { UiCarsDom } from "../dom/cars_dom";
 import {
   renderWizardBrandOptions,
   renderWizardGearboxOptions,
@@ -37,6 +38,7 @@ import {
 } from "./cars_wizard_state";
 
 export interface CarsFeatureDeps extends FeatureDepsBase {
+  dom: UiCarsDom;
   fmt: (n: number, digits?: number) => string;
   addCarFromWizard: (
     name: string,
@@ -59,7 +61,7 @@ const WIZARD_STEP_LABEL_KEYS = [
 ] as const;
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
-  const { els, escapeHtml, fmt, t } = ctx;
+  const { dom: els, escapeHtml, fmt, t } = ctx;
   const wizState: WizardState = createInitialWizardState();
   let handlersBound = false;
   let lastWizardFocusTarget: HTMLElement | null = null;

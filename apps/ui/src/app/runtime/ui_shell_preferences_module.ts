@@ -4,13 +4,13 @@ import {
   setSettingsLanguage,
   setSettingsSpeedUnit,
 } from "../../api/settings";
-import type { UiDomElements } from "../ui_dom_registry";
+import type { UiShellDom } from "../dom/shell_dom";
 import type { ShellState } from "../ui_app_state";
 import { setSettingsFeedback } from "../views/settings_feedback";
 
 export interface UiShellPreferencesModuleDeps {
   shell: ShellState;
-  els: UiDomElements;
+  dom: UiShellDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   normalizeLanguage: (lang: string) => string;
   applyLanguage: (forceReloadInsights?: boolean) => void;
@@ -28,7 +28,7 @@ export interface UiShellPreferencesModule {
 export function createUiShellPreferencesModule(
   ctx: UiShellPreferencesModuleDeps,
 ): UiShellPreferencesModule {
-  const { shell, els } = ctx;
+  const { shell, dom: els } = ctx;
 
   function normalizeSpeedUnit(raw: string): string {
     return raw === "mps" ? "mps" : "kmh";

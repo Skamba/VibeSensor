@@ -4,6 +4,7 @@ import {
   GPS_POLL_FAST_MS,
   GPS_POLL_SLOW_MS,
 } from "../../config";
+import type { UiSettingsDom } from "../dom/settings_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
 import { createPollingController } from "./polling_controller";
@@ -23,6 +24,7 @@ const OBD_POLL_MODE_I18N: Record<string, string> = {
 };
 
 export interface SettingsGpsStatusModuleDeps extends FeatureDepsBase {
+  dom: UiSettingsDom;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
@@ -36,7 +38,7 @@ export interface SettingsGpsStatusModule {
 }
 
 export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps): SettingsGpsStatusModule {
-  const { settings, els, t, fmt } = ctx;
+  const { settings, dom: els, t, fmt } = ctx;
 
   function connectionStateLabel(connectionState: string): string {
     const key = CONNECTION_STATE_I18N[connectionState];

@@ -15,6 +15,7 @@ import {
   UPDATE_POLL_INTERVAL_IDLE_MS,
   UPDATE_POLL_INTERVAL_RUNNING_MS,
 } from "../../config";
+import type { UiUpdateDom } from "../dom/update_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createPollingController } from "./polling_controller";
 import {
@@ -27,7 +28,9 @@ import {
   renderUpdateStatusPanel,
 } from "../views/update_status_view";
 
-export interface UpdateFeatureDeps extends FeatureDepsBase {}
+export interface UpdateFeatureDeps extends FeatureDepsBase {
+  dom: UiUpdateDom;
+}
 
 export interface UpdateFeature {
   bindUpdateHandlers(): void;
@@ -84,7 +87,7 @@ function normalizeInternetStatus(
 }
 
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
-  const { els, t, escapeHtml } = ctx;
+  const { dom: els, t, escapeHtml } = ctx;
 
   let passwordVisible = false;
   let latestInternetStatus: UsbInternetStatusPayload = fallbackInternetStatus(t);

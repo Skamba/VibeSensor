@@ -1,11 +1,11 @@
-import type { UiDomElements } from "../ui_dom_registry";
+import type { UiShellDom } from "../dom/shell_dom";
 import type { ShellState } from "../ui_app_state";
 
 export const DEFAULT_SHELL_VIEW_ID = "dashboardView";
 
 export interface UiShellNavigationModuleDeps {
   shell: ShellState;
-  els: UiDomElements;
+  dom: UiShellDom;
   onDashboardViewActivated?: () => void;
 }
 
@@ -17,7 +17,7 @@ export interface UiShellNavigationModule {
 export function createUiShellNavigationModule(
   ctx: UiShellNavigationModuleDeps,
 ): UiShellNavigationModule {
-  const { shell, els } = ctx;
+  const { shell, dom: els } = ctx;
 
   function setActiveView(viewId: string): void {
     const valid = els.views.some((view) => view.id === viewId);
