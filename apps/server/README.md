@@ -251,7 +251,7 @@ messages.
 
 ## HTTP and WebSocket surface
 
-The API surface is implemented in `apps/server/vibesensor/adapters/http/` and assembled by `adapters/http/__init__.py`.
+The API surface is implemented in `apps/server/vibesensor/adapters/http/`, with the top-level composition root in `adapters/http/router.py` and domain bundle registration in `adapters/http/route_bundles.py`.
 
 Start here for the human-facing API overview, then use the generated schema artifacts for endpoint-level contracts:
 

@@ -1,4 +1,4 @@
-"""Typed dependency groups for assembling HTTP route groups."""
+"""Typed dependency groups for assembling HTTP route bundles."""
 
 from __future__ import annotations
 
@@ -33,7 +33,6 @@ from vibesensor.use_cases.updates.manager import UpdateManager
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
     from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
-    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.shared.types.speed_source_config import (
         SpeedSourcePayload,
@@ -111,12 +110,20 @@ class ClientControlPlaneProtocol(Protocol):
 
 
 @dataclass(slots=True)
-class TelemetryDeps:
+class HealthDeps:
     processing_loop_state: ProcessingLoopState
     health_state: RuntimeHealthState
     processor: SignalProcessor
     registry: ClientRegistry
-    control_plane: UDPControlPlane
+    run_recorder: RunRecorder
+
+
+@dataclass(slots=True)
+class LiveDeps:
+    registry: ClientRegistryProtocol
+    control_plane: ClientControlPlaneProtocol
+    sensor_metadata_store: SensorMetadataStore
+    processor: SignalProcessor
     run_recorder: RunRecorder
     ws_hub: WebSocketHub
 
@@ -147,7 +154,8 @@ class UpdateDeps:
 
 @dataclass(slots=True)
 class RouterDeps:
-    telemetry: TelemetryDeps
+    health: HealthDeps
     settings: SettingsDeps
+    live: LiveDeps
     history: HistoryDeps
     updates: UpdateDeps

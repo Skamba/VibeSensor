@@ -16,10 +16,11 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.history import ProjectedHistoryExportService, ProjectedHistoryRunService
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.dependencies import (
+    HealthDeps,
     HistoryDeps,
+    LiveDeps,
     RouterDeps,
     SettingsDeps,
-    TelemetryDeps,
     UpdateDeps,
 )
 from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
@@ -348,13 +349,22 @@ class FakeState:
         )
 
     @property
-    def telemetry(self) -> TelemetryDeps:
-        return TelemetryDeps(
+    def health(self) -> HealthDeps:
+        return HealthDeps(
             processing_loop_state=self.processing_loop_state,
             health_state=self.health_state,
             processor=self.processor,
             registry=self.registry,
+            run_recorder=self.run_recorder,
+        )
+
+    @property
+    def live(self) -> LiveDeps:
+        return LiveDeps(
+            registry=self.registry,
             control_plane=self.control_plane,
+            sensor_metadata_store=self.settings_store,
+            processor=self.processor,
             run_recorder=self.run_recorder,
             ws_hub=self.ws_hub,
         )
@@ -389,8 +399,9 @@ class FakeState:
     @property
     def router(self) -> RouterDeps:
         return RouterDeps(
-            telemetry=self.telemetry,
+            health=self.health,
             settings=self.settings,
+            live=self.live,
             history=self.history,
             updates=self.updates,
         )
