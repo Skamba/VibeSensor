@@ -54,12 +54,16 @@ def find_latest_server_release(
         asset = find_server_wheel_asset(release)
         if asset is None:
             continue
+        if not asset.sha256:
+            raise ValueError(
+                f"Server release {tag} is missing a trusted SHA-256 digest for {asset.name}",
+            )
         return ReleaseInfo(
             tag=tag,
             version=tag.removeprefix("server-v"),
             asset_name=asset.name,
             asset_url=asset.url,
-            sha256="",
+            sha256=asset.sha256,
             published_at=release.published_at,
         )
     raise ValueError(

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,19 +10,13 @@ from vibesensor.use_cases.updates.release_resolution import ServerReleaseResolve
 
 
 @pytest.mark.asyncio
-async def test_resolve_returns_release_when_latest_version_is_newer(tmp_path: Path) -> None:
-    resolver = ServerReleaseResolver(
-        rollback_dir=tmp_path / "rollback",
-    )
+async def test_resolve_returns_release_when_latest_version_is_newer() -> None:
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4")
     fetcher = MagicMock()
     fetcher.find_latest_release.return_value = release
+    resolver = ServerReleaseResolver(release_fetcher=fetcher)
 
-    with patch(
-        "vibesensor.use_cases.updates.release_resolution.release_fetcher_factory.build_server_release_fetcher",
-        return_value=fetcher,
-    ):
-        resolution = await resolver.resolve("2026.4.3")
+    resolution = await resolver.resolve("2026.4.3")
 
     assert resolution.current_version == "2026.4.3"
     assert resolution.release is release
@@ -33,21 +26,15 @@ async def test_resolve_returns_release_when_latest_version_is_newer(tmp_path: Pa
 
 
 @pytest.mark.asyncio
-async def test_resolve_uses_latest_tag_when_no_update_is_available(tmp_path: Path) -> None:
-    resolver = ServerReleaseResolver(
-        rollback_dir=tmp_path / "rollback",
-    )
+async def test_resolve_uses_latest_tag_when_no_update_is_available() -> None:
     fetcher = MagicMock()
     fetcher.find_latest_release.return_value = SimpleNamespace(
         tag="server-v2026.4.4",
         version="2026.4.3",
     )
+    resolver = ServerReleaseResolver(release_fetcher=fetcher)
 
-    with patch(
-        "vibesensor.use_cases.updates.release_resolution.release_fetcher_factory.build_server_release_fetcher",
-        return_value=fetcher,
-    ):
-        resolution = await resolver.resolve("2026.4.3")
+    resolution = await resolver.resolve("2026.4.3")
 
     assert resolution.current_version == "2026.4.3"
     assert resolution.release is None
@@ -56,16 +43,10 @@ async def test_resolve_uses_latest_tag_when_no_update_is_available(tmp_path: Pat
 
 
 @pytest.mark.asyncio
-async def test_resolve_propagates_release_check_failure(tmp_path: Path) -> None:
-    resolver = ServerReleaseResolver(
-        rollback_dir=tmp_path / "rollback",
-    )
+async def test_resolve_propagates_release_check_failure() -> None:
     fetcher = MagicMock()
     fetcher.find_latest_release.side_effect = OSError("rate limited")
+    resolver = ServerReleaseResolver(release_fetcher=fetcher)
 
-    with patch(
-        "vibesensor.use_cases.updates.release_resolution.release_fetcher_factory.build_server_release_fetcher",
-        return_value=fetcher,
-    ):
-        with pytest.raises(UpdateReleaseError, match="rate limited"):
-            await resolver.resolve("2026.4.3")
+    with pytest.raises(UpdateReleaseError, match="rate limited"):
+        await resolver.resolve("2026.4.3")

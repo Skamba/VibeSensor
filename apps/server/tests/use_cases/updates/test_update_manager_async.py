@@ -46,16 +46,18 @@ def _build_fake_wheel(path, *, version: str) -> bytes:
 @pytest.mark.asyncio
 class TestUpdateManagerAsync:
     async def test_happy_path(self, tmp_path) -> None:
-        manager, runner, _repo = setup_update_env(tmp_path, seed_artifacts=True)
-        (tmp_path / "rollback").mkdir()
+        with patch_release_fetcher(current_version="2025.6.14") as fetcher:
+            manager, runner, _repo = setup_update_env(
+                tmp_path,
+                seed_artifacts=True,
+                server_release_fetcher=fetcher,
+            )
+            (tmp_path / "rollback").mkdir()
 
-        mock_wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-        wheel_content = _build_fake_wheel(mock_wheel_path, version="2025.6.15")
-        wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
-        mock_release = make_mock_release(sha256=wheel_sha256)
-
-        with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
-            fetcher = mock_fetcher.return_value
+            mock_wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+            wheel_content = _build_fake_wheel(mock_wheel_path, version="2025.6.15")
+            wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
+            mock_release = make_mock_release(sha256=wheel_sha256)
             fetcher.find_latest_release.return_value = mock_release
             fetcher.download_wheel.return_value = mock_wheel_path
             runner.set_response("from vibesensor import __version__", 0, "2025.6.15", "")
@@ -79,8 +81,12 @@ class TestUpdateManagerAsync:
         assert any(restart_cmd in " ".join(call[0]) for call in runner.calls)
 
     async def test_already_up_to_date(self, tmp_path) -> None:
-        manager, runner, _repo = setup_update_env(tmp_path, seed_artifacts=True)
-        with patch_release_fetcher():
+        with patch_release_fetcher() as fetcher:
+            manager, runner, _repo = setup_update_env(
+                tmp_path,
+                seed_artifacts=True,
+                server_release_fetcher=fetcher,
+            )
             await run_update(manager)
 
         assert manager.status.state == UpdateState.success
@@ -125,31 +131,31 @@ class TestUpdateManagerAsync:
         assert_hotspot_restored(runner)
 
     async def test_wifi_ssid_not_found_retries_then_succeeds(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path, seed_artifacts=True)
-        original_run = runner.run
-        connect_calls = {"count": 0}
-
-        async def run_with_retry(args, *, timeout=30, env=None):
-            joined = " ".join(args)
-            if "connection up VibeSensor-Uplink" in joined:
-                connect_calls["count"] += 1
-                if connect_calls["count"] == 1:
-                    return (10, "", "Error: No network with SSID 'TestNet' found.\n")
-            return await original_run(args, timeout=timeout, env=env)
-
-        runner.run = run_with_retry
         with (
-            patch("shutil.which", mock_which),
+            patch_release_fetcher() as fetcher,
             patch(
                 "vibesensor.use_cases.updates.wifi.wifi_uplink_setup.asyncio.sleep",
                 new=AsyncMock(return_value=None),
             ),
-            patch(
-                "vibesensor.use_cases.updates.releases.factory.build_server_release_fetcher",
-            ) as mock_fetcher,
-            patch("vibesensor.__version__", "2025.6.15"),
         ):
-            mock_fetcher.return_value.find_latest_release.return_value = make_mock_release()
+            manager, runner, _ = setup_update_env(
+                tmp_path,
+                seed_artifacts=True,
+                server_release_fetcher=fetcher,
+            )
+            original_run = runner.run
+            connect_calls = {"count": 0}
+
+            async def run_with_retry(args, *, timeout=30, env=None):
+                joined = " ".join(args)
+                if "connection up VibeSensor-Uplink" in joined:
+                    connect_calls["count"] += 1
+                    if connect_calls["count"] == 1:
+                        return (10, "", "Error: No network with SSID 'TestNet' found.\n")
+                return await original_run(args, timeout=timeout, env=env)
+
+            runner.run = run_with_retry
+            fetcher.find_latest_release.return_value = make_mock_release()
             manager.start("TestNet", "pass123")
             task = manager.job_task
             assert task is not None
@@ -160,24 +166,31 @@ class TestUpdateManagerAsync:
 
     async def test_dns_not_ready_fails_with_clear_issue(self, tmp_path) -> None:
         with (
-            patch_release_fetcher() as mock_fetcher,
+            patch_release_fetcher() as fetcher,
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_READY_MIN_WAIT_S", 0.05),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_RETRY_INTERVAL_S", 0.01),
         ):
-            manager, runner, _ = setup_update_env(tmp_path)
+            manager, runner, _ = setup_update_env(
+                tmp_path,
+                server_release_fetcher=fetcher,
+            )
             runner.set_response("socket.getaddrinfo", 1, "", "Temporary failure in name resolution")
             await run_update(manager)
-            mock_fetcher.assert_not_called()
+            fetcher.find_latest_release.assert_not_called()
         assert manager.status.state == UpdateState.failed
 
     async def test_dns_probe_retries_then_update_continues(self, tmp_path) -> None:
         probe_attempts = {"count": 0}
         with (
-            patch_release_fetcher(),
+            patch_release_fetcher() as fetcher,
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_READY_MIN_WAIT_S", 0.2),
             patch("vibesensor.use_cases.updates.wifi.wifi_config.DNS_RETRY_INTERVAL_S", 0.01),
         ):
-            manager, runner, _ = setup_update_env(tmp_path, seed_artifacts=True)
+            manager, runner, _ = setup_update_env(
+                tmp_path,
+                seed_artifacts=True,
+                server_release_fetcher=fetcher,
+            )
             original_run = runner.run
 
             async def run_with_dns_retry(args, *, timeout=30, env=None):
@@ -201,8 +214,12 @@ class TestUpdateManagerAsync:
         assert manager.status.state == UpdateState.failed
 
     async def test_password_is_applied_via_connection_modify(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path, seed_artifacts=True)
-        with patch_release_fetcher():
+        with patch_release_fetcher() as fetcher:
+            manager, runner, _ = setup_update_env(
+                tmp_path,
+                seed_artifacts=True,
+                server_release_fetcher=fetcher,
+            )
             await run_update(manager, "Pim", "tomaat123")
         assert any(
             "connection modify VibeSensor-Uplink "
@@ -211,10 +228,12 @@ class TestUpdateManagerAsync:
         )
 
     async def test_download_failure_still_restores_hotspot(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path)
-        with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
+        with patch_release_fetcher(current_version="2025.6.14") as fetcher:
+            manager, runner, _ = setup_update_env(
+                tmp_path,
+                server_release_fetcher=fetcher,
+            )
             mock_release = make_mock_release(sha256="abc")
-            fetcher = mock_fetcher.return_value
             fetcher.find_latest_release.return_value = mock_release
             fetcher.download_wheel.side_effect = OSError("Network error")
             await run_update(manager, "TestNet", "pass")
@@ -222,34 +241,37 @@ class TestUpdateManagerAsync:
         assert_hotspot_restored(runner)
 
     async def test_install_failure_triggers_rollback(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path)
-        runner.set_response("pip", 1, "", "ERROR: Could not install")
-        (tmp_path / "rollback").mkdir()
-        fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-        wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
-        wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
-
-        with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
-            fetcher = mock_fetcher.return_value
+        with patch_release_fetcher(current_version="2025.6.14") as fetcher:
+            manager, runner, _ = setup_update_env(
+                tmp_path,
+                server_release_fetcher=fetcher,
+            )
+            runner.set_response("pip", 1, "", "ERROR: Could not install")
+            (tmp_path / "rollback").mkdir()
+            fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+            wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
+            wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
             fetcher.find_latest_release.return_value = make_mock_release(sha256=wheel_sha256)
             fetcher.download_wheel.return_value = fake_wheel
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
 
     async def test_snapshot_failure_aborts_before_install(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path, seed_artifacts=True)
-        fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-        wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
-        wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
-
         with (
-            patch_release_fetcher(current_version="2025.6.14") as mock_fetcher,
+            patch_release_fetcher(current_version="2025.6.14") as fetcher,
             patch(
                 "vibesensor.use_cases.updates.installer.UpdateInstaller.snapshot_for_rollback",
                 new=AsyncMock(return_value=False),
             ),
         ):
-            fetcher = mock_fetcher.return_value
+            manager, runner, _ = setup_update_env(
+                tmp_path,
+                seed_artifacts=True,
+                server_release_fetcher=fetcher,
+            )
+            fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+            wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
+            wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
             fetcher.find_latest_release.return_value = make_mock_release(sha256=wheel_sha256)
             fetcher.download_wheel.return_value = fake_wheel
             await run_update(manager, "TestNet", "pass")
@@ -280,12 +302,13 @@ class TestUpdateManagerAsync:
         )
 
     async def test_sha256_mismatch_aborts_install(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path)
-        fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-        fake_wheel.write_bytes(b"fake-wheel-content")
-
-        with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
-            fetcher = mock_fetcher.return_value
+        with patch_release_fetcher(current_version="2025.6.14") as fetcher:
+            manager, runner, _ = setup_update_env(
+                tmp_path,
+                server_release_fetcher=fetcher,
+            )
+            fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+            fake_wheel.write_bytes(b"fake-wheel-content")
             fetcher.find_latest_release.return_value = make_mock_release(sha256="0" * 64)
             fetcher.download_wheel.return_value = fake_wheel
             await run_update(manager, "TestNet", "pass")
@@ -300,8 +323,11 @@ class TestUpdateManagerAsync:
 
     async def test_password_never_in_logs(self, tmp_path) -> None:
         secret = "SuperSecret!Password#2024"
-        manager, _runner, _ = setup_update_env(tmp_path)
-        with patch_release_fetcher():
+        with patch_release_fetcher() as fetcher:
+            manager, _runner, _ = setup_update_env(
+                tmp_path,
+                server_release_fetcher=fetcher,
+            )
             await run_update(manager, "TestNet", secret)
         serialized = str(manager.status.to_payload())
         assert secret not in serialized
@@ -340,12 +366,13 @@ class TestUpdateManagerAsync:
                 diagnostic="USB internet is ready on 'usb0'.",
             )
         )
-        manager, runner, _repo = setup_update_env(
-            tmp_path,
-            seed_artifacts=True,
-            usb_internet_service=usb_service,
-        )
-        with patch_release_fetcher():
+        with patch_release_fetcher() as fetcher:
+            manager, runner, _repo = setup_update_env(
+                tmp_path,
+                seed_artifacts=True,
+                usb_internet_service=usb_service,
+                server_release_fetcher=fetcher,
+            )
             await run_update(manager, transport=UpdateTransport.usb_internet)
 
         assert manager.status.state == UpdateState.success
@@ -371,13 +398,14 @@ class TestUpdateManagerAsync:
                 ),
             )
         )
-        manager, runner, _repo = setup_update_env(
-            tmp_path,
-            usb_internet_service=usb_service,
-        )
-        with patch_release_fetcher() as mock_fetcher:
+        with patch_release_fetcher() as fetcher:
+            manager, runner, _repo = setup_update_env(
+                tmp_path,
+                usb_internet_service=usb_service,
+                server_release_fetcher=fetcher,
+            )
             await run_update(manager, transport=UpdateTransport.usb_internet)
-            mock_fetcher.assert_not_called()
+            fetcher.find_latest_release.assert_not_called()
 
         assert manager.status.state == UpdateState.failed
         assert manager.status.transport == UpdateTransport.usb_internet
@@ -428,7 +456,6 @@ class TestUpdateManagerAsync:
                 "prepare",
                 new=AsyncMock(
                     return_value=SimpleNamespace(
-                        current_version="2026.4.3",
                         prepared_transport=AsyncMock(),
                     )
                 ),
@@ -473,7 +500,6 @@ class TestUpdateManagerAsync:
                 "prepare",
                 new=AsyncMock(
                     return_value=SimpleNamespace(
-                        current_version="2026.4.3",
                         prepared_transport=AsyncMock(),
                     )
                 ),
@@ -493,11 +519,12 @@ class TestUpdateManagerAsync:
         assert manager.status.state == UpdateState.failed
 
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
-        manager, _runner, _ = setup_update_env(tmp_path)
-        with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
-            mock_fetcher.return_value.find_latest_release.side_effect = OSError(
-                "API rate limit exceeded",
+        with patch_release_fetcher(current_version="2025.6.14") as fetcher:
+            manager, _runner, _ = setup_update_env(
+                tmp_path,
+                server_release_fetcher=fetcher,
             )
+            fetcher.find_latest_release.side_effect = OSError("API rate limit exceeded")
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
 

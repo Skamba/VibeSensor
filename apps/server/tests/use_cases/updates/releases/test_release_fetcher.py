@@ -41,18 +41,15 @@ class TestReleaseFetcherConfig:
         config = ReleaseFetcherConfig()
         assert config.server_repo == "Skamba/VibeSensor"
         assert config.github_token == ""
-        assert config.rollback_dir == "/var/lib/vibesensor/rollback"
 
     def test_resolve_uses_environment(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("VIBESENSOR_SERVER_REPO", "test/repo")
         monkeypatch.setenv("GITHUB_TOKEN", "ghp_test123")
-        monkeypatch.setenv("VIBESENSOR_ROLLBACK_DIR", "/tmp/rollback")
 
         config = resolve_release_fetcher_config()
 
         assert config.server_repo == "test/repo"
         assert config.github_token == "ghp_test123"
-        assert config.rollback_dir == "/tmp/rollback"
 
     def test_resolve_prefers_explicit_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("VIBESENSOR_SERVER_REPO", "env/repo")
@@ -86,10 +83,25 @@ class TestReleaseInfo:
 class TestGitHubReleaseAsset:
     def test_from_api_payload_requires_name_and_url_strings(self) -> None:
         assert GitHubReleaseAsset.from_api_payload({"name": "wheel.whl", "url": "https://a"}) == (
-            GitHubReleaseAsset(name="wheel.whl", url="https://a")
+            GitHubReleaseAsset(name="wheel.whl", url="https://a", sha256="")
         )
         assert GitHubReleaseAsset.from_api_payload({"name": "wheel.whl"}) is None
         assert GitHubReleaseAsset.from_api_payload({"name": 1, "url": "https://a"}) is None
+
+    def test_from_api_payload_parses_sha256_digest(self) -> None:
+        asset = GitHubReleaseAsset.from_api_payload(
+            {
+                "name": "wheel.whl",
+                "url": "https://a",
+                "digest": f"sha256:{'a' * 64}",
+            },
+        )
+
+        assert asset == GitHubReleaseAsset(
+            name="wheel.whl",
+            url="https://a",
+            sha256="a" * 64,
+        )
 
 
 class TestGitHubRelease:
@@ -100,7 +112,13 @@ class TestGitHubRelease:
                 "draft": False,
                 "prerelease": False,
                 "published_at": "2025-06-15T02:00:00Z",
-                "assets": [{"name": "vibesensor-2025.6.15-py3-none-any.whl", "url": "https://a"}],
+                "assets": [
+                    {
+                        "name": "vibesensor-2025.6.15-py3-none-any.whl",
+                        "url": "https://a",
+                        "digest": f"sha256:{'a' * 64}",
+                    },
+                ],
             },
         )
 
@@ -110,7 +128,11 @@ class TestGitHubRelease:
             prerelease=False,
             published_at="2025-06-15T02:00:00Z",
             assets=(
-                GitHubReleaseAsset(name="vibesensor-2025.6.15-py3-none-any.whl", url="https://a"),
+                GitHubReleaseAsset(
+                    name="vibesensor-2025.6.15-py3-none-any.whl",
+                    url="https://a",
+                    sha256="a" * 64,
+                ),
             ),
         )
 
@@ -173,6 +195,7 @@ MOCK_RELEASES = [
             {
                 "name": "vibesensor-2025.6.15-py3-none-any.whl",
                 "url": "https://api.github.com/assets/456",
+                "digest": f"sha256:{'a' * 64}",
             },
         ],
     },
@@ -185,6 +208,7 @@ MOCK_RELEASES = [
             {
                 "name": "vibesensor-2025.6.14-py3-none-any.whl",
                 "url": "https://api.github.com/assets/123",
+                "digest": f"sha256:{'b' * 64}",
             },
         ],
     },
@@ -211,6 +235,7 @@ class TestServerReleaseFetcher:
         assert release.tag == "server-v2025.6.15"
         assert release.version == "2025.6.15"
         assert release.asset_name == "vibesensor-2025.6.15-py3-none-any.whl"
+        assert release.sha256 == "a" * 64
 
     def test_find_latest_skips_draft(self) -> None:
         releases = [
@@ -281,12 +306,33 @@ class TestServerReleaseFetcher:
         with pytest.raises(ValueError, match="Unexpected GitHub API response format"):
             fetcher.find_latest_release()
 
+    def test_find_latest_rejects_release_without_trusted_digest(self) -> None:
+        client = MagicMock(spec=GitHubApiClient)
+        client.get_json.return_value = [
+            {
+                "tag_name": "server-v2025.6.15",
+                "draft": False,
+                "prerelease": False,
+                "assets": [
+                    {
+                        "name": "vibesensor-2025.6.15-py3-none-any.whl",
+                        "url": "https://api.github.com/assets/456",
+                    },
+                ],
+            },
+        ]
+        fetcher = self._make_fetcher(client=client)
+
+        with pytest.raises(ValueError, match="missing a trusted SHA-256 digest"):
+            fetcher.find_latest_release()
+
     def test_download_wheel(self, tmp_path: Path) -> None:
         release = ReleaseInfo(
             tag="server-v2025.6.15",
             version="2025.6.15",
             asset_name="vibesensor-2025.6.15-py3-none-any.whl",
             asset_url="https://api.github.com/assets/456",
+            sha256="a" * 64,
         )
         wheel_content = b"fake-wheel-content"
 
@@ -301,7 +347,7 @@ class TestServerReleaseFetcher:
         assert path.exists()
         assert path.name == "vibesensor-2025.6.15-py3-none-any.whl"
         assert path.read_bytes() == wheel_content
-        assert release.sha256
+        assert release.sha256 == "a" * 64
 
 
 class TestVersionPolicy:

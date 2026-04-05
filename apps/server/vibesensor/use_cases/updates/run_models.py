@@ -22,7 +22,6 @@ __all__ = [
 class PreparedUpdateRun:
     """Validated updater state with one prepared transport handle."""
 
-    current_version: str
     prepared_transport: PreparedUpdateTransport
 
 
