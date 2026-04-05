@@ -2,21 +2,15 @@ import type { UiRealtimeDom } from "../dom/realtime_dom";
 import { getTypedInlineStateAction } from "./dom_helpers";
 import { bindViewEvent, composeViewDisposers, type ViewDisposer } from "./dom_event_bindings";
 import {
+  REALTIME_LOGGING_SUMMARY_ACTIONS,
+  type RealtimeLoggingSummaryAction,
+} from "./realtime_logging_view_models";
+import {
   getRealtimeSensorTableClickAction,
   getRealtimeSensorTableLocationChange,
   type RealtimeSensorTableClickAction,
   type RealtimeSensorTableLocationChange,
 } from "./realtime_sensor_table_view";
-
-const REALTIME_LOGGING_SUMMARY_ACTIONS = [
-  "open-history",
-  "open-cars",
-  "open-add-car",
-  "open-sensors",
-  "open-speed-source",
-] as const;
-
-export type RealtimeLoggingSummaryAction = (typeof REALTIME_LOGGING_SUMMARY_ACTIONS)[number];
 
 export interface RealtimeFeatureBindingHandlers {
   onStartLogging(): void;
