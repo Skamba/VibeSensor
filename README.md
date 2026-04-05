@@ -206,6 +206,11 @@ sudo ./apps/server/scripts/install_pi.sh
 sudo ./apps/server/scripts/hotspot_nmcli.sh
 ```
 
+`install_pi.sh` validates the Pi's `python3` before creating the virtualenv and
+fails fast when the interpreter is below the supported manual-install floor. See
+[docs/runtime_support_matrix.md](docs/runtime_support_matrix.md) for the current
+policy.
+
 See [apps/server/README.md](apps/server/README.md) for configuration and uplink-update details.
 
 ### Mode B: Prebuilt image
