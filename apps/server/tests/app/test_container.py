@@ -474,7 +474,7 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
     assert calls["ws_broadcast_kwargs"] == {
         "ui_push_hz": container_module.UI_PUSH_HZ,
         "ui_heavy_push_hz": container_module.UI_HEAVY_PUSH_HZ,
-        "payload_projector": ws_payload_projector,
+        "payload_source": ws_payload_projector,
     }
     assert calls["run_recorder_kwargs"] == {
         "registry": registry,

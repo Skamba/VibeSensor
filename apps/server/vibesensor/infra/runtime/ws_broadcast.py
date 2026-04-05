@@ -10,15 +10,22 @@ those are produced by the post-run analysis pipeline and flow through
 
 from __future__ import annotations
 
-from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
+from typing import Protocol
+
 from vibesensor.shared.types.payload_types import LiveWsPayload
+
+
+class LiveWsPayloadSource(Protocol):
+    """Focused shared-payload reader used by the broadcaster transport layer."""
+
+    def build_shared_payload(self, *, include_heavy: bool) -> LiveWsPayload: ...
 
 
 class WsBroadcastService:
     """WebSocket payload assembly: tick management and cached payload building."""
 
     __slots__ = (
-        "_payload_projector",
+        "_payload_source",
         "_ui_heavy_push_hz",
         "_ui_push_hz",
         "include_heavy",
@@ -33,7 +40,7 @@ class WsBroadcastService:
         *,
         ui_push_hz: int,
         ui_heavy_push_hz: int,
-        payload_projector: LiveWsPayloadProjector,
+        payload_source: LiveWsPayloadSource,
     ) -> None:
         self.tick = 0
         self.include_heavy = True
@@ -42,7 +49,7 @@ class WsBroadcastService:
         self._shared_payload_heavy: bool = True
         self._ui_push_hz = ui_push_hz
         self._ui_heavy_push_hz = ui_heavy_push_hz
-        self._payload_projector = payload_projector
+        self._payload_source = payload_source
 
     def on_tick(self) -> None:
         """Advance the broadcast tick counter and toggle heavy-tick flag."""
@@ -54,7 +61,7 @@ class WsBroadcastService:
         self.include_heavy = (self.tick % heavy_every) == 0
 
     def _build_shared_payload(self) -> LiveWsPayload:
-        return self._payload_projector.build_shared_payload(include_heavy=self.include_heavy)
+        return self._payload_source.build_shared_payload(include_heavy=self.include_heavy)
 
     def _refresh_shared_payload(self) -> LiveWsPayload:
         cache_valid = (
