@@ -3,7 +3,7 @@ import type {
   EspFlashHistoryPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
-} from "../../api/types";
+} from "../../transport/http_models";
 import {
   ESP_FLASH_POLL_ACTIVE_MS,
   ESP_FLASH_POLL_IDLE_MS,

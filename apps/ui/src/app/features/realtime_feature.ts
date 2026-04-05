@@ -5,8 +5,8 @@ import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { deriveCarSelectionState } from "../car_selection_state";
 import type { RealtimeState, SettingsState, SpectrumState } from "../ui_app_state";
-import type { LocationOption, LoggingStatusPayload } from "../../api/types";
-import type { AdaptedClient } from "../../server_payload";
+import type { LocationOption, LoggingStatusPayload } from "../../transport/http_models";
+import type { AdaptedClient } from "../../transport/live_models";
 import {
   getClientLocations,
   getLoggingStatus,

@@ -1,7 +1,11 @@
 import type { SpectrumChart } from "../spectrum";
 import type { WsClient } from "../ws";
-import type { StrengthMetricsPayload } from "../contracts/ws_payload_types";
-import type { AdaptedClient, AdaptedPayload, RotationalSpeeds } from "../server_payload";
+import type {
+  AdaptedClient,
+  AdaptedPayload,
+  RotationalSpeeds,
+  SpectrumClientData,
+} from "../transport/live_models";
 import { defaultLocationCodes } from "../constants";
 import type {
   CarRecord,
@@ -11,7 +15,7 @@ import type {
   LoggingStatusPayload,
   SpeedSourceKind,
   SpeedSourceStatusPayload,
-} from "../api/types";
+} from "../transport/http_models";
 
 export interface VehicleSettings {
   tire_width_mm: number;
@@ -66,12 +70,6 @@ export interface ChartBand {
   min_hz: number;
   max_hz: number;
   color: string;
-}
-
-export interface SpectrumClientData {
-  freq: number[];
-  strength_metrics: StrengthMetricsPayload;
-  combined: number[];
 }
 
 export interface SpectrumTickUpdate {

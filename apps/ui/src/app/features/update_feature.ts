@@ -3,7 +3,7 @@ import type {
   UpdateStartRequestPayload,
   UpdateStatusPayload,
   UsbInternetStatusPayload,
-} from "../../api/types";
+} from "../../transport/http_models";
 import {
   cancelUpdate,
   getHealthStatus,

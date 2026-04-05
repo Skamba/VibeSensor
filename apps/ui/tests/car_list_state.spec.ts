@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { getCarCompleteness } from "../src/app/car_selection_state";
 import { renderSettingsCarList } from "../src/app/views/settings_car_list_view";
-import type { CarRecord } from "../src/api/types";
+import type { CarRecord } from "../src/transport/http_models";
 
 function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
   return {

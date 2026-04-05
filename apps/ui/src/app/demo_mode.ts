@@ -1,4 +1,4 @@
-import { EXPECTED_SCHEMA_VERSION } from "../contracts/ws_payload_types";
+import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
 import type { AppState } from "./ui_app_state";
 
 type DemoDeps = {
@@ -133,7 +133,7 @@ export function runDemoMode(deps: DemoDeps): void {
   });
 
   const demoPayload = {
-    schema_version: EXPECTED_SCHEMA_VERSION,
+    schema_version: EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION,
     server_time: new Date().toISOString(),
     clients: demoClients,
     selected_client_id: demoClients[0]?.id ?? null,

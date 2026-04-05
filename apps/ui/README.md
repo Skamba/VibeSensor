@@ -82,12 +82,13 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view binders |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
 | `app/views/` | Focused DOM rendering, render-helper composition, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and update panels |
-| `api.ts` | REST API client with typed request/response interfaces |
+| `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
+| `api.ts` | REST API facade that returns local transport DTOs while `api/types.ts` stays the generated HTTP boundary |
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
 | `config.ts` | Centralized UI tuning constants for polling intervals, spectrum ranges, and history heatmap positions |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
 | `spectrum.ts` | uPlot chart wrapper for interactive spectrum visualization |
-| `server_payload.ts` | Runtime WebSocket payload adaptation and schema-version guardrails around the generated WS types |
+| `server_payload.ts` | Transport-boundary WebSocket payload adaptation and schema-version guardrails around the generated WS types |
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
 | `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
 | `format.ts` | Number, byte, and timestamp formatting utilities |
@@ -114,6 +115,9 @@ returns only the shell, transport, and startup contracts the runtime needs.
 `app/views/` still owns focused HTML rendering helpers, the shared low-level DOM
 render helper, typed event-target decoding, and disposable delegated listener
 binders for reusable multi-action panels.
+`src/transport/` owns the UI-local DTO and adapter layer between generated HTTP /
+WS contracts and `app/**`, so feature, runtime, and view modules no longer need
+to import `api/types.ts` or generated WS contract files directly.
 
 ## WebSocket contract boundary
 
