@@ -12,6 +12,7 @@ import {
   jsonResponse,
 } from "./async_test_helpers";
 import type { TimerHarness } from "./async_test_helpers";
+import { createPanel, installFakeDomGlobals } from "./dom_render_test_support";
 
 type ClickListener = (() => void) | null;
 
@@ -114,76 +115,6 @@ function createInput(value = "", type = "text"): HTMLInputElement {
   } as unknown as HTMLInputElement;
 }
 
-function createPanel(): HTMLElement {
-  let textContent = "";
-  let innerHTML = "";
-  let className = "";
-  const classes = new Set<string>();
-
-  function syncClassName(): void {
-    className = Array.from(classes).join(" ");
-  }
-
-  const classList = {
-    add(...tokens: string[]) {
-      for (const token of tokens) {
-        classes.add(token);
-      }
-      syncClassName();
-    },
-    remove(...tokens: string[]) {
-      for (const token of tokens) {
-        classes.delete(token);
-      }
-      syncClassName();
-    },
-    toggle(token: string, force?: boolean) {
-      const shouldAdd = force ?? !classes.has(token);
-      if (shouldAdd) {
-        classes.add(token);
-      } else {
-        classes.delete(token);
-      }
-      syncClassName();
-      return classes.has(token);
-    },
-    contains(token: string) {
-      return classes.has(token);
-    },
-  };
-
-  return {
-    get textContent() {
-      return textContent;
-    },
-    set textContent(value: string | null) {
-      textContent = value ?? "";
-      innerHTML = textContent;
-    },
-    get innerHTML() {
-      return innerHTML;
-    },
-    set innerHTML(value: string) {
-      innerHTML = value;
-      textContent = value;
-    },
-    get className() {
-      return className;
-    },
-    set className(value: string) {
-      classes.clear();
-      for (const token of value.split(/\s+/).filter(Boolean)) {
-        classes.add(token);
-      }
-      syncClassName();
-    },
-    classList,
-    hidden: false,
-    scrollTop: 0,
-    scrollHeight: 0,
-  } as unknown as HTMLElement;
-}
-
 function createDeps() {
   const espFlashPortSelect = createSelect("__auto__");
   const espFlashRefreshPortsBtn = createButton();
@@ -226,6 +157,17 @@ function createDeps() {
     showError: () => {},
   };
 }
+
+let restoreDomGlobals = () => undefined;
+
+test.beforeEach(() => {
+  restoreDomGlobals = installFakeDomGlobals();
+});
+
+test.afterEach(() => {
+  restoreDomGlobals();
+  restoreDomGlobals = () => undefined;
+});
 
 async function expectDelays(readDelays: () => number[], expected: number[]): Promise<void> {
   for (let attempt = 0; attempt < 25; attempt += 1) {
