@@ -348,7 +348,7 @@ def _make_logger(
     registry: object | None = None,
     gps_monitor: object | None = None,
     processor: object | None = None,
-    settings_store: object | None = None,
+    settings_reader: object | None = None,
     history_db: object | None = None,
     **extra: Any,
 ) -> RunRecorder:
@@ -383,7 +383,7 @@ def _make_logger(
         registry=reg,
         gps_monitor=gps_monitor or _FakeGPSMonitor(),
         processor=processor or _FakeProcessor(registry=reg),
-        settings_store=settings_store or _FakeAnalysisSettings(),
+        settings_reader=settings_reader or _FakeAnalysisSettings(),
         history_db=history_db,
         **extra,
     )
@@ -394,7 +394,7 @@ def make_logger(tmp_path: Path):
     """Factory fixture: call ``make_logger(...)`` to get a RunRecorder.
 
     Accepts the same keyword overrides as ``RunRecorder`` (e.g.
-    ``make_logger(history_db=my_db, language_provider=lambda: "nl")``).
+    ``make_logger(history_db=my_db, language_reader=my_language_reader)``).
     Any dependency not supplied gets a sensible fake default.
     """
 

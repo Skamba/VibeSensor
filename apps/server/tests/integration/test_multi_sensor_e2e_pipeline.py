@@ -6,6 +6,7 @@ import io
 import math
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -118,7 +119,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
         gps_monitor=gps_monitor,
         processor=processor,
         history_db=history_db,
-        language_provider=lambda: "en",
+        language_reader=SimpleNamespace(language="en"),
     )
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=256)
     proto.connection_made(_FakeTransport())

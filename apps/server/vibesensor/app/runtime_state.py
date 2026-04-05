@@ -38,7 +38,7 @@ class RuntimeState:
     processor: SignalSource
     control_plane: UDPControlPlane
     worker_pool: WorkerPool
-    settings_store: SettingsReader
+    settings_reader: SettingsReader
     gps_monitor: GPSSpeedMonitor
     obd_runner: LifecycleObdRunner
     history_db: LifecycleHistoryDb

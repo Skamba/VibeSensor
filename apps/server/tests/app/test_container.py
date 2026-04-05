@@ -161,7 +161,8 @@ def test_build_settings_service_bundle_exposes_runtime_and_http_dependency_group
         bundle.speed_source_service.get_speed_source()
         == bundle.speed_source_settings.get_speed_source()
     )
-    assert runtime_deps.language_provider() == bundle.ui_preferences.language == "en"
+    assert runtime_deps.language_reader is bundle.ui_preferences
+    assert runtime_deps.language_reader.language == bundle.ui_preferences.language == "en"
 
     assert http_deps.car_settings is bundle.car_settings
     assert http_deps.analysis_settings is bundle.analysis_settings
@@ -337,7 +338,7 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
         settings_reader="settings-reader",
         speed_source_reader="speed-source-reader",
         sensor_metadata_reader="sensor-reader",
-        language_provider=lambda: "en",
+        language_reader="language-reader",
     )
     config = SimpleNamespace(
         processing=SimpleNamespace(
@@ -481,9 +482,9 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
         "gps_monitor": "speed-observation",
         "processor": processor,
         "history_db": history.run_repository,
-        "settings_store": "settings-reader",
+        "settings_reader": "settings-reader",
         "sensor_metadata_reader": "sensor-reader",
-        "language_provider": runtime_settings.language_provider,
+        "language_reader": runtime_settings.language_reader,
     }
     assert telemetry.processing_loop_state is processing_loop_state
     assert telemetry.health_state == "health-state"

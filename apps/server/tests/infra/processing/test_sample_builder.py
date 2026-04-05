@@ -7,6 +7,7 @@ threading machinery.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -178,16 +179,16 @@ class TestBuildRunMetadata:
         meta = build_run_metadata(
             **_default_run_metadata_kwargs(
                 run_id="run-lang",
-                language_provider=lambda: "fi",
+                language_reader=SimpleNamespace(language="fi"),
             ),
         )
         assert meta.language == "fi"
 
-    def test_language_provider_defaults_to_en_when_blank(self) -> None:
+    def test_language_reader_defaults_to_en_when_blank(self) -> None:
         meta = build_run_metadata(
             **_default_run_metadata_kwargs(
                 run_id="run-lang-default",
-                language_provider=lambda: "   ",
+                language_reader=SimpleNamespace(language="   "),
             ),
         )
         assert meta.language == "en"

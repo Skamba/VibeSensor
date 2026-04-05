@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable
 from threading import RLock
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from vibesensor.shared.ports import (
     ClientTracker,
+    LanguageReader,
     RunPersistence,
     SensorMetadataReader,
     SettingsReader,
@@ -68,15 +68,15 @@ class RunRecorder:
         gps_monitor: SpeedProvider,
         processor: SignalSource,
         history_db: RunPersistence | None = None,
-        settings_store: SettingsReader | None = None,
+        settings_reader: SettingsReader | None = None,
         sensor_metadata_reader: SensorMetadataReader | None = None,
-        language_provider: Callable[[], str] | None = None,
+        language_reader: LanguageReader | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
         self.registry = registry
         self.gps_monitor = gps_monitor
         self.processor = processor
-        self._settings_store = settings_store
+        self._settings_reader = settings_reader
         self.sensor_model = config.sensor_model.strip() or "unknown"
         self.default_sample_rate_hz = int(config.default_sample_rate_hz)
         self.fft_window_size_samples = int(config.fft_window_size_samples)
@@ -85,7 +85,7 @@ class RunRecorder:
         )
         self._lock = RLock()
         self._history_db = history_db
-        self._language_provider = language_provider
+        self._language_reader = language_reader
         self._live_start_mono_s = time.monotonic()
         self._active_run_context: RunContextSnapshot | None = None
         self._capture_readiness = CaptureReadinessTracker()
@@ -156,11 +156,13 @@ class RunRecorder:
         return current is not None and current.run_id == run_id
 
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
-        return _recorder_runtime.analysis_settings_snapshot(self._settings_store)
+        return _recorder_runtime.analysis_settings_snapshot(self._settings_reader)
 
     def _live_run_context_snapshot(self) -> RunContextSnapshot:
         active_car_snapshot = (
-            self._settings_store.active_car_snapshot() if self._settings_store is not None else None
+            self._settings_reader.active_car_snapshot()
+            if self._settings_reader is not None
+            else None
         )
         return build_run_context_snapshot(
             analysis_settings_snapshot=self._analysis_settings_snapshot(),
