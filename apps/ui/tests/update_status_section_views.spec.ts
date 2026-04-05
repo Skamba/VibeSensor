@@ -38,7 +38,7 @@ test("createUpdateCurrentStatusCard renders badge and empty note from typed inpu
   expect(findByClass(card, "maintenance-card__title")[0].textContent).toBe("Current status");
   expect(findByClass(card, "subtle")[0].textContent).toBe("Ready to start");
   expect(findByClass(card, "pill")[0].textContent).toBe("Ready");
-  expect(findByClass(card, "pill")[0].classList.contains("pill--ok")).toBe(true);
+  expect(findByClass(card, "pill")[0].getAttribute("data-variant")).toBe("ok");
   expect(findByClass(card, "maintenance-note")[0].textContent).toBe("No updater activity yet.");
 });
 

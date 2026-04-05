@@ -82,6 +82,6 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
   ).__loggingSummaryTracker?.replacements ?? -1)).toBe(0);
 
   await addCarButton.click();
-  await expect(page.locator("#settingsView")).toHaveClass(/active/);
+  await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
 });

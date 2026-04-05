@@ -162,7 +162,7 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await expect(newRow).toContainText("245/45R18");
   await expect(newRow).toContainText("3.08");
   await expect(newRow).toContainText("0.68");
-  await expect(newRow.locator(".car-active-pill")).toHaveClass(/active/);
+  await expect(newRow.locator(".car-active-pill")).toHaveAttribute("data-state", "active");
 });
 
 test("keeps the final Add Car action visible for the library branch until the user finishes", async ({ page }) => {
@@ -271,5 +271,5 @@ test("keeps the final Add Car action visible for the library branch until the us
   await expect(newRow).toContainText("275/40R21");
   await expect(newRow).toContainText("3.15");
   await expect(newRow).toContainText("0.67");
-  await expect(newRow.locator(".car-active-pill")).toHaveClass(/active/);
+  await expect(newRow.locator(".car-active-pill")).toHaveAttribute("data-state", "active");
 });

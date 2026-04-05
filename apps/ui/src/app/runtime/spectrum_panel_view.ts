@@ -76,6 +76,18 @@ export function createSpectrumPanelView(
   let legendResetButton: SpectrumLegendButton | null = null;
   const legendSeriesButtons = new Map<string, SpectrumLegendButton>();
 
+  function setOptionalStateAttribute(
+    element: HTMLElement,
+    name: string,
+    value: string | null,
+  ): void {
+    if (!value) {
+      element.removeAttribute(name);
+      return;
+    }
+    element.setAttribute(name, value);
+  }
+
   function bindBandToggle(onToggle: () => void): void {
     deps.dom.spectrumBandToggle?.addEventListener("click", onToggle);
   }
@@ -119,10 +131,11 @@ export function createSpectrumPanelView(
     }
 
     const allButton = ensureLegendResetButton(handlers.onReset);
-    allButton.button.className = `legend-item legend-item--interactive legend-item--reset${model.reset.active ? " legend-item--active" : ""}`;
+    allButton.button.className = "legend-item legend-item--interactive legend-item--reset";
     allButton.button.setAttribute("aria-pressed", model.reset.ariaPressed ? "true" : "false");
     allButton.button.title = model.reset.titleText;
     allButton.button.setAttribute("aria-label", model.reset.ariaLabel);
+    setOptionalStateAttribute(allButton.button, "data-legend-state", model.reset.active ? "active" : null);
     allButton.label.textContent = model.reset.labelText;
     placeLegendButton(legend, allButton.button, 0);
 
@@ -131,10 +144,15 @@ export function createSpectrumPanelView(
     for (const item of model.items) {
       activeIds.add(item.id);
       const parts = ensureLegendSeriesButton(item.id, handlers.onSelect);
-      parts.button.className = `legend-item legend-item--interactive${item.active ? " legend-item--active" : ""}${item.muted ? " legend-item--muted" : ""}`;
+      parts.button.className = "legend-item legend-item--interactive";
       parts.button.setAttribute("aria-pressed", item.ariaPressed ? "true" : "false");
       parts.button.title = item.titleText;
       parts.button.setAttribute("aria-label", item.ariaLabel);
+      setOptionalStateAttribute(
+        parts.button,
+        "data-legend-state",
+        item.active ? "active" : item.muted ? "muted" : null,
+      );
       parts.label.textContent = item.labelText;
       parts.swatch?.style.setProperty("--swatch-color", item.color);
       if (parts.meta) {
@@ -165,14 +183,16 @@ export function createSpectrumPanelView(
     }
     if (!model.items.length) {
       const row = document.createElement("div");
-      row.className = "legend-item legend-item--band legend-item--band-empty";
+      row.className = "legend-item legend-item--band";
+      row.setAttribute("data-band-state", "empty");
       row.textContent = model.emptyText;
       legend.appendChild(row);
       return;
     }
     for (const item of model.items) {
       const row = document.createElement("div");
-      row.className = "legend-item legend-item--band legend-item--band-active";
+      row.className = "legend-item legend-item--band";
+      row.setAttribute("data-band-state", "active");
       row.style.setProperty("--band-color", item.color);
       const swatch = document.createElement("span");
       swatch.className = "swatch";

@@ -34,7 +34,7 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   await expect(liveSummary).toContainText("Add a car before recording.");
   await expect(liveSummary).toContainText("Runs need an active car");
   await liveSummary.getByRole("button", { name: "Add a car" }).click();
-  await expect(page.locator("#settingsView")).toHaveClass(/active/);
+  await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
   await activateWizardCloseButton(page);
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
@@ -215,10 +215,10 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   const activeRow = page.locator('#carListBody tr[data-car-id="car-1"]');
   await expect(activeRow).toContainText("Audit Demo Car");
-  await expect(activeRow.locator(".car-active-pill")).toHaveClass(/active/);
+  await expect(activeRow.locator(".car-active-pill")).toHaveAttribute("data-state", "active");
 
   await page.locator("#tab-dashboard").click();
-  await expect(page.locator("#liveActiveCar")).not.toHaveClass(/stat--warn/);
+  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
   await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Audit Demo Car");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
   await expect(page.locator("#loggingStatus")).toBeHidden();
@@ -331,8 +331,9 @@ test("shows a live warning state until an active car is selected, then clears it
   });
 
   await page.goto("/");
-  await expect(page.locator("#liveActiveCar")).toHaveClass(/stat--warn/);
-  await expect(page.locator("#liveActiveCar .stat__value-icon--warn")).toHaveText("!");
+  await expect(page.locator("#liveActiveCar")).toHaveAttribute("data-variant", "warn");
+  await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveAttribute("data-variant", "warn");
+  await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveText("!");
   await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No active car selected");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
   await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
@@ -346,13 +347,13 @@ test("shows a live warning state until an active car is selected, then clears it
   await expect.poll(() => startCalls).toBe(0);
 
   await liveSummary.getByRole("button", { name: "Choose active car" }).click();
-  await expect(page.locator("#settingsView")).toHaveClass(/active/);
-  await expect(page.locator("#carTab")).toHaveClass(/active/);
+  await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);
+  await expect(page.locator("#carTab")).toHaveJSProperty("hidden", false);
   await page.locator('#carListBody tr[data-car-id="car-2"] .car-activate-btn').click();
 
   await page.locator("#tab-dashboard").click();
-  await expect(page.locator("#liveActiveCar")).not.toHaveClass(/stat--warn/);
-  await expect(page.locator("#liveActiveCar .stat__value-icon--warn")).toHaveCount(0);
+  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
+  await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveCount(0);
   await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Coupe");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Ready");
   await expect(page.locator("#loggingStatus")).toBeHidden();
@@ -505,7 +506,7 @@ test("routes incomplete cars through Finish setup instead of generic activation"
   await incompleteRow.getByRole("button", { name: "Finish setup" }).click();
 
   await expect.poll(() => activateCalls).toBe(1);
-  await expect(page.locator("#analysisTab")).toHaveClass(/active/);
+  await expect(page.locator("#analysisTab")).toHaveJSProperty("hidden", false);
 });
 
 test("returns from the add-car flow with visible success feedback and row highlighting", async ({ page }) => {
@@ -566,7 +567,7 @@ test("returns from the add-car flow with visible success feedback and row highli
   await expect(page.locator("#carSelectionGuidance")).toContainText("Car added");
   await expect(page.locator("#carSelectionGuidance")).toContainText("Track Demo was added and selected for this setup.");
   const createdRow = page.locator('#carListBody tr[data-car-id="car-1"]');
-  await expect(createdRow).toHaveClass(/car-list-row--highlighted/);
+  await expect(createdRow).toHaveAttribute("data-highlighted", "true");
   await expect(createdRow).toContainText("Active");
   await expect(createdRow).toContainText("Ready");
   await expect(createdRow).toContainText("New");

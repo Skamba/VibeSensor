@@ -10,12 +10,12 @@ import {
 import {
   createElementNode,
   renderChildren,
-  setClassStates,
 } from "./dom_render";
 import {
   setSettingsFeedback,
   type SettingsFeedbackMessage,
 } from "./settings_feedback";
+import { setChoiceCardState } from "../style_state";
 
 export interface SettingsSpeedSourceSettingsSnapshot extends SpeedSourceStateSource {
   gpsEffectiveSpeedKph: number | null;
@@ -142,25 +142,21 @@ function activeEffectiveSpeedKph(
 function syncChoiceState(
   element: HTMLElement | null,
   t: SettingsSpeedSourcePresenterDeps["t"],
-  { active, pending }: { active: boolean; pending: boolean },
+  {
+    active,
+    pending,
+    error,
+  }: { active: boolean; pending: boolean; error: boolean },
 ): void {
-  if (!element) {
-    return;
-  }
-  setClassStates(element, {
-    "speed-source-choice--active": active,
-    "speed-source-choice--selected": active,
-    "speed-source-choice--draft": pending,
+  setChoiceCardState(element, {
+    selected: active,
+    state: error ? "error" : pending ? "draft" : active ? "active" : null,
+    badgeText: pending
+      ? t("settings.speed.choice_pending")
+      : active
+        ? t("settings.speed.choice_active")
+        : null,
   });
-  if (pending) {
-    element.setAttribute("data-choice-badge", t("settings.speed.choice_pending"));
-    return;
-  }
-  if (active) {
-    element.setAttribute("data-choice-badge", t("settings.speed.choice_active"));
-    return;
-  }
-  element.removeAttribute("data-choice-badge");
 }
 
 function applyInputFeedback(
@@ -201,10 +197,10 @@ function obdDeviceSecondaryLabel(device: ObdDevicePayload): string | null {
 
 function createBadge(label: string, active = false): HTMLSpanElement {
   return createElementNode("span", {
-    classes: [
-      "speed-source-device__badge",
-      active && "speed-source-device__badge--active",
-    ],
+    className: "speed-source-device__badge",
+    data: {
+      active: active ? "true" : null,
+    },
     text: label,
   });
 }
@@ -323,14 +319,17 @@ export function createSettingsSpeedSourcePresenter(
     syncChoiceState(dom.speedSourceChoiceGps, t, {
       active: displayedMode === "gps",
       pending: hasPendingSelection && state.selectedMode === "gps",
+      error: false,
     });
     syncChoiceState(dom.speedSourceChoiceObd, t, {
       active: displayedMode === "obd2",
       pending: hasPendingSelection && state.selectedMode === "obd2",
+      error: state.obdSelectionError,
     });
     syncChoiceState(dom.speedSourceChoiceManual, t, {
       active: displayedMode === "manual",
       pending: hasPendingSelection && state.selectedMode === "manual",
+      error: false,
     });
 
     if (dom.manualSpeedConfig) {
@@ -364,7 +363,6 @@ export function createSettingsSpeedSourcePresenter(
     applyInputFeedback(dom.staleTimeoutInput, dom.staleTimeoutFeedback, state.staleTimeoutFeedback);
     setSettingsFeedback(dom.speedSourceSaveFeedback, state.saveFeedback);
 
-    dom.speedSourceChoiceObd?.classList.toggle("speed-source-choice--error", state.obdSelectionError);
     const obdRadio = dom.speedSourceRadios.find((radio) => radio.value === "obd2");
     if (state.obdSelectionError) {
       obdRadio?.setAttribute("aria-invalid", "true");

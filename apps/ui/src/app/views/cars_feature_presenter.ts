@@ -115,7 +115,11 @@ export function createCarsFeaturePresenter(
     if (isOpen && !lastOpenState) {
       dom.addCarWizard.scrollTop = 0;
     }
-    document.body.classList.toggle("wizard-open", isOpen);
+    if (isOpen) {
+      document.body.setAttribute("data-wizard-open", "true");
+    } else {
+      document.body.removeAttribute("data-wizard-open");
+    }
     lastOpenState = isOpen;
   }
 

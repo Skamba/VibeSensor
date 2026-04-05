@@ -2,6 +2,7 @@ import { fmt } from "../../format";
 import type { UiShellDom } from "../dom/shell_dom";
 import { deriveSpeedReadoutLabelKey } from "../speed_source_state";
 import type { RealtimeState, SettingsState, ShellState, TransportState } from "../ui_app_state";
+import type { VisualVariant } from "../style_state";
 
 const WS_KEY_BY_STATE: Record<string, string> = {
   connecting: "ws.connecting",
@@ -11,7 +12,7 @@ const WS_KEY_BY_STATE: Record<string, string> = {
   no_data: "ws.connected",
 };
 
-const WS_VARIANT_BY_STATE: Record<string, string> = {
+const WS_VARIANT_BY_STATE: Record<string, VisualVariant> = {
   connecting: "muted",
   connected: "ok",
   reconnecting: "warn",
@@ -66,6 +67,9 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
   function renderWsState(): void {
     if (transport.payloadError) {
       ctx.setPillState(els.linkState, "bad", ctx.t("ws.payload_error_pill"));
+      if (els.appShellWrap) {
+        els.appShellWrap.setAttribute("data-connection-state", "degraded");
+      }
       return;
     }
     ctx.setPillState(
@@ -76,7 +80,7 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
 
     if (els.appShellWrap) {
       const degraded = transport.wsState === "reconnecting" || transport.wsState === "stale";
-      els.appShellWrap.classList.toggle("wrap--stale", degraded);
+      els.appShellWrap.setAttribute("data-connection-state", degraded ? "degraded" : "live");
     }
   }
 

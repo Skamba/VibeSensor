@@ -168,19 +168,19 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
 
   await dashboardTab.focus();
   await dashboardTab.press("ArrowRight");
-  await expect(page.locator("#historyView")).toHaveClass(/active/);
+  await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
   await expect(page.locator(".site-header__status")).toBeVisible();
   await historyTab.press("ArrowLeft");
-  await expect(page.locator("#dashboardView")).toHaveClass(/active/);
+  await expect(page.locator("#dashboardView")).toHaveJSProperty("hidden", false);
   await expect(page.locator(".site-header__status")).toBeHidden();
   await dashboardTab.press("End");
-  await expect(page.locator("#settingsView")).toHaveClass(/active/);
+  await expect(page.locator("#settingsView")).toHaveJSProperty("hidden", false);
   await expect(page.locator(".site-header__status")).toBeVisible();
   await settingsTab.press("Home");
-  await expect(page.locator("#dashboardView")).toHaveClass(/active/);
+  await expect(page.locator("#dashboardView")).toHaveJSProperty("hidden", false);
   await expect(page.locator(".site-header__status")).toBeHidden();
   await historyTab.click();
-  await expect(page.locator("#historyView")).toHaveClass(/active/);
+  await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
   await expect(page.locator(".site-header__status")).toBeVisible();
   await expect(page.locator("#historyTableBody")).toContainText("run-001");
   await dashboardTab.click();
@@ -212,7 +212,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(processingSummary).toContainText("Run run-001 is being analyzed.");
   await expect(processingSummary).toContainText("Results will appear in History");
   await processingSummary.getByRole("button", { name: "Open History" }).click();
-  await expect(page.locator("#historyView")).toHaveClass(/active/);
+  await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
   await expect.poll(() => stopCalls).toBe(1);
 });
 
@@ -286,5 +286,5 @@ test("saved run state points directly to History", async ({ page }) => {
   await expect(savedSummary).toContainText("Run run-002 is ready in History.");
   await expect(savedSummary).toContainText("Open History to review the diagnosis");
   await savedSummary.getByRole("button", { name: "Open History" }).click();
-  await expect(page.locator("#historyView")).toHaveClass(/active/);
+  await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
 });
