@@ -6,14 +6,13 @@ from vibesensor.shared.exceptions import UpdateReleaseError
 from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
 from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.models import UpdateExecutionOutcome
-from vibesensor.use_cases.updates.release_deployment import (
-    UpdateReleaseDeploymentCoordinator,
-)
-from vibesensor.use_cases.updates.release_staging import ServerReleaseStager
 from vibesensor.use_cases.updates.run_models import (
     InstallServerReleasePlan,
     PlannedUpdateRun,
     RefreshFirmwarePlan,
+)
+from vibesensor.use_cases.updates.server_release_execution import (
+    ServerReleaseExecutionCoordinator,
 )
 
 __all__ = ["UpdateWorkflowExecutor"]
@@ -22,19 +21,17 @@ __all__ = ["UpdateWorkflowExecutor"]
 class UpdateWorkflowExecutor:
     """Execute a prepared release plan while delegating side effects to focused collaborators."""
 
-    __slots__ = ("_completion", "_deployment", "_firmware_refresher", "_stager")
+    __slots__ = ("_completion", "_firmware_refresher", "_server_release_execution")
 
     def __init__(
         self,
         *,
         completion: UpdateCompletionCoordinator,
-        stager: ServerReleaseStager,
-        deployment: UpdateReleaseDeploymentCoordinator,
+        server_release_execution: ServerReleaseExecutionCoordinator,
         firmware_refresher: FirmwareRefresher,
     ) -> None:
         self._completion = completion
-        self._stager = stager
-        self._deployment = deployment
+        self._server_release_execution = server_release_execution
         self._firmware_refresher = firmware_refresher
 
     async def execute(
@@ -80,8 +77,7 @@ class UpdateWorkflowExecutor:
         workflow: PlannedUpdateRun,
         plan: InstallServerReleasePlan,
     ) -> UpdateExecutionOutcome:
-        async with self._stager.stage(plan.release) as staged_release:
-            await self._deployment.deploy(staged_release)
+        await self._server_release_execution.execute(plan.release)
         await self._completion.complete_success(
             workflow.prepared.prepared_transport,
             message="Update completed successfully",

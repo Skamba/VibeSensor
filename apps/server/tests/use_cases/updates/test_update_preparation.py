@@ -28,8 +28,6 @@ def _wifi_request(ssid: str = "TestNet", password: str = "pass123") -> UpdateReq
 
 def _build_preparation(
     tmp_path: Path,
-    *,
-    current_version: str = "2026.4.3",
 ) -> tuple[UpdatePreparationCoordinator, UpdateStatusTracker, AsyncMock, AsyncMock]:
     status = build_update_status_harness(tmp_path / "state.json")
     prepared_transport = AsyncMock()
@@ -43,7 +41,6 @@ def _build_preparation(
             rollback_dir=tmp_path / "rollback",
             min_free_disk_bytes=1,
         ),
-        current_version_provider=lambda: current_version,
     )
     return preparation, status, prepared_transport, transport_coordinator
 
@@ -84,10 +81,7 @@ async def test_prepare_stops_when_transport_cannot_prepare(tmp_path: Path) -> No
 
 @pytest.mark.asyncio
 async def test_prepare_returns_canonical_prepared_run(tmp_path: Path) -> None:
-    preparation, _tracker, prepared_transport, transport_coordinator = _build_preparation(
-        tmp_path,
-        current_version="2026.4.9",
-    )
+    preparation, _tracker, prepared_transport, transport_coordinator = _build_preparation(tmp_path)
     request = _wifi_request()
 
     with patch(
@@ -97,6 +91,5 @@ async def test_prepare_returns_canonical_prepared_run(tmp_path: Path) -> None:
         prepared = await preparation.prepare(request)
 
     assert isinstance(prepared, PreparedUpdateRun)
-    assert prepared.current_version == "2026.4.9"
     transport_coordinator.prepare.assert_awaited_once_with(request)
     assert prepared.prepared_transport is prepared_transport

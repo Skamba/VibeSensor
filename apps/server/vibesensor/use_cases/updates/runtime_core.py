@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -26,6 +27,7 @@ class UpdateRuntimeCore:
     status: UpdateStatusTracker
     reporter: UpdateTerminalStateReporter
     commands: UpdateCommandExecutor
+    current_version_provider: Callable[[], str]
 
 
 def build_update_runtime_core(
@@ -46,6 +48,7 @@ def build_update_runtime_core(
         status=status,
         reporter=UpdateTerminalStateReporter(status=status),
         commands=commands,
+        current_version_provider=current_server_version,
     )
 
 
@@ -61,3 +64,9 @@ def _build_status_tracker(
     )
     status.set_runtime(collect_runtime_details(repo))
     return status
+
+
+def current_server_version() -> str:
+    from vibesensor import __version__ as current_version
+
+    return current_version
