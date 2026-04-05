@@ -9,7 +9,7 @@ from threading import Event, Thread
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 
 

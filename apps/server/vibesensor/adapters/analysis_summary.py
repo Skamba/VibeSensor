@@ -7,7 +7,7 @@ from pathlib import Path
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.boundaries.analysis_payloads import analysis_result_to_summary
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.run_schema import RunMetadata

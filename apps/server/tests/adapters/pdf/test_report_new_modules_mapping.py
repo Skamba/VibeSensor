@@ -20,10 +20,10 @@ from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.domain import VibrationOrigin
-from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
-from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
+from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
+from vibesensor.shared.boundaries.summary_fields.origin import build_origin_explanation
 from vibesensor.use_cases.diagnostics.run_analysis import (
     summarize_origin,
 )

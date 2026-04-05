@@ -11,8 +11,8 @@ from vibesensor.domain import (
     SensorPlacement,
     TestRun,
 )
-from vibesensor.shared.boundaries.run_capture_codec import configuration_snapshot_from_metadata
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.capture import configuration_snapshot_from_metadata
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 
 
 def _metadata(**overrides: object) -> dict[str, object]:

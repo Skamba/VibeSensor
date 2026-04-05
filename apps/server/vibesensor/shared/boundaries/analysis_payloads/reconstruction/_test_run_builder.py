@@ -13,16 +13,16 @@ from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries import run_suitability as _run_suitability_boundary
 from vibesensor.shared.boundaries.codecs import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )
-from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.run_capture_codec import (
+from vibesensor.shared.boundaries.runs.capture import (
     configuration_snapshot_from_run_metadata,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.suitability import run_suitability_from_payload
+from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
@@ -139,7 +139,7 @@ def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
     )
     raw_suitability_payload = payload.get("run_suitability")
     suitability = (
-        _run_suitability_boundary.run_suitability_from_payload(raw_suitability_payload)
+        run_suitability_from_payload(raw_suitability_payload)
         if isinstance(raw_suitability_payload, list)
         else None
     )

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import vibesensor.shared.boundaries.finding as boundary_finding
+import vibesensor.shared.boundaries.summary_fields.finding as boundary_finding
 from vibesensor.domain import Finding, FindingEvidence, OrderMatchObservation, VibrationSource
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
 
 
 def test_projection_emits_canonical_amplitude_metric_shape() -> None:

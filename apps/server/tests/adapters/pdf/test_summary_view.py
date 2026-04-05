@@ -19,8 +19,8 @@ from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
 )
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.projection import resolve_report_origin
-from vibesensor.shared.boundaries.test_plan_projection import step_payloads_from_plan
-from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.shared.boundaries.summary_fields.origin import origin_payload_from_finding
+from vibesensor.shared.boundaries.summary_fields.test_plan import step_payloads_from_plan
 
 
 def _minimal_summary(**overrides: object) -> dict[str, object]:

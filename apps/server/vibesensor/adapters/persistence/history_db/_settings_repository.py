@@ -6,7 +6,7 @@ import sqlite3
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 
-from vibesensor.shared.boundaries.settings_snapshot_codec import settings_snapshot_from_payload
+from vibesensor.shared.boundaries.settings.snapshot import settings_snapshot_from_payload
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import is_json_object
