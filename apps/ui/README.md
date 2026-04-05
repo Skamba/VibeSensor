@@ -85,9 +85,12 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view binders |
 | `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and delegated event bindings together |
 | `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
+| `app/features/update_feature.ts` | Thin update facade that binds DOM events, delegates state rendering to the presenter, and delegates update commands to the workflow |
+| `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_view.ts` | Dedicated realtime logging/readiness DOM renderer built from typed view-model objects |
+| `app/views/update_feature_presenter.ts` | Update presenter that owns readiness derivation, transport/control DOM state, and typed handoff into the update status/internet panels |
 | `app/views/update_status_view.ts` | Thin update-status coordinator that assembles typed section models into the settings update panel |
 | `app/views/update_status_view_models.ts` | Typed update-status section builders for current status, journey, issues, attempt history, health, and log cards |
 | `app/views/update_status_overview_view.ts` | Focused current-status and journey card renderers built from typed section inputs |
