@@ -3,20 +3,20 @@ import type { HistoryEntry } from "../../transport/http_models";
 import type { RunDetail } from "../ui_app_state";
 import {
   closestFromTarget,
+  createInlineStatePanelElement,
+  createTableEmptyRowElement,
   getTypedInlineStateAction,
-  renderInlineStatePanel,
-  renderTableEmptyRow,
 } from "./dom_helpers";
+import { renderChildren } from "./dom_render";
 import { bindViewEvent, composeViewDisposers, type ViewDisposer } from "./dom_event_bindings";
 import { buildHistoryTableRowsViewModel } from "./history_table_presenters";
-import { renderHistoryTableRows } from "./history_table_row_renderers";
+import { createHistoryTableRowElements } from "./history_table_row_renderers";
 
 export interface HistoryTableViewParams {
   runs: HistoryEntry[];
   expandedRunId: string | null;
   runDetailsById: Record<string, RunDetail>;
   t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
   fmt: (value: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
   formatInt: (value: number) => string;
@@ -51,20 +51,23 @@ export interface HistoryTableBindingHandlers {
 
 export function renderHistoryEmptyState(
   container: HTMLElement,
-  params: Pick<HistoryTableViewParams, "escapeHtml" | "t">,
+  params: Pick<HistoryTableViewParams, "t">,
 ): void {
-  const { escapeHtml, t } = params;
-  container.innerHTML = renderTableEmptyRow(
-    renderInlineStatePanel({
-      titleHtml: escapeHtml(t("history.empty.title")),
-      bodyHtml: escapeHtml(t("history.empty.body")),
-      detailHtml: escapeHtml(t("history.empty.detail")),
-      action: {
-        action: "open-live",
-        labelHtml: escapeHtml(t("history.empty.action")),
-      },
-    }),
-    4,
+  const { t } = params;
+  renderChildren(
+    container,
+    createTableEmptyRowElement(
+      createInlineStatePanelElement({
+        titleText: t("history.empty.title"),
+        bodyText: t("history.empty.body"),
+        detailText: t("history.empty.detail"),
+        action: {
+          action: "open-live",
+          labelText: t("history.empty.action"),
+        },
+      }),
+      4,
+    ),
   );
 }
 
@@ -72,12 +75,11 @@ export function renderHistoryTable(
   container: HTMLElement,
   params: HistoryTableViewParams,
 ): void {
-  container.innerHTML = renderHistoryTableRows(
-    buildHistoryTableRowsViewModel(params),
-    {
-      escapeHtml: params.escapeHtml,
+  renderChildren(
+    container,
+    createHistoryTableRowElements(buildHistoryTableRowsViewModel(params), {
       historyExportUrl: params.historyExportUrl,
-    },
+    }),
   );
 }
 

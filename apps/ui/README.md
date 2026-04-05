@@ -102,6 +102,10 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
 | `app/views/esp_flash_feature_bindings.ts` | Feature-local ESP flash bindings for start/cancel/refresh/select actions without leaving raw DOM event parsing in the feature |
 | `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that owns readiness/banner/journey/history/log/select rendering from workflow state |
+| `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
+| `app/views/history_table_presenters.ts` | Presenter builders that turn runs plus loaded insights/preview detail into typed history row and details models |
+| `app/views/history_table_row_renderers.ts` | Focused history row/detail DOM builders that materialize typed history models into table rows and expanded evidence cards |
+| `app/views/history_table_view.ts` | Thin history-table view boundary that renders DOM rows/empty state and decodes typed table interactions |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_view.ts` | Dedicated realtime logging/readiness DOM renderer built from typed view-model objects |
 | `app/views/settings_cars_presenter.ts` | Settings-car presenter that owns car-list rendering, active-car guidance, and analysis-control affordances from typed car state |

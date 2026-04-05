@@ -23,7 +23,7 @@ export interface HistoryListModule {
 }
 
 export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryListModule {
-  const { history, dom: els, t, escapeHtml, fmt, fmtTs, formatInt } = ctx;
+  const { history, dom: els, t, fmt, fmtTs, formatInt } = ctx;
 
   function renderHistoryTable(): void {
     if (els.deleteAllRunsBtn) {
@@ -36,7 +36,6 @@ export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryList
       if (els.historyTableBody) {
         renderHistoryEmptyState(els.historyTableBody, {
           t,
-          escapeHtml,
         });
       }
       ctx.collapseExpandedRun();
@@ -57,7 +56,6 @@ export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryList
         expandedRunId: history.expandedRunId,
         runDetailsById: history.runDetailsById,
         t,
-        escapeHtml,
         fmt,
         fmtTs,
         formatInt,
