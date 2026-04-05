@@ -44,7 +44,6 @@ __all__ = [
     "RunPersistence",
     "SensorMetadataReader",
     "SensorMetadataStore",
-    "SensorSettingsWriter",
     "SettingsReader",
     "SettingsSnapshotPersistence",
     "SignalSource",
@@ -176,12 +175,6 @@ class SpeedSourceSettingsStore(Protocol):
     def speed_source_config(self) -> SpeedSourceConfig: ...
 
 
-class SensorSettingsWriter(Protocol):
-    """Minimal persisted sensor-settings surface needed by client-location routes."""
-
-    def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload: ...
-
-
 class SensorMetadataReader(Protocol):
     """Read-only access to canonical persisted sensor display metadata."""
 
@@ -192,6 +185,8 @@ class SensorMetadataStore(SensorMetadataReader, Protocol):
     """Canonical sensor-metadata surface shared by settings and client routes."""
 
     def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload: ...
+
+    def assign_sensor_location(self, sensor_id: str, location_code: str) -> SensorsByMacPayload: ...
 
     def remove_sensor(self, mac: str) -> bool: ...
 

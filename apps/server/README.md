@@ -41,9 +41,11 @@ state. Current `main` is intentionally split more narrowly:
   focused services into explicit runtime and HTTP dependency bundles.
   `SettingsDerivationService` projects the persisted car settings into the
   current analysis/run context, while `SpeedSourceRuntimeApplier` pushes the
-  current speed-source selection into live runtime collaborators. HTTP adapters
-  and runtime collaborators should consume the focused settings ports they need
-  rather than importing persistence internals directly.
+  current speed-source selection into live runtime collaborators. Client-facing
+  sensor location assignment also delegates through `SensorSettingsService`, so
+  settings remains the single owner of canonical sensor metadata writes. HTTP
+  adapters and runtime collaborators should consume the focused settings ports
+  they need rather than importing persistence internals directly.
 - `vibesensor.app.container.build_runtime()` is a thin app-layer orchestrator.
   It delegates speed/OBD setup, history/reporting services, live runtime
   services, update deps, lifecycle state, and router wiring to focused builder
