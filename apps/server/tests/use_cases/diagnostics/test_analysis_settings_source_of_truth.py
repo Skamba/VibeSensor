@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from fastapi import FastAPI
 from test_support import response_payload
+from test_support.settings_services import build_settings_services
 
 from tests.conftest import FakeState
 from vibesensor.adapters.http import create_router
@@ -13,7 +14,6 @@ from vibesensor.adapters.http.models import (
     AnalysisSettingsRequest,
     CarUpsertRequest,
 )
-from vibesensor.infra.config.settings_store import SettingsStore
 
 
 def _route(router, path: str, method: str = "GET"):
@@ -33,23 +33,24 @@ def _wiring(tmp_path: Path):
     from vibesensor.adapters.persistence.history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
-    settings_store = SettingsStore(db=db)
-    initial = settings_store.add_car({"name": "Primary"})
-    settings_store.set_active_car(initial.cars[0]["id"])
+    settings = build_settings_services(db=db)
+    initial = settings.car_settings.add_car({"name": "Primary"})
+    settings.car_settings.set_active_car(initial.cars[0]["id"])
     state = FakeState(
-        settings_store=settings_store,
+        settings_reader=settings.settings_reader,
+        car_settings=settings.car_settings,
+        analysis_settings=settings.analysis_settings,
         history_db=db,
     )
     app = FastAPI()
     router = create_router(state)
     app.include_router(router)
-    return state, router
+    return settings, router
 
 
 @pytest.mark.asyncio
 async def test_analysis_settings_endpoint_updates_active_car_aspects(_wiring) -> None:
-    state, router = _wiring
-    settings_store = state.settings_store
+    settings, router = _wiring
 
     set_analysis = _route(router, "/api/settings/analysis", "PUT")
     get_cars = _route(router, "/api/settings/cars", "GET")
@@ -57,14 +58,14 @@ async def test_analysis_settings_endpoint_updates_active_car_aspects(_wiring) ->
     add_car = _route(router, "/api/settings/cars", "POST")
 
     await set_analysis(AnalysisSettingsRequest(tire_width_mm=255.0))
-    assert settings_store.active_car_aspects()["tire_width_mm"] == 255.0
-    assert settings_store.analysis_settings_snapshot().tire_width_mm == 255.0
+    assert settings.car_settings.active_car_aspects()["tire_width_mm"] == 255.0
+    assert settings.analysis_settings.analysis_settings_snapshot().tire_width_mm == 255.0
 
     cars = response_payload(
         await add_car(CarUpsertRequest(name="Second", aspects={"tire_width_mm": 225.0})),
     )
     second_id = cars["cars"][1]["id"]
     await set_active(ActiveCarRequest(car_id=second_id))
-    assert settings_store.analysis_settings_snapshot().tire_width_mm == 225.0
+    assert settings.analysis_settings.analysis_settings_snapshot().tire_width_mm == 225.0
     current = response_payload(await get_cars())
     assert current["active_car_id"] == second_id

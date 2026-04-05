@@ -30,14 +30,18 @@ state. Current `main` is intentionally split more narrowly:
 - `AppConfig` in `vibesensor.app.config_schema` owns deployment/process
   configuration loaded at startup, such as network bindings, retention windows,
   processing budgets, and update paths.
-- `SettingsStore` owns persisted user-facing runtime settings, such as car
-  profiles, speed-source preferences, language, units, and canonical sensor
-  metadata (display name plus `location_code`).
-  `SettingsDerivationService` projects those persisted car settings into the
+- Focused persisted settings services own user-facing runtime settings: car
+  profiles (`CarSettingsService`), active-car analysis settings
+  (`ActiveCarAnalysisSettingsService`), speed-source preferences
+  (`PersistedSpeedSourceSettingsService`), language/units
+  (`UiPreferencesService`), and canonical sensor metadata
+  (`SensorSettingsService`). A shared settings snapshot coordinator owns only
+  the single stored snapshot's load/save/rollback mechanics.
+  `SettingsDerivationService` projects the persisted car settings into the
   current analysis/run context, while `SpeedSourceRuntimeApplier` pushes the
   current speed-source selection into live runtime collaborators. HTTP adapters
   and runtime collaborators should consume the focused settings ports they need
-  rather than importing the concrete store directly.
+  rather than importing persistence internals directly.
 - Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
   `PostAnalysisWorker`) own live per-process coordination and per-run state.
 - History persistence now uses a shared SQLite lifecycle engine plus narrow
@@ -114,12 +118,13 @@ the key-by-key operator reference across the `ap`, `server`, `udp`,
 `processing`, `logging`, `gps`, and `update` sections.
 
 Those YAML files cover deployment/process settings. User-facing runtime
-preferences are stored separately through `SettingsStore` snapshots in
-`history.db`; runtime consumers read the derived current-context view rather
-than mutating persisted settings directly, and completed runs persist immutable
-per-run snapshots for later analysis/reporting. Persisted sensor display
-metadata also lives in that settings snapshot, while `ClientRegistry` remains
-the owner of live transport/connection state only.
+preferences are stored separately through the focused persisted settings
+services over one settings snapshot in `history.db`; runtime consumers read the
+derived current-context view rather than mutating persisted settings directly,
+and completed runs persist immutable per-run snapshots for later
+analysis/reporting. Persisted sensor display metadata also lives in that shared
+settings snapshot, while `ClientRegistry` remains the owner of live
+transport/connection state only.
 
 For live sensor presence, `processing.client_live_ttl_seconds` controls how long
 `/api/clients` and `/ws` keep reporting `connected: true` after the last

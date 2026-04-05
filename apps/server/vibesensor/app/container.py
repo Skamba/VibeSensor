@@ -26,12 +26,17 @@ from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.runtime_state import AppRuntime, RuntimeState
 from vibesensor.app.settings import AppConfig
+from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
+from vibesensor.infra.config.car_settings import CarSettingsService
+from vibesensor.infra.config.sensor_settings import SensorSettingsService
 from vibesensor.infra.config.settings_derivation import SettingsDerivationService
-from vibesensor.infra.config.settings_store import SettingsStore
+from vibesensor.infra.config.settings_persistence import SettingsPersistenceCoordinator
 from vibesensor.infra.config.speed_source_runtime import (
     SpeedSourceRuntimeApplier,
     SpeedSourceSettingsService,
 )
+from vibesensor.infra.config.speed_source_settings import PersistedSpeedSourceSettingsService
+from vibesensor.infra.config.ui_preferences import UiPreferencesService
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop
@@ -155,19 +160,41 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         obd_status_refresher=obd_runtime.control.admin,
         obd_control=obd_runtime.control.settings,
     )
-    settings_store = SettingsStore(db=history.settings_snapshot_repository)
-    # Bind the concrete settings store to the focused ports expected by
-    # routes and runtime services before handing it across boundaries.
-    car_settings: CarSettingsStore = settings_store
-    analysis_settings: AnalysisSettingsStore = settings_store
-    sensor_metadata_store: SensorMetadataStore = settings_store
+    settings_persistence = SettingsPersistenceCoordinator(db=history.settings_snapshot_repository)
+    car_settings_service = CarSettingsService(
+        lock=settings_persistence.lock,
+        state=settings_persistence.car_state,
+        update_with_rollback=settings_persistence.update_with_rollback,
+    )
+    analysis_settings_service = ActiveCarAnalysisSettingsService(
+        active_car_aspects=car_settings_service.active_car_aspects,
+        update_active_car_aspects=car_settings_service.update_active_car_aspects,
+    )
+    sensor_metadata_service = SensorSettingsService(
+        lock=settings_persistence.lock,
+        state=settings_persistence.sensor_state,
+        update_with_rollback=settings_persistence.update_with_rollback,
+    )
+    speed_source_settings_service = PersistedSpeedSourceSettingsService(
+        lock=settings_persistence.lock,
+        state=settings_persistence.speed_source_state,
+        update_with_rollback=settings_persistence.update_with_rollback,
+    )
+    ui_preferences_service = UiPreferencesService(
+        lock=settings_persistence.lock,
+        state=settings_persistence.ui_preferences_state,
+        update_with_rollback=settings_persistence.update_with_rollback,
+    )
+    car_settings: CarSettingsStore = car_settings_service
+    analysis_settings: AnalysisSettingsStore = analysis_settings_service
+    sensor_metadata_store: SensorMetadataStore = sensor_metadata_service
     sensor_metadata_reader: SensorMetadataReader = sensor_metadata_store
-    speed_source_store: SpeedSourceSettingsStore = settings_store
+    speed_source_store: SpeedSourceSettingsStore = speed_source_settings_service
     speed_source_reader: SpeedSourceSettingsReader = speed_source_store
-    ui_preferences: UiPreferencesStore = settings_store
+    ui_preferences: UiPreferencesStore = ui_preferences_service
     settings_reader = SettingsDerivationService(
-        active_car_aspects=settings_store.active_car_aspects,
-        active_car_snapshot=settings_store.active_car_snapshot,
+        active_car_aspects=car_settings_service.active_car_aspects,
+        active_car_snapshot=car_settings_service.active_car_snapshot,
     )
     speed_source_service = SpeedSourceSettingsService(
         settings_store=speed_source_store,

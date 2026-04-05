@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from test_support.settings_services import build_settings_services
+
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.config.settings_derivation import SettingsDerivationService
-from vibesensor.infra.config.settings_store import SettingsStore
 
 
 def test_derivation_service_returns_defaults_without_active_car() -> None:
@@ -21,13 +22,12 @@ def test_derivation_service_returns_defaults_without_active_car() -> None:
 
 
 def test_derivation_service_merges_active_car_aspects_with_defaults() -> None:
-    store = SettingsStore()
-    created = store.add_car({"name": "Primary", "aspects": {"tire_width_mm": 255.0}})
-    store.set_active_car(created.cars[0]["id"])
-    service = SettingsDerivationService(
-        active_car_aspects=store.active_car_aspects,
-        active_car_snapshot=store.active_car_snapshot,
+    services = build_settings_services()
+    created = services.car_settings.add_car(
+        {"name": "Primary", "aspects": {"tire_width_mm": 255.0}}
     )
+    services.car_settings.set_active_car(created.cars[0]["id"])
+    service = services.settings_reader
 
     snapshot = service.analysis_settings_snapshot()
 
@@ -36,13 +36,10 @@ def test_derivation_service_merges_active_car_aspects_with_defaults() -> None:
 
 
 def test_derivation_service_projects_active_car_snapshot() -> None:
-    store = SettingsStore()
-    created = store.add_car({"name": "Primary", "type": "coupe"})
-    store.set_active_car(created.cars[0]["id"])
-    service = SettingsDerivationService(
-        active_car_aspects=store.active_car_aspects,
-        active_car_snapshot=store.active_car_snapshot,
-    )
+    services = build_settings_services()
+    created = services.car_settings.add_car({"name": "Primary", "type": "coupe"})
+    services.car_settings.set_active_car(created.cars[0]["id"])
+    service = services.settings_reader
 
     snapshot = service.active_car_snapshot()
 

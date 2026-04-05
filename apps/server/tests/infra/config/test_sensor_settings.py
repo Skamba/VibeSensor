@@ -6,7 +6,9 @@ from collections.abc import Callable
 from threading import RLock
 
 import pytest
+from test_support.settings_services import build_settings_services
 
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.sensor_settings import (
     SensorSettingsService,
     SensorSettingsState,
@@ -87,3 +89,14 @@ def test_sensor_settings_rolls_back_new_sensor_on_persist_error() -> None:
         settings.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "FL Wheel"})
 
     assert settings.get_sensors() == {}
+
+
+def test_sensor_settings_round_trip_through_shared_snapshot(tmp_path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    services = build_settings_services(db=db)
+
+    services.sensor_settings.set_sensor("aa:bb:cc:dd:ee:ff", {})
+
+    reloaded = build_settings_services(db=db)
+    sensors = reloaded.sensor_settings.get_sensors()
+    assert "aabbccddeeff" in sensors

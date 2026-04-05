@@ -12,11 +12,12 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from test_support.settings_services import build_settings_services
 
 from vibesensor.adapters.pdf.diagram_layout import canonical_location
 from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
-from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.report_i18n import tr
+from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.updates.firmware.firmware_bundle import dir_sha256
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
@@ -58,73 +59,73 @@ class TestCorrAbsClamped:
 class TestSettingsStoreRollback:
     """Verify in-memory state is restored when _persist() fails."""
 
-    @staticmethod
-    def _make_store_failing_persist() -> SettingsStore:
-        """Return a SettingsStore whose _persist() will raise."""
-        store = SettingsStore(db=None)
-        store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
-        return store
-
     def test_add_car_rollback_on_persist_failure(self):
-        store = SettingsStore(db=None)
-        initial_count = len(store.get_cars().cars)
+        services = build_settings_services()
+        initial_count = len(services.car_settings.get_cars().cars)
 
         # Make persist fail
-        store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB write fail")
+        services.coordinator._db = MagicMock()
+        services.coordinator._db.set_settings_snapshot.side_effect = sqlite3.OperationalError(
+            "DB write fail"
+        )
 
         with pytest.raises(PersistenceError):
-            store.add_car({"name": "New Car", "type": "suv"})
+            services.car_settings.add_car({"name": "New Car", "type": "suv"})
 
-        assert len(store.get_cars().cars) == initial_count
+        assert len(services.car_settings.get_cars().cars) == initial_count
 
     def test_delete_car_rollback_on_persist_failure(self):
-        store = SettingsStore(db=None)
-        store.add_car({"name": "Car 1", "type": "sedan"})
-        store.add_car({"name": "Car 2", "type": "suv"})
-        cars = store.get_cars()
+        services = build_settings_services()
+        services.car_settings.add_car({"name": "Car 1", "type": "sedan"})
+        services.car_settings.add_car({"name": "Car 2", "type": "suv"})
+        cars = services.car_settings.get_cars()
         car_count = len(cars.cars)
         assert car_count >= 2
         target_id = cars.cars[-1]["id"]
 
-        store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
+        services.coordinator._db = MagicMock()
+        services.coordinator._db.set_settings_snapshot.side_effect = sqlite3.OperationalError(
+            "DB fail"
+        )
 
         with pytest.raises(PersistenceError):
-            store.delete_car(target_id)
+            services.car_settings.delete_car(target_id)
 
-        assert len(store.get_cars().cars) == car_count
+        assert len(services.car_settings.get_cars().cars) == car_count
 
     def test_set_active_car_rollback_on_persist_failure(self):
-        store = SettingsStore(db=None)
-        store.add_car({"name": "Car 2", "type": "suv"})
-        cars = store.get_cars()
+        services = build_settings_services()
+        services.car_settings.add_car({"name": "Car 2", "type": "suv"})
+        cars = services.car_settings.get_cars()
         original_active = cars.active_car_id
         new_id = [c["id"] for c in cars.cars if c["id"] != original_active][0]
 
-        store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
+        services.coordinator._db = MagicMock()
+        services.coordinator._db.set_settings_snapshot.side_effect = sqlite3.OperationalError(
+            "DB fail"
+        )
 
         with pytest.raises(PersistenceError):
-            store.set_active_car(new_id)
+            services.car_settings.set_active_car(new_id)
 
-        assert store.get_cars().active_car_id == original_active
+        assert services.car_settings.get_cars().active_car_id == original_active
 
     def test_update_car_rollback_on_persist_failure(self):
-        store = SettingsStore(db=None)
-        store.add_car({"name": "Original Name", "type": "sedan"})
-        cars = store.get_cars()
+        services = build_settings_services()
+        services.car_settings.add_car({"name": "Original Name", "type": "sedan"})
+        cars = services.car_settings.get_cars()
         car_id = cars.cars[0]["id"]
         original_name = cars.cars[0]["name"]
 
-        store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
+        services.coordinator._db = MagicMock()
+        services.coordinator._db.set_settings_snapshot.side_effect = sqlite3.OperationalError(
+            "DB fail"
+        )
 
         with pytest.raises(PersistenceError):
-            store.update_car(car_id, {"name": "New Name"})
+            services.car_settings.update_car(car_id, {"name": "New Name"})
 
-        assert store.get_cars().cars[0]["name"] == original_name
+        assert services.car_settings.get_cars().cars[0]["name"] == original_name
 
 
 # ── 4. Firmware cache streaming download ──────────────────────────────────
