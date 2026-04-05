@@ -1,9 +1,8 @@
 import { escapeHtml, fmt, fmtTs } from "../format";
-import type { UiDomElements } from "./ui_dom_registry";
-import { createUiDomRegistry } from "./ui_dom_registry";
 import { createAppFeatureBundle, type AppFeatureBundle } from "./app_feature_bundle";
 import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
+import { createUiRuntimeDom, type UiRuntimeDom } from "./ui_runtime_dom";
 import { UiLiveTransportController, type UiTransportFeaturePorts } from "./runtime/ui_live_transport_controller";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import type { UiShellFeaturePorts } from "./runtime/ui_shell_feature_ports";
@@ -12,7 +11,7 @@ import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 
 export class UiAppRuntime {
-  private readonly els: UiDomElements;
+  private readonly dom: UiRuntimeDom;
 
   private readonly state: AppState;
 
@@ -27,18 +26,18 @@ export class UiAppRuntime {
   private readonly startup: UiStartupCoordinator;
 
   constructor(
-    els: UiDomElements = createUiDomRegistry(),
+    dom: UiRuntimeDom = createUiRuntimeDom(),
     state: AppState = createAppState(),
   ) {
-    this.els = els;
+    this.dom = dom;
     this.state = state;
     this.shell = new UiShellController({
       state: this.state,
-      els: this.els,
+      dom: this.dom.shell,
     });
     this.spectrum = new UiSpectrumController({
       state: this.state,
-      els: this.els,
+      dom: this.dom.spectrum,
       t: (key, vars) => this.shell.t(key, vars),
     });
     this.shell.attachSpectrumHooks({
@@ -55,7 +54,13 @@ export class UiAppRuntime {
     });
     this.features = createAppFeatureBundle({
       state: this.state,
-      els: this.els,
+      shellDom: this.dom.shell,
+      realtimeDom: this.dom.realtime,
+      historyDom: this.dom.history,
+      settingsDom: this.dom.settings,
+      carsDom: this.dom.cars,
+      updateDom: this.dom.update,
+      espFlashDom: this.dom.espFlash,
       t: (key, vars) => this.shell.t(key, vars),
       escapeHtml,
       showError: (message) => this.shell.showError(message),

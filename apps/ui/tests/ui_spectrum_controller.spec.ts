@@ -1,9 +1,8 @@
 import type uPlot from "uplot";
 import { expect, test } from "@playwright/test";
 
-import { UiSpectrumController } from "../src/app/runtime/ui_spectrum_controller";
+import type { UiSpectrumDom } from "../src/app/dom/spectrum_dom";
 import { createAppState } from "../src/app/ui_app_state";
-import type { UiDomElements } from "../src/app/ui_dom_registry";
 import { installWindowGlobal } from "./async_test_helpers";
 
 type ElementStub = HTMLElement & {
@@ -128,20 +127,49 @@ const childState = new WeakMap<ElementStub, ElementState>();
 function installDocumentStub(): () => void {
   const originalDocument = globalThis.document;
   const originalGetComputedStyle = globalThis.getComputedStyle;
+  const originalDevicePixelRatio = (globalThis as { devicePixelRatio?: number }).devicePixelRatio;
+  const originalMatchMedia = globalThis.matchMedia;
+  const originalAddEventListener = globalThis.addEventListener;
+  const originalRemoveEventListener = globalThis.removeEventListener;
+  const originalDispatchEvent = globalThis.dispatchEvent;
   (globalThis as { document?: Document }).document = {
     documentElement: {} as HTMLElement,
     createElement(tagName: string) {
       return createElementStub(tagName);
     },
   } as Document;
+  (globalThis as { devicePixelRatio?: number }).devicePixelRatio = 1;
+  globalThis.matchMedia = ((query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    }) as MediaQueryList) as typeof matchMedia;
+  globalThis.addEventListener = (() => undefined) as typeof addEventListener;
+  globalThis.removeEventListener = (() => undefined) as typeof removeEventListener;
+  globalThis.dispatchEvent = (() => false) as typeof dispatchEvent;
   globalThis.getComputedStyle = (() =>
     ({
       getPropertyValue: () => "",
     }) as CSSStyleDeclaration) as typeof getComputedStyle;
   return () => {
     (globalThis as { document?: Document }).document = originalDocument;
+    (globalThis as { devicePixelRatio?: number }).devicePixelRatio = originalDevicePixelRatio;
+    globalThis.matchMedia = originalMatchMedia;
+    globalThis.addEventListener = originalAddEventListener;
+    globalThis.removeEventListener = originalRemoveEventListener;
+    globalThis.dispatchEvent = originalDispatchEvent;
     globalThis.getComputedStyle = originalGetComputedStyle;
   };
+}
+
+async function importUiSpectrumController() {
+  return (await import("../src/app/runtime/ui_spectrum_controller")).UiSpectrumController;
 }
 
 test.describe("UiSpectrumController", () => {
@@ -149,14 +177,15 @@ test.describe("UiSpectrumController", () => {
     installWindowGlobal();
   });
 
-  test("reuses the same band plugin across repeated plugin reads", () => {
+  test("reuses the same band plugin across repeated plugin reads", async () => {
     const restoreDocument = installDocumentStub();
     try {
+      const UiSpectrumController = await importUiSpectrumController();
       const controller = new UiSpectrumController({
         state: createAppState(),
-        els: {
+        dom: {
           spectrumBandToggle: null,
-        } as unknown as UiDomElements,
+        } as unknown as UiSpectrumDom,
         t: (key) => key,
       });
 
@@ -173,9 +202,10 @@ test.describe("UiSpectrumController", () => {
     }
   });
 
-  test("reuses legend buttons across live refreshes and click toggles", () => {
+  test("reuses legend buttons across live refreshes and click toggles", async () => {
     const restoreDocument = installDocumentStub();
     try {
+      const UiSpectrumController = await importUiSpectrumController();
       const state = createAppState();
       state.transport.wsState = "connected";
       state.spectrum.spectra.clients = {
@@ -219,11 +249,11 @@ test.describe("UiSpectrumController", () => {
 
       const controller = new UiSpectrumController({
         state,
-        els: {
+        dom: {
           legend,
           spectrumInspector: inspector,
           spectrumBandToggle: bandToggle,
-        } as unknown as UiDomElements,
+        } as unknown as UiSpectrumDom,
         t: (key, vars) => {
           if (key === "spectrum.legend.state_all_visible") return "All visible";
           if (key === "spectrum.legend.state_visible") return "Visible";

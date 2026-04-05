@@ -8,6 +8,7 @@ import {
   ESP_FLASH_POLL_ACTIVE_MS,
   ESP_FLASH_POLL_IDLE_MS,
 } from "../../config";
+import type { UiEspFlashDom } from "../dom/esp_flash_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createPollingController } from "./polling_controller";
 import {
@@ -21,7 +22,9 @@ import {
 import { formatEpochTimestamp, renderStatusGridRow } from "../views/dom_helpers";
 import { renderMaintenanceReadinessPanel } from "../views/maintenance_readiness_view";
 
-export interface EspFlashFeatureDeps extends FeatureDepsBase {}
+export interface EspFlashFeatureDeps extends FeatureDepsBase {
+  dom: UiEspFlashDom;
+}
 
 export interface EspFlashFeature {
   bindHandlers(): void;
@@ -116,7 +119,7 @@ function recoveryGuidanceKey(state: string, phase: string): string {
 }
 
 export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature {
-  const { els, t, escapeHtml } = ctx;
+  const { dom: els, t, escapeHtml } = ctx;
   let nextLogIndex = 0;
   let latestStatus: EspFlashStatusPayload = createIdleStatus();
   let latestJourneyPhase: string | null = null;

@@ -4,7 +4,7 @@ import type {
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../api/types";
-import type { UiDomElements } from "../ui_dom_registry";
+import type { UiCarsDom } from "../dom/cars_dom";
 
 type EscapeHtml = (value: unknown) => string;
 type FormatNumber = (value: number, digits?: number) => string;
@@ -174,7 +174,7 @@ export function renderWizardSummary(
 }
 
 export function syncCarWizardStepState(
-  els: Pick<UiDomElements, "wizardSteps" | "wizardStepDots" | "wizardBackBtn">,
+  els: Pick<UiCarsDom, "wizardSteps" | "wizardStepDots" | "wizardBackBtn">,
   step: number,
 ): void {
   els.wizardSteps.forEach((stepEl, index) => {
@@ -197,7 +197,7 @@ export function syncCarWizardStepState(
 }
 
 export function writeCarWizardTireInputs(
-  els: Pick<UiDomElements, "wizTireWidthInput" | "wizTireAspectInput" | "wizRimInput">,
+  els: Pick<UiCarsDom, "wizTireWidthInput" | "wizTireAspectInput" | "wizRimInput">,
   tire: CarLibraryTireOption,
 ): void {
   if (els.wizTireWidthInput) els.wizTireWidthInput.value = String(tire.tire_width_mm);

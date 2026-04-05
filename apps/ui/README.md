@@ -72,7 +72,9 @@ source-of-truth export commands remain the only writers for those files.
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
 | `app/start_ui_app.ts` | CSS-aware startup entry that constructs and starts the app runtime |
-| `app/ui_app_runtime.ts` | UI composition root that wires state, DOM, features, and focused runtime controllers |
+| `app/ui_runtime_dom.ts` | Startup bundle that resolves feature-scoped DOM locators and fails early when required feature anchors are missing |
+| `app/dom/` | Feature-scoped DOM locator modules for shell, spectrum, realtime, history, settings, cars, update, and ESP flash surfaces |
+| `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, features, and focused runtime controllers |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport, payload adaptation, and throttled live-session rendering |
 | `app/runtime/ui_spectrum_controller.ts` | Spectrum chart lifecycle, overlays, order-band calculation, and animation |
@@ -103,9 +105,10 @@ source-of-truth export commands remain the only writers for those files.
 
 The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
-chart behavior, or feature-specific DOM rendering. Feature modules own state,
-network calls, and delegated event binding, while `app/views/` owns focused
-HTML rendering helpers and event-target decoding for reusable panels.
+chart behavior, or page-wide DOM state. Startup resolves feature-scoped DOM
+locators once in `ui_runtime_dom.ts`, then passes those local surfaces into the
+owning runtime controllers and features. `app/views/` still owns focused HTML
+rendering helpers and event-target decoding for reusable panels.
 
 ## WebSocket contract boundary
 

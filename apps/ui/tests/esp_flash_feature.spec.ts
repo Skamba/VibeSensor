@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+import type { UiEspFlashDom } from "../src/app/dom/esp_flash_dom";
+import type { UiUpdateDom } from "../src/app/dom/update_dom";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
-import type { UiDomElements } from "../src/app/ui_dom_registry";
 import {
   createDeferred,
   flushAsyncWork,
@@ -195,7 +196,7 @@ function createDeps() {
   const espFlashLogPanel = createPanel();
   const espFlashHistoryPanel = createPanel();
 
-  const els = {
+  const dom = {
     menuButtons: [],
     views: [],
     settingsTabs: [],
@@ -210,10 +211,11 @@ function createDeps() {
     espFlashJourneyPanel,
     espFlashLogPanel,
     espFlashHistoryPanel,
-  } as unknown as UiDomElements;
+  } as unknown as UiEspFlashDom;
 
   return {
-    els,
+    dom,
+    els: dom,
     espFlashStartBtn,
     espFlashCancelBtn,
     espFlashStartSummary,
@@ -320,7 +322,7 @@ function createUpdateDeps() {
   const updateCancelBtn = createButton();
   const updateStatusPanel = createPanel();
 
-  const els = {
+  const dom = {
     menuButtons: [],
     views: [],
     settingsTabs: [],
@@ -342,10 +344,11 @@ function createUpdateDeps() {
     updateStartBtn,
     updateCancelBtn,
     updateStatusPanel,
-  } as unknown as UiDomElements;
+  } as unknown as UiUpdateDom;
 
   return {
-    els,
+    dom,
+    els: dom,
     internetStatusPanel,
     updateTransportOptions,
     updateTransportChoiceWifi,

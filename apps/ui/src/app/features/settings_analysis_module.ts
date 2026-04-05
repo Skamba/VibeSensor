@@ -1,5 +1,6 @@
 import type { AnalysisSettingsRequest, AnalysisSettingsPayload } from "../../api/types";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
+import type { UiSettingsDom } from "../dom/settings_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
 import { renderSettingsFeedback, setSettingsFeedback } from "../views/settings_feedback";
@@ -23,6 +24,7 @@ export const ANALYSIS_SETTING_KEYS = [
 ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
 
 export interface SettingsAnalysisModuleDeps extends FeatureDepsBase {
+  dom: UiSettingsDom;
   settings: SettingsState;
   renderSpectrum: () => void;
   hasValidActiveCar: () => boolean;
@@ -38,7 +40,7 @@ export interface SettingsAnalysisModule {
 }
 
 export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): SettingsAnalysisModule {
-  const { settings, els, t } = ctx;
+  const { settings, dom: els, t } = ctx;
   type EditableAnalysisKey =
     | "wheel_bandwidth_pct"
     | "driveshaft_bandwidth_pct"

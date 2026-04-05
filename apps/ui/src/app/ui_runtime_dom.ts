@@ -1,0 +1,32 @@
+import { createUiCarsDom, type UiCarsDom } from "./dom/cars_dom";
+import { createUiEspFlashDom, type UiEspFlashDom } from "./dom/esp_flash_dom";
+import { createUiHistoryDom, type UiHistoryDom } from "./dom/history_dom";
+import { createUiRealtimeDom, type UiRealtimeDom } from "./dom/realtime_dom";
+import { createUiSettingsDom, type UiSettingsDom } from "./dom/settings_dom";
+import { createUiShellDom, type UiShellDom } from "./dom/shell_dom";
+import { createUiSpectrumDom, type UiSpectrumDom } from "./dom/spectrum_dom";
+import { createUiUpdateDom, type UiUpdateDom } from "./dom/update_dom";
+
+export interface UiRuntimeDom {
+  shell: UiShellDom;
+  spectrum: UiSpectrumDom;
+  realtime: UiRealtimeDom;
+  history: UiHistoryDom;
+  settings: UiSettingsDom;
+  cars: UiCarsDom;
+  update: UiUpdateDom;
+  espFlash: UiEspFlashDom;
+}
+
+export function createUiRuntimeDom(): UiRuntimeDom {
+  return {
+    shell: createUiShellDom(),
+    spectrum: createUiSpectrumDom(),
+    realtime: createUiRealtimeDom(),
+    history: createUiHistoryDom(),
+    settings: createUiSettingsDom(),
+    cars: createUiCarsDom(),
+    update: createUiUpdateDom(),
+    espFlash: createUiEspFlashDom(),
+  };
+}

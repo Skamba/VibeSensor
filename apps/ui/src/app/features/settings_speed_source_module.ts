@@ -10,6 +10,8 @@ import {
   scanSettingsObdDevices,
   updateSettingsSpeedSource,
 } from "../../api";
+import type { UiSettingsDom } from "../dom/settings_dom";
+import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createPollingController } from "./polling_controller";
 import { setSettingsFeedback } from "../views/settings_feedback";
@@ -26,6 +28,8 @@ const OBD_BACKGROUND_RESCAN_DELAY_MS = 2_000;
 const TAB_NAVIGATION_KEYS = new Set(["Enter", " ", "ArrowRight", "ArrowLeft", "Home", "End"]);
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
+  dom: UiSettingsDom;
+  shellDom: Pick<UiShellDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
@@ -42,7 +46,7 @@ export interface SettingsSpeedSourceModule {
 }
 
 export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDeps): SettingsSpeedSourceModule {
-  const { settings, els, t, escapeHtml } = ctx;
+  const { settings, dom: els, shellDom, t, escapeHtml } = ctx;
   let speedSourceDraftDirty = false;
   let obdScanStatusMessage: string | null = null;
   let scannedDevices: ObdDevicePayload[] = [];
@@ -572,7 +576,7 @@ export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDe
         }
       });
     });
-    els.menuButtons.forEach((button) => {
+    shellDom.menuButtons.forEach((button) => {
       button.addEventListener("click", scheduleObdBackgroundRescanSync);
       button.addEventListener("keydown", (event) => {
         if (TAB_NAVIGATION_KEYS.has(event.key)) {
