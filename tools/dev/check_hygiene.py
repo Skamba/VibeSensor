@@ -312,6 +312,25 @@ def _version_core(image_tag: str) -> str:
     return image_tag.split("-", 1)[0]
 
 
+def _major_minor(version: str) -> tuple[int, int] | None:
+    match = re.fullmatch(r"\s*(\d+)\.(\d+)(?:\.\d+)?\s*", version)
+    if match is None:
+        return None
+    return int(match.group(1)), int(match.group(2))
+
+
+def _requires_python_floor(spec: str) -> str | None:
+    match = re.fullmatch(r"\s*>=\s*(\d+\.\d+)(?:\.\d+)?\s*", spec)
+    if match is None:
+        return None
+    return match.group(1)
+
+
+def _ruff_target_for_python(version: str) -> str:
+    major, minor = version.split(".")
+    return f"py{major}{minor}"
+
+
 def _validate_server_dockerfile(
     *,
     path: Path,
@@ -1008,6 +1027,81 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     return errors
 
 
+def check_python_policy_alignment() -> list[str]:
+    errors: list[str] = []
+    pinned_python = _read_required_text(ROOT / ".python-version")
+    pinned_minor = _major_minor(pinned_python)
+    if pinned_minor is None:
+        return [".python-version must contain an exact X.Y.Z Python version."]
+
+    pyproject = _load_server_pyproject()
+    project = pyproject.get("project")
+    tool = pyproject.get("tool")
+    if not isinstance(project, Mapping):
+        return ["apps/server/pyproject.toml is missing the [project] table."]
+    if not isinstance(tool, Mapping):
+        return ["apps/server/pyproject.toml is missing the [tool] table."]
+
+    requires_python = project.get("requires-python")
+    if not isinstance(requires_python, str):
+        return ["apps/server/pyproject.toml must declare project.requires-python."]
+    compatibility_floor = _requires_python_floor(requires_python)
+    if compatibility_floor is None:
+        return [
+            "apps/server/pyproject.toml project.requires-python must use a simple >=X.Y floor for Python policy alignment checks."
+        ]
+    floor_minor = _major_minor(compatibility_floor)
+    if floor_minor is None:
+        return [
+            "apps/server/pyproject.toml project.requires-python must parse to a Python X.Y floor."
+        ]
+    if pinned_minor < floor_minor:
+        errors.append(
+            f".python-version {pinned_python!r} must not be below the package compatibility floor {requires_python!r}."
+        )
+
+    ruff = tool.get("ruff")
+    if not isinstance(ruff, Mapping):
+        errors.append("apps/server/pyproject.toml is missing the [tool.ruff] table.")
+    else:
+        target_version = ruff.get("target-version")
+        expected_target = _ruff_target_for_python(compatibility_floor)
+        if target_version != expected_target:
+            errors.append(
+                "apps/server/pyproject.toml tool.ruff.target-version must match the "
+                f"package compatibility floor {compatibility_floor!r}; expected {expected_target!r}, found {target_version!r}."
+            )
+
+    mypy = tool.get("mypy")
+    if not isinstance(mypy, Mapping):
+        errors.append("apps/server/pyproject.toml is missing the [tool.mypy] table.")
+    else:
+        mypy_python = mypy.get("python_version")
+        if mypy_python != compatibility_floor:
+            errors.append(
+                "apps/server/pyproject.toml tool.mypy.python_version must match the "
+                f"package compatibility floor {compatibility_floor!r}; found {mypy_python!r}."
+            )
+
+    matrix_text = (ROOT / "docs" / "runtime_support_matrix.md").read_text(
+        encoding="utf-8"
+    )
+    if pinned_python not in matrix_text:
+        errors.append(
+            "docs/runtime_support_matrix.md must mention the exact native/CI Python pin from .python-version."
+        )
+    if requires_python not in matrix_text:
+        errors.append(
+            "docs/runtime_support_matrix.md must mention the backend compatibility floor from apps/server/pyproject.toml."
+        )
+    if "Backend lint/type settings should target this same floor" not in matrix_text:
+        errors.append(
+            "docs/runtime_support_matrix.md must explain that backend lint/type settings follow the compatibility floor."
+        )
+
+    return errors
+
+
 def check_dependency_reproducibility_hygiene() -> list[str]:
     errors: list[str] = []
 
@@ -1180,6 +1274,15 @@ def main() -> int:
         failures += 1
     else:
         print("Docker/CI dependency hygiene checks passed.")
+
+    python_policy_errors = check_python_policy_alignment()
+    if python_policy_errors:
+        print("Python policy alignment drift detected:")
+        for item in python_policy_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Python policy alignment checks passed.")
 
     dependency_repro_errors = check_dependency_reproducibility_hygiene()
     if dependency_repro_errors:

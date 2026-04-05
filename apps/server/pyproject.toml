@@ -83,9 +83,12 @@ filterwarnings = [
 
 [tool.ruff]
 line-length = 100
-# py313 (not py314) because mypy does not yet support PEP 758 unparenthesized
-# except syntax that ruff format applies at py314.  UP040/UP047 still fire at
-# py312+ so the type-statement and type-parameter modernizations remain enforced.
+# Backend lint/type analysis targets the minimum supported packaged-server floor
+# (`requires-python >=3.13`) rather than the exact `.python-version` toolchain
+# pin. Ruff stays at py313 because mypy does not yet support PEP 758
+# unparenthesized except syntax that ruff format applies at py314. UP040/UP047
+# still fire at py312+ so the type-statement and type-parameter modernizations
+# remain enforced.
 target-version = "py313"
 
 [tool.ruff.lint]
@@ -95,7 +98,7 @@ select = ["E", "F", "I", "UP", "B"]
 "vibesensor/adapters/pdf/*.py" = ["E501"]
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.13"
 packages = ["vibesensor"]
 follow_imports = "normal"
 check_untyped_defs = true
