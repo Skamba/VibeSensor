@@ -346,7 +346,6 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     if (els.internetStatusPanel) {
       renderInternetStatusPanel(els.internetStatusPanel, internet, {
         t,
-        escapeHtml,
       });
     }
   }

@@ -1,3 +1,10 @@
+import {
+  createElementNode,
+  renderChildren,
+  setClassStates,
+  type RenderChild,
+} from "./dom_render";
+
 export function renderTableEmptyRow(
   textHtml: string,
   colspan: number,
@@ -18,6 +25,17 @@ export interface InlineStatePanel {
   bodyHtml: string;
   detailHtml?: string;
   action?: InlineStateAction;
+}
+
+export interface InlineStatePanelElement {
+  titleText: string;
+  bodyText: string;
+  detailText?: string;
+  action?: {
+    action: string;
+    labelText: string;
+    variant?: InlineStateActionVariant;
+  };
 }
 
 function inlineStateActionClass(variant: InlineStateActionVariant | undefined): string {
@@ -54,6 +72,62 @@ export function renderInlineStatePanel(panel: InlineStatePanel): string {
       ${actionHtml}
     </div>
   `;
+}
+
+export function createTableEmptyRowElement(
+  content: RenderChild,
+  colspan: number,
+): HTMLTableRowElement {
+  return createElementNode("tr", {
+    children: [
+      createElementNode("td", {
+        attrs: { colspan },
+        children: [content],
+      }),
+    ],
+  });
+}
+
+export function createInlineStatePanelElement(
+  panel: InlineStatePanelElement,
+): HTMLDivElement {
+  const root = createElementNode("div", {
+    classes: ["empty-state", "empty-state--inline"],
+  });
+  setClassStates(root, {
+    "empty-state--actionable": panel.action != null,
+  });
+  const children: RenderChild[] = [
+    createElementNode("strong", {
+      className: "empty-state__title",
+      text: panel.titleText,
+    }),
+    createElementNode("span", {
+      className: "empty-state__body",
+      text: panel.bodyText,
+    }),
+  ];
+  if (panel.detailText) {
+    children.push(createElementNode("span", {
+      className: "empty-state__detail",
+      text: panel.detailText,
+    }));
+  }
+  if (panel.action) {
+    children.push(createElementNode("div", {
+      className: "empty-state__actions",
+      children: [
+        createElementNode("button", {
+          className: inlineStateActionClass(panel.action.variant),
+          attrs: { type: "button" },
+          data: { inlineStateAction: panel.action.action },
+          text: panel.action.labelText,
+        }),
+      ],
+    }));
+  }
+  renderChildren(root, children);
+  return root;
 }
 
 export function closestFromTarget<T extends Element>(
@@ -94,4 +168,22 @@ export function renderStatusGridRow(
   valueHtml: string,
 ): string {
   return `<div class="status-grid__row"><span class="status-grid__label">${labelHtml}</span><span>${valueHtml}</span></div>`;
+}
+
+export function createStatusGridRowElement(
+  labelText: string,
+  valueText: string,
+): HTMLDivElement {
+  return createElementNode("div", {
+    className: "status-grid__row",
+    children: [
+      createElementNode("span", {
+        className: "status-grid__label",
+        text: labelText,
+      }),
+      createElementNode("span", {
+        text: valueText,
+      }),
+    ],
+  });
 }
