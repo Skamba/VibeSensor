@@ -83,6 +83,8 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and delegated event bindings together |
 | `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
+| `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
+| `app/views/realtime_logging_view.ts` | Dedicated realtime logging/readiness DOM renderer built from typed view-model objects |
 | `app/views/` | Focused DOM rendering, render-helper composition, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and update panels |
 | `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived panel state, DOM rendering, elapsed-timer sync, and cross-view navigation clicks |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
@@ -118,7 +120,10 @@ returns only the shell, transport, and startup contracts the runtime needs.
 Realtime now follows that same split explicitly: `realtime_feature.ts` is the
 thin facade, `realtime_feature_workflow.ts` owns the controller-style polling
 and mutation flow, and `realtime_feature_presenter.ts` owns realtime-specific
-DOM rendering and navigation actions.
+DOM rendering and navigation actions. The logging/readiness subsection is now
+further split so `realtime_logging_view_models.ts` owns the typed summary /
+checklist / readiness models and `realtime_logging_view.ts` owns the DOM
+rendering for those models.
 `app/views/` still owns focused HTML rendering helpers, the shared low-level DOM
 render helper, typed event-target decoding, and disposable delegated listener
 binders for reusable multi-action panels.
