@@ -9,8 +9,8 @@ import numpy as np
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
-from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.boundaries.clients import snapshot_for_api
 
 
 @dataclass(slots=True)

@@ -614,6 +614,46 @@ def _check_health_snapshot_moves_out_of_http_adapter() -> list[str]:
     return failures
 
 
+def _check_clients_http_adapter_uses_protocol_dependencies() -> list[str]:
+    clients_path = VIBESENSOR_DIR / "adapters" / "http" / "clients.py"
+    dependencies_path = VIBESENSOR_DIR / "adapters" / "http" / "dependencies.py"
+    clients_source = _read_text(clients_path)
+    dependencies_source = _read_text(dependencies_path)
+    failures: list[str] = []
+    forbidden_markers = (
+        "from vibesensor.infra.runtime.client_snapshot import",
+        "from vibesensor.infra.processing",
+        "from vibesensor.infra.runtime.registry",
+    )
+    for marker in forbidden_markers:
+        if marker in clients_source:
+            failures.append(
+                f"{clients_path.relative_to(REPO_ROOT)} must not import concrete infra client/runtime helpers ({marker})"
+            )
+    required_clients_markers = (
+        "ClientRegistryProtocol",
+        "ClientProcessorProtocol",
+        "ClientControlPlaneProtocol",
+        "from vibesensor.shared.boundaries.clients import snapshot_for_api",
+    )
+    for marker in required_clients_markers:
+        if marker not in clients_source:
+            failures.append(
+                f"{clients_path.relative_to(REPO_ROOT)} must depend on protocol-based client adapter collaborators ({marker})"
+            )
+    required_dependencies_markers = (
+        "class ClientRegistryProtocol(ClientSnapshotSource, Protocol):",
+        "class ClientProcessorProtocol(Protocol):",
+        "class ClientControlPlaneProtocol(Protocol):",
+    )
+    for marker in required_dependencies_markers:
+        if marker not in dependencies_source:
+            failures.append(
+                f"{dependencies_path.relative_to(REPO_ROOT)} must define focused client adapter protocols ({marker})"
+            )
+    return failures
+
+
 def _check_report_pdf_entrypoint_renders_report_document() -> list[str]:
     path = VIBESENSOR_DIR / "app" / "container.py"
     tree = _parse_python(path)
@@ -1720,6 +1760,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Health snapshot assembly stays out of HTTP adapters",
         _check_health_snapshot_moves_out_of_http_adapter,
+    ),
+    (
+        "Clients HTTP adapter uses protocol deps",
+        _check_clients_http_adapter_uses_protocol_dependencies,
     ),
     (
         "Report PDF entrypoint renders report document",
