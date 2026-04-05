@@ -16,6 +16,7 @@ import pytest
 
 from vibesensor.shared.exceptions import ProcessingError
 from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
+from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload
 
 # ---------------------------------------------------------------------------
 # Stubs – lightweight stand-ins for RuntimeState dependencies
@@ -117,6 +118,27 @@ class _StubProcessor:
         pass
 
 
+class _StubWsPayloadSource:
+    def build_shared_payload(self, *, include_heavy: bool) -> LiveWsPayload:
+        payload: LiveWsPayload = {
+            "schema_version": SCHEMA_VERSION,
+            "server_time": "2026-04-05T00:00:00Z",
+            "speed_mps": None,
+            "clients": [],
+            "selected_client_id": None,
+            "rotational_speeds": {
+                "basis_speed_source": None,
+                "wheel": {"rpm": None, "mode": None, "reason": None},
+                "driveshaft": {"rpm": None, "mode": None, "reason": None},
+                "engine": {"rpm": None, "mode": None, "reason": None},
+                "order_bands": None,
+            },
+        }
+        if include_heavy:
+            payload["spectra"] = {"freq": [], "clients": {}}
+        return payload
+
+
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
     import vibesensor.infra.runtime as runtime_module
@@ -127,7 +149,6 @@ def _make_runtime(**overrides: Any):
     from vibesensor.infra.runtime.ws_broadcast import (
         WsBroadcastService,
     )
-    from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
 
     config = overrides.pop("config", _StubConfig(processing=_StubProcessingConfig()))
     registry = overrides.pop("registry", _StubRegistry())
@@ -143,16 +164,9 @@ def _make_runtime(**overrides: Any):
     diagnostics = overrides.pop("run_recorder", MagicMock())
     update_manager = overrides.pop("update_manager", MagicMock())
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
+    payload_source = overrides.pop("payload_source", _StubWsPayloadSource())
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
-    payload_projector = LiveWsPayloadProjector(
-        registry=registry,
-        processor=processor,
-        gps_monitor=gps_monitor,
-        gps_enabled=config.gps.gps_enabled,
-        settings_reader=settings_store,
-        speed_source_reader=settings_store,
-    )
     rt = RuntimeState(
         config=config,
         registry=registry,
@@ -178,7 +192,7 @@ def _make_runtime(**overrides: Any):
         ws_broadcast=WsBroadcastService(
             ui_push_hz=config.processing.ui_push_hz,
             ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
-            payload_projector=payload_projector,
+            payload_source=payload_source,
         ),
         run_recorder=diagnostics,
         update_manager=update_manager,
