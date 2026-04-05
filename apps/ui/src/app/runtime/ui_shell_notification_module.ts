@@ -1,9 +1,9 @@
-import type { UiDomElements } from "../ui_dom_registry";
+import type { UiShellDom } from "../dom/shell_dom";
 
 const ERROR_BANNER_VISIBLE_MS = 8_000;
 
 export interface UiShellNotificationModuleDeps {
-  els: UiDomElements;
+  dom: UiShellDom;
 }
 
 export interface UiShellNotificationModule {
@@ -24,7 +24,7 @@ export function createUiShellNotificationModule(
 
   function clearError(): void {
     clearPendingTimer();
-    const banner = ctx.els.appErrorBanner;
+    const banner = ctx.dom.appErrorBanner;
     if (!banner) return;
     banner.hidden = true;
     banner.textContent = "";
@@ -33,7 +33,7 @@ export function createUiShellNotificationModule(
 
   function showError(message: string): void {
     clearPendingTimer();
-    const banner = ctx.els.appErrorBanner;
+    const banner = ctx.dom.appErrorBanner;
     if (!banner) {
       console.warn("UI error banner unavailable", message);
       return;

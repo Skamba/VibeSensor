@@ -1,4 +1,5 @@
 import { getHistory, historyExportUrl } from "../../api";
+import type { UiHistoryDom } from "../dom/history_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { HistoryState, RunDetail } from "../ui_app_state";
 import {
@@ -7,6 +8,7 @@ import {
 } from "../views/history_table_view";
 
 export interface HistoryListModuleDeps extends FeatureDepsBase {
+  dom: UiHistoryDom;
   history: HistoryState;
   fmt: (n: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
@@ -21,7 +23,7 @@ export interface HistoryListModule {
 }
 
 export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryListModule {
-  const { history, els, t, escapeHtml, fmt, fmtTs, formatInt } = ctx;
+  const { history, dom: els, t, escapeHtml, fmt, fmtTs, formatInt } = ctx;
 
   function renderHistoryTable(): void {
     if (els.deleteAllRunsBtn) {

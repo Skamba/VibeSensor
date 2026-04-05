@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import type { UiShellDom } from "../src/app/dom/shell_dom";
 import { createAppState } from "../src/app/ui_app_state";
-import type { UiDomElements } from "../src/app/ui_dom_registry";
 import {
   bindUiShellFeatureEvents,
   type UiShellFeaturePorts,
@@ -123,10 +123,18 @@ function createMenuButton(viewId: string): ButtonStub {
 
 function createSelect(value: string): SelectStub {
   let changeListener: EventListenerOrEventListenerObject | undefined;
+  const attributes = new Map<string, string>();
   const select = {
     value,
+    options: [],
     addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
       if (type === "change") changeListener = listener;
+    },
+    setAttribute(name: string, nextValue: string) {
+      attributes.set(name, nextValue);
+    },
+    removeAttribute(name: string) {
+      attributes.delete(name);
     },
     triggerChange(nextValue: string) {
       this.value = nextValue;
@@ -142,11 +150,22 @@ function createSelect(value: string): SelectStub {
 }
 
 function createTextElement(): HTMLElement {
+  const attributes = new Map<string, string>();
   return {
     textContent: "",
+    innerHTML: "",
     className: "",
     hidden: false,
     classList: createClassList(),
+    setAttribute(name: string, value: string) {
+      attributes.set(name, value);
+    },
+    removeAttribute(name: string) {
+      attributes.delete(name);
+    },
+    getAttribute(name: string) {
+      return attributes.get(name) ?? null;
+    },
   } as unknown as HTMLElement;
 }
 
@@ -159,14 +178,17 @@ function createI18nElement(key: string): Element {
   } as unknown as Element;
 }
 
-function createShellDeps(overrides?: Partial<UiDomElements>): {
-  els: UiDomElements;
+function createShellDeps(overrides?: Partial<UiShellDom>): {
+  dom: UiShellDom;
+  els: UiShellDom;
   dashboardView: HTMLElement;
   historyView: HTMLElement;
   dashboardButton: ButtonStub;
   historyButton: ButtonStub;
   languageSelect: SelectStub;
+  languageFeedback: HTMLElement;
   speedUnitSelect: SelectStub;
+  speedUnitFeedback: HTMLElement;
   speed: HTMLElement;
   linkState: HTMLElement;
   appErrorBanner: HTMLElement;
@@ -177,32 +199,39 @@ function createShellDeps(overrides?: Partial<UiDomElements>): {
   const dashboardButton = createMenuButton(DEFAULT_SHELL_VIEW_ID);
   const historyButton = createMenuButton("historyView");
   const languageSelect = createSelect("en");
+  const languageFeedback = createTextElement();
   const speedUnitSelect = createSelect("kmh");
+  const speedUnitFeedback = createTextElement();
   const speed = createTextElement();
   const linkState = createTextElement();
   const appErrorBanner = createTextElement();
   const appShellWrap = createTextElement();
 
-  const els = {
+  const dom = {
     menuButtons: [dashboardButton, historyButton],
     views: [dashboardView, historyView],
     languageSelect,
+    languageFeedback,
     speedUnitSelect,
+    speedUnitFeedback,
     speed,
     linkState,
     appErrorBanner,
     appShellWrap,
     ...overrides,
-  } as unknown as UiDomElements;
+  } as unknown as UiShellDom;
 
   return {
-    els,
+    dom,
+    els: dom,
     dashboardView,
     historyView,
     dashboardButton,
     historyButton,
     languageSelect,
+    languageFeedback,
     speedUnitSelect,
+    speedUnitFeedback,
     speed,
     linkState,
     appErrorBanner,
@@ -265,7 +294,7 @@ test.describe("createUiShellNavigationModule", () => {
     let resizeCalls = 0;
     const module = createUiShellNavigationModule({
       shell: state.shell,
-      els,
+      dom: els,
       onDashboardViewActivated: () => {
         resizeCalls += 1;
       },
@@ -292,7 +321,7 @@ test.describe("createUiShellNavigationModule", () => {
   test("bindHandlers supports keyboard navigation", () => {
     const state = createAppState();
     const { els, historyButton } = createShellDeps();
-    const module = createUiShellNavigationModule({ shell: state.shell, els });
+    const module = createUiShellNavigationModule({ shell: state.shell, dom: els });
 
     module.bindHandlers();
     const event = historyButton.triggerKeydown("ArrowLeft");
@@ -317,7 +346,7 @@ test.describe("createUiShellPreferencesModule", () => {
     let renderSpeedReadoutCalls = 0;
     const module = createUiShellPreferencesModule({
       shell: state.shell,
-      els,
+      dom: els,
       t: (key) => key,
       normalizeLanguage: (lang) => lang,
       applyLanguage: (forceReloadInsights = false) => {
@@ -359,7 +388,7 @@ test.describe("createUiShellPreferencesModule", () => {
     let renderSpeedReadoutCalls = 0;
     const module = createUiShellPreferencesModule({
       shell: state.shell,
-      els,
+      dom: els,
       t: (key) => key,
       normalizeLanguage: (lang) => lang,
       applyLanguage: () => {},
@@ -394,14 +423,14 @@ test.describe("createUiShellPreferencesModule", () => {
     expect(renderSpeedReadoutCalls).toBe(1);
   });
 
-  test("save failure restores the previous value and reports via showError", async () => {
+  test("save failure restores the previous value and reports inline field feedback", async () => {
     const state = createAppState();
-    const { els, speedUnitSelect } = createShellDeps();
+    const { els, speedUnitSelect, speedUnitFeedback } = createShellDeps();
     const errors: string[] = [];
 
     const module = createUiShellPreferencesModule({
       shell: state.shell,
-      els,
+      dom: els,
       t: (key) => key,
       normalizeLanguage: (lang) => lang,
       applyLanguage: () => {},
@@ -416,18 +445,20 @@ test.describe("createUiShellPreferencesModule", () => {
     }) as typeof fetch, async () => {
       module.bindHandlers();
       speedUnitSelect.triggerChange("mps");
-      await expect.poll(() => errors).toEqual(["save failed"]);
+      await expect.poll(() => speedUnitFeedback.innerHTML).toContain("save failed");
     });
 
+    expect(errors).toEqual([]);
     expect(state.shell.speedUnit).toBe("kmh");
     expect(speedUnitSelect.value).toBe("kmh");
+    expect(speedUnitFeedback.hidden).toBe(false);
   });
 });
 
 test.describe("createUiShellNotificationModule", () => {
   test("shows and clears the shared error banner", () => {
     const { els, appErrorBanner } = createShellDeps();
-    const module = createUiShellNotificationModule({ els });
+    const module = createUiShellNotificationModule({ dom: els });
 
     module.showError("save failed");
 
@@ -453,7 +484,7 @@ test.describe("createUiShellStatusModule", () => {
       transport: state.transport,
       realtime: state.realtime,
       settings: state.settings,
-      els,
+      dom: els,
       t: (key) => key,
       setPillState: (el, variant, text) => {
         if (!el) return;
@@ -484,7 +515,7 @@ test.describe("createUiShellStatusModule", () => {
       transport: state.transport,
       realtime: state.realtime,
       settings: state.settings,
-      els,
+      dom: els,
       t: testTranslation,
       setPillState: () => {},
     });
@@ -507,7 +538,7 @@ test.describe("createUiShellStatusModule", () => {
       transport: state.transport,
       realtime: state.realtime,
       settings: state.settings,
-      els,
+      dom: els,
       t: testTranslation,
       setPillState: () => {},
     });
@@ -550,7 +581,7 @@ test.describe("createUiShellLanguageRefreshModule", () => {
 
     const module = createUiShellLanguageRefreshModule({
       state,
-      els,
+      dom: els,
       t: testTranslation,
       renderSpeedReadout: () => {
         renderSpeedReadoutCalls += 1;
@@ -591,6 +622,11 @@ test.describe("createUiShellLanguageRefreshModule", () => {
             portCalls.push("reloadExpandedRunOnLanguageChange");
           },
         },
+        settings: {
+          syncSettingsInputs() {
+            portCalls.push("syncSettingsInputs");
+          },
+        },
       }, true);
     } finally {
       documentHarness.restore();
@@ -609,6 +645,7 @@ test.describe("createUiShellLanguageRefreshModule", () => {
     expect(state.realtime.sensorsSettingsSignature).toBe("");
     expect(portCalls).toEqual([
       "buildLocationOptions",
+      "syncSettingsInputs",
       "maybeRenderSensorsSettingsList:true",
       "renderLoggingStatus",
       "renderStatus",
@@ -639,7 +676,7 @@ test.describe("createUiShellLanguageRefreshModule", () => {
 
     const module = createUiShellLanguageRefreshModule({
       state,
-      els,
+      dom: els,
       t: testTranslation,
       renderSpeedReadout: () => undefined,
       renderWsState: () => undefined,
@@ -676,6 +713,11 @@ test.describe("createUiShellLanguageRefreshModule", () => {
             portCalls.push("reloadExpandedRunOnLanguageChange");
           },
         },
+        settings: {
+          syncSettingsInputs() {
+            portCalls.push("syncSettingsInputs");
+          },
+        },
       });
     } finally {
       documentHarness.restore();
@@ -683,6 +725,7 @@ test.describe("createUiShellLanguageRefreshModule", () => {
 
     expect(portCalls).toEqual([
       "buildLocationOptions",
+      "syncSettingsInputs",
       "maybeRenderSensorsSettingsList:true",
       "renderLoggingStatus",
       "renderStatus",
