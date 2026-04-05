@@ -3,9 +3,8 @@ import { createAppFeatureBundle, type AppFeatureBundle } from "./app_feature_bun
 import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
 import { createUiRuntimeDom, type UiRuntimeDom } from "./ui_runtime_dom";
-import { UiLiveTransportController, type UiTransportFeaturePorts } from "./runtime/ui_live_transport_controller";
+import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
-import type { UiShellFeaturePorts } from "./runtime/ui_shell_feature_ports";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
@@ -15,7 +14,7 @@ export class UiAppRuntime {
 
   private readonly state: AppState;
 
-  private readonly features: AppFeatureBundle;
+  private readonly featurePorts: AppFeatureBundle;
 
   private readonly shell: UiShellController;
 
@@ -52,62 +51,45 @@ export class UiAppRuntime {
       renderSpectrum: () => this.spectrum.renderSpectrum(),
       updateSpectrumOverlay: () => this.spectrum.updateSpectrumOverlay(),
     });
-    this.features = createAppFeatureBundle({
+    this.featurePorts = createAppFeatureBundle({
       state: this.state,
-      shellDom: this.dom.shell,
-      realtimeDom: this.dom.realtime,
-      historyDom: this.dom.history,
-      settingsDom: this.dom.settings,
-      carsDom: this.dom.cars,
-      updateDom: this.dom.update,
-      espFlashDom: this.dom.espFlash,
-      t: (key, vars) => this.shell.t(key, vars),
-      escapeHtml,
-      showError: (message) => this.shell.showError(message),
-      fmt,
-      fmtTs,
-      formatInt: (value) => this.shell.localFormatInt(value),
-      setPillState: (el, variant, text) => this.shell.setPillState(el, variant, text),
-      setStatValue: (container, value) => this.shell.setStatValue(container, value),
-      renderSpectrum: () => this.spectrum.renderSpectrum(),
-      renderSpeedReadout: () => this.shell.renderSpeedReadout(),
-      sendSelection: () => this.transport.sendSelection(),
-    });
-    const shellPorts: UiShellFeaturePorts = {
-      bindSettingsHandlers: () => this.features.settings.bindHandlers(),
-      bindCarWizardHandlers: () => this.features.cars.bindWizardHandlers(),
-      bindRealtimeHandlers: () => this.features.realtime.bindHandlers(),
-      bindHistoryHandlers: () => this.features.history.bindHandlers(),
-      bindUpdateHandlers: () => this.features.update.bindUpdateHandlers(),
-      bindEspFlashHandlers: () => this.features.espFlash.bindHandlers(),
-      languageRefresh: {
-        realtime: {
-          buildLocationOptions: (codes) => this.features.realtime.buildLocationOptions(codes),
-          maybeRenderSensorsSettingsList: (force) => this.features.realtime.maybeRenderSensorsSettingsList(force),
-          renderLoggingStatus: () => this.features.realtime.renderLoggingStatus(),
-          renderStatus: () => this.features.realtime.renderStatus(),
+      dom: {
+        shell: this.dom.shell,
+        realtime: this.dom.realtime,
+        history: this.dom.history,
+        settings: this.dom.settings,
+        cars: this.dom.cars,
+        update: this.dom.update,
+        espFlash: this.dom.espFlash,
+      },
+      shared: {
+        t: (key, vars) => this.shell.t(key, vars),
+        escapeHtml,
+        showError: (message) => this.shell.showError(message),
+        fmt,
+        fmtTs,
+        formatInt: (value) => this.shell.localFormatInt(value),
+      },
+      runtime: {
+        realtimeChrome: {
+          setPillState: (el, variant, text) => this.shell.setPillState(el, variant, text),
+          setStatValue: (container, value) => this.shell.setStatValue(container, value),
         },
-        history: {
-          renderHistoryTable: () => this.features.history.renderHistoryTable(),
-          reloadExpandedRunOnLanguageChange: () => this.features.history.reloadExpandedRunOnLanguageChange(),
+        view: {
+          renderSpectrum: () => this.spectrum.renderSpectrum(),
+          renderSpeedReadout: () => this.shell.renderSpeedReadout(),
         },
-        settings: {
-          syncSettingsInputs: () => this.features.settings.syncSettingsInputs(),
+        transport: {
+          sendSelection: () => this.transport.sendSelection(),
         },
       },
-    };
-    this.shell.attachPorts(shellPorts);
-    const transportPorts: UiTransportFeaturePorts = {
-      updateClientSelection: () => this.features.realtime.updateClientSelection(),
-      maybeRenderSensorsSettingsList: (force) => this.features.realtime.maybeRenderSensorsSettingsList(force),
-      renderLoggingStatus: () => this.features.realtime.renderLoggingStatus(),
-      renderStatus: (clientRow) => this.features.realtime.renderStatus(clientRow),
-    };
-    this.transport.attachPorts(transportPorts);
+    });
+    this.shell.attachPorts(this.featurePorts.shell);
+    this.transport.attachPorts(this.featurePorts.transport);
     this.startup = new UiStartupCoordinator({
       shell: this.shell,
       transport: this.transport,
-      features: this.features,
+      features: this.featurePorts.startup,
       defaultViewId: DEFAULT_SHELL_VIEW_ID,
     });
   }

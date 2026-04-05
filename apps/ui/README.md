@@ -74,11 +74,11 @@ source-of-truth export commands remain the only writers for those files.
 | `app/start_ui_app.ts` | CSS-aware startup entry that constructs and starts the app runtime |
 | `app/ui_runtime_dom.ts` | Startup bundle that resolves feature-scoped DOM locators and fails early when required feature anchors are missing |
 | `app/dom/` | Feature-scoped DOM locator modules for shell, spectrum, realtime, history, settings, cars, update, and ESP flash surfaces |
-| `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, features, and focused runtime controllers |
+| `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport, payload adaptation, and throttled live-session rendering |
 | `app/runtime/ui_spectrum_controller.ts` | Spectrum chart lifecycle, overlays, order-band calculation, and animation |
-| `app/app_feature_bundle.ts` | Feature composition for dashboard, realtime, settings, cars, history, update, and ESP flash flows |
+| `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
 | `app/features/` | Feature owners for state changes, API calls, shared polling control, and delegated UI event wiring |
 | `app/views/` | Focused DOM rendering and event-target decoding for settings, cars wizard, realtime, history, and update panels |
 | `api.ts` | REST API client with typed request/response interfaces |
@@ -107,8 +107,11 @@ The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
 chart behavior, or page-wide DOM state. Startup resolves feature-scoped DOM
 locators once in `ui_runtime_dom.ts`, then passes those local surfaces into the
-owning runtime controllers and features. `app/views/` still owns focused HTML
-rendering helpers and event-target decoding for reusable panels.
+owning runtime controllers and into `app_feature_bundle.ts`. That bundle
+creates the concrete features, wires their explicit cross-feature ports, and
+returns only the shell, transport, and startup contracts the runtime needs.
+`app/views/` still owns focused HTML rendering helpers and event-target
+decoding for reusable panels.
 
 ## WebSocket contract boundary
 
