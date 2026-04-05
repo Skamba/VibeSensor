@@ -25,13 +25,13 @@ _LOCATION_VALIDATOR = LocationAssignmentValidator()
 
 @dataclass(slots=True)
 class SensorSettingsState:
-    """Mutable sensor-settings state owned by ``SettingsStore``."""
+    """Mutable sensor-settings state shared by focused persisted settings services."""
 
     sensors: dict[str, SensorConfig] = field(default_factory=dict)
 
 
 class SensorSettingsService:
-    """Explicit sensor CRUD collaborator used by ``SettingsStore``."""
+    """Persisted sensor-metadata CRUD collaborator backed by the shared snapshot coordinator."""
 
     __slots__ = ("_lock", "_state", "_update_with_rollback")
 

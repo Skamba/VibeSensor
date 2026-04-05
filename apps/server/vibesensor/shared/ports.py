@@ -197,7 +197,7 @@ class SensorMetadataStore(SensorMetadataReader, Protocol):
 
 
 class SettingsSnapshotPersistence(Protocol):
-    """Minimal settings snapshot persistence surface needed by SettingsStore."""
+    """Minimal settings snapshot persistence surface needed by focused settings services."""
 
     def get_settings_snapshot(self) -> SettingsSnapshotPayload | None: ...
 
@@ -337,7 +337,7 @@ class SpeedProvider(Protocol):
 
 
 class SpeedSourceSync(Protocol):
-    """Minimal speed-source sync surface needed by SettingsStore."""
+    """Minimal speed-source sync surface needed by runtime settings services."""
 
     def apply_speed_source_settings(
         self,

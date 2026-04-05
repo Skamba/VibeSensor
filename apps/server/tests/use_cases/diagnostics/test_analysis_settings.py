@@ -145,42 +145,45 @@ def test_sanitize_rejects_non_finite_values() -> None:
 
 
 def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
+    from test_support.settings_services import build_settings_services
+
     from vibesensor.adapters.persistence.history_db import HistoryDB
-    from vibesensor.infra.config.settings_store import SettingsStore
 
     db = HistoryDB(tmp_path / "test.db")
-    store = SettingsStore(db=db)
-    snap = store.analysis_settings_snapshot()
+    services = build_settings_services(db=db)
+    snap = services.analysis_settings.analysis_settings_snapshot()
     # Frozen dataclass — values match defaults and instance is immutable
     assert snap.tire_width_mm == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
     assert snap.rim_in == DEFAULT_ANALYSIS_SETTINGS["rim_in"]
 
 
 def test_update_merges_valid_values(tmp_path) -> None:
+    from test_support.settings_services import build_settings_services
+
     from vibesensor.adapters.persistence.history_db import HistoryDB
-    from vibesensor.infra.config.settings_store import SettingsStore
 
     db = HistoryDB(tmp_path / "test.db")
-    store = SettingsStore(db=db)
-    initial = store.add_car({"name": "Test"})
-    store.set_active_car(initial.cars[0]["id"])
-    store.update_active_car_aspects({"tire_width_mm": 225.0})
-    result = store.analysis_settings_snapshot()
+    services = build_settings_services(db=db)
+    initial = services.car_settings.add_car({"name": "Test"})
+    services.car_settings.set_active_car(initial.cars[0]["id"])
+    services.analysis_settings.update_active_car_aspects({"tire_width_mm": 225.0})
+    result = services.analysis_settings.analysis_settings_snapshot()
     assert result.tire_width_mm == 225.0
     assert result.rim_in == DEFAULT_ANALYSIS_SETTINGS["rim_in"]
 
 
 def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
+    from test_support.settings_services import build_settings_services
+
     from vibesensor.adapters.persistence.history_db import HistoryDB
-    from vibesensor.infra.config.settings_store import SettingsStore
 
     db = HistoryDB(tmp_path / "test.db")
-    store = SettingsStore(db=db)
-    initial = store.add_car({"name": "Test"})
-    store.set_active_car(initial.cars[0]["id"])
-    store.update_active_car_aspects({"tire_width_mm": -5.0})
+    services = build_settings_services(db=db)
+    initial = services.car_settings.add_car({"name": "Test"})
+    services.car_settings.set_active_car(initial.cars[0]["id"])
+    services.analysis_settings.update_active_car_aspects({"tire_width_mm": -5.0})
     assert (
-        store.analysis_settings_snapshot().tire_width_mm
+        services.analysis_settings.analysis_settings_snapshot().tire_width_mm
         == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
     )
 
