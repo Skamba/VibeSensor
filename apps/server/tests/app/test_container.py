@@ -314,6 +314,7 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
     processing_loop_state = SimpleNamespace(name="processing-loop-state")
     processing_loop = SimpleNamespace(name="processing-loop")
     ws_hub = SimpleNamespace(name="ws-hub")
+    ws_payload_projector = SimpleNamespace(name="ws-payload-projector")
     ws_broadcast = SimpleNamespace(name="ws-broadcast")
     calls: dict[str, object] = {}
 
@@ -405,6 +406,16 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
         _fake_processing_loop,
     )
     monkeypatch.setattr(container_module, "WebSocketHub", lambda: ws_hub)
+
+    def _fake_ws_payload_projector(**kwargs: object) -> SimpleNamespace:
+        calls["ws_payload_projector_kwargs"] = kwargs
+        return ws_payload_projector
+
+    monkeypatch.setattr(
+        container_module,
+        "LiveWsPayloadProjector",
+        _fake_ws_payload_projector,
+    )
     monkeypatch.setattr(
         container_module,
         "WsBroadcastService",
@@ -451,9 +462,7 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
         "bind_host": "0.0.0.0",
         "bind_port": 2000,
     }
-    assert calls["ws_broadcast_kwargs"] == {
-        "ui_push_hz": container_module.UI_PUSH_HZ,
-        "ui_heavy_push_hz": container_module.UI_HEAVY_PUSH_HZ,
+    assert calls["ws_payload_projector_kwargs"] == {
         "registry": registry,
         "processor": processor,
         "gps_monitor": "speed-observation",
@@ -461,6 +470,11 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
         "settings_reader": "settings-reader",
         "speed_source_reader": "speed-source-reader",
         "sensor_metadata_reader": "sensor-reader",
+    }
+    assert calls["ws_broadcast_kwargs"] == {
+        "ui_push_hz": container_module.UI_PUSH_HZ,
+        "ui_heavy_push_hz": container_module.UI_HEAVY_PUSH_HZ,
+        "payload_projector": ws_payload_projector,
     }
     assert calls["run_recorder_kwargs"] == {
         "registry": registry,
