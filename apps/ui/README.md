@@ -88,6 +88,12 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_view.ts` | Dedicated realtime logging/readiness DOM renderer built from typed view-model objects |
+| `app/views/update_status_view.ts` | Thin update-status coordinator that assembles typed section models into the settings update panel |
+| `app/views/update_status_view_models.ts` | Typed update-status section builders for current status, journey, issues, attempt history, health, and log cards |
+| `app/views/update_status_overview_view.ts` | Focused current-status and journey card renderers built from typed section inputs |
+| `app/views/update_status_history_view.ts` | Focused issues and latest-attempt card renderers for update history and failure context |
+| `app/views/update_status_health_view.ts` | Dedicated background-service health card renderer for the update panel |
+| `app/views/update_status_log_view.ts` | Dedicated updater log card renderer for empty, running, and populated log states |
 | `app/views/` | Focused DOM rendering, render-helper composition, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and update panels |
 | `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived panel state, DOM rendering, elapsed-timer sync, and cross-view navigation clicks |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |

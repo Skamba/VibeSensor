@@ -63,6 +63,27 @@ class FakeText extends FakeNode {
 
 export class FakeDocumentFragment extends FakeNode {}
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function serializeNode(node: FakeNode): string {
+  if (node instanceof FakeText) {
+    return node.textContent;
+  }
+  if (node instanceof FakeDocumentFragment) {
+    return node.childNodes.map((child) => serializeNode(child)).join("");
+  }
+  if (node instanceof FakeElement) {
+    return node.toOuterHtml();
+  }
+  return node.textContent;
+}
+
 class FakeClassList {
   readonly #tokens = new Set<string>();
 
@@ -108,6 +129,7 @@ export class FakeElement extends FakeNode {
   readonly classList = new FakeClassList();
   readonly dataset: Record<string, string> = {};
   readonly #attributes = new Map<string, string>();
+  #rawInnerHTML: string | null = null;
 
   hidden = false;
   scrollTop = 0;
@@ -126,11 +148,31 @@ export class FakeElement extends FakeNode {
   }
 
   get innerHTML(): string {
-    return this.textContent;
+    return this.#rawInnerHTML ?? this.childNodes.map((child) => serializeNode(child)).join("");
   }
 
   set innerHTML(value: string) {
-    this.textContent = value;
+    this.#rawInnerHTML = value;
+    super.textContent = value;
+  }
+
+  override appendChild<T extends FakeNode>(child: T): T {
+    this.#rawInnerHTML = null;
+    return super.appendChild(child);
+  }
+
+  override replaceChildren(...children: Array<FakeNode | string>): void {
+    this.#rawInnerHTML = null;
+    super.replaceChildren(...children);
+  }
+
+  override get textContent(): string {
+    return super.textContent;
+  }
+
+  override set textContent(value: string | null) {
+    this.#rawInnerHTML = null;
+    super.textContent = value;
   }
 
   setAttribute(name: string, value: string): void {
@@ -139,6 +181,18 @@ export class FakeElement extends FakeNode {
 
   getAttribute(name: string): string | null {
     return this.#attributes.get(name) ?? null;
+  }
+
+  toOuterHtml(): string {
+    const attrs: string[] = [];
+    if (this.className) {
+      attrs.push(`class="${escapeHtml(this.className)}"`);
+    }
+    for (const [name, value] of this.#attributes) {
+      attrs.push(`${name}="${escapeHtml(value)}"`);
+    }
+    const attrsHtml = attrs.length > 0 ? ` ${attrs.join(" ")}` : "";
+    return `<${this.tagName.toLowerCase()}${attrsHtml}>${this.childNodes.map((child) => serializeNode(child)).join("")}</${this.tagName.toLowerCase()}>`;
   }
 }
 
