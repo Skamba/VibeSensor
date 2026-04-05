@@ -1,0 +1,253 @@
+import { expect, test } from "@playwright/test";
+
+import {
+  createCarsFeatureWorkflow,
+  type CarsFeatureFocusTarget,
+  type CarsFeatureRenderState,
+  type CarsFeatureWorkflowViewPorts,
+} from "../src/app/features/cars_feature_workflow";
+import type {
+  CarLibraryGearbox,
+  CarLibraryModel,
+  CarLibraryTireOption,
+} from "../src/transport/http_models";
+
+type WorkflowHarness = {
+  focuses: CarsFeatureFocusTarget[];
+  renderStates: CarsFeatureRenderState[];
+};
+
+function createHarness(): WorkflowHarness {
+  return {
+    focuses: [],
+    renderStates: [],
+  };
+}
+
+function createViewPorts(harness: WorkflowHarness): CarsFeatureWorkflowViewPorts {
+  return {
+    focus(target): void {
+      harness.focuses.push(target);
+    },
+    render(state): void {
+      harness.renderStates.push({
+        ...state,
+        brandOptions: {
+          ...state.brandOptions,
+          options: [...state.brandOptions.options],
+        },
+        gearboxOptions: [...state.gearboxOptions],
+        manualInputs: { ...state.manualInputs },
+        modelOptions: {
+          ...state.modelOptions,
+          options: [...state.modelOptions.options],
+        },
+        tireOptions: [...state.tireOptions],
+        typeOptions: {
+          ...state.typeOptions,
+          options: [...state.typeOptions.options],
+        },
+        variantOptions: [...state.variantOptions],
+      });
+    },
+  };
+}
+
+function createTranslator(): (key: string, vars?: Record<string, unknown>) => string {
+  return (key, vars) => {
+    if (vars?.current && vars?.total && vars?.step) {
+      return `${key}:${vars.current}/${vars.total}:${String(vars.step)}`;
+    }
+    return key;
+  };
+}
+
+function createDefaultManualInputs() {
+  return {
+    finalDrive: "3.08",
+    rim: "18",
+    tireAspect: "45",
+    tireWidth: "225",
+    topGear: "0.64",
+  };
+}
+
+function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGearbox {
+  return {
+    final_drive_ratio: 3.15,
+    name: "8-speed automatic",
+    top_gear_ratio: 0.67,
+    ...overrides,
+  };
+}
+
+function makeTireOption(overrides: Partial<CarLibraryTireOption> = {}): CarLibraryTireOption {
+  return {
+    name: "Factory staggered",
+    rim_in: 21,
+    tire_aspect_pct: 40,
+    tire_width_mm: 275,
+    ...overrides,
+  };
+}
+
+function makeModel(overrides: Partial<CarLibraryModel> = {}): CarLibraryModel {
+  return {
+    gearboxes: [],
+    model: "X5",
+    rim_in: 21,
+    tire_aspect_pct: 40,
+    tire_options: [],
+    tire_width_mm: 275,
+    variants: [],
+    ...overrides,
+  };
+}
+
+test.describe("createCarsFeatureWorkflow", () => {
+  test("surfaces brand-load failures through render state and focuses the custom-brand input", async () => {
+    const harness = createHarness();
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async () => undefined,
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          throw new Error("offline");
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard(createDefaultManualInputs());
+
+    expect(harness.focuses).toEqual(["close", "custom-brand"]);
+    expect(harness.renderStates.at(-1)?.brandOptions).toEqual({
+      message: "settings.wizard.load_failed_brands",
+      options: [],
+      status: "error",
+    });
+  });
+
+  test("finishes the manual branch without DOM fixtures and closes the wizard", async () => {
+    const harness = createHarness();
+    const addCalls: Array<{
+      aspects: Record<string, number>;
+      carType: string;
+      name: string;
+      variant?: string;
+    }> = [];
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async (name, carType, aspects, variant) => {
+        addCalls.push({ aspects, carType, name, variant });
+      },
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+        async loadModels() {
+          return [makeModel()];
+        },
+        async loadTypes() {
+          return ["SUV"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard(createDefaultManualInputs());
+    await workflow.selectBrand("BMW");
+    await workflow.selectType("SUV");
+    await workflow.submitCustomModel("X5 M60i");
+    workflow.handleManualInputsChanged({
+      ...createDefaultManualInputs(),
+      tireWidth: "245",
+      topGear: "0.68",
+    });
+
+    const closed = await workflow.finishWizard();
+
+    expect(closed).toBe(true);
+    expect(addCalls).toEqual([{
+      aspects: {
+        current_gear_ratio: 0.68,
+        final_drive_ratio: 3.08,
+        rim_in: 18,
+        tire_aspect_pct: 45,
+        tire_width_mm: 245,
+      },
+      carType: "SUV",
+      name: "BMW X5 M60i",
+      variant: undefined,
+    }]);
+    expect(harness.focuses).toContain("manual-tire-width");
+    expect(harness.renderStates.at(-1)?.isOpen).toBe(false);
+  });
+
+  test("keeps the library branch disabled until a gearbox is chosen and then submits the selected specs", async () => {
+    const harness = createHarness();
+    const addCalls: Array<{
+      aspects: Record<string, number>;
+      carType: string;
+      name: string;
+      variant?: string;
+    }> = [];
+    const tire = makeTireOption();
+    const gearbox = makeGearbox();
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async (name, carType, aspects, variant) => {
+        addCalls.push({ aspects, carType, name, variant });
+      },
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+        async loadModels() {
+          return [makeModel({
+            gearboxes: [gearbox],
+            tire_options: [tire],
+          })];
+        },
+        async loadTypes() {
+          return ["SUV"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard(createDefaultManualInputs());
+    await workflow.selectBrand("BMW");
+    await workflow.selectType("SUV");
+    await workflow.selectModel(0);
+
+    expect(harness.renderStates.at(-1)).toMatchObject({
+      canFinish: false,
+      resolvedSpecBranch: null,
+      selectedTire: tire,
+      step: 4,
+    });
+
+    workflow.selectGearbox(0);
+    const closed = await workflow.finishWizard();
+
+    expect(closed).toBe(true);
+    expect(addCalls).toEqual([{
+      aspects: {
+        current_gear_ratio: 0.67,
+        final_drive_ratio: 3.15,
+        rim_in: 21,
+        tire_aspect_pct: 40,
+        tire_width_mm: 275,
+      },
+      carType: "SUV",
+      name: "BMW X5",
+      variant: undefined,
+    }]);
+    expect(harness.focuses).toContain("finish");
+    expect(harness.renderStates.at(-1)?.isOpen).toBe(false);
+  });
+});

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { bindCarsFeatureInteractions } from "../src/app/views/cars_feature_bindings";
 import { bindHistoryTableInteractions } from "../src/app/views/history_table_view";
 import { bindRealtimeFeatureInteractions } from "../src/app/views/realtime_feature_bindings";
 import { bindSettingsCarListActions } from "../src/app/views/settings_car_list_view";
@@ -488,6 +489,113 @@ test("settings car-list bindings surface typed list actions and disposer stops d
     { type: "add", carId: null },
     { type: "activate", carId: "car-1" },
   ]);
+});
+
+test("cars wizard bindings decode typed wizard actions and stop after disposal", () => {
+  const addCarBtn = createButton();
+  const addCarWizard = createContainer();
+  (addCarWizard as unknown as { hidden: boolean }).hidden = false;
+  const wizardBackdrop = createContainer();
+  const wizardCloseBtn = createButton();
+  const wizardBackBtn = createButton();
+  const wizardBrandList = createContainer();
+  const wizardBrandButton = appendChild(wizardBrandList, createButton({
+    classes: ["wiz-opt"],
+    attrs: { "data-value": "BMW" },
+  }));
+  const wizardCustomBrandInput = createInput({ value: "Volvo" });
+  const wizardCustomBrandBtn = createButton();
+  const wizardTypeList = createContainer();
+  const wizardModelList = createContainer();
+  const wizardVariantList = createContainer();
+  const wizardTireList = createContainer();
+  const wizardGearboxList = createContainer();
+  const wizardGearboxButton = appendChild(wizardGearboxList, createButton({
+    classes: ["wiz-opt"],
+    attrs: { "data-idx": "1" },
+  }));
+  const wizardCustomTypeInput = createInput({ value: "SUV" });
+  const wizardCustomTypeBtn = createButton();
+  const wizardCustomModelInput = createInput({ value: "XC90" });
+  const wizardCustomModelBtn = createButton();
+  const wizardManualAddBtn = createButton();
+  const wizTireWidthInput = createInput({ value: "245" });
+  const wizTireAspectInput = createInput({ value: "45" });
+  const wizRimInput = createInput({ value: "18" });
+  const wizFinalDriveInput = createInput({ value: "3.08" });
+  const wizGearRatioInput = createInput({ value: "0.68" });
+  const keyboardTarget = createContainer();
+
+  const actions: Array<{ type: string; [key: string]: unknown }> = [];
+
+  const dispose = bindCarsFeatureInteractions(
+    {
+      addCarBtn: addCarBtn as unknown as HTMLButtonElement,
+      addCarWizard: addCarWizard as unknown as HTMLElement,
+      wizFinalDriveInput: wizFinalDriveInput as unknown as HTMLInputElement,
+      wizGearRatioInput: wizGearRatioInput as unknown as HTMLInputElement,
+      wizRimInput: wizRimInput as unknown as HTMLInputElement,
+      wizTireAspectInput: wizTireAspectInput as unknown as HTMLInputElement,
+      wizTireWidthInput: wizTireWidthInput as unknown as HTMLInputElement,
+      wizardBackdrop: wizardBackdrop as unknown as HTMLElement,
+      wizardBackBtn: wizardBackBtn as unknown as HTMLButtonElement,
+      wizardBrandList: wizardBrandList as unknown as HTMLElement,
+      wizardCloseBtn: wizardCloseBtn as unknown as HTMLButtonElement,
+      wizardCustomBrandBtn: wizardCustomBrandBtn as unknown as HTMLButtonElement,
+      wizardCustomBrandInput: wizardCustomBrandInput as unknown as HTMLInputElement,
+      wizardCustomModelBtn: wizardCustomModelBtn as unknown as HTMLButtonElement,
+      wizardCustomModelInput: wizardCustomModelInput as unknown as HTMLInputElement,
+      wizardCustomTypeBtn: wizardCustomTypeBtn as unknown as HTMLButtonElement,
+      wizardCustomTypeInput: wizardCustomTypeInput as unknown as HTMLInputElement,
+      wizardGearboxList: wizardGearboxList as unknown as HTMLElement,
+      wizardManualAddBtn: wizardManualAddBtn as unknown as HTMLButtonElement,
+      wizardModelList: wizardModelList as unknown as HTMLElement,
+      wizardTireList: wizardTireList as unknown as HTMLElement,
+      wizardTypeList: wizardTypeList as unknown as HTMLElement,
+      wizardVariantList: wizardVariantList as unknown as HTMLElement,
+    },
+    {
+      onAction: (action) => {
+        actions.push(action);
+      },
+    },
+    {
+      keyboard: keyboardTarget,
+    },
+  );
+
+  addCarBtn.dispatch("click");
+  wizardBrandList.dispatch("click", { target: wizardBrandButton as unknown as EventTarget });
+  wizardCustomBrandBtn.dispatch("click");
+  wizardCustomModelBtn.dispatch("click");
+  wizardGearboxList.dispatch("click", { target: wizardGearboxButton as unknown as EventTarget });
+  wizTireWidthInput.dispatch("input");
+  keyboardTarget.dispatch("keydown", { key: "Escape" });
+  wizardManualAddBtn.dispatch("click");
+
+  expect(actions).toEqual([
+    { type: "open" },
+    { type: "select-brand", value: "BMW" },
+    { type: "submit-custom-brand", value: "Volvo" },
+    { type: "submit-custom-model", value: "XC90" },
+    { type: "select-gearbox", index: 1 },
+    {
+      type: "manual-inputs-changed",
+      inputs: {
+        finalDrive: "3.08",
+        rim: "18",
+        tireAspect: "45",
+        tireWidth: "245",
+        topGear: "0.68",
+      },
+    },
+    { type: "close" },
+    { type: "finish" },
+  ]);
+
+  dispose();
+  addCarBtn.dispatch("click");
+  expect(actions).toHaveLength(8);
 });
 
 test("speed-source bindings turn form events and OBD pairing clicks into typed actions", () => {
