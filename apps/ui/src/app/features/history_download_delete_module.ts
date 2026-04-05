@@ -45,6 +45,8 @@ export async function downloadBlobFile(url: string, fallbackName: string): Promi
   setTimeout(() => URL.revokeObjectURL(objectUrl), DOWNLOAD_REVOKE_DELAY_MS);
 }
 
+import type { HistoryRunAction } from "../views/history_table_view";
+
 export interface HistoryDownloadDeleteModuleDeps {
   history: HistoryState;
   getLanguage: () => string;
@@ -61,7 +63,7 @@ export interface HistoryDownloadDeleteModule {
   deleteRun(runId: string): Promise<void>;
   deleteAllRuns(): Promise<void>;
   downloadReportPdfForRun(runId: string): Promise<void>;
-  onHistoryTableAction(action: string, runId: string): Promise<void>;
+  onHistoryTableAction(action: HistoryRunAction, runId: string): Promise<void>;
 }
 
 export function createHistoryDownloadDeleteModule(
@@ -135,7 +137,7 @@ export function createHistoryDownloadDeleteModule(
     }
   }
 
-  async function onHistoryTableAction(action: string, runId: string): Promise<void> {
+  async function onHistoryTableAction(action: HistoryRunAction, runId: string): Promise<void> {
     if (!action || !runId) return;
     if (action === "download-pdf") return downloadReportPdfForRun(runId);
     if (action === "delete-run") return deleteRun(runId);

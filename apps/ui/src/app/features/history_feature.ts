@@ -2,10 +2,9 @@ import type { UiHistoryDom } from "../dom/history_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { HistoryState, RunDetail } from "../ui_app_state";
-import { getInlineStateAction } from "../views/dom_helpers";
 import {
-  getHistoryTableAction,
-  getHistoryTableRowRunId,
+  bindHistoryTableInteractions,
+  type HistoryRunAction,
 } from "../views/history_table_view";
 import {
   createHistoryDetailModule,
@@ -35,7 +34,7 @@ export interface HistoryFeature {
   renderHistoryTable(): void;
   refreshHistory(): Promise<void>;
   deleteAllRuns(): Promise<void>;
-  onHistoryTableAction(action: string, runId: string): Promise<void>;
+  onHistoryTableAction(action: HistoryRunAction, runId: string): Promise<void>;
   toggleRunDetails(runId: string): void;
   reloadExpandedRunOnLanguageChange(): void;
 }
@@ -124,32 +123,27 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       return;
     }
     handlersBound = true;
-    els.refreshHistoryBtn?.addEventListener("click", () => void refreshHistory());
-    els.deleteAllRunsBtn?.addEventListener("click", () => void downloadDeleteModule.deleteAllRuns());
-    els.historyTableBody?.addEventListener("click", (event) => {
-      const inlineAction = getInlineStateAction(event.target);
-      if (inlineAction === "open-live") {
-        event.preventDefault();
-        event.stopPropagation();
-        activatePrimaryView("dashboardView");
-        return;
-      }
-      const action = getHistoryTableAction(event.target);
-      if (action) {
-        if (action.action !== "download-raw") {
-          event.preventDefault();
+    bindHistoryTableInteractions(els, {
+      onRefreshHistory: () => {
+        void refreshHistory();
+      },
+      onDeleteAllRuns: () => {
+        void downloadDeleteModule.deleteAllRuns();
+      },
+      onTableInteraction: (action) => {
+        if (action.type === "open-live") {
+          activatePrimaryView("dashboardView");
+          return;
         }
-        event.stopPropagation();
-        void downloadDeleteModule.onHistoryTableAction(
-          action.action,
-          action.runId ?? history.expandedRunId ?? "",
-        );
-        return;
-      }
-      const runId = getHistoryTableRowRunId(event.target);
-      if (runId) {
-        detailModule.toggleRunDetails(runId);
-      }
+        if (action.type === "run-action") {
+          void downloadDeleteModule.onHistoryTableAction(
+            action.action,
+            action.runId ?? history.expandedRunId ?? "",
+          );
+          return;
+        }
+        detailModule.toggleRunDetails(action.runId);
+      },
     });
   }
 

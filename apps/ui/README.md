@@ -79,8 +79,8 @@ source-of-truth export commands remain the only writers for those files.
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport, payload adaptation, and throttled live-session rendering |
 | `app/runtime/ui_spectrum_controller.ts` | Spectrum chart lifecycle, overlays, order-band calculation, and animation |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
-| `app/features/` | Feature owners for state changes, API calls, shared polling control, and delegated UI event wiring |
-| `app/views/` | Focused DOM rendering and event-target decoding for settings, cars wizard, realtime, history, and update panels |
+| `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view binders |
+| `app/views/` | Focused DOM rendering, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and update panels |
 | `api.ts` | REST API client with typed request/response interfaces |
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
 | `config.ts` | Centralized UI tuning constants for polling intervals, spectrum ranges, and history heatmap positions |
@@ -110,8 +110,9 @@ locators once in `ui_runtime_dom.ts`, then passes those local surfaces into the
 owning runtime controllers and into `app_feature_bundle.ts`. That bundle
 creates the concrete features, wires their explicit cross-feature ports, and
 returns only the shell, transport, and startup contracts the runtime needs.
-`app/views/` still owns focused HTML rendering helpers and event-target
-decoding for reusable panels.
+`app/views/` still owns focused HTML rendering helpers, typed event-target
+decoding, and disposable delegated listener binders for reusable multi-action
+panels.
 
 ## WebSocket contract boundary
 
