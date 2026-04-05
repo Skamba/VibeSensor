@@ -13,7 +13,10 @@ from vibesensor.adapters.http._helpers import (
 from vibesensor.adapters.http.error_boundary import http_exception_for_value_error
 from vibesensor.adapters.http.models import SensorRequest, SensorsResponse
 from vibesensor.adapters.http.settings.dependencies import SensorSettingsRouteDeps
-from vibesensor.shared.types.sensor_config import SensorConfigUpdatePayload
+from vibesensor.shared.boundaries.settings import (
+    sensor_config_update_payload_from_mapping,
+    sensors_response_payload,
+)
 
 _UPDATE_SENSOR_RESPONSES: OpenAPIResponses = {
     400: {"description": "Invalid sensor MAC address or sensor settings payload."},
@@ -26,21 +29,6 @@ _DELETE_SENSOR_RESPONSES: OpenAPIResponses = {
 }
 
 
-def _sensor_update_payload(req: SensorRequest) -> SensorConfigUpdatePayload:
-    payload: SensorConfigUpdatePayload = {}
-    if req.name is not None:
-        payload["name"] = req.name
-    if req.location_code is not None:
-        payload["location_code"] = req.location_code
-    return payload
-
-
-def _sensors_response(deps: SensorSettingsRouteDeps) -> SensorsResponse:
-    return SensorsResponse.model_validate(
-        {"sensors_by_mac": deps.sensor_metadata_store.get_sensors()}
-    )
-
-
 def create_sensor_settings_routes(deps: SensorSettingsRouteDeps) -> APIRouter:
     """Create routes for persisted sensor metadata."""
 
@@ -50,7 +38,9 @@ def create_sensor_settings_routes(deps: SensorSettingsRouteDeps) -> APIRouter:
     async def get_sensors() -> SensorsResponse:
         """List persisted per-sensor settings keyed by normalized MAC address."""
 
-        return _sensors_response(deps)
+        return SensorsResponse.model_validate(
+            sensors_response_payload(deps.sensor_metadata_store.get_sensors())
+        )
 
     @router.post(
         "/api/settings/sensors/{mac}",
@@ -61,7 +51,7 @@ def create_sensor_settings_routes(deps: SensorSettingsRouteDeps) -> APIRouter:
         """Create or update persisted sensor metadata for a specific MAC address."""
 
         normalized_mac = normalize_mac_or_400(mac)
-        payload = _sensor_update_payload(req)
+        payload = sensor_config_update_payload_from_mapping(req.model_dump(exclude_none=True))
         try:
             await asyncio.to_thread(
                 deps.sensor_metadata_store.set_sensor,
@@ -70,7 +60,9 @@ def create_sensor_settings_routes(deps: SensorSettingsRouteDeps) -> APIRouter:
             )
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=409) from exc
-        return _sensors_response(deps)
+        return SensorsResponse.model_validate(
+            sensors_response_payload(deps.sensor_metadata_store.get_sensors())
+        )
 
     @router.delete(
         "/api/settings/sensors/{mac}",
@@ -90,6 +82,8 @@ def create_sensor_settings_routes(deps: SensorSettingsRouteDeps) -> APIRouter:
             raise http_exception_for_value_error(exc, status_code=400) from exc
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
-        return _sensors_response(deps)
+        return SensorsResponse.model_validate(
+            sensors_response_payload(deps.sensor_metadata_store.get_sensors())
+        )
 
     return router
