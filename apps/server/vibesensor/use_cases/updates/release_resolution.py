@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from vibesensor.shared.exceptions import UpdateReleaseError
-from vibesensor.use_cases.updates.releases import factory as release_fetcher_factory
 from vibesensor.use_cases.updates.releases.version_policy import select_update_release
 
 if TYPE_CHECKING:
@@ -36,20 +34,17 @@ class UpdateReleaseResolution:
 class ServerReleaseResolver:
     """Own server release discovery independent from staging or install work."""
 
-    __slots__ = ("_rollback_dir",)
+    __slots__ = ("_release_fetcher",)
 
     def __init__(
         self,
         *,
-        rollback_dir: Path,
+        release_fetcher: ServerReleaseFetcher,
     ) -> None:
-        self._rollback_dir = rollback_dir
+        self._release_fetcher = release_fetcher
 
     async def resolve(self, current_version: str) -> UpdateReleaseResolution:
-        fetcher = release_fetcher_factory.build_server_release_fetcher(
-            rollback_dir=self._rollback_dir,
-        )
-        latest_release = await self._find_latest_release(fetcher)
+        latest_release = await self._find_latest_release()
         release = select_update_release(
             current_version=current_version,
             latest_release=latest_release,
@@ -65,12 +60,9 @@ class ServerReleaseResolver:
             release=release,
         )
 
-    async def _find_latest_release(
-        self,
-        fetcher: ServerReleaseFetcher,
-    ) -> ReleaseInfo:
+    async def _find_latest_release(self) -> ReleaseInfo:
         try:
-            return await asyncio.to_thread(fetcher.find_latest_release)
+            return await asyncio.to_thread(self._release_fetcher.find_latest_release)
         except (OSError, ValueError) as exc:
             raise UpdateReleaseError(
                 f"Failed to check for updates: {exc}",

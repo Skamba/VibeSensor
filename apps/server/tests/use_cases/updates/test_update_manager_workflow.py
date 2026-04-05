@@ -102,7 +102,6 @@ async def test_workflow_finalizes_the_prepared_transport_handle() -> None:
     workflow, prepare, plan, execute, finalize = _build_workflow()
     prepared_transport = AsyncMock()
     prepared = PreparedUpdateRun(
-        current_version="2026.4.3",
         prepared_transport=prepared_transport,
     )
     planned = object()
@@ -122,7 +121,6 @@ async def test_workflow_stops_after_release_failure_and_finalizes_prepared_trans
     workflow, prepare, plan, execute, finalize = _build_workflow()
     prepared_transport = AsyncMock()
     prepare.return_value = PreparedUpdateRun(
-        current_version="2026.4.3",
         prepared_transport=prepared_transport,
     )
     plan.side_effect = UpdateReleaseError("release check failed")

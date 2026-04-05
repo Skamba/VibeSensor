@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from vibesensor.shared.exceptions import UpdateReleaseError
-from vibesensor.use_cases.updates.firmware import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.release_staging import StagedServerRelease
@@ -15,17 +14,15 @@ __all__ = ["UpdateReleaseDeploymentCoordinator"]
 class UpdateReleaseDeploymentCoordinator:
     """Own staged-release mutation order, install policy, and rollback handling."""
 
-    __slots__ = ("_firmware_refresher", "_installer", "_status")
+    __slots__ = ("_installer", "_status")
 
     def __init__(
         self,
         *,
         installer: UpdateInstaller,
-        firmware_refresher: FirmwareRefresher,
         status: UpdateStatusTracker,
     ) -> None:
         self._installer = installer
-        self._firmware_refresher = firmware_refresher
         self._status = status
 
     async def deploy(self, staged_release: StagedServerRelease) -> None:
@@ -37,16 +34,6 @@ class UpdateReleaseDeploymentCoordinator:
                 phase=UpdatePhase.installing.value,
                 detail="Install aborted before mutating the live environment",
             )
-        refresh_result = await self._firmware_refresher.refresh_esp_firmware(
-            pinned_tag=staged_release.release.tag,
-        )
-        if not refresh_result.succeeded:
-            self._status.add_issue(
-                refresh_result.phase,
-                refresh_result.message,
-                refresh_result.detail,
-            )
-            self._status.log("ESP firmware refresh failed; continuing with existing cache")
         install_result = await self._installer.install_release(
             staged_release.wheel_path,
             str(staged_release.release.version),

@@ -170,7 +170,6 @@ class TestUpdateManagerCancelledError:
             preparation=SimpleNamespace(
                 prepare=AsyncMock(
                     return_value=PreparedUpdateRun(
-                        current_version="2026.4.3",
                         prepared_transport=AsyncMock(),
                     )
                 )

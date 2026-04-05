@@ -131,12 +131,10 @@ async def run_update(
 def patch_release_fetcher(current_version: str = "2025.6.15") -> Iterator[MagicMock]:
     with (
         patch("shutil.which", mock_which),
-        patch(
-            "vibesensor.use_cases.updates.releases.factory.build_server_release_fetcher",
-        ) as mock_fetcher,
         patch("vibesensor.__version__", current_version),
     ):
-        mock_fetcher.return_value.find_latest_release.return_value = make_mock_release(
+        mock_fetcher = MagicMock()
+        mock_fetcher.find_latest_release.return_value = make_mock_release(
             version=current_version,
             tag=f"server-v{current_version}",
         )
@@ -150,6 +148,7 @@ def setup_update_env(
     rollback: bool = True,
     seed_artifacts: bool = False,
     usb_internet_service: object | None = None,
+    server_release_fetcher: object | None = None,
 ) -> tuple[UpdateManager, FakeRunner, Path]:
     runner = FakeRunner()
     if sudo_ok:
@@ -165,6 +164,8 @@ def setup_update_env(
         kwargs["rollback_dir"] = str(tmp_path / "rollback")
     if usb_internet_service is not None:
         kwargs["usb_internet_service"] = usb_internet_service
+    if server_release_fetcher is not None:
+        kwargs["server_release_fetcher"] = server_release_fetcher
     mgr = build_update_manager(**kwargs)
     if seed_artifacts:
         seed_runtime_artifacts(repo, mgr, valid=True)

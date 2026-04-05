@@ -38,6 +38,7 @@ def _planner(tmp_path: Path) -> tuple[UpdateReleasePlanner, UpdateStatusTracker,
     return (
         UpdateReleasePlanner(
             status=tracker,
+            current_version_provider=lambda: "2026.4.3",
             resolver=resolver,
         ),
         tracker,
@@ -47,7 +48,6 @@ def _planner(tmp_path: Path) -> tuple[UpdateReleasePlanner, UpdateStatusTracker,
 
 def _prepared_run() -> PreparedUpdateRun:
     return PreparedUpdateRun(
-        current_version="2026.4.3",
         prepared_transport=object(),
     )
 
@@ -66,7 +66,6 @@ async def test_plan_returns_refresh_only_plan_when_no_server_update_is_needed(
 
     assert isinstance(planned, PlannedUpdateRun)
     assert isinstance(planned.execution_plan, RefreshFirmwarePlan)
-    assert planned.prepared.current_version == "2026.4.3"
     assert planned.execution_plan.latest_tag == "server-v2026.4.3"
     assert tracker.status.phase.value == "checking"
     assert any("Already up-to-date" in line for line in tracker.status.log_tail)
@@ -84,7 +83,6 @@ async def test_plan_returns_install_plan_when_server_update_is_available(tmp_pat
     planned = await planner.plan(_prepared_run())
 
     assert isinstance(planned.execution_plan, InstallServerReleasePlan)
-    assert planned.prepared.current_version == "2026.4.3"
     assert planned.execution_plan.release is release
     assert tracker.status.phase.value == "checking"
     assert any("Update available: 2026.4.3 → 2026.4.4" in line for line in tracker.status.log_tail)

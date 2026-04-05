@@ -8,20 +8,16 @@ The updater now has one explicit run-scoped workflow boundary per concern:
   manager instance.
 - ``runtime_config.py`` owns runtime config resolution.
 - ``runtime_core.py`` owns status-tracker and command-executor assembly.
-- ``release_planning_runtime.py`` owns release-planner assembly.
-- ``release_execution_runtime.py`` owns release-execution assembly.
 - ``workflow_runtime.py`` owns workflow assembly from the focused planning,
-  execution, transport, and core collaborators.
+  release execution, transport, and core collaborators.
 - ``run_models.py`` holds the canonical prepared/planned run models shared
   across the workflow.
 - ``workflow.py`` owns request-scoped orchestration across preparation,
   planning, execution, and explicit post-run finalization handoff.
-- ``preparation.py`` owns validation, transport preparation, and current-version
-  observation for one run while returning the prepared transport lifecycle
-  explicitly.
-- ``release_planner.py`` interprets discovered release state into one canonical
-  execution plan tied to that prepared session.
-- ``workflow_executor.py`` owns plan execution only.
+- ``preparation.py`` owns validation and transport preparation for one run.
+- ``release_planner.py`` owns current-version observation and release selection.
+- ``server_release_execution.py`` owns the staged server-release install path.
+- ``workflow_executor.py`` owns plan dispatch and success completion.
 - ``completion.py`` owns post-success transport completion and restart follow-up.
 - ``finalization.py`` owns unconditional transport cleanup and runtime refresh.
 - ``transport/`` owns prepared-transport interfaces, transport coordination,
