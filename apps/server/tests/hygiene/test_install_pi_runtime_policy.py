@@ -25,7 +25,10 @@ def _prepare_install_pi_workspace(tmp_path: Path) -> Path:
     install_pi = scripts_dir / "install_pi.sh"
     install_pi.write_text(_INSTALL_PI.read_text(encoding="utf-8"), encoding="utf-8")
     install_pi.chmod(0o755)
-    (server_root / "pyproject.toml").write_text(_PYPROJECT.read_text(encoding="utf-8"), encoding="utf-8")
+    (server_root / "pyproject.toml").write_text(
+        _PYPROJECT.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     return install_pi
 
 
@@ -35,7 +38,7 @@ def _write_fake_sudo(bin_dir: Path) -> None:
         "\n".join(
             [
                 "#!/bin/sh",
-                "exec \"$@\"",
+                'exec "$@"',
                 "",
             ]
         ),
@@ -132,7 +135,9 @@ def _run_install_pi(
         text=True,
         check=False,
     )
-    python_calls = python_log.read_text(encoding="utf-8").splitlines() if python_log.exists() else []
+    python_calls = (
+        python_log.read_text(encoding="utf-8").splitlines() if python_log.exists() else []
+    )
     pip_calls = pip_log.read_text(encoding="utf-8").splitlines() if pip_log.exists() else []
     return result, python_calls, pip_calls, install_pi.parent.parent
 
