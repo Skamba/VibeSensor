@@ -11,7 +11,10 @@ import {
   createSettingsFeatureRealtimePorts,
   type AppFeatureBundle,
 } from "./app_feature_ports";
-import { createCarsFeature } from "./features/cars_feature";
+import {
+  createCarsFeature,
+  type CarsFeature,
+} from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature } from "./features/history_feature";
 import {
@@ -21,6 +24,7 @@ import {
 } from "./features/realtime_feature";
 import {
   createSettingsFeature,
+  type SettingsFeature,
   type SettingsFeatureViewPorts,
 } from "./features/settings_feature";
 import { createUpdateFeature } from "./features/update_feature";
@@ -115,12 +119,15 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     recording: createRealtimeFeatureRecordingPorts(history),
   });
 
-  const settings = createSettingsFeature({
+  let carsFeature: CarsFeature | null = null;
+  const settings: SettingsFeature = createSettingsFeature({
     settings: state.settings,
     getSpeedUnit: () => state.shell.speedUnit,
     dom: settingsDom,
     shellDom,
-    carsDom,
+    openCarWizard: () => {
+      carsFeature?.openWizard();
+    },
     t,
     escapeHtml,
     showError,
@@ -138,7 +145,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     renderSpectrum: runtime.view.renderSpectrum,
   });
 
-  const cars = createCarsFeature({
+  const cars: CarsFeature = createCarsFeature({
     dom: carsDom,
     t,
     escapeHtml,
@@ -147,6 +154,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     addCarFromWizard: (name, carType, aspects, variant) =>
       carCreation.addCarFromWizard(name, carType, aspects, variant),
   });
+  carsFeature = cars;
 
   const update = createUpdateFeature({ dom: updateDom, t, escapeHtml, showError });
   const espFlash = createEspFlashFeature({ dom: espFlashDom, t, escapeHtml, showError });
