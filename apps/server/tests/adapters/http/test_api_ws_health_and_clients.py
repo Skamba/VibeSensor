@@ -175,7 +175,7 @@ async def test_set_client_location_maps_canonical_location_conflict_to_409() -> 
     registry = KnownRegistry()
     control_plane = MagicMock()
     settings_store = MagicMock()
-    settings_store.set_sensor.side_effect = ValueError(
+    settings_store.assign_sensor_location.side_effect = ValueError(
         "Location 'front_left_wheel' already assigned to other sensor",
     )
     router = create_client_routes(registry, control_plane, settings_store, MagicMock())
@@ -186,6 +186,28 @@ async def test_set_client_location_maps_canonical_location_conflict_to_409() -> 
         await endpoint("aa:bb:cc:dd:ee:ff", request)
     assert exc_info.value.status_code == 409
     assert "already assigned" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_set_client_location_maps_unknown_location_to_400() -> None:
+    from vibesensor.adapters.http.clients import create_client_routes
+
+    class KnownRegistry:
+        def get(self, _client_id: str) -> object:
+            return object()
+
+    registry = KnownRegistry()
+    control_plane = MagicMock()
+    settings_store = MagicMock()
+    settings_store.assign_sensor_location.side_effect = ValueError("Unknown location_code")
+    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
+    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
+
+    with pytest.raises(HTTPException) as exc_info:
+        request = type("Req", (), {"location_code": "not_a_real_location"})()
+        await endpoint("aa:bb:cc:dd:ee:ff", request)
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Unknown location_code"
 
 
 @pytest.mark.asyncio
@@ -216,7 +238,7 @@ async def test_set_client_location_persists_canonical_name_and_location() -> Non
     registry = KnownRegistry()
     control_plane = MagicMock()
     settings_store = MagicMock()
-    settings_store.set_sensor.return_value = {
+    settings_store.assign_sensor_location.return_value = {
         "aabbccddeeff": {
             "name": "Front Left Wheel",
             "location_code": "front_left_wheel",
@@ -228,9 +250,9 @@ async def test_set_client_location_persists_canonical_name_and_location() -> Non
     request = type("Req", (), {"location_code": "front_left_wheel"})()
     resp = response_payload(await endpoint("aa:bb:cc:dd:ee:ff", request))
 
-    settings_store.set_sensor.assert_called_once_with(
-        "aa:bb:cc:dd:ee:ff",
-        {"name": "Front Left Wheel", "location_code": "front_left_wheel"},
+    settings_store.assign_sensor_location.assert_called_once_with(
+        "aabbccddeeff",
+        "front_left_wheel",
     )
     assert registry.locations == [("aabbccddeeff", "front_left_wheel")]
     assert registry.names == [("aabbccddeeff", "Front Left Wheel")]

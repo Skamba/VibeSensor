@@ -24,10 +24,10 @@ from vibesensor.adapters.http.models import (
 )
 from vibesensor.adapters.udp.protocol import client_id_mac
 from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
-from vibesensor.shared.locations import all_locations, label_for_code
+from vibesensor.shared.locations import all_locations
 from vibesensor.shared.ports import SensorMetadataStore
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
-from vibesensor.shared.types.sensor_config import SensorConfigPayload, SensorConfigUpdatePayload
+from vibesensor.shared.types.sensor_config import SensorConfigPayload
 
 if TYPE_CHECKING:
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
@@ -114,34 +114,32 @@ def create_client_routes(
         if registry.get(normalized_client_id) is None:
             raise HTTPException(status_code=404, detail="Sensor not found")
 
-        code = req.location_code.strip()
-        payload: SensorConfigUpdatePayload
-
-        if code:
-            label = label_for_code(code)
-            if label is None:
-                raise HTTPException(status_code=400, detail="Unknown location_code")
-
-            payload = {"location_code": code, "name": label}
-        else:
-            payload = {"location_code": "", "name": normalized_client_id}
-
         updated = registry.get(normalized_client_id)
-        mac = client_id_mac(normalized_client_id)
         try:
-            stored = await asyncio.to_thread(sensor_settings_store.set_sensor, mac, payload)
+            stored = await asyncio.to_thread(
+                sensor_settings_store.assign_sensor_location,
+                normalized_client_id,
+                req.location_code,
+            )
         except ValueError as exc:
-            raise http_exception_for_value_error(exc, status_code=409) from exc
+            status_code = 400 if str(exc) == "Unknown location_code" else 409
+            raise http_exception_for_value_error(exc, status_code=status_code) from exc
+        stored_sensor = stored.get(normalized_client_id)
+        code = str(stored_sensor["location_code"] if stored_sensor is not None else "").strip()
         registry.set_location(normalized_client_id, code)
         if code:
-            registry.set_name(normalized_client_id, payload["name"])
+            registry.set_name(
+                normalized_client_id,
+                str(stored_sensor["name"] if stored_sensor is not None else "").strip(),
+            )
         else:
             registry.clear_name(normalized_client_id)
+        mac = client_id_mac(normalized_client_id)
         fallback_sensor: SensorConfigPayload = {
-            "name": payload["name"],
-            "location_code": payload["location_code"],
+            "name": normalized_client_id,
+            "location_code": code,
         }
-        stored_sensor = stored.get(normalized_client_id, fallback_sensor)
+        stored_sensor = stored_sensor or fallback_sensor
         fallback_name = updated.name if updated and updated.name is not None else ""
         name, _ = resolve_sensor_presentation(
             sensor_id=normalized_client_id,

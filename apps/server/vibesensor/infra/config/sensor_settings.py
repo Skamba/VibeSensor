@@ -13,6 +13,7 @@ from vibesensor.infra.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
 )
+from vibesensor.shared.locations import label_for_code
 from vibesensor.shared.types.sensor_config import (
     SensorConfig,
     SensorConfigUpdatePayload,
@@ -71,6 +72,24 @@ class SensorSettingsService:
                 )
                 for cfg in self._state.sensors.values()
             ]
+
+    def assign_sensor_location(self, sensor_id: str, location_code: str) -> SensorsByMacPayload:
+        normalized_sensor_id = normalize_sensor_id(sensor_id)
+        normalized_location = _LOCATION_VALIDATOR.normalize(location_code)
+        if normalized_location:
+            label = label_for_code(normalized_location)
+            if label is None:
+                raise ValueError("Unknown location_code")
+            payload: SensorConfigUpdatePayload = {
+                "location_code": normalized_location,
+                "name": label,
+            }
+        else:
+            payload = {
+                "location_code": "",
+                "name": normalized_sensor_id,
+            }
+        return self.set_sensor(normalized_sensor_id, payload)
 
     def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload:
         sensor_id = normalize_sensor_id(mac)
