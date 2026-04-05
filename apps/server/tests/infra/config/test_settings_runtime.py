@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.config.speed_source_runtime import (
     SpeedSourceRuntimeApplier,
     SpeedSourceSettingsService,
+)
+from vibesensor.shared.types.speed_source_config import (
+    SpeedSourceConfig,
+    SpeedSourcePayload,
+    SpeedSourceUpdatePayload,
 )
 
 
@@ -38,8 +42,29 @@ class _FakeSpeedSourceSync:
         return effective_speed_kmh
 
 
+class _FakeSpeedSourceStore:
+    def __init__(self) -> None:
+        self._config = SpeedSourceConfig.default()
+
+    def get_speed_source(self) -> SpeedSourcePayload:
+        return self._config.to_dict()
+
+    def preview_speed_source_update(self, data: SpeedSourceUpdatePayload) -> SpeedSourceConfig:
+        return self._config.updated(data)
+
+    def persist_speed_source(self, config: SpeedSourceConfig) -> SpeedSourceConfig:
+        self._config = config.copy()
+        return self._config.copy()
+
+    def speed_source_config(self) -> SpeedSourceConfig:
+        return self._config.copy()
+
+    def update_speed_source(self, data: SpeedSourceUpdatePayload) -> SpeedSourcePayload:
+        return self.persist_speed_source(self.preview_speed_source_update(data)).to_dict()
+
+
 def test_runtime_applier_pushes_current_speed_source_to_monitor() -> None:
-    store = SettingsStore()
+    store = _FakeSpeedSourceStore()
     monitor = _FakeSpeedSourceSync()
     store.update_speed_source(
         {
@@ -64,7 +89,7 @@ def test_runtime_applier_pushes_current_speed_source_to_monitor() -> None:
 
 
 def test_runtime_applier_keeps_live_source_manual_fallback_and_obd_device() -> None:
-    store = SettingsStore()
+    store = _FakeSpeedSourceStore()
     monitor = _FakeSpeedSourceSync()
     store.update_speed_source(
         {
@@ -91,7 +116,7 @@ def test_runtime_applier_keeps_live_source_manual_fallback_and_obd_device() -> N
 
 
 def test_speed_source_service_updates_store_and_runtime() -> None:
-    store = SettingsStore()
+    store = _FakeSpeedSourceStore()
     monitor = _FakeSpeedSourceSync()
     service = SpeedSourceSettingsService(
         settings_store=store,

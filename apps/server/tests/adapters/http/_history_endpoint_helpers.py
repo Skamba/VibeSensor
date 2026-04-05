@@ -362,7 +362,10 @@ class FakeState:
     @property
     def settings(self) -> SettingsDeps:
         return SettingsDeps(
-            settings_store=self.settings_store,
+            car_settings=self.settings_store,
+            analysis_settings=self.settings_store,
+            sensor_metadata_store=self.settings_store,
+            ui_preferences=self.settings_store,
             speed_source_service=self.settings_store,
             speed_status_service=self.gps_monitor,
             obd_admin_service=self.gps_monitor,
