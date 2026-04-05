@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
@@ -16,77 +15,21 @@ from vibesensor.adapters.http.error_boundary import (
     route_errors_to_http,
 )
 from vibesensor.adapters.http.models import (
-    ObdDeviceResponse,
     ObdPairRequest,
     ObdPairResponse,
     ObdScanResponse,
     ObdStatusResponse,
 )
-from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
 from vibesensor.adapters.http.settings.dependencies import ObdAdminRouteDeps
-
-if TYPE_CHECKING:
-    from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+from vibesensor.adapters.http.settings.presentation import (
+    obd_pair_response,
+    obd_scan_response,
+    obd_status_response,
+)
 
 _OBD_ADMIN_RESPONSES: OpenAPIResponses = {
     503: {"description": "Bluetooth OBD helper unavailable or the requested action failed."},
 }
-
-
-def _obd_device_response(snapshot: ObdDeviceSnapshot) -> ObdDeviceResponse:
-    return ObdDeviceResponse(
-        mac_address=snapshot.mac_address,
-        name=snapshot.name,
-        paired=snapshot.paired,
-        trusted=snapshot.trusted,
-        connected=snapshot.connected,
-        rfcomm_channel=snapshot.rfcomm_channel,
-    )
-
-
-def _obd_pair_response(
-    *,
-    configured_device_mac: str,
-    configured_device_name: str | None,
-    snapshot: ObdDeviceSnapshot,
-) -> ObdPairResponse:
-    return ObdPairResponse(
-        configured_device_mac=configured_device_mac,
-        configured_device_name=configured_device_name,
-        paired=snapshot.paired,
-        trusted=snapshot.trusted,
-        connected=snapshot.connected,
-        rfcomm_channel=snapshot.rfcomm_channel,
-    )
-
-
-def _obd_status_response(snapshot: ObdStatusSnapshot) -> ObdStatusResponse:
-    return ObdStatusResponse(
-        configured_device_mac=snapshot.configured_device_mac,
-        configured_device_name=snapshot.configured_device_name,
-        connection_state=snapshot.connection_state,
-        device_mac=snapshot.device_mac,
-        device_name=snapshot.device_name,
-        paired=snapshot.paired,
-        trusted=snapshot.trusted,
-        connected=snapshot.connected,
-        rfcomm_channel=snapshot.rfcomm_channel,
-        last_sample_age_s=snapshot.last_sample_age_s,
-        last_speed_kmh=snapshot.last_speed_kmh,
-        last_rpm=snapshot.last_rpm,
-        rpm_sample_age_s=snapshot.rpm_sample_age_s,
-        rpm_target_interval_ms=snapshot.rpm_target_interval_ms,
-        rpm_effective_hz=snapshot.rpm_effective_hz,
-        request_rtt_ms=snapshot.request_rtt_ms,
-        timeout_count=snapshot.timeout_count,
-        error_count=snapshot.error_count,
-        poll_mode=snapshot.poll_mode,
-        backoff_active=snapshot.backoff_active,
-        last_error=snapshot.last_error,
-        last_raw_response=snapshot.last_raw_response,
-        reconnect_delay_s=snapshot.reconnect_delay_s,
-        debug_hint=obd_debug_hint(snapshot),
-    )
 
 
 def create_obd_admin_routes(deps: ObdAdminRouteDeps) -> APIRouter:
@@ -104,7 +47,7 @@ def create_obd_admin_routes(deps: ObdAdminRouteDeps) -> APIRouter:
 
         with route_errors_to_http():
             devices = await asyncio.to_thread(deps.obd_admin_service.scan_obd_devices)
-        return ObdScanResponse(devices=[_obd_device_response(device) for device in devices])
+        return obd_scan_response(devices)
 
     @router.post(
         "/api/settings/obd/pair",
@@ -130,7 +73,7 @@ def create_obd_admin_routes(deps: ObdAdminRouteDeps) -> APIRouter:
             )
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
-        return _obd_pair_response(
+        return obd_pair_response(
             configured_device_mac=str(persisted.get("obdDeviceMac") or device.mac_address),
             configured_device_name=(
                 str(persisted.get("obdDeviceName"))
@@ -147,6 +90,6 @@ def create_obd_admin_routes(deps: ObdAdminRouteDeps) -> APIRouter:
         with route_errors_to_http():
             await asyncio.to_thread(deps.obd_admin_service.refresh_obd_status)
             snapshot = await asyncio.to_thread(deps.speed_status_service.obd_status)
-        return _obd_status_response(snapshot)
+        return obd_status_response(snapshot)
 
     return router

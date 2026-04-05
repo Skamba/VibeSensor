@@ -13,15 +13,13 @@ from vibesensor.adapters.http._helpers import (
 from vibesensor.adapters.http.error_boundary import http_exception_for_value_error
 from vibesensor.adapters.http.models import (
     ActiveCarRequest,
-    CarResponse,
     CarsResponse,
     CarUpsertRequest,
 )
 from vibesensor.adapters.http.settings.dependencies import CarSettingsRouteDeps
-from vibesensor.shared.types.car_config import (
-    CarConfigPayload,
-    CarConfigUpdatePayload,
-    CarsSnapshot,
+from vibesensor.shared.boundaries.settings import (
+    car_config_update_payload_from_mapping,
+    cars_response_payload,
 )
 
 _CAR_NOT_FOUND_RESPONSES: OpenAPIResponses = {
@@ -40,36 +38,6 @@ _DELETE_CAR_RESPONSES: OpenAPIResponses = {
 }
 
 
-def _car_response(payload: CarConfigPayload) -> CarResponse:
-    return CarResponse(
-        id=payload["id"],
-        name=payload["name"],
-        type=payload["type"],
-        aspects=payload["aspects"],
-        variant=payload.get("variant"),
-    )
-
-
-def _cars_response(snapshot: CarsSnapshot) -> CarsResponse:
-    return CarsResponse(
-        cars=[_car_response(car) for car in snapshot.cars],
-        active_car_id=snapshot.active_car_id,
-    )
-
-
-def _car_upsert_payload(req: CarUpsertRequest) -> CarConfigUpdatePayload:
-    payload: CarConfigUpdatePayload = {}
-    if req.name is not None:
-        payload["name"] = req.name
-    if req.type is not None:
-        payload["type"] = req.type
-    if req.aspects is not None:
-        payload["aspects"] = req.aspects
-    if req.variant is not None:
-        payload["variant"] = req.variant
-    return payload
-
-
 def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
     """Create routes for car-profile settings."""
 
@@ -79,15 +47,15 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
     async def get_cars() -> CarsResponse:
         """List all saved car profiles together with the currently active car ID."""
 
-        return _cars_response(deps.car_settings.get_cars())
+        return CarsResponse.model_validate(cars_response_payload(deps.car_settings.get_cars()))
 
     @router.post("/api/settings/cars", response_model=CarsResponse)
     async def add_car(req: CarUpsertRequest) -> CarsResponse:
         """Create a new car profile from the provided partial settings payload."""
 
-        payload = _car_upsert_payload(req)
+        payload = car_config_update_payload_from_mapping(req.model_dump(exclude_none=True))
         result = await asyncio.to_thread(deps.car_settings.add_car, payload)
-        return _cars_response(result)
+        return CarsResponse.model_validate(cars_response_payload(result))
 
     @router.put(
         "/api/settings/cars/active",
@@ -102,7 +70,7 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
             result = await asyncio.to_thread(deps.car_settings.set_active_car, car_id)
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=404) from exc
-        return _cars_response(result)
+        return CarsResponse.model_validate(cars_response_payload(result))
 
     @router.put(
         "/api/settings/cars/{car_id}",
@@ -113,7 +81,7 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
         """Update an existing car profile while preserving unspecified fields."""
 
         normalized_car_id = normalize_car_id_or_400(car_id)
-        payload = _car_upsert_payload(req)
+        payload = car_config_update_payload_from_mapping(req.model_dump(exclude_none=True))
         try:
             result = await asyncio.to_thread(
                 deps.car_settings.update_car,
@@ -122,7 +90,7 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
             )
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=404) from exc
-        return _cars_response(result)
+        return CarsResponse.model_validate(cars_response_payload(result))
 
     @router.delete(
         "/api/settings/cars/{car_id}",
@@ -146,6 +114,6 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
             )
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
-        return _cars_response(result)
+        return CarsResponse.model_validate(cars_response_payload(result))
 
     return router
