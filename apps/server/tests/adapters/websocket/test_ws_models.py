@@ -3,18 +3,15 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 
 from vibesensor.cli.ws_schema_export import export_schema
 from vibesensor.infra.processing import ClientBuffer, SignalProcessor
-from vibesensor.shared.types.payload_types import SCHEMA_VERSION
+from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
+from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
-
-if TYPE_CHECKING:
-    from vibesensor.app.runtime_state import RuntimeState
 
 # ---------------------------------------------------------------------------
 # Schema export check
@@ -35,20 +32,36 @@ def test_schema_export_check_passes() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _make_state(**kwargs: object) -> RuntimeState:
-    """Build a RuntimeState with stubs (reuse the helpers from test_build_ws_payload)."""
-    # Import the factory from the existing test module.
-    from test_build_ws_payload import _make_state as _factory
-
-    return _factory(**kwargs)
+class _StubPayloadSource:
+    def build_shared_payload(self, *, include_heavy: bool) -> LiveWsPayload:
+        payload: LiveWsPayload = {
+            "schema_version": SCHEMA_VERSION,
+            "server_time": "2026-04-05T00:00:00Z",
+            "speed_mps": None,
+            "clients": [],
+            "selected_client_id": None,
+            "rotational_speeds": {
+                "basis_speed_source": None,
+                "wheel": {"rpm": None, "mode": None, "reason": None},
+                "driveshaft": {"rpm": None, "mode": None, "reason": None},
+                "engine": {"rpm": None, "mode": None, "reason": None},
+                "order_bands": None,
+            },
+        }
+        if include_heavy:
+            payload["spectra"] = {"freq": [], "clients": {}}
+        return payload
 
 
 def test_build_ws_payload_includes_schema_version() -> None:
-    state = _make_state(
-        clients=[{"id": "aaaaaaaaaaaa", "name": "front"}],
-        ws_include_heavy=True,
+    ws_broadcast = WsBroadcastService(
+        ui_push_hz=10,
+        ui_heavy_push_hz=4,
+        payload_source=_StubPayloadSource(),
     )
-    payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
+
+    payload = ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
+
     assert "schema_version" in payload
     assert payload["schema_version"] == SCHEMA_VERSION
 

@@ -99,3 +99,52 @@ def test_build_shared_payload_carries_speed_unavailable_reason() -> None:
     payload = projector.build_shared_payload(include_heavy=False)
 
     assert payload["rotational_speeds"]["wheel"]["reason"] == "speed_unavailable"
+
+
+def test_build_shared_payload_marks_retained_stale_clients_disconnected(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.udp.protocol import HelloMessage
+    from vibesensor.infra.runtime.registry import ClientRegistry
+
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db, live_ttl_seconds=5.0, retention_ttl_seconds=30.0)
+    hello = HelloMessage(
+        client_id=bytes.fromhex("001122334455"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="sensor",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
+
+    now = {"wall": 9.0, "mono": 9.0}
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
+
+    processor = MagicMock()
+    processor.clients_with_recent_data.return_value = []
+    processor.multi_spectrum_payload.return_value = {"freq": [], "clients": {}}
+    gps_monitor = MagicMock()
+    gps_monitor.resolve_speed.return_value = _SpeedResolution(12.5)
+    gps_monitor.engine_rpm = None
+    settings_reader = MagicMock()
+    settings_reader.analysis_settings_snapshot.return_value = _analysis_settings()
+    speed_source_reader = MagicMock()
+    speed_source_reader.speed_source_config.return_value = SpeedSourceConfig.default()
+    projector = LiveWsPayloadProjector(
+        registry=registry,
+        processor=processor,
+        gps_monitor=gps_monitor,
+        gps_enabled=True,
+        settings_reader=settings_reader,
+        speed_source_reader=speed_source_reader,
+    )
+
+    payload = projector.build_shared_payload(include_heavy=False)
+
+    assert len(payload["clients"]) == 1
+    assert payload["clients"][0]["connected"] is False
+    assert payload["clients"][0]["last_seen_age_ms"] == 8000

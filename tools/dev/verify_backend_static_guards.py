@@ -659,19 +659,25 @@ def _check_ws_broadcast_uses_projection_module() -> list[str]:
     ws_projection_path = (
         VIBESENSOR_DIR / "infra" / "runtime" / "ws_payload_projection.py"
     )
+    container_path = VIBESENSOR_DIR / "app" / "container.py"
     source = _read_text(ws_broadcast_path)
+    container_source = _read_text(container_path)
     failures: list[str] = []
     if not ws_projection_path.exists():
         failures.append(
             f"{ws_projection_path.relative_to(REPO_ROOT)} must exist so live WS payload shaping has a dedicated projection module"
         )
         return failures
+    if "class LiveWsPayloadSource(Protocol):" not in source:
+        failures.append(
+            f"{ws_broadcast_path.relative_to(REPO_ROOT)} must define a focused LiveWsPayloadSource port for shared payload assembly"
+        )
     if (
         "from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector"
-        not in source
+        in source
     ):
         failures.append(
-            f"{ws_broadcast_path.relative_to(REPO_ROOT)} must depend on LiveWsPayloadProjector for shared payload assembly"
+            f"{ws_broadcast_path.relative_to(REPO_ROOT)} should not depend directly on the concrete LiveWsPayloadProjector once the broadcaster port seam exists"
         )
     forbidden_markers = (
         "from vibesensor.shared.boundaries.clients import snapshot_for_api",
@@ -687,9 +693,16 @@ def _check_ws_broadcast_uses_projection_module() -> list[str]:
             failures.append(
                 f"{ws_broadcast_path.relative_to(REPO_ROOT)} should not shape live payloads directly once ws_payload_projection owns that logic ({marker})"
             )
-    if "payload_projector: LiveWsPayloadProjector" not in source:
+    if "payload_source: LiveWsPayloadSource" not in source:
         failures.append(
-            f"{ws_broadcast_path.relative_to(REPO_ROOT)} must accept a LiveWsPayloadProjector collaborator"
+            f"{ws_broadcast_path.relative_to(REPO_ROOT)} must accept a LiveWsPayloadSource collaborator"
+        )
+    if (
+        "LiveWsPayloadProjector(" not in container_source
+        or "payload_source=ws_payload_projector" not in container_source
+    ):
+        failures.append(
+            f"{container_path.relative_to(REPO_ROOT)} must keep the concrete LiveWsPayloadProjector wired behind the broadcaster's payload_source port"
         )
     return failures
 
