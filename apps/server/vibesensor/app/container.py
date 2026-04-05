@@ -12,6 +12,9 @@ from vibesensor.adapters.history import (
 )
 from vibesensor.adapters.http.dependencies import (
     HistoryDeps,
+    HistoryExportServiceProtocol,
+    HistoryReportServiceProtocol,
+    HistoryRunServiceProtocol,
     ObdAdminServiceProtocol,
     RouterDeps,
     SettingsDeps,
@@ -19,12 +22,12 @@ from vibesensor.adapters.http.dependencies import (
     TelemetryDeps,
     UpdateDeps,
 )
-from vibesensor.adapters.obd import ObdAdminClient, build_obd_runtime
+from vibesensor.adapters.obd import ObdAdminClient, ObdRuntime, build_obd_runtime
 from vibesensor.adapters.persistence.history_db import (
     HistoryPersistenceAdapters,
     create_history_persistence_adapters,
 )
-from vibesensor.adapters.speed import build_speed_source_services
+from vibesensor.adapters.speed import SpeedSourceServices, build_speed_source_services
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.runtime_state import AppRuntime, RuntimeState
@@ -125,6 +128,61 @@ class SettingsServiceBundle:
             speed_source_service=self.speed_source_service,
             speed_status_service=speed_status_service,
             obd_admin_service=obd_admin_service,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SpeedRuntimeBundle:
+    """GPS, OBD, and selected-speed-source runtime services."""
+
+    gps_monitor: GPSSpeedMonitor
+    obd_runtime: ObdRuntime
+    speed_services: SpeedSourceServices
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryServiceBundle:
+    """History and reporting services derived from shared persistence adapters."""
+
+    run_service: HistoryRunServiceProtocol
+    report_service: HistoryReportServiceProtocol
+    export_service: HistoryExportServiceProtocol
+
+    def http_deps(self) -> HistoryDeps:
+        """Return the focused HTTP history dependency group."""
+
+        return HistoryDeps(
+            run_service=self.run_service,
+            report_service=self.report_service,
+            export_service=self.export_service,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class LiveRuntimeBundle:
+    """Live signal-processing and operator-facing runtime services."""
+
+    registry: ClientRegistry
+    worker_pool: WorkerPool
+    processor: SignalProcessor
+    control_plane: UDPControlPlane
+    processing_loop_state: ProcessingLoopState
+    processing_loop: ProcessingLoop
+    ws_hub: WebSocketHub
+    ws_broadcast: WsBroadcastService
+    run_recorder: RunRecorder
+
+    def telemetry_deps(self, *, health_state: RuntimeHealthState) -> TelemetryDeps:
+        """Return the focused HTTP telemetry dependency group."""
+
+        return TelemetryDeps(
+            processing_loop_state=self.processing_loop_state,
+            health_state=health_state,
+            processor=self.processor,
+            registry=self.registry,
+            control_plane=self.control_plane,
+            run_recorder=self.run_recorder,
+            ws_hub=self.ws_hub,
         )
 
 
@@ -249,53 +307,58 @@ def build_settings_service_bundle(
     )
 
 
-def build_runtime(config: AppConfig) -> AppRuntime:
-    """Construct all services and return the app runtime bundle."""
-    accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
-    health_state = RuntimeHealthState()
+def build_speed_runtime(config: AppConfig) -> SpeedRuntimeBundle:
+    """Build the grouped GPS/OBD speed-source runtime services."""
 
-    # DB + settings
-    history = create_history_db(
-        config,
-        corruption_reporter=health_state.mark_db_corrupted,
-    )
-    history_db = history.run_repository
-    history_lifecycle = history.lifecycle
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
     obd_admin_client = ObdAdminClient()
     obd_runtime = build_obd_runtime(admin_client=obd_admin_client)
-    speed_services = build_speed_source_services(
+    return SpeedRuntimeBundle(
         gps_monitor=gps_monitor,
-        obd_facts=obd_runtime.observation.facts,
-        obd_projection=obd_runtime.observation.projection,
-        obd_device_admin=obd_admin_client,
-        obd_status_refresher=obd_runtime.control.admin,
-        obd_control=obd_runtime.control.settings,
+        obd_runtime=obd_runtime,
+        speed_services=build_speed_source_services(
+            gps_monitor=gps_monitor,
+            obd_facts=obd_runtime.observation.facts,
+            obd_projection=obd_runtime.observation.projection,
+            obd_device_admin=obd_admin_client,
+            obd_status_refresher=obd_runtime.control.admin,
+            obd_control=obd_runtime.control.settings,
+        ),
     )
-    settings_services = build_settings_service_bundle(
-        snapshot_repository=history.settings_snapshot_repository,
-        speed_control=speed_services.control,
-    )
-    runtime_settings = settings_services.runtime_deps()
 
-    # persistence services
-    history_run_service = HistoryRunService(
-        history_db,
-    )
-    report_service = HistoryReportService(
-        history_db,
-        pdf_renderer=_build_prepared_pdf_bytes,
-    )
-    history_export_service = HistoryExportService(
-        history_db,
-    )
-    run_service = ProjectedHistoryRunService(
-        history_run_service,
-        current_car_reader=settings_services.settings_reader,
-    )
-    export_service = ProjectedHistoryExportService(history_export_service)
 
-    # ingress
+def build_history_service_bundle(
+    *,
+    history: HistoryPersistenceAdapters,
+    current_car_reader: SettingsReader,
+) -> HistoryServiceBundle:
+    """Build the focused history/reporting services over shared persistence."""
+
+    history_run_service = HistoryRunService(history.run_repository)
+    history_export_service = HistoryExportService(history.run_repository)
+    return HistoryServiceBundle(
+        run_service=ProjectedHistoryRunService(
+            history_run_service,
+            current_car_reader=current_car_reader,
+        ),
+        report_service=HistoryReportService(
+            history.run_repository,
+            pdf_renderer=_build_prepared_pdf_bytes,
+        ),
+        export_service=ProjectedHistoryExportService(history_export_service),
+    )
+
+
+def build_live_runtime(
+    *,
+    config: AppConfig,
+    accel_scale_g_per_lsb: float,
+    history: HistoryPersistenceAdapters,
+    speed_runtime: SpeedRuntimeBundle,
+    runtime_settings: RuntimeSettingsDeps,
+) -> LiveRuntimeBundle:
+    """Build the grouped live processing, broadcast, and recording services."""
+
     registry = ClientRegistry(
         db=history.client_name_repository,
         live_ttl_seconds=config.processing.client_live_ttl_seconds,
@@ -317,8 +380,6 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         bind_host=config.udp.control_host,
         bind_port=config.udp.control_port,
     )
-
-    # processing loop
     processing_loop_state = ProcessingLoopState()
     processing_loop = ProcessingLoop(
         state=processing_loop_state,
@@ -329,22 +390,18 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         processor=processor,
         control_plane=control_plane,
     )
-
-    # websocket
     ws_hub = WebSocketHub()
     ws_broadcast = WsBroadcastService(
         ui_push_hz=UI_PUSH_HZ,
         ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
         registry=registry,
         processor=processor,
-        gps_monitor=speed_services.observation,
+        gps_monitor=speed_runtime.speed_services.observation,
         gps_enabled=config.gps.gps_enabled,
         settings_reader=runtime_settings.settings_reader,
         speed_source_reader=runtime_settings.speed_source_reader,
         sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
     )
-
-    # run recorder
     run_recorder = RunRecorder(
         RunRecorderConfig(
             metrics_log_hz=config.logging.metrics_log_hz,
@@ -356,73 +413,145 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             persist_history_db=config.logging.persist_history_db,
         ),
         registry=registry,
-        gps_monitor=speed_services.observation,
+        gps_monitor=speed_runtime.speed_services.observation,
         processor=processor,
-        history_db=history_db,
+        history_db=history.run_repository,
         settings_store=runtime_settings.settings_reader,
         sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
         language_provider=runtime_settings.language_provider,
     )
 
-    # requeue stale analysis runs
-    stale_analyzing = history_db.stale_analyzing_run_ids()
+    stale_analyzing = history.run_repository.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
         run_recorder.schedule_post_analysis(stale_run_id)
     if stale_analyzing:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))
 
-    # update manager
-    update_manager = build_update_manager(
-        ap_con_name=config.ap.con_name,
-        wifi_ifname=config.ap.ifname,
-        rollback_dir=str(config.update.rollback_dir),
-    )
-
-    esp_flash_manager = EspFlashManager()
-
-    lifecycle = RuntimeState(
-        config=config,
+    return LiveRuntimeBundle(
         registry=registry,
+        worker_pool=worker_pool,
         processor=processor,
         control_plane=control_plane,
-        worker_pool=worker_pool,
-        settings_store=runtime_settings.settings_reader,
-        gps_monitor=gps_monitor,
-        obd_runner=obd_runtime.connection.runner,
-        history_db=history_lifecycle,
         processing_loop_state=processing_loop_state,
-        health_state=health_state,
         processing_loop=processing_loop,
         ws_hub=ws_hub,
         ws_broadcast=ws_broadcast,
         run_recorder=run_recorder,
-        update_manager=update_manager,
-        esp_flash_manager=esp_flash_manager,
     )
-    router = RouterDeps(
-        telemetry=TelemetryDeps(
-            processing_loop_state=processing_loop_state,
-            health_state=health_state,
-            processor=processor,
-            registry=registry,
-            control_plane=control_plane,
-            run_recorder=run_recorder,
-            ws_hub=ws_hub,
+
+
+def build_update_deps(config: AppConfig) -> UpdateDeps:
+    """Build the grouped updater and firmware-flash dependencies."""
+
+    return UpdateDeps(
+        update_manager=build_update_manager(
+            ap_con_name=config.ap.con_name,
+            wifi_ifname=config.ap.ifname,
+            rollback_dir=str(config.update.rollback_dir),
         ),
+        esp_flash_manager=EspFlashManager(),
+    )
+
+
+def build_lifecycle_state(
+    *,
+    config: AppConfig,
+    health_state: RuntimeHealthState,
+    history: HistoryPersistenceAdapters,
+    speed_runtime: SpeedRuntimeBundle,
+    runtime_settings: RuntimeSettingsDeps,
+    live_runtime: LiveRuntimeBundle,
+    updates: UpdateDeps,
+) -> RuntimeState:
+    """Build the lifecycle-focused runtime dependency bundle."""
+
+    return RuntimeState(
+        config=config,
+        registry=live_runtime.registry,
+        processor=live_runtime.processor,
+        control_plane=live_runtime.control_plane,
+        worker_pool=live_runtime.worker_pool,
+        settings_store=runtime_settings.settings_reader,
+        gps_monitor=speed_runtime.gps_monitor,
+        obd_runner=speed_runtime.obd_runtime.connection.runner,
+        history_db=history.lifecycle,
+        processing_loop_state=live_runtime.processing_loop_state,
+        health_state=health_state,
+        processing_loop=live_runtime.processing_loop,
+        ws_hub=live_runtime.ws_hub,
+        ws_broadcast=live_runtime.ws_broadcast,
+        run_recorder=live_runtime.run_recorder,
+        update_manager=updates.update_manager,
+        esp_flash_manager=updates.esp_flash_manager,
+    )
+
+
+def build_router_deps(
+    *,
+    health_state: RuntimeHealthState,
+    speed_runtime: SpeedRuntimeBundle,
+    settings_services: SettingsServiceBundle,
+    history_services: HistoryServiceBundle,
+    live_runtime: LiveRuntimeBundle,
+    updates: UpdateDeps,
+) -> RouterDeps:
+    """Build the grouped HTTP route dependency bundle."""
+
+    return RouterDeps(
+        telemetry=live_runtime.telemetry_deps(health_state=health_state),
         settings=settings_services.http_settings_deps(
-            speed_status_service=speed_services.observation,
-            obd_admin_service=speed_services.admin,
+            speed_status_service=speed_runtime.speed_services.observation,
+            obd_admin_service=speed_runtime.speed_services.admin,
         ),
-        history=HistoryDeps(
-            run_service=run_service,
-            report_service=report_service,
-            export_service=export_service,
-        ),
-        updates=UpdateDeps(
-            update_manager=update_manager,
-            esp_flash_manager=esp_flash_manager,
-        ),
+        history=history_services.http_deps(),
+        updates=updates,
+    )
+
+
+def build_runtime(config: AppConfig) -> AppRuntime:
+    """Construct all services and return the app runtime bundle."""
+    accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
+    health_state = RuntimeHealthState()
+
+    history = create_history_db(
+        config,
+        corruption_reporter=health_state.mark_db_corrupted,
+    )
+    speed_runtime = build_speed_runtime(config)
+    settings_services = build_settings_service_bundle(
+        snapshot_repository=history.settings_snapshot_repository,
+        speed_control=speed_runtime.speed_services.control,
+    )
+    runtime_settings = settings_services.runtime_deps()
+    history_services = build_history_service_bundle(
+        history=history,
+        current_car_reader=settings_services.settings_reader,
+    )
+    live_runtime = build_live_runtime(
+        config=config,
+        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+        history=history,
+        speed_runtime=speed_runtime,
+        runtime_settings=runtime_settings,
+    )
+    updates = build_update_deps(config)
+    lifecycle = build_lifecycle_state(
+        config=config,
+        health_state=health_state,
+        history=history,
+        speed_runtime=speed_runtime,
+        runtime_settings=runtime_settings,
+        live_runtime=live_runtime,
+        updates=updates,
+    )
+    router = build_router_deps(
+        health_state=health_state,
+        speed_runtime=speed_runtime,
+        settings_services=settings_services,
+        history_services=history_services,
+        live_runtime=live_runtime,
+        updates=updates,
     )
     settings_services.speed_source_service.sync_all()
     return AppRuntime(lifecycle=lifecycle, router=router)

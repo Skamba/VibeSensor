@@ -44,6 +44,11 @@ state. Current `main` is intentionally split more narrowly:
   current speed-source selection into live runtime collaborators. HTTP adapters
   and runtime collaborators should consume the focused settings ports they need
   rather than importing persistence internals directly.
+- `vibesensor.app.container.build_runtime()` is a thin app-layer orchestrator.
+  It delegates speed/OBD setup, history/reporting services, live runtime
+  services, update deps, lifecycle state, and router wiring to focused builder
+  functions with explicit bundles rather than extending one monolithic
+  composition function.
 - Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
   `PostAnalysisWorker`) own live per-process coordination and per-run state.
 - History persistence now uses a shared SQLite lifecycle engine plus narrow
