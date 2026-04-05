@@ -87,6 +87,9 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
 | `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and delegated event bindings together |
 | `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
+| `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, presenter, and typed bindings together |
+| `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
+| `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/features/update_feature.ts` | Thin update facade that binds DOM events, delegates state rendering to the presenter, and delegates update commands to the workflow |
 | `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
@@ -94,6 +97,8 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that owns readiness/banner/journey/history/log/select rendering from workflow state |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_view.ts` | Dedicated realtime logging/readiness DOM renderer built from typed view-model objects |
+| `app/views/settings_speed_source_bindings.ts` | Typed speed-source form bindings that decode radio/input/navigation/device actions away from the workflow |
+| `app/views/settings_speed_source_presenter.ts` | Speed-source presenter that owns summary, validation, and OBD-device-list DOM rendering from typed workflow state |
 | `app/views/update_feature_presenter.ts` | Update presenter that owns readiness derivation, transport/control DOM state, and typed handoff into the update status/internet panels |
 | `app/views/update_status_view.ts` | Thin update-status coordinator that assembles typed section models into the settings update panel |
 | `app/views/update_status_view_models.ts` | Typed update-status section builders for current status, journey, issues, attempt history, health, and log cards |
