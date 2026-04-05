@@ -536,9 +536,9 @@ test("speed-source bindings turn form events and OBD pairing clicks into typed a
   obdDeviceList.dispatch("click", { target: pairButton as unknown as EventTarget });
 
   expect(actions).toEqual([
-    { type: "speed-source-changed" },
-    { type: "manual-speed-input" },
-    { type: "stale-timeout-input" },
+    { type: "speed-source-changed", mode: "manual" },
+    { type: "manual-speed-input", value: "80" },
+    { type: "stale-timeout-input", value: "5" },
     { type: "save" },
     { type: "scan-obd-devices" },
     { type: "navigate-context" },
@@ -549,9 +549,9 @@ test("speed-source bindings turn form events and OBD pairing clicks into typed a
   dispose();
   saveSpeedSourceBtn.click();
   expect(actions).toEqual([
-    { type: "speed-source-changed" },
-    { type: "manual-speed-input" },
-    { type: "stale-timeout-input" },
+    { type: "speed-source-changed", mode: "manual" },
+    { type: "manual-speed-input", value: "80" },
+    { type: "stale-timeout-input", value: "5" },
     { type: "save" },
     { type: "scan-obd-devices" },
     { type: "navigate-context" },
