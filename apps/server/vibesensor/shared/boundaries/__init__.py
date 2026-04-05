@@ -3,6 +3,7 @@
 Focused conversion families live in sibling subpackages:
 
 - ``analysis_payloads/`` owns ``AnalysisResult`` <-> summary/persisted payloads
+- ``clients/`` owns client API/WS payload projection from runtime snapshots
 - ``runs/`` owns persisted run metadata, log, capture, and suitability adapters
 - ``reporting/`` owns report preparation and report-facing fact shaping
 - ``settings/`` owns persisted settings normalization plus shared settings payload shaping

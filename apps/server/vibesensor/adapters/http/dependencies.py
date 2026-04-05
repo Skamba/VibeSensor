@@ -15,12 +15,15 @@ from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.boundaries.clients import ClientSnapshotSource
 from vibesensor.shared.ports import (
     AnalysisSettingsStore,
     CarSettingsStore,
     SensorMetadataStore,
+    TrackedClient,
     UiPreferencesStore,
 )
+from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.use_cases.history.exports import HistoryExportDownload
 from vibesensor.use_cases.history.reports import HistoryReportPdf
 from vibesensor.use_cases.run import RunRecorder
@@ -78,6 +81,33 @@ class SpeedSourceSettingsServiceProtocol(Protocol):
     def get_speed_source(self) -> SpeedSourcePayload: ...
 
     def update_speed_source(self, data: SpeedSourceUpdatePayload) -> SpeedSourcePayload: ...
+
+
+class ClientRegistryProtocol(ClientSnapshotSource, Protocol):
+    def get(self, client_id: str) -> TrackedClient | None: ...
+
+    def active_client_ids(
+        self,
+        now: float | None = None,
+        *,
+        now_mono: float | None = None,
+    ) -> list[str]: ...
+
+    def set_location(self, client_id: str, location_code: str) -> TrackedClient | None: ...
+
+    def set_name(self, client_id: str, name: str) -> TrackedClient | None: ...
+
+    def clear_name(self, client_id: str) -> TrackedClient | None: ...
+
+    def remove_client(self, client_id: str) -> bool: ...
+
+
+class ClientProcessorProtocol(Protocol):
+    def all_latest_metrics(self, client_ids: list[str]) -> dict[str, ClientMetrics]: ...
+
+
+class ClientControlPlaneProtocol(Protocol):
+    def send_identify(self, client_id: str, duration_ms: int) -> tuple[bool, int | None]: ...
 
 
 @dataclass(slots=True)
