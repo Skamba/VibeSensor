@@ -267,3 +267,24 @@ export function findByClass(node: FakeNode, className: string): FakeElement[] {
   }
   return matches;
 }
+
+export function findByAttribute(
+  node: FakeNode,
+  attributeName: string,
+  expectedValue?: string,
+): FakeElement[] {
+  const matches: FakeElement[] = [];
+  for (const child of node.childNodes) {
+    if (child instanceof FakeElement) {
+      const actualValue = child.getAttribute(attributeName);
+      if (
+        actualValue !== null
+        && (expectedValue === undefined || actualValue === expectedValue)
+      ) {
+        matches.push(child);
+      }
+      matches.push(...findByAttribute(child, attributeName, expectedValue));
+    }
+  }
+  return matches;
+}
