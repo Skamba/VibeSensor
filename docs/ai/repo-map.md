@@ -43,7 +43,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `use_cases/history/`: history queries, report loading/preparation/caching, and export orchestration. See `docs/report_pipeline.md` for report-specific flow.
 - `infra/runtime/health_snapshot.py`: application-level runtime health snapshot assembly for the `/api/health` route.
 - `use_cases/run/`: recording pipeline orchestration. `logger.py` is the `RunRecorder` entrypoint, `run_context.py` owns run/history context orchestration helpers, `capture_readiness.py` owns the backend idle/pre-record gate, and the `post_analysis*.py` modules split queueing, loading, execution, and summary shaping. See `docs/run_lifecycle.md` for the recording -> persistence -> post-analysis handoff.
-- `use_cases/updates/`: wheel-based updater workflow and public facade. Focused subpackages now group `updates/firmware/`, `updates/wifi/`, and `updates/releases/`, while the root package keeps installer/state/orchestration helpers.
+- `use_cases/updates/`: wheel-based updater workflow and public facade. Focused subpackages group `updates/firmware/`, `updates/wifi/`, and `updates/releases/`, while the root package keeps installer/state/orchestration helpers.
 - `shared/`: cross-cutting ports, model/payload types, JSON helpers, boundary codecs, split constant modules under `shared/constants/`, and small package-level helpers such as `shared/_data_files.py`, `shared/sensor_units.py`, and `shared/run_context_warning.py`. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, `shared/types/history_analysis_contracts.py`, `shared/types/run_schema.py`, `shared/types/car_config.py`, `shared/types/speed_source_config.py`, and the codec/projection modules under `shared/boundaries/` such as `settings_snapshot_codec.py`.
 - `domain/`: domain model package for classification, ranking, lifecycle, and query logic. See `docs/domain-model.md` for the domain object graph.
 - `apps/ui/src/app/runtime/`: UI composition root and runtime controllers.
@@ -54,14 +54,14 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 ## Backend layer dependency DAG
 
 - Import-direction enforcement lives in `tools/dev/verify_backend_static_guards.py::_check_layer_boundaries()`.
-- Current allowed dependency directions are:
+- Allowed dependency directions are:
   - `domain` -> none
   - `shared` -> `domain`
   - `use_cases` -> `domain`, `shared`
   - `infra` -> `domain`, `shared`
   - `adapters` -> `domain`, `shared`, `infra`, `use_cases`
   - `app` -> all backend layers
-- `shared -> domain` and `infra -> domain` are intentional in the current architecture. Questions in the `#1271` family should focus on disallowed inward leakage such as `use_cases -> adapters` or `domain -> outer layers`, not these permitted edges.
+- `shared -> domain` and `infra -> domain` are intentional allowed edges. Focus dependency cleanup on disallowed inward leakage such as `use_cases -> adapters` or `domain -> outer layers`, not these permitted edges.
 
 ## Test layout
 

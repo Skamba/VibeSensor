@@ -173,6 +173,11 @@ def _read_text(repo_root: Path, relative_path: str) -> str | None:
 def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list[str]:
     """Flag AI guidance drift in the canonical entrypoint stack."""
     issues: list[str] = []
+    instruction_files = sorted(
+        path
+        for path in markdown_files
+        if path.startswith(".github/instructions/") and path.endswith(".instructions.md")
+    )
 
     docs_ai_files = {path for path in markdown_files if path.startswith("docs/ai/")}
     unexpected_guides = sorted(docs_ai_files - ALLOWED_AI_GUIDANCE_DOCS)
@@ -208,6 +213,11 @@ def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list
             issues.append(
                 ".github/copilot-instructions.md must point to docs/ai/repo-map.md"
             )
+        for path in instruction_files:
+            if path not in copilot_text:
+                issues.append(
+                    f".github/copilot-instructions.md must point to {path}"
+                )
 
     repo_map_text = _read_text(repo_root, "docs/ai/repo-map.md")
     if repo_map_text is None:
@@ -219,6 +229,18 @@ def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list
             issues.append(
                 "docs/ai/repo-map.md must point back to .github/copilot-instructions.md"
             )
+
+    docs_index_text = _read_text(repo_root, "docs/README.md")
+    if docs_index_text is None:
+        issues.append("missing docs/README.md")
+    else:
+        for path in [
+            ".github/copilot-instructions.md",
+            "docs/ai/repo-map.md",
+            *instruction_files,
+        ]:
+            if path not in docs_index_text:
+                issues.append(f"docs/README.md must list {path}")
 
     return issues
 

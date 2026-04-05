@@ -3,6 +3,9 @@
 ## Key locations
 
 - Server tests live under `apps/server/tests/`.
+- UI validation lives under `apps/ui/` (Vite build/typecheck plus Playwright browser checks).
+- Firmware build/flash guidance lives in `firmware/esp/README.md`.
+- Pi-image build/validation guidance lives in `infra/pi-image/pi-gen/README.md`.
 - Use `make test-ci-lite` for the non-Docker blocking-CI subset.
 - Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner.
 - The full end-to-end verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
@@ -77,7 +80,7 @@ and complete in under 5 seconds.
 
 ## Running tests
 
-Four tiers: `make test-changed` for a fast changed-file heuristic, `make test` for backend iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
+Backend/local CI tiers: `make test-changed` for a fast changed-file heuristic, `make test` for backend iteration, `make test-ci-lite` for the non-Docker blocking-CI subset, `make test-all` for the broader local runner, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
 
 Main local tiers:
 
@@ -121,6 +124,43 @@ make test-full-suite
 wheel, validates packaged static assets, boots the packaged server, and checks
 that `/api/health` reaches readiness. It is complementary to Docker/e2e
 validation, not a duplicate of it.
+
+## Frontend validation
+
+Use the standard UI workflow for `apps/ui/**` changes:
+
+```bash
+cd apps/ui && npm run typecheck && npm run build
+cd apps/ui && npm run test:visual
+python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
+```
+
+- `npm run test:visual` is the rendered-state and snapshot gate; use
+  `npm run test:visual:update` only for intentional baseline changes.
+- `frontend-typecheck` is the contract/type gate, while `ui-smoke` is the CI
+  browser path. Use `act -j frontend-typecheck -W .github/workflows/ci.yml` or
+  `act -j ui-smoke -W .github/workflows/ci.yml` when you need GitHub-workflow
+  parity for those jobs.
+
+## Firmware and Pi-image validation
+
+Use the narrowest existing validation path that matches the layer you changed:
+
+```bash
+cd firmware/esp && pio run
+BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
+BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
+./infra/pi-image/pi-gen/validate-image.sh
+python3 tools/tests/run_ci_parallel.py --job release-smoke
+```
+
+- Use `pio run -t upload` and `pio device monitor` only when hardware-backed
+  firmware behavior needs confirmation.
+- Use `BUILD_MODE=app` for packaged app artifact changes, `BUILD_MODE=image` for
+  image-stage logic, and `validate-image.sh` to rerun image validation without a
+  rebuild. `BUILD_MODE=all` is only needed when both layers changed.
+- `release-smoke` validates packaged server/UI artifacts; it complements the
+  full Pi-image build rather than replacing it.
 
 ## Fuzzing
 
