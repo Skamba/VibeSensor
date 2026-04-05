@@ -1,0 +1,148 @@
+/* ── Dark mode ─────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --md-sys-color-primary: #a78bfa;
+    --md-sys-color-on-primary: #1a1c24;
+    --md-sys-color-primary-container: #2e1065;
+    --md-sys-color-on-primary-container: #ede9fe;
+    --md-sys-color-secondary: #a3a5b5;
+    --md-sys-color-on-secondary: #1a1c24;
+    --md-sys-color-surface: #0f1117;
+    --md-sys-color-surface-container: #1a1d27;
+    --md-sys-color-surface-container-high: #22252f;
+    --md-sys-color-surface-container-highest: #2a2d38;
+    --md-sys-color-on-surface: #e4e5ea;
+    --md-sys-color-on-surface-variant: #9b9da8;
+    --md-sys-color-outline: #4a4d58;
+    --md-sys-color-outline-variant: #33363f;
+    --md-sys-color-tertiary: #4ade80;
+    --md-sys-color-on-tertiary: #0f1117;
+    --md-sys-color-error: #f87171;
+    --md-sys-color-on-error: #0f1117;
+    --md-sys-color-focus: #8b5cf6;
+
+    --brand-600: #8b5cf6;
+    --brand-700: #7c3aed;
+    --brand-400: #c4b5fd;
+    --success-400: #4ade80;
+    --success-700: #16a34a;
+    --danger-400: #f87171;
+    --danger-700: #dc2626;
+    --on-fill: #0f1117;
+    --menu-hover: rgba(139, 92, 246, 0.12);
+    --pill-muted-bg: #22252f;
+    --pill-muted-text: #9b9da8;
+    --pill-ok-bg: rgba(74, 222, 128, 0.14);
+    --pill-ok-text: #4ade80;
+    --pill-bad-bg: rgba(248, 113, 113, 0.14);
+    --pill-bad-text: #f87171;
+    --row-even: #161923;
+    --row-hover: rgba(139, 92, 246, 0.08);
+    --chart-grid: #2a2d38;
+    --tooltip-bg: rgba(10, 12, 18, 0.96);
+    --tooltip-fg: #e4e5ea;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .site-header {
+    background: rgba(15, 17, 23, 0.92);
+    border-bottom-color: var(--border);
+  }
+
+  .empty-state {
+    background: rgba(26, 29, 39, 0.94);
+  }
+
+  .empty-state::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239b9da8' stroke-width='1.8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3 5h18M6 8v8m4-5v5m4-9v9m4-6v6M4 19h16'/%3E%3C/svg%3E");
+  }
+
+  .swatch {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .live-sensor-card__status-dot {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  }
+
+  .vib-matrix tr[data-severity="l5"] td:first-child { background: rgba(248, 113, 113, 0.15); }
+  .vib-matrix tr[data-severity="l4"] td:first-child { background: rgba(251, 191, 36, 0.12); }
+  .vib-matrix tr[data-severity="l3"] td:first-child { background: rgba(250, 204, 21, 0.10); }
+  .vib-matrix tr[data-severity="l2"] td:first-child { background: rgba(74, 222, 128, 0.12); }
+  .vib-matrix tr[data-severity="l1"] td:first-child { background: rgba(139, 92, 246, 0.12); }
+
+  td.vib-cell[data-severity="l5"] { background: rgba(248, 113, 113, 0.12); }
+  td.vib-cell[data-severity="l4"] { background: rgba(251, 191, 36, 0.10); }
+  td.vib-cell[data-severity="l3"] { background: rgba(250, 204, 21, 0.08); }
+  td.vib-cell[data-severity="l2"] { background: rgba(74, 222, 128, 0.08); }
+  td.vib-cell[data-severity="l1"] { background: rgba(139, 92, 246, 0.08); }
+
+  .history-row--expanded td { background: var(--surface-2) !important; }
+
+  .uplot .u-select { background: rgba(167, 139, 250, 0.15); }
+
+  .matrix-tooltip {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ── Drive / tablet sizing mode ────────────────────────────── */
+@media (pointer: coarse) and (max-width: 1024px) {
+  body { font-size: 17px; }
+
+  select,
+  input,
+  button,
+  .btn {
+    height: 44px;
+    font-size: 1rem;
+    padding: 0 var(--space-4);
+  }
+
+  .menu-btn {
+    padding: 0.65rem 1.2rem;
+    font-size: 1rem;
+  }
+
+  .pill,
+  .badge,
+  .status-pill {
+    height: 36px;
+    font-size: 0.88rem;
+  }
+
+  .stat__label { font-size: 0.84rem; }
+  .stat__value { font-size: 1.25rem; }
+
+  .card__title { font-size: 1.1rem; }
+
+  .vib-matrix th,
+  .vib-matrix td,
+  .history-table th,
+  .history-table td,
+  .clients-table th,
+  .clients-table td {
+    padding: 0.75rem;
+  }
+
+  .speed {
+    min-height: 44px;
+    font-size: 1.4rem;
+  }
+
+  .wrap { padding: var(--space-4); }
+  .site-header { padding: var(--space-3) var(--space-4); }
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

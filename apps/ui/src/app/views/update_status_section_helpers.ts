@@ -17,7 +17,10 @@ export function createUpdateBadgeElement(
   badge: UpdateStatusBadgeModel,
 ): HTMLSpanElement {
   return createElementNode("span", {
-    className: `pill pill--${badge.variant}`,
+    className: "pill",
+    data: {
+      variant: badge.variant,
+    },
     text: badge.text,
   });
 }

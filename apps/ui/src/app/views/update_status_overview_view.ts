@@ -44,7 +44,7 @@ function createJourneyStageElement(
   stage: UpdateJourneyStageModel,
 ): HTMLLIElement {
   return createElementNode("li", {
-    className: `maintenance-stage maintenance-stage--${stage.state}`,
+    className: "maintenance-stage",
     attrs: {
       "data-stage-phase": stage.phase,
       "data-stage-state": stage.state,

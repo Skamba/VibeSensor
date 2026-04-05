@@ -19,7 +19,7 @@ function renderItem(
   escapeHtml: (value: unknown) => string,
 ): string {
   const marker = item.state === "ready" ? "✓" : "!";
-  return `<li class="maintenance-readiness__item maintenance-readiness__item--${item.state}">
+  return `<li class="maintenance-readiness__item" data-readiness-state="${item.state}">
     <span class="maintenance-readiness__marker" aria-hidden="true">${marker}</span>
     <div class="maintenance-readiness__body">
       <div class="maintenance-readiness__label">${escapeHtml(item.label)}</div>
@@ -39,7 +39,7 @@ export function renderMaintenanceReadinessPanel(
         <div class="maintenance-readiness__title">${escapeHtml(model.title)}</div>
         <div class="maintenance-readiness__summary">${escapeHtml(model.summary)}</div>
       </div>
-      <span class="pill pill--${model.stateVariant}">${escapeHtml(model.stateLabel)}</span>
+      <span class="pill" data-variant="${model.stateVariant}">${escapeHtml(model.stateLabel)}</span>
     </div>
     <ul class="maintenance-readiness__list">${items}</ul>
   </section>`;

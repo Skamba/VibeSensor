@@ -37,7 +37,11 @@ export function renderRealtimeLoggingSummary(
       setNodeText(container, summaryText);
     }
   }
-  container.classList.toggle("logging-summary--panel", summaryPanel !== null);
+  if (summaryPanel) {
+    container.setAttribute("data-summary-layout", "panel");
+  } else {
+    container.removeAttribute("data-summary-layout");
+  }
   return nextSignature;
 }
 
@@ -45,7 +49,10 @@ function createChecklistItemElement(
   item: RealtimeCaptureReadinessChecklistItemModel,
 ): HTMLDivElement {
   return createElementNode("div", {
-    className: `capture-readiness__item capture-readiness__item--${item.state}`,
+    className: "capture-readiness__item",
+    data: {
+      readinessState: item.state,
+    },
     children: [
       createElementNode("div", {
         className: "capture-readiness__row",

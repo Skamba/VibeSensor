@@ -9,6 +9,7 @@ import {
   formatUsbInternetSummary,
   renderInternetStatusPanel,
 } from "./internet_status_view";
+import { setChoiceCardState } from "../style_state";
 import {
   renderMaintenanceReadinessPanel,
   type MaintenanceReadinessPanelModel,
@@ -231,12 +232,13 @@ export function createUpdateFeaturePresenter(
         els.updateTransportUsbRadio.checked = usingUsb;
       }
     }
-    els.updateTransportChoiceWifi?.classList.toggle("speed-source-choice--selected", !usingUsb);
-    els.updateTransportChoiceUsb?.classList.toggle("speed-source-choice--selected", usingUsb);
-    els.updateTransportChoiceUsb?.classList.toggle(
-      "speed-source-choice--disabled",
-      !usbAvailable && !controlsLocked,
-    );
+    setChoiceCardState(els.updateTransportChoiceWifi, {
+      selected: !usingUsb,
+    });
+    setChoiceCardState(els.updateTransportChoiceUsb, {
+      selected: usingUsb,
+      disabled: !usbAvailable && !controlsLocked,
+    });
     if (els.updateWifiFields) {
       els.updateWifiFields.hidden = usingUsb;
     }
