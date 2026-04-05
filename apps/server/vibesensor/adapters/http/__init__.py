@@ -40,7 +40,10 @@ def create_router(services: RouterDeps) -> APIRouter:
     )
     router.include_router(
         create_settings_routes(
-            services.settings.settings_store,
+            services.settings.car_settings,
+            services.settings.analysis_settings,
+            services.settings.sensor_metadata_store,
+            services.settings.ui_preferences,
             services.settings.speed_source_service,
             services.settings.speed_status_service,
             services.settings.obd_admin_service,
@@ -50,7 +53,7 @@ def create_router(services: RouterDeps) -> APIRouter:
         create_client_routes(
             services.telemetry.registry,
             services.telemetry.control_plane,
-            services.settings.settings_store,
+            services.settings.sensor_metadata_store,
             services.telemetry.processor,
         ),
     )

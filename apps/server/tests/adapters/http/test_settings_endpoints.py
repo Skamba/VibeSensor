@@ -75,6 +75,9 @@ def _settings_router(fake_state):
     fake_state.settings_store.get_cars.return_value = _make_cars_snapshot()
     return create_settings_routes(
         fake_state.settings_store,
+        fake_state.settings_store,
+        fake_state.settings_store,
+        fake_state.settings_store,
         fake_state.speed_source_service,
         fake_state.gps_monitor,
         fake_state.gps_monitor,

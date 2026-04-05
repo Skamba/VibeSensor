@@ -29,7 +29,6 @@ from vibesensor.adapters.http.dependencies import (
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.domain import AnalysisSettingsSnapshot
-from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
 from vibesensor.infra.runtime.registry import ClientRegistry
@@ -180,8 +179,8 @@ def _default_cars_snapshot() -> CarsSnapshot:
     )
 
 
-def _settings_store_mock() -> SettingsStore:
-    store = create_autospec(SettingsStore, instance=True, spec_set=True)
+def _settings_store_mock() -> MagicMock:
+    store = MagicMock()
     store.analysis_settings_snapshot.return_value = AnalysisSettingsSnapshot(
         **AnalysisSettingsSnapshot.DEFAULTS
     )
@@ -197,6 +196,9 @@ def _settings_store_mock() -> SettingsStore:
     store.update_car.return_value = _default_cars_snapshot()
     store.delete_car.return_value = _default_cars_snapshot()
     store.set_active_car.return_value = _default_cars_snapshot()
+    store.update_active_car_aspects.return_value = {}
+    store.set_sensor.return_value = {}
+    store.remove_sensor.return_value = True
     store.update_speed_source.return_value = {
         "speedSource": "manual",
         "manualSpeedKph": 0.0,
@@ -240,7 +242,7 @@ class FakeState:
     ws_hub: WebSocketHub = field(default_factory=_ws_hub_mock)
     gps_monitor: GPSSpeedMonitor = field(default_factory=_gps_monitor_mock)
     run_recorder: RunRecorder = field(default_factory=_run_recorder_mock)
-    settings_store: SettingsStore = field(default_factory=_settings_store_mock)
+    settings_store: MagicMock = field(default_factory=_settings_store_mock)
     speed_source_service: MagicMock = field(default_factory=_speed_source_service_mock)
     history_db: object = field(default_factory=MagicMock)
     update_manager: UpdateManager = field(default_factory=_update_manager_mock)
@@ -291,7 +293,10 @@ class FakeState:
     @property
     def settings(self) -> SettingsDeps:
         return SettingsDeps(
-            settings_store=self.settings_store,
+            car_settings=self.settings_store,
+            analysis_settings=self.settings_store,
+            sensor_metadata_store=self.settings_store,
+            ui_preferences=self.settings_store,
             speed_source_service=self.speed_source_service,
             speed_status_service=self.gps_monitor,
             obd_admin_service=self.gps_monitor,

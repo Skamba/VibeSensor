@@ -48,7 +48,10 @@ def _build_openapi_app() -> FastAPI:
             ws_hub=placeholder,
         ),
         settings=SettingsDeps(
-            settings_store=placeholder,
+            car_settings=placeholder,
+            analysis_settings=placeholder,
+            sensor_metadata_store=placeholder,
+            ui_preferences=placeholder,
             speed_source_service=placeholder,
             speed_status_service=placeholder,
             obd_admin_service=placeholder,
