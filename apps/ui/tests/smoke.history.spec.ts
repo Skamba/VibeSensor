@@ -38,7 +38,7 @@ test("history empty state points users back to Live", async ({ page }) => {
   await expect(emptyState).toContainText("Capture the first run from Live.");
   await expect(emptyState).toContainText("History fills automatically");
   await emptyState.getByRole("button", { name: "Go to Live" }).click();
-  await expect(page.locator("#dashboardView")).toHaveClass(/active/);
+  await expect(page.locator("#dashboardView")).toHaveJSProperty("hidden", false);
 });
 
 test("history rows show diagnostic context before expansion", async ({ page }) => {
