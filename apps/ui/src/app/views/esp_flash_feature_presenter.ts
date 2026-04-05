@@ -9,10 +9,11 @@ import {
   renderMaintenanceReadinessPanel,
   type MaintenanceReadinessPanelModel,
 } from "./maintenance_readiness_view";
+import { setVariantState, type VisualVariant } from "../style_state";
 
 const LOG_PANEL_BASE_CLASS = "maintenance-log-slot";
 
-const STATE_TO_VARIANT: Readonly<Record<string, string>> = {
+const STATE_TO_VARIANT: Readonly<Record<string, VisualVariant>> = {
   success: "ok",
   running: "warn",
   failed: "bad",
@@ -144,7 +145,7 @@ export function createEspFlashFeaturePresenter(
       const stageState = resolveJourneyStageState(state, index);
       const markerLabel = stageState === "done" ? "✓" : `${index + 1}`;
       const currentStepAttr = stageState === "active" ? ' aria-current="step"' : "";
-      return `<li class="maintenance-stage maintenance-stage--${stageState}" data-stage-phase="${stage.phase}" data-stage-state="${stageState}"${currentStepAttr}>
+      return `<li class="maintenance-stage" data-stage-phase="${stage.phase}" data-stage-state="${stageState}"${currentStepAttr}>
         <span class="maintenance-stage__marker">${markerLabel}</span>
         <div class="maintenance-stage__body">
           <div class="maintenance-stage__title">${escapeHtml(t(stage.titleKey))}</div>
@@ -511,7 +512,7 @@ export function createEspFlashFeaturePresenter(
       const errorHtml = attempt.error
         ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(attempt.error)}</div>`
         : "";
-      return `<li class="maintenance-attempt"><div class="maintenance-attempt__header"><span class="pill pill--${variant}">${escapeHtml(stateLabel)}</span><strong>${escapeHtml(port)}</strong></div><div class="maintenance-attempt__meta subtle">${escapeHtml(meta.join(" · "))}</div>${errorHtml}</li>`;
+      return `<li class="maintenance-attempt"><div class="maintenance-attempt__header"><span class="pill" data-variant="${variant}">${escapeHtml(stateLabel)}</span><strong>${escapeHtml(port)}</strong></div><div class="maintenance-attempt__meta subtle">${escapeHtml(meta.join(" · "))}</div>${errorHtml}</li>`;
     });
     els.espFlashHistoryPanel.innerHTML = `<ul class="maintenance-attempt-list">${rows.join("")}</ul>`;
   }
@@ -525,7 +526,8 @@ export function createEspFlashFeaturePresenter(
     const extra = state.status.error ? ` — ${state.status.error}` : "";
     els.espFlashStatusBanner.textContent = `${stateLabel}${extra}`;
     const variant = STATE_TO_VARIANT[safeState] || "muted";
-    els.espFlashStatusBanner.className = `pill pill--${variant}`;
+    els.espFlashStatusBanner.className = "pill";
+    setVariantState(els.espFlashStatusBanner, variant);
   }
 
   function renderLogPanel(state: EspFlashFeatureRenderState): void {

@@ -1,0 +1,80 @@
+:root {
+  /* Purple accent design tokens */
+  --md-sys-color-primary: #7c3aed;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #ede9fe;
+  --md-sys-color-on-primary-container: #2e1065;
+  --md-sys-color-secondary: #5b5d6e;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-surface: #f8f9fb;
+  --md-sys-color-surface-container: #ffffff;
+  --md-sys-color-surface-container-high: #f1f2f6;
+  --md-sys-color-surface-container-highest: #e8eaef;
+  --md-sys-color-on-surface: #1a1c24;
+  --md-sys-color-on-surface-variant: #52555e;
+  --md-sys-color-outline: #c4c7d0;
+  --md-sys-color-outline-variant: #dcdfe6;
+  --md-sys-color-tertiary: #0f9d58;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-error: #c5221f;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-focus: #a78bfa;
+
+  /* Alias tokens kept for existing selectors */
+  --bg: var(--md-sys-color-surface);
+  --surface: var(--md-sys-color-surface-container);
+  --surface-2: var(--md-sys-color-surface-container-high);
+  --border: var(--md-sys-color-outline-variant);
+  --border-strong: var(--md-sys-color-outline);
+  --text: var(--md-sys-color-on-surface);
+  --muted: var(--md-sys-color-on-surface-variant);
+  --brand-500: var(--md-sys-color-primary);
+  --brand-600: #6d28d9;
+  --brand-700: #5b21b6;
+  --brand-400: #8b5cf6;
+  --success: var(--md-sys-color-tertiary);
+  --success-400: #29b56c;
+  --success-700: #0b7a44;
+  --danger: var(--md-sys-color-error);
+  --danger-400: #d64e4b;
+  --danger-700: #9f1b18;
+  --warning: #b7791f;
+  --focus: var(--md-sys-color-focus);
+  --on-fill: #ffffff;
+  --menu-hover: #f0ebfe;
+  --pill-muted-bg: #eef0f5;
+  --pill-muted-text: #4a4d5a;
+  --pill-ok-bg: #dff4e8;
+  --pill-ok-text: #0b6a3d;
+  --pill-bad-bg: #fae3e3;
+  --pill-bad-text: #8c2b2b;
+  --row-even: #fafafc;
+  --row-hover: #f3f0fe;
+  --chart-grid: #dcdfe6;
+  --tooltip-bg: rgba(15, 17, 23, 0.96);
+  --tooltip-fg: #f3f5ff;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --header-brandmark-height: 46px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Trebuchet MS", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+}
+

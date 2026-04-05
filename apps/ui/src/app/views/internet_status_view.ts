@@ -18,7 +18,10 @@ function createBadgeElement(
       ? "settings.internet.state.detected"
       : "settings.internet.state.not_detected";
   return createElementNode("span", {
-    className: `pill pill--${variant}`,
+    className: "pill",
+    data: {
+      variant,
+    },
     text: t(key),
   });
 }

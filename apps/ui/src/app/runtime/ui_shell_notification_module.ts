@@ -1,4 +1,5 @@
 import type { UiShellDom } from "../dom/shell_dom";
+import { setVariantState } from "../style_state";
 
 const ERROR_BANNER_VISIBLE_MS = 8_000;
 
@@ -29,6 +30,7 @@ export function createUiShellNotificationModule(
     banner.hidden = true;
     banner.textContent = "";
     banner.className = "connection-banner app-error-banner";
+    setVariantState(banner, null);
   }
 
   function showError(message: string): void {
@@ -40,7 +42,8 @@ export function createUiShellNotificationModule(
     }
     banner.hidden = false;
     banner.textContent = message;
-    banner.className = "connection-banner connection-banner--bad app-error-banner";
+    banner.className = "connection-banner app-error-banner";
+    setVariantState(banner, "bad");
     clearTimer = setTimeout(() => {
       clearTimer = null;
       clearError();

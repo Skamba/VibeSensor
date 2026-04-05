@@ -124,12 +124,12 @@ export function renderSettingsCarList(
         <tr
           data-car-id="${escapeHtml(car.id)}"
           data-car-complete="${isComplete ? "true" : "false"}"
-          class="${isHighlighted ? "car-list-row--highlighted" : ""}"
+          data-highlighted="${isHighlighted ? "true" : "false"}"
         >
           <td>
             <div class="car-status-stack">
-              <span class="car-active-pill ${isActive ? "active" : "inactive"}">${isActive ? escapeHtml(t("settings.car.active_label")) : escapeHtml(t("settings.car.inactive_label"))}</span>
-              <span class="car-readiness-pill ${isComplete ? "ready" : "incomplete"}">${escapeHtml(t(isComplete ? "settings.car.ready_label" : "settings.car.incomplete_label"))}</span>
+              <span class="car-active-pill" data-state="${isActive ? "active" : "inactive"}">${isActive ? escapeHtml(t("settings.car.active_label")) : escapeHtml(t("settings.car.inactive_label"))}</span>
+              <span class="car-readiness-pill" data-state="${isComplete ? "ready" : "incomplete"}">${escapeHtml(t(isComplete ? "settings.car.ready_label" : "settings.car.incomplete_label"))}</span>
               ${isHighlighted ? `<span class="car-created-pill">${escapeHtml(t("settings.car.just_added"))}</span>` : ""}
             </div>
           </td>

@@ -4,6 +4,7 @@ import { createStatusGridRowElement } from "../src/app/views/dom_helpers";
 import { renderInternetStatusPanel } from "../src/app/views/internet_status_view";
 import {
   elementChildren,
+  FakeHTMLElement,
   installFakeDomGlobals,
   findByClass,
 } from "./dom_render_test_support";
@@ -86,7 +87,7 @@ test("renderInternetStatusPanel replaces children with a semantic maintenance ca
 
   const pills = findByClass(panel, "pill");
   expect(pills).toHaveLength(1);
-  expect(pills[0].classList.contains("pill--warn")).toBe(true);
+  expect(pills[0].getAttribute("data-variant")).toBe("warn");
   expect(pills[0].textContent).toBe("Detected");
 
   const rows = findByClass(panel, "status-grid__row");

@@ -24,17 +24,15 @@ export function createUiShellNavigationModule(
     shell.activeViewId = valid ? viewId : DEFAULT_SHELL_VIEW_ID;
     for (const view of els.views) {
       const isActive = view.id === shell.activeViewId;
-      view.classList.toggle("active", isActive);
       view.hidden = !isActive;
     }
     for (const button of els.menuButtons) {
       const isActive = button.dataset.view === shell.activeViewId;
-      button.classList.toggle("active", isActive);
       button.setAttribute("aria-selected", isActive ? "true" : "false");
       button.tabIndex = isActive ? 0 : -1;
     }
     if (els.appShellWrap) {
-      els.appShellWrap.classList.toggle("wrap--dashboard-view", shell.activeViewId === DEFAULT_SHELL_VIEW_ID);
+      els.appShellWrap.setAttribute("data-active-view", shell.activeViewId);
     }
     if (shell.activeViewId === DEFAULT_SHELL_VIEW_ID) {
       ctx.onDashboardViewActivated?.();
