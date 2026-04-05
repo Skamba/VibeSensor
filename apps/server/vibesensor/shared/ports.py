@@ -37,6 +37,7 @@ __all__ = [
     "ClockSyncBroadcaster",
     "ClientTracker",
     "ClientNamePersistence",
+    "LanguageReader",
     "RegistryAckMessage",
     "RegistryDataMessage",
     "RegistryHelloMessage",
@@ -116,6 +117,13 @@ class SettingsReader(Protocol):
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot: ...
 
     def active_car_snapshot(self) -> CarSnapshot | None: ...
+
+
+class LanguageReader(Protocol):
+    """Read-only language access needed by long-lived runtime collaborators."""
+
+    @property
+    def language(self) -> LanguageCode: ...
 
 
 class CarSettingsStore(Protocol):

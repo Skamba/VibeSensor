@@ -62,6 +62,7 @@ from vibesensor.shared.constants.dsp import (
 )
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.shared.ports import (
+    LanguageReader,
     SensorMetadataReader,
     SettingsReader,
     SettingsSnapshotPersistence,
@@ -81,12 +82,12 @@ LOGGER = logging.getLogger(__name__)
 
 @dataclass(frozen=True, slots=True)
 class RuntimeSettingsDeps:
-    """Focused settings readers/providers needed by long-lived runtime collaborators."""
+    """Focused settings readers needed by long-lived runtime collaborators."""
 
     settings_reader: SettingsReader
     speed_source_reader: SpeedSourceSettingsReader
     sensor_metadata_reader: SensorMetadataReader
-    language_provider: Callable[[], str]
+    language_reader: LanguageReader
 
 
 @dataclass(slots=True)
@@ -101,16 +102,15 @@ class SettingsServiceBundle:
     ui_preferences: UiPreferencesService
     settings_reader: SettingsDerivationService
     speed_source_service: SpeedSourceSettingsService
-    language_provider: Callable[[], str]
 
     def runtime_deps(self) -> RuntimeSettingsDeps:
-        """Return the focused runtime readers/providers derived from this bundle."""
+        """Return the focused runtime readers derived from this bundle."""
 
         return RuntimeSettingsDeps(
             settings_reader=self.settings_reader,
             speed_source_reader=self.speed_source_settings,
             sensor_metadata_reader=self.sensor_metadata_store,
-            language_provider=self.language_provider,
+            language_reader=self.ui_preferences,
         )
 
     def http_settings_deps(
@@ -287,9 +287,6 @@ def build_settings_service_bundle(
         active_car_snapshot=car_settings.active_car_snapshot,
     )
 
-    def _language_provider() -> str:
-        return ui_preferences.language
-
     return SettingsServiceBundle(
         coordinator=coordinator,
         car_settings=car_settings,
@@ -304,7 +301,6 @@ def build_settings_service_bundle(
                 speed_control=speed_control,
             ),
         ),
-        language_provider=_language_provider,
     )
 
 
@@ -420,9 +416,9 @@ def build_live_runtime(
         gps_monitor=speed_runtime.speed_services.observation,
         processor=processor,
         history_db=history.run_repository,
-        settings_store=runtime_settings.settings_reader,
+        settings_reader=runtime_settings.settings_reader,
         sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
-        language_provider=runtime_settings.language_provider,
+        language_reader=runtime_settings.language_reader,
     )
 
     stale_analyzing = history.run_repository.stale_analyzing_run_ids()
@@ -476,7 +472,7 @@ def build_lifecycle_state(
         processor=live_runtime.processor,
         control_plane=live_runtime.control_plane,
         worker_pool=live_runtime.worker_pool,
-        settings_store=runtime_settings.settings_reader,
+        settings_reader=runtime_settings.settings_reader,
         gps_monitor=speed_runtime.gps_monitor,
         obd_runner=speed_runtime.obd_runtime.connection.runner,
         history_db=history.lifecycle,

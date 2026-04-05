@@ -4,6 +4,7 @@ import asyncio
 import threading
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from test_support.core import wait_until
@@ -285,7 +286,7 @@ def test_finalize_preserves_run_metadata_from_recording_start(
     fake_history_db,
     mutable_fake_settings,
 ) -> None:
-    logger = make_logger(settings_store=mutable_fake_settings, history_db=fake_history_db)
+    logger = make_logger(settings_reader=mutable_fake_settings, history_db=fake_history_db)
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -585,7 +586,7 @@ def test_post_analysis_uses_run_language_from_metadata(
     tmp_path: Path,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
-    logger = make_logger(history_db=history_db, language_provider=lambda: "nl")
+    logger = make_logger(history_db=history_db, language_reader=SimpleNamespace(language="nl"))
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -626,8 +627,8 @@ def test_post_analysis_uses_run_language_from_metadata(
 
 
 def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
-    settings_store = type(
-        "SettingsStoreStub",
+    settings_reader = type(
+        "SettingsReaderStub",
         (),
         {
             "active_car_snapshot": lambda self: CarSnapshot(
@@ -651,7 +652,7 @@ def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
             ),
         },
     )()
-    logger = make_logger(settings_store=settings_store)
+    logger = make_logger(settings_reader=settings_reader)
 
     metadata = _build_run_metadata_record(logger, "run-1", "2026-01-01T00:00:00Z")
 

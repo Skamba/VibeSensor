@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -278,7 +279,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
         gps_monitor=gps_monitor,
         processor=processor,
         history_db=db,
-        language_provider=lambda: "en",
+        language_reader=SimpleNamespace(language="en"),
     )
 
     # Start logging and simulate some data

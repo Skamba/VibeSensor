@@ -33,7 +33,7 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     )
     fake_gps_monitor.override_speed_mps = 10.0
 
-    logger = make_logger(settings_store=mutable_fake_settings, gps_monitor=fake_gps_monitor)
+    logger = make_logger(settings_reader=mutable_fake_settings, gps_monitor=fake_gps_monitor)
     logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
