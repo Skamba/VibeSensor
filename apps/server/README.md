@@ -37,6 +37,8 @@ state. Current `main` is intentionally split more narrowly:
   (`UiPreferencesService`), and canonical sensor metadata
   (`SensorSettingsService`). A shared settings snapshot coordinator owns only
   the single stored snapshot's load/save/rollback mechanics.
+  `build_settings_service_bundle()` in `vibesensor.app.container` groups those
+  focused services into explicit runtime and HTTP dependency bundles.
   `SettingsDerivationService` projects the persisted car settings into the
   current analysis/run context, while `SpeedSourceRuntimeApplier` pushes the
   current speed-source selection into live runtime collaborators. HTTP adapters

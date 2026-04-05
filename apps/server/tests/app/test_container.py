@@ -1,4 +1,4 @@
-"""Container wiring coverage for history-db startup recovery and retention hooks."""
+"""Container wiring coverage for history-db startup and settings assembly."""
 
 from __future__ import annotations
 
@@ -126,3 +126,46 @@ def test_create_history_db_continues_when_retention_prune_fails(
 
     assert result is fake_history
     assert "Failed to prune terminal runs older than 7 day(s)" in caplog.text
+
+
+def test_build_settings_service_bundle_exposes_runtime_and_http_dependency_groups() -> None:
+    speed_status_service = SimpleNamespace(name="speed-status")
+    obd_admin_service = SimpleNamespace(name="obd-admin")
+    bundle = container_module.build_settings_service_bundle(
+        snapshot_repository=None,
+        speed_control=None,
+    )
+
+    created = bundle.car_settings.add_car({"name": "Bundle Car", "type": "coupe"})
+    car_id = created.cars[0]["id"]
+    bundle.car_settings.set_active_car(car_id)
+    bundle.analysis_settings.update_active_car_aspects({"tire_width_mm": 255.0})
+    bundle.sensor_metadata_store.set_sensor(
+        "00:11:22:33:44:55",
+        {"name": "Front Left", "location_code": "front_left"},
+    )
+
+    runtime_deps = bundle.runtime_deps()
+    http_deps = bundle.http_settings_deps(
+        speed_status_service=speed_status_service,
+        obd_admin_service=obd_admin_service,
+    )
+
+    assert runtime_deps.settings_reader.active_car_snapshot().car_id == car_id
+    assert runtime_deps.settings_reader.analysis_settings_snapshot().tire_width_mm == 255.0
+    assert runtime_deps.sensor_metadata_reader is bundle.sensor_metadata_store
+    assert runtime_deps.sensor_metadata_reader.get_sensors()["001122334455"]["name"] == "Front Left"
+    assert runtime_deps.speed_source_reader is bundle.speed_source_settings
+    assert (
+        bundle.speed_source_service.get_speed_source()
+        == bundle.speed_source_settings.get_speed_source()
+    )
+    assert runtime_deps.language_provider() == bundle.ui_preferences.language == "en"
+
+    assert http_deps.car_settings is bundle.car_settings
+    assert http_deps.analysis_settings is bundle.analysis_settings
+    assert http_deps.sensor_metadata_store is bundle.sensor_metadata_store
+    assert http_deps.ui_preferences is bundle.ui_preferences
+    assert http_deps.speed_source_service is bundle.speed_source_service
+    assert http_deps.speed_status_service is speed_status_service
+    assert http_deps.obd_admin_service is obd_admin_service
