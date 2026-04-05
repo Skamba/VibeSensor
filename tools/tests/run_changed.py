@@ -101,7 +101,11 @@ def _is_markdown_path(path: str) -> bool:
 
 def _test_target_for_changed_test(path: str) -> str:
     candidate = PurePosixPath(path)
-    if candidate.name.startswith("test_") and candidate.suffix == ".py":
+    if (
+        candidate.name.startswith("test_")
+        and candidate.suffix == ".py"
+        and (ROOT / candidate).exists()
+    ):
         return candidate.as_posix()
     return candidate.parent.as_posix()
 

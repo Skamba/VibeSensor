@@ -261,7 +261,7 @@ Current route groups:
 
 - `health.py` — `/api/health` runtime, startup, and degradation snapshots.
 - `clients.py` — sensor inventory, location assignment, and identify/blink actions.
-- `settings.py` — speed source, language, speed units, cars, and related settings state.
+- `settings/` — aggregated settings routes split across cars, speed source, OBD admin, sensor metadata, UI preferences, and analysis micro-routers.
 - `recording.py` — recording lifecycle control and status.
 - `history.py` — saved runs, insights, reports, and exports.
 - `websocket.py` — `/ws` live update stream and selected-client updates.

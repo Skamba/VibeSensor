@@ -6,12 +6,14 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
-from vibesensor.adapters.http.settings import create_settings_routes
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
 from vibesensor.shared.operational_errors import ExternalCommandError
 
 
 def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock, MagicMock]:
+    from vibesensor.adapters.http.settings.dependencies import ObdAdminRouteDeps
+    from vibesensor.adapters.http.settings.obd import create_obd_admin_routes
+
     settings_store = MagicMock()
     speed_source_service = MagicMock()
     speed_status_service = MagicMock()
@@ -37,14 +39,12 @@ def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock, MagicM
     obd_admin_service = MagicMock()
     app = FastAPI()
     app.include_router(
-        create_settings_routes(
-            settings_store,
-            settings_store,
-            settings_store,
-            settings_store,
-            speed_source_service,
-            speed_status_service,
-            obd_admin_service,
+        create_obd_admin_routes(
+            ObdAdminRouteDeps(
+                speed_source_service=speed_source_service,
+                speed_status_service=speed_status_service,
+                obd_admin_service=obd_admin_service,
+            ),
         )
     )
     return (
