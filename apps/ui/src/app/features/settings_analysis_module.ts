@@ -1,9 +1,13 @@
-import type { AnalysisSettingsRequest, AnalysisSettingsPayload } from "../../transport/http_models";
+import type {
+  AnalysisSettingsRequest,
+  AnalysisSettingsPayload,
+} from "../../transport/http_models";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { UiSettingsDom } from "../dom/settings_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
-import { renderSettingsFeedback, setSettingsFeedback } from "../views/settings_feedback";
+import { setSettingsAnalysisGuidance } from "../views/settings_analysis_guidance";
+import { setSettingsFeedback } from "../views/settings_feedback";
 
 export const ANALYSIS_SETTING_KEYS = [
   "tire_width_mm",
@@ -39,7 +43,9 @@ export interface SettingsAnalysisModule {
   saveAnalysisFromInputs(): void;
 }
 
-export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): SettingsAnalysisModule {
+export function createSettingsAnalysisModule(
+  ctx: SettingsAnalysisModuleDeps,
+): SettingsAnalysisModule {
   const { settings, dom: els, t } = ctx;
   type EditableAnalysisKey =
     | "wheel_bandwidth_pct"
@@ -62,6 +68,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     guidedMax: number;
     defaultValue: number;
     guidanceId: string;
+    guidance: () => HTMLElement | null;
     input: () => HTMLInputElement | null;
   }
   const analysisFields: readonly AnalysisFieldConfig[] = [
@@ -75,6 +82,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 12,
       defaultValue: defaultVehicleSettings.wheel_bandwidth_pct,
       guidanceId: "wheelBandwidthGuidance",
+      guidance: () => els.analysisFieldGuidance.wheelBandwidth,
       input: () => els.wheelBandwidthInput,
     },
     {
@@ -87,6 +95,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 10,
       defaultValue: defaultVehicleSettings.driveshaft_bandwidth_pct,
       guidanceId: "driveshaftBandwidthGuidance",
+      guidance: () => els.analysisFieldGuidance.driveshaftBandwidth,
       input: () => els.driveshaftBandwidthInput,
     },
     {
@@ -99,6 +108,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 12,
       defaultValue: defaultVehicleSettings.engine_bandwidth_pct,
       guidanceId: "engineBandwidthGuidance",
+      guidance: () => els.analysisFieldGuidance.engineBandwidth,
       input: () => els.engineBandwidthInput,
     },
     {
@@ -111,6 +121,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 5,
       defaultValue: defaultVehicleSettings.speed_uncertainty_pct,
       guidanceId: "speedUncertaintyGuidance",
+      guidance: () => els.analysisFieldGuidance.speedUncertainty,
       input: () => els.speedUncertaintyInput,
     },
     {
@@ -123,6 +134,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 5,
       defaultValue: defaultVehicleSettings.tire_diameter_uncertainty_pct,
       guidanceId: "tireDiameterUncertaintyGuidance",
+      guidance: () => els.analysisFieldGuidance.tireDiameterUncertainty,
       input: () => els.tireDiameterUncertaintyInput,
     },
     {
@@ -135,6 +147,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 2,
       defaultValue: defaultVehicleSettings.final_drive_uncertainty_pct,
       guidanceId: "finalDriveUncertaintyGuidance",
+      guidance: () => els.analysisFieldGuidance.finalDriveUncertainty,
       input: () => els.finalDriveUncertaintyInput,
     },
     {
@@ -147,6 +160,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 4,
       defaultValue: defaultVehicleSettings.gear_uncertainty_pct,
       guidanceId: "gearUncertaintyGuidance",
+      guidance: () => els.analysisFieldGuidance.gearUncertainty,
       input: () => els.gearUncertaintyInput,
     },
     {
@@ -159,6 +173,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 2,
       defaultValue: defaultVehicleSettings.min_abs_band_hz,
       guidanceId: "minAbsBandHzGuidance",
+      guidance: () => els.analysisFieldGuidance.minAbsBandHz,
       input: () => els.minAbsBandHzInput,
     },
     {
@@ -171,6 +186,7 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       guidedMax: 12,
       defaultValue: defaultVehicleSettings.max_band_half_width_pct,
       guidanceId: "maxBandHalfWidthGuidance",
+      guidance: () => els.analysisFieldGuidance.maxBandHalfWidth,
       input: () => els.maxBandHalfWidthInput,
     },
   ];
@@ -183,7 +199,9 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
   const fieldErrorMessages = new Map<EditableAnalysisKey, string>();
 
   function formatSettingValue(value: number): string {
-    return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(1)));
+    return Number.isInteger(value)
+      ? String(value)
+      : String(Number(value.toFixed(1)));
   }
 
   function clearFieldValidationState(): void {
@@ -206,10 +224,6 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     });
   }
 
-  function renderGuidanceLine(label: string, value: string): string {
-    return `<span class="settings-field-guidance__line"><span class="settings-field-guidance__label">${ctx.escapeHtml(label)}</span> ${ctx.escapeHtml(value)}</span>`;
-  }
-
   function markFieldInvalid(field: AnalysisFieldConfig, message: string): void {
     fieldErrorMessages.set(field.key, message);
     renderFieldGuidance();
@@ -220,33 +234,29 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
 
   function renderFieldGuidance(): void {
     for (const field of analysisFields) {
-      const help = document.getElementById(field.guidanceId);
+      const help = field.guidance();
       if (!help) {
         continue;
       }
       const errorMessage = fieldErrorMessages.get(field.key);
-      const guidanceHtml = [
-        renderGuidanceLine(
-          t("settings.analysis.recommended_range_label"),
-          formatRange(field.guidedMin, field.guidedMax, field.unit),
-        ),
-        renderGuidanceLine(
-          t("settings.analysis.allowed_range_label"),
-          formatRange(field.hardMin, field.hardMax, field.unit),
-        ),
-        renderGuidanceLine(
-          t("settings.analysis.default_label"),
-          `${formatSettingValue(field.defaultValue)}${field.unit}`,
-        ),
-      ].join("");
-      const errorHtml = errorMessage
-        ? renderSettingsFeedback({
-          tone: "error",
-          body: errorMessage,
-          compact: true,
-        })
-        : "";
-      help.innerHTML = `<span class="settings-field-guidance__stack">${guidanceHtml}</span>${errorHtml}`;
+      setSettingsAnalysisGuidance(help, {
+        lines: [
+          {
+            label: t("settings.analysis.recommended_range_label"),
+            value: formatRange(field.guidedMin, field.guidedMax, field.unit),
+          },
+          {
+            label: t("settings.analysis.allowed_range_label"),
+            value: formatRange(field.hardMin, field.hardMax, field.unit),
+          },
+          {
+            label: t("settings.analysis.default_label"),
+            value: `${formatSettingValue(field.defaultValue)}${field.unit}`,
+          },
+        ],
+        errorMessage,
+        escapeHtml: ctx.escapeHtml,
+      });
     }
   }
 
@@ -274,7 +284,9 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     });
   }
 
-  function buildEditableAnalysisPayload(states: readonly AnalysisFieldState[]): AnalysisSettingsRequest {
+  function buildEditableAnalysisPayload(
+    states: readonly AnalysisFieldState[],
+  ): AnalysisSettingsRequest {
     return states.reduce<AnalysisSettingsRequest>((payload, field) => {
       payload[field.config.key] = field.numericValue;
       return payload;
@@ -297,15 +309,20 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       driveshaft_bandwidth_pct: defaultVehicleSettings.driveshaft_bandwidth_pct,
       engine_bandwidth_pct: defaultVehicleSettings.engine_bandwidth_pct,
       speed_uncertainty_pct: defaultVehicleSettings.speed_uncertainty_pct,
-      tire_diameter_uncertainty_pct: defaultVehicleSettings.tire_diameter_uncertainty_pct,
-      final_drive_uncertainty_pct: defaultVehicleSettings.final_drive_uncertainty_pct,
+      tire_diameter_uncertainty_pct:
+        defaultVehicleSettings.tire_diameter_uncertainty_pct,
+      final_drive_uncertainty_pct:
+        defaultVehicleSettings.final_drive_uncertainty_pct,
       gear_uncertainty_pct: defaultVehicleSettings.gear_uncertainty_pct,
       min_abs_band_hz: defaultVehicleSettings.min_abs_band_hz,
       max_band_half_width_pct: defaultVehicleSettings.max_band_half_width_pct,
     });
   }
 
-  function syncNumericInputValue(input: HTMLInputElement | null, value: number): void {
+  function syncNumericInputValue(
+    input: HTMLInputElement | null,
+    value: number,
+  ): void {
     if (input) input.value = String(value);
   }
 
@@ -313,18 +330,47 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     applyInputConstraints();
     clearFieldValidationState();
     setSettingsFeedback(els.analysisSaveFeedback, null);
-    syncNumericInputValue(els.wheelBandwidthInput, settings.vehicleSettings.wheel_bandwidth_pct);
-    syncNumericInputValue(els.driveshaftBandwidthInput, settings.vehicleSettings.driveshaft_bandwidth_pct);
-    syncNumericInputValue(els.engineBandwidthInput, settings.vehicleSettings.engine_bandwidth_pct);
-    syncNumericInputValue(els.speedUncertaintyInput, settings.vehicleSettings.speed_uncertainty_pct);
-    syncNumericInputValue(els.tireDiameterUncertaintyInput, settings.vehicleSettings.tire_diameter_uncertainty_pct);
-    syncNumericInputValue(els.finalDriveUncertaintyInput, settings.vehicleSettings.final_drive_uncertainty_pct);
-    syncNumericInputValue(els.gearUncertaintyInput, settings.vehicleSettings.gear_uncertainty_pct);
-    syncNumericInputValue(els.minAbsBandHzInput, settings.vehicleSettings.min_abs_band_hz);
-    syncNumericInputValue(els.maxBandHalfWidthInput, settings.vehicleSettings.max_band_half_width_pct);
+    syncNumericInputValue(
+      els.wheelBandwidthInput,
+      settings.vehicleSettings.wheel_bandwidth_pct,
+    );
+    syncNumericInputValue(
+      els.driveshaftBandwidthInput,
+      settings.vehicleSettings.driveshaft_bandwidth_pct,
+    );
+    syncNumericInputValue(
+      els.engineBandwidthInput,
+      settings.vehicleSettings.engine_bandwidth_pct,
+    );
+    syncNumericInputValue(
+      els.speedUncertaintyInput,
+      settings.vehicleSettings.speed_uncertainty_pct,
+    );
+    syncNumericInputValue(
+      els.tireDiameterUncertaintyInput,
+      settings.vehicleSettings.tire_diameter_uncertainty_pct,
+    );
+    syncNumericInputValue(
+      els.finalDriveUncertaintyInput,
+      settings.vehicleSettings.final_drive_uncertainty_pct,
+    );
+    syncNumericInputValue(
+      els.gearUncertaintyInput,
+      settings.vehicleSettings.gear_uncertainty_pct,
+    );
+    syncNumericInputValue(
+      els.minAbsBandHzInput,
+      settings.vehicleSettings.min_abs_band_hz,
+    );
+    syncNumericInputValue(
+      els.maxBandHalfWidthInput,
+      settings.vehicleSettings.max_band_half_width_pct,
+    );
   }
 
-  function applyAnalysisSettingsPayload(serverSettings: AnalysisSettingsPayload): void {
+  function applyAnalysisSettingsPayload(
+    serverSettings: AnalysisSettingsPayload,
+  ): void {
     for (const key of ANALYSIS_SETTING_KEYS) {
       const value = serverSettings[key];
       if (typeof value === "number") settings.vehicleSettings[key] = value;
@@ -333,7 +379,9 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     ctx.renderSpectrum();
   }
 
-  async function syncAnalysisSettingsToServer(payload: AnalysisSettingsRequest): Promise<void> {
+  async function syncAnalysisSettingsToServer(
+    payload: AnalysisSettingsRequest,
+  ): Promise<void> {
     try {
       const saved = await setAnalysisSettings(payload);
       applyAnalysisSettingsPayload(saved);
@@ -342,7 +390,8 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       setSettingsFeedback(els.analysisSaveFeedback, {
         tone: "error",
         title: t("settings.analysis.save_failed_title"),
-        body: error instanceof Error ? error.message : t("settings.save_failed"),
+        body:
+          error instanceof Error ? error.message : t("settings.save_failed"),
         detail: t("settings.analysis.save_failed_detail"),
       });
     }
@@ -354,7 +403,9 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
       if (serverSettings) {
         applyAnalysisSettingsPayload(serverSettings);
       }
-    } catch (_err) { /* ignore */ }
+    } catch (_err) {
+      /* ignore */
+    }
   }
 
   function saveAnalysisFromInputs(): void {
@@ -364,37 +415,64 @@ export function createSettingsAnalysisModule(ctx: SettingsAnalysisModuleDeps): S
     }
     clearFieldValidationState();
     const fieldStates = collectFieldStates();
-    const missingField = fieldStates.find((field) => field.rawValue === "" || Number.isNaN(field.numericValue) || !Number.isFinite(field.numericValue));
+    const missingField = fieldStates.find(
+      (field) =>
+        field.rawValue === "" ||
+        Number.isNaN(field.numericValue) ||
+        !Number.isFinite(field.numericValue),
+    );
     if (missingField) {
       markFieldInvalid(
         missingField.config,
-        t("settings.analysis.invalid_number", { field: t(missingField.config.labelKey) }),
+        t("settings.analysis.invalid_number", {
+          field: t(missingField.config.labelKey),
+        }),
       );
       return;
     }
-    const outOfBoundsField = fieldStates.find((field) => field.numericValue < field.config.hardMin || field.numericValue > field.config.hardMax);
+    const outOfBoundsField = fieldStates.find(
+      (field) =>
+        field.numericValue < field.config.hardMin ||
+        field.numericValue > field.config.hardMax,
+    );
     if (outOfBoundsField) {
-      markFieldInvalid(outOfBoundsField.config, t("settings.analysis.invalid_value", {
-        field: t(outOfBoundsField.config.labelKey),
-        min: formatSettingValue(outOfBoundsField.config.hardMin),
-        max: formatSettingValue(outOfBoundsField.config.hardMax),
-        value: formatSettingValue(outOfBoundsField.numericValue),
-        unit: outOfBoundsField.config.unit,
-      }));
+      markFieldInvalid(
+        outOfBoundsField.config,
+        t("settings.analysis.invalid_value", {
+          field: t(outOfBoundsField.config.labelKey),
+          min: formatSettingValue(outOfBoundsField.config.hardMin),
+          max: formatSettingValue(outOfBoundsField.config.hardMax),
+          value: formatSettingValue(outOfBoundsField.numericValue),
+          unit: outOfBoundsField.config.unit,
+        }),
+      );
       return;
     }
-    const riskyFields = fieldStates.filter((field) => field.numericValue < field.config.guidedMin || field.numericValue > field.config.guidedMax);
+    const riskyFields = fieldStates.filter(
+      (field) =>
+        field.numericValue < field.config.guidedMin ||
+        field.numericValue > field.config.guidedMax,
+    );
     if (riskyFields.length > 0) {
       const intro = t("settings.analysis.risky_confirm_intro");
-      const details = riskyFields.map((field) => t("settings.analysis.risky_confirm_line", {
-        field: t(field.config.labelKey),
-        value: formatSettingValue(field.numericValue),
-        min: formatSettingValue(field.config.guidedMin),
-        max: formatSettingValue(field.config.guidedMax),
-        defaultValue: formatSettingValue(field.config.defaultValue),
-        unit: field.config.unit,
-      }));
-      const ok = window.confirm([intro, ...details, "", t("settings.analysis.risky_confirm_outro")].join("\n"));
+      const details = riskyFields.map((field) =>
+        t("settings.analysis.risky_confirm_line", {
+          field: t(field.config.labelKey),
+          value: formatSettingValue(field.numericValue),
+          min: formatSettingValue(field.config.guidedMin),
+          max: formatSettingValue(field.config.guidedMax),
+          defaultValue: formatSettingValue(field.config.defaultValue),
+          unit: field.config.unit,
+        }),
+      );
+      const ok = window.confirm(
+        [
+          intro,
+          ...details,
+          "",
+          t("settings.analysis.risky_confirm_outro"),
+        ].join("\n"),
+      );
       if (!ok) {
         return;
       }
