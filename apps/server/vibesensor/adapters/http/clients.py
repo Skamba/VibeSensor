@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
 
 from vibesensor.adapters.http._helpers import (
     OpenAPIResponses,
     normalize_client_id_or_400,
+)
+from vibesensor.adapters.http.dependencies import (
+    ClientControlPlaneProtocol,
+    ClientProcessorProtocol,
+    ClientRegistryProtocol,
 )
 from vibesensor.adapters.http.error_boundary import http_exception_for_value_error
 from vibesensor.adapters.http.models import (
@@ -23,16 +27,11 @@ from vibesensor.adapters.http.models import (
     SetLocationRequest,
 )
 from vibesensor.adapters.udp.protocol import client_id_mac
-from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
+from vibesensor.shared.boundaries.clients import snapshot_for_api
 from vibesensor.shared.locations import all_locations
 from vibesensor.shared.ports import SensorMetadataStore
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.sensor_config import SensorConfigPayload
-
-if TYPE_CHECKING:
-    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-    from vibesensor.infra.processing.processor import SignalProcessor
-    from vibesensor.infra.runtime.registry import ClientRegistry
 
 _IDENTIFY_CLIENT_RESPONSES: OpenAPIResponses = {
     400: {"description": "Invalid sensor identifier."},
@@ -53,10 +52,10 @@ _REMOVE_CLIENT_RESPONSES: OpenAPIResponses = {
 
 
 def create_client_routes(
-    registry: ClientRegistry,
-    control_plane: UDPControlPlane,
+    registry: ClientRegistryProtocol,
+    control_plane: ClientControlPlaneProtocol,
     sensor_settings_store: SensorMetadataStore,
-    processor: SignalProcessor,
+    processor: ClientProcessorProtocol,
 ) -> APIRouter:
     """Create and return the client-management API routes."""
     router = APIRouter(tags=["clients"])

@@ -15,13 +15,10 @@ import pytest
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.domain import RunStatus
-from vibesensor.infra.runtime.client_snapshot import (
-    ClientSnapshot,
-    build_client_api_row,
-    snapshot_for_api,
-)
+from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.registry_updates import _JITTER_EMA_ALPHA, _RESTART_SEQ_GAP
+from vibesensor.shared.boundaries.clients import build_client_api_row, snapshot_for_api
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import vibesensor.shared.boundaries.analysis_payloads as analysis_payloads
 import vibesensor.shared.boundaries.analysis_payloads.reconstruction as reconstruction
+import vibesensor.shared.boundaries.clients as clients
 import vibesensor.shared.boundaries.runs as runs
 import vibesensor.shared.boundaries.sensor_frames as sensor_frames
 import vibesensor.shared.boundaries.settings as settings
@@ -26,6 +27,12 @@ def test_sensor_frames_package_keeps_shared_field_list_public() -> None:
     assert callable(sensor_frames.sensor_frame_to_json_object)
     assert callable(sensor_frames.sensor_frame_from_row)
     assert callable(sensor_frames.sensor_frame_to_row_values)
+
+
+def test_clients_package_exposes_canonical_entrypoints() -> None:
+    assert callable(clients.build_client_api_row)
+    assert callable(clients.build_client_api_rows)
+    assert callable(clients.snapshot_for_api)
 
 
 def test_runs_package_exposes_canonical_entrypoints() -> None:
