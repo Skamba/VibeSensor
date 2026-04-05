@@ -30,7 +30,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 ## Backend package layout
 
 - `app/`: startup, dependency wiring, runtime state, and config loading.
-- `adapters/http/`: API route groups, bundle-level router assembly (`router.py`, `route_bundles.py`), grouped route dependencies, and HTTP-specific Pydantic request/response models under `adapters/http/models/`.
+- `adapters/http/`: API route groups, bundle-level router assembly (`router.py`, `route_bundles.py`), grouped route dependencies, and HTTP-specific Pydantic request/response models under `adapters/http/models/`. Keep route-facing modules on shared ports or adapter-local protocols rather than direct `infra` imports, and keep sensor metadata writes in `settings/sensors.py` plus the `clients.py` location-assignment handoff.
 - `adapters/websocket/hub.py`: live WebSocket fan-out and payload delivery.
 - `adapters/persistence/`: SQLite history storage and static car-library loading.
 - `adapters/pdf/`: report mapping and PDF rendering, with grouped panel renderers under `adapters/pdf/panels/`. See `docs/report_pipeline.md` for the report flow.

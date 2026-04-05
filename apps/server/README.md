@@ -45,7 +45,10 @@ state. Current `main` is intentionally split more narrowly:
   sensor location assignment also delegates through `SensorSettingsService`, so
   settings remains the single owner of canonical sensor metadata writes. HTTP
   adapters and runtime collaborators should consume the focused settings ports
-  they need rather than importing persistence internals directly.
+  they need rather than importing persistence internals directly. Route-facing
+  HTTP modules should stay on shared ports or adapter-local protocol seams,
+  while `settings/sensors.py` owns raw sensor CRUD and `clients.py` may only
+  delegate location writes through `assign_sensor_location()`.
 - `vibesensor.app.container.build_runtime()` is a thin app-layer orchestrator.
   It delegates speed/OBD setup, history/reporting services, live runtime
   services, update deps, lifecycle state, and router wiring to focused builder
