@@ -6,7 +6,6 @@ import logging
 import tempfile
 from pathlib import Path
 
-from vibesensor.use_cases.updates.artifact_validation import sha256_file
 from vibesensor.use_cases.updates.asset_download import download_release_asset
 
 from .github_api import DOWNLOAD_CHUNK_BYTES, GitHubApiClient
@@ -83,6 +82,5 @@ class ServerReleaseFetcher:
         dest = dest_dir / release.asset_name
         LOGGER.info("Downloading %s", release.asset_name)
         self._download_asset(release.asset_url, dest)
-        release.sha256 = sha256_file(dest)
-        LOGGER.info("Downloaded %s (sha256=%s)", release.asset_name, release.sha256)
+        LOGGER.info("Downloaded %s", release.asset_name)
         return dest

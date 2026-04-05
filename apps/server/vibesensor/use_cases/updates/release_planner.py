@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.use_cases.updates.models import UpdatePhase
@@ -18,23 +19,27 @@ if TYPE_CHECKING:
 
 __all__ = ["UpdateReleasePlanner"]
 
+CurrentVersionProvider = Callable[[], str]
+
 
 class UpdateReleasePlanner:
     """Interpret resolved release state into one canonical execution plan."""
 
-    __slots__ = ("_resolver", "_status")
+    __slots__ = ("_current_version_provider", "_resolver", "_status")
 
     def __init__(
         self,
         *,
         status: UpdateStatusTracker,
+        current_version_provider: CurrentVersionProvider,
         resolver: ServerReleaseResolver,
     ) -> None:
         self._status = status
+        self._current_version_provider = current_version_provider
         self._resolver = resolver
 
     async def plan(self, prepared: PreparedUpdateRun) -> PlannedUpdateRun:
-        current_version = prepared.current_version
+        current_version = self._current_version_provider()
         self._status.transition(UpdatePhase.checking)
         self._status.log("Checking for available updates...")
 

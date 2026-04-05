@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
@@ -24,35 +22,30 @@ def _executor() -> tuple[
     MagicMock,
     MagicMock,
     MagicMock,
-    MagicMock,
 ]:
     completion = MagicMock()
     completion.complete_success = AsyncMock()
-    stager = MagicMock()
-    deployment = MagicMock()
-    deployment.deploy = AsyncMock(return_value=True)
+    server_release_execution = MagicMock()
+    server_release_execution.execute = AsyncMock(return_value=None)
     firmware_refresher = MagicMock()
     firmware_refresher.refresh_esp_firmware = AsyncMock(
         return_value=FirmwareRefreshResult.success(),
     )
     executor = UpdateWorkflowExecutor(
         completion=completion,
-        stager=stager,
-        deployment=deployment,
+        server_release_execution=server_release_execution,
         firmware_refresher=firmware_refresher,
     )
     return (
         executor,
         completion,
-        stager,
-        deployment,
+        server_release_execution,
         firmware_refresher,
     )
 
 
 def _prepared_run(prepared_transport: object) -> PreparedUpdateRun:
     return PreparedUpdateRun(
-        current_version="2026.4.3",
         prepared_transport=prepared_transport,
     )
 
@@ -62,8 +55,7 @@ async def test_execute_refresh_plan_refreshes_firmware_then_completes_success() 
     (
         executor,
         completion,
-        stager,
-        deployment,
+        server_release_execution,
         firmware_refresher,
     ) = _executor()
     prepared_transport = MagicMock()
@@ -84,8 +76,7 @@ async def test_execute_refresh_plan_refreshes_firmware_then_completes_success() 
         prepared_transport,
         message="No server update needed; ESP firmware checked",
     )
-    deployment.deploy.assert_not_awaited()
-    assert not stager.stage.called
+    server_release_execution.execute.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -93,8 +84,7 @@ async def test_execute_refresh_plan_fails_when_firmware_refresh_fails() -> None:
     (
         executor,
         completion,
-        stager,
-        deployment,
+        server_release_execution,
         firmware_refresher,
     ) = _executor()
     prepared_transport = MagicMock()
@@ -119,28 +109,19 @@ async def test_execute_refresh_plan_fails_when_firmware_refresh_fails() -> None:
         == "ESP firmware refresh failed; refresh-only update did not complete"
     )
     completion.complete_success.assert_not_awaited()
-    deployment.deploy.assert_not_awaited()
-    assert not stager.stage.called
+    server_release_execution.execute.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_execute_install_plan_stages_and_deploys_before_completion(tmp_path: Path) -> None:
+async def test_execute_install_plan_runs_server_release_execution_before_completion() -> None:
     (
         executor,
         completion,
-        stager,
-        deployment,
+        server_release_execution,
         firmware_refresher,
     ) = _executor()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
-    staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
     prepared_transport = MagicMock()
-
-    @asynccontextmanager
-    async def stage(_release: object):
-        yield staged_release
-
-    stager.stage.side_effect = stage
 
     completed = await executor.execute(
         PlannedUpdateRun(
@@ -152,8 +133,7 @@ async def test_execute_install_plan_stages_and_deploys_before_completion(tmp_pat
     )
 
     assert completed == UpdateExecutionOutcome.installed
-    stager.stage.assert_called_once_with(release)
-    deployment.deploy.assert_awaited_once_with(staged_release)
+    server_release_execution.execute.assert_awaited_once_with(release)
     completion.complete_success.assert_awaited_once_with(
         prepared_transport,
         message="Update completed successfully",
@@ -162,26 +142,18 @@ async def test_execute_install_plan_stages_and_deploys_before_completion(tmp_pat
 
 
 @pytest.mark.asyncio
-async def test_execute_install_plan_propagates_deploy_failure_before_completion(
-    tmp_path: Path,
-) -> None:
+async def test_execute_install_plan_propagates_release_execution_failure_before_completion() -> (
+    None
+):
     (
         executor,
         completion,
-        stager,
-        deployment,
+        server_release_execution,
         _firmware_refresher,
     ) = _executor()
     release = SimpleNamespace(version="2026.4.4", tag="server-v2026.4.4", sha256="")
-    staged_release = SimpleNamespace(release=release, wheel_path=tmp_path / "release.whl")
     prepared_transport = MagicMock()
-
-    @asynccontextmanager
-    async def stage(_release: object):
-        yield staged_release
-
-    stager.stage.side_effect = stage
-    deployment.deploy.side_effect = UpdateReleaseError("install failed")
+    server_release_execution.execute.side_effect = UpdateReleaseError("install failed")
 
     with pytest.raises(UpdateReleaseError, match="install failed"):
         await executor.execute(
@@ -193,5 +165,5 @@ async def test_execute_install_plan_propagates_deploy_failure_before_completion(
             ),
         )
 
-    deployment.deploy.assert_awaited_once_with(staged_release)
+    server_release_execution.execute.assert_awaited_once_with(release)
     completion.complete_success.assert_not_awaited()
