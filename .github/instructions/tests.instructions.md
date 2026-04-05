@@ -1,7 +1,7 @@
 ---
 applyTo: "apps/server/tests/**"
 ---
-Tests
+Backend tests (`apps/server/tests/**`)
 - Detailed test layout, placement rules, shared root helpers, and CI command usage live in `docs/testing.md`; this file only captures test-specific deltas, so use the matching `tests/<module>/` directory from that map, reserve `integration/` for cross-cutting regressions, and use `hygiene/` for guards.
 - Import style: use `from test_support.X import Y` (short form). The `tests/` directory is on `sys.path` via `testpaths` in `pyproject.toml`. Do not use `from tests.test_support` or manipulate `sys.path` for test imports.
 - Use `test_support/findings.py` factories (`make_finding_payload`, `make_ref_finding`, `make_info_finding`) for constructing finding dicts in tests. Do not create local finding factories in individual test files.
