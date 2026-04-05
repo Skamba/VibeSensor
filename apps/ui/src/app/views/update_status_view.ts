@@ -1,7 +1,3 @@
-import type {
-  HealthStatusPayload,
-  UpdateStatusPayload,
-} from "../../transport/http_models";
 import { createElementNode, renderChildren } from "./dom_render";
 import { createUpdateHealthCard } from "./update_status_health_view";
 import {
@@ -13,13 +9,7 @@ import {
   createUpdateCurrentStatusCard,
   createUpdateJourneyCard,
 } from "./update_status_overview_view";
-import {
-  buildUpdateStatusPanelViewModel,
-  type UpdateStatusViewDeps,
-} from "./update_status_view_models";
-
-export { getUpdateFailureSummary } from "./update_status_view_models";
-export type { UpdateStatusViewDeps } from "./update_status_view_models";
+import type { UpdateStatusPanelViewModel } from "./update_status_view_models";
 
 export function syncUpdateControls(
   els: {
@@ -28,7 +18,7 @@ export function syncUpdateControls(
     updateSsidInput: HTMLInputElement | null;
     updatePasswordInput: HTMLInputElement | null;
   },
-  status: UpdateStatusPayload,
+  status: { state: string },
 ): void {
   const isRunning = status.state === "running";
   els.updateStartBtn.hidden = isRunning;
@@ -42,11 +32,8 @@ export function syncUpdateControls(
 
 export function renderUpdateStatusPanel(
   panel: HTMLElement,
-  status: UpdateStatusPayload,
-  health: HealthStatusPayload,
-  deps: UpdateStatusViewDeps,
+  viewModel: UpdateStatusPanelViewModel,
 ): void {
-  const viewModel = buildUpdateStatusPanelViewModel(status, health, deps);
   renderChildren(
     panel,
     createElementNode("div", {
