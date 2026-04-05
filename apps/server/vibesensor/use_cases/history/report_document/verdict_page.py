@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from dataclasses import replace
+from typing import TYPE_CHECKING
 
 from vibesensor.domain import SuitabilityCheck, TestRun
 from vibesensor.report_i18n import human_source
@@ -22,9 +24,14 @@ from vibesensor.shared.report_presentation import (
 from vibesensor.shared.run_context_warning import RunContextWarning
 
 from ._candidate_resolver import PrimaryCandidateContext
+from .narrative_summaries import _proof_summary_text
 from .section_context import VerdictPageContext
+from .timeline_graph import build_timeline_graph_data
 
-__all__ = ["build_observed_signature", "build_verdict_page_data"]
+if TYPE_CHECKING:
+    from .document_context import ReportDocumentContext
+
+__all__ = ["build_observed_signature", "build_verdict_page", "build_verdict_page_data"]
 
 
 def build_observed_signature(
@@ -126,6 +133,36 @@ def build_verdict_page_data(
                 tr("REPORT_ROUTE_APPENDIX_C"),
                 tr("REPORT_ROUTE_APPENDIX_D"),
             )
+        ),
+    )
+
+
+def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
+    """Build the fully assembled verdict page from shared document context."""
+
+    verdict_page = build_verdict_page_data(
+        aggregate=context.test_run,
+        primary_candidate_facts=context.decision_facts.primary_candidate,
+        duration_text=context.run_facts.duration_text,
+        verdict_context=context.verdict_page_context,
+        suitability_checks=context.decision_facts.suitability_checks,
+        warnings=context.decision_facts.warnings,
+        lang=context.lang,
+        tr=context.tr,
+    )
+    proof_summary = _proof_summary_text(
+        context.test_run,
+        context.primary,
+        context.report_facts,
+        runner_up_corner=context.verdict_page_context.runner_up_corner,
+        tr=context.tr,
+    )
+    return replace(
+        verdict_page,
+        proof_summary=proof_summary,
+        timeline_graph=build_timeline_graph_data(
+            context.report_facts,
+            duration_s=context.run_facts.duration_s,
         ),
     )
 
