@@ -1,4 +1,4 @@
-import type { AppFeatureBundle } from "../app_feature_bundle";
+import type { UiStartupFeaturePorts } from "./ui_startup_feature_ports";
 
 type StartupShell = {
   bindUiEvents(): void;
@@ -11,14 +11,12 @@ type StartupTransport = {
   startTransportMode(): void;
 };
 
-type StartupFeatures = Pick<AppFeatureBundle, "history" | "realtime" | "settings" | "update" | "espFlash">;
-
 type StartupWarn = (message: string, error: unknown) => void;
 
 type UiStartupCoordinatorDeps = {
   shell: StartupShell;
   transport: StartupTransport;
-  features: StartupFeatures;
+  features: UiStartupFeaturePorts;
   defaultViewId: string;
   warn?: StartupWarn;
 };
@@ -28,7 +26,7 @@ export class UiStartupCoordinator {
 
   private readonly transport: StartupTransport;
 
-  private readonly features: StartupFeatures;
+  private readonly features: UiStartupFeaturePorts;
 
   private readonly defaultViewId: string;
 

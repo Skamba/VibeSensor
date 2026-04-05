@@ -43,8 +43,16 @@ export interface SettingsFeatureDeps extends FeatureDepsBase {
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
+  view: SettingsFeatureViewPorts;
+  realtime: SettingsFeatureRealtimePorts;
+}
+
+export interface SettingsFeatureViewPorts {
   renderSpectrum: () => void;
   renderSpeedReadout: () => void;
+}
+
+export interface SettingsFeatureRealtimePorts {
   renderRealtimeStatus: () => void;
   renderRealtimeLoggingStatus: () => void;
 }
@@ -234,7 +242,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     escapeHtml,
     showError: ctx.showError,
     settings,
-    renderSpectrum: ctx.renderSpectrum,
+    renderSpectrum: ctx.view.renderSpectrum,
     hasValidActiveCar,
     onMissingActiveCar: syncCarDependentUiState,
     onSaveError: showSettingsSaveError,
@@ -248,7 +256,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     settings,
     getSpeedUnit: ctx.getSpeedUnit,
     fmt,
-    renderSpeedReadout: ctx.renderSpeedReadout,
+    renderSpeedReadout: ctx.view.renderSpeedReadout,
     onSaveError: showSettingsSaveError,
   });
   const gpsStatusModule: SettingsGpsStatusModule = createSettingsGpsStatusModule({
@@ -260,7 +268,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     getSpeedUnit: ctx.getSpeedUnit,
     fmt,
     syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
-    renderSpeedReadout: ctx.renderSpeedReadout,
+    renderSpeedReadout: ctx.view.renderSpeedReadout,
   });
   syncCarDependentUiState();
 
@@ -276,8 +284,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       highlightedCarFeedback = null;
     }
     syncCarDependentUiState();
-    ctx.renderRealtimeStatus();
-    ctx.renderRealtimeLoggingStatus();
+    ctx.realtime.renderRealtimeStatus();
+    ctx.realtime.renderRealtimeLoggingStatus();
   }
 
   async function loadCarsFromServer(): Promise<void> {
@@ -310,7 +318,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       clearHighlightedCarFeedback();
       syncCarDependentUiState();
       renderCarList();
-      ctx.renderSpectrum();
+      ctx.view.renderSpectrum();
     } catch (_err) {
       ctx.showError(t("settings.car.activate_failed"));
     }
@@ -330,7 +338,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         const result = await setActiveSettingsCar(carId);
         syncCarsPayload(result);
         syncActiveCarToInputs();
-        ctx.renderSpectrum();
+        ctx.view.renderSpectrum();
         didSyncSelection = true;
       }
       const hadFeedback = highlightedCarFeedback !== null;
@@ -357,7 +365,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       clearHighlightedCarFeedback();
       syncCarDependentUiState();
       renderCarList();
-      ctx.renderSpectrum();
+      ctx.view.renderSpectrum();
     } catch (_err) {
       ctx.showError(t("settings.car.delete_failed"));
     }
