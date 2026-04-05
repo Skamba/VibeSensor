@@ -88,11 +88,15 @@ For HTTP/WebSocket developer references, start with
 and
 [apps/ui/README.md#websocket-contract-boundary](apps/ui/README.md#websocket-contract-boundary),
 then use the docs index for the broader map.
+For supported Python and Node policy by environment, use
+[docs/runtime_support_matrix.md](docs/runtime_support_matrix.md).
 
 ## Prerequisites
 
-- Python `3.14.3` for the native backend, local tooling, and simulator (`.python-version`)
-- Node `22.x` plus `npm` for the UI build and dev server (`.nvmrc`)
+- The Python and Node versions from
+  [docs/runtime_support_matrix.md](docs/runtime_support_matrix.md) for the
+  workflow path you're using. Native dev and local CI reproduction follow
+  [`.python-version`](.python-version) and [`.nvmrc`](.nvmrc).
 - Docker plus Docker Compose for the Docker quick-start and Docker dev mode
 - PlatformIO `6.x` only when you are working on firmware
 
@@ -140,8 +144,12 @@ changes, and it fails fast if the generated frontend contracts are stale.
 
 ### Native Python + Vite (recommended for backend or UI iteration)
 
+Use the native-dev Python from
+[docs/runtime_support_matrix.md](docs/runtime_support_matrix.md) before creating
+the virtualenv:
+
 ```bash
-python3.14 -m venv .venv
+python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e "./apps/server[dev]"
@@ -151,9 +159,9 @@ vibesensor-server --reload --config apps/server/config.dev.yaml
 
 The backend uses an editable install from `apps/server/pyproject.toml` so
 commands like `vibesensor-server` and `vibesensor-sim` stay tied to your working
-tree. A local Python `3.14.3` virtualenv is the recommended native-dev path
-before you run the install above, and `make setup` will create or refresh that
-`.venv` for you automatically.
+tree. A local virtualenv created from the matrix-supported native-dev Python is
+the recommended path before you run the install above, and `make setup` will
+create or refresh that `.venv` for you automatically.
 
 In another terminal:
 
