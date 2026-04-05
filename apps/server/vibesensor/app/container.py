@@ -404,7 +404,7 @@ def build_live_runtime(
     ws_broadcast = WsBroadcastService(
         ui_push_hz=UI_PUSH_HZ,
         ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
-        payload_projector=ws_payload_projector,
+        payload_source=ws_payload_projector,
     )
     run_recorder = RunRecorder(
         RunRecorderConfig(
