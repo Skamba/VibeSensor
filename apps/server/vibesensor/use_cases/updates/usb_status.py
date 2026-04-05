@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Protocol
 
 from vibesensor.use_cases.updates.models import UsbInternetStatus
-from vibesensor.use_cases.updates.runner import CommandRunner, build_sudo_args
+from vibesensor.use_cases.updates.privilege import build_sudo_args
+from vibesensor.use_cases.updates.runner import CommandRunner
 from vibesensor.use_cases.updates.usb_status_evaluation import (
     candidate_diagnostic,
     select_best_candidate,
