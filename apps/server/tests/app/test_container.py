@@ -305,7 +305,7 @@ def test_build_history_service_bundle_exposes_http_history_deps(monkeypatch) -> 
     assert calls["projected_export_arg"] is history_export_service
 
 
-def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
+def test_build_live_runtime_exposes_http_route_bundle_deps_and_requeues_stale_runs(
     monkeypatch,
 ) -> None:
     registry = SimpleNamespace(name="registry")
@@ -437,7 +437,8 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
         speed_runtime=speed_runtime,
         runtime_settings=runtime_settings,
     )
-    telemetry = bundle.telemetry_deps(health_state="health-state")
+    health = bundle.http_health_deps(health_state="health-state")
+    live = bundle.http_live_deps(sensor_metadata_store="sensor-store")
 
     assert bundle.registry is registry
     assert bundle.worker_pool is worker_pool
@@ -486,13 +487,63 @@ def test_build_live_runtime_exposes_telemetry_deps_and_requeues_stale_runs(
         "sensor_metadata_reader": "sensor-reader",
         "language_reader": runtime_settings.language_reader,
     }
-    assert telemetry.processing_loop_state is processing_loop_state
-    assert telemetry.health_state == "health-state"
-    assert telemetry.processor is processor
-    assert telemetry.registry is registry
-    assert telemetry.control_plane is control_plane
-    assert telemetry.run_recorder is run_recorder
-    assert telemetry.ws_hub is ws_hub
+    assert health.processing_loop_state is processing_loop_state
+    assert health.health_state == "health-state"
+    assert health.processor is processor
+    assert health.registry is registry
+    assert health.run_recorder is run_recorder
+    assert live.registry is registry
+    assert live.control_plane is control_plane
+    assert live.sensor_metadata_store == "sensor-store"
+    assert live.processor is processor
+    assert live.run_recorder is run_recorder
+    assert live.ws_hub is ws_hub
+
+
+def test_build_router_deps_maps_runtime_bundles_to_route_bundles() -> None:
+    speed_status_service = object()
+    obd_admin_service = object()
+    settings_deps = SimpleNamespace(sensor_metadata_store="sensor-store")
+    history_deps = object()
+    health_deps = object()
+    live_deps = object()
+    updates = object()
+    speed_runtime = SimpleNamespace(
+        speed_services=SimpleNamespace(
+            observation=speed_status_service,
+            admin=obd_admin_service,
+        )
+    )
+    settings_services = SimpleNamespace(
+        http_settings_deps=Mock(return_value=settings_deps),
+    )
+    history_services = SimpleNamespace(http_deps=Mock(return_value=history_deps))
+    live_runtime = SimpleNamespace(
+        http_health_deps=Mock(return_value=health_deps),
+        http_live_deps=Mock(return_value=live_deps),
+    )
+
+    router_deps = container_module.build_router_deps(
+        health_state="health-state",
+        speed_runtime=speed_runtime,
+        settings_services=settings_services,
+        history_services=history_services,
+        live_runtime=live_runtime,
+        updates=updates,
+    )
+
+    assert router_deps.health is health_deps
+    assert router_deps.settings is settings_deps
+    assert router_deps.live is live_deps
+    assert router_deps.history is history_deps
+    assert router_deps.updates is updates
+    live_runtime.http_health_deps.assert_called_once_with(health_state="health-state")
+    settings_services.http_settings_deps.assert_called_once_with(
+        speed_status_service=speed_status_service,
+        obd_admin_service=obd_admin_service,
+    )
+    live_runtime.http_live_deps.assert_called_once_with(sensor_metadata_store="sensor-store")
+    history_services.http_deps.assert_called_once_with()
 
 
 def test_build_runtime_assembles_app_runtime_through_domain_builders(
