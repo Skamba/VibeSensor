@@ -60,6 +60,32 @@ def test_sensor_settings_rejects_duplicate_location() -> None:
         settings.set_sensor("11:22:33:44:55:66", {"location_code": "front_left_wheel"})
 
 
+def test_assign_sensor_location_persists_canonical_location_label() -> None:
+    settings = _sensor_settings_service()
+
+    settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "front_left_wheel")
+
+    assert settings.get_sensors()["aabbccddeeff"] == {
+        "name": "Front Left Wheel",
+        "location_code": "front_left_wheel",
+    }
+
+
+def test_assign_sensor_location_reuses_duplicate_location_validation() -> None:
+    settings = _sensor_settings_service()
+    settings.set_sensor("aa:bb:cc:dd:ee:ff", {"location_code": "front_left_wheel"})
+
+    with pytest.raises(ValueError, match="already assigned"):
+        settings.assign_sensor_location("11:22:33:44:55:66", "front_left_wheel")
+
+
+def test_assign_sensor_location_rejects_unknown_location_code() -> None:
+    settings = _sensor_settings_service()
+
+    with pytest.raises(ValueError, match="Unknown location_code"):
+        settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "not_a_real_location")
+
+
 def test_sensor_settings_remove_sensor() -> None:
     settings = _sensor_settings_service()
     settings.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "Test"})
