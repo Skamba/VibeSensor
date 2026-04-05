@@ -42,9 +42,21 @@ export interface RealtimeFeatureDeps extends FeatureDepsBase {
   settings: SettingsState;
   getLanguage: () => string;
   formatInt: (value: number) => string;
+  chrome: RealtimeFeatureChromePorts;
+  selection: RealtimeFeatureSelectionPorts;
+  recording: RealtimeFeatureRecordingPorts;
+}
+
+export interface RealtimeFeatureChromePorts {
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
   setStatValue: (container: HTMLElement | null, value: string | number) => void;
+}
+
+export interface RealtimeFeatureSelectionPorts {
   sendSelection: () => void;
+}
+
+export interface RealtimeFeatureRecordingPorts {
   onRecordingStatusChanged: () => Promise<void>;
 }
 
@@ -77,8 +89,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     t,
     escapeHtml,
     formatInt,
-    setPillState,
+    chrome,
   } = ctx;
+  const { setPillState, setStatValue } = chrome;
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
   const LOGGING_STATUS_IDLE_POLL_MS = 2_000;
   const LOGGING_STATUS_ACTIVE_POLL_MS = 2_000;
@@ -247,11 +260,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   function renderLiveOverviewStats(): void {
     const signal = strongestSignal();
     const totalClients = realtime.clients.length;
-    ctx.setStatValue(els.liveConnectedSensors, `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`);
+    setStatValue(els.liveConnectedSensors, `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`);
     renderActiveCarStat();
-    ctx.setStatValue(els.liveRecordingState, computeRecordingPanelState().phaseText);
-    ctx.setStatValue(els.liveDataFreshness, dataFreshnessText());
-    ctx.setStatValue(els.liveStrongestSignal, strongestSignalText(signal));
+    setStatValue(els.liveRecordingState, computeRecordingPanelState().phaseText);
+    setStatValue(els.liveDataFreshness, dataFreshnessText());
+    setStatValue(els.liveStrongestSignal, strongestSignalText(signal));
     els.liveStrongestSignal?.classList.remove("stat--spotlight");
   }
 
@@ -336,7 +349,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     }
     if (loggingElapsedTimer !== null) return;
     loggingElapsedTimer = setInterval(() => {
-      ctx.setStatValue(els.loggingElapsed, formatElapsed(realtime.loggingStatus.start_time_utc));
+      setStatValue(els.loggingElapsed, formatElapsed(realtime.loggingStatus.start_time_utc));
     }, 1_000);
   }
 
@@ -911,9 +924,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     setDashboardPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText, {
       hidden: !panelState.showPill,
     });
-    ctx.setStatValue(els.loggingPhase, panelState.phaseText);
-    ctx.setStatValue(els.loggingElapsed, panelState.elapsedText);
-    ctx.setStatValue(els.loggingSamples, panelState.samplesText);
+    setStatValue(els.loggingPhase, panelState.phaseText);
+    setStatValue(els.loggingElapsed, panelState.elapsedText);
+    setStatValue(els.loggingSamples, panelState.samplesText);
     if (els.loggingPhase) {
       els.loggingPhase.hidden = true;
     }
@@ -961,9 +974,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         els.loggingRunId.hidden = true;
         els.loggingRunId.textContent = "";
       }
-      ctx.setStatValue(els.loggingPhase, t("status.unavailable"));
-      ctx.setStatValue(els.loggingElapsed, "--");
-      ctx.setStatValue(els.loggingSamples, "--");
+      setStatValue(els.loggingPhase, t("status.unavailable"));
+      setStatValue(els.loggingElapsed, "--");
+      setStatValue(els.loggingSamples, "--");
       if (els.loggingPhase) {
         els.loggingPhase.hidden = true;
       }
@@ -990,7 +1003,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     renderLoggingStatus();
     try {
       realtime.loggingStatus = await startLoggingRun();
-      await ctx.onRecordingStatusChanged();
+      await ctx.recording.onRecordingStatusChanged();
       loggingStatusPolling.restart();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -1009,7 +1022,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     renderLoggingStatus();
     try {
       realtime.loggingStatus = await stopLoggingRun();
-      await ctx.onRecordingStatusChanged();
+      await ctx.recording.onRecordingStatusChanged();
       loggingStatusPolling.restart();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -1089,7 +1102,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     maybeRenderSensorsSettingsList();
     renderLoggingStatus();
     renderStatus();
-    if (prevSelected !== realtime.selectedClientId) ctx.sendSelection();
+    if (prevSelected !== realtime.selectedClientId) ctx.selection.sendSelection();
   }
 
   function bindHandlers(): void {
