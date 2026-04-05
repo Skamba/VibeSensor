@@ -15,6 +15,10 @@ from vibesensor.adapters.http.models import (
     SpeedUnitResponse,
 )
 from vibesensor.adapters.http.settings.dependencies import UiPreferencesRouteDeps
+from vibesensor.shared.boundaries.settings import (
+    language_response_payload,
+    speed_unit_response_payload,
+)
 
 _SET_LANGUAGE_RESPONSES: OpenAPIResponses = {
     400: {"description": "Unsupported language code."},
@@ -34,7 +38,9 @@ def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
     async def get_language() -> LanguageResponse:
         """Return the currently selected dashboard language code."""
 
-        return LanguageResponse(language=deps.ui_preferences.language)
+        return LanguageResponse.model_validate(
+            language_response_payload(deps.ui_preferences.language)
+        )
 
     @router.put(
         "/api/settings/language",
@@ -51,13 +57,15 @@ def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
             )
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
-        return LanguageResponse(language=language)
+        return LanguageResponse.model_validate(language_response_payload(language))
 
     @router.get("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def get_speed_unit() -> SpeedUnitResponse:
         """Return the speed unit currently used for UI display and input."""
 
-        return SpeedUnitResponse(speed_unit=deps.ui_preferences.speed_unit)
+        return SpeedUnitResponse.model_validate(
+            speed_unit_response_payload(deps.ui_preferences.speed_unit)
+        )
 
     @router.put(
         "/api/settings/speed-unit",
@@ -74,6 +82,6 @@ def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
             )
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
-        return SpeedUnitResponse(speed_unit=unit)
+        return SpeedUnitResponse.model_validate(speed_unit_response_payload(unit))
 
     return router

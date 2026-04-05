@@ -49,7 +49,17 @@ def test_summary_fields_package_exposes_canonical_entrypoints() -> None:
     assert callable(summary_fields.build_evidence_metrics)
 
 
-def test_settings_package_exposes_snapshot_codecs() -> None:
+def test_settings_package_exposes_settings_codecs() -> None:
+    assert callable(settings.analysis_settings_response_payload)
+    assert callable(settings.analysis_settings_update_payload_from_mapping)
+    assert callable(settings.car_config_update_payload_from_mapping)
+    assert callable(settings.cars_response_payload)
     assert callable(settings.settings_snapshot_from_payload)
+    assert callable(settings.language_response_payload)
+    assert callable(settings.sensor_config_update_payload_from_mapping)
+    assert callable(settings.sensors_response_payload)
+    assert callable(settings.speed_source_response_payload)
+    assert callable(settings.speed_source_update_payload_from_mapping)
+    assert callable(settings.speed_unit_response_payload)
     assert callable(settings.coerce_language_code)
     assert callable(settings.coerce_speed_unit_code)

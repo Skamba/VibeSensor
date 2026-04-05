@@ -3,32 +3,24 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import asdict
 
 from fastapi import APIRouter
 
 from vibesensor.adapters.http._helpers import OpenAPIResponses
-from vibesensor.adapters.http.analysis_settings_request_codec import (
-    analysis_settings_payload_from_request,
-)
 from vibesensor.adapters.http.error_boundary import http_exception_for_value_error
 from vibesensor.adapters.http.models import (
     AnalysisSettingsRequest,
     AnalysisSettingsResponse,
 )
 from vibesensor.adapters.http.settings.dependencies import AnalysisSettingsRouteDeps
+from vibesensor.shared.boundaries.settings import (
+    analysis_settings_response_payload,
+    analysis_settings_update_payload_from_mapping,
+)
 
 _SET_ANALYSIS_SETTINGS_RESPONSES: OpenAPIResponses = {
     400: {"description": "Analysis settings are invalid or no active car is configured."},
 }
-
-
-def _analysis_settings_response(
-    deps: AnalysisSettingsRouteDeps,
-) -> AnalysisSettingsResponse:
-    return AnalysisSettingsResponse.model_validate(
-        asdict(deps.analysis_settings.analysis_settings_snapshot())
-    )
 
 
 def create_analysis_settings_routes(deps: AnalysisSettingsRouteDeps) -> APIRouter:
@@ -40,7 +32,9 @@ def create_analysis_settings_routes(deps: AnalysisSettingsRouteDeps) -> APIRoute
     async def get_analysis_settings() -> AnalysisSettingsResponse:
         """Return the validated analysis settings derived from the active car profile."""
 
-        return _analysis_settings_response(deps)
+        return AnalysisSettingsResponse.model_validate(
+            analysis_settings_response_payload(deps.analysis_settings.analysis_settings_snapshot())
+        )
 
     @router.put(
         "/api/settings/analysis",
@@ -53,7 +47,9 @@ def create_analysis_settings_routes(deps: AnalysisSettingsRouteDeps) -> APIRoute
         """Update analysis-specific car aspects such as tire geometry and drivetrain ratios."""
 
         try:
-            changes = analysis_settings_payload_from_request(req)
+            changes = analysis_settings_update_payload_from_mapping(
+                req.model_dump(exclude_none=True)
+            )
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
         if changes:
@@ -64,6 +60,8 @@ def create_analysis_settings_routes(deps: AnalysisSettingsRouteDeps) -> APIRoute
                 )
             except ValueError as exc:
                 raise http_exception_for_value_error(exc, status_code=400) from exc
-        return _analysis_settings_response(deps)
+        return AnalysisSettingsResponse.model_validate(
+            analysis_settings_response_payload(deps.analysis_settings.analysis_settings_snapshot())
+        )
 
     return router

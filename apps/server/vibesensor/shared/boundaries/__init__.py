@@ -5,7 +5,7 @@ Focused conversion families live in sibling subpackages:
 - ``analysis_payloads/`` owns ``AnalysisResult`` <-> summary/persisted payloads
 - ``runs/`` owns persisted run metadata, log, capture, and suitability adapters
 - ``reporting/`` owns report preparation and report-facing fact shaping
-- ``settings/`` owns persisted settings-snapshot normalization
+- ``settings/`` owns persisted settings normalization plus shared settings payload shaping
 - ``summary_fields/`` owns finding, warning, origin, and test-plan payload fragments
 - ``sensor_frames/`` owns ``SensorFrame`` JSON and storage-row adapters
 
