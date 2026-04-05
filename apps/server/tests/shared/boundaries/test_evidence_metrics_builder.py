@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import Finding, FindingEvidence, VibrationSource
-from vibesensor.shared.boundaries.evidence_metrics_builder import build_evidence_metrics
+from vibesensor.shared.boundaries.summary_fields.evidence_metrics import build_evidence_metrics
 
 
 class TestBuildEvidenceMetrics:

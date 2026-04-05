@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.run_car_codec import (
+from vibesensor.shared.boundaries.runs.car import (
     run_car_metadata_from_mapping,
     run_car_metadata_to_json_object,
 )

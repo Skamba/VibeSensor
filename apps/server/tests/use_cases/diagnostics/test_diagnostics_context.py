@@ -5,7 +5,7 @@ from dataclasses import replace
 from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain import Symptom
-from vibesensor.shared.boundaries.run_metadata_codec import (
+from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )

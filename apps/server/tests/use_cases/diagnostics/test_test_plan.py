@@ -6,7 +6,7 @@ from test_support.findings import make_finding_payload
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.domain import Finding
-from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
 from vibesensor.use_cases.diagnostics.findings import finalize_findings
 

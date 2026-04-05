@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import RunSuitability, SuitabilityCheck
-from vibesensor.shared.boundaries.run_suitability import (
+from vibesensor.shared.boundaries.runs.suitability import (
     run_suitability_from_payload,
     run_suitability_payload,
 )

@@ -50,16 +50,16 @@ from vibesensor.infra.config.sensor_settings import (
 )
 from vibesensor.infra.config.settings_derivation import analysis_settings_snapshot_from_aspects
 from vibesensor.infra.config.settings_transaction import update_with_rollback
-from vibesensor.shared.boundaries.settings_snapshot_codec import (
+from vibesensor.shared.boundaries.settings.snapshot import (
     coerce_language_code as _coerce_language,
 )
-from vibesensor.shared.boundaries.settings_snapshot_codec import (
+from vibesensor.shared.boundaries.settings.snapshot import (
     coerce_speed_unit_code as _coerce_speed_unit,
 )
-from vibesensor.shared.boundaries.settings_snapshot_codec import (
+from vibesensor.shared.boundaries.settings.snapshot import (
     validated_language_code as _validated_language,
 )
-from vibesensor.shared.boundaries.settings_snapshot_codec import (
+from vibesensor.shared.boundaries.settings.snapshot import (
     validated_speed_unit_code as _validated_speed_unit,
 )
 from vibesensor.shared.exceptions import PersistenceError

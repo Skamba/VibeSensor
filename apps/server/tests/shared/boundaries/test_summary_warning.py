@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.summary_warning import (
+from vibesensor.shared.boundaries.summary_fields.warnings import (
     localize_warning_list,
     summary_warning_payloads,
 )

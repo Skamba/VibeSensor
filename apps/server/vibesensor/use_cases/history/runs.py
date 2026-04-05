@@ -6,7 +6,7 @@ import asyncio
 from typing import Never, cast
 
 from vibesensor.domain import RunStatus
-from vibesensor.shared.boundaries.summary_warning import localize_warning_list
+from vibesensor.shared.boundaries.summary_fields.warnings import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun

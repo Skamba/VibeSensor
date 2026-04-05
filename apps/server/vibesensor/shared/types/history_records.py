@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata

@@ -11,7 +11,7 @@ from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_from_storage_json_object,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.json_utils import safe_json_loads
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,

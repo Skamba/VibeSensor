@@ -12,8 +12,8 @@ from vibesensor.domain import (
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
-from vibesensor.shared.boundaries.vibration_origin import (
+from vibesensor.shared.boundaries.runs.suitability import run_suitability_payload
+from vibesensor.shared.boundaries.summary_fields.origin import (
     SuspectedVibrationOrigin,
     build_origin_explanation,
 )

@@ -6,13 +6,13 @@ from collections.abc import Mapping
 from typing import cast
 
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
-from vibesensor.shared.boundaries.test_plan_projection import (
+from vibesensor.shared.boundaries.runs.suitability import run_suitability_payload
+from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
+from vibesensor.shared.boundaries.summary_fields.origin import origin_payload_from_finding
+from vibesensor.shared.boundaries.summary_fields.test_plan import (
     _has_structured_step_content,
     step_payloads_from_plan,
 )
-from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 

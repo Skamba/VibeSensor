@@ -15,7 +15,7 @@ from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_from_storage_json_object,
     persisted_analysis_to_storage_json_object,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import (

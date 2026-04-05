@@ -12,7 +12,7 @@ from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition
 from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_to_storage_json_object,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis

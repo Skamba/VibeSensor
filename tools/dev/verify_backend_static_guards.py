@@ -957,7 +957,7 @@ def _check_diagnostics_boundary_types() -> list[str]:
         for node in ast.walk(tree):
             if (
                 isinstance(node, ast.ImportFrom)
-                and node.module == "vibesensor.shared.boundaries.finding"
+                and node.module == "vibesensor.shared.boundaries.summary_fields.finding"
                 and any(
                     alias.name == "finding_payload_from_domain" for alias in node.names
                 )
@@ -1102,33 +1102,43 @@ def _check_run_context_split_owners() -> list[str]:
     return failures
 
 
-def _check_settings_snapshot_codec_name() -> list[str]:
+def _check_settings_snapshot_boundary_location() -> list[str]:
     failures: list[str] = []
-    old_file = VIBESENSOR_DIR / "shared" / "boundaries" / "settings_snapshot.py"
-    new_file = VIBESENSOR_DIR / "shared" / "boundaries" / "settings_snapshot_codec.py"
-    if old_file.exists():
+    legacy_files = (
+        VIBESENSOR_DIR / "shared" / "boundaries" / "settings_snapshot.py",
+        VIBESENSOR_DIR / "shared" / "boundaries" / "settings_snapshot_codec.py",
+    )
+    new_file = VIBESENSOR_DIR / "shared" / "boundaries" / "settings" / "snapshot.py"
+    for legacy_file in legacy_files:
+        if not legacy_file.exists():
+            continue
         failures.append(
-            f"{old_file.relative_to(REPO_ROOT)} should be renamed to settings_snapshot_codec.py"
+            f"{legacy_file.relative_to(REPO_ROOT)} should be removed in favor of "
+            "shared/boundaries/settings/snapshot.py"
         )
     if not new_file.exists():
         failures.append(
-            f"Missing settings snapshot codec: {new_file.relative_to(REPO_ROOT)}"
+            f"Missing settings snapshot boundary: {new_file.relative_to(REPO_ROOT)}"
         )
     for path in _python_files(VIBESENSOR_DIR):
         tree = _parse_python(path)
         if tree is None:
             continue
         for node in ast.walk(tree):
-            if (
-                isinstance(node, ast.ImportFrom)
-                and node.module == "vibesensor.shared.boundaries.settings_snapshot"
-            ):
+            if isinstance(node, ast.ImportFrom) and node.module in {
+                "vibesensor.shared.boundaries.settings_snapshot",
+                "vibesensor.shared.boundaries.settings_snapshot_codec",
+            }:
                 failures.append(
                     f"{path.relative_to(REPO_ROOT)} imports the old settings snapshot codec path"
                 )
             if isinstance(node, ast.Import):
                 if any(
-                    alias.name == "vibesensor.shared.boundaries.settings_snapshot"
+                    alias.name
+                    in {
+                        "vibesensor.shared.boundaries.settings_snapshot",
+                        "vibesensor.shared.boundaries.settings_snapshot_codec",
+                    }
                     for alias in node.names
                 ):
                     failures.append(
@@ -1531,7 +1541,7 @@ def _check_boundary_owns_no_meaning_finding_kind() -> list[str]:
 def _check_boundary_owns_no_meaning_vibration_source() -> list[str]:
     sanctioned: dict[str, set[str]] = {
         "finding.py": {"finding_from_payload"},
-        "vibration_origin.py": {"_source_from_payload"},
+        "origin.py": {"_source_from_payload"},
         "mapping.py": {"human_source"},
         "pdf_diagram_render.py": {"_source_color"},
     }
@@ -1739,7 +1749,7 @@ CHECKS: tuple[Check, ...] = (
     ),
     (
         "Settings snapshot codec keeps a distinct filename",
-        _check_settings_snapshot_codec_name,
+        _check_settings_snapshot_boundary_location,
     ),
     (
         "Domain package avoids payload type imports",

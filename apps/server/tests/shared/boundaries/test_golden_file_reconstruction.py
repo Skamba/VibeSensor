@@ -14,7 +14,7 @@ from vibesensor.shared.boundaries.codecs import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 
 

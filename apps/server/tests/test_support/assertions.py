@@ -6,7 +6,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from test_support.analysis import extract_top, top_confidence, top_corner_label
-from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 
 _CORNER_LABEL_TOKENS: dict[str, tuple[str, ...]] = {
     "FL": ("front left", "front-left", "fl"),

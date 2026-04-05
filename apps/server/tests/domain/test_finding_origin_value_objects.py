@@ -14,7 +14,7 @@ from vibesensor.domain import (
     VibrationSource,
 )
 from vibesensor.shared.boundaries.codecs import finding_evidence_from_mapping
-from vibesensor.shared.boundaries.vibration_origin import (
+from vibesensor.shared.boundaries.summary_fields.origin import (
     location_hotspot_from_payload,
     origin_payload_from_finding,
     vibration_origin_from_payload,
@@ -453,7 +453,7 @@ class TestVibrationOrigin:
 
     def test_suspected_vibration_origin_is_boundary_type(self) -> None:
         """SuspectedVibrationOrigin is importable from boundaries, not analysis."""
-        from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
+        from vibesensor.shared.boundaries.summary_fields.origin import SuspectedVibrationOrigin
 
         origin: SuspectedVibrationOrigin = {
             "location": "front_left",

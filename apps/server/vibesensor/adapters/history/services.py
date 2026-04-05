@@ -16,8 +16,8 @@ from vibesensor.adapters.http.models import (
     HistoryListEntryResponse,
     HistoryRunResponse,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
-from vibesensor.shared.boundaries.summary_warning import localize_warning_list
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+from vibesensor.shared.boundaries.summary_fields.warnings import localize_warning_list
 from vibesensor.shared.ports import ActiveCarReader
 from vibesensor.shared.types.json_types import JsonValue, is_json_array, is_json_object
 from vibesensor.use_cases.history.exports import (

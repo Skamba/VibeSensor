@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import vibesensor.shared.boundaries.analysis_payloads.reconstruction.case as diagnostic_case
+import vibesensor.shared.boundaries.runs.projection as run_metadata_projection
 from vibesensor.domain import Car, SpeedProfile, Symptom
-from vibesensor.shared.boundaries import diagnostic_case, run_metadata_projection
 from vibesensor.use_cases.diagnostics import _analysis_result_builder, run_data_preparation
 
 

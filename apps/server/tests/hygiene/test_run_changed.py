@@ -25,7 +25,9 @@ def _load_run_changed_module():
 def test_plan_commands_maps_backend_source_to_mirrored_test_dir() -> None:
     module = _load_run_changed_module()
 
-    commands = module._plan_commands(("apps/server/vibesensor/shared/boundaries/finding.py",))
+    commands = module._plan_commands(
+        ("apps/server/vibesensor/shared/boundaries/summary_fields/finding.py",)
+    )
 
     assert commands == (
         module.PlannedCommand(

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.vibration_origin import location_hotspot_from_payload
+from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
+from vibesensor.shared.boundaries.summary_fields.origin import location_hotspot_from_payload
 
 
 def test_location_hotspot_from_payload_drops_non_finite_numeric_values() -> None:

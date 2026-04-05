@@ -11,7 +11,7 @@ import pytest
 from test_support.core import canonicalize_run_context_metadata
 from test_support.findings import make_finding_payload
 from vibesensor.domain import LocationHotspot
-from vibesensor.shared.boundaries.run_metadata_codec import (
+from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )

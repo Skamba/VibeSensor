@@ -12,8 +12,8 @@ from vibesensor.domain import (
 )
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.test_plan import plan_test_actions
-from vibesensor.shared.boundaries.run_capture_codec import configuration_snapshot_from_run_metadata
-from vibesensor.shared.boundaries.run_metadata_projection import (
+from vibesensor.shared.boundaries.runs.capture import configuration_snapshot_from_run_metadata
+from vibesensor.shared.boundaries.runs.projection import (
     car_from_run_metadata,
     symptom_from_run_metadata,
 )

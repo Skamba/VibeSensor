@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.shared.boundaries.run_log import read_jsonl_run
+from vibesensor.shared.boundaries.runs.log import read_jsonl_run
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
