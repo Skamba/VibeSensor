@@ -1,4 +1,5 @@
-import { adaptServerPayload, type AdaptedClient, type AdaptedPayload } from "../../server_payload";
+import { adaptServerPayload } from "../../server_payload";
+import type { AdaptedClient, AdaptedPayload } from "../../transport/live_models";
 import { runDemoMode } from "../demo_mode";
 import { WsClient } from "../../ws";
 import { applyLivePayloadUpdate, type AppState } from "../ui_app_state";

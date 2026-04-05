@@ -3,7 +3,7 @@ import type {
   SpeedSourceKind,
   SpeedSourcePayload,
   SpeedSourceRequest,
-} from "../../api/types";
+} from "../../transport/http_models";
 import {
   getSettingsSpeedSource,
   pairSettingsObdDevice,

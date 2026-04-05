@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import type { AdaptedPayload } from "../src/server_payload";
 import { createAppState, applyLivePayloadUpdate } from "../src/app/ui_app_state";
+import type { AdaptedPayload } from "../src/transport/live_models";
 
 function makeAdaptedPayload(overrides: Partial<AdaptedPayload> = {}): AdaptedPayload {
   return {

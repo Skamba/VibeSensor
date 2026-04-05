@@ -1,4 +1,4 @@
-import type { CarRecord } from "../api/types";
+import type { CarRecord } from "../transport/http_models";
 import type { SettingsState } from "./ui_app_state";
 
 const REQUIRED_CAR_ASPECT_KEYS = [

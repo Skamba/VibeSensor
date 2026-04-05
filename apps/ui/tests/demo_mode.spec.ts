@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { runDemoMode } from "../src/app/demo_mode";
+import { defaultVehicleSettings } from "../src/app/ui_app_state";
 import { adaptServerPayload } from "../src/server_payload";
 import { installWindowGlobal } from "./async_test_helpers";
 
@@ -15,6 +16,19 @@ test.describe("runDemoMode", () => {
       transport: {
         wsState: "disconnected",
         hasReceivedPayload: false,
+      },
+      settings: {
+        vehicleSettings: { ...defaultVehicleSettings },
+        cars: [],
+        carsLoaded: false,
+        activeCarId: null,
+        speedSource: "gps",
+        manualSpeedKph: null,
+        obdDeviceMac: null,
+        obdDeviceName: null,
+        resolvedSpeedSource: null,
+        gpsFallbackActive: false,
+        gpsEffectiveSpeedKph: null,
       },
     };
     let renderWsStateCalls = 0;
