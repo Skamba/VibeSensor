@@ -4,8 +4,8 @@ from typing import get_type_hints
 
 from vibesensor.adapters.http.models.settings import CarResponse, CarUpsertRequest
 from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
-from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.shared.types.settings_types import (
     AnalysisSettingsPayload,
     analysis_settings_payload_from_mapping,
@@ -35,15 +35,6 @@ def test_analysis_settings_payload_projection_keeps_only_supported_keys() -> Non
 def test_http_and_store_annotations_use_analysis_settings_payload() -> None:
     assert get_type_hints(CarUpsertRequest)["aspects"] == AnalysisSettingsPayload | None
     assert get_type_hints(CarResponse)["aspects"] is AnalysisSettingsPayload
-    assert get_type_hints(SettingsStore.active_car_aspects)["return"] == (
-        AnalysisSettingsPayload | None
-    )
-    assert get_type_hints(SettingsStore.update_active_car_aspects)["aspects"] is (
-        AnalysisSettingsPayload
-    )
-    assert get_type_hints(SettingsStore.update_active_car_aspects)["return"] is (
-        AnalysisSettingsPayload
-    )
     assert get_type_hints(CarSettingsService.active_car_aspects)["return"] == (
         AnalysisSettingsPayload | None
     )
@@ -53,3 +44,10 @@ def test_http_and_store_annotations_use_analysis_settings_payload() -> None:
     assert get_type_hints(CarSettingsService.update_active_car_aspects)["return"] is (
         AnalysisSettingsPayload
     )
+    analysis_hints = get_type_hints(ActiveCarAnalysisSettingsService.update_active_car_aspects)
+    assert (
+        get_type_hints(ActiveCarAnalysisSettingsService.analysis_settings_snapshot)["return"]
+        is AnalysisSettingsSnapshot
+    )
+    assert analysis_hints["aspects"] is (AnalysisSettingsPayload)
+    assert analysis_hints["return"] is AnalysisSettingsPayload

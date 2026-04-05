@@ -243,6 +243,11 @@ class FakeState:
     gps_monitor: GPSSpeedMonitor = field(default_factory=_gps_monitor_mock)
     run_recorder: RunRecorder = field(default_factory=_run_recorder_mock)
     settings_store: MagicMock = field(default_factory=_settings_store_mock)
+    settings_reader: object | None = None
+    car_settings: object | None = None
+    analysis_settings: object | None = None
+    sensor_metadata_store: object | None = None
+    ui_preferences: object | None = None
     speed_source_service: MagicMock = field(default_factory=_speed_source_service_mock)
     history_db: object = field(default_factory=MagicMock)
     update_manager: UpdateManager = field(default_factory=_update_manager_mock)
@@ -257,6 +262,16 @@ class FakeState:
 
     def __post_init__(self) -> None:
         self.health_state.mark_ready()
+        if self.settings_reader is None:
+            self.settings_reader = self.settings_store
+        if self.car_settings is None:
+            self.car_settings = self.settings_store
+        if self.analysis_settings is None:
+            self.analysis_settings = self.settings_store
+        if self.sensor_metadata_store is None:
+            self.sensor_metadata_store = self.settings_store
+        if self.ui_preferences is None:
+            self.ui_preferences = self.settings_store
         # Keep router assembly tests focused on dependency wiring rather than
         # bespoke history/export service setup in each caller.
         if self.run_service is None:
@@ -264,7 +279,7 @@ class FakeState:
                 HistoryRunService(
                     self.history_db,
                 ),
-                current_car_reader=self.settings_store,
+                current_car_reader=self.settings_reader,
             )
         if self.report_service is None:
             self.report_service = HistoryReportService(
@@ -293,10 +308,10 @@ class FakeState:
     @property
     def settings(self) -> SettingsDeps:
         return SettingsDeps(
-            car_settings=self.settings_store,
-            analysis_settings=self.settings_store,
-            sensor_metadata_store=self.settings_store,
-            ui_preferences=self.settings_store,
+            car_settings=self.car_settings,
+            analysis_settings=self.analysis_settings,
+            sensor_metadata_store=self.sensor_metadata_store,
+            ui_preferences=self.ui_preferences,
             speed_source_service=self.speed_source_service,
             speed_status_service=self.gps_monitor,
             obd_admin_service=self.gps_monitor,

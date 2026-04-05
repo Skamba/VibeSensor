@@ -43,7 +43,7 @@ class _UpdateWithRollback(Protocol):
 
 @dataclass(slots=True)
 class CarSettingsState:
-    """Mutable car-selection state owned by ``SettingsStore``."""
+    """Mutable car-selection state shared by focused persisted settings services."""
 
     cars: list[Car] = field(default_factory=list)
     active_car_id: str | None = None
@@ -61,7 +61,7 @@ def _car_payload(car: Car | None) -> dict[str, object] | None:
 
 
 class CarSettingsService:
-    """Explicit car-profile CRUD collaborator used by ``SettingsStore``."""
+    """Persisted car-profile CRUD collaborator backed by the shared snapshot coordinator."""
 
     __slots__ = ("_lock", "_state", "_update_with_rollback")
 

@@ -16,9 +16,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from test_support.settings_services import build_settings_services
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frame_from_mapping
@@ -169,22 +169,22 @@ class TestBoundedSample:
 
 def test_speed_unit_persists_and_round_trips(tmp_path: Path) -> None:
     db = _make_history_db(tmp_path, "settings.db")
-    store = SettingsStore(db)
+    services = build_settings_services(db=db)
 
     # Default
-    assert store.speed_unit == "kmh"
+    assert services.ui_preferences.speed_unit == "kmh"
 
     # Change to mps
-    store.set_speed_unit("mps")
-    assert store.speed_unit == "mps"
+    services.ui_preferences.set_speed_unit("mps")
+    assert services.ui_preferences.speed_unit == "mps"
 
     # Reload from DB
-    store2 = SettingsStore(db)
-    assert store2.speed_unit == "mps"
+    services2 = build_settings_services(db=db)
+    assert services2.ui_preferences.speed_unit == "mps"
 
     # Invalid falls back
     with pytest.raises(ValueError, match="speed_unit must be one of"):
-        store.set_speed_unit("mph")  # not a valid choice
+        services.ui_preferences.set_speed_unit("mph")  # not a valid choice
 
 
 # ---------------------------------------------------------------------------
