@@ -12,6 +12,7 @@ Use this file as the human-facing guide for day-to-day development workflow. Det
 Primary references:
 
 - Documentation index: [docs/README.md](docs/README.md)
+- Runtime/toolchain support policy: [docs/runtime_support_matrix.md](docs/runtime_support_matrix.md)
 - Repo structure: [docs/ai/repo-map.md](docs/ai/repo-map.md)
 - Server setup and deployment: [apps/server/README.md](apps/server/README.md)
 - API surface and contracts: [apps/server/README.md#http-and-websocket-surface](apps/server/README.md#http-and-websocket-surface), [apps/ui/README.md#websocket-contract-boundary](apps/ui/README.md#websocket-contract-boundary), and [docs/operational-runbooks.md](docs/operational-runbooks.md)
@@ -22,8 +23,10 @@ Primary references:
 ## Local setup
 
 Before the first bootstrap, run `make doctor` if you want a quick prerequisite
-check against the pinned Python/Node versions and the optional Docker/firmware
-tooling. Run bare `make` any time you want the current repo command menu.
+check against the runtime policy in
+[docs/runtime_support_matrix.md](docs/runtime_support_matrix.md) and the
+optional Docker/firmware tooling. Run bare `make` any time you want the current
+repo command menu.
 
 ### Docker path
 
@@ -177,7 +180,9 @@ drift.
 
 ### Developer setup troubleshooting
 
-- `make doctor` fails on Python or Node: switch to the versions pinned in
+- `make doctor` fails on Python or Node: switch to the versions required by
+  [docs/runtime_support_matrix.md](docs/runtime_support_matrix.md). For native
+  dev and local CI reproduction, that means matching
   [.python-version](.python-version) and [.nvmrc](.nvmrc), then rerun
   `make doctor` before bootstrapping. A doctor `WARN` on Docker or PlatformIO
   only means those optional workflow paths are unavailable; the native Python +
@@ -193,9 +198,9 @@ drift.
   intend to use, then rerun either `make setup` or the native bootstrap flow in
   [README.md#native-python--vite-recommended-for-backend-or-ui-iteration](README.md#native-python--vite-recommended-for-backend-or-ui-iteration).
 - `npm --prefix apps/ui ci` or `npm --prefix apps/ui run dev` fails right after a
-  Node version switch: confirm `node --version` matches `.nvmrc`, delete
-  `apps/ui/node_modules`, and rerun `npm --prefix apps/ui ci` instead of
-  `npm install`.
+  Node version switch: confirm `node --version` matches the runtime support
+  matrix (native dev uses `.nvmrc`), delete `apps/ui/node_modules`, and rerun
+  `npm --prefix apps/ui ci` instead of `npm install`.
 - `docker compose` fails before the app starts: check `docker info` and
   `docker compose version` before debugging the repo itself. If the daemon is
   not reachable or your user lacks Docker permissions, fix that first and then
