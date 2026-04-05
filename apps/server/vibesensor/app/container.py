@@ -49,6 +49,7 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoop
 from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
+from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
@@ -391,9 +392,7 @@ def build_live_runtime(
         control_plane=control_plane,
     )
     ws_hub = WebSocketHub()
-    ws_broadcast = WsBroadcastService(
-        ui_push_hz=UI_PUSH_HZ,
-        ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
+    ws_payload_projector = LiveWsPayloadProjector(
         registry=registry,
         processor=processor,
         gps_monitor=speed_runtime.speed_services.observation,
@@ -401,6 +400,11 @@ def build_live_runtime(
         settings_reader=runtime_settings.settings_reader,
         speed_source_reader=runtime_settings.speed_source_reader,
         sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
+    )
+    ws_broadcast = WsBroadcastService(
+        ui_push_hz=UI_PUSH_HZ,
+        ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
+        payload_projector=ws_payload_projector,
     )
     run_recorder = RunRecorder(
         RunRecorderConfig(

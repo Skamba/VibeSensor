@@ -173,6 +173,7 @@ def _make_state(
     from vibesensor.infra.runtime.processing_loop import ProcessingLoop
     from vibesensor.infra.runtime.processing_state import ProcessingLoopState
     from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
+    from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
 
     registry = _StubRegistry(clients)
     processor = _StubProcessor()
@@ -185,6 +186,14 @@ def _make_state(
             ui_push_hz=ui_push_hz,
             ui_heavy_push_hz=ui_heavy_push_hz,
         ),
+    )
+    payload_projector = LiveWsPayloadProjector(
+        registry=registry,
+        processor=processor,
+        gps_monitor=gps_monitor,
+        gps_enabled=gps_monitor.gps_enabled,
+        settings_reader=settings_store,
+        speed_source_reader=settings_store,
     )
     state = RuntimeState(
         config=config,
@@ -210,12 +219,7 @@ def _make_state(
         ws_broadcast=WsBroadcastService(
             ui_push_hz=ui_push_hz,
             ui_heavy_push_hz=ui_heavy_push_hz,
-            registry=registry,
-            processor=processor,
-            gps_monitor=gps_monitor,
-            gps_enabled=gps_monitor.gps_enabled,
-            settings_reader=settings_store,
-            speed_source_reader=settings_store,
+            payload_projector=payload_projector,
         ),
         run_recorder=_StubRunRecorder(),
         update_manager=_SENTINEL,
@@ -375,6 +379,7 @@ def test_build_ws_payload_marks_retained_stale_clients_disconnected(
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
     from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
+    from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
 
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db, live_ttl_seconds=5.0, retention_ttl_seconds=30.0)
@@ -391,15 +396,18 @@ def test_build_ws_payload_marks_retained_stale_clients_disconnected(
     monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
     monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
 
-    ws_broadcast = WsBroadcastService(
-        ui_push_hz=10,
-        ui_heavy_push_hz=4,
+    payload_projector = LiveWsPayloadProjector(
         registry=registry,
         processor=_StubProcessor(),
         gps_monitor=_StubGPS(),
         gps_enabled=True,
         settings_reader=_StubSettingsStore(),
         speed_source_reader=_StubSettingsStore(),
+    )
+    ws_broadcast = WsBroadcastService(
+        ui_push_hz=10,
+        ui_heavy_push_hz=4,
+        payload_projector=payload_projector,
     )
     payload = ws_broadcast.build_payload(selected_client=None)
     assert len(payload["clients"]) == 1

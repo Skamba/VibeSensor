@@ -654,6 +654,46 @@ def _check_clients_http_adapter_uses_protocol_dependencies() -> list[str]:
     return failures
 
 
+def _check_ws_broadcast_uses_projection_module() -> list[str]:
+    ws_broadcast_path = VIBESENSOR_DIR / "infra" / "runtime" / "ws_broadcast.py"
+    ws_projection_path = (
+        VIBESENSOR_DIR / "infra" / "runtime" / "ws_payload_projection.py"
+    )
+    source = _read_text(ws_broadcast_path)
+    failures: list[str] = []
+    if not ws_projection_path.exists():
+        failures.append(
+            f"{ws_projection_path.relative_to(REPO_ROOT)} must exist so live WS payload shaping has a dedicated projection module"
+        )
+        return failures
+    if (
+        "from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector"
+        not in source
+    ):
+        failures.append(
+            f"{ws_broadcast_path.relative_to(REPO_ROOT)} must depend on LiveWsPayloadProjector for shared payload assembly"
+        )
+    forbidden_markers = (
+        "from vibesensor.shared.boundaries.clients import snapshot_for_api",
+        "from vibesensor.infra.runtime.rotational_speeds import",
+        "resolve_speed()",
+        "analysis_settings_snapshot()",
+        "speed_source_config()",
+        "clients_with_recent_data(",
+        "multi_spectrum_payload(",
+    )
+    for marker in forbidden_markers:
+        if marker in source:
+            failures.append(
+                f"{ws_broadcast_path.relative_to(REPO_ROOT)} should not shape live payloads directly once ws_payload_projection owns that logic ({marker})"
+            )
+    if "payload_projector: LiveWsPayloadProjector" not in source:
+        failures.append(
+            f"{ws_broadcast_path.relative_to(REPO_ROOT)} must accept a LiveWsPayloadProjector collaborator"
+        )
+    return failures
+
+
 def _check_report_pdf_entrypoint_renders_report_document() -> list[str]:
     path = VIBESENSOR_DIR / "app" / "container.py"
     tree = _parse_python(path)
@@ -1764,6 +1804,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Clients HTTP adapter uses protocol deps",
         _check_clients_http_adapter_uses_protocol_dependencies,
+    ),
+    (
+        "WsBroadcast uses projection module",
+        _check_ws_broadcast_uses_projection_module,
     ),
     (
         "Report PDF entrypoint renders report document",
