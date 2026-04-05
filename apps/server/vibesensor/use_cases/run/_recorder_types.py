@@ -64,7 +64,7 @@ def _build_run_metadata_record(
         fft_window_size_samples=recorder.fft_window_size_samples,
         accel_scale_g_per_lsb=recorder.accel_scale_g_per_lsb,
         active_car_snapshot=run_context.car,
-        language_provider=recorder._language_provider,
+        language_reader=recorder._language_reader,
         recorded_utc_offset_seconds=current_utc_offset_seconds(),
     )
 

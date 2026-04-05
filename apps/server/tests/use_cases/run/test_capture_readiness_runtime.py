@@ -164,7 +164,7 @@ def test_run_recorder_status_includes_capture_readiness(
     logger = make_logger(
         registry=fake_registry,
         gps_monitor=fake_gps_monitor,
-        settings_store=mutable_fake_settings,
+        settings_reader=mutable_fake_settings,
     )
 
     logger.status()

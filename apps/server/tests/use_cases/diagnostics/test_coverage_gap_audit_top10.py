@@ -113,7 +113,7 @@ def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
         registry=registry,
         gps_monitor=gps_mock,
         processor=MagicMock(),
-        settings_store=settings_mock,
+        settings_reader=settings_mock,
     )
     return logger, gps_mock
 
@@ -742,8 +742,8 @@ class TestResolveSpeedContext:
     def test_no_gear_ratio_skips_rpm(self) -> None:
         logger, gps_mock = _make_run_recorder()
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
-        # Remove gear ratio from settings via settings_store mock
-        settings_mock = logger._settings_store
+        # Remove gear ratio from settings via settings_reader mock
+        settings_mock = logger._settings_reader
         settings_mock.analysis_settings_snapshot.return_value = AnalysisSettingsSnapshot(
             tire_width_mm=205,
             tire_aspect_pct=55,

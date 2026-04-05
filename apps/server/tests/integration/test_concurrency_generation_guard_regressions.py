@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from test_support.persisted_analysis import make_persisted_analysis
@@ -225,7 +226,7 @@ class TestFinalizeReturnGatesAnalysis:
         logger, db = _make_logger(
             tmp_path,
             persist_history_db=True,
-            language_provider=lambda: "en",
+            language_reader=SimpleNamespace(language="en"),
         )
 
         logger.start_recording()
