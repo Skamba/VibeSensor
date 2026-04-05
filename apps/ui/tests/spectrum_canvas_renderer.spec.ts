@@ -1,0 +1,100 @@
+import { expect, test } from "@playwright/test";
+
+import type { UiSpectrumDom } from "../src/app/dom/spectrum_dom";
+import { SpectrumCanvasRenderer } from "../src/app/runtime/spectrum_canvas_renderer";
+import { createAppState } from "../src/app/ui_app_state";
+import type { AdaptedClient } from "../src/transport/live_models";
+import { installWindowGlobal } from "./async_test_helpers";
+import { createElementStub, installDocumentStub } from "./spectrum_test_support";
+
+function makeClient(id: string, name: string): AdaptedClient {
+  return {
+    id,
+    name,
+    connected: true,
+    mac_address: id,
+    location_code: "front_right_wheel",
+    last_seen_age_ms: 25,
+    dropped_frames: 0,
+    frames_total: 100,
+    frame_samples: 200,
+    sample_rate_hz: 400,
+    firmware_version: "fw-1.0.0",
+  };
+}
+
+test.describe("SpectrumCanvasRenderer", () => {
+  test.beforeEach(() => {
+    installWindowGlobal();
+  });
+
+  test("prepares aligned dB series without shell DOM bindings", () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const state = createAppState();
+      state.realtime.clients = [
+        makeClient("sensor-a", "Front Right Wheel"),
+        makeClient("sensor-b", "Rear Left Wheel"),
+      ];
+      state.spectrum.spectra.clients = {
+        "sensor-a": {
+          freq: [10, 15, 20],
+          combined: [1, 0.75, 0.5],
+          strength_metrics: {
+            noise_floor_amp_g: 0.1,
+            peak_amp_g: 1,
+            strength_bucket: null,
+            top_peaks: [{
+              amp: 1,
+              hz: 10,
+              strength_bucket: null,
+              vibration_strength_db: 12,
+            }],
+            vibration_strength_db: 12,
+          },
+        },
+        "sensor-b": {
+          freq: [10, 20],
+          combined: [0.8, 0.4],
+          strength_metrics: {
+            noise_floor_amp_g: 0.1,
+            peak_amp_g: 0.8,
+            strength_bucket: null,
+            top_peaks: [{
+              amp: 0.8,
+              hz: 10,
+              strength_bucket: null,
+              vibration_strength_db: 9,
+            }],
+            vibration_strength_db: 9,
+          },
+        },
+      };
+
+      const renderer = new SpectrumCanvasRenderer({
+        state,
+        dom: {
+          specChart: createElementStub("div"),
+          specChartWrap: createElementStub("div"),
+          spectrumOverlay: null,
+        } as unknown as Pick<UiSpectrumDom, "specChart" | "specChartWrap" | "spectrumOverlay">,
+        t: (key) => key,
+        getBandsVisible: () => false,
+        getChartBands: () => [],
+        getFocusMarker: () => null,
+        onCursorDataIndexChange: () => undefined,
+      });
+
+      const prepared = renderer.prepareFrame();
+
+      expect(prepared.hasData).toBe(true);
+      expect(prepared.freqAxis).toEqual([10, 15, 20]);
+      expect(prepared.entries.map((entry) => entry.id)).toEqual(["sensor-a", "sensor-b"]);
+      expect(prepared.frame?.values[1]).toHaveLength(3);
+      expect(prepared.entries[1].values.every((value) => Number.isFinite(value))).toBe(true);
+      expect(prepared.entries[1].values[0]).toBeGreaterThan(prepared.entries[1].values[2]);
+    } finally {
+      restoreDocument();
+    }
+  });
+});
