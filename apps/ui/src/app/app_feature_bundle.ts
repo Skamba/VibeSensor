@@ -1,4 +1,10 @@
-import type { UiDomElements } from "./ui_dom_registry";
+import type { UiCarsDom } from "./dom/cars_dom";
+import type { UiEspFlashDom } from "./dom/esp_flash_dom";
+import type { UiHistoryDom } from "./dom/history_dom";
+import type { UiRealtimeDom } from "./dom/realtime_dom";
+import type { UiSettingsDom } from "./dom/settings_dom";
+import type { UiShellDom } from "./dom/shell_dom";
+import type { UiUpdateDom } from "./dom/update_dom";
 import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature, type EspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature, type HistoryFeature } from "./features/history_feature";
@@ -21,7 +27,13 @@ export interface AppFeatureBundle {
 
 export interface AppFeatureBundleDeps {
   state: AppState;
-  els: UiDomElements;
+  shellDom: UiShellDom;
+  realtimeDom: UiRealtimeDom;
+  historyDom: UiHistoryDom;
+  settingsDom: UiSettingsDom;
+  carsDom: UiCarsDom;
+  updateDom: UiUpdateDom;
+  espFlashDom: UiEspFlashDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
   showError: (message: string) => void;
@@ -37,12 +49,27 @@ export interface AppFeatureBundleDeps {
 }
 
 export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBundle {
-  const { state, els, t, escapeHtml, fmt, fmtTs, formatInt } = deps;
+  const {
+    state,
+    shellDom,
+    realtimeDom,
+    historyDom,
+    settingsDom,
+    carsDom,
+    updateDom,
+    espFlashDom,
+    t,
+    escapeHtml,
+    fmt,
+    fmtTs,
+    formatInt,
+  } = deps;
 
   const history = createHistoryFeature({
     history: state.history,
     getLanguage: () => state.shell.lang,
-    els,
+    dom: historyDom,
+    shellDom,
     t,
     escapeHtml,
     showError: deps.showError,
@@ -59,7 +86,10 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     spectrum: state.spectrum,
     settings: state.settings,
     getLanguage: () => state.shell.lang,
-    els,
+    dom: realtimeDom,
+    shellDom,
+    settingsDom,
+    carsDom,
     t,
     escapeHtml,
     showError: deps.showError,
@@ -73,7 +103,9 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   const settings = createSettingsFeature({
     settings: state.settings,
     getSpeedUnit: () => state.shell.speedUnit,
-    els,
+    dom: settingsDom,
+    shellDom,
+    carsDom,
     t,
     escapeHtml,
     showError: deps.showError,
@@ -93,7 +125,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   });
 
   const cars = createCarsFeature({
-    els,
+    dom: carsDom,
     t,
     escapeHtml,
     showError: deps.showError,
@@ -102,8 +134,8 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
       carCreation.addCarFromWizard(name, carType, aspects, variant),
   });
 
-  const update = createUpdateFeature({ els, t, escapeHtml, showError: deps.showError });
-  const espFlash = createEspFlashFeature({ els, t, escapeHtml, showError: deps.showError });
+  const update = createUpdateFeature({ dom: updateDom, t, escapeHtml, showError: deps.showError });
+  const espFlash = createEspFlashFeature({ dom: espFlashDom, t, escapeHtml, showError: deps.showError });
 
   return {
     history,

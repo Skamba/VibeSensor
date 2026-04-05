@@ -1,3 +1,7 @@
+import type { UiCarsDom } from "../dom/cars_dom";
+import type { UiRealtimeDom } from "../dom/realtime_dom";
+import type { UiSettingsDom } from "../dom/settings_dom";
+import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { deriveCarSelectionState } from "../car_selection_state";
 import type { RealtimeState, SettingsState, SpectrumState } from "../ui_app_state";
@@ -29,6 +33,10 @@ import { classifyDataFreshness } from "./data_freshness";
 import { createRealtimeSensorState } from "./realtime_sensor_state";
 
 export interface RealtimeFeatureDeps extends FeatureDepsBase {
+  dom: UiRealtimeDom;
+  shellDom: Pick<UiShellDom, "menuButtons">;
+  settingsDom: Pick<UiSettingsDom, "settingsTabs">;
+  carsDom: Pick<UiCarsDom, "addCarBtn">;
   realtime: RealtimeState;
   spectrum: SpectrumState;
   settings: SettingsState;
@@ -58,7 +66,19 @@ type CaptureReadinessPayload = NonNullable<LoggingStatusPayload["capture_readine
 type CaptureReadinessCheckPayload = CaptureReadinessPayload["checks"][number];
 
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
-  const { realtime, settings, spectrum, els, t, escapeHtml, formatInt, setPillState } = ctx;
+  const {
+    realtime,
+    settings,
+    spectrum,
+    dom: els,
+    shellDom,
+    settingsDom,
+    carsDom,
+    t,
+    escapeHtml,
+    formatInt,
+    setPillState,
+  } = ctx;
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
   const LOGGING_STATUS_IDLE_POLL_MS = 2_000;
   const LOGGING_STATUS_ACTIVE_POLL_MS = 2_000;
@@ -331,11 +351,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function activatePrimaryView(viewId: string): void {
-    els.menuButtons.find((button) => button.dataset.view === viewId)?.click();
+    shellDom.menuButtons.find((button) => button.dataset.view === viewId)?.click();
   }
 
   function activateSettingsTab(tabId: string): void {
-    els.settingsTabs.find((button) => button.getAttribute("data-settings-tab") === tabId)?.click();
+    settingsDom.settingsTabs.find((button) => button.getAttribute("data-settings-tab") === tabId)?.click();
   }
 
   function openSettingsView(tabId: string): void {
@@ -346,7 +366,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   function openCarsView({ openWizard = false }: { openWizard?: boolean } = {}): void {
     openSettingsView("carTab");
     if (openWizard) {
-      els.addCarBtn?.click();
+      carsDom.addCarBtn.click();
     }
   }
 

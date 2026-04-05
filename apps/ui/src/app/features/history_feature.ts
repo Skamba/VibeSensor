@@ -1,3 +1,5 @@
+import type { UiHistoryDom } from "../dom/history_dom";
+import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { HistoryState, RunDetail } from "../ui_app_state";
 import { getInlineStateAction } from "../views/dom_helpers";
@@ -19,6 +21,8 @@ import {
 } from "./history_list_module";
 
 export interface HistoryFeatureDeps extends FeatureDepsBase {
+  dom: UiHistoryDom;
+  shellDom: Pick<UiShellDom, "menuButtons">;
   history: HistoryState;
   getLanguage: () => string;
   fmt: (n: number, digits?: number) => string;
@@ -37,12 +41,12 @@ export interface HistoryFeature {
 }
 
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
-  const { history, els } = ctx;
+  const { history, dom: els, shellDom } = ctx;
   let handlersBound = false;
   let previewPrefetchToken = 0;
 
   function activatePrimaryView(viewId: string): void {
-    els.menuButtons.find((button) => button.dataset.view === viewId)?.click();
+    shellDom.menuButtons.find((button) => button.dataset.view === viewId)?.click();
   }
 
   function ensureRunDetail(runId: string): RunDetail {

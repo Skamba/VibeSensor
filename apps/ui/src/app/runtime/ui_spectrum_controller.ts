@@ -6,8 +6,8 @@ import {
 import { escapeHtml } from "../../format";
 import { convertSpectrumAmplitudesToDbInPlace, SpectrumChart } from "../../spectrum";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
+import type { UiSpectrumDom } from "../dom/spectrum_dom";
 import { areHeavyFramesCompatible, interpolateHeavyFrame, type SpectrumHeavyFrame } from "../spectrum_animation";
-import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState, ChartBand } from "../ui_app_state";
 
 const FREQ_MATCH_EPSILON = 1e-6;
@@ -76,14 +76,14 @@ type SpectrumLegendState = "all-visible" | "visible" | "isolated" | "inactive";
 
 type UiSpectrumControllerDeps = {
   state: AppState;
-  els: UiDomElements;
+  dom: UiSpectrumDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
 };
 
 export class UiSpectrumController {
   private readonly state: AppState;
 
-  private readonly els: UiDomElements;
+  private readonly els: UiSpectrumDom;
 
   private readonly t: (key: string, vars?: Record<string, unknown>) => string;
 
@@ -111,7 +111,7 @@ export class UiSpectrumController {
 
   constructor(deps: UiSpectrumControllerDeps) {
     this.state = deps.state;
-    this.els = deps.els;
+    this.els = deps.dom;
     this.t = deps.t;
     this.rootStyle = getComputedStyle(document.documentElement);
     this.spectrumBandPlugin = this.createBandPlugin();

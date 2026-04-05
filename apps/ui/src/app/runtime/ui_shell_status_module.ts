@@ -1,6 +1,6 @@
 import { fmt } from "../../format";
+import type { UiShellDom } from "../dom/shell_dom";
 import { deriveSpeedReadoutLabelKey } from "../speed_source_state";
-import type { UiDomElements } from "../ui_dom_registry";
 import type { RealtimeState, SettingsState, ShellState, TransportState } from "../ui_app_state";
 
 const WS_KEY_BY_STATE: Record<string, string> = {
@@ -24,7 +24,7 @@ export interface UiShellStatusModuleDeps {
   transport: TransportState;
   realtime: RealtimeState;
   settings: SettingsState;
-  els: UiDomElements;
+  dom: UiShellDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
 }
@@ -35,7 +35,7 @@ export interface UiShellStatusModule {
 }
 
 export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShellStatusModule {
-  const { shell, transport, realtime, settings, els } = ctx;
+  const { shell, transport, realtime, settings, dom: els } = ctx;
 
   function speedValueInSelectedUnit(speedMps: number): number {
     return shell.speedUnit === "mps" ? speedMps : speedMps * 3.6;

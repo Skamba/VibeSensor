@@ -1,6 +1,6 @@
 import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
-import type { UiDomElements } from "../ui_dom_registry";
+import type { UiShellDom } from "../dom/shell_dom";
 import type { AppState } from "../ui_app_state";
 import {
   bindUiShellFeatureEvents,
@@ -29,13 +29,13 @@ import {
 
 type UiShellControllerDeps = {
   state: AppState;
-  els: UiDomElements;
+  dom: UiShellDom;
 };
 
 export class UiShellController {
   private readonly state: AppState;
 
-  private readonly els: UiDomElements;
+  private readonly els: UiShellDom;
 
   private readonly navigation: UiShellNavigationModule;
 
@@ -55,29 +55,29 @@ export class UiShellController {
 
   constructor(deps: UiShellControllerDeps) {
     this.state = deps.state;
-    this.els = deps.els;
+    this.els = deps.dom;
     this.navigation = createUiShellNavigationModule({
       shell: this.state.shell,
-      els: this.els,
+      dom: this.els,
       onDashboardViewActivated: () => {
         this.state.spectrum.spectrumPlot?.resize();
       },
     });
     this.notifications = createUiShellNotificationModule({
-      els: this.els,
+      dom: this.els,
     });
     this.status = createUiShellStatusModule({
       shell: this.state.shell,
       transport: this.state.transport,
       realtime: this.state.realtime,
       settings: this.state.settings,
-      els: this.els,
+      dom: this.els,
       t: (key, vars) => this.t(key, vars),
       setPillState: (el, variant, text) => this.setPillState(el, variant, text),
     });
     this.preferences = createUiShellPreferencesModule({
       shell: this.state.shell,
-      els: this.els,
+      dom: this.els,
       t: (key, vars) => this.t(key, vars),
       normalizeLanguage: (lang) => I18N.normalizeLang(lang),
       applyLanguage: (forceReloadInsights = false) => this.applyLanguage(forceReloadInsights),
@@ -86,7 +86,7 @@ export class UiShellController {
     });
     this.languageRefresh = createUiShellLanguageRefreshModule({
       state: this.state,
-      els: this.els,
+      dom: this.els,
       t: (key, vars) => this.t(key, vars),
       renderSpeedReadout: () => this.renderSpeedReadout(),
       renderWsState: () => this.renderWsState(),

@@ -1,3 +1,6 @@
+import type { UiCarsDom } from "../dom/cars_dom";
+import type { UiSettingsDom } from "../dom/settings_dom";
+import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
   type CarSelectionState,
@@ -34,6 +37,9 @@ import {
 import { bindSettingsTabs } from "./settings_tabs_controller";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
+  dom: UiSettingsDom;
+  shellDom: Pick<UiShellDom, "menuButtons">;
+  carsDom: Pick<UiCarsDom, "addCarBtn">;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
@@ -60,7 +66,7 @@ export interface SettingsFeature {
 }
 
 export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature {
-  const { settings, els, t, escapeHtml, fmt } = ctx;
+  const { settings, dom: els, shellDom, carsDom, t, escapeHtml, fmt } = ctx;
   let handlersBound = false;
   let highlightedCarFeedback: { carId: string; carName: string } | null = null;
 
@@ -98,11 +104,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function primaryViewIdAt(index: number): string | undefined {
-    if (!els.menuButtons.length) {
+    if (!shellDom.menuButtons.length) {
       return undefined;
     }
-    const safeIndex = ((index % els.menuButtons.length) + els.menuButtons.length) % els.menuButtons.length;
-    return els.menuButtons[safeIndex].dataset.view;
+    const safeIndex = ((index % shellDom.menuButtons.length) + shellDom.menuButtons.length)
+      % shellDom.menuButtons.length;
+    return shellDom.menuButtons[safeIndex].dataset.view;
   }
 
   function bindHighlightedCarFeedbackResetEvents(): void {
@@ -144,7 +151,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       });
     });
 
-    els.menuButtons.forEach((button, index) => {
+    shellDom.menuButtons.forEach((button, index) => {
       button.addEventListener("click", () => {
         dismissForPrimaryView(button.dataset.view);
       });
@@ -166,7 +173,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
           return;
         }
         if (event.key === "End") {
-          dismissForPrimaryView(primaryViewIdAt(els.menuButtons.length - 1));
+          dismissForPrimaryView(primaryViewIdAt(shellDom.menuButtons.length - 1));
         }
       });
     });
@@ -222,7 +229,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
-    els,
+    dom: els,
     t,
     escapeHtml,
     showError: ctx.showError,
@@ -233,7 +240,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     onSaveError: showSettingsSaveError,
   });
   const speedSourceModule: SettingsSpeedSourceModule = createSettingsSpeedSourceModule({
-    els,
+    dom: els,
+    shellDom,
     t,
     escapeHtml,
     showError: ctx.showError,
@@ -244,7 +252,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     onSaveError: showSettingsSaveError,
   });
   const gpsStatusModule: SettingsGpsStatusModule = createSettingsGpsStatusModule({
-    els,
+    dom: els,
     t,
     escapeHtml,
     showError: ctx.showError,
@@ -393,7 +401,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         return;
       }
       if (action.type === "add") {
-        els.addCarBtn?.click();
+        carsDom.addCarBtn.click();
         return;
       }
       if (action.type === "activate") {
