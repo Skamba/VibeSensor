@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  activateWizardCloseButton,
   createSettingsHandlerFromMap,
   fulfillJson,
   installCommonRoutes,
@@ -43,7 +44,7 @@ test("opens the add car wizard in a focused task container and restores focus wh
     dots.map((dot) => Math.round((dot as HTMLElement).getBoundingClientRect().top)));
   expect(new Set(stepDotTops).size).toBe(1);
 
-  await page.locator("#wizardCloseBtn").click();
+  await activateWizardCloseButton(page);
 
   await expect(page.locator("#addCarWizard")).toBeHidden();
   await expect(page.locator("#wizardBackdrop")).toBeHidden();

@@ -1,0 +1,356 @@
+import type { UiSettingsDom } from "../dom/settings_dom";
+import type { UiShellDom } from "../dom/shell_dom";
+import type { FeatureDepsBase } from "../feature_deps_base";
+import {
+  type CarSelectionState,
+  deriveCarSelectionState,
+  getCarCompleteness,
+  hasResolvedActiveCar,
+  resolveActiveCar,
+} from "../car_selection_state";
+import type { SettingsState } from "../ui_app_state";
+import type { CarRecord, CarsPayload } from "../../transport/http_models";
+import { bindSettingsCarListActions } from "../views/settings_car_list_view";
+import {
+  createSettingsCarsPresenter,
+  type SettingsCarsHighlightedFeedback,
+  type SettingsCarsPresenter,
+  type SettingsCarsRenderState,
+} from "../views/settings_cars_presenter";
+import {
+  createSettingsCarsTransport,
+  type SettingsCarsTransport,
+} from "./settings_cars_transport";
+
+export interface SettingsCarsModuleDeps extends FeatureDepsBase {
+  confirmDelete?: (message: string) => boolean;
+  dom: Pick<
+    UiSettingsDom,
+    | "analysisNoCarMessage"
+    | "carListBody"
+    | "carSelectionGuidance"
+    | "resetAnalysisBtn"
+    | "saveAnalysisBtn"
+    | "settingsTabs"
+  >;
+  fmt: (value: number, digits?: number) => string;
+  openAnalysisTab: () => void;
+  openCarWizard: () => void;
+  renderRealtimeLoggingStatus: () => void;
+  renderRealtimeStatus: () => void;
+  renderSpectrum: () => void;
+  settings: SettingsState;
+  shellDom: Pick<UiShellDom, "menuButtons">;
+  syncAnalysisInputs: () => void;
+  transport?: Partial<SettingsCarsTransport>;
+}
+
+export interface SettingsCarsModule {
+  bindHandlers(): void;
+  hasValidActiveCar(): boolean;
+  loadCarsFromServer(): Promise<void>;
+  renderCarList(): void;
+  showCarCreationSuccess(carId: string, carName: string): void;
+  syncActiveCarToInputs(): void;
+  syncCarsPayload(payload: CarsPayload): void;
+}
+
+function copyActiveCarAspects(
+  car: CarRecord | null,
+  settings: SettingsState,
+): void {
+  if (!car?.aspects || typeof car.aspects !== "object") {
+    return;
+  }
+  for (const [key, value] of Object.entries(car.aspects)) {
+    if (typeof value === "number" && key in settings.vehicleSettings) {
+      settings.vehicleSettings[key as keyof SettingsState["vehicleSettings"]] = value;
+    }
+  }
+}
+
+export function createSettingsCarsModule(
+  ctx: SettingsCarsModuleDeps,
+): SettingsCarsModule {
+  const { settings, t } = ctx;
+  const confirmDelete = ctx.confirmDelete ?? ((message: string) => window.confirm(message));
+  const presenter: SettingsCarsPresenter = createSettingsCarsPresenter({
+    dom: ctx.dom,
+    escapeHtml: ctx.escapeHtml,
+    fmt: ctx.fmt,
+    t,
+  });
+  const transport = createSettingsCarsTransport(ctx.transport);
+  let handlersBound = false;
+  let highlightedCarFeedback: SettingsCarsHighlightedFeedback | null = null;
+
+  function hasValidActiveCar(): boolean {
+    return hasResolvedActiveCar(settings);
+  }
+
+  function getCarSelectionState(): CarSelectionState {
+    return deriveCarSelectionState(settings);
+  }
+
+  function renderState(): SettingsCarsRenderState {
+    return {
+      activeCarId: settings.activeCarId,
+      carSelectionState: getCarSelectionState(),
+      cars: settings.cars,
+      highlightedCarFeedback,
+    };
+  }
+
+  function renderCarList(): void {
+    presenter.render(renderState());
+  }
+
+  function clearHighlightedCarFeedback(): void {
+    highlightedCarFeedback = null;
+  }
+
+  function dismissHighlightedCarFeedback(): void {
+    if (!highlightedCarFeedback) {
+      return;
+    }
+    clearHighlightedCarFeedback();
+    renderCarList();
+  }
+
+  function settingsTabIdAt(index: number): string | null {
+    if (!ctx.dom.settingsTabs.length) {
+      return null;
+    }
+    const safeIndex = ((index % ctx.dom.settingsTabs.length) + ctx.dom.settingsTabs.length)
+      % ctx.dom.settingsTabs.length;
+    return ctx.dom.settingsTabs[safeIndex].getAttribute("data-settings-tab");
+  }
+
+  function primaryViewIdAt(index: number): string | undefined {
+    if (!ctx.shellDom.menuButtons.length) {
+      return undefined;
+    }
+    const safeIndex = ((index % ctx.shellDom.menuButtons.length) + ctx.shellDom.menuButtons.length)
+      % ctx.shellDom.menuButtons.length;
+    return ctx.shellDom.menuButtons[safeIndex].dataset.view;
+  }
+
+  function bindHighlightedCarFeedbackResetEvents(): void {
+    const dismissForSettingsTab = (tabId: string | null): void => {
+      if (tabId && tabId !== "carTab") {
+        dismissHighlightedCarFeedback();
+      }
+    };
+    const dismissForPrimaryView = (viewId: string | undefined): void => {
+      if (viewId && viewId !== "settingsView") {
+        dismissHighlightedCarFeedback();
+      }
+    };
+
+    ctx.dom.settingsTabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => {
+        dismissForSettingsTab(tab.getAttribute("data-settings-tab"));
+      });
+      tab.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          dismissForSettingsTab(tab.getAttribute("data-settings-tab"));
+          return;
+        }
+        if (event.key === "ArrowRight") {
+          dismissForSettingsTab(settingsTabIdAt(index + 1));
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          dismissForSettingsTab(settingsTabIdAt(index - 1));
+          return;
+        }
+        if (event.key === "Home") {
+          dismissForSettingsTab(settingsTabIdAt(0));
+          return;
+        }
+        if (event.key === "End") {
+          dismissForSettingsTab(settingsTabIdAt(ctx.dom.settingsTabs.length - 1));
+        }
+      });
+    });
+
+    ctx.shellDom.menuButtons.forEach((button, index) => {
+      button.addEventListener("click", () => {
+        dismissForPrimaryView(button.dataset.view);
+      });
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          dismissForPrimaryView(button.dataset.view);
+          return;
+        }
+        if (event.key === "ArrowRight") {
+          dismissForPrimaryView(primaryViewIdAt(index + 1));
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          dismissForPrimaryView(primaryViewIdAt(index - 1));
+          return;
+        }
+        if (event.key === "Home") {
+          dismissForPrimaryView(primaryViewIdAt(0));
+          return;
+        }
+        if (event.key === "End") {
+          dismissForPrimaryView(primaryViewIdAt(ctx.shellDom.menuButtons.length - 1));
+        }
+      });
+    });
+  }
+
+  function syncCarsPayload(payload: CarsPayload): void {
+    settings.cars = payload.cars;
+    settings.carsLoaded = true;
+    const requestedActiveCarId = payload.active_car_id;
+    const hasRequestedActive = requestedActiveCarId
+      ? settings.cars.some((car) => car.id === requestedActiveCarId)
+      : false;
+    settings.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
+    if (highlightedCarFeedback && !settings.cars.some((car) => car.id === highlightedCarFeedback?.carId)) {
+      highlightedCarFeedback = null;
+    }
+    renderCarList();
+    ctx.renderRealtimeStatus();
+    ctx.renderRealtimeLoggingStatus();
+  }
+
+  function findCar(carId: string): CarRecord | null {
+    return settings.cars.find((entry) => entry.id === carId) ?? null;
+  }
+
+  function syncActiveCarToInputs(): void {
+    copyActiveCarAspects(resolveActiveCar(settings), settings);
+    if (hasValidActiveCar()) {
+      ctx.syncAnalysisInputs();
+    }
+    renderCarList();
+  }
+
+  async function loadCarsFromServer(): Promise<void> {
+    try {
+      syncCarsPayload(await transport.loadCars());
+      syncActiveCarToInputs();
+    } catch (_err) {
+      return;
+    }
+  }
+
+  async function handleActivateCar(carId: string): Promise<void> {
+    if (!carId) {
+      return;
+    }
+    const car = findCar(carId);
+    if (!car) {
+      return;
+    }
+    if (!getCarCompleteness(car).isComplete) {
+      ctx.showError(t("settings.car.activate_incomplete"));
+      return;
+    }
+    try {
+      syncCarsPayload(await transport.activateCar(carId));
+      syncActiveCarToInputs();
+      clearHighlightedCarFeedback();
+      renderCarList();
+      ctx.renderSpectrum();
+    } catch (_err) {
+      ctx.showError(t("settings.car.activate_failed"));
+    }
+  }
+
+  async function handleCompleteCar(carId: string): Promise<void> {
+    if (!carId) {
+      return;
+    }
+    const car = findCar(carId);
+    if (!car) {
+      return;
+    }
+    try {
+      let shouldRefreshAfterSelection = highlightedCarFeedback !== null;
+      if (car.id !== settings.activeCarId) {
+        syncCarsPayload(await transport.activateCar(carId));
+        syncActiveCarToInputs();
+        ctx.renderSpectrum();
+        shouldRefreshAfterSelection = true;
+      }
+      clearHighlightedCarFeedback();
+      if (shouldRefreshAfterSelection) {
+        renderCarList();
+      }
+      ctx.openAnalysisTab();
+    } catch (_err) {
+      ctx.showError(t("settings.car.activate_failed"));
+    }
+  }
+
+  async function handleDeleteCar(carId: string): Promise<void> {
+    if (!carId) {
+      return;
+    }
+    const car = findCar(carId);
+    const confirmed = confirmDelete(t("settings.car.delete_confirm", { name: car?.name || "" }));
+    if (!confirmed) {
+      return;
+    }
+    try {
+      syncCarsPayload(await transport.deleteCar(carId));
+      syncActiveCarToInputs();
+      clearHighlightedCarFeedback();
+      renderCarList();
+      ctx.renderSpectrum();
+    } catch (_err) {
+      ctx.showError(t("settings.car.delete_failed"));
+    }
+  }
+
+  function bindHandlers(): void {
+    if (handlersBound) {
+      return;
+    }
+    handlersBound = true;
+    bindHighlightedCarFeedbackResetEvents();
+    bindSettingsCarListActions(ctx.dom, {
+      onAction: (action) => {
+        if (action.type === "add") {
+          ctx.openCarWizard();
+          return;
+        }
+        if (action.type === "activate") {
+          if (action.carId) {
+            void handleActivateCar(action.carId);
+          }
+          return;
+        }
+        if (action.type === "complete") {
+          if (action.carId) {
+            void handleCompleteCar(action.carId);
+          }
+          return;
+        }
+        if (action.carId) {
+          void handleDeleteCar(action.carId);
+        }
+      },
+    });
+  }
+
+  renderCarList();
+
+  return {
+    bindHandlers,
+    hasValidActiveCar,
+    loadCarsFromServer,
+    renderCarList,
+    showCarCreationSuccess(carId: string, carName: string): void {
+      highlightedCarFeedback = { carId, carName };
+      renderCarList();
+    },
+    syncActiveCarToInputs,
+    syncCarsPayload,
+  };
+}
