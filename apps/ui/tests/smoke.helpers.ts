@@ -96,6 +96,15 @@ export async function fulfillJson(route: Route, body: unknown): Promise<void> {
   await route.fulfill(jsonOk(body));
 }
 
+export async function activateWizardCloseButton(page: Page): Promise<void> {
+  await page.locator("#wizardCloseBtn").evaluate((button) => {
+    if (!(button instanceof HTMLButtonElement)) {
+      throw new Error("wizardCloseBtn must be a button");
+    }
+    button.click();
+  });
+}
+
 type CaptureReadinessState = "pass" | "warn" | "fail";
 
 type CaptureReadinessCheckInput = {

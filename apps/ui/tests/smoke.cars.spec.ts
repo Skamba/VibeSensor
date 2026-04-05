@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  activateWizardCloseButton,
   buildCaptureReadiness,
   fulfillJson,
   installCommonRoutes,
@@ -35,7 +36,7 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   await liveSummary.getByRole("button", { name: "Add a car" }).click();
   await expect(page.locator("#settingsView")).toHaveClass(/active/);
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
-  await page.locator("#wizardCloseBtn").click();
+  await activateWizardCloseButton(page);
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
   await page.locator("#tab-history").click();
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
@@ -47,7 +48,7 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   await expect(carEmptyState).toContainText("Cars define the setup used for recording");
   await carEmptyState.getByRole("button", { name: "Add a car" }).click();
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
-  await page.locator("#wizardCloseBtn").click();
+  await activateWizardCloseButton(page);
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
