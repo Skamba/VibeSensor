@@ -12,7 +12,7 @@
 - `tools/tests/run_backend_parallel.py` shards `apps/server/tests` by whole test file, using cached JUnit timings from `~/.cache/vibesensor/backend-duration-cache.json` to keep the backend CI shards balanced over time.
 - `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
 - Python test configuration lives in `apps/server/pyproject.toml`.
-- Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py` and run via `make lint` (or directly with `cd apps/server && python3 ../../tools/dev/verify_backend_static_guards.py`).
+- Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py`, and repo/frontend hygiene guards live in `tools/dev/check_hygiene.py`; both run via `make lint`.
 
 ## Layout
 
@@ -64,7 +64,7 @@ regressions that span multiple subsystems go in `integration/`.
 
 Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `findings.py` (shared finding-payload factories), `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
 
-If a guard needs AST or source-text inspection of production modules, put it in `tools/dev/verify_backend_static_guards.py` instead of pytest. Tests should exercise behavior, outputs, side effects, and errors through stable interfaces.
+If a guard needs AST or source-text inspection of production modules, put backend-specific checks in `tools/dev/verify_backend_static_guards.py` and repo/frontend boundary checks in `tools/dev/check_hygiene.py` instead of re-parsing source inside pytest. Hygiene tests should call those helpers through stable module interfaces rather than duplicating the source inspection logic.
 
 ## Contract bridge tests
 

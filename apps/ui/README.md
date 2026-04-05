@@ -172,6 +172,25 @@ feature surfaces. Shared visual state conventions now prefer stable data/ARIA
 selectors such as `data-variant`, `data-choice-state`, `data-selected`, and
 `data-step-state` instead of controller-side variant class interpolation.
 
+## Architecture guardrails
+
+- `app/dom/**` plus `app/ui_runtime_dom.ts` own page lookup. Feature, runtime, and
+  presenter modules should receive feature-scoped DOM surfaces instead of
+  rebuilding page-wide DOM registries or ad hoc `document.getElementById(...)`
+  lookups.
+- Generated HTTP / WS contracts stay behind the transport boundary. The approved
+  generated-contract seams are the `api/*.ts` HTTP wrappers plus `api/types.ts`,
+  `transport/http_models.ts`, `transport/live_models.ts`, `server_payload.ts`,
+  `ws.ts`, and `ws_payload_validator.ts`; `app/**` code imports `transport/**`,
+  not generated contract files or `api/types.ts`.
+- Raw HTML escape hatches belong only in `app/views/**` rendering helpers. When a
+  module outside `app/views/**` needs to update DOM structure, prefer
+  `renderChildren()`, `createElementNode()`, or a dedicated view/helper module
+  instead of `innerHTML`, `insertAdjacentHTML`, or contextual fragments.
+- Expected feature shape is thin facade + focused workflow/transport/presenter or
+  binding modules. Workflow modules stay DOM-free, presenters own rendering, and
+  bindings decode DOM events into typed actions for the owning feature.
+
 ## WebSocket contract boundary
 
 - `src/contracts/ws_payload_schema.json` defines the JSON Schema for live WS payloads.

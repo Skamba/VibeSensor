@@ -15,6 +15,17 @@ export interface UiSettingsDom {
   saveAnalysisBtn: HTMLButtonElement | null;
   resetAnalysisBtn: HTMLButtonElement | null;
   analysisGuidanceHelp: HTMLDetailsElement | null;
+  analysisFieldGuidance: {
+    wheelBandwidth: HTMLElement | null;
+    driveshaftBandwidth: HTMLElement | null;
+    engineBandwidth: HTMLElement | null;
+    speedUncertainty: HTMLElement | null;
+    tireDiameterUncertainty: HTMLElement | null;
+    finalDriveUncertainty: HTMLElement | null;
+    gearUncertainty: HTMLElement | null;
+    minAbsBandHz: HTMLElement | null;
+    maxBandHalfWidth: HTMLElement | null;
+  };
   analysisSaveFeedback: HTMLElement | null;
   analysisNoCarMessage: HTMLElement | null;
   carSelectionGuidance: HTMLElement | null;
@@ -72,24 +83,51 @@ export interface UiSettingsDom {
 export function createUiSettingsDom(): UiSettingsDom {
   return {
     wheelBandwidthInput: getById<HTMLInputElement>("wheelBandwidthInput"),
-    driveshaftBandwidthInput: getById<HTMLInputElement>("driveshaftBandwidthInput"),
+    driveshaftBandwidthInput: getById<HTMLInputElement>(
+      "driveshaftBandwidthInput",
+    ),
     engineBandwidthInput: getById<HTMLInputElement>("engineBandwidthInput"),
     speedUncertaintyInput: getById<HTMLInputElement>("speedUncertaintyInput"),
-    tireDiameterUncertaintyInput: getById<HTMLInputElement>("tireDiameterUncertaintyInput"),
-    finalDriveUncertaintyInput: getById<HTMLInputElement>("finalDriveUncertaintyInput"),
+    tireDiameterUncertaintyInput: getById<HTMLInputElement>(
+      "tireDiameterUncertaintyInput",
+    ),
+    finalDriveUncertaintyInput: getById<HTMLInputElement>(
+      "finalDriveUncertaintyInput",
+    ),
     gearUncertaintyInput: getById<HTMLInputElement>("gearUncertaintyInput"),
     minAbsBandHzInput: getById<HTMLInputElement>("minAbsBandHzInput"),
     maxBandHalfWidthInput: getById<HTMLInputElement>("maxBandHalfWidthInput"),
     saveAnalysisBtn: getById<HTMLButtonElement>("saveAnalysisBtn"),
     resetAnalysisBtn: getById<HTMLButtonElement>("resetAnalysisBtn"),
     analysisGuidanceHelp: getById<HTMLDetailsElement>("analysisGuidanceHelp"),
+    analysisFieldGuidance: {
+      wheelBandwidth: getById<HTMLElement>("wheelBandwidthGuidance"),
+      driveshaftBandwidth: getById<HTMLElement>("driveshaftBandwidthGuidance"),
+      engineBandwidth: getById<HTMLElement>("engineBandwidthGuidance"),
+      speedUncertainty: getById<HTMLElement>("speedUncertaintyGuidance"),
+      tireDiameterUncertainty: getById<HTMLElement>(
+        "tireDiameterUncertaintyGuidance",
+      ),
+      finalDriveUncertainty: getById<HTMLElement>(
+        "finalDriveUncertaintyGuidance",
+      ),
+      gearUncertainty: getById<HTMLElement>("gearUncertaintyGuidance"),
+      minAbsBandHz: getById<HTMLElement>("minAbsBandHzGuidance"),
+      maxBandHalfWidth: getById<HTMLElement>("maxBandHalfWidthGuidance"),
+    },
     analysisSaveFeedback: getById<HTMLElement>("analysisSaveFeedback"),
     analysisNoCarMessage: getById<HTMLElement>("analysisNoCarMessage"),
     carSelectionGuidance: getById<HTMLElement>("carSelectionGuidance"),
     carListBody: getById<HTMLElement>("carListBody"),
-    speedSourceRadios: Array.from(document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]')),
+    speedSourceRadios: Array.from(
+      document.querySelectorAll<HTMLInputElement>(
+        'input[name="speedSourceRadio"]',
+      ),
+    ),
     speedSourceCurrentSource: getById<HTMLElement>("speedSourceCurrentSource"),
-    speedSourceEffectiveSpeed: getById<HTMLElement>("speedSourceEffectiveSpeed"),
+    speedSourceEffectiveSpeed: getById<HTMLElement>(
+      "speedSourceEffectiveSpeed",
+    ),
     speedSourceChoiceGps: getById<HTMLElement>("speedSourceChoiceGps"),
     speedSourceChoiceObd: getById<HTMLElement>("speedSourceChoiceObd"),
     speedSourceChoiceManual: getById<HTMLElement>("speedSourceChoiceManual"),
@@ -103,9 +141,17 @@ export function createUiSettingsDom(): UiSettingsDom {
     obdDeviceList: getById<HTMLElement>("obdDeviceList"),
     saveSpeedSourceBtn: getById<HTMLButtonElement>("saveSpeedSourceBtn"),
     speedSourceSaveFeedback: getById<HTMLElement>("speedSourceSaveFeedback"),
-    speedSourceDiagnostics: getById<HTMLDetailsElement>("speedSourceDiagnostics"),
-    settingsTabs: queryRequiredAll<HTMLElement>(".settings-tab", SETTINGS_OWNER),
-    settingsTabPanels: queryRequiredAll<HTMLElement>(".settings-tab-panel", SETTINGS_OWNER),
+    speedSourceDiagnostics: getById<HTMLDetailsElement>(
+      "speedSourceDiagnostics",
+    ),
+    settingsTabs: queryRequiredAll<HTMLElement>(
+      ".settings-tab",
+      SETTINGS_OWNER,
+    ),
+    settingsTabPanels: queryRequiredAll<HTMLElement>(
+      ".settings-tab-panel",
+      SETTINGS_OWNER,
+    ),
     gpsStatusPanel: getById<HTMLElement>("gpsStatusPanel"),
     gpsStatusState: getById<HTMLElement>("gpsStatusState"),
     gpsStatusDevice: getById<HTMLElement>("gpsStatusDevice"),
@@ -116,7 +162,9 @@ export function createUiSettingsDom(): UiSettingsDom {
     gpsStatusReconnect: getById<HTMLElement>("gpsStatusReconnect"),
     gpsStatusFallback: getById<HTMLElement>("gpsStatusFallback"),
     obdStatusPanel: getById<HTMLElement>("obdStatusPanel"),
-    obdStatusConfiguredDevice: getById<HTMLElement>("obdStatusConfiguredDevice"),
+    obdStatusConfiguredDevice: getById<HTMLElement>(
+      "obdStatusConfiguredDevice",
+    ),
     obdStatusPairing: getById<HTMLElement>("obdStatusPairing"),
     obdStatusTrusted: getById<HTMLElement>("obdStatusTrusted"),
     obdStatusConnected: getById<HTMLElement>("obdStatusConnected"),
@@ -124,7 +172,9 @@ export function createUiSettingsDom(): UiSettingsDom {
     obdStatusLastRpm: getById<HTMLElement>("obdStatusLastRpm"),
     obdStatusRpmAge: getById<HTMLElement>("obdStatusRpmAge"),
     obdStatusTargetCadence: getById<HTMLElement>("obdStatusTargetCadence"),
-    obdStatusEffectiveCadence: getById<HTMLElement>("obdStatusEffectiveCadence"),
+    obdStatusEffectiveCadence: getById<HTMLElement>(
+      "obdStatusEffectiveCadence",
+    ),
     obdStatusRequestRtt: getById<HTMLElement>("obdStatusRequestRtt"),
     obdStatusTimeouts: getById<HTMLElement>("obdStatusTimeouts"),
     obdStatusErrors: getById<HTMLElement>("obdStatusErrors"),
