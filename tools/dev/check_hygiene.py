@@ -1,4 +1,4 @@
-"""Repository hygiene checks: line endings, path indirection, and CI/local-runner sync."""
+"""Repository hygiene checks: repo sync, boundary guardrails, and local/CI drift."""
 
 from __future__ import annotations
 
@@ -109,6 +109,32 @@ _DOCKER_PYTHON_RE = re.compile(r"^FROM python:(\S+)$", re.MULTILINE)
 _ACTION_INPUT_EQ_RE = re.compile(
     r"^\${{\s*inputs\.([A-Za-z0-9_-]+)\s*==\s*'([^']+)'\s*}}$"
 )
+_UI_SOURCE_SUFFIXES = {".ts", ".tsx", ".js", ".mjs"}
+_UI_FRONTEND_BOUNDARY_IMPORTERS: dict[str, frozenset[str]] = {
+    "apps/ui/src/generated/http_api_contracts.ts": frozenset(
+        {"apps/ui/src/api/types.ts"}
+    ),
+    "apps/ui/src/api/types.ts": frozenset({"apps/ui/src/transport/http_models.ts"}),
+    "apps/ui/src/contracts/ws_payload_types.ts": frozenset(
+        {
+            "apps/ui/src/server_payload.ts",
+            "apps/ui/src/transport/live_models.ts",
+            "apps/ui/src/ws.ts",
+            "apps/ui/src/ws_payload_validator.ts",
+        }
+    ),
+    "apps/ui/src/contracts/ws_payload_schema.generated.ts": frozenset(
+        {"apps/ui/src/ws_payload_validator.ts"}
+    ),
+}
+_UI_ALLOWED_RAW_HTML_PREFIX = "apps/ui/src/app/views/"
+_UI_DOM_REGISTRY_PATH = ROOT / "apps" / "ui" / "src" / "app" / "ui_dom_registry.ts"
+_UI_DOM_REGISTRY_TOKENS = ("UiDomRegistry", "ui_dom_registry")
+_IMPORT_FROM_RE = re.compile(r"""\bfrom\s+["']([^"']+)["']""")
+_SIDE_EFFECT_IMPORT_RE = re.compile(r"""\bimport\s+["']([^"']+)["']""")
+_EMPTY_INNERHTML_ASSIGNMENT_RE = re.compile(
+    r"""\.innerHTML\s*=\s*(?:""|''|`{2})\s*;?"""
+)
 
 
 def _load_yaml_mapping(path: Path) -> dict[str, object]:
@@ -133,6 +159,128 @@ def _load_ci_parallel_module():
 
 def _read_required_text(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
+
+
+def _ui_source_files() -> list[Path]:
+    return [
+        path
+        for path in _git_tracked_files()
+        if path.is_file()
+        and path.suffix in _UI_SOURCE_SUFFIXES
+        and path.is_relative_to(ROOT / "apps" / "ui" / "src")
+    ]
+
+
+def _extract_import_specifiers(source_text: str) -> list[str]:
+    specifiers = [
+        *(_IMPORT_FROM_RE.findall(source_text)),
+        *(_SIDE_EFFECT_IMPORT_RE.findall(source_text)),
+    ]
+    return list(dict.fromkeys(specifiers))
+
+
+def _resolve_ui_local_import(source_path: Path, specifier: str) -> Path | None:
+    if not specifier.startswith("."):
+        return None
+    base = (source_path.parent / specifier).resolve()
+    candidates = [base]
+    if not base.suffix:
+        candidates.extend(base.with_suffix(ext) for ext in sorted(_UI_SOURCE_SUFFIXES))
+        candidates.extend(base / f"index{ext}" for ext in sorted(_UI_SOURCE_SUFFIXES))
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _ui_boundary_import_allowed(importer_rel: str, target_rel: str) -> bool:
+    if target_rel == "apps/ui/src/api/types.ts":
+        return importer_rel == "apps/ui/src/transport/http_models.ts" or (
+            importer_rel.startswith("apps/ui/src/api/") and importer_rel != target_rel
+        )
+    allowed_importers = _UI_FRONTEND_BOUNDARY_IMPORTERS.get(target_rel)
+    return allowed_importers is None or importer_rel in allowed_importers
+
+
+def _ui_boundary_allowed_description(target_rel: str) -> str:
+    if target_rel == "apps/ui/src/api/types.ts":
+        return "apps/ui/src/api/*.ts and apps/ui/src/transport/http_models.ts"
+    allowed_importers = _UI_FRONTEND_BOUNDARY_IMPORTERS.get(target_rel)
+    return (
+        ", ".join(sorted(allowed_importers))
+        if allowed_importers is not None
+        else "approved transport boundary files"
+    )
+
+
+def check_frontend_generated_contract_boundaries() -> list[str]:
+    errors: list[str] = []
+    for path in _ui_source_files():
+        rel = str(path.relative_to(ROOT))
+        text = path.read_text(encoding="utf-8")
+        for specifier in _extract_import_specifiers(text):
+            resolved = _resolve_ui_local_import(path, specifier)
+            if resolved is None:
+                continue
+            resolved_rel = str(resolved.relative_to(ROOT))
+            if _ui_boundary_import_allowed(rel, resolved_rel):
+                continue
+            errors.append(
+                f"{rel} must not import {resolved_rel}; keep generated transport contracts behind "
+                f"{_ui_boundary_allowed_description(resolved_rel)}."
+            )
+    return errors
+
+
+def check_frontend_raw_html_boundaries() -> list[str]:
+    errors: list[str] = []
+    for path in _ui_source_files():
+        rel = str(path.relative_to(ROOT))
+        if rel.startswith(_UI_ALLOWED_RAW_HTML_PREFIX):
+            continue
+        text = path.read_text(encoding="utf-8")
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            if "insertAdjacentHTML(" in line:
+                errors.append(
+                    f"{rel}:{lineno} uses insertAdjacentHTML outside app/views/**; "
+                    "move the markup into a view helper or DOM builder."
+                )
+            if "createContextualFragment(" in line:
+                errors.append(
+                    f"{rel}:{lineno} uses createContextualFragment outside app/views/**; "
+                    "move the markup into a view helper or DOM builder."
+                )
+            if ".innerHTML" not in line or "=" not in line:
+                continue
+            if _EMPTY_INNERHTML_ASSIGNMENT_RE.search(line):
+                continue
+            errors.append(
+                f"{rel}:{lineno} uses innerHTML outside app/views/**; "
+                "move the markup into a view helper or DOM builder."
+            )
+    return errors
+
+
+def check_frontend_dom_registry_guardrails() -> list[str]:
+    errors: list[str] = []
+    if _UI_DOM_REGISTRY_PATH.exists():
+        errors.append(
+            "apps/ui/src/app/ui_dom_registry.ts must stay deleted; "
+            "DOM lookup belongs in app/dom/* locators plus ui_runtime_dom.ts."
+        )
+    for path in _ui_source_files():
+        rel = str(path.relative_to(ROOT))
+        if not rel.startswith("apps/ui/src/app/"):
+            continue
+        text = path.read_text(encoding="utf-8")
+        for token in _UI_DOM_REGISTRY_TOKENS:
+            if token in text:
+                errors.append(
+                    f"{rel} references {token!r}; keep page-wide DOM registries out of app/** and "
+                    "use feature-scoped locators instead."
+                )
+                break
+    return errors
 
 
 def _makefile_job_list(var_name: str) -> list[str]:
@@ -1041,6 +1189,33 @@ def main() -> int:
         failures += 1
     else:
         print("Dependency reproducibility hygiene checks passed.")
+
+    frontend_contract_errors = check_frontend_generated_contract_boundaries()
+    if frontend_contract_errors:
+        print("Frontend generated-contract boundary drift detected:")
+        for item in frontend_contract_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Frontend generated-contract boundaries passed.")
+
+    frontend_html_errors = check_frontend_raw_html_boundaries()
+    if frontend_html_errors:
+        print("Frontend raw HTML boundary drift detected:")
+        for item in frontend_html_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Frontend raw HTML boundaries passed.")
+
+    frontend_dom_registry_errors = check_frontend_dom_registry_guardrails()
+    if frontend_dom_registry_errors:
+        print("Frontend DOM registry guardrail drift detected:")
+        for item in frontend_dom_registry_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Frontend DOM registry guardrails passed.")
 
     return 1 if failures else 0
 
