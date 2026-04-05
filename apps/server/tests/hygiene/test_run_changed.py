@@ -58,6 +58,27 @@ def test_plan_commands_uses_changed_test_file_directly() -> None:
     )
 
 
+def test_plan_commands_uses_parent_dir_for_deleted_changed_test_file() -> None:
+    module = _load_run_changed_module()
+
+    commands = module._plan_commands(
+        ("apps/server/tests/adapters/http/test_deleted_settings_endpoints.py",)
+    )
+
+    assert commands == (
+        module.PlannedCommand(
+            "pytest",
+            (
+                sys.executable,
+                "-m",
+                "pytest",
+                "-q",
+                "apps/server/tests/adapters/http",
+            ),
+        ),
+    )
+
+
 def test_plan_commands_combines_docs_ui_and_hygiene_checks() -> None:
     module = _load_run_changed_module()
 
