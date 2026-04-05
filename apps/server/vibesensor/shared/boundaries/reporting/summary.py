@@ -12,10 +12,10 @@ from vibesensor.shared.boundaries.codecs.scalars import (
     optional_float,
     text_or_none,
 )
-from vibesensor.shared.boundaries.location_hotspot_codec import (
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summaries_from_rows,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
 from vibesensor.shared.types.analysis_views import PeakTableRow
 from vibesensor.shared.types.run_schema import RunMetadata
 

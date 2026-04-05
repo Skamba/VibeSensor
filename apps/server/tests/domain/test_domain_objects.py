@@ -18,8 +18,8 @@ from vibesensor.domain import (
     SpeedSource,
     SpeedSourceKind,
 )
-from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.boundaries.reporting.document import Report
+from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 
 # ---------------------------------------------------------------------------
 # Phase 1: SpeedSource

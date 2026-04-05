@@ -105,7 +105,7 @@ from vibesensor.adapters.http.models.history import (
 from vibesensor.adapters.http.models.history import (
     TestPlanStepResponse as ApiTestPlanStepResponse,
 )
-from vibesensor.shared.boundaries.vibration_origin import (
+from vibesensor.shared.boundaries.summary_fields.origin import (
     SuspectedVibrationOrigin as BoundarySuspectedVibrationOrigin,
 )
 from vibesensor.shared.types.analysis_views import (

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import vibesensor.shared.boundaries.analysis_payloads as analysis_payloads
 import vibesensor.shared.boundaries.analysis_payloads.reconstruction as reconstruction
+import vibesensor.shared.boundaries.runs as runs
 import vibesensor.shared.boundaries.sensor_frames as sensor_frames
+import vibesensor.shared.boundaries.settings as settings
+import vibesensor.shared.boundaries.summary_fields as summary_fields
 
 
 def test_analysis_payloads_package_exposes_canonical_entrypoints() -> None:
@@ -12,6 +15,7 @@ def test_analysis_payloads_package_exposes_canonical_entrypoints() -> None:
     assert callable(analysis_payloads.project_persisted_analysis)
     assert callable(analysis_payloads.persisted_analysis_from_storage_json_object)
     assert callable(analysis_payloads.persisted_analysis_to_storage_json_object)
+    assert callable(reconstruction.diagnostic_case_from_summary)
     assert callable(reconstruction.test_run_from_summary)
     assert callable(reconstruction.test_run_from_persisted_analysis)
 
@@ -22,3 +26,30 @@ def test_sensor_frames_package_keeps_shared_field_list_public() -> None:
     assert callable(sensor_frames.sensor_frame_to_json_object)
     assert callable(sensor_frames.sensor_frame_from_row)
     assert callable(sensor_frames.sensor_frame_to_row_values)
+
+
+def test_runs_package_exposes_canonical_entrypoints() -> None:
+    assert callable(runs.run_metadata_from_mapping)
+    assert callable(runs.run_metadata_to_json_object)
+    assert callable(runs.configuration_snapshot_from_run_metadata)
+    assert callable(runs.car_from_run_metadata)
+    assert callable(runs.symptom_from_run_metadata)
+    assert callable(runs.run_suitability_from_payload)
+    assert callable(runs.run_suitability_payload)
+    assert callable(runs.read_jsonl_run)
+
+
+def test_summary_fields_package_exposes_canonical_entrypoints() -> None:
+    assert callable(summary_fields.finding_from_payload)
+    assert callable(summary_fields.finding_payload_from_domain)
+    assert callable(summary_fields.location_hotspot_from_payload)
+    assert callable(summary_fields.origin_payload_from_finding)
+    assert callable(summary_fields.summary_warning_payloads)
+    assert callable(summary_fields.step_payloads_from_plan)
+    assert callable(summary_fields.build_evidence_metrics)
+
+
+def test_settings_package_exposes_snapshot_codecs() -> None:
+    assert callable(settings.settings_snapshot_from_payload)
+    assert callable(settings.coerce_language_code)
+    assert callable(settings.coerce_speed_unit_code)

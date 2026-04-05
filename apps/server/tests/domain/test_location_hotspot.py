@@ -10,7 +10,7 @@ from vibesensor.domain.location_hotspot import (
     LocationIntensitySummary,
     StrengthBucketDistribution,
 )
-from vibesensor.shared.boundaries.location_hotspot_codec import (
+from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summary_from_mapping,
     phase_intensity_summary_from_mapping,
 )

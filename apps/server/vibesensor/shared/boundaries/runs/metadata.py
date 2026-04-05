@@ -11,7 +11,7 @@ from vibesensor.shared.boundaries.codecs import (
     analysis_settings_snapshot_to_metadata,
 )
 from vibesensor.shared.boundaries.codecs.scalars import text_or_none
-from vibesensor.shared.boundaries.run_car_codec import (
+from vibesensor.shared.boundaries.runs.car import (
     run_car_metadata_from_mapping,
     run_car_metadata_to_json_object,
 )

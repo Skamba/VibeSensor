@@ -11,7 +11,7 @@ from vibesensor.shared.boundaries.analysis_payloads import (
     project_analysis_summary,
     project_persisted_analysis,
 )
-from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 

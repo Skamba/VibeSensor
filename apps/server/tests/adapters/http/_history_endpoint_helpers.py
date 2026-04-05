@@ -25,7 +25,7 @@ from vibesensor.adapters.http.dependencies import (
 from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
 from vibesensor.domain import RunStatus
 from vibesensor.infra.runtime import RuntimeHealthState
-from vibesensor.shared.boundaries.run_metadata_codec import (
+from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )

@@ -10,7 +10,7 @@ from vibesensor.shared.boundaries.reporting import (
     PreparedReportInput,
     prepare_persisted_report_input,
 )
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.ports import RunPersistence
