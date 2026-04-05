@@ -11,11 +11,16 @@ from vibesensor.adapters.http.models import (
     HistoryListEntryResponse,
     HistoryRunResponse,
 )
-from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.ports import (
+    AnalysisSettingsStore,
+    CarSettingsStore,
+    SensorMetadataStore,
+    UiPreferencesStore,
+)
 from vibesensor.use_cases.history.exports import HistoryExportDownload
 from vibesensor.use_cases.history.reports import HistoryReportPdf
 from vibesensor.use_cases.run import RunRecorder
@@ -88,7 +93,10 @@ class TelemetryDeps:
 
 @dataclass(slots=True)
 class SettingsDeps:
-    settings_store: SettingsStore
+    car_settings: CarSettingsStore
+    analysis_settings: AnalysisSettingsStore
+    sensor_metadata_store: SensorMetadataStore
+    ui_preferences: UiPreferencesStore
     speed_source_service: SpeedSourceSettingsServiceProtocol
     speed_status_service: SettingsSpeedServiceProtocol
     obd_admin_service: ObdAdminServiceProtocol

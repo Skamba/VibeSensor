@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -11,13 +12,34 @@ from pydantic import BaseModel
 from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
 from vibesensor.adapters.http.settings import create_settings_routes
-from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.shared.operational_errors import ServiceUnavailableError
-from vibesensor.shared.structured_logging import REQUEST_ID_HEADER
+from vibesensor.shared.structured_logging import REQUEST_ID_HEADER, log_extra
 
 
 def _log_record(caplog: pytest.LogCaptureFixture, message: str):
     return next(rec for rec in caplog.records if rec.message == message)
+
+
+def _audited_ui_preferences() -> SimpleNamespace:
+    prefs = SimpleNamespace(language="en", speed_unit="kmh")
+    logger = logging.getLogger("vibesensor.tests.request_observability")
+
+    def _set_language(value: str) -> str:
+        before = prefs.language
+        prefs.language = value
+        logger.info(
+            "settings_change",
+            extra=log_extra(
+                settings_action="set_language",
+                before=before,
+                after=value,
+            ),
+        )
+        return value
+
+    prefs.set_language = _set_language
+    prefs.set_speed_unit = MagicMock(return_value="kmh")
+    return prefs
 
 
 def test_request_logging_middleware_sets_response_header_and_logs_request(
@@ -47,7 +69,10 @@ def test_request_id_flows_into_settings_audit_logs(caplog: pytest.LogCaptureFixt
     install_request_logging_middleware(app)
     app.include_router(
         create_settings_routes(
-            SettingsStore(),
+            MagicMock(),
+            MagicMock(),
+            MagicMock(),
+            _audited_ui_preferences(),
             MagicMock(),
             MagicMock(),
             MagicMock(),

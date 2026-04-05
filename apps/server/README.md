@@ -34,8 +34,10 @@ state. Current `main` is intentionally split more narrowly:
   profiles, speed-source preferences, language, units, and canonical sensor
   metadata (display name plus `location_code`).
   `SettingsDerivationService` projects those persisted car settings into the
-  current analysis/run context, while `SettingsRuntimeApplier` pushes the
-  current speed-source selection into live runtime collaborators.
+  current analysis/run context, while `SpeedSourceRuntimeApplier` pushes the
+  current speed-source selection into live runtime collaborators. HTTP adapters
+  and runtime collaborators should consume the focused settings ports they need
+  rather than importing the concrete store directly.
 - Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
   `PostAnalysisWorker`) own live per-process coordination and per-run state.
 - History persistence now uses a shared SQLite lifecycle engine plus narrow

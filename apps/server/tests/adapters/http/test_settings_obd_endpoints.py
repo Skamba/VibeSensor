@@ -39,6 +39,9 @@ def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock, MagicM
     app.include_router(
         create_settings_routes(
             settings_store,
+            settings_store,
+            settings_store,
+            settings_store,
             speed_source_service,
             speed_status_service,
             obd_admin_service,

@@ -60,7 +60,10 @@ def test_smoke_health_route_registered() -> None:
         ws_hub=placeholder,
     )
     state.settings = SimpleNamespace(
-        settings_store=placeholder,
+        car_settings=placeholder,
+        analysis_settings=placeholder,
+        sensor_metadata_store=placeholder,
+        ui_preferences=placeholder,
         speed_source_service=placeholder,
         speed_status_service=placeholder,
         obd_admin_service=placeholder,

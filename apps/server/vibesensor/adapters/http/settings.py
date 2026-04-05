@@ -62,7 +62,12 @@ if TYPE_CHECKING:
         SpeedSourceSettingsServiceProtocol,
     )
     from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
-    from vibesensor.infra.config.settings_store import SettingsStore
+    from vibesensor.shared.ports import (
+        AnalysisSettingsStore,
+        CarSettingsStore,
+        SensorMetadataStore,
+        UiPreferencesStore,
+    )
 
 _CAR_NOT_FOUND_RESPONSES: OpenAPIResponses = {
     400: {"description": "Invalid car identifier."},
@@ -111,7 +116,10 @@ _OBD_ADMIN_RESPONSES: OpenAPIResponses = {
 
 
 def create_settings_routes(
-    settings_store: SettingsStore,
+    car_settings: CarSettingsStore,
+    analysis_settings: AnalysisSettingsStore,
+    sensor_metadata_store: SensorMetadataStore,
+    ui_preferences: UiPreferencesStore,
     speed_source_service: SpeedSourceSettingsServiceProtocol,
     speed_status_service: SettingsSpeedServiceProtocol,
     obd_admin_service: ObdAdminServiceProtocol,
@@ -255,7 +263,7 @@ def create_settings_routes(
 
     def _analysis_settings_response() -> AnalysisSettingsResponse:
         return AnalysisSettingsResponse.model_validate(
-            asdict(settings_store.analysis_settings_snapshot())
+            asdict(analysis_settings.analysis_settings_snapshot())
         )
 
     # -- cars ------------------------------------------------------------------
@@ -263,13 +271,13 @@ def create_settings_routes(
     @router.get("/api/settings/cars", response_model=CarsResponse)
     async def get_cars() -> CarsResponse:
         """List all saved car profiles together with the currently active car ID."""
-        return _cars_response(settings_store.get_cars())
+        return _cars_response(car_settings.get_cars())
 
     @router.post("/api/settings/cars", response_model=CarsResponse)
     async def add_car(req: CarUpsertRequest) -> CarsResponse:
         """Create a new car profile from the provided partial settings payload."""
         payload = _car_upsert_payload(req)
-        result = await asyncio.to_thread(settings_store.add_car, payload)
+        result = await asyncio.to_thread(car_settings.add_car, payload)
         return _cars_response(result)
 
     @router.put(
@@ -281,7 +289,7 @@ def create_settings_routes(
         """Select which saved car profile should drive current analysis settings."""
         car_id = normalize_car_id_or_400(req.car_id)
         try:
-            result = await asyncio.to_thread(settings_store.set_active_car, car_id)
+            result = await asyncio.to_thread(car_settings.set_active_car, car_id)
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=404) from exc
         return _cars_response(result)
@@ -297,7 +305,7 @@ def create_settings_routes(
         payload = _car_upsert_payload(req)
         try:
             result = await asyncio.to_thread(
-                settings_store.update_car,
+                car_settings.update_car,
                 car_id,
                 payload,
             )
@@ -315,11 +323,11 @@ def create_settings_routes(
         car_id = normalize_car_id_or_400(car_id)
         # Existence check first so unknown-car yields 404 while business-logic
         # errors (e.g. "cannot delete the last car") propagate as 400.
-        cars_snapshot = await asyncio.to_thread(settings_store.get_cars)
+        cars_snapshot = await asyncio.to_thread(car_settings.get_cars)
         if not any(car["id"] == car_id for car in cars_snapshot.cars):
             raise HTTPException(status_code=404, detail=f"Car {car_id!r} not found")
         try:
-            result = await asyncio.to_thread(settings_store.delete_car, car_id)
+            result = await asyncio.to_thread(car_settings.delete_car, car_id)
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
         return _cars_response(result)
@@ -405,7 +413,9 @@ def create_settings_routes(
     # -- sensors ---------------------------------------------------------------
 
     def _sensors_response() -> SensorsResponse:
-        return SensorsResponse.model_validate({"sensors_by_mac": settings_store.get_sensors()})
+        return SensorsResponse.model_validate(
+            {"sensors_by_mac": sensor_metadata_store.get_sensors()}
+        )
 
     @router.get("/api/settings/sensors", response_model=SensorsResponse)
     async def get_sensors() -> SensorsResponse:
@@ -423,7 +433,7 @@ def create_settings_routes(
         payload = _sensor_update_payload(req)
         try:
             await asyncio.to_thread(
-                settings_store.set_sensor,
+                sensor_metadata_store.set_sensor,
                 normalized_mac,
                 payload,
             )
@@ -440,7 +450,7 @@ def create_settings_routes(
         """Delete persisted sensor metadata for a specific MAC address."""
         normalized_mac = normalize_mac_or_400(mac)
         try:
-            removed = await asyncio.to_thread(settings_store.remove_sensor, normalized_mac)
+            removed = await asyncio.to_thread(sensor_metadata_store.remove_sensor, normalized_mac)
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
         if not removed:
@@ -452,7 +462,7 @@ def create_settings_routes(
     @router.get("/api/settings/language", response_model=LanguageResponse)
     async def get_language() -> LanguageResponse:
         """Return the currently selected dashboard language code."""
-        return LanguageResponse(language=settings_store.language)
+        return LanguageResponse(language=ui_preferences.language)
 
     @router.put(
         "/api/settings/language",
@@ -462,7 +472,7 @@ def create_settings_routes(
     async def set_language(req: LanguageRequest) -> LanguageResponse:
         """Update the dashboard language used by the local UI."""
         try:
-            language = await asyncio.to_thread(settings_store.set_language, req.language)
+            language = await asyncio.to_thread(ui_preferences.set_language, req.language)
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
         return LanguageResponse(language=language)
@@ -470,7 +480,7 @@ def create_settings_routes(
     @router.get("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def get_speed_unit() -> SpeedUnitResponse:
         """Return the speed unit currently used for UI display and input."""
-        return SpeedUnitResponse(speed_unit=settings_store.speed_unit)
+        return SpeedUnitResponse(speed_unit=ui_preferences.speed_unit)
 
     @router.put(
         "/api/settings/speed-unit",
@@ -480,7 +490,7 @@ def create_settings_routes(
     async def set_speed_unit(req: SpeedUnitRequest) -> SpeedUnitResponse:
         """Update the speed unit used for UI display and manual speed entry."""
         try:
-            unit = await asyncio.to_thread(settings_store.set_speed_unit, req.speed_unit)
+            unit = await asyncio.to_thread(ui_preferences.set_speed_unit, req.speed_unit)
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=400) from exc
         return SpeedUnitResponse(speed_unit=unit)
@@ -505,7 +515,7 @@ def create_settings_routes(
             raise http_exception_for_value_error(exc, status_code=400) from exc
         if changes:
             try:
-                await asyncio.to_thread(settings_store.update_active_car_aspects, changes)
+                await asyncio.to_thread(analysis_settings.update_active_car_aspects, changes)
             except ValueError as exc:
                 raise http_exception_for_value_error(exc, status_code=400) from exc
         return _analysis_settings_response()

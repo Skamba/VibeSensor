@@ -49,6 +49,15 @@ from vibesensor.shared.constants.dsp import (
     WAVEFORM_DISPLAY_HZ,
 )
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
+from vibesensor.shared.ports import (
+    AnalysisSettingsStore,
+    CarSettingsStore,
+    SensorMetadataReader,
+    SensorMetadataStore,
+    SpeedSourceSettingsReader,
+    SpeedSourceSettingsStore,
+    UiPreferencesStore,
+)
 from vibesensor.shared.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
@@ -147,12 +156,21 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         obd_control=obd_runtime.control.settings,
     )
     settings_store = SettingsStore(db=history.settings_snapshot_repository)
+    # Bind the concrete settings store to the focused ports expected by
+    # routes and runtime services before handing it across boundaries.
+    car_settings: CarSettingsStore = settings_store
+    analysis_settings: AnalysisSettingsStore = settings_store
+    sensor_metadata_store: SensorMetadataStore = settings_store
+    sensor_metadata_reader: SensorMetadataReader = sensor_metadata_store
+    speed_source_store: SpeedSourceSettingsStore = settings_store
+    speed_source_reader: SpeedSourceSettingsReader = speed_source_store
+    ui_preferences: UiPreferencesStore = settings_store
     settings_reader = SettingsDerivationService(
         active_car_aspects=settings_store.active_car_aspects,
         active_car_snapshot=settings_store.active_car_snapshot,
     )
     speed_source_service = SpeedSourceSettingsService(
-        settings_store=settings_store,
+        settings_store=speed_source_store,
         runtime_applier=SpeedSourceRuntimeApplier(
             speed_control=speed_services.control,
         ),
@@ -220,8 +238,8 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         gps_monitor=speed_services.observation,
         gps_enabled=config.gps.gps_enabled,
         settings_reader=settings_reader,
-        speed_source_reader=settings_store,
-        sensor_metadata_reader=settings_store,
+        speed_source_reader=speed_source_reader,
+        sensor_metadata_reader=sensor_metadata_reader,
     )
 
     # run recorder
@@ -240,8 +258,8 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         processor=processor,
         history_db=history_db,
         settings_store=settings_reader,
-        sensor_metadata_reader=settings_store,
-        language_provider=lambda: settings_store.language,
+        sensor_metadata_reader=sensor_metadata_reader,
+        language_provider=lambda: ui_preferences.language,
     )
 
     # requeue stale analysis runs
@@ -291,7 +309,10 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             ws_hub=ws_hub,
         ),
         settings=SettingsDeps(
-            settings_store=settings_store,
+            car_settings=car_settings,
+            analysis_settings=analysis_settings,
+            sensor_metadata_store=sensor_metadata_store,
+            ui_preferences=ui_preferences,
             speed_source_service=speed_source_service,
             speed_status_service=speed_services.observation,
             obd_admin_service=speed_services.admin,

@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
+from vibesensor.shared.types.car_config import CarConfigUpdatePayload, CarsSnapshot
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
@@ -17,10 +18,22 @@ from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_config import SensorConfigUpdatePayload, SensorsByMacPayload
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource, SpeedSourceConfig
+from vibesensor.shared.types.settings_types import (
+    AnalysisSettingsPayload,
+    LanguageCode,
+    SpeedUnitCode,
+)
+from vibesensor.shared.types.speed_source_config import (
+    ResolvedSpeedSource,
+    SpeedSourceConfig,
+    SpeedSourcePayload,
+    SpeedSourceUpdatePayload,
+)
 
 __all__ = [
     "ActiveCarReader",
+    "AnalysisSettingsStore",
+    "CarSettingsStore",
     "ClockSyncBroadcaster",
     "ClientTracker",
     "ClientNamePersistence",
@@ -36,9 +49,11 @@ __all__ = [
     "SettingsSnapshotPersistence",
     "SignalSource",
     "SpeedProvider",
+    "SpeedSourceSettingsStore",
     "SpeedSourceSettingsReader",
     "SpeedSourceSync",
     "TrackedClient",
+    "UiPreferencesStore",
 ]
 
 
@@ -104,8 +119,59 @@ class SettingsReader(Protocol):
     def active_car_snapshot(self) -> CarSnapshot | None: ...
 
 
+class CarSettingsStore(Protocol):
+    """Car-profile CRUD surface needed by HTTP settings routes."""
+
+    def get_cars(self) -> CarsSnapshot: ...
+
+    def set_active_car(self, car_id: str) -> CarsSnapshot: ...
+
+    def add_car(self, car_data: CarConfigUpdatePayload) -> CarsSnapshot: ...
+
+    def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> CarsSnapshot: ...
+
+    def delete_car(self, car_id: str) -> CarsSnapshot: ...
+
+
+class AnalysisSettingsStore(Protocol):
+    """Derived-analysis settings surface needed by HTTP settings routes."""
+
+    def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot: ...
+
+    def update_active_car_aspects(
+        self,
+        aspects: AnalysisSettingsPayload,
+    ) -> AnalysisSettingsPayload: ...
+
+
+class UiPreferencesStore(Protocol):
+    """Language and speed-unit preference surface needed by HTTP settings routes."""
+
+    @property
+    def language(self) -> LanguageCode: ...
+
+    def set_language(self, value: str) -> LanguageCode: ...
+
+    @property
+    def speed_unit(self) -> SpeedUnitCode: ...
+
+    def set_speed_unit(self, value: str) -> SpeedUnitCode: ...
+
+
 class SpeedSourceSettingsReader(Protocol):
     """Read-only speed-source access needed by runtime/broadcast settings consumers."""
+
+    def speed_source_config(self) -> SpeedSourceConfig: ...
+
+
+class SpeedSourceSettingsStore(Protocol):
+    """Persisted speed-source surface needed by runtime settings services."""
+
+    def get_speed_source(self) -> SpeedSourcePayload: ...
+
+    def preview_speed_source_update(self, data: SpeedSourceUpdatePayload) -> SpeedSourceConfig: ...
+
+    def persist_speed_source(self, config: SpeedSourceConfig) -> SpeedSourceConfig: ...
 
     def speed_source_config(self) -> SpeedSourceConfig: ...
 
