@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
+import sys
 from dataclasses import dataclass
 
 from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
@@ -30,19 +30,12 @@ class UpdateWorkflow:
         request: UpdateRequest,
     ) -> None:
         prepared: PreparedUpdateRun | None = None
-        prior_error: BaseException | None = None
         try:
             prepared = await self.preparation.prepare(request)
             planned = await self.release_planner.plan(prepared)
             await self.workflow_executor.execute(planned)
-        except asyncio.CancelledError as exc:
-            prior_error = exc
-            raise
-        except Exception as exc:
-            prior_error = exc
-            raise
         finally:
             await self.finalizer.finalize(
                 None if prepared is None else prepared.prepared_transport,
-                prior_error=prior_error,
+                prior_error=sys.exc_info()[1],
             )

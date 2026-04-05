@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
-import os
-import tempfile
 from pathlib import Path
-from urllib.request import urlopen
 
-from vibesensor.shared.types.json_types import JsonObject, is_json_array, is_json_object
+from vibesensor.use_cases.updates.asset_download import download_release_asset
+from vibesensor.use_cases.updates.firmware.firmware_release_selection import (
+    find_firmware_asset,
+    is_firmware_asset_name,
+    require_release_payload,
+    select_firmware_release,
+)
 from vibesensor.use_cases.updates.firmware.firmware_types import (
     FirmwareCacheConfig,
     GitHubReleaseAssetPayload,
@@ -30,47 +32,6 @@ __all__ = [
 ]
 
 _MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024  # 100 MB hard limit for firmware assets
-_FW_ASSET_PREFIX = "vibesensor-fw-"
-_FW_ASSET_SUFFIX = ".zip"
-
-
-def _coerce_release_asset_payload(raw: JsonObject) -> GitHubReleaseAssetPayload:
-    """Project a raw GitHub asset JSON object into the updater payload shape."""
-
-    payload: GitHubReleaseAssetPayload = {}
-    name = raw.get("name")
-    url = raw.get("url")
-    if isinstance(name, str):
-        payload["name"] = name
-    if isinstance(url, str):
-        payload["url"] = url
-    return payload
-
-
-def _coerce_release_payload(raw: JsonObject) -> GitHubReleasePayload:
-    """Project a raw GitHub release JSON object into the updater payload shape."""
-
-    payload: GitHubReleasePayload = {}
-    tag_name = raw.get("tag_name")
-    if isinstance(tag_name, str):
-        payload["tag_name"] = tag_name
-    draft = raw.get("draft")
-    if isinstance(draft, bool):
-        payload["draft"] = draft
-    prerelease = raw.get("prerelease")
-    if isinstance(prerelease, bool):
-        payload["prerelease"] = prerelease
-    assets = raw.get("assets")
-    if is_json_array(assets):
-        payload["assets"] = [
-            _coerce_release_asset_payload(asset) for asset in assets if is_json_object(asset)
-        ]
-    return payload
-
-
-def is_firmware_asset_name(name: str) -> bool:
-    """Return True if *name* matches the firmware bundle naming convention."""
-    return name.startswith(_FW_ASSET_PREFIX) and name.endswith(_FW_ASSET_SUFFIX)
 
 
 class GitHubReleaseFetcher:
@@ -91,37 +52,18 @@ class GitHubReleaseFetcher:
         )
 
     def _download_asset(self, url: str, dest: Path) -> None:
-        req = self._client.build_request(url, accept="application/octet-stream")
-        with urlopen(req, timeout=120) as resp:
-            # Stream directly to a temp file to avoid buffering the entire
-            # firmware binary in memory (Pi 3A+ has only 512 MB RAM).
-            tmp_fd, tmp_path = tempfile.mkstemp(dir=str(dest.parent), suffix=".dl_tmp")
-            fdopen_ok = False
-            downloaded = False
-            try:
-                total = 0
-                with os.fdopen(tmp_fd, "wb") as tmp_f:
-                    fdopen_ok = True
-                    while True:
-                        chunk = resp.read(DOWNLOAD_CHUNK_BYTES)
-                        if not chunk:
-                            break
-                        total += len(chunk)
-                        if total > _MAX_DOWNLOAD_BYTES:
-                            raise ValueError(
-                                f"Firmware asset exceeds {_MAX_DOWNLOAD_BYTES // (1024 * 1024)} MB "
-                                f"size limit; aborting download to prevent OOM.",
-                            )
-                        tmp_f.write(chunk)
-                Path(tmp_path).replace(dest)
-                downloaded = True
-            finally:
-                if not fdopen_ok:
-                    with contextlib.suppress(OSError):
-                        os.close(tmp_fd)
-                if not downloaded:
-                    with contextlib.suppress(OSError):
-                        Path(tmp_path).unlink()
+        download_release_asset(
+            client=self._client,
+            url=url,
+            dest=dest,
+            timeout_s=120,
+            max_bytes=_MAX_DOWNLOAD_BYTES,
+            chunk_size=DOWNLOAD_CHUNK_BYTES,
+            size_limit_message=(
+                f"Firmware asset exceeds {_MAX_DOWNLOAD_BYTES // (1024 * 1024)} MB "
+                "size limit; aborting download to prevent OOM."
+            ),
+        )
 
     def find_release(self) -> GitHubReleasePayload:
         """Find the target release based on config (pinned tag, channel)."""
@@ -131,64 +73,18 @@ class GitHubReleaseFetcher:
         if self._config.pinned_tag:
             url = f"{base}/tags/{self._config.pinned_tag}"
             LOGGER.info("Fetching pinned release: %s", self._config.pinned_tag)
-            release = self._client.get_json(url)
-            if not is_json_object(release):
-                raise ValueError("Unexpected GitHub API response format")
-            return _coerce_release_payload(release)
+            return require_release_payload(self._client.get_json(url))
 
         LOGGER.info("Fetching releases for channel '%s'", self._config.channel)
-        releases = self._client.get_json(f"{base}?per_page=50")
-        if not isinstance(releases, list):
-            raise ValueError("Unexpected GitHub API response format")
-
-        for release in releases:
-            if not is_json_object(release):
-                continue
-            is_prerelease = release.get("prerelease", False)
-            is_draft = release.get("draft", False)
-            if is_draft:
-                continue
-            release_payload = _coerce_release_payload(release)
-            if not self._release_has_firmware_asset(release_payload):
-                continue
-            if self._config.channel == "stable" and not is_prerelease:
-                return release_payload
-            if self._config.channel in ("prerelease", "edge") and is_prerelease:
-                return release_payload
-
-        # Fallback: use the latest prerelease (firmware releases are typically prereleases)
-        for release in releases:
-            if not is_json_object(release):
-                continue
-            if release.get("draft", False):
-                continue
-            release_payload = _coerce_release_payload(release)
-            if not self._release_has_firmware_asset(release_payload):
-                continue
-            return release_payload
-
-        raise ValueError(
-            f"No eligible firmware release found for channel '{self._config.channel}' "
-            f"in {self._config.firmware_repo}",
-        )
-
-    @staticmethod
-    def _release_has_firmware_asset(release: GitHubReleasePayload) -> bool:
-        """Return whether the release exposes at least one firmware bundle asset."""
-
-        return any(
-            is_firmware_asset_name(str(a.get("name", ""))) for a in release.get("assets", [])
+        return select_firmware_release(
+            self._client.get_json(f"{base}?per_page=50"),
+            channel=self._config.channel,
+            firmware_repo=self._config.firmware_repo,
         )
 
     def find_firmware_asset(self, release: GitHubReleasePayload) -> GitHubReleaseAssetPayload:
         """Find the firmware bundle asset in a release."""
-        for asset in release.get("assets", []):
-            if is_firmware_asset_name(str(asset.get("name", ""))):
-                return asset
-        raise ValueError(
-            f"No firmware bundle asset found in release '{release.get('tag_name', '?')}'. "
-            "Expected an asset named vibesensor-fw-*.zip",
-        )
+        return find_firmware_asset(release)
 
     def download_asset(self, asset: GitHubReleaseAssetPayload, dest: Path) -> Path:
         """Download a firmware asset zip to *dest*."""

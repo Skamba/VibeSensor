@@ -8,8 +8,10 @@ The updater now has one explicit run-scoped workflow boundary per concern:
   manager instance.
 - ``runtime_config.py`` owns runtime config resolution.
 - ``runtime_core.py`` owns status-tracker and command-executor assembly.
-- ``release_runtime.py`` owns release-specific runtime assembly.
-- ``workflow_runtime.py`` owns workflow assembly from the focused runtime bundles.
+- ``release_planning_runtime.py`` owns release-planner assembly.
+- ``release_execution_runtime.py`` owns release-execution assembly.
+- ``workflow_runtime.py`` owns workflow assembly from the focused planning,
+  execution, transport, and core collaborators.
 - ``run_models.py`` holds the canonical prepared/planned run models shared
   across the workflow.
 - ``workflow.py`` owns request-scoped orchestration across preparation,
