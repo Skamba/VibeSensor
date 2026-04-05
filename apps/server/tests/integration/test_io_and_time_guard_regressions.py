@@ -2,7 +2,7 @@
 
 Covers:
   1. firmware_cache.refresh() – target/old_current initialised before try
-  2. firmware_release_fetcher._download_asset() – fd leak guard when os.fdopen fails
+2. shared updater asset download – fd leak guard when os.fdopen fails
   3. gps_speed.resolve_speed() – TOCTOU snapshot of speed_mps
   4. gps_speed._is_gps_stale() – TOCTOU snapshot of last_update_ts
   5. report_cli.main() – PDF generation errors return 1 instead of traceback
@@ -85,7 +85,7 @@ class TestFirmwareCacheRefreshUnboundGuard:
 
 
 # ------------------------------------------------------------------
-# 2. firmware_release_fetcher._download_asset() – fd leak guard
+# 2. shared updater asset download – fd leak guard
 # ------------------------------------------------------------------
 
 
@@ -106,7 +106,7 @@ class TestDownloadAssetFdLeakGuard:
 
         with (
             patch(
-                "vibesensor.use_cases.updates.firmware.firmware_release_fetcher.urlopen",
+                "vibesensor.use_cases.updates.asset_download.urlopen",
                 return_value=fake_resp,
             ),
             patch("os.fdopen", side_effect=OSError("mock fdopen failure")),

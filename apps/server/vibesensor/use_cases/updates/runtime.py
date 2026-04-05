@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 
 from vibesensor.use_cases.updates.manager import UpdateManager
-from vibesensor.use_cases.updates.release_runtime import build_update_release_runtime
 from vibesensor.use_cases.updates.runner import CommandRunner
 from vibesensor.use_cases.updates.runtime_config import resolve_update_runtime_config
 from vibesensor.use_cases.updates.runtime_core import build_update_runtime_core
@@ -51,16 +50,10 @@ def build_update_manager(
         usb_internet_service=usb_internet_service,
         logger=LOGGER,
     )
-    release = build_update_release_runtime(
-        commands=core.commands,
-        status=core.status,
-        config=config,
-    )
     workflow = build_update_workflow(
         core=core,
         config=config,
         transport=transport,
-        release=release,
         logger=LOGGER,
     )
     return UpdateManager(

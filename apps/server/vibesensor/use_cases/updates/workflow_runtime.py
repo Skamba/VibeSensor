@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import logging
 
-from vibesensor.use_cases.updates.completion import UpdateCompletionCoordinator
 from vibesensor.use_cases.updates.finalization import UpdateWorkflowFinalizer
 from vibesensor.use_cases.updates.preparation import UpdatePreparationCoordinator
-from vibesensor.use_cases.updates.release_planner import UpdateReleasePlanner
-from vibesensor.use_cases.updates.release_runtime import UpdateReleaseRuntime
+from vibesensor.use_cases.updates.release_execution_runtime import (
+    build_update_workflow_executor,
+)
+from vibesensor.use_cases.updates.release_planning_runtime import (
+    build_update_release_planner,
+)
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.runtime_config import UpdateRuntimeConfig
 from vibesensor.use_cases.updates.runtime_core import UpdateRuntimeCore
@@ -16,7 +19,6 @@ from vibesensor.use_cases.updates.runtime_refresh import UpdateRuntimeDetailsRef
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.transport.runtime import UpdateTransportRuntime
 from vibesensor.use_cases.updates.workflow import UpdateWorkflow
-from vibesensor.use_cases.updates.workflow_executor import UpdateWorkflowExecutor
 
 __all__ = ["build_update_workflow"]
 
@@ -26,7 +28,6 @@ def build_update_workflow(
     core: UpdateRuntimeCore,
     config: UpdateRuntimeConfig,
     transport: UpdateTransportRuntime,
-    release: UpdateReleaseRuntime,
     logger: logging.Logger,
 ) -> UpdateWorkflow:
     return UpdateWorkflow(
@@ -36,19 +37,15 @@ def build_update_workflow(
             transport=transport,
             config=config,
         ),
-        release_planner=UpdateReleasePlanner(
+        release_planner=build_update_release_planner(
             status=core.status,
-            resolver=release.resolver,
+            config=config,
         ),
-        workflow_executor=UpdateWorkflowExecutor(
-            completion=UpdateCompletionCoordinator(
-                restart_scheduler=release.restart_scheduler,
-                reporter=core.reporter,
-                status=core.status,
-            ),
-            stager=release.stager,
-            deployment=release.deployment,
-            firmware_refresher=release.firmware_refresher,
+        workflow_executor=build_update_workflow_executor(
+            commands=core.commands,
+            status=core.status,
+            reporter=core.reporter,
+            config=config,
         ),
         finalizer=UpdateWorkflowFinalizer(
             transport_coordinator=transport.coordinator,
@@ -63,10 +60,10 @@ def build_update_workflow(
 
 def _build_preparation(
     *,
-    commands: UpdateCommandExecutor,
-    status: UpdateStatusTracker,
     transport: UpdateTransportRuntime,
     config: UpdateRuntimeConfig,
+    commands: UpdateCommandExecutor,
+    status: UpdateStatusTracker,
 ) -> UpdatePreparationCoordinator:
     return UpdatePreparationCoordinator(
         status=status,

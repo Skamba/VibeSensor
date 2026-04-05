@@ -148,7 +148,7 @@ class TestFirmwareCacheStreamingDownload:
         mock_resp.__exit__ = lambda s, *a: None
 
         with patch(
-            "vibesensor.use_cases.updates.firmware.firmware_release_fetcher.urlopen",
+            "vibesensor.use_cases.updates.asset_download.urlopen",
             return_value=mock_resp,
         ):
             fetcher._download_asset("https://example.com/fw.bin", dest)
