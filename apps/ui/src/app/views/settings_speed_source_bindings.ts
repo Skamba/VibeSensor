@@ -1,14 +1,16 @@
 import type { UiSettingsDom } from "../dom/settings_dom";
 import type { UiShellDom } from "../dom/shell_dom";
+import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import { closestFromTarget } from "./dom_helpers";
 import { bindViewEvent, composeViewDisposers, type ViewDisposer } from "./dom_event_bindings";
 
 const TAB_NAVIGATION_KEYS = new Set(["Enter", " ", "ArrowRight", "ArrowLeft", "Home", "End"]);
+const DISPLAYED_SPEED_SOURCE_MODES = ["gps", "manual", "obd2"] as const satisfies readonly DisplayedSpeedSourceMode[];
 
 export type SettingsSpeedSourceInteraction =
-  | { type: "speed-source-changed" }
-  | { type: "manual-speed-input" }
-  | { type: "stale-timeout-input" }
+  | { type: "speed-source-changed"; mode: DisplayedSpeedSourceMode }
+  | { type: "manual-speed-input"; value: string }
+  | { type: "stale-timeout-input"; value: string }
   | { type: "save" }
   | { type: "scan-obd-devices" }
   | { type: "navigate-context" }
@@ -21,6 +23,10 @@ export interface SettingsObdDeviceListAction {
 
 export interface SettingsSpeedSourceBindingHandlers {
   onAction(action: SettingsSpeedSourceInteraction): void;
+}
+
+function readDisplayedSpeedSourceMode(value: string): DisplayedSpeedSourceMode | null {
+  return DISPLAYED_SPEED_SOURCE_MODES.find((mode) => mode === value) ?? null;
 }
 
 export function getSettingsObdDeviceListAction(
@@ -56,13 +62,22 @@ export function bindSettingsSpeedSourceInteractions(
   return composeViewDisposers(
     ...dom.speedSourceRadios.map((radio) =>
       bindViewEvent(radio, "change", () => {
-        handlers.onAction({ type: "speed-source-changed" });
+        const mode = readDisplayedSpeedSourceMode(radio.value);
+        if (mode) {
+          handlers.onAction({ type: "speed-source-changed", mode });
+        }
       })),
     bindViewEvent(dom.manualSpeedInput, "input", () => {
-      handlers.onAction({ type: "manual-speed-input" });
+      handlers.onAction({
+        type: "manual-speed-input",
+        value: dom.manualSpeedInput?.value ?? "",
+      });
     }),
     bindViewEvent(dom.staleTimeoutInput, "input", () => {
-      handlers.onAction({ type: "stale-timeout-input" });
+      handlers.onAction({
+        type: "stale-timeout-input",
+        value: dom.staleTimeoutInput?.value ?? "",
+      });
     }),
     bindViewEvent(dom.saveSpeedSourceBtn, "click", () => {
       handlers.onAction({ type: "save" });
