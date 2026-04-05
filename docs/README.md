@@ -14,7 +14,9 @@ links onward to the scoped instruction files and repo map below.
 | `.github/instructions/general.instructions.md` | Shared workflow, validation, and execution guardrails for AI work. |
 | `.github/instructions/backend.instructions.md` | Backend-specific coding rules and deltas for AI work. |
 | `.github/instructions/frontend.instructions.md` | Frontend-specific rules and deltas for AI work. |
-| `.github/instructions/tests.instructions.md` | Test-specific conventions and commands for AI work. |
+| `.github/instructions/firmware.instructions.md` | Firmware-specific rules and validation deltas for `firmware/esp/**`. |
+| `.github/instructions/pi-image.instructions.md` | Pi-image-specific rules and validation deltas for `infra/pi-image/**`. |
+| `.github/instructions/tests.instructions.md` | Backend test-specific conventions and commands for `apps/server/tests/**`. |
 
 ## Architecture & Design
 
@@ -54,7 +56,7 @@ HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
 
 | File | Description |
 |------|-------------|
-| `docs/testing.md` | Test layout, commands, CI parity, and conventions. |
+| `docs/testing.md` | Test layout plus backend, frontend, firmware, and Pi-image validation quick paths. |
 
 ## READMEs (setup and orientation)
 

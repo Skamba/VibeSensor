@@ -14,9 +14,11 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.boundaries.codecs import finding_evidence_from_mapping
-from vibesensor.shared.boundaries.evidence_metrics_builder import build_evidence_metrics
-from vibesensor.shared.boundaries.order_match_codec import order_match_observations_from_sequence
-from vibesensor.shared.boundaries.vibration_origin import (
+from vibesensor.shared.boundaries.summary_fields.evidence_metrics import build_evidence_metrics
+from vibesensor.shared.boundaries.summary_fields.order_match import (
+    order_match_observations_from_sequence,
+)
+from vibesensor.shared.boundaries.summary_fields.origin import (
     location_hotspot_from_payload,
     vibration_origin_from_payload,
 )

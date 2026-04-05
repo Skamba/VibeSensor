@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.run_metadata_codec import (
+from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )

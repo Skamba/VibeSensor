@@ -13,7 +13,10 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.finding import finding_from_payload, finding_payload_from_domain
+from vibesensor.shared.boundaries.summary_fields.finding import (
+    finding_from_payload,
+    finding_payload_from_domain,
+)
 
 
 def _roundtrip(finding: Finding) -> Finding:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from test_support.update_status import build_update_status_harness
@@ -31,7 +31,7 @@ async def test_stage_yields_staged_release_and_cleans_temp_dir(tmp_path: Path) -
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(
         status=tracker,
-        rollback_dir=tmp_path / "rollback",
+        release_fetcher=MagicMock(),
     )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="")
     staged_path: Path | None = None
@@ -70,7 +70,7 @@ async def test_stage_returns_none_when_verification_fails(tmp_path: Path) -> Non
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(
         status=tracker,
-        rollback_dir=tmp_path / "rollback",
+        release_fetcher=MagicMock(),
     )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="bad")
     staged_dir: Path | None = None
@@ -110,7 +110,7 @@ async def test_stage_raises_cleanup_error_when_cleanup_fails_without_prior_error
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(
         status=tracker,
-        rollback_dir=tmp_path / "rollback",
+        release_fetcher=MagicMock(),
     )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="")
     staged_dir: Path | None = None
@@ -155,7 +155,7 @@ async def test_stage_keeps_prior_error_and_adds_cleanup_note(tmp_path: Path) -> 
     _seed_release_ready_state(tracker)
     stager = ServerReleaseStager(
         status=tracker,
-        rollback_dir=tmp_path / "rollback",
+        release_fetcher=MagicMock(),
     )
     release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4", sha256="")
 
@@ -185,3 +185,23 @@ async def test_stage_keeps_prior_error_and_adds_cleanup_note(tmp_path: Path) -> 
             pytest.fail("stage() should not yield when verification fails")
 
     assert exc_info.value.__notes__ == ["Failed to remove staged release directory: busy"]
+
+
+@pytest.mark.asyncio
+async def test_verify_download_rejects_missing_trusted_digest(tmp_path: Path) -> None:
+    tracker = build_update_status_harness(tmp_path / "state.json")
+    _seed_release_ready_state(tracker)
+    stager = ServerReleaseStager(
+        status=tracker,
+        release_fetcher=MagicMock(),
+    )
+    wheel_path = tmp_path / "release.whl"
+    wheel_path.write_text("wheel", encoding="utf-8")
+
+    with pytest.raises(UpdateReleaseError, match="missing a trusted SHA-256 digest") as exc_info:
+        await stager._verify_download(
+            SimpleNamespace(tag="server-v2026.4.4", sha256=""),
+            wheel_path,
+        )
+
+    assert exc_info.value.phase == UpdatePhase.downloading.value

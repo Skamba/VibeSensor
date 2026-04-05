@@ -22,7 +22,7 @@ from vibesensor.infra.runtime.client_snapshot import (
 )
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.registry_updates import _JITTER_EMA_ALPHA, _RESTART_SEQ_GAP
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig

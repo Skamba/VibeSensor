@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import pytest
 
 from vibesensor.domain import RunStatus
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.helpers import async_require_run

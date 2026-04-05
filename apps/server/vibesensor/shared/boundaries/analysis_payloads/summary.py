@@ -5,15 +5,15 @@ from __future__ import annotations
 from copy import deepcopy
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_to_json_object
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_to_json_objects
+from vibesensor.shared.boundaries.summary_fields.test_plan import step_payloads_from_plan
+from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
 from vibesensor.shared.boundaries.summary_serialization import (
     AccelStatisticsLike,
     build_analysis_summary,
     serialize_plot_data,
 )
-from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
-from vibesensor.shared.boundaries.test_plan_projection import step_payloads_from_plan
 from vibesensor.shared.run_context_warning import (
     RunContextWarningsInput,
     build_summary_warnings,

@@ -14,10 +14,12 @@ from typing import TYPE_CHECKING
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateReleaseError
 from vibesensor.use_cases.updates.artifact_validation import sha256_file
 from vibesensor.use_cases.updates.models import UpdatePhase
-from vibesensor.use_cases.updates.releases import factory as release_fetcher_factory
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.updates.releases.release_fetcher import ReleaseInfo
+    from vibesensor.use_cases.updates.releases.release_fetcher import (
+        ReleaseInfo,
+        ServerReleaseFetcher,
+    )
     from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
 
@@ -32,16 +34,16 @@ class StagedServerRelease:
 class ServerReleaseStager:
     """Own temporary staging, download, and verification of server wheels."""
 
-    __slots__ = ("_rollback_dir", "_status")
+    __slots__ = ("_release_fetcher", "_status")
 
     def __init__(
         self,
         *,
         status: UpdateStatusTracker,
-        rollback_dir: Path,
+        release_fetcher: ServerReleaseFetcher,
     ) -> None:
         self._status = status
-        self._rollback_dir = rollback_dir
+        self._release_fetcher = release_fetcher
 
     @asynccontextmanager
     async def stage(self, release: ReleaseInfo) -> AsyncIterator[StagedServerRelease]:
@@ -52,9 +54,7 @@ class ServerReleaseStager:
         try:
             try:
                 wheel_path = await self._download_release(release, staging_dir)
-                self._status.log(
-                    f"Downloaded {wheel_path.name} (sha256={getattr(release, 'sha256', '')})",
-                )
+                self._status.log(f"Downloaded {wheel_path.name}")
                 await self._verify_download(release, wheel_path)
                 yield StagedServerRelease(release=release, wheel_path=wheel_path)
             except BaseException as exc:
@@ -84,11 +84,12 @@ class ServerReleaseStager:
     async def _download_release(self, release: ReleaseInfo, staging_dir: Path) -> Path:
         """Download a release wheel to *staging_dir*."""
 
-        fetcher = release_fetcher_factory.build_server_release_fetcher(
-            rollback_dir=self._rollback_dir,
-        )
         try:
-            return await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
+            return await asyncio.to_thread(
+                self._release_fetcher.download_wheel,
+                release,
+                staging_dir,
+            )
         except (OSError, ValueError) as exc:
             raise UpdateReleaseError(
                 f"Failed to download release: {exc}",
@@ -99,7 +100,11 @@ class ServerReleaseStager:
         """Verify SHA-256 digest of a downloaded wheel."""
 
         if not release.sha256:
-            return
+            raise UpdateReleaseError(
+                "Release asset is missing a trusted SHA-256 digest",
+                phase=UpdatePhase.downloading.value,
+                detail=f"{release.tag}: {wheel_path.name}",
+            )
         actual_sha256 = await asyncio.to_thread(sha256_file, wheel_path)
         expected_sha256 = release.sha256.lower()
         if actual_sha256 == expected_sha256:

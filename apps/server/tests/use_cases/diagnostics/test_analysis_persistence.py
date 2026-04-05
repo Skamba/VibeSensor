@@ -13,7 +13,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 from tests.conftest import FakeState
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frame_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun

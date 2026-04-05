@@ -2,21 +2,17 @@
 
 from __future__ import annotations
 
-import hashlib
 import logging
-import os
 import tempfile
 from pathlib import Path
-from urllib.request import urlopen
 
-from vibesensor.shared.types.json_types import is_json_array
+from vibesensor.use_cases.updates.asset_download import download_release_asset
 
 from .github_api import DOWNLOAD_CHUNK_BYTES, GitHubApiClient
-from .models import GitHubRelease, GitHubReleaseAsset, ReleaseFetcherConfig, ReleaseInfo
+from .models import ReleaseFetcherConfig, ReleaseInfo
+from .release_discovery import decode_server_releases, find_latest_server_release
 
 LOGGER = logging.getLogger(__name__)
-
-_HASH_CHUNK_BYTES = 65536  # 64 KB per hash update
 
 __all__ = ["ServerReleaseFetcher"]
 
@@ -44,30 +40,16 @@ class ServerReleaseFetcher:
     def _download_asset(self, url: str, dest: Path) -> None:
         """Stream a release asset to disk with an upper size bound."""
 
-        req = self._client.build_request(url, accept="application/octet-stream")
-        tmp = dest.with_suffix(".tmp")
-        max_bytes = self._MAX_DOWNLOAD_BYTES
-        chunk_size = DOWNLOAD_CHUNK_BYTES
-        replaced = False
-        try:
-            with urlopen(req, timeout=300) as resp:
-                total = 0
-                with tmp.open("wb") as f:
-                    while True:
-                        chunk = resp.read(chunk_size)
-                        if not chunk:
-                            break
-                        total += len(chunk)
-                        if total > max_bytes:
-                            raise ValueError(f"Asset exceeds {self._MAX_DOWNLOAD_MB} MB limit")
-                        f.write(chunk)
-                    f.flush()
-                    os.fsync(f.fileno())
-            tmp.replace(dest)
-            replaced = True
-        finally:
-            if not replaced:
-                tmp.unlink(missing_ok=True)
+        download_release_asset(
+            client=self._client,
+            url=url,
+            dest=dest,
+            timeout_s=300,
+            max_bytes=self._MAX_DOWNLOAD_BYTES,
+            chunk_size=DOWNLOAD_CHUNK_BYTES,
+            size_limit_message=f"Asset exceeds {self._MAX_DOWNLOAD_MB} MB limit",
+            temp_suffix=".whl_tmp",
+        )
 
     def find_latest_release(self) -> ReleaseInfo:
         """Find the latest server release (tag matching ``server-v*``).
@@ -78,47 +60,10 @@ class ServerReleaseFetcher:
         owner, repo = self._config.server_repo.split("/", 1)
         url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page=50"
         LOGGER.info("Querying releases from %s/%s", owner, repo)
-        releases_raw = self._client.get_json(url)
-        if not is_json_array(releases_raw):
-            raise ValueError("Unexpected GitHub API response format")
-        releases: list[GitHubRelease] = []
-        for item in releases_raw:
-            release = GitHubRelease.from_api_payload(item)
-            if release is None:
-                raise ValueError("Unexpected GitHub API response format")
-            releases.append(release)
-
-        for release in releases:
-            if release.draft:
-                continue
-            tag = release.tag_name
-            if not tag.startswith("server-v"):
-                continue
-            version = tag.removeprefix("server-v")
-            asset = self._find_wheel_asset(release)
-            if asset is None:
-                continue
-            return ReleaseInfo(
-                tag=tag,
-                version=version,
-                asset_name=asset.name,
-                asset_url=asset.url,
-                sha256="",
-                published_at=release.published_at,
-            )
-
-        raise ValueError(
-            f"No server release found with tag 'server-v*' in {self._config.server_repo}",
+        return find_latest_server_release(
+            decode_server_releases(self._client.get_json(url)),
+            server_repo=self._config.server_repo,
         )
-
-    @staticmethod
-    def _find_wheel_asset(release: GitHubRelease) -> GitHubReleaseAsset | None:
-        """Find a .whl asset in a release."""
-        for asset in release.assets:
-            name = asset.name
-            if name.startswith("vibesensor") and name.endswith(".whl"):
-                return asset
-        return None
 
     def download_wheel(
         self,
@@ -137,12 +82,5 @@ class ServerReleaseFetcher:
         dest = dest_dir / release.asset_name
         LOGGER.info("Downloading %s", release.asset_name)
         self._download_asset(release.asset_url, dest)
-
-        h = hashlib.sha256()
-        with dest.open("rb") as f:
-            for chunk in iter(lambda: f.read(_HASH_CHUNK_BYTES), b""):
-                h.update(chunk)
-        sha = h.hexdigest()
-        release.sha256 = sha
-        LOGGER.info("Downloaded %s (sha256=%s)", release.asset_name, sha)
+        LOGGER.info("Downloaded %s", release.asset_name)
         return dest

@@ -6,7 +6,9 @@ from __future__ import annotations
 def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     from test_support.findings import make_finding_payload
 
-    from vibesensor.shared.boundaries.diagnostic_case import diagnostic_case_from_summary
+    from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+        diagnostic_case_from_summary,
+    )
 
     summary = {
         "case_id": "summary-case-guard-id",
@@ -32,8 +34,8 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
 
 
 def test_finding_projector_in_finding_boundary_module() -> None:
-    """Finding payload projector should live in boundaries/finding.py."""
-    from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+    """Finding payload projector should live in boundaries/summary_fields/finding.py."""
+    from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
 
     assert callable(finding_payload_from_domain)
 

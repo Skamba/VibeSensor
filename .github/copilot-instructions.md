@@ -3,7 +3,7 @@ Canonical AI guidance entrypoint (scope: short repo orientation, enduring archit
 Guidance stack
 - This file is the canonical AI guidance entrypoint and short index.
 - `.github/instructions/general.instructions.md` owns shared workflow, validation, and documentation-maintenance guardrails.
-- `.github/instructions/{backend,frontend,tests}.instructions.md` own area-specific deltas only.
+- `.github/instructions/backend.instructions.md`, `.github/instructions/frontend.instructions.md`, `.github/instructions/firmware.instructions.md`, `.github/instructions/pi-image.instructions.md`, and `.github/instructions/tests.instructions.md` own area-specific deltas only.
 - `docs/ai/repo-map.md` is the repo map for layout, entry points, and stable ownership boundaries; it is not a second workflow or policy guide.
 - Do not create additional guidance files in `docs/ai/`.
 
@@ -11,7 +11,7 @@ Execution philosophy
 - Be decisive, direct, and completion-oriented. Attack large tasks aggressively; do not narrow scope because the work is broad or invasive.
 - Large scope is not itself a blocker. Decompose and execute in waves until the work is done. Do not stop at analysis, planning, or partial implementation.
 - Breaking internal-only interfaces is acceptable and preferred when the result is cleaner. The repo controls both producers and consumers; coordinated breaking refactors are the right default, not the exception.
-- Do not preserve deprecated aliases, old DTO shapes, fallback branches, or legacy config forms unless a real external consumer is confirmed. The cleaner current architecture wins.
+- Do not preserve deprecated aliases, old DTO shapes, fallback branches, or legacy config forms unless a real external consumer is confirmed. The cleaner architecture wins.
 - Full execution-completion rules and anti-hedging guidance live in `.github/instructions/general.instructions.md`.
 
 Repository overview
@@ -38,7 +38,7 @@ Domain model (scope: behavioral rules only; see `docs/domain-model.md` for the f
   - `infra` may import `domain` and `shared`
   - `adapters` may import `domain`, `shared`, `infra`, and `use_cases`
   - `app` may import all backend layers
-- Treat `shared -> domain` and `infra -> domain` as intentional current architecture, not violations. The disallowed direction for this issue family is outer-layer leakage back inward, such as `use_cases -> adapters` or `domain -> shared/infra/adapters`.
+- Treat `shared -> domain` and `infra -> domain` as intentional allowed edges, not violations. The disallowed direction is outer-layer leakage back inward, such as `use_cases -> adapters` or `domain -> shared/infra/adapters`.
 
 Commands
 - Other AI guidance and docs should reference this list instead of repeating it.
@@ -55,6 +55,11 @@ Commands
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
 - `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`
+- `cd apps/ui && npm run test:visual`
+- `cd firmware/esp && pio run`
+- `BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh`
+- `BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh`
+- `./infra/pi-image/pi-gen/validate-image.sh`
 - `docker compose build --pull && docker compose up -d`
 
 Pi access defaults (prebuilt image)

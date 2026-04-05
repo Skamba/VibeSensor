@@ -26,7 +26,7 @@ from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_payloads import project_analysis_summary
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input

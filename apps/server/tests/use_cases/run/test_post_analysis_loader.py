@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from vibesensor.shared.boundaries.run_metadata_codec import run_metadata_from_mapping
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_loader import (
