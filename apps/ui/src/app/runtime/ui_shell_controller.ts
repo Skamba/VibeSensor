@@ -26,6 +26,7 @@ import {
   createUiShellStatusModule,
   type UiShellStatusModule,
 } from "./ui_shell_status_module";
+import { setVariantState } from "../style_state";
 
 type UiShellControllerDeps = {
   state: AppState;
@@ -128,7 +129,10 @@ export class UiShellController {
 
   setPillState(el: HTMLElement | null, variant: string, text: string): void {
     if (!el) return;
-    el.className = `pill pill--${variant}`;
+    el.className = "pill";
+    setVariantState(el, variant === "bad" || variant === "muted" || variant === "ok" || variant === "warn"
+      ? variant
+      : "muted");
     el.textContent = text;
   }
 

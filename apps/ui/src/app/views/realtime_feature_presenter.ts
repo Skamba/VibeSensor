@@ -111,13 +111,20 @@ export function createRealtimeFeaturePresenter(
       return;
     }
     const state = activeCarDisplayState();
-    container.classList.toggle("stat--warn", state.isWarning);
-    valueEl.classList.toggle("stat__value--warn", state.isWarning);
-    valueEl.classList.toggle("stat__value--with-icon", state.isWarning);
+    if (state.isWarning) {
+      container.setAttribute("data-variant", "warn");
+      valueEl.setAttribute("data-variant", "warn");
+      valueEl.setAttribute("data-has-icon", "true");
+    } else {
+      container.removeAttribute("data-variant");
+      valueEl.removeAttribute("data-variant");
+      valueEl.removeAttribute("data-has-icon");
+    }
     valueEl.replaceChildren();
     if (state.isWarning) {
       const iconEl = document.createElement("span");
-      iconEl.className = "stat__value-icon stat__value-icon--warn";
+      iconEl.className = "stat__value-icon";
+      iconEl.setAttribute("data-variant", "warn");
       iconEl.setAttribute("aria-hidden", "true");
       iconEl.textContent = "!";
       const textEl = document.createElement("span");
@@ -231,7 +238,6 @@ export function createRealtimeFeaturePresenter(
     setStatValue(els.liveRecordingState, phaseText);
     setStatValue(els.liveDataFreshness, dataFreshnessText());
     setStatValue(els.liveStrongestSignal, strongestSignalText(signal));
-    els.liveStrongestSignal?.classList.remove("stat--spotlight");
   }
 
   function renderLiveHealth(): void {
@@ -353,7 +359,11 @@ export function createRealtimeFeaturePresenter(
     const panelState = buildLoggingPanelViewModel(state.pendingLoggingAction);
     lastCompletedElapsedText = panelState.nextLastCompletedElapsedText;
     const dashboardGrid = els.loggingSummary?.closest<HTMLElement>(".dashboard-grid");
-    dashboardGrid?.classList.toggle("dashboard-grid--setup", panelState.setupMode);
+    if (panelState.setupMode) {
+      dashboardGrid?.setAttribute("data-layout", "setup");
+    } else {
+      dashboardGrid?.removeAttribute("data-layout");
+    }
     renderLiveOverviewStats(panelState.phaseText);
     setDashboardPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText, {
       hidden: !panelState.showPill,
@@ -424,7 +434,7 @@ export function createRealtimeFeaturePresenter(
       els.stopLoggingBtn.disabled = true;
     }
     const dashboardGrid = els.loggingSummary?.closest<HTMLElement>(".dashboard-grid");
-    dashboardGrid?.classList.remove("dashboard-grid--setup");
+    dashboardGrid?.removeAttribute("data-layout");
   }
 
   function renderLoggingError(message: string): void {

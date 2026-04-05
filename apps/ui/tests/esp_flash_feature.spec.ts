@@ -666,8 +666,8 @@ test.describe("createUpdateFeature polling", () => {
       expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("settings.internet.card_title");
       expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("settings.internet.summary.not_detected");
       expect(deps.updateTransportOptions.hidden).toBe(false);
-      expect(deps.updateTransportChoiceWifi.classList.contains("speed-source-choice--selected")).toBe(true);
-      expect(deps.updateTransportChoiceUsb.classList.contains("speed-source-choice--disabled")).toBe(true);
+      expect(deps.updateTransportChoiceWifi.getAttribute("data-selected")).toBe("true");
+      expect(deps.updateTransportChoiceUsb.getAttribute("data-disabled")).toBe("true");
       expect(deps.updateTransportUsbRadio.disabled).toBe(true);
       expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.readiness.summary_ready");
       expect(deps.updateReadinessSummary.innerHTML).toContain(
@@ -905,9 +905,9 @@ test.describe("createUpdateFeature polling", () => {
       expect(deps.updateUsbTransportSummary.textContent).toBe(
         "settings.update.transport.usb_summary_interface",
       );
-      expect(deps.updateTransportChoiceWifi.classList.contains("speed-source-choice--selected")).toBe(false);
-      expect(deps.updateTransportChoiceUsb.classList.contains("speed-source-choice--selected")).toBe(true);
-      expect(deps.updateTransportChoiceUsb.classList.contains("speed-source-choice--disabled")).toBe(false);
+      expect(deps.updateTransportChoiceWifi.getAttribute("data-selected")).toBeNull();
+      expect(deps.updateTransportChoiceUsb.getAttribute("data-selected")).toBe("true");
+      expect(deps.updateTransportChoiceUsb.getAttribute("data-disabled")).toBeNull();
       expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("usb0");
 
       deps.updateStartBtn.click();

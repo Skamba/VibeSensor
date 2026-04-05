@@ -71,6 +71,15 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
+function dataAttributeToDatasetKey(name: string): string {
+  return name
+    .slice(5)
+    .split("-")
+    .filter(Boolean)
+    .map((part, index) => (index === 0 ? part : `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`))
+    .join("");
+}
+
 function serializeNode(node: FakeNode): string {
   if (node instanceof FakeText) {
     return node.textContent;
@@ -177,10 +186,20 @@ export class FakeElement extends FakeNode {
 
   setAttribute(name: string, value: string): void {
     this.#attributes.set(name, value);
+    if (name.startsWith("data-")) {
+      this.dataset[dataAttributeToDatasetKey(name)] = value;
+    }
   }
 
   getAttribute(name: string): string | null {
     return this.#attributes.get(name) ?? null;
+  }
+
+  removeAttribute(name: string): void {
+    this.#attributes.delete(name);
+    if (name.startsWith("data-")) {
+      delete this.dataset[dataAttributeToDatasetKey(name)];
+    }
   }
 
   toOuterHtml(): string {

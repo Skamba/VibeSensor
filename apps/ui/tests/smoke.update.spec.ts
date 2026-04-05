@@ -70,8 +70,8 @@ test("settings update tab renders readiness guidance when idle", async ({ page }
   await expect(page.locator("#updateStatusPanel")).toContainText("1.2.3");
   await expect(page.locator("#updateStatusPanel")).toContainText("Background service health");
   await expect(page.locator("#updateTransportOptions")).toHaveJSProperty("hidden", false);
-  await expect(page.locator("#updateTransportChoiceWifi")).toHaveClass(/speed-source-choice--selected/);
-  await expect(page.locator("#updateTransportChoiceUsb")).toHaveClass(/speed-source-choice--disabled/);
+  await expect(page.locator("#updateTransportChoiceWifi")).toHaveAttribute("data-selected", "true");
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute("data-disabled", "true");
   await expect(page.locator("#updateTransportChoiceUsb")).toContainText("USB internet is not ready yet.");
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "Complete the blocked item before starting the update.",
@@ -175,7 +175,7 @@ test("settings internet tab and updater show USB internet when usable", async ({
   await expect(page.locator("#updateTransportOptions")).toHaveJSProperty("hidden", false);
   await expect(page.locator("#updateTransportChoiceUsb")).toContainText("Existing USB internet");
   await page.locator("#updateTransportChoiceUsb").click();
-  await expect(page.locator("#updateTransportChoiceUsb")).toHaveClass(/speed-source-choice--selected/);
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute("data-selected", "true");
   await expect(page.locator("#updateWifiFields")).toHaveJSProperty("hidden", true);
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
   await expect(page.locator("#updateReadinessSummary")).toContainText(

@@ -5,13 +5,11 @@ type UiSettingsTabsDom = Pick<UiSettingsDom, "settingsTabs" | "settingsTabPanels
 function setActiveSettingsTab(els: UiSettingsTabsDom, tabId: string): void {
   els.settingsTabs.forEach((tab) => {
     const isActive = tab.getAttribute("data-settings-tab") === tabId;
-    tab.classList.toggle("active", isActive);
     tab.setAttribute("aria-selected", isActive ? "true" : "false");
     tab.tabIndex = isActive ? 0 : -1;
   });
   els.settingsTabPanels.forEach((panel) => {
     const isActive = panel.id === tabId;
-    panel.classList.toggle("active", isActive);
     panel.hidden = !isActive;
   });
 }

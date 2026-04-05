@@ -304,17 +304,16 @@ test.describe("createUiShellNavigationModule", () => {
     expect(state.shell.activeViewId).toBe("historyView");
     expect(historyView.hidden).toBe(false);
     expect(dashboardView.hidden).toBe(true);
-    expect(historyButton.classList.contains("active")).toBe(true);
     expect(historyButton.ariaSelected).toBe("true");
     expect(dashboardButton.tabIndex).toBe(-1);
-    expect(appShellWrap.classList.contains("wrap--dashboard-view")).toBe(false);
+    expect(appShellWrap.getAttribute("data-active-view")).toBe("historyView");
     expect(resizeCalls).toBe(0);
 
     module.setActiveView("missingView");
     expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(dashboardView.hidden).toBe(false);
-    expect(dashboardButton.classList.contains("active")).toBe(true);
-    expect(appShellWrap.classList.contains("wrap--dashboard-view")).toBe(true);
+    expect(dashboardButton.ariaSelected).toBe("true");
+    expect(appShellWrap.getAttribute("data-active-view")).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(resizeCalls).toBe(1);
   });
 
@@ -464,13 +463,15 @@ test.describe("createUiShellNotificationModule", () => {
 
     expect(appErrorBanner.hidden).toBe(false);
     expect(appErrorBanner.textContent).toBe("save failed");
-    expect(appErrorBanner.className).toBe("connection-banner connection-banner--bad app-error-banner");
+    expect(appErrorBanner.className).toBe("connection-banner app-error-banner");
+    expect(appErrorBanner.getAttribute("data-variant")).toBe("bad");
 
     module.clearError();
 
     expect(appErrorBanner.hidden).toBe(true);
     expect(appErrorBanner.textContent).toBe("");
     expect(appErrorBanner.className).toBe("connection-banner app-error-banner");
+    expect(appErrorBanner.getAttribute("data-variant")).toBeNull();
   });
 });
 
@@ -488,16 +489,18 @@ test.describe("createUiShellStatusModule", () => {
       t: (key) => key,
       setPillState: (el, variant, text) => {
         if (!el) return;
-        el.className = `pill pill--${variant}`;
+        el.className = "pill";
+        el.setAttribute("data-variant", variant);
         el.textContent = text;
       },
     });
 
     module.renderWsState();
 
-    expect(linkState.className).toBe("pill pill--bad");
+    expect(linkState.className).toBe("pill");
+    expect(linkState.getAttribute("data-variant")).toBe("bad");
     expect(linkState.textContent).toBe("ws.stale");
-    expect(appShellWrap.classList.contains("wrap--stale")).toBe(true);
+    expect(appShellWrap.getAttribute("data-connection-state")).toBe("degraded");
   });
 
   test("renders speed override after car bootstrap resolves", () => {

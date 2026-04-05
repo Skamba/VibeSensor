@@ -132,7 +132,8 @@ source-of-truth export commands remain the only writers for those files.
 | `format.ts` | Number, byte, and timestamp formatting utilities |
 | `constants.ts` | Generated sensor location codes and shared strength field names from backend sources |
 | `theme.ts` | Chart color palette and order band fill colors |
-| `styles/app.css` | Full CSS with light/dark theme tokens |
+| `styles/app.css` | Thin stylesheet aggregator that imports the UI style modules in cascade order |
+| `styles/{tokens,shell,components,maintenance,realtime,history,settings,adaptive,theme}.css` | Shared tokens/primitives plus feature-scoped and cross-cutting style ownership for shell, updater, realtime, history, settings, responsive, and theme overrides |
 
 ## Features
 
@@ -163,6 +164,13 @@ binders for reusable multi-action panels.
 `src/transport/` owns the UI-local DTO and adapter layer between generated HTTP /
 WS contracts and `app/**`, so feature, runtime, and view modules no longer need
 to import `api/types.ts` or generated WS contract files directly.
+Styling now follows the same ownership split: `styles/app.css` is only the
+import aggregator, `tokens.css`/`theme.css` own global token and color-mode
+concerns, `shell.css` and `components.css` own shared chrome/primitives, and
+`maintenance.css`, `realtime.css`, `history.css`, and `settings.css` own the
+feature surfaces. Shared visual state conventions now prefer stable data/ARIA
+selectors such as `data-variant`, `data-choice-state`, `data-selected`, and
+`data-step-state` instead of controller-side variant class interpolation.
 
 ## WebSocket contract boundary
 

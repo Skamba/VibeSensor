@@ -38,7 +38,10 @@ function renderWizardOptions(
       const detail = option.detail
         ? `<span class="wiz-opt-detail">${escapeHtml(option.detail)}</span>`
         : "";
-      return `<button type="button" class="wiz-opt${option.selected ? " selected" : ""}" data-${option.dataAttribute}="${escapeHtml(option.value)}"><span>${escapeHtml(option.label)}</span>${detail}</button>`;
+      const selectedAttrs = option.selected
+        ? ' data-selected="true" aria-pressed="true"'
+        : ' aria-pressed="false"';
+      return `<button type="button" class="wiz-opt"${selectedAttrs} data-${option.dataAttribute}="${escapeHtml(option.value)}"><span>${escapeHtml(option.label)}</span>${detail}</button>`;
     })
     .join("");
 }
@@ -179,12 +182,12 @@ export function syncCarWizardStepState(
 ): void {
   els.wizardSteps.forEach((stepEl, index) => {
     if (!stepEl) return;
-    stepEl.classList.toggle("active", index === step);
+    stepEl.hidden = index !== step;
   });
   els.wizardStepDots.forEach((dot) => {
     const dotStep = Number(dot.getAttribute("data-step"));
-    dot.classList.toggle("active", dotStep === step);
-    dot.classList.toggle("done", dotStep < step);
+    const stepState = dotStep === step ? "active" : dotStep < step ? "done" : "upcoming";
+    dot.setAttribute("data-step-state", stepState);
     if (dotStep === step) {
       dot.setAttribute("aria-current", "step");
     } else {
