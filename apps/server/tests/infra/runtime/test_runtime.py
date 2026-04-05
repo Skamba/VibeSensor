@@ -127,6 +127,7 @@ def _make_runtime(**overrides: Any):
     from vibesensor.infra.runtime.ws_broadcast import (
         WsBroadcastService,
     )
+    from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
 
     config = overrides.pop("config", _StubConfig(processing=_StubProcessingConfig()))
     registry = overrides.pop("registry", _StubRegistry())
@@ -144,6 +145,14 @@ def _make_runtime(**overrides: Any):
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
+    payload_projector = LiveWsPayloadProjector(
+        registry=registry,
+        processor=processor,
+        gps_monitor=gps_monitor,
+        gps_enabled=config.gps.gps_enabled,
+        settings_reader=settings_store,
+        speed_source_reader=settings_store,
+    )
     rt = RuntimeState(
         config=config,
         registry=registry,
@@ -169,12 +178,7 @@ def _make_runtime(**overrides: Any):
         ws_broadcast=WsBroadcastService(
             ui_push_hz=config.processing.ui_push_hz,
             ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
-            registry=registry,
-            processor=processor,
-            gps_monitor=gps_monitor,
-            gps_enabled=config.gps.gps_enabled,
-            settings_reader=settings_store,
-            speed_source_reader=settings_store,
+            payload_projector=payload_projector,
         ),
         run_recorder=diagnostics,
         update_manager=update_manager,

@@ -17,7 +17,8 @@ Submodules
 - ``processing_loop``: ProcessingLoop (async tick scheduling over execution + failure policy)
 - ``task_supervisor``: TaskSupervisor (managed restart policy + backoff)
 - ``udp_transport_lifecycle``: UdpTransportLifecycle (UDP startup + cleanup seam)
-- ``ws_broadcast``: WsBroadcastService (payload assembly + cache)
+- ``ws_payload_projection``: LiveWsPayloadProjector (live broadcast payload projection)
+- ``ws_broadcast``: WsBroadcastService (broadcast tick/cache + selected-client assembly)
 - ``lifecycle``: LifecycleManager (phase sequencing + graceful shutdown)
 - ``rotational_speeds``: Stateless rotational speed payload helpers
 """
