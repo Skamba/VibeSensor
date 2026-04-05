@@ -12,8 +12,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.infra.runtime.registry import ClientRegistry, _resolve_now_mono
+from vibesensor.shared.boundaries.clients import snapshot_for_api
 
 _CLIENT_ID = "aabbccddeeff"
 
