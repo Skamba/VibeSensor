@@ -1,14 +1,22 @@
 import { apiJson } from "./http";
-import type { LoggingStatusPayload } from "./types";
+import { fromTransportPayload } from "../transport/http_adapters";
+import type * as Local from "../transport/http_models";
+import type * as Transport from "./types";
 
-export async function getLoggingStatus(): Promise<LoggingStatusPayload> {
-  return apiJson("/api/recording/status");
+export async function getLoggingStatus(): Promise<Local.LoggingStatusPayload> {
+  return fromTransportPayload<Transport.LoggingStatusPayload, Local.LoggingStatusPayload>(
+    await apiJson<Transport.LoggingStatusPayload>("/api/recording/status"),
+  );
 }
 
-export async function startLoggingRun(): Promise<LoggingStatusPayload> {
-  return apiJson("/api/recording/start", { method: "POST" });
+export async function startLoggingRun(): Promise<Local.LoggingStatusPayload> {
+  return fromTransportPayload<Transport.LoggingStatusPayload, Local.LoggingStatusPayload>(
+    await apiJson<Transport.LoggingStatusPayload>("/api/recording/start", { method: "POST" }),
+  );
 }
 
-export async function stopLoggingRun(): Promise<LoggingStatusPayload> {
-  return apiJson("/api/recording/stop", { method: "POST" });
+export async function stopLoggingRun(): Promise<Local.LoggingStatusPayload> {
+  return fromTransportPayload<Transport.LoggingStatusPayload, Local.LoggingStatusPayload>(
+    await apiJson<Transport.LoggingStatusPayload>("/api/recording/stop", { method: "POST" }),
+  );
 }

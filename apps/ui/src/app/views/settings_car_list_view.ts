@@ -1,4 +1,4 @@
-import type { CarRecord } from "../../api/types";
+import type { CarRecord } from "../../transport/http_models";
 import type { UiSettingsDom } from "../dom/settings_dom";
 import { getCarCompleteness } from "../car_selection_state";
 import {

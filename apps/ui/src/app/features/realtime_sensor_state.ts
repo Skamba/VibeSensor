@@ -1,5 +1,5 @@
-import type { LocationOption, LoggingStatusPayload } from "../../api/types";
-import type { AdaptedClient } from "../../server_payload";
+import type { LocationOption, LoggingStatusPayload } from "../../transport/http_models";
+import type { AdaptedClient } from "../../transport/live_models";
 import * as I18N from "../../i18n";
 import { deriveCarSelectionState } from "../car_selection_state";
 import type { RealtimeState, SettingsState, SpectrumState } from "../ui_app_state";

@@ -3,7 +3,7 @@ import type {
   CarLibraryModel,
   CarLibraryTireOption,
   CarLibraryVariant,
-} from "../../api/types";
+} from "../../transport/http_models";
 import type { UiCarsDom } from "../dom/cars_dom";
 
 type EscapeHtml = (value: unknown) => string;

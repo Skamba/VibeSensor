@@ -3,7 +3,7 @@ import type {
   UpdateIssue,
   UpdateStartRequestPayload,
   UpdateStatusPayload,
-} from "../../api/types";
+} from "../../transport/http_models";
 import type { UiUpdateDom } from "../dom/update_dom";
 import { formatEpochTimestamp, renderStatusGridRow } from "./dom_helpers";
 
