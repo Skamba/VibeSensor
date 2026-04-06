@@ -51,11 +51,19 @@ write_version_info() {
   local build_time_utc="$3"
   local build_git_sha="$4"
   local build_git_branch="$5"
+  local image_runtime_python_version="${6:-}"
+  local image_runtime_python_floor="${7:-}"
 
-  cat >"${version_info_file}" <<EOF_INNER
-vibesensor_image_version=${build_time_utc}-g${build_git_sha}
-git_sha=${build_git_sha}
-git_branch=${build_git_branch}
-source_artifact=$(basename "${final_artifact}")
-EOF_INNER
+  {
+    echo "vibesensor_image_version=${build_time_utc}-g${build_git_sha}"
+    echo "git_sha=${build_git_sha}"
+    echo "git_branch=${build_git_branch}"
+    echo "source_artifact=$(basename "${final_artifact}")"
+    if [ -n "${image_runtime_python_version}" ]; then
+      echo "image_runtime_python_version=${image_runtime_python_version}"
+    fi
+    if [ -n "${image_runtime_python_floor}" ]; then
+      echo "image_runtime_python_floor=${image_runtime_python_floor}"
+    fi
+  } >"${version_info_file}"
 }
