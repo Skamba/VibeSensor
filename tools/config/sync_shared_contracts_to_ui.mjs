@@ -17,6 +17,8 @@ const constantsDst = resolve(root, 'apps/ui/src/constants.ts');
 const wsSchemaSrc = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.json');
 const wsSchemaTsDst = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.generated.ts');
 const wsTypesDst = resolve(root, 'apps/ui/src/contracts/ws_payload_types.ts');
+const freshnessHelp =
+	'Run `make sync-contracts` (authoritative) or `npm --prefix apps/ui run sync:generated-contracts` to refresh the local UI derivatives.';
 
 function resolveOpenApiCliPath() {
 	const openapiPackageJsonPath = requireFromUi.resolve('openapi-typescript/package.json');
@@ -43,11 +45,13 @@ function writeGenerated(filePath, content, checkMode) {
 	mkdirSync(dirname(filePath), { recursive: true });
 	if (checkMode) {
 		if (!existsSync(filePath)) {
-			throw new Error(`Out of date or missing generated file: ${filePath}`);
+			throw new Error(
+				`Out of date or missing generated file: ${filePath}\n${freshnessHelp}`,
+			);
 		}
 		const existing = readFileSync(filePath, 'utf8');
 		if (existing !== content) {
-			throw new Error(`Out of date generated file: ${filePath}`);
+			throw new Error(`Out of date generated file: ${filePath}\n${freshnessHelp}`);
 		}
 		return;
 	}
@@ -196,4 +200,10 @@ async function main() {
 	console.log(`Generated ${constantsGeneratorSrc} -> ${constantsDst}`);
 }
 
-await main();
+try {
+	await main();
+} catch (error) {
+	const message = error instanceof Error ? error.message : String(error);
+	console.error(message);
+	process.exitCode = 1;
+}

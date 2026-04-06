@@ -64,9 +64,9 @@ It then regenerates the UI-only derivative artifacts:
 - `src/contracts/ws_payload_schema.generated.ts`
 - `src/constants.ts`
 
-Those derivative outputs are materialized locally from the tracked inputs and are no longer a committed source-of-truth surface. `npm run sync:generated-contracts` recreates them on demand, and local `build`, `typecheck`, `test:smoke`, and `dev:docker` flows call that helper when they need the files on disk.
+Those derivative outputs are materialized locally from the tracked inputs and are no longer a committed source-of-truth surface. Explicit owner flows such as `test:smoke`, `dev:docker`, `make ui-typecheck`, and release/UI-build helpers call `npm run sync:generated-contracts` when they need the files on disk.
 
-`npm run check:contracts` remains the strict derivative-only comparison when you want to confirm an already-generated local copy is current. CI contract drift and human-facing regeneration should use `make sync-contracts`.
+`npm run build` and `npm run typecheck` no longer regenerate those files automatically. They run `npm run check:contracts` first and fail fast with guidance to `make sync-contracts` if the local derivative copy is missing or stale. CI contract drift and human-facing regeneration should still use `make sync-contracts`.
 
 ## Code Quality
 
