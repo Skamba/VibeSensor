@@ -1,4 +1,4 @@
-"""Guard: Dockerfile, CI cache, and dependency hygiene stay aligned."""
+"""Guard: Docker/CI and runtime policy hygiene stay aligned."""
 
 from __future__ import annotations
 
@@ -22,3 +22,8 @@ def _load_check_hygiene_module():
 def test_docker_ci_dependency_hygiene() -> None:
     module = _load_check_hygiene_module()
     assert module.check_docker_ci_dependency_hygiene() == []
+
+
+def test_runtime_policy_drift_hygiene() -> None:
+    module = _load_check_hygiene_module()
+    assert module.check_runtime_policy_drift() == []
