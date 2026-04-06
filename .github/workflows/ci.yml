@@ -10,8 +10,48 @@ permissions:
   contents: read
 
 jobs:
+  ci-scope:
+    name: CI scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run_docs_lint: ${{ steps.scope.outputs.run_docs_lint }}
+      run_repo_hygiene: ${{ steps.scope.outputs.run_repo_hygiene }}
+      run_backend_lint: ${{ steps.scope.outputs.run_backend_lint }}
+      run_backend_static_guards: ${{ steps.scope.outputs.run_backend_static_guards }}
+      run_backend_preflight: ${{ steps.scope.outputs.run_backend_preflight }}
+      run_backend_contract_drift: ${{ steps.scope.outputs.run_backend_contract_drift }}
+      run_backend_typecheck: ${{ steps.scope.outputs.run_backend_typecheck }}
+      run_frontend_typecheck: ${{ steps.scope.outputs.run_frontend_typecheck }}
+      run_ui_smoke: ${{ steps.scope.outputs.run_ui_smoke }}
+      run_backend_tests: ${{ steps.scope.outputs.run_backend_tests }}
+      run_release_smoke: ${{ steps.scope.outputs.run_release_smoke }}
+      run_firmware_native_tests: ${{ steps.scope.outputs.run_firmware_native_tests }}
+      run_e2e: ${{ steps.scope.outputs.run_e2e }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up configured Python runtime
+        id: setup-python
+        uses: ./.github/actions/setup-python
+
+      - name: Determine changed-file CI scope
+        id: scope
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: >-
+          "${{ steps.setup-python.outputs.python-path }}"
+          tools/tests/ci_changed_scope.py --github-output "$GITHUB_OUTPUT"
+
   backend-lint:
     name: Backend lint
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_backend_lint == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -30,6 +70,9 @@ jobs:
 
   repo-hygiene:
     name: Repo hygiene
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_repo_hygiene == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -45,6 +88,9 @@ jobs:
 
   backend-static-guards:
     name: Backend static guards
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_backend_static_guards == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -61,6 +107,9 @@ jobs:
 
   backend-preflight:
     name: Backend preflight
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_backend_preflight == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -85,6 +134,9 @@ jobs:
 
   docs-lint:
     name: Docs lint
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_docs_lint == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -100,6 +152,9 @@ jobs:
 
   backend-contract-drift:
     name: Backend contract drift
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_backend_contract_drift == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -118,6 +173,9 @@ jobs:
 
   backend-typecheck:
     name: Backend type check
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_backend_typecheck == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -136,6 +194,9 @@ jobs:
 
   frontend-typecheck:
     name: Frontend type check
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_frontend_typecheck == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -169,7 +230,13 @@ jobs:
   ui-smoke:
     name: UI smoke tests
     needs:
+      - ci-scope
       - frontend-typecheck
+    if: >-
+      ${{
+        needs.ci-scope.outputs.run_ui_smoke == 'true' &&
+        needs.frontend-typecheck.result == 'success'
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -204,6 +271,7 @@ jobs:
   release-smoke:
     name: Release smoke
     needs:
+      - ci-scope
       - backend-lint
       - repo-hygiene
       - backend-static-guards
@@ -212,6 +280,19 @@ jobs:
       - backend-contract-drift
       - backend-typecheck
       - frontend-typecheck
+    if: >-
+      ${{
+        always() &&
+        needs.ci-scope.outputs.run_release_smoke == 'true' &&
+        needs.backend-lint.result != 'failure' &&
+        needs.repo-hygiene.result != 'failure' &&
+        needs.backend-static-guards.result != 'failure' &&
+        needs.backend-preflight.result != 'failure' &&
+        needs.docs-lint.result != 'failure' &&
+        needs.backend-contract-drift.result != 'failure' &&
+        needs.backend-typecheck.result != 'failure' &&
+        needs.frontend-typecheck.result != 'failure'
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -238,12 +319,24 @@ jobs:
   firmware-native-tests:
     name: Firmware native tests
     needs:
+      - ci-scope
       - backend-lint
       - repo-hygiene
       - backend-static-guards
       - backend-preflight
       - docs-lint
       - backend-contract-drift
+    if: >-
+      ${{
+        always() &&
+        needs.ci-scope.outputs.run_firmware_native_tests == 'true' &&
+        needs.backend-lint.result != 'failure' &&
+        needs.repo-hygiene.result != 'failure' &&
+        needs.backend-static-guards.result != 'failure' &&
+        needs.backend-preflight.result != 'failure' &&
+        needs.docs-lint.result != 'failure' &&
+        needs.backend-contract-drift.result != 'failure'
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -265,6 +358,9 @@ jobs:
 
   backend-tests:
     name: Backend tests (shard ${{ matrix.shard_label }})
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_backend_tests == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -341,6 +437,9 @@ jobs:
 
   e2e:
     name: E2E
+    needs:
+      - ci-scope
+    if: ${{ needs.ci-scope.outputs.run_e2e == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

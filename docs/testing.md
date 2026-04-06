@@ -285,7 +285,26 @@ you want a faster non-containerized local run without Docker. The workflow’s r
 job id is `backend-tests` because GitHub expands it as a matrix, while
 `run_ci_parallel.py` expands that same matrix source back into logical local
 jobs `backend-tests-1` through `backend-tests-5` so you can run individual
-backend shards directly.
+backend shards directly. The path-planning `ci-scope` job stays workflow-only;
+it feeds GitHub job gating but is intentionally excluded from the local
+manifest-backed runner surface.
+
+### Path-aware CI gating
+
+Changed-path gating lives in `tools/tests/ci_path_rules.py` and is applied by
+the workflow’s `ci-scope` job via `tools/tests/ci_changed_scope.py`. Keep those
+rules explicit, documented, and test-backed.
+
+The current gating contract is:
+
+- docs-only markdown changes run `docs-lint` without the backend, frontend, release, firmware, or e2e stacks
+- frontend-only changes run `repo-hygiene`, `frontend-typecheck`, `ui-smoke`, and `release-smoke`
+- backend-only changes run the split backend quality gates, `backend-typecheck`, `backend-tests`, `release-smoke`, and `e2e`
+- firmware-only changes run `firmware-native-tests`
+- workflow / CI meta changes such as `.github/workflows/ci.yml`, `Makefile`, version pins, Dockerfiles, and workflow-manifest tooling fall back to the full stack
+
+When you change these rules, update both the workflow wiring and the focused
+hygiene tests so path scope does not silently drift.
 
 ## Coverage reporting
 
