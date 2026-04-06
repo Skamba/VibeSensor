@@ -27,9 +27,11 @@ _PYTHON_PATH_TOKENS = frozenset(
         "${{ steps.setup-python.outputs.python-path }}",
     }
 )
+_MATRIX_LOGICAL_JOB_NAME_KEY = "logical_job_name"
 _ACTION_INPUT_EQ_RE = re.compile(
     r"^\${{\s*inputs\.([A-Za-z0-9_-]+)\s*==\s*'([^']+)'\s*}}$"
 )
+_MATRIX_TOKEN_RE = re.compile(r"\${{\s*matrix\.([A-Za-z0-9_-]+)\s*}}")
 
 
 @dataclass(frozen=True)
@@ -80,6 +82,24 @@ class CiWorkflowJob:
 def _load_yaml_mapping(path: Path) -> dict[str, object]:
     loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
     return loaded if isinstance(loaded, dict) else {}
+
+
+def _substitute_matrix_values(
+    value: object, matrix_values: Mapping[str, str]
+) -> object:
+    if isinstance(value, str):
+        return _MATRIX_TOKEN_RE.sub(
+            lambda match: matrix_values.get(match.group(1), match.group(0)),
+            value,
+        )
+    if isinstance(value, list):
+        return [_substitute_matrix_values(item, matrix_values) for item in value]
+    if isinstance(value, Mapping):
+        return {
+            key: _substitute_matrix_values(item, matrix_values)
+            for key, item in value.items()
+        }
+    return value
 
 
 def _normalize_tokenized_command(tokens: list[str]) -> str:
@@ -222,6 +242,37 @@ def _replace_python_placeholders(command: str, python_cmd: str) -> str:
     return _normalize_shell_command(" ".join(shlex.quote(token) for token in replaced))
 
 
+def _expanded_job_variants(
+    job_name: str, job_body: Mapping[str, object]
+) -> tuple[tuple[str, Mapping[str, object]], ...]:
+    strategy = job_body.get("strategy")
+    if not isinstance(strategy, Mapping):
+        return ((job_name, job_body),)
+    matrix = strategy.get("matrix")
+    if not isinstance(matrix, Mapping):
+        return ((job_name, job_body),)
+    raw_include = matrix.get("include")
+    if not isinstance(raw_include, list):
+        return ((job_name, job_body),)
+
+    expanded: list[tuple[str, Mapping[str, object]]] = []
+    for index, raw_entry in enumerate(raw_include, start=1):
+        if not isinstance(raw_entry, Mapping):
+            continue
+        matrix_values = {
+            key: str(value)
+            for key, value in raw_entry.items()
+            if isinstance(key, str) and value is not None
+        }
+        logical_job_name = matrix_values.get(
+            _MATRIX_LOGICAL_JOB_NAME_KEY, f"{job_name}[{index}]"
+        )
+        substituted_job = _substitute_matrix_values(job_body, matrix_values)
+        if isinstance(substituted_job, Mapping):
+            expanded.append((logical_job_name, substituted_job))
+    return tuple(expanded) or ((job_name, job_body),)
+
+
 def ci_workflow_jobs() -> dict[str, CiWorkflowJob]:
     workflow = _load_yaml_mapping(_CI_WORKFLOW)
     jobs = workflow.get("jobs")
@@ -232,18 +283,21 @@ def ci_workflow_jobs() -> dict[str, CiWorkflowJob]:
     for job_name, job_body in jobs.items():
         if not isinstance(job_name, str) or not isinstance(job_body, Mapping):
             continue
-        raw_steps = job_body.get("steps")
-        if not isinstance(raw_steps, list):
-            continue
-        normalized_steps: list[CiWorkflowStep] = []
-        for raw_step in raw_steps:
-            if not isinstance(raw_step, Mapping):
+        for expanded_job_name, expanded_job_body in _expanded_job_variants(
+            job_name, job_body
+        ):
+            raw_steps = expanded_job_body.get("steps")
+            if not isinstance(raw_steps, list):
                 continue
-            normalized_steps.extend(_normalized_ci_steps(raw_step))
-        result[job_name] = CiWorkflowJob(
-            job_name=job_name,
-            steps=tuple(normalized_steps),
-        )
+            normalized_steps: list[CiWorkflowStep] = []
+            for raw_step in raw_steps:
+                if not isinstance(raw_step, Mapping):
+                    continue
+                normalized_steps.extend(_normalized_ci_steps(raw_step))
+            result[expanded_job_name] = CiWorkflowJob(
+                job_name=expanded_job_name,
+                steps=tuple(normalized_steps),
+            )
     return result
 
 
