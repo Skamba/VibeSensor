@@ -63,11 +63,7 @@ jobs:
         shell: bash
         run: python3 tools/build_ui_static.py
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version-file: ".python-version"
-          cache: pip
-          cache-dependency-path: apps/server/pyproject.toml
+      - uses: ./.github/actions/setup-python
 
       - name: Stamp version and build server wheel
         shell: bash

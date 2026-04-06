@@ -10,11 +10,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@v5
-      with:
-        python-version-file: ".python-version"
-        cache: "pip"
-        cache-dependency-path: apps/server/pyproject.toml
+    - uses: ./.github/actions/setup-python
 
     - name: Install dependencies
       shell: bash
