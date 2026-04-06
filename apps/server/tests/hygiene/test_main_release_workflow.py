@@ -23,6 +23,24 @@ def test_main_release_workflow_fetches_full_history_and_validates_release_artifa
     )
     assert checkout_step["with"]["fetch-depth"] == 0
 
+    compute_version_step = next(
+        step for step in steps if isinstance(step, dict) and step.get("name") == "Compute version"
+    )
+    compute_script = compute_version_step["run"]
+    assert "tools/release/main_release.py compute-version" in compute_script
+    assert 'base_ver="$(date -u +%Y.%-m.%-d)"' not in compute_script
+    assert 'git tag -l "server-v${base_ver}*"' not in compute_script
+
+    build_wheel_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Stamp version and build server wheel"
+    )
+    build_wheel_script = build_wheel_step["run"]
+    assert "tools/release/main_release.py build-wheel" in build_wheel_script
+    assert "cat > apps/server/vibesensor/_version.py" not in build_wheel_script
+    assert "python -m build --wheel apps/server/" not in build_wheel_script
+
     metadata_step = next(
         step
         for step in steps
@@ -43,6 +61,15 @@ def test_main_release_workflow_fetches_full_history_and_validates_release_artifa
     assert _LIVE_MODULE in run_script
     assert "validate-firmware-manifest" in run_script
     assert _STALE_MODULE not in run_script
+
+    manifest_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Generate flash manifest"
+    )
+    manifest_script = manifest_step["run"]
+    assert "tools/release/main_release.py generate-firmware-manifest" in manifest_script
+    assert "python - <<'PY'" not in manifest_script
 
 
 def test_main_release_workflow_labels_and_cleans_only_wheel_esp_releases() -> None:
@@ -65,9 +92,9 @@ def test_main_release_workflow_labels_and_cleans_only_wheel_esp_releases() -> No
         if isinstance(step, dict) and step.get("name") == "Remove superseded Wheel / ESP releases"
     )
     assert cleanup_step["env"]["WHEEL_ESP_RELEASE_TITLE_PREFIX"] == "Wheel / ESP release"
-    cleanup_script = cleanup_step["with"]["script"]
-    assert 'tag.startsWith("server-v")' in cleanup_script
-    assert "title.startsWith(releaseTitlePrefix)" in cleanup_script
-    assert "title.startsWith(legacyTitlePrefix)" in cleanup_script
-    assert "weekly-pi-image" not in cleanup_script
-    assert "/^fw-v/" not in cleanup_script
+    assert cleanup_step["env"]["GH_TOKEN"] == "${{ github.token }}"
+    cleanup_script = cleanup_step["run"]
+    assert "tools/release/main_release.py cleanup-releases" in cleanup_script
+    assert "--current-tag" in cleanup_script
+    assert "--release-title-prefix" in cleanup_script
+    assert "actions/github-script@v8" not in str(cleanup_step)
