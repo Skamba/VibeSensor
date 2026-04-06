@@ -34,83 +34,14 @@ jobs:
             echo "release_name=Weekly Pi Image ${build_label}"
           } >> "${GITHUB_OUTPUT}"
 
-      - uses: actions/setup-node@v6
+      - name: Build weekly Pi image workflow artifact
+        id: build-image
+        uses: ./.github/actions/build-pi-image
         with:
-          node-version-file: ".nvmrc"
-          cache: npm
-          cache-dependency-path: apps/ui/package-lock.json
-
-      - name: Set up configured Python runtime
-        id: setup-python
-        uses: ./.github/actions/setup-python
-
-      - name: Install Pi image build prerequisites
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y qemu-user qemu-user-static rsync xz-utils
-
-      - name: Build Pi image
-        shell: bash
-        env:
-          VS_PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}
-        run: |
-          set -euo pipefail
-          ./infra/pi-image/pi-gen/build.sh
-
-      - name: Collect weekly release assets
-        id: assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          out_dir="infra/pi-image/pi-gen/out"
-          release_dir="${RUNNER_TEMP}/weekly-pi-image"
-          mkdir -p "${release_dir}"
-
-          artifact="$(find "${out_dir}" -maxdepth 1 -type f \
-            -name "image_*-vibesensor-lite*.zip" \
-            | sort | tail -n 1 || true)"
-          if [ -z "${artifact}" ]; then
-            echo "No Pi image artifact found in ${out_dir}" >&2
-            exit 1
-          fi
-
-          short_date="$(date -u +%y-%m-%d)"
-          release_artifact="${release_dir}/VibeSensor-${short_date}.img.zip"
-          cp "${artifact}" "${release_artifact}"
-
-          sha_file="${release_artifact}.sha256"
-          sha256sum "${release_artifact}" > "${sha_file}"
-
-          version_info_source="${out_dir}/$(basename "${artifact}").version.txt"
-          version_info_target="${release_dir}/VibeSensor-${short_date}.img.zip.version.txt"
-          if [ -f "${version_info_source}" ]; then
-            cp "${version_info_source}" "${version_info_target}"
-          else
-            cat > "${version_info_target}" <<EOF
-          git_sha=${GITHUB_SHA}
-          git_ref=${GITHUB_REF}
-          source_artifact=$(basename "${artifact}")
-          EOF
-          fi
-          echo "published_artifact=VibeSensor-${short_date}.img.zip" >> "${version_info_target}"
-          {
-            echo "workflow_name=${GITHUB_WORKFLOW}"
-            echo "runner_label=ubuntu-24.04-arm"
-            echo "run_id=${GITHUB_RUN_ID}"
-          } >> "${version_info_target}"
-
-          echo "release_dir=${release_dir}" >> "${GITHUB_OUTPUT}"
-          echo "artifact_name=VibeSensor-${short_date}.img.zip" >> "${GITHUB_OUTPUT}"
-
-      - name: Upload weekly image workflow artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: weekly-pi-image-${{ steps.metadata.outputs.build_label }}
-          path: ${{ steps.assets.outputs.release_dir }}/*
-          if-no-files-found: error
-          retention-days: 21
+          release-dir-name: weekly-pi-image
+          release-artifact-name: VibeSensor-${{ steps.metadata.outputs.build_label }}.img.zip
+          workflow-artifact-name: weekly-pi-image-${{ steps.metadata.outputs.build_label }}
+          include-published-artifact: "true"
 
       - name: Delete previous weekly Pi image releases
         env:
@@ -145,9 +76,9 @@ jobs:
           Before publishing, it deletes the previous weekly Pi image release so the Releases overview only shows the latest Pi image snapshot.
           EOF
 
-          mapfile -t release_files < <(find "${{ steps.assets.outputs.release_dir }}" -maxdepth 1 -type f | sort)
+          mapfile -t release_files < <(find "${{ steps.build-image.outputs.release-dir }}" -maxdepth 1 -type f | sort)
           if [ "${#release_files[@]}" -eq 0 ]; then
-            echo "No weekly release assets found under ${{ steps.assets.outputs.release_dir }}" >&2
+            echo "No weekly release assets found under ${{ steps.build-image.outputs.release-dir }}" >&2
             exit 1
           fi
 
@@ -156,7 +87,7 @@ jobs:
             release_args+=(--asset "${release_file}")
           done
 
-          python_bin="${{ steps.setup-python.outputs.python-path }}"
+          python_bin="${{ steps.build-image.outputs.python-path }}"
           "${python_bin}" tools/publish_github_release.py \
             --repo "${GITHUB_REPOSITORY}" \
             --tag "${{ steps.metadata.outputs.tag }}" \
