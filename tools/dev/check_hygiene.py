@@ -403,6 +403,34 @@ def _validate_server_dockerfile(
     return errors
 
 
+def _validate_ui_dev_compose_node_image(expected_node: str) -> list[str]:
+    compose_path = ROOT / "docker-compose.dev.yml"
+    if not compose_path.exists():
+        return ["Missing Docker dev override at docker-compose.dev.yml."]
+
+    compose = _load_yaml_mapping(compose_path)
+    services = compose.get("services")
+    if not isinstance(services, Mapping):
+        return ["docker-compose.dev.yml is missing its services mapping."]
+    ui_service = services.get("vibesensor-ui-dev")
+    if not isinstance(ui_service, Mapping):
+        return ["docker-compose.dev.yml is missing the vibesensor-ui-dev service."]
+    image = ui_service.get("image")
+    if not isinstance(image, str):
+        return ["docker-compose.dev.yml:vibesensor-ui-dev must declare a node image."]
+
+    match = re.fullmatch(r"node:(\S+)", image.strip())
+    if match is None:
+        return ["docker-compose.dev.yml:vibesensor-ui-dev must use a node:<tag> image."]
+    actual_node = match.group(1)
+    if _version_core(actual_node) != expected_node:
+        return [
+            "docker-compose.dev.yml:vibesensor-ui-dev image "
+            f"{actual_node!r} does not match .nvmrc {expected_node!r}."
+        ]
+    return []
+
+
 def _project_dependency_spec(requirement_name: str) -> str | None:
     pyproject = _load_server_pyproject()
     project = pyproject.get("project")
@@ -829,6 +857,7 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
             require_ui_stage=False,
         )
     )
+    errors.extend(_validate_ui_dev_compose_node_image(expected_node))
 
     workflow = _load_ci_workflow()
     jobs = workflow.get("jobs")
@@ -976,6 +1005,16 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     if ".github/actions/setup-backend/action.yml" not in runtime_support_matrix:
         errors.append(
             "docs/runtime_support_matrix.md must point GitHub Actions maintainers to .github/actions/setup-backend/action.yml."
+        )
+    if "docker-compose.dev.yml" not in runtime_support_matrix:
+        errors.append(
+            "docs/runtime_support_matrix.md must mention docker-compose.dev.yml as a Node policy surface."
+        )
+
+    ui_readme = (ROOT / "apps" / "ui" / "README.md").read_text(encoding="utf-8")
+    if "docs/runtime_support_matrix.md" not in ui_readme or ".nvmrc" not in ui_readme:
+        errors.append(
+            "apps/ui/README.md must point UI setup readers to docs/runtime_support_matrix.md and .nvmrc."
         )
 
     ui_smoke = jobs.get("ui-smoke") if isinstance(jobs, Mapping) else None
