@@ -52,6 +52,7 @@ def test_backend_quality_jobs_are_split_into_focused_gates() -> None:
     module = _load_ci_manifest_module()
 
     job_names = set(module.all_job_names())
+    assert "ci-scope" not in job_names
     assert "backend-quality" not in job_names
     assert {
         "backend-lint",

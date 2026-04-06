@@ -21,6 +21,7 @@ _INSTALL_STEP_NAMES = frozenset(
     }
 )
 _CI_LITE_EXCLUDED_JOBS = frozenset({"e2e"})
+_WORKFLOW_ONLY_EXCLUDED_JOBS = frozenset({"ci-scope"})
 _PYTHON_PATH_TOKENS = frozenset(
     {
         "${{ steps.setup-backend.outputs.python-path }}",
@@ -282,6 +283,8 @@ def ci_workflow_jobs() -> dict[str, CiWorkflowJob]:
     result: dict[str, CiWorkflowJob] = {}
     for job_name, job_body in jobs.items():
         if not isinstance(job_name, str) or not isinstance(job_body, Mapping):
+            continue
+        if job_name in _WORKFLOW_ONLY_EXCLUDED_JOBS:
             continue
         for expanded_job_name, expanded_job_body in _expanded_job_variants(
             job_name, job_body
