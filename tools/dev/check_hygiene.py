@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import re
 import shlex
 import subprocess
@@ -147,6 +148,9 @@ _UI_FRONTEND_BOUNDARY_IMPORTERS: dict[str, frozenset[str]] = {
 _RUNTIME_SUPPORT_MATRIX_PATH = ROOT / "docs" / "runtime_support_matrix.md"
 _CONTRIBUTING_PATH = ROOT / "CONTRIBUTING.md"
 _INSTALL_PI_PATH = ROOT / "apps" / "server" / "scripts" / "install_pi.sh"
+_UI_README_PATH = ROOT / "apps" / "ui" / "README.md"
+_SERVER_README_PATH = ROOT / "apps" / "server" / "README.md"
+_UI_PACKAGE_JSON_PATH = ROOT / "apps" / "ui" / "package.json"
 _IMAGE_VALIDATION_PATH = (
     ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "image_validation.sh"
 )
@@ -822,6 +826,94 @@ def check_ci_lite_job_sync() -> list[str]:
         errors.append(
             "Makefile test-ci-lite must invoke tools/tests/run_ci_parallel.py --ci-lite."
         )
+    return errors
+
+
+def check_contract_sync_entrypoint() -> list[str]:
+    errors: list[str] = []
+
+    package_json = json.loads(_UI_PACKAGE_JSON_PATH.read_text(encoding="utf-8"))
+    scripts = package_json.get("scripts")
+    if not isinstance(scripts, dict):
+        return ["apps/ui/package.json must define a scripts object."]
+
+    expected_scripts = {
+        "sync:contracts": "node ../../tools/config/sync_contract_artifacts.mjs",
+        "sync:generated-contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs",
+        "check:contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs --check",
+        "pretypecheck": "npm run sync:generated-contracts",
+        "prebuild": "npm run sync:generated-contracts",
+    }
+    for script_name, expected_command in expected_scripts.items():
+        actual_command = scripts.get(script_name)
+        if actual_command != expected_command:
+            errors.append(
+                f"apps/ui/package.json script '{script_name}' must be {expected_command!r}, got {actual_command!r}."
+            )
+
+    makefile_text = (ROOT / "Makefile").read_text(encoding="utf-8")
+    expected_make_command = 'cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:contracts $(if $(CHECK),-- --check,)'
+    if expected_make_command not in makefile_text:
+        errors.append(
+            "Makefile sync-contracts target must route through apps/ui npm run sync:contracts and forward CHECK=1 to --check."
+        )
+    if "regen-contracts: sync-contracts" not in makefile_text:
+        errors.append(
+            "Makefile regen-contracts target must stay a thin alias to sync-contracts."
+        )
+
+    workflow = _load_ci_workflow()
+    jobs = workflow.get("jobs")
+    if not isinstance(jobs, Mapping):
+        return errors
+
+    backend_contract_drift = jobs.get("backend-contract-drift")
+    if isinstance(backend_contract_drift, Mapping):
+        steps = backend_contract_drift.get("steps")
+        if isinstance(steps, list):
+            if not any(
+                isinstance(step, Mapping)
+                and step.get("uses") == "actions/setup-node@v6"
+                for step in steps
+            ):
+                errors.append(
+                    "backend-contract-drift must install Node because the authoritative contract sync runs the UI derivative generator."
+                )
+            if not any(
+                isinstance(step, Mapping)
+                and step.get("working-directory") == "apps/ui"
+                and step.get("run") == "npm ci"
+                for step in steps
+            ):
+                errors.append(
+                    "backend-contract-drift must install UI dependencies from apps/ui before running the authoritative contract sync check."
+                )
+            if not any(
+                isinstance(step, Mapping)
+                and step.get("run") == "make sync-contracts CHECK=1"
+                for step in steps
+            ):
+                errors.append(
+                    "backend-contract-drift must run `make sync-contracts CHECK=1` as the authoritative contract sync check."
+                )
+
+    frontend_typecheck = jobs.get("frontend-typecheck")
+    if isinstance(frontend_typecheck, Mapping):
+        steps = frontend_typecheck.get("steps")
+        if isinstance(steps, list) and any(
+            isinstance(step, Mapping) and step.get("run") == "npm run check:contracts"
+            for step in steps
+        ):
+            errors.append(
+                "frontend-typecheck must not run npm run check:contracts; the authoritative contract sync check belongs in backend-contract-drift."
+            )
+
+    for path in (_UI_README_PATH, _SERVER_README_PATH, _CONTRIBUTING_PATH):
+        if "make sync-contracts" not in path.read_text(encoding="utf-8"):
+            errors.append(
+                f"{path.relative_to(ROOT)} must point readers at `make sync-contracts`."
+            )
+
     return errors
 
 
@@ -1717,6 +1809,15 @@ def main() -> int:
         failures += 1
     else:
         print("CI-lite entrypoints match the workflow-backed non-Docker subset.")
+
+    contract_sync_errors = check_contract_sync_entrypoint()
+    if contract_sync_errors:
+        print("Contract sync entrypoint drift detected:")
+        for item in contract_sync_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Contract sync entrypoint checks passed.")
 
     docker_ci_hygiene_errors = check_docker_ci_dependency_hygiene()
     if docker_ci_hygiene_errors:

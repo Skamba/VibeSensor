@@ -47,7 +47,7 @@ def test_export_schema_matches_committed_schema(schema_text: str) -> None:
     committed = committed_path.read_text(encoding="utf-8")
     assert committed == schema_text, (
         "Committed http_api_schema.json is out of sync with generated schema. "
-        "Run 'python -m vibesensor.cli.http_api_schema_export' and commit the result."
+        "Run `make sync-contracts` and commit the results."
     )
 
 

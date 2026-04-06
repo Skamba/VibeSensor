@@ -1,5 +1,5 @@
 // Generated from apps/server/vibesensor/shared/locations.py and apps/server/vibesensor/shared/strength_fields.py
-// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs
+// Do not edit manually; run make sync-contracts
 
 export const METRIC_FIELDS = {
   "vibration_strength_db": "vibration_strength_db",

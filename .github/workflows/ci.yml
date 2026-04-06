@@ -165,11 +165,18 @@ jobs:
 
       - uses: ./.github/actions/setup-backend
 
-      - name: WS schema sync check
-        run: python -m vibesensor.cli.ws_schema_export --check
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: apps/ui/package-lock.json
 
-      - name: HTTP API schema sync check
-        run: python -m vibesensor.cli.http_api_schema_export --check
+      - name: Install UI dependencies
+        working-directory: apps/ui
+        run: npm ci
+
+      - name: Authoritative contract sync check
+        run: make sync-contracts CHECK=1
 
   backend-typecheck:
     name: Backend type check
@@ -214,10 +221,6 @@ jobs:
       - name: Install UI dependencies
         working-directory: apps/ui
         run: npm ci
-
-      - name: UI contract sync check
-        working-directory: apps/ui
-        run: npm run check:contracts
 
       - name: UI lint
         working-directory: apps/ui
