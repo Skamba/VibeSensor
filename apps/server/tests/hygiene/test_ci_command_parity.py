@@ -1,4 +1,4 @@
-"""Guard: local CI-parallel runner commands stay aligned with ci.yml."""
+"""Guard: local CI-parallel runner commands stay aligned with the workflow manifest."""
 
 from __future__ import annotations
 
