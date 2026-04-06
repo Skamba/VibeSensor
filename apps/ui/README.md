@@ -14,6 +14,10 @@ server over HTTP (REST) and WebSocket (live data).
 
 ## Setup
 
+Use the supported Node line from
+[docs/runtime_support_matrix.md](../../docs/runtime_support_matrix.md) before
+running the UI commands below. Native frontend work follows [`.nvmrc`](../../.nvmrc).
+
 ```bash
 cd apps/ui
 npm ci
