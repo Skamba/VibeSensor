@@ -1,3 +1,53 @@
+read_supported_python_floor_from_pyproject() {
+  local pyproject_path="$1"
+  local floor
+  floor="$(
+    sed -n 's/^requires-python = ">=\([0-9][0-9]*\.[0-9][0-9]*\)"$/\1/p' "${pyproject_path}" | head -n 1
+  )"
+  if [ -z "${floor}" ]; then
+    return 1
+  fi
+  printf '%s\n' "${floor}"
+}
+
+read_env_file_value() {
+  local env_file="$1"
+  local key="$2"
+  awk -F= -v key="${key}" '
+    $1 == key {
+      print substr($0, index($0, "=") + 1)
+      found = 1
+      exit
+    }
+    END {
+      exit(found ? 0 : 1)
+    }
+  ' "${env_file}"
+}
+
+python_version_meets_floor() {
+  local actual_version="$1"
+  local floor="$2"
+  local actual_major actual_minor floor_major floor_minor
+  IFS=. read -r actual_major actual_minor _ <<<"${actual_version}"
+  IFS=. read -r floor_major floor_minor <<<"${floor}"
+
+  if ! [[ "${actual_major}" =~ ^[0-9]+$ && "${actual_minor}" =~ ^[0-9]+$ ]]; then
+    return 1
+  fi
+  if ! [[ "${floor_major}" =~ ^[0-9]+$ && "${floor_minor}" =~ ^[0-9]+$ ]]; then
+    return 1
+  fi
+
+  if [ "${actual_major}" -gt "${floor_major}" ]; then
+    return 0
+  fi
+  if [ "${actual_major}" -lt "${floor_major}" ]; then
+    return 1
+  fi
+  [ "${actual_minor}" -ge "${floor_minor}" ]
+}
+
 validate_image_artifact() {
   local FINAL_ARTIFACT="$1"
   local INSPECT_DIR="${OUT_DIR}/inspect"
@@ -13,8 +63,20 @@ validate_image_artifact() {
   local DNSMASQ_PATH=""
   local GPSD_PATH=""
   local OPENBLAS_LIB=""
+  local ROOTFS_PYPROJECT=""
+  local PYTHON_RUNTIME_INFO_PATH=""
+  local RECORDED_SYSTEM_PYTHON=""
+  local RECORDED_SYSTEM_PYTHON_VERSION=""
+  local RECORDED_VENV_PYTHON=""
+  local RECORDED_VENV_PYTHON_VERSION=""
+  local RECORDED_SUPPORTED_PYTHON_FLOOR=""
+  local ACTUAL_SUPPORTED_PYTHON_FLOOR=""
+  local ACTUAL_VENV_PYTHON_VERSION=""
   local SHADOW_LINE=""
   local SHADOW_HASH=""
+
+  VALIDATED_IMAGE_PYTHON_VERSION=""
+  VALIDATED_IMAGE_PYTHON_FLOOR=""
 
   mkdir -p "${INSPECT_DIR}"
 
@@ -192,6 +254,12 @@ validate_image_artifact() {
     exit 1
   fi
 
+  ROOTFS_PYPROJECT="${ROOT_MNT}/opt/VibeSensor/apps/server/pyproject.toml"
+  if [ ! -f "${ROOTFS_PYPROJECT}" ]; then
+    echo "Validation failed: missing ${ROOTFS_PYPROJECT}"
+    exit 1
+  fi
+
   if [ -d "${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor" ]; then
     echo "Validation failed: source tree still present at ${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor"
     exit 1
@@ -242,6 +310,61 @@ validate_image_artifact() {
     sudo cp /usr/bin/qemu-arm-static "${ROOT_MNT}/usr/bin/"
     sudo chroot "${ROOT_MNT}" /usr/bin/qemu-arm-static "$@"
   }
+
+  PYTHON_RUNTIME_INFO_PATH="${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/.vibesensor-python-runtime.env"
+  if [ ! -f "${PYTHON_RUNTIME_INFO_PATH}" ]; then
+    echo "Validation failed: missing ${PYTHON_RUNTIME_INFO_PATH}"
+    exit 1
+  fi
+
+  RECORDED_SYSTEM_PYTHON="$(read_env_file_value "${PYTHON_RUNTIME_INFO_PATH}" "system_python" || true)"
+  RECORDED_SYSTEM_PYTHON_VERSION="$(read_env_file_value "${PYTHON_RUNTIME_INFO_PATH}" "system_python_version" || true)"
+  RECORDED_VENV_PYTHON="$(read_env_file_value "${PYTHON_RUNTIME_INFO_PATH}" "venv_python" || true)"
+  RECORDED_VENV_PYTHON_VERSION="$(read_env_file_value "${PYTHON_RUNTIME_INFO_PATH}" "venv_python_version" || true)"
+  RECORDED_SUPPORTED_PYTHON_FLOOR="$(read_env_file_value "${PYTHON_RUNTIME_INFO_PATH}" "supported_python_floor" || true)"
+
+  if [ -z "${RECORDED_SYSTEM_PYTHON}" ] || [ -z "${RECORDED_SYSTEM_PYTHON_VERSION}" ] || \
+    [ -z "${RECORDED_VENV_PYTHON}" ] || [ -z "${RECORDED_VENV_PYTHON_VERSION}" ] || \
+    [ -z "${RECORDED_SUPPORTED_PYTHON_FLOOR}" ]; then
+    echo "Validation failed: Python runtime metadata file is incomplete at ${PYTHON_RUNTIME_INFO_PATH}"
+    exit 1
+  fi
+
+  ACTUAL_SUPPORTED_PYTHON_FLOOR="$(read_supported_python_floor_from_pyproject "${ROOTFS_PYPROJECT}" || true)"
+  if [ -z "${ACTUAL_SUPPORTED_PYTHON_FLOOR}" ]; then
+    echo "Validation failed: Could not determine supported Python floor from ${ROOTFS_PYPROJECT}"
+    exit 1
+  fi
+
+  ACTUAL_VENV_PYTHON_VERSION="$(
+    run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python -c '
+import sys
+print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+'
+  )"
+
+  if [ "${RECORDED_VENV_PYTHON}" != "/opt/VibeSensor/apps/server/.venv/bin/python" ]; then
+    echo "Validation failed: recorded venv Python path ${RECORDED_VENV_PYTHON} does not match /opt/VibeSensor/apps/server/.venv/bin/python"
+    exit 1
+  fi
+
+  if [ "${RECORDED_VENV_PYTHON_VERSION}" != "${ACTUAL_VENV_PYTHON_VERSION}" ]; then
+    echo "Validation failed: recorded image Python version ${RECORDED_VENV_PYTHON_VERSION} does not match actual venv version ${ACTUAL_VENV_PYTHON_VERSION}"
+    exit 1
+  fi
+
+  if [ "${RECORDED_SUPPORTED_PYTHON_FLOOR}" != "${ACTUAL_SUPPORTED_PYTHON_FLOOR}" ]; then
+    echo "Validation failed: recorded Python floor ${RECORDED_SUPPORTED_PYTHON_FLOOR} does not match pyproject floor ${ACTUAL_SUPPORTED_PYTHON_FLOOR}"
+    exit 1
+  fi
+
+  if ! python_version_meets_floor "${ACTUAL_VENV_PYTHON_VERSION}" "${ACTUAL_SUPPORTED_PYTHON_FLOOR}"; then
+    echo "Validation failed: image runtime Python ${ACTUAL_VENV_PYTHON_VERSION} does not satisfy supported floor >=${ACTUAL_SUPPORTED_PYTHON_FLOOR}"
+    exit 1
+  fi
+
+  VALIDATED_IMAGE_PYTHON_VERSION="${ACTUAL_VENV_PYTHON_VERSION}"
+  VALIDATED_IMAGE_PYTHON_FLOOR="${ACTUAL_SUPPORTED_PYTHON_FLOOR}"
 
   if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python -c '
 import vibesensor.use_cases.updates.firmware.firmware_cache
@@ -465,6 +588,11 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
 
   echo "=== Validation: Python venv ==="
   ls -la "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python"* || true
+
+  echo "=== Validation: embedded Python runtime ==="
+  cat "${PYTHON_RUNTIME_INFO_PATH}"
+  echo "validated_venv_python_version=${VALIDATED_IMAGE_PYTHON_VERSION}"
+  echo "validated_supported_python_floor=>=${VALIDATED_IMAGE_PYTHON_FLOOR}"
 
   echo "=== Validation: OpenBLAS runtime ==="
   echo "${OPENBLAS_LIB}"

@@ -81,7 +81,9 @@ write_version_info \
   "${FINAL_ARTIFACT}" \
   "${BUILD_TIME_UTC}" \
   "${BUILD_GIT_SHA}" \
-  "${BUILD_GIT_BRANCH}"
+  "${BUILD_GIT_BRANCH}" \
+  "${VALIDATED_IMAGE_PYTHON_VERSION:-}" \
+  "${VALIDATED_IMAGE_PYTHON_FLOOR:-}"
 
 prune_old_artifacts \
   "${OUT_DIR}" \
