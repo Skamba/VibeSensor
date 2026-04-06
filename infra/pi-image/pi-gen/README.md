@@ -56,9 +56,16 @@ Standalone validation against an existing image artifact:
 ./infra/pi-image/pi-gen/validate-image.sh infra/pi-image/pi-gen/out/your-image.img.xz
 ```
 
+Successful validation now reports the embedded server Python version from the
+built image and verifies that it satisfies the packaged-server floor declared in
+`apps/server/pyproject.toml`.
+
 Artifacts:
 - app artifacts: `infra/pi-image/pi-gen/out/app-artifacts/`
 - image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-trixie-lite.img`
+- image build metadata: `infra/pi-image/pi-gen/out/*.version.txt` (includes the
+  validated embedded server Python version/floor when post-build validation runs)
+
 
 Useful build flags for faster x86 iteration:
 
