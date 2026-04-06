@@ -63,10 +63,20 @@ def test_workflows_use_configured_python_runtime_paths() -> None:
         for i, step in enumerate(release_steps)
         if isinstance(step, dict) and step.get("name") == "Build UI"
     )
+    compute_version_index = next(
+        i
+        for i, step in enumerate(release_steps)
+        if isinstance(step, dict) and step.get("name") == "Compute version"
+    )
+    assert setup_index < compute_version_index
     assert setup_index < build_ui_index
 
     main_release_text = _MAIN_RELEASE.read_text(encoding="utf-8")
     assert "steps.setup-python.outputs.python-path" in main_release_text
+    assert "tools/release/main_release.py compute-version" in main_release_text
+    assert "tools/release/main_release.py build-wheel" in main_release_text
+    assert "tools/release/main_release.py generate-firmware-manifest" in main_release_text
+    assert "tools/release/main_release.py cleanup-releases" in main_release_text
 
     weekly_text = _WEEKLY_PI_IMAGE.read_text(encoding="utf-8")
     assert "VS_PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}" in weekly_text
