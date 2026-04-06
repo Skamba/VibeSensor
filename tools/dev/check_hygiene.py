@@ -103,6 +103,7 @@ _MIRRORED_BACKEND_INSTALL_JOBS = (
 )
 _FIRMWARE_INSTALL_JOB = "firmware-native-tests"
 _CI_LITE_EXCLUDED_JOBS = ("e2e",)
+_LOCAL_PYTHON_SETUP_ACTION = "./.github/actions/setup-python"
 _LOCAL_BACKEND_SETUP_ACTION = "./.github/actions/setup-backend"
 _DOCKER_NODE_RE = re.compile(r"^FROM node:(\S+) AS ui-build$", re.MULTILINE)
 _DOCKER_PYTHON_RE = re.compile(r"^FROM python:(\S+)$", re.MULTILINE)
@@ -144,6 +145,15 @@ def _load_yaml_mapping(path: Path) -> dict[str, object]:
 
 def _load_ci_workflow() -> dict[str, object]:
     return _load_yaml_mapping(ROOT / ".github" / "workflows" / "ci.yml")
+
+
+def _load_action_steps(path: Path) -> list[object]:
+    action = _load_yaml_mapping(path)
+    runs = action.get("runs")
+    if not isinstance(runs, Mapping):
+        return []
+    steps = runs.get("steps")
+    return steps if isinstance(steps, list) else []
 
 
 def _load_ci_parallel_module():
@@ -823,11 +833,79 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
         errors.append("CI workflow is missing its jobs mapping.")
         return errors
 
+    python_action_file = ROOT / ".github" / "actions" / "setup-python" / "action.yml"
+    if not python_action_file.exists():
+        errors.append(
+            "Missing shared GitHub Actions Python setup action at .github/actions/setup-python/action.yml."
+        )
+    else:
+        python_action_steps = _load_action_steps(python_action_file)
+        setup_step = next(
+            (
+                step
+                for step in python_action_steps
+                if isinstance(step, Mapping)
+                and isinstance(step.get("uses"), str)
+                and step["uses"].startswith("actions/setup-python@")
+            ),
+            None,
+        )
+        if setup_step is None:
+            errors.append(
+                ".github/actions/setup-python/action.yml must wrap actions/setup-python."
+            )
+        else:
+            uses = setup_step.get("uses")
+            if uses != "actions/setup-python@v6":
+                errors.append(
+                    ".github/actions/setup-python/action.yml must pin actions/setup-python@v6."
+                )
+            raw_with = setup_step.get("with")
+            if not isinstance(raw_with, Mapping):
+                errors.append(
+                    ".github/actions/setup-python/action.yml must configure python-version-file and pip caching."
+                )
+            else:
+                if raw_with.get("python-version-file") != ".python-version":
+                    errors.append(
+                        ".github/actions/setup-python/action.yml must resolve Python from .python-version."
+                    )
+                if raw_with.get("cache") != "pip":
+                    errors.append(
+                        ".github/actions/setup-python/action.yml must enable pip caching."
+                    )
+                if (
+                    raw_with.get("cache-dependency-path")
+                    != "apps/server/pyproject.toml"
+                ):
+                    errors.append(
+                        ".github/actions/setup-python/action.yml must cache against apps/server/pyproject.toml."
+                    )
+
     action_file = ROOT / ".github" / "actions" / "setup-backend" / "action.yml"
     if not action_file.exists():
         errors.append(
             "Missing shared backend setup composite action at .github/actions/setup-backend/action.yml."
         )
+    else:
+        backend_action_steps = _load_action_steps(action_file)
+        if not any(
+            isinstance(step, Mapping) and step.get("uses") == _LOCAL_PYTHON_SETUP_ACTION
+            for step in backend_action_steps
+        ):
+            errors.append(
+                ".github/actions/setup-backend/action.yml must delegate Python setup to "
+                f"{_LOCAL_PYTHON_SETUP_ACTION}."
+            )
+        if any(
+            isinstance(step, Mapping)
+            and isinstance(step.get("uses"), str)
+            and step["uses"].startswith("actions/setup-python@")
+            for step in backend_action_steps
+        ):
+            errors.append(
+                ".github/actions/setup-backend/action.yml must not call actions/setup-python directly."
+            )
 
     for job_name in (*_MIRRORED_BACKEND_INSTALL_JOBS, _FIRMWARE_INSTALL_JOB):
         raw_job = jobs.get(job_name)
@@ -850,13 +928,6 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                 f"{job_name} must use {_LOCAL_BACKEND_SETUP_ACTION} for shared backend setup."
             )
             continue
-        if any(
-            isinstance(step, Mapping) and step.get("uses") == "actions/setup-python@v5"
-            for step in raw_steps
-        ):
-            errors.append(
-                f"{job_name} should rely on {_LOCAL_BACKEND_SETUP_ACTION} instead of duplicating actions/setup-python."
-            )
         if job_name == _FIRMWARE_INSTALL_JOB:
             raw_with = setup_step.get("with")
             include_platformio = ""
@@ -868,6 +939,41 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                 errors.append(
                     "firmware-native-tests must enable include-platformio on the shared backend setup action."
                 )
+
+    workflow_dir = ROOT / ".github" / "workflows"
+    for workflow_path in sorted(workflow_dir.glob("*.yml")):
+        workflow = _load_yaml_mapping(workflow_path)
+        workflow_jobs = workflow.get("jobs")
+        if not isinstance(workflow_jobs, Mapping):
+            continue
+        rel_workflow_path = workflow_path.relative_to(ROOT)
+        for job_name, raw_job in workflow_jobs.items():
+            if not isinstance(raw_job, Mapping):
+                continue
+            raw_steps = raw_job.get("steps")
+            if not isinstance(raw_steps, list):
+                continue
+            for step in raw_steps:
+                if not isinstance(step, Mapping):
+                    continue
+                uses = step.get("uses")
+                if isinstance(uses, str) and uses.startswith("actions/setup-python@"):
+                    errors.append(
+                        f"{rel_workflow_path}:{job_name} must use {_LOCAL_PYTHON_SETUP_ACTION} "
+                        f"or {_LOCAL_BACKEND_SETUP_ACTION} instead of direct {uses}."
+                    )
+
+    runtime_support_matrix = (ROOT / "docs" / "runtime_support_matrix.md").read_text(
+        encoding="utf-8"
+    )
+    if ".github/actions/setup-python/action.yml" not in runtime_support_matrix:
+        errors.append(
+            "docs/runtime_support_matrix.md must point GitHub Actions maintainers to .github/actions/setup-python/action.yml."
+        )
+    if ".github/actions/setup-backend/action.yml" not in runtime_support_matrix:
+        errors.append(
+            "docs/runtime_support_matrix.md must point GitHub Actions maintainers to .github/actions/setup-backend/action.yml."
+        )
 
     ui_smoke = jobs.get("ui-smoke") if isinstance(jobs, Mapping) else None
     steps = ui_smoke.get("steps") if isinstance(ui_smoke, Mapping) else None
