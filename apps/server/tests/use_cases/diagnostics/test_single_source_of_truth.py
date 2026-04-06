@@ -244,10 +244,7 @@ def test_protocol_docs_match_generated_contract_reference() -> None:
     doc_path = root / "docs" / "protocol.md"
     observed = doc_path.read_text(encoding="utf-8")
     expected = render_contract_reference_markdown()
-    assert observed == expected, (
-        "docs/protocol.md is out of date. "
-        "Run: python3 tools/config/generate_contract_reference_doc.py"
-    )
+    assert observed == expected, "docs/protocol.md is out of date. Run: make sync-contracts"
 
 
 def test_validation_sets_cover_all_settings_keys() -> None:

@@ -167,15 +167,14 @@ full key-by-key runtime config reference.
 
 The contract-sync flow lives in
 [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync). Use that
-section for what `npm run sync:contracts` regenerates (including
-`apps/ui/src/constants.ts`) and what to do when CI reports frontend contract
-drift.
+section for what `make sync-contracts` regenerates (including
+`apps/ui/src/constants.ts`) and what to do when CI reports contract drift.
 
 ## Common failure cases
 
 - Hook warning about missing `privacy_guard.py`: this is non-blocking; run the documented validation commands directly.
 - Port confusion: production-style access is usually `http://127.0.0.1`, while native dev often uses `http://127.0.0.1:8000`.
-- UI contract drift: follow [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync) for the generated HTTP/WS/constants sync flow and rerun `npm run sync:contracts`.
+- UI contract drift: follow [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync) for the authoritative HTTP/WS/constants sync flow and rerun `make sync-contracts`.
 - Slow or failing end-to-end runs: check Docker status and the operational runbook before debugging application logic.
 
 ### Developer setup troubleshooting

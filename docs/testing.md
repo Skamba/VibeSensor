@@ -13,6 +13,7 @@
 - `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
 - Python test configuration lives in `apps/server/pyproject.toml`.
 - Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py`, and repo/frontend hygiene guards live in `tools/dev/check_hygiene.py`; both run via `make lint`.
+- `make sync-contracts` is the authoritative contract/doc regeneration path; `make lint` and the `backend-contract-drift` CI job run it in `--check` mode.
 
 ## Layout
 

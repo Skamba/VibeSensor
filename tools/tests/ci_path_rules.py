@@ -35,6 +35,20 @@ BACKEND_STATIC_GUARD_TOOL_FILES = {"tools/dev/verify_backend_static_guards.py"}
 BACKEND_TEST_TOOL_FILES = {"tools/tests/run_backend_parallel.py"}
 RELEASE_TRIGGER_FILES = {"tools/tests/run_release_smoke.py", "tools/build_ui_static.py"}
 E2E_TRIGGER_FILES = {"tools/tests/run_e2e_parallel.py", "apps/server/Dockerfile.e2e"}
+CONTRACT_SYNC_TRIGGER_FILES = {
+    "apps/ui/package.json",
+    "apps/ui/src/constants.ts",
+    "apps/ui/src/contracts/http_api_schema.json",
+    "apps/ui/src/contracts/ws_payload_schema.generated.ts",
+    "apps/ui/src/contracts/ws_payload_schema.json",
+    "apps/ui/src/contracts/ws_payload_types.ts",
+    "apps/ui/src/generated/http_api_contracts.ts",
+    "docs/protocol.md",
+    "tools/config/generate_contract_reference_doc.py",
+    "tools/config/generate_ui_shared_constants.py",
+    "tools/config/sync_contract_artifacts.mjs",
+    "tools/config/sync_shared_contracts_to_ui.mjs",
+}
 
 
 @dataclass(frozen=True)
@@ -96,8 +110,11 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
         return WorkflowJobSelection.full_stack()
 
     docs_changed = any(is_markdown_path(path) for path in normalized)
+    contract_sync_changed = any(
+        path in CONTRACT_SYNC_TRIGGER_FILES for path in normalized
+    )
     non_docs_paths = tuple(path for path in normalized if not is_markdown_path(path))
-    if not non_docs_paths:
+    if not non_docs_paths and not contract_sync_changed:
         return WorkflowJobSelection(docs_lint=True)
 
     full_stack = any(
@@ -139,13 +156,14 @@ def workflow_job_selection(changed_files: Iterable[str]) -> WorkflowJobSelection
         or repo_hygiene_tool_changed
         or backend_changed
         or frontend_changed
-        or python_tool_changed,
+        or python_tool_changed
+        or contract_sync_changed,
         backend_lint=full_stack or backend_changed or python_tool_changed,
         backend_static_guards=full_stack
         or backend_changed
         or backend_static_guard_tool_changed,
         backend_preflight=full_stack or backend_changed,
-        backend_contract_drift=full_stack or backend_changed,
+        backend_contract_drift=full_stack or backend_changed or contract_sync_changed,
         backend_typecheck=full_stack or backend_changed,
         frontend_typecheck=full_stack or frontend_changed,
         ui_smoke=full_stack or frontend_changed,

@@ -1,5 +1,5 @@
 // Generated from apps/ui/src/contracts/ws_payload_schema.json
-// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs
+// Do not edit manually; run make sync-contracts
 
 export const wsPayloadSchema = {
   "$defs": {
