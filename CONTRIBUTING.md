@@ -187,6 +187,12 @@ drift.
   `make doctor` before bootstrapping. A doctor `WARN` on Docker or PlatformIO
   only means those optional workflow paths are unavailable; the native Python +
   Vite path can still be usable.
+- `make lint` fails on runtime policy drift: treat
+  [docs/runtime_support_matrix.md](docs/runtime_support_matrix.md) as the
+  runtime-policy coverage contract and update it in the same change as the
+  referenced anchors named by the failure (`.python-version`, `.nvmrc`,
+  `apps/server/pyproject.toml`, GitHub Actions setup/workflow files,
+  Dockerfiles, or Pi install/image scripts). Then rerun `make lint`.
 - `vibesensor-server`, `vibesensor-config-preflight`, or other `vibesensor-*`
   commands are missing after `pip install -e`: activate the same environment you
   installed into before running repo commands. If you use a local `.venv`, run

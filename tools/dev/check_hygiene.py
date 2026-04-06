@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tomllib
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
@@ -128,6 +129,30 @@ _UI_FRONTEND_BOUNDARY_IMPORTERS: dict[str, frozenset[str]] = {
         {"apps/ui/src/ws_payload_validator.ts"}
     ),
 }
+
+_RUNTIME_SUPPORT_MATRIX_PATH = ROOT / "docs" / "runtime_support_matrix.md"
+_CONTRIBUTING_PATH = ROOT / "CONTRIBUTING.md"
+_INSTALL_PI_PATH = ROOT / "apps" / "server" / "scripts" / "install_pi.sh"
+_IMAGE_VALIDATION_PATH = (
+    ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "image_validation.sh"
+)
+
+_NATIVE_RUNTIME_ROW = "Native development, local tooling, and simulator runs"
+_GITHUB_ACTIONS_RUNTIME_ROW = "GitHub Actions CI and release builders"
+_DOCKER_RUNTIME_ROW = "Docker / container build path"
+_PACKAGE_RUNTIME_ROW = "Installable backend package / wheel compatibility"
+_MANUAL_PI_RUNTIME_ROW = "Manual Raspberry Pi install and on-device runtime"
+_PI_IMAGE_RUNTIME_ROW = "Prebuilt Pi image build"
+
+
+@dataclass(frozen=True)
+class RuntimeSupportMatrixRow:
+    environment: str
+    python_policy: str
+    node_policy: str
+    notes: str
+
+
 _UI_ALLOWED_RAW_HTML_PREFIX = "apps/ui/src/app/views/"
 _UI_DOM_REGISTRY_PATH = ROOT / "apps" / "ui" / "src" / "app" / "ui_dom_registry.ts"
 _UI_DOM_REGISTRY_TOKENS = ("UiDomRegistry", "ui_dom_registry")
@@ -169,6 +194,62 @@ def _load_ci_parallel_module():
 
 def _read_required_text(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
+
+
+def _load_runtime_support_matrix_rows() -> dict[str, RuntimeSupportMatrixRow]:
+    rows: dict[str, RuntimeSupportMatrixRow] = {}
+    in_table = False
+    for raw_line in _RUNTIME_SUPPORT_MATRIX_PATH.read_text(
+        encoding="utf-8"
+    ).splitlines():
+        line = raw_line.strip()
+        if (
+            line
+            == "| Environment / path | Supported Python policy | Supported Node policy | Current source-of-truth files and notes |"
+        ):
+            in_table = True
+            continue
+        if not in_table:
+            continue
+        if not line.startswith("|"):
+            if rows:
+                break
+            continue
+        if line.startswith("|---"):
+            continue
+        cells = [cell.strip() for cell in line.split("|")[1:-1]]
+        if len(cells) != 4:
+            continue
+        row = RuntimeSupportMatrixRow(
+            environment=cells[0],
+            python_policy=cells[1],
+            node_policy=cells[2],
+            notes=cells[3],
+        )
+        rows[row.environment] = row
+    return rows
+
+
+def _require_runtime_support_row(
+    rows: Mapping[str, RuntimeSupportMatrixRow], environment: str, errors: list[str]
+) -> RuntimeSupportMatrixRow | None:
+    row = rows.get(environment)
+    if row is None:
+        errors.append(
+            "docs/runtime_support_matrix.md must include the "
+            f"{environment!r} support-matrix row."
+        )
+    return row
+
+
+def _matrix_row_mentions(
+    row: RuntimeSupportMatrixRow, expected: str, description: str, errors: list[str]
+) -> None:
+    if expected not in (row.python_policy + row.node_policy + row.notes):
+        errors.append(
+            "docs/runtime_support_matrix.md "
+            f"{row.environment!r} row must mention {description}."
+        )
 
 
 def _ui_source_files() -> list[Path]:
@@ -1250,6 +1331,241 @@ def check_python_policy_alignment() -> list[str]:
     return errors
 
 
+def check_runtime_policy_drift() -> list[str]:
+    errors: list[str] = []
+    matrix_rows = _load_runtime_support_matrix_rows()
+    if not matrix_rows:
+        return [
+            "docs/runtime_support_matrix.md must contain a parseable current support matrix table."
+        ]
+
+    pinned_python = _read_required_text(ROOT / ".python-version")
+    pinned_node = _read_required_text(ROOT / ".nvmrc")
+    pyproject = _load_server_pyproject()
+    project = pyproject.get("project")
+    if not isinstance(project, Mapping):
+        return ["apps/server/pyproject.toml is missing the [project] table."]
+    requires_python = project.get("requires-python")
+    if not isinstance(requires_python, str):
+        return ["apps/server/pyproject.toml must declare project.requires-python."]
+
+    native_row = _require_runtime_support_row(matrix_rows, _NATIVE_RUNTIME_ROW, errors)
+    actions_row = _require_runtime_support_row(
+        matrix_rows, _GITHUB_ACTIONS_RUNTIME_ROW, errors
+    )
+    docker_row = _require_runtime_support_row(matrix_rows, _DOCKER_RUNTIME_ROW, errors)
+    package_row = _require_runtime_support_row(
+        matrix_rows, _PACKAGE_RUNTIME_ROW, errors
+    )
+    manual_pi_row = _require_runtime_support_row(
+        matrix_rows, _MANUAL_PI_RUNTIME_ROW, errors
+    )
+    pi_image_row = _require_runtime_support_row(
+        matrix_rows, _PI_IMAGE_RUNTIME_ROW, errors
+    )
+
+    if native_row is not None:
+        _matrix_row_mentions(
+            native_row,
+            pinned_python,
+            "the exact native Python pin from .python-version",
+            errors,
+        )
+        _matrix_row_mentions(
+            native_row,
+            f"{pinned_node}.x",
+            "the supported Node major from .nvmrc",
+            errors,
+        )
+        _matrix_row_mentions(
+            native_row,
+            "make doctor",
+            "make doctor as the native prerequisite check",
+            errors,
+        )
+        _matrix_row_mentions(
+            native_row,
+            "tools/dev/check_prerequisites.py",
+            "tools/dev/check_prerequisites.py as the native prerequisite checker",
+            errors,
+        )
+
+    if actions_row is not None:
+        _matrix_row_mentions(
+            actions_row,
+            ".python-version",
+            ".python-version in the GitHub Actions row",
+            errors,
+        )
+        _matrix_row_mentions(
+            actions_row,
+            ".nvmrc",
+            ".nvmrc in the GitHub Actions row",
+            errors,
+        )
+        _matrix_row_mentions(
+            actions_row,
+            ".github/actions/setup-python/action.yml",
+            "the shared GitHub Actions Python setup path",
+            errors,
+        )
+        _matrix_row_mentions(
+            actions_row,
+            ".github/actions/setup-backend/action.yml",
+            "the shared backend setup action",
+            errors,
+        )
+
+    if docker_row is not None:
+        _matrix_row_mentions(
+            docker_row,
+            ".python-version",
+            ".python-version in the Docker row",
+            errors,
+        )
+        _matrix_row_mentions(
+            docker_row,
+            ".nvmrc",
+            ".nvmrc in the Docker row",
+            errors,
+        )
+        _matrix_row_mentions(
+            docker_row,
+            "apps/server/Dockerfile",
+            "apps/server/Dockerfile as a Docker policy surface",
+            errors,
+        )
+        _matrix_row_mentions(
+            docker_row,
+            "docker-compose.dev.yml",
+            "docker-compose.dev.yml as a Docker dev policy surface",
+            errors,
+        )
+        _matrix_row_mentions(
+            docker_row,
+            "tools/dev/check_hygiene.py",
+            "tools/dev/check_hygiene.py as the Docker drift checker",
+            errors,
+        )
+
+    if package_row is not None:
+        _matrix_row_mentions(
+            package_row,
+            requires_python,
+            "the backend package compatibility floor from apps/server/pyproject.toml",
+            errors,
+        )
+        _matrix_row_mentions(
+            package_row,
+            "apps/server/pyproject.toml",
+            "apps/server/pyproject.toml in the package row",
+            errors,
+        )
+        _matrix_row_mentions(
+            package_row,
+            "compatibility floor",
+            "the compatibility-floor explanation for the installable package row",
+            errors,
+        )
+
+    if manual_pi_row is not None:
+        _matrix_row_mentions(
+            manual_pi_row,
+            requires_python,
+            "the packaged-server Python floor in the manual Pi row",
+            errors,
+        )
+        _matrix_row_mentions(
+            manual_pi_row,
+            "apps/server/scripts/install_pi.sh",
+            "apps/server/scripts/install_pi.sh in the manual Pi row",
+            errors,
+        )
+
+    if pi_image_row is not None:
+        _matrix_row_mentions(
+            pi_image_row,
+            ".python-version",
+            ".python-version in the Pi image row",
+            errors,
+        )
+        _matrix_row_mentions(
+            pi_image_row,
+            "apps/server/pyproject.toml",
+            "apps/server/pyproject.toml in the Pi image row",
+            errors,
+        )
+        _matrix_row_mentions(
+            pi_image_row,
+            ".nvmrc",
+            ".nvmrc in the Pi image row",
+            errors,
+        )
+        _matrix_row_mentions(
+            pi_image_row,
+            "infra/pi-image/pi-gen/README.md",
+            "the Pi image README in the Pi image row",
+            errors,
+        )
+
+    matrix_text = _read_required_text(_RUNTIME_SUPPORT_MATRIX_PATH)
+    if (
+        "tools/dev/check_hygiene.py" not in matrix_text
+        or "runtime-policy coverage contract" not in matrix_text
+    ):
+        errors.append(
+            "docs/runtime_support_matrix.md must explain that tools/dev/check_hygiene.py reads the matrix as the runtime-policy coverage contract."
+        )
+
+    contributing_text = _read_required_text(_CONTRIBUTING_PATH)
+    for required, description in (
+        ("make lint", "make lint as the fixing path"),
+        ("runtime policy drift", "runtime policy drift wording"),
+        ("docs/runtime_support_matrix.md", "docs/runtime_support_matrix.md"),
+        (".python-version", ".python-version"),
+        (".nvmrc", ".nvmrc"),
+        ("apps/server/pyproject.toml", "apps/server/pyproject.toml"),
+    ):
+        if required not in contributing_text:
+            errors.append(
+                "CONTRIBUTING.md must explain how to resolve runtime policy drift failures and must mention "
+                f"{description}."
+            )
+
+    install_pi_text = _read_required_text(_INSTALL_PI_PATH)
+    for required, description in (
+        (
+            'RUNTIME_POLICY_DOC="docs/runtime_support_matrix.md"',
+            "the runtime policy doc path",
+        ),
+        ('SERVER_PYPROJECT="${PI_DIR}/pyproject.toml"', "the server pyproject anchor"),
+        ("read_supported_python_floor()", "read_supported_python_floor()"),
+        ("validate_supported_python()", "validate_supported_python()"),
+        ("requires python3 >=", "the supported-floor failure message"),
+    ):
+        if required not in install_pi_text:
+            errors.append(
+                "apps/server/scripts/install_pi.sh must keep the runtime policy guard and must mention "
+                f"{description}."
+            )
+
+    image_validation_text = _read_required_text(_IMAGE_VALIDATION_PATH)
+    for required, description in (
+        ("read_supported_python_floor_from_pyproject()", "pyproject floor parsing"),
+        (".vibesensor-python-runtime.env", "the recorded runtime metadata file"),
+        ("VALIDATED_IMAGE_PYTHON_VERSION", "validated image Python version output"),
+        ("VALIDATED_IMAGE_PYTHON_FLOOR", "validated image Python floor output"),
+        ("Validation failed: image runtime Python ", "the runtime mismatch failure"),
+    ):
+        if required not in image_validation_text:
+            errors.append(
+                "infra/pi-image/pi-gen/lib/image_validation.sh must keep the runtime policy validation path and must mention "
+                f"{description}."
+            )
+
+    return errors
+
+
 def check_dependency_reproducibility_hygiene() -> list[str]:
     errors: list[str] = []
 
@@ -1431,6 +1747,15 @@ def main() -> int:
         failures += 1
     else:
         print("Python policy alignment checks passed.")
+
+    runtime_policy_errors = check_runtime_policy_drift()
+    if runtime_policy_errors:
+        print("Runtime policy drift detected:")
+        for item in runtime_policy_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Runtime policy drift checks passed.")
 
     dependency_repro_errors = check_dependency_reproducibility_hygiene()
     if dependency_repro_errors:

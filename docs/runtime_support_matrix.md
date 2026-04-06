@@ -40,7 +40,9 @@ change set as the machine-readable source files it references.
    [`apps/server/README.md`](../apps/server/README.md), and
    [`infra/pi-image/pi-gen/README.md`](../infra/pi-image/pi-gen/README.md).
 
-This matrix defines the policy view. The version files, package metadata,
-Dockerfile tags, and shared GitHub Actions setup actions remain the
-machine-readable anchors that later alignment and drift-check issues should
-keep in sync.
+This matrix defines the policy view. `tools/dev/check_hygiene.py` reads it as
+the runtime-policy coverage contract and compares the referenced anchors
+against version files, package metadata, Docker/CI config, and Pi
+install/image helpers. The version files, package metadata, Dockerfile tags,
+and shared GitHub Actions setup actions remain the machine-readable anchors for
+the concrete values.
