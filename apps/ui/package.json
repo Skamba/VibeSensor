@@ -18,6 +18,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "pretest:smoke": "npm run sync:generated-contracts",
     "test:smoke": "npx playwright test --config=playwright.smoke.config.ts --project=laptop-light --workers=1",
     "test:visual": "npx playwright test",
     "test:visual:update": "npx playwright test --update-snapshots",

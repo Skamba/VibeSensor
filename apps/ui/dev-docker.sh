@@ -22,11 +22,11 @@ if [ ! -d node_modules ] || [ "$lock_hash" != "$current_lock_hash" ]; then
 	printf '%s\n' "$lock_hash" > .npm-ci-lock.sha256
 fi
 
-if npm run check:contracts; then
+if npm run sync:generated-contracts; then
 	:
 else
 	status=$?
-	echo "[dev:docker] Frontend contracts are stale. Run \`make sync-contracts\` or \`npm --prefix apps/ui run sync:contracts\`, then restart the dev stack." >&2
+	echo "[dev:docker] Could not regenerate the frontend contract derivatives. Run \`make sync-contracts\` or \`npm --prefix apps/ui run sync:contracts\`, then restart the dev stack." >&2
 	exit "$status"
 fi
 
