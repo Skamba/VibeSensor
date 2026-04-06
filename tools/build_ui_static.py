@@ -83,23 +83,13 @@ def main(argv: list[str] | None = None) -> None:
     ui_dir = repo_root / "apps" / "ui"
     dist_dir = ui_dir / "dist"
     static_dir = repo_root / "apps" / "server" / "vibesensor" / "static"
-    lock_file = ui_dir / "package-lock.json"
-    lock_hash_file = ui_dir / ".npm-ci-lock.sha256"
-
-    lock_hash = hashlib.sha256(lock_file.read_bytes()).hexdigest()
-    previous_lock_hash = (
-        lock_hash_file.read_text(encoding="utf-8").strip()
-        if lock_hash_file.exists()
-        else ""
-    )
-
-    should_run_npm_ci = not args.skip_npm_ci and (
-        not (ui_dir / "node_modules").exists() or lock_hash != previous_lock_hash
-    )
-
-    if should_run_npm_ci:
-        _run(["npm", "ci"], cwd=ui_dir)
-        lock_hash_file.write_text(lock_hash, encoding="utf-8")
+    bootstrap_cmd = [
+        "node",
+        str(repo_root / "tools" / "ui" / "ensure_ui_bootstrap.mjs"),
+    ]
+    if args.skip_npm_ci:
+        bootstrap_cmd.append("--skip-npm-ci")
+    _run(bootstrap_cmd, cwd=ui_dir)
     _run(["npm", "run", "sync:generated-contracts"], cwd=ui_dir)
     if not args.skip_typecheck:
         _run(["npm", "run", "typecheck"], cwd=ui_dir)
