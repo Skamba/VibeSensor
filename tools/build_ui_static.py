@@ -100,6 +100,7 @@ def main(argv: list[str] | None = None) -> None:
     if should_run_npm_ci:
         _run(["npm", "ci"], cwd=ui_dir)
         lock_hash_file.write_text(lock_hash, encoding="utf-8")
+    _run(["npm", "run", "sync:generated-contracts"], cwd=ui_dir)
     if not args.skip_typecheck:
         _run(["npm", "run", "typecheck"], cwd=ui_dir)
     _run(["npm", "run", "build"], cwd=ui_dir)
