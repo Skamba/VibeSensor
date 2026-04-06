@@ -1,10 +1,16 @@
 name: Setup Python
 description: Set up the shared GitHub Actions Python runtime from the repo version policy.
 
+outputs:
+  python-path:
+    description: Configured Python interpreter path.
+    value: ${{ steps.setup-python.outputs.python-path }}
+
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@v6
+    - id: setup-python
+      uses: actions/setup-python@v6
       with:
         python-version-file: ".python-version"
         cache: "pip"
