@@ -35,6 +35,8 @@ build_ui_bundle() {
   fi
 
   if [ "${should_build}" = "1" ]; then
+    echo "Syncing generated UI contracts"
+    (cd "${ui_dir}" && npm run sync:generated-contracts)
     echo "Building UI bundle"
     (cd "${ui_dir}" && npm run build)
     if [ -z "${current_hash}" ]; then
