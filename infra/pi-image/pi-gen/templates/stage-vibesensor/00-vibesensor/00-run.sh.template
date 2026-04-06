@@ -25,12 +25,27 @@ set -e
 PIP_TMP_CACHE=/tmp/vibesensor-pip-cache
 WHEELHOUSE=/tmp/vibesensor-wheelhouse
 PREBUILT_WHEEL="/opt/vibesensor-artifacts/wheels/__APP_WHEEL_FILE__"
+PYPROJECT_PATH="/opt/VibeSensor/apps/server/pyproject.toml"
+VENV_PYTHON="/opt/VibeSensor/apps/server/.venv/bin/python"
+PYTHON_RUNTIME_INFO_FILE="/opt/VibeSensor/apps/server/.venv/.vibesensor-python-runtime.env"
 BUILD_DEPS=(python3-dev)
 PIP_WHEEL_ARGS=(
   --wheel-dir "${WHEELHOUSE}"
   --prefer-binary
   --cache-dir "${PIP_TMP_CACHE}"
 )
+
+read_supported_python_floor() {
+  local floor
+  floor="$(
+    sed -n 's/^requires-python = ">=\([0-9][0-9]*\.[0-9][0-9]*\)"$/\1/p' "${PYPROJECT_PATH}" | head -n 1
+  )"
+  if [ -z "${floor}" ]; then
+    echo "ERROR: Could not determine the supported Python floor from ${PYPROJECT_PATH}"
+    exit 1
+  fi
+  printf '%s\n' "${floor}"
+}
 
 if [ ! -f "${PREBUILT_WHEEL}" ]; then
   echo "ERROR: missing prebuilt app wheel at ${PREBUILT_WHEEL}"
@@ -74,6 +89,17 @@ fi
   --no-build-isolation \
   "${VIBESENSOR_WHEEL}[esp]" \
   --quiet
+SYSTEM_PYTHON_BIN="$(command -v python3)"
+SYSTEM_PYTHON_VERSION="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")')"
+VENV_PYTHON_VERSION="$("${VENV_PYTHON}" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")')"
+SUPPORTED_PYTHON_FLOOR="$(read_supported_python_floor)"
+cat >"${PYTHON_RUNTIME_INFO_FILE}" <<EOF
+system_python=${SYSTEM_PYTHON_BIN}
+system_python_version=${SYSTEM_PYTHON_VERSION}
+venv_python=${VENV_PYTHON}
+venv_python_version=${VENV_PYTHON_VERSION}
+supported_python_floor=${SUPPORTED_PYTHON_FLOOR}
+EOF
 echo "Purging transient build deps"
 apt-get purge -y "${BUILD_DEPS[@]}"
 apt-get autoremove -y --purge
@@ -148,7 +174,6 @@ cat >/tmp/vibesensor-fw-baseline.sh <<'FW_BASELINE_EOF'
 #!/bin/bash
 set -euo pipefail
 
-VENV_PYTHON="/opt/VibeSensor/apps/server/.venv/bin/python"
 VENV_FW_REFRESH="/opt/VibeSensor/apps/server/.venv/bin/vibesensor-fw-refresh"
 FW_CACHE_DIR="/var/lib/vibesensor/firmware"
 
