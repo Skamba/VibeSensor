@@ -24,8 +24,11 @@ def _smoke_script() -> str:
 
 
 def test_ui_smoke_script_defers_test_selection_to_smoke_config() -> None:
-    script = _smoke_script()
+    package_json = json.loads(_UI_PACKAGE_JSON.read_text())
+    scripts = package_json["scripts"]
+    script = str(scripts["test:smoke"])
 
+    assert scripts["pretest:smoke"] == "npm run sync:generated-contracts"
     assert "--config=playwright.smoke.config.ts" in script
     assert "--project=laptop-light" in script
     assert "--workers=1" in script
