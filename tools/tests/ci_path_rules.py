@@ -37,12 +37,8 @@ RELEASE_TRIGGER_FILES = {"tools/tests/run_release_smoke.py", "tools/build_ui_sta
 E2E_TRIGGER_FILES = {"tools/tests/run_e2e_parallel.py", "apps/server/Dockerfile.e2e"}
 CONTRACT_SYNC_TRIGGER_FILES = {
     "apps/ui/package.json",
-    "apps/ui/src/constants.ts",
     "apps/ui/src/contracts/http_api_schema.json",
-    "apps/ui/src/contracts/ws_payload_schema.generated.ts",
     "apps/ui/src/contracts/ws_payload_schema.json",
-    "apps/ui/src/contracts/ws_payload_types.ts",
-    "apps/ui/src/generated/http_api_contracts.ts",
     "docs/protocol.md",
     "tools/config/generate_contract_reference_doc.py",
     "tools/config/generate_ui_shared_constants.py",

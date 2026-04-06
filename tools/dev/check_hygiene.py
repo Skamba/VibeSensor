@@ -144,6 +144,7 @@ _UI_FRONTEND_BOUNDARY_IMPORTERS: dict[str, frozenset[str]] = {
         {"apps/ui/src/ws_payload_validator.ts"}
     ),
 }
+_UI_OPTIONAL_GENERATED_TARGETS = frozenset(_UI_FRONTEND_BOUNDARY_IMPORTERS)
 
 _RUNTIME_SUPPORT_MATRIX_PATH = ROOT / "docs" / "runtime_support_matrix.md"
 _CONTRIBUTING_PATH = ROOT / "CONTRIBUTING.md"
@@ -153,6 +154,12 @@ _SERVER_README_PATH = ROOT / "apps" / "server" / "README.md"
 _UI_PACKAGE_JSON_PATH = ROOT / "apps" / "ui" / "package.json"
 _IMAGE_VALIDATION_PATH = (
     ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "image_validation.sh"
+)
+_UI_DERIVATIVE_GENERATED_ARTIFACTS = (
+    "apps/ui/src/constants.ts",
+    "apps/ui/src/generated/http_api_contracts.ts",
+    "apps/ui/src/contracts/ws_payload_schema.generated.ts",
+    "apps/ui/src/contracts/ws_payload_types.ts",
 )
 
 _NATIVE_RUNTIME_ROW = "Native development, local tooling, and simulator runs"
@@ -321,6 +328,10 @@ def _resolve_ui_local_import(source_path: Path, specifier: str) -> Path | None:
     for candidate in candidates:
         if candidate.exists():
             return candidate
+        if candidate.is_relative_to(ROOT):
+            candidate_rel = str(candidate.relative_to(ROOT))
+            if candidate_rel in _UI_OPTIONAL_GENERATED_TARGETS:
+                return candidate
     return None
 
 
@@ -852,6 +863,8 @@ def check_contract_sync_entrypoint() -> list[str]:
             )
 
     makefile_text = (ROOT / "Makefile").read_text(encoding="utf-8")
+    gitignore_text = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    tracked_paths = {str(path.relative_to(ROOT)) for path in _git_tracked_files()}
     expected_make_command = 'cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:contracts $(if $(CHECK),-- --check,)'
     if expected_make_command not in makefile_text:
         errors.append(
@@ -861,6 +874,13 @@ def check_contract_sync_entrypoint() -> list[str]:
         errors.append(
             "Makefile regen-contracts target must stay a thin alias to sync-contracts."
         )
+    for rel_path in _UI_DERIVATIVE_GENERATED_ARTIFACTS:
+        if rel_path in tracked_paths and (ROOT / rel_path).exists():
+            errors.append(
+                f"{rel_path} must stay out of git; regenerate it locally from the authoritative contract inputs instead."
+            )
+        if rel_path not in gitignore_text:
+            errors.append(f".gitignore must ignore {rel_path}.")
 
     workflow = _load_ci_workflow()
     jobs = workflow.get("jobs")

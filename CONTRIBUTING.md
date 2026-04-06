@@ -168,7 +168,8 @@ full key-by-key runtime config reference.
 The contract-sync flow lives in
 [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync). Use that
 section for what `make sync-contracts` regenerates (including
-`apps/ui/src/constants.ts`) and what to do when CI reports contract drift.
+the locally generated derivative UI artifacts) and what to do when CI reports
+contract drift.
 
 ## Common failure cases
 

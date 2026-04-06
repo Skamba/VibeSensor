@@ -44,10 +44,10 @@ def test_frontend_only_changes_run_frontend_and_release_checks() -> None:
     assert selection.firmware_native_tests is False
 
 
-def test_generated_contract_artifact_changes_run_frontend_and_contract_drift() -> None:
+def test_authoritative_contract_input_changes_run_frontend_and_contract_drift() -> None:
     module = _load_ci_path_rules_module()
 
-    selection = module.workflow_job_selection(("apps/ui/src/constants.ts",))
+    selection = module.workflow_job_selection(("apps/ui/src/contracts/http_api_schema.json",))
     assert selection.repo_hygiene is True
     assert selection.backend_contract_drift is True
     assert selection.frontend_typecheck is True
