@@ -10,8 +10,57 @@ permissions:
   contents: read
 
 jobs:
-  backend-quality:
-    name: Backend quality (lint + preflight)
+  backend-lint:
+    name: Backend lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-backend
+
+      - name: Ruff check
+        run: python -m ruff check apps/server/vibesensor apps/server/tests tools
+
+      - name: Ruff format check
+        run: python -m ruff format --check apps/server/vibesensor apps/server/tests tools
+
+  repo-hygiene:
+    name: Repo hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-backend
+
+      - name: Repo hygiene checks
+        run: python tools/dev/check_hygiene.py
+
+  backend-static-guards:
+    name: Backend static guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-backend
+
+      - name: Backend static guard checks
+        working-directory: apps/server
+        run: python ../../tools/dev/verify_backend_static_guards.py
+
+  backend-preflight:
+    name: Backend preflight
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -25,8 +74,47 @@ jobs:
       - name: Validate dependency consistency
         run: python -m pip check
 
-      - name: Backend quality checks
-        run: make lint
+      - name: Config preflight (dev)
+        run: python -m vibesensor.cli.preflight apps/server/config.dev.yaml
+
+      - name: Config preflight (docker)
+        run: python -m vibesensor.cli.preflight apps/server/config.docker.yaml
+
+      - name: Config preflight (pi)
+        run: python -m vibesensor.cli.preflight apps/server/config.pi.yaml
+
+  docs-lint:
+    name: Docs lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-backend
+
+      - name: Docs lint
+        run: python tools/dev/docs_lint.py
+
+  backend-contract-drift:
+    name: Backend contract drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-backend
+
+      - name: WS schema sync check
+        run: python -m vibesensor.cli.ws_schema_export --check
+
+      - name: HTTP API schema sync check
+        run: python -m vibesensor.cli.http_api_schema_export --check
 
   backend-typecheck:
     name: Backend type check
@@ -116,7 +204,12 @@ jobs:
   release-smoke:
     name: Release smoke
     needs:
-      - backend-quality
+      - backend-lint
+      - repo-hygiene
+      - backend-static-guards
+      - backend-preflight
+      - docs-lint
+      - backend-contract-drift
       - backend-typecheck
       - frontend-typecheck
     runs-on: ubuntu-latest
@@ -145,7 +238,12 @@ jobs:
   firmware-native-tests:
     name: Firmware native tests
     needs:
-      - backend-quality
+      - backend-lint
+      - repo-hygiene
+      - backend-static-guards
+      - backend-preflight
+      - docs-lint
+      - backend-contract-drift
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

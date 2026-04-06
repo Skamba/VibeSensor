@@ -225,7 +225,12 @@ act -l -W .github/workflows/ci.yml
 act -W .github/workflows/ci.yml
 
 # Run a single job
-act -j backend-quality -W .github/workflows/ci.yml
+act -j backend-lint -W .github/workflows/ci.yml
+act -j repo-hygiene -W .github/workflows/ci.yml
+act -j backend-static-guards -W .github/workflows/ci.yml
+act -j backend-preflight -W .github/workflows/ci.yml
+act -j docs-lint -W .github/workflows/ci.yml
+act -j backend-contract-drift -W .github/workflows/ci.yml
 act -j backend-typecheck -W .github/workflows/ci.yml
 act -j frontend-typecheck -W .github/workflows/ci.yml
 act -j backend-tests -W .github/workflows/ci.yml
@@ -244,7 +249,7 @@ prerequisites and passes arguments through to `act`:
 ```bash
 ./tools/tests/run_ci_with_act.sh -l               # list jobs
 ./tools/tests/run_ci_with_act.sh                   # run all CI jobs
-./tools/tests/run_ci_with_act.sh -j backend-quality  # run one job
+./tools/tests/run_ci_with_act.sh -j backend-lint  # run one job
 ```
 
 ### Secrets
@@ -257,7 +262,12 @@ No secrets are currently required. If needed in the future, copy
 
 | Job | Status | Notes |
 |---|---|---|
-| `backend-quality` | ✅ Fully supported | — |
+| `backend-lint` | ✅ Fully supported | — |
+| `repo-hygiene` | ✅ Fully supported | — |
+| `backend-static-guards` | ✅ Fully supported | — |
+| `backend-preflight` | ✅ Fully supported | — |
+| `docs-lint` | ✅ Fully supported | — |
+| `backend-contract-drift` | ✅ Fully supported | — |
 | `backend-typecheck` | ✅ Fully supported | — |
 | `frontend-typecheck` | ✅ Fully supported | — |
 | `ui-smoke` | ✅ Fully supported | — |
@@ -304,7 +314,12 @@ Coverage guidance:
 The default CI-parity suite now derives these blocking GitHub checks from the
 workflow-backed CI manifest:
 
-- `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, backend static guards, docs lint, WS schema sync, and HTTP API schema sync.
+- `backend-lint`: Ruff lint and formatter drift checks for backend and tooling Python code.
+- `repo-hygiene`: line endings plus repo/path/runtime/CI hygiene checks.
+- `backend-static-guards`: backend layer and import-boundary static guards.
+- `backend-preflight`: dependency consistency plus config preflight validation for dev, docker, and pi configs.
+- `docs-lint`: docs misuse and markdown-link validation.
+- `backend-contract-drift`: WS schema and HTTP API contract drift checks.
 - `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
