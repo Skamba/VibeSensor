@@ -111,7 +111,7 @@ build_app_artifacts() {
 
   (
     cd "${build_root}"
-    python3 -m venv .build-venv
+    "${VS_PYTHON_BIN}" -m venv .build-venv
     ./.build-venv/bin/pip install --upgrade pip build >/dev/null
     ./.build-venv/bin/python -m build --wheel apps/server
   )

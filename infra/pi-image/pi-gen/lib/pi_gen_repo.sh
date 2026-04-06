@@ -64,7 +64,7 @@ esac'
     ;;
 esac'
 
-  BUILD_DOCKER="${build_docker}" STOCK_BLOCK="${stock_block}" PATCHED_BLOCK="${patched_block}" python3 - <<'PY'
+  BUILD_DOCKER="${build_docker}" STOCK_BLOCK="${stock_block}" PATCHED_BLOCK="${patched_block}" "${VS_PYTHON_BIN}" - <<'PY'
 from pathlib import Path
 import os
 import sys

@@ -26,7 +26,7 @@ require_app_prereqs() {
   require_cmd git
   require_cmd rsync
   require_cmd npm
-  require_cmd python3
+  require_cmd "${VS_PYTHON_BIN}"
 }
 
 require_image_prereqs() {
@@ -50,7 +50,7 @@ require_validation_prereqs() {
   require_cmd umount
   require_cmd awk
   require_cmd qemu-arm-static
-  require_cmd python3
+  require_cmd "${VS_PYTHON_BIN}"
 }
 
 ensure_docker_available() {

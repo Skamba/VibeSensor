@@ -7,10 +7,16 @@ inputs:
     required: false
     default: "false"
 
+outputs:
+  python-path:
+    description: Configured Python interpreter path.
+    value: ${{ steps.setup-python.outputs.python-path }}
+
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-python
+    - id: setup-python
+      uses: ./.github/actions/setup-python
 
     - name: Install dependencies
       shell: bash

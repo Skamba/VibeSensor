@@ -472,7 +472,10 @@ def _upper_bound_major(requirement_spec: str) -> int | None:
 
 
 def _normalize_python_token(token: str) -> str:
-    return "python" if Path(token).name.startswith("python") else token
+    stripped = token.strip("\"'")
+    if Path(stripped).name.startswith("python") or "python-path" in stripped:
+        return "python"
+    return token
 
 
 def _normalize_tokenized_command(tokens: list[str]) -> str:

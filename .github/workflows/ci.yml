@@ -133,10 +133,14 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
-      - uses: ./.github/actions/setup-python
+      - name: Set up configured Python runtime
+        id: setup-python
+        uses: ./.github/actions/setup-python
 
       - name: Release smoke validation
-        run: python3 tools/tests/run_release_smoke.py
+        run: >-
+          "${{ steps.setup-python.outputs.python-path }}"
+          tools/tests/run_release_smoke.py
 
   firmware-native-tests:
     name: Firmware native tests
@@ -171,7 +175,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-backend
+      - name: Set up configured backend Python runtime
+        id: setup-backend
+        uses: ./.github/actions/setup-backend
 
       - uses: actions/cache@v5
         with:
@@ -186,8 +192,10 @@ jobs:
         run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 1/5
-        run: |
-          python3 tools/tests/run_backend_parallel.py --shards 5 --shard-index 1 --junitxml artifacts/ai/logs/ci/backend-tests-1.xml
+        run: >-
+          "${{ steps.setup-backend.outputs.python-path }}"
+          tools/tests/run_backend_parallel.py --shards 5 --shard-index 1
+          --junitxml artifacts/ai/logs/ci/backend-tests-1.xml
 
       - name: Upload backend test artifacts
         if: failure()
@@ -208,7 +216,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-backend
+      - name: Set up configured backend Python runtime
+        id: setup-backend
+        uses: ./.github/actions/setup-backend
 
       - uses: actions/cache@v5
         with:
@@ -222,8 +232,10 @@ jobs:
         run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 2/5
-        run: |
-          python3 tools/tests/run_backend_parallel.py --shards 5 --shard-index 2 --junitxml artifacts/ai/logs/ci/backend-tests-2.xml
+        run: >-
+          "${{ steps.setup-backend.outputs.python-path }}"
+          tools/tests/run_backend_parallel.py --shards 5 --shard-index 2
+          --junitxml artifacts/ai/logs/ci/backend-tests-2.xml
 
       - name: Upload backend test artifacts
         if: failure()
@@ -244,7 +256,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-backend
+      - name: Set up configured backend Python runtime
+        id: setup-backend
+        uses: ./.github/actions/setup-backend
 
       - uses: actions/cache@v5
         with:
@@ -258,8 +272,10 @@ jobs:
         run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 3/5
-        run: |
-          python3 tools/tests/run_backend_parallel.py --shards 5 --shard-index 3 --junitxml artifacts/ai/logs/ci/backend-tests-3.xml
+        run: >-
+          "${{ steps.setup-backend.outputs.python-path }}"
+          tools/tests/run_backend_parallel.py --shards 5 --shard-index 3
+          --junitxml artifacts/ai/logs/ci/backend-tests-3.xml
 
       - name: Upload backend test artifacts
         if: failure()
@@ -280,7 +296,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-backend
+      - name: Set up configured backend Python runtime
+        id: setup-backend
+        uses: ./.github/actions/setup-backend
 
       - uses: actions/cache@v5
         with:
@@ -294,8 +312,10 @@ jobs:
         run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 4/5
-        run: |
-          python3 tools/tests/run_backend_parallel.py --shards 5 --shard-index 4 --junitxml artifacts/ai/logs/ci/backend-tests-4.xml
+        run: >-
+          "${{ steps.setup-backend.outputs.python-path }}"
+          tools/tests/run_backend_parallel.py --shards 5 --shard-index 4
+          --junitxml artifacts/ai/logs/ci/backend-tests-4.xml
 
       - name: Upload backend test artifacts
         if: failure()
@@ -316,7 +336,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-backend
+      - name: Set up configured backend Python runtime
+        id: setup-backend
+        uses: ./.github/actions/setup-backend
 
       - uses: actions/cache@v5
         with:
@@ -330,8 +352,10 @@ jobs:
         run: mkdir -p artifacts/ai/logs/ci
 
       - name: Backend tests shard 5/5
-        run: |
-          python3 tools/tests/run_backend_parallel.py --shards 5 --shard-index 5 --junitxml artifacts/ai/logs/ci/backend-tests-5.xml
+        run: >-
+          "${{ steps.setup-backend.outputs.python-path }}"
+          tools/tests/run_backend_parallel.py --shards 5 --shard-index 5
+          --junitxml artifacts/ai/logs/ci/backend-tests-5.xml
 
       - name: Upload backend test artifacts
         if: failure()
@@ -352,7 +376,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-backend
+      - name: Set up configured backend Python runtime
+        id: setup-backend
+        uses: ./.github/actions/setup-backend
 
       - uses: actions/cache@v5
         with:
@@ -363,7 +389,9 @@ jobs:
             ${{ runner.os }}-e2e-durations-
 
       - name: Process-backed e2e suite (skip already-owned checks)
-        run: python3 tools/tests/run_e2e_parallel.py --fast-e2e --shards 6
+        run: >-
+          "${{ steps.setup-backend.outputs.python-path }}"
+          tools/tests/run_e2e_parallel.py --fast-e2e --shards 6
 
       - name: Upload e2e failure artifacts
         if: failure()
