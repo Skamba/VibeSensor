@@ -110,5 +110,5 @@ docs-lint: ## Run docs lint without the broader lint suite
 ui-lint: ## Run UI lint checks
 	cd $(UI_DIR) && npm run lint
 
-ui-typecheck: ## Run UI-derived contract freshness, lint, and TypeScript type checking
-	cd $(UI_DIR) && npm run check:contracts && npm run lint && npm run typecheck
+ui-typecheck: ## Materialize UI-derived contracts, then run lint and TypeScript type checking
+	cd $(UI_DIR) && npm run sync:generated-contracts && npm run lint && npm run typecheck

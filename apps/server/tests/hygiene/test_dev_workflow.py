@@ -43,7 +43,7 @@ def _write_fake_npm(bin_dir: Path) -> None:
                 "log_path = Path(os.environ['FAKE_NPM_LOG'])",
                 "with log_path.open('a', encoding='utf-8') as handle:",
                 "    handle.write(' '.join(sys.argv[1:]) + '\\n')",
-                "if sys.argv[1:3] == ['run', 'check:contracts'] and "
+                "if sys.argv[1:3] == ['run', 'sync:generated-contracts'] and "
                 "os.environ.get('FAKE_CONTRACTS_FAIL') == '1':",
                 "    sys.exit(17)",
                 "sys.exit(0)",
@@ -152,7 +152,7 @@ def test_dev_docker_runs_npm_ci_and_marks_lock_hash_when_node_modules_missing(
     assert result.returncode == 0
     assert commands == [
         "ci",
-        "run check:contracts",
+        "run sync:generated-contracts",
         "run dev -- --host 0.0.0.0 --port 5173",
     ]
     assert (ui_dir / ".npm-ci-lock.sha256").read_text(encoding="utf-8").strip() == hashlib.sha256(
@@ -172,7 +172,7 @@ def test_dev_docker_reinstalls_when_lock_hash_is_stale(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert commands == [
         "ci",
-        "run check:contracts",
+        "run sync:generated-contracts",
         "run dev -- --host 0.0.0.0 --port 5173",
     ]
     assert (ui_dir / ".npm-ci-lock.sha256").read_text(encoding="utf-8").strip() == hashlib.sha256(
@@ -195,12 +195,12 @@ def test_dev_docker_skips_npm_ci_when_lock_hash_is_current(tmp_path: Path) -> No
 
     assert result.returncode == 0
     assert commands == [
-        "run check:contracts",
+        "run sync:generated-contracts",
         "run dev -- --host 0.0.0.0 --port 5173",
     ]
 
 
-def test_dev_docker_fails_fast_when_contracts_are_stale(tmp_path: Path) -> None:
+def test_dev_docker_fails_fast_when_contract_regeneration_fails(tmp_path: Path) -> None:
     ui_dir, package_lock = _prepare_ui_workspace(
         tmp_path,
         create_node_modules=True,
@@ -213,5 +213,5 @@ def test_dev_docker_fails_fast_when_contracts_are_stale(tmp_path: Path) -> None:
     result, commands = _run_dev_docker_script(ui_dir, tmp_path, fail_contracts=True)
 
     assert result.returncode == 17
-    assert commands == ["run check:contracts"]
+    assert commands == ["run sync:generated-contracts"]
     assert "make sync-contracts" in result.stderr
