@@ -38,7 +38,9 @@ jobs:
           cache: npm
           cache-dependency-path: apps/ui/package-lock.json
 
-      - uses: ./.github/actions/setup-python
+      - name: Set up configured Python runtime
+        id: setup-python
+        uses: ./.github/actions/setup-python
 
       - name: Install Pi image build prerequisites
         shell: bash
@@ -49,6 +51,8 @@ jobs:
 
       - name: Build Pi image
         shell: bash
+        env:
+          VS_PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}
         run: |
           set -euo pipefail
           ./infra/pi-image/pi-gen/build.sh
