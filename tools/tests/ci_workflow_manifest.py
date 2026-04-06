@@ -1,0 +1,259 @@
+#!/usr/bin/env python3
+"""Shared adapter over the authoritative CI workflow job surface."""
+
+from __future__ import annotations
+
+import re
+import shlex
+from collections.abc import Collection, Mapping
+from dataclasses import dataclass
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[2]
+_CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
+_INSTALL_STEP_NAMES = frozenset(
+    {
+        "Install dependencies",
+        "Install PlatformIO dependencies",
+        "Install UI dependencies",
+    }
+)
+_CI_LITE_EXCLUDED_JOBS = frozenset({"e2e"})
+_PYTHON_PATH_TOKENS = frozenset(
+    {
+        "${{ steps.setup-backend.outputs.python-path }}",
+        "${{ steps.setup-python.outputs.python-path }}",
+    }
+)
+_ACTION_INPUT_EQ_RE = re.compile(
+    r"^\${{\s*inputs\.([A-Za-z0-9_-]+)\s*==\s*'([^']+)'\s*}}$"
+)
+
+
+@dataclass(frozen=True)
+class RunnableCommandSpec:
+    label: str
+    command: str
+
+
+@dataclass(frozen=True)
+class CiWorkflowStep:
+    name: str
+    commands: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CiWorkflowJob:
+    job_name: str
+    steps: tuple[CiWorkflowStep, ...]
+
+    def commands_named(self, names: Collection[str]) -> tuple[str, ...]:
+        commands: list[str] = []
+        for step in self.steps:
+            if step.name in names:
+                commands.extend(step.commands)
+        return tuple(commands)
+
+    @property
+    def requires_platformio(self) -> bool:
+        return any(
+            step.name == "Install PlatformIO dependencies" for step in self.steps
+        )
+
+    def local_runnable_steps(self, python_cmd: str) -> tuple[RunnableCommandSpec, ...]:
+        specs: list[RunnableCommandSpec] = []
+        for step in self.steps:
+            if step.name in _INSTALL_STEP_NAMES:
+                continue
+            for command in step.commands:
+                specs.append(
+                    RunnableCommandSpec(
+                        label=step.name,
+                        command=_replace_python_placeholders(command, python_cmd),
+                    )
+                )
+        return tuple(specs)
+
+
+def _load_yaml_mapping(path: Path) -> dict[str, object]:
+    loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def _normalize_tokenized_command(tokens: list[str]) -> str:
+    return shlex.join(tokens)
+
+
+def _normalize_shell_command(command: str) -> str:
+    tokens = shlex.split(command)
+    if "&&" not in tokens:
+        return _normalize_tokenized_command(tokens)
+
+    parts: list[str] = []
+    current: list[str] = []
+    for token in tokens:
+        if token == "&&":
+            if current:
+                parts.append(_normalize_tokenized_command(current))
+                current = []
+            continue
+        current.append(token)
+    if current:
+        parts.append(_normalize_tokenized_command(current))
+    return " && ".join(parts)
+
+
+def _normalize_env(env: Mapping[str, object] | None) -> str:
+    if not env:
+        return ""
+    parts = [f"{key}={env[key]}" for key in sorted(env)]
+    return f"env {' '.join(parts)} "
+
+
+def _normalize_ci_step_commands(step: Mapping[str, object]) -> tuple[str, ...]:
+    run = step.get("run")
+    if not isinstance(run, str):
+        return ()
+    working_directory = step.get("working-directory")
+    cwd_prefix = ""
+    if isinstance(working_directory, str) and working_directory:
+        cwd_prefix = f"cd {working_directory} && "
+    env_prefix = _normalize_env(
+        step.get("env") if isinstance(step.get("env"), Mapping) else None
+    )
+    lines = [raw_line.strip() for raw_line in run.splitlines() if raw_line.strip()]
+    line_cwd_prefix = ""
+    if lines and lines[0].startswith("cd ") and "&&" not in lines[0] and len(lines) > 1:
+        line_cwd_prefix = f"{_normalize_shell_command(lines[0])} && "
+        lines = lines[1:]
+
+    commands: list[str] = []
+    for line in lines:
+        commands.append(
+            f"{cwd_prefix}{line_cwd_prefix}{env_prefix}{_normalize_shell_command(line)}"
+        )
+    return tuple(commands)
+
+
+def _local_action_file(action_ref: str) -> Path | None:
+    if not action_ref.startswith("./"):
+        return None
+    action_file = ROOT / action_ref.removeprefix("./") / "action.yml"
+    return action_file if action_file.exists() else None
+
+
+def _resolved_action_inputs(
+    action: Mapping[str, object], raw_with: Mapping[str, object] | None
+) -> dict[str, str]:
+    resolved: dict[str, str] = {}
+    raw_inputs = action.get("inputs")
+    if isinstance(raw_inputs, Mapping):
+        for input_name, input_spec in raw_inputs.items():
+            if not isinstance(input_name, str):
+                continue
+            default = ""
+            if isinstance(input_spec, Mapping):
+                raw_default = input_spec.get("default")
+                if raw_default is not None:
+                    default = str(raw_default)
+            resolved[input_name] = default
+    if raw_with is not None:
+        for input_name, value in raw_with.items():
+            if isinstance(input_name, str) and value is not None:
+                resolved[input_name] = str(value)
+    return resolved
+
+
+def _action_step_enabled(step: Mapping[str, object], inputs: Mapping[str, str]) -> bool:
+    raw_if = step.get("if")
+    if not isinstance(raw_if, str):
+        return True
+    match = _ACTION_INPUT_EQ_RE.fullmatch(raw_if.strip())
+    if match is None:
+        return True
+    input_name, expected_value = match.groups()
+    return inputs.get(input_name, "") == expected_value
+
+
+def _normalized_ci_steps(raw_step: Mapping[str, object]) -> tuple[CiWorkflowStep, ...]:
+    run = raw_step.get("run")
+    if isinstance(run, str):
+        return (
+            CiWorkflowStep(
+                name=str(raw_step.get("name", "")),
+                commands=_normalize_ci_step_commands(raw_step),
+            ),
+        )
+
+    uses = raw_step.get("uses")
+    if not isinstance(uses, str):
+        return ()
+    action_file = _local_action_file(uses)
+    if action_file is None:
+        return ()
+    action = _load_yaml_mapping(action_file)
+    runs = action.get("runs")
+    if not isinstance(runs, Mapping):
+        return ()
+    raw_steps = runs.get("steps")
+    if not isinstance(raw_steps, list):
+        return ()
+    raw_with = raw_step.get("with")
+    action_inputs = _resolved_action_inputs(
+        action, raw_with if isinstance(raw_with, Mapping) else None
+    )
+    normalized_steps: list[CiWorkflowStep] = []
+    for action_step in raw_steps:
+        if not isinstance(action_step, Mapping):
+            continue
+        if not _action_step_enabled(action_step, action_inputs):
+            continue
+        normalized_steps.extend(_normalized_ci_steps(action_step))
+    return tuple(normalized_steps)
+
+
+def _replace_python_placeholders(command: str, python_cmd: str) -> str:
+    tokens = shlex.split(command)
+    replaced = [
+        python_cmd if token in _PYTHON_PATH_TOKENS else token for token in tokens
+    ]
+    return _normalize_shell_command(" ".join(shlex.quote(token) for token in replaced))
+
+
+def ci_workflow_jobs() -> dict[str, CiWorkflowJob]:
+    workflow = _load_yaml_mapping(_CI_WORKFLOW)
+    jobs = workflow.get("jobs")
+    if not isinstance(jobs, Mapping):
+        return {}
+
+    result: dict[str, CiWorkflowJob] = {}
+    for job_name, job_body in jobs.items():
+        if not isinstance(job_name, str) or not isinstance(job_body, Mapping):
+            continue
+        raw_steps = job_body.get("steps")
+        if not isinstance(raw_steps, list):
+            continue
+        normalized_steps: list[CiWorkflowStep] = []
+        for raw_step in raw_steps:
+            if not isinstance(raw_step, Mapping):
+                continue
+            normalized_steps.extend(_normalized_ci_steps(raw_step))
+        result[job_name] = CiWorkflowJob(
+            job_name=job_name,
+            steps=tuple(normalized_steps),
+        )
+    return result
+
+
+def all_job_names() -> tuple[str, ...]:
+    return tuple(ci_workflow_jobs())
+
+
+def ci_lite_job_names() -> tuple[str, ...]:
+    return tuple(
+        job_name
+        for job_name in ci_workflow_jobs()
+        if job_name not in _CI_LITE_EXCLUDED_JOBS
+    )

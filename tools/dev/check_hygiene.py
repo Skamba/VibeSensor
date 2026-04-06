@@ -88,7 +88,6 @@ def check_path_indirections() -> tuple[list[str], list[str]]:
     return pointer_files, python_path_hacks
 
 
-_MIRRORED_UI_INSTALL_JOBS = ("frontend-typecheck", "ui-smoke")
 _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-1",
     "backend-tests-2",
@@ -103,14 +102,10 @@ _MIRRORED_BACKEND_INSTALL_JOBS = (
     "e2e",
 )
 _FIRMWARE_INSTALL_JOB = "firmware-native-tests"
-_CI_LITE_EXCLUDED_JOBS = ("e2e",)
 _LOCAL_PYTHON_SETUP_ACTION = "./.github/actions/setup-python"
 _LOCAL_BACKEND_SETUP_ACTION = "./.github/actions/setup-backend"
 _DOCKER_NODE_RE = re.compile(r"^FROM node:(\S+) AS ui-build$", re.MULTILINE)
 _DOCKER_PYTHON_RE = re.compile(r"^FROM python:(\S+)$", re.MULTILINE)
-_ACTION_INPUT_EQ_RE = re.compile(
-    r"^\${{\s*inputs\.([A-Za-z0-9_-]+)\s*==\s*'([^']+)'\s*}}$"
-)
 _UI_SOURCE_SUFFIXES = {".ts", ".tsx", ".js", ".mjs"}
 _UI_FRONTEND_BOUNDARY_IMPORTERS: dict[str, frozenset[str]] = {
     "apps/ui/src/generated/http_api_contracts.ts": frozenset(
@@ -184,6 +179,19 @@ def _load_action_steps(path: Path) -> list[object]:
 def _load_ci_parallel_module():
     module_path = ROOT / "tools" / "tests" / "run_ci_parallel.py"
     spec = importlib.util.spec_from_file_location("ci_parallel_local", module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_ci_manifest_module():
+    module_path = ROOT / "tools" / "tests" / "ci_workflow_manifest.py"
+    spec = importlib.util.spec_from_file_location(
+        "ci_workflow_manifest_local", module_path
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load {module_path}")
     module = importlib.util.module_from_spec(spec)
@@ -372,22 +380,6 @@ def check_frontend_dom_registry_guardrails() -> list[str]:
                 )
                 break
     return errors
-
-
-def _makefile_job_list(var_name: str) -> list[str]:
-    text = (ROOT / "Makefile").read_text(encoding="utf-8")
-    match = re.search(rf"^{re.escape(var_name)}\s*[:+?]?=\s*(.+)$", text, re.MULTILINE)
-    if match is None:
-        return []
-    tokens = shlex.split(match.group(1))
-    jobs: list[str] = []
-    index = 0
-    while index < len(tokens):
-        if tokens[index] != "--job" or index + 1 >= len(tokens):
-            return []
-        jobs.append(tokens[index + 1])
-        index += 2
-    return jobs
 
 
 def _load_server_pyproject() -> dict[str, object]:
@@ -621,130 +613,6 @@ def _normalize_env(env: Mapping[str, object] | None) -> str:
     return f"env {' '.join(parts)} "
 
 
-def _normalize_ci_step_commands(step: Mapping[str, object]) -> list[str]:
-    run = step.get("run")
-    if not isinstance(run, str):
-        return []
-    working_directory = step.get("working-directory")
-    cwd_prefix = ""
-    if isinstance(working_directory, str) and working_directory:
-        cwd_prefix = f"cd {working_directory} && "
-    env_prefix = _normalize_env(
-        step.get("env") if isinstance(step.get("env"), Mapping) else None
-    )
-    lines = [raw_line.strip() for raw_line in run.splitlines() if raw_line.strip()]
-    line_cwd_prefix = ""
-    if lines and lines[0].startswith("cd ") and "&&" not in lines[0] and len(lines) > 1:
-        line_cwd_prefix = f"{_normalize_shell_command(lines[0])} && "
-        lines = lines[1:]
-
-    commands: list[str] = []
-    for line in lines:
-        commands.append(
-            f"{cwd_prefix}{line_cwd_prefix}{env_prefix}{_normalize_shell_command(line)}"
-        )
-    return commands
-
-
-def _local_action_file(action_ref: str) -> Path | None:
-    if not action_ref.startswith("./"):
-        return None
-    action_file = ROOT / action_ref.removeprefix("./") / "action.yml"
-    return action_file if action_file.exists() else None
-
-
-def _resolved_action_inputs(
-    action: Mapping[str, object], raw_with: Mapping[str, object] | None
-) -> dict[str, str]:
-    resolved: dict[str, str] = {}
-    raw_inputs = action.get("inputs")
-    if isinstance(raw_inputs, Mapping):
-        for input_name, input_spec in raw_inputs.items():
-            if not isinstance(input_name, str):
-                continue
-            default = ""
-            if isinstance(input_spec, Mapping):
-                raw_default = input_spec.get("default")
-                if raw_default is not None:
-                    default = str(raw_default)
-            resolved[input_name] = default
-    if raw_with is not None:
-        for input_name, value in raw_with.items():
-            if isinstance(input_name, str) and value is not None:
-                resolved[input_name] = str(value)
-    return resolved
-
-
-def _action_step_enabled(step: Mapping[str, object], inputs: Mapping[str, str]) -> bool:
-    raw_if = step.get("if")
-    if not isinstance(raw_if, str):
-        return True
-    match = _ACTION_INPUT_EQ_RE.fullmatch(raw_if.strip())
-    if match is None:
-        return True
-    input_name, expected_value = match.groups()
-    return inputs.get(input_name, "") == expected_value
-
-
-def _normalized_ci_steps(raw_step: Mapping[str, object]) -> list[dict[str, object]]:
-    run = raw_step.get("run")
-    if isinstance(run, str):
-        return [
-            {
-                "name": raw_step.get("name", ""),
-                "commands": _normalize_ci_step_commands(raw_step),
-            }
-        ]
-
-    uses = raw_step.get("uses")
-    if not isinstance(uses, str):
-        return []
-    action_file = _local_action_file(uses)
-    if action_file is None:
-        return []
-    action = _load_yaml_mapping(action_file)
-    runs = action.get("runs")
-    if not isinstance(runs, Mapping):
-        return []
-    raw_steps = runs.get("steps")
-    if not isinstance(raw_steps, list):
-        return []
-    raw_with = raw_step.get("with")
-    action_inputs = _resolved_action_inputs(
-        action, raw_with if isinstance(raw_with, Mapping) else None
-    )
-    normalized_steps: list[dict[str, object]] = []
-    for action_step in raw_steps:
-        if not isinstance(action_step, Mapping):
-            continue
-        if not _action_step_enabled(action_step, action_inputs):
-            continue
-        normalized_steps.extend(_normalized_ci_steps(action_step))
-    return normalized_steps
-
-
-def _ci_run_steps_by_job() -> dict[str, list[dict[str, object]]]:
-    workflow = _load_ci_workflow()
-    jobs = workflow.get("jobs")
-    if not isinstance(jobs, Mapping):
-        return {}
-
-    result: dict[str, list[dict[str, object]]] = {}
-    for job_name, job_body in jobs.items():
-        if not isinstance(job_name, str) or not isinstance(job_body, Mapping):
-            continue
-        raw_steps = job_body.get("steps")
-        if not isinstance(raw_steps, list):
-            continue
-        normalized_steps: list[dict[str, object]] = []
-        for raw_step in raw_steps:
-            if not isinstance(raw_step, Mapping):
-                continue
-            normalized_steps.extend(_normalized_ci_steps(raw_step))
-        result[job_name] = normalized_steps
-    return result
-
-
 def _normalize_local_step(step) -> str:
     cwd_prefix = ""
     if step.cwd != ROOT:
@@ -804,58 +672,63 @@ def _pip_install_markers(commands: list[str]) -> set[str]:
     return markers
 
 
-def _ci_commands_named(steps: list[dict[str, object]], names: set[str]) -> list[str]:
-    collected: list[str] = []
-    for step in steps:
-        if step.get("name") not in names:
-            continue
-        commands = step.get("commands")
-        if isinstance(commands, list):
-            collected.extend(str(command) for command in commands)
-    return collected
-
-
 def check_ci_job_sync() -> list[str]:
-    """Verify run_ci_parallel.py job names match ci.yml job names."""
-    ci_yml = ROOT / ".github" / "workflows" / "ci.yml"
+    """Verify run_ci_parallel.py exposes every workflow-backed manifest job."""
+    manifest_py = ROOT / "tools" / "tests" / "ci_workflow_manifest.py"
     parallel_py = ROOT / "tools" / "tests" / "run_ci_parallel.py"
     errors: list[str] = []
-    if not ci_yml.exists() or not parallel_py.exists():
+    if not manifest_py.exists() or not parallel_py.exists():
         return errors
 
-    ci_jobs = set(_ci_run_steps_by_job())
-    parallel_jobs = set(_local_runner_commands()[0])
+    ci_jobs = list(_load_ci_manifest_module().all_job_names())
+    parallel_jobs = list(_local_runner_commands()[0])
 
-    only_ci = ci_jobs - parallel_jobs
-    only_parallel = parallel_jobs - ci_jobs
+    only_ci = set(ci_jobs) - set(parallel_jobs)
+    only_parallel = set(parallel_jobs) - set(ci_jobs)
     if only_ci:
-        errors.append(f"CI jobs not mirrored in run_ci_parallel.py: {sorted(only_ci)}")
+        errors.append(
+            f"Workflow manifest jobs missing from run_ci_parallel.py: {sorted(only_ci)}"
+        )
     if only_parallel:
-        errors.append(f"run_ci_parallel.py jobs not in ci.yml: {sorted(only_parallel)}")
+        errors.append(
+            f"run_ci_parallel.py exposes jobs not present in the workflow manifest: {sorted(only_parallel)}"
+        )
     return errors
 
 
 def check_ci_command_sync() -> list[str]:
-    """Verify mirrored CI run commands stay aligned with run_ci_parallel.py."""
-    ci_steps = _ci_run_steps_by_job()
+    """Verify local runner commands translate the shared workflow manifest correctly."""
+    manifest_jobs = _load_ci_manifest_module().ci_workflow_jobs()
     local_jobs, common_bootstrap, firmware_bootstrap = _local_runner_commands()
     errors: list[str] = []
 
     common_backend_markers = _pip_install_markers(common_bootstrap[:2])
-    for job_name in _MIRRORED_BACKEND_INSTALL_JOBS:
-        install_commands = _ci_commands_named(
-            ci_steps.get(job_name, []), {"Install dependencies"}
+    backend_install_jobs = [
+        job_name
+        for job_name, job in manifest_jobs.items()
+        if job.commands_named({"Install dependencies"})
+        and not job.commands_named({"Install UI dependencies"})
+        and not job.requires_platformio
+    ]
+    for job_name in backend_install_jobs:
+        install_commands = list(
+            manifest_jobs[job_name].commands_named({"Install dependencies"})
         )
         if _pip_install_markers(install_commands) != common_backend_markers:
             errors.append(
-                f"{job_name} install commands drifted from local bootstrap: "
+                f"{job_name} backend install commands drifted from local bootstrap: "
                 f"ci={install_commands!r} local={common_bootstrap[:2]!r}"
             )
 
     ui_bootstrap_commands = common_bootstrap[2:]
-    for job_name in _MIRRORED_UI_INSTALL_JOBS:
-        install_commands = _ci_commands_named(
-            ci_steps.get(job_name, []), {"Install UI dependencies"}
+    ui_install_jobs = [
+        job_name
+        for job_name, job in manifest_jobs.items()
+        if job.commands_named({"Install UI dependencies"})
+    ]
+    for job_name in ui_install_jobs:
+        install_commands = list(
+            manifest_jobs[job_name].commands_named({"Install UI dependencies"})
         )
         if install_commands != ui_bootstrap_commands:
             errors.append(
@@ -863,56 +736,65 @@ def check_ci_command_sync() -> list[str]:
                 f"ci={install_commands!r} local={ui_bootstrap_commands!r}"
             )
 
-    firmware_install_commands = _ci_commands_named(
-        ci_steps.get(_FIRMWARE_INSTALL_JOB, []),
-        {"Install dependencies", "Install PlatformIO dependencies"},
-    )
-    if _pip_install_markers(firmware_install_commands) != _pip_install_markers(
-        firmware_bootstrap[:3]
-    ):
-        errors.append(
-            f"{_FIRMWARE_INSTALL_JOB} install commands drifted from local bootstrap: "
-            f"ci={firmware_install_commands!r} local={firmware_bootstrap[:3]!r}"
+    firmware_jobs = [
+        job_name for job_name, job in manifest_jobs.items() if job.requires_platformio
+    ]
+    for job_name in firmware_jobs:
+        firmware_install_commands = list(
+            manifest_jobs[job_name].commands_named(
+                {"Install dependencies", "Install PlatformIO dependencies"}
+            )
         )
+        if _pip_install_markers(firmware_install_commands) != _pip_install_markers(
+            firmware_bootstrap[:3]
+        ):
+            errors.append(
+                f"{job_name} install commands drifted from local bootstrap: "
+                f"ci={firmware_install_commands!r} local={firmware_bootstrap[:3]!r}"
+            )
 
-    install_step_names = {
-        "Install dependencies",
-        "Install PlatformIO dependencies",
-        "Install UI dependencies",
-    }
-    for job_name, steps in ci_steps.items():
-        expected_commands: list[str] = []
-        for step in steps:
-            if step.get("name") in install_step_names:
-                continue
-            commands = step.get("commands")
-            if isinstance(commands, list):
-                expected_commands.extend(str(command) for command in commands)
+    for job_name, job in manifest_jobs.items():
+        expected_commands = [
+            _normalize_shell_command(spec.command)
+            for spec in job.local_runnable_steps(sys.executable)
+        ]
         local_commands = local_jobs.get(job_name, [])
         if expected_commands != local_commands:
             errors.append(
-                f"{job_name} run commands drifted from run_ci_parallel.py: "
+                f"{job_name} run commands drifted from the workflow manifest: "
                 f"ci={expected_commands!r} local={local_commands!r}"
             )
 
     return errors
 
 
+def _makefile_ci_lite_status() -> tuple[bool, bool]:
+    text = (ROOT / "Makefile").read_text(encoding="utf-8")
+    legacy_var_present = "CI_LITE_JOBS :=" in text or "CI_LITE_JOBS:=" in text
+    uses_ci_lite_flag = "tools/tests/run_ci_parallel.py --ci-lite" in text
+    return legacy_var_present, uses_ci_lite_flag
+
+
 def check_ci_lite_job_sync() -> list[str]:
-    """Verify Makefile CI_LITE_JOBS tracks the non-Docker CI job subset."""
-    ci_jobs = list(_ci_run_steps_by_job())
-    expected = [
-        job_name for job_name in ci_jobs if job_name not in _CI_LITE_EXCLUDED_JOBS
-    ]
-    actual = _makefile_job_list("CI_LITE_JOBS")
-    if not actual:
-        return ["Makefile CI_LITE_JOBS is missing or unparsable."]
-    if actual == expected:
-        return []
-    return [
-        "Makefile CI_LITE_JOBS drifted from the non-Docker CI subset: "
-        f"expected={expected!r} actual={actual!r}"
-    ]
+    """Verify CI-lite entrypoints derive from the shared workflow manifest."""
+    manifest = _load_ci_manifest_module()
+    ci_parallel = _load_ci_parallel_module()
+    expected = list(manifest.ci_lite_job_names())
+    actual = list(ci_parallel.CI_LITE_JOB_NAMES)
+    errors: list[str] = []
+    if actual != expected:
+        errors.append(
+            "run_ci_parallel.py CI-lite jobs drifted from the workflow manifest: "
+            f"expected={expected!r} actual={actual!r}"
+        )
+    legacy_var_present, uses_ci_lite_flag = _makefile_ci_lite_status()
+    if legacy_var_present:
+        errors.append("Makefile must not define a mirrored CI_LITE_JOBS variable.")
+    if not uses_ci_lite_flag:
+        errors.append(
+            "Makefile test-ci-lite must invoke tools/tests/run_ci_parallel.py --ci-lite."
+        )
+    return errors
 
 
 def check_docker_ci_dependency_hygiene() -> list[str]:
@@ -1710,7 +1592,9 @@ def main() -> int:
             print(f"  - {item}")
         failures += 1
     else:
-        print("CI job names in sync between ci.yml and run_ci_parallel.py.")
+        print(
+            "CI job names in sync between the workflow manifest and run_ci_parallel.py."
+        )
 
     ci_command_sync_errors = check_ci_command_sync()
     if ci_command_sync_errors:
@@ -1719,7 +1603,9 @@ def main() -> int:
             print(f"  - {item}")
         failures += 1
     else:
-        print("CI commands in sync between ci.yml and run_ci_parallel.py.")
+        print(
+            "CI commands in sync between the workflow manifest and run_ci_parallel.py."
+        )
 
     ci_lite_sync_errors = check_ci_lite_job_sync()
     if ci_lite_sync_errors:
@@ -1728,7 +1614,7 @@ def main() -> int:
             print(f"  - {item}")
         failures += 1
     else:
-        print("Makefile CI_LITE_JOBS matches the non-Docker CI subset.")
+        print("CI-lite entrypoints match the workflow-backed non-Docker subset.")
 
     docker_ci_hygiene_errors = check_docker_ci_dependency_hygiene()
     if docker_ci_hygiene_errors:

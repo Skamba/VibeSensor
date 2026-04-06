@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
-"""Run CI job groups in parallel locally (``make test-all``).
-
-Job definitions here mirror ``.github/workflows/ci.yml`` — keep them in sync.
-When a CI job's steps change, update the corresponding ``_*_steps()`` builder
-below to match.
-"""
+"""Run CI job groups in parallel locally from the workflow-backed manifest."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import os
 import shlex
 import subprocess
@@ -27,20 +23,24 @@ UI_LOCK_FILE = UI_DIR / "package-lock.json"
 UI_LOCK_HASH_FILE = UI_DIR / ".npm-ci-lock.sha256"
 PRINT_LOCK = threading.Lock()
 RESULT_LOCK = threading.Lock()
-ALL_JOB_NAMES = (
-    "backend-quality",
-    "backend-typecheck",
-    "frontend-typecheck",
-    "ui-smoke",
-    "release-smoke",
-    "firmware-native-tests",
-    "backend-tests-1",
-    "backend-tests-2",
-    "backend-tests-3",
-    "backend-tests-4",
-    "backend-tests-5",
-    "e2e",
-)
+_CI_MANIFEST_PATH = Path(__file__).with_name("ci_workflow_manifest.py")
+
+
+def _load_ci_workflow_manifest_module():
+    spec = importlib.util.spec_from_file_location(
+        "ci_workflow_manifest_local", _CI_MANIFEST_PATH
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load {_CI_MANIFEST_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_CI_MANIFEST = _load_ci_workflow_manifest_module()
+ALL_JOB_NAMES = _CI_MANIFEST.all_job_names()
+CI_LITE_JOB_NAMES = _CI_MANIFEST.ci_lite_job_names()
 
 
 @dataclass(frozen=True)
@@ -91,12 +91,30 @@ def _should_run_ui_npm_ci(skip_npm_ci: bool) -> bool:
     )
 
 
+def _job_uses_ui_workspace(steps: list[Step]) -> bool:
+    return any(step.cwd == UI_DIR for step in steps)
+
+
+def _job_runs_release_smoke(steps: list[Step]) -> bool:
+    return any("tools/tests/run_release_smoke.py" in step.cmd for step in steps)
+
+
 def _shared_ui_workspace_would_race(
-    selected_jobs: list[str], *, skip_bootstrap: bool, skip_npm_ci: bool
+    selected_jobs: list[str],
+    all_jobs: dict[str, list[Step]],
+    *,
+    skip_bootstrap: bool,
+    skip_npm_ci: bool,
 ) -> bool:
-    if not skip_bootstrap or "release-smoke" not in selected_jobs:
+    if not skip_bootstrap:
         return False
-    if "frontend-typecheck" not in selected_jobs and "ui-smoke" not in selected_jobs:
+    if not any(
+        _job_runs_release_smoke(all_jobs[job_name]) for job_name in selected_jobs
+    ):
+        return False
+    if not any(
+        _job_uses_ui_workspace(all_jobs[job_name]) for job_name in selected_jobs
+    ):
         return False
     return _should_run_ui_npm_ci(skip_npm_ci)
 
@@ -185,171 +203,41 @@ def _bootstrap_steps(
     return steps
 
 
+def _step_from_manifest_command(label: str, command: str) -> Step:
+    tokens = shlex.split(command)
+    cwd = ROOT
+    if len(tokens) >= 3 and tokens[0] == "cd" and tokens[2] == "&&":
+        cwd = ROOT / tokens[1]
+        tokens = tokens[3:]
+
+    env: dict[str, str] | None = None
+    if tokens and tokens[0] == "env":
+        parsed_env: dict[str, str] = {}
+        index = 1
+        while index < len(tokens) and "=" in tokens[index]:
+            key, value = tokens[index].split("=", 1)
+            parsed_env[key] = value
+            index += 1
+        env = parsed_env or None
+        tokens = tokens[index:]
+
+    return Step(label, tokens, cwd=cwd, env=env)
+
+
 def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
+    jobs = _CI_MANIFEST.ci_workflow_jobs()
     return {
-        "backend-quality": [
-            Step(
-                "Validate dependency consistency",
-                [python_cmd, "-m", "pip", "check"],
-            ),
-            Step("Backend quality checks", ["make", "lint"]),
-        ],
-        "backend-typecheck": [
-            Step(
-                "Mypy backend enforced coverage",
-                [python_cmd, "-m", "mypy", "--config-file", "pyproject.toml"],
-                cwd=ROOT / "apps" / "server",
-                env={"MYPYPATH": "."},
-            ),
-        ],
-        "frontend-typecheck": [
-            Step(
-                "UI contract sync check",
-                ["npm", "run", "check:contracts"],
-                cwd=ROOT / "apps" / "ui",
-            ),
-            Step("UI lint", ["npm", "run", "lint"], cwd=ROOT / "apps" / "ui"),
-            Step("UI typecheck", ["npm", "run", "typecheck"], cwd=ROOT / "apps" / "ui"),
-        ],
-        "ui-smoke": [
-            Step(
-                "Install Playwright Chromium",
-                ["npx", "playwright", "install", "chromium"],
-                cwd=ROOT / "apps" / "ui",
-            ),
-            Step(
-                "UI smoke tests", ["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui"
-            ),
-        ],
-        "release-smoke": [
-            Step(
-                "Release smoke validation",
-                [python_cmd, "tools/tests/run_release_smoke.py"],
-            ),
-        ],
-        "firmware-native-tests": [
-            Step(
-                "Verify firmware protocol fixtures",
-                [
-                    python_cmd,
-                    "tools/firmware/generate_protocol_contract_fixtures.py",
-                    "--check",
-                ],
-            ),
-            Step(
-                "Firmware native tests",
-                ["pio", "test", "-e", "native"],
-                cwd=ROOT / "firmware" / "esp",
-            ),
-        ],
-        "backend-tests-1": [
-            Step(
-                "Prepare backend test artifacts",
-                ["mkdir", "-p", "artifacts/ai/logs/ci"],
-            ),
-            Step(
-                "Backend tests shard 1/5",
-                [
-                    python_cmd,
-                    "tools/tests/run_backend_parallel.py",
-                    "--shards",
-                    "5",
-                    "--shard-index",
-                    "1",
-                    "--junitxml",
-                    "artifacts/ai/logs/ci/backend-tests-1.xml",
-                ],
-            ),
-        ],
-        "backend-tests-2": [
-            Step(
-                "Prepare backend test artifacts",
-                ["mkdir", "-p", "artifacts/ai/logs/ci"],
-            ),
-            Step(
-                "Backend tests shard 2/5",
-                [
-                    python_cmd,
-                    "tools/tests/run_backend_parallel.py",
-                    "--shards",
-                    "5",
-                    "--shard-index",
-                    "2",
-                    "--junitxml",
-                    "artifacts/ai/logs/ci/backend-tests-2.xml",
-                ],
-            ),
-        ],
-        "backend-tests-3": [
-            Step(
-                "Prepare backend test artifacts",
-                ["mkdir", "-p", "artifacts/ai/logs/ci"],
-            ),
-            Step(
-                "Backend tests shard 3/5",
-                [
-                    python_cmd,
-                    "tools/tests/run_backend_parallel.py",
-                    "--shards",
-                    "5",
-                    "--shard-index",
-                    "3",
-                    "--junitxml",
-                    "artifacts/ai/logs/ci/backend-tests-3.xml",
-                ],
-            ),
-        ],
-        "backend-tests-4": [
-            Step(
-                "Prepare backend test artifacts",
-                ["mkdir", "-p", "artifacts/ai/logs/ci"],
-            ),
-            Step(
-                "Backend tests shard 4/5",
-                [
-                    python_cmd,
-                    "tools/tests/run_backend_parallel.py",
-                    "--shards",
-                    "5",
-                    "--shard-index",
-                    "4",
-                    "--junitxml",
-                    "artifacts/ai/logs/ci/backend-tests-4.xml",
-                ],
-            ),
-        ],
-        "backend-tests-5": [
-            Step(
-                "Prepare backend test artifacts",
-                ["mkdir", "-p", "artifacts/ai/logs/ci"],
-            ),
-            Step(
-                "Backend tests shard 5/5",
-                [
-                    python_cmd,
-                    "tools/tests/run_backend_parallel.py",
-                    "--shards",
-                    "5",
-                    "--shard-index",
-                    "5",
-                    "--junitxml",
-                    "artifacts/ai/logs/ci/backend-tests-5.xml",
-                ],
-            ),
-        ],
-        "e2e": [
-            Step(
-                "Process-backed e2e suite (skip already-owned checks)",
-                [
-                    python_cmd,
-                    "tools/tests/run_e2e_parallel.py",
-                    "--fast-e2e",
-                    "--shards",
-                    "6",
-                ],
-            ),
-        ],
+        job_name: [
+            _step_from_manifest_command(spec.label, spec.command)
+            for spec in job.local_runnable_steps(python_cmd)
+        ]
+        for job_name, job in jobs.items()
     }
+
+
+def _selected_jobs_require_platformio(selected_jobs: list[str]) -> bool:
+    jobs = _CI_MANIFEST.ci_workflow_jobs()
+    return any(jobs[job_name].requires_platformio for job_name in selected_jobs)
 
 
 def _run_bootstrap(steps: list[Step]) -> int:
@@ -389,6 +277,11 @@ def main() -> int:
         help="Run only selected job(s). Repeat to run multiple jobs.",
     )
     parser.add_argument(
+        "--ci-lite",
+        action="store_true",
+        help="Run the non-Docker blocking CI subset derived from the workflow manifest.",
+    )
+    parser.add_argument(
         "--skip-bootstrap",
         action="store_true",
         help="Skip shared local dependency bootstrap (pip install + optional npm ci).",
@@ -399,15 +292,22 @@ def main() -> int:
         help="Skip npm ci bootstrap even when node_modules is missing.",
     )
     args = parser.parse_args()
+    if args.job and args.ci_lite:
+        parser.error("--ci-lite cannot be combined with --job")
 
     python_cmd = sys.executable
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     all_jobs = _job_steps(python_cmd)
-    selected_jobs = args.job if args.job else list(ALL_JOB_NAMES)
+    selected_jobs = (
+        args.job
+        if args.job
+        else list(CI_LITE_JOB_NAMES if args.ci_lite else ALL_JOB_NAMES)
+    )
 
     if _shared_ui_workspace_would_race(
         selected_jobs,
+        all_jobs,
         skip_bootstrap=args.skip_bootstrap,
         skip_npm_ci=args.skip_npm_ci,
     ):
@@ -426,7 +326,7 @@ def main() -> int:
         else _bootstrap_steps(
             python_cmd,
             run_npm_ci,
-            include_platformio="firmware-native-tests" in selected_jobs,
+            include_platformio=_selected_jobs_require_platformio(selected_jobs),
         )
     )
     bootstrap_rc = _run_bootstrap(bootstrap_steps)
