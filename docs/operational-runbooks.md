@@ -154,12 +154,13 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
 ## Update and rollback checks
 
 1. Confirm current runtime and update status from the UI or update endpoints.
-2. Before shipping a release, ensure the release workflow builds the wheel and passes the smoke validation step.
-3. If an update fails on-device, do not assume rollback succeeded silently. Confirm service health after the attempt and check updater issues for rollback wheel validation failures.
-4. The updater now aborts before touching the live environment if it cannot write a fresh rollback snapshot or cannot verify free disk space for the rollback area. Treat either condition as an infrastructure problem to fix first, not a retry-until-it-works event.
-5. If rollback metadata is missing, the updater will only trust the newest rollback wheel after structural archive validation; if checksum metadata exists, a mismatch should be treated as a broken rollback snapshot, not a transient install failure.
-6. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs. Key degradation reasons include `persistence_write_error` (DB write failures), `persistence_samples_dropped` (samples lost during recording), and `last_analysis_failed` (most recent post-analysis run errored). The health response also exposes `samples_written`, `samples_dropped`, `last_completed_run_id`, and `last_completed_run_error` in its persistence section for detailed diagnostics.
-7. If emergency patching was used to restore service, follow up with the repo fix, validation, and a successful updater rerun so the device returns to wheel-managed state.
+2. Before shipping a release, ensure the `release` job in the main release workflow builds the wheel, publishes the Wheel / ESP artifacts, and passes the smoke validation step.
+3. Treat the `publish_wiki` follow-on job as non-blocking documentation publication: if it fails, the release artifacts may already be published. Inspect that job and the `wiki-screenshots-<version>` artifact before retrying the wiki update.
+4. If an update fails on-device, do not assume rollback succeeded silently. Confirm service health after the attempt and check updater issues for rollback wheel validation failures.
+5. The updater now aborts before touching the live environment if it cannot write a fresh rollback snapshot or cannot verify free disk space for the rollback area. Treat either condition as an infrastructure problem to fix first, not a retry-until-it-works event.
+6. If rollback metadata is missing, the updater will only trust the newest rollback wheel after structural archive validation; if checksum metadata exists, a mismatch should be treated as a broken rollback snapshot, not a transient install failure.
+7. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs. Key degradation reasons include `persistence_write_error` (DB write failures), `persistence_samples_dropped` (samples lost during recording), and `last_analysis_failed` (most recent post-analysis run errored). The health response also exposes `samples_written`, `samples_dropped`, `last_completed_run_id`, and `last_completed_run_error` in its persistence section for detailed diagnostics.
+8. If emergency patching was used to restore service, follow up with the repo fix, validation, and a successful updater rerun so the device returns to wheel-managed state.
 
 ## Local release readiness
 
