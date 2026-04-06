@@ -6,7 +6,7 @@
 - UI validation lives under `apps/ui/` (Vite build/typecheck plus Playwright browser checks).
 - Firmware build/flash guidance lives in `firmware/esp/README.md`.
 - Pi-image build/validation guidance lives in `infra/pi-image/pi-gen/README.md`.
-- Use `make test-ci-lite` for the non-Docker blocking-CI subset.
+- Use `make test-ci-lite` (`python3 tools/tests/run_ci_parallel.py --ci-lite`) for the non-Docker blocking-CI subset.
 - Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner.
 - The full end-to-end verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
 - `tools/tests/run_backend_parallel.py` shards `apps/server/tests` by whole test file, using cached JUnit timings from `~/.cache/vibesensor/backend-duration-cache.json` to keep the backend CI shards balanced over time.
@@ -114,7 +114,7 @@ python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 -
 Focused CI job groups and full-stack validation:
 
 ```bash
-python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5
+python3 tools/tests/run_ci_parallel.py --ci-lite
 python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
 python3 tools/tests/run_ci_parallel.py --job release-smoke
 make test-full-suite
@@ -272,9 +272,10 @@ No secrets are currently required. If needed in the future, copy
 ### Relationship to `run_ci_parallel.py`
 
 `tools/tests/run_ci_parallel.py` (`make test-all`) remains available as a fast
-local convenience runner. `act` is the primary CI-parity mechanism — it runs the
-actual GitHub workflow file. Use `run_ci_parallel.py` when you want a faster
-non-containerized local run without Docker.
+local convenience runner. Its job surface is derived from
+`.github/workflows/ci.yml`, while `act` remains the primary CI-parity mechanism
+because it runs the actual GitHub workflow file. Use `run_ci_parallel.py` when
+you want a faster non-containerized local run without Docker.
 
 ## Coverage reporting
 
@@ -300,7 +301,8 @@ Coverage guidance:
   `use_cases/updates/` should stay above the repo-wide baseline whenever
   practical.
 
-The default CI-parity suite now mirrors these blocking GitHub checks:
+The default CI-parity suite now derives these blocking GitHub checks from the
+workflow-backed CI manifest:
 
 - `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, backend static guards, docs lint, WS schema sync, and HTTP API schema sync.
 - `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.

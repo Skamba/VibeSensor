@@ -63,13 +63,18 @@ def test_main_refuses_skip_bootstrap_when_release_smoke_would_race_ui_jobs(
     monkeypatch.setattr(module, "UI_NODE_MODULES", ui_dir / "node_modules")
     monkeypatch.setattr(module, "UI_LOCK_FILE", ui_dir / "package-lock.json")
     monkeypatch.setattr(module, "UI_LOCK_HASH_FILE", ui_dir / ".npm-ci-lock.sha256")
+    release_smoke_step = module.Step(
+        "Release smoke validation",
+        ["python3", "tools/tests/run_release_smoke.py"],
+    )
+    ui_step = module.Step("UI lint", ["npm", "run", "lint"], cwd=ui_dir)
     monkeypatch.setattr(
         module,
         "_job_steps",
         lambda python_cmd: {
-            "frontend-typecheck": [],
-            "ui-smoke": [],
-            "release-smoke": [],
+            "frontend-typecheck": [ui_step],
+            "ui-smoke": [ui_step],
+            "release-smoke": [release_smoke_step],
         },
     )
 
