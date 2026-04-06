@@ -106,7 +106,7 @@ def test_default_helper_script_walks_up_to_repo_scripts_dir(
         tmp_path
         / ".venv"
         / "lib"
-        / "python3.13"
+        / "python3.14"
         / "site-packages"
         / "vibesensor"
         / "adapters"
