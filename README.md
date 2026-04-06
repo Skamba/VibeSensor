@@ -140,7 +140,8 @@ changes hot-reload without rebuilding the image.
 
 `make dev` wraps `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`.
 The UI container now reuses the `node_modules` volume unless `apps/ui/package-lock.json`
-changes, and it fails fast if the generated frontend contracts are stale.
+changes, it follows the supported Node line from [`.nvmrc`](.nvmrc), and it fails
+fast if the generated frontend contracts are stale.
 
 ### Native Python + Vite (recommended for backend or UI iteration)
 
