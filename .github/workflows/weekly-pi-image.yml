@@ -40,7 +40,9 @@ jobs:
           cache: npm
           cache-dependency-path: apps/ui/package-lock.json
 
-      - uses: ./.github/actions/setup-python
+      - name: Set up configured Python runtime
+        id: setup-python
+        uses: ./.github/actions/setup-python
 
       - name: Install Pi image build prerequisites
         shell: bash
@@ -51,6 +53,8 @@ jobs:
 
       - name: Build Pi image
         shell: bash
+        env:
+          VS_PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}
         run: |
           set -euo pipefail
           ./infra/pi-image/pi-gen/build.sh
@@ -152,7 +156,8 @@ jobs:
             release_args+=(--asset "${release_file}")
           done
 
-          python3 tools/publish_github_release.py \
+          python_bin="${{ steps.setup-python.outputs.python-path }}"
+          "${python_bin}" tools/publish_github_release.py \
             --repo "${GITHUB_REPOSITORY}" \
             --tag "${{ steps.metadata.outputs.tag }}" \
             --target "${GITHUB_SHA}" \
