@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -42,6 +42,9 @@ function generatedHeader(sourcePath) {
 function writeGenerated(filePath, content, checkMode) {
 	mkdirSync(dirname(filePath), { recursive: true });
 	if (checkMode) {
+		if (!existsSync(filePath)) {
+			throw new Error(`Out of date or missing generated file: ${filePath}`);
+		}
 		const existing = readFileSync(filePath, 'utf8');
 		if (existing !== content) {
 			throw new Error(`Out of date generated file: ${filePath}`);

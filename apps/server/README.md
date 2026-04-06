@@ -258,7 +258,7 @@ The API surface is implemented in `apps/server/vibesensor/adapters/http/`, with 
 
 Start here for the human-facing API overview, then use the generated schema artifacts for endpoint-level contracts:
 
-- `make sync-contracts` is the authoritative end-to-end contract sync entrypoint. It refreshes the committed HTTP OpenAPI schema at `apps/ui/src/contracts/http_api_schema.json`, the committed WebSocket schema at `apps/ui/src/contracts/ws_payload_schema.json`, `docs/protocol.md`, and the derivative UI TypeScript/constants generated from those checked-in inputs.
+- `make sync-contracts` is the authoritative end-to-end contract sync entrypoint. It refreshes the committed HTTP OpenAPI schema at `apps/ui/src/contracts/http_api_schema.json`, the committed WebSocket schema at `apps/ui/src/contracts/ws_payload_schema.json`, `docs/protocol.md`, and the locally materialized derivative UI TypeScript/constants generated from those checked-in inputs.
 - The committed HTTP schema remains the endpoint-by-endpoint reference for request/response shapes, route descriptions, and documented HTTP error responses.
 - Pair the committed WebSocket schema with `apps/ui/README.md` § "WebSocket contract boundary" for the human-readable field guide.
 - `docs/operational-runbooks.md` covers `/api/health` interpretation and stale-live-update debugging steps.
