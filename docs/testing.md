@@ -228,11 +228,7 @@ act -W .github/workflows/ci.yml
 act -j backend-quality -W .github/workflows/ci.yml
 act -j backend-typecheck -W .github/workflows/ci.yml
 act -j frontend-typecheck -W .github/workflows/ci.yml
-act -j backend-tests-1 -W .github/workflows/ci.yml
-act -j backend-tests-2 -W .github/workflows/ci.yml
-act -j backend-tests-3 -W .github/workflows/ci.yml
-act -j backend-tests-4 -W .github/workflows/ci.yml
-act -j backend-tests-5 -W .github/workflows/ci.yml
+act -j backend-tests -W .github/workflows/ci.yml
 act -j ui-smoke -W .github/workflows/ci.yml
 act -j release-smoke -W .github/workflows/ci.yml
 
@@ -266,7 +262,7 @@ No secrets are currently required. If needed in the future, copy
 | `frontend-typecheck` | ✅ Fully supported | — |
 | `ui-smoke` | ✅ Fully supported | — |
 | `release-smoke` | ✅ Fully supported | — |
-| `backend-tests-1/2/3/4/5` | ⚠️ Mostly works | 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
+| `backend-tests` | ⚠️ Mostly works | This matrix job emits the `Backend tests (shard 1/5)` through `Backend tests (shard 5/5)` checks. The same 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
 | `e2e` | ✅ Fully supported | Runs isolated server subprocess shards directly; no Docker-in-Docker dependency. |
 
 ### Relationship to `run_ci_parallel.py`
@@ -275,7 +271,11 @@ No secrets are currently required. If needed in the future, copy
 local convenience runner. Its job surface is derived from
 `.github/workflows/ci.yml`, while `act` remains the primary CI-parity mechanism
 because it runs the actual GitHub workflow file. Use `run_ci_parallel.py` when
-you want a faster non-containerized local run without Docker.
+you want a faster non-containerized local run without Docker. The workflow’s raw
+job id is `backend-tests` because GitHub expands it as a matrix, while
+`run_ci_parallel.py` expands that same matrix source back into logical local
+jobs `backend-tests-1` through `backend-tests-5` so you can run individual
+backend shards directly.
 
 ## Coverage reporting
 
@@ -308,7 +308,7 @@ workflow-backed CI manifest:
 - `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
-- `ui-smoke`, `backend-tests-1`, `backend-tests-2`, `backend-tests-3`, `backend-tests-4`, `backend-tests-5`, `e2e`: required test jobs.
+- `ui-smoke`, `backend-tests` (matrix job emitting shard `1/5` through `5/5` checks), `e2e`: required test jobs.
 
 ## Adding or moving tests
 

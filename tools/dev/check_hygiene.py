@@ -88,6 +88,7 @@ def check_path_indirections() -> tuple[list[str], list[str]]:
     return pointer_files, python_path_hacks
 
 
+_BACKEND_TEST_MATRIX_JOB = "backend-tests"
 _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-1",
     "backend-tests-2",
@@ -98,7 +99,7 @@ _BACKEND_TEST_SHARD_JOBS = (
 _MIRRORED_BACKEND_INSTALL_JOBS = (
     "backend-quality",
     "backend-typecheck",
-    *_BACKEND_TEST_SHARD_JOBS,
+    _BACKEND_TEST_MATRIX_JOB,
     "e2e",
 )
 _FIRMWARE_INSTALL_JOB = "firmware-native-tests"
@@ -1009,18 +1010,43 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
             "ui-smoke must cache ~/.cache/ms-playwright with a package-lock-based actions/cache key."
         )
 
-    for job_name in _BACKEND_TEST_SHARD_JOBS:
-        backend_job = jobs.get(job_name) if isinstance(jobs, Mapping) else None
-        if isinstance(backend_job, Mapping) and backend_job.get("needs") not in (
-            None,
-            [],
+    backend_job = (
+        jobs.get(_BACKEND_TEST_MATRIX_JOB) if isinstance(jobs, Mapping) else None
+    )
+    if not isinstance(backend_job, Mapping):
+        errors.append("CI workflow is missing the backend-tests matrix job.")
+    else:
+        if backend_job.get("needs") not in (None, []):
+            errors.append(
+                "backend-tests must not declare job needs so backend test shards can start immediately."
+            )
+
+        backend_job_name = backend_job.get("name")
+        if (
+            not isinstance(backend_job_name, str)
+            or "${{ matrix.shard_label }}" not in backend_job_name
         ):
             errors.append(
-                f"{job_name} must not declare job needs so backend test shards can start immediately."
+                "backend-tests must include matrix.shard_label in its displayed job name so PR checks stay distinguishable."
             )
-        backend_steps = (
-            backend_job.get("steps") if isinstance(backend_job, Mapping) else None
-        )
+
+        strategy = backend_job.get("strategy")
+        matrix = strategy.get("matrix") if isinstance(strategy, Mapping) else None
+        raw_include = matrix.get("include") if isinstance(matrix, Mapping) else None
+        actual_shard_jobs: list[str] = []
+        if isinstance(raw_include, list):
+            for raw_entry in raw_include:
+                if not isinstance(raw_entry, Mapping):
+                    continue
+                logical_job_name = raw_entry.get("logical_job_name")
+                if isinstance(logical_job_name, str):
+                    actual_shard_jobs.append(logical_job_name)
+        if tuple(actual_shard_jobs) != _BACKEND_TEST_SHARD_JOBS:
+            errors.append(
+                "backend-tests must define strategy.matrix.include entries whose logical_job_name values match backend-tests-1 through backend-tests-5 in order."
+            )
+
+        backend_steps = backend_job.get("steps")
         backend_duration_cache_ok = False
         if isinstance(backend_steps, list):
             for step in backend_steps:
@@ -1043,6 +1069,7 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                     and "backend-test-durations" in key
                     and "run_backend_parallel.py" in key
                     and "apps/server/tests/**/*.py" in key
+                    and "matrix.cache_suffix" in key
                     and "github.run_id" in key
                     and isinstance(restore_keys, str)
                     and "run_backend_parallel.py" in restore_keys
@@ -1052,9 +1079,9 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                     break
         if not backend_duration_cache_ok:
             errors.append(
-                f"{job_name} must cache ~/.cache/vibesensor/backend-duration-cache.json "
+                "backend-tests must cache ~/.cache/vibesensor/backend-duration-cache.json "
                 "with a restoreable actions/cache key tied to run_backend_parallel.py, "
-                "apps/server/tests, and github.run_id."
+                "apps/server/tests, matrix.cache_suffix, and github.run_id."
             )
 
     e2e_job = jobs.get("e2e") if isinstance(jobs, Mapping) else None
