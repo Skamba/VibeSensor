@@ -4,8 +4,6 @@
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
 LINT_TARGETS := $(SERVER_DIR)/vibesensor $(SERVER_DIR)/tests tools
-# Keep this list aligned with the non-Docker blocking subset enforced in CI.
-CI_LITE_JOBS := --job backend-quality --job backend-typecheck --job frontend-typecheck --job ui-smoke --job release-smoke --job firmware-native-tests --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5
 PYTHON_VERSION := $(strip $(shell cat .python-version))
 PYTHON_MAJOR := $(word 1,$(subst ., ,$(PYTHON_VERSION)))
 PYTHON_MINOR := $(word 2,$(subst ., ,$(PYTHON_VERSION)))
@@ -76,7 +74,7 @@ test-changed: ## Run heuristic checks for files changed vs origin/main
 
 test-ci-lite: ## Run the non-Docker blocking CI subset locally
 	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/tests/run_ci_parallel.py $(CI_LITE_JOBS)
+	"$$PYTHON" tools/tests/run_ci_parallel.py --ci-lite
 
 test-all: ## Run the broader local CI runner
 	@$(RESOLVE_PYTHON) \

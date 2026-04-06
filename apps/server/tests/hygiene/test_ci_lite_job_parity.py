@@ -1,4 +1,4 @@
-"""Guard: Makefile CI_LITE_JOBS matches the non-Docker CI subset."""
+"""Guard: CI-lite entrypoints match the workflow-backed non-Docker CI subset."""
 
 from __future__ import annotations
 
