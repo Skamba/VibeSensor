@@ -46,3 +46,18 @@ def test_backend_shard_matrix_preserves_shard_specific_commands() -> None:
     assert len(commands) == 1
     assert "--shard-index 3" in commands[0]
     assert "backend-tests-3.xml" in commands[0]
+
+
+def test_backend_quality_jobs_are_split_into_focused_gates() -> None:
+    module = _load_ci_manifest_module()
+
+    job_names = set(module.all_job_names())
+    assert "backend-quality" not in job_names
+    assert {
+        "backend-lint",
+        "repo-hygiene",
+        "backend-static-guards",
+        "backend-preflight",
+        "docs-lint",
+        "backend-contract-drift",
+    }.issubset(job_names)
