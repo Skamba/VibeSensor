@@ -172,6 +172,12 @@ These weekly builds reuse the same `./infra/pi-image/pi-gen/build.sh` pipeline
 documented above, so the GitHub Release artifact follows the same supported
 image-build path as local builds. The weekly workflow now runs natively on the
 GitHub-hosted `ubuntu-24.04-arm` runner instead of using x64-host emulation.
+Both the weekly and manual ARM workflows now share the same
+[`build-pi-image` action](../../../.github/actions/build-pi-image/action.yml)
+for Node/Python setup, prerequisite installation, image build, artifact
+collection, and workflow-artifact upload; the weekly workflow keeps only the
+weekly-specific release cleanup/publication wrapper steps on top of that shared
+path.
 
 The repository also provides a manual ARM-hosted validation workflow:
 

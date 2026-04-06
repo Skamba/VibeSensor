@@ -10,6 +10,7 @@ from tests._paths import REPO_ROOT
 
 _SETUP_PYTHON = REPO_ROOT / ".github" / "actions" / "setup-python" / "action.yml"
 _SETUP_BACKEND = REPO_ROOT / ".github" / "actions" / "setup-backend" / "action.yml"
+_BUILD_PI_IMAGE = REPO_ROOT / ".github" / "actions" / "build-pi-image" / "action.yml"
 _MAIN_RELEASE = REPO_ROOT / ".github" / "workflows" / "main-release.yml"
 _WEEKLY_PI_IMAGE = REPO_ROOT / ".github" / "workflows" / "weekly-pi-image.yml"
 _MANUAL_PI_IMAGE = REPO_ROOT / ".github" / "workflows" / "manual-pi-image-arm.yml"
@@ -100,10 +101,15 @@ def test_workflows_use_configured_python_runtime_paths() -> None:
     assert "tools/wiki/publish_wiki.py" in main_release_text
 
     weekly_text = _WEEKLY_PI_IMAGE.read_text(encoding="utf-8")
-    assert "VS_PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}" in weekly_text
+    assert "uses: ./.github/actions/build-pi-image" in weekly_text
 
     manual_text = _MANUAL_PI_IMAGE.read_text(encoding="utf-8")
-    assert "VS_PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}" in manual_text
+    assert "uses: ./.github/actions/build-pi-image" in manual_text
+
+    build_pi_image_text = _BUILD_PI_IMAGE.read_text(encoding="utf-8")
+    assert "steps.setup-python.outputs.python-path" in build_pi_image_text
+    assert "VS_PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}" in build_pi_image_text
+    assert "python3 " not in build_pi_image_text
 
     ci_text = _CI.read_text(encoding="utf-8")
     assert "steps.setup-python.outputs.python-path" in ci_text
