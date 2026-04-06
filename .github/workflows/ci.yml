@@ -226,6 +226,10 @@ jobs:
         working-directory: apps/ui
         run: npm run lint
 
+      - name: Sync generated UI contract derivatives
+        working-directory: apps/ui
+        run: npm run sync:generated-contracts
+
       - name: UI typecheck
         working-directory: apps/ui
         run: npm run typecheck

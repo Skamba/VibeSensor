@@ -852,8 +852,8 @@ def check_contract_sync_entrypoint() -> list[str]:
         "sync:contracts": "node ../../tools/config/sync_contract_artifacts.mjs",
         "sync:generated-contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs",
         "check:contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs --check",
-        "pretypecheck": "npm run sync:generated-contracts",
-        "prebuild": "npm run sync:generated-contracts",
+        "build": "npm run check:contracts && vite build",
+        "typecheck": "npm run check:contracts && tsc --noEmit",
         "pretest:smoke": "npm run sync:generated-contracts",
     }
     for script_name, expected_command in expected_scripts.items():
@@ -861,6 +861,11 @@ def check_contract_sync_entrypoint() -> list[str]:
         if actual_command != expected_command:
             errors.append(
                 f"apps/ui/package.json script '{script_name}' must be {expected_command!r}, got {actual_command!r}."
+            )
+    for removed_script in ("pretypecheck", "prebuild"):
+        if removed_script in scripts:
+            errors.append(
+                f"apps/ui/package.json must not define {removed_script!r}; build and typecheck should fail on stale derivatives instead of regenerating them automatically."
             )
 
     makefile_text = (ROOT / "Makefile").read_text(encoding="utf-8")
@@ -921,13 +926,24 @@ def check_contract_sync_entrypoint() -> list[str]:
     frontend_typecheck = jobs.get("frontend-typecheck")
     if isinstance(frontend_typecheck, Mapping):
         steps = frontend_typecheck.get("steps")
-        if isinstance(steps, list) and any(
-            isinstance(step, Mapping) and step.get("run") == "npm run check:contracts"
-            for step in steps
-        ):
-            errors.append(
-                "frontend-typecheck must not run npm run check:contracts; the authoritative contract sync check belongs in backend-contract-drift."
-            )
+        if isinstance(steps, list):
+            if any(
+                isinstance(step, Mapping)
+                and step.get("run") == "npm run check:contracts"
+                for step in steps
+            ):
+                errors.append(
+                    "frontend-typecheck must not run npm run check:contracts; the authoritative contract sync check belongs in backend-contract-drift."
+                )
+            if not any(
+                isinstance(step, Mapping)
+                and step.get("working-directory") == "apps/ui"
+                and step.get("run") == "npm run sync:generated-contracts"
+                for step in steps
+            ):
+                errors.append(
+                    "frontend-typecheck must explicitly sync generated UI contract derivatives before running npm run typecheck."
+                )
 
     for path in (_UI_README_PATH, _SERVER_README_PATH, _CONTRIBUTING_PATH):
         if "make sync-contracts" not in path.read_text(encoding="utf-8"):
