@@ -20,25 +20,73 @@ def test_weekly_pi_image_workflow_uses_native_arm_runner_and_keeps_release_namin
         for step in steps
     )
 
-    assets_step = next(
+    build_step = next(
         step
         for step in steps
-        if isinstance(step, dict) and step.get("name") == "Collect weekly release assets"
+        if isinstance(step, dict) and step.get("name") == "Build weekly Pi image workflow artifact"
     )
-    assets_script = assets_step["run"]
-    assert 'release_artifact="${release_dir}/VibeSensor-${short_date}.img.zip"' in assets_script
+    assert build_step["uses"] == "./.github/actions/build-pi-image"
+    assert build_step["with"]["release-dir-name"] == "weekly-pi-image"
     assert (
-        'version_info_target="${release_dir}/VibeSensor-${short_date}.img.zip.version.txt"'
-        in assets_script
+        build_step["with"]["release-artifact-name"]
+        == "VibeSensor-${{ steps.metadata.outputs.build_label }}.img.zip"
     )
-    assert 'echo "published_artifact=VibeSensor-${short_date}.img.zip"' in assets_script
-    assert 'echo "runner_label=ubuntu-24.04-arm"' in assets_script
+    assert (
+        build_step["with"]["workflow-artifact-name"]
+        == "weekly-pi-image-${{ steps.metadata.outputs.build_label }}"
+    )
+    assert build_step["with"]["include-published-artifact"] == "true"
 
-    upload_step = next(
+    delete_step = next(
         step
         for step in steps
-        if isinstance(step, dict) and step.get("name") == "Upload weekly image workflow artifact"
+        if isinstance(step, dict) and step.get("name") == "Delete previous weekly Pi image releases"
+    )
+    assert 'select(.tag_name == "weekly-pi-image"' in delete_step["run"]
+
+    publish_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Publish weekly Pi image release"
+    )
+    publish_script = publish_step["run"]
+    assert (
+        'find "${{ steps.build-image.outputs.release-dir }}" -maxdepth 1 -type f | sort'
+        in publish_script
+    )
+    assert 'python_bin="${{ steps.build-image.outputs.python-path }}"' in publish_script
+    assert '--tag "${{ steps.metadata.outputs.tag }}"' in publish_script
+    assert '--title "${{ steps.metadata.outputs.release_name }}"' in publish_script
+
+
+def test_manual_pi_image_workflow_reuses_shared_build_action_and_stays_artifact_only() -> None:
+    workflow_path = REPO_ROOT / ".github" / "workflows" / "manual-pi-image-arm.yml"
+    workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["build-image"]
+
+    assert job["runs-on"] == "ubuntu-24.04-arm"
+    steps = job["steps"]
+
+    build_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Build ARM Pi image workflow artifact"
+    )
+    assert build_step["uses"] == "./.github/actions/build-pi-image"
+    assert build_step["with"]["release-dir-name"] == "manual-pi-image-arm"
+    assert (
+        build_step["with"]["release-artifact-name"]
+        == "${{ steps.metadata.outputs.artifact_prefix }}.img.zip"
     )
     assert (
-        upload_step["with"]["name"] == "weekly-pi-image-${{ steps.metadata.outputs.build_label }}"
+        build_step["with"]["workflow-artifact-name"]
+        == "manual-pi-image-arm-${{ steps.metadata.outputs.build_label }}"
     )
+    assert "include-published-artifact" not in build_step["with"]
+
+    step_names = {
+        step.get("name")
+        for step in steps
+        if isinstance(step, dict) and isinstance(step.get("name"), str)
+    }
+    assert "Publish weekly Pi image release" not in step_names
