@@ -89,6 +89,7 @@ def check_path_indirections() -> tuple[list[str], list[str]]:
 
 
 _BACKEND_TEST_MATRIX_JOB = "backend-tests"
+_CI_SCOPE_JOB = "ci-scope"
 _BACKEND_QUALITY_JOBS = (
     "backend-lint",
     "repo-hygiene",
@@ -97,11 +98,14 @@ _BACKEND_QUALITY_JOBS = (
     "docs-lint",
     "backend-contract-drift",
 )
+_CI_SCOPE_ONLY_NEEDS = (_CI_SCOPE_JOB,)
 _RELEASE_SMOKE_QUALITY_NEEDS = (
+    _CI_SCOPE_JOB,
     *_BACKEND_QUALITY_JOBS,
     "backend-typecheck",
     "frontend-typecheck",
 )
+_UI_SMOKE_NEEDS = (_CI_SCOPE_JOB, "frontend-typecheck")
 _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-1",
     "backend-tests-2",
@@ -116,6 +120,7 @@ _BACKEND_SETUP_JOBS = (
     "e2e",
 )
 _FIRMWARE_INSTALL_JOB = "firmware-native-tests"
+_FIRMWARE_NEEDS = (_CI_SCOPE_JOB, *_BACKEND_QUALITY_JOBS)
 _LOCAL_PYTHON_SETUP_ACTION = "./.github/actions/setup-python"
 _LOCAL_BACKEND_SETUP_ACTION = "./.github/actions/setup-backend"
 _DOCKER_NODE_RE = re.compile(r"^FROM node:(\S+) AS ui-build$", re.MULTILINE)
@@ -936,20 +941,40 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
         errors.append(
             f"CI workflow is missing split quality jobs: {missing_quality_jobs}"
         )
+    if _CI_SCOPE_JOB not in jobs:
+        errors.append("CI workflow is missing the ci-scope job for path-aware gating.")
     release_smoke = jobs.get("release-smoke")
     if (
         isinstance(release_smoke, Mapping)
         and _workflow_job_needs(release_smoke) != _RELEASE_SMOKE_QUALITY_NEEDS
     ):
         errors.append(
-            "release-smoke must depend on the split quality jobs plus backend-typecheck and frontend-typecheck."
+            "release-smoke must depend on ci-scope, the split quality jobs, backend-typecheck, and frontend-typecheck."
         )
     firmware_job = jobs.get(_FIRMWARE_INSTALL_JOB)
     if (
         isinstance(firmware_job, Mapping)
-        and _workflow_job_needs(firmware_job) != _BACKEND_QUALITY_JOBS
+        and _workflow_job_needs(firmware_job) != _FIRMWARE_NEEDS
     ):
-        errors.append("firmware-native-tests must depend on the split quality jobs.")
+        errors.append(
+            "firmware-native-tests must depend on ci-scope plus the split quality jobs."
+        )
+    ui_smoke = jobs.get("ui-smoke")
+    if (
+        isinstance(ui_smoke, Mapping)
+        and _workflow_job_needs(ui_smoke) != _UI_SMOKE_NEEDS
+    ):
+        errors.append("ui-smoke must depend on ci-scope and frontend-typecheck.")
+
+    for job_name in (*_BACKEND_QUALITY_JOBS, "backend-typecheck", "frontend-typecheck"):
+        raw_job = jobs.get(job_name)
+        if (
+            isinstance(raw_job, Mapping)
+            and _workflow_job_needs(raw_job) != _CI_SCOPE_ONLY_NEEDS
+        ):
+            errors.append(
+                f"{job_name} must depend only on ci-scope for path-aware gating."
+            )
 
     for job_name in (*_BACKEND_SETUP_JOBS, _FIRMWARE_INSTALL_JOB):
         raw_job = jobs.get(job_name)
@@ -1064,9 +1089,9 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     if not isinstance(backend_job, Mapping):
         errors.append("CI workflow is missing the backend-tests matrix job.")
     else:
-        if backend_job.get("needs") not in (None, []):
+        if _workflow_job_needs(backend_job) != _CI_SCOPE_ONLY_NEEDS:
             errors.append(
-                "backend-tests must not declare job needs so backend test shards can start immediately."
+                "backend-tests must depend only on ci-scope so path-aware gating stays centralized."
             )
 
         backend_job_name = backend_job.get("name")
@@ -1138,8 +1163,10 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
     if not isinstance(e2e_job, Mapping):
         errors.append("CI workflow is missing the e2e job.")
     else:
-        if e2e_job.get("needs") not in (None, []):
-            errors.append("e2e must not declare job needs so it can start immediately.")
+        if _workflow_job_needs(e2e_job) != _CI_SCOPE_ONLY_NEEDS:
+            errors.append(
+                "e2e must depend only on ci-scope so path-aware gating stays centralized."
+            )
 
         steps = e2e_job.get("steps")
         if isinstance(steps, list):
