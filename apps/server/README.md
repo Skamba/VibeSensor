@@ -258,8 +258,9 @@ The API surface is implemented in `apps/server/vibesensor/adapters/http/`, with 
 
 Start here for the human-facing API overview, then use the generated schema artifacts for endpoint-level contracts:
 
-- `python -m vibesensor.cli.http_api_schema_export` writes the committed OpenAPI artifact at `apps/ui/src/contracts/http_api_schema.json`. That schema is the endpoint-by-endpoint reference for request/response shapes, route descriptions, and documented HTTP error responses.
-- `python -m vibesensor.cli.ws_schema_export` writes the committed live-payload schema at `apps/ui/src/contracts/ws_payload_schema.json`. Pair that schema with `apps/ui/README.md` § "WebSocket contract boundary" for the human-readable field guide.
+- `make sync-contracts` is the authoritative end-to-end contract sync entrypoint. It refreshes the committed HTTP OpenAPI schema at `apps/ui/src/contracts/http_api_schema.json`, the committed WebSocket schema at `apps/ui/src/contracts/ws_payload_schema.json`, `docs/protocol.md`, and the derivative UI TypeScript/constants generated from those checked-in inputs.
+- The committed HTTP schema remains the endpoint-by-endpoint reference for request/response shapes, route descriptions, and documented HTTP error responses.
+- Pair the committed WebSocket schema with `apps/ui/README.md` § "WebSocket contract boundary" for the human-readable field guide.
 - `docs/operational-runbooks.md` covers `/api/health` interpretation and stale-live-update debugging steps.
 
 Current route groups:
@@ -276,12 +277,12 @@ Current route groups:
 
 ### HTTP API schema export and versioning stance
 
-- Export the committed HTTP OpenAPI schema with `python -m vibesensor.cli.http_api_schema_export`.
-- Export the committed WebSocket schema with `python -m vibesensor.cli.ws_schema_export`.
+- Refresh all committed contract artifacts with `make sync-contracts`.
 - The checked-in schema artifact lives at
   `apps/ui/src/contracts/http_api_schema.json`, while the committed WebSocket
-  payload schema lives at `apps/ui/src/contracts/ws_payload_schema.json`; both
-  are kept in sync by CI drift checks.
+  payload schema lives at `apps/ui/src/contracts/ws_payload_schema.json`; both,
+  along with `docs/protocol.md`, are kept in sync by the authoritative
+  contract-drift checks.
 - The current HTTP API intentionally remains a single unversioned `/api/*`
   surface because the backend and bundled UI ship atomically.
 - If independent or third-party clients become a real compatibility concern,

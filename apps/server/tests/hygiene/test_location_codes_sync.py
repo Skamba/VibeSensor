@@ -29,7 +29,7 @@ def test_generated_ui_constants_are_current() -> None:
     actual = _CONSTANTS_TS.read_text()
     assert actual == expected, (
         "apps/ui/src/constants.ts is stale.\n"
-        "Run `npm run sync:contracts` to regenerate the shared UI constants."
+        "Run `make sync-contracts` to regenerate the shared UI constants."
     )
 
 

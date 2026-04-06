@@ -49,16 +49,22 @@ in one step.
 
 ## Contract sync
 
-Use `npm run sync:contracts` to refresh the generated frontend contracts and shared constants.
+Use `make sync-contracts` from the repo root as the authoritative contract sync entrypoint. If your backend dev environment is already bootstrapped, `npm run sync:contracts` in `apps/ui/` is a thin alias to the same full pipeline.
 
-It regenerates:
+That authoritative sync updates the checked-in contract inputs first:
+
+- `src/contracts/http_api_schema.json`
+- `src/contracts/ws_payload_schema.json`
+- `../../docs/protocol.md`
+
+It then regenerates the UI-only derivative artifacts:
 
 - `src/generated/http_api_contracts.ts`
 - `src/contracts/ws_payload_types.ts`
 - `src/contracts/ws_payload_schema.generated.ts`
 - `src/constants.ts`
 
-`npm run check:contracts` fails if any of those generated files are stale.
+`npm run check:contracts` is the lightweight derivative-only guard used by Node-only flows like `pretypecheck`, `prebuild`, and `dev:docker`. CI contract drift and human-facing regeneration should use `make sync-contracts`.
 
 ## Code Quality
 

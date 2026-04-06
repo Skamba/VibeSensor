@@ -105,7 +105,7 @@ def main() -> None:
         if committed != generated:
             print(
                 f"FAIL: {args.out} is out of date.\n"
-                "Run 'python -m vibesensor.cli.http_api_schema_export' and commit the result.",
+                "Run `make sync-contracts` and commit the results.",
                 file=sys.stderr,
             )
             raise SystemExit(1)

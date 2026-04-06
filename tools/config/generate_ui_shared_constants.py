@@ -54,7 +54,7 @@ def render_ui_shared_constants_module() -> str:
     return (
         "// Generated from apps/server/vibesensor/shared/locations.py and "
         "apps/server/vibesensor/shared/strength_fields.py\n"
-        "// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs\n\n"
+        "// Do not edit manually; run make sync-contracts\n\n"
         f"export const METRIC_FIELDS = {json.dumps(metric_fields, indent=2)} as const;\n\n"
         f"export const LOCATION_CODES = {json.dumps(list(location_codes.keys()), indent=2)} as const;\n\n"
         "export const defaultLocationCodes = LOCATION_CODES;\n"
