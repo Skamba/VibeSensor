@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import hashlib
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -21,30 +21,27 @@ def _load_ci_parallel_module():
     return module
 
 
-def test_bootstrap_marks_ui_lock_hash_after_shared_npm_ci(monkeypatch, tmp_path: Path) -> None:
+def test_bootstrap_uses_shared_ui_bootstrap_helper_when_npm_ci_is_needed(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
     module = _load_ci_parallel_module()
     ui_dir = tmp_path / "apps" / "ui"
     ui_dir.mkdir(parents=True)
-    package_lock = ui_dir / "package-lock.json"
-    package_lock.write_text('{"lockfileVersion": 3}\n', encoding="utf-8")
+    helper_path = tmp_path / "tools" / "ui" / "ensure_ui_bootstrap.mjs"
+    helper_path.parent.mkdir(parents=True, exist_ok=True)
+    helper_path.write_text("// helper\n", encoding="utf-8")
 
     monkeypatch.setattr(module, "ROOT", tmp_path)
-    monkeypatch.setattr(module, "LOG_DIR", tmp_path / "logs")
-    module.LOG_DIR.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(module, "UI_DIR", ui_dir)
-    monkeypatch.setattr(module, "UI_NODE_MODULES", ui_dir / "node_modules")
-    monkeypatch.setattr(module, "UI_LOCK_FILE", package_lock)
-    monkeypatch.setattr(module, "UI_LOCK_HASH_FILE", ui_dir / ".npm-ci-lock.sha256")
-    monkeypatch.setattr(module, "_run_step", lambda step, log_file: 0)
+    monkeypatch.setattr(module, "UI_BOOTSTRAP_HELPER", helper_path)
 
-    result = module._run_bootstrap(
-        module._bootstrap_steps("python3", True, include_platformio=False)
-    )
+    steps = module._bootstrap_steps("python3", True, include_platformio=False)
 
-    assert result == 0
-    assert (
-        module.UI_LOCK_HASH_FILE.read_text(encoding="utf-8").strip()
-        == hashlib.sha256(package_lock.read_bytes()).hexdigest()
+    assert steps[-1] == module.Step(
+        "ui deps: ensure bootstrap",
+        ["node", "../../tools/ui/ensure_ui_bootstrap.mjs"],
+        cwd=ui_dir,
     )
 
 
@@ -60,9 +57,6 @@ def test_main_refuses_skip_bootstrap_when_release_smoke_would_race_ui_jobs(
     monkeypatch.setattr(module, "ROOT", tmp_path)
     monkeypatch.setattr(module, "LOG_DIR", tmp_path / "logs")
     monkeypatch.setattr(module, "UI_DIR", ui_dir)
-    monkeypatch.setattr(module, "UI_NODE_MODULES", ui_dir / "node_modules")
-    monkeypatch.setattr(module, "UI_LOCK_FILE", ui_dir / "package-lock.json")
-    monkeypatch.setattr(module, "UI_LOCK_HASH_FILE", ui_dir / ".npm-ci-lock.sha256")
     release_smoke_step = module.Step(
         "Release smoke validation",
         ["python3", "tools/tests/run_release_smoke.py"],
@@ -83,6 +77,16 @@ def test_main_refuses_skip_bootstrap_when_release_smoke_would_race_ui_jobs(
 
     monkeypatch.setattr(module, "_run_bootstrap", _unexpected_bootstrap)
     monkeypatch.setattr(
+        module,
+        "_ui_bootstrap_status",
+        lambda skip_npm_ci: module.UiBootstrapStatus(
+            needs_npm_ci=not skip_npm_ci,
+            lock_hash="lock",
+            current_lock_hash="",
+            node_modules_exists=True,
+        ),
+    )
+    monkeypatch.setattr(
         module.sys,
         "argv",
         [
@@ -102,3 +106,36 @@ def test_main_refuses_skip_bootstrap_when_release_smoke_would_race_ui_jobs(
 
     assert result == 2
     assert "release-smoke would trigger npm ci inside apps/ui" in output
+
+
+def test_ui_bootstrap_status_reads_shared_helper_json(monkeypatch, tmp_path: Path) -> None:
+    module = _load_ci_parallel_module()
+    ui_dir = tmp_path / "apps" / "ui"
+    ui_dir.mkdir(parents=True)
+    helper_path = tmp_path / "tools" / "ui" / "ensure_ui_bootstrap.mjs"
+    helper_path.parent.mkdir(parents=True, exist_ok=True)
+    helper_path.write_text("// helper\n", encoding="utf-8")
+
+    monkeypatch.setattr(module, "UI_DIR", ui_dir)
+    monkeypatch.setattr(module, "UI_BOOTSTRAP_HELPER", helper_path)
+    monkeypatch.setattr(
+        module.subprocess,
+        "check_output",
+        lambda command, cwd, text: json.dumps(
+            {
+                "needs_npm_ci": True,
+                "lock_hash": "abc",
+                "current_lock_hash": "",
+                "node_modules_exists": False,
+            }
+        ),
+    )
+
+    status = module._ui_bootstrap_status(False)
+
+    assert status == module.UiBootstrapStatus(
+        needs_npm_ci=True,
+        lock_hash="abc",
+        current_lock_hash="",
+        node_modules_exists=False,
+    )

@@ -173,7 +173,7 @@ jobs:
 
       - name: Install UI dependencies
         working-directory: apps/ui
-        run: npm ci
+        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
       - name: Authoritative contract sync check
         run: make sync-contracts CHECK=1
@@ -220,7 +220,7 @@ jobs:
 
       - name: Install UI dependencies
         working-directory: apps/ui
-        run: npm ci
+        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
       - name: UI lint
         working-directory: apps/ui
@@ -267,7 +267,7 @@ jobs:
 
       - name: Install UI dependencies
         working-directory: apps/ui
-        run: npm ci
+        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
       - name: UI smoke tests
         working-directory: apps/ui

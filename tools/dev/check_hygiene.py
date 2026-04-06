@@ -16,6 +16,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+_UI_BOOTSTRAP_HELPER_WORKFLOW_CMD = "node ../../tools/ui/ensure_ui_bootstrap.mjs"
 
 TEXT_EXTS = {
     ".py",
@@ -908,7 +909,7 @@ def check_contract_sync_entrypoint() -> list[str]:
             if not any(
                 isinstance(step, Mapping)
                 and step.get("working-directory") == "apps/ui"
-                and step.get("run") == "npm ci"
+                and step.get("run") == _UI_BOOTSTRAP_HELPER_WORKFLOW_CMD
                 for step in steps
             ):
                 errors.append(

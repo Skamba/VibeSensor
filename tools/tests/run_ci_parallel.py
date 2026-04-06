@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import importlib.util
+import json
 import os
 import shlex
 import subprocess
@@ -19,8 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "ci_local"
 UI_DIR = ROOT / "apps" / "ui"
 UI_NODE_MODULES = UI_DIR / "node_modules"
-UI_LOCK_FILE = UI_DIR / "package-lock.json"
-UI_LOCK_HASH_FILE = UI_DIR / ".npm-ci-lock.sha256"
+UI_BOOTSTRAP_HELPER = ROOT / "tools" / "ui" / "ensure_ui_bootstrap.mjs"
 PRINT_LOCK = threading.Lock()
 RESULT_LOCK = threading.Lock()
 _CI_MANIFEST_PATH = Path(__file__).with_name("ci_workflow_manifest.py")
@@ -70,25 +69,30 @@ def _format_cmd(cmd: list[str]) -> str:
     return shlex.join(cmd)
 
 
-def _ui_lock_hash() -> str:
-    # Keep this hash rule aligned with tools/build_ui_static.py.
-    return hashlib.sha256(UI_LOCK_FILE.read_bytes()).hexdigest()
+@dataclass(frozen=True)
+class UiBootstrapStatus:
+    needs_npm_ci: bool
+    lock_hash: str
+    current_lock_hash: str
+    node_modules_exists: bool
 
 
-def _ui_lock_hash_is_current() -> bool:
-    if not UI_LOCK_HASH_FILE.exists():
-        return False
-    return UI_LOCK_HASH_FILE.read_text(encoding="utf-8").strip() == _ui_lock_hash()
-
-
-def _mark_ui_lock_hash_current() -> None:
-    UI_LOCK_HASH_FILE.write_text(f"{_ui_lock_hash()}\n", encoding="utf-8")
+def _ui_bootstrap_status(skip_npm_ci: bool) -> UiBootstrapStatus:
+    command = ["node", os.path.relpath(UI_BOOTSTRAP_HELPER, UI_DIR), "--check"]
+    if skip_npm_ci:
+        command.append("--skip-npm-ci")
+    raw = subprocess.check_output(command, cwd=UI_DIR, text=True)
+    payload = json.loads(raw)
+    return UiBootstrapStatus(
+        needs_npm_ci=bool(payload["needs_npm_ci"]),
+        lock_hash=str(payload["lock_hash"]),
+        current_lock_hash=str(payload["current_lock_hash"]),
+        node_modules_exists=bool(payload["node_modules_exists"]),
+    )
 
 
 def _should_run_ui_npm_ci(skip_npm_ci: bool) -> bool:
-    return not skip_npm_ci and (
-        not UI_NODE_MODULES.exists() or not _ui_lock_hash_is_current()
-    )
+    return _ui_bootstrap_status(skip_npm_ci).needs_npm_ci
 
 
 def _job_uses_ui_workspace(steps: list[Step]) -> bool:
@@ -97,6 +101,16 @@ def _job_uses_ui_workspace(steps: list[Step]) -> bool:
 
 def _job_runs_release_smoke(steps: list[Step]) -> bool:
     return any("tools/tests/run_release_smoke.py" in step.cmd for step in steps)
+
+
+def _selected_jobs_touch_ui(
+    selected_jobs: list[str], all_jobs: dict[str, list[Step]]
+) -> bool:
+    return any(
+        _job_runs_release_smoke(all_jobs[job_name])
+        or _job_uses_ui_workspace(all_jobs[job_name])
+        for job_name in selected_jobs
+    )
 
 
 def _shared_ui_workspace_would_race(
@@ -199,7 +213,13 @@ def _bootstrap_steps(
             )
         )
     if run_npm_ci:
-        steps.append(Step("ui deps: npm ci", ["npm", "ci"], cwd=ROOT / "apps" / "ui"))
+        steps.append(
+            Step(
+                "ui deps: ensure bootstrap",
+                ["node", os.path.relpath(UI_BOOTSTRAP_HELPER, UI_DIR)],
+                cwd=ROOT / "apps" / "ui",
+            )
+        )
     return steps
 
 
@@ -256,8 +276,6 @@ def _run_bootstrap(steps: list[Step]) -> int:
                     f"[bootstrap] fail at '{step.label}' (exit {rc}) after {elapsed:.1f}s; log: {bootstrap_log}"
                 )
                 return rc
-            if step.label == "ui deps: npm ci":
-                _mark_ui_lock_hash_current()
             _emit(f"[bootstrap] ok '{step.label}' in {elapsed:.1f}s")
     _emit("[bootstrap] success")
     return 0
@@ -319,7 +337,11 @@ def main() -> int:
         )
         return 2
 
-    run_npm_ci = _should_run_ui_npm_ci(args.skip_npm_ci)
+    run_npm_ci = (
+        _should_run_ui_npm_ci(args.skip_npm_ci)
+        if _selected_jobs_touch_ui(selected_jobs, all_jobs)
+        else False
+    )
     bootstrap_steps = (
         []
         if args.skip_bootstrap
