@@ -1376,6 +1376,7 @@ def check_python_policy_alignment() -> list[str]:
     pinned_minor = _major_minor(pinned_python)
     if pinned_minor is None:
         return [".python-version must contain an exact X.Y.Z Python version."]
+    pinned_minor_str = f"{pinned_minor[0]}.{pinned_minor[1]}"
 
     pyproject = _load_server_pyproject()
     project = pyproject.get("project")
@@ -1420,10 +1421,10 @@ def check_python_policy_alignment() -> list[str]:
         errors.append("apps/server/pyproject.toml is missing the [tool.mypy] table.")
     else:
         mypy_python = mypy.get("python_version")
-        if mypy_python != compatibility_floor:
+        if mypy_python != pinned_minor_str:
             errors.append(
                 "apps/server/pyproject.toml tool.mypy.python_version must match the "
-                f"package compatibility floor {compatibility_floor!r}; found {mypy_python!r}."
+                f"exact native/CI Python minor from .python-version ({pinned_minor_str!r}); found {mypy_python!r}."
             )
 
     matrix_text = (ROOT / "docs" / "runtime_support_matrix.md").read_text(
@@ -1437,9 +1438,16 @@ def check_python_policy_alignment() -> list[str]:
         errors.append(
             "docs/runtime_support_matrix.md must mention the backend compatibility floor from apps/server/pyproject.toml."
         )
-    if "Backend lint/type settings should target this same floor" not in matrix_text:
+    if "Backend Ruff formatting/lint stays on this floor" not in matrix_text:
         errors.append(
-            "docs/runtime_support_matrix.md must explain that backend lint/type settings follow the compatibility floor."
+            "docs/runtime_support_matrix.md must explain that backend Ruff formatting/lint follows the compatibility floor."
+        )
+    if (
+        "backend mypy type checking follows the exact native-dev / CI Python minor"
+        not in matrix_text
+    ):
+        errors.append(
+            "docs/runtime_support_matrix.md must explain that backend mypy follows the exact native/CI Python minor from .python-version."
         )
 
     return errors
