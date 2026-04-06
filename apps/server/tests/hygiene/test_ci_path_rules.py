@@ -22,7 +22,7 @@ def _load_ci_path_rules_module():
 def test_docs_only_changes_only_run_docs_lint() -> None:
     module = _load_ci_path_rules_module()
 
-    selection = module.workflow_job_selection(("README.md", "docs/testing.md"))
+    selection = module.workflow_job_selection(("README.md", "docs/design_language.md"))
     assert selection.docs_lint is True
     assert selection.repo_hygiene is False
     assert selection.backend_lint is False
@@ -42,6 +42,17 @@ def test_frontend_only_changes_run_frontend_and_release_checks() -> None:
     assert selection.release_smoke is True
     assert selection.backend_tests is False
     assert selection.firmware_native_tests is False
+
+
+def test_generated_contract_artifact_changes_run_frontend_and_contract_drift() -> None:
+    module = _load_ci_path_rules_module()
+
+    selection = module.workflow_job_selection(("apps/ui/src/constants.ts",))
+    assert selection.repo_hygiene is True
+    assert selection.backend_contract_drift is True
+    assert selection.frontend_typecheck is True
+    assert selection.ui_smoke is True
+    assert selection.release_smoke is True
 
 
 def test_backend_only_changes_run_backend_stack_without_frontend_smoke() -> None:
@@ -78,3 +89,23 @@ def test_workflow_changes_fall_back_to_full_stack() -> None:
 
     selection = module.workflow_job_selection((".github/workflows/ci.yml",))
     assert selection == module.WorkflowJobSelection.full_stack()
+
+
+def test_protocol_doc_changes_run_docs_lint_and_contract_drift() -> None:
+    module = _load_ci_path_rules_module()
+
+    selection = module.workflow_job_selection(("docs/protocol.md",))
+    assert selection.docs_lint is True
+    assert selection.repo_hygiene is True
+    assert selection.backend_contract_drift is True
+    assert selection.frontend_typecheck is False
+
+
+def test_contract_sync_tool_changes_run_repo_hygiene_and_contract_drift() -> None:
+    module = _load_ci_path_rules_module()
+
+    selection = module.workflow_job_selection(("tools/config/sync_contract_artifacts.mjs",))
+    assert selection.repo_hygiene is True
+    assert selection.backend_contract_drift is True
+    assert selection.backend_lint is False
+    assert selection.frontend_typecheck is False

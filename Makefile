@@ -54,8 +54,7 @@ lint: ## Run repo hygiene, static guards, docs lint, and contract drift checks
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.docker.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.pi.yaml && \
 	"$$PYTHON" tools/dev/docs_lint.py && \
-	"$$PYTHON" -m vibesensor.cli.ws_schema_export --check && \
-	"$$PYTHON" -m vibesensor.cli.http_api_schema_export --check
+	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:contracts -- --check
 
 typecheck-backend: ## Run backend mypy checks
 	@$(RESOLVE_PYTHON) \
@@ -84,13 +83,12 @@ test-full-suite: ## Run the full end-to-end suite locally
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_e2e_parallel.py --shards 1
 
-sync-contracts: ## Regenerate shared frontend HTTP/WS/contracts artifacts
-	cd $(UI_DIR) && npm run sync:contracts
-
-regen-contracts: ## Sync contracts and rebuild the contract reference doc
-regen-contracts: sync-contracts
+sync-contracts: ## Regenerate or check the authoritative contract sync pipeline
 	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/config/generate_contract_reference_doc.py
+	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:contracts $(if $(CHECK),-- --check,)
+
+regen-contracts: ## Backward-compatible alias for the authoritative contract sync
+regen-contracts: sync-contracts
 
 coverage: ## Run backend coverage with optional COV_OPTS overrides
 	@$(RESOLVE_PYTHON) \
@@ -112,5 +110,5 @@ docs-lint: ## Run docs lint without the broader lint suite
 ui-lint: ## Run UI lint checks
 	cd $(UI_DIR) && npm run lint
 
-ui-typecheck: ## Run UI contract freshness, lint, and TypeScript type checking
+ui-typecheck: ## Run UI-derived contract freshness, lint, and TypeScript type checking
 	cd $(UI_DIR) && npm run check:contracts && npm run lint && npm run typecheck
