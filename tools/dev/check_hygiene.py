@@ -89,6 +89,19 @@ def check_path_indirections() -> tuple[list[str], list[str]]:
 
 
 _BACKEND_TEST_MATRIX_JOB = "backend-tests"
+_BACKEND_QUALITY_JOBS = (
+    "backend-lint",
+    "repo-hygiene",
+    "backend-static-guards",
+    "backend-preflight",
+    "docs-lint",
+    "backend-contract-drift",
+)
+_RELEASE_SMOKE_QUALITY_NEEDS = (
+    *_BACKEND_QUALITY_JOBS,
+    "backend-typecheck",
+    "frontend-typecheck",
+)
 _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-1",
     "backend-tests-2",
@@ -96,8 +109,8 @@ _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-4",
     "backend-tests-5",
 )
-_MIRRORED_BACKEND_INSTALL_JOBS = (
-    "backend-quality",
+_BACKEND_SETUP_JOBS = (
+    *_BACKEND_QUALITY_JOBS,
     "backend-typecheck",
     _BACKEND_TEST_MATRIX_JOB,
     "e2e",
@@ -166,6 +179,15 @@ def _load_yaml_mapping(path: Path) -> dict[str, object]:
 
 def _load_ci_workflow() -> dict[str, object]:
     return _load_yaml_mapping(ROOT / ".github" / "workflows" / "ci.yml")
+
+
+def _workflow_job_needs(raw_job: Mapping[str, object]) -> tuple[str, ...]:
+    raw_needs = raw_job.get("needs")
+    if isinstance(raw_needs, str):
+        return (raw_needs,)
+    if isinstance(raw_needs, list):
+        return tuple(need for need in raw_needs if isinstance(need, str))
+    return ()
 
 
 def _load_action_steps(path: Path) -> list[object]:
@@ -903,7 +925,33 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
                 ".github/actions/setup-backend/action.yml must not call actions/setup-python directly."
             )
 
-    for job_name in (*_MIRRORED_BACKEND_INSTALL_JOBS, _FIRMWARE_INSTALL_JOB):
+    if "backend-quality" in jobs:
+        errors.append(
+            "CI workflow must not define a monolithic backend-quality job; keep the focused quality jobs split by concern."
+        )
+    missing_quality_jobs = [
+        job_name for job_name in _BACKEND_QUALITY_JOBS if job_name not in jobs
+    ]
+    if missing_quality_jobs:
+        errors.append(
+            f"CI workflow is missing split quality jobs: {missing_quality_jobs}"
+        )
+    release_smoke = jobs.get("release-smoke")
+    if (
+        isinstance(release_smoke, Mapping)
+        and _workflow_job_needs(release_smoke) != _RELEASE_SMOKE_QUALITY_NEEDS
+    ):
+        errors.append(
+            "release-smoke must depend on the split quality jobs plus backend-typecheck and frontend-typecheck."
+        )
+    firmware_job = jobs.get(_FIRMWARE_INSTALL_JOB)
+    if (
+        isinstance(firmware_job, Mapping)
+        and _workflow_job_needs(firmware_job) != _BACKEND_QUALITY_JOBS
+    ):
+        errors.append("firmware-native-tests must depend on the split quality jobs.")
+
+    for job_name in (*_BACKEND_SETUP_JOBS, _FIRMWARE_INSTALL_JOB):
         raw_job = jobs.get(job_name)
         if not isinstance(raw_job, Mapping):
             continue
