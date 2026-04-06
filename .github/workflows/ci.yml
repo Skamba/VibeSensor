@@ -165,10 +165,45 @@ jobs:
         working-directory: firmware/esp
         run: pio test -e native
 
-  backend-tests-1:
-    name: Backend tests (shard 1/5)
+  backend-tests:
+    name: Backend tests (shard ${{ matrix.shard_label }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - logical_job_name: "backend-tests-1"
+            shard_label: "1/5"
+            shard_index: 1
+            cache_suffix: 1
+            junitxml: "artifacts/ai/logs/ci/backend-tests-1.xml"
+            artifact_name: "backend-test-artifacts-1"
+          - logical_job_name: "backend-tests-2"
+            shard_label: "2/5"
+            shard_index: 2
+            cache_suffix: 2
+            junitxml: "artifacts/ai/logs/ci/backend-tests-2.xml"
+            artifact_name: "backend-test-artifacts-2"
+          - logical_job_name: "backend-tests-3"
+            shard_label: "3/5"
+            shard_index: 3
+            cache_suffix: 3
+            junitxml: "artifacts/ai/logs/ci/backend-tests-3.xml"
+            artifact_name: "backend-test-artifacts-3"
+          - logical_job_name: "backend-tests-4"
+            shard_label: "4/5"
+            shard_index: 4
+            cache_suffix: 4
+            junitxml: "artifacts/ai/logs/ci/backend-tests-4.xml"
+            artifact_name: "backend-test-artifacts-4"
+          - logical_job_name: "backend-tests-5"
+            shard_label: "5/5"
+            shard_index: 5
+            cache_suffix: 5
+            junitxml: "artifacts/ai/logs/ci/backend-tests-5.xml"
+            artifact_name: "backend-test-artifacts-5"
 
     steps:
       - uses: actions/checkout@v6
@@ -183,7 +218,7 @@ jobs:
         with:
           path: ~/.cache/vibesensor/backend-duration-cache.json
           # Keep each run's write key distinct while still restoring from the stable test-history prefix.
-          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-1-${{ github.run_id }}
+          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-${{ matrix.cache_suffix }}-${{ github.run_id }}
           restore-keys: |
             ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
             ${{ runner.os }}-backend-test-durations-
@@ -191,177 +226,17 @@ jobs:
       - name: Prepare backend test artifacts
         run: mkdir -p artifacts/ai/logs/ci
 
-      - name: Backend tests shard 1/5
+      - name: Backend tests shard ${{ matrix.shard_label }}
         run: >-
           "${{ steps.setup-backend.outputs.python-path }}"
-          tools/tests/run_backend_parallel.py --shards 5 --shard-index 1
-          --junitxml artifacts/ai/logs/ci/backend-tests-1.xml
+          tools/tests/run_backend_parallel.py --shards 5 --shard-index ${{ matrix.shard_index }}
+          --junitxml ${{ matrix.junitxml }}
 
       - name: Upload backend test artifacts
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: backend-test-artifacts-1
-          path: artifacts/ai/logs/ci/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  backend-tests-2:
-    name: Backend tests (shard 2/5)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-
-      - name: Set up configured backend Python runtime
-        id: setup-backend
-        uses: ./.github/actions/setup-backend
-
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/vibesensor/backend-duration-cache.json
-          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-2-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
-            ${{ runner.os }}-backend-test-durations-
-
-      - name: Prepare backend test artifacts
-        run: mkdir -p artifacts/ai/logs/ci
-
-      - name: Backend tests shard 2/5
-        run: >-
-          "${{ steps.setup-backend.outputs.python-path }}"
-          tools/tests/run_backend_parallel.py --shards 5 --shard-index 2
-          --junitxml artifacts/ai/logs/ci/backend-tests-2.xml
-
-      - name: Upload backend test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: backend-test-artifacts-2
-          path: artifacts/ai/logs/ci/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  backend-tests-3:
-    name: Backend tests (shard 3/5)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-
-      - name: Set up configured backend Python runtime
-        id: setup-backend
-        uses: ./.github/actions/setup-backend
-
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/vibesensor/backend-duration-cache.json
-          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-3-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
-            ${{ runner.os }}-backend-test-durations-
-
-      - name: Prepare backend test artifacts
-        run: mkdir -p artifacts/ai/logs/ci
-
-      - name: Backend tests shard 3/5
-        run: >-
-          "${{ steps.setup-backend.outputs.python-path }}"
-          tools/tests/run_backend_parallel.py --shards 5 --shard-index 3
-          --junitxml artifacts/ai/logs/ci/backend-tests-3.xml
-
-      - name: Upload backend test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: backend-test-artifacts-3
-          path: artifacts/ai/logs/ci/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  backend-tests-4:
-    name: Backend tests (shard 4/5)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-
-      - name: Set up configured backend Python runtime
-        id: setup-backend
-        uses: ./.github/actions/setup-backend
-
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/vibesensor/backend-duration-cache.json
-          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-4-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
-            ${{ runner.os }}-backend-test-durations-
-
-      - name: Prepare backend test artifacts
-        run: mkdir -p artifacts/ai/logs/ci
-
-      - name: Backend tests shard 4/5
-        run: >-
-          "${{ steps.setup-backend.outputs.python-path }}"
-          tools/tests/run_backend_parallel.py --shards 5 --shard-index 4
-          --junitxml artifacts/ai/logs/ci/backend-tests-4.xml
-
-      - name: Upload backend test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: backend-test-artifacts-4
-          path: artifacts/ai/logs/ci/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  backend-tests-5:
-    name: Backend tests (shard 5/5)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-
-      - name: Set up configured backend Python runtime
-        id: setup-backend
-        uses: ./.github/actions/setup-backend
-
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/vibesensor/backend-duration-cache.json
-          key: ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-5-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-backend-test-durations-${{ hashFiles('tools/tests/run_backend_parallel.py', 'apps/server/tests/**/*.py') }}-
-            ${{ runner.os }}-backend-test-durations-
-
-      - name: Prepare backend test artifacts
-        run: mkdir -p artifacts/ai/logs/ci
-
-      - name: Backend tests shard 5/5
-        run: >-
-          "${{ steps.setup-backend.outputs.python-path }}"
-          tools/tests/run_backend_parallel.py --shards 5 --shard-index 5
-          --junitxml artifacts/ai/logs/ci/backend-tests-5.xml
-
-      - name: Upload backend test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: backend-test-artifacts-5
+          name: ${{ matrix.artifact_name }}
           path: artifacts/ai/logs/ci/
           if-no-files-found: ignore
           retention-days: 7
