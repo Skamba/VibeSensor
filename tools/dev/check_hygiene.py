@@ -854,6 +854,7 @@ def check_contract_sync_entrypoint() -> list[str]:
         "check:contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs --check",
         "pretypecheck": "npm run sync:generated-contracts",
         "prebuild": "npm run sync:generated-contracts",
+        "pretest:smoke": "npm run sync:generated-contracts",
     }
     for script_name, expected_command in expected_scripts.items():
         actual_command = scripts.get(script_name)
