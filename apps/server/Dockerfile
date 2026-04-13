@@ -16,7 +16,7 @@ COPY apps/server/vibesensor/shared/strength_fields.py /app/apps/server/vibesenso
 COPY apps/ui/ ./
 RUN npm run build
 
-FROM python:3.14.3-slim
+FROM python:3.13.5-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
