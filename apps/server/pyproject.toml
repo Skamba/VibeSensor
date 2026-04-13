@@ -20,7 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 esp = [
-  "esptool>=4,<6",
+  "esptool>=5.2.0,<6",
 ]
 dev = [
   "hypothesis>=6.131,<7",
