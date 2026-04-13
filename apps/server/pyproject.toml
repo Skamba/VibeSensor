@@ -84,10 +84,10 @@ filterwarnings = [
 [tool.ruff]
 line-length = 100
 # Backend Ruff formatting/lint stays on the packaged-server syntax floor
-# (`requires-python >=3.13`) so the formatter does not emit py314-only syntax
-# for the current Raspberry Pi OS Lite (Trixie) runtime path. mypy tracks the
-# exact native/CI Python minor from `.python-version` (`3.14` today) so type
-# checking matches the active repo toolchain.
+# (`requires-python >=3.13`) so the formatter does not emit syntax beyond the
+# Raspberry Pi OS Lite (Trixie) runtime line. mypy tracks the exact native/CI
+# Python minor from `.python-version` (`3.13` today) so type checking matches
+# the active repo toolchain.
 target-version = "py313"
 
 [tool.ruff.lint]
@@ -97,7 +97,7 @@ select = ["E", "F", "I", "UP", "B"]
 "vibesensor/adapters/pdf/*.py" = ["E501"]
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.13"
 packages = ["vibesensor"]
 follow_imports = "normal"
 check_untyped_defs = true
