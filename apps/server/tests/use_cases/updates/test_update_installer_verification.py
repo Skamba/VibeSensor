@@ -431,16 +431,16 @@ def test_wheel_dependency_issues_report_python_and_dependency_mismatches(tmp_pat
 
     issues = wheel_dependency_issues(
         read_wheel_metadata(wheel_path),
-        python_full_version="3.14.3",
+        python_full_version="3.13.5",
         marker_environment={
-            "python_full_version": "3.14.3",
-            "python_version": "3.14",
+            "python_full_version": "3.13.5",
+            "python_version": "3.13",
             "sys_platform": "linux",
         },
         installed_versions={"packaging": "24.2"},
     )
 
-    assert "Python 3.14.3 does not satisfy wheel Requires-Python >=3.15" in issues
+    assert "Python 3.13.5 does not satisfy wheel Requires-Python >=3.15" in issues
     assert "Dependency packaging==24.2 does not satisfy >=99" in issues
     assert "Missing dependency: missingdep>=1" in issues
     assert all("colorama" not in issue for issue in issues)
@@ -461,8 +461,8 @@ async def test_install_release_rejects_incompatible_environment_before_pip_insta
         "missingdep",
         0,
         (
-            '{"python_full_version":"3.14.3","marker_environment":{"python_full_version":"3.14.3",'
-            '"python_version":"3.14","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
+            '{"python_full_version":"3.13.5","marker_environment":{"python_full_version":"3.13.5",'
+            '"python_version":"3.13","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
         ),
         "",
     )
@@ -495,8 +495,8 @@ async def test_wheel_install_executor_only_requests_rollback_after_mutating_fail
         "missingdep",
         0,
         (
-            '{"python_full_version":"3.14.3","marker_environment":{"python_full_version":"3.14.3",'
-            '"python_version":"3.14","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
+            '{"python_full_version":"3.13.5","marker_environment":{"python_full_version":"3.13.5",'
+            '"python_version":"3.13","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
         ),
         "",
     )
