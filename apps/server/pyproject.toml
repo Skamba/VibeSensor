@@ -14,7 +14,7 @@ dependencies = [
   "numpy>=2.4.4,<3",
   "packaging>=24,<27",
   "PyYAML>=6.0.3,<7",
-  "reportlab>=4,<5",
+  "reportlab>=4.4.10,<5",
   "websockets>=16,<17",
 ]
 
