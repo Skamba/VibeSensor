@@ -1,5 +1,6 @@
 version: 2
-# Weekly cadence plus per-ecosystem PR caps keep dependency churn reviewable.
+# Weekly cadence, grouped minor/patch updates, and per-ecosystem PR caps keep
+# dependency churn reviewable without hiding major version jumps.
 updates:
   - package-ecosystem: pip
     directory: /apps/server
@@ -9,6 +10,37 @@ updates:
       - dependencies
       - CI
     open-pull-requests-limit: 5
+    groups:
+      backend-runtime-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "fastapi"
+          - "numpy"
+          - "packaging"
+          - "PyYAML"
+          - "reportlab"
+          - "uvicorn*"
+          - "websockets"
+          - "esptool"
+        update-types:
+          - minor
+          - patch
+      backend-tooling-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "fastapi"
+          - "numpy"
+          - "packaging"
+          - "PyYAML"
+          - "reportlab"
+          - "uvicorn*"
+          - "websockets"
+          - "esptool"
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: npm
     directory: /apps/ui
@@ -17,6 +49,19 @@ updates:
     labels:
       - dependencies
     open-pull-requests-limit: 5
+    groups:
+      ui-runtime-minor-patch:
+        applies-to: version-updates
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      ui-tooling-minor-patch:
+        applies-to: version-updates
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
@@ -27,3 +72,11 @@ updates:
       - CI
       - dependencies
     open-pull-requests-limit: 5
+    groups:
+      github-actions-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
