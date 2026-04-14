@@ -46,6 +46,7 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="carTab"]').click();
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
+  await expect(page.locator("#carListBody .settings-table-empty-state")).toBeVisible();
   const carEmptyState = page.locator("#carListBody .empty-state");
   await expect(carEmptyState).toContainText("Add the first car profile.");
   await expect(carEmptyState).toContainText("Cars define the setup used for recording");

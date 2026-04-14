@@ -489,6 +489,8 @@ test("assigning a sensor location preserves the original sensor name", async ({ 
   const locationSelect = row.locator("select.row-location-select");
 
   await expect(row.locator("strong")).toHaveText("Chassis Sensor A");
+  await expect(row.locator(".settings-sensor-row__meta code")).toHaveText("sensor-1");
+  await expect(row.locator(".settings-sensor-row__actions .row-identify")).toBeVisible();
   await locationSelect.selectOption("front_left_wheel");
   await expect.poll(() => locationUpdateCalls).toBe(1);
   await expect(locationSelect).toHaveValue("front_left_wheel");
