@@ -1,4 +1,3 @@
-import type { UiSettingsDom } from "../dom/settings_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
@@ -6,12 +5,13 @@ import {
   type SettingsSpeedSourceInteraction,
 } from "../views/settings_speed_source_bindings";
 import { createSettingsSpeedSourcePresenter } from "../views/settings_speed_source_presenter";
+import type { SettingsShellDom } from "../views/settings_shell";
 import type { SettingsSpeedSourcePanelDom } from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
 import { createSettingsSpeedSourceWorkflow } from "./settings_speed_source_workflow";
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
-  dom: Pick<UiSettingsDom, "settingsTabs"> & SettingsSpeedSourcePanelDom;
+  dom: Pick<SettingsShellDom, "settingsTabs"> & SettingsSpeedSourcePanelDom;
   shellDom: Pick<UiShellDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;

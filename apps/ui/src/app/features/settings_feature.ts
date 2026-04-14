@@ -1,4 +1,3 @@
-import type { UiSettingsDom } from "../dom/settings_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { hasResolvedActiveCar } from "../car_selection_state";
@@ -20,18 +19,18 @@ import {
   createSettingsCarsModule,
   type SettingsCarsModule,
 } from "./settings_cars_module";
-import { bindSettingsTabs } from "./settings_tabs_controller";
 import type { CarsListPanelView } from "../views/cars_panel";
 import type { AnalysisPanelView } from "../views/analysis_panel";
+import type { SettingsShellView } from "../views/settings_shell";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
-  dom: UiSettingsDom;
   shellDom: Pick<UiShellDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
   openCarWizard: () => void;
+  settingsShell: SettingsShellView;
   carsPanel: CarsListPanelView;
   analysisPanel: AnalysisPanelView;
   speedSourcePanel: SpeedSourcePanelView;
@@ -68,12 +67,12 @@ export interface SettingsFeature {
 export function createSettingsFeature(
   ctx: SettingsFeatureDeps,
 ): SettingsFeature {
-  const { settings, dom: els, shellDom, t, escapeHtml, fmt } = ctx;
+  const { settings, shellDom, t, escapeHtml, fmt } = ctx;
   let handlersBound = false;
   let carsModule!: SettingsCarsModule;
   const speedSourceDom = {
     ...ctx.speedSourcePanel.dom,
-    settingsTabs: els.settingsTabs,
+    settingsTabs: ctx.settingsShell.dom.settingsTabs,
   };
 
   function showSettingsSaveError(error: unknown): void {
@@ -83,9 +82,7 @@ export function createSettingsFeature(
   }
 
   function openSettingsTab(tabId: string): void {
-    els.settingsTabs
-      .find((button) => button.getAttribute("data-settings-tab") === tabId)
-      ?.click();
+    ctx.settingsShell.activateTab(tabId);
   }
 
   const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
@@ -125,7 +122,7 @@ export function createSettingsFeature(
       renderSpeedReadout: ctx.view.renderSpeedReadout,
     });
   carsModule = createSettingsCarsModule({
-    dom: els,
+    dom: ctx.settingsShell.dom,
     analysisDom: ctx.analysisPanel.dom,
     escapeHtml,
     fmt,
@@ -147,7 +144,6 @@ export function createSettingsFeature(
       return;
     }
     handlersBound = true;
-    bindSettingsTabs(els);
     carsModule.bindHandlers();
     analysisModule.bindHandlers();
     speedSourceModule.bindHandlers();

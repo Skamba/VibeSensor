@@ -1,4 +1,3 @@
-import type { UiSettingsDom } from "../dom/settings_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
@@ -16,6 +15,7 @@ import type {
   CarsListRenderModel,
 } from "../views/cars_panel";
 import type { SettingsAnalysisPanelDom } from "../views/analysis_panel";
+import type { SettingsShellDom } from "../views/settings_shell";
 import {
   createSettingsCarsTransport,
   type SettingsCarsTransport,
@@ -23,7 +23,7 @@ import {
 
 export interface SettingsCarsModuleDeps extends FeatureDepsBase {
   confirmDelete?: (message: string) => boolean;
-  dom: Pick<UiSettingsDom, "settingsTabs">;
+  dom: Pick<SettingsShellDom, "settingsTabs">;
   analysisDom: Pick<
     SettingsAnalysisPanelDom,
     "analysisNoCarMessage" | "resetAnalysisBtn" | "saveAnalysisBtn"

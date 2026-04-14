@@ -1,6 +1,6 @@
-import type { UiSettingsDom } from "../dom/settings_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
+import type { SettingsShellDom } from "./settings_shell";
 import type { SettingsSpeedSourcePanelDom } from "./speed_source_panel";
 import { closestFromTarget } from "./dom_helpers";
 import {
@@ -67,7 +67,7 @@ export function getSettingsObdDeviceListAction(
 
 export function bindSettingsSpeedSourceInteractions(
   dom: Pick<
-    Pick<UiSettingsDom, "settingsTabs"> & SettingsSpeedSourcePanelDom,
+    Pick<SettingsShellDom, "settingsTabs"> & SettingsSpeedSourcePanelDom,
     | "speedSourceRadios"
     | "manualSpeedInput"
     | "staleTimeoutInput"

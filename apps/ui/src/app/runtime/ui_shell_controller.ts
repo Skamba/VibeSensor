@@ -147,6 +147,10 @@ export class UiShellController {
     this.status.renderWsState();
   }
 
+  setLiveStatus(variant: string, text: string): void {
+    this.setPillState(this.els.shellLiveStatus, variant, text);
+  }
+
   setActiveView(viewId: string): void {
     this.navigation.setActiveView(viewId);
   }
