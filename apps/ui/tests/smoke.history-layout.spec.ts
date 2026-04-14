@@ -57,12 +57,14 @@ test("history uses mobile run cards and keeps the primary action readable on nar
   await expect(row).toContainText("Started");
   await expect(row).toContainText("Samples");
   await expect(row).toContainText("Quick report");
+  await expect(row.locator(".history-row__diagnosis")).toContainText("Duration: 12.3 s");
 
-  const metrics = await toggle.evaluate((button) => {
-    const title = button.querySelector<HTMLElement>(".history-row__toggle-title");
-    const hint = button.querySelector<HTMLElement>(".history-row__toggle-hint");
-    if (!title || !hint) {
-      throw new Error("history toggle content is missing");
+  const metrics = await row.evaluate((element) => {
+    const diagnosisTitle = element.querySelector<HTMLElement>(".history-row__diagnosis-title");
+    const diagnosisMeta = element.querySelector<HTMLElement>(".history-row__diagnosis-meta");
+    const button = element.querySelector<HTMLElement>('[data-run-toggle="details"]');
+    if (!diagnosisTitle || !diagnosisMeta || !button) {
+      throw new Error("history row content is missing");
     }
     const lineMetrics = (el: HTMLElement) => {
       const style = getComputedStyle(el);
@@ -74,18 +76,17 @@ test("history uses mobile run cards and keeps the primary action readable on nar
     };
     return {
       buttonWidth: Math.round(button.getBoundingClientRect().width),
-      titleLines: lineMetrics(title).lines,
-      hintLines: lineMetrics(hint).lines,
+      diagnosisTitleLines: lineMetrics(diagnosisTitle).lines,
+      diagnosisMetaLines: lineMetrics(diagnosisMeta).lines,
     };
   });
 
   expect(metrics.buttonWidth).toBeGreaterThanOrEqual(140);
-  expect(metrics.titleLines).toBeLessThanOrEqual(2);
-  expect(metrics.hintLines).toBeLessThanOrEqual(3);
+  expect(metrics.diagnosisTitleLines).toBeLessThanOrEqual(2);
+  expect(metrics.diagnosisMetaLines).toBeLessThanOrEqual(3);
   const rowDisplay = await row.evaluate((element) => getComputedStyle(element).display);
   expect(rowDisplay).toBe("grid");
   await expect(toggle).toContainText("Open diagnosis");
-  await expect(toggle).toContainText("Open diagnosis and evidence");
 });
 
 test("history empty state stays action-oriented on narrow screens", async ({ page }) => {

@@ -56,6 +56,11 @@ type HistoryRowStatusBadge = {
   tone: Extract<HistorySummaryChipTone, "ok" | "warn" | "bad" | "muted">;
 };
 
+type HistoryRowSummary = {
+  headline: string | null;
+  meta: string | null;
+};
+
 function summarizeFindings(summary: HistoryInsightsPayload | null): FindingPayload[] {
   return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
 }
@@ -257,15 +262,27 @@ function historyRunDisplayTitle(run: HistoryEntry, t: PresenterParams["t"]): str
 function buildSummaryChips(
   run: HistoryEntry,
   detail: RunDetail,
-  params: Pick<PresenterParams, "fmt" | "formatInt" | "t">,
+  params: Pick<PresenterParams, "t">,
 ): HistorySummaryChipViewModel[] {
-  const { fmt, formatInt, t } = params;
-  const summary = historyRowSummary(detail);
-  const primaryFinding = summarizeFindings(summary)[0] ?? null;
+  const { t } = params;
   const statusBadge = historyRowStatusBadge(run, detail, t);
   const chips: HistorySummaryChipViewModel[] = [
     { text: statusBadge.label, tone: statusBadge.tone },
   ];
+  if (run.status === "error" && run.error_message) {
+    chips.push({ text: run.error_message, tone: "muted" });
+  }
+  return chips;
+}
+
+function buildRowSummary(
+  run: HistoryEntry,
+  detail: RunDetail,
+  params: Pick<PresenterParams, "fmt" | "formatInt" | "t">,
+): HistoryRowSummary {
+  const { fmt, formatInt, t } = params;
+  const summary = historyRowSummary(detail);
+  const primaryFinding = summarizeFindings(summary)[0] ?? null;
   const source = summary?.most_likely_origin?.suspected_source || primaryFinding?.suspected_source || "";
   const sourceLabel =
     primaryFinding && isInconclusiveFinding(primaryFinding)
@@ -273,34 +290,31 @@ function buildSummaryChips(
       : source
         ? formatSourceLabel(source, t)
         : "";
-  if (sourceLabel) {
-    chips.push({ text: sourceLabel, tone: "source" });
-  }
+  const headline = sourceLabel
+    || (run.status === "complete" && (detail.previewLoading || detail.insightsLoading || summary === null)
+      ? t("history.row_summary_loading")
+      : run.status === "complete" && summary
+        ? t("history.row_no_findings")
+        : historyRowStatusBadge(run, detail, t).label);
+  const metaParts: string[] = [];
   if (primaryFinding) {
-    chips.push({ text: confidenceText(primaryFinding, params), tone: "default" });
-  } else if (run.status === "complete" && detail.previewLoading) {
-    chips.push({ text: t("history.row_summary_loading"), tone: "muted" });
-  } else if (run.status === "complete" && summary) {
-    chips.push({ text: t("history.row_no_findings"), tone: "muted" });
-  }
-  if (run.status === "error" && run.error_message) {
-    chips.push({ text: run.error_message, tone: "muted" });
+    metaParts.push(confidenceText(primaryFinding, params));
   }
   const durationSeconds = historyRowDurationSeconds(run, detail);
   if (durationSeconds !== null) {
-    chips.push({
-      text: `${t("history.summary_size")}: ${fmt(durationSeconds, 1)} s`,
-      tone: "default",
-    });
+    metaParts.push(`${t("history.summary_size")}: ${fmt(durationSeconds, 1)} s`);
   }
   const sensorCount = Number(summary?.sensor_count_used);
   if (Number.isFinite(sensorCount) && sensorCount > 0) {
-    chips.push({
-      text: `${t("history.summary_sensor_count")}: ${formatInt(sensorCount)}`,
-      tone: "default",
-    });
+    metaParts.push(`${t("history.summary_sensor_count")}: ${formatInt(sensorCount)}`);
   }
-  return chips;
+  if (metaParts.length === 0 && run.status === "error" && run.error_message) {
+    metaParts.push(run.error_message);
+  }
+  return {
+    headline,
+    meta: metaParts.length ? metaParts.join(" · ") : null,
+  };
 }
 
 function buildCollapsedAction(
@@ -600,17 +614,19 @@ function buildDetails(
 function buildRowViewModel(run: HistoryEntry, detail: RunDetail, params: PresenterParams): HistoryRowViewModel {
   const { expandedRunId, formatInt, fmtTs, t } = params;
   const isExpanded = expandedRunId === run.run_id;
+  const rowSummary = buildRowSummary(run, detail, params);
   return {
     runId: run.run_id,
     isExpanded,
     carLabel: t("history.car_label"),
     carName: historyRowCarName(run, t),
     summaryChips: buildSummaryChips(run, detail, params),
+    summaryHeadline: rowSummary.headline,
+    summaryMeta: rowSummary.meta,
     toggleLabel: isExpanded ? t("history.close_diagnosis") : t("history.open_diagnosis"),
     toggleTitle: isExpanded
       ? t("history.close_diagnosis_for_run", { runId: run.run_id })
       : t("history.open_diagnosis_for_run", { runId: run.run_id }),
-    previewHint: t("history.preview_available"),
     startedLabel: t("history.table.updated"),
     startedAtText: fmtTs(run.start_time_utc),
     sizeLabel: t("history.table.size"),

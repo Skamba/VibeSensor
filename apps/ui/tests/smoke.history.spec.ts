@@ -108,19 +108,12 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
   await expect(row).toContainText("confidence 92%");
   await expect(row).toContainText("Duration: 12.3 s");
   await expect(row).toContainText("Sensors: 2");
+  await expect(row.locator(".history-row__diagnosis-title")).toHaveText("Front-right wheel imbalance");
+  await expect(row.locator(".history-row__diagnosis-meta")).toContainText("confidence 92%");
   const chipTexts = await row.locator(".history-row__summary-chip").allTextContents();
-  const sourceIndex = chipTexts.findIndex((text) => text.includes("Front-right wheel imbalance"));
-  const confidenceIndex = chipTexts.findIndex((text) => text.includes("92%"));
-  const durationIndex = chipTexts.findIndex((text) => text.includes("Duration: 12.3 s"));
-  const sensorIndex = chipTexts.findIndex((text) => text.includes("Sensors: 2"));
-  expect(sourceIndex).toBeGreaterThan(-1);
-  expect(confidenceIndex).toBeGreaterThan(-1);
-  expect(durationIndex).toBeGreaterThan(-1);
-  expect(sensorIndex).toBeGreaterThan(-1);
-  expect(sourceIndex).toBeLessThan(durationIndex);
-  expect(confidenceIndex).toBeLessThan(sensorIndex);
+  expect(chipTexts).toContain("Analysis ready");
   await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toContainText("Open diagnosis");
-  await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toContainText("Open diagnosis and evidence");
+  await expect(page.locator('[data-run-action="download-pdf"][data-run="run-001"]')).toContainText("PDF");
   await expect(page.locator('[data-run-toggle="details"][data-run="run-001"]')).toHaveAttribute("aria-expanded", "false");
 });
 
@@ -166,29 +159,25 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await page.goto("/");
   await page.locator("#tab-history").click();
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
+  const diagnosisSummary = page.locator('[data-run-row="1"][data-run="run-001"] .history-row__diagnosis');
   await expect(toggle).toContainText("Open diagnosis");
-  await expect(toggle).toContainText("Open diagnosis and evidence");
+  await expect(diagnosisSummary).toContainText("Duration: 12.3 s");
+  await expect(diagnosisSummary).toContainText("Sensors: 1");
   const overflowMetrics = await toggle.evaluate((button) => {
     const title = button.querySelector<HTMLElement>(".history-row__toggle-title");
-    const hint = button.querySelector<HTMLElement>(".history-row__toggle-hint");
-    const buttonRect = button.getBoundingClientRect();
     return {
       buttonClientWidth: button.clientWidth,
       buttonScrollWidth: button.scrollWidth,
       buttonClientHeight: button.clientHeight,
       buttonScrollHeight: button.scrollHeight,
-      hintClientWidth: hint?.clientWidth ?? 0,
-      hintScrollWidth: hint?.scrollWidth ?? 0,
-      hintBottomGap: hint ? buttonRect.bottom - hint.getBoundingClientRect().bottom : 0,
-      titleTopGap: title ? title.getBoundingClientRect().top - buttonRect.top : 0,
+      titleClientWidth: title?.clientWidth ?? 0,
+      titleScrollWidth: title?.scrollWidth ?? 0,
     };
   });
   const overflowTolerancePx = 2;
   expect(overflowMetrics.buttonScrollWidth).toBeLessThanOrEqual(overflowMetrics.buttonClientWidth + overflowTolerancePx);
-  expect(overflowMetrics.hintScrollWidth).toBeLessThanOrEqual(overflowMetrics.hintClientWidth + overflowTolerancePx);
+  expect(overflowMetrics.titleScrollWidth).toBeLessThanOrEqual(overflowMetrics.titleClientWidth + overflowTolerancePx);
   expect(overflowMetrics.buttonScrollHeight).toBeLessThanOrEqual(overflowMetrics.buttonClientHeight + 1);
-  expect(overflowMetrics.hintBottomGap).toBeGreaterThanOrEqual(2);
-  expect(overflowMetrics.titleTopGap).toBeGreaterThanOrEqual(2);
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
@@ -212,7 +201,7 @@ test("history keeps destructive actions inside the expanded management footer", 
   await page.locator("#tab-history").click();
   const row = page.locator('[data-run-row="1"][data-run="run-001"]');
   const actionCell = row.locator("td").nth(3);
-  await expect(actionCell).toContainText("PDF unlocks once the diagnosis preview is ready.");
+  await expect(actionCell).toContainText("PDF after preview.");
   await expect(actionCell).not.toContainText("Export");
   await expect(actionCell).not.toContainText("Delete");
   await row.locator('[data-run-toggle="details"]').click();

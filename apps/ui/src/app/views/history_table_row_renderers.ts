@@ -58,6 +58,29 @@ function createCollapsedRowActionsElement(
   });
 }
 
+function createDiagnosisSummaryElement(row: HistoryRowViewModel): HTMLDivElement | null {
+  if (!row.summaryHeadline && !row.summaryMeta) {
+    return null;
+  }
+  return createElementNode("div", {
+    className: "history-row__diagnosis",
+    children: [
+      row.summaryHeadline
+        ? createElementNode("div", {
+            className: "history-row__diagnosis-title",
+            text: row.summaryHeadline,
+          })
+        : null,
+      row.summaryMeta
+        ? createElementNode("div", {
+            className: "history-row__diagnosis-meta",
+            text: row.summaryMeta,
+          })
+        : null,
+    ],
+  });
+}
+
 function createHeatmapElement(
   heatmap: NonNullable<HistoryRowViewModel["details"]>["heatmap"],
 ): HTMLDivElement {
@@ -580,6 +603,7 @@ function createRowElement(
               createElementNode("div", {
                 className: "history-row__detail-affordance",
                 children: [
+                  createDiagnosisSummaryElement(row),
                   createElementNode("button", {
                     className: `history-row__toggle${row.isExpanded ? " history-row__toggle--expanded" : ""}`,
                     attrs: {
@@ -603,10 +627,6 @@ function createRowElement(
                           createElementNode("span", {
                             className: "history-row__toggle-title",
                             text: row.toggleLabel,
-                          }),
-                          createElementNode("span", {
-                            className: "history-row__toggle-hint",
-                            text: row.previewHint,
                           }),
                         ],
                       }),

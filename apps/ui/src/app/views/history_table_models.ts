@@ -99,9 +99,10 @@ export interface HistoryRowViewModel {
   carLabel: string;
   carName: string;
   summaryChips: HistorySummaryChipViewModel[];
+  summaryHeadline: string | null;
+  summaryMeta: string | null;
   toggleLabel: string;
   toggleTitle: string;
-  previewHint: string;
   startedLabel: string;
   startedAtText: string;
   sizeLabel: string;
