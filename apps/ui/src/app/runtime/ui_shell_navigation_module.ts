@@ -11,7 +11,6 @@ export interface UiShellNavigationModuleDeps {
 
 export interface UiShellNavigationModule {
   setActiveView(viewId: string): void;
-  bindHandlers(): void;
 }
 
 export function createUiShellNavigationModule(
@@ -39,56 +38,7 @@ export function createUiShellNavigationModule(
     }
   }
 
-  function activateMenuButton(button: HTMLElement): void {
-    const viewId = button.dataset.view;
-    if (!viewId) return;
-    setActiveView(viewId);
-  }
-
-  function activateMenuTabByIndex(index: number): void {
-    if (!els.menuButtons.length) return;
-    const safeIndex = ((index % els.menuButtons.length) + els.menuButtons.length)
-      % els.menuButtons.length;
-    const button = els.menuButtons[safeIndex];
-    activateMenuButton(button);
-    button.focus();
-  }
-
-  function bindHandlers(): void {
-    els.menuButtons.forEach((button, index) => {
-      const activate = (): void => activateMenuButton(button);
-      button.addEventListener("click", activate);
-      button.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          activate();
-          return;
-        }
-        if (event.key === "ArrowRight") {
-          event.preventDefault();
-          activateMenuTabByIndex(index + 1);
-          return;
-        }
-        if (event.key === "ArrowLeft") {
-          event.preventDefault();
-          activateMenuTabByIndex(index - 1);
-          return;
-        }
-        if (event.key === "Home") {
-          event.preventDefault();
-          activateMenuTabByIndex(0);
-          return;
-        }
-        if (event.key === "End") {
-          event.preventDefault();
-          activateMenuTabByIndex(els.menuButtons.length - 1);
-        }
-      });
-    });
-  }
-
   return {
     setActiveView,
-    bindHandlers,
   };
 }
