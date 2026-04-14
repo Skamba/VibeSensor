@@ -87,6 +87,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/ui_runtime_dom.ts` | Startup bundle that resolves feature-scoped DOM locators and fails early when required feature anchors are missing |
 | `app/dom/` | Feature-scoped DOM locator modules for shell, spectrum, realtime, history, settings, cars, update, and ESP flash surfaces |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
+| `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport, payload adaptation, and throttled live-session rendering |
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that wires overlay updates plus the extracted canvas, interaction, and panel modules |
@@ -183,6 +184,10 @@ concerns, `shell.css` and `components.css` own shared chrome/primitives, and
 feature surfaces. Shared visual state conventions now prefer stable data/ARIA
 selectors such as `data-variant`, `data-choice-state`, `data-selected`, and
 `data-step-state` instead of controller-side variant class interpolation.
+Preact is now available for incremental migration work, but the current DOM
+runtime remains the live product path. New panel-by-panel migrations should
+mount Preact into existing hosts through `app/runtime/ui_preact_mount.ts`
+instead of introducing ad hoc framework entrypoints.
 
 ## Architecture guardrails
 
@@ -202,6 +207,9 @@ selectors such as `data-variant`, `data-choice-state`, `data-selected`, and
 - Expected feature shape is thin facade + focused workflow/transport/presenter or
   binding modules. Workflow modules stay DOM-free, presenters own rendering, and
   bindings decode DOM events into typed actions for the owning feature.
+- Incremental Preact migrations should mount into existing panel hosts through
+  `app/runtime/ui_preact_mount.ts`; do not scatter raw `preact.render(...)`
+  calls across feature modules.
 
 ## WebSocket contract boundary
 
