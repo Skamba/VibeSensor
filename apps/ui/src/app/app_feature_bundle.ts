@@ -1,5 +1,4 @@
 import type { UiCarsDom } from "./dom/cars_dom";
-import type { UiEspFlashDom } from "./dom/esp_flash_dom";
 import type { UiHistoryDom } from "./dom/history_dom";
 import type { UiRealtimeDom } from "./dom/realtime_dom";
 import type { UiSettingsDom } from "./dom/settings_dom";
@@ -29,6 +28,7 @@ import { createUpdateFeature } from "./features/update_feature";
 import type { AppState } from "./ui_app_state";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
 import type { AnalysisPanelView } from "./views/analysis_panel";
+import type { EspFlashPanelView } from "./views/esp_flash_panel";
 import type { InternetPanelView } from "./views/internet_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
@@ -42,7 +42,6 @@ export interface AppFeatureBundleDom {
   history: UiHistoryDom;
   settings: UiSettingsDom;
   cars: UiCarsDom;
-  espFlash: UiEspFlashDom;
 }
 
 export interface AppFeatureBundleSharedDeps {
@@ -61,6 +60,7 @@ export interface AppFeatureBundleRuntimePorts {
   sensorsPanel: SensorsPanelView;
   speedSourcePanel: SpeedSourcePanelView;
   updatePanel: UpdatePanelView;
+  espFlashPanel: EspFlashPanelView;
   realtimeChrome: RealtimeFeatureChromePorts;
   historyPanel: HistoryPanelView;
   transport: RealtimeFeatureSelectionPorts;
@@ -85,7 +85,6 @@ export function createAppFeatureBundle(
       history: historyDom,
       settings: settingsDom,
       cars: carsDom,
-      espFlash: espFlashDom,
     },
     shared: { t, escapeHtml, showError, fmt, fmtTs, formatInt },
     runtime,
@@ -173,7 +172,7 @@ export function createAppFeatureBundle(
     showError,
   });
   const espFlash = createEspFlashFeature({
-    dom: espFlashDom,
+    panel: runtime.espFlashPanel,
     t,
     escapeHtml,
     showError,

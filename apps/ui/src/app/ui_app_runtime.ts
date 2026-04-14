@@ -36,6 +36,7 @@ import type { CarsPanelView } from "./views/cars_panel";
 import type { AnalysisPanelView } from "./views/analysis_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
+import type { EspFlashPanelView } from "./views/esp_flash_panel";
 import type { UpdatePanelView } from "./views/update_panel";
 
 export class UiAppRuntime {
@@ -67,6 +68,7 @@ export class UiAppRuntime {
     updatePanel: UpdatePanelView,
     sensorsPanel: SensorsPanelView,
     speedSourcePanel: SpeedSourcePanelView,
+    espFlashPanel: EspFlashPanelView,
   ) {
     this.dom = dom;
     this.state = state;
@@ -102,7 +104,6 @@ export class UiAppRuntime {
         history: this.dom.history,
         settings: this.dom.settings,
         cars: this.dom.cars,
-        espFlash: this.dom.espFlash,
       },
       shared: {
         t: (key, vars) => this.shell.t(key, vars),
@@ -119,6 +120,7 @@ export class UiAppRuntime {
         updatePanel,
         sensorsPanel,
         speedSourcePanel,
+        espFlashPanel,
         realtimeChrome: {
           setPillState: (el, variant, text) =>
             this.shell.setPillState(el, variant, text),

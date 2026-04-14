@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-import type { UiEspFlashDom } from "../src/app/dom/esp_flash_dom";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
+import type { EspFlashPanelDom } from "../src/app/views/esp_flash_panel";
 import type { UpdatePanelDom } from "../src/app/views/update_panel";
 import {
   createDeferred,
@@ -173,10 +173,12 @@ function createDeps() {
     espFlashJourneyPanel,
     espFlashLogPanel,
     espFlashHistoryPanel,
-  } as unknown as UiEspFlashDom;
+  } as EspFlashPanelDom;
 
   return {
-    dom,
+    panel: {
+      dom,
+    },
     els: dom,
     espFlashStartBtn,
     espFlashCancelBtn,

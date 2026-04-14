@@ -1,4 +1,4 @@
-import type { UiEspFlashDom } from "../dom/esp_flash_dom";
+import type { EspFlashPanelDom } from "./esp_flash_panel";
 import {
   bindViewEvent,
   composeViewDisposers,
@@ -17,7 +17,7 @@ export interface EspFlashFeatureBindingHandlers {
 
 export function bindEspFlashFeatureInteractions(
   dom: Pick<
-    UiEspFlashDom,
+    EspFlashPanelDom,
     | "espFlashPortSelect"
     | "espFlashRefreshPortsBtn"
     | "espFlashStartBtn"
