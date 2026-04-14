@@ -5,33 +5,8 @@ import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
 export interface RealtimeSensorTableViewParams {
   clients: AdaptedClient[];
   locationOptions: LocationOption[];
-  locationCodeForClient: (client: AdaptedClient) => string;
-  strongestClientId?: string | null;
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
-}
-
-function locationLabelForClient(
-  client: AdaptedClient,
-  params: RealtimeSensorTableViewParams,
-): string {
-  const code = params.locationCodeForClient(client);
-  if (!code) {
-    return params.t("dashboard.sensor_unassigned");
-  }
-  const option = params.locationOptions.find((location) => location.code === code);
-  return option?.label ?? code;
-}
-
-function liveSensorOverviewLabelForClient(
-  client: AdaptedClient,
-  params: RealtimeSensorTableViewParams,
-): string {
-  const code = params.locationCodeForClient(client);
-  if (!code) {
-    return client.name || client.id || params.t("dashboard.sensor_unassigned");
-  }
-  return locationLabelForClient(client, params);
 }
 
 export interface RealtimeSensorTableClickAction {
@@ -62,7 +37,7 @@ export function renderRealtimeSensorTable(
   container: HTMLElement,
   params: RealtimeSensorTableViewParams,
 ): void {
-  const { clients, locationOptions, locationCodeForClient, t, escapeHtml } = params;
+  const { clients, locationOptions, t, escapeHtml } = params;
   if (!clients.length) {
     container.innerHTML = renderTableEmptyRow(
       escapeHtml(t("settings.sensors.no_sensors")),
@@ -79,28 +54,6 @@ export function renderRealtimeSensorTable(
       const statusClass = connected ? "online" : "offline";
       const macAddress = client.mac_address || client.id;
       return `<tr data-client-id="${escapeHtml(client.id)}"><td><strong>${escapeHtml(client.name || client.id)}</strong><div class="subtle">${escapeHtml(client.id)}</div><div class="status-pill ${statusClass}">${statusText}</div></td><td><code>${escapeHtml(macAddress)}</code></td><td><select class="row-location-select" data-client-id="${escapeHtml(client.id)}">${locationOptionsMarkup(locationOptions, selectedCode, t, escapeHtml)}</select></td><td><button class="btn btn--primary row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button></td><td><button class="btn btn--danger row-remove" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("actions.remove"))}</button></td></tr>`;
-    })
-    .join("");
-}
-
-export function renderRealtimeSensorOverview(
-  container: HTMLElement,
-  params: RealtimeSensorTableViewParams,
-): void {
-  const { clients, t, escapeHtml } = params;
-  if (!clients.length) {
-    container.innerHTML = `<div class="subtle">${escapeHtml(t("settings.sensors.no_sensors"))}</div>`;
-    return;
-  }
-
-  container.innerHTML = clients
-    .map((client) => {
-      const connected = Boolean(client.connected);
-      const statusText = connected ? t("status.online") : t("status.offline");
-      const statusClass = connected ? "online" : "offline";
-      const strongestClass = params.strongestClientId === client.id ? " live-sensor-card--strongest" : "";
-      const locationLabel = escapeHtml(liveSensorOverviewLabelForClient(client, params));
-      return `<article class="live-sensor-card${strongestClass}"><div class="live-sensor-card__header"><strong>${locationLabel}</strong><span class="live-sensor-card__status-dot live-sensor-card__status-dot--${statusClass}" role="img" aria-label="${escapeHtml(statusText)}" title="${escapeHtml(statusText)}"></span></div></article>`;
     })
     .join("");
 }

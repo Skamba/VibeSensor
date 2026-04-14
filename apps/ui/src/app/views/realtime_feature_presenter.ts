@@ -19,9 +19,12 @@ import {
   renderRealtimeLoggingSummary,
 } from "./realtime_logging_view";
 import {
-  renderRealtimeSensorOverview,
   renderRealtimeSensorTable,
 } from "./realtime_sensor_table_view";
+import type {
+  RealtimeLiveOverviewBridge,
+  RealtimeLiveOverviewRenderModel,
+} from "./realtime_live_overview";
 
 export type RealtimeFeaturePendingLoggingAction = RealtimeLoggingPendingAction;
 
@@ -45,6 +48,7 @@ export interface RealtimeFeaturePresenterDeps {
   chrome: {
     setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
     setStatValue: (container: HTMLElement | null, value: string | number) => void;
+    liveOverview: RealtimeLiveOverviewBridge;
   };
 }
 
@@ -104,37 +108,6 @@ export function createRealtimeFeaturePresenter(
     strongestSignalText,
   } = sensorState;
 
-  function renderActiveCarStat(): void {
-    const container = els.liveActiveCar;
-    const valueEl = container?.querySelector<HTMLElement>("[data-value]");
-    if (!container || !valueEl) {
-      return;
-    }
-    const state = activeCarDisplayState();
-    if (state.isWarning) {
-      container.setAttribute("data-variant", "warn");
-      valueEl.setAttribute("data-variant", "warn");
-      valueEl.setAttribute("data-has-icon", "true");
-    } else {
-      container.removeAttribute("data-variant");
-      valueEl.removeAttribute("data-variant");
-      valueEl.removeAttribute("data-has-icon");
-    }
-    valueEl.replaceChildren();
-    if (state.isWarning) {
-      const iconEl = document.createElement("span");
-      iconEl.className = "stat__value-icon";
-      iconEl.setAttribute("data-variant", "warn");
-      iconEl.setAttribute("aria-hidden", "true");
-      iconEl.textContent = "!";
-      const textEl = document.createElement("span");
-      textEl.textContent = state.text;
-      valueEl.append(iconEl, textEl);
-      return;
-    }
-    valueEl.textContent = state.text;
-  }
-
   function dataFreshnessText(): string {
     const connected = connectedClients();
     const ages = connected
@@ -190,17 +163,42 @@ export function createRealtimeFeaturePresenter(
     }));
   }
 
-  function renderLiveSensorRoster(): void {
-    if (!els.liveSensorRoster) return;
+  function liveSensorOverviewLabel(client: AdaptedClient): string {
+    const code = locationCodeForClient(client);
+    if (!code) {
+      return String(client.name || client.id || t("dashboard.sensor_unassigned")).trim();
+    }
+    const option = realtime.locationOptions.find((location) => location.code === code);
+    return option?.label ?? code;
+  }
+
+  function buildLiveOverviewModel(phaseText: string): RealtimeLiveOverviewRenderModel {
     const signal = strongestSignal();
-    renderRealtimeSensorOverview(els.liveSensorRoster, {
-      clients: realtime.clients,
-      locationOptions: realtime.locationOptions,
-      locationCodeForClient,
-      strongestClientId: signal?.client.id ?? null,
-      t,
-      escapeHtml,
-    });
+    const health = computeCurrentLiveHealth();
+    const totalClients = realtime.clients.length;
+    const activeCar = activeCarDisplayState();
+    return {
+      connectedSensorsText: `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`,
+      activeCar: {
+        text: activeCar.text,
+        warning: activeCar.isWarning,
+      },
+      recordingStateText: phaseText,
+      dataFreshnessText: dataFreshnessText(),
+      strongestSignalText: strongestSignalText(signal),
+      runHealth: {
+        hidden: !health.showOverviewPill,
+        text: health.text,
+        variant: health.variant,
+      },
+      sensorCards: realtime.clients.map((client) => ({
+        id: client.id,
+        label: liveSensorOverviewLabel(client),
+        connected: Boolean(client.connected),
+        statusText: client.connected ? t("status.online") : t("status.offline"),
+        strongest: signal?.client.id === client.id,
+      })),
+    };
   }
 
   function selectionBlockReason(): "no_cars" | "no_active" | null {
@@ -230,20 +228,10 @@ export function createRealtimeFeaturePresenter(
     });
   }
 
-  function renderLiveOverviewStats(phaseText: string): void {
-    const signal = strongestSignal();
-    const totalClients = realtime.clients.length;
-    setStatValue(els.liveConnectedSensors, `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`);
-    renderActiveCarStat();
-    setStatValue(els.liveRecordingState, phaseText);
-    setStatValue(els.liveDataFreshness, dataFreshnessText());
-    setStatValue(els.liveStrongestSignal, strongestSignalText(signal));
-  }
-
-  function renderLiveHealth(): void {
-    const health = computeCurrentLiveHealth();
-    setDashboardPillState(els.liveRunHealth, health.variant, health.text, { hidden: !health.showOverviewPill });
-    setPillState(els.shellLiveStatus, health.variant, health.text);
+  function renderLiveOverview(phaseText: string): void {
+    const model = buildLiveOverviewModel(phaseText);
+    chrome.liveOverview.render(model);
+    setPillState(els.shellLiveStatus, model.runHealth.variant, model.runHealth.text);
   }
 
   function sensorsSettingsSignature(): string {
@@ -262,7 +250,7 @@ export function createRealtimeFeaturePresenter(
     if (!force && nextSig === realtime.sensorsSettingsSignature) return;
     realtime.sensorsSettingsSignature = nextSig;
     renderSensorsSettingsList();
-    renderLiveSensorRoster();
+    renderLiveOverview(buildLoggingPanelViewModel(null).phaseText);
   }
 
   function renderSensorsSettingsList(): void {
@@ -270,7 +258,6 @@ export function createRealtimeFeaturePresenter(
     renderRealtimeSensorTable(els.sensorsSettingsBody, {
       clients: realtime.clients,
       locationOptions: realtime.locationOptions,
-      locationCodeForClient,
       t,
       escapeHtml,
     });
@@ -278,7 +265,7 @@ export function createRealtimeFeaturePresenter(
 
   function renderStatus(clientRow?: AdaptedClient): void {
     void clientRow;
-    renderLiveOverviewStats(buildLoggingPanelViewModel(null).phaseText);
+    renderLiveOverview(buildLoggingPanelViewModel(null).phaseText);
   }
 
   function clearLoggingElapsedTimer(): void {
@@ -364,7 +351,7 @@ export function createRealtimeFeaturePresenter(
     } else {
       dashboardGrid?.removeAttribute("data-layout");
     }
-    renderLiveOverviewStats(panelState.phaseText);
+    renderLiveOverview(panelState.phaseText);
     setDashboardPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText, {
       hidden: !panelState.showPill,
     });
@@ -398,7 +385,7 @@ export function createRealtimeFeaturePresenter(
       els.stopLoggingBtn.disabled = panelState.stopDisabled;
     }
     syncLoggingElapsedTimer(state.handlersBound);
-    renderLiveHealth();
+    renderLiveOverview(panelState.phaseText);
   }
 
   function renderLoggingUnavailable(): void {

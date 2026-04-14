@@ -162,7 +162,6 @@ function createShellDeps(overrides?: Partial<UiShellDom>): {
   languageFeedback: HTMLElement;
   speedUnitSelect: SelectStub;
   speedUnitFeedback: HTMLElement;
-  speed: HTMLElement;
   linkState: HTMLElement;
   appErrorBanner: HTMLElement;
   appShellWrap: HTMLElement;
@@ -175,7 +174,6 @@ function createShellDeps(overrides?: Partial<UiShellDom>): {
   const languageFeedback = createTextElement();
   const speedUnitSelect = createSelect("kmh");
   const speedUnitFeedback = createTextElement();
-  const speed = createTextElement();
   const linkState = createTextElement();
   const appErrorBanner = createTextElement();
   const appShellWrap = createTextElement();
@@ -187,7 +185,6 @@ function createShellDeps(overrides?: Partial<UiShellDom>): {
     languageFeedback,
     speedUnitSelect,
     speedUnitFeedback,
-    speed,
     linkState,
     appErrorBanner,
     appShellWrap,
@@ -205,7 +202,6 @@ function createShellDeps(overrides?: Partial<UiShellDom>): {
     languageFeedback,
     speedUnitSelect,
     speedUnitFeedback,
-    speed,
     linkState,
     appErrorBanner,
     appShellWrap,
@@ -511,7 +507,8 @@ test.describe("createUiShellStatusModule", () => {
     state.settings.carsLoaded = true;
     state.settings.cars = [];
     state.settings.activeCarId = null;
-    const { els, speed } = createShellDeps();
+    const { els } = createShellDeps();
+    let renderedSpeedText = "";
     const module = createUiShellStatusModule({
       shell: state.shell,
       transport: state.transport,
@@ -520,12 +517,15 @@ test.describe("createUiShellStatusModule", () => {
       dom: els,
       t: testTranslation,
       setPillState: () => {},
+      renderLiveOverviewSpeed: (text) => {
+        renderedSpeedText = text;
+      },
     });
 
     module.renderSpeedReadout();
 
-    expect(speed.textContent).toContain("speed.override");
-    expect(speed.textContent).toContain("\"unit\":\"speed.unit.kmh\"");
+    expect(renderedSpeedText).toContain("speed.override");
+    expect(renderedSpeedText).toContain("\"unit\":\"speed.unit.kmh\"");
   });
 
   test("renders OBD2 when OBD2 is the resolved speed source", () => {
@@ -534,7 +534,8 @@ test.describe("createUiShellStatusModule", () => {
     state.settings.speedSource = "obd2";
     state.settings.resolvedSpeedSource = "obd2";
     state.shell.speedUnit = "kmh";
-    const { els, speed } = createShellDeps();
+    const { els } = createShellDeps();
+    let renderedSpeedText = "";
     const module = createUiShellStatusModule({
       shell: state.shell,
       transport: state.transport,
@@ -543,12 +544,15 @@ test.describe("createUiShellStatusModule", () => {
       dom: els,
       t: testTranslation,
       setPillState: () => {},
+      renderLiveOverviewSpeed: (text) => {
+        renderedSpeedText = text;
+      },
     });
 
     module.renderSpeedReadout();
 
-    expect(speed.textContent).toContain("speed.obd2");
-    expect(speed.textContent).toContain("\"unit\":\"speed.unit.kmh\"");
+    expect(renderedSpeedText).toContain("speed.obd2");
+    expect(renderedSpeedText).toContain("\"unit\":\"speed.unit.kmh\"");
   });
 });
 
