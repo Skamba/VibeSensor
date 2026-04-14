@@ -75,6 +75,36 @@ def test_capture_readiness_passes_after_stable_dwell(
     assert speed_check.reason_key == "speed_stable"
 
 
+def test_capture_readiness_accepts_manual_speed_source_for_start_gate(
+    fake_registry,
+    fake_gps_monitor,
+    mutable_fake_settings,
+) -> None:
+    tracker = CaptureReadinessTracker()
+    mutable_fake_settings.active_car = _active_car_snapshot()
+    fake_gps_monitor.speed_mps = 22.0
+    fake_gps_monitor.resolved_source = "manual"
+
+    readiness = tracker.evaluate(
+        _observation(
+            fake_registry=fake_registry,
+            fake_gps_monitor=fake_gps_monitor,
+            mutable_fake_settings=mutable_fake_settings,
+            now_mono=150.0,
+        )
+    )
+
+    reference_check = next(
+        check for check in readiness.checks if check.check_key == "reference_ready"
+    )
+    speed_check = next(check for check in readiness.checks if check.check_key == "speed_stable")
+    assert readiness.is_ready
+    assert reference_check.state == "pass"
+    assert reference_check.reason_key == "reference_ready"
+    assert speed_check.state == "pass"
+    assert speed_check.reason_key == "speed_stable"
+
+
 def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     fake_registry,
     fake_gps_monitor,
@@ -124,15 +154,15 @@ def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     assert sensors_check.reason_key == "limited_sensor_coverage"
 
 
-def test_capture_readiness_blocks_without_fresh_reference(
+def test_capture_readiness_blocks_without_resolved_speed_source(
     fake_registry,
     fake_gps_monitor,
     mutable_fake_settings,
 ) -> None:
     tracker = CaptureReadinessTracker()
     mutable_fake_settings.active_car = _active_car_snapshot()
-    fake_gps_monitor.speed_mps = 22.0
-    fake_gps_monitor.resolved_source = "manual"
+    fake_gps_monitor.speed_mps = None
+    fake_gps_monitor.resolved_source = "none"
 
     readiness = tracker.evaluate(
         _observation(
@@ -148,6 +178,34 @@ def test_capture_readiness_blocks_without_fresh_reference(
     )
     assert reference_check.state == "fail"
     assert reference_check.reason_key == "speed_source_not_live"
+    assert not readiness.is_ready
+
+
+def test_capture_readiness_blocks_when_manual_fallback_is_active(
+    fake_registry,
+    fake_gps_monitor,
+    mutable_fake_settings,
+) -> None:
+    tracker = CaptureReadinessTracker()
+    mutable_fake_settings.active_car = _active_car_snapshot()
+    fake_gps_monitor.speed_mps = 22.0
+    fake_gps_monitor.resolved_source = "fallback_manual"
+    fake_gps_monitor.fallback_active = True
+
+    readiness = tracker.evaluate(
+        _observation(
+            fake_registry=fake_registry,
+            fake_gps_monitor=fake_gps_monitor,
+            mutable_fake_settings=mutable_fake_settings,
+            now_mono=320.0,
+        )
+    )
+
+    reference_check = next(
+        check for check in readiness.checks if check.check_key == "reference_ready"
+    )
+    assert reference_check.state == "fail"
+    assert reference_check.reason_key == "speed_source_fallback_active"
     assert not readiness.is_ready
 
 

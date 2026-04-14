@@ -95,7 +95,7 @@
   "dashboard.capture_readiness.reference_ready.active_car_missing": "Choose an active car before recording.",
   "dashboard.capture_readiness.reference_ready.order_reference_incomplete": "Complete the active car's tire and driveline settings first.",
   "dashboard.capture_readiness.reference_ready.speed_source_missing": "No live speed source is available yet.",
-  "dashboard.capture_readiness.reference_ready.speed_source_not_live": "Use GPS or OBD-II speed for steady-state capture.",
+  "dashboard.capture_readiness.reference_ready.speed_source_not_live": "Choose GPS, OBD-II, or a manual speed before starting steady-state capture.",
   "dashboard.capture_readiness.reference_ready.speed_source_fallback_active": "Waiting for live speed updates instead of fallback speed.",
   "dashboard.capture_readiness.reference_ready.speed_sample_stale": "Waiting for a fresh live speed update.",
   "dashboard.capture_readiness.reference_ready.speed_sample_missing": "Waiting for a valid live speed reading.",

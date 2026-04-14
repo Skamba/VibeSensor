@@ -95,7 +95,7 @@
   "dashboard.capture_readiness.reference_ready.active_car_missing": "Kies een actieve auto voordat je opneemt.",
   "dashboard.capture_readiness.reference_ready.order_reference_incomplete": "Vul eerst de banden- en aandrijflijninstellingen van de actieve auto aan.",
   "dashboard.capture_readiness.reference_ready.speed_source_missing": "Er is nog geen live snelheidsbron beschikbaar.",
-  "dashboard.capture_readiness.reference_ready.speed_source_not_live": "Gebruik GPS- of OBD-II-snelheid voor steady-state metingen.",
+  "dashboard.capture_readiness.reference_ready.speed_source_not_live": "Kies GPS-, OBD-II- of handmatige snelheid voordat je steady-state metingen start.",
   "dashboard.capture_readiness.reference_ready.speed_source_fallback_active": "Wachten op live snelheidsupdates in plaats van terugvalsnelheid.",
   "dashboard.capture_readiness.reference_ready.speed_sample_stale": "Wachten op een verse live snelheidsupdate.",
   "dashboard.capture_readiness.reference_ready.speed_sample_missing": "Wachten op een geldige live snelheidsmeting.",
