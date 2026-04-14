@@ -1,8 +1,14 @@
 import { expect, test } from "@playwright/test";
 
-import { fulfillJson, installCommonRoutes, installFakeWebSocket } from "./smoke.helpers";
+import {
+  fulfillJson,
+  installCommonRoutes,
+  installFakeWebSocket,
+} from "./smoke.helpers";
 
-test("settings update tab renders readiness guidance when idle", async ({ page }) => {
+test("settings update tab renders readiness guidance when idle", async ({
+  page,
+}) => {
   await installCommonRoutes(page);
   await page.route("**/api/update/status", async (route) => {
     await fulfillJson(route, {
@@ -63,41 +69,66 @@ test("settings update tab renders readiness guidance when idle", async ({ page }
   await expect(page.locator("#updateStatusPanel")).toContainText(
     "Ready to start once the Pi has either temporary Wi-Fi credentials or a usable USB internet uplink.",
   );
-  await expect(page.locator("#updateStatusPanel")).toContainText("Update journey");
-  await expect(page.locator("#updateStatusPanel")).toContainText("Validating...");
-  await expect(page.locator("#updateStatusPanel")).not.toContainText("No blockers recorded");
-  await expect(page.locator("#updateStatusPanel")).toContainText("No updater log yet");
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "Update journey",
+  );
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "Validating...",
+  );
+  await expect(page.locator("#updateStatusPanel")).not.toContainText(
+    "No blockers recorded",
+  );
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "No updater log yet",
+  );
   await expect(page.locator("#updateStatusPanel")).toContainText("1.2.3");
-  await expect(page.locator("#updateStatusPanel")).toContainText("Background service health");
-  await expect(page.locator("#updateTransportOptions")).toHaveJSProperty("hidden", false);
-  await expect(page.locator("#updateTransportChoiceWifi")).toHaveAttribute("data-selected", "true");
-  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute("data-disabled", "true");
-  await expect(page.locator("#updateTransportChoiceUsb")).toContainText("USB internet is not ready yet.");
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "Background service health",
+  );
+  await expect(page.locator("#updateStartBtn")).toBeDisabled();
+  await page.locator('[data-settings-tab="internetTab"]').click();
+  await expect(page.locator("#updateTransportOptions")).toHaveJSProperty(
+    "hidden",
+    false,
+  );
+  await expect(page.locator("#updateTransportChoiceWifi")).toHaveAttribute(
+    "data-selected",
+    "true",
+  );
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute(
+    "data-disabled",
+    "true",
+  );
+  await expect(page.locator("#updateTransportChoiceUsb")).toContainText(
+    "USB internet is not ready yet.",
+  );
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "Complete the blocked item before starting the update.",
   );
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "Enter a Wi-Fi SSID to enable Start Update.",
   );
-  await expect(page.locator("#updateStartBtn")).toBeDisabled();
-  await expect(page.locator("#updateTab")).toContainText("What happens next");
+  await expect(page.locator("#internetTab")).toContainText("What happens next");
   await expect(page.locator("#updateDetailsCaption")).toContainText(
     "Hotspot access pauses while the Pi joins Wi-Fi.",
   );
-  await expect(page.locator("#updateTab")).toContainText(
+  await expect(page.locator("#internetTab")).toContainText(
     "Starting a Wi-Fi update temporarily pauses hotspot access",
   );
   await page.locator("#updateSsidInput").fill("Workshop Wi-Fi");
-  await expect(page.locator("#updateStartBtn")).toBeEnabled();
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "All visible prerequisites are ready to start the update.",
   );
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "A Wi-Fi network name is entered and ready to use.",
   );
+  await page.locator('[data-settings-tab="updateTab"]').click();
+  await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });
 
-test("settings internet tab and updater show USB internet when usable", async ({ page }) => {
+test("settings internet tab and updater show USB internet when usable", async ({
+  page,
+}) => {
   await installCommonRoutes(page);
   await page.route("**/api/update/status", async (route) => {
     await fulfillJson(route, {
@@ -168,16 +199,27 @@ test("settings internet tab and updater show USB internet when usable", async ({
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="internetTab"]').click();
-  await expect(page.locator("#internetStatusPanel")).toContainText("USB internet status");
+  await expect(page.locator("#internetStatusPanel")).toContainText(
+    "USB internet status",
+  );
   await expect(page.locator("#internetStatusPanel")).toContainText("usb0");
   await expect(page.locator("#internetStatusPanel")).toContainText("Usable");
-  await page.locator('[data-settings-tab="updateTab"]').click();
-  await expect(page.locator("#updateTransportOptions")).toHaveJSProperty("hidden", false);
-  await expect(page.locator("#updateTransportChoiceUsb")).toContainText("Existing USB internet");
+  await expect(page.locator("#updateTransportOptions")).toHaveJSProperty(
+    "hidden",
+    false,
+  );
+  await expect(page.locator("#updateTransportChoiceUsb")).toContainText(
+    "Existing USB internet",
+  );
   await page.locator("#updateTransportChoiceUsb").click();
-  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute("data-selected", "true");
-  await expect(page.locator("#updateWifiFields")).toHaveJSProperty("hidden", true);
-  await expect(page.locator("#updateStartBtn")).toBeEnabled();
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute(
+    "data-selected",
+    "true",
+  );
+  await expect(page.locator("#updateWifiFields")).toHaveJSProperty(
+    "hidden",
+    true,
+  );
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "USB internet is ready on usb0.",
   );
@@ -187,9 +229,13 @@ test("settings internet tab and updater show USB internet when usable", async ({
   await expect(page.locator("#updateTransportNote")).toContainText(
     "Starting a USB-internet update keeps the hotspot up",
   );
+  await page.locator('[data-settings-tab="updateTab"]').click();
+  await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });
 
-test("settings update failure shows retry guidance, failed-stage retention, and latest attempt context", async ({ page }) => {
+test("settings update failure shows retry guidance, failed-stage retention, and latest attempt context", async ({
+  page,
+}) => {
   await installCommonRoutes(page);
   await page.route("**/api/update/status", async (route) => {
     await fulfillJson(route, {
@@ -208,7 +254,8 @@ test("settings update failure shows retry guidance, failed-stage retention, and 
         {
           phase: "downloading",
           message: "GitHub release download timed out",
-          detail: "The upstream connection dropped while fetching the release package.",
+          detail:
+            "The upstream connection dropped while fetching the release package.",
         },
       ],
       log_tail: [],
@@ -265,20 +312,36 @@ test("settings update failure shows retry guidance, failed-stage retention, and 
   await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="updateTab"]').click();
+  await page.locator('[data-settings-tab="internetTab"]').click();
   await page.locator("#updateTransportChoiceUsb").click();
+  await expect(page.locator("#updateReadinessSummary")).toContainText(
+    "Recovery guidance",
+  );
+  await expect(page.locator("#updateReadinessSummary")).toContainText(
+    "Failed step",
+  );
+  await expect(page.locator("#updateReadinessSummary")).toContainText(
+    "Downloading update",
+  );
+  await expect(page.locator("#updateReadinessSummary")).toContainText(
+    "Check upstream connectivity",
+  );
+  await page.locator('[data-settings-tab="updateTab"]').click();
   await expect(page.locator("#updateStartBtn")).toHaveText("Retry Update");
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
-  await expect(page.locator("#updateReadinessSummary")).toContainText("Recovery guidance");
-  await expect(page.locator("#updateReadinessSummary")).toContainText("Failed step");
-  await expect(page.locator("#updateReadinessSummary")).toContainText("Downloading update");
-  await expect(page.locator("#updateReadinessSummary")).toContainText("Check upstream connectivity");
-  await expect(page.locator("#updateStatusPanel")).toContainText("GitHub release download timed out");
-  await expect(page.locator("#updateStatusPanel")).toContainText("Latest attempt");
-  await expect(page.locator("#updateStatusPanel")).toContainText("Exit code");
-  await expect(page.locator("#updateStatusPanel")).toContainText("No failure log was captured");
-  await expect(page.locator('#updateStatusPanel .maintenance-stage[data-stage-phase="downloading"]')).toHaveAttribute(
-    "data-stage-state",
-    "attention",
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "GitHub release download timed out",
   );
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "Latest attempt",
+  );
+  await expect(page.locator("#updateStatusPanel")).toContainText("Exit code");
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "No failure log was captured",
+  );
+  await expect(
+    page.locator(
+      '#updateStatusPanel .maintenance-stage[data-stage-phase="downloading"]',
+    ),
+  ).toHaveAttribute("data-stage-state", "attention");
 });

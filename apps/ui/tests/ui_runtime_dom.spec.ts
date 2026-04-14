@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { getUiAnalysisPanelHost } from "../src/app/dom/analysis_dom";
 import { getUiCarsPanelHost } from "../src/app/dom/cars_dom";
 import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
+import { getUiInternetPanelHost } from "../src/app/dom/internet_dom";
 import { getUiSensorsPanelHost } from "../src/app/dom/sensors_dom";
 import { getUiSpeedSourcePanelHost } from "../src/app/dom/speed_source_dom";
 import {
@@ -42,6 +43,7 @@ function createBaseFixture(): SelectorFixture {
       historyPanelRoot: stubElement("historyPanelRoot"),
       carsPanelRoot: stubElement("carsPanelRoot"),
       analysisPanelRoot: stubElement("analysisPanelRoot"),
+      internetPanelRoot: stubElement("internetPanelRoot"),
       sensorsPanelRoot: stubElement("sensorsPanelRoot"),
       speedSourcePanelRoot: stubElement("speedSourcePanelRoot"),
       addCarBtn: stubElement("addCarBtn"),
@@ -176,6 +178,15 @@ test("getUiAnalysisPanelHost resolves the analysis island host", () => {
   }
 });
 
+test("getUiInternetPanelHost resolves the internet island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiInternetPanelHost().id).toBe("internetPanelRoot");
+  } finally {
+    restore();
+  }
+});
+
 test("getUiSensorsPanelHost resolves the sensors island host", () => {
   const restore = installDomFixture();
   try {
@@ -275,6 +286,17 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     try {
       expect(() => getUiAnalysisPanelHost()).toThrow(
         "Analysis feature requires #analysisPanelRoot",
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("fails when the internet panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "internetPanelRoot" });
+    try {
+      expect(() => getUiInternetPanelHost()).toThrow(
+        "Internet settings requires #internetPanelRoot",
       );
     } finally {
       restore();
