@@ -21,16 +21,32 @@ function pendingPollDelays(timers: TimerHarness): number[] {
 }
 
 function installFetchMock(
-  handler: (url: URL, method: string, body: string) => Promise<Response> | Response,
+  handler: (
+    url: URL,
+    method: string,
+    body: string,
+  ) => Promise<Response> | Response,
 ): () => void {
   const originalFetch = globalThis.fetch;
 
-  globalThis.fetch = (async (input: string | URL | RequestInfo, init?: RequestInit) => {
+  globalThis.fetch = (async (
+    input: string | URL | RequestInfo,
+    init?: RequestInit,
+  ) => {
     const requestUrl =
-      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    const requestMethod = init?.method ?? (input instanceof Request ? input.method : "GET");
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
+    const requestMethod =
+      init?.method ?? (input instanceof Request ? input.method : "GET");
     const requestBody = typeof init?.body === "string" ? init.body : "";
-    return handler(new URL(requestUrl, "http://vibesensor.test"), requestMethod, requestBody);
+    return handler(
+      new URL(requestUrl, "http://vibesensor.test"),
+      requestMethod,
+      requestBody,
+    );
   }) as typeof fetch;
 
   return () => {
@@ -44,7 +60,10 @@ function createButton(): HTMLButtonElement {
   return {
     disabled: false,
     hidden: false,
-    addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+    ) {
       if (type !== "click") return;
       onClick = () => {
         const event = new Event("click");
@@ -65,12 +84,18 @@ function createButton(): HTMLButtonElement {
 }
 
 function createSelect(value: string): HTMLSelectElement {
-  const listeners = new Map<string, Array<EventListenerOrEventListenerObject>>();
+  const listeners = new Map<
+    string,
+    Array<EventListenerOrEventListenerObject>
+  >();
   return {
     value,
     disabled: false,
     innerHTML: "",
-    addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+    ) {
       const typeListeners = listeners.get(type) ?? [];
       typeListeners.push(listener);
       listeners.set(type, typeListeners);
@@ -90,13 +115,19 @@ function createSelect(value: string): HTMLSelectElement {
 }
 
 function createInput(value = "", type = "text"): HTMLInputElement {
-  const listeners = new Map<string, Array<EventListenerOrEventListenerObject>>();
+  const listeners = new Map<
+    string,
+    Array<EventListenerOrEventListenerObject>
+  >();
   return {
     value,
     type,
     disabled: false,
     focus() {},
-    addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+    ) {
       const typeListeners = listeners.get(type) ?? [];
       typeListeners.push(listener);
       listeners.set(type, typeListeners);
@@ -169,10 +200,16 @@ test.afterEach(() => {
   restoreDomGlobals = () => undefined;
 });
 
-async function expectDelays(readDelays: () => number[], expected: number[]): Promise<void> {
+async function expectDelays(
+  readDelays: () => number[],
+  expected: number[],
+): Promise<void> {
   for (let attempt = 0; attempt < 25; attempt += 1) {
     const actual = readDelays();
-    if (actual.length === expected.length && actual.every((delay, index) => delay === expected[index])) {
+    if (
+      actual.length === expected.length &&
+      actual.every((delay, index) => delay === expected[index])
+    ) {
       expect(actual).toEqual(expected);
       return;
     }
@@ -181,11 +218,17 @@ async function expectDelays(readDelays: () => number[], expected: number[]): Pro
   expect(readDelays()).toEqual(expected);
 }
 
-async function expectPollDelays(timers: TimerHarness, expected: number[]): Promise<void> {
+async function expectPollDelays(
+  timers: TimerHarness,
+  expected: number[],
+): Promise<void> {
   await expectDelays(() => pendingPollDelays(timers), expected);
 }
 
-async function expectTimerDelays(timers: TimerHarness, expected: number[]): Promise<void> {
+async function expectTimerDelays(
+  timers: TimerHarness,
+  expected: number[],
+): Promise<void> {
   await expectDelays(() => timers.pendingDelays(), expected);
 }
 
@@ -264,11 +307,7 @@ function createUpdateDeps() {
   const updateCancelBtn = createButton();
   const updateStatusPanel = createPanel();
 
-  const dom = {
-    menuButtons: [],
-    views: [],
-    settingsTabs: [],
-    settingsTabPanels: [],
+  const internetDom = {
     internetStatusPanel,
     updateTransportOptions,
     updateTransportChoiceWifi,
@@ -283,6 +322,9 @@ function createUpdateDeps() {
     updateSsidInput,
     updatePasswordInput,
     updateTogglePasswordBtn,
+  };
+
+  const dom = {
     updateStartBtn,
     updateCancelBtn,
     updateStatusPanel,
@@ -290,6 +332,9 @@ function createUpdateDeps() {
 
   return {
     dom,
+    internetPanel: {
+      dom: internetDom,
+    },
     els: dom,
     internetStatusPanel,
     updateTransportOptions,
@@ -334,10 +379,28 @@ test.describe("createEspFlashFeature polling", () => {
   test("idle state renders readiness, empty log, and empty history context", async () => {
     const restoreFetch = installFetchMock(async (url) => {
       if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
+        return jsonResponse({
+          ports: [
+            {
+              port: "/dev/ttyUSB0",
+              description: "USB UART",
+              vid: 1,
+              pid: 2,
+              serial_number: "abc",
+            },
+          ],
+        });
       }
       if (url.pathname === "/api/esp-flash/status") {
-        return jsonResponse({ state: "idle", phase: "idle", selected_port: null, auto_detect: true, last_success_at: null, error: null, log_count: 0 });
+        return jsonResponse({
+          state: "idle",
+          phase: "idle",
+          selected_port: null,
+          auto_detect: true,
+          last_success_at: null,
+          error: null,
+          log_count: 0,
+        });
       }
       if (url.pathname === "/api/esp-flash/history") {
         return jsonResponse({ attempts: [] });
@@ -363,14 +426,30 @@ test.describe("createEspFlashFeature polling", () => {
       );
       expect(deps.espFlashStartBtn.disabled).toBe(false);
       expect(deps.espFlashCancelBtn.hidden).toBe(true);
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.summary.ready_ports");
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.one_port");
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.auto_detect");
-      expect(deps.espFlashReadinessPanel.innerHTML).not.toContain("settings.esp_flash.journey_title");
-      expect(deps.espFlashReadinessPanel.innerHTML).not.toContain("settings.esp_flash.phase.validating");
-      expect(deps.espFlashJourneyPanel.innerHTML).toContain("settings.esp_flash.phase.validating");
-      expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.logs_idle_title");
-      expect((deps.els.espFlashHistoryPanel as HTMLElement).innerHTML).toContain("settings.esp_flash.history_empty_title");
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain(
+        "settings.esp_flash.readiness.summary.ready_ports",
+      );
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain(
+        "settings.esp_flash.readiness.one_port",
+      );
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain(
+        "settings.esp_flash.auto_detect",
+      );
+      expect(deps.espFlashReadinessPanel.innerHTML).not.toContain(
+        "settings.esp_flash.journey_title",
+      );
+      expect(deps.espFlashReadinessPanel.innerHTML).not.toContain(
+        "settings.esp_flash.phase.validating",
+      );
+      expect(deps.espFlashJourneyPanel.innerHTML).toContain(
+        "settings.esp_flash.phase.validating",
+      );
+      expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain(
+        "settings.esp_flash.logs_idle_title",
+      );
+      expect(
+        (deps.els.espFlashHistoryPanel as HTMLElement).innerHTML,
+      ).toContain("settings.esp_flash.history_empty_title");
     } finally {
       restoreFetch();
     }
@@ -382,7 +461,15 @@ test.describe("createEspFlashFeature polling", () => {
         return jsonResponse({ ports: [] });
       }
       if (url.pathname === "/api/esp-flash/status") {
-        return jsonResponse({ state: "idle", phase: "idle", selected_port: null, auto_detect: true, last_success_at: null, error: null, log_count: 0 });
+        return jsonResponse({
+          state: "idle",
+          phase: "idle",
+          selected_port: null,
+          auto_detect: true,
+          last_success_at: null,
+          error: null,
+          log_count: 0,
+        });
       }
       if (url.pathname === "/api/esp-flash/history") {
         return jsonResponse({ attempts: [] });
@@ -416,7 +503,17 @@ test.describe("createEspFlashFeature polling", () => {
   test("running state highlights the active stage and marks completed stages done", async () => {
     const restoreFetch = installFetchMock(async (url) => {
       if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
+        return jsonResponse({
+          ports: [
+            {
+              port: "/dev/ttyUSB0",
+              description: "USB UART",
+              vid: 1,
+              pid: 2,
+              serial_number: "abc",
+            },
+          ],
+        });
       }
       if (url.pathname === "/api/esp-flash/status") {
         return jsonResponse({
@@ -454,10 +551,16 @@ test.describe("createEspFlashFeature polling", () => {
         "settings.esp_flash.logs_running_title",
       );
       const html = deps.espFlashJourneyPanel.innerHTML;
-      expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="active" aria-current="step"/);
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain("settings.esp_flash.readiness.current_step");
+      expect(html).toMatch(
+        /data-stage-phase="flashing" data-stage-state="active" aria-current="step"/,
+      );
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain(
+        "settings.esp_flash.readiness.current_step",
+      );
       expect(html.match(/data-stage-state="done"/g)).toHaveLength(3);
-      expect(html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)).toHaveLength(3);
+      expect(
+        html.match(/<span class="maintenance-stage__marker">✓<\/span>/g),
+      ).toHaveLength(3);
     } finally {
       restoreFetch();
     }
@@ -475,7 +578,17 @@ test.describe("createEspFlashFeature polling", () => {
     };
     const restoreFetch = installFetchMock(async (url) => {
       if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
+        return jsonResponse({
+          ports: [
+            {
+              port: "/dev/ttyUSB0",
+              description: "USB UART",
+              vid: 1,
+              pid: 2,
+              serial_number: "abc",
+            },
+          ],
+        });
       }
       if (url.pathname === "/api/esp-flash/status") {
         return jsonResponse(status);
@@ -507,20 +620,28 @@ test.describe("createEspFlashFeature polling", () => {
       await flushAsyncWork();
 
       const html = deps.espFlashJourneyPanel.innerHTML;
-      expect(html).toMatch(/data-stage-phase="flashing" data-stage-state="attention"/);
-      expect(deps.espFlashStartSummary.innerHTML).toContain("settings.esp_flash.recovery.title");
+      expect(html).toMatch(
+        /data-stage-phase="flashing" data-stage-state="attention"/,
+      );
+      expect(deps.espFlashStartSummary.innerHTML).toContain(
+        "settings.esp_flash.recovery.title",
+      );
       expect(deps.espFlashStartSummary.innerHTML).toContain(
         "settings.esp_flash.recovery.flashing.detail",
       );
-      expect(deps.espFlashStartBtn.textContent).toBe("settings.esp_flash.retry");
+      expect(deps.espFlashStartBtn.textContent).toBe(
+        "settings.esp_flash.retry",
+      );
       expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain(
         "settings.esp_flash.logs_failed_title",
       );
-      expect((deps.els.espFlashHistoryPanel as HTMLElement).innerHTML).toContain(
+      expect(
+        (deps.els.espFlashHistoryPanel as HTMLElement).innerHTML,
+      ).toContain("serial port disconnected");
+      expect(html.match(/data-stage-state="done"/g)).toHaveLength(3);
+      expect(deps.espFlashReadinessPanel.innerHTML).toContain(
         "serial port disconnected",
       );
-      expect(html.match(/data-stage-state="done"/g)).toHaveLength(3);
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain("serial port disconnected");
     } finally {
       restoreFetch();
     }
@@ -530,7 +651,17 @@ test.describe("createEspFlashFeature polling", () => {
     const timers = installTimerHarness();
     const restoreFetch = installFetchMock(async (url, method) => {
       if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
+        return jsonResponse({
+          ports: [
+            {
+              port: "/dev/ttyUSB0",
+              description: "USB UART",
+              vid: 1,
+              pid: 2,
+              serial_number: "abc",
+            },
+          ],
+        });
       }
       if (url.pathname === "/api/esp-flash/start" && method === "POST") {
         return jsonResponse({ status: "started", job_id: 1 });
@@ -566,7 +697,8 @@ test.describe("createEspFlashFeature polling", () => {
   test("cancel replaces the previous poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
     const restoreFetch = installFetchMock(async (url, method) => {
-      if (url.pathname === "/api/esp-flash/ports") return jsonResponse({ ports: [] });
+      if (url.pathname === "/api/esp-flash/ports")
+        return jsonResponse({ ports: [] });
       if (url.pathname === "/api/esp-flash/cancel" && method === "POST") {
         return jsonResponse({ status: "cancelled" });
       }
@@ -602,8 +734,10 @@ test.describe("createEspFlashFeature polling", () => {
     const timers = installTimerHarness();
     const deferredStatus = createDeferred<Response>();
     const restoreFetch = installFetchMock(async (url) => {
-      if (url.pathname === "/api/esp-flash/ports") return jsonResponse({ ports: [] });
-      if (url.pathname === "/api/esp-flash/status") return deferredStatus.promise;
+      if (url.pathname === "/api/esp-flash/ports")
+        return jsonResponse({ ports: [] });
+      if (url.pathname === "/api/esp-flash/status")
+        return deferredStatus.promise;
       if (url.pathname === "/api/esp-flash/logs") {
         return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
       }
@@ -622,7 +756,9 @@ test.describe("createEspFlashFeature polling", () => {
       expect(pendingPollDelays(timers)).toEqual([]);
 
       feature.stopPolling();
-      deferredStatus.resolve(jsonResponse({ state: "idle", log_count: 0, error: null }));
+      deferredStatus.resolve(
+        jsonResponse({ state: "idle", log_count: 0, error: null }),
+      );
       await flushAsyncWork();
 
       expect(pendingPollDelays(timers)).toEqual([]);
@@ -655,25 +791,53 @@ test.describe("createUpdateFeature polling", () => {
       feature.startPolling();
       await flushAsyncWork();
 
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_title");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.current_status_summary.ready");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.journey_title");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.phase.validating");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).not.toContain("settings.update.issues_empty_title");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.log_empty_title");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("1.2.3");
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain("settings.update.health_card_title");
-      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("settings.internet.card_title");
-      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("settings.internet.summary.not_detected");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+        "settings.update.current_status_title",
+      );
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+        "settings.update.current_status_summary.ready",
+      );
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+        "settings.update.journey_title",
+      );
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+        "settings.update.phase.validating",
+      );
+      expect(
+        (deps.els.updateStatusPanel as HTMLElement).innerHTML,
+      ).not.toContain("settings.update.issues_empty_title");
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+        "settings.update.log_empty_title",
+      );
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+        "1.2.3",
+      );
+      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+        "settings.update.health_card_title",
+      );
+      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain(
+        "settings.internet.card_title",
+      );
+      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain(
+        "settings.internet.summary.not_detected",
+      );
       expect(deps.updateTransportOptions.hidden).toBe(false);
-      expect(deps.updateTransportChoiceWifi.getAttribute("data-selected")).toBe("true");
-      expect(deps.updateTransportChoiceUsb.getAttribute("data-disabled")).toBe("true");
+      expect(deps.updateTransportChoiceWifi.getAttribute("data-selected")).toBe(
+        "true",
+      );
+      expect(deps.updateTransportChoiceUsb.getAttribute("data-disabled")).toBe(
+        "true",
+      );
       expect(deps.updateTransportUsbRadio.disabled).toBe(true);
-      expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.readiness.summary_ready");
+      expect(deps.updateReadinessSummary.innerHTML).toContain(
+        "settings.update.readiness.summary_ready",
+      );
       expect(deps.updateReadinessSummary.innerHTML).toContain(
         "settings.update.readiness.item.connection_wifi_ready",
       );
-      expect(deps.updateDetailsCaption.textContent).toBe("settings.update.details_caption_wifi");
+      expect(deps.updateDetailsCaption.textContent).toBe(
+        "settings.update.details_caption_wifi",
+      );
       expect(deps.updateStartBtn.disabled).toBe(false);
       expect(deps.updateUsbTransportSummary.textContent).toBe(
         "settings.update.transport.usb_summary_unavailable",
@@ -751,9 +915,13 @@ test.describe("createUpdateFeature polling", () => {
 
       const html = (deps.els.updateStatusPanel as HTMLElement).innerHTML;
       expect(html).toContain("settings.update.log_running_title");
-      expect(html).toMatch(/data-stage-phase="installing" data-stage-state="active" aria-current="step"/);
+      expect(html).toMatch(
+        /data-stage-phase="installing" data-stage-state="active" aria-current="step"/,
+      );
       expect(html.match(/data-stage-state="done"/g)).toHaveLength(5);
-      expect(html.match(/<span class="maintenance-stage__marker">✓<\/span>/g)).toHaveLength(5);
+      expect(
+        html.match(/<span class="maintenance-stage__marker">✓<\/span>/g),
+      ).toHaveLength(5);
     } finally {
       restoreFetch();
     }
@@ -793,16 +961,26 @@ test.describe("createUpdateFeature polling", () => {
       await flushAsyncWork();
 
       const html = (deps.els.updateStatusPanel as HTMLElement).innerHTML;
-      expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.recovery.title");
-      expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.recovery.wifi.title");
-      expect(deps.updateReadinessSummary.innerHTML).toContain("settings.update.recovery.wifi.detail");
+      expect(deps.updateReadinessSummary.innerHTML).toContain(
+        "settings.update.recovery.title",
+      );
+      expect(deps.updateReadinessSummary.innerHTML).toContain(
+        "settings.update.recovery.wifi.title",
+      );
+      expect(deps.updateReadinessSummary.innerHTML).toContain(
+        "settings.update.recovery.wifi.detail",
+      );
       expect(deps.updateStartBtn.textContent).toBe("settings.update.retry");
       expect(html).toContain("settings.update.issues");
       expect(html).toContain("settings.update.attempt_title");
       expect(html).toContain("settings.update.log_failed_title");
       expect(html).toContain("Hotspot restart timed out");
-      expect(html).toContain("NetworkManager is still reconnecting to the uplink.");
-      expect(html).toMatch(/data-stage-phase="restoring_hotspot" data-stage-state="attention"/);
+      expect(html).toContain(
+        "NetworkManager is still reconnecting to the uplink.",
+      );
+      expect(html).toMatch(
+        /data-stage-phase="restoring_hotspot" data-stage-state="attention"/,
+      );
     } finally {
       restoreFetch();
     }
@@ -814,7 +992,11 @@ test.describe("createUpdateFeature polling", () => {
     const restoreFetch = installFetchMock(async (url, method, body) => {
       if (url.pathname === "/api/update/start" && method === "POST") {
         startBody = body;
-        return jsonResponse({ status: "started", transport: "wifi", ssid: "MyWiFi" });
+        return jsonResponse({
+          status: "started",
+          transport: "wifi",
+          ssid: "MyWiFi",
+        });
       }
       if (url.pathname === "/api/update/status") {
         return jsonResponse(createIdleUpdateStatus());
@@ -855,7 +1037,11 @@ test.describe("createUpdateFeature polling", () => {
     const restoreFetch = installFetchMock(async (url, method, body) => {
       if (url.pathname === "/api/update/start" && method === "POST") {
         startBody = body;
-        return jsonResponse({ status: "started", transport: "usb_internet", ssid: null });
+        return jsonResponse({
+          status: "started",
+          transport: "usb_internet",
+          ssid: null,
+        });
       }
       if (url.pathname === "/api/update/status") {
         return jsonResponse(createIdleUpdateStatus());
@@ -900,20 +1086,35 @@ test.describe("createUpdateFeature polling", () => {
       expect(deps.updateReadinessSummary.innerHTML).toContain(
         "settings.update.readiness.item.connection_usb_ready",
       );
-      expect(deps.updateDetailsCaption.textContent).toBe("settings.update.details_caption_usb");
-      expect(deps.updateTransportNote.textContent).toBe("settings.update.preflight_note_usb");
+      expect(deps.updateDetailsCaption.textContent).toBe(
+        "settings.update.details_caption_usb",
+      );
+      expect(deps.updateTransportNote.textContent).toBe(
+        "settings.update.preflight_note_usb",
+      );
       expect(deps.updateUsbTransportSummary.textContent).toBe(
         "settings.update.transport.usb_summary_interface",
       );
-      expect(deps.updateTransportChoiceWifi.getAttribute("data-selected")).toBeNull();
-      expect(deps.updateTransportChoiceUsb.getAttribute("data-selected")).toBe("true");
-      expect(deps.updateTransportChoiceUsb.getAttribute("data-disabled")).toBeNull();
-      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain("usb0");
+      expect(
+        deps.updateTransportChoiceWifi.getAttribute("data-selected"),
+      ).toBeNull();
+      expect(deps.updateTransportChoiceUsb.getAttribute("data-selected")).toBe(
+        "true",
+      );
+      expect(
+        deps.updateTransportChoiceUsb.getAttribute("data-disabled"),
+      ).toBeNull();
+      expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain(
+        "usb0",
+      );
 
       deps.updateStartBtn.click();
       await flushAsyncWork();
 
-      expect(JSON.parse(startBody)).toEqual({ transport: "usb_internet", password: "" });
+      expect(JSON.parse(startBody)).toEqual({
+        transport: "usb_internet",
+        password: "",
+      });
     } finally {
       restoreFetch();
     }

@@ -23,6 +23,7 @@ import {
   createNullHistoryPanelView,
   type HistoryPanelView,
 } from "./views/history_table_view";
+import type { InternetPanelView } from "./views/internet_panel";
 import {
   createNullRealtimeLoggingPanelBridge,
   type RealtimeLoggingPanelBridge,
@@ -61,6 +62,7 @@ export class UiAppRuntime {
     historyPanel: HistoryPanelView = createNullHistoryPanelView(),
     carsPanel: CarsPanelView,
     analysisPanel: AnalysisPanelView,
+    internetPanel: InternetPanelView,
     sensorsPanel: SensorsPanelView,
     speedSourcePanel: SpeedSourcePanelView,
   ) {
@@ -112,6 +114,7 @@ export class UiAppRuntime {
       runtime: {
         analysisPanel,
         carsPanel,
+        internetPanel,
         sensorsPanel,
         speedSourcePanel,
         realtimeChrome: {
