@@ -6,11 +6,12 @@ import {
   type SettingsSpeedSourceInteraction,
 } from "../views/settings_speed_source_bindings";
 import { createSettingsSpeedSourcePresenter } from "../views/settings_speed_source_presenter";
+import type { SettingsSpeedSourcePanelDom } from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
 import { createSettingsSpeedSourceWorkflow } from "./settings_speed_source_workflow";
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
-  dom: UiSettingsDom;
+  dom: Pick<UiSettingsDom, "settingsTabs"> & SettingsSpeedSourcePanelDom;
   shellDom: Pick<UiShellDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;
@@ -27,7 +28,9 @@ export interface SettingsSpeedSourceModule {
   saveSpeedSourceFromInputs(): void;
 }
 
-export function createSettingsSpeedSourceModule(ctx: SettingsSpeedSourceModuleDeps): SettingsSpeedSourceModule {
+export function createSettingsSpeedSourceModule(
+  ctx: SettingsSpeedSourceModuleDeps,
+): SettingsSpeedSourceModule {
   const { settings, dom: els, shellDom, t } = ctx;
   const presenter = createSettingsSpeedSourcePresenter({
     dom: els,
