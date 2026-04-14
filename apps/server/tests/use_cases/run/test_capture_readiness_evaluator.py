@@ -82,10 +82,40 @@ def _observation(
     )
 
 
+def test_capture_readiness_evaluator_accepts_manual_speed_source_for_start_gate() -> None:
+    readiness = evaluate_capture_readiness(
+        policy=CaptureReadinessPolicy(low_sensor_count_warn_threshold=1),
+        observation=_observation(speed_status=_SpeedStatus(source="manual", speed_kmh=82.0)),
+        state=CaptureReadinessStateSnapshot(
+            integrity=IntegrityState(
+                active=False,
+                frames_dropped=0,
+                queue_overflow_drops=0,
+                server_queue_drops=0,
+                parse_errors=0,
+                quiet_period_remaining_s=None,
+            ),
+            speed_history=(),
+        ),
+    )
+
+    assert readiness.is_ready
+    reference_check = next(
+        check for check in readiness.checks if check.check_key == "reference_ready"
+    )
+    speed_check = next(check for check in readiness.checks if check.check_key == "speed_stable")
+    assert reference_check.state == "pass"
+    assert reference_check.reason_key == "reference_ready"
+    assert speed_check.state == "pass"
+    assert speed_check.reason_key == "speed_stable"
+
+
 def test_capture_readiness_evaluator_reports_non_live_speed_sources_explicitly() -> None:
     readiness = evaluate_capture_readiness(
         policy=CaptureReadinessPolicy(),
-        observation=_observation(speed_status=_SpeedStatus(source="manual")),
+        observation=_observation(
+            speed_status=_SpeedStatus(source="none", speed_kmh=None, age_s=None)
+        ),
         state=CaptureReadinessStateSnapshot(
             integrity=IntegrityState(
                 active=False,
@@ -103,6 +133,36 @@ def test_capture_readiness_evaluator_reports_non_live_speed_sources_explicitly()
         check for check in readiness.checks if check.check_key == "reference_ready"
     )
     assert reference_check.reason_key == "speed_source_not_live"
+
+
+def test_capture_readiness_evaluator_blocks_manual_fallback_reference_explicitly() -> None:
+    readiness = evaluate_capture_readiness(
+        policy=CaptureReadinessPolicy(),
+        observation=_observation(
+            speed_status=_SpeedStatus(
+                source="fallback_manual",
+                speed_kmh=82.0,
+                age_s=None,
+                fallback_active=True,
+            )
+        ),
+        state=CaptureReadinessStateSnapshot(
+            integrity=IntegrityState(
+                active=False,
+                frames_dropped=0,
+                queue_overflow_drops=0,
+                server_queue_drops=0,
+                parse_errors=0,
+                quiet_period_remaining_s=None,
+            ),
+            speed_history=(),
+        ),
+    )
+
+    reference_check = next(
+        check for check in readiness.checks if check.check_key == "reference_ready"
+    )
+    assert reference_check.reason_key == "speed_source_fallback_active"
 
 
 def test_capture_readiness_evaluator_accepts_ready_observation_from_state_snapshot() -> None:
