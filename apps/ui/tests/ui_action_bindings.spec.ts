@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 
 import { bindCarsFeatureInteractions } from "../src/app/views/cars_feature_bindings";
-import { bindHistoryTableInteractions } from "../src/app/views/history_table_view";
 import { bindRealtimeFeatureInteractions } from "../src/app/views/realtime_feature_bindings";
 import { bindSettingsCarListActions } from "../src/app/views/settings_car_list_view";
 import {
@@ -334,87 +333,6 @@ test("realtime view bindings emit typed sensor actions and clean up listeners", 
     target: identifyButton as unknown as EventTarget,
   });
   expect(sensorActions).toEqual([{ type: "identify", clientId: "sensor-1" }]);
-});
-
-test("history table bindings preserve typed row actions and download-raw default navigation", () => {
-  const refreshHistoryBtn = createButton();
-  const deleteAllRunsBtn = createButton();
-  const historyTableBody = createContainer("tbody");
-  const inlineButton = appendChild(historyTableBody, createButton({
-    attrs: { "data-inline-state-action": "open-live" },
-  }));
-  const deleteRunButton = appendChild(historyTableBody, createButton({
-    attrs: {
-      "data-run-action": "delete-run",
-      "data-run": "run-1",
-    },
-  }));
-  const downloadRawLink = appendChild(historyTableBody, (() => {
-    const link = createContainer("a");
-    link.setAttribute("data-run-action", "download-raw");
-    link.setAttribute("data-run", "run-2");
-    return link;
-  })());
-  const runRow = appendChild(historyTableBody, (() => {
-    const row = createContainer("tr");
-    row.setAttribute("data-run-row", "1");
-    row.setAttribute("data-run", "run-3");
-    return row;
-  })());
-  const rowCellButton = appendChild(runRow, createButton());
-
-  const interactions: Array<Record<string, string | null>> = [];
-  let refreshCalls = 0;
-  let deleteAllCalls = 0;
-
-  bindHistoryTableInteractions(
-    {
-      refreshHistoryBtn: refreshHistoryBtn as unknown as HTMLButtonElement,
-      deleteAllRunsBtn: deleteAllRunsBtn as unknown as HTMLButtonElement,
-      historyTableBody: historyTableBody as unknown as HTMLElement,
-    },
-    {
-      onRefreshHistory: () => {
-        refreshCalls += 1;
-      },
-      onDeleteAllRuns: () => {
-        deleteAllCalls += 1;
-      },
-      onTableInteraction: (action) => {
-        interactions.push(action as unknown as Record<string, string | null>);
-      },
-    },
-  );
-
-  refreshHistoryBtn.click();
-  deleteAllRunsBtn.click();
-  const inlineEvent = historyTableBody.dispatch("click", {
-    target: inlineButton as unknown as EventTarget,
-  });
-  const deleteRunEvent = historyTableBody.dispatch("click", {
-    target: deleteRunButton as unknown as EventTarget,
-  });
-  const downloadRawEvent = historyTableBody.dispatch("click", {
-    target: downloadRawLink as unknown as EventTarget,
-  });
-  historyTableBody.dispatch("click", {
-    target: rowCellButton as unknown as EventTarget,
-  });
-
-  expect(refreshCalls).toBe(1);
-  expect(deleteAllCalls).toBe(1);
-  expect(interactions).toEqual([
-    { type: "open-live" },
-    { type: "run-action", action: "delete-run", runId: "run-1" },
-    { type: "run-action", action: "download-raw", runId: "run-2" },
-    { type: "toggle-run", runId: "run-3" },
-  ]);
-  expect(inlineEvent.defaultPrevented).toBe(true);
-  expect(inlineEvent.propagationStopped).toBe(true);
-  expect(deleteRunEvent.defaultPrevented).toBe(true);
-  expect(deleteRunEvent.propagationStopped).toBe(true);
-  expect(downloadRawEvent.defaultPrevented).toBe(false);
-  expect(downloadRawEvent.propagationStopped).toBe(true);
 });
 
 test("settings car-list bindings surface typed list actions and disposer stops delegated clicks", () => {

@@ -10,6 +10,12 @@ import { createHistoryListModule } from "../src/app/features/history_list_module
 import type { UiHistoryDom } from "../src/app/dom/history_dom";
 import type { UiShellDom } from "../src/app/dom/shell_dom";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
+import {
+  renderHistoryEmptyState,
+  renderHistoryTable,
+  type HistoryPanelActionHandlers,
+  type HistoryPanelView,
+} from "../src/app/views/history_table_view";
 import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
 import {
   findByAttribute,
@@ -40,7 +46,7 @@ function createTextElement(tagName = "DIV"): HTMLElement {
 
 function createHistoryElements(): {
   dom: UiHistoryDom;
-  els: UiHistoryDom;
+  panel: HistoryPanelView;
   historySummary: FakeElement;
   historyTableBody: FakeElement;
   deleteAllRunsBtn: ButtonStub;
@@ -48,14 +54,32 @@ function createHistoryElements(): {
   const historySummary = createTextElement("DIV") as unknown as FakeElement;
   const historyTableBody = createTextElement("TBODY") as unknown as FakeElement;
   const deleteAllRunsBtn = createButton();
-  const dom = {
-    historySummary,
-    historyTableBody,
-    deleteAllRunsBtn,
-  } as unknown as UiHistoryDom;
+  let actions: HistoryPanelActionHandlers | null = null;
+  const panel: HistoryPanelView = {
+    render(model) {
+      historySummary.textContent = model.historySummaryText;
+      deleteAllRunsBtn.disabled = model.deleteAllRunsDisabled;
+      if (model.table === null) {
+        historyTableBody.textContent = "No runs found.";
+        return;
+      }
+      if (model.table.kind === "empty") {
+        renderHistoryEmptyState(historyTableBody as unknown as HTMLElement, {
+          t: model.table.t,
+        });
+        return;
+      }
+      renderHistoryTable(historyTableBody as unknown as HTMLElement, model.table.params);
+    },
+    bindActions(handlers) {
+      actions = handlers;
+    },
+  };
+  void actions;
+  const dom = {} as UiHistoryDom;
   return {
     dom,
-    els: dom,
+    panel,
     historySummary,
     historyTableBody,
     deleteAllRunsBtn,
@@ -192,7 +216,7 @@ test.afterEach(() => {
 
 test("history list module refreshes runs and renders table state", async () => {
   const state = createAppState();
-  const { dom, historySummary, historyTableBody, deleteAllRunsBtn } = createHistoryElements();
+  const { panel, historySummary, historyTableBody, deleteAllRunsBtn } = createHistoryElements();
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
     const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
@@ -206,7 +230,7 @@ test("history list module refreshes runs and renders table state", async () => {
 
   const module = createHistoryListModule({
     history: state.history,
-    dom,
+    panel,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     fmt: (value, digits = 0) => Number(value).toFixed(digits),
@@ -362,11 +386,11 @@ test("history list rendering promotes loaded findings ahead of supporting statis
     pdfLoading: false,
     pdfError: "",
   };
-  const { dom, historyTableBody } = createHistoryElements();
+  const { panel, historyTableBody } = createHistoryElements();
 
   const module = createHistoryListModule({
     history: state.history,
-    dom,
+    panel,
     t: testTranslation,
     escapeHtml: (value) => String(value ?? ""),
     fmt: (value, digits = 0) => Number(value).toFixed(digits),
@@ -406,7 +430,7 @@ test("history list rendering promotes loaded findings ahead of supporting statis
 
 test("history feature preloads collapsed row context for completed runs", async () => {
   const state = createAppState();
-  const { dom, historyTableBody } = createHistoryElements();
+  const { dom, panel, historyTableBody } = createHistoryElements();
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
@@ -423,6 +447,7 @@ test("history feature preloads collapsed row context for completed runs", async 
 
   const feature = createHistoryFeature({
     dom,
+    panel,
     shellDom: { menuButtons: [] } as Pick<UiShellDom, "menuButtons">,
     history: state.history,
     getLanguage: () => state.shell.lang,
