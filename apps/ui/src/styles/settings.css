@@ -871,20 +871,62 @@ body[data-wizard-open="true"] { overflow: hidden; }
 }
 
 @media (max-width: 720px) {
+  .add-car-wizard:not([hidden]) {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border-width: 0;
+    box-shadow: none;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    padding: var(--space-3);
+  }
   .wizard-header {
     flex-direction: column;
   }
   .wizard-close {
     align-self: flex-end;
   }
+  .wizard-shell {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--space-3);
+    overflow: hidden;
+  }
+  .wizard-main {
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .wizard-steps {
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.1rem;
+  }
   .wizard-step-dot {
     min-width: 120px;
+  }
+  .wizard-nav {
+    position: static;
+    margin-top: var(--space-3);
+    padding-top: var(--space-2);
+    background: var(--surface);
   }
   .wizard-options .wiz-opt,
   .wizard-custom input,
   .wizard-custom .btn {
     width: 100%;
     min-width: 0;
+  }
+  .wizard-summary-card {
+    order: -1;
+    max-height: min(22vh, 9rem);
+    overflow-y: auto;
   }
   .wizard-nav__actions {
     flex-direction: column-reverse;
