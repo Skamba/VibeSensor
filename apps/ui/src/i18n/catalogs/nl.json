@@ -688,6 +688,7 @@
   "settings.update.transport.usb_summary": "Hergebruik de huidige USB-uplink zonder de hotspot uit te schakelen.",
   "settings.update.transport.usb_summary_interface": "Hergebruik de huidige USB-uplink op {interface}.",
   "settings.update.transport.usb_summary_unavailable": "USB-internet is nog niet klaar.",
+  "settings.update.transport.selected_badge": "Geselecteerd",
   "settings.update.transport_value.wifi": "Wi-Fi",
   "settings.update.transport_value.wifi_ssid": "Wi-Fi ({ssid})",
   "settings.update.transport_value.usb": "USB-internet",

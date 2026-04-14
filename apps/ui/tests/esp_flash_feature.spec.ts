@@ -829,6 +829,12 @@ test.describe("createUpdateFeature polling", () => {
       expect(deps.updateTransportChoiceWifi.getAttribute("data-selected")).toBe(
         "true",
       );
+      expect(
+        deps.updateTransportChoiceWifi.getAttribute("data-choice-state"),
+      ).toBe("active");
+      expect(
+        deps.updateTransportChoiceWifi.getAttribute("data-choice-badge"),
+      ).toBe("settings.update.transport.selected_badge");
       expect(deps.updateTransportChoiceUsb.getAttribute("data-disabled")).toBe(
         "true",
       );
@@ -1102,9 +1108,21 @@ test.describe("createUpdateFeature polling", () => {
       expect(
         deps.updateTransportChoiceWifi.getAttribute("data-selected"),
       ).toBeNull();
+      expect(
+        deps.updateTransportChoiceWifi.getAttribute("data-choice-state"),
+      ).toBeNull();
+      expect(
+        deps.updateTransportChoiceWifi.getAttribute("data-choice-badge"),
+      ).toBeNull();
       expect(deps.updateTransportChoiceUsb.getAttribute("data-selected")).toBe(
         "true",
       );
+      expect(
+        deps.updateTransportChoiceUsb.getAttribute("data-choice-state"),
+      ).toBe("active");
+      expect(
+        deps.updateTransportChoiceUsb.getAttribute("data-choice-badge"),
+      ).toBe("settings.update.transport.selected_badge");
       expect(
         deps.updateTransportChoiceUsb.getAttribute("data-disabled"),
       ).toBeNull();
