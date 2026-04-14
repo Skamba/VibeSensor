@@ -4,6 +4,10 @@ import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
 import { createUiRuntimeDom, type UiRuntimeDom } from "./ui_runtime_dom";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
+import {
+  createUiShellChromeActionBridge,
+  type UiShellChromeActionBridge,
+} from "./runtime/ui_shell_chrome";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
@@ -27,12 +31,14 @@ export class UiAppRuntime {
   constructor(
     dom: UiRuntimeDom = createUiRuntimeDom(),
     state: AppState = createAppState(),
+    shellChromeActions: UiShellChromeActionBridge = createUiShellChromeActionBridge(),
   ) {
     this.dom = dom;
     this.state = state;
     this.shell = new UiShellController({
       state: this.state,
       dom: this.dom.shell,
+      chromeActions: shellChromeActions,
     });
     this.spectrum = new UiSpectrumController({
       state: this.state,
