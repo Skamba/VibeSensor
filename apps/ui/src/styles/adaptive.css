@@ -69,6 +69,12 @@
   .history-toolbar__actions {
     justify-content: flex-start;
   }
+  .settings-entity-table--cars td:nth-child(2) {
+    min-width: 15rem;
+  }
+  .car-row__setup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
@@ -221,6 +227,13 @@
     grid-template-columns: 1fr;
   }
   .history-details-footer__actions {
+    justify-content: flex-start;
+  }
+  .car-row__setup {
+    grid-template-columns: 1fr;
+  }
+  .car-list-actions,
+  .settings-sensor-row__actions {
     justify-content: flex-start;
   }
 }

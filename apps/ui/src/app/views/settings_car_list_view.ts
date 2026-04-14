@@ -69,13 +69,22 @@ function renderRowActionButtons(
   } = options;
   const primaryButton = isComplete
     ? (!isActive
-        ? `<button class="btn btn--success car-activate-btn" data-car-action="activate" data-car-id="${escapeHtml(car.id)}">${escapeHtml(t("settings.car.activate"))}</button>`
+        ? `<button class="btn car-activate-btn" data-car-action="activate" data-car-id="${escapeHtml(car.id)}">${escapeHtml(t("settings.car.activate"))}</button>`
         : "")
     : `<button class="btn btn--primary car-complete-btn" data-car-action="complete" data-car-id="${escapeHtml(car.id)}">${escapeHtml(t(isActive ? "settings.car.open_analysis" : "settings.car.finish_setup"))}</button>`;
   return `
     <div class="car-list-actions">
       ${primaryButton}
       <button class="btn btn--danger-quiet car-delete-btn" data-car-action="delete" data-car-id="${escapeHtml(car.id)}">${escapeHtml(t("settings.car.delete"))}</button>
+    </div>
+  `;
+}
+
+function renderSetupMetric(labelHtml: string, valueHtml: string): string {
+  return `
+    <div class="car-row__setup-item">
+      <span class="car-row__setup-label">${labelHtml}</span>
+      <span class="car-row__setup-value">${valueHtml}</span>
     </div>
   `;
 }
@@ -94,7 +103,7 @@ export function renderSettingsCarList(
   } = params;
   if (!cars.length) {
     container.innerHTML = renderTableEmptyRow(
-      renderInlineStatePanel({
+      `<div class="settings-table-empty-state">${renderInlineStatePanel({
         titleHtml: escapeHtml(t("settings.car.empty.title")),
         bodyHtml: escapeHtml(t("settings.car.empty.body")),
         detailHtml: escapeHtml(t("settings.car.empty.detail")),
@@ -103,8 +112,8 @@ export function renderSettingsCarList(
           labelHtml: escapeHtml(t("settings.car.empty.action")),
           variant: "success",
         },
-      }),
-      7,
+      })}</div>`,
+      3,
     );
     return;
   }
@@ -117,8 +126,14 @@ export function renderSettingsCarList(
       const tireStr = formatTireSummary(car, t);
       const driveStr = formatRatioValue(car.aspects?.final_drive_ratio, { fmt, t });
       const gearStr = formatRatioValue(car.aspects?.current_gear_ratio, { fmt, t });
+      const typeMarkup = car.type
+        ? `<span class="car-row__type">${escapeHtml(car.type)}</span>`
+        : "";
       const variantMarkup = car.variant
-        ? `<span class="subtle car-row__variant">${escapeHtml(car.variant)}</span>`
+        ? `<span class="car-row__variant">${escapeHtml(car.variant)}</span>`
+        : "";
+      const metaMarkup = typeMarkup || variantMarkup
+        ? `<div class="car-row__meta">${typeMarkup}${variantMarkup}</div>`
         : "";
       const completionDetail = isComplete
         ? ""
@@ -132,23 +147,26 @@ export function renderSettingsCarList(
           data-highlighted="${isHighlighted ? "true" : "false"}"
         >
           <td>
-            <div class="car-status-stack">
-              <span class="car-active-pill" data-state="${isActive ? "active" : "inactive"}">${isActive ? escapeHtml(t("settings.car.active_label")) : escapeHtml(t("settings.car.inactive_label"))}</span>
-              <span class="car-readiness-pill" data-state="${isComplete ? "ready" : "incomplete"}">${escapeHtml(t(isComplete ? "settings.car.ready_label" : "settings.car.incomplete_label"))}</span>
-              ${isHighlighted ? `<span class="car-created-pill">${escapeHtml(t("settings.car.just_added"))}</span>` : ""}
-            </div>
-          </td>
-          <td>
             <div class="car-row__identity">
-              <strong>${escapeHtml(car.name)}</strong>
-              ${variantMarkup}
+              <div class="car-row__heading">
+                <strong>${escapeHtml(car.name)}</strong>
+              </div>
+              ${metaMarkup}
+              <div class="car-status-stack">
+                <span class="car-active-pill settings-entity-status" data-state="${isActive ? "active" : "inactive"}">${isActive ? escapeHtml(t("settings.car.active_label")) : escapeHtml(t("settings.car.inactive_label"))}</span>
+                <span class="car-readiness-pill settings-entity-status" data-state="${isComplete ? "ready" : "incomplete"}">${escapeHtml(t(isComplete ? "settings.car.ready_label" : "settings.car.incomplete_label"))}</span>
+                ${isHighlighted ? `<span class="car-created-pill settings-entity-status">${escapeHtml(t("settings.car.just_added"))}</span>` : ""}
+              </div>
               ${completionDetail}
             </div>
           </td>
-          <td>${escapeHtml(car.type)}</td>
-          <td><code>${escapeHtml(tireStr)}</code></td>
-          <td>${escapeHtml(driveStr)}</td>
-          <td>${escapeHtml(gearStr)}</td>
+          <td>
+            <div class="car-row__setup">
+              ${renderSetupMetric(escapeHtml(t("settings.car.col_tires")), `<code>${escapeHtml(tireStr)}</code>`)}
+              ${renderSetupMetric(escapeHtml(t("settings.car.col_drive")), escapeHtml(driveStr))}
+              ${renderSetupMetric(escapeHtml(t("settings.car.col_gear")), escapeHtml(gearStr))}
+            </div>
+          </td>
           <td>${renderRowActionButtons(car, { isActive, isComplete, params: { escapeHtml, t } })}</td>
         </tr>
       `;
