@@ -696,9 +696,17 @@ def _pip_install_markers(commands: list[str]) -> set[str]:
         tokens = shlex.split(command)
         if len(tokens) < 5:
             continue
-        if tokens[1:4] != ["-m", "pip", "install"]:
+        pip_install_index = next(
+            (
+                index
+                for index in range(len(tokens) - 3)
+                if tokens[index + 1 : index + 4] == ["-m", "pip", "install"]
+            ),
+            None,
+        )
+        if pip_install_index is None:
             continue
-        args = tokens[4:]
+        args = tokens[pip_install_index + 4 :]
         i = 0
         while i < len(args):
             token = args[i]
