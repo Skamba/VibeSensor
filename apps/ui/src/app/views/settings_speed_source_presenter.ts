@@ -1,5 +1,4 @@
 import type { ObdDevicePayload } from "../../transport/http_models";
-import type { UiSettingsDom } from "../dom/settings_dom";
 import {
   deriveDisplayedSpeedSourceMode,
   isManualLikeSpeedSource,
@@ -7,17 +6,16 @@ import {
   type DisplayedSpeedSourceMode,
   type SpeedSourceStateSource,
 } from "../speed_source_state";
-import {
-  createElementNode,
-  renderChildren,
-} from "./dom_render";
+import { createElementNode, renderChildren } from "./dom_render";
+import type { SettingsSpeedSourcePanelDom } from "./speed_source_panel";
 import {
   setSettingsFeedback,
   type SettingsFeedbackMessage,
 } from "./settings_feedback";
 import { setChoiceCardState } from "../style_state";
 
-export interface SettingsSpeedSourceSettingsSnapshot extends SpeedSourceStateSource {
+export interface SettingsSpeedSourceSettingsSnapshot
+  extends SpeedSourceStateSource {
   gpsEffectiveSpeedKph: number | null;
   obdDeviceMac: string | null;
   obdDeviceName: string | null;
@@ -42,7 +40,7 @@ export interface SettingsSpeedSourceRenderState {
 
 export interface SettingsSpeedSourcePresenterDeps {
   dom: Pick<
-    UiSettingsDom,
+    SettingsSpeedSourcePanelDom,
     | "gpsFallbackPanel"
     | "manualSpeedConfig"
     | "manualSpeedFeedback"
@@ -80,7 +78,9 @@ export interface SettingsSpeedSourcePresenter {
 function selectedSpeedUnitLabel(
   deps: Pick<SettingsSpeedSourcePresenterDeps, "getSpeedUnit" | "t">,
 ): string {
-  return deps.getSpeedUnit() === "mps" ? deps.t("speed.unit.mps") : deps.t("speed.unit.kmh");
+  return deps.getSpeedUnit() === "mps"
+    ? deps.t("speed.unit.mps")
+    : deps.t("speed.unit.kmh");
 }
 
 function speedKphInSelectedUnit(
@@ -98,17 +98,26 @@ function formatSpeedValue(
   deps: Pick<SettingsSpeedSourcePresenterDeps, "fmt" | "getSpeedUnit" | "t">,
 ): string {
   const speed = speedKphInSelectedUnit(speedKmh, deps);
-  return speed != null ? `${deps.fmt(speed, 1)} ${selectedSpeedUnitLabel(deps)}` : "--";
+  return speed != null
+    ? `${deps.fmt(speed, 1)} ${selectedSpeedUnitLabel(deps)}`
+    : "--";
 }
 
 function formatConfiguredObdDevice(
-  settings: Pick<SettingsSpeedSourceSettingsSnapshot, "obdDeviceMac" | "obdDeviceName">,
+  settings: Pick<
+    SettingsSpeedSourceSettingsSnapshot,
+    "obdDeviceMac" | "obdDeviceName"
+  >,
   t: SettingsSpeedSourcePresenterDeps["t"],
 ): string {
   if (settings.obdDeviceName && settings.obdDeviceMac) {
     return `${settings.obdDeviceName} (${settings.obdDeviceMac})`;
   }
-  return settings.obdDeviceName ?? settings.obdDeviceMac ?? t("settings.speed.obd_not_configured");
+  return (
+    settings.obdDeviceName ??
+    settings.obdDeviceMac ??
+    t("settings.speed.obd_not_configured")
+  );
 }
 
 function activeSourceLabel(
@@ -224,11 +233,12 @@ function createObdDeviceRow(
     badges.push(createBadge(t("settings.speed.obd_connected_badge"), true));
   }
 
-  const actionLabel = state.pairInFlightMac === device.mac_address
-    ? t("settings.speed.obd_pairing")
-    : device.paired && device.trusted
-      ? t("settings.speed.obd_use")
-      : t("settings.speed.obd_pair_and_use");
+  const actionLabel =
+    state.pairInFlightMac === device.mac_address
+      ? t("settings.speed.obd_pairing")
+      : device.paired && device.trusted
+        ? t("settings.speed.obd_use")
+        : t("settings.speed.obd_pair_and_use");
   const secondaryLabel = obdDeviceSecondaryLabel(device);
 
   return createElementNode("div", {
@@ -303,7 +313,8 @@ export function createSettingsSpeedSourcePresenter(
 
   function render(state: SettingsSpeedSourceRenderState): void {
     const displayedMode = deriveDisplayedSpeedSourceMode(state.settings);
-    const hasPendingSelection = state.draftDirty && state.selectedMode !== displayedMode;
+    const hasPendingSelection =
+      state.draftDirty && state.selectedMode !== displayedMode;
 
     dom.speedSourceRadios.forEach((radio) => {
       radio.checked = radio.value === state.selectedMode;
@@ -343,27 +354,48 @@ export function createSettingsSpeedSourcePresenter(
     }
 
     if (dom.speedSourceCurrentSource) {
-      dom.speedSourceCurrentSource.textContent = activeSourceLabel(state.settings, t);
+      dom.speedSourceCurrentSource.textContent = activeSourceLabel(
+        state.settings,
+        t,
+      );
     }
     if (dom.speedSourceEffectiveSpeed) {
-      dom.speedSourceEffectiveSpeed.textContent = formatSpeedValue(activeEffectiveSpeedKph(state.settings), deps);
+      dom.speedSourceEffectiveSpeed.textContent = formatSpeedValue(
+        activeEffectiveSpeedKph(state.settings),
+        deps,
+      );
     }
     if (dom.obdConfiguredDevice) {
-      dom.obdConfiguredDevice.textContent = formatConfiguredObdDevice(state.settings, t);
+      dom.obdConfiguredDevice.textContent = formatConfiguredObdDevice(
+        state.settings,
+        t,
+      );
     }
     if (dom.scanObdDevicesBtn) {
-      dom.scanObdDevicesBtn.disabled = state.scanInFlight || state.pairInFlightMac !== null;
+      dom.scanObdDevicesBtn.disabled =
+        state.scanInFlight || state.pairInFlightMac !== null;
     }
     if (dom.obdDeviceScanStatus) {
-      dom.obdDeviceScanStatus.textContent = state.obdScanStatusMessage ?? t("settings.speed.obd_scan_idle");
+      dom.obdDeviceScanStatus.textContent =
+        state.obdScanStatusMessage ?? t("settings.speed.obd_scan_idle");
     }
     renderObdDeviceList(dom.obdDeviceList, state, t);
 
-    applyInputFeedback(dom.manualSpeedInput, dom.manualSpeedFeedback, state.manualSpeedFeedback);
-    applyInputFeedback(dom.staleTimeoutInput, dom.staleTimeoutFeedback, state.staleTimeoutFeedback);
+    applyInputFeedback(
+      dom.manualSpeedInput,
+      dom.manualSpeedFeedback,
+      state.manualSpeedFeedback,
+    );
+    applyInputFeedback(
+      dom.staleTimeoutInput,
+      dom.staleTimeoutFeedback,
+      state.staleTimeoutFeedback,
+    );
     setSettingsFeedback(dom.speedSourceSaveFeedback, state.saveFeedback);
 
-    const obdRadio = dom.speedSourceRadios.find((radio) => radio.value === "obd2");
+    const obdRadio = dom.speedSourceRadios.find(
+      (radio) => radio.value === "obd2",
+    );
     if (state.obdSelectionError) {
       obdRadio?.setAttribute("aria-invalid", "true");
     } else {
@@ -379,7 +411,9 @@ export function createSettingsSpeedSourcePresenter(
     if (!dom.obdSpeedConfig || dom.obdSpeedConfig.hidden) {
       return false;
     }
-    const activePanel = dom.obdSpeedConfig.closest<HTMLElement>(".settings-tab-panel");
+    const activePanel = dom.obdSpeedConfig.closest<HTMLElement>(
+      ".settings-tab-panel",
+    );
     if (!activePanel || activePanel.hidden) {
       return false;
     }

@@ -1,12 +1,12 @@
-import type { ObdStatusPayload, SpeedSourceStatusPayload } from "../../transport/http_models";
+import type {
+  ObdStatusPayload,
+  SpeedSourceStatusPayload,
+} from "../../transport/http_models";
 import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
-import {
-  GPS_POLL_FAST_MS,
-  GPS_POLL_SLOW_MS,
-} from "../../config";
-import type { UiSettingsDom } from "../dom/settings_dom";
+import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
+import type { SettingsSpeedSourcePanelDom } from "../views/speed_source_panel";
 import { createPollingController } from "./polling_controller";
 
 const CONNECTION_STATE_I18N: Record<string, string> = {
@@ -24,7 +24,7 @@ const OBD_POLL_MODE_I18N: Record<string, string> = {
 };
 
 export interface SettingsGpsStatusModuleDeps extends FeatureDepsBase {
-  dom: UiSettingsDom;
+  dom: SettingsSpeedSourcePanelDom;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
@@ -37,7 +37,9 @@ export interface SettingsGpsStatusModule {
   stopGpsStatusPolling(): void;
 }
 
-export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps): SettingsGpsStatusModule {
+export function createSettingsGpsStatusModule(
+  ctx: SettingsGpsStatusModuleDeps,
+): SettingsGpsStatusModule {
   const { settings, dom: els, t, fmt } = ctx;
 
   function connectionStateLabel(connectionState: string): string {
@@ -51,26 +53,33 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
   }
 
   function selectedSpeedUnitLabel(): string {
-    return ctx.getSpeedUnit() === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh");
+    return ctx.getSpeedUnit() === "mps"
+      ? t("speed.unit.mps")
+      : t("speed.unit.kmh");
   }
 
-  function formatSpeedValue(speedKmh: number | null, unitLabel: string): string | null {
+  function formatSpeedValue(
+    speedKmh: number | null,
+    unitLabel: string,
+  ): string | null {
     const speed = speedKmhInSelectedUnit(speedKmh);
     return speed != null ? `${fmt(speed, 1)} ${unitLabel}` : null;
   }
 
   function boolLabel(value: boolean): string {
-    return value ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
+    return value
+      ? t("settings.speed.fallback_yes")
+      : t("settings.speed.fallback_no");
   }
 
   function formatAgeSeconds(ageSeconds: number | null): string | null {
     return ageSeconds != null
       ? t("settings.speed.last_update_value", {
-        value: {
-          number: ageSeconds,
-          options: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
-        },
-      })
+          value: {
+            number: ageSeconds,
+            options: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+          },
+        })
       : null;
   }
 
@@ -95,32 +104,44 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
 
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
     const unitLabel = selectedSpeedUnitLabel();
-    if (els.gpsStatusState) els.gpsStatusState.textContent = connectionStateLabel(status.connection_state);
-    if (els.gpsStatusDevice) els.gpsStatusDevice.textContent = status.device ?? "--";
+    if (els.gpsStatusState)
+      els.gpsStatusState.textContent = connectionStateLabel(
+        status.connection_state,
+      );
+    if (els.gpsStatusDevice)
+      els.gpsStatusDevice.textContent = status.device ?? "--";
     if (els.gpsStatusLastUpdate) {
-      els.gpsStatusLastUpdate.textContent = status.last_update_age_s != null
-        ? t("settings.speed.last_update_value", {
-          value: {
-            number: status.last_update_age_s,
-            options: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
-          },
-        })
-        : t("settings.speed.last_update_never");
+      els.gpsStatusLastUpdate.textContent =
+        status.last_update_age_s != null
+          ? t("settings.speed.last_update_value", {
+              value: {
+                number: status.last_update_age_s,
+                options: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+              },
+            })
+          : t("settings.speed.last_update_never");
     }
     if (els.gpsStatusRawSpeed) {
-      els.gpsStatusRawSpeed.textContent = formatSpeedValue(status.raw_speed_kmh, unitLabel) ?? "--";
+      els.gpsStatusRawSpeed.textContent =
+        formatSpeedValue(status.raw_speed_kmh, unitLabel) ?? "--";
     }
     if (els.gpsStatusEffectiveSpeed) {
-      els.gpsStatusEffectiveSpeed.textContent = formatSpeedValue(status.effective_speed_kmh, unitLabel) ?? "--";
+      els.gpsStatusEffectiveSpeed.textContent =
+        formatSpeedValue(status.effective_speed_kmh, unitLabel) ?? "--";
     }
     if (els.gpsStatusLastError) {
       els.gpsStatusLastError.textContent = status.last_error ?? "--";
     }
     if (els.gpsStatusReconnect) {
-      els.gpsStatusReconnect.textContent = status.reconnect_delay_s != null ? `${fmt(status.reconnect_delay_s, 1)}s` : "--";
+      els.gpsStatusReconnect.textContent =
+        status.reconnect_delay_s != null
+          ? `${fmt(status.reconnect_delay_s, 1)}s`
+          : "--";
     }
     if (els.gpsStatusFallback) {
-      els.gpsStatusFallback.textContent = status.fallback_active ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
+      els.gpsStatusFallback.textContent = status.fallback_active
+        ? t("settings.speed.fallback_yes")
+        : t("settings.speed.fallback_no");
     }
   }
 
@@ -128,7 +149,11 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
     if (status.configured_device_name && status.configured_device_mac) {
       return `${status.configured_device_name} (${status.configured_device_mac})`;
     }
-    return status.configured_device_name ?? status.configured_device_mac ?? t("settings.speed.obd_not_configured");
+    return (
+      status.configured_device_name ??
+      status.configured_device_mac ??
+      t("settings.speed.obd_not_configured")
+    );
   }
 
   function renderObdStatus(status: ObdStatusPayload | null): void {
@@ -136,15 +161,19 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
       els.obdStatusPanel.hidden = status === null;
     }
     if (status === null) {
-      if (els.obdStatusConfiguredDevice) els.obdStatusConfiguredDevice.textContent = "--";
+      if (els.obdStatusConfiguredDevice)
+        els.obdStatusConfiguredDevice.textContent = "--";
       if (els.obdStatusPairing) els.obdStatusPairing.textContent = "--";
       if (els.obdStatusTrusted) els.obdStatusTrusted.textContent = "--";
       if (els.obdStatusConnected) els.obdStatusConnected.textContent = "--";
-      if (els.obdStatusRfcommChannel) els.obdStatusRfcommChannel.textContent = "--";
+      if (els.obdStatusRfcommChannel)
+        els.obdStatusRfcommChannel.textContent = "--";
       if (els.obdStatusLastRpm) els.obdStatusLastRpm.textContent = "--";
       if (els.obdStatusRpmAge) els.obdStatusRpmAge.textContent = "--";
-      if (els.obdStatusTargetCadence) els.obdStatusTargetCadence.textContent = "--";
-      if (els.obdStatusEffectiveCadence) els.obdStatusEffectiveCadence.textContent = "--";
+      if (els.obdStatusTargetCadence)
+        els.obdStatusTargetCadence.textContent = "--";
+      if (els.obdStatusEffectiveCadence)
+        els.obdStatusEffectiveCadence.textContent = "--";
       if (els.obdStatusRequestRtt) els.obdStatusRequestRtt.textContent = "--";
       if (els.obdStatusTimeouts) els.obdStatusTimeouts.textContent = "--";
       if (els.obdStatusErrors) els.obdStatusErrors.textContent = "--";
@@ -155,7 +184,8 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
       return;
     }
     if (els.obdStatusConfiguredDevice) {
-      els.obdStatusConfiguredDevice.textContent = formatConfiguredDevice(status);
+      els.obdStatusConfiguredDevice.textContent =
+        formatConfiguredDevice(status);
     }
     if (els.obdStatusPairing) {
       els.obdStatusPairing.textContent = boolLabel(status.paired);
@@ -167,22 +197,28 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
       els.obdStatusConnected.textContent = boolLabel(status.connected);
     }
     if (els.obdStatusRfcommChannel) {
-      els.obdStatusRfcommChannel.textContent = status.rfcomm_channel != null ? String(status.rfcomm_channel) : "--";
+      els.obdStatusRfcommChannel.textContent =
+        status.rfcomm_channel != null ? String(status.rfcomm_channel) : "--";
     }
     if (els.obdStatusLastRpm) {
-      els.obdStatusLastRpm.textContent = status.last_rpm != null ? fmt(status.last_rpm, 0) : "--";
+      els.obdStatusLastRpm.textContent =
+        status.last_rpm != null ? fmt(status.last_rpm, 0) : "--";
     }
     if (els.obdStatusRpmAge) {
-      els.obdStatusRpmAge.textContent = formatAgeSeconds(status.rpm_sample_age_s) ?? "--";
+      els.obdStatusRpmAge.textContent =
+        formatAgeSeconds(status.rpm_sample_age_s) ?? "--";
     }
     if (els.obdStatusTargetCadence) {
-      els.obdStatusTargetCadence.textContent = formatCadenceFromTarget(status.rpm_target_interval_ms) ?? "--";
+      els.obdStatusTargetCadence.textContent =
+        formatCadenceFromTarget(status.rpm_target_interval_ms) ?? "--";
     }
     if (els.obdStatusEffectiveCadence) {
-      els.obdStatusEffectiveCadence.textContent = formatCadenceHz(status.rpm_effective_hz) ?? "--";
+      els.obdStatusEffectiveCadence.textContent =
+        formatCadenceHz(status.rpm_effective_hz) ?? "--";
     }
     if (els.obdStatusRequestRtt) {
-      els.obdStatusRequestRtt.textContent = formatMilliseconds(status.request_rtt_ms) ?? "--";
+      els.obdStatusRequestRtt.textContent =
+        formatMilliseconds(status.request_rtt_ms) ?? "--";
     }
     if (els.obdStatusTimeouts) {
       els.obdStatusTimeouts.textContent = String(status.timeout_count);
@@ -191,7 +227,8 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
       els.obdStatusErrors.textContent = String(status.error_count);
     }
     if (els.obdStatusMode) {
-      els.obdStatusMode.textContent = obdPollModeLabel(status.poll_mode) ?? "--";
+      els.obdStatusMode.textContent =
+        obdPollModeLabel(status.poll_mode) ?? "--";
     }
     if (els.obdStatusBackoff) {
       els.obdStatusBackoff.textContent = boolLabel(status.backoff_active);
@@ -206,7 +243,8 @@ export function createSettingsGpsStatusModule(ctx: SettingsGpsStatusModuleDeps):
 
   const polling = createPollingController({
     poll: async () => {
-      const shouldLoadObdStatus = settings.speedSource === "obd2" || settings.obdDeviceMac != null;
+      const shouldLoadObdStatus =
+        settings.speedSource === "obd2" || settings.obdDeviceMac != null;
       const [status, obdStatus] = await Promise.all([
         getSpeedSourceStatus(),
         shouldLoadObdStatus ? getSettingsObdStatus() : Promise.resolve(null),

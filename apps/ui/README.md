@@ -110,6 +110,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
+| `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that mounts the full tab surface and exposes the shared typed bridge consumed by the speed-source and GPS-status modules |
 | `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that mounts the list shell and wizard chrome, then exposes typed list and wizard bridges |
 | `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
 | `app/views/cars_feature_presenter.ts` | Car-wizard presenter reused as the thin wizard DOM adapter for dialog visibility, step rendering, summary updates, and focus targets |
@@ -217,6 +218,12 @@ host, the history feature/modules feed it typed summary and table models, and
 the existing row/detail presenters plus row-renderer adapter still own the
 typed history table body while the page-level toolbar/action wiring lives in
 the island bridge.
+The speed-source settings tab now follows that same pattern through
+`app/views/speed_source_panel.tsx`: startup mounts the island into the tab host,
+the existing speed-source workflow/presenter/binding path keeps owning
+validation, save/load, and OBD scan behavior, and `settings_gps_status_module.ts`
+still owns the live GPS/OBD diagnostics rows through the same typed panel
+bridge instead of the page-wide settings DOM registry.
 The car-management flow now follows that same island pattern through
 `app/views/cars_panel.tsx`: startup mounts the car tab and wizard shell into a
 single settings host, `settings_cars_module.ts` feeds saved-car list/guidance
