@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { getUiAnalysisPanelHost } from "../src/app/dom/analysis_dom";
 import { getUiCarsPanelHost } from "../src/app/dom/cars_dom";
 import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
+import { getUiSensorsPanelHost } from "../src/app/dom/sensors_dom";
 import { getUiSpeedSourcePanelHost } from "../src/app/dom/speed_source_dom";
 import {
   getUiLiveOverviewHost,
@@ -41,6 +42,7 @@ function createBaseFixture(): SelectorFixture {
       historyPanelRoot: stubElement("historyPanelRoot"),
       carsPanelRoot: stubElement("carsPanelRoot"),
       analysisPanelRoot: stubElement("analysisPanelRoot"),
+      sensorsPanelRoot: stubElement("sensorsPanelRoot"),
       speedSourcePanelRoot: stubElement("speedSourcePanelRoot"),
       addCarBtn: stubElement("addCarBtn"),
       addCarWizard: stubElement("addCarWizard"),
@@ -169,6 +171,15 @@ test("getUiAnalysisPanelHost resolves the analysis island host", () => {
   const restore = installDomFixture();
   try {
     expect(getUiAnalysisPanelHost().id).toBe("analysisPanelRoot");
+  } finally {
+    restore();
+  }
+});
+
+test("getUiSensorsPanelHost resolves the sensors island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiSensorsPanelHost().id).toBe("sensorsPanelRoot");
   } finally {
     restore();
   }
@@ -308,6 +319,17 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     try {
       expect(() => createUiRuntimeDom()).toThrow(
         "ESP flash feature requires #espFlashStartBtn",
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("fails when the sensors panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "sensorsPanelRoot" });
+    try {
+      expect(() => getUiSensorsPanelHost()).toThrow(
+        "Sensors feature requires #sensorsPanelRoot",
       );
     } finally {
       restore();

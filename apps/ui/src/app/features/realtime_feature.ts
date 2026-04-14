@@ -3,14 +3,17 @@ import type { UiRealtimeDom } from "../dom/realtime_dom";
 import type { UiSettingsDom } from "../dom/settings_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { RealtimeState, SettingsState, SpectrumState } from "../ui_app_state";
+import type {
+  RealtimeState,
+  SettingsState,
+  SpectrumState,
+} from "../ui_app_state";
 import type { LocationOption } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
-import {
-  bindRealtimeFeatureInteractions,
-} from "../views/realtime_feature_bindings";
+import { bindRealtimeFeatureInteractions } from "../views/realtime_feature_bindings";
 import type { RealtimeLoggingPanelBridge } from "../views/realtime_logging_panel";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
+import type { SensorsPanelView } from "../views/sensors_panel";
 import { createRealtimeFeatureWorkflow } from "./realtime_feature_workflow";
 import { createRealtimeFeaturePresenter } from "../views/realtime_feature_presenter";
 
@@ -25,6 +28,7 @@ export interface RealtimeFeatureDeps extends FeatureDepsBase {
   getLanguage: () => string;
   formatInt: (value: number) => string;
   chrome: RealtimeFeatureChromePorts;
+  sensorsPanel: SensorsPanelView;
   selection: RealtimeFeatureSelectionPorts;
   recording: RealtimeFeatureRecordingPorts;
 }
@@ -54,7 +58,9 @@ export interface RealtimeFeature {
   refreshLocationOptions(): Promise<void>;
 }
 
-export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
+export function createRealtimeFeature(
+  ctx: RealtimeFeatureDeps,
+): RealtimeFeature {
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
   const presenter = createRealtimeFeaturePresenter({
     realtime: ctx.realtime,
@@ -65,6 +71,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     shellDom: ctx.shellDom,
     settingsDom: ctx.settingsDom,
     carsDom: ctx.carsDom,
+    sensorsDom: ctx.sensorsPanel.dom,
     t: ctx.t,
     escapeHtml: ctx.escapeHtml,
     formatInt: ctx.formatInt,
@@ -115,7 +122,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       },
     });
     workflow.bindHandlers();
-    bindRealtimeFeatureInteractions(ctx.dom, {
+    bindRealtimeFeatureInteractions(ctx.sensorsPanel.dom, {
       onSensorLocationChange: (change) => {
         void workflow.setClientLocation(change.clientId, change.locationCode);
       },
@@ -132,7 +139,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   return {
     bindHandlers,
     buildLocationOptions: (codes) => presenter.buildLocationOptions(codes),
-    maybeRenderSensorsSettingsList: (force) => presenter.maybeRenderSensorsSettingsList(force),
+    maybeRenderSensorsSettingsList: (force) =>
+      presenter.maybeRenderSensorsSettingsList(force),
     updateClientSelection: () => workflow.updateClientSelection(),
     renderStatus: (clientRow) => presenter.renderStatus(clientRow),
     renderLoggingStatus: () => workflow.renderLoggingStatus(),
