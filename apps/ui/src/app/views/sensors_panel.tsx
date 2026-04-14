@@ -17,22 +17,22 @@ function SensorsPanel() {
       <div class="subtle" data-i18n="settings.sensors.hint">
         Manage sensor names and locations. Default name is the MAC address.
       </div>
-      <table class="clients-table">
-        <thead>
-          <tr>
-            <th data-i18n="settings.sensors.name">Name</th>
-            <th data-i18n="settings.sensors.mac">MAC Address</th>
-            <th data-i18n="settings.sensors.location">Location</th>
-            <th data-i18n="settings.sensors.identify">Identify</th>
-            <th data-i18n="settings.sensors.remove">Remove</th>
-          </tr>
-        </thead>
-        <tbody id="sensorsSettingsBody">
-          <tr>
-            <td colSpan={5}>No sensors detected yet.</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="settings-table-wrap">
+        <table class="clients-table settings-entity-table settings-entity-table--sensors">
+          <thead>
+            <tr>
+              <th data-i18n="settings.sensors.name">Name</th>
+              <th data-i18n="settings.sensors.location">Location</th>
+              <th data-i18n="settings.sensors.actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sensorsSettingsBody">
+            <tr>
+              <td colSpan={3}>No sensors detected yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

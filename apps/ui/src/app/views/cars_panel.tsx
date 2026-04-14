@@ -59,26 +59,24 @@ function CarsPanel() {
           analysis.
         </div>
         <div id="carSelectionGuidance" class="empty-state empty-state--inline" hidden />
-        <table class="car-list-table">
-          <thead>
-            <tr>
-              <th data-i18n="settings.car.col_status">Status</th>
-              <th data-i18n="settings.car.col_name">Name</th>
-              <th data-i18n="settings.car.col_type">Type</th>
-              <th data-i18n="settings.car.col_tires">Tires</th>
-              <th data-i18n="settings.car.col_drive">Drive</th>
-              <th data-i18n="settings.car.col_gear">Top Gear</th>
-              <th data-i18n="settings.car.col_actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="carListBody">
-            <tr>
-              <td colSpan={7} data-i18n="settings.car.no_cars">
-                No cars added yet.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="settings-table-wrap">
+          <table class="car-list-table settings-entity-table settings-entity-table--cars">
+            <thead>
+              <tr>
+                <th data-i18n="settings.car.col_name">Name</th>
+                <th data-i18n="settings.car.col_setup">Setup</th>
+                <th data-i18n="settings.car.col_actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="carListBody">
+              <tr>
+                <td colSpan={3} data-i18n="settings.car.no_cars">
+                  No cars added yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div id="wizardBackdrop" class="wizard-backdrop" hidden />

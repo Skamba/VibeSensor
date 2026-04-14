@@ -33,6 +33,23 @@ function locationOptionsMarkup(
   return opts.join("");
 }
 
+function renderSensorActionButtons(
+  clientId: string,
+  options: {
+    connected: boolean;
+    escapeHtml: (value: unknown) => string;
+    t: (key: string, vars?: Record<string, unknown>) => string;
+  },
+): string {
+  const { connected, escapeHtml, t } = options;
+  return `
+    <div class="settings-sensor-row__actions">
+      <button class="btn row-identify" data-client-id="${escapeHtml(clientId)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button>
+      <button class="btn btn--danger-quiet row-remove" data-client-id="${escapeHtml(clientId)}">${escapeHtml(t("actions.remove"))}</button>
+    </div>
+  `;
+}
+
 export function renderRealtimeSensorTable(
   container: HTMLElement,
   params: RealtimeSensorTableViewParams,
@@ -41,7 +58,7 @@ export function renderRealtimeSensorTable(
   if (!clients.length) {
     container.innerHTML = renderTableEmptyRow(
       escapeHtml(t("settings.sensors.no_sensors")),
-      5,
+      3,
     );
     return;
   }
@@ -53,7 +70,25 @@ export function renderRealtimeSensorTable(
       const statusText = connected ? t("status.online") : t("status.offline");
       const statusClass = connected ? "online" : "offline";
       const macAddress = client.mac_address || client.id;
-      return `<tr data-client-id="${escapeHtml(client.id)}"><td><strong>${escapeHtml(client.name || client.id)}</strong><div class="subtle">${escapeHtml(client.id)}</div><div class="status-pill ${statusClass}">${statusText}</div></td><td><code>${escapeHtml(macAddress)}</code></td><td><select class="row-location-select" data-client-id="${escapeHtml(client.id)}">${locationOptionsMarkup(locationOptions, selectedCode, t, escapeHtml)}</select></td><td><button class="btn btn--primary row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button></td><td><button class="btn btn--danger row-remove" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("actions.remove"))}</button></td></tr>`;
+      return `
+        <tr data-client-id="${escapeHtml(client.id)}">
+          <td>
+            <div class="settings-sensor-row__identity">
+              <div class="settings-sensor-row__heading">
+                <strong>${escapeHtml(client.name || client.id)}</strong>
+                <span class="status-pill settings-entity-status ${statusClass}">${statusText}</span>
+              </div>
+              <div class="settings-sensor-row__meta">
+                <code>${escapeHtml(macAddress)}</code>
+              </div>
+            </div>
+          </td>
+          <td class="settings-sensor-row__location">
+            <select class="row-location-select" data-client-id="${escapeHtml(client.id)}">${locationOptionsMarkup(locationOptions, selectedCode, t, escapeHtml)}</select>
+          </td>
+          <td>${renderSensorActionButtons(client.id, { connected, escapeHtml, t })}</td>
+        </tr>
+      `;
     })
     .join("");
 }

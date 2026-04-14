@@ -20,6 +20,9 @@ const labels: Record<string, string> = {
   "settings.car.empty.body": "Cars define the setup used for recording, saved runs, and analysis settings.",
   "settings.car.empty.detail": "Start with the add-car wizard so the next recording has the right context.",
   "settings.car.empty.action": "Add a car",
+  "settings.car.col_tires": "Tires",
+  "settings.car.col_drive": "Drive",
+  "settings.car.col_gear": "Top Gear",
   "settings.car.active_label": "Active",
   "settings.car.inactive_label": "Inactive",
   "settings.car.ready_label": "Ready",
@@ -128,6 +131,8 @@ test("renderSettingsCarList shows explicit readiness labels and completion actio
   expect(container.innerHTML).toContain("Finish setup");
   expect(container.innerHTML).toContain("Tire size not set");
   expect(container.innerHTML).toContain("Not set");
+  expect(container.innerHTML).toContain("car-row__setup");
+  expect(container.innerHTML).toContain("Top Gear");
   expect(container.innerHTML).toContain("Open Analysis to finish the missing tire and drivetrain specs before using this car.");
   expect(container.innerHTML).toContain("car-list-row--highlighted");
   expect(container.innerHTML).toContain("New");
