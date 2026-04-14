@@ -230,9 +230,9 @@ test("dark mode quiet danger buttons use semantic danger tokens in History", asy
     borderVar: "--button-danger-quiet-border",
     textVar: "--button-danger-quiet-text",
   });
-  expect(idleStyles.backgroundColor).toBe(idleStyles.expectedBackgroundColor);
-  expect(idleStyles.borderColor).toBe(idleStyles.expectedBorderColor);
-  expect(idleStyles.color).toBe(idleStyles.expectedColor);
+  await expect(deleteButton).toHaveCSS("background-color", idleStyles.expectedBackgroundColor);
+  await expect(deleteButton).toHaveCSS("border-top-color", idleStyles.expectedBorderColor);
+  await expect(deleteButton).toHaveCSS("color", idleStyles.expectedColor);
 
   const deleteButtonBox = await deleteButton.boundingBox();
   if (!deleteButtonBox) {
@@ -249,9 +249,9 @@ test("dark mode quiet danger buttons use semantic danger tokens in History", asy
     borderVar: "--button-danger-quiet-hover-border",
     textVar: "--button-danger-quiet-text",
   });
-  expect(hoverStyles.backgroundColor).toBe(hoverStyles.expectedBackgroundColor);
-  expect(hoverStyles.borderColor).toBe(hoverStyles.expectedBorderColor);
-  expect(hoverStyles.color).toBe(hoverStyles.expectedColor);
+  await expect(deleteButton).toHaveCSS("background-color", hoverStyles.expectedBackgroundColor);
+  await expect(deleteButton).toHaveCSS("border-top-color", hoverStyles.expectedBorderColor);
+  await expect(deleteButton).toHaveCSS("color", hoverStyles.expectedColor);
 });
 
 test("history empty state points users back to Live", async ({ page }) => {
