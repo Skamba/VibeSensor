@@ -21,32 +21,7 @@
       </section>
 
       <section id="historyView" class="view" role="tabpanel" aria-labelledby="tab-history" hidden>
-        <div class="panel card">
-          <div class="history-toolbar">
-            <div class="history-toolbar__copy">
-              <div id="historySummary" class="history-toolbar__summary subtle">No runs yet.</div>
-            </div>
-            <div class="history-toolbar__actions">
-              <button id="refreshHistoryBtn" class="btn btn--muted" data-i18n="history.refresh">Refresh History</button>
-              <button id="deleteAllRunsBtn" class="btn btn--danger-quiet" data-i18n="history.delete_all" disabled>Delete All Runs</button>
-            </div>
-          </div>
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th data-i18n="history.table.file">Run</th>
-                <th data-i18n="history.table.updated">Started</th>
-                <th class="numeric" data-i18n="history.table.size">Samples</th>
-                <th data-i18n="history.table.actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody">
-              <tr>
-                <td colspan="4">No runs found.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div id="historyPanelRoot" class="panel card"></div>
       </section>
 
       <section id="settingsView" class="view" role="tabpanel" aria-labelledby="tab-settings" hidden>

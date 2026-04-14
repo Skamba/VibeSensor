@@ -17,6 +17,7 @@ import {
 } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature } from "./features/history_feature";
+import type { HistoryPanelView } from "./views/history_table_view";
 import {
   createRealtimeFeature,
   type RealtimeFeatureChromePorts,
@@ -54,6 +55,7 @@ export interface AppFeatureBundleSharedDeps {
 
 export interface AppFeatureBundleRuntimePorts {
   realtimeChrome: RealtimeFeatureChromePorts;
+  historyPanel: HistoryPanelView;
   transport: RealtimeFeatureSelectionPorts;
   view: SettingsFeatureViewPorts;
 }
@@ -92,6 +94,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     history: state.history,
     getLanguage: () => state.shell.lang,
     dom: historyDom,
+    panel: runtime.historyPanel,
     shellDom,
     t,
     escapeHtml,

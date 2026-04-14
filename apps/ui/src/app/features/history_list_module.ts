@@ -1,14 +1,13 @@
 import { getHistory, historyExportUrl } from "../../api";
-import type { UiHistoryDom } from "../dom/history_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { HistoryState, RunDetail } from "../ui_app_state";
-import {
-  renderHistoryEmptyState,
-  renderHistoryTable as renderHistoryTableView,
+import type {
+  HistoryPanelRenderModel,
+  HistoryPanelView,
 } from "../views/history_table_view";
 
 export interface HistoryListModuleDeps extends FeatureDepsBase {
-  dom: UiHistoryDom;
+  panel: HistoryPanelView;
   history: HistoryState;
   fmt: (n: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
@@ -23,45 +22,49 @@ export interface HistoryListModule {
 }
 
 export function createHistoryListModule(ctx: HistoryListModuleDeps): HistoryListModule {
-  const { history, dom: els, t, fmt, fmtTs, formatInt } = ctx;
+  const { history, panel, t, fmt, fmtTs, formatInt } = ctx;
+
+  function renderModel(model: HistoryPanelRenderModel): void {
+    panel.render(model);
+  }
 
   function renderHistoryTable(): void {
-    if (els.deleteAllRunsBtn) {
-      els.deleteAllRunsBtn.disabled = history.deleteAllRunsInFlight || history.runs.length === 0;
-    }
+    const deleteAllRunsDisabled = history.deleteAllRunsInFlight || history.runs.length === 0;
     if (!history.runs.length) {
-      if (els.historySummary) {
-        els.historySummary.textContent = t("history.none");
-      }
-      if (els.historyTableBody) {
-        renderHistoryEmptyState(els.historyTableBody, {
-          t,
-        });
-      }
       ctx.collapseExpandedRun();
+      renderModel({
+        historySummaryText: t("history.none"),
+        deleteAllRunsDisabled,
+        table: {
+          kind: "empty",
+          t,
+        },
+      });
       return;
     }
     if (history.expandedRunId && !history.runs.some((row) => row.run_id === history.expandedRunId)) {
       ctx.collapseExpandedRun();
     }
-    if (els.historySummary) {
-      els.historySummary.textContent = t("history.available_count", { count: history.runs.length });
-    }
     for (const run of history.runs) {
       ctx.ensureRunDetail(run.run_id);
     }
-    if (els.historyTableBody) {
-      renderHistoryTableView(els.historyTableBody, {
-        runs: history.runs,
-        expandedRunId: history.expandedRunId,
-        runDetailsById: history.runDetailsById,
-        t,
-        fmt,
-        fmtTs,
-        formatInt,
-        historyExportUrl,
-      });
-    }
+    renderModel({
+      historySummaryText: t("history.available_count", { count: history.runs.length }),
+      deleteAllRunsDisabled,
+      table: {
+        kind: "rows",
+        params: {
+          runs: history.runs,
+          expandedRunId: history.expandedRunId,
+          runDetailsById: history.runDetailsById,
+          t,
+          fmt,
+          fmtTs,
+          formatInt,
+          historyExportUrl,
+        },
+      },
+    });
   }
 
   async function refreshHistory(): Promise<void> {
