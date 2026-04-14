@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { getUiLiveOverviewHost } from "../src/app/dom/realtime_dom";
+import { getUiLiveOverviewHost, getUiLoggingPanelHost } from "../src/app/dom/realtime_dom";
 import { getUiSpectrumPanelHost } from "../src/app/dom/spectrum_dom";
 import { createUiRuntimeDom } from "../src/app/ui_runtime_dom";
 
@@ -27,9 +27,9 @@ function stubElement(id = ""): HTMLElement {
 function createBaseFixture(): SelectorFixture {
   return {
     ids: {
+      loggingPanelRoot: stubElement("loggingPanelRoot"),
       spectrumPanelRoot: stubElement("spectrumPanelRoot"),
       specChart: stubElement("specChart"),
-      startLoggingBtn: stubElement("startLoggingBtn"),
       liveOverviewRoot: stubElement("liveOverviewRoot"),
       historyTableBody: stubElement("historyTableBody"),
       addCarBtn: stubElement("addCarBtn"),
@@ -92,7 +92,6 @@ test("createUiRuntimeDom returns the feature-scoped startup bundle when required
     const dom = createUiRuntimeDom();
     expect(dom.shell.menuButtons).toHaveLength(2);
     expect(dom.spectrum.specChart.id).toBe("specChart");
-    expect(dom.realtime.startLoggingBtn.id).toBe("startLoggingBtn");
     expect(dom.history.historyTableBody.id).toBe("historyTableBody");
     expect(dom.settings.settingsTabs).toHaveLength(2);
     expect(dom.cars.addCarBtn.id).toBe("addCarBtn");
@@ -107,6 +106,15 @@ test("getUiLiveOverviewHost resolves the overview island host", () => {
   const restore = installDomFixture();
   try {
     expect(getUiLiveOverviewHost().id).toBe("liveOverviewRoot");
+  } finally {
+    restore();
+  }
+});
+
+test("getUiLoggingPanelHost resolves the logging island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiLoggingPanelHost().id).toBe("loggingPanelRoot");
   } finally {
     restore();
   }
@@ -149,10 +157,10 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     }
   });
 
-  test("fails at the realtime boundary when logging controls are missing", () => {
-    const restore = installDomFixture({ missingId: "startLoggingBtn" });
+  test("fails when the logging panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "loggingPanelRoot" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow("Realtime feature requires #startLoggingBtn");
+      expect(() => getUiLoggingPanelHost()).toThrow("Realtime feature requires #loggingPanelRoot");
     } finally {
       restore();
     }

@@ -12,12 +12,13 @@ import {
   buildRealtimeLoggingPanelViewModel,
   captureReadinessCheck,
   captureReadinessSummaryText,
+  type RealtimeLoggingPanelViewModel,
   type RealtimeLoggingPendingAction,
 } from "./realtime_logging_view_models";
-import {
-  renderRealtimeCaptureReadinessChecklist,
-  renderRealtimeLoggingSummary,
-} from "./realtime_logging_view";
+import type {
+  RealtimeLoggingPanelBridge,
+  RealtimeLoggingPanelRenderModel,
+} from "./realtime_logging_panel";
 import {
   renderRealtimeSensorTable,
 } from "./realtime_sensor_table_view";
@@ -47,8 +48,8 @@ export interface RealtimeFeaturePresenterDeps {
   formatInt: (value: number) => string;
   chrome: {
     setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
-    setStatValue: (container: HTMLElement | null, value: string | number) => void;
     liveOverview: RealtimeLiveOverviewBridge;
+    loggingPanel: RealtimeLoggingPanelBridge;
   };
 }
 
@@ -83,11 +84,11 @@ export function createRealtimeFeaturePresenter(
     formatInt,
     chrome,
   } = ctx;
-  const { setPillState, setStatValue } = chrome;
+  const { setPillState } = chrome;
 
   let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
   let lastCompletedElapsedText = "--";
-  let renderedLoggingSummarySignature: string | null = null;
+  let renderedLoggingPanelModel: RealtimeLoggingPanelRenderModel | null = null;
 
   const sensorState = createRealtimeSensorState({
     realtime,
@@ -142,18 +143,6 @@ export function createRealtimeFeaturePresenter(
       return t("dashboard.data_freshness_delayed", { age: ageText });
     }
     return t("dashboard.data_freshness_stale", { age: ageText });
-  }
-
-  function setDashboardPillState(
-    el: HTMLElement | null,
-    variant: "muted" | "ok" | "warn" | "bad",
-    text: string,
-    { hidden = false }: { hidden?: boolean } = {},
-  ): void {
-    setPillState(el, variant, text);
-    if (el) {
-      el.hidden = hidden;
-    }
   }
 
   function computeCurrentLiveHealth() {
@@ -228,6 +217,33 @@ export function createRealtimeFeaturePresenter(
     });
   }
 
+  function buildLoggingRenderModel(
+    panelState: RealtimeLoggingPanelViewModel,
+  ): RealtimeLoggingPanelRenderModel {
+    return {
+      pillVariant: panelState.pillVariant,
+      pillText: panelState.pillText,
+      showPill: panelState.showPill,
+      summaryText: panelState.summaryText,
+      summaryPanel: panelState.summaryPanel,
+      runIdText: panelState.runIdText,
+      phaseText: panelState.phaseText,
+      elapsedText: panelState.elapsedText,
+      samplesText: panelState.samplesText,
+      checklist: panelState.checklist,
+      showStart: panelState.showStart,
+      showStop: panelState.showStop,
+      startDisabled: panelState.startDisabled,
+      stopDisabled: panelState.stopDisabled,
+      setupMode: panelState.setupMode,
+    };
+  }
+
+  function renderLoggingPanel(model: RealtimeLoggingPanelRenderModel): void {
+    renderedLoggingPanelModel = model;
+    chrome.loggingPanel.render(model);
+  }
+
   function renderLiveOverview(phaseText: string): void {
     const model = buildLiveOverviewModel(phaseText);
     chrome.liveOverview.render(model);
@@ -296,7 +312,13 @@ export function createRealtimeFeaturePresenter(
     }
     if (loggingElapsedTimer !== null) return;
     loggingElapsedTimer = setInterval(() => {
-      setStatValue(els.loggingElapsed, formatElapsed(realtime.loggingStatus.start_time_utc));
+      if (renderedLoggingPanelModel === null) {
+        return;
+      }
+      renderLoggingPanel({
+        ...renderedLoggingPanelModel,
+        elapsedText: formatElapsed(realtime.loggingStatus.start_time_utc),
+      });
     }, 1_000);
   }
 
@@ -345,93 +367,60 @@ export function createRealtimeFeaturePresenter(
   function renderLoggingStatus(state: RealtimeFeatureRenderState): void {
     const panelState = buildLoggingPanelViewModel(state.pendingLoggingAction);
     lastCompletedElapsedText = panelState.nextLastCompletedElapsedText;
-    const dashboardGrid = els.loggingSummary?.closest<HTMLElement>(".dashboard-grid");
-    if (panelState.setupMode) {
-      dashboardGrid?.setAttribute("data-layout", "setup");
-    } else {
-      dashboardGrid?.removeAttribute("data-layout");
-    }
     renderLiveOverview(panelState.phaseText);
-    setDashboardPillState(els.loggingStatus, panelState.pillVariant, panelState.pillText, {
-      hidden: !panelState.showPill,
-    });
-    setStatValue(els.loggingPhase, panelState.phaseText);
-    setStatValue(els.loggingElapsed, panelState.elapsedText);
-    setStatValue(els.loggingSamples, panelState.samplesText);
-    if (els.loggingPhase) {
-      els.loggingPhase.hidden = true;
-    }
-    renderedLoggingSummarySignature = renderRealtimeLoggingSummary(
-      els.loggingSummary,
-      panelState.summaryText,
-      panelState.summaryPanel,
-      renderedLoggingSummarySignature,
-    );
-    renderRealtimeCaptureReadinessChecklist(els.loggingChecklist, panelState.checklist);
-    if (els.loggingRunId) {
-      els.loggingRunId.hidden = panelState.runIdText === "";
-      els.loggingRunId.textContent = panelState.runIdText;
-    }
-    const loggingRow = els.loggingStatus?.parentElement;
-    if (loggingRow) {
-      loggingRow.hidden = !panelState.showPill && panelState.runIdText === "";
-    }
-    if (els.startLoggingBtn) {
-      els.startLoggingBtn.hidden = !panelState.showStart;
-      els.startLoggingBtn.disabled = panelState.startDisabled;
-    }
-    if (els.stopLoggingBtn) {
-      els.stopLoggingBtn.hidden = !panelState.showStop;
-      els.stopLoggingBtn.disabled = panelState.stopDisabled;
-    }
+    renderLoggingPanel(buildLoggingRenderModel(panelState));
     syncLoggingElapsedTimer(state.handlersBound);
     renderLiveOverview(panelState.phaseText);
   }
 
   function renderLoggingUnavailable(): void {
     clearLoggingElapsedTimer();
-    setDashboardPillState(els.loggingStatus, "bad", t("status.unavailable"));
-    renderedLoggingSummarySignature = renderRealtimeLoggingSummary(
-      els.loggingSummary,
-      t("status.unavailable"),
-      null,
-      renderedLoggingSummarySignature,
-    );
-    renderRealtimeCaptureReadinessChecklist(els.loggingChecklist, null);
-    if (els.loggingRunId) {
-      els.loggingRunId.hidden = true;
-      els.loggingRunId.textContent = "";
-    }
-    setStatValue(els.loggingPhase, t("status.unavailable"));
-    setStatValue(els.loggingElapsed, "--");
-    setStatValue(els.loggingSamples, "--");
-    if (els.loggingPhase) {
-      els.loggingPhase.hidden = true;
-    }
-    const loggingRow = els.loggingStatus?.parentElement;
-    if (loggingRow) {
-      loggingRow.hidden = false;
-    }
-    if (els.startLoggingBtn) {
-      els.startLoggingBtn.hidden = false;
-      els.startLoggingBtn.disabled = true;
-    }
-    if (els.stopLoggingBtn) {
-      els.stopLoggingBtn.hidden = true;
-      els.stopLoggingBtn.disabled = true;
-    }
-    const dashboardGrid = els.loggingSummary?.closest<HTMLElement>(".dashboard-grid");
-    dashboardGrid?.removeAttribute("data-layout");
+    renderLoggingPanel({
+      pillVariant: "bad",
+      pillText: t("status.unavailable"),
+      showPill: true,
+      summaryText: t("status.unavailable"),
+      summaryPanel: null,
+      runIdText: "",
+      phaseText: t("status.unavailable"),
+      elapsedText: "--",
+      samplesText: "--",
+      checklist: null,
+      showStart: true,
+      showStop: false,
+      startDisabled: true,
+      stopDisabled: true,
+      setupMode: false,
+    });
   }
 
   function renderLoggingError(message: string): void {
-    setDashboardPillState(els.loggingStatus, "bad", message || t("status.unavailable"));
-    renderedLoggingSummarySignature = renderRealtimeLoggingSummary(
-      els.loggingSummary,
-      message || t("status.unavailable"),
-      null,
-      renderedLoggingSummarySignature,
-    );
+    const errorText = message || t("status.unavailable");
+    const baseModel = renderedLoggingPanelModel ?? {
+      pillVariant: "bad" as const,
+      pillText: errorText,
+      showPill: true,
+      summaryText: errorText,
+      summaryPanel: null,
+      runIdText: "",
+      phaseText: "--",
+      elapsedText: "--",
+      samplesText: "--",
+      checklist: null,
+      showStart: true,
+      showStop: false,
+      startDisabled: true,
+      stopDisabled: true,
+      setupMode: false,
+    };
+    renderLoggingPanel({
+      ...baseModel,
+      pillVariant: "bad",
+      pillText: errorText,
+      showPill: true,
+      summaryText: errorText,
+      summaryPanel: null,
+    });
   }
 
   function openHistory(): void {

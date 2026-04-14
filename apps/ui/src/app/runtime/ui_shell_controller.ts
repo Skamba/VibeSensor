@@ -126,17 +126,6 @@ export class UiShellController {
     return formatIntLocale(value, this.state.shell.lang);
   }
 
-  setStatValue(container: HTMLElement | null, value: string | number): void {
-    const valueEl = container?.querySelector?.("[data-value]");
-    if (valueEl) {
-      valueEl.textContent = String(value);
-      return;
-    }
-    if (container) {
-      container.textContent = String(value);
-    }
-  }
-
   setPillState(el: HTMLElement | null, variant: string, text: string): void {
     if (!el) return;
     el.className = "pill";
