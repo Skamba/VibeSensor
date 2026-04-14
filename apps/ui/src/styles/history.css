@@ -97,8 +97,8 @@
   border-color: transparent;
 }
 .history-row__summary-chip--warn {
-  background: #fff3cd;
-  color: #8a6d1d;
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-text);
   border-color: transparent;
 }
 .history-row__summary-chip--bad {
@@ -319,10 +319,10 @@
   gap: var(--space-2);
 }
 .history-warning-banner {
-  border: 1px solid #d2b15c;
+  border: 1px solid var(--warning-border);
   border-radius: var(--radius-sm);
-  background: #fff7e1;
-  color: #6f4f12;
+  background: var(--warning-surface);
+  color: var(--warning-text);
   padding: var(--space-2) var(--space-3);
   font-size: 0.84rem;
 }
@@ -584,8 +584,8 @@
   color: var(--pill-ok-text);
 }
 .history-diagnosis-card__confidence--warn {
-  background: #fff3cd;
-  color: #8a6d1d;
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-text);
 }
 .history-findings-overview__explanation {
   margin: 0;
@@ -665,7 +665,7 @@
   border-color: #c4dec8;
 }
 .history-finding-card--warn {
-  border-color: #e6cf9b;
+  border-color: var(--warning-border);
 }
 .history-finding-card--empty {
   color: var(--muted);
@@ -705,8 +705,8 @@
   color: var(--pill-ok-text);
 }
 .history-finding-card__confidence--warn {
-  background: #fff3cd;
-  color: #8a6d1d;
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-text);
 }
 .history-finding-card__meta {
   display: grid;

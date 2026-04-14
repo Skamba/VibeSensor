@@ -147,7 +147,7 @@ button[hidden],
 .pill[data-variant="ok"],
 .status-pill.online,
 .badge.on { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
-.pill[data-variant="warn"] { background: #fff3cd; color: #8a6d1d; }
+.pill[data-variant="warn"] { background: var(--pill-warn-bg); color: var(--pill-warn-text); }
 .pill[data-variant="bad"],
 .status-pill.offline,
 .badge.off { background: var(--pill-bad-bg); color: var(--pill-bad-text); }
@@ -187,7 +187,7 @@ button[hidden],
 .stat { min-height: 72px; }
 .stat__label { font-size: 0.76rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .stat__value { margin-top: var(--space-1); font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
-.stat__value[data-variant="warn"] { color: #8a6d1d; }
+.stat__value[data-variant="warn"] { color: var(--warning-text); }
 .stat__value[data-has-icon="true"] {
   display: inline-flex;
   align-items: flex-start;
@@ -207,9 +207,9 @@ button[hidden],
   margin-top: 2px;
 }
 .stat__value-icon[data-variant="warn"] {
-  border: 1px solid rgba(183, 121, 31, 0.3);
-  background: #fff3cd;
-  color: #8a6d1d;
+  border: 1px solid var(--warning-border);
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-text);
 }
 
 .matrix-tooltip {
