@@ -1,5 +1,6 @@
 import "uplot/dist/uPlot.min.css";
 import "../styles/app.css";
+import { getUiCarsPanelHost } from "./dom/cars_dom";
 import { getUiHistoryPanelHost } from "./dom/history_dom";
 import { getUiLiveOverviewHost, getUiLoggingPanelHost } from "./dom/realtime_dom";
 import { getUiShellChromeHost } from "./dom/shell_dom";
@@ -7,6 +8,7 @@ import { getUiSpectrumPanelHost } from "./dom/spectrum_dom";
 import { createAppState } from "./ui_app_state";
 import { UiAppRuntime } from "./ui_app_runtime";
 import { mountHistoryPanel } from "./views/history_panel";
+import { mountCarsPanel } from "./views/cars_panel";
 import { mountRealtimeLoggingPanel } from "./views/realtime_logging_panel";
 import { mountRealtimeLiveOverview } from "./views/realtime_live_overview";
 import { mountSpectrumPanel } from "./views/spectrum_panel";
@@ -19,6 +21,7 @@ export function startUiApp(): void {
   const liveOverview = mountRealtimeLiveOverview(getUiLiveOverviewHost());
   const loggingPanel = mountRealtimeLoggingPanel(getUiLoggingPanelHost());
   const historyPanel = mountHistoryPanel(getUiHistoryPanelHost());
+  const carsPanel = mountCarsPanel(getUiCarsPanelHost());
   mountUiShellChrome(getUiShellChromeHost(), shellChromeActions, state.shell);
   new UiAppRuntime(
     undefined,
@@ -28,5 +31,6 @@ export function startUiApp(): void {
     spectrumPanel,
     loggingPanel,
     historyPanel,
+    carsPanel,
   ).start();
 }

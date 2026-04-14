@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { getUiCarsPanelHost } from "../src/app/dom/cars_dom";
 import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
 import { getUiLiveOverviewHost, getUiLoggingPanelHost } from "../src/app/dom/realtime_dom";
 import { getUiSpectrumPanelHost } from "../src/app/dom/spectrum_dom";
@@ -33,6 +34,7 @@ function createBaseFixture(): SelectorFixture {
       specChart: stubElement("specChart"),
       liveOverviewRoot: stubElement("liveOverviewRoot"),
       historyPanelRoot: stubElement("historyPanelRoot"),
+      carsPanelRoot: stubElement("carsPanelRoot"),
       addCarBtn: stubElement("addCarBtn"),
       addCarWizard: stubElement("addCarWizard"),
       updateStartBtn: stubElement("updateStartBtn"),
@@ -139,6 +141,15 @@ test("getUiHistoryPanelHost resolves the history island host", () => {
   }
 });
 
+test("getUiCarsPanelHost resolves the cars island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiCarsPanelHost().id).toBe("carsPanelRoot");
+  } finally {
+    restore();
+  }
+});
+
 test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the shell boundary when menu tabs are missing", () => {
     const restore = installDomFixture({ missingSelector: ".menu-btn" });
@@ -189,6 +200,15 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     const restore = installDomFixture({ missingId: "historyPanelRoot" });
     try {
       expect(() => getUiHistoryPanelHost()).toThrow("History feature requires #historyPanelRoot");
+    } finally {
+      restore();
+    }
+  });
+
+  test("fails when the cars panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "carsPanelRoot" });
+    try {
+      expect(() => getUiCarsPanelHost()).toThrow("Cars feature requires #carsPanelRoot");
     } finally {
       restore();
     }
