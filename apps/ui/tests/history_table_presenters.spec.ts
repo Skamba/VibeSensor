@@ -172,9 +172,9 @@ test("history table presenter keeps loading and error state outside the renderer
   expect(row.summaryHeadline).toBe("history.row_summary_loading");
   expect(row.summaryMeta).toBe("history.summary_size: 12.0 s");
   expect(row.collapsedAction).toEqual({
-    hintText: "history.quick_report_pending",
-    pdfLabel: null,
-    pdfLoading: false,
+    hintText: null,
+    pdfLabel: "history.generating_pdf",
+    pdfLoading: true,
   });
   expect(row.details?.insights.stateMessage).toBe("history.loading_insights");
   expect(row.details?.heatmap).toMatchObject({
@@ -182,4 +182,32 @@ test("history table presenter keeps loading and error state outside the renderer
     stateTone: "subtle",
   });
   expect(row.details?.insightsError).toBe("history.error.insights");
+});
+
+test("history table presenter keeps PDF pending until analysis completes", () => {
+  const run = {
+    ...historyListRun("run-003"),
+    status: "analyzing" as const,
+  };
+  const rows = buildHistoryTableRowsViewModel({
+    runs: [run],
+    expandedRunId: null,
+    runDetailsById: {
+      "run-003": defaultDetail({
+        preview: populatedInsights("run-003") as RunDetail["preview"],
+      }),
+    },
+    t: testTranslation,
+    fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    fmtTs: (iso) => iso,
+    formatInt: (value) => String(value),
+  });
+
+  const row = rows[0];
+  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.preview_ready");
+  expect(row.collapsedAction).toEqual({
+    hintText: "history.quick_report_pending",
+    pdfLabel: null,
+    pdfLoading: false,
+  });
 });

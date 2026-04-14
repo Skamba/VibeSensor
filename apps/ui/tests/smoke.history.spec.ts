@@ -201,7 +201,8 @@ test("history keeps destructive actions inside the expanded management footer", 
   await page.locator("#tab-history").click();
   const row = page.locator('[data-run-row="1"][data-run="run-001"]');
   const actionCell = row.locator("td").nth(3);
-  await expect(actionCell).toContainText("PDF after preview.");
+  await expect(actionCell.locator('[data-run-action="download-pdf"][data-run="run-001"]')).toContainText("PDF");
+  await expect(actionCell).not.toContainText("PDF after preview.");
   await expect(actionCell).not.toContainText("Export");
   await expect(actionCell).not.toContainText("Delete");
   await row.locator('[data-run-toggle="details"]').click();
