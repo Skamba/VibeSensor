@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+from unittest.mock import MagicMock
+
 from vibesensor.domain import CarSnapshot
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
@@ -34,12 +37,14 @@ def _observation(
     fake_registry,
     fake_gps_monitor,
     mutable_fake_settings,
+    sensor_metadata_reader=None,
     now_mono: float,
 ):
     return observe_capture_readiness(
         registry=fake_registry,
         run_context=_run_context(mutable_fake_settings),
         speed_provider=fake_gps_monitor,
+        sensor_metadata_reader=sensor_metadata_reader,
         now_mono=now_mono,
     )
 
@@ -103,6 +108,58 @@ def test_capture_readiness_accepts_manual_speed_source_for_start_gate(
     assert reference_check.reason_key == "reference_ready"
     assert speed_check.state == "pass"
     assert speed_check.reason_key == "speed_stable"
+
+
+def test_capture_readiness_uses_persisted_sensor_location_metadata_when_runtime_location_is_blank(
+    fake_gps_monitor,
+    mutable_fake_settings,
+) -> None:
+    tracker = CaptureReadinessTracker()
+    mutable_fake_settings.active_car = _active_car_snapshot()
+    fake_gps_monitor.speed_mps = 23.0
+    fake_gps_monitor.engine_rpm = 2450.0
+    fake_gps_monitor.resolved_source = "obd2"
+
+    sensor_id = "001122334455"
+    fake_registry = MagicMock()
+    fake_registry.active_client_ids.return_value = [sensor_id]
+    fake_registry.get.return_value = SimpleNamespace(
+        client_id=sensor_id,
+        name=sensor_id,
+        location_code="",
+        frames_dropped=0,
+        queue_overflow_drops=0,
+        server_queue_drops=0,
+        parse_errors=0,
+    )
+    sensor_metadata_reader = MagicMock()
+    sensor_metadata_reader.get_sensors.return_value = {
+        sensor_id: {
+            "name": sensor_id,
+            "location_code": "front_left_wheel",
+        }
+    }
+
+    snapshots = []
+    for now_mono in (100.0, 104.0, 108.0):
+        snapshots.append(
+            tracker.evaluate(
+                _observation(
+                    fake_registry=fake_registry,
+                    fake_gps_monitor=fake_gps_monitor,
+                    mutable_fake_settings=mutable_fake_settings,
+                    sensor_metadata_reader=sensor_metadata_reader,
+                    now_mono=now_mono,
+                )
+            )
+        )
+
+    sensors_check = next(
+        check for check in snapshots[-1].checks if check.check_key == "sensors_ready"
+    )
+    assert sensors_check.state == "warn"
+    assert sensors_check.reason_key == "limited_sensor_coverage"
+    assert snapshots[-1].is_ready
 
 
 def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
