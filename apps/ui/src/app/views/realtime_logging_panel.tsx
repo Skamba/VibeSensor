@@ -138,6 +138,7 @@ function RealtimeLoggingChecklist(props: {
 function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState }) {
   const { state } = props;
   const loggingRowHidden = !state.showPill && state.runIdText === "";
+  const showProgressSection = !state.setupMode || state.checklist !== null;
 
   return (
     <>
@@ -167,36 +168,42 @@ function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState })
           {state.runIdText}
         </span>
       </div>
-      <div class="mini-label" data-i18n="dashboard.recording_progress">
-        Run progress
-      </div>
-      <div class="stat-grid stat-grid--compact">
-        <div id="loggingPhase" class="stat stat--compact" hidden>
-          <div class="stat__label" data-i18n="dashboard.recording_phase">
-            Run phase
-          </div>
-          <div class="stat__value" data-value>
-            {state.phaseText}
-          </div>
-        </div>
-        <div id="loggingElapsed" class="stat stat--compact">
-          <div class="stat__label" data-i18n="dashboard.recording_elapsed">
-            Elapsed
-          </div>
-          <div class="stat__value" data-value>
-            {state.elapsedText}
-          </div>
-        </div>
-        <div id="loggingSamples" class="stat stat--compact">
-          <div class="stat__label" data-i18n="dashboard.recording_samples">
-            Samples recorded
-          </div>
-          <div class="stat__value" data-value>
-            {state.samplesText}
-          </div>
-        </div>
-      </div>
-      <RealtimeLoggingChecklist checklist={state.checklist} />
+      {showProgressSection
+        ? (
+          <>
+            <div class="mini-label" data-i18n="dashboard.recording_progress">
+              Run progress
+            </div>
+            <div class="stat-grid stat-grid--compact">
+              <div id="loggingPhase" class="stat stat--compact" hidden>
+                <div class="stat__label" data-i18n="dashboard.recording_phase">
+                  Run phase
+                </div>
+                <div class="stat__value" data-value>
+                  {state.phaseText}
+                </div>
+              </div>
+              <div id="loggingElapsed" class="stat stat--compact">
+                <div class="stat__label" data-i18n="dashboard.recording_elapsed">
+                  Elapsed
+                </div>
+                <div class="stat__value" data-value>
+                  {state.elapsedText}
+                </div>
+              </div>
+              <div id="loggingSamples" class="stat stat--compact">
+                <div class="stat__label" data-i18n="dashboard.recording_samples">
+                  Samples recorded
+                </div>
+                <div class="stat__value" data-value>
+                  {state.samplesText}
+                </div>
+              </div>
+            </div>
+            <RealtimeLoggingChecklist checklist={state.checklist} />
+          </>
+        )
+        : null}
       <div class="logging-actions">
         <button
           id="startLoggingBtn"

@@ -29,7 +29,10 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   });
   await installFakeWebSocket(page);
   await page.goto("/");
+  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
+  await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveCount(0);
   await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No cars added yet");
+  await expect(page.locator("#loggingChecklist")).toBeHidden();
   const liveSummary = page.locator("#loggingSummary");
   await expect(liveSummary).toContainText("Add a car before recording.");
   await expect(liveSummary).toContainText("Runs need an active car");
@@ -331,13 +334,13 @@ test("shows a live warning state until an active car is selected, then clears it
   });
 
   await page.goto("/");
-  await expect(page.locator("#liveActiveCar")).toHaveAttribute("data-variant", "warn");
-  await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveAttribute("data-variant", "warn");
-  await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveText("!");
+  await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
+  await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveCount(0);
   await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No active car selected");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
   await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
   await expect(page.locator("#loggingStatus")).toBeHidden();
+  await expect(page.locator("#loggingChecklist")).toBeHidden();
   const liveSummary = page.locator("#loggingSummary");
   await expect(liveSummary).toContainText("Choose the active car before recording.");
   await expect(liveSummary).toContainText("none is active for the next run");

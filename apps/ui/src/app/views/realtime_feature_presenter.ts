@@ -174,11 +174,12 @@ export function createRealtimeFeaturePresenter(
     const health = computeCurrentLiveHealth();
     const totalClients = realtime.clients.length;
     const activeCar = activeCarDisplayState();
+    const setupBlockReason = selectionBlockReason();
     return {
       connectedSensorsText: `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`,
       activeCar: {
         text: activeCar.text,
-        warning: activeCar.isWarning,
+        warning: setupBlockReason === null && activeCar.isWarning,
       },
       recordingStateText: phaseText,
       dataFreshnessText: dataFreshnessText(),
