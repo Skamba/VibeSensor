@@ -357,16 +357,16 @@
   padding: var(--space-2) var(--space-3);
 }
 .capture-readiness__item[data-readiness-state="pass"] {
-  border-color: #c9ead7;
-  background: #f4fbf7;
+  border-color: var(--capture-readiness-pass-border);
+  background: var(--capture-readiness-pass-surface);
 }
 .capture-readiness__item[data-readiness-state="warn"] {
-  border-color: #ead9b3;
-  background: #fff9ee;
+  border-color: var(--capture-readiness-warn-border);
+  background: var(--capture-readiness-warn-surface);
 }
 .capture-readiness__item[data-readiness-state="fail"] {
-  border-color: #efc1c1;
-  background: #fff5f5;
+  border-color: var(--capture-readiness-fail-border);
+  background: var(--capture-readiness-fail-surface);
 }
 .capture-readiness__row {
   display: flex;

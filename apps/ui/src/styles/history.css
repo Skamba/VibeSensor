@@ -545,12 +545,12 @@
   background: var(--surface);
 }
 .history-diagnosis-card--success {
-  border-color: #a4d2b0;
-  background: #f5fbf7;
+  border-color: var(--history-diagnosis-success-border);
+  background: var(--history-diagnosis-success-surface);
 }
 .history-diagnosis-card--warn {
-  border-color: #e3c47a;
-  background: #fff8e7;
+  border-color: var(--history-diagnosis-warn-border);
+  background: var(--history-diagnosis-warn-surface);
 }
 .history-diagnosis-card__header {
   display: flex;
