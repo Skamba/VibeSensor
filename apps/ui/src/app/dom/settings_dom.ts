@@ -3,31 +3,6 @@ import { getById, queryRequiredAll } from "./dom_query";
 const SETTINGS_OWNER = "Settings feature";
 
 export interface UiSettingsDom {
-  wheelBandwidthInput: HTMLInputElement | null;
-  driveshaftBandwidthInput: HTMLInputElement | null;
-  engineBandwidthInput: HTMLInputElement | null;
-  speedUncertaintyInput: HTMLInputElement | null;
-  tireDiameterUncertaintyInput: HTMLInputElement | null;
-  finalDriveUncertaintyInput: HTMLInputElement | null;
-  gearUncertaintyInput: HTMLInputElement | null;
-  minAbsBandHzInput: HTMLInputElement | null;
-  maxBandHalfWidthInput: HTMLInputElement | null;
-  saveAnalysisBtn: HTMLButtonElement | null;
-  resetAnalysisBtn: HTMLButtonElement | null;
-  analysisGuidanceHelp: HTMLDetailsElement | null;
-  analysisFieldGuidance: {
-    wheelBandwidth: HTMLElement | null;
-    driveshaftBandwidth: HTMLElement | null;
-    engineBandwidth: HTMLElement | null;
-    speedUncertainty: HTMLElement | null;
-    tireDiameterUncertainty: HTMLElement | null;
-    finalDriveUncertainty: HTMLElement | null;
-    gearUncertainty: HTMLElement | null;
-    minAbsBandHz: HTMLElement | null;
-    maxBandHalfWidth: HTMLElement | null;
-  };
-  analysisSaveFeedback: HTMLElement | null;
-  analysisNoCarMessage: HTMLElement | null;
   speedSourceRadios: HTMLInputElement[];
   speedSourceCurrentSource: HTMLElement | null;
   speedSourceEffectiveSpeed: HTMLElement | null;
@@ -80,41 +55,6 @@ export interface UiSettingsDom {
 
 export function createUiSettingsDom(): UiSettingsDom {
   return {
-    wheelBandwidthInput: getById<HTMLInputElement>("wheelBandwidthInput"),
-    driveshaftBandwidthInput: getById<HTMLInputElement>(
-      "driveshaftBandwidthInput",
-    ),
-    engineBandwidthInput: getById<HTMLInputElement>("engineBandwidthInput"),
-    speedUncertaintyInput: getById<HTMLInputElement>("speedUncertaintyInput"),
-    tireDiameterUncertaintyInput: getById<HTMLInputElement>(
-      "tireDiameterUncertaintyInput",
-    ),
-    finalDriveUncertaintyInput: getById<HTMLInputElement>(
-      "finalDriveUncertaintyInput",
-    ),
-    gearUncertaintyInput: getById<HTMLInputElement>("gearUncertaintyInput"),
-    minAbsBandHzInput: getById<HTMLInputElement>("minAbsBandHzInput"),
-    maxBandHalfWidthInput: getById<HTMLInputElement>("maxBandHalfWidthInput"),
-    saveAnalysisBtn: getById<HTMLButtonElement>("saveAnalysisBtn"),
-    resetAnalysisBtn: getById<HTMLButtonElement>("resetAnalysisBtn"),
-    analysisGuidanceHelp: getById<HTMLDetailsElement>("analysisGuidanceHelp"),
-    analysisFieldGuidance: {
-      wheelBandwidth: getById<HTMLElement>("wheelBandwidthGuidance"),
-      driveshaftBandwidth: getById<HTMLElement>("driveshaftBandwidthGuidance"),
-      engineBandwidth: getById<HTMLElement>("engineBandwidthGuidance"),
-      speedUncertainty: getById<HTMLElement>("speedUncertaintyGuidance"),
-      tireDiameterUncertainty: getById<HTMLElement>(
-        "tireDiameterUncertaintyGuidance",
-      ),
-      finalDriveUncertainty: getById<HTMLElement>(
-        "finalDriveUncertaintyGuidance",
-      ),
-      gearUncertainty: getById<HTMLElement>("gearUncertaintyGuidance"),
-      minAbsBandHz: getById<HTMLElement>("minAbsBandHzGuidance"),
-      maxBandHalfWidth: getById<HTMLElement>("maxBandHalfWidthGuidance"),
-    },
-    analysisSaveFeedback: getById<HTMLElement>("analysisSaveFeedback"),
-    analysisNoCarMessage: getById<HTMLElement>("analysisNoCarMessage"),
     speedSourceRadios: Array.from(
       document.querySelectorAll<HTMLInputElement>(
         'input[name="speedSourceRadio"]',

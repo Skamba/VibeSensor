@@ -3,9 +3,9 @@ import type {
   AnalysisSettingsPayload,
 } from "../../transport/http_models";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
-import type { UiSettingsDom } from "../dom/settings_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
+import type { SettingsAnalysisPanelDom } from "../views/analysis_panel";
 import { setSettingsAnalysisGuidance } from "../views/settings_analysis_guidance";
 import { setSettingsFeedback } from "../views/settings_feedback";
 
@@ -28,7 +28,7 @@ export const ANALYSIS_SETTING_KEYS = [
 ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
 
 export interface SettingsAnalysisModuleDeps extends FeatureDepsBase {
-  dom: UiSettingsDom;
+  dom: SettingsAnalysisPanelDom;
   settings: SettingsState;
   renderSpectrum: () => void;
   hasValidActiveCar: () => boolean;
