@@ -688,6 +688,7 @@
   "settings.update.transport.usb_summary": "Reuse the currently detected USB uplink without taking the hotspot down.",
   "settings.update.transport.usb_summary_interface": "Reuse the currently detected USB uplink on {interface}.",
   "settings.update.transport.usb_summary_unavailable": "USB internet is not ready yet.",
+  "settings.update.transport.selected_badge": "Selected",
   "settings.update.transport_value.wifi": "Wi-Fi",
   "settings.update.transport_value.wifi_ssid": "Wi-Fi ({ssid})",
   "settings.update.transport_value.usb": "USB internet",

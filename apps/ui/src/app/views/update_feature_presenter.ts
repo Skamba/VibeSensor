@@ -255,10 +255,14 @@ export function createUpdateFeaturePresenter(
     }
     setChoiceCardState(internetDom.updateTransportChoiceWifi, {
       selected: !usingUsb,
+      state: !usingUsb ? "active" : null,
+      badgeText: !usingUsb ? t("settings.update.transport.selected_badge") : null,
     });
     setChoiceCardState(internetDom.updateTransportChoiceUsb, {
       selected: usingUsb,
       disabled: !usbAvailable && !controlsLocked,
+      state: usingUsb ? "active" : null,
+      badgeText: usingUsb ? t("settings.update.transport.selected_badge") : null,
     });
     if (internetDom.updateWifiFields) {
       internetDom.updateWifiFields.hidden = usingUsb;

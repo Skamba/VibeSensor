@@ -95,6 +95,14 @@ test("settings update tab renders readiness guidance when idle", async ({
     "data-selected",
     "true",
   );
+  await expect(page.locator("#updateTransportChoiceWifi")).toHaveAttribute(
+    "data-choice-state",
+    "active",
+  );
+  await expect(page.locator("#updateTransportChoiceWifi")).toHaveAttribute(
+    "data-choice-badge",
+    "Selected",
+  );
   await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute(
     "data-disabled",
     "true",
@@ -216,6 +224,14 @@ test("settings internet tab and updater show USB internet when usable", async ({
     "data-selected",
     "true",
   );
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute(
+    "data-choice-state",
+    "active",
+  );
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute(
+    "data-choice-badge",
+    "Selected",
+  );
   await expect(page.locator("#updateWifiFields")).toHaveJSProperty(
     "hidden",
     true,
@@ -228,6 +244,19 @@ test("settings internet tab and updater show USB internet when usable", async ({
   );
   await expect(page.locator("#updateTransportNote")).toContainText(
     "Starting a USB-internet update keeps the hotspot up",
+  );
+  await page.locator("#updateTransportWifiRadio").focus();
+  await expect(page.locator("#updateTransportChoiceWifi")).toHaveCSS(
+    "outline-style",
+    "solid",
+  );
+  await expect(page.locator("#updateTransportChoiceWifi")).toHaveCSS(
+    "outline-width",
+    "2px",
+  );
+  await expect(page.locator("#updateTransportChoiceUsb")).toHaveAttribute(
+    "data-choice-state",
+    "active",
   );
   await page.locator('[data-settings-tab="updateTab"]').click();
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
