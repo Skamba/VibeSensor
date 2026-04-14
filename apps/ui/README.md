@@ -192,6 +192,11 @@ The shell chrome owner path now starts at `app/runtime/ui_shell_chrome.tsx`,
 which mounts the shell island before `ui_runtime_dom.ts` resolves the shared
 shell selectors; the legacy shell runtime still owns state updates and
 cross-feature refresh behavior behind that rendered surface.
+The live overview card now follows the same pattern through
+`app/views/realtime_live_overview.tsx`: startup mounts the island into the
+overview host, the realtime presenter feeds it view-model data, and the
+remaining dashboard cards continue on the legacy path until their own issues
+land.
 
 ## Architecture guardrails
 

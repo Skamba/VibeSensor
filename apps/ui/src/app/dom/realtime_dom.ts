@@ -1,6 +1,7 @@
 import { getById, requiredById } from "./dom_query";
 
 const REALTIME_OWNER = "Realtime feature";
+const LIVE_OVERVIEW_HOST_ID = "liveOverviewRoot";
 
 export interface UiRealtimeDom {
   loggingStatus: HTMLElement | null;
@@ -13,14 +14,11 @@ export interface UiRealtimeDom {
   startLoggingBtn: HTMLButtonElement;
   stopLoggingBtn: HTMLButtonElement | null;
   sensorsSettingsBody: HTMLElement | null;
-  liveConnectedSensors: HTMLElement | null;
-  liveActiveCar: HTMLElement | null;
-  liveRecordingState: HTMLElement | null;
-  liveDataFreshness: HTMLElement | null;
-  liveStrongestSignal: HTMLElement | null;
-  liveRunHealth: HTMLElement | null;
-  liveSensorRoster: HTMLElement | null;
   shellLiveStatus: HTMLElement | null;
+}
+
+export function getUiLiveOverviewHost(): HTMLElement {
+  return requiredById<HTMLElement>(LIVE_OVERVIEW_HOST_ID, REALTIME_OWNER);
 }
 
 export function createUiRealtimeDom(): UiRealtimeDom {
@@ -35,13 +33,6 @@ export function createUiRealtimeDom(): UiRealtimeDom {
     startLoggingBtn: requiredById<HTMLButtonElement>("startLoggingBtn", REALTIME_OWNER),
     stopLoggingBtn: getById<HTMLButtonElement>("stopLoggingBtn"),
     sensorsSettingsBody: getById<HTMLElement>("sensorsSettingsBody"),
-    liveConnectedSensors: getById<HTMLElement>("liveConnectedSensors"),
-    liveActiveCar: getById<HTMLElement>("liveActiveCar"),
-    liveRecordingState: getById<HTMLElement>("liveRecordingState"),
-    liveDataFreshness: getById<HTMLElement>("liveDataFreshness"),
-    liveStrongestSignal: getById<HTMLElement>("liveStrongestSignal"),
-    liveRunHealth: getById<HTMLElement>("liveRunHealth"),
-    liveSensorRoster: getById<HTMLElement>("liveSensorRoster"),
     shellLiveStatus: getById<HTMLElement>("shellLiveStatus"),
   };
 }

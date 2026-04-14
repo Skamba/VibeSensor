@@ -28,11 +28,13 @@ import {
 } from "./ui_shell_status_module";
 import type { UiShellChromeActionBridge } from "./ui_shell_chrome";
 import { setVariantState } from "../style_state";
+import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
 
 type UiShellControllerDeps = {
   state: AppState;
   dom: UiShellDom;
   chromeActions: UiShellChromeActionBridge;
+  liveOverview: RealtimeLiveOverviewBridge;
 };
 
 export class UiShellController {
@@ -77,6 +79,7 @@ export class UiShellController {
       dom: this.els,
       t: (key, vars) => this.t(key, vars),
       setPillState: (el, variant, text) => this.setPillState(el, variant, text),
+      renderLiveOverviewSpeed: (text) => deps.liveOverview.setSpeedText(text),
     });
     this.preferences = createUiShellPreferencesModule({
       shell: this.state.shell,
