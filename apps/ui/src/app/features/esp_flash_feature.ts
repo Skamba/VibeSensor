@@ -1,11 +1,11 @@
-import type { UiEspFlashDom } from "../dom/esp_flash_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createEspFlashFeatureWorkflow } from "./esp_flash_feature_workflow";
 import { bindEspFlashFeatureInteractions } from "../views/esp_flash_feature_bindings";
 import { createEspFlashFeaturePresenter } from "../views/esp_flash_feature_presenter";
+import type { EspFlashPanelView } from "../views/esp_flash_panel";
 
 export interface EspFlashFeatureDeps extends FeatureDepsBase {
-  dom: UiEspFlashDom;
+  panel: EspFlashPanelView;
 }
 
 export interface EspFlashFeature {
@@ -14,9 +14,11 @@ export interface EspFlashFeature {
   stopPolling(): void;
 }
 
-export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature {
+export function createEspFlashFeature(
+  ctx: EspFlashFeatureDeps,
+): EspFlashFeature {
   const presenter = createEspFlashFeaturePresenter({
-    dom: ctx.dom,
+    dom: ctx.panel.dom,
     t: ctx.t,
     escapeHtml: ctx.escapeHtml,
   });
@@ -32,7 +34,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       return;
     }
     handlersBound = true;
-    bindEspFlashFeatureInteractions(ctx.dom, {
+    bindEspFlashFeatureInteractions(ctx.panel.dom, {
       onAction(action) {
         switch (action.type) {
           case "start":

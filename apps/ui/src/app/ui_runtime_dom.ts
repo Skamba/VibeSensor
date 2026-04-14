@@ -1,5 +1,4 @@
 import { createUiCarsDom, type UiCarsDom } from "./dom/cars_dom";
-import { createUiEspFlashDom, type UiEspFlashDom } from "./dom/esp_flash_dom";
 import { createUiHistoryDom, type UiHistoryDom } from "./dom/history_dom";
 import { createUiRealtimeDom, type UiRealtimeDom } from "./dom/realtime_dom";
 import { createUiSettingsDom, type UiSettingsDom } from "./dom/settings_dom";
@@ -13,7 +12,6 @@ export interface UiRuntimeDom {
   history: UiHistoryDom;
   settings: UiSettingsDom;
   cars: UiCarsDom;
-  espFlash: UiEspFlashDom;
 }
 
 export function createUiRuntimeDom(): UiRuntimeDom {
@@ -24,6 +22,5 @@ export function createUiRuntimeDom(): UiRuntimeDom {
     history: createUiHistoryDom(),
     settings: createUiSettingsDom(),
     cars: createUiCarsDom(),
-    espFlash: createUiEspFlashDom(),
   };
 }

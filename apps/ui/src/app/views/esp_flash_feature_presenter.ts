@@ -3,7 +3,7 @@ import type {
   EspFlashStatusPayload,
   EspSerialPortPayload,
 } from "../../transport/http_models";
-import type { UiEspFlashDom } from "../dom/esp_flash_dom";
+import type { EspFlashPanelDom } from "./esp_flash_panel";
 import { formatEpochTimestamp, renderStatusGridRow } from "./dom_helpers";
 import {
   renderMaintenanceReadinessPanel,
@@ -69,7 +69,7 @@ export interface EspFlashFeatureRenderState {
 }
 
 export interface EspFlashFeaturePresenterDeps {
-  dom: UiEspFlashDom;
+  dom: EspFlashPanelDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
 }
@@ -94,7 +94,10 @@ export function createEspFlashFeaturePresenter(
 
   function formatEspFlashPhase(phase: string | null | undefined): string {
     const safePhase = phase || "idle";
-    return translateKeyOrFallback(`settings.esp_flash.phase.${safePhase}`, safePhase);
+    return translateKeyOrFallback(
+      `settings.esp_flash.phase.${safePhase}`,
+      safePhase,
+    );
   }
 
   function stageStateLabel(state: JourneyStageState): string {
@@ -102,10 +105,14 @@ export function createEspFlashFeaturePresenter(
   }
 
   function journeyStageIndex(phase: string | null | undefined): number {
-    return ESP_FLASH_JOURNEY_STAGES.findIndex((stage) => stage.phase === (phase || "idle"));
+    return ESP_FLASH_JOURNEY_STAGES.findIndex(
+      (stage) => stage.phase === (phase || "idle"),
+    );
   }
 
-  function resolvedJourneyPhase(state: EspFlashFeatureRenderState): string | null {
+  function resolvedJourneyPhase(
+    state: EspFlashFeatureRenderState,
+  ): string | null {
     if (journeyStageIndex(state.status.phase) !== -1) {
       return state.status.phase || null;
     }
@@ -135,7 +142,9 @@ export function createEspFlashFeaturePresenter(
       return "done";
     }
     if (stageIndex === currentIndex) {
-      return safeState === "failed" || safeState === "cancelled" ? "attention" : "active";
+      return safeState === "failed" || safeState === "cancelled"
+        ? "attention"
+        : "active";
     }
     return "upcoming";
   }
@@ -144,7 +153,8 @@ export function createEspFlashFeaturePresenter(
     const items = ESP_FLASH_JOURNEY_STAGES.map((stage, index) => {
       const stageState = resolveJourneyStageState(state, index);
       const markerLabel = stageState === "done" ? "✓" : `${index + 1}`;
-      const currentStepAttr = stageState === "active" ? ' aria-current="step"' : "";
+      const currentStepAttr =
+        stageState === "active" ? ' aria-current="step"' : "";
       return `<li class="maintenance-stage" data-stage-phase="${stage.phase}" data-stage-state="${stageState}"${currentStepAttr}>
         <span class="maintenance-stage__marker">${markerLabel}</span>
         <div class="maintenance-stage__body">
@@ -155,9 +165,10 @@ export function createEspFlashFeaturePresenter(
       </li>`;
     }).join("");
     const terminalState = safeEspFlashState(state.status.state);
-    const terminalNote = terminalState === "failed" || terminalState === "cancelled"
-      ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(t(`settings.esp_flash.journey_terminal.${terminalState}`))}</div>`
-      : "";
+    const terminalNote =
+      terminalState === "failed" || terminalState === "cancelled"
+        ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(t(`settings.esp_flash.journey_terminal.${terminalState}`))}</div>`
+        : "";
     return `<div class="maintenance-journey">
       ${terminalNote}
       <ol class="maintenance-stage-list">${items}</ol>
@@ -166,7 +177,9 @@ export function createEspFlashFeaturePresenter(
 
   function selectedTargetLabel(state: EspFlashFeatureRenderState): string {
     const selectedValue = state.selectedPortValue;
-    const raw = state.status.selected_port || (selectedValue !== "__auto__" ? selectedValue : null);
+    const raw =
+      state.status.selected_port ||
+      (selectedValue !== "__auto__" ? selectedValue : null);
     return raw || t("settings.esp_flash.auto_detect");
   }
 
@@ -176,7 +189,9 @@ export function createEspFlashFeaturePresenter(
     }
     if (state.availablePorts.length === 1) {
       const port = state.availablePorts[0];
-      const label = port.description ? `${port.port} — ${port.description}` : port.port;
+      const label = port.description
+        ? `${port.port} — ${port.description}`
+        : port.port;
       return t("settings.esp_flash.readiness.one_port", { port: label });
     }
     return t("settings.esp_flash.readiness.multiple_ports", {
@@ -203,9 +218,14 @@ export function createEspFlashFeaturePresenter(
   }
 
   function latestAttemptSummary(attempt: FlashAttemptSummary): string {
-    const stateLabel = t(`settings.esp_flash.state.${safeEspFlashState(attempt.state)}`);
+    const stateLabel = t(
+      `settings.esp_flash.state.${safeEspFlashState(attempt.state)}`,
+    );
     const when = formatEpochTimestamp(attempt.finishedAt ?? attempt.startedAt);
-    return t("settings.esp_flash.last_result_value", { state: stateLabel, when });
+    return t("settings.esp_flash.last_result_value", {
+      state: stateLabel,
+      when,
+    });
   }
 
   function currentAttemptSummaries(
@@ -226,15 +246,17 @@ export function createEspFlashFeaturePresenter(
     if (safeState === "idle" || safeState === "running") {
       return [];
     }
-    return [{
-      autoDetect: state.status.auto_detect,
-      error: state.status.error ?? null,
-      exitCode: state.status.exit_code ?? null,
-      finishedAt: state.status.finished_at ?? null,
-      selectedPort: state.status.selected_port ?? null,
-      startedAt: state.status.started_at ?? null,
-      state: safeState,
-    }];
+    return [
+      {
+        autoDetect: state.status.auto_detect,
+        error: state.status.error ?? null,
+        exitCode: state.status.exit_code ?? null,
+        finishedAt: state.status.finished_at ?? null,
+        selectedPort: state.status.selected_port ?? null,
+        startedAt: state.status.started_at ?? null,
+        state: safeState,
+      },
+    ];
   }
 
   function recoverySummary(state: EspFlashFeatureRenderState): {
@@ -248,28 +270,28 @@ export function createEspFlashFeaturePresenter(
       return null;
     }
     const phase = resolvedJourneyPhase(state) ?? state.status.phase ?? "idle";
-    const keyBase = safeState === "cancelled"
-      ? "settings.esp_flash.recovery.cancelled"
-      : phase === "preparing"
-        ? "settings.esp_flash.recovery.preparing"
-        : phase === "erasing"
-          ? "settings.esp_flash.recovery.erasing"
-          : phase === "flashing"
-            ? "settings.esp_flash.recovery.flashing"
-            : phase === "validating"
-              ? "settings.esp_flash.recovery.validating"
-              : "settings.esp_flash.recovery.generic";
+    const keyBase =
+      safeState === "cancelled"
+        ? "settings.esp_flash.recovery.cancelled"
+        : phase === "preparing"
+          ? "settings.esp_flash.recovery.preparing"
+          : phase === "erasing"
+            ? "settings.esp_flash.recovery.erasing"
+            : phase === "flashing"
+              ? "settings.esp_flash.recovery.flashing"
+              : phase === "validating"
+                ? "settings.esp_flash.recovery.validating"
+                : "settings.esp_flash.recovery.generic";
     return {
-      message: state.status.error || t("settings.esp_flash.recovery.fallback_error"),
+      message:
+        state.status.error || t("settings.esp_flash.recovery.fallback_error"),
       phaseLabel: formatEspFlashPhase(phase),
       recoveryTitle: t(`${keyBase}.title`),
       recoveryDetail: t(`${keyBase}.detail`),
     };
   }
 
-  function buildActionSummary(
-    state: EspFlashFeatureRenderState,
-  ): {
+  function buildActionSummary(state: EspFlashFeatureRenderState): {
     canStart: boolean;
     panelModel: MaintenanceReadinessPanelModel;
     startLabel: string;
@@ -311,7 +333,9 @@ export function createEspFlashFeaturePresenter(
     return {
       canStart: safeState !== "running" && portsDetected,
       startLabel: t(
-        isRecoveryState ? "settings.esp_flash.retry" : "settings.esp_flash.start",
+        isRecoveryState
+          ? "settings.esp_flash.retry"
+          : "settings.esp_flash.start",
       ),
       panelModel: {
         title: t(
@@ -355,7 +379,9 @@ export function createEspFlashFeaturePresenter(
                 detail: portsDetected
                   ? `${recovery.recoveryTitle} — ${recovery.recoveryDetail}`
                   : t("settings.esp_flash.recovery.item.next_step_blocked"),
-                state: portsDetected ? ("attention" as const) : ("blocked" as const),
+                state: portsDetected
+                  ? ("attention" as const)
+                  : ("blocked" as const),
               },
             ]
           : readinessItems,
@@ -398,7 +424,8 @@ export function createEspFlashFeaturePresenter(
     if (els.espFlashStartBtn) {
       els.espFlashStartBtn.textContent = actionSummary.startLabel;
       els.espFlashStartBtn.hidden = safeState === "running";
-      els.espFlashStartBtn.disabled = safeState === "running" || !actionSummary.canStart;
+      els.espFlashStartBtn.disabled =
+        safeState === "running" || !actionSummary.canStart;
     }
     if (els.espFlashCancelBtn) {
       els.espFlashCancelBtn.hidden = safeState !== "running";
@@ -467,16 +494,18 @@ export function createEspFlashFeaturePresenter(
 
   function renderLogsEmptyState(status: EspFlashStatusPayload): string {
     const safeState = safeEspFlashState(status.state);
-    const titleKey = safeState === "running"
-      ? "settings.esp_flash.logs_running_title"
-      : safeState === "failed" || safeState === "cancelled"
-        ? "settings.esp_flash.logs_failed_title"
-        : "settings.esp_flash.logs_idle_title";
-    const bodyKey = safeState === "running"
-      ? "settings.esp_flash.logs_running_body"
-      : safeState === "failed" || safeState === "cancelled"
-        ? "settings.esp_flash.logs_failed_body"
-        : "settings.esp_flash.logs_idle_body";
+    const titleKey =
+      safeState === "running"
+        ? "settings.esp_flash.logs_running_title"
+        : safeState === "failed" || safeState === "cancelled"
+          ? "settings.esp_flash.logs_failed_title"
+          : "settings.esp_flash.logs_idle_title";
+    const bodyKey =
+      safeState === "running"
+        ? "settings.esp_flash.logs_running_body"
+        : safeState === "failed" || safeState === "cancelled"
+          ? "settings.esp_flash.logs_failed_body"
+          : "settings.esp_flash.logs_idle_body";
     return `<div class="empty-state empty-state--inline"><strong>${escapeHtml(t(titleKey))}</strong><span>${escapeHtml(t(bodyKey))}</span></div>`;
   }
 
@@ -507,7 +536,9 @@ export function createEspFlashFeaturePresenter(
           : t("settings.esp_flash.history_manual_target_used"),
       ];
       if (attempt.exitCode != null) {
-        meta.push(t("settings.esp_flash.history_exit_code", { code: attempt.exitCode }));
+        meta.push(
+          t("settings.esp_flash.history_exit_code", { code: attempt.exitCode }),
+        );
       }
       const errorHtml = attempt.error
         ? `<div class="maintenance-note maintenance-note--bad">${escapeHtml(attempt.error)}</div>`

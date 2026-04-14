@@ -2,6 +2,7 @@ import "uplot/dist/uPlot.min.css";
 import "../styles/app.css";
 import { getUiAnalysisPanelHost } from "./dom/analysis_dom";
 import { getUiCarsPanelHost } from "./dom/cars_dom";
+import { getUiEspFlashPanelHost } from "./dom/esp_flash_dom";
 import { getUiHistoryPanelHost } from "./dom/history_dom";
 import { getUiInternetPanelHost } from "./dom/internet_dom";
 import { getUiSensorsPanelHost } from "./dom/sensors_dom";
@@ -17,6 +18,7 @@ import { createAppState } from "./ui_app_state";
 import { UiAppRuntime } from "./ui_app_runtime";
 import { mountAnalysisPanel } from "./views/analysis_panel";
 import { mountCarsPanel } from "./views/cars_panel";
+import { mountEspFlashPanel } from "./views/esp_flash_panel";
 import { mountHistoryPanel } from "./views/history_panel";
 import { mountInternetPanel } from "./views/internet_panel";
 import { mountRealtimeLoggingPanel } from "./views/realtime_logging_panel";
@@ -43,6 +45,7 @@ export function startUiApp(): void {
   const updatePanel = mountUpdatePanel(getUiUpdatePanelHost());
   const sensorsPanel = mountSensorsPanel(getUiSensorsPanelHost());
   const speedSourcePanel = mountSpeedSourcePanel(getUiSpeedSourcePanelHost());
+  const espFlashPanel = mountEspFlashPanel(getUiEspFlashPanelHost());
   mountUiShellChrome(getUiShellChromeHost(), shellChromeActions, state.shell);
   new UiAppRuntime(
     undefined,
@@ -58,5 +61,6 @@ export function startUiApp(): void {
     updatePanel,
     sensorsPanel,
     speedSourcePanel,
+    espFlashPanel,
   ).start();
 }
