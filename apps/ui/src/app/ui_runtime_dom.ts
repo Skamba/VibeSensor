@@ -5,7 +5,6 @@ import { createUiRealtimeDom, type UiRealtimeDom } from "./dom/realtime_dom";
 import { createUiSettingsDom, type UiSettingsDom } from "./dom/settings_dom";
 import { createUiShellDom, type UiShellDom } from "./dom/shell_dom";
 import { createUiSpectrumDom, type UiSpectrumDom } from "./dom/spectrum_dom";
-import { createUiUpdateDom, type UiUpdateDom } from "./dom/update_dom";
 
 export interface UiRuntimeDom {
   shell: UiShellDom;
@@ -14,7 +13,6 @@ export interface UiRuntimeDom {
   history: UiHistoryDom;
   settings: UiSettingsDom;
   cars: UiCarsDom;
-  update: UiUpdateDom;
   espFlash: UiEspFlashDom;
 }
 
@@ -26,7 +24,6 @@ export function createUiRuntimeDom(): UiRuntimeDom {
     history: createUiHistoryDom(),
     settings: createUiSettingsDom(),
     cars: createUiCarsDom(),
-    update: createUiUpdateDom(),
     espFlash: createUiEspFlashDom(),
   };
 }

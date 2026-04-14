@@ -1,11 +1,11 @@
-import type { UiUpdateDom } from "../dom/update_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createUpdateFeatureWorkflow } from "./update_feature_workflow";
 import { createUpdateFeaturePresenter } from "../views/update_feature_presenter";
 import type { InternetPanelView } from "../views/internet_panel";
+import type { UpdatePanelView } from "../views/update_panel";
 
 export interface UpdateFeatureDeps extends FeatureDepsBase {
-  dom: UiUpdateDom;
+  panel: UpdatePanelView;
   internetPanel: InternetPanelView;
 }
 
@@ -17,7 +17,7 @@ export interface UpdateFeature {
 
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const presenter = createUpdateFeaturePresenter({
-    dom: ctx.dom,
+    dom: ctx.panel.dom,
     internetDom: ctx.internetPanel.dom,
     t: ctx.t,
     escapeHtml: ctx.escapeHtml,
@@ -34,13 +34,13 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       return;
     }
     handlersBound = true;
-    ctx.dom.updateStartBtn.addEventListener("click", () => {
+    ctx.panel.dom.updateStartBtn.addEventListener("click", () => {
       workflow.renderCurrentState();
       void workflow.startUpdate(
         presenter.readStartIntent(workflow.getRenderState()),
       );
     });
-    ctx.dom.updateCancelBtn?.addEventListener("click", () => {
+    ctx.panel.dom.updateCancelBtn.addEventListener("click", () => {
       void workflow.cancelUpdate();
     });
     ctx.internetPanel.dom.updateTogglePasswordBtn?.addEventListener(
