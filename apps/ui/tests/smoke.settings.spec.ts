@@ -112,11 +112,10 @@ test("resolved fallback manual state stays coherent across header status, form, 
   await page.locator('[data-settings-tab="speedSourceTab"]').click();
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText("Manual fallback");
   await expect(page.locator("#speedSourceEffectiveSpeed")).toHaveText("80.0 km/h");
+  await expect(page.locator("#speedSourceFallbackActive")).toHaveText("Yes");
   await expect(page.locator("#manualSpeedConfig")).toBeVisible();
   await expect(page.locator("#gpsFallbackPanel")).toBeHidden();
   const diagnostics = page.locator("#speedSourceDiagnostics");
-  await expect(diagnostics.locator(".settings-help-disclosure__body")).not.toBeVisible();
-  await diagnostics.locator("summary").click();
   await expect(diagnostics.locator(".settings-help-disclosure__body")).toBeVisible();
   await expect(page.locator("#gpsStatusState")).toHaveText("Disabled");
   await expect(page.locator("#gpsStatusEffectiveSpeed")).toHaveText("80.0 km/h");
@@ -307,8 +306,8 @@ test("analysis tab adds guided helper copy and can reset tuning to defaults", as
   await expect(uncertaintyHelpBody).toContainText("Use these only when vehicle data is approximate");
 
   await expect(page.locator("#wheelBandwidthGuidance")).toContainText("Recommended 2% to 12%");
-  await expect(page.locator("#wheelBandwidthGuidance")).toContainText("Allowed 0.1% to 100%");
   await expect(page.locator("#wheelBandwidthGuidance")).toContainText("Default 5%");
+  await expect(page.locator("#wheelBandwidthGuidance")).not.toContainText("Allowed 0.1% to 100%");
 
   await page.locator("#resetAnalysisBtn").click();
   await expect.poll(() => analysisPutCalls).toBe(1);

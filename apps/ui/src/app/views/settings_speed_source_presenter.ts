@@ -16,6 +16,7 @@ import { setChoiceCardState } from "../style_state";
 
 export interface SettingsSpeedSourceSettingsSnapshot
   extends SpeedSourceStateSource {
+  gpsFallbackActive: boolean;
   gpsEffectiveSpeedKph: number | null;
   obdDeviceMac: string | null;
   obdDeviceName: string | null;
@@ -57,6 +58,7 @@ export interface SettingsSpeedSourcePresenterDeps {
     | "speedSourceCurrentSource"
     | "speedSourceDiagnostics"
     | "speedSourceEffectiveSpeed"
+    | "speedSourceFallbackActive"
     | "speedSourceRadios"
     | "speedSourceSaveFeedback"
     | "staleTimeoutFeedback"
@@ -365,6 +367,11 @@ export function createSettingsSpeedSourcePresenter(
         deps,
       );
     }
+    if (dom.speedSourceFallbackActive) {
+      dom.speedSourceFallbackActive.textContent = state.settings.gpsFallbackActive
+        ? t("settings.speed.fallback_yes")
+        : t("settings.speed.fallback_no");
+    }
     if (dom.obdConfiguredDevice) {
       dom.obdConfiguredDevice.textContent = formatConfiguredObdDevice(
         state.settings,
@@ -402,7 +409,10 @@ export function createSettingsSpeedSourcePresenter(
       obdRadio?.removeAttribute("aria-invalid");
     }
 
-    if (state.diagnosticsOpen) {
+    if (
+      state.diagnosticsOpen
+      || resolveEffectiveSpeedSource(state.settings) !== state.settings.speedSource
+    ) {
       dom.speedSourceDiagnostics?.setAttribute("open", "");
     }
   }

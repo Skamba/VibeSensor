@@ -6,6 +6,7 @@ export interface SettingsSpeedSourcePanelDom {
   speedSourceRadios: HTMLInputElement[];
   speedSourceCurrentSource: HTMLElement | null;
   speedSourceEffectiveSpeed: HTMLElement | null;
+  speedSourceFallbackActive: HTMLElement | null;
   speedSourceChoiceGps: HTMLElement | null;
   speedSourceChoiceObd: HTMLElement | null;
   speedSourceChoiceManual: HTMLElement | null;
@@ -60,10 +61,6 @@ function SpeedSourcePanel() {
     <>
       <div class="panel card">
         <strong data-i18n="settings.speed.title">Speed Source</strong>
-        <div class="subtle" data-i18n="settings.speed.hint">
-          Select how vehicle speed is determined. Live sources can fall back to
-          the configured manual speed when data goes stale.
-        </div>
         <div class="speed-source-summary">
           <div
             class="speed-source-summary__eyebrow"
@@ -102,6 +99,20 @@ function SpeedSourcePanel() {
               </div>
               <div
                 id="speedSourceEffectiveSpeed"
+                class="speed-source-summary__value"
+              >
+                --
+              </div>
+            </div>
+            <div class="speed-source-summary__stat">
+              <div
+                class="speed-source-summary__label"
+                data-i18n="settings.speed.fallback_active"
+              >
+                Fallback active
+              </div>
+              <div
+                id="speedSourceFallbackActive"
                 class="speed-source-summary__value"
               >
                 --
@@ -268,7 +279,7 @@ function SpeedSourcePanel() {
           ></div>
         </div>
         <div id="speedSourceSaveFeedback" class="settings-feedback-slot" hidden></div>
-        <div class="settings-actions">
+        <div class="settings-actions settings-actions--sticky">
           <button
             id="saveSpeedSourceBtn"
             class="btn btn--primary"
@@ -437,6 +448,7 @@ function createSpeedSourcePanelDom(host: HTMLElement): SettingsSpeedSourcePanelD
     ),
     speedSourceCurrentSource: queryById<HTMLElement>("speedSourceCurrentSource"),
     speedSourceEffectiveSpeed: queryById<HTMLElement>("speedSourceEffectiveSpeed"),
+    speedSourceFallbackActive: queryById<HTMLElement>("speedSourceFallbackActive"),
     speedSourceChoiceGps: queryById<HTMLElement>("speedSourceChoiceGps"),
     speedSourceChoiceObd: queryById<HTMLElement>("speedSourceChoiceObd"),
     speedSourceChoiceManual: queryById<HTMLElement>("speedSourceChoiceManual"),
