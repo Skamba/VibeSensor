@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { getUiLiveOverviewHost } from "../src/app/dom/realtime_dom";
+import { getUiSpectrumPanelHost } from "../src/app/dom/spectrum_dom";
 import { createUiRuntimeDom } from "../src/app/ui_runtime_dom";
 
 type SelectorFixture = {
@@ -26,6 +27,7 @@ function stubElement(id = ""): HTMLElement {
 function createBaseFixture(): SelectorFixture {
   return {
     ids: {
+      spectrumPanelRoot: stubElement("spectrumPanelRoot"),
       specChart: stubElement("specChart"),
       startLoggingBtn: stubElement("startLoggingBtn"),
       liveOverviewRoot: stubElement("liveOverviewRoot"),
@@ -110,6 +112,15 @@ test("getUiLiveOverviewHost resolves the overview island host", () => {
   }
 });
 
+test("getUiSpectrumPanelHost resolves the spectrum island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiSpectrumPanelHost().id).toBe("spectrumPanelRoot");
+  } finally {
+    restore();
+  }
+});
+
 test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the shell boundary when menu tabs are missing", () => {
     const restore = installDomFixture({ missingSelector: ".menu-btn" });
@@ -124,6 +135,15 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     const restore = installDomFixture({ missingId: "specChart" });
     try {
       expect(() => createUiRuntimeDom()).toThrow("Spectrum UI requires #specChart");
+    } finally {
+      restore();
+    }
+  });
+
+  test("fails when the spectrum panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "spectrumPanelRoot" });
+    try {
+      expect(() => getUiSpectrumPanelHost()).toThrow("Spectrum UI requires #spectrumPanelRoot");
     } finally {
       restore();
     }
