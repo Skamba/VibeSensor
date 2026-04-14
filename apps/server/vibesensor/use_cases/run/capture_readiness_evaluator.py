@@ -137,12 +137,27 @@ def _reference_check(
         )
 
     speed_source = speed.source
-    if speed_source not in policy.live_speed_sources:
+    effective_speed_kmh = speed.speed_kmh
+    if speed_source == "manual":
+        if (
+            not _is_finite_number(effective_speed_kmh)
+            or effective_speed_kmh is None
+            or effective_speed_kmh <= 0.0
+        ):
+            return CaptureReadinessCheck(
+                check_key="reference_ready",
+                state="fail",
+                reason_key="speed_sample_missing",
+                details=(("speed_source", speed_source),),
+            )
         return CaptureReadinessCheck(
             check_key="reference_ready",
-            state="fail",
-            reason_key="speed_source_not_live",
-            details=(("speed_source", speed_source),),
+            state="pass",
+            reason_key="reference_ready",
+            details=(
+                ("speed_source", speed_source),
+                ("speed_kmh", round(effective_speed_kmh, 2)),
+            ),
         )
 
     if speed.fallback_active:
@@ -150,6 +165,14 @@ def _reference_check(
             check_key="reference_ready",
             state="fail",
             reason_key="speed_source_fallback_active",
+            details=(("speed_source", speed_source),),
+        )
+
+    if speed_source not in policy.live_speed_sources:
+        return CaptureReadinessCheck(
+            check_key="reference_ready",
+            state="fail",
+            reason_key="speed_source_not_live",
             details=(("speed_source", speed_source),),
         )
 
@@ -165,7 +188,6 @@ def _reference_check(
             ),
         )
 
-    effective_speed_kmh = speed.speed_kmh
     if (
         not _is_finite_number(effective_speed_kmh)
         or effective_speed_kmh is None
@@ -232,6 +254,36 @@ def _speed_check(
 
     speed_source = speed.source
     speed_kmh = speed.speed_kmh
+    if speed_source == "manual":
+        if not _is_finite_number(speed_kmh) or speed_kmh is None:
+            return CaptureReadinessCheck(
+                check_key="speed_stable",
+                state="fail",
+                reason_key="speed_sample_missing",
+                details=(("speed_source", speed_source),),
+            )
+        if speed_kmh < policy.min_ready_speed_kmh:
+            return CaptureReadinessCheck(
+                check_key="speed_stable",
+                state="fail",
+                reason_key="speed_too_low",
+                details=(
+                    ("speed_kmh", round(speed_kmh, 2)),
+                    ("minimum_speed_kmh", policy.min_ready_speed_kmh),
+                ),
+            )
+        return CaptureReadinessCheck(
+            check_key="speed_stable",
+            state="pass",
+            reason_key="speed_stable",
+            details=(
+                ("speed_kmh", round(speed_kmh, 2)),
+                ("mean_speed_kmh", round(speed_kmh, 2)),
+                ("range_kmh", 0.0),
+                ("dwell_elapsed_s", policy.stable_speed_dwell_s),
+            ),
+        )
+
     if (
         speed_source not in policy.live_speed_sources
         or speed.fallback_active
