@@ -23,6 +23,7 @@ import {
   type SettingsCarsModule,
 } from "./settings_cars_module";
 import { bindSettingsTabs } from "./settings_tabs_controller";
+import type { CarsListPanelView } from "../views/cars_panel";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
   dom: UiSettingsDom;
@@ -31,6 +32,7 @@ export interface SettingsFeatureDeps extends FeatureDepsBase {
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
   openCarWizard: () => void;
+  carsPanel: CarsListPanelView;
   view: SettingsFeatureViewPorts;
   realtime: SettingsFeatureRealtimePorts;
 }
@@ -121,6 +123,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     shellDom,
     showError: ctx.showError,
     syncAnalysisInputs: analysisModule.syncSettingsInputs,
+    panel: ctx.carsPanel,
     t,
   });
 

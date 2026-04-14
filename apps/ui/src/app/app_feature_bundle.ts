@@ -17,6 +17,7 @@ import {
 } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature } from "./features/history_feature";
+import type { CarsPanelView } from "./views/cars_panel";
 import type { HistoryPanelView } from "./views/history_table_view";
 import {
   createRealtimeFeature,
@@ -54,6 +55,7 @@ export interface AppFeatureBundleSharedDeps {
 }
 
 export interface AppFeatureBundleRuntimePorts {
+  carsPanel: CarsPanelView;
   realtimeChrome: RealtimeFeatureChromePorts;
   historyPanel: HistoryPanelView;
   transport: RealtimeFeatureSelectionPorts;
@@ -126,6 +128,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   const settings: SettingsFeature = createSettingsFeature({
     settings: state.settings,
     getSpeedUnit: () => state.shell.speedUnit,
+    carsPanel: runtime.carsPanel.list,
     dom: settingsDom,
     shellDom,
     openCarWizard: () => {
@@ -149,7 +152,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   });
 
   const cars: CarsFeature = createCarsFeature({
-    dom: carsDom,
+    panel: runtime.carsPanel.wizard,
     t,
     escapeHtml,
     showError,

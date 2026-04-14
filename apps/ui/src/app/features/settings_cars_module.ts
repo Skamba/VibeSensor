@@ -10,13 +10,11 @@ import {
 } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
 import type { CarRecord, CarsPayload } from "../../transport/http_models";
-import { bindSettingsCarListActions } from "../views/settings_car_list_view";
-import {
-  createSettingsCarsPresenter,
-  type SettingsCarsHighlightedFeedback,
-  type SettingsCarsPresenter,
-  type SettingsCarsRenderState,
-} from "../views/settings_cars_presenter";
+import type {
+  CarsListHighlightedFeedback,
+  CarsListPanelView,
+  CarsListRenderModel,
+} from "../views/cars_panel";
 import {
   createSettingsCarsTransport,
   type SettingsCarsTransport,
@@ -27,8 +25,6 @@ export interface SettingsCarsModuleDeps extends FeatureDepsBase {
   dom: Pick<
     UiSettingsDom,
     | "analysisNoCarMessage"
-    | "carListBody"
-    | "carSelectionGuidance"
     | "resetAnalysisBtn"
     | "saveAnalysisBtn"
     | "settingsTabs"
@@ -42,6 +38,7 @@ export interface SettingsCarsModuleDeps extends FeatureDepsBase {
   settings: SettingsState;
   shellDom: Pick<UiShellDom, "menuButtons">;
   syncAnalysisInputs: () => void;
+  panel: CarsListPanelView;
   transport?: Partial<SettingsCarsTransport>;
 }
 
@@ -74,15 +71,9 @@ export function createSettingsCarsModule(
 ): SettingsCarsModule {
   const { settings, t } = ctx;
   const confirmDelete = ctx.confirmDelete ?? ((message: string) => window.confirm(message));
-  const presenter: SettingsCarsPresenter = createSettingsCarsPresenter({
-    dom: ctx.dom,
-    escapeHtml: ctx.escapeHtml,
-    fmt: ctx.fmt,
-    t,
-  });
   const transport = createSettingsCarsTransport(ctx.transport);
   let handlersBound = false;
-  let highlightedCarFeedback: SettingsCarsHighlightedFeedback | null = null;
+  let highlightedCarFeedback: CarsListHighlightedFeedback | null = null;
 
   function hasValidActiveCar(): boolean {
     return hasResolvedActiveCar(settings);
@@ -92,17 +83,35 @@ export function createSettingsCarsModule(
     return deriveCarSelectionState(settings);
   }
 
-  function renderState(): SettingsCarsRenderState {
+  function renderState(): CarsListRenderModel {
     return {
       activeCarId: settings.activeCarId,
       carSelectionState: getCarSelectionState(),
       cars: settings.cars,
       highlightedCarFeedback,
+      escapeHtml: ctx.escapeHtml,
+      fmt: ctx.fmt,
+      t,
     };
   }
 
+  function syncAnalysisControls(state: CarsListRenderModel): void {
+    const hasActiveCar = state.carSelectionState.kind === "active";
+    if (ctx.dom.saveAnalysisBtn) {
+      ctx.dom.saveAnalysisBtn.disabled = !hasActiveCar;
+    }
+    if (ctx.dom.resetAnalysisBtn) {
+      ctx.dom.resetAnalysisBtn.disabled = !hasActiveCar;
+    }
+    if (ctx.dom.analysisNoCarMessage) {
+      ctx.dom.analysisNoCarMessage.hidden = hasActiveCar || state.carSelectionState.kind === "loading";
+    }
+  }
+
   function renderCarList(): void {
-    presenter.render(renderState());
+    const state = renderState();
+    syncAnalysisControls(state);
+    ctx.panel.render(state);
   }
 
   function clearHighlightedCarFeedback(): void {
@@ -314,7 +323,7 @@ export function createSettingsCarsModule(
     }
     handlersBound = true;
     bindHighlightedCarFeedbackResetEvents();
-    bindSettingsCarListActions(ctx.dom, {
+    ctx.panel.bindActions({
       onAction: (action) => {
         if (action.type === "add") {
           ctx.openCarWizard();
