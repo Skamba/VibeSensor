@@ -70,13 +70,7 @@
         </div>
 
         <div id="internetTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div class="panel card">
-            <strong data-i18n="settings.internet.title">Internet</strong>
-            <div class="subtle" data-i18n="settings.internet.hint">USB internet is optional. When a compatible phone or USB network device is detected, the Pi can keep its hotspot active while using USB as the upstream connection.</div>
-            <div id="internetStatusPanel" class="maintenance-stack" aria-live="polite" style="margin-top:1rem;">
-              <!-- Rendered dynamically by update_feature.ts -->
-            </div>
-          </div>
+          <div id="internetPanelRoot"></div>
         </div>
 
         <!-- Update Tab -->
@@ -86,62 +80,10 @@
             <div class="subtle" data-i18n="settings.update.hint">Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.</div>
             <div class="subtle" data-i18n="settings.update.reconnect_note" style="margin-top:0.25rem;">Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.</div>
             <div class="maintenance-stack" style="margin-top:1rem;">
-              <section class="maintenance-card">
-                <div class="maintenance-card__header">
-                  <div>
-                    <div class="maintenance-card__title" data-i18n="settings.update.controls_title">Update connection</div>
-                    <div class="subtle" data-i18n="settings.update.controls_intro">Use Wi-Fi credentials as before, or choose the existing USB internet uplink when the Pi detects one.</div>
-                  </div>
-                </div>
-                <div class="update-form">
-                  <div id="updateTransportOptions" class="maintenance-stack maintenance-stack--tight">
-                    <div class="subtle" data-i18n="settings.update.transport_label">Internet source</div>
-                    <div class="speed-source-choice-grid">
-                      <label id="updateTransportChoiceWifi" class="speed-source-choice" data-update-transport-choice="wifi">
-                        <input class="speed-source-choice__radio" type="radio" id="updateTransportWifiRadio" name="updateTransport" value="wifi" checked />
-                        <span class="speed-source-choice__title" data-i18n="settings.update.transport.wifi_title">Temporary Wi-Fi</span>
-                        <span class="speed-source-choice__caption" data-i18n="settings.update.transport.wifi_summary">Pause the hotspot, join a Wi-Fi network, install, then restore the hotspot.</span>
-                      </label>
-                      <label id="updateTransportChoiceUsb" class="speed-source-choice" data-update-transport-choice="usb_internet">
-                        <input class="speed-source-choice__radio" type="radio" id="updateTransportUsbRadio" name="updateTransport" value="usb_internet" />
-                        <span class="speed-source-choice__title" data-i18n="settings.update.transport.usb_title">Existing USB internet</span>
-                        <span id="updateUsbTransportSummary" class="speed-source-choice__caption"></span>
-                      </label>
-                    </div>
-                  </div>
-                  <div id="updateWifiFields">
-                    <div class="form-group">
-                      <label for="updateSsidInput" data-i18n="settings.update.ssid">Wi-Fi SSID</label>
-                      <input type="text" id="updateSsidInput" autocomplete="off" maxlength="64" style="width:100%;max-width:20rem;" />
-                    </div>
-                    <div class="form-group">
-                      <label for="updatePasswordInput" data-i18n="settings.update.password">Wi-Fi Password</label>
-                      <div style="display:flex;gap:0.5rem;align-items:center;">
-                        <input type="password" id="updatePasswordInput" autocomplete="off" maxlength="128" style="width:100%;max-width:20rem;" />
-                        <button type="button" id="updateTogglePasswordBtn" class="btn btn--small">
-                          <span data-i18n="settings.update.show_password">Show</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div id="updateReadinessSummary" class="maintenance-stack maintenance-stack--tight" aria-live="polite"></div>
-                  <details class="settings-help-disclosure settings-help-disclosure--inline">
-                    <summary class="settings-help-disclosure__summary">
-                      <span class="settings-help-disclosure__heading">
-                        <span class="settings-help-disclosure__title" data-i18n="settings.update.details_title">What happens next</span>
-                        <span id="updateDetailsCaption" class="settings-help-disclosure__caption"></span>
-                      </span>
-                    </summary>
-                    <div class="settings-help-disclosure__body">
-                      <div id="updateTransportNote" class="maintenance-note" data-i18n="settings.update.preflight_note_wifi">Starting a Wi-Fi update temporarily pauses hotspot access while the Pi joins Wi-Fi, downloads the next release, and restores the local web UI when the job is done.</div>
-                    </div>
-                  </details>
-                  <div class="maintenance-action-row">
-                    <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
-                    <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
-                  </div>
-                </div>
-              </section>
+              <div class="maintenance-action-row">
+                <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
+                <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
+              </div>
 
               <div id="updateStatusPanel" class="maintenance-stack" aria-live="polite">
                 <!-- Rendered dynamically by update_feature.ts -->
