@@ -28,6 +28,7 @@ export interface UiShellStatusModuleDeps {
   dom: UiShellDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
+  renderLiveOverviewSpeed: (text: string) => void;
 }
 
 export interface UiShellStatusModule {
@@ -47,7 +48,6 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
   }
 
   function renderSpeedReadout(): void {
-    if (!els.speed) return;
     const unitLabel = selectedSpeedUnitLabel();
     if (typeof realtime.speedMps === "number" && Number.isFinite(realtime.speedMps)) {
       const value = speedValueInSelectedUnit(realtime.speedMps);
@@ -55,13 +55,13 @@ export function createUiShellStatusModule(ctx: UiShellStatusModuleDeps): UiShell
         settings,
         realtime.rotationalSpeeds?.basis_speed_source ?? null,
       );
-      els.speed.textContent = ctx.t(labelKey, {
+      ctx.renderLiveOverviewSpeed(ctx.t(labelKey, {
         value: fmt(value, 1),
         unit: unitLabel,
-      });
+      }));
       return;
     }
-    els.speed.textContent = ctx.t("speed.none", { unit: unitLabel });
+    ctx.renderLiveOverviewSpeed(ctx.t("speed.none", { unit: unitLabel }));
   }
 
   function renderWsState(): void {
