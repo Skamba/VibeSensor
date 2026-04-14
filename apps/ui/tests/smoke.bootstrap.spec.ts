@@ -6,6 +6,7 @@ import {
   installCommonRoutes,
   installFakeWebSocket,
   readSemanticSurfaceStyles,
+  readSemanticToneStyles,
   requestPath,
 } from "./smoke.helpers";
 
@@ -140,6 +141,57 @@ test("dark mode readiness cards use semantic theme surfaces", async ({ page }) =
     expect(styles.backgroundColor).toBe(styles.expectedBackgroundColor);
     expect(styles.borderColor).toBe(styles.expectedBorderColor);
   }
+});
+
+test("dark mode shell warning banner uses semantic theme tokens", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  const banner = page.locator(".app-error-banner");
+  await banner.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) {
+      throw new Error("expected app error banner element");
+    }
+    element.hidden = false;
+    element.dataset.variant = "warn";
+    element.textContent = "Attention needed";
+  });
+
+  const bannerStyles = await readSemanticToneStyles(banner, {
+    surfaceVar: "--warning-surface",
+    borderVar: "--warning-border",
+    textVar: "--warning-text",
+  });
+  const bannerBorderColor = await banner.evaluate((element) => {
+    const probe = document.createElement("div");
+    probe.style.borderBottom = "1px solid var(--warning-border)";
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.pointerEvents = "none";
+    document.body.appendChild(probe);
+    const result = {
+      actual: getComputedStyle(element).borderBottomColor,
+      expected: getComputedStyle(probe).borderBottomColor,
+    };
+    probe.remove();
+    return result;
+  });
+  expect(bannerStyles.backgroundColor).toBe(bannerStyles.expectedBackgroundColor);
+  expect(bannerBorderColor.actual).toBe(bannerBorderColor.expected);
+  expect(bannerStyles.color).toBe(bannerStyles.expectedColor);
 });
 
 test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
