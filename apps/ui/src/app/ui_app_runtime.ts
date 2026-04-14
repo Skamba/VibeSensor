@@ -25,6 +25,7 @@ import {
   createNullRealtimeLiveOverviewBridge,
   type RealtimeLiveOverviewBridge,
 } from "./views/realtime_live_overview";
+import type { CarsPanelView } from "./views/cars_panel";
 
 export class UiAppRuntime {
   private readonly dom: UiRuntimeDom;
@@ -49,6 +50,7 @@ export class UiAppRuntime {
     spectrumPanel: SpectrumPanelView = createNullSpectrumPanelView(),
     loggingPanel: RealtimeLoggingPanelBridge = createNullRealtimeLoggingPanelBridge(),
     historyPanel: HistoryPanelView = createNullHistoryPanelView(),
+    carsPanel: CarsPanelView,
   ) {
     this.dom = dom;
     this.state = state;
@@ -96,6 +98,7 @@ export class UiAppRuntime {
         formatInt: (value) => this.shell.localFormatInt(value),
       },
       runtime: {
+        carsPanel,
         realtimeChrome: {
           setPillState: (el, variant, text) => this.shell.setPillState(el, variant, text),
           liveOverview,

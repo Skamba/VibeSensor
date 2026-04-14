@@ -1,10 +1,7 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { UiCarsDom } from "../dom/cars_dom";
-import {
-  bindCarsFeatureInteractions,
-  type CarsFeatureInteraction,
-} from "../views/cars_feature_bindings";
+import type { CarsFeatureInteraction } from "../views/cars_feature_bindings";
 import { createCarsFeaturePresenter } from "../views/cars_feature_presenter";
+import type { CarsWizardPanelBridge } from "../views/cars_panel";
 import { createCarsFeatureWorkflow } from "./cars_feature_workflow";
 
 export interface CarsFeatureDeps extends FeatureDepsBase {
@@ -14,7 +11,7 @@ export interface CarsFeatureDeps extends FeatureDepsBase {
     aspects: Record<string, number>,
     variant?: string,
   ) => Promise<void>;
-  dom: UiCarsDom;
+  panel: CarsWizardPanelBridge;
   fmt: (n: number, digits?: number) => string;
 }
 
@@ -25,7 +22,7 @@ export interface CarsFeature {
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   const presenter = createCarsFeaturePresenter({
-    dom: ctx.dom,
+    dom: ctx.panel.dom,
     escapeHtml: ctx.escapeHtml,
     fmt: ctx.fmt,
     t: ctx.t,
@@ -114,7 +111,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         return;
       }
       handlersBound = true;
-      bindCarsFeatureInteractions(ctx.dom, {
+      ctx.panel.bindActions({
         onAction: (action) => {
           void handleInteraction(action);
         },

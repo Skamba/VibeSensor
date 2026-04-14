@@ -98,7 +98,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view binders |
 | `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, and feature-local bindings together |
 | `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
-| `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow, presenter, and typed wizard bindings together |
+| `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
 | `app/features/cars_feature_transport.ts` | Car-library transport wrapper for loading wizard brands, types, and models through the UI API facade |
 | `app/features/cars_feature_workflow.ts` | DOM-free car-wizard workflow/controller for step transitions, library loading, branch selection, and finish validation |
 | `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and delegated event bindings together |
@@ -108,8 +108,9 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, presenter, and typed bindings together |
 | `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
-| `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings for open/close/step/manual-input actions without leaving raw DOM parsing in the feature |
-| `app/views/cars_feature_presenter.ts` | Car-wizard presenter that owns dialog visibility, step rendering, summary updates, and focus targets from workflow state |
+| `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that mounts the list shell and wizard chrome, then exposes typed list and wizard bridges |
+| `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
+| `app/views/cars_feature_presenter.ts` | Car-wizard presenter reused as the thin wizard DOM adapter for dialog visibility, step rendering, summary updates, and focus targets |
 | `app/features/update_feature.ts` | Thin update facade that binds DOM events, delegates state rendering to the presenter, and delegates update commands to the workflow |
 | `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
@@ -122,7 +123,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/history_table_view.ts` | Thin history-panel bridge and DOM row adapter that renders typed empty/table states for the Preact history island |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_panel.tsx` | Preact owner for the run-recording card that renders typed logging/readiness models and binds start/stop plus summary CTA actions through a bridge |
-| `app/views/settings_cars_presenter.ts` | Settings-car presenter that owns car-list rendering, active-car guidance, and analysis-control affordances from typed car state |
+| `app/views/settings_car_list_view.ts` | Thin settings-car table renderer and action decoder reused by the car-management island for the saved-car table body |
 | `app/views/settings_speed_source_bindings.ts` | Typed speed-source form bindings that decode radio/input/navigation/device actions away from the workflow |
 | `app/views/settings_speed_source_presenter.ts` | Speed-source presenter that owns summary, validation, and OBD-device-list DOM rendering from typed workflow state |
 | `app/views/update_feature_presenter.ts` | Update presenter that owns readiness derivation, transport/control DOM state, and typed handoff into the update status/internet panels |
@@ -214,6 +215,11 @@ host, the history feature/modules feed it typed summary and table models, and
 the existing row/detail presenters plus row-renderer adapter still own the
 typed history table body while the page-level toolbar/action wiring lives in
 the island bridge.
+The car-management flow now follows that same island pattern through
+`app/views/cars_panel.tsx`: startup mounts the car tab and wizard shell into a
+single settings host, `settings_cars_module.ts` feeds saved-car list/guidance
+state through the list bridge, and the existing wizard presenter/bindings now
+operate only as a thin adapter behind the island-owned dialog surface.
 
 ## Architecture guardrails
 
