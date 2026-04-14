@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { getUiAnalysisPanelHost } from "../src/app/dom/analysis_dom";
 import { getUiCarsPanelHost } from "../src/app/dom/cars_dom";
+import { getUiEspFlashPanelHost } from "../src/app/dom/esp_flash_dom";
 import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
 import { getUiInternetPanelHost } from "../src/app/dom/internet_dom";
 import { getUiSensorsPanelHost } from "../src/app/dom/sensors_dom";
@@ -46,11 +47,11 @@ function createBaseFixture(): SelectorFixture {
       analysisPanelRoot: stubElement("analysisPanelRoot"),
       internetPanelRoot: stubElement("internetPanelRoot"),
       updatePanelRoot: stubElement("updatePanelRoot"),
+      espFlashPanelRoot: stubElement("espFlashPanelRoot"),
       sensorsPanelRoot: stubElement("sensorsPanelRoot"),
       speedSourcePanelRoot: stubElement("speedSourcePanelRoot"),
       addCarBtn: stubElement("addCarBtn"),
       addCarWizard: stubElement("addCarWizard"),
-      espFlashStartBtn: stubElement("espFlashStartBtn"),
     },
     selectorOne: {
       ".wrap": stubElement("wrap"),
@@ -118,7 +119,6 @@ test("createUiRuntimeDom returns the feature-scoped startup bundle when required
     expect(dom.history).toEqual({});
     expect(dom.settings.settingsTabs).toHaveLength(2);
     expect(dom.cars.addCarBtn.id).toBe("addCarBtn");
-    expect(dom.espFlash.espFlashStartBtn.id).toBe("espFlashStartBtn");
   } finally {
     restore();
   }
@@ -191,6 +191,15 @@ test("getUiUpdatePanelHost resolves the update island host", () => {
   const restore = installDomFixture();
   try {
     expect(getUiUpdatePanelHost().id).toBe("updatePanelRoot");
+  } finally {
+    restore();
+  }
+});
+
+test("getUiEspFlashPanelHost resolves the ESP flash island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiEspFlashPanelHost().id).toBe("espFlashPanelRoot");
   } finally {
     restore();
   }
@@ -323,6 +332,17 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     }
   });
 
+  test("fails when the ESP flash panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "espFlashPanelRoot" });
+    try {
+      expect(() => getUiEspFlashPanelHost()).toThrow(
+        "ESP flash feature requires #espFlashPanelRoot",
+      );
+    } finally {
+      restore();
+    }
+  });
+
   test("fails at the settings boundary when tab controls are missing", () => {
     const restore = installDomFixture({ missingSelector: ".settings-tab" });
     try {
@@ -339,17 +359,6 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     try {
       expect(() => createUiRuntimeDom()).toThrow(
         "Cars feature requires #addCarBtn",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails at the ESP flash boundary when the flash trigger is missing", () => {
-    const restore = installDomFixture({ missingId: "espFlashStartBtn" });
-    try {
-      expect(() => createUiRuntimeDom()).toThrow(
-        "ESP flash feature requires #espFlashStartBtn",
       );
     } finally {
       restore();
