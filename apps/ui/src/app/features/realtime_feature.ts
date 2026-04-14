@@ -9,6 +9,7 @@ import type { AdaptedClient } from "../../transport/live_models";
 import {
   bindRealtimeFeatureInteractions,
 } from "../views/realtime_feature_bindings";
+import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
 import { createRealtimeFeatureWorkflow } from "./realtime_feature_workflow";
 import { createRealtimeFeaturePresenter } from "../views/realtime_feature_presenter";
 
@@ -30,6 +31,7 @@ export interface RealtimeFeatureDeps extends FeatureDepsBase {
 export interface RealtimeFeatureChromePorts {
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
   setStatValue: (container: HTMLElement | null, value: string | number) => void;
+  liveOverview: RealtimeLiveOverviewBridge;
 }
 
 export interface RealtimeFeatureSelectionPorts {

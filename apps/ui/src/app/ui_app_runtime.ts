@@ -12,6 +12,10 @@ import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
+import {
+  createNullRealtimeLiveOverviewBridge,
+  type RealtimeLiveOverviewBridge,
+} from "./views/realtime_live_overview";
 
 export class UiAppRuntime {
   private readonly dom: UiRuntimeDom;
@@ -32,6 +36,7 @@ export class UiAppRuntime {
     dom: UiRuntimeDom = createUiRuntimeDom(),
     state: AppState = createAppState(),
     shellChromeActions: UiShellChromeActionBridge = createUiShellChromeActionBridge(),
+    liveOverview: RealtimeLiveOverviewBridge = createNullRealtimeLiveOverviewBridge(),
   ) {
     this.dom = dom;
     this.state = state;
@@ -39,6 +44,7 @@ export class UiAppRuntime {
       state: this.state,
       dom: this.dom.shell,
       chromeActions: shellChromeActions,
+      liveOverview,
     });
     this.spectrum = new UiSpectrumController({
       state: this.state,
@@ -80,6 +86,7 @@ export class UiAppRuntime {
         realtimeChrome: {
           setPillState: (el, variant, text) => this.shell.setPillState(el, variant, text),
           setStatValue: (container, value) => this.shell.setStatValue(container, value),
+          liveOverview,
         },
         view: {
           renderSpectrum: () => this.spectrum.renderSpectrum(),

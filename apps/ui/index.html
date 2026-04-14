@@ -11,45 +11,7 @@
 
       <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
         <div class="dashboard-grid">
-          <div class="panel card dashboard-grid__overview">
-            <div class="card__header card__header--stack">
-              <div>
-                <div class="card__title" data-i18n="dashboard.live_overview">Live overview</div>
-                <div class="card__subtle" data-i18n="dashboard.live_overview_hint">Check readiness, current run state, and the strongest sensor level before reading the chart.</div>
-              </div>
-              <div id="liveRunHealth" class="pill pill--muted" aria-live="polite">No live signal</div>
-            </div>
-            <div class="stat-grid live-overview__stats">
-              <div id="liveConnectedSensors" class="stat">
-                <div class="stat__label" data-i18n="dashboard.connected_sensors">Sensors online</div>
-                <div class="stat__value" data-value>--</div>
-              </div>
-              <div id="liveActiveCar" class="stat">
-                <div class="stat__label" data-i18n="dashboard.active_car">Active car</div>
-                <div class="stat__value" data-value>--</div>
-              </div>
-              <div id="liveRecordingState" class="stat">
-                <div class="stat__label" data-i18n="dashboard.recording_state">Run state</div>
-                <div class="stat__value" data-value>--</div>
-              </div>
-              <div id="liveDataFreshness" class="stat">
-                <div class="stat__label" data-i18n="dashboard.data_freshness">Feed freshness</div>
-                <div class="stat__value" data-value>--</div>
-              </div>
-              <div id="liveStrongestSignal" class="stat">
-                <div class="stat__label" data-i18n="dashboard.strongest_signal">Strongest sensor level</div>
-                <div class="stat__value" data-value>--</div>
-              </div>
-              <div class="stat">
-                <div class="stat__label" data-i18n="dashboard.current_speed">Current speed</div>
-                <div id="speed" class="stat__value speed" aria-live="polite">--</div>
-              </div>
-            </div>
-            <div class="live-sensor-roster__header">
-              <div class="mini-label" data-i18n="dashboard.sensor_coverage">Sensor coverage</div>
-            </div>
-            <div id="liveSensorRoster" class="live-sensor-roster"></div>
-          </div>
+          <div id="liveOverviewRoot" class="panel card dashboard-grid__overview"></div>
 
           <div class="panel card dashboard-grid__main">
             <div class="card__header">

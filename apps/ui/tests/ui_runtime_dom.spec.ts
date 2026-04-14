@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { getUiLiveOverviewHost } from "../src/app/dom/realtime_dom";
 import { createUiRuntimeDom } from "../src/app/ui_runtime_dom";
 
 type SelectorFixture = {
@@ -27,6 +28,7 @@ function createBaseFixture(): SelectorFixture {
     ids: {
       specChart: stubElement("specChart"),
       startLoggingBtn: stubElement("startLoggingBtn"),
+      liveOverviewRoot: stubElement("liveOverviewRoot"),
       historyTableBody: stubElement("historyTableBody"),
       addCarBtn: stubElement("addCarBtn"),
       addCarWizard: stubElement("addCarWizard"),
@@ -99,6 +101,15 @@ test("createUiRuntimeDom returns the feature-scoped startup bundle when required
   }
 });
 
+test("getUiLiveOverviewHost resolves the overview island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiLiveOverviewHost().id).toBe("liveOverviewRoot");
+  } finally {
+    restore();
+  }
+});
+
 test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the shell boundary when menu tabs are missing", () => {
     const restore = installDomFixture({ missingSelector: ".menu-btn" });
@@ -122,6 +133,15 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     const restore = installDomFixture({ missingId: "startLoggingBtn" });
     try {
       expect(() => createUiRuntimeDom()).toThrow("Realtime feature requires #startLoggingBtn");
+    } finally {
+      restore();
+    }
+  });
+
+  test("fails when the live overview host is missing", () => {
+    const restore = installDomFixture({ missingId: "liveOverviewRoot" });
+    try {
+      expect(() => getUiLiveOverviewHost()).toThrow("Realtime feature requires #liveOverviewRoot");
     } finally {
       restore();
     }
