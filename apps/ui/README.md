@@ -83,9 +83,9 @@ source-of-truth export commands remain the only writers for those files.
 | File | Purpose |
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
-| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact panel islands, then constructs and starts the app runtime |
-| `app/ui_runtime_dom.ts` | Startup bundle that resolves the remaining non-island feature-scoped DOM locators and fails early when required feature anchors are missing |
-| `app/dom/` | Feature-scoped DOM locator modules for shell, spectrum, realtime, history, analysis, settings, cars, update, and ESP flash surfaces |
+| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell/page/settings islands, then constructs and starts the app runtime |
+| `app/ui_runtime_dom.ts` | Startup bundle for the remaining imperative shell/spectrum DOM seams that still need explicit lookup and early missing-anchor failures |
+| `app/dom/` | Island-host lookup modules plus the remaining imperative shell/spectrum DOM seam locators |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
 | `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
@@ -110,6 +110,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
+| `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts and expose the settings navigation bridge |
 | `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell that mounts the controls, readiness, status, history, and log surface while exposing the bridge consumed by the ESP flash feature |
 | `app/views/internet_panel.tsx` | Preact owner for the internet settings shell that mounts the USB-status plus transport/readiness surface and exposes the bridge consumed by the update feature |
 | `app/views/update_panel.tsx` | Preact owner for the update settings shell that mounts the update controls and status host while exposing the bridge consumed by the update feature |
@@ -168,96 +169,52 @@ source-of-truth export commands remain the only writers for those files.
 
 The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
-chart behavior, or page-wide DOM state. Startup resolves feature-scoped DOM
-locators once in `ui_runtime_dom.ts`, then passes those local surfaces into the
-owning runtime controllers and into `app_feature_bundle.ts`. That bundle
-creates the concrete features, wires their explicit cross-feature ports, and
-returns only the shell, transport, and startup contracts the runtime needs.
-Realtime now follows that same split explicitly: `realtime_feature.ts` is the
-thin facade, `realtime_feature_workflow.ts` owns the controller-style polling
-and mutation flow, and `realtime_feature_presenter.ts` owns realtime-specific
-panel state plus navigation actions. The logging/readiness subsection is now
-further split so `realtime_logging_view_models.ts` owns the typed summary /
-checklist / readiness models while `realtime_logging_panel.tsx` owns the
-incremental Preact run-recording surface behind a typed bridge.
-`app/views/` still owns focused HTML rendering helpers, the shared low-level DOM
-render helper, typed event-target decoding, and disposable delegated listener
-binders for reusable multi-action panels.
-`src/transport/` owns the UI-local DTO and adapter layer between generated HTTP /
-WS contracts and `app/**`, so feature, runtime, and view modules no longer need
-to import `api/types.ts` or generated WS contract files directly.
-Styling now follows the same ownership split: `styles/app.css` is only the
-import aggregator, `tokens.css`/`theme.css` own global token and color-mode
-concerns, `shell.css` and `components.css` own shared chrome/primitives, and
-`maintenance.css`, `realtime.css`, `history.css`, and `settings.css` own the
-feature surfaces. Shared visual state conventions now prefer stable data/ARIA
-selectors such as `data-variant`, `data-choice-state`, `data-selected`, and
-`data-step-state` instead of controller-side variant class interpolation.
-Preact is now available for incremental migration work, but the current DOM
-runtime remains the live product path. New panel-by-panel migrations should
-mount Preact into existing hosts through `app/runtime/ui_preact_mount.ts`
-instead of introducing ad hoc framework entrypoints.
-The shell chrome owner path now starts at `app/runtime/ui_shell_chrome.tsx`,
-which mounts the shell island before `ui_runtime_dom.ts` resolves the shared
-shell selectors; the legacy shell runtime still owns state updates and
-cross-feature refresh behavior behind that rendered surface.
-The live overview card now follows the same pattern through
-`app/views/realtime_live_overview.tsx`: startup mounts the island into the
-overview host, the realtime presenter feeds it view-model data, and the
-remaining dashboard cards continue on the legacy path until their own issues
-land.
-The spectrum panel now follows the same incremental pattern through
-`app/views/spectrum_panel.tsx`: startup mounts the island into the spectrum
-host, `UiSpectrumController` keeps the chart renderer imperative behind the
-stable `specChart` seam, and interaction/overlay/legend state is pushed into
-the island through a typed bridge instead of direct DOM mutation.
-The run-recording panel now follows that same pattern through
-`app/views/realtime_logging_panel.tsx`: startup mounts the island into the
-recording host, the realtime presenter feeds it typed logging/readiness models,
-and the existing workflow still owns polling plus start/stop recording actions
-behind that bridge.
-The history view now follows the same pattern through
-`app/views/history_panel.tsx`: startup mounts the panel island into the history
-host, the history feature/modules feed it typed summary and table models, and
-the existing row/detail presenters plus row-renderer adapter still own the
-typed history table body while the page-level toolbar/action wiring lives in
-the island bridge.
-The speed-source settings tab now follows that same pattern through
-`app/views/speed_source_panel.tsx`: startup mounts the island into the tab host,
-the existing speed-source workflow/presenter/binding path keeps owning
-validation, save/load, and OBD scan behavior, and `settings_gps_status_module.ts`
-still owns the live GPS/OBD diagnostics rows through the same typed panel
-bridge instead of the page-wide settings DOM registry.
-The sensors settings tab now follows the same pattern through
-`app/views/sensors_panel.tsx`: startup mounts the island into the sensors tab
-host, the realtime presenter/workflow path still owns sensor row rendering plus
-identify/remove/location actions, and `realtime_sensor_table_view.ts` remains a
-thin table-body adapter behind the island-owned shell instead of a page-scoped
-DOM target.
-The internet settings tab now follows that same pattern through
-`app/views/internet_panel.tsx`: startup mounts the internet shell into its own
-tab host, and the existing update presenter/workflow path still owns USB-status
-rendering, transport selection, readiness messaging, and Wi-Fi credential
-handling through the typed internet-panel bridge instead of the page-wide update
-DOM registry.
-The car-management flow now follows that same island pattern through
-`app/views/cars_panel.tsx`: startup mounts the car tab and wizard shell into a
-single settings host, `settings_cars_module.ts` feeds saved-car list/guidance
-state through the list bridge, and the existing wizard presenter/bindings now
-operate only as a thin adapter behind the island-owned dialog surface.
-The analysis settings tab now follows that same pattern through
-`app/views/analysis_panel.tsx`: startup mounts the full analysis shell into its
-own settings host, `settings_analysis_module.ts` keeps validation/save/reset and
-guidance updates behind the typed panel bridge, and `settings_cars_module.ts`
-still owns the no-active-car gating without reaching back into the page-wide
-settings DOM registry.
+chart behavior, or page-wide DOM state. Startup now mounts the live Preact
+owner surfaces first — shell chrome, dashboard/history shells, the shared
+settings shell, and the per-settings-tab panel hosts — then resolves only the
+remaining imperative shell/spectrum DOM seams through `ui_runtime_dom.ts`.
+`app_feature_bundle.ts` creates the concrete features, wires explicit
+cross-feature ports, and returns only the shell, transport, and startup
+contracts the runtime needs.
+
+The live UI architecture is now Preact-first for every page/tab shell.
+`app/runtime/ui_shell_chrome.tsx` owns the primary navigation and preference
+chrome, `app/views/settings_shell.tsx` owns the shared settings tab strip and
+panel wrappers, and the individual page/settings panel islands own their local
+chrome plus typed bridges. The remaining imperative paths are deliberate seams:
+the shell controller still owns app-level status/preference state, the spectrum
+controller still owns the uPlot/canvas lifecycle behind `specChart`, and a few
+feature-local render helpers still materialize table bodies or structured status
+cards behind island-owned hosts.
+
+Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
+facade, `realtime_feature_workflow.ts` owns the controller-style polling and
+mutation flow, `realtime_feature_presenter.ts` owns realtime-specific panel
+state plus typed navigation actions, and `realtime_logging_view_models.ts`
+builds the logging/readiness models consumed by
+`app/views/realtime_logging_panel.tsx`. `app/views/` still owns focused HTML
+render helpers, the shared low-level DOM render helper, typed event-target
+decoding, and disposable delegated listener binders for reusable multi-action
+panels.
+
+`src/transport/` owns the UI-local DTO and adapter layer between generated HTTP
+/ WS contracts and `app/**`, so feature, runtime, and view modules no longer
+need to import `api/types.ts` or generated WS contract files directly. Styling
+follows the same ownership split: `styles/app.css` is only the import
+aggregator, `tokens.css`/`theme.css` own global token and color-mode concerns,
+and `shell.css`, `components.css`, `maintenance.css`, `realtime.css`,
+`history.css`, and `settings.css` own the shared and feature-specific surfaces.
+Shared visual state conventions prefer stable data/ARIA selectors such as
+`data-variant`, `data-choice-state`, `data-selected`, and `data-step-state`
+instead of controller-side variant class interpolation.
 
 ## Architecture guardrails
 
-- `app/dom/**` plus `app/ui_runtime_dom.ts` own page lookup. Feature, runtime, and
-  presenter modules should receive feature-scoped DOM surfaces instead of
-  rebuilding page-wide DOM registries or ad hoc `document.getElementById(...)`
-  lookups.
+- `app/dom/**` plus `app/ui_runtime_dom.ts` own island-host lookup and the few
+  remaining imperative shell/spectrum DOM seams. Feature, runtime, and
+  presenter modules should receive typed bridges or focused DOM surfaces instead
+  of rebuilding page-wide registries or ad hoc
+  `document.getElementById(...)` lookups.
 - Generated HTTP / WS contracts stay behind the transport boundary. The approved
   generated-contract seams are the `api/*.ts` HTTP wrappers plus `api/types.ts`,
   `transport/http_models.ts`, `transport/live_models.ts`, `server_payload.ts`,
@@ -270,9 +227,8 @@ settings DOM registry.
 - Expected feature shape is thin facade + focused workflow/transport/presenter or
   binding modules. Workflow modules stay DOM-free, presenters own rendering, and
   bindings decode DOM events into typed actions for the owning feature.
-- Incremental Preact migrations should mount into existing panel hosts through
-  `app/runtime/ui_preact_mount.ts`; do not scatter raw `preact.render(...)`
-  calls across feature modules.
+- Preact owner surfaces mount through `app/runtime/ui_preact_mount.ts`; do not
+  scatter raw `preact.render(...)` calls across feature modules.
 
 ## WebSocket contract boundary
 
