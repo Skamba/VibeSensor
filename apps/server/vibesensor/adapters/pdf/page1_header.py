@@ -20,7 +20,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     SUB_CLR,
     TEXT_CLR,
 )
-from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height
+from vibesensor.adapters.pdf.pdf_text import _draw_text, _measure_text_height, _truncate_single_line
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import Page1RenderPlan
@@ -64,6 +64,7 @@ def draw_header_strip(
         col = index % 3
         col_x = inner_x + (col * (col_w + col_gap))
         row_y = top_y - (row * 8.2 * mm)
+        value_text = _truncate_single_line(str(value), col_w, FS_BODY)
         c.setFillColor(_hex(SUB_CLR))
         c.setFont(FONT, FS_SMALL)
         c.drawString(col_x, row_y, label)
@@ -74,12 +75,12 @@ def draw_header_strip(
             col_x,
             row_y - 4.0 * mm,
             col_w,
-            str(value),
+            value_text,
             font=FONT_B,
             size=FS_BODY,
             color=TEXT_CLR,
             leading=FS_BODY + 1.0,
-            max_lines=2,
+            max_lines=1,
         )
 
 
