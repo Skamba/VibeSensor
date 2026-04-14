@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import type { UiEspFlashDom } from "../src/app/dom/esp_flash_dom";
-import type { UiUpdateDom } from "../src/app/dom/update_dom";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
+import type { UpdatePanelDom } from "../src/app/views/update_panel";
 import {
   createDeferred,
   flushAsyncWork,
@@ -328,10 +328,12 @@ function createUpdateDeps() {
     updateStartBtn,
     updateCancelBtn,
     updateStatusPanel,
-  } as unknown as UiUpdateDom;
+  } as UpdatePanelDom;
 
   return {
-    dom,
+    panel: {
+      dom,
+    },
     internetPanel: {
       dom: internetDom,
     },

@@ -75,21 +75,7 @@
 
         <!-- Update Tab -->
         <div id="updateTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div class="panel card">
-            <strong data-i18n="settings.update.title">System Update</strong>
-            <div class="subtle" data-i18n="settings.update.hint">Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.</div>
-            <div class="subtle" data-i18n="settings.update.reconnect_note" style="margin-top:0.25rem;">Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.</div>
-            <div class="maintenance-stack" style="margin-top:1rem;">
-              <div class="maintenance-action-row">
-                <button type="button" id="updateStartBtn" class="btn btn--success" data-i18n="settings.update.start">Start Update</button>
-                <button type="button" id="updateCancelBtn" class="btn btn--danger" hidden data-i18n="settings.update.cancel">Cancel Update</button>
-              </div>
-
-              <div id="updateStatusPanel" class="maintenance-stack" aria-live="polite">
-                <!-- Rendered dynamically by update_feature.ts -->
-              </div>
-            </div>
-          </div>
+          <div id="updatePanelRoot"></div>
         </div>
 
         <div id="espFlashTab" class="settings-tab-panel" role="tabpanel" hidden>
