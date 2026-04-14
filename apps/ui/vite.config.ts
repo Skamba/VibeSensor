@@ -1,3 +1,4 @@
+import preact from "@preact/preset-vite";
 import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
@@ -8,6 +9,7 @@ export default defineConfig(({ mode }) => {
   const devPort = 5173;
 
   return {
+    plugins: [preact()],
     build: {
       // Align with tsconfig.json "target": "ES2020" so vite and tsc target the
       // same language level and avoid duplicate down-transpilation.

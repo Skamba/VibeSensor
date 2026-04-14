@@ -10,6 +10,8 @@
     ],
     "allowJs": false,
     "checkJs": false,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
