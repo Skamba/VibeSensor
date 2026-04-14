@@ -42,7 +42,7 @@ export class SpectrumChart {
   private resizeObserver: ResizeObserver | null = null;
   private resizeRaf: number | null = null;
 
-  constructor(hostEl: HTMLElement, _overlayEl?: HTMLElement | null, height = 360, measureEl?: HTMLElement | null) {
+  constructor(hostEl: HTMLElement, height = 360, measureEl?: HTMLElement | null) {
     this.hostEl = hostEl;
     this.measureEl = measureEl || hostEl;
     this.height = height;

@@ -2,16 +2,17 @@ import type { UiSpectrumDom } from "../dom/spectrum_dom";
 import type { AppState } from "../ui_app_state";
 import { SpectrumCanvasRenderer } from "./spectrum_canvas_renderer";
 import { SpectrumInteractionController } from "./spectrum_interaction_controller";
-import { createSpectrumPanelView } from "./spectrum_panel_view";
+import { createNullSpectrumPanelView, type SpectrumPanelView } from "./spectrum_panel_view";
 
 type UiSpectrumControllerDeps = {
   state: AppState;
   dom: UiSpectrumDom;
+  panel?: SpectrumPanelView;
   t: (key: string, vars?: Record<string, unknown>) => string;
 };
 
 export class UiSpectrumController {
-  private readonly panel: ReturnType<typeof createSpectrumPanelView>;
+  private readonly panel: SpectrumPanelView;
 
   private readonly interaction: SpectrumInteractionController;
 
@@ -20,9 +21,7 @@ export class UiSpectrumController {
   constructor(
     private readonly deps: UiSpectrumControllerDeps,
   ) {
-    this.panel = createSpectrumPanelView({
-      dom: this.els,
-    });
+    this.panel = this.deps.panel ?? createNullSpectrumPanelView();
     this.canvas = new SpectrumCanvasRenderer({
       state: this.state,
       dom: this.els,
@@ -63,6 +62,10 @@ export class UiSpectrumController {
   }
 
   renderSpectrum(): void {
+    this.panel.renderHeader({
+      titleText: this.t("chart.spectrum_title"),
+      hintText: this.t("spectrum.controls_hint"),
+    });
     const prepared = this.canvas.prepareFrame();
     this.state.spectrum.chartBands = prepared.chartBands;
     this.state.spectrum.hasSpectrumData = prepared.hasData;
@@ -99,10 +102,6 @@ export class UiSpectrumController {
   }
 
   private setSpectrumOverlay(message: string | null): void {
-    if (!this.els.spectrumOverlay) {
-      return;
-    }
-    this.els.spectrumOverlay.hidden = message === null;
-    this.els.spectrumOverlay.textContent = message ?? "";
+    this.panel.renderOverlay(message);
   }
 }
