@@ -33,8 +33,6 @@ type SelectStub = HTMLSelectElement & {
 };
 
 type ButtonStub = HTMLButtonElement & {
-  triggerClick(): void;
-  triggerKeydown(key: string): EventStub;
   focused: boolean;
   ariaSelected: string | null;
 };
@@ -78,18 +76,12 @@ function createView(id: string): HTMLElement {
 }
 
 function createMenuButton(viewId: string): ButtonStub {
-  let clickListener: EventListenerOrEventListenerObject | undefined;
-  let keydownListener: EventListenerOrEventListenerObject | undefined;
   const button = {
     dataset: { view: viewId },
     tabIndex: -1,
     classList: createClassList(),
     focused: false,
     ariaSelected: null as string | null,
-    addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
-      if (type === "click") clickListener = listener;
-      if (type === "keydown") keydownListener = listener;
-    },
     setAttribute(name: string, value: string) {
       if (name === "aria-selected") {
         this.ariaSelected = value;
@@ -97,25 +89,6 @@ function createMenuButton(viewId: string): ButtonStub {
     },
     focus() {
       this.focused = true;
-    },
-    triggerClick() {
-      triggerListener(clickListener, {
-        defaultPrevented: false,
-        preventDefault() {
-          this.defaultPrevented = true;
-        },
-      });
-    },
-    triggerKeydown(key: string) {
-      const event: EventStub = {
-        key,
-        defaultPrevented: false,
-        preventDefault() {
-          this.defaultPrevented = true;
-        },
-      };
-      triggerListener(keydownListener, event);
-      return event;
     },
   } as unknown as ButtonStub;
   return button;
@@ -316,18 +289,6 @@ test.describe("createUiShellNavigationModule", () => {
     expect(appShellWrap.getAttribute("data-active-view")).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(resizeCalls).toBe(1);
   });
-
-  test("bindHandlers supports keyboard navigation", () => {
-    const state = createAppState();
-    const { els, historyButton } = createShellDeps();
-    const module = createUiShellNavigationModule({ shell: state.shell, dom: els });
-
-    module.bindHandlers();
-    const event = historyButton.triggerKeydown("ArrowLeft");
-
-    expect(event.defaultPrevented).toBe(true);
-    expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
-  });
 });
 
 test.describe("createUiShellPreferencesModule", () => {
@@ -379,7 +340,48 @@ test.describe("createUiShellPreferencesModule", () => {
     expect(renderSpeedReadoutCalls).toBe(1);
   });
 
-  test("bindHandlers persists speed unit changes independently from navigation", async () => {
+  test("saveLanguage persists the selected language independently from shell navigation", async () => {
+    const state = createAppState();
+    const { els, languageSelect } = createShellDeps();
+    const requests: Array<{ url: string; method: string; body: string }> = [];
+
+    const applyLanguageCalls: boolean[] = [];
+    const module = createUiShellPreferencesModule({
+      shell: state.shell,
+      dom: els,
+      t: (key) => key,
+      normalizeLanguage: (lang) => lang,
+      applyLanguage: (forceReloadInsights = false) => {
+        applyLanguageCalls.push(forceReloadInsights);
+      },
+      renderSpeedReadout: () => {},
+      showError: () => {},
+    });
+
+    await withMockFetch((async (input: string | URL | RequestInfo, init?: RequestInit) => {
+      requests.push({
+        url: requestUrl(input),
+        method: init?.method ?? "GET",
+        body: String(init?.body ?? ""),
+      });
+      return jsonResponse({ language: "nl" });
+    }) as typeof fetch, async () => {
+      await module.saveLanguage("nl");
+    });
+
+    expect(requests).toEqual([
+      {
+        url: "/api/settings/language",
+        method: "PUT",
+        body: JSON.stringify({ language: "nl" }),
+      },
+    ]);
+    expect(state.shell.lang).toBe("nl");
+    expect(languageSelect.value).toBe("nl");
+    expect(applyLanguageCalls).toEqual([true]);
+  });
+
+  test("saveSpeedUnit persists speed unit changes independently from navigation", async () => {
     const state = createAppState();
     const { els, speedUnitSelect } = createShellDeps();
     const requests: Array<{ url: string; method: string; body: string }> = [];
@@ -405,10 +407,7 @@ test.describe("createUiShellPreferencesModule", () => {
       });
       return jsonResponse({ speed_unit: "mps" });
     }) as typeof fetch, async () => {
-      module.bindHandlers();
-      speedUnitSelect.triggerChange("mps");
-      await expect.poll(() => state.shell.speedUnit).toBe("mps");
-      await expect.poll(() => renderSpeedReadoutCalls).toBe(1);
+      await module.saveSpeedUnit("mps");
     });
 
     expect(requests).toEqual([
@@ -419,6 +418,7 @@ test.describe("createUiShellPreferencesModule", () => {
       },
     ]);
     expect(state.shell.speedUnit).toBe("mps");
+    expect(speedUnitSelect.value).toBe("mps");
     expect(renderSpeedReadoutCalls).toBe(1);
   });
 
@@ -442,15 +442,14 @@ test.describe("createUiShellPreferencesModule", () => {
     await withMockFetch((async () => {
       throw new Error("save failed");
     }) as typeof fetch, async () => {
-      module.bindHandlers();
-      speedUnitSelect.triggerChange("mps");
-      await expect.poll(() => speedUnitFeedback.innerHTML).toContain("save failed");
+      await module.saveSpeedUnit("mps");
     });
 
     expect(errors).toEqual([]);
     expect(state.shell.speedUnit).toBe("kmh");
     expect(speedUnitSelect.value).toBe("kmh");
     expect(speedUnitFeedback.hidden).toBe(false);
+    expect(speedUnitFeedback.innerHTML).toContain("save failed");
   });
 });
 

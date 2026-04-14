@@ -26,11 +26,13 @@ import {
   createUiShellStatusModule,
   type UiShellStatusModule,
 } from "./ui_shell_status_module";
+import type { UiShellChromeActionBridge } from "./ui_shell_chrome";
 import { setVariantState } from "../style_state";
 
 type UiShellControllerDeps = {
   state: AppState;
   dom: UiShellDom;
+  chromeActions: UiShellChromeActionBridge;
 };
 
 export class UiShellController {
@@ -84,6 +86,11 @@ export class UiShellController {
       applyLanguage: (forceReloadInsights = false) => this.applyLanguage(forceReloadInsights),
       renderSpeedReadout: () => this.status.renderSpeedReadout(),
       showError: (message) => this.showError(message),
+    });
+    deps.chromeActions.attach({
+      activateView: (viewId) => this.setActiveView(viewId),
+      saveLanguage: (lang) => this.preferences.saveLanguage(lang),
+      saveSpeedUnit: (unit) => this.preferences.saveSpeedUnit(unit),
     });
     this.languageRefresh = createUiShellLanguageRefreshModule({
       state: this.state,
@@ -157,9 +164,7 @@ export class UiShellController {
   }
 
   bindUiEvents(): void {
-    this.navigation.bindHandlers();
     this.bindFeatureEvents();
-    this.preferences.bindHandlers();
   }
 
   async hydratePersistedPreferences(): Promise<void> {

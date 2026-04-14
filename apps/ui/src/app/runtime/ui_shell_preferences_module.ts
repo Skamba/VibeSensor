@@ -19,7 +19,6 @@ export interface UiShellPreferencesModuleDeps {
 }
 
 export interface UiShellPreferencesModule {
-  bindHandlers(): void;
   hydratePersistedPreferences(): Promise<void>;
   saveLanguage(lang: string): Promise<void>;
   saveSpeedUnit(unit: string): Promise<void>;
@@ -143,28 +142,7 @@ export function createUiShellPreferencesModule(
     }
   }
 
-  function bindHandlers(): void {
-    const languageSelect = els.languageSelect;
-    if (languageSelect) {
-      languageSelect.value = shell.lang;
-      languageSelect.addEventListener("change", () => {
-        clearPreferenceFeedback(els.languageSelect, els.languageFeedback);
-        void saveLanguage(languageSelect.value);
-      });
-    }
-
-    const speedUnitSelect = els.speedUnitSelect;
-    if (speedUnitSelect) {
-      speedUnitSelect.value = shell.speedUnit;
-      speedUnitSelect.addEventListener("change", () => {
-        clearPreferenceFeedback(els.speedUnitSelect, els.speedUnitFeedback);
-        void saveSpeedUnit(speedUnitSelect.value);
-      });
-    }
-  }
-
   return {
-    bindHandlers,
     hydratePersistedPreferences,
     saveLanguage,
     saveSpeedUnit,

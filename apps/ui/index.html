@@ -7,55 +7,7 @@
   </head>
   <body>
     <div class="wrap">
-      <header class="site-header">
-        <div class="site-header__main">
-          <div class="site-header__nav">
-            <h1 class="title" aria-label="VibeSensor">
-              <picture class="brandmark">
-                <source srcset="/branding/vibesensor-logo-header-dark.svg" media="(prefers-color-scheme: dark)" />
-                <img src="/branding/vibesensor-logo-header-light.svg" alt="VibeSensor" width="222" height="46" />
-              </picture>
-            </h1>
-            <nav class="menu" aria-label="Primary" role="tablist">
-              <button type="button" class="menu-btn active" data-view="dashboardView" id="tab-dashboard" role="tab" aria-controls="dashboardView" aria-selected="true" tabindex="0">
-                <span data-i18n="nav.live">Live</span>
-              </button>
-              <button type="button" class="menu-btn" data-view="historyView" id="tab-history" role="tab" aria-controls="historyView" aria-selected="false" tabindex="-1">
-                <span data-i18n="nav.history">History</span>
-              </button>
-              <button type="button" class="menu-btn" data-view="settingsView" id="tab-settings" role="tab" aria-controls="settingsView" aria-selected="false" tabindex="-1">
-                <span data-i18n="nav.settings">Settings</span>
-              </button>
-            </nav>
-          </div>
-          <div class="site-header__preferences">
-            <label class="header-select" for="speedUnitSelect">
-              <span class="mini-label" data-i18n="speed.unit">Unit</span>
-              <select id="speedUnitSelect" class="unit-picker" aria-label="Speed unit">
-                <option value="kmh" data-i18n="speed.unit.kmh">km/h</option>
-                <option value="mps" data-i18n="speed.unit.mps">m/s</option>
-              </select>
-              <div id="speedUnitFeedback" class="settings-feedback-slot settings-feedback-slot--compact" hidden></div>
-            </label>
-            <label class="header-select" for="languageSelect">
-              <span class="mini-label" data-i18n="settings.language">Language</span>
-              <select id="languageSelect" class="lang-picker" aria-label="Language">
-                <option value="en">🇺🇸 English</option>
-                <option value="nl">🇳🇱 Nederlands</option>
-              </select>
-              <div id="languageFeedback" class="settings-feedback-slot settings-feedback-slot--compact" hidden></div>
-            </label>
-          </div>
-        </div>
-        <div class="site-header__status">
-          <div class="site-header__status-pills">
-            <div id="linkState" class="pill pill--muted" aria-live="polite">Connecting...</div>
-            <div id="shellLiveStatus" class="pill pill--muted" aria-live="polite">No live signal</div>
-          </div>
-        </div>
-      </header>
-
-      <div id="appErrorBanner" class="connection-banner app-error-banner" hidden aria-live="assertive" role="alert"></div>
+      <div id="appShellChromeRoot"></div>
 
       <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
         <div class="dashboard-grid">
