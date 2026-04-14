@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
 import { getUiLiveOverviewHost, getUiLoggingPanelHost } from "../src/app/dom/realtime_dom";
 import { getUiSpectrumPanelHost } from "../src/app/dom/spectrum_dom";
 import { createUiRuntimeDom } from "../src/app/ui_runtime_dom";
@@ -31,7 +32,7 @@ function createBaseFixture(): SelectorFixture {
       spectrumPanelRoot: stubElement("spectrumPanelRoot"),
       specChart: stubElement("specChart"),
       liveOverviewRoot: stubElement("liveOverviewRoot"),
-      historyTableBody: stubElement("historyTableBody"),
+      historyPanelRoot: stubElement("historyPanelRoot"),
       addCarBtn: stubElement("addCarBtn"),
       addCarWizard: stubElement("addCarWizard"),
       updateStartBtn: stubElement("updateStartBtn"),
@@ -92,7 +93,7 @@ test("createUiRuntimeDom returns the feature-scoped startup bundle when required
     const dom = createUiRuntimeDom();
     expect(dom.shell.menuButtons).toHaveLength(2);
     expect(dom.spectrum.specChart.id).toBe("specChart");
-    expect(dom.history.historyTableBody.id).toBe("historyTableBody");
+    expect(dom.history).toEqual({});
     expect(dom.settings.settingsTabs).toHaveLength(2);
     expect(dom.cars.addCarBtn.id).toBe("addCarBtn");
     expect(dom.update.updateStartBtn.id).toBe("updateStartBtn");
@@ -124,6 +125,15 @@ test("getUiSpectrumPanelHost resolves the spectrum island host", () => {
   const restore = installDomFixture();
   try {
     expect(getUiSpectrumPanelHost().id).toBe("spectrumPanelRoot");
+  } finally {
+    restore();
+  }
+});
+
+test("getUiHistoryPanelHost resolves the history island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiHistoryPanelHost().id).toBe("historyPanelRoot");
   } finally {
     restore();
   }
@@ -175,10 +185,10 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     }
   });
 
-  test("fails at the history boundary when the history table is missing", () => {
-    const restore = installDomFixture({ missingId: "historyTableBody" });
+  test("fails when the history panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "historyPanelRoot" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow("History feature requires #historyTableBody");
+      expect(() => getUiHistoryPanelHost()).toThrow("History feature requires #historyPanelRoot");
     } finally {
       restore();
     }
