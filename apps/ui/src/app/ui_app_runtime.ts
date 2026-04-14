@@ -33,6 +33,7 @@ import {
 } from "./views/realtime_live_overview";
 import type { CarsPanelView } from "./views/cars_panel";
 import type { AnalysisPanelView } from "./views/analysis_panel";
+import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
 
 export class UiAppRuntime {
@@ -60,6 +61,7 @@ export class UiAppRuntime {
     historyPanel: HistoryPanelView = createNullHistoryPanelView(),
     carsPanel: CarsPanelView,
     analysisPanel: AnalysisPanelView,
+    sensorsPanel: SensorsPanelView,
     speedSourcePanel: SpeedSourcePanelView,
   ) {
     this.dom = dom;
@@ -110,6 +112,7 @@ export class UiAppRuntime {
       runtime: {
         analysisPanel,
         carsPanel,
+        sensorsPanel,
         speedSourcePanel,
         realtimeChrome: {
           setPillState: (el, variant, text) =>

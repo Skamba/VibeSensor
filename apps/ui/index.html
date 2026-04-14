@@ -66,26 +66,7 @@
 
         <!-- Sensors Tab -->
         <div id="sensorsTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div class="panel card">
-            <strong data-i18n="settings.sensors.title">Sensors</strong>
-            <div class="subtle" data-i18n="settings.sensors.hint">Manage sensor names and locations. Default name is the MAC address.</div>
-            <table class="clients-table">
-              <thead>
-                <tr>
-                  <th data-i18n="settings.sensors.name">Name</th>
-                  <th data-i18n="settings.sensors.mac">MAC Address</th>
-                  <th data-i18n="settings.sensors.location">Location</th>
-                  <th data-i18n="settings.sensors.identify">Identify</th>
-                  <th data-i18n="settings.sensors.remove">Remove</th>
-                </tr>
-              </thead>
-              <tbody id="sensorsSettingsBody">
-                <tr>
-                  <td colspan="5">No sensors detected yet.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div id="sensorsPanelRoot"></div>
         </div>
 
         <div id="internetTab" class="settings-tab-panel" role="tabpanel" hidden>
