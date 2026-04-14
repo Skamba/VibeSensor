@@ -5,7 +5,11 @@ import type { UiShellDom } from "../dom/shell_dom";
 import { deriveCarSelectionState } from "../car_selection_state";
 import { classifyDataFreshness } from "../features/data_freshness";
 import { createRealtimeSensorState } from "../features/realtime_sensor_state";
-import type { RealtimeState, SettingsState, SpectrumState } from "../ui_app_state";
+import type {
+  RealtimeState,
+  SettingsState,
+  SpectrumState,
+} from "../ui_app_state";
 import type { LocationOption } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
 import {
@@ -19,13 +23,12 @@ import type {
   RealtimeLoggingPanelBridge,
   RealtimeLoggingPanelRenderModel,
 } from "./realtime_logging_panel";
-import {
-  renderRealtimeSensorTable,
-} from "./realtime_sensor_table_view";
+import { renderRealtimeSensorTable } from "./realtime_sensor_table_view";
 import type {
   RealtimeLiveOverviewBridge,
   RealtimeLiveOverviewRenderModel,
 } from "./realtime_live_overview";
+import type { SensorsPanelDom } from "./sensors_panel";
 
 export type RealtimeFeaturePendingLoggingAction = RealtimeLoggingPendingAction;
 
@@ -36,6 +39,7 @@ export interface RealtimeFeatureRenderState {
 
 export interface RealtimeFeaturePresenterDeps {
   dom: UiRealtimeDom;
+  sensorsDom: SensorsPanelDom;
   shellDom: Pick<UiShellDom, "menuButtons">;
   settingsDom: Pick<UiSettingsDom, "settingsTabs">;
   carsDom: Pick<UiCarsDom, "addCarBtn">;
@@ -47,7 +51,11 @@ export interface RealtimeFeaturePresenterDeps {
   escapeHtml: (value: unknown) => string;
   formatInt: (value: number) => string;
   chrome: {
-    setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
+    setPillState: (
+      el: HTMLElement | null,
+      variant: string,
+      text: string,
+    ) => void;
     liveOverview: RealtimeLiveOverviewBridge;
     loggingPanel: RealtimeLoggingPanelBridge;
   };
@@ -73,6 +81,7 @@ export function createRealtimeFeaturePresenter(
 ): RealtimeFeaturePresenter {
   const {
     dom: els,
+    sensorsDom,
     shellDom,
     settingsDom,
     carsDom,
@@ -113,17 +122,22 @@ export function createRealtimeFeaturePresenter(
     const connected = connectedClients();
     const ages = connected
       .map((client) => client.last_seen_age_ms)
-      .filter((age): age is number => typeof age === "number" && Number.isFinite(age));
+      .filter(
+        (age): age is number => typeof age === "number" && Number.isFinite(age),
+      );
     if (!ages.length) {
       return t("dashboard.data_freshness_none");
     }
     const captureReadiness = realtime.loggingStatus.capture_readiness ?? null;
-    const referenceCheck = captureReadinessCheck(captureReadiness, "reference_ready");
+    const referenceCheck = captureReadinessCheck(
+      captureReadiness,
+      "reference_ready",
+    );
     const referenceReason = referenceCheck?.reason_key ?? "";
     if (
-      referenceCheck
-      && referenceCheck.state !== "pass"
-      && [
+      referenceCheck &&
+      referenceCheck.state !== "pass" &&
+      [
         "speed_source_missing",
         "speed_source_not_live",
         "speed_source_fallback_active",
@@ -146,22 +160,30 @@ export function createRealtimeFeaturePresenter(
   }
 
   function computeCurrentLiveHealth() {
-    return computeLiveHealth((readiness) => captureReadinessSummaryText(readiness, {
-      t,
-      formatInt,
-    }));
+    return computeLiveHealth((readiness) =>
+      captureReadinessSummaryText(readiness, {
+        t,
+        formatInt,
+      }),
+    );
   }
 
   function liveSensorOverviewLabel(client: AdaptedClient): string {
     const code = locationCodeForClient(client);
     if (!code) {
-      return String(client.name || client.id || t("dashboard.sensor_unassigned")).trim();
+      return String(
+        client.name || client.id || t("dashboard.sensor_unassigned"),
+      ).trim();
     }
-    const option = realtime.locationOptions.find((location) => location.code === code);
+    const option = realtime.locationOptions.find(
+      (location) => location.code === code,
+    );
     return option?.label ?? code;
   }
 
-  function buildLiveOverviewModel(phaseText: string): RealtimeLiveOverviewRenderModel {
+  function buildLiveOverviewModel(
+    phaseText: string,
+  ): RealtimeLiveOverviewRenderModel {
     const signal = strongestSignal();
     const health = computeCurrentLiveHealth();
     const totalClients = realtime.clients.length;
@@ -209,7 +231,9 @@ export function createRealtimeFeaturePresenter(
       connectedCountText: formatInt(connectedClients().length),
       assignedCountText: formatInt(assignedClientCount()),
       runIdText: recordingRunIdText(realtime.loggingStatus),
-      elapsedText: realtime.loggingStatus.enabled ? formatElapsed(realtime.loggingStatus.start_time_utc) : "--",
+      elapsedText: realtime.loggingStatus.enabled
+        ? formatElapsed(realtime.loggingStatus.start_time_utc)
+        : "--",
       samplesText: formatInt(realtime.loggingStatus.samples_written ?? 0),
       lastCompletedElapsedText,
       t,
@@ -247,7 +271,11 @@ export function createRealtimeFeaturePresenter(
   function renderLiveOverview(phaseText: string): void {
     const model = buildLiveOverviewModel(phaseText);
     chrome.liveOverview.render(model);
-    setPillState(els.shellLiveStatus, model.runHealth.variant, model.runHealth.text);
+    setPillState(
+      els.shellLiveStatus,
+      model.runHealth.variant,
+      model.runHealth.text,
+    );
   }
 
   function sensorsSettingsSignature(): string {
@@ -257,7 +285,9 @@ export function createRealtimeFeaturePresenter(
         return `${client.id}|${client.name || ""}|${client.mac_address || ""}|${connected}|${client.location_code || ""}`;
       })
       .join("||");
-    const locationPart = realtime.locationOptions.map((loc) => `${loc.code}|${loc.label}`).join("||");
+    const locationPart = realtime.locationOptions
+      .map((loc) => `${loc.code}|${loc.label}`)
+      .join("||");
     return `${clientPart}##${locationPart}`;
   }
 
@@ -270,8 +300,8 @@ export function createRealtimeFeaturePresenter(
   }
 
   function renderSensorsSettingsList(): void {
-    if (!els.sensorsSettingsBody) return;
-    renderRealtimeSensorTable(els.sensorsSettingsBody, {
+    if (!sensorsDom.sensorsSettingsBody) return;
+    renderRealtimeSensorTable(sensorsDom.sensorsSettingsBody, {
       clients: realtime.clients,
       locationOptions: realtime.locationOptions,
       t,
@@ -294,7 +324,10 @@ export function createRealtimeFeaturePresenter(
     if (!startTimeUtc) return "--";
     const startMs = Date.parse(startTimeUtc);
     if (!Number.isFinite(startMs)) return "--";
-    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+    const elapsedSeconds = Math.max(
+      0,
+      Math.floor((Date.now() - startMs) / 1000),
+    );
     const hours = Math.floor(elapsedSeconds / 3600);
     const minutes = Math.floor((elapsedSeconds % 3600) / 60);
     const seconds = elapsedSeconds % 60;
@@ -305,7 +338,11 @@ export function createRealtimeFeaturePresenter(
   }
 
   function syncLoggingElapsedTimer(handlersBound: boolean): void {
-    const shouldTick = handlersBound && Boolean(realtime.loggingStatus.enabled && realtime.loggingStatus.start_time_utc);
+    const shouldTick =
+      handlersBound &&
+      Boolean(
+        realtime.loggingStatus.enabled && realtime.loggingStatus.start_time_utc,
+      );
     if (!shouldTick) {
       clearLoggingElapsedTimer();
       return;
@@ -327,17 +364,23 @@ export function createRealtimeFeaturePresenter(
       return t("dashboard.logging.run_id", { runId: status.run_id });
     }
     if (status.last_completed_run_id) {
-      return t("dashboard.logging.last_run_id", { runId: status.last_completed_run_id });
+      return t("dashboard.logging.last_run_id", {
+        runId: status.last_completed_run_id,
+      });
     }
     return "";
   }
 
   function activatePrimaryView(viewId: string): void {
-    shellDom.menuButtons.find((button) => button.dataset.view === viewId)?.click();
+    shellDom.menuButtons
+      .find((button) => button.dataset.view === viewId)
+      ?.click();
   }
 
   function activateSettingsTab(tabId: string): void {
-    settingsDom.settingsTabs.find((button) => button.getAttribute("data-settings-tab") === tabId)?.click();
+    settingsDom.settingsTabs
+      .find((button) => button.getAttribute("data-settings-tab") === tabId)
+      ?.click();
   }
 
   function openSettingsView(tabId: string): void {
@@ -354,11 +397,13 @@ export function createRealtimeFeaturePresenter(
 
   function getIdleCaptureReadinessSignature(): string {
     const clientsSignature = realtime.clients
-      .map((client) => [
-        client.id,
-        client.connected ? "1" : "0",
-        locationCodeForClient(client),
-      ].join(":"))
+      .map((client) =>
+        [
+          client.id,
+          client.connected ? "1" : "0",
+          locationCodeForClient(client),
+        ].join(":"),
+      )
       .sort()
       .join("|");
     return `${settings.activeCarId ?? ""}##${clientsSignature}`;

@@ -3,6 +3,7 @@ import "../styles/app.css";
 import { getUiAnalysisPanelHost } from "./dom/analysis_dom";
 import { getUiCarsPanelHost } from "./dom/cars_dom";
 import { getUiHistoryPanelHost } from "./dom/history_dom";
+import { getUiSensorsPanelHost } from "./dom/sensors_dom";
 import { getUiSpeedSourcePanelHost } from "./dom/speed_source_dom";
 import {
   getUiLiveOverviewHost,
@@ -17,6 +18,7 @@ import { mountHistoryPanel } from "./views/history_panel";
 import { mountCarsPanel } from "./views/cars_panel";
 import { mountRealtimeLoggingPanel } from "./views/realtime_logging_panel";
 import { mountRealtimeLiveOverview } from "./views/realtime_live_overview";
+import { mountSensorsPanel } from "./views/sensors_panel";
 import { mountSpeedSourcePanel } from "./views/speed_source_panel";
 import { mountSpectrumPanel } from "./views/spectrum_panel";
 import {
@@ -33,6 +35,7 @@ export function startUiApp(): void {
   const historyPanel = mountHistoryPanel(getUiHistoryPanelHost());
   const carsPanel = mountCarsPanel(getUiCarsPanelHost());
   const analysisPanel = mountAnalysisPanel(getUiAnalysisPanelHost());
+  const sensorsPanel = mountSensorsPanel(getUiSensorsPanelHost());
   const speedSourcePanel = mountSpeedSourcePanel(getUiSpeedSourcePanelHost());
   mountUiShellChrome(getUiShellChromeHost(), shellChromeActions, state.shell);
   new UiAppRuntime(
@@ -45,6 +48,7 @@ export function startUiApp(): void {
     historyPanel,
     carsPanel,
     analysisPanel,
+    sensorsPanel,
     speedSourcePanel,
   ).start();
 }

@@ -5,7 +5,6 @@ const LIVE_OVERVIEW_HOST_ID = "liveOverviewRoot";
 const LOGGING_PANEL_HOST_ID = "loggingPanelRoot";
 
 export interface UiRealtimeDom {
-  sensorsSettingsBody: HTMLElement | null;
   shellLiveStatus: HTMLElement | null;
 }
 
@@ -19,7 +18,6 @@ export function getUiLoggingPanelHost(): HTMLElement {
 
 export function createUiRealtimeDom(): UiRealtimeDom {
   return {
-    sensorsSettingsBody: getById<HTMLElement>("sensorsSettingsBody"),
     shellLiveStatus: getById<HTMLElement>("shellLiveStatus"),
   };
 }

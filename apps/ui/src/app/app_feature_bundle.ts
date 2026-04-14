@@ -30,6 +30,7 @@ import { createUpdateFeature } from "./features/update_feature";
 import type { AppState } from "./ui_app_state";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
 import type { AnalysisPanelView } from "./views/analysis_panel";
+import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
 
 export type { AppFeatureBundle } from "./app_feature_ports";
@@ -56,6 +57,7 @@ export interface AppFeatureBundleSharedDeps {
 export interface AppFeatureBundleRuntimePorts {
   analysisPanel: AnalysisPanelView;
   carsPanel: CarsPanelView;
+  sensorsPanel: SensorsPanelView;
   speedSourcePanel: SpeedSourcePanelView;
   realtimeChrome: RealtimeFeatureChromePorts;
   historyPanel: HistoryPanelView;
@@ -116,6 +118,7 @@ export function createAppFeatureBundle(
     showError,
     formatInt,
     chrome: runtime.realtimeChrome,
+    sensorsPanel: runtime.sensorsPanel,
     selection: runtime.transport,
     recording: createRealtimeFeatureRecordingPorts(history),
   });
