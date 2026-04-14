@@ -73,7 +73,7 @@ function InternetPanel() {
             <div class="speed-source-choice-grid">
               <label
                 id="updateTransportChoiceWifi"
-                class="speed-source-choice"
+                class="speed-source-choice update-transport-choice"
                 data-update-transport-choice="wifi"
               >
                 <input
@@ -100,7 +100,7 @@ function InternetPanel() {
               </label>
               <label
                 id="updateTransportChoiceUsb"
-                class="speed-source-choice"
+                class="speed-source-choice update-transport-choice"
                 data-update-transport-choice="usb_internet"
               >
                 <input
