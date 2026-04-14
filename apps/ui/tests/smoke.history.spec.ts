@@ -214,6 +214,46 @@ test("dark mode history warning pills and banners use semantic theme tokens", as
   expect(bannerStyles.color).toBe(bannerStyles.expectedColor);
 });
 
+test("dark mode quiet danger buttons use semantic danger tokens in History", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await installCommonRoutes(page, { runs: [historyListRun] });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-history").click();
+  await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
+  const deleteButton = page.locator('[data-run-action="delete-run"][data-run="run-001"]');
+  await expect(deleteButton).toBeVisible();
+
+  const idleStyles = await readSemanticToneStyles(deleteButton, {
+    surfaceVar: "--button-danger-quiet-surface",
+    borderVar: "--button-danger-quiet-border",
+    textVar: "--button-danger-quiet-text",
+  });
+  expect(idleStyles.backgroundColor).toBe(idleStyles.expectedBackgroundColor);
+  expect(idleStyles.borderColor).toBe(idleStyles.expectedBorderColor);
+  expect(idleStyles.color).toBe(idleStyles.expectedColor);
+
+  const deleteButtonBox = await deleteButton.boundingBox();
+  if (!deleteButtonBox) {
+    throw new Error("expected history delete button to have a layout box");
+  }
+  await page.mouse.move(
+    deleteButtonBox.x + (deleteButtonBox.width / 2),
+    deleteButtonBox.y + (deleteButtonBox.height / 2),
+  );
+  await expect.poll(() => deleteButton.evaluate((element) => element.matches(":hover"))).toBe(true);
+  await page.waitForTimeout(150);
+  const hoverStyles = await readSemanticToneStyles(deleteButton, {
+    surfaceVar: "--button-danger-quiet-hover-surface",
+    borderVar: "--button-danger-quiet-hover-border",
+    textVar: "--button-danger-quiet-text",
+  });
+  expect(hoverStyles.backgroundColor).toBe(hoverStyles.expectedBackgroundColor);
+  expect(hoverStyles.borderColor).toBe(hoverStyles.expectedBorderColor);
+  expect(hoverStyles.color).toBe(hoverStyles.expectedColor);
+});
+
 test("history empty state points users back to Live", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {

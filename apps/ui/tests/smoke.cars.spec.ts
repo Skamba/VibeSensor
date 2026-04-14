@@ -104,6 +104,72 @@ test("dark mode warning pills use semantic theme tokens in Live and Cars", async
   expect(readinessStyles.color).toBe(readinessStyles.expectedColor);
 });
 
+test("dark mode quiet danger buttons use semantic danger tokens in Cars", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      const method = route.request().method();
+      if (path === "/api/settings/cars" && method === "GET") {
+        await fulfillJson(route, {
+          cars: [
+            {
+              id: "car-1",
+              name: "Active Car",
+              type: "sedan",
+              aspects: {
+                tire_width_mm: 245,
+                tire_aspect_pct: 40,
+                rim_in: 18,
+                final_drive_ratio: 3.91,
+                current_gear_ratio: 0.82,
+              },
+            },
+          ],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  const deleteButton = page.locator('#carListBody tr[data-car-id="car-1"] .car-delete-btn');
+  await expect(deleteButton).toBeVisible();
+
+  const idleStyles = await readSemanticToneStyles(deleteButton, {
+    surfaceVar: "--button-danger-quiet-surface",
+    borderVar: "--button-danger-quiet-border",
+    textVar: "--button-danger-quiet-text",
+  });
+  expect(idleStyles.backgroundColor).toBe(idleStyles.expectedBackgroundColor);
+  expect(idleStyles.borderColor).toBe(idleStyles.expectedBorderColor);
+  expect(idleStyles.color).toBe(idleStyles.expectedColor);
+
+  const deleteButtonBox = await deleteButton.boundingBox();
+  if (!deleteButtonBox) {
+    throw new Error("expected car delete button to have a layout box");
+  }
+  await page.mouse.move(
+    deleteButtonBox.x + (deleteButtonBox.width / 2),
+    deleteButtonBox.y + (deleteButtonBox.height / 2),
+  );
+  await expect.poll(() => deleteButton.evaluate((element) => element.matches(":hover"))).toBe(true);
+  await page.waitForTimeout(150);
+  const hoverStyles = await readSemanticToneStyles(deleteButton, {
+    surfaceVar: "--button-danger-quiet-hover-surface",
+    borderVar: "--button-danger-quiet-hover-border",
+    textVar: "--button-danger-quiet-text",
+  });
+  expect(hoverStyles.backgroundColor).toBe(hoverStyles.expectedBackgroundColor);
+  expect(hoverStyles.borderColor).toBe(hoverStyles.expectedBorderColor);
+  expect(hoverStyles.color).toBe(hoverStyles.expectedColor);
+});
+
 test("routes no-car blockers to the add-car flow from Live and Cars", async ({ page }) => {
   let analysisPutCalls = 0;
   await installCommonRoutes(page, {
