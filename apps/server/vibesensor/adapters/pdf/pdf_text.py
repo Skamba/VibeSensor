@@ -29,6 +29,17 @@ def _wrap_lines(text: str, width_pt: float, font_size: float) -> list[str]:
     return lines
 
 
+def _truncate_single_line(text: str, width_pt: float, font_size: float) -> str:
+    """Return *text* truncated to one wrapped line, adding ``...`` when needed."""
+    lines = _wrap_lines(text, width_pt, font_size)
+    if len(lines) <= 1:
+        return text
+    first_line = lines[0].rstrip()
+    if len(first_line) <= 3:
+        return "..."
+    return f"{first_line[:-3].rstrip()}..."
+
+
 def _measure_text_height(
     text: str,
     *,
