@@ -50,26 +50,39 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   await expect(page.locator("#espFlashStartSummary")).toContainText(
     "/dev/ttyUSB0 — USB UART detected and ready for flashing.",
   );
+  await expect(page.locator("#espFlashReadinessPanel")).toContainText(
+    "Detected ports",
+  );
+  await expect(page.locator("#espFlashTab")).not.toContainText(
+    "Current readiness",
+  );
   await expect(page.locator("#espFlashTab")).toContainText("What happens next");
   await page.locator("#espFlashStartBtn").click();
   statusState = "running";
   logCursor = 2;
   const pairedLayout = await page.evaluate(() => {
-    const readinessCard = document.querySelector("#espFlashReadinessPanel")?.closest(".maintenance-card");
     const journeyCard = document.querySelector("#espFlashJourneyPanel")?.closest(".maintenance-card");
-    if (!(readinessCard instanceof HTMLElement) || !(journeyCard instanceof HTMLElement)) {
+    const logCard = document.querySelector("#espFlashLogPanel")?.closest(".maintenance-card");
+    const readinessCard = document.querySelector("#espFlashReadinessPanel")?.closest(".maintenance-card");
+    const summaryCard = document.querySelector("#espFlashStartSummary")?.closest(".maintenance-card");
+    if (!(journeyCard instanceof HTMLElement) || !(logCard instanceof HTMLElement)) {
       return null;
     }
-    const readinessRect = readinessCard.getBoundingClientRect();
     const journeyRect = journeyCard.getBoundingClientRect();
+    const logRect = logCard.getBoundingClientRect();
     return {
-      topDelta: Math.abs(readinessRect.top - journeyRect.top),
-      leftDelta: journeyRect.left - readinessRect.left,
+      topDelta: Math.abs(journeyRect.top - logRect.top),
+      leftDelta: logRect.left - journeyRect.left,
+      readinessGrouped:
+        readinessCard instanceof HTMLElement &&
+        summaryCard instanceof HTMLElement &&
+        readinessCard === summaryCard,
     };
   });
   expect(pairedLayout).not.toBeNull();
   expect(pairedLayout?.topDelta ?? 999).toBeLessThan(8);
   expect(pairedLayout?.leftDelta ?? 0).toBeGreaterThan(40);
+  expect(pairedLayout?.readinessGrouped).toBe(true);
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Running");
   await expect(page.locator("#espFlashStartBtn")).toBeHidden();
   await expect(page.locator("#espFlashCancelBtn")).toBeVisible();
@@ -117,7 +130,7 @@ test("settings esp flash status falls back to idle when API omits state", async 
     "Connect the ESP board over USB and refresh the port list.",
   );
   await expect(page.locator("#espFlashReadinessPanel")).toContainText("No serial device is detected yet");
-  await expect(page.locator("#espFlashReadinessPanel")).not.toContainText("Expected stages");
+  await expect(page.locator("#espFlashTab")).not.toContainText("Current readiness");
   await expect(page.locator("#espFlashJourneyPanel")).toContainText("Validate board and bundle");
   await expect(page.locator("#espFlashTab")).toContainText("What happens next");
   await expect(page.locator("#espFlashLogPanel")).toContainText("No active flash log");

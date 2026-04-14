@@ -19,7 +19,10 @@ import {
   buildUpdateStatusPanelViewModel,
   getUpdateFailureSummary,
 } from "./update_status_view_models";
-import { renderUpdateStatusPanel } from "./update_status_view";
+import {
+  renderUpdateOverviewPanel,
+  renderUpdateStatusPanel,
+} from "./update_status_view";
 
 export interface UpdateFeatureRenderState {
   internetStatus: UsbInternetStatusPayload;
@@ -313,17 +316,16 @@ export function createUpdateFeaturePresenter(
         renderMaintenanceReadinessPanel(actionSummary.panelModel, escapeHtml);
     }
     if (state.updateStatus && state.healthStatus) {
-      renderUpdateStatusPanel(
-        updateEls.updateStatusPanel,
-        buildUpdateStatusPanelViewModel(
-          state.updateStatus,
-          state.healthStatus,
-          {
-            t,
-            selectedTransport: actionSummary.transport,
-          },
-        ),
+      const viewModel = buildUpdateStatusPanelViewModel(
+        state.updateStatus,
+        state.healthStatus,
+        {
+          t,
+          selectedTransport: actionSummary.transport,
+        },
       );
+      renderUpdateOverviewPanel(updateEls.updateOverviewPanel, viewModel);
+      renderUpdateStatusPanel(updateEls.updateStatusPanel, viewModel);
     }
     if (
       internetDom.internetStatusPanel &&

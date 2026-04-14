@@ -22,135 +22,119 @@ export interface EspFlashPanelView {
 function EspFlashPanel() {
   return (
     <div class="panel card">
-      <strong data-i18n="settings.esp_flash.title">ESP Flash</strong>
-      <div class="subtle" data-i18n="settings.esp_flash.hint">
-        Flash ESP firmware from local source on this Pi.
-      </div>
-      <div class="maintenance-layout">
+      <div class="maintenance-layout maintenance-layout--compact">
         <div class="maintenance-stack">
-          <section class="maintenance-card">
+          <section class="maintenance-card maintenance-card--hero">
             <div class="maintenance-card__header">
               <div>
                 <div
                   class="maintenance-card__title"
-                  data-i18n="settings.esp_flash.controls_title"
+                  data-i18n="settings.esp_flash.title"
                 >
-                  Flash target
+                  ESP Flash
                 </div>
                 <div
                   class="subtle"
-                  data-i18n="settings.esp_flash.controls_intro"
+                  data-i18n="settings.esp_flash.hint"
                 >
-                  Choose a serial port or leave auto-detect enabled, then start
-                  the firmware build and flash flow.
+                  Flash ESP firmware from local source on this Pi.
                 </div>
               </div>
-            </div>
-            <div class="manual-speed-row">
-              <label
-                htmlFor="espFlashPortSelect"
-                data-i18n="settings.esp_flash.port"
+              <span
+                id="espFlashStatusBanner"
+                class="pill pill--muted"
+                data-i18n="settings.esp_flash.state.idle"
               >
-                Serial Port
-              </label>
-              <select id="espFlashPortSelect">
-                <option
-                  value="__auto__"
-                  data-i18n="settings.esp_flash.auto_detect"
-                >
-                  Auto-detect
-                </option>
-              </select>
-              <button
-                type="button"
-                id="espFlashRefreshPortsBtn"
-                class="btn btn--muted"
-                data-i18n="settings.esp_flash.refresh_ports"
-              >
-                Refresh
-              </button>
+                Idle
+              </span>
             </div>
-            <div
-              id="espFlashStartSummary"
-              class="maintenance-stack maintenance-stack--tight"
-              aria-live="polite"
-            ></div>
-            <details class="settings-help-disclosure settings-help-disclosure--inline">
-              <summary class="settings-help-disclosure__summary">
-                <span class="settings-help-disclosure__heading">
-                  <span
-                    class="settings-help-disclosure__title"
-                    data-i18n="settings.esp_flash.details_title"
-                  >
-                    What happens next
-                  </span>
-                  <span
-                    class="settings-help-disclosure__caption"
-                    data-i18n="settings.esp_flash.details_caption"
-                  >
-                    Build, erase, and write the current firmware over USB.
-                  </span>
-                </span>
-              </summary>
-              <div class="settings-help-disclosure__body">
-                <div
-                  class="maintenance-note"
-                  data-i18n="settings.esp_flash.preflight_note"
+            <div class="maintenance-card__body maintenance-card__body--hero">
+              <div class="manual-speed-row">
+                <label
+                  htmlFor="espFlashPortSelect"
+                  data-i18n="settings.esp_flash.port"
                 >
-                  Starting a flash builds the latest firmware on this Pi, erases
-                  the selected board, and writes the new image over USB. Keep
-                  the board powered until the staged progress reaches Done.
-                </div>
+                  Serial Port
+                </label>
+                <select id="espFlashPortSelect">
+                  <option
+                    value="__auto__"
+                    data-i18n="settings.esp_flash.auto_detect"
+                  >
+                    Auto-detect
+                  </option>
+                </select>
+                <button
+                  type="button"
+                  id="espFlashRefreshPortsBtn"
+                  class="btn btn--muted"
+                  data-i18n="settings.esp_flash.refresh_ports"
+                >
+                  Refresh
+                </button>
               </div>
-            </details>
-            <div class="maintenance-action-row">
-              <button
-                type="button"
-                id="espFlashStartBtn"
-                class="btn btn--success"
-                data-i18n="settings.esp_flash.start"
-              >
-                Flash latest
-              </button>
-              <button
-                type="button"
-                id="espFlashCancelBtn"
-                class="btn btn--danger"
-                data-i18n="settings.esp_flash.cancel"
-                hidden
-                disabled
-              >
-                Cancel
-              </button>
-            </div>
-          </section>
-
-          <div class="maintenance-pair-grid">
-            <section class="maintenance-card">
-              <div class="maintenance-card__header">
-                <div>
-                  <div
-                    class="maintenance-card__title"
-                    data-i18n="settings.esp_flash.current_status_title"
-                  >
-                    Current readiness
-                  </div>
-                </div>
-                <span
-                  id="espFlashStatusBanner"
-                  class="pill pill--muted"
-                  data-i18n="settings.esp_flash.state.idle"
-                >
-                  Idle
-                </span>
-              </div>
+              <div
+                id="espFlashStartSummary"
+                class="maintenance-stack maintenance-stack--tight"
+                aria-live="polite"
+              ></div>
               <div
                 id="espFlashReadinessPanel"
                 class="maintenance-stack maintenance-stack--tight"
                 aria-live="polite"
               ></div>
-            </section>
+              <details class="settings-help-disclosure settings-help-disclosure--inline">
+                <summary class="settings-help-disclosure__summary">
+                  <span class="settings-help-disclosure__heading">
+                    <span
+                      class="settings-help-disclosure__title"
+                      data-i18n="settings.esp_flash.details_title"
+                    >
+                      What happens next
+                    </span>
+                    <span
+                      class="settings-help-disclosure__caption"
+                      data-i18n="settings.esp_flash.details_caption"
+                    >
+                      Build, erase, and write the current firmware over USB.
+                    </span>
+                  </span>
+                </summary>
+                <div class="settings-help-disclosure__body">
+                  <div
+                    class="maintenance-note"
+                    data-i18n="settings.esp_flash.preflight_note"
+                  >
+                    Starting a flash builds the latest firmware on this Pi, erases
+                    the selected board, and writes the new image over USB. Keep
+                    the board powered until the staged progress reaches Done.
+                  </div>
+                </div>
+              </details>
+              <div class="maintenance-action-row">
+                <button
+                  type="button"
+                  id="espFlashStartBtn"
+                  class="btn btn--success"
+                  data-i18n="settings.esp_flash.start"
+                >
+                  Flash latest
+                </button>
+                <button
+                  type="button"
+                  id="espFlashCancelBtn"
+                  class="btn btn--danger"
+                  data-i18n="settings.esp_flash.cancel"
+                  hidden
+                  disabled
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </section>
 
+          <div class="maintenance-pair-grid maintenance-pair-grid--focus">
             <section class="maintenance-card">
               <div class="maintenance-card__header">
                 <div>
@@ -168,32 +152,31 @@ function EspFlashPanel() {
                 aria-live="polite"
               ></div>
             </section>
-          </div>
-
-          <section class="maintenance-card">
-            <div class="maintenance-card__header">
-              <div>
-                <div
-                  class="maintenance-card__title"
-                  data-i18n="settings.esp_flash.logs_title"
-                >
-                  Live flash output
-                </div>
-                <div
-                  class="subtle"
-                  data-i18n="settings.esp_flash.logs_intro"
-                >
-                  Build, erase, and upload output appears here while the
-                  toolchain runs.
+            <section class="maintenance-card">
+              <div class="maintenance-card__header">
+                <div>
+                  <div
+                    class="maintenance-card__title"
+                    data-i18n="settings.esp_flash.logs_title"
+                  >
+                    Live flash output
+                  </div>
+                  <div
+                    class="subtle"
+                    data-i18n="settings.esp_flash.logs_intro"
+                  >
+                    Build, erase, and upload output appears here while the
+                    toolchain runs.
+                  </div>
                 </div>
               </div>
-            </div>
-            <div
-              id="espFlashLogPanel"
-              class="maintenance-log-slot"
-              aria-live="polite"
-            ></div>
-          </section>
+              <div
+                id="espFlashLogPanel"
+                class="maintenance-log-slot"
+                aria-live="polite"
+              ></div>
+            </section>
+          </div>
 
           <section class="maintenance-card">
             <div class="maintenance-card__header">
