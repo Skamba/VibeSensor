@@ -193,6 +193,57 @@ test.describe("createRealtimeFeatureWorkflow", () => {
     ]);
   });
 
+  test("refreshes history once when polling observes analysis completion", async () => {
+    const harness = createHarness();
+    harness.state.realtime.loggingStatus = {
+      ...harness.state.realtime.loggingStatus,
+      analysis_in_progress: true,
+      last_completed_run_id: null,
+    };
+    const completedStatus: LoggingStatusPayload = {
+      ...harness.state.realtime.loggingStatus,
+      analysis_in_progress: false,
+      last_completed_run_id: "run-42",
+    };
+    const responses = [completedStatus, completedStatus];
+    const workflow = createRealtimeFeatureWorkflow({
+      realtime: harness.state.realtime,
+      t: (key) => key,
+      showError: (message) => {
+        harness.viewCalls.push(`showError:${message}`);
+      },
+      isDemoMode: false,
+      view: createViewPorts(harness),
+      selection: {
+        sendSelection() {
+          harness.selectionCalls.push("sendSelection");
+        },
+      },
+      recording: {
+        async onRecordingStatusChanged() {
+          harness.recordingCalls.push("onRecordingStatusChanged");
+        },
+      },
+      confirmRemoveClient: () => true,
+      api: {
+        async getLoggingStatus(): Promise<LoggingStatusPayload> {
+          const next = responses.shift();
+          if (!next) {
+            throw new Error("unexpected extra status request");
+          }
+          return next;
+        },
+      },
+    });
+
+    await workflow.refreshLoggingStatus();
+    await workflow.refreshLoggingStatus();
+
+    expect(harness.state.realtime.loggingStatus).toEqual(completedStatus);
+    expect(harness.recordingCalls).toEqual(["onRecordingStatusChanged"]);
+    expect(harness.viewCalls).toEqual(["renderLoggingStatus", "renderLoggingStatus"]);
+  });
+
   test("removes the selected client and emits a new selection without DOM fixtures", async () => {
     const harness = createHarness();
     harness.state.realtime.clients = [
