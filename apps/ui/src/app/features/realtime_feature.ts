@@ -1,7 +1,3 @@
-import type { UiCarsDom } from "../dom/cars_dom";
-import type { UiRealtimeDom } from "../dom/realtime_dom";
-import type { UiSettingsDom } from "../dom/settings_dom";
-import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type {
   RealtimeState,
@@ -18,10 +14,6 @@ import { createRealtimeFeatureWorkflow } from "./realtime_feature_workflow";
 import { createRealtimeFeaturePresenter } from "../views/realtime_feature_presenter";
 
 export interface RealtimeFeatureDeps extends FeatureDepsBase {
-  dom: UiRealtimeDom;
-  shellDom: Pick<UiShellDom, "menuButtons">;
-  settingsDom: Pick<UiSettingsDom, "settingsTabs">;
-  carsDom: Pick<UiCarsDom, "addCarBtn">;
   realtime: RealtimeState;
   spectrum: SpectrumState;
   settings: SettingsState;
@@ -29,14 +21,21 @@ export interface RealtimeFeatureDeps extends FeatureDepsBase {
   formatInt: (value: number) => string;
   chrome: RealtimeFeatureChromePorts;
   sensorsPanel: SensorsPanelView;
+  navigation: RealtimeFeatureNavigationPorts;
   selection: RealtimeFeatureSelectionPorts;
   recording: RealtimeFeatureRecordingPorts;
 }
 
 export interface RealtimeFeatureChromePorts {
-  setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
+  setShellLiveStatus: (variant: string, text: string) => void;
   liveOverview: RealtimeLiveOverviewBridge;
   loggingPanel: RealtimeLoggingPanelBridge;
+}
+
+export interface RealtimeFeatureNavigationPorts {
+  activatePrimaryView(viewId: string): void;
+  activateSettingsTab(tabId: string): void;
+  openCarWizard(): void;
 }
 
 export interface RealtimeFeatureSelectionPorts {
@@ -67,15 +66,12 @@ export function createRealtimeFeature(
     settings: ctx.settings,
     spectrum: ctx.spectrum,
     getLanguage: ctx.getLanguage,
-    dom: ctx.dom,
-    shellDom: ctx.shellDom,
-    settingsDom: ctx.settingsDom,
-    carsDom: ctx.carsDom,
     sensorsDom: ctx.sensorsPanel.dom,
     t: ctx.t,
     escapeHtml: ctx.escapeHtml,
     formatInt: ctx.formatInt,
     chrome: ctx.chrome,
+    navigation: ctx.navigation,
   });
   const workflow = createRealtimeFeatureWorkflow({
     realtime: ctx.realtime,

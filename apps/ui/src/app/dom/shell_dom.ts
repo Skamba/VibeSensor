@@ -11,6 +11,7 @@ export interface UiShellDom {
   speedUnitSelect: HTMLSelectElement | null;
   speedUnitFeedback: HTMLElement | null;
   linkState: HTMLElement | null;
+  shellLiveStatus: HTMLElement | null;
   appErrorBanner: HTMLElement | null;
   appShellWrap: HTMLElement | null;
 }
@@ -28,6 +29,7 @@ export function createUiShellDom(): UiShellDom {
     speedUnitSelect: getById<HTMLSelectElement>("speedUnitSelect"),
     speedUnitFeedback: getById<HTMLElement>("speedUnitFeedback"),
     linkState: getById<HTMLElement>("linkState"),
+    shellLiveStatus: getById<HTMLElement>("shellLiveStatus"),
     appErrorBanner: getById<HTMLElement>("appErrorBanner"),
     appShellWrap: queryOne<HTMLElement>(".wrap"),
   };

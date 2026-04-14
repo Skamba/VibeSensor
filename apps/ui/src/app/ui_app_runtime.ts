@@ -37,6 +37,7 @@ import type { AnalysisPanelView } from "./views/analysis_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
 import type { EspFlashPanelView } from "./views/esp_flash_panel";
+import type { SettingsShellView } from "./views/settings_shell";
 import type { UpdatePanelView } from "./views/update_panel";
 
 export class UiAppRuntime {
@@ -62,6 +63,7 @@ export class UiAppRuntime {
     spectrumPanel: SpectrumPanelView = createNullSpectrumPanelView(),
     loggingPanel: RealtimeLoggingPanelBridge = createNullRealtimeLoggingPanelBridge(),
     historyPanel: HistoryPanelView = createNullHistoryPanelView(),
+    settingsShell: SettingsShellView,
     carsPanel: CarsPanelView,
     analysisPanel: AnalysisPanelView,
     internetPanel: InternetPanelView,
@@ -100,10 +102,6 @@ export class UiAppRuntime {
       state: this.state,
       dom: {
         shell: this.dom.shell,
-        realtime: this.dom.realtime,
-        history: this.dom.history,
-        settings: this.dom.settings,
-        cars: this.dom.cars,
       },
       shared: {
         t: (key, vars) => this.shell.t(key, vars),
@@ -114,6 +112,7 @@ export class UiAppRuntime {
         formatInt: (value) => this.shell.localFormatInt(value),
       },
       runtime: {
+        settingsShell,
         analysisPanel,
         carsPanel,
         internetPanel,
@@ -121,9 +120,12 @@ export class UiAppRuntime {
         sensorsPanel,
         speedSourcePanel,
         espFlashPanel,
+        navigation: {
+          activatePrimaryView: (viewId) => this.shell.setActiveView(viewId),
+        },
         realtimeChrome: {
-          setPillState: (el, variant, text) =>
-            this.shell.setPillState(el, variant, text),
+          setShellLiveStatus: (variant, text) =>
+            this.shell.setLiveStatus(variant, text),
           liveOverview,
           loggingPanel,
         },

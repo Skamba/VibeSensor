@@ -6,6 +6,7 @@ import { getUiEspFlashPanelHost } from "../src/app/dom/esp_flash_dom";
 import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
 import { getUiInternetPanelHost } from "../src/app/dom/internet_dom";
 import { getUiSensorsPanelHost } from "../src/app/dom/sensors_dom";
+import { getUiSettingsShellHost } from "../src/app/dom/settings_shell_dom";
 import { getUiSpeedSourcePanelHost } from "../src/app/dom/speed_source_dom";
 import { getUiUpdatePanelHost } from "../src/app/dom/update_dom";
 import {
@@ -43,6 +44,7 @@ function createBaseFixture(): SelectorFixture {
       specChart: stubElement("specChart"),
       liveOverviewRoot: stubElement("liveOverviewRoot"),
       historyPanelRoot: stubElement("historyPanelRoot"),
+      settingsShellRoot: stubElement("settingsShellRoot"),
       carsPanelRoot: stubElement("carsPanelRoot"),
       analysisPanelRoot: stubElement("analysisPanelRoot"),
       internetPanelRoot: stubElement("internetPanelRoot"),
@@ -50,8 +52,6 @@ function createBaseFixture(): SelectorFixture {
       espFlashPanelRoot: stubElement("espFlashPanelRoot"),
       sensorsPanelRoot: stubElement("sensorsPanelRoot"),
       speedSourcePanelRoot: stubElement("speedSourcePanelRoot"),
-      addCarBtn: stubElement("addCarBtn"),
-      addCarWizard: stubElement("addCarWizard"),
     },
     selectorOne: {
       ".wrap": stubElement("wrap"),
@@ -59,11 +59,6 @@ function createBaseFixture(): SelectorFixture {
     selectorAll: {
       ".menu-btn": [stubElement("tab-dashboard"), stubElement("tab-history")],
       ".view": [stubElement("dashboardView"), stubElement("historyView")],
-      ".settings-tab": [stubElement("analysisTab"), stubElement("carTab")],
-      ".settings-tab-panel": [
-        stubElement("analysisTab"),
-        stubElement("carTab"),
-      ],
       ".wizard-step-dot": [
         stubElement(),
         stubElement(),
@@ -116,9 +111,6 @@ test("createUiRuntimeDom returns the feature-scoped startup bundle when required
     const dom = createUiRuntimeDom();
     expect(dom.shell.menuButtons).toHaveLength(2);
     expect(dom.spectrum.specChart.id).toBe("specChart");
-    expect(dom.history).toEqual({});
-    expect(dom.settings.settingsTabs).toHaveLength(2);
-    expect(dom.cars.addCarBtn.id).toBe("addCarBtn");
   } finally {
     restore();
   }
@@ -155,6 +147,15 @@ test("getUiHistoryPanelHost resolves the history island host", () => {
   const restore = installDomFixture();
   try {
     expect(getUiHistoryPanelHost().id).toBe("historyPanelRoot");
+  } finally {
+    restore();
+  }
+});
+
+test("getUiSettingsShellHost resolves the settings shell island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiSettingsShellHost().id).toBe("settingsShellRoot");
   } finally {
     restore();
   }
@@ -343,22 +344,11 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     }
   });
 
-  test("fails at the settings boundary when tab controls are missing", () => {
-    const restore = installDomFixture({ missingSelector: ".settings-tab" });
+  test("fails when the settings shell host is missing", () => {
+    const restore = installDomFixture({ missingId: "settingsShellRoot" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow(
-        "Settings feature requires .settings-tab",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails at the cars boundary when the add-car trigger is missing", () => {
-    const restore = installDomFixture({ missingId: "addCarBtn" });
-    try {
-      expect(() => createUiRuntimeDom()).toThrow(
-        "Cars feature requires #addCarBtn",
+      expect(() => getUiSettingsShellHost()).toThrow(
+        "Settings shell requires #settingsShellRoot",
       );
     } finally {
       restore();

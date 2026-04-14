@@ -1,7 +1,3 @@
-import type { UiCarsDom } from "./dom/cars_dom";
-import type { UiHistoryDom } from "./dom/history_dom";
-import type { UiRealtimeDom } from "./dom/realtime_dom";
-import type { UiSettingsDom } from "./dom/settings_dom";
 import type { UiShellDom } from "./dom/shell_dom";
 import {
   createAppFeaturePorts,
@@ -32,16 +28,13 @@ import type { EspFlashPanelView } from "./views/esp_flash_panel";
 import type { InternetPanelView } from "./views/internet_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
+import type { SettingsShellView } from "./views/settings_shell";
 import type { UpdatePanelView } from "./views/update_panel";
 
 export type { AppFeatureBundle } from "./app_feature_ports";
 
 export interface AppFeatureBundleDom {
   shell: UiShellDom;
-  realtime: UiRealtimeDom;
-  history: UiHistoryDom;
-  settings: UiSettingsDom;
-  cars: UiCarsDom;
 }
 
 export interface AppFeatureBundleSharedDeps {
@@ -54,6 +47,7 @@ export interface AppFeatureBundleSharedDeps {
 }
 
 export interface AppFeatureBundleRuntimePorts {
+  settingsShell: SettingsShellView;
   analysisPanel: AnalysisPanelView;
   carsPanel: CarsPanelView;
   internetPanel: InternetPanelView;
@@ -61,6 +55,9 @@ export interface AppFeatureBundleRuntimePorts {
   speedSourcePanel: SpeedSourcePanelView;
   updatePanel: UpdatePanelView;
   espFlashPanel: EspFlashPanelView;
+  navigation: {
+    activatePrimaryView(viewId: string): void;
+  };
   realtimeChrome: RealtimeFeatureChromePorts;
   historyPanel: HistoryPanelView;
   transport: RealtimeFeatureSelectionPorts;
@@ -79,13 +76,7 @@ export function createAppFeatureBundle(
 ): AppFeatureBundle {
   const {
     state,
-    dom: {
-      shell: shellDom,
-      realtime: realtimeDom,
-      history: historyDom,
-      settings: settingsDom,
-      cars: carsDom,
-    },
+    dom: { shell: shellDom },
     shared: { t, escapeHtml, showError, fmt, fmtTs, formatInt },
     runtime,
   } = deps;
@@ -93,9 +84,8 @@ export function createAppFeatureBundle(
   const history = createHistoryFeature({
     history: state.history,
     getLanguage: () => state.shell.lang,
-    dom: historyDom,
     panel: runtime.historyPanel,
-    shellDom,
+    navigation: runtime.navigation,
     t,
     escapeHtml,
     showError,
@@ -104,33 +94,36 @@ export function createAppFeatureBundle(
     formatInt,
   });
 
+  let carsFeature: CarsFeature | null = null;
   const realtime = createRealtimeFeature({
     realtime: state.realtime,
     spectrum: state.spectrum,
     settings: state.settings,
     getLanguage: () => state.shell.lang,
-    dom: realtimeDom,
-    shellDom,
-    settingsDom,
-    carsDom,
     t,
     escapeHtml,
     showError,
     formatInt,
     chrome: runtime.realtimeChrome,
     sensorsPanel: runtime.sensorsPanel,
+    navigation: {
+      activatePrimaryView: runtime.navigation.activatePrimaryView,
+      activateSettingsTab: (tabId) => runtime.settingsShell.activateTab(tabId),
+      openCarWizard: () => {
+        carsFeature?.openWizard();
+      },
+    },
     selection: runtime.transport,
     recording: createRealtimeFeatureRecordingPorts(history),
   });
 
-  let carsFeature: CarsFeature | null = null;
   const settings: SettingsFeature = createSettingsFeature({
     settings: state.settings,
     getSpeedUnit: () => state.shell.speedUnit,
+    settingsShell: runtime.settingsShell,
     analysisPanel: runtime.analysisPanel,
     carsPanel: runtime.carsPanel.list,
     speedSourcePanel: runtime.speedSourcePanel,
-    dom: settingsDom,
     shellDom,
     openCarWizard: () => {
       carsFeature?.openWizard();
