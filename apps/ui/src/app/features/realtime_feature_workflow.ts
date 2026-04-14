@@ -79,6 +79,17 @@ const LOGGING_STATUS_IDLE_POLL_MS = 2_000;
 const LOGGING_STATUS_ACTIVE_POLL_MS = 2_000;
 const LOGGING_STATUS_ERROR_POLL_MS = 5_000;
 
+function didHistoryAffectingStatusChange(
+  previous: LoggingStatusPayload,
+  next: LoggingStatusPayload,
+): boolean {
+  return previous.enabled !== next.enabled
+    || previous.run_id !== next.run_id
+    || previous.analysis_in_progress !== next.analysis_in_progress
+    || previous.last_completed_run_id !== next.last_completed_run_id
+    || previous.last_completed_run_error !== next.last_completed_run_error;
+}
+
 export function createRealtimeFeatureWorkflow(
   deps: RealtimeFeatureWorkflowDeps,
 ): RealtimeFeatureWorkflow {
@@ -186,12 +197,25 @@ export function createRealtimeFeatureWorkflow(
       renderLoggingStatus();
       return;
     }
+    const previousStatus = realtime.loggingStatus;
+    let nextStatus: LoggingStatusPayload;
     try {
-      realtime.loggingStatus = await api.getLoggingStatus();
-      renderLoggingStatus();
+      nextStatus = await api.getLoggingStatus();
     } catch {
       pendingLoggingAction = null;
       view.renderLoggingUnavailable();
+      return;
+    }
+    realtime.loggingStatus = nextStatus;
+    renderLoggingStatus();
+    if (!didHistoryAffectingStatusChange(previousStatus, nextStatus)) {
+      return;
+    }
+    try {
+      await recording.onRecordingStatusChanged();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("status.unavailable");
+      showError(message || t("status.unavailable"));
     }
   }
 
