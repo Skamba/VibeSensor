@@ -531,11 +531,7 @@ export function buildRealtimeLoggingPanelViewModel(
       startDisabled: true,
       stopDisabled: true,
       showPill: false,
-      checklist: buildRealtimeCaptureReadinessChecklistModel(captureReadiness, {
-        setupMode: true,
-        t,
-        formatInt,
-      }),
+      checklist: null,
       setupMode: true,
       nextLastCompletedElapsedText,
     };
