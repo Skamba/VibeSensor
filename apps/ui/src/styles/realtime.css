@@ -28,7 +28,17 @@
   display: none;
 }
 
-.live-overview__stats { margin-bottom: var(--space-3); }
+.live-overview__stats {
+  margin-bottom: var(--space-3);
+}
+
+.live-overview__stats .stat {
+  min-width: 0;
+}
+
+.live-overview__stats .stat__value {
+  line-height: 1.25;
+}
 
 .stat[data-variant="warn"] {
   border: 1px solid rgba(183, 121, 31, 0.28);
@@ -198,7 +208,7 @@
 .spectrum-controls-panel {
   margin-top: var(--space-3);
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
@@ -226,7 +236,10 @@
 .spectrum-inspector {
   margin-top: 0;
   color: var(--text);
-  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: var(--space-2) var(--space-3);
   font-size: 0.88rem;
   line-height: 1.45;
 }
@@ -235,6 +248,18 @@
 }
 .spectrum-toolbar__bands .band-legend {
   flex: 1 1 18rem;
+}
+
+#legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2);
+}
+
+#legend .legend-item--interactive {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2);
 }
 
 .empty-state {
@@ -441,7 +466,7 @@
 }
 .legend-item__meta {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   line-height: 1.4;
 }
 .legend-item--band {
@@ -532,6 +557,12 @@
   font-size: 1.1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 1180px) {
+  .live-overview__stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .rotational-speeds {

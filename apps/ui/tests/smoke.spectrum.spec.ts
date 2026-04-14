@@ -23,13 +23,14 @@ test("spectrum controls simplify the chart and update the inspector", async ({ p
   await expect(bandToggle).toHaveAttribute("aria-pressed", "false");
   await expect(bandToggle).toHaveAttribute("aria-expanded", "false");
   await expect(bandLegend).toBeHidden();
-  await expect(inspector).toContainText("Strongest trace:");
-  await expect(sensorChip).toContainText("Visible");
+  await expect(inspector).toContainText("Strongest:");
+  await expect(sensorChip).not.toHaveAttribute("data-legend-state", "active");
+  await expect(sensorChip).not.toHaveAttribute("data-legend-state", "muted");
   await sensorChip.click();
   await expect(sensorChip).toHaveAttribute("aria-pressed", "true");
-  await expect(sensorChip).toContainText("Isolated");
-  await expect(adjacentChip).toContainText("Inactive");
-  await expect(inspector).toContainText("Focused trace:");
+  await expect(sensorChip).toHaveAttribute("data-legend-state", "active");
+  await expect(adjacentChip).toHaveAttribute("data-legend-state", "muted");
+  await expect(inspector).toContainText("Focused:");
   await expect(inspector).toContainText("Front Right Wheel");
 
   await bandToggle.click();
@@ -47,8 +48,9 @@ test("spectrum controls simplify the chart and update the inspector", async ({ p
   await allTracesChip.click();
   await expect(allTracesChip).toHaveAttribute("aria-pressed", "true");
   await expect(sensorChip).toHaveAttribute("aria-pressed", "false");
-  await expect(sensorChip).toContainText("Visible");
-  await expect(inspector).toContainText("Strongest trace:");
+  await expect(sensorChip).not.toHaveAttribute("data-legend-state", "active");
+  await expect(sensorChip).not.toHaveAttribute("data-legend-state", "muted");
+  await expect(inspector).toContainText("Strongest:");
 });
 
 test("spectrum band toggle stays hidden when no spectrum data is available", async ({ page }) => {

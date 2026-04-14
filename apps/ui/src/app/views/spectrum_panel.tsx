@@ -138,7 +138,9 @@ function SpectrumPanel(props: { state: SpectrumPanelBridgeState }) {
                     <span class="swatch" style={`--swatch-color: ${item.color}`} />
                     <span class="legend-item__text-group">
                       <span class="legend-item__label">{item.labelText}</span>
-                      <span class="legend-item__meta">{item.detailText ?? ""}</span>
+                      {item.detailText
+                        ? <span class="legend-item__meta">{item.detailText}</span>
+                        : null}
                     </span>
                   </button>
                 ))}

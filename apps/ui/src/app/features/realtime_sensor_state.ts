@@ -127,7 +127,7 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
     const primary = locationCodeForClient(signal.client)
       ? clientLocationText(signal.client)
       : clientDisplayName(signal.client);
-    return `${primary} (${formatInt(signal.db)} dB)`;
+    return `${primary} · ${formatInt(signal.db)} dB`;
   }
 
   function activeCarDisplayState(): ActiveCarDisplayState {

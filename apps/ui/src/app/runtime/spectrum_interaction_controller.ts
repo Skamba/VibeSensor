@@ -164,17 +164,16 @@ export class SpectrumInteractionController {
             ? "inactive"
             : "visible";
         const metric = this.deps.getStrengthDb(entry.id);
-        const detailParts = [this.legendStateText(legendState)];
-        if (typeof metric === "number" && Number.isFinite(metric)) {
-          detailParts.push(this.deps.t("spectrum.legend.sensor_level", {
+        const detailText = typeof metric === "number" && Number.isFinite(metric)
+          ? this.deps.t("spectrum.legend.sensor_level", {
             value: this.formatDb(metric),
-          }));
-        }
+          })
+          : this.legendStateText(legendState);
         return {
           id: entry.id,
           labelText: entry.label,
           color: entry.color,
-          detailText: detailParts.join(" · "),
+          detailText,
           titleText: active
             ? this.deps.t("spectrum.legend.clear_focus")
             : this.deps.t("spectrum.legend.focus_series", { sensor: entry.label }),
