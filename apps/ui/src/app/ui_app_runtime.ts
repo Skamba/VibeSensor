@@ -14,6 +14,10 @@ import { createNullSpectrumPanelView, type SpectrumPanelView } from "./runtime/s
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 import {
+  createNullRealtimeLoggingPanelBridge,
+  type RealtimeLoggingPanelBridge,
+} from "./views/realtime_logging_panel";
+import {
   createNullRealtimeLiveOverviewBridge,
   type RealtimeLiveOverviewBridge,
 } from "./views/realtime_live_overview";
@@ -39,6 +43,7 @@ export class UiAppRuntime {
     shellChromeActions: UiShellChromeActionBridge = createUiShellChromeActionBridge(),
     liveOverview: RealtimeLiveOverviewBridge = createNullRealtimeLiveOverviewBridge(),
     spectrumPanel: SpectrumPanelView = createNullSpectrumPanelView(),
+    loggingPanel: RealtimeLoggingPanelBridge = createNullRealtimeLoggingPanelBridge(),
   ) {
     this.dom = dom;
     this.state = state;
@@ -88,8 +93,8 @@ export class UiAppRuntime {
       runtime: {
         realtimeChrome: {
           setPillState: (el, variant, text) => this.shell.setPillState(el, variant, text),
-          setStatValue: (container, value) => this.shell.setStatValue(container, value),
           liveOverview,
+          loggingPanel,
         },
         view: {
           renderSpectrum: () => this.spectrum.renderSpectrum(),

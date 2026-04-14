@@ -290,14 +290,8 @@ test.afterEach(() => {
   restoreDomGlobals = () => undefined;
 });
 
-test("realtime view bindings emit typed summary and sensor actions and clean up listeners", () => {
-  const startLoggingBtn = createButton();
-  const stopLoggingBtn = createButton();
-  const loggingSummary = createContainer();
+test("realtime view bindings emit typed sensor actions and clean up listeners", () => {
   const sensorsSettingsBody = createContainer("tbody");
-  const summaryActionButton = appendChild(loggingSummary, createButton({
-    attrs: { "data-inline-state-action": "open-speed-source" },
-  }));
   const identifyButton = appendChild(sensorsSettingsBody, createButton({
     classes: ["row-identify"],
     attrs: { "data-client-id": "sensor-1" },
@@ -308,29 +302,14 @@ test("realtime view bindings emit typed summary and sensor actions and clean up 
     value: "front-left",
   }));
 
-  const summaryActions: string[] = [];
   const sensorActions: Array<{ type: string; clientId: string }> = [];
   const locationChanges: Array<{ clientId: string; locationCode: string }> = [];
-  let startCalls = 0;
-  let stopCalls = 0;
 
   const dispose = bindRealtimeFeatureInteractions(
     {
-      startLoggingBtn: startLoggingBtn as unknown as HTMLButtonElement,
-      stopLoggingBtn: stopLoggingBtn as unknown as HTMLButtonElement,
-      loggingSummary: loggingSummary as unknown as HTMLElement,
       sensorsSettingsBody: sensorsSettingsBody as unknown as HTMLElement,
     },
     {
-      onStartLogging: () => {
-        startCalls += 1;
-      },
-      onStopLogging: () => {
-        stopCalls += 1;
-      },
-      onLoggingSummaryAction: (action) => {
-        summaryActions.push(action);
-      },
       onSensorLocationChange: (change) => {
         locationChanges.push(change);
       },
@@ -340,11 +319,6 @@ test("realtime view bindings emit typed summary and sensor actions and clean up 
     },
   );
 
-  startLoggingBtn.click();
-  stopLoggingBtn.click();
-  const summaryEvent = loggingSummary.dispatch("click", {
-    target: summaryActionButton as unknown as EventTarget,
-  });
   sensorsSettingsBody.dispatch("click", {
     target: identifyButton as unknown as EventTarget,
   });
@@ -352,21 +326,14 @@ test("realtime view bindings emit typed summary and sensor actions and clean up 
     target: locationSelect as unknown as EventTarget,
   });
 
-  expect(startCalls).toBe(1);
-  expect(stopCalls).toBe(1);
-  expect(summaryActions).toEqual(["open-speed-source"]);
   expect(sensorActions).toEqual([{ type: "identify", clientId: "sensor-1" }]);
   expect(locationChanges).toEqual([{ clientId: "sensor-1", locationCode: "front-left" }]);
-  expect(summaryEvent.defaultPrevented).toBe(true);
-  expect(summaryEvent.propagationStopped).toBe(true);
 
   dispose();
-  startLoggingBtn.click();
-  loggingSummary.dispatch("click", {
-    target: summaryActionButton as unknown as EventTarget,
+  sensorsSettingsBody.dispatch("click", {
+    target: identifyButton as unknown as EventTarget,
   });
-  expect(startCalls).toBe(1);
-  expect(summaryActions).toEqual(["open-speed-source"]);
+  expect(sensorActions).toEqual([{ type: "identify", clientId: "sensor-1" }]);
 });
 
 test("history table bindings preserve typed row actions and download-raw default navigation", () => {

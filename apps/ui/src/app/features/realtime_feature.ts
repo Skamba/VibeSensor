@@ -9,6 +9,7 @@ import type { AdaptedClient } from "../../transport/live_models";
 import {
   bindRealtimeFeatureInteractions,
 } from "../views/realtime_feature_bindings";
+import type { RealtimeLoggingPanelBridge } from "../views/realtime_logging_panel";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
 import { createRealtimeFeatureWorkflow } from "./realtime_feature_workflow";
 import { createRealtimeFeaturePresenter } from "../views/realtime_feature_presenter";
@@ -30,8 +31,8 @@ export interface RealtimeFeatureDeps extends FeatureDepsBase {
 
 export interface RealtimeFeatureChromePorts {
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
-  setStatValue: (container: HTMLElement | null, value: string | number) => void;
   liveOverview: RealtimeLiveOverviewBridge;
+  loggingPanel: RealtimeLoggingPanelBridge;
 }
 
 export interface RealtimeFeatureSelectionPorts {
@@ -86,15 +87,14 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       return;
     }
     handlersBound = true;
-    workflow.bindHandlers();
-    bindRealtimeFeatureInteractions(ctx.dom, {
+    ctx.chrome.loggingPanel.bindActions({
       onStartLogging: () => {
         void workflow.startLogging();
       },
       onStopLogging: () => {
         void workflow.stopLogging();
       },
-      onLoggingSummaryAction: (action) => {
+      onSummaryAction: (action) => {
         if (action === "open-history") {
           presenter.openHistory();
           return;
@@ -113,6 +113,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         }
         presenter.openSpeedSourceSettings();
       },
+    });
+    workflow.bindHandlers();
+    bindRealtimeFeatureInteractions(ctx.dom, {
       onSensorLocationChange: (change) => {
         void workflow.setClientLocation(change.clientId, change.locationCode);
       },

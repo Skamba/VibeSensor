@@ -120,7 +120,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/history_table_row_renderers.ts` | Focused history row/detail DOM builders that materialize typed history models into table rows and expanded evidence cards |
 | `app/views/history_table_view.ts` | Thin history-table view boundary that renders DOM rows/empty state and decodes typed table interactions |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
-| `app/views/realtime_logging_view.ts` | Dedicated realtime logging/readiness DOM renderer built from typed view-model objects |
+| `app/views/realtime_logging_panel.tsx` | Preact owner for the run-recording card that renders typed logging/readiness models and binds start/stop plus summary CTA actions through a bridge |
 | `app/views/settings_cars_presenter.ts` | Settings-car presenter that owns car-list rendering, active-car guidance, and analysis-control affordances from typed car state |
 | `app/views/settings_speed_source_bindings.ts` | Typed speed-source form bindings that decode radio/input/navigation/device actions away from the workflow |
 | `app/views/settings_speed_source_presenter.ts` | Speed-source presenter that owns summary, validation, and OBD-device-list DOM rendering from typed workflow state |
@@ -132,7 +132,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/update_status_health_view.ts` | Dedicated background-service health card renderer for the update panel |
 | `app/views/update_status_log_view.ts` | Dedicated updater log card renderer for empty, running, and populated log states |
 | `app/views/` | Focused DOM rendering, render-helper composition, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and update panels |
-| `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived panel state, DOM rendering, elapsed-timer sync, and cross-view navigation clicks |
+| `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived live/logging panel state, elapsed-timer sync, and cross-view navigation clicks |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
 | `api.ts` | REST API facade that returns local transport DTOs while `api/types.ts` stays the generated HTTP boundary |
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
@@ -167,10 +167,10 @@ returns only the shell, transport, and startup contracts the runtime needs.
 Realtime now follows that same split explicitly: `realtime_feature.ts` is the
 thin facade, `realtime_feature_workflow.ts` owns the controller-style polling
 and mutation flow, and `realtime_feature_presenter.ts` owns realtime-specific
-DOM rendering and navigation actions. The logging/readiness subsection is now
+panel state plus navigation actions. The logging/readiness subsection is now
 further split so `realtime_logging_view_models.ts` owns the typed summary /
-checklist / readiness models and `realtime_logging_view.ts` owns the DOM
-rendering for those models.
+checklist / readiness models while `realtime_logging_panel.tsx` owns the
+incremental Preact run-recording surface behind a typed bridge.
 `app/views/` still owns focused HTML rendering helpers, the shared low-level DOM
 render helper, typed event-target decoding, and disposable delegated listener
 binders for reusable multi-action panels.
@@ -202,6 +202,11 @@ The spectrum panel now follows the same incremental pattern through
 host, `UiSpectrumController` keeps the chart renderer imperative behind the
 stable `specChart` seam, and interaction/overlay/legend state is pushed into
 the island through a typed bridge instead of direct DOM mutation.
+The run-recording panel now follows that same pattern through
+`app/views/realtime_logging_panel.tsx`: startup mounts the island into the
+recording host, the realtime presenter feeds it typed logging/readiness models,
+and the existing workflow still owns polling plus start/stop recording actions
+behind that bridge.
 
 ## Architecture guardrails
 
