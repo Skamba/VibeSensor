@@ -121,7 +121,11 @@ test("history table presenter builds typed diagnosis models from raw insights", 
 
   expect(rows).toHaveLength(1);
   const row = rows[0];
-  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.source.wheel_tire");
+  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
+  expect(row.summaryHeadline).toBe("history.source.wheel_tire");
+  expect(row.summaryMeta).toContain('report.confidence:{"value":"92%"}');
+  expect(row.summaryMeta).toContain("history.summary_size: 12.3 s");
+  expect(row.summaryMeta).toContain("history.summary_sensor_count: 2");
   expect(row.details?.insights.primary).toMatchObject({
     headline: "history.source.wheel_tire",
     confidence: 'report.confidence:{"value":"92%"}',
@@ -165,6 +169,8 @@ test("history table presenter keeps loading and error state outside the renderer
   });
 
   const row = rows[0];
+  expect(row.summaryHeadline).toBe("history.row_summary_loading");
+  expect(row.summaryMeta).toBe("history.summary_size: 12.0 s");
   expect(row.collapsedAction).toEqual({
     hintText: "history.quick_report_pending",
     pdfLabel: null,
