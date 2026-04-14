@@ -66,9 +66,13 @@ test("settings update tab renders readiness guidance when idle", async ({
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="updateTab"]').click();
-  await expect(page.locator("#updateStatusPanel")).toContainText(
+  await expect(page.locator("#updateOverviewPanel")).toContainText(
     "Ready to start once the Pi has either temporary Wi-Fi credentials or a usable USB internet uplink.",
   );
+  await expect(page.locator("#updateOverviewPanel")).toContainText(
+    "Background service health",
+  );
+  await expect(page.locator("#updateOverviewPanel")).toContainText("1.2.3");
   await expect(page.locator("#updateStatusPanel")).toContainText(
     "Update journey",
   );
@@ -81,8 +85,7 @@ test("settings update tab renders readiness guidance when idle", async ({
   await expect(page.locator("#updateStatusPanel")).toContainText(
     "No updater log yet",
   );
-  await expect(page.locator("#updateStatusPanel")).toContainText("1.2.3");
-  await expect(page.locator("#updateStatusPanel")).toContainText(
+  await expect(page.locator("#updateStatusPanel")).not.toContainText(
     "Background service health",
   );
   await expect(page.locator("#updateStartBtn")).toBeDisabled();

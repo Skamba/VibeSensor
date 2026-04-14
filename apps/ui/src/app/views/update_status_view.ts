@@ -37,15 +37,32 @@ export function renderUpdateStatusPanel(
   renderChildren(
     panel,
     createElementNode("div", {
-      className: "maintenance-pair-grid",
+      className: "maintenance-pair-grid maintenance-pair-grid--focus",
       children: [
-        createUpdateCurrentStatusCard(viewModel.currentStatus),
         createUpdateJourneyCard(viewModel.journey),
+        createUpdateLogCard(viewModel.log),
       ],
     }),
-    viewModel.issues ? createUpdateIssuesCard(viewModel.issues) : null,
     viewModel.latestAttempt ? createUpdateLatestAttemptCard(viewModel.latestAttempt) : null,
-    createUpdateHealthCard(viewModel.health),
-    createUpdateLogCard(viewModel.log),
+    viewModel.issues ? createUpdateIssuesCard(viewModel.issues) : null,
+  );
+}
+
+export function renderUpdateOverviewPanel(
+  panel: HTMLElement | null,
+  viewModel: UpdateStatusPanelViewModel,
+): void {
+  if (!panel) {
+    return;
+  }
+  renderChildren(
+    panel,
+    createElementNode("div", {
+      className: "maintenance-pair-grid maintenance-pair-grid--summary",
+      children: [
+        createUpdateCurrentStatusCard(viewModel.currentStatus),
+        createUpdateHealthCard(viewModel.health),
+      ],
+    }),
   );
 }

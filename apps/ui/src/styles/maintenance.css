@@ -5,6 +5,11 @@
   margin-top: var(--space-4);
 }
 
+.maintenance-layout--compact {
+  gap: var(--space-3);
+  margin-top: 0;
+}
+
 .maintenance-stack {
   min-width: 0;
   display: grid;
@@ -27,6 +32,15 @@
   padding: var(--space-3);
 }
 
+.maintenance-card--hero {
+  border-color: color-mix(in srgb, var(--brand-400) 24%, var(--border));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--menu-hover) 42%, var(--surface-2)),
+    var(--surface-2)
+  );
+}
+
 .maintenance-card__header {
   display: flex;
   align-items: flex-start;
@@ -46,11 +60,23 @@
   gap: var(--space-2);
 }
 
+.maintenance-card__body--hero {
+  gap: var(--space-3);
+}
+
 .maintenance-action-row {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   margin-top: var(--space-3);
+}
+
+.maintenance-pair-grid--summary {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.maintenance-pair-grid--focus {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
 .maintenance-readiness {
