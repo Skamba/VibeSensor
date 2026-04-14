@@ -23,6 +23,7 @@ import {
 import { bindSettingsTabs } from "./settings_tabs_controller";
 import type { CarsListPanelView } from "../views/cars_panel";
 import type { AnalysisPanelView } from "../views/analysis_panel";
+import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
   dom: UiSettingsDom;
@@ -33,6 +34,7 @@ export interface SettingsFeatureDeps extends FeatureDepsBase {
   openCarWizard: () => void;
   carsPanel: CarsListPanelView;
   analysisPanel: AnalysisPanelView;
+  speedSourcePanel: SpeedSourcePanelView;
   view: SettingsFeatureViewPorts;
   realtime: SettingsFeatureRealtimePorts;
 }
@@ -69,6 +71,10 @@ export function createSettingsFeature(
   const { settings, dom: els, shellDom, t, escapeHtml, fmt } = ctx;
   let handlersBound = false;
   let carsModule!: SettingsCarsModule;
+  const speedSourceDom = {
+    ...ctx.speedSourcePanel.dom,
+    settingsTabs: els.settingsTabs,
+  };
 
   function showSettingsSaveError(error: unknown): void {
     ctx.showError(
@@ -95,7 +101,7 @@ export function createSettingsFeature(
   });
   const speedSourceModule: SettingsSpeedSourceModule =
     createSettingsSpeedSourceModule({
-      dom: els,
+      dom: speedSourceDom,
       shellDom,
       t,
       escapeHtml,
@@ -108,7 +114,7 @@ export function createSettingsFeature(
     });
   const gpsStatusModule: SettingsGpsStatusModule =
     createSettingsGpsStatusModule({
-      dom: els,
+      dom: ctx.speedSourcePanel.dom,
       t,
       escapeHtml,
       showError: ctx.showError,
