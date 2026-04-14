@@ -246,10 +246,6 @@ export function createSettingsAnalysisModule(
             value: formatRange(field.guidedMin, field.guidedMax, field.unit),
           },
           {
-            label: t("settings.analysis.allowed_range_label"),
-            value: formatRange(field.hardMin, field.hardMax, field.unit),
-          },
-          {
             label: t("settings.analysis.default_label"),
             value: `${formatSettingValue(field.defaultValue)}${field.unit}`,
           },

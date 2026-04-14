@@ -95,28 +95,38 @@
   line-height: 1.35;
 }
 .settings-field-guidance {
-  min-height: 3.9em;
   line-height: 1.45;
 }
 
 .settings-field-guidance__stack {
-  display: grid;
-  gap: 0.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
 }
 
 .settings-field-guidance__line {
   font-size: 0.8rem;
   color: var(--muted);
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
 }
 
 .settings-field-guidance__label {
   color: var(--pill-muted-text);
   font-weight: 700;
-  margin-right: 0.25rem;
 }
 .settings-actions { display: flex; justify-content: flex-end; gap: var(--space-2); flex-wrap: wrap; }
 .settings-actions .btn,
 .settings-actions button { min-width: 12rem; }
+.settings-actions--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  background: linear-gradient(180deg, transparent, var(--surface) 35%);
+}
 .settings-tabs {
   display: flex; gap: var(--space-1); margin-bottom: var(--space-3);
   border-bottom: 2px solid var(--border);
