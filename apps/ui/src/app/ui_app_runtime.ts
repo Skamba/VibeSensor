@@ -14,6 +14,10 @@ import { createNullSpectrumPanelView, type SpectrumPanelView } from "./runtime/s
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 import {
+  createNullHistoryPanelView,
+  type HistoryPanelView,
+} from "./views/history_table_view";
+import {
   createNullRealtimeLoggingPanelBridge,
   type RealtimeLoggingPanelBridge,
 } from "./views/realtime_logging_panel";
@@ -44,6 +48,7 @@ export class UiAppRuntime {
     liveOverview: RealtimeLiveOverviewBridge = createNullRealtimeLiveOverviewBridge(),
     spectrumPanel: SpectrumPanelView = createNullSpectrumPanelView(),
     loggingPanel: RealtimeLoggingPanelBridge = createNullRealtimeLoggingPanelBridge(),
+    historyPanel: HistoryPanelView = createNullHistoryPanelView(),
   ) {
     this.dom = dom;
     this.state = state;
@@ -96,6 +101,7 @@ export class UiAppRuntime {
           liveOverview,
           loggingPanel,
         },
+        historyPanel,
         view: {
           renderSpectrum: () => this.spectrum.renderSpectrum(),
           renderSpeedReadout: () => this.shell.renderSpeedReadout(),

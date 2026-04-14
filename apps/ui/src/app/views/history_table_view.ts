@@ -1,14 +1,11 @@
-import type { UiHistoryDom } from "../dom/history_dom";
 import type { HistoryEntry } from "../../transport/http_models";
 import type { RunDetail } from "../ui_app_state";
 import {
   closestFromTarget,
   createInlineStatePanelElement,
   createTableEmptyRowElement,
-  getTypedInlineStateAction,
 } from "./dom_helpers";
 import { renderChildren } from "./dom_render";
-import { bindViewEvent, composeViewDisposers, type ViewDisposer } from "./dom_event_bindings";
 import { buildHistoryTableRowsViewModel } from "./history_table_presenters";
 import { createHistoryTableRowElements } from "./history_table_row_renderers";
 
@@ -29,7 +26,6 @@ const HISTORY_TABLE_ACTIONS = [
   "download-raw",
   "delete-run",
 ] as const;
-const HISTORY_INLINE_ACTIONS = ["open-live"] as const;
 
 export type HistoryRunAction = (typeof HISTORY_TABLE_ACTIONS)[number];
 
@@ -43,10 +39,38 @@ export type HistoryTableInteraction =
   | { type: "run-action"; action: HistoryRunAction; runId: string | null }
   | { type: "toggle-run"; runId: string };
 
-export interface HistoryTableBindingHandlers {
+export type HistoryPanelTableRenderModel =
+  | {
+      kind: "empty";
+      t: (key: string, vars?: Record<string, unknown>) => string;
+    }
+  | {
+      kind: "rows";
+      params: HistoryTableViewParams;
+    };
+
+export interface HistoryPanelRenderModel {
+  historySummaryText: string;
+  deleteAllRunsDisabled: boolean;
+  table: HistoryPanelTableRenderModel | null;
+}
+
+export interface HistoryPanelActionHandlers {
   onRefreshHistory(): void;
   onDeleteAllRuns(): void;
   onTableInteraction(action: HistoryTableInteraction): void;
+}
+
+export interface HistoryPanelView {
+  render(model: HistoryPanelRenderModel): void;
+  bindActions(handlers: HistoryPanelActionHandlers): void;
+}
+
+export function createNullHistoryPanelView(): HistoryPanelView {
+  return {
+    render() {},
+    bindActions() {},
+  };
 }
 
 export function renderHistoryEmptyState(
@@ -105,44 +129,4 @@ export function getHistoryTableAction(
 export function getHistoryTableRowRunId(target: EventTarget | null): string | null {
   return closestFromTarget<HTMLElement>(target, 'tr[data-run-row="1"]')
     ?.getAttribute("data-run") ?? null;
-}
-
-export function bindHistoryTableInteractions(
-  dom: Pick<UiHistoryDom, "refreshHistoryBtn" | "deleteAllRunsBtn" | "historyTableBody">,
-  handlers: HistoryTableBindingHandlers,
-): ViewDisposer {
-  return composeViewDisposers(
-    bindViewEvent(dom.refreshHistoryBtn, "click", () => {
-      handlers.onRefreshHistory();
-    }),
-    bindViewEvent(dom.deleteAllRunsBtn, "click", () => {
-      handlers.onDeleteAllRuns();
-    }),
-    bindViewEvent(dom.historyTableBody, "click", (event: MouseEvent) => {
-      const inlineAction = getTypedInlineStateAction(event.target, HISTORY_INLINE_ACTIONS);
-      if (inlineAction) {
-        event.preventDefault();
-        event.stopPropagation();
-        handlers.onTableInteraction({ type: inlineAction });
-        return;
-      }
-      const action = getHistoryTableAction(event.target);
-      if (action) {
-        if (action.action !== "download-raw") {
-          event.preventDefault();
-        }
-        event.stopPropagation();
-        handlers.onTableInteraction({
-          type: "run-action",
-          action: action.action,
-          runId: action.runId,
-        });
-        return;
-      }
-      const runId = getHistoryTableRowRunId(event.target);
-      if (runId) {
-        handlers.onTableInteraction({ type: "toggle-run", runId });
-      }
-    }),
-  );
 }

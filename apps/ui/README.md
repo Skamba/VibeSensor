@@ -117,8 +117,9 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that owns readiness/banner/journey/history/log/select rendering from workflow state |
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
 | `app/views/history_table_presenters.ts` | Presenter builders that turn runs plus loaded insights/preview detail into typed history row and details models |
+| `app/views/history_panel.tsx` | Preact owner for the history panel shell that renders summary/toolbar chrome and binds typed row actions through a bridge |
 | `app/views/history_table_row_renderers.ts` | Focused history row/detail DOM builders that materialize typed history models into table rows and expanded evidence cards |
-| `app/views/history_table_view.ts` | Thin history-table view boundary that renders DOM rows/empty state and decodes typed table interactions |
+| `app/views/history_table_view.ts` | Thin history-panel bridge and DOM row adapter that renders typed empty/table states for the Preact history island |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_panel.tsx` | Preact owner for the run-recording card that renders typed logging/readiness models and binds start/stop plus summary CTA actions through a bridge |
 | `app/views/settings_cars_presenter.ts` | Settings-car presenter that owns car-list rendering, active-car guidance, and analysis-control affordances from typed car state |
@@ -207,6 +208,12 @@ The run-recording panel now follows that same pattern through
 recording host, the realtime presenter feeds it typed logging/readiness models,
 and the existing workflow still owns polling plus start/stop recording actions
 behind that bridge.
+The history view now follows the same pattern through
+`app/views/history_panel.tsx`: startup mounts the panel island into the history
+host, the history feature/modules feed it typed summary and table models, and
+the existing row/detail presenters plus row-renderer adapter still own the
+typed history table body while the page-level toolbar/action wiring lives in
+the island bridge.
 
 ## Architecture guardrails
 

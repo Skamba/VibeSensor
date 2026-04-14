@@ -2,9 +2,9 @@ import type { UiHistoryDom } from "../dom/history_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { HistoryState, RunDetail } from "../ui_app_state";
-import {
-  bindHistoryTableInteractions,
-  type HistoryRunAction,
+import type {
+  HistoryPanelView,
+  HistoryRunAction,
 } from "../views/history_table_view";
 import {
   createHistoryDetailModule,
@@ -21,6 +21,7 @@ import {
 
 export interface HistoryFeatureDeps extends FeatureDepsBase {
   dom: UiHistoryDom;
+  panel: HistoryPanelView;
   shellDom: Pick<UiShellDom, "menuButtons">;
   history: HistoryState;
   getLanguage: () => string;
@@ -40,7 +41,7 @@ export interface HistoryFeature {
 }
 
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
-  const { history, dom: els, shellDom } = ctx;
+  const { history, panel, shellDom } = ctx;
   let handlersBound = false;
   let previewPrefetchToken = 0;
 
@@ -123,7 +124,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       return;
     }
     handlersBound = true;
-    bindHistoryTableInteractions(els, {
+    panel.bindActions({
       onRefreshHistory: () => {
         void refreshHistory();
       },
