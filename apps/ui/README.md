@@ -83,8 +83,8 @@ source-of-truth export commands remain the only writers for those files.
 | File | Purpose |
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
-| `app/start_ui_app.ts` | CSS-aware startup entry that constructs and starts the app runtime |
-| `app/ui_runtime_dom.ts` | Startup bundle that resolves feature-scoped DOM locators and fails early when required feature anchors are missing |
+| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact panel islands, then constructs and starts the app runtime |
+| `app/ui_runtime_dom.ts` | Startup bundle that resolves the remaining non-island feature-scoped DOM locators and fails early when required feature anchors are missing |
 | `app/dom/` | Feature-scoped DOM locator modules for shell, spectrum, realtime, history, analysis, settings, cars, update, and ESP flash surfaces |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
 | `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
@@ -111,6 +111,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
 | `app/views/internet_panel.tsx` | Preact owner for the internet settings shell that mounts the USB-status plus transport/readiness surface and exposes the bridge consumed by the update feature |
+| `app/views/update_panel.tsx` | Preact owner for the update settings shell that mounts the update controls and status host while exposing the bridge consumed by the update feature |
 | `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that mounts the full table/card chrome and exposes the table-body bridge consumed by the realtime feature |
 | `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that mounts the full tab surface and exposes the shared typed bridge consumed by the speed-source and GPS-status modules |
 | `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that mounts the list shell and wizard chrome, then exposes typed list and wizard bridges |
@@ -131,8 +132,8 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/settings_car_list_view.ts` | Thin settings-car table renderer and action decoder reused by the car-management island for the saved-car table body |
 | `app/views/settings_speed_source_bindings.ts` | Typed speed-source form bindings that decode radio/input/navigation/device actions away from the workflow |
 | `app/views/settings_speed_source_presenter.ts` | Speed-source presenter that owns summary, validation, and OBD-device-list DOM rendering from typed workflow state |
-| `app/views/update_feature_presenter.ts` | Update presenter that owns readiness derivation, transport/control DOM state, and typed handoff into the update status/internet panels |
-| `app/views/update_status_view.ts` | Thin update-status coordinator that assembles typed section models into the settings update panel |
+| `app/views/update_feature_presenter.ts` | Update presenter that owns readiness derivation, transport/control DOM state, and typed handoff into the island-owned update and internet panel bridges |
+| `app/views/update_status_view.ts` | Thin update-status coordinator that assembles typed section models into the island-owned settings update panel |
 | `app/views/update_status_view_models.ts` | Typed update-status section builders for current status, journey, issues, attempt history, health, and log cards |
 | `app/views/update_status_overview_view.ts` | Focused current-status and journey card renderers built from typed section inputs |
 | `app/views/update_status_history_view.ts` | Focused issues and latest-attempt card renderers for update history and failure context |

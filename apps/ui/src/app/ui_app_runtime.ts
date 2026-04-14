@@ -36,6 +36,7 @@ import type { CarsPanelView } from "./views/cars_panel";
 import type { AnalysisPanelView } from "./views/analysis_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
+import type { UpdatePanelView } from "./views/update_panel";
 
 export class UiAppRuntime {
   private readonly dom: UiRuntimeDom;
@@ -63,6 +64,7 @@ export class UiAppRuntime {
     carsPanel: CarsPanelView,
     analysisPanel: AnalysisPanelView,
     internetPanel: InternetPanelView,
+    updatePanel: UpdatePanelView,
     sensorsPanel: SensorsPanelView,
     speedSourcePanel: SpeedSourcePanelView,
   ) {
@@ -100,7 +102,6 @@ export class UiAppRuntime {
         history: this.dom.history,
         settings: this.dom.settings,
         cars: this.dom.cars,
-        update: this.dom.update,
         espFlash: this.dom.espFlash,
       },
       shared: {
@@ -115,6 +116,7 @@ export class UiAppRuntime {
         analysisPanel,
         carsPanel,
         internetPanel,
+        updatePanel,
         sensorsPanel,
         speedSourcePanel,
         realtimeChrome: {
