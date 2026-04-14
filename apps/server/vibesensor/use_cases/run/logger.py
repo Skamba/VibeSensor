@@ -77,6 +77,7 @@ class RunRecorder:
         self.gps_monitor = gps_monitor
         self.processor = processor
         self._settings_reader = settings_reader
+        self._sensor_metadata_reader = sensor_metadata_reader
         self.sensor_model = config.sensor_model.strip() or "unknown"
         self.default_sample_rate_hz = int(config.default_sample_rate_hz)
         self.fft_window_size_samples = int(config.fft_window_size_samples)
@@ -220,6 +221,7 @@ class RunRecorder:
                         registry=self.registry,
                         run_context=self._live_run_context_snapshot(),
                         speed_provider=self.gps_monitor,
+                        sensor_metadata_reader=self._sensor_metadata_reader,
                         now_mono=time.monotonic(),
                     )
                 )
