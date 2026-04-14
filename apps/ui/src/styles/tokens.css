@@ -46,8 +46,13 @@
   --pill-muted-text: #4a4d5a;
   --pill-ok-bg: #dff4e8;
   --pill-ok-text: #0b6a3d;
+  --pill-warn-bg: #fff3cd;
+  --pill-warn-text: #8a6d1d;
   --pill-bad-bg: #fae3e3;
   --pill-bad-text: #8c2b2b;
+  --warning-surface: #fff8e5;
+  --warning-border: #e6cf9b;
+  --warning-text: #8a6d1d;
   --capture-readiness-pass-surface: #f4fbf7;
   --capture-readiness-pass-border: #c9ead7;
   --capture-readiness-warn-surface: #fff9ee;

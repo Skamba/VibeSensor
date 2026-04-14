@@ -6,8 +6,103 @@ import {
   fulfillJson,
   installCommonRoutes,
   installFakeWebSocket,
+  readSemanticToneStyles,
   requestPath,
 } from "./smoke.helpers";
+
+test("dark mode warning pills use semantic theme tokens in Live and Cars", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      const method = route.request().method();
+      if (path === "/api/settings/cars" && method === "GET") {
+        await fulfillJson(route, {
+          cars: [
+            {
+              id: "car-1",
+              name: "Needs Work",
+              type: "coupe",
+              aspects: {
+                tire_width_mm: 245,
+              },
+            },
+          ],
+          active_car_id: null,
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      start_time_utc: null,
+      samples_written: 0,
+      samples_dropped: 0,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+      capture_readiness: buildCaptureReadiness({
+        isReady: false,
+        sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+        reference: { state: "fail", reasonKey: "active_car_missing" },
+        speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+        overall: {
+          state: "fail",
+          reasonKey: "capture_blocked",
+          details: { blocking_check: "reference_ready" },
+        },
+      }),
+    });
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "001122334455",
+          name: "Front Left",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 12,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "front_left_wheel",
+          mac_address: "001122334455",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: { clients: {} },
+    },
+  });
+
+  await page.goto("/");
+  const liveHealth = page.locator("#liveRunHealth");
+  await expect(liveHealth).toHaveText("Needs attention");
+  const liveHealthStyles = await readSemanticToneStyles(liveHealth, {
+    surfaceVar: "--pill-warn-bg",
+    textVar: "--pill-warn-text",
+  });
+  expect(liveHealthStyles.backgroundColor).toBe(liveHealthStyles.expectedBackgroundColor);
+  expect(liveHealthStyles.color).toBe(liveHealthStyles.expectedColor);
+
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  const readinessPill = page.locator(
+    '#carListBody tr[data-car-id="car-1"] .car-readiness-pill[data-state="incomplete"]',
+  );
+  await expect(readinessPill).toHaveText("Needs specs");
+  const readinessStyles = await readSemanticToneStyles(readinessPill, {
+    surfaceVar: "--pill-warn-bg",
+    textVar: "--pill-warn-text",
+  });
+  expect(readinessStyles.backgroundColor).toBe(readinessStyles.expectedBackgroundColor);
+  expect(readinessStyles.color).toBe(readinessStyles.expectedColor);
+});
 
 test("routes no-car blockers to the add-car flow from Live and Cars", async ({ page }) => {
   let analysisPutCalls = 0;

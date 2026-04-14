@@ -425,8 +425,8 @@
   border: 1px solid var(--border);
 }
 .car-readiness-pill[data-state="incomplete"] {
-  background: #fff3cd;
-  color: #8a6d1d;
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-text);
 }
 .car-created-pill {
   background: rgba(22, 163, 74, 0.12);

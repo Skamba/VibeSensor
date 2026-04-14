@@ -41,14 +41,14 @@
 }
 
 .stat[data-variant="warn"] {
-  border: 1px solid rgba(183, 121, 31, 0.28);
+  border: 1px solid var(--warning-border);
   border-radius: var(--radius-sm);
-  background: #fff8e5;
+  background: var(--warning-surface);
   padding-inline: var(--space-3);
 }
 
 .stat[data-variant="warn"] .stat__label {
-  color: #8a6d1d;
+  color: var(--warning-text);
 }
 
 .live-sensor-roster__header {
@@ -385,7 +385,7 @@
   color: var(--success-700);
 }
 .capture-readiness__item[data-readiness-state="warn"] .capture-readiness__state {
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .capture-readiness__item[data-readiness-state="fail"] .capture-readiness__state {
   color: var(--danger-700);

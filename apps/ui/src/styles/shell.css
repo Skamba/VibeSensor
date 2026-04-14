@@ -164,9 +164,9 @@
 .connection-banner[hidden] { display: none; }
 
 .connection-banner[data-variant="warn"] {
-  background: #fff3cd;
-  color: #8a6d1d;
-  border-bottom-color: #ffe69c;
+  background: var(--warning-surface);
+  color: var(--warning-text);
+  border-bottom-color: var(--warning-border);
 }
 
 .connection-banner[data-variant="bad"] {

@@ -34,8 +34,13 @@
     --pill-muted-text: #9b9da8;
     --pill-ok-bg: rgba(74, 222, 128, 0.14);
     --pill-ok-text: #4ade80;
+    --pill-warn-bg: rgba(251, 191, 36, 0.16);
+    --pill-warn-text: #fbbf24;
     --pill-bad-bg: rgba(248, 113, 113, 0.14);
     --pill-bad-text: #f87171;
+    --warning-surface: rgba(251, 191, 36, 0.14);
+    --warning-border: rgba(251, 191, 36, 0.34);
+    --warning-text: #fbbf24;
     --capture-readiness-pass-surface: rgba(74, 222, 128, 0.14);
     --capture-readiness-pass-border: rgba(74, 222, 128, 0.3);
     --capture-readiness-warn-surface: rgba(251, 191, 36, 0.14);
