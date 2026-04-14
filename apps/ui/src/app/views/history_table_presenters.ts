@@ -322,7 +322,7 @@ function buildCollapsedAction(
   detail: RunDetail,
   t: PresenterParams["t"],
 ): HistoryCollapsedActionViewModel {
-  const reportReady = run.status === "complete" && (detail.insights !== null || detail.preview !== null);
+  const reportReady = run.status === "complete";
   if (!reportReady) {
     return {
       hintText: t("history.quick_report_pending"),
