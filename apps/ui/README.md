@@ -188,6 +188,10 @@ Preact is now available for incremental migration work, but the current DOM
 runtime remains the live product path. New panel-by-panel migrations should
 mount Preact into existing hosts through `app/runtime/ui_preact_mount.ts`
 instead of introducing ad hoc framework entrypoints.
+The shell chrome owner path now starts at `app/runtime/ui_shell_chrome.tsx`,
+which mounts the shell island before `ui_runtime_dom.ts` resolves the shared
+shell selectors; the legacy shell runtime still owns state updates and
+cross-feature refresh behavior behind that rendered surface.
 
 ## Architecture guardrails
 
