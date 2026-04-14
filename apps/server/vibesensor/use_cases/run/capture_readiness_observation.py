@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from vibesensor.domain import RunContextSnapshot
-from vibesensor.shared.ports import ClientTracker, TrackedClient
+from vibesensor.shared.ports import ClientTracker, SensorMetadataReader, TrackedClient
+from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
+from vibesensor.shared.types.sensor_config import SensorConfigPayload
 
 __all__ = [
     "CaptureReadinessObservation",
@@ -88,10 +91,12 @@ def observe_capture_readiness(
     registry: ClientTracker,
     run_context: RunContextSnapshot,
     speed_provider: object,
+    sensor_metadata_reader: SensorMetadataReader | None = None,
     now_mono: float | None = None,
 ) -> CaptureReadinessObservation:
     observed_at_mono_s = time.monotonic() if now_mono is None else now_mono
-    active_sensors = _active_sensors(registry)
+    sensors_by_mac = sensor_metadata_reader.get_sensors() if sensor_metadata_reader else {}
+    active_sensors = _active_sensors(registry, sensors_by_mac=sensors_by_mac)
     return CaptureReadinessObservation(
         observed_at_mono_s=observed_at_mono_s,
         active_sensors=active_sensors,
@@ -101,19 +106,33 @@ def observe_capture_readiness(
     )
 
 
-def _active_sensors(registry: ClientTracker) -> tuple[CaptureReadinessSensorObservation, ...]:
+def _active_sensors(
+    registry: ClientTracker,
+    *,
+    sensors_by_mac: Mapping[str, SensorConfigPayload],
+) -> tuple[CaptureReadinessSensorObservation, ...]:
     active_sensors: list[CaptureReadinessSensorObservation] = []
     for client_id in registry.active_client_ids():
         client = registry.get(client_id)
         if client is not None:
-            active_sensors.append(_sensor_observation(client))
+            active_sensors.append(_sensor_observation(client, sensors_by_mac=sensors_by_mac))
     return tuple(active_sensors)
 
 
-def _sensor_observation(client: TrackedClient) -> CaptureReadinessSensorObservation:
+def _sensor_observation(
+    client: TrackedClient,
+    *,
+    sensors_by_mac: Mapping[str, SensorConfigPayload],
+) -> CaptureReadinessSensorObservation:
+    _, location_code = resolve_sensor_presentation(
+        sensor_id=client.client_id,
+        sensors_by_mac=sensors_by_mac,
+        fallback_name=str(getattr(client, "name", "") or ""),
+        fallback_location_code=str(client.location_code),
+    )
     return CaptureReadinessSensorObservation(
         client_id=client.client_id,
-        location_code=str(client.location_code),
+        location_code=location_code,
         frames_dropped=int(getattr(client, "frames_dropped", 0)),
         queue_overflow_drops=int(getattr(client, "queue_overflow_drops", 0)),
         server_queue_drops=int(getattr(client, "server_queue_drops", 0)),
