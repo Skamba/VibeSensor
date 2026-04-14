@@ -5,6 +5,7 @@ import type {
   UsbInternetStatusPayload,
 } from "../../transport/http_models";
 import type { UiUpdateDom } from "../dom/update_dom";
+import type { InternetPanelDom } from "./internet_panel";
 import {
   formatUsbInternetSummary,
   renderInternetStatusPanel,
@@ -45,6 +46,7 @@ interface UpdateFeatureActionSummary {
 
 export interface UpdateFeaturePresenterDeps {
   dom: UiUpdateDom;
+  internetDom: InternetPanelDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
 }
@@ -60,7 +62,7 @@ export interface UpdateFeaturePresenter {
 export function createUpdateFeaturePresenter(
   ctx: UpdateFeaturePresenterDeps,
 ): UpdateFeaturePresenter {
-  const { dom: els, t, escapeHtml } = ctx;
+  const { dom: updateEls, internetDom, t, escapeHtml } = ctx;
 
   let passwordVisible = false;
   let lastActionSummary: UpdateFeatureActionSummary | null = null;
@@ -71,24 +73,25 @@ export function createUpdateFeaturePresenter(
     if (state.updateState === "running") {
       return state.updateTransport;
     }
-    if (state.internetStatus.usable && els.updateTransportUsbRadio?.checked) {
+    if (
+      state.internetStatus.usable &&
+      internetDom.updateTransportUsbRadio?.checked
+    ) {
       return "usb_internet";
     }
     return "wifi";
   }
 
-  function hasBlockingHealthIssue(
-    state: UpdateFeatureRenderState,
-  ): boolean {
+  function hasBlockingHealthIssue(state: UpdateFeatureRenderState): boolean {
     const health = state.healthStatus;
     if (!health) {
       return false;
     }
     return (
-      health.status === "degraded"
-      || health.persistence.write_error != null
-      || health.startup_error != null
-      || health.db_corruption_detected === true
+      health.status === "degraded" ||
+      health.persistence.write_error != null ||
+      health.startup_error != null ||
+      health.db_corruption_detected === true
     );
   }
 
@@ -98,7 +101,7 @@ export function createUpdateFeaturePresenter(
     const transport = selectedTransport(state);
     const usingUsb = transport === "usb_internet";
     const isRunning = state.updateState === "running";
-    const ssid = els.updateSsidInput?.value.trim() ?? "";
+    const ssid = internetDom.updateSsidInput?.value.trim() ?? "";
     const usbInterface = state.internetStatus.interface_name;
     const readinessItems = [
       {
@@ -113,10 +116,13 @@ export function createUpdateFeaturePresenter(
             label: t("settings.update.readiness.item.connection"),
             detail: state.internetStatus.usable
               ? t("settings.update.readiness.item.connection_usb_ready", {
-                  interface: usbInterface || t("settings.update.transport.usb_title"),
+                  interface:
+                    usbInterface || t("settings.update.transport.usb_title"),
                 })
               : t("settings.update.readiness.item.connection_usb_blocked"),
-            state: state.internetStatus.usable ? ("ready" as const) : ("blocked" as const),
+            state: state.internetStatus.usable
+              ? ("ready" as const)
+              : ("blocked" as const),
           }
         : {
             label: t("settings.update.readiness.item.connection"),
@@ -133,8 +139,12 @@ export function createUpdateFeaturePresenter(
         state: "blocked",
       });
     }
-    const hasBlockedItem = readinessItems.some((item) => item.state === "blocked");
-    const failure = state.updateStatus ? getUpdateFailureSummary(state.updateStatus, t) : null;
+    const hasBlockedItem = readinessItems.some(
+      (item) => item.state === "blocked",
+    );
+    const failure = state.updateStatus
+      ? getUpdateFailureSummary(state.updateStatus, t)
+      : null;
     const isRecoveryState = failure !== null;
     const stateLabel = isRecoveryState
       ? hasBlockedItem
@@ -166,13 +176,17 @@ export function createUpdateFeaturePresenter(
             detail: hasBlockedItem
               ? t("settings.update.recovery.item.next_step_blocked")
               : `${failure.recoveryTitle} — ${failure.recoveryDetail}`,
-            state: hasBlockedItem ? ("blocked" as const) : ("attention" as const),
+            state: hasBlockedItem
+              ? ("blocked" as const)
+              : ("attention" as const),
           },
         ]
       : readinessItems;
     return {
       canStart: !isRunning && !hasBlockedItem,
-      startLabel: t(isRecoveryState ? "settings.update.retry" : "settings.update.start"),
+      startLabel: t(
+        isRecoveryState ? "settings.update.retry" : "settings.update.start",
+      ),
       transport,
       panelModel: {
         title: t(
@@ -192,7 +206,13 @@ export function createUpdateFeaturePresenter(
                 : "settings.update.readiness.summary_ready",
         ),
         stateLabel,
-        stateVariant: isRecoveryState ? "bad" : isRunning ? "warn" : hasBlockedItem ? "bad" : "ok",
+        stateVariant: isRecoveryState
+          ? "bad"
+          : isRunning
+            ? "warn"
+            : hasBlockedItem
+              ? "bad"
+              : "ok",
         items,
       },
     };
@@ -202,55 +222,56 @@ export function createUpdateFeaturePresenter(
     const usbAvailable = state.internetStatus.usable;
     const controlsLocked = state.updateState === "running";
     const usingUsb = selectedTransport(state) === "usb_internet";
-    if (els.updateTransportOptions) {
-      els.updateTransportOptions.hidden = false;
+    if (internetDom.updateTransportOptions) {
+      internetDom.updateTransportOptions.hidden = false;
     }
-    if (els.updateUsbTransportSummary) {
-      els.updateUsbTransportSummary.textContent = usbAvailable
+    if (internetDom.updateUsbTransportSummary) {
+      internetDom.updateUsbTransportSummary.textContent = usbAvailable
         ? formatUsbInternetSummary(state.internetStatus, t)
         : t("settings.update.transport.usb_summary_unavailable");
     }
     if (!usbAvailable && !controlsLocked) {
-      if (els.updateTransportWifiRadio) {
-        els.updateTransportWifiRadio.checked = true;
+      if (internetDom.updateTransportWifiRadio) {
+        internetDom.updateTransportWifiRadio.checked = true;
       }
-      if (els.updateTransportUsbRadio) {
-        els.updateTransportUsbRadio.checked = false;
+      if (internetDom.updateTransportUsbRadio) {
+        internetDom.updateTransportUsbRadio.checked = false;
       }
     }
-    if (els.updateTransportWifiRadio) {
-      els.updateTransportWifiRadio.disabled = controlsLocked;
+    if (internetDom.updateTransportWifiRadio) {
+      internetDom.updateTransportWifiRadio.disabled = controlsLocked;
     }
-    if (els.updateTransportUsbRadio) {
-      els.updateTransportUsbRadio.disabled = controlsLocked || !usbAvailable;
+    if (internetDom.updateTransportUsbRadio) {
+      internetDom.updateTransportUsbRadio.disabled =
+        controlsLocked || !usbAvailable;
     }
     if (controlsLocked) {
-      if (els.updateTransportWifiRadio) {
-        els.updateTransportWifiRadio.checked = !usingUsb;
+      if (internetDom.updateTransportWifiRadio) {
+        internetDom.updateTransportWifiRadio.checked = !usingUsb;
       }
-      if (els.updateTransportUsbRadio) {
-        els.updateTransportUsbRadio.checked = usingUsb;
+      if (internetDom.updateTransportUsbRadio) {
+        internetDom.updateTransportUsbRadio.checked = usingUsb;
       }
     }
-    setChoiceCardState(els.updateTransportChoiceWifi, {
+    setChoiceCardState(internetDom.updateTransportChoiceWifi, {
       selected: !usingUsb,
     });
-    setChoiceCardState(els.updateTransportChoiceUsb, {
+    setChoiceCardState(internetDom.updateTransportChoiceUsb, {
       selected: usingUsb,
       disabled: !usbAvailable && !controlsLocked,
     });
-    if (els.updateWifiFields) {
-      els.updateWifiFields.hidden = usingUsb;
+    if (internetDom.updateWifiFields) {
+      internetDom.updateWifiFields.hidden = usingUsb;
     }
-    if (els.updateTransportNote) {
-      els.updateTransportNote.textContent = t(
+    if (internetDom.updateTransportNote) {
+      internetDom.updateTransportNote.textContent = t(
         usingUsb
           ? "settings.update.preflight_note_usb"
           : "settings.update.preflight_note_wifi",
       );
     }
-    if (els.updateDetailsCaption) {
-      els.updateDetailsCaption.textContent = t(
+    if (internetDom.updateDetailsCaption) {
+      internetDom.updateDetailsCaption.textContent = t(
         usingUsb
           ? "settings.update.details_caption_usb"
           : "settings.update.details_caption_wifi",
@@ -263,21 +284,21 @@ export function createUpdateFeaturePresenter(
     actionSummary: UpdateFeatureActionSummary,
   ): void {
     const isRunning = state.updateState === "running";
-    els.updateStartBtn.textContent = actionSummary.startLabel;
-    els.updateStartBtn.hidden = isRunning;
-    els.updateStartBtn.disabled = isRunning || !actionSummary.canStart;
-    if (els.updateCancelBtn) {
-      els.updateCancelBtn.hidden = !isRunning;
-      els.updateCancelBtn.disabled = !isRunning;
+    updateEls.updateStartBtn.textContent = actionSummary.startLabel;
+    updateEls.updateStartBtn.hidden = isRunning;
+    updateEls.updateStartBtn.disabled = isRunning || !actionSummary.canStart;
+    if (updateEls.updateCancelBtn) {
+      updateEls.updateCancelBtn.hidden = !isRunning;
+      updateEls.updateCancelBtn.disabled = !isRunning;
     }
-    if (els.updateSsidInput) {
-      els.updateSsidInput.disabled = isRunning;
+    if (internetDom.updateSsidInput) {
+      internetDom.updateSsidInput.disabled = isRunning;
     }
-    if (els.updatePasswordInput) {
-      els.updatePasswordInput.disabled = isRunning;
+    if (internetDom.updatePasswordInput) {
+      internetDom.updatePasswordInput.disabled = isRunning;
     }
-    if (els.updateTogglePasswordBtn) {
-      els.updateTogglePasswordBtn.disabled = isRunning;
+    if (internetDom.updateTogglePasswordBtn) {
+      internetDom.updateTogglePasswordBtn.disabled = isRunning;
     }
   }
 
@@ -285,33 +306,39 @@ export function createUpdateFeaturePresenter(
     state: UpdateFeatureRenderState,
     actionSummary: UpdateFeatureActionSummary,
   ): void {
-    if (els.updateReadinessSummary) {
-      els.updateReadinessSummary.innerHTML = renderMaintenanceReadinessPanel(
-        actionSummary.panelModel,
-        escapeHtml,
-      );
+    if (internetDom.updateReadinessSummary) {
+      internetDom.updateReadinessSummary.innerHTML =
+        renderMaintenanceReadinessPanel(actionSummary.panelModel, escapeHtml);
     }
     if (
-      els.updateStatusPanel
-      && state.updateStatus
-      && state.healthStatus
+      updateEls.updateStatusPanel &&
+      state.updateStatus &&
+      state.healthStatus
     ) {
       renderUpdateStatusPanel(
-        els.updateStatusPanel,
-        buildUpdateStatusPanelViewModel(state.updateStatus, state.healthStatus, {
-          t,
-          selectedTransport: actionSummary.transport,
-        }),
+        updateEls.updateStatusPanel,
+        buildUpdateStatusPanelViewModel(
+          state.updateStatus,
+          state.healthStatus,
+          {
+            t,
+            selectedTransport: actionSummary.transport,
+          },
+        ),
       );
     }
     if (
-      els.internetStatusPanel
-      && state.updateStatus
-      && state.healthStatus
+      internetDom.internetStatusPanel &&
+      state.updateStatus &&
+      state.healthStatus
     ) {
-      renderInternetStatusPanel(els.internetStatusPanel, state.internetStatus, {
-        t,
-      });
+      renderInternetStatusPanel(
+        internetDom.internetStatusPanel,
+        state.internetStatus,
+        {
+          t,
+        },
+      );
     }
   }
 
@@ -329,8 +356,8 @@ export function createUpdateFeaturePresenter(
     const actionSummary = lastActionSummary ?? buildActionSummary(state);
     return {
       canStart: actionSummary.canStart,
-      password: els.updatePasswordInput?.value ?? "",
-      ssid: els.updateSsidInput?.value.trim() ?? "",
+      password: internetDom.updatePasswordInput?.value ?? "",
+      ssid: internetDom.updateSsidInput?.value.trim() ?? "",
       transport: actionSummary.transport,
       usbAvailable: state.internetStatus.usable,
     };
@@ -338,11 +365,13 @@ export function createUpdateFeaturePresenter(
 
   function togglePassword(): void {
     passwordVisible = !passwordVisible;
-    if (els.updatePasswordInput) {
-      els.updatePasswordInput.type = passwordVisible ? "text" : "password";
+    if (internetDom.updatePasswordInput) {
+      internetDom.updatePasswordInput.type = passwordVisible
+        ? "text"
+        : "password";
     }
-    if (els.updateTogglePasswordBtn) {
-      const span = els.updateTogglePasswordBtn.querySelector("span");
+    if (internetDom.updateTogglePasswordBtn) {
+      const span = internetDom.updateTogglePasswordBtn.querySelector("span");
       if (span) {
         span.textContent = t(
           passwordVisible
@@ -358,11 +387,11 @@ export function createUpdateFeaturePresenter(
     readStartIntent,
     togglePassword,
     focusSsidInput() {
-      els.updateSsidInput?.focus();
+      internetDom.updateSsidInput?.focus();
     },
     clearPassword() {
-      if (els.updatePasswordInput) {
-        els.updatePasswordInput.value = "";
+      if (internetDom.updatePasswordInput) {
+        internetDom.updatePasswordInput.value = "";
       }
     },
   };

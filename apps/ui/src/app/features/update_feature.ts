@@ -2,9 +2,11 @@ import type { UiUpdateDom } from "../dom/update_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createUpdateFeatureWorkflow } from "./update_feature_workflow";
 import { createUpdateFeaturePresenter } from "../views/update_feature_presenter";
+import type { InternetPanelView } from "../views/internet_panel";
 
 export interface UpdateFeatureDeps extends FeatureDepsBase {
   dom: UiUpdateDom;
+  internetPanel: InternetPanelView;
 }
 
 export interface UpdateFeature {
@@ -16,6 +18,7 @@ export interface UpdateFeature {
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const presenter = createUpdateFeaturePresenter({
     dom: ctx.dom,
+    internetDom: ctx.internetPanel.dom,
     t: ctx.t,
     escapeHtml: ctx.escapeHtml,
   });
@@ -33,21 +36,32 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     handlersBound = true;
     ctx.dom.updateStartBtn.addEventListener("click", () => {
       workflow.renderCurrentState();
-      void workflow.startUpdate(presenter.readStartIntent(workflow.getRenderState()));
+      void workflow.startUpdate(
+        presenter.readStartIntent(workflow.getRenderState()),
+      );
     });
     ctx.dom.updateCancelBtn?.addEventListener("click", () => {
       void workflow.cancelUpdate();
     });
-    ctx.dom.updateTogglePasswordBtn?.addEventListener("click", () => {
-      presenter.togglePassword();
-    });
-    ctx.dom.updateTransportWifiRadio?.addEventListener("change", () => {
-      workflow.renderCurrentState();
-    });
-    ctx.dom.updateTransportUsbRadio?.addEventListener("change", () => {
-      workflow.renderCurrentState();
-    });
-    ctx.dom.updateSsidInput?.addEventListener("input", () => {
+    ctx.internetPanel.dom.updateTogglePasswordBtn?.addEventListener(
+      "click",
+      () => {
+        presenter.togglePassword();
+      },
+    );
+    ctx.internetPanel.dom.updateTransportWifiRadio?.addEventListener(
+      "change",
+      () => {
+        workflow.renderCurrentState();
+      },
+    );
+    ctx.internetPanel.dom.updateTransportUsbRadio?.addEventListener(
+      "change",
+      () => {
+        workflow.renderCurrentState();
+      },
+    );
+    ctx.internetPanel.dom.updateSsidInput?.addEventListener("input", () => {
       workflow.renderCurrentState();
     });
     workflow.renderCurrentState();
