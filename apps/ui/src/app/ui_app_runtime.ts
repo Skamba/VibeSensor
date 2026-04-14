@@ -10,6 +10,7 @@ import {
 } from "./runtime/ui_shell_chrome";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import { UiShellController } from "./runtime/ui_shell_controller";
+import { createNullSpectrumPanelView, type SpectrumPanelView } from "./runtime/spectrum_panel_view";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 import {
@@ -37,6 +38,7 @@ export class UiAppRuntime {
     state: AppState = createAppState(),
     shellChromeActions: UiShellChromeActionBridge = createUiShellChromeActionBridge(),
     liveOverview: RealtimeLiveOverviewBridge = createNullRealtimeLiveOverviewBridge(),
+    spectrumPanel: SpectrumPanelView = createNullSpectrumPanelView(),
   ) {
     this.dom = dom;
     this.state = state;
@@ -49,6 +51,7 @@ export class UiAppRuntime {
     this.spectrum = new UiSpectrumController({
       state: this.state,
       dom: this.dom.spectrum,
+      panel: spectrumPanel,
       t: (key, vars) => this.shell.t(key, vars),
     });
     this.shell.attachSpectrumHooks({

@@ -13,26 +13,7 @@
         <div class="dashboard-grid">
           <div id="liveOverviewRoot" class="panel card dashboard-grid__overview"></div>
 
-          <div class="panel card dashboard-grid__main">
-            <div class="card__header">
-              <div class="card__title" data-i18n="chart.spectrum_title">Multi-Sensor Blended Spectrum</div>
-            </div>
-            <div id="specChartWrap" class="spectrum-wrap">
-              <div id="specChart"></div>
-              <div id="spectrumOverlay" class="empty-state" hidden>Waiting for sensor data...</div>
-            </div>
-            <div class="spectrum-controls-panel">
-              <div class="spectrum-toolbar">
-                <div class="card__subtle spectrum-toolbar__hint" data-i18n="spectrum.controls_hint">Use the trace chips to isolate one sensor at a time. Turn on reference bands when you need order context.</div>
-                <div class="spectrum-toolbar__bands">
-                  <button id="spectrumBandToggle" class="btn spectrum-toolbar__toggle" type="button" aria-pressed="false" hidden>Show reference bands</button>
-                  <div id="bandLegend" class="legend band-legend" hidden></div>
-                </div>
-              </div>
-              <div id="spectrumInspector" class="spectrum-inspector" aria-live="polite">Use the trace chips or hover the chart to inspect the current peak.</div>
-              <div id="legend" class="legend"></div>
-            </div>
-          </div>
+          <div id="spectrumPanelRoot" class="panel card dashboard-grid__main"></div>
 
           <div class="panel card dashboard-grid__controls">
             <div class="card__header card__header--stack">
