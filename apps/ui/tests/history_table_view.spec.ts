@@ -150,10 +150,13 @@ test("renderHistoryTable builds rows and expanded details from typed history mod
   const toggle = expectSingleByAttribute(root, "data-run-toggle", "details");
   const zone = expectSingleByAttribute(root, "data-location-key", "front-right wheel");
   const rawExport = expectSingleByAttribute(root, "data-run-action", "download-raw");
+  const mainColumn = findByClass(root, "history-main-column");
 
   expect(row.getAttribute("data-run")).toBe("run-001");
   expect(toggle.getAttribute("aria-expanded")).toBe("true");
   expect(findByClass(root, "history-details-row")).toHaveLength(1);
+  expect(mainColumn).toHaveLength(1);
+  expect(findByClass(mainColumn[0], "history-details-footer")).toHaveLength(1);
   expect(findByClass(root, "history-warning-banner")).toHaveLength(1);
   expect(zone.textContent).toContain("32.0 dB");
   expect(findByClass(root, "history-findings-chip__label").map((label) => label.textContent))
