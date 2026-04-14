@@ -1,8 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+import { getUiAnalysisPanelHost } from "../src/app/dom/analysis_dom";
 import { getUiCarsPanelHost } from "../src/app/dom/cars_dom";
 import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
-import { getUiLiveOverviewHost, getUiLoggingPanelHost } from "../src/app/dom/realtime_dom";
+import {
+  getUiLiveOverviewHost,
+  getUiLoggingPanelHost,
+} from "../src/app/dom/realtime_dom";
 import { getUiSpectrumPanelHost } from "../src/app/dom/spectrum_dom";
 import { createUiRuntimeDom } from "../src/app/ui_runtime_dom";
 
@@ -35,6 +39,7 @@ function createBaseFixture(): SelectorFixture {
       liveOverviewRoot: stubElement("liveOverviewRoot"),
       historyPanelRoot: stubElement("historyPanelRoot"),
       carsPanelRoot: stubElement("carsPanelRoot"),
+      analysisPanelRoot: stubElement("analysisPanelRoot"),
       addCarBtn: stubElement("addCarBtn"),
       addCarWizard: stubElement("addCarWizard"),
       updateStartBtn: stubElement("updateStartBtn"),
@@ -47,17 +52,25 @@ function createBaseFixture(): SelectorFixture {
       ".menu-btn": [stubElement("tab-dashboard"), stubElement("tab-history")],
       ".view": [stubElement("dashboardView"), stubElement("historyView")],
       ".settings-tab": [stubElement("analysisTab"), stubElement("carTab")],
-      ".settings-tab-panel": [stubElement("analysisTab"), stubElement("carTab")],
-      ".wizard-step-dot": [stubElement(), stubElement(), stubElement(), stubElement(), stubElement()],
+      ".settings-tab-panel": [
+        stubElement("analysisTab"),
+        stubElement("carTab"),
+      ],
+      ".wizard-step-dot": [
+        stubElement(),
+        stubElement(),
+        stubElement(),
+        stubElement(),
+        stubElement(),
+      ],
       'input[name="speedSourceRadio"]': [],
     },
   };
 }
 
-function installDomFixture(overrides: {
-  missingId?: string;
-  missingSelector?: string;
-} = {}): () => void {
+function installDomFixture(
+  overrides: { missingId?: string; missingSelector?: string } = {},
+): () => void {
   const originalDocument = globalThis.document;
   const fixture = createBaseFixture();
   const ids = new Map(Object.entries(fixture.ids ?? {}));
@@ -150,6 +163,15 @@ test("getUiCarsPanelHost resolves the cars island host", () => {
   }
 });
 
+test("getUiAnalysisPanelHost resolves the analysis island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiAnalysisPanelHost().id).toBe("analysisPanelRoot");
+  } finally {
+    restore();
+  }
+});
+
 test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the shell boundary when menu tabs are missing", () => {
     const restore = installDomFixture({ missingSelector: ".menu-btn" });
@@ -163,7 +185,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the spectrum boundary when the chart host is missing", () => {
     const restore = installDomFixture({ missingId: "specChart" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow("Spectrum UI requires #specChart");
+      expect(() => createUiRuntimeDom()).toThrow(
+        "Spectrum UI requires #specChart",
+      );
     } finally {
       restore();
     }
@@ -172,7 +196,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails when the spectrum panel host is missing", () => {
     const restore = installDomFixture({ missingId: "spectrumPanelRoot" });
     try {
-      expect(() => getUiSpectrumPanelHost()).toThrow("Spectrum UI requires #spectrumPanelRoot");
+      expect(() => getUiSpectrumPanelHost()).toThrow(
+        "Spectrum UI requires #spectrumPanelRoot",
+      );
     } finally {
       restore();
     }
@@ -181,7 +207,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails when the logging panel host is missing", () => {
     const restore = installDomFixture({ missingId: "loggingPanelRoot" });
     try {
-      expect(() => getUiLoggingPanelHost()).toThrow("Realtime feature requires #loggingPanelRoot");
+      expect(() => getUiLoggingPanelHost()).toThrow(
+        "Realtime feature requires #loggingPanelRoot",
+      );
     } finally {
       restore();
     }
@@ -190,7 +218,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails when the live overview host is missing", () => {
     const restore = installDomFixture({ missingId: "liveOverviewRoot" });
     try {
-      expect(() => getUiLiveOverviewHost()).toThrow("Realtime feature requires #liveOverviewRoot");
+      expect(() => getUiLiveOverviewHost()).toThrow(
+        "Realtime feature requires #liveOverviewRoot",
+      );
     } finally {
       restore();
     }
@@ -199,7 +229,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails when the history panel host is missing", () => {
     const restore = installDomFixture({ missingId: "historyPanelRoot" });
     try {
-      expect(() => getUiHistoryPanelHost()).toThrow("History feature requires #historyPanelRoot");
+      expect(() => getUiHistoryPanelHost()).toThrow(
+        "History feature requires #historyPanelRoot",
+      );
     } finally {
       restore();
     }
@@ -208,7 +240,20 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails when the cars panel host is missing", () => {
     const restore = installDomFixture({ missingId: "carsPanelRoot" });
     try {
-      expect(() => getUiCarsPanelHost()).toThrow("Cars feature requires #carsPanelRoot");
+      expect(() => getUiCarsPanelHost()).toThrow(
+        "Cars feature requires #carsPanelRoot",
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("fails when the analysis panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "analysisPanelRoot" });
+    try {
+      expect(() => getUiAnalysisPanelHost()).toThrow(
+        "Analysis feature requires #analysisPanelRoot",
+      );
     } finally {
       restore();
     }
@@ -217,7 +262,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the settings boundary when tab controls are missing", () => {
     const restore = installDomFixture({ missingSelector: ".settings-tab" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow("Settings feature requires .settings-tab");
+      expect(() => createUiRuntimeDom()).toThrow(
+        "Settings feature requires .settings-tab",
+      );
     } finally {
       restore();
     }
@@ -226,7 +273,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the cars boundary when the add-car trigger is missing", () => {
     const restore = installDomFixture({ missingId: "addCarBtn" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow("Cars feature requires #addCarBtn");
+      expect(() => createUiRuntimeDom()).toThrow(
+        "Cars feature requires #addCarBtn",
+      );
     } finally {
       restore();
     }
@@ -235,7 +284,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the update boundary when the updater trigger is missing", () => {
     const restore = installDomFixture({ missingId: "updateStartBtn" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow("Update feature requires #updateStartBtn");
+      expect(() => createUiRuntimeDom()).toThrow(
+        "Update feature requires #updateStartBtn",
+      );
     } finally {
       restore();
     }
@@ -244,7 +295,9 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the ESP flash boundary when the flash trigger is missing", () => {
     const restore = installDomFixture({ missingId: "espFlashStartBtn" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow("ESP flash feature requires #espFlashStartBtn");
+      expect(() => createUiRuntimeDom()).toThrow(
+        "ESP flash feature requires #espFlashStartBtn",
+      );
     } finally {
       restore();
     }

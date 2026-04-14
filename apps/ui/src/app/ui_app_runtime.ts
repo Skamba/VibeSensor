@@ -1,5 +1,8 @@
 import { escapeHtml, fmt, fmtTs } from "../format";
-import { createAppFeatureBundle, type AppFeatureBundle } from "./app_feature_bundle";
+import {
+  createAppFeatureBundle,
+  type AppFeatureBundle,
+} from "./app_feature_bundle";
 import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
 import { createUiRuntimeDom, type UiRuntimeDom } from "./ui_runtime_dom";
@@ -10,7 +13,10 @@ import {
 } from "./runtime/ui_shell_chrome";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import { UiShellController } from "./runtime/ui_shell_controller";
-import { createNullSpectrumPanelView, type SpectrumPanelView } from "./runtime/spectrum_panel_view";
+import {
+  createNullSpectrumPanelView,
+  type SpectrumPanelView,
+} from "./runtime/spectrum_panel_view";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 import {
@@ -26,6 +32,7 @@ import {
   type RealtimeLiveOverviewBridge,
 } from "./views/realtime_live_overview";
 import type { CarsPanelView } from "./views/cars_panel";
+import type { AnalysisPanelView } from "./views/analysis_panel";
 
 export class UiAppRuntime {
   private readonly dom: UiRuntimeDom;
@@ -51,6 +58,7 @@ export class UiAppRuntime {
     loggingPanel: RealtimeLoggingPanelBridge = createNullRealtimeLoggingPanelBridge(),
     historyPanel: HistoryPanelView = createNullHistoryPanelView(),
     carsPanel: CarsPanelView,
+    analysisPanel: AnalysisPanelView,
   ) {
     this.dom = dom;
     this.state = state;
@@ -98,9 +106,11 @@ export class UiAppRuntime {
         formatInt: (value) => this.shell.localFormatInt(value),
       },
       runtime: {
+        analysisPanel,
         carsPanel,
         realtimeChrome: {
-          setPillState: (el, variant, text) => this.shell.setPillState(el, variant, text),
+          setPillState: (el, variant, text) =>
+            this.shell.setPillState(el, variant, text),
           liveOverview,
           loggingPanel,
         },

@@ -11,10 +11,7 @@ import {
   createSettingsFeatureRealtimePorts,
   type AppFeatureBundle,
 } from "./app_feature_ports";
-import {
-  createCarsFeature,
-  type CarsFeature,
-} from "./features/cars_feature";
+import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature } from "./features/history_feature";
 import type { CarsPanelView } from "./views/cars_panel";
@@ -32,6 +29,7 @@ import {
 import { createUpdateFeature } from "./features/update_feature";
 import type { AppState } from "./ui_app_state";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
+import type { AnalysisPanelView } from "./views/analysis_panel";
 
 export type { AppFeatureBundle } from "./app_feature_ports";
 
@@ -55,6 +53,7 @@ export interface AppFeatureBundleSharedDeps {
 }
 
 export interface AppFeatureBundleRuntimePorts {
+  analysisPanel: AnalysisPanelView;
   carsPanel: CarsPanelView;
   realtimeChrome: RealtimeFeatureChromePorts;
   historyPanel: HistoryPanelView;
@@ -69,7 +68,9 @@ export interface AppFeatureBundleDeps {
   runtime: AppFeatureBundleRuntimePorts;
 }
 
-export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBundle {
+export function createAppFeatureBundle(
+  deps: AppFeatureBundleDeps,
+): AppFeatureBundle {
   const {
     state,
     dom: {
@@ -81,14 +82,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
       update: updateDom,
       espFlash: espFlashDom,
     },
-    shared: {
-      t,
-      escapeHtml,
-      showError,
-      fmt,
-      fmtTs,
-      formatInt,
-    },
+    shared: { t, escapeHtml, showError, fmt, fmtTs, formatInt },
     runtime,
   } = deps;
 
@@ -128,6 +122,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   const settings: SettingsFeature = createSettingsFeature({
     settings: state.settings,
     getSpeedUnit: () => state.shell.speedUnit,
+    analysisPanel: runtime.analysisPanel,
     carsPanel: runtime.carsPanel.list,
     dom: settingsDom,
     shellDom,
@@ -146,7 +141,8 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     getVehicleSettings: () => state.settings.vehicleSettings,
     syncCarsPayload: (payload) => settings.syncCarsPayload(payload),
     syncActiveCarToInputs: () => settings.syncActiveCarToInputs(),
-    showCarCreationSuccess: (carId, carName) => settings.showCarCreationSuccess(carId, carName),
+    showCarCreationSuccess: (carId, carName) =>
+      settings.showCarCreationSuccess(carId, carName),
     renderCarList: () => settings.renderCarList(),
     renderSpectrum: runtime.view.renderSpectrum,
   });
@@ -162,8 +158,18 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   });
   carsFeature = cars;
 
-  const update = createUpdateFeature({ dom: updateDom, t, escapeHtml, showError });
-  const espFlash = createEspFlashFeature({ dom: espFlashDom, t, escapeHtml, showError });
+  const update = createUpdateFeature({
+    dom: updateDom,
+    t,
+    escapeHtml,
+    showError,
+  });
+  const espFlash = createEspFlashFeature({
+    dom: espFlashDom,
+    t,
+    escapeHtml,
+    showError,
+  });
 
   return createAppFeaturePorts({
     history,

@@ -1,9 +1,7 @@
 import type { UiSettingsDom } from "../dom/settings_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
-import {
-  hasResolvedActiveCar,
-} from "../car_selection_state";
+import { hasResolvedActiveCar } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
 import type { CarsPayload } from "../../transport/http_models";
 import {
@@ -24,6 +22,7 @@ import {
 } from "./settings_cars_module";
 import { bindSettingsTabs } from "./settings_tabs_controller";
 import type { CarsListPanelView } from "../views/cars_panel";
+import type { AnalysisPanelView } from "../views/analysis_panel";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
   dom: UiSettingsDom;
@@ -33,6 +32,7 @@ export interface SettingsFeatureDeps extends FeatureDepsBase {
   fmt: (n: number, digits?: number) => string;
   openCarWizard: () => void;
   carsPanel: CarsListPanelView;
+  analysisPanel: AnalysisPanelView;
   view: SettingsFeatureViewPorts;
   realtime: SettingsFeatureRealtimePorts;
 }
@@ -63,21 +63,27 @@ export interface SettingsFeature {
   stopGpsStatusPolling(): void;
 }
 
-export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature {
+export function createSettingsFeature(
+  ctx: SettingsFeatureDeps,
+): SettingsFeature {
   const { settings, dom: els, shellDom, t, escapeHtml, fmt } = ctx;
   let handlersBound = false;
   let carsModule!: SettingsCarsModule;
 
   function showSettingsSaveError(error: unknown): void {
-    ctx.showError(error instanceof Error ? error.message : t("settings.save_failed"));
+    ctx.showError(
+      error instanceof Error ? error.message : t("settings.save_failed"),
+    );
   }
 
   function openSettingsTab(tabId: string): void {
-    els.settingsTabs.find((button) => button.getAttribute("data-settings-tab") === tabId)?.click();
+    els.settingsTabs
+      .find((button) => button.getAttribute("data-settings-tab") === tabId)
+      ?.click();
   }
 
   const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
-    dom: els,
+    dom: ctx.analysisPanel.dom,
     t,
     escapeHtml,
     showError: ctx.showError,
@@ -87,31 +93,34 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     onMissingActiveCar: () => carsModule.renderCarList(),
     onSaveError: showSettingsSaveError,
   });
-  const speedSourceModule: SettingsSpeedSourceModule = createSettingsSpeedSourceModule({
-    dom: els,
-    shellDom,
-    t,
-    escapeHtml,
-    showError: ctx.showError,
-    settings,
-    getSpeedUnit: ctx.getSpeedUnit,
-    fmt,
-    renderSpeedReadout: ctx.view.renderSpeedReadout,
-    onSaveError: showSettingsSaveError,
-  });
-  const gpsStatusModule: SettingsGpsStatusModule = createSettingsGpsStatusModule({
-    dom: els,
-    t,
-    escapeHtml,
-    showError: ctx.showError,
-    settings,
-    getSpeedUnit: ctx.getSpeedUnit,
-    fmt,
-    syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
-    renderSpeedReadout: ctx.view.renderSpeedReadout,
-  });
+  const speedSourceModule: SettingsSpeedSourceModule =
+    createSettingsSpeedSourceModule({
+      dom: els,
+      shellDom,
+      t,
+      escapeHtml,
+      showError: ctx.showError,
+      settings,
+      getSpeedUnit: ctx.getSpeedUnit,
+      fmt,
+      renderSpeedReadout: ctx.view.renderSpeedReadout,
+      onSaveError: showSettingsSaveError,
+    });
+  const gpsStatusModule: SettingsGpsStatusModule =
+    createSettingsGpsStatusModule({
+      dom: els,
+      t,
+      escapeHtml,
+      showError: ctx.showError,
+      settings,
+      getSpeedUnit: ctx.getSpeedUnit,
+      fmt,
+      syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
+      renderSpeedReadout: ctx.view.renderSpeedReadout,
+    });
   carsModule = createSettingsCarsModule({
     dom: els,
+    analysisDom: ctx.analysisPanel.dom,
     escapeHtml,
     fmt,
     openAnalysisTab: () => openSettingsTab("analysisTab"),
@@ -142,7 +151,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     bindHandlers,
     syncSettingsInputs: analysisModule.syncSettingsInputs,
     loadSpeedSourceFromServer: speedSourceModule.loadSpeedSourceFromServer,
-    loadAnalysisSettingsFromServer: analysisModule.loadAnalysisSettingsFromServer,
+    loadAnalysisSettingsFromServer:
+      analysisModule.loadAnalysisSettingsFromServer,
     loadCarsFromServer: carsModule.loadCarsFromServer,
     renderCarList: carsModule.renderCarList,
     syncCarsPayload(payload: CarsPayload): void {
