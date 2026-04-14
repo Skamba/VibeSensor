@@ -197,6 +197,11 @@ The live overview card now follows the same pattern through
 overview host, the realtime presenter feeds it view-model data, and the
 remaining dashboard cards continue on the legacy path until their own issues
 land.
+The spectrum panel now follows the same incremental pattern through
+`app/views/spectrum_panel.tsx`: startup mounts the island into the spectrum
+host, `UiSpectrumController` keeps the chart renderer imperative behind the
+stable `specChart` seam, and interaction/overlay/legend state is pushed into
+the island through a typed bridge instead of direct DOM mutation.
 
 ## Architecture guardrails
 

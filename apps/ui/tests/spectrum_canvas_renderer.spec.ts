@@ -76,8 +76,7 @@ test.describe("SpectrumCanvasRenderer", () => {
         dom: {
           specChart: createElementStub("div"),
           specChartWrap: createElementStub("div"),
-          spectrumOverlay: null,
-        } as unknown as Pick<UiSpectrumDom, "specChart" | "specChartWrap" | "spectrumOverlay">,
+        } as unknown as Pick<UiSpectrumDom, "specChart" | "specChartWrap">,
         t: (key) => key,
         getBandsVisible: () => false,
         getChartBands: () => [],

@@ -30,7 +30,7 @@ export interface SpectrumPreparedRenderData {
 
 export interface SpectrumCanvasRendererDeps {
   state: AppState;
-  dom: Pick<UiSpectrumDom, "specChart" | "specChartWrap" | "spectrumOverlay">;
+  dom: Pick<UiSpectrumDom, "specChart" | "specChartWrap">;
   t: (key: string, vars?: Record<string, unknown>) => string;
   getBandsVisible: () => boolean;
   getChartBands: () => readonly ChartBand[];
@@ -334,7 +334,6 @@ export class SpectrumCanvasRenderer {
     }
     this.deps.state.spectrum.spectrumPlot = new SpectrumChart(
       this.deps.dom.specChart,
-      this.deps.dom.spectrumOverlay,
       360,
       this.deps.dom.specChartWrap,
     );
