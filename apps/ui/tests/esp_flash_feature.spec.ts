@@ -307,6 +307,7 @@ function createUpdateDeps() {
   const updateTogglePasswordBtn = createButton();
   const updateStartBtn = createButton();
   const updateCancelBtn = createButton();
+  const updateOverviewPanel = createPanel();
   const updateStatusPanel = createPanel();
 
   const internetDom = {
@@ -327,6 +328,7 @@ function createUpdateDeps() {
   };
 
   const dom = {
+    updateOverviewPanel,
     updateStartBtn,
     updateCancelBtn,
     updateStatusPanel,
@@ -796,12 +798,6 @@ test.describe("createUpdateFeature polling", () => {
       await flushAsyncWork();
 
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
-        "settings.update.current_status_title",
-      );
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
-        "settings.update.current_status_summary.ready",
-      );
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
         "settings.update.journey_title",
       );
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
@@ -813,10 +809,16 @@ test.describe("createUpdateFeature polling", () => {
       expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
         "settings.update.log_empty_title",
       );
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+      expect((deps.els.updateOverviewPanel as HTMLElement).innerHTML).toContain(
+        "settings.update.current_status_title",
+      );
+      expect((deps.els.updateOverviewPanel as HTMLElement).innerHTML).toContain(
+        "settings.update.current_status_summary.ready",
+      );
+      expect((deps.els.updateOverviewPanel as HTMLElement).innerHTML).toContain(
         "1.2.3",
       );
-      expect((deps.els.updateStatusPanel as HTMLElement).innerHTML).toContain(
+      expect((deps.els.updateOverviewPanel as HTMLElement).innerHTML).toContain(
         "settings.update.health_card_title",
       );
       expect((deps.internetStatusPanel as HTMLElement).innerHTML).toContain(
