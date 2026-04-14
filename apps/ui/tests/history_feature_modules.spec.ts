@@ -253,13 +253,13 @@ test("history list module refreshes runs and renders table state", async () => {
   const row = expectSingleByAttribute(historyTableBody, "data-run-row", "1");
   const toggle = expectSingleByAttribute(row, "data-run-toggle", "details");
   const summaryChips = findByClass(row, "history-row__summary-chip").map((chip) => chip.textContent);
+  const diagnosisTitle = findByClass(row, "history-row__diagnosis-title")[0];
   expect(row.getAttribute("data-run")).toBe("run-001");
   expect(toggle.getAttribute("aria-expanded")).toBe("false");
   expect(summaryChips).toContain("history.row_status.complete");
-  expect(summaryChips.some((chip) => chip.includes("history.summary_size"))).toBe(true);
+  expect(diagnosisTitle?.textContent).toBe("history.row_summary_loading");
   expect(row.textContent).toContain("Track Car");
   expect(row.textContent).toContain("history.car_label");
-  expect(toggle.textContent).toContain("history.preview_available");
   expect(toggle.textContent).toContain("history.open_diagnosis");
   expect(findByAttribute(historyTableBody, "data-run-action", "delete-run")).toHaveLength(0);
   expect(deleteAllRunsBtn.disabled).toBe(false);
@@ -469,8 +469,11 @@ test("history feature preloads collapsed row context for completed runs", async 
   }
 
   const summaryChips = findByClass(historyTableBody, "history-row__summary-chip").map((chip) => chip.textContent);
-  expect(summaryChips).toContain("Front-right wheel imbalance");
-  expect(summaryChips.some((chip) => chip.includes("report.confidence"))).toBe(true);
+  const diagnosisTitles = findByClass(historyTableBody, "history-row__diagnosis-title").map((node) => node.textContent);
+  const diagnosisMeta = findByClass(historyTableBody, "history-row__diagnosis-meta").map((node) => node.textContent);
+  expect(summaryChips).toContain("history.row_status.complete");
+  expect(diagnosisTitles).toContain("Front-right wheel imbalance");
+  expect(diagnosisMeta.some((text) => text.includes("report.confidence"))).toBe(true);
   expect(requests).toEqual([
     "/api/history",
     "/api/history/run-001/insights?lang=en",
