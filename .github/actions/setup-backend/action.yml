@@ -21,12 +21,61 @@ runs:
     - name: Install dependencies
       shell: bash
       run: |
-        python -m pip install --upgrade pip
+        set -euo pipefail
+
+        retry_command() {
+          local max_attempts=$1
+          shift
+          local attempt=1
+
+          while true; do
+            if "$@"; then
+              return 0
+            fi
+
+            if [[ "$attempt" -ge "$max_attempts" ]]; then
+              return 1
+            fi
+
+            local delay=$(( attempt * 5 ))
+            echo "Command failed on attempt ${attempt}/${max_attempts}: $*" >&2
+            echo "Retrying in ${delay}s..." >&2
+            sleep "$delay"
+            attempt=$(( attempt + 1 ))
+          done
+        }
+
+        retry_command 3 python -m pip install --upgrade pip
         # Reuse the backend dev extra so CI matches the local editable setup.
-        python -m pip install -e "./apps/server[dev]"
+        retry_command 3 python -m pip install -e "./apps/server[dev]"
 
     - name: Install PlatformIO dependencies
       # Keep firmware tooling opt-in so non-firmware jobs reuse the shared backend setup.
       if: ${{ inputs.include-platformio == 'true' }}
       shell: bash
-      run: python -m pip install "platformio>=6,<7"
+      run: |
+        set -euo pipefail
+
+        retry_command() {
+          local max_attempts=$1
+          shift
+          local attempt=1
+
+          while true; do
+            if "$@"; then
+              return 0
+            fi
+
+            if [[ "$attempt" -ge "$max_attempts" ]]; then
+              return 1
+            fi
+
+            local delay=$(( attempt * 5 ))
+            echo "Command failed on attempt ${attempt}/${max_attempts}: $*" >&2
+            echo "Retrying in ${delay}s..." >&2
+            sleep "$delay"
+            attempt=$(( attempt + 1 ))
+          done
+        }
+
+        retry_command 3 python -m pip install "platformio>=6,<7"
