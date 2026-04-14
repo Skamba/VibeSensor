@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { getUiAnalysisPanelHost } from "../src/app/dom/analysis_dom";
 import { getUiCarsPanelHost } from "../src/app/dom/cars_dom";
 import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
+import { getUiSpeedSourcePanelHost } from "../src/app/dom/speed_source_dom";
 import {
   getUiLiveOverviewHost,
   getUiLoggingPanelHost,
@@ -40,6 +41,7 @@ function createBaseFixture(): SelectorFixture {
       historyPanelRoot: stubElement("historyPanelRoot"),
       carsPanelRoot: stubElement("carsPanelRoot"),
       analysisPanelRoot: stubElement("analysisPanelRoot"),
+      speedSourcePanelRoot: stubElement("speedSourcePanelRoot"),
       addCarBtn: stubElement("addCarBtn"),
       addCarWizard: stubElement("addCarWizard"),
       updateStartBtn: stubElement("updateStartBtn"),
@@ -172,6 +174,15 @@ test("getUiAnalysisPanelHost resolves the analysis island host", () => {
   }
 });
 
+test("getUiSpeedSourcePanelHost resolves the speed-source island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiSpeedSourcePanelHost().id).toBe("speedSourcePanelRoot");
+  } finally {
+    restore();
+  }
+});
+
 test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the shell boundary when menu tabs are missing", () => {
     const restore = installDomFixture({ missingSelector: ".menu-btn" });
@@ -297,6 +308,17 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     try {
       expect(() => createUiRuntimeDom()).toThrow(
         "ESP flash feature requires #espFlashStartBtn",
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  test("fails when the speed-source panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "speedSourcePanelRoot" });
+    try {
+      expect(() => getUiSpeedSourcePanelHost()).toThrow(
+        "Speed source feature requires #speedSourcePanelRoot",
       );
     } finally {
       restore();

@@ -1,11 +1,27 @@
 import type { UiSettingsDom } from "../dom/settings_dom";
 import type { UiShellDom } from "../dom/shell_dom";
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
+import type { SettingsSpeedSourcePanelDom } from "./speed_source_panel";
 import { closestFromTarget } from "./dom_helpers";
-import { bindViewEvent, composeViewDisposers, type ViewDisposer } from "./dom_event_bindings";
+import {
+  bindViewEvent,
+  composeViewDisposers,
+  type ViewDisposer,
+} from "./dom_event_bindings";
 
-const TAB_NAVIGATION_KEYS = new Set(["Enter", " ", "ArrowRight", "ArrowLeft", "Home", "End"]);
-const DISPLAYED_SPEED_SOURCE_MODES = ["gps", "manual", "obd2"] as const satisfies readonly DisplayedSpeedSourceMode[];
+const TAB_NAVIGATION_KEYS = new Set([
+  "Enter",
+  " ",
+  "ArrowRight",
+  "ArrowLeft",
+  "Home",
+  "End",
+]);
+const DISPLAYED_SPEED_SOURCE_MODES = [
+  "gps",
+  "manual",
+  "obd2",
+] as const satisfies readonly DisplayedSpeedSourceMode[];
 
 export type SettingsSpeedSourceInteraction =
   | { type: "speed-source-changed"; mode: DisplayedSpeedSourceMode }
@@ -25,15 +41,21 @@ export interface SettingsSpeedSourceBindingHandlers {
   onAction(action: SettingsSpeedSourceInteraction): void;
 }
 
-function readDisplayedSpeedSourceMode(value: string): DisplayedSpeedSourceMode | null {
+function readDisplayedSpeedSourceMode(
+  value: string,
+): DisplayedSpeedSourceMode | null {
   return DISPLAYED_SPEED_SOURCE_MODES.find((mode) => mode === value) ?? null;
 }
 
 export function getSettingsObdDeviceListAction(
   target: EventTarget | null,
 ): SettingsObdDeviceListAction | null {
-  const button = closestFromTarget<HTMLButtonElement>(target, "[data-obd-pair-mac]");
-  const macAddress = button?.dataset.obdPairMac ?? button?.getAttribute("data-obd-pair-mac");
+  const button = closestFromTarget<HTMLButtonElement>(
+    target,
+    "[data-obd-pair-mac]",
+  );
+  const macAddress =
+    button?.dataset.obdPairMac ?? button?.getAttribute("data-obd-pair-mac");
   if (!macAddress) {
     return null;
   }
@@ -45,7 +67,7 @@ export function getSettingsObdDeviceListAction(
 
 export function bindSettingsSpeedSourceInteractions(
   dom: Pick<
-    UiSettingsDom,
+    Pick<UiSettingsDom, "settingsTabs"> & SettingsSpeedSourcePanelDom,
     | "speedSourceRadios"
     | "manualSpeedInput"
     | "staleTimeoutInput"
@@ -66,7 +88,8 @@ export function bindSettingsSpeedSourceInteractions(
         if (mode) {
           handlers.onAction({ type: "speed-source-changed", mode });
         }
-      })),
+      }),
+    ),
     bindViewEvent(dom.manualSpeedInput, "input", () => {
       handlers.onAction({
         type: "manual-speed-input",
