@@ -25,62 +25,7 @@
       </section>
 
       <section id="settingsView" class="view" role="tabpanel" aria-labelledby="tab-settings" hidden>
-        <nav class="settings-tabs" role="tablist">
-          <button type="button" class="settings-tab active" data-settings-tab="carTab" role="tab" aria-controls="carTab" aria-selected="true" tabindex="0">
-            <span data-i18n="settings.tab.car">Car</span>
-          </button>
-          <button type="button" class="settings-tab" data-settings-tab="analysisTab" role="tab" aria-controls="analysisTab" aria-selected="false" tabindex="-1">
-            <span data-i18n="settings.tab.analysis">Analysis</span>
-          </button>
-          <button type="button" class="settings-tab" data-settings-tab="speedSourceTab" role="tab" aria-controls="speedSourceTab" aria-selected="false" tabindex="-1">
-            <span data-i18n="settings.tab.speed_source">Speed Source</span>
-          </button>
-          <button type="button" class="settings-tab" data-settings-tab="sensorsTab" role="tab" aria-controls="sensorsTab" aria-selected="false" tabindex="-1">
-            <span data-i18n="settings.tab.sensors">Sensors</span>
-          </button>
-          <button type="button" class="settings-tab" data-settings-tab="internetTab" role="tab" aria-controls="internetTab" aria-selected="false" tabindex="-1">
-            <span data-i18n="settings.tab.internet">Internet</span>
-          </button>
-          <button type="button" class="settings-tab" data-settings-tab="updateTab" role="tab" aria-controls="updateTab" aria-selected="false" tabindex="-1">
-            <span data-i18n="settings.tab.update">Update</span>
-          </button>
-          <button type="button" class="settings-tab" data-settings-tab="espFlashTab" role="tab" aria-controls="espFlashTab" aria-selected="false" tabindex="-1">
-            <span data-i18n="settings.tab.esp_flash">ESP Flash</span>
-          </button>
-        </nav>
-
-        <!-- Car Tab -->
-        <div id="carTab" class="settings-tab-panel active" role="tabpanel">
-          <div id="carsPanelRoot"></div>
-        </div>
-
-        <!-- Analysis Tab -->
-        <div id="analysisTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div id="analysisPanelRoot"></div>
-        </div>
-
-        <!-- Speed Source Tab -->
-        <div id="speedSourceTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div id="speedSourcePanelRoot"></div>
-        </div>
-
-        <!-- Sensors Tab -->
-        <div id="sensorsTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div id="sensorsPanelRoot"></div>
-        </div>
-
-        <div id="internetTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div id="internetPanelRoot"></div>
-        </div>
-
-        <!-- Update Tab -->
-        <div id="updateTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div id="updatePanelRoot"></div>
-        </div>
-
-        <div id="espFlashTab" class="settings-tab-panel" role="tabpanel" hidden>
-          <div id="espFlashPanelRoot"></div>
-        </div>
+        <div id="settingsShellRoot"></div>
       </section>
     </div>
     <div id="matrixTooltip" class="matrix-tooltip"></div>

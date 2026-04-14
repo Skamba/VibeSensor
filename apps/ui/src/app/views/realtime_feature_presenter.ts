@@ -1,10 +1,7 @@
-import type { UiCarsDom } from "../dom/cars_dom";
-import type { UiRealtimeDom } from "../dom/realtime_dom";
-import type { UiSettingsDom } from "../dom/settings_dom";
-import type { UiShellDom } from "../dom/shell_dom";
 import { deriveCarSelectionState } from "../car_selection_state";
 import { classifyDataFreshness } from "../features/data_freshness";
 import { createRealtimeSensorState } from "../features/realtime_sensor_state";
+import type { RealtimeFeatureNavigationPorts } from "../features/realtime_feature";
 import type {
   RealtimeState,
   SettingsState,
@@ -38,11 +35,7 @@ export interface RealtimeFeatureRenderState {
 }
 
 export interface RealtimeFeaturePresenterDeps {
-  dom: UiRealtimeDom;
   sensorsDom: SensorsPanelDom;
-  shellDom: Pick<UiShellDom, "menuButtons">;
-  settingsDom: Pick<UiSettingsDom, "settingsTabs">;
-  carsDom: Pick<UiCarsDom, "addCarBtn">;
   realtime: RealtimeState;
   spectrum: SpectrumState;
   settings: SettingsState;
@@ -51,14 +44,11 @@ export interface RealtimeFeaturePresenterDeps {
   escapeHtml: (value: unknown) => string;
   formatInt: (value: number) => string;
   chrome: {
-    setPillState: (
-      el: HTMLElement | null,
-      variant: string,
-      text: string,
-    ) => void;
+    setShellLiveStatus: (variant: string, text: string) => void;
     liveOverview: RealtimeLiveOverviewBridge;
     loggingPanel: RealtimeLoggingPanelBridge;
   };
+  navigation: RealtimeFeatureNavigationPorts;
 }
 
 export interface RealtimeFeaturePresenter {
@@ -80,11 +70,7 @@ export function createRealtimeFeaturePresenter(
   ctx: RealtimeFeaturePresenterDeps,
 ): RealtimeFeaturePresenter {
   const {
-    dom: els,
     sensorsDom,
-    shellDom,
-    settingsDom,
-    carsDom,
     realtime,
     settings,
     spectrum,
@@ -92,8 +78,8 @@ export function createRealtimeFeaturePresenter(
     escapeHtml,
     formatInt,
     chrome,
+    navigation,
   } = ctx;
-  const { setPillState } = chrome;
 
   let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
   let lastCompletedElapsedText = "--";
@@ -271,11 +257,7 @@ export function createRealtimeFeaturePresenter(
   function renderLiveOverview(phaseText: string): void {
     const model = buildLiveOverviewModel(phaseText);
     chrome.liveOverview.render(model);
-    setPillState(
-      els.shellLiveStatus,
-      model.runHealth.variant,
-      model.runHealth.text,
-    );
+    chrome.setShellLiveStatus(model.runHealth.variant, model.runHealth.text);
   }
 
   function sensorsSettingsSignature(): string {
@@ -372,15 +354,11 @@ export function createRealtimeFeaturePresenter(
   }
 
   function activatePrimaryView(viewId: string): void {
-    shellDom.menuButtons
-      .find((button) => button.dataset.view === viewId)
-      ?.click();
+    navigation.activatePrimaryView(viewId);
   }
 
   function activateSettingsTab(tabId: string): void {
-    settingsDom.settingsTabs
-      .find((button) => button.getAttribute("data-settings-tab") === tabId)
-      ?.click();
+    navigation.activateSettingsTab(tabId);
   }
 
   function openSettingsView(tabId: string): void {
@@ -391,7 +369,7 @@ export function createRealtimeFeaturePresenter(
   function openCars(options: { openWizard?: boolean } = {}): void {
     openSettingsView("carTab");
     if (options.openWizard) {
-      carsDom.addCarBtn.click();
+      navigation.openCarWizard();
     }
   }
 
