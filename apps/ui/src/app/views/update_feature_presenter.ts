@@ -4,8 +4,8 @@ import type {
   UpdateStatusPayload,
   UsbInternetStatusPayload,
 } from "../../transport/http_models";
-import type { UiUpdateDom } from "../dom/update_dom";
 import type { InternetPanelDom } from "./internet_panel";
+import type { UpdatePanelDom } from "./update_panel";
 import {
   formatUsbInternetSummary,
   renderInternetStatusPanel,
@@ -45,7 +45,7 @@ interface UpdateFeatureActionSummary {
 }
 
 export interface UpdateFeaturePresenterDeps {
-  dom: UiUpdateDom;
+  dom: UpdatePanelDom;
   internetDom: InternetPanelDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
@@ -287,10 +287,8 @@ export function createUpdateFeaturePresenter(
     updateEls.updateStartBtn.textContent = actionSummary.startLabel;
     updateEls.updateStartBtn.hidden = isRunning;
     updateEls.updateStartBtn.disabled = isRunning || !actionSummary.canStart;
-    if (updateEls.updateCancelBtn) {
-      updateEls.updateCancelBtn.hidden = !isRunning;
-      updateEls.updateCancelBtn.disabled = !isRunning;
-    }
+    updateEls.updateCancelBtn.hidden = !isRunning;
+    updateEls.updateCancelBtn.disabled = !isRunning;
     if (internetDom.updateSsidInput) {
       internetDom.updateSsidInput.disabled = isRunning;
     }
@@ -310,11 +308,7 @@ export function createUpdateFeaturePresenter(
       internetDom.updateReadinessSummary.innerHTML =
         renderMaintenanceReadinessPanel(actionSummary.panelModel, escapeHtml);
     }
-    if (
-      updateEls.updateStatusPanel &&
-      state.updateStatus &&
-      state.healthStatus
-    ) {
+    if (state.updateStatus && state.healthStatus) {
       renderUpdateStatusPanel(
         updateEls.updateStatusPanel,
         buildUpdateStatusPanelViewModel(

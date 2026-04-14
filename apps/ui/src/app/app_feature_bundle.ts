@@ -4,7 +4,6 @@ import type { UiHistoryDom } from "./dom/history_dom";
 import type { UiRealtimeDom } from "./dom/realtime_dom";
 import type { UiSettingsDom } from "./dom/settings_dom";
 import type { UiShellDom } from "./dom/shell_dom";
-import type { UiUpdateDom } from "./dom/update_dom";
 import {
   createAppFeaturePorts,
   createRealtimeFeatureRecordingPorts,
@@ -33,6 +32,7 @@ import type { AnalysisPanelView } from "./views/analysis_panel";
 import type { InternetPanelView } from "./views/internet_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
+import type { UpdatePanelView } from "./views/update_panel";
 
 export type { AppFeatureBundle } from "./app_feature_ports";
 
@@ -42,7 +42,6 @@ export interface AppFeatureBundleDom {
   history: UiHistoryDom;
   settings: UiSettingsDom;
   cars: UiCarsDom;
-  update: UiUpdateDom;
   espFlash: UiEspFlashDom;
 }
 
@@ -61,6 +60,7 @@ export interface AppFeatureBundleRuntimePorts {
   internetPanel: InternetPanelView;
   sensorsPanel: SensorsPanelView;
   speedSourcePanel: SpeedSourcePanelView;
+  updatePanel: UpdatePanelView;
   realtimeChrome: RealtimeFeatureChromePorts;
   historyPanel: HistoryPanelView;
   transport: RealtimeFeatureSelectionPorts;
@@ -85,7 +85,6 @@ export function createAppFeatureBundle(
       history: historyDom,
       settings: settingsDom,
       cars: carsDom,
-      update: updateDom,
       espFlash: espFlashDom,
     },
     shared: { t, escapeHtml, showError, fmt, fmtTs, formatInt },
@@ -167,7 +166,7 @@ export function createAppFeatureBundle(
   carsFeature = cars;
 
   const update = createUpdateFeature({
-    dom: updateDom,
+    panel: runtime.updatePanel,
     internetPanel: runtime.internetPanel,
     t,
     escapeHtml,

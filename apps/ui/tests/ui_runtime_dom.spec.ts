@@ -6,6 +6,7 @@ import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
 import { getUiInternetPanelHost } from "../src/app/dom/internet_dom";
 import { getUiSensorsPanelHost } from "../src/app/dom/sensors_dom";
 import { getUiSpeedSourcePanelHost } from "../src/app/dom/speed_source_dom";
+import { getUiUpdatePanelHost } from "../src/app/dom/update_dom";
 import {
   getUiLiveOverviewHost,
   getUiLoggingPanelHost,
@@ -44,11 +45,11 @@ function createBaseFixture(): SelectorFixture {
       carsPanelRoot: stubElement("carsPanelRoot"),
       analysisPanelRoot: stubElement("analysisPanelRoot"),
       internetPanelRoot: stubElement("internetPanelRoot"),
+      updatePanelRoot: stubElement("updatePanelRoot"),
       sensorsPanelRoot: stubElement("sensorsPanelRoot"),
       speedSourcePanelRoot: stubElement("speedSourcePanelRoot"),
       addCarBtn: stubElement("addCarBtn"),
       addCarWizard: stubElement("addCarWizard"),
-      updateStartBtn: stubElement("updateStartBtn"),
       espFlashStartBtn: stubElement("espFlashStartBtn"),
     },
     selectorOne: {
@@ -117,7 +118,6 @@ test("createUiRuntimeDom returns the feature-scoped startup bundle when required
     expect(dom.history).toEqual({});
     expect(dom.settings.settingsTabs).toHaveLength(2);
     expect(dom.cars.addCarBtn.id).toBe("addCarBtn");
-    expect(dom.update.updateStartBtn.id).toBe("updateStartBtn");
     expect(dom.espFlash.espFlashStartBtn.id).toBe("espFlashStartBtn");
   } finally {
     restore();
@@ -182,6 +182,15 @@ test("getUiInternetPanelHost resolves the internet island host", () => {
   const restore = installDomFixture();
   try {
     expect(getUiInternetPanelHost().id).toBe("internetPanelRoot");
+  } finally {
+    restore();
+  }
+});
+
+test("getUiUpdatePanelHost resolves the update island host", () => {
+  const restore = installDomFixture();
+  try {
+    expect(getUiUpdatePanelHost().id).toBe("updatePanelRoot");
   } finally {
     restore();
   }
@@ -303,6 +312,17 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     }
   });
 
+  test("fails when the update panel host is missing", () => {
+    const restore = installDomFixture({ missingId: "updatePanelRoot" });
+    try {
+      expect(() => getUiUpdatePanelHost()).toThrow(
+        "Update feature requires #updatePanelRoot",
+      );
+    } finally {
+      restore();
+    }
+  });
+
   test("fails at the settings boundary when tab controls are missing", () => {
     const restore = installDomFixture({ missingSelector: ".settings-tab" });
     try {
@@ -319,17 +339,6 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
     try {
       expect(() => createUiRuntimeDom()).toThrow(
         "Cars feature requires #addCarBtn",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails at the update boundary when the updater trigger is missing", () => {
-    const restore = installDomFixture({ missingId: "updateStartBtn" });
-    try {
-      expect(() => createUiRuntimeDom()).toThrow(
-        "Update feature requires #updateStartBtn",
       );
     } finally {
       restore();
