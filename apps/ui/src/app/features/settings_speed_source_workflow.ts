@@ -158,6 +158,7 @@ export function createSettingsSpeedSourceWorkflow(
       scanInFlight,
       selectedMode,
       settings: {
+        gpsFallbackActive: deps.settings.gpsFallbackActive,
         gpsEffectiveSpeedKph: deps.settings.gpsEffectiveSpeedKph,
         manualSpeedKph: deps.settings.manualSpeedKph,
         obdDeviceMac: deps.settings.obdDeviceMac,

@@ -39,10 +39,6 @@ export interface AnalysisPanelView {
 function AnalysisPanel() {
   return (
     <div class="panel card settings-layout">
-      <div class="subtle" data-i18n="settings.analysis.hint">
-        These settings apply globally to all cars and control how vibration
-        frequency bands are calculated.
-      </div>
       <details
         id="analysisGuidanceHelp"
         class="settings-help-disclosure settings-help-disclosure--banner"
@@ -282,7 +278,7 @@ function AnalysisPanel() {
         </section>
       </div>
       <div id="analysisSaveFeedback" class="settings-feedback-slot" hidden></div>
-      <div class="settings-actions">
+      <div class="settings-actions settings-actions--sticky">
         <button
           id="resetAnalysisBtn"
           class="btn"
