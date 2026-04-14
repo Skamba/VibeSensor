@@ -38,6 +38,11 @@
     --pill-warn-text: #fbbf24;
     --pill-bad-bg: rgba(248, 113, 113, 0.14);
     --pill-bad-text: #f87171;
+    --button-danger-quiet-surface: rgba(248, 113, 113, 0.12);
+    --button-danger-quiet-border: rgba(248, 113, 113, 0.28);
+    --button-danger-quiet-text: #f87171;
+    --button-danger-quiet-hover-surface: rgba(248, 113, 113, 0.18);
+    --button-danger-quiet-hover-border: rgba(248, 113, 113, 0.42);
     --warning-surface: rgba(251, 191, 36, 0.14);
     --warning-border: rgba(251, 191, 36, 0.34);
     --warning-text: #fbbf24;

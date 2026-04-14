@@ -504,14 +504,14 @@
   margin-top: var(--space-2);
 }
 .btn--danger-quiet {
-  background: #fff4f4;
-  border-color: #efc1c1;
-  color: var(--danger-700);
+  background: var(--button-danger-quiet-surface);
+  border-color: var(--button-danger-quiet-border);
+  color: var(--button-danger-quiet-text);
 }
 .btn--danger-quiet:hover {
-  background: #fee2e2;
-  border-color: var(--danger-400);
-  color: var(--danger-700);
+  background: var(--button-danger-quiet-hover-surface);
+  border-color: var(--button-danger-quiet-hover-border);
+  color: var(--button-danger-quiet-text);
   filter: none;
 }
 .stat-grid--compact {

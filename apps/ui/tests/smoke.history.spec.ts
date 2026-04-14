@@ -214,6 +214,46 @@ test("dark mode history warning pills and banners use semantic theme tokens", as
   expect(bannerStyles.color).toBe(bannerStyles.expectedColor);
 });
 
+test("dark mode quiet danger buttons use semantic danger tokens in History", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await installCommonRoutes(page, { runs: [historyListRun] });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-history").click();
+  await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
+  const deleteButton = page.locator('[data-run-action="delete-run"][data-run="run-001"]');
+  await expect(deleteButton).toBeVisible();
+
+  const idleStyles = await readSemanticToneStyles(deleteButton, {
+    surfaceVar: "--button-danger-quiet-surface",
+    borderVar: "--button-danger-quiet-border",
+    textVar: "--button-danger-quiet-text",
+  });
+  await expect(deleteButton).toHaveCSS("background-color", idleStyles.expectedBackgroundColor);
+  await expect(deleteButton).toHaveCSS("border-top-color", idleStyles.expectedBorderColor);
+  await expect(deleteButton).toHaveCSS("color", idleStyles.expectedColor);
+
+  const deleteButtonBox = await deleteButton.boundingBox();
+  if (!deleteButtonBox) {
+    throw new Error("expected history delete button to have a layout box");
+  }
+  await page.mouse.move(
+    deleteButtonBox.x + (deleteButtonBox.width / 2),
+    deleteButtonBox.y + (deleteButtonBox.height / 2),
+  );
+  await expect.poll(() => deleteButton.evaluate((element) => element.matches(":hover"))).toBe(true);
+  await page.waitForTimeout(150);
+  const hoverStyles = await readSemanticToneStyles(deleteButton, {
+    surfaceVar: "--button-danger-quiet-hover-surface",
+    borderVar: "--button-danger-quiet-hover-border",
+    textVar: "--button-danger-quiet-text",
+  });
+  await expect(deleteButton).toHaveCSS("background-color", hoverStyles.expectedBackgroundColor);
+  await expect(deleteButton).toHaveCSS("border-top-color", hoverStyles.expectedBorderColor);
+  await expect(deleteButton).toHaveCSS("color", hoverStyles.expectedColor);
+});
+
 test("history empty state points users back to Live", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
