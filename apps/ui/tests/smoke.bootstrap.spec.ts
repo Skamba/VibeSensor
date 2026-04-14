@@ -144,13 +144,13 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#liveDataFreshness [data-value]")).toHaveText("Fresh - 10 ms ago");
   await expect(page.locator("#liveRunHealth")).toBeHidden();
   await expect(page.locator("#liveStrongestSignal")).not.toHaveClass(/stat--spotlight/);
-  await expect(page.locator("#liveStrongestSignal .stat__label")).toHaveText("Strongest sensor level");
+  await expect(page.locator("#liveStrongestSignal .stat__label")).toHaveText("Strongest signal");
   await expect(page.locator("#liveStrongestSignal [data-value]")).toContainText("Front Left");
   await expect(page.locator("#liveSensorRoster .live-sensor-card--strongest")).toHaveText("Front Left Wheel");
   await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
   await expect(page.locator("#liveSensorRoster .live-sensor-card__status-dot--online")).toHaveCount(1);
   await expect(page.locator("#liveSensorRoster article")).toHaveText("Front Left Wheel");
-  await expect(page.locator(".spectrum-controls-panel")).toContainText("Use the trace chips to isolate one sensor at a time.");
+  await expect(page.locator(".spectrum-controls-panel")).toContainText("Select a trace to isolate it.");
   await expect(page.locator(".spectrum-controls-panel #spectrumInspector")).toBeVisible();
   await expect(page.locator(".spectrum-controls-panel #legend")).toContainText("Front Left");
   await expect(page.locator("#loggingSummary")).toBeHidden();

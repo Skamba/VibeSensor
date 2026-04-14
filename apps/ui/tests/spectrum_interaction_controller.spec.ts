@@ -88,7 +88,7 @@ test.describe("SpectrumInteractionController", () => {
         if (key === "spectrum.legend.state_isolated") return "Isolated";
         if (key === "spectrum.legend.state_inactive") return "Inactive";
         if (key === "spectrum.legend.sensor_level") {
-          return `Sensor level: ${String(vars?.value)} dB`;
+          return `${String(vars?.value)} dB`;
         }
         if (key === "spectrum.legend.all_series") return "All sensor traces";
         if (key === "spectrum.legend.clear_focus") return "Clear focus";
@@ -124,15 +124,17 @@ test.describe("SpectrumInteractionController", () => {
       bandsVisible: false,
       text: "Show reference bands",
     });
-    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("Visible · Sensor level: 12.0 dB");
+    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("12.0 dB");
     expect(panel.sensorLegend.model?.items[0]?.ariaPressed).toBe(false);
-    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("Visible · Sensor level: 8.0 dB");
+    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("8.0 dB");
     expect(isolatedSeries).toBeNull();
 
     panel.sensorLegend.handlers?.onSelect("sensor-a");
-    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("Isolated · Sensor level: 12.0 dB");
+    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("12.0 dB");
     expect(panel.sensorLegend.model?.items[0]?.ariaPressed).toBe(true);
-    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("Inactive · Sensor level: 8.0 dB");
+    expect(panel.sensorLegend.model?.items[0]?.active).toBe(true);
+    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("8.0 dB");
+    expect(panel.sensorLegend.model?.items[1]?.muted).toBe(true);
     expect(isolatedSeries).toBe(1);
 
     strengthDbById.set("sensor-a", 13);
@@ -145,13 +147,15 @@ test.describe("SpectrumInteractionController", () => {
       chartBands: [],
     });
 
-    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("Isolated · Sensor level: 13.0 dB");
+    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("13.0 dB");
     expect(panel.sensorLegend.model?.items[0]?.ariaPressed).toBe(true);
 
     panel.sensorLegend.handlers?.onSelect("sensor-a");
-    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("Visible · Sensor level: 13.0 dB");
+    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("13.0 dB");
     expect(panel.sensorLegend.model?.items[0]?.ariaPressed).toBe(false);
-    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("Visible · Sensor level: 8.0 dB");
+    expect(panel.sensorLegend.model?.items[0]?.active).toBe(false);
+    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("8.0 dB");
+    expect(panel.sensorLegend.model?.items[1]?.muted).toBe(false);
     expect(isolatedSeries).toBeNull();
   });
 });
