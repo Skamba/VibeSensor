@@ -2,6 +2,10 @@ import { getById, requiredById } from "./dom_query";
 
 const CARS_OWNER = "Cars feature";
 
+export function getUiCarsPanelHost(): HTMLElement {
+  return requiredById<HTMLElement>("carsPanelRoot", CARS_OWNER);
+}
+
 export interface UiCarsDom {
   addCarBtn: HTMLButtonElement;
   wizardBackdrop: HTMLElement | null;

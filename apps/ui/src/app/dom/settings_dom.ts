@@ -28,8 +28,6 @@ export interface UiSettingsDom {
   };
   analysisSaveFeedback: HTMLElement | null;
   analysisNoCarMessage: HTMLElement | null;
-  carSelectionGuidance: HTMLElement | null;
-  carListBody: HTMLElement | null;
   speedSourceRadios: HTMLInputElement[];
   speedSourceCurrentSource: HTMLElement | null;
   speedSourceEffectiveSpeed: HTMLElement | null;
@@ -117,8 +115,6 @@ export function createUiSettingsDom(): UiSettingsDom {
     },
     analysisSaveFeedback: getById<HTMLElement>("analysisSaveFeedback"),
     analysisNoCarMessage: getById<HTMLElement>("analysisNoCarMessage"),
-    carSelectionGuidance: getById<HTMLElement>("carSelectionGuidance"),
-    carListBody: getById<HTMLElement>("carListBody"),
     speedSourceRadios: Array.from(
       document.querySelectorAll<HTMLInputElement>(
         'input[name="speedSourceRadio"]',

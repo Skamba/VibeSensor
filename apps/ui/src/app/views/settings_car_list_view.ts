@@ -1,5 +1,4 @@
 import type { CarRecord } from "../../transport/http_models";
-import type { UiSettingsDom } from "../dom/settings_dom";
 import { getCarCompleteness } from "../car_selection_state";
 import {
   closestFromTarget,
@@ -20,6 +19,10 @@ export interface SettingsCarListViewParams {
 export interface SettingsCarListAction {
   type: "activate" | "complete" | "delete" | "add";
   carId: string | null;
+}
+
+export interface SettingsCarListBindingDom {
+  carListBody: HTMLElement | null;
 }
 
 function hasConfiguredNumber(value: unknown): value is number {
@@ -120,8 +123,10 @@ export function renderSettingsCarList(
       const completionDetail = isComplete
         ? ""
         : `<span class="subtle car-row__detail">${escapeHtml(t("settings.car.incomplete_detail"))}</span>`;
+      const rowClass = isHighlighted ? ' class="car-list-row--highlighted"' : "";
       return `
         <tr
+          ${rowClass}
           data-car-id="${escapeHtml(car.id)}"
           data-car-complete="${isComplete ? "true" : "false"}"
           data-highlighted="${isHighlighted ? "true" : "false"}"
@@ -180,7 +185,7 @@ export function getSettingsCarListAction(
 }
 
 export function bindSettingsCarListActions(
-  dom: Pick<UiSettingsDom, "carListBody">,
+  dom: SettingsCarListBindingDom,
   handlers: { onAction(action: SettingsCarListAction): void },
 ): ViewDisposer {
   return bindViewEvent(dom.carListBody, "click", (event: MouseEvent) => {
