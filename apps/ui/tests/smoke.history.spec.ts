@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
+import {
+  fulfillJson,
+  installCommonRoutes,
+  installFakeWebSocket,
+  readSemanticSurfaceStyles,
+  requestPath,
+} from "./smoke.helpers";
 
 const historyListRun = {
   run_id: "run-001",
@@ -12,6 +18,102 @@ const historyListRun = {
   car_name: "Track Car",
   error_message: null,
 };
+
+test("dark mode diagnosis cards use semantic theme surfaces", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  let confidenceTone: "success" | "warn" = "success";
+
+  await installCommonRoutes(page, {
+    historyHandler: async (route) => {
+      const pathname = requestPath(route);
+      if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, { runs: [historyListRun] });
+    },
+    settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/history/**/insights**", async (route) => {
+    await fulfillJson(route, {
+      run_id: "run-001",
+      status: "complete",
+      start_time_utc: "2026-01-01T00:00:00Z",
+      duration_s: 12.3,
+      sensor_count_used: 2,
+      most_likely_origin: {
+        suspected_source: "Front-right wheel imbalance",
+        location: "Front-right wheel",
+        speed_band: "60-90 km/h",
+        explanation: "Order content and spatial dominance agree on the front-right wheel.",
+      },
+      findings: [
+        {
+          finding_id: "finding-1",
+          amplitude_metric: "db",
+          confidence: confidenceTone === "success" ? 0.92 : 0.67,
+          confidence_pct: confidenceTone === "success" ? "92%" : "67%",
+          confidence_tone: confidenceTone,
+          evidence_summary: "Diagnostic evidence remains strongest at the front-right wheel.",
+          frequency_hz_or_order: "1x wheel",
+          strongest_location: "Front-right wheel",
+          strongest_speed_band: "60-90 km/h",
+          suspected_source: "Front-right wheel imbalance",
+        },
+      ],
+      sensor_intensity_by_location: [
+        {
+          location: "Front Right Wheel",
+          p50_intensity_db: 18,
+          p95_intensity_db: 32,
+          max_intensity_db: 40,
+          dropped_frames_delta: 0,
+          queue_overflow_drops_delta: 0,
+          sample_count: 20,
+        },
+      ],
+    });
+  });
+  await installFakeWebSocket(page);
+
+  const expectations = [
+    {
+      tone: "success",
+      surfaceVar: "--history-diagnosis-success-surface",
+      borderVar: "--history-diagnosis-success-border",
+    },
+    {
+      tone: "warn",
+      surfaceVar: "--history-diagnosis-warn-surface",
+      borderVar: "--history-diagnosis-warn-border",
+    },
+  ] as const;
+
+  for (const expectation of expectations) {
+    confidenceTone = expectation.tone;
+    await page.goto("/");
+    await page.locator("#tab-history").click();
+    await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
+    const diagnosisCard = page.locator(`.history-diagnosis-card--${expectation.tone}`);
+    await expect(diagnosisCard).toBeVisible();
+    const styles = await readSemanticSurfaceStyles(
+      diagnosisCard,
+      expectation.surfaceVar,
+      expectation.borderVar,
+    );
+    expect(styles.backgroundColor).toBe(styles.expectedBackgroundColor);
+    expect(styles.borderColor).toBe(styles.expectedBorderColor);
+  }
+});
 
 test("history empty state points users back to Live", async ({ page }) => {
   await installCommonRoutes(page, {

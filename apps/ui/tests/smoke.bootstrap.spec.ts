@@ -5,6 +5,7 @@ import {
   fulfillJson,
   installCommonRoutes,
   installFakeWebSocket,
+  readSemanticSurfaceStyles,
   requestPath,
 } from "./smoke.helpers";
 
@@ -20,6 +21,126 @@ function parseElapsedSeconds(value: string): number {
   const [minutes, seconds] = value.trim().split(":").map((part) => Number(part));
   return (minutes * 60) + seconds;
 }
+
+test("dark mode readiness cards use semantic theme surfaces", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  let captureReadiness = buildCaptureReadiness({
+    isReady: true,
+    sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+    reference: { state: "pass", reasonKey: "reference_ready" },
+    speed: { state: "pass", reasonKey: "speed_stable", details: { dwell_elapsed_s: 8 } },
+  });
+  await installCommonRoutes(page, {
+    locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
+    settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [
+            {
+              id: "car-1",
+              name: "Test Hatch",
+              type: "Simulated setup",
+              variant: null,
+              aspects: {},
+            },
+          ],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await page.route("**/api/recording/status", async (route) => {
+    await fulfillJson(route, {
+      enabled: false,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+      start_time_utc: null,
+      samples_written: 0,
+      samples_dropped: 0,
+      last_completed_run_id: null,
+      last_completed_run_error: null,
+      capture_readiness: captureReadiness,
+    });
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "001122334455",
+          name: "Front Left",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "front_left_wheel",
+          mac_address: "001122334455",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: {
+        clients: {
+          "001122334455": {
+            freq: [1, 2, 3],
+            combined_spectrum_amp_g: [0.1, 0.2, 0.15],
+            strength_metrics: strengthMetrics,
+          },
+        },
+      },
+    },
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#loggingChecklist")).toBeVisible();
+  const passStyles = await readSemanticSurfaceStyles(
+    page.locator('.capture-readiness__item[data-readiness-state="pass"]').first(),
+    "--capture-readiness-pass-surface",
+    "--capture-readiness-pass-border",
+  );
+  expect(passStyles.backgroundColor).toBe(passStyles.expectedBackgroundColor);
+  expect(passStyles.borderColor).toBe(passStyles.expectedBorderColor);
+
+  captureReadiness = buildCaptureReadiness({
+    isReady: false,
+    sensors: { state: "pass", reasonKey: "sensors_ready", details: { live_sensor_count: 1 } },
+    reference: { state: "warn", reasonKey: "speed_sample_stale" },
+    speed: { state: "fail", reasonKey: "speed_sample_missing" },
+    overall: {
+      state: "fail",
+      reasonKey: "capture_blocked",
+      details: { blocking_check: "speed_stable" },
+    },
+  });
+  await page.reload();
+  await expect(page.locator("#loggingChecklist")).toBeVisible();
+
+  const expectations = [
+    {
+      locator: page.locator('.capture-readiness__item[data-readiness-state="warn"]').first(),
+      surfaceVar: "--capture-readiness-warn-surface",
+      borderVar: "--capture-readiness-warn-border",
+    },
+    {
+      locator: page.locator('.capture-readiness__item[data-readiness-state="fail"]').first(),
+      surfaceVar: "--capture-readiness-fail-surface",
+      borderVar: "--capture-readiness-fail-border",
+    },
+  ] as const;
+
+  for (const expectation of expectations) {
+    const styles = await readSemanticSurfaceStyles(
+      expectation.locator,
+      expectation.surfaceVar,
+      expectation.borderVar,
+    );
+    expect(styles.backgroundColor).toBe(styles.expectedBackgroundColor);
+    expect(styles.borderColor).toBe(styles.expectedBorderColor);
+  }
+});
 
 test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
   let startCalls = 0;

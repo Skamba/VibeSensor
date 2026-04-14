@@ -48,6 +48,16 @@
   --pill-ok-text: #0b6a3d;
   --pill-bad-bg: #fae3e3;
   --pill-bad-text: #8c2b2b;
+  --capture-readiness-pass-surface: #f4fbf7;
+  --capture-readiness-pass-border: #c9ead7;
+  --capture-readiness-warn-surface: #fff9ee;
+  --capture-readiness-warn-border: #ead9b3;
+  --capture-readiness-fail-surface: #fff5f5;
+  --capture-readiness-fail-border: #efc1c1;
+  --history-diagnosis-success-surface: #f5fbf7;
+  --history-diagnosis-success-border: #a4d2b0;
+  --history-diagnosis-warn-surface: #fff8e7;
+  --history-diagnosis-warn-border: #e3c47a;
   --row-even: #fafafc;
   --row-hover: #f3f0fe;
   --chart-grid: #dcdfe6;
@@ -77,4 +87,3 @@ body {
   color: var(--text);
   font-size: 15px;
 }
-

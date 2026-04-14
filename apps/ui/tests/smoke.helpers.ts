@@ -1,4 +1,4 @@
-import type { Page, Route } from "@playwright/test";
+import type { Locator, Page, Route } from "@playwright/test";
 import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
 export type FakeWebSocketOptions = {
@@ -94,6 +94,42 @@ export function requestPath(route: Route): string {
 
 export async function fulfillJson(route: Route, body: unknown): Promise<void> {
   await route.fulfill(jsonOk(body));
+}
+
+export type SemanticSurfaceStyles = {
+  backgroundColor: string;
+  borderColor: string;
+  expectedBackgroundColor: string;
+  expectedBorderColor: string;
+};
+
+export async function readSemanticSurfaceStyles(
+  locator: Locator,
+  surfaceVar: string,
+  borderVar: string,
+): Promise<SemanticSurfaceStyles> {
+  return locator.evaluate(
+    (element, vars) => {
+      const probe = document.createElement("div");
+      probe.style.background = `var(${vars.surfaceVar})`;
+      probe.style.border = `1px solid var(${vars.borderVar})`;
+      probe.style.position = "absolute";
+      probe.style.visibility = "hidden";
+      probe.style.pointerEvents = "none";
+      document.body.appendChild(probe);
+      const elementStyles = getComputedStyle(element);
+      const probeStyles = getComputedStyle(probe);
+      const result = {
+        backgroundColor: elementStyles.backgroundColor,
+        borderColor: elementStyles.borderTopColor,
+        expectedBackgroundColor: probeStyles.backgroundColor,
+        expectedBorderColor: probeStyles.borderTopColor,
+      };
+      probe.remove();
+      return result;
+    },
+    { surfaceVar, borderVar },
+  );
 }
 
 export async function activateWizardCloseButton(page: Page): Promise<void> {
