@@ -15,6 +15,7 @@ import type {
   CarsListPanelView,
   CarsListRenderModel,
 } from "../views/cars_panel";
+import type { SettingsAnalysisPanelDom } from "../views/analysis_panel";
 import {
   createSettingsCarsTransport,
   type SettingsCarsTransport,
@@ -22,12 +23,10 @@ import {
 
 export interface SettingsCarsModuleDeps extends FeatureDepsBase {
   confirmDelete?: (message: string) => boolean;
-  dom: Pick<
-    UiSettingsDom,
-    | "analysisNoCarMessage"
-    | "resetAnalysisBtn"
-    | "saveAnalysisBtn"
-    | "settingsTabs"
+  dom: Pick<UiSettingsDom, "settingsTabs">;
+  analysisDom: Pick<
+    SettingsAnalysisPanelDom,
+    "analysisNoCarMessage" | "resetAnalysisBtn" | "saveAnalysisBtn"
   >;
   fmt: (value: number, digits?: number) => string;
   openAnalysisTab: () => void;
@@ -61,7 +60,8 @@ function copyActiveCarAspects(
   }
   for (const [key, value] of Object.entries(car.aspects)) {
     if (typeof value === "number" && key in settings.vehicleSettings) {
-      settings.vehicleSettings[key as keyof SettingsState["vehicleSettings"]] = value;
+      settings.vehicleSettings[key as keyof SettingsState["vehicleSettings"]] =
+        value;
     }
   }
 }
@@ -70,7 +70,8 @@ export function createSettingsCarsModule(
   ctx: SettingsCarsModuleDeps,
 ): SettingsCarsModule {
   const { settings, t } = ctx;
-  const confirmDelete = ctx.confirmDelete ?? ((message: string) => window.confirm(message));
+  const confirmDelete =
+    ctx.confirmDelete ?? ((message: string) => window.confirm(message));
   const transport = createSettingsCarsTransport(ctx.transport);
   let handlersBound = false;
   let highlightedCarFeedback: CarsListHighlightedFeedback | null = null;
@@ -97,14 +98,15 @@ export function createSettingsCarsModule(
 
   function syncAnalysisControls(state: CarsListRenderModel): void {
     const hasActiveCar = state.carSelectionState.kind === "active";
-    if (ctx.dom.saveAnalysisBtn) {
-      ctx.dom.saveAnalysisBtn.disabled = !hasActiveCar;
+    if (ctx.analysisDom.saveAnalysisBtn) {
+      ctx.analysisDom.saveAnalysisBtn.disabled = !hasActiveCar;
     }
-    if (ctx.dom.resetAnalysisBtn) {
-      ctx.dom.resetAnalysisBtn.disabled = !hasActiveCar;
+    if (ctx.analysisDom.resetAnalysisBtn) {
+      ctx.analysisDom.resetAnalysisBtn.disabled = !hasActiveCar;
     }
-    if (ctx.dom.analysisNoCarMessage) {
-      ctx.dom.analysisNoCarMessage.hidden = hasActiveCar || state.carSelectionState.kind === "loading";
+    if (ctx.analysisDom.analysisNoCarMessage) {
+      ctx.analysisDom.analysisNoCarMessage.hidden =
+        hasActiveCar || state.carSelectionState.kind === "loading";
     }
   }
 
@@ -130,8 +132,9 @@ export function createSettingsCarsModule(
     if (!ctx.dom.settingsTabs.length) {
       return null;
     }
-    const safeIndex = ((index % ctx.dom.settingsTabs.length) + ctx.dom.settingsTabs.length)
-      % ctx.dom.settingsTabs.length;
+    const safeIndex =
+      ((index % ctx.dom.settingsTabs.length) + ctx.dom.settingsTabs.length) %
+      ctx.dom.settingsTabs.length;
     return ctx.dom.settingsTabs[safeIndex].getAttribute("data-settings-tab");
   }
 
@@ -139,8 +142,10 @@ export function createSettingsCarsModule(
     if (!ctx.shellDom.menuButtons.length) {
       return undefined;
     }
-    const safeIndex = ((index % ctx.shellDom.menuButtons.length) + ctx.shellDom.menuButtons.length)
-      % ctx.shellDom.menuButtons.length;
+    const safeIndex =
+      ((index % ctx.shellDom.menuButtons.length) +
+        ctx.shellDom.menuButtons.length) %
+      ctx.shellDom.menuButtons.length;
     return ctx.shellDom.menuButtons[safeIndex].dataset.view;
   }
 
@@ -178,7 +183,9 @@ export function createSettingsCarsModule(
           return;
         }
         if (event.key === "End") {
-          dismissForSettingsTab(settingsTabIdAt(ctx.dom.settingsTabs.length - 1));
+          dismissForSettingsTab(
+            settingsTabIdAt(ctx.dom.settingsTabs.length - 1),
+          );
         }
       });
     });
@@ -205,7 +212,9 @@ export function createSettingsCarsModule(
           return;
         }
         if (event.key === "End") {
-          dismissForPrimaryView(primaryViewIdAt(ctx.shellDom.menuButtons.length - 1));
+          dismissForPrimaryView(
+            primaryViewIdAt(ctx.shellDom.menuButtons.length - 1),
+          );
         }
       });
     });
@@ -219,7 +228,10 @@ export function createSettingsCarsModule(
       ? settings.cars.some((car) => car.id === requestedActiveCarId)
       : false;
     settings.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
-    if (highlightedCarFeedback && !settings.cars.some((car) => car.id === highlightedCarFeedback?.carId)) {
+    if (
+      highlightedCarFeedback &&
+      !settings.cars.some((car) => car.id === highlightedCarFeedback?.carId)
+    ) {
       highlightedCarFeedback = null;
     }
     renderCarList();
@@ -302,7 +314,9 @@ export function createSettingsCarsModule(
       return;
     }
     const car = findCar(carId);
-    const confirmed = confirmDelete(t("settings.car.delete_confirm", { name: car?.name || "" }));
+    const confirmed = confirmDelete(
+      t("settings.car.delete_confirm", { name: car?.name || "" }),
+    );
     if (!confirmed) {
       return;
     }

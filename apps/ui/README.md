@@ -85,7 +85,7 @@ source-of-truth export commands remain the only writers for those files.
 | `main.ts` | Thin Vite entry that boots the UI runtime |
 | `app/start_ui_app.ts` | CSS-aware startup entry that constructs and starts the app runtime |
 | `app/ui_runtime_dom.ts` | Startup bundle that resolves feature-scoped DOM locators and fails early when required feature anchors are missing |
-| `app/dom/` | Feature-scoped DOM locator modules for shell, spectrum, realtime, history, settings, cars, update, and ESP flash surfaces |
+| `app/dom/` | Feature-scoped DOM locator modules for shell, spectrum, realtime, history, analysis, settings, cars, update, and ESP flash surfaces |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
 | `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
@@ -105,9 +105,11 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
 | `app/features/settings_cars_module.ts` | Settings-side car controller that owns list loading, activation/deletion flows, highlight feedback, and the explicit open-wizard port |
 | `app/features/settings_cars_transport.ts` | Settings-car transport wrapper over load/activate/delete API calls |
+| `app/features/settings_analysis_module.ts` | Analysis-settings behavior owner for validation, save/reset orchestration, field guidance, and spectrum refreshes behind the island DOM bridge |
 | `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, presenter, and typed bindings together |
 | `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
+| `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
 | `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that mounts the list shell and wizard chrome, then exposes typed list and wizard bridges |
 | `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
 | `app/views/cars_feature_presenter.ts` | Car-wizard presenter reused as the thin wizard DOM adapter for dialog visibility, step rendering, summary updates, and focus targets |
@@ -220,6 +222,12 @@ The car-management flow now follows that same island pattern through
 single settings host, `settings_cars_module.ts` feeds saved-car list/guidance
 state through the list bridge, and the existing wizard presenter/bindings now
 operate only as a thin adapter behind the island-owned dialog surface.
+The analysis settings tab now follows that same pattern through
+`app/views/analysis_panel.tsx`: startup mounts the full analysis shell into its
+own settings host, `settings_analysis_module.ts` keeps validation/save/reset and
+guidance updates behind the typed panel bridge, and `settings_cars_module.ts`
+still owns the no-active-car gating without reaching back into the page-wide
+settings DOM registry.
 
 ## Architecture guardrails
 
