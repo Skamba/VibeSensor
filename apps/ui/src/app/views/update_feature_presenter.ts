@@ -69,6 +69,27 @@ export function createUpdateFeaturePresenter(
 
   let passwordVisible = false;
   let lastActionSummary: UpdateFeatureActionSummary | null = null;
+  let hasHydratedPersistedWifiSettings = false;
+
+  function hydratePersistedWifiSettings(
+    state: UpdateFeatureRenderState,
+  ): void {
+    if (hasHydratedPersistedWifiSettings || state.updateStatus == null) {
+      return;
+    }
+    hasHydratedPersistedWifiSettings = true;
+    if (
+      state.updateStatus.transport !== "wifi" ||
+      !state.updateStatus.ssid ||
+      !internetDom.updateSsidInput
+    ) {
+      return;
+    }
+    if (internetDom.updateSsidInput.value.trim()) {
+      return;
+    }
+    internetDom.updateSsidInput.value = state.updateStatus.ssid;
+  }
 
   function selectedTransport(
     state: UpdateFeatureRenderState,
@@ -343,6 +364,7 @@ export function createUpdateFeaturePresenter(
   }
 
   function render(state: UpdateFeatureRenderState): void {
+    hydratePersistedWifiSettings(state);
     syncTransportUi(state);
     const actionSummary = buildActionSummary(state);
     lastActionSummary = actionSummary;

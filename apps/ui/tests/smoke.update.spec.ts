@@ -265,6 +265,74 @@ test("settings internet tab and updater show USB internet when usable", async ({
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });
 
+test("settings internet tab restores persisted Wi-Fi SSID after reboot", async ({
+  page,
+}) => {
+  await installCommonRoutes(page);
+  await page.route("**/api/update/status", async (route) => {
+    await fulfillJson(route, {
+      state: "idle",
+      phase: "idle",
+      transport: "wifi",
+      ssid: "Workshop Wi-Fi",
+      uplink_interface: null,
+      started_at: null,
+      phase_started_at: null,
+      phase_elapsed_s: null,
+      finished_at: null,
+      last_success_at: 123,
+      updated_at: 123,
+      issues: [],
+      log_tail: [],
+      exit_code: null,
+      runtime: {
+        version: "1.2.3",
+        commit: "abcdef1234567890",
+        ui_source_hash: "ui-hash",
+        static_assets_hash: "feedfacecafebeef",
+        static_build_source_hash: "build-hash",
+        static_build_commit: "build-commit",
+        assets_verified: true,
+        has_packaged_static: true,
+      },
+    });
+  });
+  await page.route("**/api/health", async (route) => {
+    await fulfillJson(route, {
+      status: "ok",
+      processing_state: "idle",
+      processing_failures: 0,
+      degradation_reasons: [],
+      data_loss: {
+        affected_clients: 0,
+        tracked_clients: 0,
+        frames_dropped: 0,
+        queue_overflow_drops: 0,
+        server_queue_drops: 0,
+        parse_errors: 0,
+      },
+      persistence: {
+        analysis_in_progress: false,
+        analysis_queue_depth: 0,
+        write_error: null,
+        analysis_active_run_id: null,
+        analysis_started_at: null,
+        analysis_elapsed_s: null,
+      },
+    });
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="internetTab"]').click();
+  await expect(page.locator("#updateSsidInput")).toHaveValue("Workshop Wi-Fi");
+  await expect(page.locator("#updateReadinessSummary")).toContainText(
+    "All visible prerequisites are ready to start the update.",
+  );
+  await page.locator('[data-settings-tab="updateTab"]').click();
+  await expect(page.locator("#updateStartBtn")).toBeEnabled();
+});
+
 test("settings update failure shows retry guidance, failed-stage retention, and latest attempt context", async ({
   page,
 }) => {

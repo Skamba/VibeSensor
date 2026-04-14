@@ -939,6 +939,78 @@ test.describe("createUpdateFeature polling", () => {
     }
   });
 
+  test("persisted Wi-Fi ssid rehydrates the update input after startup", async () => {
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse({
+          ...createIdleUpdateStatus(),
+          ssid: "Workshop Wi-Fi",
+          updated_at: 123,
+          last_success_at: 123,
+        });
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      deps.internetPanel.dom.updateSsidInput.value = "";
+      const feature = createUpdateFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      expect(deps.internetPanel.dom.updateSsidInput.value).toBe("Workshop Wi-Fi");
+      expect(deps.updateReadinessSummary.innerHTML).toContain(
+        "settings.update.readiness.summary_ready",
+      );
+      expect(deps.updateStartBtn.disabled).toBe(false);
+    } finally {
+      restoreFetch();
+    }
+  });
+
+  test("persisted Wi-Fi ssid does not overwrite a user edit already in progress", async () => {
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse({
+          ...createIdleUpdateStatus(),
+          ssid: "Workshop Wi-Fi",
+          updated_at: 123,
+          last_success_at: 123,
+        });
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      if (url.pathname === "/api/update/internet-status") {
+        return jsonResponse(createUsbInternetStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      deps.internetPanel.dom.updateSsidInput.value = "Driver-entered Wi-Fi";
+      const feature = createUpdateFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+
+      expect(deps.internetPanel.dom.updateSsidInput.value).toBe(
+        "Driver-entered Wi-Fi",
+      );
+    } finally {
+      restoreFetch();
+    }
+  });
+
   test("failed update state surfaces the failed stage and issue details", async () => {
     const restoreFetch = installFetchMock(async (url) => {
       if (url.pathname === "/api/update/status") {
