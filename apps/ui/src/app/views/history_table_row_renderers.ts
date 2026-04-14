@@ -420,6 +420,57 @@ function createWarningsElement(
   });
 }
 
+function createRunActionsPanelElement(
+  row: HistoryRowViewModel,
+  details: NonNullable<HistoryRowViewModel["details"]>,
+  params: HistoryTableRendererParams,
+): HTMLDivElement {
+  return createElementNode("div", {
+    className: "history-details-footer",
+    children: [
+      createElementNode("div", {
+        className: "history-details-footer__copy",
+        children: [
+          createElementNode("div", {
+            className: "history-details-footer__eyebrow",
+            text: details.footerEyebrow,
+          }),
+          createElementNode("div", {
+            className: "history-details-footer__body",
+            text: details.footerBody,
+          }),
+        ],
+      }),
+      createElementNode("div", {
+        className: "history-details-footer__actions",
+        children: [
+          createElementNode("a", {
+            className: "btn btn--muted",
+            attrs: {
+              href: params.historyExportUrl(row.runId),
+              download: `${row.runId}.zip`,
+            },
+            data: {
+              runAction: "download-raw",
+              run: row.runId,
+            },
+            text: details.exportLabel,
+          }),
+          createElementNode("button", {
+            className: "btn btn--danger-quiet",
+            attrs: { type: "button" },
+            data: {
+              runAction: "delete-run",
+              run: row.runId,
+            },
+            text: details.deleteLabel,
+          }),
+        ],
+      }),
+    ],
+  });
+}
+
 function createDetailsRowElement(
   row: HistoryRowViewModel,
   details: NonNullable<HistoryRowViewModel["details"]>,
@@ -491,57 +542,19 @@ function createDetailsRowElement(
               createElementNode("div", {
                 className: "history-results-layout",
                 children: [
-                  createInsightsElement(details.insights),
+                  createElementNode("div", {
+                    className: "history-main-column",
+                    children: [
+                      createInsightsElement(details.insights),
+                      createRunActionsPanelElement(row, details, params),
+                    ],
+                  }),
                   createElementNode("div", {
                     className: "history-evidence-column",
                     children: [
                       createElementNode("div", {
                         className: "history-evidence-panel",
                         children: [createHeatmapElement(details.heatmap)],
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              createElementNode("div", {
-                className: "history-details-footer",
-                children: [
-                  createElementNode("div", {
-                    className: "history-details-footer__copy",
-                    children: [
-                      createElementNode("div", {
-                        className: "history-details-footer__eyebrow",
-                        text: details.footerEyebrow,
-                      }),
-                      createElementNode("div", {
-                        className: "history-details-footer__body",
-                        text: details.footerBody,
-                      }),
-                    ],
-                  }),
-                  createElementNode("div", {
-                    className: "history-details-footer__actions",
-                    children: [
-                      createElementNode("a", {
-                        className: "btn btn--muted",
-                        attrs: {
-                          href: params.historyExportUrl(row.runId),
-                          download: `${row.runId}.zip`,
-                        },
-                        data: {
-                          runAction: "download-raw",
-                          run: row.runId,
-                        },
-                        text: details.exportLabel,
-                      }),
-                      createElementNode("button", {
-                        className: "btn btn--danger-quiet",
-                        attrs: { type: "button" },
-                        data: {
-                          runAction: "delete-run",
-                          run: row.runId,
-                        },
-                        text: details.deleteLabel,
                       }),
                     ],
                   }),

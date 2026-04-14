@@ -206,6 +206,7 @@ test("history keeps destructive actions inside the expanded management footer", 
   await expect(actionCell).not.toContainText("Delete");
   await row.locator('[data-run-toggle="details"]').click();
   const footer = page.locator(".history-details-footer");
+  await expect(page.locator(".history-main-column .history-details-footer")).toHaveCount(1);
   await expect(footer).toContainText("Reports and data");
   await expect(footer.locator('[data-run-action="download-raw"][data-run="run-001"]')).toContainText("Export");
   const deleteButton = footer.locator('[data-run-action="delete-run"][data-run="run-001"]');
@@ -338,5 +339,18 @@ test("history loaded insights promote the result summary above supporting eviden
   await expect(page.locator(".history-secondary-findings")).toContainText("Secondary candidates");
   await expect(page.locator(".history-finding-card--secondary")).toHaveCount(1);
   await expect(page.locator(".history-finding-card--secondary")).toContainText("Secondary driveline contribution");
+  await expect(page.locator(".history-main-column .history-details-footer")).toHaveCount(1);
   await expect(page.locator(".history-evidence-column .history-preview-stats")).toHaveCount(0);
+  const layoutMetrics = await page.locator(".history-results-layout").evaluate((layout) => {
+    const mainColumn = layout.querySelector<HTMLElement>(".history-main-column");
+    const insights = layout.querySelector<HTMLElement>(".history-insights-block");
+    const footer = layout.querySelector<HTMLElement>(".history-details-footer");
+    if (!mainColumn || !insights || !footer) {
+      throw new Error("history detail layout is missing expected sections");
+    }
+    return {
+      footerAfterInsightsGap: Math.round(footer.getBoundingClientRect().top - insights.getBoundingClientRect().bottom),
+    };
+  });
+  expect(layoutMetrics.footerAfterInsightsGap).toBeLessThanOrEqual(24);
 });
