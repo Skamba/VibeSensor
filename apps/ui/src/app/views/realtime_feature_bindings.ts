@@ -1,5 +1,9 @@
-import type { UiRealtimeDom } from "../dom/realtime_dom";
-import { bindViewEvent, composeViewDisposers, type ViewDisposer } from "./dom_event_bindings";
+import type { SensorsPanelDom } from "./sensors_panel";
+import {
+  bindViewEvent,
+  composeViewDisposers,
+  type ViewDisposer,
+} from "./dom_event_bindings";
 import {
   getRealtimeSensorTableClickAction,
   getRealtimeSensorTableLocationChange,
@@ -13,7 +17,7 @@ export interface RealtimeFeatureBindingHandlers {
 }
 
 export function bindRealtimeFeatureInteractions(
-  dom: Pick<UiRealtimeDom, "sensorsSettingsBody">,
+  dom: SensorsPanelDom,
   handlers: RealtimeFeatureBindingHandlers,
 ): ViewDisposer {
   return composeViewDisposers(
