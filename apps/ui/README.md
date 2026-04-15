@@ -89,6 +89,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/ui_panel_bootstrap.ts` | Centralized host registry and panel-mount bootstrap for dashboard, history, and settings islands so startup/runtime stop wiring one host getter per panel |
 | `app/dom/` | Focused DOM lookup helpers that remain after the panel bootstrap cleanup, including `requiredById` and other non-panel runtime locators |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
+| `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
 | `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, and app-level error banner plus the typed shell chrome bridge |
@@ -158,6 +159,8 @@ source-of-truth export commands remain the only writers for those files.
 | `theme.ts` | Chart color palette and order band fill colors |
 | `styles/app.css` | Thin stylesheet aggregator that imports the UI style modules in cascade order |
 | `styles/{tokens,shell,components,maintenance,realtime,history,settings,adaptive,theme}.css` | Shared tokens/primitives plus feature-scoped and cross-cutting style ownership for shell, updater, realtime, history, settings, responsive, and theme overrides |
+
+- AppState top-level slices returned by `createAppState()` are reactive proxy stores. Existing feature/runtime code can keep object-style reads and writes, but any `computed()`/`effect()` that depends on a slice should call `trackAppStateSlice(slice)` (or read `getAppStateSliceSignal(slice).value`) and bulk multi-field writes should use `batchAppStateUpdates()`.
 
 ## Features
 

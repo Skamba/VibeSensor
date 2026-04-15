@@ -1,4 +1,5 @@
 import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
+import { batchAppStateUpdates } from "./ui_app_state";
 import type { AppState } from "./ui_app_state";
 
 type DemoDeps = {
@@ -16,7 +17,9 @@ declare global {
 export function runDemoMode(deps: DemoDeps): void {
   const { state, renderWsState, applyPayload } = deps;
 
-  state.transport.wsState = "connected";
+  batchAppStateUpdates(() => {
+    state.transport.wsState = "connected";
+  });
   renderWsState();
 
   const demoClients = [
@@ -165,18 +168,20 @@ export function runDemoMode(deps: DemoDeps): void {
     spectra: { clients: demoSpectra },
   };
 
-  state.settings.carsLoaded = true;
-  state.settings.cars = [
-    {
-      id: "demo-car-1",
-      name: "Demo Hatch",
-      type: "Simulated setup",
-      variant: "Audit baseline",
-      aspects: { ...state.settings.vehicleSettings },
-    },
-  ];
-  state.settings.activeCarId = "demo-car-1";
-  state.transport.hasReceivedPayload = true;
+  batchAppStateUpdates(() => {
+    state.settings.carsLoaded = true;
+    state.settings.cars = [
+      {
+        id: "demo-car-1",
+        name: "Demo Hatch",
+        type: "Simulated setup",
+        variant: "Audit baseline",
+        aspects: { ...state.settings.vehicleSettings },
+      },
+    ];
+    state.settings.activeCarId = "demo-car-1";
+    state.transport.hasReceivedPayload = true;
+  });
   applyPayload(demoPayload);
 
   window.__vibesensorDemoCleanup = undefined;

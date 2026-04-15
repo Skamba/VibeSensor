@@ -16,6 +16,111 @@ import type {
   SpeedSourceKind,
   SpeedSourceStatusPayload,
 } from "../transport/http_models";
+import { batch, signal, type ReadonlySignal, type Signal } from "./ui_signals";
+
+const reactiveTargetProxies = new WeakMap<object, WeakMap<Signal<number>, object>>();
+const reactiveProxyTargets = new WeakMap<object, object>();
+const reactiveSliceSignals = new WeakMap<object, Signal<number>>();
+
+function isProxyableObject(value: unknown): value is object {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return true;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function unwrapReactiveValue<T>(value: T): T {
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  return (reactiveProxyTargets.get(value) as T | undefined) ?? value;
+}
+
+function createReactiveProxy<T extends object>(target: T, rootSignal: Signal<number>): T {
+  let proxiesBySignal = reactiveTargetProxies.get(target);
+  if (!proxiesBySignal) {
+    proxiesBySignal = new WeakMap<Signal<number>, object>();
+    reactiveTargetProxies.set(target, proxiesBySignal);
+  }
+  const existingProxy = proxiesBySignal.get(rootSignal);
+  if (existingProxy) {
+    return existingProxy as T;
+  }
+
+  const proxy = new Proxy(target, {
+    get(current, property) {
+      const value = Reflect.get(current, property);
+      if (isProxyableObject(value)) {
+        return createReactiveProxy(unwrapReactiveValue(value), rootSignal);
+      }
+      return value;
+    },
+    set(current, property, nextValue) {
+      const rawNextValue = unwrapReactiveValue(nextValue);
+      const previousValue = unwrapReactiveValue(Reflect.get(current, property));
+      if (Object.is(previousValue, rawNextValue)) {
+        return true;
+      }
+      const didSet = Reflect.set(current, property, rawNextValue);
+      if (didSet) {
+        rootSignal.value += 1;
+      }
+      return didSet;
+    },
+    deleteProperty(current, property) {
+      if (!Reflect.has(current, property)) {
+        return true;
+      }
+      const didDelete = Reflect.deleteProperty(current, property);
+      if (didDelete) {
+        rootSignal.value += 1;
+      }
+      return didDelete;
+    },
+  });
+
+  proxiesBySignal.set(rootSignal, proxy);
+  reactiveProxyTargets.set(proxy, target);
+  reactiveSliceSignals.set(proxy, rootSignal);
+  return proxy as T;
+}
+
+function createReactiveStateSlice<T extends object>(value: T): T {
+  return createReactiveProxy(value, signal(0));
+}
+
+function requireReactiveSliceSignal<T extends object>(slice: T): Signal<number> {
+  const sliceSignal = reactiveSliceSignals.get(slice as object);
+  if (!sliceSignal) {
+    throw new Error("AppState slice signal is unavailable outside createAppState()");
+  }
+  return sliceSignal;
+}
+
+export function getAppStateSliceSignal<T extends object>(slice: T): ReadonlySignal<number> {
+  return requireReactiveSliceSignal(slice);
+}
+
+export function trackAppStateSlice<T extends object>(slice: T): T {
+  requireReactiveSliceSignal(slice).value;
+  return slice;
+}
+
+export function batchAppStateUpdates<T>(callback: () => T): T {
+  let result!: T;
+  batch(() => {
+    result = callback();
+  });
+  return result;
+}
+
+export function unwrapAppStateValue<T>(value: T): T {
+  return unwrapReactiveValue(value);
+}
 
 export interface VehicleSettings {
   tire_width_mm: number;
@@ -115,20 +220,26 @@ export function applySpectrumTick(
 }
 
 export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayloadUpdateResult {
-  const { realtime, spectrum, adaptedPayload, updateClientSelection } = deps;
-  const previousSelectedClientId = realtime.selectedClientId;
-  realtime.clients = adaptedPayload.clients;
-  const spectrumTick = applySpectrumTick(spectrum.spectra, spectrum.hasSpectrumData, adaptedPayload.spectra);
-  spectrum.spectra = spectrumTick.spectra;
-  updateClientSelection();
-  realtime.speedMps = adaptedPayload.speed_mps;
-  realtime.rotationalSpeeds = adaptedPayload.rotational_speeds;
-  spectrum.hasSpectrumData = spectrumTick.hasSpectrumData;
-  return {
-    hasSelectedClientChanged: previousSelectedClientId !== realtime.selectedClientId,
-    selectedClient: realtime.clients.find((client) => client.id === realtime.selectedClientId),
-    hasNewSpectrumFrame: spectrumTick.hasNewSpectrumFrame,
-  };
+  return batchAppStateUpdates(() => {
+    const { realtime, spectrum, adaptedPayload, updateClientSelection } = deps;
+    const previousSelectedClientId = realtime.selectedClientId;
+    realtime.clients = adaptedPayload.clients;
+    const spectrumTick = applySpectrumTick(
+      spectrum.spectra,
+      spectrum.hasSpectrumData,
+      adaptedPayload.spectra,
+    );
+    spectrum.spectra = spectrumTick.spectra;
+    updateClientSelection();
+    realtime.speedMps = adaptedPayload.speed_mps;
+    realtime.rotationalSpeeds = adaptedPayload.rotational_speeds;
+    spectrum.hasSpectrumData = spectrumTick.hasSpectrumData;
+    return {
+      hasSelectedClientChanged: previousSelectedClientId !== realtime.selectedClientId,
+      selectedClient: realtime.clients.find((client) => client.id === realtime.selectedClientId),
+      hasNewSpectrumFrame: spectrumTick.hasNewSpectrumFrame,
+    };
+  });
 }
 
 export interface ShellState {
@@ -198,12 +309,12 @@ export interface AppState {
 
 export function createAppState(): AppState {
   return {
-    shell: {
+    shell: createReactiveStateSlice({
       lang: "en",
       speedUnit: "kmh",
       activeViewId: "dashboardView",
-    },
-    transport: {
+    }),
+    transport: createReactiveStateSlice({
       ws: null,
       wsState: "connecting",
       pendingPayload: null,
@@ -212,8 +323,8 @@ export function createAppState(): AppState {
       minRenderIntervalMs: 100,
       hasReceivedPayload: false,
       payloadError: null,
-    },
-    realtime: {
+    }),
+    realtime: createReactiveStateSlice({
       clients: [],
       selectedClientId: null,
       speedMps: null,
@@ -233,14 +344,14 @@ export function createAppState(): AppState {
       locationOptions: [],
       locationCodes: defaultLocationCodes.slice(),
       sensorsSettingsSignature: "",
-    },
-    history: {
+    }),
+    history: createReactiveStateSlice({
       runs: [],
       deleteAllRunsInFlight: false,
       expandedRunId: null,
       runDetailsById: {},
-    },
-    settings: {
+    }),
+    settings: createReactiveStateSlice({
       vehicleSettings: { ...defaultVehicleSettings },
       cars: [],
       carsLoaded: false,
@@ -252,12 +363,12 @@ export function createAppState(): AppState {
       resolvedSpeedSource: null,
       gpsFallbackActive: false,
       gpsEffectiveSpeedKph: null,
-    },
-    spectrum: {
+    }),
+    spectrum: createReactiveStateSlice({
       spectrumPlot: null,
       spectra: { clients: {} },
       chartBands: [],
       hasSpectrumData: false,
-    },
+    }),
   };
 }

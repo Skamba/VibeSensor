@@ -2,7 +2,12 @@ import { adaptServerPayload } from "../../server_payload";
 import type { AdaptedClient, AdaptedPayload } from "../../transport/live_models";
 import { runDemoMode } from "../demo_mode";
 import { WsClient } from "../../ws";
-import { applyLivePayloadUpdate, type AppState } from "../ui_app_state";
+import {
+  applyLivePayloadUpdate,
+  batchAppStateUpdates,
+  type AppState,
+  unwrapAppStateValue,
+} from "../ui_app_state";
 
 type UiLiveTransportControllerDeps = {
   state: AppState;
@@ -82,10 +87,12 @@ export class UiLiveTransportController {
         this.queueRender();
         return;
       }
-      const payload = this.state.transport.pendingPayload;
+      const payload = unwrapAppStateValue(this.state.transport.pendingPayload);
       if (!payload) return;
-      this.state.transport.pendingPayload = null;
-      this.state.transport.lastRenderTsMs = now;
+      batchAppStateUpdates(() => {
+        this.state.transport.pendingPayload = null;
+        this.state.transport.lastRenderTsMs = now;
+      });
       this.applyPayload(payload);
     });
   }
@@ -96,21 +103,25 @@ export class UiLiveTransportController {
     try {
       adapted = adaptServerPayload(payload);
     } catch (error) {
-      this.state.transport.payloadError = error instanceof Error ? error.message : this.payloadErrorMessage();
-      this.state.spectrum.hasSpectrumData = false;
+      batchAppStateUpdates(() => {
+        this.state.transport.payloadError =
+          error instanceof Error ? error.message : this.payloadErrorMessage();
+        this.state.spectrum.hasSpectrumData = false;
+      });
       this.refreshWsChrome();
       return;
     }
 
-    this.state.transport.payloadError = null;
-    this.renderWsState();
-
-    const update = applyLivePayloadUpdate({
-      realtime: this.state.realtime,
-      spectrum: this.state.spectrum,
-      adaptedPayload: adapted,
-      updateClientSelection: () => ports.updateClientSelection(),
+    const update = batchAppStateUpdates(() => {
+      this.state.transport.payloadError = null;
+      return applyLivePayloadUpdate({
+        realtime: this.state.realtime,
+        spectrum: this.state.spectrum,
+        adaptedPayload: adapted,
+        updateClientSelection: () => ports.updateClientSelection(),
+      });
     });
+    this.renderWsState();
     ports.maybeRenderSensorsSettingsList();
     ports.renderLoggingStatus();
     if (update.hasSelectedClientChanged) {
@@ -130,8 +141,10 @@ export class UiLiveTransportController {
     this.state.transport.ws = new WsClient({
       url: `${protocol}//${window.location.host}/ws`,
       onPayload: (payload) => {
-        this.state.transport.hasReceivedPayload = true;
-        this.state.transport.pendingPayload = payload;
+        batchAppStateUpdates(() => {
+          this.state.transport.hasReceivedPayload = true;
+          this.state.transport.pendingPayload = payload;
+        });
         this.queueRender();
       },
       onStateChange: (nextState) => {

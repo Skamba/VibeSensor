@@ -301,6 +301,36 @@ test.describe("createUiShellStatusModule", () => {
     expect(appShellWrap.dataset.connectionState).toBe("degraded");
   });
 
+  test("derives updated websocket badge state after transport mutations", () => {
+    const state = createAppState();
+    const module = createUiShellStatusModule({
+      appShellWrap: createWrap(),
+      realtime: state.realtime,
+      renderLiveOverviewSpeed: () => undefined,
+      settings: state.settings,
+      shell: state.shell,
+      t: testTranslation,
+      transport: state.transport,
+    });
+
+    expect(module.getWsLinkState()).toEqual({
+      text: "ws.connecting",
+      variant: "muted",
+    });
+
+    state.transport.wsState = "stale";
+    expect(module.getWsLinkState()).toEqual({
+      text: "ws.stale",
+      variant: "bad",
+    });
+
+    state.transport.payloadError = "bad frame";
+    expect(module.getWsLinkState()).toEqual({
+      text: "ws.payload_error_pill",
+      variant: "bad",
+    });
+  });
+
   test("renders speed override after car bootstrap resolves", () => {
     const state = createAppState();
     state.realtime.speedMps = 12;

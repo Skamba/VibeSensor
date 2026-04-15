@@ -6,7 +6,9 @@ import type {
   ShellState,
   TransportState,
 } from "../ui_app_state";
+import { trackAppStateSlice } from "../ui_app_state";
 import type { VisualVariant } from "../style_state";
+import { computed } from "../ui_signals";
 import type { UiShellBadgeModel } from "./ui_shell_chrome";
 
 const WS_KEY_BY_STATE: Record<string, string> = {
@@ -54,7 +56,8 @@ export function createUiShellStatusModule(
       : deps.t("speed.unit.kmh");
   }
 
-  function getWsLinkState(): UiShellBadgeModel {
+  const wsLinkState = computed<UiShellBadgeModel>(() => {
+    trackAppStateSlice(deps.transport);
     if (deps.transport.payloadError) {
       return {
         text: deps.t("ws.payload_error_pill"),
@@ -66,38 +69,49 @@ export function createUiShellStatusModule(
       text: deps.t(WS_KEY_BY_STATE[wsState] || "ws.connecting"),
       variant: WS_VARIANT_BY_STATE[wsState] || "muted",
     };
-  }
+  });
+
+  const speedReadoutText = computed(() => {
+    trackAppStateSlice(deps.realtime);
+    trackAppStateSlice(deps.settings);
+    trackAppStateSlice(deps.shell);
+    const unitLabel = selectedSpeedUnitLabel();
+    if (
+      typeof deps.realtime.speedMps === "number" &&
+      Number.isFinite(deps.realtime.speedMps)
+    ) {
+      const value = speedValueInSelectedUnit(deps.realtime.speedMps);
+      const labelKey = deriveSpeedReadoutLabelKey(
+        deps.settings,
+        deps.realtime.rotationalSpeeds?.basis_speed_source ?? null,
+      );
+      return deps.t(labelKey, {
+        unit: unitLabel,
+        value: fmt(value, 1),
+      });
+    }
+    return deps.t("speed.none", { unit: unitLabel });
+  });
+
+  const connectionState = computed(() => {
+    trackAppStateSlice(deps.transport);
+    const degraded =
+      deps.transport.payloadError !== null ||
+      deps.transport.wsState === "reconnecting" ||
+      deps.transport.wsState === "stale";
+    return degraded ? "degraded" : "live";
+  });
 
   return {
-    getWsLinkState,
+    getWsLinkState() {
+      return wsLinkState.value;
+    },
     renderSpeedReadout() {
-      const unitLabel = selectedSpeedUnitLabel();
-      if (
-        typeof deps.realtime.speedMps === "number" &&
-        Number.isFinite(deps.realtime.speedMps)
-      ) {
-        const value = speedValueInSelectedUnit(deps.realtime.speedMps);
-        const labelKey = deriveSpeedReadoutLabelKey(
-          deps.settings,
-          deps.realtime.rotationalSpeeds?.basis_speed_source ?? null,
-        );
-        deps.renderLiveOverviewSpeed(
-          deps.t(labelKey, {
-            unit: unitLabel,
-            value: fmt(value, 1),
-          }),
-        );
-        return;
-      }
-      deps.renderLiveOverviewSpeed(deps.t("speed.none", { unit: unitLabel }));
+      deps.renderLiveOverviewSpeed(speedReadoutText.value);
     },
     syncConnectionState() {
       if (deps.appShellWrap) {
-        const degraded =
-          deps.transport.payloadError !== null ||
-          deps.transport.wsState === "reconnecting" ||
-          deps.transport.wsState === "stale";
-        deps.appShellWrap.dataset.connectionState = degraded ? "degraded" : "live";
+        deps.appShellWrap.dataset.connectionState = connectionState.value;
       }
     },
   };
