@@ -16,6 +16,7 @@ import {
 import { createUiShellNotificationModule } from "../src/app/runtime/ui_shell_notification_module";
 import { createUiShellPreferencesModule } from "../src/app/runtime/ui_shell_preferences_module";
 import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_module";
+import { createUiShellViewVisibilityModule } from "../src/app/runtime/ui_shell_view_visibility_module";
 
 function createView(id: string): HTMLElement {
   return {
@@ -79,19 +80,13 @@ function installShellDocument() {
 }
 
 test.describe("createUiShellNavigationModule", () => {
-  test("setActiveView toggles views and falls back to dashboard", () => {
+  test("setActiveView updates signal-backed state and falls back to dashboard", () => {
     const state = createAppState();
-    const dashboardView = createView(DEFAULT_SHELL_VIEW_ID);
-    const historyView = createView("historyView");
-    const appShellWrap = createWrap();
     let resizeCalls = 0;
 
     const module = createUiShellNavigationModule({
       shell: state.shell,
-      dom: {
-        appShellWrap,
-        views: [dashboardView, historyView],
-      },
+      viewIds: [DEFAULT_SHELL_VIEW_ID, "historyView"],
       onDashboardViewActivated: () => {
         resizeCalls += 1;
       },
@@ -99,17 +94,38 @@ test.describe("createUiShellNavigationModule", () => {
 
     module.setActiveView("historyView");
     expect(state.shell.activeViewId).toBe("historyView");
-    expect(historyView.hidden).toBe(false);
-    expect(dashboardView.hidden).toBe(true);
-    expect(appShellWrap.dataset.activeView).toBe("historyView");
+    expect(module.activeViewId.value).toBe("historyView");
     expect(resizeCalls).toBe(0);
 
     module.setActiveView("missingView");
     expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(resizeCalls).toBe(1);
+  });
+});
+
+test.describe("createUiShellViewVisibilityModule", () => {
+  test("syncs section visibility from the active view signal", () => {
+    const state = createAppState();
+    const dashboardView = createView(DEFAULT_SHELL_VIEW_ID);
+    const historyView = createView("historyView");
+    const navigation = createUiShellNavigationModule({
+      shell: state.shell,
+      viewIds: [DEFAULT_SHELL_VIEW_ID, "historyView"],
+    });
+    const visibility = createUiShellViewVisibilityModule({
+      activeViewId: navigation.activeViewId,
+      views: [dashboardView, historyView],
+    });
+
     expect(dashboardView.hidden).toBe(false);
     expect(historyView.hidden).toBe(true);
-    expect(appShellWrap.dataset.activeView).toBe(DEFAULT_SHELL_VIEW_ID);
-    expect(resizeCalls).toBe(1);
+
+    navigation.setActiveView("historyView");
+    expect(dashboardView.hidden).toBe(true);
+    expect(historyView.hidden).toBe(false);
+
+    visibility.dispose();
   });
 });
 

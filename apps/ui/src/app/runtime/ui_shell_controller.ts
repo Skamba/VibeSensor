@@ -15,6 +15,7 @@ import {
   createUiShellNavigationModule,
   type UiShellNavigationModule,
 } from "./ui_shell_navigation_module";
+import { createUiShellViewVisibilityModule } from "./ui_shell_view_visibility_module";
 import {
   createUiShellNotificationModule,
   type UiShellNotificationModule,
@@ -86,15 +87,17 @@ export class UiShellController {
     setUiLanguage(this.state.shell.lang);
     this.chrome = deps.chrome;
     const appShellWrap = queryOne<HTMLElement>(".wrap");
+    const views = queryRequiredAll<HTMLElement>(".view", "UI shell views");
     this.navigation = createUiShellNavigationModule({
       shell: this.state.shell,
-      dom: {
-        appShellWrap,
-        views: queryRequiredAll<HTMLElement>(".view", "UI shell views"),
-      },
+      viewIds: views.map((view) => view.id),
       onDashboardViewActivated: () => {
         this.state.spectrum.spectrumPlot?.resize();
       },
+    });
+    createUiShellViewVisibilityModule({
+      activeViewId: this.navigation.activeViewId,
+      views,
     });
     this.notifications = createUiShellNotificationModule({
       onChanged: () => this.renderChrome(),
