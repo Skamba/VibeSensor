@@ -119,7 +119,7 @@ test.describe("createCarsFeatureWorkflow", () => {
       view: createViewPorts(harness),
     });
 
-    await workflow.openWizard(createDefaultManualInputs());
+    await workflow.openWizard();
 
     expect(harness.focuses).toEqual(["close", "custom-brand"]);
     expect(harness.renderStates.at(-1)?.brandOptions).toEqual({
@@ -157,7 +157,7 @@ test.describe("createCarsFeatureWorkflow", () => {
       view: createViewPorts(harness),
     });
 
-    await workflow.openWizard(createDefaultManualInputs());
+    await workflow.openWizard();
     await workflow.selectBrand("BMW");
     await workflow.selectType("SUV");
     await workflow.submitCustomModel("X5 M60i");
@@ -219,7 +219,7 @@ test.describe("createCarsFeatureWorkflow", () => {
       view: createViewPorts(harness),
     });
 
-    await workflow.openWizard(createDefaultManualInputs());
+    await workflow.openWizard();
     await workflow.selectBrand("BMW");
     await workflow.selectType("SUV");
     await workflow.selectModel(0);

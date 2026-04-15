@@ -4,7 +4,6 @@ import {
 } from "./car_wizard_view";
 import type {
   CarsFeatureFocusTarget,
-  CarsFeatureManualInputState,
   CarsFeatureRenderState,
 } from "../features/cars_feature_workflow";
 import type { CarsWizardPanelBridge } from "./cars_panel";
@@ -16,11 +15,8 @@ export interface CarsFeaturePresenterDeps {
 }
 
 export interface CarsFeaturePresenter {
-  captureReturnFocusTarget(): HTMLElement | null;
   focus(target: CarsFeatureFocusTarget): void;
-  readManualInputs(): CarsFeatureManualInputState;
   render(state: CarsFeatureRenderState): void;
-  restoreFocus(target: HTMLElement | null): void;
 }
 
 export function createCarsFeaturePresenter(
@@ -33,20 +29,11 @@ export function createCarsFeaturePresenter(
   }
 
   return {
-    captureReturnFocusTarget(): HTMLElement | null {
-      return panel.captureReturnFocusTarget();
-    },
     focus(target): void {
       panel.focus(target);
     },
-    readManualInputs(): CarsFeatureManualInputState {
-      return panel.readManualInputs();
-    },
     render(state): void {
-      panel.render(renderWizard(state));
-    },
-    restoreFocus(target): void {
-      panel.restoreFocus(target);
+      panel.setModel(renderWizard(state));
     },
   };
 }

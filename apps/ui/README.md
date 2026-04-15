@@ -118,8 +118,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/update_panel.tsx` | Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a typed bridge |
 | `app/views/sensors_panel.tsx` | Signal-backed Preact owner for the sensors settings shell that keeps the sensor table reactive while exposing typed identify/remove/location callbacks to the realtime feature |
 | `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX, owns typed save/scan/select/input callbacks, and exposes the shared bridge consumed by the speed-source and GPS-status modules |
-| `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that renders saved-car guidance/list rows plus the full add-car wizard internals in JSX and exposes typed list and wizard bridges |
-| `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
+| `app/views/cars_panel.tsx` | Signal-backed Preact owner for the full car-management surface; it renders saved-car guidance/list rows plus the full add-car wizard in JSX, owns wizard focus/return-focus/scroll lifecycle locally, and exposes typed list and wizard bridges |
 | `app/views/cars_feature_presenter.ts` | Thin car-wizard presenter that turns workflow state into typed wizard render models and delegates focus/manual-input access through the island bridge |
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
 | `app/features/update_feature.ts` | Thin update facade that binds typed island actions, delegates island render-model updates to the presenter, and delegates update commands to the workflow |

@@ -1,7 +1,9 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { CarsFeatureInteraction } from "../views/cars_feature_bindings";
 import { createCarsFeaturePresenter } from "../views/cars_feature_presenter";
-import type { CarsWizardPanelBridge } from "../views/cars_panel";
+import type {
+  CarsFeatureInteraction,
+  CarsWizardPanelBridge,
+} from "../views/cars_panel";
 import { createCarsFeatureWorkflow } from "./cars_feature_workflow";
 
 export interface CarsFeatureDeps extends FeatureDepsBase {
@@ -33,16 +35,9 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     view: presenter,
   });
   let handlersBound = false;
-  let lastFocusTarget: HTMLElement | null = null;
-
-  function restoreFocus(): void {
-    presenter.restoreFocus(lastFocusTarget);
-    lastFocusTarget = null;
-  }
 
   function openWizard(): void {
-    lastFocusTarget = presenter.captureReturnFocusTarget();
-    void workflow.openWizard(presenter.readManualInputs());
+    void workflow.openWizard();
   }
 
   async function handleInteraction(action: CarsFeatureInteraction): Promise<void> {
@@ -52,7 +47,6 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     }
     if (action.type === "close") {
       workflow.closeWizard();
-      restoreFocus();
       return;
     }
     if (action.type === "back") {
@@ -99,9 +93,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       workflow.handleManualInputsChanged(action.inputs);
       return;
     }
-    if (await workflow.finishWizard()) {
-      restoreFocus();
-    }
+    await workflow.finishWizard();
   }
 
   return {
