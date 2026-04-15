@@ -1,7 +1,8 @@
-import { h } from "preact";
+import type { JSX } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
   RealtimeSensorTableClickAction,
   RealtimeSensorTableLocationChange,
@@ -19,7 +20,7 @@ export interface SensorsPanelActionHandlers {
 }
 
 export interface SensorsPanelView {
-  render(model: SensorsPanelRenderModel): void;
+  setModel(model: SensorsPanelRenderModel): void;
   bindActions(handlers: SensorsPanelActionHandlers): void;
 }
 
@@ -29,7 +30,7 @@ type SensorsPanelBridgeState = {
 };
 
 function handleSensorAction(
-  event: h.JSX.TargetedMouseEvent<HTMLButtonElement>,
+  event: JSX.TargetedMouseEvent<HTMLButtonElement>,
   actions: SensorsPanelActionHandlers | null,
   action: RealtimeSensorTableClickAction["type"],
   clientId: string,
@@ -120,8 +121,8 @@ function SensorsTableBody(props: {
   ));
 }
 
-function SensorsPanel(props: { state: SensorsPanelBridgeState }) {
-  const { state } = props;
+function SensorsPanel(props: { state: ReadonlySignal<SensorsPanelBridgeState> }) {
+  const state = props.state.value;
   const t = useUiTranslation();
   return (
     <div class="panel card">
@@ -159,21 +160,18 @@ function SensorsPanel(props: { state: SensorsPanelBridgeState }) {
 }
 
 export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
-  let state: SensorsPanelBridgeState = {
+  const state = signal<SensorsPanelBridgeState>({
     actions: null,
     model: { table: null },
-  };
+  });
   const mount = createUiPreactMount(host);
-  const render = () => mount.render(<SensorsPanel state={state} />);
-  render();
+  mount.render(<SensorsPanel state={state} />);
   return {
-    render(model) {
-      state = { ...state, model };
-      render();
+    setModel(model) {
+      state.value = { ...state.value, model };
     },
     bindActions(handlers) {
-      state = { ...state, actions: handlers };
-      render();
+      state.value = { ...state.value, actions: handlers };
     },
   };
 }
