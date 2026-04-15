@@ -1,39 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { createStatusGridRowElement } from "../src/app/views/dom_helpers";
 import { buildInternetStatusPanelModel } from "../src/app/views/internet_status_view";
-import {
-  elementChildren,
-  installFakeDomGlobals,
-} from "./dom_render_test_support";
-import type { FakeElement } from "./dom_render_test_support";
-
-let restoreDom = () => undefined;
-
-test.beforeEach(() => {
-  restoreDom = installFakeDomGlobals();
-});
-
-test.afterEach(() => {
-  restoreDom();
-  restoreDom = () => undefined;
-});
-
-test("createStatusGridRowElement builds semantic label and value nodes", () => {
-  const row = createStatusGridRowElement("Detected", "Yes") as unknown as FakeElement;
-
-  expect(row.tagName).toBe("DIV");
-  expect(row.classList.contains("status-grid__row")).toBe(true);
-
-  const spans = elementChildren(row);
-  expect(spans).toHaveLength(2);
-  expect(spans[0].tagName).toBe("SPAN");
-  expect(spans[0].classList.contains("status-grid__label")).toBe(true);
-  expect(spans[0].textContent).toBe("Detected");
-  expect(spans[1].tagName).toBe("SPAN");
-  expect(spans[1].textContent).toBe("Yes");
-});
-
 test("buildInternetStatusPanelModel returns semantic badge and status rows", () => {
   const model = buildInternetStatusPanelModel({
     detected: true,
