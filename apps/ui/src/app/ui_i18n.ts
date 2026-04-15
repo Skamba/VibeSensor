@@ -1,51 +1,30 @@
-import { useEffect, useState } from "preact/hooks";
-
 import { get as translate, normalizeLang } from "../i18n";
+import { signal } from "./ui_signals";
 
-type TranslationListener = () => void;
-
-let currentLanguage = "en";
-const listeners = new Set<TranslationListener>();
-
-function notifyLanguageListeners(): void {
-  for (const listener of listeners) {
-    listener();
-  }
-}
+const currentLanguage = signal("en");
 
 export function getUiText(
   key: string,
   fallback: string,
   vars?: Record<string, unknown>,
 ): string {
-  return translate(currentLanguage, key, vars) || fallback;
+  return translate(currentLanguage.value, key, vars) || fallback;
 }
 
 export function setUiLanguage(lang: string): void {
   const normalizedLanguage = normalizeLang(lang);
-  if (normalizedLanguage === currentLanguage) {
+  if (normalizedLanguage === currentLanguage.value) {
     return;
   }
-  currentLanguage = normalizedLanguage;
-  notifyLanguageListeners();
+  currentLanguage.value = normalizedLanguage;
 }
 
 export function useUiTranslation() {
-  const [, setVersion] = useState(0);
-
-  useEffect(() => {
-    const listener = () => {
-      setVersion((version) => version + 1);
-    };
-    listeners.add(listener);
-    return () => {
-      listeners.delete(listener);
-    };
-  }, []);
+  const language = currentLanguage.value;
 
   return (
     key: string,
     fallback: string,
     vars?: Record<string, unknown>,
-  ): string => getUiText(key, fallback, vars);
+  ): string => translate(language, key, vars) || fallback;
 }
