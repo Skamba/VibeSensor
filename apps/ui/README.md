@@ -84,10 +84,10 @@ source-of-truth export commands remain the only writers for those files.
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
 | `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell/page/settings islands, then constructs and starts the app runtime |
-| `app/ui_runtime_dom.ts` | Startup bundle for the remaining imperative shell/spectrum DOM seams that still need explicit lookup and early missing-anchor failures |
-| `app/dom/` | Island-host lookup modules plus the remaining imperative shell/spectrum DOM seam locators |
+| `app/dom/` | Island-host lookup modules plus focused runtime DOM locators such as the spectrum chart surface |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
 | `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
+| `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, and app-level error banner plus the typed shell chrome bridge |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport, payload adaptation, and throttled live-session rendering |
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that wires overlay updates plus the extracted canvas, interaction, and panel modules |
@@ -167,23 +167,24 @@ source-of-truth export commands remain the only writers for those files.
 
 The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
-chart behavior, or page-wide DOM state. Startup now mounts the live Preact
-owner surfaces first — shell chrome, dashboard/history shells, the shared
-settings shell, and the per-settings-tab panel hosts — then resolves only the
-remaining imperative shell/spectrum DOM seams through `ui_runtime_dom.ts`.
+chart behavior, or page-wide DOM state. Startup mounts the live Preact owner
+surfaces first — shell chrome, dashboard/history shells, the shared settings
+shell, and the per-settings-tab panel hosts — then resolves only the spectrum
+chart DOM surface directly through `app/dom/spectrum_dom.ts`.
 `app_feature_bundle.ts` creates the concrete features, wires explicit
 cross-feature ports, and returns only the shell, transport, and startup
 contracts the runtime needs.
 
 The live UI architecture is now Preact-first for every page/tab shell.
-`app/runtime/ui_shell_chrome.tsx` owns the primary navigation and preference
-chrome, `app/views/settings_shell.tsx` owns the shared settings tab strip and
-panel wrappers, and the individual page/settings panel islands own their local
-chrome plus typed bridges. The remaining imperative paths are deliberate seams:
-the shell controller still owns app-level status/preference state, the spectrum
-controller still owns the uPlot/canvas lifecycle behind `specChart`, and a few
-feature-local presenters still materialize structured wizard or status surfaces
-behind island-owned hosts.
+`app/runtime/ui_shell_chrome.tsx` owns the primary navigation, header
+preferences, pills, and app banner; `app/views/settings_shell.tsx` owns the
+shared settings tab strip and panel wrappers; and the individual page/settings
+panel islands own their local chrome plus typed bridges. The remaining
+imperative paths are deliberate seams: the shell controller still owns
+app-level status/preference state, the spectrum controller still owns the
+uPlot/canvas lifecycle behind `specChart`, and a few feature-local presenters
+still materialize structured wizard or status surfaces behind island-owned
+hosts.
 
 Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
 facade, `realtime_feature_workflow.ts` owns the controller-style polling and
@@ -208,11 +209,10 @@ instead of controller-side variant class interpolation.
 
 ## Architecture guardrails
 
-- `app/dom/**` plus `app/ui_runtime_dom.ts` own island-host lookup and the few
-  remaining imperative shell/spectrum DOM seams. Feature, runtime, and
-  presenter modules should receive typed bridges or focused DOM surfaces instead
-  of rebuilding page-wide registries or ad hoc
-  `document.getElementById(...)` lookups.
+- `app/dom/**` plus focused runtime/view helpers own island-host lookup and the
+  remaining imperative DOM seams. Feature, runtime, and presenter modules
+  should receive typed bridges or focused DOM surfaces instead of rebuilding
+  page-wide registries or ad hoc `document.getElementById(...)` lookups.
 - Generated HTTP / WS contracts stay behind the transport boundary. The approved
   generated-contract seams are the `api/*.ts` HTTP wrappers plus `api/types.ts`,
   `transport/http_models.ts`, `transport/live_models.ts`, `server_payload.ts`,

@@ -13,7 +13,6 @@ import {
   getUiLiveOverviewHost,
   getUiLoggingPanelHost,
 } from "./dom/realtime_dom";
-import { getUiShellChromeHost } from "./dom/shell_dom";
 import { getUiSpectrumPanelHost } from "./dom/spectrum_dom";
 import { createAppState } from "./ui_app_state";
 import { UiAppRuntime } from "./ui_app_runtime";
@@ -31,6 +30,7 @@ import { mountSpectrumPanel } from "./views/spectrum_panel";
 import { mountUpdatePanel } from "./views/update_panel";
 import {
   createUiShellChromeActionBridge,
+  getUiShellChromeHost,
   mountUiShellChrome,
 } from "./runtime/ui_shell_chrome";
 
@@ -49,15 +49,9 @@ export function startUiApp(): void {
   const sensorsPanel = mountSensorsPanel(getUiSensorsPanelHost());
   const speedSourcePanel = mountSpeedSourcePanel(getUiSpeedSourcePanelHost());
   const espFlashPanel = mountEspFlashPanel(getUiEspFlashPanelHost());
-  mountUiShellChrome(getUiShellChromeHost(), shellChromeActions, state.shell);
+  const shellChrome = mountUiShellChrome(getUiShellChromeHost(), shellChromeActions);
   new UiAppRuntime(
-    undefined,
-    state,
-    shellChromeActions,
-    liveOverview,
-    spectrumPanel,
-    loggingPanel,
-    historyPanel,
+    shellChrome,
     settingsShell,
     carsPanel,
     analysisPanel,
@@ -66,5 +60,12 @@ export function startUiApp(): void {
     sensorsPanel,
     speedSourcePanel,
     espFlashPanel,
+    undefined,
+    state,
+    shellChromeActions,
+    liveOverview,
+    spectrumPanel,
+    loggingPanel,
+    historyPanel,
   ).start();
 }

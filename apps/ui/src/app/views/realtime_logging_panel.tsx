@@ -1,4 +1,5 @@
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import { inlineStateActionClass } from "./dom_helpers";
 import type {
   RealtimeCaptureReadinessChecklistModel,
@@ -137,6 +138,7 @@ function RealtimeLoggingChecklist(props: {
 
 function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState }) {
   const { state } = props;
+  const t = useUiTranslation();
   const loggingRowHidden = !state.showPill && state.runIdText === "";
   const showProgressSection = !state.setupMode || state.checklist !== null;
 
@@ -145,7 +147,7 @@ function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState })
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title" data-i18n="dashboard.run_recording">
-            Run Recording
+            {t("dashboard.run_recording", "Run Recording")}
           </div>
           <RealtimeLoggingSummary
             summaryText={state.summaryText}
@@ -172,12 +174,12 @@ function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState })
         ? (
           <>
             <div class="mini-label" data-i18n="dashboard.recording_progress">
-              Run progress
+              {t("dashboard.recording_progress", "Run progress")}
             </div>
             <div class="stat-grid stat-grid--compact">
               <div id="loggingPhase" class="stat stat--compact" hidden>
                 <div class="stat__label" data-i18n="dashboard.recording_phase">
-                  Run phase
+                  {t("dashboard.recording_phase", "Run phase")}
                 </div>
                 <div class="stat__value" data-value>
                   {state.phaseText}
@@ -185,7 +187,7 @@ function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState })
               </div>
               <div id="loggingElapsed" class="stat stat--compact">
                 <div class="stat__label" data-i18n="dashboard.recording_elapsed">
-                  Elapsed
+                  {t("dashboard.recording_elapsed", "Elapsed")}
                 </div>
                 <div class="stat__value" data-value>
                   {state.elapsedText}
@@ -193,7 +195,7 @@ function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState })
               </div>
               <div id="loggingSamples" class="stat stat--compact">
                 <div class="stat__label" data-i18n="dashboard.recording_samples">
-                  Samples recorded
+                  {t("dashboard.recording_samples", "Samples recorded")}
                 </div>
                 <div class="stat__value" data-value>
                   {state.samplesText}
@@ -214,7 +216,7 @@ function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState })
           disabled={state.startDisabled}
           onClick={() => state.actions?.onStartLogging()}
         >
-          Start Recording
+          {t("dashboard.start_recording", "Start Recording")}
         </button>
         <button
           id="stopLoggingBtn"
@@ -225,7 +227,7 @@ function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState })
           disabled={state.stopDisabled}
           onClick={() => state.actions?.onStopLogging()}
         >
-          Stop Recording
+          {t("dashboard.stop_recording", "Stop Recording")}
         </button>
       </div>
     </>

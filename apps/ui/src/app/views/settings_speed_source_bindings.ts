@@ -1,5 +1,5 @@
-import type { UiShellDom } from "../dom/shell_dom";
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
+import type { UiShellChromeDom } from "../runtime/ui_shell_chrome";
 import type { SettingsShellDom } from "./settings_shell";
 import type { SettingsSpeedSourcePanelDom } from "./speed_source_panel";
 import { closestFromTarget } from "./dom_helpers";
@@ -76,7 +76,7 @@ export function bindSettingsSpeedSourceInteractions(
     | "settingsTabs"
     | "obdDeviceList"
   >,
-  shellDom: Pick<UiShellDom, "menuButtons">,
+  shellDom: Pick<UiShellChromeDom, "menuButtons">,
   handlers: SettingsSpeedSourceBindingHandlers,
 ): ViewDisposer {
   const navigationTargets = [...dom.settingsTabs, ...shellDom.menuButtons];

@@ -1,6 +1,7 @@
 import { h, type ComponentChildren } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateHealthSectionModel,
@@ -325,6 +326,7 @@ function UpdatePanel(props: {
   model: UpdatePanelRenderModel;
 }) {
   const { model } = props;
+  const t = useUiTranslation();
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
@@ -332,19 +334,22 @@ function UpdatePanel(props: {
           <div class="maintenance-card__header">
             <div>
               <div class="maintenance-card__title" data-i18n="settings.update.title">
-                System Update
+                {t("settings.update.title", "System Update")}
               </div>
               <div class="subtle" data-i18n="settings.update.hint">
-                Use either temporary Wi-Fi credentials or an already-connected USB
-                internet uplink to update from GitHub. The hotspot only pauses for
-                the Wi-Fi path.
+                {t(
+                  "settings.update.hint",
+                  "Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.",
+                )}
               </div>
             </div>
           </div>
           <div class="maintenance-card__body maintenance-card__body--hero">
             <div class="maintenance-note" data-i18n="settings.update.reconnect_note">
-              Note: The page may disconnect while the hotspot is down for the
-              Wi-Fi path. It will reconnect automatically.
+              {t(
+                "settings.update.reconnect_note",
+                "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
+              )}
             </div>
             <div
               id="updateOverviewPanel"
@@ -370,7 +375,7 @@ function UpdatePanel(props: {
                 hidden={model.cancelButtonHidden}
                 disabled={model.cancelButtonDisabled}
               >
-                Cancel Update
+                {t("settings.update.cancel", "Cancel Update")}
               </button>
             </div>
           </div>

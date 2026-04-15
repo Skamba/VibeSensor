@@ -1,4 +1,5 @@
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import { HistoryTableBody } from "./history_table_content";
 import type {
   HistoryPanelActionHandlers,
@@ -19,6 +20,7 @@ const DEFAULT_PANEL_STATE: HistoryPanelBridgeState = {
 
 function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
   const { state } = props;
+  const t = useUiTranslation();
 
   return (
     <>
@@ -36,7 +38,7 @@ function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
             data-i18n="history.refresh"
             onClick={() => state.actions?.onRefreshHistory()}
           >
-            Refresh History
+            {t("history.refresh", "Refresh History")}
           </button>
           <button
             id="deleteAllRunsBtn"
@@ -46,17 +48,19 @@ function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
             disabled={state.deleteAllRunsDisabled}
             onClick={() => state.actions?.onDeleteAllRuns()}
           >
-            Delete All Runs
+            {t("history.delete_all", "Delete All Runs")}
           </button>
         </div>
       </div>
       <table class="history-table">
         <thead>
           <tr>
-            <th data-i18n="history.table.file">Run</th>
-            <th data-i18n="history.table.updated">Started</th>
-            <th class="numeric" data-i18n="history.table.size">Samples</th>
-            <th data-i18n="history.table.actions">Actions</th>
+            <th data-i18n="history.table.file">{t("history.table.file", "Run")}</th>
+            <th data-i18n="history.table.updated">{t("history.table.updated", "Started")}</th>
+            <th class="numeric" data-i18n="history.table.size">
+              {t("history.table.size", "Samples")}
+            </th>
+            <th data-i18n="history.table.actions">{t("history.table.actions", "Actions")}</th>
           </tr>
         </thead>
         <tbody id="historyTableBody">
