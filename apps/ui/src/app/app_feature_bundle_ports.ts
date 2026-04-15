@@ -4,14 +4,8 @@ import type { UiStartupFeaturePorts } from "./runtime/ui_startup_feature_ports";
 import type { CarsFeature } from "./features/cars_feature";
 import type { EspFlashFeature } from "./features/esp_flash_feature";
 import type { HistoryFeature } from "./features/history_feature";
-import type {
-  RealtimeFeature,
-  RealtimeFeatureRecordingPorts,
-} from "./features/realtime_feature";
-import type {
-  SettingsFeature,
-  SettingsFeatureRealtimePorts,
-} from "./features/settings_feature";
+import type { RealtimeFeature, RealtimeFeatureRecordingPorts } from "./features/realtime_feature";
+import type { SettingsFeature } from "./features/settings_feature";
 import type { UpdateFeature } from "./features/update_feature";
 
 export interface AppFeatureBundle {
@@ -27,9 +21,6 @@ interface AppFeatureBundlePortSources {
   realtime: Pick<
     RealtimeFeature,
     | "bindHandlers"
-    | "maybeRenderSensorsSettingsList"
-    | "renderLoggingStatus"
-    | "renderStatus"
     | "refreshLocationOptions"
     | "refreshLoggingStatus"
   >;
@@ -45,15 +36,6 @@ interface AppFeatureBundlePortSources {
   cars: Pick<CarsFeature, "bindWizardHandlers">;
   update: Pick<UpdateFeature, "bindUpdateHandlers" | "startPolling">;
   espFlash: Pick<EspFlashFeature, "bindHandlers" | "startPolling">;
-}
-
-export function createSettingsFeatureRealtimePorts(
-  realtime: Pick<RealtimeFeature, "renderStatus" | "renderLoggingStatus">,
-): SettingsFeatureRealtimePorts {
-  return {
-    renderRealtimeStatus: () => realtime.renderStatus(),
-    renderRealtimeLoggingStatus: () => realtime.renderLoggingStatus(),
-  };
 }
 
 export function createRealtimeFeatureRecordingPorts(
@@ -79,12 +61,6 @@ export function createAppFeatureBundlePorts(
       bindUpdateHandlers: () => features.update.bindUpdateHandlers(),
       bindEspFlashHandlers: () => features.espFlash.bindHandlers(),
       languageRefresh: {
-        realtime: {
-          maybeRenderSensorsSettingsList: (force) =>
-            features.realtime.maybeRenderSensorsSettingsList(force),
-          renderLoggingStatus: () => features.realtime.renderLoggingStatus(),
-          renderStatus: () => features.realtime.renderStatus(),
-        },
         history: {
           renderHistoryTable: () => features.history.renderHistoryTable(),
           reloadExpandedRunOnLanguageChange: () =>

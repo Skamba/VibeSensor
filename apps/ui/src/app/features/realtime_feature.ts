@@ -5,14 +5,15 @@ import type {
   ShellState,
   SpectrumState,
 } from "../ui_app_state";
-import { trackAppStateSlice } from "../ui_app_state";
-import type { AdaptedClient } from "../../transport/live_models";
 import type { RealtimeLoggingPanelBridge } from "../views/realtime_logging_panel";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
 import type { SensorsPanelView } from "../views/sensors_panel";
 import { effect, untracked } from "../ui_signals";
-import { createRealtimeFeatureWorkflow } from "./realtime_feature_workflow";
-import { createRealtimeFeaturePresenter } from "../views/realtime_feature_presenter";
+import {
+  createRealtimeFeatureWorkflow,
+  createRealtimeFeatureWorkflowState,
+} from "./realtime_feature_workflow";
+import { createRealtimeFeatureViewState } from "./realtime_feature_view_state";
 
 interface RealtimeFeatureStateDeps {
   realtime: RealtimeState;
@@ -62,9 +63,6 @@ export interface RealtimeFeatureRecordingPorts {
 
 export interface RealtimeFeature {
   bindHandlers(): void;
-  maybeRenderSensorsSettingsList(force?: boolean): void;
-  renderStatus(clientRow?: AdaptedClient): void;
-  renderLoggingStatus(): void;
   refreshLoggingStatus(): Promise<void>;
   refreshLocationOptions(): Promise<void>;
 }
@@ -74,36 +72,55 @@ export function createRealtimeFeature(
 ): RealtimeFeature {
   const { state, panels, ports, services, formatting } = ctx;
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
-  const presenter = createRealtimeFeaturePresenter({
-    realtime: state.realtime,
-    settings: state.settings,
-    shell: state.shell,
-    spectrum: state.spectrum,
-    sensorsPanel: panels.sensorsPanel,
-    t: services.t,
-    formatInt: formatting.formatInt,
-    chrome: ports.chrome,
-    navigation: ports.navigation,
+  let handlersBound = false;
+  const workflowState = createRealtimeFeatureWorkflowState();
+  const viewState = createRealtimeFeatureViewState({
+    state: {
+      realtime: state.realtime,
+      settings: state.settings,
+      shell: state.shell,
+      spectrum: state.spectrum,
+    },
+    services: {
+      t: services.t,
+    },
+    formatting: {
+      formatInt: formatting.formatInt,
+    },
+    workflow: workflowState,
   });
+  ports.chrome.liveOverview.bindModel(viewState.liveOverviewModel);
+  ports.chrome.loggingPanel.bindModel(viewState.loggingPanelModel);
+  panels.sensorsPanel.bindModel(viewState.sensorsPanelModel);
   const workflow = createRealtimeFeatureWorkflow({
     realtime: state.realtime,
     t: services.t,
     showError: services.showError,
     isDemoMode,
-    view: presenter,
+    idleCaptureReadinessSignature: viewState.idleCaptureReadinessSignature,
     selection: ports.selection,
     recording: ports.recording,
     confirmRemoveClient: (message) => window.confirm(message),
+    state: workflowState,
   });
-  let handlersBound = false;
+
+  function activatePrimaryView(viewId: string): void {
+    ports.navigation.activatePrimaryView(viewId);
+  }
+
+  function activateSettingsTab(tabId: string): void {
+    ports.navigation.activateSettingsTab(tabId);
+  }
+
+  function openSettingsView(tabId: string): void {
+    activatePrimaryView("settingsView");
+    activateSettingsTab(tabId);
+  }
 
   effect(() => {
-    trackAppStateSlice(state.realtime);
-    trackAppStateSlice(state.settings);
-    trackAppStateSlice(state.spectrum);
+    const model = viewState.liveOverviewModel.value;
     untracked(() => {
-      presenter.maybeRenderSensorsSettingsList();
-      workflow.renderLoggingStatus();
+      ports.chrome.setShellLiveStatus(model.runHealth.variant, model.runHealth.text);
     });
   });
 
@@ -121,22 +138,23 @@ export function createRealtimeFeature(
       },
       onSummaryAction: (action) => {
         if (action === "open-history") {
-          presenter.openHistory();
+          activatePrimaryView("historyView");
           return;
         }
         if (action === "open-add-car") {
-          presenter.openCars({ openWizard: true });
+          openSettingsView("carTab");
+          ports.navigation.openCarWizard();
           return;
         }
         if (action === "open-cars") {
-          presenter.openCars();
+          openSettingsView("carTab");
           return;
         }
         if (action === "open-sensors") {
-          presenter.openSensorsSettings();
+          openSettingsView("sensorsTab");
           return;
         }
-        presenter.openSpeedSourceSettings();
+        openSettingsView("speedSourceTab");
       },
     });
     workflow.bindHandlers();
@@ -156,10 +174,6 @@ export function createRealtimeFeature(
 
   return {
     bindHandlers,
-    maybeRenderSensorsSettingsList: (force) =>
-      presenter.maybeRenderSensorsSettingsList(force),
-    renderStatus: (clientRow) => presenter.renderStatus(clientRow),
-    renderLoggingStatus: () => workflow.renderLoggingStatus(),
     refreshLoggingStatus: () => workflow.refreshLoggingStatus(),
     refreshLocationOptions: () => workflow.refreshLocationOptions(),
   };

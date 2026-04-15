@@ -26,8 +26,6 @@ interface SettingsCarsModulePanels {
 interface SettingsCarsModulePorts {
   openAnalysisTab: () => void;
   openCarWizard: () => void;
-  renderRealtimeLoggingStatus: () => void;
-  renderRealtimeStatus: () => void;
   renderSpectrum: () => void;
   subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
@@ -150,8 +148,6 @@ export function createSettingsCarsModule(
       highlightedCarFeedback = null;
     }
     renderCarList();
-    ctx.ports.renderRealtimeStatus();
-    ctx.ports.renderRealtimeLoggingStatus();
   }
 
   function findCar(carId: string): CarRecord | null {

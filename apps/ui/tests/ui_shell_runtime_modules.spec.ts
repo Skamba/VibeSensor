@@ -366,17 +366,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
           portCalls.push("renderHistoryTable");
         },
       },
-      realtime: {
-        maybeRenderSensorsSettingsList(force = false) {
-          portCalls.push(`maybeRenderSensorsSettingsList:${String(force)}`);
-        },
-        renderLoggingStatus() {
-          portCalls.push("renderLoggingStatus");
-        },
-        renderStatus() {
-          portCalls.push("renderStatus");
-        },
-      },
       settings: {
         syncSettingsInputs() {
           portCalls.push("syncSettingsInputs");
@@ -393,9 +382,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
     expect(documentHarness.documentElement.lang).toBe("nl");
     expect(portCalls).toEqual([
       "syncSettingsInputs",
-      "maybeRenderSensorsSettingsList:true",
-      "renderLoggingStatus",
-      "renderStatus",
       "renderHistoryTable",
       "reloadExpandedRunOnLanguageChange",
     ]);
@@ -437,17 +423,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
             portCalls.push("renderHistoryTable");
           },
         },
-        realtime: {
-          maybeRenderSensorsSettingsList(force = false) {
-            portCalls.push(`maybeRenderSensorsSettingsList:${String(force)}`);
-          },
-          renderLoggingStatus() {
-            portCalls.push("renderLoggingStatus");
-          },
-          renderStatus() {
-            portCalls.push("renderStatus");
-          },
-        },
         settings: {
           syncSettingsInputs() {
             portCalls.push("syncSettingsInputs");
@@ -460,9 +435,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
 
     expect(portCalls).toEqual([
       "syncSettingsInputs",
-      "maybeRenderSensorsSettingsList:true",
-      "renderLoggingStatus",
-      "renderStatus",
       "renderHistoryTable",
     ]);
     expect(renderSpectrumCalls).toBe(0);
@@ -496,11 +468,6 @@ test.describe("bindUiShellFeatureEvents", () => {
         history: {
           reloadExpandedRunOnLanguageChange: () => undefined,
           renderHistoryTable: () => undefined,
-        },
-        realtime: {
-          maybeRenderSensorsSettingsList: () => undefined,
-          renderLoggingStatus: () => undefined,
-          renderStatus: () => undefined,
         },
         settings: {
           syncSettingsInputs: () => undefined,
