@@ -103,7 +103,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/cars_feature_workflow.ts` | DOM-free car-wizard workflow/controller for step transitions, library loading, branch selection, and finish validation |
 | `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and delegated event bindings together |
 | `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
-| `app/features/settings_cars_module.ts` | Settings-side car controller that owns list loading, activation/deletion flows, highlight feedback, and the explicit open-wizard port |
+| `app/features/settings_cars_module.ts` | Settings-side car controller that owns list loading, activation/deletion flows, highlight feedback, and typed tab/view-driven feedback dismissal plus the explicit open-wizard port |
 | `app/features/settings_cars_transport.ts` | Settings-car transport wrapper over load/activate/delete API calls |
 | `app/features/settings_analysis_module.ts` | Analysis-settings behavior owner for validation, save/reset orchestration, field guidance, and spectrum refreshes behind the island DOM bridge |
 | `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, presenter, and typed bindings together |
@@ -116,7 +116,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/update_panel.tsx` | Preact owner for the update settings shell that mounts the update controls and status host while exposing the bridge consumed by the update feature |
 | `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that renders the full sensor table and exposes typed identify/remove/location callbacks to the realtime feature |
 | `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that mounts the full tab surface and exposes the shared typed bridge consumed by the speed-source and GPS-status modules |
-| `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that mounts the list shell and wizard chrome, then exposes typed list and wizard bridges |
+| `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that renders saved-car guidance/list rows in JSX, mounts the wizard chrome, and exposes typed list and wizard bridges |
 | `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
 | `app/views/cars_feature_presenter.ts` | Car-wizard presenter reused as the thin wizard DOM adapter for dialog visibility, step rendering, summary updates, and focus targets |
 | `app/features/update_feature.ts` | Thin update facade that binds DOM events, delegates state rendering to the presenter, and delegates update commands to the workflow |
@@ -131,7 +131,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/history_table_view.ts` | Thin history-panel bridge that defines the typed empty/table render contract consumed by the Preact history island |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_panel.tsx` | Preact owner for the run-recording card that renders typed logging/readiness models and binds start/stop plus summary CTA actions through a bridge |
-| `app/views/settings_car_list_view.ts` | Thin settings-car table renderer and action decoder reused by the car-management island for the saved-car table body |
+| `app/views/settings_car_list_view.ts` | Typed saved-car list and guidance view-model builders reused by the car-management island for row, empty-state, and highlight rendering |
 | `app/views/settings_speed_source_bindings.ts` | Typed speed-source form bindings that decode radio/input/navigation/device actions away from the workflow |
 | `app/views/settings_speed_source_presenter.ts` | Speed-source presenter that owns summary, validation, and OBD-device-list DOM rendering from typed workflow state |
 | `app/views/update_feature_presenter.ts` | Update presenter that owns readiness derivation, transport/control DOM state, and typed handoff into the island-owned update and internet panel bridges |
@@ -184,8 +184,8 @@ panel wrappers, and the individual page/settings panel islands own their local
 chrome plus typed bridges. The remaining imperative paths are deliberate seams:
 the shell controller still owns app-level status/preference state, the spectrum
 controller still owns the uPlot/canvas lifecycle behind `specChart`, and a few
-feature-local render helpers still materialize table bodies or structured status
-cards behind island-owned hosts.
+feature-local presenters still materialize structured wizard or status surfaces
+behind island-owned hosts.
 
 Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
 facade, `realtime_feature_workflow.ts` owns the controller-style polling and

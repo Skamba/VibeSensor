@@ -30,6 +30,7 @@ export interface SettingsFeatureDeps extends FeatureDepsBase {
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
   openCarWizard: () => void;
+  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   settingsShell: SettingsShellView;
   carsPanel: CarsListPanelView;
   analysisPanel: AnalysisPanelView;
@@ -122,7 +123,6 @@ export function createSettingsFeature(
       renderSpeedReadout: ctx.view.renderSpeedReadout,
     });
   carsModule = createSettingsCarsModule({
-    dom: ctx.settingsShell.dom,
     analysisDom: ctx.analysisPanel.dom,
     escapeHtml,
     fmt,
@@ -132,7 +132,8 @@ export function createSettingsFeature(
     renderRealtimeStatus: ctx.realtime.renderRealtimeStatus,
     renderSpectrum: ctx.view.renderSpectrum,
     settings,
-    shellDom,
+    subscribePrimaryViewChanges: ctx.subscribePrimaryViewChanges,
+    subscribeSettingsTabChanges: ctx.settingsShell.subscribeActiveTabChanges,
     showError: ctx.showError,
     syncAnalysisInputs: analysisModule.syncSettingsInputs,
     panel: ctx.carsPanel,

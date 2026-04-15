@@ -1,36 +1,27 @@
-import type { CarSelectionState } from "../car_selection_state";
 import type { UiCarsDom } from "../dom/cars_dom";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
-import type { CarRecord } from "../../transport/http_models";
 import {
   bindCarsFeatureInteractions,
   type CarsFeatureInteractionHandlers,
 } from "./cars_feature_bindings";
 import type { ViewDisposer } from "./dom_event_bindings";
-import { renderInlineStatePanel } from "./dom_helpers";
 import {
-  bindSettingsCarListActions,
-  renderSettingsCarList,
-  type SettingsCarListAction,
+  inlineStateActionClass,
+} from "./dom_helpers";
+import {
+  type CarsInlineStateViewModel,
+  type CarsListAction,
+  type CarsListRowViewModel,
+  type SettingsCarListTableRenderModel,
 } from "./settings_car_list_view";
 
-export interface CarsListHighlightedFeedback {
-  carId: string;
-  carName: string;
-}
-
 export interface CarsListRenderModel {
-  activeCarId: string | null;
-  carSelectionState: CarSelectionState;
-  cars: readonly CarRecord[];
-  highlightedCarFeedback: CarsListHighlightedFeedback | null;
-  t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
-  fmt: (value: number, digits?: number) => string;
+  guidance: CarsInlineStateViewModel | null;
+  table: SettingsCarListTableRenderModel | null;
 }
 
 export interface CarsListPanelView {
-  bindActions(handlers: { onAction(action: SettingsCarListAction): void }): void;
+  bindActions(handlers: { onAction(action: CarsListAction): void }): void;
   render(model: CarsListRenderModel): void;
 }
 
@@ -44,7 +35,188 @@ export interface CarsPanelView {
   readonly wizard: CarsWizardPanelBridge;
 }
 
-function CarsPanel() {
+type CarsListPanelActionHandlers = {
+  onAction(action: CarsListAction): void;
+};
+
+type CarsPanelBridgeState = {
+  actions: CarsListPanelActionHandlers | null;
+  model: CarsListRenderModel;
+};
+
+const DEFAULT_CARS_PANEL_MODEL: CarsListRenderModel = {
+  guidance: null,
+  table: null,
+};
+
+function handleCarsListAction(
+  actions: CarsListPanelActionHandlers | null,
+  action: CarsListAction,
+): void {
+  actions?.onAction(action);
+}
+
+function CarsInlineStatePanel(props: {
+  actions: CarsListPanelActionHandlers | null;
+  state: CarsInlineStateViewModel;
+}) {
+  const { actions, state } = props;
+  const rootClass = state.tone === "success"
+    ? "empty-state empty-state--inline car-selection-feedback car-selection-feedback--success"
+    : "empty-state empty-state--inline empty-state--actionable";
+  return (
+    <div class={rootClass} role={state.tone === "success" ? "status" : undefined}>
+      <strong class="empty-state__title">{state.titleText}</strong>
+      <span class="empty-state__body">{state.bodyText}</span>
+      {state.detailText ? (
+        <span class="empty-state__detail">{state.detailText}</span>
+      ) : null}
+      {state.action ? (
+        <div class="empty-state__actions">
+          <button
+            type="button"
+            class={inlineStateActionClass(state.action.variant)}
+            data-inline-state-action={state.action.type === "add" ? "add-car" : state.action.type}
+            onClick={() =>
+              handleCarsListAction(actions, {
+                type: state.action?.type ?? "add",
+                carId: null,
+              })}
+          >
+            {state.action.labelText}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function CarsTableRow(props: {
+  actions: CarsListPanelActionHandlers | null;
+  row: CarsListRowViewModel;
+}) {
+  const { actions, row } = props;
+  const primaryAction = row.primaryAction;
+  return (
+    <tr
+      class={row.isHighlighted ? "car-list-row--highlighted" : undefined}
+      data-car-id={row.carId}
+      data-car-complete={row.isComplete ? "true" : "false"}
+      data-highlighted={row.isHighlighted ? "true" : "false"}
+    >
+      <td>
+        <div class="car-row__identity">
+          <div class="car-row__heading">
+            <strong>{row.displayName}</strong>
+          </div>
+          {row.metaTypeText || row.metaVariantText ? (
+            <div class="car-row__meta">
+              {row.metaTypeText ? <span class="car-row__type">{row.metaTypeText}</span> : null}
+              {row.metaVariantText ? (
+                <span class="car-row__variant">{row.metaVariantText}</span>
+              ) : null}
+            </div>
+          ) : null}
+          <div class="car-status-stack">
+            <span
+              class="car-active-pill settings-entity-status"
+              data-state={row.activeState}
+            >
+              {row.activeStatusText}
+            </span>
+            <span
+              class="car-readiness-pill settings-entity-status"
+              data-state={row.readinessState}
+            >
+              {row.readinessStatusText}
+            </span>
+            {row.highlightedStatusText ? (
+              <span class="car-created-pill settings-entity-status">
+                {row.highlightedStatusText}
+              </span>
+            ) : null}
+          </div>
+          {row.completionDetailText ? (
+            <span class="subtle car-row__detail">{row.completionDetailText}</span>
+          ) : null}
+        </div>
+      </td>
+      <td>
+        <div class="car-row__setup">
+          {row.setupMetrics.map((metric) => (
+            <div key={metric.labelText} class="car-row__setup-item">
+              <span class="car-row__setup-label">{metric.labelText}</span>
+              <span class="car-row__setup-value">
+                {metric.isCode ? <code>{metric.valueText}</code> : metric.valueText}
+              </span>
+            </div>
+          ))}
+        </div>
+      </td>
+      <td>
+        <div class="car-list-actions">
+          {primaryAction ? (
+            <button
+              type="button"
+              class={primaryAction.className}
+              data-car-action={primaryAction.type}
+              data-car-id={row.carId}
+              onClick={() =>
+                handleCarsListAction(actions, {
+                  type: primaryAction.type,
+                  carId: row.carId,
+                })}
+            >
+              {primaryAction.labelText}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            class="btn btn--danger-quiet car-delete-btn"
+            data-car-action="delete"
+            data-car-id={row.carId}
+            onClick={() => handleCarsListAction(actions, { type: "delete", carId: row.carId })}
+          >
+            {row.deleteLabelText}
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function CarsTableBody(props: {
+  actions: CarsListPanelActionHandlers | null;
+  table: SettingsCarListTableRenderModel | null;
+}) {
+  const { actions, table } = props;
+  if (table === null) {
+    return (
+      <tr>
+        <td colSpan={3} data-i18n="settings.car.no_cars">
+          No cars added yet.
+        </td>
+      </tr>
+    );
+  }
+  if (table.kind === "empty") {
+    return (
+      <tr>
+        <td colSpan={3}>
+          <div class="settings-table-empty-state">
+            <CarsInlineStatePanel actions={actions} state={table.emptyState} />
+          </div>
+        </td>
+      </tr>
+    );
+  }
+  return table.rows.map((row) => (
+    <CarsTableRow key={row.carId} actions={actions} row={row} />
+  ));
+}
+
+function CarsPanel(props: { state: CarsPanelBridgeState }) {
+  const { state } = props;
   return (
     <>
       <div class="panel card">
@@ -58,7 +230,11 @@ function CarsPanel() {
           Add cars from the library or enter specs manually. Activate a car to use it for
           analysis.
         </div>
-        <div id="carSelectionGuidance" class="empty-state empty-state--inline" hidden />
+        <div id="carSelectionGuidance" hidden={state.model.guidance === null}>
+          {state.model.guidance ? (
+            <CarsInlineStatePanel actions={state.actions} state={state.model.guidance} />
+          ) : null}
+        </div>
         <div class="settings-table-wrap">
           <table class="car-list-table settings-entity-table settings-entity-table--cars">
             <thead>
@@ -69,11 +245,7 @@ function CarsPanel() {
               </tr>
             </thead>
             <tbody id="carListBody">
-              <tr>
-                <td colSpan={3} data-i18n="settings.car.no_cars">
-                  No cars added yet.
-                </td>
-              </tr>
+              <CarsTableBody actions={state.actions} table={state.model.table} />
             </tbody>
           </table>
         </div>
@@ -377,80 +549,27 @@ function createCarsPanelDom(host: HTMLElement): UiCarsDom {
   };
 }
 
-function renderCreationFeedback(
-  feedback: CarsListHighlightedFeedback,
-  deps: Pick<CarsListRenderModel, "escapeHtml" | "t">,
-): string {
-  return `
-    <div class="empty-state empty-state--inline car-selection-feedback car-selection-feedback--success" role="status">
-      <strong class="empty-state__title">${deps.escapeHtml(deps.t("settings.car.created_title"))}</strong>
-      <span class="empty-state__body">${deps.escapeHtml(
-        deps.t("settings.car.created_body", { name: feedback.carName }),
-      )}</span>
-      <span class="empty-state__detail">${deps.escapeHtml(deps.t("settings.car.created_detail"))}</span>
-    </div>
-  `;
-}
-
-function renderCarsGuidance(target: HTMLElement | null, model: CarsListRenderModel): void {
-  if (!target) {
-    return;
-  }
-  if (
-    model.carSelectionState.kind === "loading"
-    || model.carSelectionState.kind === "no_cars"
-  ) {
-    target.hidden = true;
-    target.replaceChildren();
-    return;
-  }
-  if (model.carSelectionState.kind === "active" && model.highlightedCarFeedback) {
-    target.hidden = false;
-    target.innerHTML = renderCreationFeedback(model.highlightedCarFeedback, model);
-    return;
-  }
-  if (model.carSelectionState.kind === "active") {
-    target.hidden = true;
-    target.replaceChildren();
-    return;
-  }
-  target.hidden = false;
-  target.innerHTML = renderInlineStatePanel({
-    titleHtml: model.escapeHtml(model.t("settings.car.guidance.no_active_title")),
-    bodyHtml: model.escapeHtml(model.t("settings.car.guidance.no_active")),
-    detailHtml: model.escapeHtml(model.t("settings.car.guidance.no_active_detail")),
-  });
-}
-
 export function mountCarsPanel(host: HTMLElement): CarsPanelView {
+  const bridgeState: CarsPanelBridgeState = {
+    actions: null,
+    model: DEFAULT_CARS_PANEL_MODEL,
+  };
   const mount = createUiPreactMount(host);
-  mount.render(<CarsPanel />);
+  const render = () => mount.render(<CarsPanel state={bridgeState} />);
+  render();
 
   const dom = createCarsPanelDom(host);
-  const carSelectionGuidance = requireInHost<HTMLElement>(host, "#carSelectionGuidance");
-  const carListBody = requireInHost<HTMLElement>(host, "#carListBody");
-  let listDisposer: ViewDisposer | null = null;
   let wizardDisposer: ViewDisposer | null = null;
 
   return {
     list: {
       bindActions(handlers): void {
-        listDisposer?.();
-        listDisposer = bindSettingsCarListActions({ carListBody }, handlers);
+        bridgeState.actions = handlers;
+        render();
       },
       render(model): void {
-        renderCarsGuidance(carSelectionGuidance, model);
-        if (model.carSelectionState.kind === "loading") {
-          return;
-        }
-        renderSettingsCarList(carListBody, {
-          activeCarId: model.activeCarId,
-          cars: [...model.cars],
-          highlightedCarId: model.highlightedCarFeedback?.carId ?? null,
-          t: model.t,
-          escapeHtml: model.escapeHtml,
-          fmt: model.fmt,
-        });
+        bridgeState.model = model;
+        render();
       },
     },
     wizard: {

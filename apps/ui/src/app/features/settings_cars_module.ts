@@ -1,4 +1,3 @@
-import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
   type CarSelectionState,
@@ -10,12 +9,14 @@ import {
 import type { SettingsState } from "../ui_app_state";
 import type { CarRecord, CarsPayload } from "../../transport/http_models";
 import type {
-  CarsListHighlightedFeedback,
   CarsListPanelView,
-  CarsListRenderModel,
 } from "../views/cars_panel";
 import type { SettingsAnalysisPanelDom } from "../views/analysis_panel";
-import type { SettingsShellDom } from "../views/settings_shell";
+import {
+  buildCarsGuidanceRenderModel,
+  buildSettingsCarListRenderModel,
+  type CarsListHighlightedFeedback,
+} from "../views/settings_car_list_view";
 import {
   createSettingsCarsTransport,
   type SettingsCarsTransport,
@@ -23,7 +24,6 @@ import {
 
 export interface SettingsCarsModuleDeps extends FeatureDepsBase {
   confirmDelete?: (message: string) => boolean;
-  dom: Pick<SettingsShellDom, "settingsTabs">;
   analysisDom: Pick<
     SettingsAnalysisPanelDom,
     "analysisNoCarMessage" | "resetAnalysisBtn" | "saveAnalysisBtn"
@@ -35,7 +35,8 @@ export interface SettingsCarsModuleDeps extends FeatureDepsBase {
   renderRealtimeStatus: () => void;
   renderSpectrum: () => void;
   settings: SettingsState;
-  shellDom: Pick<UiShellDom, "menuButtons">;
+  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
   syncAnalysisInputs: () => void;
   panel: CarsListPanelView;
   transport?: Partial<SettingsCarsTransport>;
@@ -84,20 +85,29 @@ export function createSettingsCarsModule(
     return deriveCarSelectionState(settings);
   }
 
-  function renderState(): CarsListRenderModel {
+  function createPanelModel(
+    carSelectionState: CarSelectionState,
+  ): Parameters<CarsListPanelView["render"]>[0] {
     return {
-      activeCarId: settings.activeCarId,
-      carSelectionState: getCarSelectionState(),
-      cars: settings.cars,
-      highlightedCarFeedback,
-      escapeHtml: ctx.escapeHtml,
-      fmt: ctx.fmt,
-      t,
+      guidance: buildCarsGuidanceRenderModel({
+        carSelectionState,
+        highlightedCarFeedback,
+        t,
+      }),
+      table: carSelectionState.kind === "loading"
+        ? null
+        : buildSettingsCarListRenderModel({
+          activeCarId: settings.activeCarId,
+          cars: settings.cars,
+          highlightedCarId: highlightedCarFeedback?.carId ?? null,
+          fmt: ctx.fmt,
+          t,
+        }),
     };
   }
 
-  function syncAnalysisControls(state: CarsListRenderModel): void {
-    const hasActiveCar = state.carSelectionState.kind === "active";
+  function syncAnalysisControls(carSelectionState: CarSelectionState): void {
+    const hasActiveCar = carSelectionState.kind === "active";
     if (ctx.analysisDom.saveAnalysisBtn) {
       ctx.analysisDom.saveAnalysisBtn.disabled = !hasActiveCar;
     }
@@ -106,14 +116,14 @@ export function createSettingsCarsModule(
     }
     if (ctx.analysisDom.analysisNoCarMessage) {
       ctx.analysisDom.analysisNoCarMessage.hidden =
-        hasActiveCar || state.carSelectionState.kind === "loading";
+        hasActiveCar || carSelectionState.kind === "loading";
     }
   }
 
   function renderCarList(): void {
-    const state = renderState();
-    syncAnalysisControls(state);
-    ctx.panel.render(state);
+    const carSelectionState = getCarSelectionState();
+    syncAnalysisControls(carSelectionState);
+    ctx.panel.render(createPanelModel(carSelectionState));
   }
 
   function clearHighlightedCarFeedback(): void {
@@ -126,98 +136,6 @@ export function createSettingsCarsModule(
     }
     clearHighlightedCarFeedback();
     renderCarList();
-  }
-
-  function settingsTabIdAt(index: number): string | null {
-    if (!ctx.dom.settingsTabs.length) {
-      return null;
-    }
-    const safeIndex =
-      ((index % ctx.dom.settingsTabs.length) + ctx.dom.settingsTabs.length) %
-      ctx.dom.settingsTabs.length;
-    return ctx.dom.settingsTabs[safeIndex].getAttribute("data-settings-tab");
-  }
-
-  function primaryViewIdAt(index: number): string | undefined {
-    if (!ctx.shellDom.menuButtons.length) {
-      return undefined;
-    }
-    const safeIndex =
-      ((index % ctx.shellDom.menuButtons.length) +
-        ctx.shellDom.menuButtons.length) %
-      ctx.shellDom.menuButtons.length;
-    return ctx.shellDom.menuButtons[safeIndex].dataset.view;
-  }
-
-  function bindHighlightedCarFeedbackResetEvents(): void {
-    const dismissForSettingsTab = (tabId: string | null): void => {
-      if (tabId && tabId !== "carTab") {
-        dismissHighlightedCarFeedback();
-      }
-    };
-    const dismissForPrimaryView = (viewId: string | undefined): void => {
-      if (viewId && viewId !== "settingsView") {
-        dismissHighlightedCarFeedback();
-      }
-    };
-
-    ctx.dom.settingsTabs.forEach((tab, index) => {
-      tab.addEventListener("click", () => {
-        dismissForSettingsTab(tab.getAttribute("data-settings-tab"));
-      });
-      tab.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          dismissForSettingsTab(tab.getAttribute("data-settings-tab"));
-          return;
-        }
-        if (event.key === "ArrowRight") {
-          dismissForSettingsTab(settingsTabIdAt(index + 1));
-          return;
-        }
-        if (event.key === "ArrowLeft") {
-          dismissForSettingsTab(settingsTabIdAt(index - 1));
-          return;
-        }
-        if (event.key === "Home") {
-          dismissForSettingsTab(settingsTabIdAt(0));
-          return;
-        }
-        if (event.key === "End") {
-          dismissForSettingsTab(
-            settingsTabIdAt(ctx.dom.settingsTabs.length - 1),
-          );
-        }
-      });
-    });
-
-    ctx.shellDom.menuButtons.forEach((button, index) => {
-      button.addEventListener("click", () => {
-        dismissForPrimaryView(button.dataset.view);
-      });
-      button.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          dismissForPrimaryView(button.dataset.view);
-          return;
-        }
-        if (event.key === "ArrowRight") {
-          dismissForPrimaryView(primaryViewIdAt(index + 1));
-          return;
-        }
-        if (event.key === "ArrowLeft") {
-          dismissForPrimaryView(primaryViewIdAt(index - 1));
-          return;
-        }
-        if (event.key === "Home") {
-          dismissForPrimaryView(primaryViewIdAt(0));
-          return;
-        }
-        if (event.key === "End") {
-          dismissForPrimaryView(
-            primaryViewIdAt(ctx.shellDom.menuButtons.length - 1),
-          );
-        }
-      });
-    });
   }
 
   function syncCarsPayload(payload: CarsPayload): void {
@@ -336,7 +254,16 @@ export function createSettingsCarsModule(
       return;
     }
     handlersBound = true;
-    bindHighlightedCarFeedbackResetEvents();
+    ctx.subscribeSettingsTabChanges((tabId) => {
+      if (tabId !== "carTab") {
+        dismissHighlightedCarFeedback();
+      }
+    });
+    ctx.subscribePrimaryViewChanges((viewId) => {
+      if (viewId !== "settingsView") {
+        dismissHighlightedCarFeedback();
+      }
+    });
     ctx.panel.bindActions({
       onAction: (action) => {
         if (action.type === "add") {
