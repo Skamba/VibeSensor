@@ -66,29 +66,3 @@ export interface SpectrumPanelView {
   renderBandLegend(model: SpectrumBandLegendModel): void;
   renderInspectorText(text: string): void;
 }
-
-function createNullSpectrumChartDom(): SpectrumPanelChartDom {
-  if (typeof document !== "undefined" && typeof document.createElement === "function") {
-    return {
-      specChartWrap: document.createElement("div"),
-      specChart: document.createElement("div"),
-    };
-  }
-  return {
-    specChartWrap: {} as HTMLElement,
-    specChart: {} as HTMLElement,
-  };
-}
-
-export function createNullSpectrumPanelView(): SpectrumPanelView {
-  return {
-    chartDom: createNullSpectrumChartDom(),
-    bindBandToggle() {},
-    renderHeader() {},
-    renderOverlay() {},
-    renderBandToggle() {},
-    renderSensorLegend() {},
-    renderBandLegend() {},
-    renderInspectorText() {},
-  };
-}

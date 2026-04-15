@@ -237,13 +237,6 @@ function RealtimeLoggingPanel(props: {
   );
 }
 
-export function createNullRealtimeLoggingPanelBridge(): RealtimeLoggingPanelBridge {
-  return {
-    render() {},
-    bindActions() {},
-  };
-}
-
 export function mountRealtimeLoggingPanel(host: HTMLElement): RealtimeLoggingPanelBridge {
   const mount = createUiPreactMount(host);
   const state = signal<RealtimeLoggingPanelBridgeState>({ ...DEFAULT_PANEL_STATE });
