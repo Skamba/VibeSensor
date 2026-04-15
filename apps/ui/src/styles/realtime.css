@@ -12,19 +12,19 @@
 .dashboard-grid__controls .card__header > :first-child { width: 100%; }
 .dashboard-grid__controls .card__subtle { text-align: left; }
 
-.dashboard-grid[data-layout="setup"] {
+.dashboard-grid:has(.realtime-logging-shell[data-layout="setup"]) {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     "overview"
     "controls";
 }
 
-.dashboard-grid[data-layout="setup"] .dashboard-grid__main {
+.dashboard-grid:has(.realtime-logging-shell[data-layout="setup"]) .dashboard-grid__main {
   display: none;
 }
 
-.dashboard-grid[data-layout="setup"] .stat-grid--compact,
-.dashboard-grid[data-layout="setup"] .logging-actions {
+.realtime-logging-shell[data-layout="setup"] .stat-grid--compact,
+.realtime-logging-shell[data-layout="setup"] .logging-actions {
   display: none;
 }
 

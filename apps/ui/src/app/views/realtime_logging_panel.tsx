@@ -1,5 +1,6 @@
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import { inlineStateActionClass } from "./dom_helpers";
 import type {
   RealtimeCaptureReadinessChecklistModel,
@@ -136,14 +137,16 @@ function RealtimeLoggingChecklist(props: {
   );
 }
 
-function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState }) {
-  const { state } = props;
+function RealtimeLoggingPanel(props: {
+  state: ReadonlySignal<RealtimeLoggingPanelBridgeState>;
+}) {
+  const state = props.state.value;
   const t = useUiTranslation();
   const loggingRowHidden = !state.showPill && state.runIdText === "";
   const showProgressSection = !state.setupMode || state.checklist !== null;
 
   return (
-    <>
+    <div class="realtime-logging-shell" data-layout={state.setupMode ? "setup" : undefined}>
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title" data-i18n="dashboard.run_recording">
@@ -230,20 +233,8 @@ function RealtimeLoggingPanel(props: { state: RealtimeLoggingPanelBridgeState })
           {t("dashboard.stop_recording", "Stop Recording")}
         </button>
       </div>
-    </>
+    </div>
   );
-}
-
-function syncDashboardLayout(host: HTMLElement, setupMode: boolean): void {
-  const dashboardGrid = host.closest<HTMLElement>(".dashboard-grid");
-  if (!dashboardGrid) {
-    return;
-  }
-  if (setupMode) {
-    dashboardGrid.setAttribute("data-layout", "setup");
-    return;
-  }
-  dashboardGrid.removeAttribute("data-layout");
 }
 
 export function createNullRealtimeLoggingPanelBridge(): RealtimeLoggingPanelBridge {
@@ -255,23 +246,15 @@ export function createNullRealtimeLoggingPanelBridge(): RealtimeLoggingPanelBrid
 
 export function mountRealtimeLoggingPanel(host: HTMLElement): RealtimeLoggingPanelBridge {
   const mount = createUiPreactMount(host);
-  let state: RealtimeLoggingPanelBridgeState = { ...DEFAULT_PANEL_STATE };
-
-  function render(): void {
-    syncDashboardLayout(host, state.setupMode);
-    mount.render(<RealtimeLoggingPanel state={state} />);
-  }
-
-  render();
+  const state = signal<RealtimeLoggingPanelBridgeState>({ ...DEFAULT_PANEL_STATE });
+  mount.render(<RealtimeLoggingPanel state={state} />);
 
   return {
     render(model: RealtimeLoggingPanelRenderModel): void {
-      state = { ...state, ...model };
-      render();
+      state.value = { ...state.value, ...model };
     },
     bindActions(handlers: RealtimeLoggingPanelActionHandlers): void {
-      state = { ...state, actions: handlers };
-      render();
+      state.value = { ...state.value, actions: handlers };
     },
   };
 }
