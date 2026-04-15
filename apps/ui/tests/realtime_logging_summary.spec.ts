@@ -40,6 +40,8 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
   const liveSummary = page.locator("#loggingSummary");
   const addCarButton = liveSummary.getByRole("button", { name: "Add a car" });
   await expect(addCarButton).toBeVisible();
+  await expect(page.locator("#spectrumPanelRoot")).toBeHidden();
+  expect(await page.locator(".dashboard-grid").getAttribute("data-layout")).toBeNull();
 
   await page.evaluate(() => {
     const summary = document.querySelector<HTMLElement>("#loggingSummary");

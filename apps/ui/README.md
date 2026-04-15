@@ -103,7 +103,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
 | `app/features/cars_feature_transport.ts` | Car-library transport wrapper for loading wizard brands, types, and models through the UI API facade |
 | `app/features/cars_feature_workflow.ts` | DOM-free car-wizard workflow/controller for step transitions, library loading, branch selection, and finish validation |
-| `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and delegated event bindings together |
+| `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and typed logging/sensor action bridges together |
 | `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
 | `app/features/settings_cars_module.ts` | Settings-side car controller that owns list loading, activation/deletion flows, highlight feedback, and typed tab/view-driven feedback dismissal plus the explicit open-wizard port |
 | `app/features/settings_cars_transport.ts` | Settings-car transport wrapper over load/activate/delete API calls |
@@ -131,7 +131,8 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/history_table_content.tsx` | History island JSX renderer that turns typed row/detail models into empty state, table rows, expanded evidence cards, and action affordances |
 | `app/views/history_table_view.ts` | Thin history-panel bridge that defines the typed empty/table render contract consumed by the Preact history island |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
-| `app/views/realtime_logging_panel.tsx` | Preact owner for the run-recording card that renders typed logging/readiness models and binds start/stop plus summary CTA actions through a bridge |
+| `app/views/realtime_live_overview.tsx` | Signal-backed Preact owner for the live overview card that consumes typed status/sensor models without manual island rerender loops |
+| `app/views/realtime_logging_panel.tsx` | Signal-backed Preact owner for the run-recording card that renders typed logging/readiness models, owns the setup-layout marker locally, and binds start/stop plus summary CTA actions through the shared bridge |
 | `app/views/settings_car_list_view.ts` | Typed saved-car list and guidance view-model builders reused by the car-management island for row, empty-state, and highlight rendering |
 | `app/views/settings_speed_source_presenter.ts` | Pure speed-source presenter that turns typed workflow state and live status payloads into panel and diagnostics render models |
 | `app/views/update_feature_presenter.ts` | Update presenter that derives typed update/internet panel models from workflow state plus draft form inputs and toggles |
@@ -191,11 +192,12 @@ contract below is available.
 Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
 facade, `realtime_feature_workflow.ts` owns the controller-style polling and
 mutation flow, `realtime_feature_presenter.ts` owns realtime-specific panel
-state plus typed navigation actions, and `realtime_logging_view_models.ts`
-builds the logging/readiness models consumed by
-`app/views/realtime_logging_panel.tsx`. `app/views/` now owns typed view-model
-builders, event-target decoding, and disposable delegated listener binders for
-reusable multi-action panels.
+state plus typed navigation actions, `app/views/realtime_live_overview.tsx`
+and `app/views/realtime_logging_panel.tsx` keep the dashboard cards in
+signal-backed island state, and `realtime_logging_view_models.ts` builds the
+logging/readiness models consumed by the recording card. `app/views/` now owns
+typed view-model builders, event-target decoding, and disposable delegated
+listener binders for reusable multi-action panels.
 
 `src/transport/` owns the UI-local DTO and adapter layer between generated HTTP
 / WS contracts and `app/**`, so feature, runtime, and view modules no longer
