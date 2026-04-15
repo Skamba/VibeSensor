@@ -2,7 +2,10 @@ import { expect, test } from "@playwright/test";
 
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
-import type { EspFlashPanelDom } from "../src/app/views/esp_flash_panel";
+import type {
+  EspFlashPanelDom,
+  EspFlashPanelRenderModel,
+} from "../src/app/views/esp_flash_panel";
 import type {
   InternetPanelDom,
   InternetPanelRenderModel,
@@ -418,6 +421,94 @@ function renderInternetPanelDom(
   }
 }
 
+function serializeEspFlashReadinessPanel(
+  model: EspFlashPanelRenderModel["readiness"],
+): string {
+  return `<div class="maintenance-stack maintenance-stack--tight"><div class="subtle">${model.summaryText}</div>${model.rows.length > 0 ? serializeStatusGrid(model.rows) : ""}${model.errorText ? `<div class="maintenance-note maintenance-note--bad">${model.errorText}</div>` : ""}</div>`;
+}
+
+function serializeEspFlashJourney(
+  model: EspFlashPanelRenderModel["journey"],
+): string {
+  const noteHtml = model.terminalNoteText
+    ? `<div class="maintenance-note maintenance-note--bad">${model.terminalNoteText}</div>`
+    : "";
+  const stagesHtml = model.stages.map((stage) => `<li class="maintenance-stage" data-stage-phase="${stage.phase}" data-stage-state="${stage.state}"${stage.current ? ' aria-current="step"' : ""}><span class="maintenance-stage__marker">${stage.markerText}</span><div class="maintenance-stage__body"><div class="maintenance-stage__title">${stage.titleText}</div><div class="maintenance-stage__detail">${stage.detailText}</div></div><span class="maintenance-stage__state">${stage.stateText}</span></li>`).join("");
+  return `<div class="maintenance-journey">${noteHtml}<ol class="maintenance-stage-list">${stagesHtml}</ol></div>`;
+}
+
+function serializeInlineEmptyState(model: {
+  bodyText: string;
+  titleText: string;
+}): string {
+  return `<div class="empty-state empty-state--inline"><strong class="empty-state__title">${model.titleText}</strong><span class="empty-state__body">${model.bodyText}</span></div>`;
+}
+
+function serializeEspFlashLog(
+  model: EspFlashPanelRenderModel["log"],
+): string {
+  return model.emptyState
+    ? serializeInlineEmptyState(model.emptyState)
+    : `<pre class="log-pre">${model.text}</pre>`;
+}
+
+function serializeEspFlashHistory(
+  model: EspFlashPanelRenderModel["history"],
+): string {
+  if (model.emptyState) {
+    return serializeInlineEmptyState(model.emptyState);
+  }
+  return `<ul class="maintenance-attempt-list">${model.attempts.map((attempt) => `<li class="maintenance-attempt"><div class="maintenance-attempt__header"><span class="pill" data-variant="${attempt.badge.variant}">${attempt.badge.text}</span><strong>${attempt.portText}</strong></div><div class="maintenance-attempt__meta subtle">${attempt.metaText}</div>${attempt.errorText ? `<div class="maintenance-note maintenance-note--bad">${attempt.errorText}</div>` : ""}</li>`).join("")}</ul>`;
+}
+
+function renderEspFlashPanelDom(
+  dom: EspFlashPanelDom,
+  model: EspFlashPanelRenderModel,
+): void {
+  if (dom.espFlashPortSelect) {
+    dom.espFlashPortSelect.innerHTML = model.portOptions.map((option) => `<option value="${option.value}">${option.labelText}</option>`).join("");
+    dom.espFlashPortSelect.value = model.selectedPortValue;
+    dom.espFlashPortSelect.disabled = model.portSelectDisabled;
+  }
+  if (dom.espFlashRefreshPortsBtn) {
+    dom.espFlashRefreshPortsBtn.disabled = model.refreshPortsDisabled;
+  }
+  dom.espFlashStartBtn.textContent = model.startButtonLabelText;
+  dom.espFlashStartBtn.disabled = model.startButtonDisabled;
+  dom.espFlashStartBtn.hidden = model.startButtonHidden;
+  if (dom.espFlashCancelBtn) {
+    dom.espFlashCancelBtn.disabled = model.cancelButtonDisabled;
+    dom.espFlashCancelBtn.hidden = model.cancelButtonHidden;
+  }
+  if (dom.espFlashStartSummary) {
+    dom.espFlashStartSummary.innerHTML = serializeReadinessPanel(model.startSummary);
+  }
+  if (dom.espFlashStatusBanner) {
+    dom.espFlashStatusBanner.className = "pill";
+    setOptionalAttribute(
+      dom.espFlashStatusBanner,
+      "data-variant",
+      model.statusBanner.variant,
+    );
+    dom.espFlashStatusBanner.textContent = model.statusBanner.text;
+  }
+  if (dom.espFlashReadinessPanel) {
+    dom.espFlashReadinessPanel.innerHTML = serializeEspFlashReadinessPanel(model.readiness);
+  }
+  if (dom.espFlashJourneyPanel) {
+    dom.espFlashJourneyPanel.innerHTML = serializeEspFlashJourney(model.journey);
+  }
+  if (dom.espFlashLogPanel) {
+    dom.espFlashLogPanel.className = model.log.emptyState
+      ? "maintenance-log-slot"
+      : "maintenance-log-slot maintenance-log-panel";
+    dom.espFlashLogPanel.innerHTML = serializeEspFlashLog(model.log);
+  }
+  if (dom.espFlashHistoryPanel) {
+    dom.espFlashHistoryPanel.innerHTML = serializeEspFlashHistory(model.history);
+  }
+}
+
 function createDeps() {
   const espFlashPortSelect = createSelect("__auto__");
   const espFlashRefreshPortsBtn = createButton();
@@ -450,6 +541,9 @@ function createDeps() {
   return {
     panel: {
       dom,
+      render(model: EspFlashPanelRenderModel) {
+        renderEspFlashPanelDom(dom, model);
+      },
     },
     els: dom,
     espFlashStartBtn,
@@ -975,6 +1069,67 @@ test.describe("createEspFlashFeature polling", () => {
     } finally {
       restoreFetch();
       timers.restore();
+    }
+  });
+
+  test("manual port selection is reflected in the flash start payload", async () => {
+    let startBody: Record<string, unknown> | null = null;
+    const restoreFetch = installFetchMock(async (url, method, body) => {
+      if (url.pathname === "/api/esp-flash/ports") {
+        return jsonResponse({
+          ports: [
+            {
+              port: "/dev/ttyUSB0",
+              description: "USB UART",
+              vid: 1,
+              pid: 2,
+              serial_number: "abc",
+            },
+            {
+              port: "/dev/ttyUSB1",
+              description: "ESP32 Bootloader",
+              vid: 3,
+              pid: 4,
+              serial_number: "def",
+            },
+          ],
+        });
+      }
+      if (url.pathname === "/api/esp-flash/start" && method === "POST") {
+        startBody = JSON.parse(body) as Record<string, unknown>;
+        return jsonResponse({ status: "started", job_id: 1 });
+      }
+      if (url.pathname === "/api/esp-flash/status") {
+        return jsonResponse({ state: "idle", log_count: 0, error: null });
+      }
+      if (url.pathname === "/api/esp-flash/logs") {
+        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
+      }
+      if (url.pathname === "/api/esp-flash/history") {
+        return jsonResponse({ attempts: [] });
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createDeps();
+      const feature = createEspFlashFeature(deps);
+
+      feature.bindHandlers();
+      feature.startPolling();
+      await flushAsyncWork();
+
+      deps.els.espFlashPortSelect.value = "/dev/ttyUSB1";
+      deps.els.espFlashPortSelect.dispatchEvent(new Event("change"));
+      deps.espFlashStartBtn.click();
+      await flushAsyncWork();
+
+      expect(startBody).toEqual({
+        auto_detect: false,
+        port: "/dev/ttyUSB1",
+      });
+    } finally {
+      restoreFetch();
     }
   });
 

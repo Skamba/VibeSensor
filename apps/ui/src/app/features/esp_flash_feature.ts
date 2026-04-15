@@ -18,9 +18,8 @@ export function createEspFlashFeature(
   ctx: EspFlashFeatureDeps,
 ): EspFlashFeature {
   const presenter = createEspFlashFeaturePresenter({
-    dom: ctx.panel.dom,
+    panel: ctx.panel,
     t: ctx.t,
-    escapeHtml: ctx.escapeHtml,
   });
   const workflow = createEspFlashFeatureWorkflow({
     t: ctx.t,
