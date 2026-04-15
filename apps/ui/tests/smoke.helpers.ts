@@ -96,6 +96,13 @@ export async function fulfillJson(route: Route, body: unknown): Promise<void> {
   await route.fulfill(jsonOk(body));
 }
 
+function defaultSettingsPayload(path: string): Record<string, unknown> {
+  if (path === "/api/settings/cars" || path === "/api/settings/cars/active") {
+    return { cars: [], active_car_id: null };
+  }
+  return {};
+}
+
 export type SemanticSurfaceStyles = {
   backgroundColor: string;
   borderColor: string;
@@ -273,11 +280,7 @@ export async function installCommonRoutes(page: Page, options: CommonRouteOption
       await options.settingsHandler(route);
       return;
     }
-    if (path === "/api/settings/cars" || path === "/api/settings/cars/active") {
-      await fulfillJson(route, { cars: [], active_car_id: null });
-      return;
-    }
-    await fulfillJson(route, {});
+    await fulfillJson(route, defaultSettingsPayload(path));
   });
   await page.route("**/api/esp-flash/**", async (route) => {
     if (!requestPath(route).startsWith("/api/esp-flash")) {
@@ -322,7 +325,7 @@ export function createSettingsHandlerFromMap(settingsMap: Record<string, Setting
       await fulfillJson(route, value);
       return;
     }
-    await fulfillJson(route, {});
+    await fulfillJson(route, defaultSettingsPayload(path));
   };
 }
 
