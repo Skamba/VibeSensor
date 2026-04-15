@@ -33,35 +33,27 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       return;
     }
     handlersBound = true;
-    ctx.panel.dom.updateStartBtn.addEventListener("click", () => {
-      workflow.renderCurrentState();
-      void workflow.startUpdate(
-        presenter.readStartIntent(workflow.getRenderState()),
-      );
+    ctx.panel.bindActions({
+      onStart: () => {
+        workflow.renderCurrentState();
+        void workflow.startUpdate(
+          presenter.readStartIntent(workflow.getRenderState()),
+        );
+      },
+      onCancel: () => {
+        void workflow.cancelUpdate();
+      },
     });
-    ctx.panel.dom.updateCancelBtn.addEventListener("click", () => {
-      void workflow.cancelUpdate();
-    });
-    ctx.internetPanel.dom.updateTogglePasswordBtn?.addEventListener(
-      "click",
-      () => {
+    ctx.internetPanel.bindActions({
+      onTogglePassword: () => {
         presenter.togglePassword();
       },
-    );
-    ctx.internetPanel.dom.updateTransportWifiRadio?.addEventListener(
-      "change",
-      () => {
+      onTransportChange: () => {
         workflow.renderCurrentState();
       },
-    );
-    ctx.internetPanel.dom.updateTransportUsbRadio?.addEventListener(
-      "change",
-      () => {
+      onSsidInput: () => {
         workflow.renderCurrentState();
       },
-    );
-    ctx.internetPanel.dom.updateSsidInput?.addEventListener("input", () => {
-      workflow.renderCurrentState();
     });
     workflow.renderCurrentState();
   }

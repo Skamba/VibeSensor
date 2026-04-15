@@ -33,12 +33,19 @@ export interface UpdatePanelRenderModel {
   status: UpdateStatusPanelViewModel | null;
 }
 
+export interface UpdatePanelActionHandlers {
+  onCancel(): void;
+  onStart(): void;
+}
+
 export interface UpdatePanelView {
   readonly dom: UpdatePanelDom;
+  bindActions(handlers: UpdatePanelActionHandlers): void;
   render(model: UpdatePanelRenderModel): void;
 }
 
 type UpdatePanelBridgeState = {
+  actions: UpdatePanelActionHandlers | null;
   model: UpdatePanelRenderModel;
 };
 
@@ -323,9 +330,10 @@ function UpdateStatusContent(props: {
 }
 
 function UpdatePanel(props: {
-  model: UpdatePanelRenderModel;
+  state: UpdatePanelBridgeState;
 }) {
-  const { model } = props;
+  const { state } = props;
+  const { model } = state;
   const t = useUiTranslation();
   return (
     <div class="panel card">
@@ -365,6 +373,7 @@ function UpdatePanel(props: {
                 class="btn btn--success"
                 hidden={model.startButtonHidden}
                 disabled={model.startButtonDisabled}
+                onClick={() => state.actions?.onStart()}
               >
                 {model.startButtonLabelText}
               </button>
@@ -374,6 +383,7 @@ function UpdatePanel(props: {
                 class="btn btn--danger"
                 hidden={model.cancelButtonHidden}
                 disabled={model.cancelButtonDisabled}
+                onClick={() => state.actions?.onCancel()}
               >
                 {t("settings.update.cancel", "Cancel Update")}
               </button>
@@ -414,21 +424,26 @@ function createUpdatePanelDom(host: HTMLElement): UpdatePanelDom {
 }
 
 export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
-  const bridgeState: UpdatePanelBridgeState = {
+  let state: UpdatePanelBridgeState = {
+    actions: null,
     model: DEFAULT_UPDATE_PANEL_MODEL,
   };
   const mount = createUiPreactMount(host);
 
   function render(): void {
-    mount.render(<UpdatePanel model={bridgeState.model} />);
+    mount.render(<UpdatePanel state={state} />);
   }
 
   render();
 
   return {
     dom: createUpdatePanelDom(host),
+    bindActions(handlers) {
+      state = { ...state, actions: handlers };
+      render();
+    },
     render(model) {
-      bridgeState.model = model;
+      state = { ...state, model };
       render();
     },
   };
