@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { runDemoMode } from "../src/app/demo_mode";
-import { createAppState } from "../src/app/ui_app_state";
+import { createAppState, unwrapAppStateValue } from "../src/app/ui_app_state";
 import { adaptServerPayload } from "../src/server_payload";
 import { installWindowGlobal } from "./async_test_helpers";
 
@@ -10,26 +10,24 @@ test.describe("runDemoMode", () => {
     installWindowGlobal();
   });
 
-  test("emits a schema-valid websocket payload", () => {
+  test("queues a schema-valid websocket payload into shared transport state", () => {
     const selectedClientId = "aabbcc001122";
     const state = createAppState();
     state.transport.wsState = "reconnecting";
-    let adaptedPayload:
-      | ReturnType<typeof adaptServerPayload>
-      | undefined;
 
     runDemoMode({
       state,
-      applyPayload: (payload) => {
-        adaptedPayload = adaptServerPayload(payload);
-      },
     });
+
+    const adaptedPayload = adaptServerPayload(
+      unwrapAppStateValue(state.transport.pendingPayload),
+    );
 
     expect(state.transport.wsState).toBe("connected");
     expect(state.transport.hasReceivedPayload).toBe(true);
-    expect(adaptedPayload).toBeDefined();
-    expect(adaptedPayload?.clients).toHaveLength(5);
-    expect(adaptedPayload?.spectra?.clients[selectedClientId]).toMatchObject({
+    expect(state.transport.pendingPayload).not.toBeNull();
+    expect(adaptedPayload.clients).toHaveLength(5);
+    expect(adaptedPayload.spectra?.clients[selectedClientId]).toMatchObject({
       freq: expect.any(Array),
       combined: expect.any(Array),
       strength_metrics: expect.objectContaining({

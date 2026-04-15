@@ -78,7 +78,6 @@ export class UiLiveTransportController {
     if (isDemoMode) {
       runDemoMode({
         state: this.state,
-        applyPayload: (payload) => this.applyPayload(payload),
       });
       return;
     }
