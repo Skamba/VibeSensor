@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { buildUpdateFeaturePanelModels } from "../src/app/views/update_feature_presenter";
+import type { InternetPanelRenderModel } from "../src/app/views/internet_panel";
+import type { UpdatePanelRenderModel } from "../src/app/views/update_panel";
+import {
+  buildUpdateFeaturePanelModels,
+  createUpdateFeaturePresenter,
+} from "../src/app/views/update_feature_presenter";
 import type {
   HealthStatusPayload,
   UpdateStatusPayload,
@@ -235,5 +240,93 @@ test.describe("buildUpdateFeaturePanelModels", () => {
     expect(models.internetPanel.togglePasswordLabelText).toBe(
       "settings.update.hide_password",
     );
+  });
+});
+
+test.describe("createUpdateFeaturePresenter", () => {
+  test("reads and clears presenter-owned form state instead of DOM values", () => {
+    let latestInternetPanel: InternetPanelRenderModel | null = null;
+    let latestUpdatePanel: UpdatePanelRenderModel | null = null;
+    let focusCalls = 0;
+    const presenter = createUpdateFeaturePresenter({
+      internetPanel: {
+        dom: {
+          internetStatusPanel: null,
+          updateTransportOptions: null,
+          updateTransportChoiceWifi: null,
+          updateTransportChoiceUsb: null,
+          updateWifiFields: null,
+          updateReadinessSummary: null,
+          updateDetailsCaption: null,
+          updateTransportNote: null,
+          updateTransportWifiRadio: { checked: false } as HTMLInputElement,
+          updateTransportUsbRadio: { checked: true } as HTMLInputElement,
+          updateUsbTransportSummary: null,
+          updateSsidInput: {
+            focus() {
+              focusCalls += 1;
+            },
+            value: "dom-ssid",
+          } as HTMLInputElement,
+          updatePasswordInput: {
+            value: "dom-password",
+          } as HTMLInputElement,
+          updateTogglePasswordBtn: null,
+        },
+        bindActions() {},
+        render(model) {
+          latestInternetPanel = model;
+        },
+      },
+      panel: {
+        dom: {
+          updateOverviewPanel: null,
+          updateStartBtn: {} as HTMLButtonElement,
+          updateCancelBtn: {} as HTMLButtonElement,
+          updateStatusPanel: {} as HTMLElement,
+        },
+        bindActions() {},
+        render(model) {
+          latestUpdatePanel = model;
+        },
+      },
+      t,
+    });
+    const state = {
+      internetStatus: makeInternet({
+        detected: true,
+        usable: true,
+        interface_name: "usb0",
+      }),
+      healthStatus: makeHealth(),
+      updateStatus: makeStatus(),
+      updateState: "idle" as const,
+      updateTransport: "wifi" as const,
+    };
+
+    presenter.setSelectedTransport("wifi");
+    presenter.setSsidInput("presenter-ssid");
+    presenter.setPasswordInput("presenter-password");
+    presenter.render(state);
+
+    expect(latestInternetPanel?.ssidInputValue).toBe("presenter-ssid");
+    expect(latestInternetPanel?.passwordInputValue).toBe("presenter-password");
+    expect(latestUpdatePanel?.startButtonDisabled).toBe(false);
+    expect(presenter.readStartIntent(state)).toMatchObject({
+      password: "presenter-password",
+      ssid: "presenter-ssid",
+      transport: "wifi",
+    });
+
+    presenter.clearPassword();
+    expect(latestInternetPanel?.passwordInputValue).toBe("");
+    expect(presenter.readStartIntent(state)).toMatchObject({
+      password: "",
+      ssid: "presenter-ssid",
+      transport: "wifi",
+    });
+
+    presenter.focusSsidInput();
+    expect(focusCalls).toBe(1);
   });
 });
