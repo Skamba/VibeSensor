@@ -1,5 +1,6 @@
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
   SpectrumBandLegendModel,
   SpectrumPanelChartDom,
@@ -55,6 +56,19 @@ const DEFAULT_PANEL_STATE: SpectrumPanelBridgeState = {
   onBandToggle: null,
 };
 
+function createDefaultPanelState(): SpectrumPanelBridgeState {
+  return {
+    header: { ...DEFAULT_PANEL_STATE.header },
+    overlayMessage: DEFAULT_PANEL_STATE.overlayMessage,
+    bandToggle: { ...DEFAULT_PANEL_STATE.bandToggle },
+    sensorLegend: DEFAULT_PANEL_STATE.sensorLegend,
+    sensorLegendHandlers: DEFAULT_PANEL_STATE.sensorLegendHandlers,
+    bandLegend: { ...DEFAULT_PANEL_STATE.bandLegend, items: [...DEFAULT_PANEL_STATE.bandLegend.items] },
+    inspectorText: DEFAULT_PANEL_STATE.inspectorText,
+    onBandToggle: DEFAULT_PANEL_STATE.onBandToggle,
+  };
+}
+
 function requireSpectrumElement<T extends HTMLElement>(
   element: T | null,
   target: string,
@@ -66,10 +80,11 @@ function requireSpectrumElement<T extends HTMLElement>(
 }
 
 function SpectrumPanel(props: {
-  state: SpectrumPanelBridgeState;
+  state: ReadonlySignal<SpectrumPanelBridgeState>;
   chartDom: MutableSpectrumPanelChartDom;
 }) {
-  const { state, chartDom } = props;
+  const state = props.state.value;
+  const { chartDom } = props;
   const t = useUiTranslation();
 
   return (
@@ -186,18 +201,13 @@ function SpectrumPanel(props: {
 }
 
 export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
+  const state = signal<SpectrumPanelBridgeState>(createDefaultPanelState());
   const mount = createUiPreactMount(host);
-  let state: SpectrumPanelBridgeState = { ...DEFAULT_PANEL_STATE };
   const chartDom: MutableSpectrumPanelChartDom = {
     specChartWrap: null,
     specChart: null,
   };
-
-  function render(): void {
-    mount.render(<SpectrumPanel state={state} chartDom={chartDom} />);
-  }
-
-  render();
+  mount.render(<SpectrumPanel state={state} chartDom={chartDom} />);
 
   return {
     chartDom: {
@@ -209,39 +219,32 @@ export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
       },
     } satisfies SpectrumPanelChartDom,
     bindBandToggle(onToggle: () => void): void {
-      state = { ...state, onBandToggle: onToggle };
-      render();
+      state.value = { ...state.value, onBandToggle: onToggle };
     },
     renderHeader(model: SpectrumPanelHeaderModel): void {
-      state = { ...state, header: model };
-      render();
+      state.value = { ...state.value, header: model };
     },
     renderOverlay(message: string | null): void {
-      state = { ...state, overlayMessage: message };
-      render();
+      state.value = { ...state.value, overlayMessage: message };
     },
     renderBandToggle(model: { hasBands: boolean; bandsVisible: boolean; text: string }): void {
-      state = { ...state, bandToggle: model };
-      render();
+      state.value = { ...state.value, bandToggle: model };
     },
     renderSensorLegend(
       model: SpectrumSensorLegendModel | null,
       handlers?: SpectrumLegendHandlers,
     ): void {
-      state = {
-        ...state,
+      state.value = {
+        ...state.value,
         sensorLegend: model,
         sensorLegendHandlers: model && handlers ? handlers : null,
       };
-      render();
     },
     renderBandLegend(model: SpectrumBandLegendModel): void {
-      state = { ...state, bandLegend: model };
-      render();
+      state.value = { ...state.value, bandLegend: model };
     },
     renderInspectorText(text: string): void {
-      state = { ...state, inspectorText: text };
-      render();
+      state.value = { ...state.value, inspectorText: text };
     },
   };
 }
