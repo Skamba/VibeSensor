@@ -1,20 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { getUiAnalysisPanelHost } from "../src/app/dom/analysis_dom";
-import { getUiCarsPanelHost } from "../src/app/dom/cars_dom";
-import { getUiEspFlashPanelHost } from "../src/app/dom/esp_flash_dom";
-import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
-import { getUiInternetPanelHost } from "../src/app/dom/internet_dom";
-import { requiredById } from "../src/app/dom/dom_query";
-import { getUiSensorsPanelHost } from "../src/app/dom/sensors_dom";
-import { getUiSettingsShellHost } from "../src/app/dom/settings_shell_dom";
-import { getUiSpeedSourcePanelHost } from "../src/app/dom/speed_source_dom";
-import { getUiUpdatePanelHost } from "../src/app/dom/update_dom";
-import {
-  getUiLiveOverviewHost,
-  getUiLoggingPanelHost,
-} from "../src/app/dom/realtime_dom";
 import { getUiShellChromeHost } from "../src/app/runtime/ui_shell_chrome";
+import { resolveUiPanelHosts } from "../src/app/ui_panel_host_registry";
 
 type SelectorFixture = {
   ids?: Record<string, HTMLElement>;
@@ -103,119 +90,42 @@ function installDomFixture(
   };
 }
 
-test("shell and spectrum startup locators resolve the remaining island hosts", () => {
+const missingTopLevelPanelHostCases = [
+  ["spectrumPanelRoot", "Spectrum UI requires #spectrumPanelRoot"],
+  ["loggingPanelRoot", "Realtime feature requires #loggingPanelRoot"],
+  ["liveOverviewRoot", "Realtime feature requires #liveOverviewRoot"],
+  ["historyPanelRoot", "History feature requires #historyPanelRoot"],
+  ["settingsShellRoot", "Settings shell requires #settingsShellRoot"],
+] as const;
+
+const missingSettingsPanelHostCases = [
+  ["carsPanelRoot", "Cars feature requires #carsPanelRoot"],
+  ["analysisPanelRoot", "Analysis feature requires #analysisPanelRoot"],
+  ["internetPanelRoot", "Internet settings requires #internetPanelRoot"],
+  ["updatePanelRoot", "Update feature requires #updatePanelRoot"],
+  ["espFlashPanelRoot", "ESP flash feature requires #espFlashPanelRoot"],
+  ["sensorsPanelRoot", "Sensors feature requires #sensorsPanelRoot"],
+  ["speedSourcePanelRoot", "Speed source feature requires #speedSourcePanelRoot"],
+] as const;
+
+test("shell chrome host and panel registry resolve the startup anchors", () => {
   const restore = installDomFixture();
   try {
     expect(getUiShellChromeHost().id).toBe("appShellChromeRoot");
-    expect(requiredById<HTMLElement>("spectrumPanelRoot", "Spectrum UI").id).toBe("spectrumPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiLiveOverviewHost resolves the overview island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiLiveOverviewHost().id).toBe("liveOverviewRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiLoggingPanelHost resolves the logging island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiLoggingPanelHost().id).toBe("loggingPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("requiredById resolves the spectrum island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(requiredById<HTMLElement>("spectrumPanelRoot", "Spectrum UI").id).toBe("spectrumPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiHistoryPanelHost resolves the history island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiHistoryPanelHost().id).toBe("historyPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiSettingsShellHost resolves the settings shell island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiSettingsShellHost().id).toBe("settingsShellRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiCarsPanelHost resolves the cars island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiCarsPanelHost().id).toBe("carsPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiAnalysisPanelHost resolves the analysis island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiAnalysisPanelHost().id).toBe("analysisPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiInternetPanelHost resolves the internet island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiInternetPanelHost().id).toBe("internetPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiUpdatePanelHost resolves the update island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiUpdatePanelHost().id).toBe("updatePanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiEspFlashPanelHost resolves the ESP flash island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiEspFlashPanelHost().id).toBe("espFlashPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiSensorsPanelHost resolves the sensors island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiSensorsPanelHost().id).toBe("sensorsPanelRoot");
-  } finally {
-    restore();
-  }
-});
-
-test("getUiSpeedSourcePanelHost resolves the speed-source island host", () => {
-  const restore = installDomFixture();
-  try {
-    expect(getUiSpeedSourcePanelHost().id).toBe("speedSourcePanelRoot");
+    const hosts = resolveUiPanelHosts();
+    expect(hosts.dashboard.spectrum.id).toBe("spectrumPanelRoot");
+    expect(hosts.dashboard.liveOverview.id).toBe("liveOverviewRoot");
+    expect(hosts.dashboard.logging.id).toBe("loggingPanelRoot");
+    expect(hosts.history.id).toBe("historyPanelRoot");
+    expect(hosts.settingsShell.id).toBe("settingsShellRoot");
+    const settingsHosts = hosts.resolveSettingsPanels();
+    expect(settingsHosts.cars.id).toBe("carsPanelRoot");
+    expect(settingsHosts.analysis.id).toBe("analysisPanelRoot");
+    expect(settingsHosts.internet.id).toBe("internetPanelRoot");
+    expect(settingsHosts.update.id).toBe("updatePanelRoot");
+    expect(settingsHosts.espFlash.id).toBe("espFlashPanelRoot");
+    expect(settingsHosts.sensors.id).toBe("sensorsPanelRoot");
+    expect(settingsHosts.speedSource.id).toBe("speedSourcePanelRoot");
   } finally {
     restore();
   }
@@ -233,135 +143,27 @@ test.describe("runtime locator missing required feature anchors", () => {
     }
   });
 
-  test("fails when the spectrum panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "spectrumPanelRoot" });
-    try {
-      expect(() => requiredById<HTMLElement>("spectrumPanelRoot", "Spectrum UI")).toThrow(
-        "Spectrum UI requires #spectrumPanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
+  for (const [missingId, message] of missingTopLevelPanelHostCases) {
+    test(`fails when ${missingId} is missing from the top-level panel registry`, () => {
+      const restore = installDomFixture({ missingId });
+      try {
+        expect(() => resolveUiPanelHosts()).toThrow(message);
+      } finally {
+        restore();
+      }
+    });
+  }
 
-  test("fails when the logging panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "loggingPanelRoot" });
-    try {
-      expect(() => getUiLoggingPanelHost()).toThrow(
-        "Realtime feature requires #loggingPanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the live overview host is missing", () => {
-    const restore = installDomFixture({ missingId: "liveOverviewRoot" });
-    try {
-      expect(() => getUiLiveOverviewHost()).toThrow(
-        "Realtime feature requires #liveOverviewRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the history panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "historyPanelRoot" });
-    try {
-      expect(() => getUiHistoryPanelHost()).toThrow(
-        "History feature requires #historyPanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the cars panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "carsPanelRoot" });
-    try {
-      expect(() => getUiCarsPanelHost()).toThrow(
-        "Cars feature requires #carsPanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the analysis panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "analysisPanelRoot" });
-    try {
-      expect(() => getUiAnalysisPanelHost()).toThrow(
-        "Analysis feature requires #analysisPanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the internet panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "internetPanelRoot" });
-    try {
-      expect(() => getUiInternetPanelHost()).toThrow(
-        "Internet settings requires #internetPanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the update panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "updatePanelRoot" });
-    try {
-      expect(() => getUiUpdatePanelHost()).toThrow(
-        "Update feature requires #updatePanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the ESP flash panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "espFlashPanelRoot" });
-    try {
-      expect(() => getUiEspFlashPanelHost()).toThrow(
-        "ESP flash feature requires #espFlashPanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the settings shell host is missing", () => {
-    const restore = installDomFixture({ missingId: "settingsShellRoot" });
-    try {
-      expect(() => getUiSettingsShellHost()).toThrow(
-        "Settings shell requires #settingsShellRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the sensors panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "sensorsPanelRoot" });
-    try {
-      expect(() => getUiSensorsPanelHost()).toThrow(
-        "Sensors feature requires #sensorsPanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
-
-  test("fails when the speed-source panel host is missing", () => {
-    const restore = installDomFixture({ missingId: "speedSourcePanelRoot" });
-    try {
-      expect(() => getUiSpeedSourcePanelHost()).toThrow(
-        "Speed source feature requires #speedSourcePanelRoot",
-      );
-    } finally {
-      restore();
-    }
-  });
+  for (const [missingId, message] of missingSettingsPanelHostCases) {
+    test(`fails when ${missingId} is missing from the settings panel registry`, () => {
+      const restore = installDomFixture({ missingId });
+      try {
+        expect(() => resolveUiPanelHosts().resolveSettingsPanels()).toThrow(
+          message,
+        );
+      } finally {
+        restore();
+      }
+    });
+  }
 });

@@ -84,8 +84,10 @@ source-of-truth export commands remain the only writers for those files.
 | File | Purpose |
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
-| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell/page/settings islands, then constructs and starts the app runtime |
-| `app/dom/` | Island-host lookup modules plus focused runtime DOM locators such as the spectrum chart surface |
+| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell chrome, resolves and mounts the centralized panel bootstrap, then constructs and starts the app runtime |
+| `app/ui_panel_host_registry.ts` | Centralized host registry for dashboard, history, and settings panel mount points so startup and tests stop depending on one host getter module per panel |
+| `app/ui_panel_bootstrap.ts` | Centralized host registry and panel-mount bootstrap for dashboard, history, and settings islands so startup/runtime stop wiring one host getter per panel |
+| `app/dom/` | Focused DOM lookup helpers that remain after the panel bootstrap cleanup, including `requiredById` and other non-panel runtime locators |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
 | `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
