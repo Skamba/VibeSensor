@@ -600,10 +600,6 @@ export function createEspFlashFeaturePresenter(
     render(state) {
       const model = buildEspFlashPanelRenderModel(state, { t: ctx.t });
       ctx.panel.render(model);
-      if (ctx.panel.dom.espFlashLogPanel && model.log.emptyState === null) {
-        ctx.panel.dom.espFlashLogPanel.scrollTop =
-          ctx.panel.dom.espFlashLogPanel.scrollHeight;
-      }
     },
   };
 }

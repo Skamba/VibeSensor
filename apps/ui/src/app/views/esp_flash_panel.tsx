@@ -1,4 +1,5 @@
 import { h } from "preact";
+import { useEffect, useRef } from "preact/hooks";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
@@ -103,12 +104,20 @@ export interface EspFlashPanelRenderModel {
   statusBanner: EspFlashStatusBadgeModel;
 }
 
+export interface EspFlashPanelActionHandlers {
+  onCancel(): void;
+  onRefreshPorts(): void;
+  onSelectPort(value: string): void;
+  onStart(): void;
+}
+
 export interface EspFlashPanelView {
-  readonly dom: EspFlashPanelDom;
+  bindActions(handlers: EspFlashPanelActionHandlers): void;
   render(model: EspFlashPanelRenderModel): void;
 }
 
 type EspFlashPanelBridgeState = {
+  actions: EspFlashPanelActionHandlers | null;
   model: EspFlashPanelRenderModel;
 };
 
@@ -296,10 +305,21 @@ function EspFlashHistoryContent(props: {
 }
 
 function EspFlashPanel(props: {
-  model: EspFlashPanelRenderModel;
+  state: EspFlashPanelBridgeState;
 }) {
-  const { model } = props;
+  const { state } = props;
+  const { model } = state;
   const t = useUiTranslation();
+  const logPanelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const logPanel = logPanelRef.current;
+    if (!logPanel || model.log.emptyState !== null) {
+      return;
+    }
+    logPanel.scrollTop = logPanel.scrollHeight;
+  }, [model.log.emptyState, model.log.text]);
+
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
@@ -343,6 +363,8 @@ function EspFlashPanel(props: {
                   id="espFlashPortSelect"
                   disabled={model.portSelectDisabled}
                   value={model.selectedPortValue}
+                  onChange={(event) =>
+                    state.actions?.onSelectPort(event.currentTarget.value)}
                 >
                   {model.portOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -356,6 +378,7 @@ function EspFlashPanel(props: {
                   class="btn btn--muted"
                   data-i18n="settings.esp_flash.refresh_ports"
                   disabled={model.refreshPortsDisabled}
+                  onClick={() => state.actions?.onRefreshPorts()}
                 >
                   {t("settings.esp_flash.refresh_ports", "Refresh")}
                 </button>
@@ -413,6 +436,7 @@ function EspFlashPanel(props: {
                   class="btn btn--success"
                   hidden={model.startButtonHidden}
                   disabled={model.startButtonDisabled}
+                  onClick={() => state.actions?.onStart()}
                 >
                   {model.startButtonLabelText}
                 </button>
@@ -423,6 +447,7 @@ function EspFlashPanel(props: {
                   data-i18n="settings.esp_flash.cancel"
                   hidden={model.cancelButtonHidden}
                   disabled={model.cancelButtonDisabled}
+                  onClick={() => state.actions?.onCancel()}
                 >
                   {t("settings.esp_flash.cancel", "Cancel")}
                 </button>
@@ -472,6 +497,7 @@ function EspFlashPanel(props: {
               </div>
               <div
                 id="espFlashLogPanel"
+                ref={logPanelRef}
                 class={
                   model.log.emptyState
                     ? "maintenance-log-slot"
@@ -517,52 +543,26 @@ function EspFlashPanel(props: {
   );
 }
 
-function requiredInHost<T extends Element>(
-  host: ParentNode,
-  selector: string,
-): T {
-  const element = host.querySelector<T>(selector);
-  if (!element) {
-    throw new Error(`ESP flash feature requires ${selector}`);
-  }
-  return element;
-}
-
-function createEspFlashPanelDom(host: HTMLElement): EspFlashPanelDom {
-  return {
-    espFlashPortSelect: host.querySelector<HTMLSelectElement>("#espFlashPortSelect"),
-    espFlashRefreshPortsBtn: host.querySelector<HTMLButtonElement>(
-      "#espFlashRefreshPortsBtn",
-    ),
-    espFlashStartBtn: requiredInHost<HTMLButtonElement>(host, "#espFlashStartBtn"),
-    espFlashCancelBtn: host.querySelector<HTMLButtonElement>("#espFlashCancelBtn"),
-    espFlashStartSummary: host.querySelector<HTMLElement>("#espFlashStartSummary"),
-    espFlashStatusBanner: host.querySelector<HTMLElement>("#espFlashStatusBanner"),
-    espFlashReadinessPanel: host.querySelector<HTMLElement>(
-      "#espFlashReadinessPanel",
-    ),
-    espFlashJourneyPanel: host.querySelector<HTMLElement>("#espFlashJourneyPanel"),
-    espFlashLogPanel: host.querySelector<HTMLElement>("#espFlashLogPanel"),
-    espFlashHistoryPanel: host.querySelector<HTMLElement>("#espFlashHistoryPanel"),
-  };
-}
-
 export function mountEspFlashPanel(host: HTMLElement): EspFlashPanelView {
-  const bridgeState: EspFlashPanelBridgeState = {
+  let state: EspFlashPanelBridgeState = {
+    actions: null,
     model: DEFAULT_ESP_FLASH_PANEL_MODEL,
   };
   const mount = createUiPreactMount(host);
 
   function render(): void {
-    mount.render(<EspFlashPanel model={bridgeState.model} />);
+    mount.render(<EspFlashPanel state={state} />);
   }
 
   render();
 
   return {
-    dom: createEspFlashPanelDom(host),
+    bindActions(handlers) {
+      state = { ...state, actions: handlers };
+      render();
+    },
     render(model) {
-      bridgeState.model = model;
+      state = { ...state, model };
       render();
     },
   };
