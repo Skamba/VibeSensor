@@ -39,7 +39,6 @@ interface SettingsFeaturePortDeps {
   openCarWizard: () => void;
   subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   view: SettingsFeatureViewPorts;
-  realtime: SettingsFeatureRealtimePorts;
 }
 
 export interface SettingsFeatureDeps {
@@ -53,11 +52,6 @@ export interface SettingsFeatureDeps {
 export interface SettingsFeatureViewPorts {
   renderSpectrum: () => void;
   renderSpeedReadout: () => void;
-}
-
-export interface SettingsFeatureRealtimePorts {
-  renderRealtimeStatus: () => void;
-  renderRealtimeLoggingStatus: () => void;
 }
 
 export interface SettingsFeature {
@@ -141,8 +135,6 @@ export function createSettingsFeature(
     ports: {
       openAnalysisTab: () => openSettingsTab("analysisTab"),
       openCarWizard: ctx.ports.openCarWizard,
-      renderRealtimeLoggingStatus: ctx.ports.realtime.renderRealtimeLoggingStatus,
-      renderRealtimeStatus: ctx.ports.realtime.renderRealtimeStatus,
       renderSpectrum: ctx.ports.view.renderSpectrum,
       subscribePrimaryViewChanges: ctx.ports.subscribePrimaryViewChanges,
       subscribeSettingsTabChanges:

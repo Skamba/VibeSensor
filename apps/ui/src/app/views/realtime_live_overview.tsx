@@ -32,16 +32,17 @@ export interface RealtimeLiveOverviewRenderModel {
   sensorCards: RealtimeLiveOverviewSensorCardModel[];
 }
 
-interface RealtimeLiveOverviewBridgeState extends RealtimeLiveOverviewRenderModel {
+interface RealtimeLiveOverviewBridgeState {
+  model: ReadonlySignal<RealtimeLiveOverviewRenderModel> | null;
   speedText: string;
 }
 
 export interface RealtimeLiveOverviewBridge {
-  setModel(model: RealtimeLiveOverviewRenderModel): void;
+  bindModel(model: ReadonlySignal<RealtimeLiveOverviewRenderModel>): void;
   setSpeedText(text: string): void;
 }
 
-const DEFAULT_OVERVIEW_STATE: RealtimeLiveOverviewBridgeState = {
+const DEFAULT_OVERVIEW_MODEL: RealtimeLiveOverviewRenderModel = {
   connectedSensorsText: "--",
   activeCar: {
     text: "--",
@@ -56,11 +57,16 @@ const DEFAULT_OVERVIEW_STATE: RealtimeLiveOverviewBridgeState = {
     variant: "muted",
   },
   sensorCards: [],
+};
+
+const DEFAULT_OVERVIEW_STATE: RealtimeLiveOverviewBridgeState = {
+  model: null,
   speedText: "--",
 };
 
 function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOverviewBridgeState> }) {
   const state = props.state.value;
+  const model = state.model?.value ?? DEFAULT_OVERVIEW_MODEL;
   const t = useUiTranslation();
 
   return (
@@ -80,11 +86,11 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
         <div
           id="liveRunHealth"
           class="pill"
-          data-variant={state.runHealth.variant}
-          hidden={state.runHealth.hidden}
+          data-variant={model.runHealth.variant}
+          hidden={model.runHealth.hidden}
           aria-live="polite"
         >
-          {state.runHealth.text}
+          {model.runHealth.text}
         </div>
       </div>
       <div class="stat-grid live-overview__stats">
@@ -93,13 +99,13 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
             {t("dashboard.connected_sensors", "Sensors online")}
           </div>
           <div class="stat__value" data-value>
-            {state.connectedSensorsText}
+            {model.connectedSensorsText}
           </div>
         </div>
         <div
           id="liveActiveCar"
           class="stat"
-          data-variant={state.activeCar.warning ? "warn" : undefined}
+          data-variant={model.activeCar.warning ? "warn" : undefined}
         >
           <div class="stat__label">
             {t("dashboard.active_car", "Active car")}
@@ -107,19 +113,19 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
           <div
             class="stat__value"
             data-value
-            data-variant={state.activeCar.warning ? "warn" : undefined}
-            data-has-icon={state.activeCar.warning ? "true" : undefined}
+            data-variant={model.activeCar.warning ? "warn" : undefined}
+            data-has-icon={model.activeCar.warning ? "true" : undefined}
           >
-            {state.activeCar.warning
+            {model.activeCar.warning
               ? (
                 <>
                   <span class="stat__value-icon" data-variant="warn" aria-hidden="true">
                     !
                   </span>
-                  <span>{state.activeCar.text}</span>
+                  <span>{model.activeCar.text}</span>
                 </>
               )
-              : state.activeCar.text}
+              : model.activeCar.text}
           </div>
         </div>
         <div id="liveRecordingState" class="stat">
@@ -127,7 +133,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
             {t("dashboard.recording_state", "Run state")}
           </div>
           <div class="stat__value" data-value>
-            {state.recordingStateText}
+            {model.recordingStateText}
           </div>
         </div>
         <div id="liveDataFreshness" class="stat">
@@ -135,7 +141,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
             {t("dashboard.data_freshness", "Feed freshness")}
           </div>
           <div class="stat__value" data-value>
-            {state.dataFreshnessText}
+            {model.dataFreshnessText}
           </div>
         </div>
         <div id="liveStrongestSignal" class="stat">
@@ -143,7 +149,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
             {t("dashboard.strongest_signal", "Strongest signal")}
           </div>
           <div class="stat__value" data-value>
-            {state.strongestSignalText}
+            {model.strongestSignalText}
           </div>
         </div>
         <div class="stat">
@@ -161,8 +167,8 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
         </div>
       </div>
       <div id="liveSensorRoster" class="live-sensor-roster">
-        {state.sensorCards.length
-          ? state.sensorCards.map((card) => {
+        {model.sensorCards.length
+          ? model.sensorCards.map((card) => {
             const statusClass = card.connected ? "online" : "offline";
             return (
               <article
@@ -196,8 +202,8 @@ export function mountRealtimeLiveOverview(host: HTMLElement): RealtimeLiveOvervi
   render(<RealtimeLiveOverview state={state} />, host);
 
   return {
-    setModel(model: RealtimeLiveOverviewRenderModel): void {
-      state.value = { ...state.value, ...model };
+    bindModel(model: ReadonlySignal<RealtimeLiveOverviewRenderModel>): void {
+      state.value = { ...state.value, model };
     },
     setSpeedText(text: string): void {
       state.value = { ...state.value, speedText: text };

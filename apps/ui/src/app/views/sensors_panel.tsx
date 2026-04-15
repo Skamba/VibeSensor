@@ -20,13 +20,13 @@ export interface SensorsPanelActionHandlers {
 }
 
 export interface SensorsPanelView {
-  setModel(model: SensorsPanelRenderModel): void;
+  bindModel(model: ReadonlySignal<SensorsPanelRenderModel>): void;
   bindActions(handlers: SensorsPanelActionHandlers): void;
 }
 
 type SensorsPanelBridgeState = {
   actions: SensorsPanelActionHandlers | null;
-  model: SensorsPanelRenderModel;
+  model: ReadonlySignal<SensorsPanelRenderModel> | null;
 };
 
 function handleSensorAction(
@@ -123,6 +123,7 @@ function SensorsTableBody(props: {
 
 function SensorsPanel(props: { state: ReadonlySignal<SensorsPanelBridgeState> }) {
   const state = props.state.value;
+  const model = state.model?.value ?? { table: null };
   const t = useUiTranslation();
   return (
     <div class="panel card">
@@ -151,7 +152,7 @@ function SensorsPanel(props: { state: ReadonlySignal<SensorsPanelBridgeState> })
             </tr>
           </thead>
           <tbody id="sensorsSettingsBody">
-            <SensorsTableBody actions={state.actions} table={state.model.table} />
+            <SensorsTableBody actions={state.actions} table={model.table} />
           </tbody>
         </table>
       </div>
@@ -162,11 +163,11 @@ function SensorsPanel(props: { state: ReadonlySignal<SensorsPanelBridgeState> })
 export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
   const state = signal<SensorsPanelBridgeState>({
     actions: null,
-    model: { table: null },
+    model: null,
   });
   render(<SensorsPanel state={state} />, host);
   return {
-    setModel(model) {
+    bindModel(model) {
       state.value = { ...state.value, model };
     },
     bindActions(handlers) {

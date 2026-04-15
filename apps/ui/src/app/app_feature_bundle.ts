@@ -1,7 +1,6 @@
 import {
   createAppFeatureBundlePorts,
   createRealtimeFeatureRecordingPorts,
-  createSettingsFeatureRealtimePorts,
 } from "./app_feature_bundle_ports";
 import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
@@ -115,7 +114,6 @@ export function createAppFeatureBundle(
       },
       subscribePrimaryViewChanges: runtime.navigation.subscribeActiveViewChanges,
       view: runtime.view,
-      realtime: createSettingsFeatureRealtimePorts(realtime),
     },
     services,
     formatting: {

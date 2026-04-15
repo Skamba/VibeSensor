@@ -3,10 +3,9 @@ import { expect, test } from "@playwright/test";
 import {
   createAppFeatureBundlePorts,
   createRealtimeFeatureRecordingPorts,
-  createSettingsFeatureRealtimePorts,
 } from "../src/app/app_feature_bundle_ports";
 
-test("feature port helpers expose explicit shell and startup contracts without a full app shell", async () => {
+test("feature port helpers expose the narrowed shell and startup contracts", async () => {
   const calls: string[] = [];
 
   const history = {
@@ -26,15 +25,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
   const realtime = {
     bindHandlers() {
       calls.push("realtime.bindHandlers");
-    },
-    maybeRenderSensorsSettingsList(force?: boolean) {
-      calls.push(`realtime.maybeRenderSensorsSettingsList:${String(force)}`);
-    },
-    renderStatus() {
-      calls.push("realtime.renderStatus");
-    },
-    renderLoggingStatus() {
-      calls.push("realtime.renderLoggingStatus");
     },
     async refreshLocationOptions() {
       calls.push("realtime.refreshLocationOptions");
@@ -97,7 +87,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
     },
   };
 
-  const settingsRealtime = createSettingsFeatureRealtimePorts(realtime);
   const recording = createRealtimeFeatureRecordingPorts(history);
   const bundle = createAppFeatureBundlePorts({
     history,
@@ -110,8 +99,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
 
   expect(Object.keys(bundle).sort()).toEqual(["shell", "startup"]);
 
-  settingsRealtime.renderRealtimeStatus();
-  settingsRealtime.renderRealtimeLoggingStatus();
   await recording.onRecordingStatusChanged();
 
   bundle.shell.bindSettingsHandlers();
@@ -120,9 +107,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
   bundle.shell.bindHistoryHandlers();
   bundle.shell.bindUpdateHandlers();
   bundle.shell.bindEspFlashHandlers();
-  bundle.shell.languageRefresh.realtime.maybeRenderSensorsSettingsList(true);
-  bundle.shell.languageRefresh.realtime.renderLoggingStatus();
-  bundle.shell.languageRefresh.realtime.renderStatus();
   bundle.shell.languageRefresh.history.renderHistoryTable();
   bundle.shell.languageRefresh.history.reloadExpandedRunOnLanguageChange();
   bundle.shell.languageRefresh.settings.syncSettingsInputs();
@@ -138,8 +122,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
   bundle.startup.espFlash.startPolling();
 
   expect(calls).toEqual([
-    "realtime.renderStatus",
-    "realtime.renderLoggingStatus",
     "history.refreshHistory",
     "settings.bindHandlers",
     "cars.bindWizardHandlers",
@@ -147,9 +129,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
     "history.bindHandlers",
     "update.bindUpdateHandlers",
     "espFlash.bindHandlers",
-    "realtime.maybeRenderSensorsSettingsList:true",
-    "realtime.renderLoggingStatus",
-    "realtime.renderStatus",
     "history.renderHistoryTable",
     "history.reloadExpandedRunOnLanguageChange",
     "settings.syncSettingsInputs",

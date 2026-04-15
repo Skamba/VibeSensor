@@ -27,9 +27,6 @@ test("settings cars module dismisses transient creation feedback through typed t
   };
 
   const module = createSettingsCarsModule({
-    renderRealtimeLoggingStatus: () => undefined,
-    renderRealtimeStatus: () => undefined,
-    renderSpectrum: () => undefined,
     settings: state,
     panels: {
       analysisPanel: {
@@ -42,8 +39,6 @@ test("settings cars module dismisses transient creation feedback through typed t
     ports: {
       openAnalysisTab: () => undefined,
       openCarWizard: () => undefined,
-      renderRealtimeLoggingStatus: () => undefined,
-      renderRealtimeStatus: () => undefined,
       renderSpectrum: () => undefined,
       subscribePrimaryViewChanges(listener) {
         primaryViewListener = listener;

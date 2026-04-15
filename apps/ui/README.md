@@ -107,7 +107,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
 | `app/features/cars_feature_transport.ts` | Car-library transport wrapper for loading wizard brands, types, and models through the UI API facade |
 | `app/features/cars_feature_workflow.ts` | DOM-free car-wizard workflow/controller for step transitions, library loading, branch selection, and finish validation |
-| `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, presenter, and typed logging/sensor action bridges together |
+| `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, derived realtime view-state, and typed logging/sensor action bridges together |
 | `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
 | `app/features/settings_cars_module.ts` | Settings-side car controller that owns list loading, activation/deletion flows, highlight feedback, and typed tab/view-driven feedback dismissal plus the explicit open-wizard port |
 | `app/features/settings_cars_transport.ts` | Settings-car transport wrapper over load/activate/delete API calls |
@@ -145,7 +145,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/update_status_view_models.ts` | Typed update-status section builders for current status, journey, issues, attempt history, health, and log cards |
 | `app/views/maintenance_readiness_view.ts` | Shared maintenance-readiness model and Preact component contract reused by update and ESP flash readiness flows |
 | `app/views/` | Focused render-model builders, event-target decoding, and signal-backed Preact surfaces for settings, cars wizard, realtime, history, and updater flows |
-| `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived live/logging panel state, elapsed-timer sync, and cross-view navigation clicks |
+| `app/features/realtime_feature_view_state.ts` | Signal-backed realtime view-state owner that derives live overview, logging, and sensors models plus idle readiness signatures without presenter render fan-out |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
 | `api.ts` | REST API facade that returns local transport DTOs while `api/types.ts` stays the generated HTTP boundary |
 | `ws.ts` | WebSocket client with auto-reconnect, stale detection, and direct writes into the signal-backed transport slice |
@@ -204,13 +204,14 @@ like `setModel()` / `setDiagnostics()` rather than generic `render(model)`
 loops.
 
 Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
-facade, `realtime_feature_workflow.ts` owns the controller-style polling and
-mutation flow, `realtime_feature_presenter.ts` owns realtime-specific panel
-state plus typed navigation actions, `app/views/realtime_live_overview.tsx`
-and `app/views/realtime_logging_panel.tsx` keep the dashboard cards in
-signal-backed island state, and `realtime_logging_view_models.ts` builds the
-logging/readiness models consumed by the recording card. `app/views/` now owns
-typed view-model builders, event-target decoding, and signal-backed Preact
+facade, `realtime_feature_workflow.ts` owns the controller-style polling,
+mutation flow, and signal-backed workflow state, `realtime_feature_view_state.ts`
+derives the live overview/logging/sensors models plus idle readiness signatures
+from shared AppState slices, `app/views/realtime_live_overview.tsx` and
+`app/views/realtime_logging_panel.tsx` consume bound model signals inside their
+signal-backed islands, and `realtime_logging_view_models.ts` still owns the
+logging/readiness model builders reused by that derived state. `app/views/` now
+owns typed view-model builders, event-target decoding, and signal-backed Preact
 surfaces for reusable multi-action panels.
 
 `src/transport/` owns the UI-local DTO and adapter layer between generated HTTP
@@ -255,9 +256,9 @@ instead of controller-side variant class interpolation.
   integrations such as download anchors, canvas/uPlot lifecycles, observers, or
   external-library mount points instead of generic HTML/string builder helpers.
 - Expected feature shape is thin facade + focused workflow/transport/presenter
-  modules. Workflow modules stay DOM-free, presenters own render-state
-  derivation, and view surfaces decode local DOM events into typed actions for
-  the owning feature.
+  or derived view-state modules. Workflow modules stay DOM-free, render-state
+  derivation lives in one focused owner, and view surfaces decode local DOM
+  events into typed actions for the owning feature.
 - Mount Preact owner surfaces directly inside their owning runtime/view module.
   Do not scatter `preact.render(...)` calls across feature or presenter code.
 

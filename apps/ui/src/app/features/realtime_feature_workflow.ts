@@ -12,20 +12,23 @@ import type {
   ClientLocationsResponse,
   LoggingStatusPayload,
 } from "../../transport/http_models";
-import type { AdaptedClient } from "../../transport/live_models";
 import {
+  trackAppStateSlice,
   syncSelectedRealtimeClient,
   type RealtimeState,
 } from "../ui_app_state";
+import {
+  effect,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "../ui_signals";
 import {
   createPollingController,
   type PollingController,
   type PollingControllerOptions,
 } from "./polling_controller";
-import type {
-  RealtimeFeaturePendingLoggingAction,
-  RealtimeFeatureRenderState,
-} from "../views/realtime_feature_presenter";
+import type { RealtimeLoggingPendingAction } from "../views/realtime_logging_view_models";
 
 export interface RealtimeFeatureWorkflowApi {
   getLoggingStatus(): Promise<LoggingStatusPayload>;
@@ -37,13 +40,29 @@ export interface RealtimeFeatureWorkflowApi {
   removeClient(clientId: string): Promise<void>;
 }
 
-export interface RealtimeFeatureWorkflowViewPorts {
-  maybeRenderSensorsSettingsList(force?: boolean): void;
-  renderStatus(clientRow?: AdaptedClient): void;
-  renderLoggingStatus(state: RealtimeFeatureRenderState): void;
-  renderLoggingUnavailable(): void;
-  renderLoggingError(message: string): void;
-  getIdleCaptureReadinessSignature(): string;
+export interface RealtimeFeatureWorkflowLoggingError {
+  kind: "error" | "unavailable";
+  message: string;
+}
+
+export interface RealtimeFeatureWorkflowSignals {
+  readonly handlersBound: ReadonlySignal<boolean>;
+  readonly pendingLoggingAction: ReadonlySignal<RealtimeLoggingPendingAction>;
+  readonly loggingError: ReadonlySignal<RealtimeFeatureWorkflowLoggingError | null>;
+}
+
+export interface RealtimeFeatureWorkflowState {
+  readonly handlersBound: Signal<boolean>;
+  readonly pendingLoggingAction: Signal<RealtimeLoggingPendingAction>;
+  readonly loggingError: Signal<RealtimeFeatureWorkflowLoggingError | null>;
+}
+
+export function createRealtimeFeatureWorkflowState(): RealtimeFeatureWorkflowState {
+  return {
+    handlersBound: signal(false),
+    pendingLoggingAction: signal<RealtimeLoggingPendingAction>(null),
+    loggingError: signal<RealtimeFeatureWorkflowLoggingError | null>(null),
+  };
 }
 
 export interface RealtimeFeatureWorkflowDeps {
@@ -51,7 +70,7 @@ export interface RealtimeFeatureWorkflowDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
   showError: (message: string) => void;
   isDemoMode: boolean;
-  view: RealtimeFeatureWorkflowViewPorts;
+  idleCaptureReadinessSignature: ReadonlySignal<string>;
   selection: {
     sendSelection(): void;
   };
@@ -59,13 +78,14 @@ export interface RealtimeFeatureWorkflowDeps {
     onRecordingStatusChanged(): Promise<void>;
   };
   confirmRemoveClient: (message: string) => boolean;
+  state?: RealtimeFeatureWorkflowState;
   api?: Partial<RealtimeFeatureWorkflowApi>;
   createPollingController?: (options: PollingControllerOptions) => PollingController;
 }
 
 export interface RealtimeFeatureWorkflow {
+  readonly signals: RealtimeFeatureWorkflowSignals;
   bindHandlers(): void;
-  renderLoggingStatus(): void;
   refreshLoggingStatus(): Promise<void>;
   startLogging(): Promise<void>;
   stopLogging(): Promise<void>;
@@ -98,7 +118,6 @@ export function createRealtimeFeatureWorkflow(
     t,
     showError,
     isDemoMode,
-    view,
     selection,
     recording,
     confirmRemoveClient,
@@ -114,25 +133,27 @@ export function createRealtimeFeatureWorkflow(
     removeClient: deps.api?.removeClient ?? removeClientApi,
   };
   const createPolling = deps.createPollingController ?? createPollingController;
+  const state = deps.state ?? createRealtimeFeatureWorkflowState();
 
-  let handlersBound = false;
-  let pendingLoggingAction: RealtimeFeaturePendingLoggingAction = null;
   let idleCaptureReadinessRefreshInFlight = false;
   let lastIdleCaptureReadinessSignature: string | null = null;
+  let queuedIdleCaptureReadinessSignature: string | null = null;
 
-  function renderState(): RealtimeFeatureRenderState {
-    return {
-      handlersBound,
-      pendingLoggingAction,
-    };
+  function syncIdleCaptureReadinessSignature(): void {
+    lastIdleCaptureReadinessSignature = deps.idleCaptureReadinessSignature.value;
+    queuedIdleCaptureReadinessSignature = null;
   }
 
   function applyLocationCodes(codes: string[]): void {
     realtime.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
   }
 
-  function requestIdleCaptureReadinessRefresh(): void {
-    if (!handlersBound || isDemoMode || pendingLoggingAction !== null) {
+  async function refreshIdleCaptureReadiness(signature: string): Promise<void> {
+    if (
+      !state.handlersBound.value
+      || isDemoMode
+      || state.pendingLoggingAction.value !== null
+    ) {
       return;
     }
     if (
@@ -142,21 +163,46 @@ export function createRealtimeFeatureWorkflow(
     ) {
       return;
     }
-    const signature = view.getIdleCaptureReadinessSignature();
-    if (idleCaptureReadinessRefreshInFlight || lastIdleCaptureReadinessSignature === signature) {
+    if (lastIdleCaptureReadinessSignature === signature) {
+      return;
+    }
+    if (idleCaptureReadinessRefreshInFlight) {
+      queuedIdleCaptureReadinessSignature = signature;
       return;
     }
     lastIdleCaptureReadinessSignature = signature;
     idleCaptureReadinessRefreshInFlight = true;
-    void refreshLoggingStatus().finally(() => {
-      idleCaptureReadinessRefreshInFlight = false;
-    });
+    await refreshLoggingStatus();
+    idleCaptureReadinessRefreshInFlight = false;
+    const queuedSignature = queuedIdleCaptureReadinessSignature;
+    queuedIdleCaptureReadinessSignature = null;
+    if (
+      queuedSignature !== null
+      && queuedSignature !== lastIdleCaptureReadinessSignature
+    ) {
+      await refreshIdleCaptureReadiness(queuedSignature);
+    }
   }
 
-  function renderLoggingStatus(): void {
-    view.renderLoggingStatus(renderState());
-    requestIdleCaptureReadinessRefresh();
-  }
+  effect(() => {
+    trackAppStateSlice(realtime);
+    const signature = deps.idleCaptureReadinessSignature.value;
+    if (
+      !state.handlersBound.value
+      || isDemoMode
+      || state.pendingLoggingAction.value !== null
+    ) {
+      return;
+    }
+    if (
+      realtime.loggingStatus.enabled
+      || realtime.loggingStatus.analysis_in_progress
+      || Boolean(realtime.loggingStatus.last_completed_run_id)
+    ) {
+      return;
+    }
+    void refreshIdleCaptureReadiness(signature);
+  });
 
   const loggingStatusPolling = createPolling({
     poll: async () => {
@@ -169,19 +215,19 @@ export function createRealtimeFeatureWorkflow(
   });
 
   function bindHandlers(): void {
-    if (handlersBound) {
+    if (state.handlersBound.value) {
       return;
     }
-    handlersBound = true;
+    state.handlersBound.value = true;
     if (!isDemoMode) {
       loggingStatusPolling.start();
     }
-    view.renderLoggingStatus(renderState());
   }
 
   async function refreshLoggingStatus(): Promise<void> {
-    if (isDemoMode && pendingLoggingAction === null) {
-      renderLoggingStatus();
+    syncIdleCaptureReadinessSignature();
+    if (isDemoMode && state.pendingLoggingAction.value === null) {
+      state.loggingError.value = null;
       return;
     }
     const previousStatus = realtime.loggingStatus;
@@ -189,12 +235,15 @@ export function createRealtimeFeatureWorkflow(
     try {
       nextStatus = await api.getLoggingStatus();
     } catch {
-      pendingLoggingAction = null;
-      view.renderLoggingUnavailable();
+      state.pendingLoggingAction.value = null;
+      state.loggingError.value = {
+        kind: "unavailable",
+        message: t("status.unavailable"),
+      };
       return;
     }
     realtime.loggingStatus = nextStatus;
-    renderLoggingStatus();
+    state.loggingError.value = null;
     if (!didHistoryAffectingStatusChange(previousStatus, nextStatus)) {
       return;
     }
@@ -207,39 +256,47 @@ export function createRealtimeFeatureWorkflow(
   }
 
   async function startLogging(): Promise<void> {
-    if (pendingLoggingAction) return;
-    pendingLoggingAction = "starting";
-    view.renderLoggingStatus(renderState());
+    if (state.pendingLoggingAction.value) return;
+    syncIdleCaptureReadinessSignature();
+    state.pendingLoggingAction.value = "starting";
+    state.loggingError.value = null;
     try {
       realtime.loggingStatus = await api.startLoggingRun();
       await recording.onRecordingStatusChanged();
       loggingStatusPolling.restart();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      pendingLoggingAction = null;
-      view.renderLoggingError(message || t("status.unavailable"));
+      state.pendingLoggingAction.value = null;
+      state.loggingError.value = {
+        kind: "error",
+        message: message || t("status.unavailable"),
+      };
       return;
     }
-    pendingLoggingAction = null;
-    renderLoggingStatus();
+    state.pendingLoggingAction.value = null;
+    state.loggingError.value = null;
   }
 
   async function stopLogging(): Promise<void> {
-    if (pendingLoggingAction) return;
-    pendingLoggingAction = "stopping";
-    view.renderLoggingStatus(renderState());
+    if (state.pendingLoggingAction.value) return;
+    syncIdleCaptureReadinessSignature();
+    state.pendingLoggingAction.value = "stopping";
+    state.loggingError.value = null;
     try {
       realtime.loggingStatus = await api.stopLoggingRun();
       await recording.onRecordingStatusChanged();
       loggingStatusPolling.restart();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      pendingLoggingAction = null;
-      view.renderLoggingError(message || t("status.unavailable"));
+      state.pendingLoggingAction.value = null;
+      state.loggingError.value = {
+        kind: "error",
+        message: message || t("status.unavailable"),
+      };
       return;
     }
-    pendingLoggingAction = null;
-    renderLoggingStatus();
+    state.pendingLoggingAction.value = null;
+    state.loggingError.value = null;
   }
 
   async function refreshLocationOptions(): Promise<void> {
@@ -252,9 +309,6 @@ export function createRealtimeFeatureWorkflow(
     } catch {
       applyLocationCodes([]);
     }
-    view.maybeRenderSensorsSettingsList(true);
-    view.renderStatus();
-    renderLoggingStatus();
   }
 
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
@@ -271,9 +325,6 @@ export function createRealtimeFeatureWorkflow(
     const client = realtime.clients.find((row) => row.id === clientId);
     if (client) {
       client.location_code = locationCode;
-      view.maybeRenderSensorsSettingsList();
-      view.renderStatus();
-      await refreshLoggingStatus();
     }
   }
 
@@ -298,17 +349,14 @@ export function createRealtimeFeatureWorkflow(
       realtime.selectedClientId = null;
     }
     syncSelectedRealtimeClient(realtime);
-    view.maybeRenderSensorsSettingsList();
-    renderLoggingStatus();
-    view.renderStatus();
     if (previousSelectedClientId !== realtime.selectedClientId) {
       selection.sendSelection();
     }
   }
 
   return {
+    signals: state,
     bindHandlers,
-    renderLoggingStatus,
     refreshLoggingStatus,
     startLogging,
     stopLogging,
