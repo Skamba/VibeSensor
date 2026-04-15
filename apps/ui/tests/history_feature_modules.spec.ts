@@ -11,25 +11,19 @@ import type { UiHistoryDom } from "../src/app/dom/history_dom";
 import type { UiShellDom } from "../src/app/dom/shell_dom";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
 import {
-  renderHistoryEmptyState,
-  renderHistoryTable,
-  type HistoryPanelActionHandlers,
+  type HistoryPanelRenderModel,
   type HistoryPanelView,
 } from "../src/app/views/history_table_view";
+import { buildHistoryTableRowsViewModel } from "../src/app/views/history_table_presenters";
 import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
-import {
-  findByAttribute,
-  findByClass,
-  installFakeDomGlobals,
-  type FakeElement,
-  FakeHTMLElement,
-} from "./dom_render_test_support";
 
 type ButtonStub = HTMLButtonElement & {
   disabled: boolean;
 };
 
-let restoreDom = () => undefined;
+type TextStub = {
+  textContent: string;
+};
 
 function createButton(): ButtonStub {
   return {
@@ -40,49 +34,37 @@ function createButton(): ButtonStub {
   } as unknown as ButtonStub;
 }
 
-function createTextElement(tagName = "DIV"): HTMLElement {
-  return new FakeHTMLElement(tagName) as unknown as HTMLElement;
+function createTextElement(): TextStub {
+  return { textContent: "" };
 }
 
 function createHistoryElements(): {
   dom: UiHistoryDom;
   panel: HistoryPanelView;
-  historySummary: FakeElement;
-  historyTableBody: FakeElement;
+  historySummary: TextStub;
   deleteAllRunsBtn: ButtonStub;
+  getLatestModel(): HistoryPanelRenderModel | null;
 } {
-  const historySummary = createTextElement("DIV") as unknown as FakeElement;
-  const historyTableBody = createTextElement("TBODY") as unknown as FakeElement;
+  const historySummary = createTextElement();
   const deleteAllRunsBtn = createButton();
-  let actions: HistoryPanelActionHandlers | null = null;
+  let latestModel: HistoryPanelRenderModel | null = null;
   const panel: HistoryPanelView = {
     render(model) {
+      latestModel = model;
       historySummary.textContent = model.historySummaryText;
       deleteAllRunsBtn.disabled = model.deleteAllRunsDisabled;
-      if (model.table === null) {
-        historyTableBody.textContent = "No runs found.";
-        return;
-      }
-      if (model.table.kind === "empty") {
-        renderHistoryEmptyState(historyTableBody as unknown as HTMLElement, {
-          t: model.table.t,
-        });
-        return;
-      }
-      renderHistoryTable(historyTableBody as unknown as HTMLElement, model.table.params);
     },
-    bindActions(handlers) {
-      actions = handlers;
-    },
+    bindActions() {},
   };
-  void actions;
   const dom = {} as UiHistoryDom;
   return {
     dom,
     panel,
     historySummary,
-    historyTableBody,
     deleteAllRunsBtn,
+    getLatestModel() {
+      return latestModel;
+    },
   };
 }
 
@@ -188,35 +170,63 @@ function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string
   return state.history.runDetailsById[runId];
 }
 
-function expectSingleByClass(root: FakeElement, className: string): FakeElement {
-  const matches = findByClass(root, className);
-  expect(matches, `Expected exactly one .${className} element`).toHaveLength(1);
-  return matches[0];
-}
-
-function expectSingleByAttribute(
-  root: FakeElement,
-  attributeName: string,
-  expectedValue: string,
-): FakeElement {
-  const matches = findByAttribute(root, attributeName, expectedValue);
-  expect(matches, `Expected exactly one [${attributeName}="${expectedValue}"] element`).toHaveLength(1);
-  return matches[0];
+function latestRowModels(panel: { getLatestModel(): HistoryPanelRenderModel | null }) {
+  const model = panel.getLatestModel();
+  expect(model?.table?.kind).toBe("rows");
+  if (!model || !model.table || model.table.kind !== "rows") {
+    throw new Error("Expected rendered history rows");
+  }
+  return buildHistoryTableRowsViewModel(model.table.params);
 }
 
 test.beforeEach(() => {
   installWindowGlobal();
-  restoreDom = installFakeDomGlobals();
 });
 
-test.afterEach(() => {
-  restoreDom();
-  restoreDom = () => undefined;
+test("history list module refreshes runs and renders an empty-state model when no runs exist", async () => {
+  const state = createAppState();
+  const { panel, historySummary, deleteAllRunsBtn, getLatestModel } = createHistoryElements();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
+    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
+    if (url === "/api/history") {
+      return jsonResponse({ runs: [] });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  }) as typeof fetch;
+
+  const module = createHistoryListModule({
+    history: state.history,
+    panel,
+    t: testTranslation,
+    escapeHtml: (value) => String(value ?? ""),
+    fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    fmtTs: (iso) => iso,
+    formatInt: (value) => String(value),
+    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
+    collapseExpandedRun: () => {
+      state.history.expandedRunId = null;
+    },
+  });
+
+  try {
+    await module.refreshHistory();
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const model = getLatestModel();
+  expect(historySummary.textContent).toBe("history.none");
+  expect(deleteAllRunsBtn.disabled).toBe(true);
+  expect(model?.table?.kind).toBe("empty");
+  if (model?.table?.kind === "empty") {
+    expect(model.table.t("history.empty.title")).toBe("history.empty.title");
+  }
 });
 
 test("history list module refreshes runs and renders table state", async () => {
   const state = createAppState();
-  const { panel, historySummary, historyTableBody, deleteAllRunsBtn } = createHistoryElements();
+  const { panel, historySummary, deleteAllRunsBtn, getLatestModel } = createHistoryElements();
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
     const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
@@ -250,18 +260,16 @@ test("history list module refreshes runs and renders table state", async () => {
 
   expect(state.history.runs).toHaveLength(1);
   expect(historySummary.textContent).toContain("history.available_count");
-  const row = expectSingleByAttribute(historyTableBody, "data-run-row", "1");
-  const toggle = expectSingleByAttribute(row, "data-run-toggle", "details");
-  const summaryChips = findByClass(row, "history-row__summary-chip").map((chip) => chip.textContent);
-  const diagnosisTitle = findByClass(row, "history-row__diagnosis-title")[0];
-  expect(row.getAttribute("data-run")).toBe("run-001");
-  expect(toggle.getAttribute("aria-expanded")).toBe("false");
-  expect(summaryChips).toContain("history.row_status.complete");
-  expect(diagnosisTitle?.textContent).toBe("history.row_summary_loading");
-  expect(row.textContent).toContain("Track Car");
-  expect(row.textContent).toContain("history.car_label");
-  expect(toggle.textContent).toContain("history.open_diagnosis");
-  expect(findByAttribute(historyTableBody, "data-run-action", "delete-run")).toHaveLength(0);
+  expect(getLatestModel()?.table?.kind).toBe("rows");
+  const row = latestRowModels({ getLatestModel })[0];
+  expect(row.runId).toBe("run-001");
+  expect(row.isExpanded).toBe(false);
+  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
+  expect(row.summaryHeadline).toBe("history.row_summary_loading");
+  expect(row.carName).toBe("Track Car");
+  expect(row.carLabel).toBe("history.car_label");
+  expect(row.toggleLabel).toBe("history.open_diagnosis");
+  expect(row.details).toBeNull();
   expect(deleteAllRunsBtn.disabled).toBe(false);
 });
 
@@ -386,7 +394,7 @@ test("history list rendering promotes loaded findings ahead of supporting statis
     pdfLoading: false,
     pdfError: "",
   };
-  const { panel, historyTableBody } = createHistoryElements();
+  const { panel, getLatestModel } = createHistoryElements();
 
   const module = createHistoryListModule({
     history: state.history,
@@ -404,33 +412,25 @@ test("history list rendering promotes loaded findings ahead of supporting statis
 
   module.renderHistoryTable();
 
-  expect(expectSingleByClass(historyTableBody, "history-details-header__eyebrow").textContent)
-    .toBe("history.details_title");
-  expect(expectSingleByClass(historyTableBody, "history-findings-overview__eyebrow").textContent)
-    .toBe("history.primary_diagnosis");
-  expect(findByClass(historyTableBody, "history-evidence-column")).toHaveLength(1);
-  expect(expectSingleByAttribute(historyTableBody, "data-location-key", "front-right wheel").textContent)
-    .toContain("32.0 dB");
-  expect(expectSingleByClass(historyTableBody, "history-findings-overview__headline").textContent)
-    .toBe("Front-right wheel imbalance");
-  expect(findByClass(historyTableBody, "history-findings-chip__label").map((label) => label.textContent))
-    .toContain("history.findings_signature");
-  expect(expectSingleByClass(historyTableBody, "history-secondary-findings__title").textContent)
-    .toBe("history.secondary_candidates_title");
-  expect(historyTableBody.textContent).not.toContain("history.findings_loaded");
-  expect(findByClass(historyTableBody, "history-finding-card__title").map((title) => title.textContent))
+  const row = latestRowModels({ getLatestModel })[0];
+  expect(row.details?.titleEyebrow).toBe("history.details_title");
+  expect(row.details?.insights.primary?.eyebrow).toBe("history.primary_diagnosis");
+  expect(row.details?.heatmap.zones.find((zone) => zone.key === "front-right wheel")?.valueLabel)
+    .toBe("32.0 dB");
+  expect(row.details?.insights.primary?.headline).toBe("Front-right wheel imbalance");
+  expect(row.details?.insights.primary?.chips.map((chip) => chip.label)).toContain("history.findings_signature");
+  expect(row.details?.insights.secondaryTitle).toBe("history.secondary_candidates_title");
+  expect(row.details?.insights.stateMessage).toBeNull();
+  expect(row.details?.insights.visibleSecondary.map((finding) => finding.source))
     .toContain("Secondary driveline contribution");
-  expect(historyTableBody.textContent).not.toContain("history.preview_stats_title");
-  expect(expectSingleByClass(historyTableBody, "history-diagnosis-card__next-step-label").textContent)
-    .toBe("history.findings_next_step_label");
-  expect(expectSingleByClass(historyTableBody, "history-details-footer__eyebrow").textContent)
-    .toBe("history.run_actions_title");
-  expect(findByAttribute(historyTableBody, "data-run-action", "delete-run")).toHaveLength(1);
+  expect(row.details?.insights.emptyMessage).toBeNull();
+  expect(row.details?.insights.primary?.nextStepLabel).toBe("history.findings_next_step_label");
+  expect(row.details?.footerEyebrow).toBe("history.run_actions_title");
 });
 
 test("history feature preloads collapsed row context for completed runs", async () => {
   const state = createAppState();
-  const { dom, panel, historyTableBody } = createHistoryElements();
+  const { dom, panel, getLatestModel } = createHistoryElements();
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
@@ -468,12 +468,10 @@ test("history feature preloads collapsed row context for completed runs", async 
     globalThis.fetch = originalFetch;
   }
 
-  const summaryChips = findByClass(historyTableBody, "history-row__summary-chip").map((chip) => chip.textContent);
-  const diagnosisTitles = findByClass(historyTableBody, "history-row__diagnosis-title").map((node) => node.textContent);
-  const diagnosisMeta = findByClass(historyTableBody, "history-row__diagnosis-meta").map((node) => node.textContent);
-  expect(summaryChips).toContain("history.row_status.complete");
-  expect(diagnosisTitles).toContain("Front-right wheel imbalance");
-  expect(diagnosisMeta.some((text) => text.includes("report.confidence"))).toBe(true);
+  const row = latestRowModels({ getLatestModel })[0];
+  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
+  expect(row.summaryHeadline).toBe("Front-right wheel imbalance");
+  expect(row.summaryMeta?.includes("report.confidence")).toBe(true);
   expect(requests).toEqual([
     "/api/history",
     "/api/history/run-001/insights?lang=en",
