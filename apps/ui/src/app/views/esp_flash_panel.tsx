@@ -3,7 +3,7 @@ import { useEffect, useRef } from "preact/hooks";
 
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
-import type { VisualVariant } from "../style_state";
+import type { VisualVariant } from "../view_style_types";
 import {
   MaintenanceReadinessPanel,
   type MaintenanceReadinessPanelModel,

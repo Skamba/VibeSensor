@@ -1,7 +1,7 @@
 import { h, render } from "preact";
 
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
-import type { ChoiceCardState } from "../style_state";
+import type { ChoiceCardState } from "../view_style_types";
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
 import {

@@ -6,7 +6,7 @@ import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
 } from "../views/settings_feedback";
-import type { VisualVariant } from "../style_state";
+import type { VisualVariant } from "../view_style_types";
 const SHELL_OWNER = "UI shell";
 const SHELL_CHROME_HOST_ID = "appShellChromeRoot";
 
