@@ -8,34 +8,60 @@ export interface SettingsFeedbackMessage {
   compact?: boolean;
 }
 
-function escapeHtml(value: unknown): string {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function appendTextElement(
+  documentRef: Document,
+  parent: HTMLElement,
+  tagName: "span" | "strong",
+  className: string,
+  text: string | undefined,
+): void {
+  const trimmedText = text?.trim();
+  if (!trimmedText) {
+    return;
+  }
+  const element = documentRef.createElement(tagName);
+  element.className = className;
+  element.textContent = trimmedText;
+  parent.append(element);
 }
 
-export function renderSettingsFeedback(message: SettingsFeedbackMessage): string {
+function feedbackClassName(message: SettingsFeedbackMessage): string {
   const tone = message.tone ?? "info";
   const classNames = ["settings-feedback", `settings-feedback--${tone}`];
   if (message.compact) {
     classNames.push("settings-feedback--compact");
   }
-  const titleHtml = message.title
-    ? `<strong class="settings-feedback__title">${escapeHtml(message.title)}</strong>`
-    : "";
-  const detailHtml = message.detail
-    ? `<span class="settings-feedback__detail">${escapeHtml(message.detail)}</span>`
-    : "";
-  return `
-    <div class="${classNames.join(" ")}">
-      ${titleHtml}
-      <span class="settings-feedback__body">${escapeHtml(message.body)}</span>
-      ${detailHtml}
-    </div>
-  `;
+  return classNames.join(" ");
+}
+
+export function createSettingsFeedbackElement(
+  documentRef: Document,
+  message: SettingsFeedbackMessage,
+): HTMLDivElement {
+  const root = documentRef.createElement("div");
+  root.className = feedbackClassName(message);
+  appendTextElement(
+    documentRef,
+    root,
+    "strong",
+    "settings-feedback__title",
+    message.title,
+  );
+  appendTextElement(
+    documentRef,
+    root,
+    "span",
+    "settings-feedback__body",
+    message.body,
+  );
+  appendTextElement(
+    documentRef,
+    root,
+    "span",
+    "settings-feedback__detail",
+    message.detail,
+  );
+  return root;
 }
 
 export function setSettingsFeedback(
@@ -47,11 +73,11 @@ export function setSettingsFeedback(
   }
   if (!message) {
     slot.hidden = true;
-    slot.innerHTML = "";
+    slot.replaceChildren();
     slot.removeAttribute("aria-live");
     return;
   }
   slot.hidden = false;
   slot.setAttribute("aria-live", message.tone === "error" ? "assertive" : "polite");
-  slot.innerHTML = renderSettingsFeedback(message);
+  slot.replaceChildren(createSettingsFeedbackElement(slot.ownerDocument, message));
 }

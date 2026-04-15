@@ -27,10 +27,10 @@ test("settings cars module dismisses transient creation feedback through typed t
   };
 
   const module = createSettingsCarsModule({
-    analysisDom: {
-      analysisNoCarMessage: null,
-      resetAnalysisBtn: null,
-      saveAnalysisBtn: null,
+    analysisPanel: {
+      setCarAvailability() {
+        return;
+      },
     },
     escapeHtml: (value) => String(value ?? ""),
     fmt: (value, digits = 0) => Number(value).toFixed(digits),

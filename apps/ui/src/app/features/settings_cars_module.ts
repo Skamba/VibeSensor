@@ -11,7 +11,7 @@ import type { CarRecord, CarsPayload } from "../../transport/http_models";
 import type {
   CarsListPanelView,
 } from "../views/cars_panel";
-import type { SettingsAnalysisPanelDom } from "../views/analysis_panel";
+import type { AnalysisPanelView } from "../views/analysis_panel";
 import {
   buildCarsGuidanceRenderModel,
   buildSettingsCarListRenderModel,
@@ -24,10 +24,7 @@ import {
 
 export interface SettingsCarsModuleDeps extends FeatureDepsBase {
   confirmDelete?: (message: string) => boolean;
-  analysisDom: Pick<
-    SettingsAnalysisPanelDom,
-    "analysisNoCarMessage" | "resetAnalysisBtn" | "saveAnalysisBtn"
-  >;
+  analysisPanel: Pick<AnalysisPanelView, "setCarAvailability">;
   fmt: (value: number, digits?: number) => string;
   openAnalysisTab: () => void;
   openCarWizard: () => void;
@@ -107,17 +104,10 @@ export function createSettingsCarsModule(
   }
 
   function syncAnalysisControls(carSelectionState: CarSelectionState): void {
-    const hasActiveCar = carSelectionState.kind === "active";
-    if (ctx.analysisDom.saveAnalysisBtn) {
-      ctx.analysisDom.saveAnalysisBtn.disabled = !hasActiveCar;
-    }
-    if (ctx.analysisDom.resetAnalysisBtn) {
-      ctx.analysisDom.resetAnalysisBtn.disabled = !hasActiveCar;
-    }
-    if (ctx.analysisDom.analysisNoCarMessage) {
-      ctx.analysisDom.analysisNoCarMessage.hidden =
-        hasActiveCar || carSelectionState.kind === "loading";
-    }
+    ctx.analysisPanel.setCarAvailability({
+      hasActiveCar: carSelectionState.kind === "active",
+      isLoading: carSelectionState.kind === "loading",
+    });
   }
 
   function renderCarList(): void {

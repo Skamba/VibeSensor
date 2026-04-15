@@ -87,7 +87,7 @@ export function createSettingsFeature(
   }
 
   const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
-    dom: ctx.analysisPanel.dom,
+    panel: ctx.analysisPanel,
     t,
     escapeHtml,
     showError: ctx.showError,
@@ -121,9 +121,9 @@ export function createSettingsFeature(
       fmt,
       syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
       renderSpeedReadout: ctx.view.renderSpeedReadout,
-    });
+  });
   carsModule = createSettingsCarsModule({
-    analysisDom: ctx.analysisPanel.dom,
+    analysisPanel: ctx.analysisPanel,
     escapeHtml,
     fmt,
     openAnalysisTab: () => openSettingsTab("analysisTab"),
