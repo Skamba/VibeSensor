@@ -112,7 +112,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
-| `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts and expose the settings navigation bridge |
+| `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts, keep tab selection in signal-backed shell state, and expose typed settings navigation APIs |
 | `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell, typed flash actions, and log-autoscroll lifecycle alongside the render bridge for port selection, readiness, journey, history, and logs |
 | `app/views/internet_panel.tsx` | Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a typed bridge |
 | `app/views/update_panel.tsx` | Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a typed bridge |
