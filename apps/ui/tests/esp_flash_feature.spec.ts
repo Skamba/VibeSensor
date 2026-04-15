@@ -9,12 +9,10 @@ import type {
 } from "../src/app/views/esp_flash_panel";
 import type {
   InternetPanelActionHandlers,
-  InternetPanelDom,
   InternetPanelRenderModel,
 } from "../src/app/views/internet_panel";
 import type {
   UpdatePanelActionHandlers,
-  UpdatePanelDom,
   UpdatePanelRenderModel,
 } from "../src/app/views/update_panel";
 import {
@@ -293,8 +291,15 @@ function serializeUpdateStatus(
   return `<div class="maintenance-pair-grid maintenance-pair-grid--focus">${serializeJourneyCard(status.journey)}${serializeLogCard(status.log)}</div>${status.latestAttempt ? serializeLatestAttemptCard(status.latestAttempt) : ""}${status.issues ? serializeIssuesCard(status.issues) : ""}`;
 }
 
+type UpdatePanelDomHarness = {
+  updateOverviewPanel: HTMLElement | null;
+  updateStartBtn: HTMLButtonElement;
+  updateCancelBtn: HTMLButtonElement;
+  updateStatusPanel: HTMLElement;
+};
+
 function renderUpdatePanelDom(
-  dom: UpdatePanelDom,
+  dom: UpdatePanelDomHarness,
   model: UpdatePanelRenderModel,
 ): void {
   dom.updateStartBtn.textContent = model.startButtonLabelText;
@@ -332,8 +337,25 @@ function serializeInternetStatusPanel(
   });
 }
 
+type InternetPanelDomHarness = {
+  internetStatusPanel: HTMLElement | null;
+  updateTransportOptions: HTMLElement | null;
+  updateTransportChoiceWifi: HTMLElement | null;
+  updateTransportChoiceUsb: HTMLElement | null;
+  updateWifiFields: HTMLElement | null;
+  updateReadinessSummary: HTMLElement | null;
+  updateDetailsCaption: HTMLElement | null;
+  updateTransportNote: HTMLElement | null;
+  updateTransportWifiRadio: HTMLInputElement | null;
+  updateTransportUsbRadio: HTMLInputElement | null;
+  updateUsbTransportSummary: HTMLElement | null;
+  updateSsidInput: HTMLInputElement | null;
+  updatePasswordInput: HTMLInputElement | null;
+  updateTogglePasswordBtn: HTMLButtonElement | null;
+};
+
 function renderInternetPanelDom(
-  dom: InternetPanelDom,
+  dom: InternetPanelDomHarness,
   model: InternetPanelRenderModel,
 ): void {
   if (dom.internetStatusPanel) {
@@ -744,19 +766,18 @@ function createUpdateDeps() {
     updateSsidInput,
     updatePasswordInput,
     updateTogglePasswordBtn,
-  } as InternetPanelDom;
+  } satisfies InternetPanelDomHarness;
 
   const dom = {
     updateOverviewPanel,
     updateStartBtn,
     updateCancelBtn,
     updateStatusPanel,
-  } as UpdatePanelDom;
+  } satisfies UpdatePanelDomHarness;
 
   return {
     panels: {
       update: {
-        dom,
         bindActions(handlers: UpdatePanelActionHandlers) {
           dom.updateStartBtn.addEventListener("click", () => {
             handlers.onStart();
@@ -770,7 +791,6 @@ function createUpdateDeps() {
         },
       },
       internet: {
-        dom: internetDom,
         bindActions(handlers: InternetPanelActionHandlers) {
           internetDom.updatePasswordInput?.addEventListener("input", () => {
             handlers.onPasswordInput(internetDom.updatePasswordInput?.value ?? "");
@@ -787,6 +807,9 @@ function createUpdateDeps() {
           internetDom.updateSsidInput?.addEventListener("input", () => {
             handlers.onSsidInput(internetDom.updateSsidInput?.value ?? "");
           });
+        },
+        focusSsidInput() {
+          internetDom.updateSsidInput?.focus();
         },
         setModel(model: InternetPanelRenderModel) {
           renderInternetPanelDom(internetDom, model);
@@ -1481,13 +1504,13 @@ test.describe("createUpdateFeature polling", () => {
 
     try {
       const deps = createUpdateDeps();
-      deps.panels.internet.dom.updateSsidInput.value = "";
+      deps.updateSsidInput.value = "";
       const feature = createUpdateFeature(deps);
 
       feature.startPolling();
       await flushAsyncWork();
 
-      expect(deps.panels.internet.dom.updateSsidInput.value).toBe("Workshop Wi-Fi");
+      expect(deps.updateSsidInput.value).toBe("Workshop Wi-Fi");
       expect(deps.updateReadinessSummary.innerHTML).toContain(
         "settings.update.readiness.summary_ready",
       );
@@ -1526,7 +1549,7 @@ test.describe("createUpdateFeature polling", () => {
       feature.startPolling();
       await flushAsyncWork();
 
-      expect(deps.panels.internet.dom.updateSsidInput.value).toBe(
+      expect(deps.updateSsidInput.value).toBe(
         "Driver-entered Wi-Fi",
       );
     } finally {

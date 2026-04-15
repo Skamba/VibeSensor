@@ -425,7 +425,7 @@ export function createUpdateFeaturePresenter(
       rerenderLastState();
     },
     focusSsidInput() {
-      internetPanel.dom.updateSsidInput?.focus();
+      internetPanel.focusSsidInput();
     },
     clearPassword() {
       formState = { ...formState, passwordInputValue: "" };
