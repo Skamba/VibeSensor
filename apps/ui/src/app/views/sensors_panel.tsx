@@ -159,20 +159,20 @@ function SensorsPanel(props: { state: SensorsPanelBridgeState }) {
 }
 
 export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
-  const bridgeState: SensorsPanelBridgeState = {
+  let state: SensorsPanelBridgeState = {
     actions: null,
     model: { table: null },
   };
   const mount = createUiPreactMount(host);
-  const render = () => mount.render(<SensorsPanel state={bridgeState} />);
+  const render = () => mount.render(<SensorsPanel state={state} />);
   render();
   return {
     render(model) {
-      bridgeState.model = model;
+      state = { ...state, model };
       render();
     },
     bindActions(handlers) {
-      bridgeState.actions = handlers;
+      state = { ...state, actions: handlers };
       render();
     },
   };
