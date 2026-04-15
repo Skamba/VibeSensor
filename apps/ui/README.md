@@ -122,7 +122,6 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
 | `app/features/update_feature.ts` | Thin update facade that binds explicit DOM events, delegates island render-model updates to the presenter, and delegates update commands to the workflow |
 | `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
-| `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
 | `app/views/esp_flash_feature_bindings.ts` | Feature-local ESP flash bindings for start/cancel/refresh/select actions without leaving raw DOM event parsing in the feature |
 | `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that derives typed panel models for the island-owned ESP flash bridge while leaving workflow state in the feature workflow |
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
@@ -175,26 +174,26 @@ chart host refs internally and passes that typed bridge to the runtime.
 cross-feature ports, and returns only the shell, transport, and startup
 contracts the runtime needs.
 
-The live UI architecture is now Preact-first for every page/tab shell.
+The live UI architecture is now fully Preact for every page, tab, and
+feature surface.
 `app/runtime/ui_shell_chrome.tsx` owns the primary navigation, header
 preferences, pills, and app banner; `app/views/settings_shell.tsx` owns the
 shared settings tab strip and panel wrappers; and the individual page/settings
 panel islands own their local chrome plus typed bridges. The remaining
-imperative paths are deliberate seams: the shell controller still owns
-app-level status/preference state, the spectrum controller still owns the
-uPlot/canvas lifecycle through island-owned chart refs, and a few feature-local
-presenters still materialize structured wizard or status surfaces behind
-island-owned hosts.
+imperative paths are deliberate runtime integrations rather than alternate UI
+renderers: the shell controller still owns app-level status/preference state,
+the spectrum controller still owns the uPlot/canvas lifecycle through
+island-owned chart refs, and a few feature-local presenters still materialize
+typed wizard or status models behind island-owned hosts.
 
 Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
 facade, `realtime_feature_workflow.ts` owns the controller-style polling and
 mutation flow, `realtime_feature_presenter.ts` owns realtime-specific panel
 state plus typed navigation actions, and `realtime_logging_view_models.ts`
 builds the logging/readiness models consumed by
-`app/views/realtime_logging_panel.tsx`. `app/views/` still owns focused HTML
-render helpers, the shared low-level DOM render helper, typed event-target
-decoding, and disposable delegated listener binders for reusable multi-action
-panels.
+`app/views/realtime_logging_panel.tsx`. `app/views/` now owns typed view-model
+builders, event-target decoding, and disposable delegated listener binders for
+reusable multi-action panels.
 
 `src/transport/` owns the UI-local DTO and adapter layer between generated HTTP
 / WS contracts and `app/**`, so feature, runtime, and view modules no longer
@@ -218,10 +217,10 @@ instead of controller-side variant class interpolation.
   `transport/http_models.ts`, `transport/live_models.ts`, `server_payload.ts`,
   `ws.ts`, and `ws_payload_validator.ts`; `app/**` code imports `transport/**`,
   not generated contract files or `api/types.ts`.
-- Raw HTML escape hatches belong only in `app/views/**` rendering helpers. When a
-  module outside `app/views/**` needs to update DOM structure, prefer
-  `renderChildren()`, `createElementNode()`, or a dedicated view/helper module
-  instead of `innerHTML`, `insertAdjacentHTML`, or contextual fragments.
+- Normal UI rendering belongs in Preact owner surfaces. If code outside an
+  island needs imperative DOM work, keep it narrowly scoped to non-render
+  integrations such as download anchors, canvas/uPlot lifecycles, observers, or
+  external-library mount points instead of generic HTML/string builder helpers.
 - Expected feature shape is thin facade + focused workflow/transport/presenter or
   binding modules. Workflow modules stay DOM-free, presenters own rendering, and
   bindings decode DOM events into typed actions for the owning feature.

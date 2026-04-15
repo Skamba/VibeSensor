@@ -5,7 +5,10 @@ import { useUiTranslation } from "../ui_i18n";
 import type {
   SettingsAnalysisGuidanceRenderModel,
 } from "./settings_analysis_guidance";
-import type { SettingsFeedbackMessage } from "./settings_feedback";
+import {
+  settingsFeedbackClassName,
+  type SettingsFeedbackMessage,
+} from "./settings_feedback";
 
 export type AnalysisPanelFieldKey =
   | "wheel_bandwidth_pct"
@@ -202,22 +205,13 @@ const UNCERTAINTY_FIELDS: readonly AnalysisFieldSpec[] = [
   },
 ] as const;
 
-function feedbackClassName(message: SettingsFeedbackMessage): string {
-  const tone = message.tone ?? "info";
-  const classNames = ["settings-feedback", `settings-feedback--${tone}`];
-  if (message.compact) {
-    classNames.push("settings-feedback--compact");
-  }
-  return classNames.join(" ");
-}
-
 function SettingsFeedbackBlock(props: {
   message: SettingsFeedbackMessage;
 }) {
   const { message } = props;
   return (
     <div
-      class={feedbackClassName(message)}
+      class={settingsFeedbackClassName(message)}
       aria-live={message.tone === "error" ? "assertive" : "polite"}
     >
       {message.title ? (
