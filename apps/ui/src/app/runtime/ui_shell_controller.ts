@@ -2,7 +2,8 @@ import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
 import { queryOne, queryRequiredAll } from "../dom/dom_query";
 import { setUiLanguage } from "../ui_i18n";
-import type { AppState } from "../ui_app_state";
+import { trackAppStateSlice, type AppState } from "../ui_app_state";
+import { effect, untracked } from "../ui_signals";
 import {
   bindUiShellFeatureEvents,
   type UiShellFeaturePorts,
@@ -133,6 +134,7 @@ export class UiShellController {
       updateSpectrumOverlay: () => this.updateSpectrumOverlayState?.(),
     });
     this.renderChrome();
+    this.bindReactiveStatusSync();
   }
 
   attachPorts(ports: UiShellFeaturePorts): void {
@@ -215,6 +217,41 @@ export class UiShellController {
 
   private bindFeatureEvents(): void {
     bindUiShellFeatureEvents(this.requirePorts());
+  }
+
+  private bindReactiveStatusSync(): void {
+    let previousWsState = this.state.transport.wsState;
+    let previousPayloadError = this.state.transport.payloadError;
+    let transportInitialized = false;
+    effect(() => {
+      trackAppStateSlice(this.state.transport);
+      const nextWsState = this.state.transport.wsState;
+      const nextPayloadError = this.state.transport.payloadError;
+      if (!transportInitialized) {
+        transportInitialized = true;
+        previousWsState = nextWsState;
+        previousPayloadError = nextPayloadError;
+        return;
+      }
+      if (nextWsState === previousWsState && nextPayloadError === previousPayloadError) {
+        return;
+      }
+      previousWsState = nextWsState;
+      previousPayloadError = nextPayloadError;
+      untracked(() => this.renderWsState());
+    });
+
+    let speedInitialized = false;
+    effect(() => {
+      trackAppStateSlice(this.state.realtime);
+      trackAppStateSlice(this.state.settings);
+      trackAppStateSlice(this.state.shell);
+      if (!speedInitialized) {
+        speedInitialized = true;
+        return;
+      }
+      untracked(() => this.renderSpeedReadout());
+    });
   }
 
   private buildRenderModel(): UiShellChromeRenderModel {

@@ -94,7 +94,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, and app-level error banner plus the typed shell chrome bridge |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
-| `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport, payload adaptation, and throttled live-session rendering |
+| `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport coordinator that queues payloads through AppState, throttles live-session adaptation, and lets shell/spectrum react from signal-backed state |
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that wires overlay updates plus the extracted canvas, interaction, and panel modules |
 | `app/runtime/spectrum_canvas_renderer.ts` | Spectrum frame preparation, plot lifecycle, tweening, and canvas draw plugin orchestration |
 | `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports |
@@ -147,7 +147,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived live/logging panel state, elapsed-timer sync, and cross-view navigation clicks |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
 | `api.ts` | REST API facade that returns local transport DTOs while `api/types.ts` stays the generated HTTP boundary |
-| `ws.ts` | WebSocket client with auto-reconnect and stale detection |
+| `ws.ts` | WebSocket client with auto-reconnect, stale detection, and direct writes into the signal-backed transport slice |
 | `config.ts` | Centralized UI tuning constants for polling intervals, spectrum ranges, and history heatmap positions |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
 | `spectrum.ts` | uPlot chart wrapper for interactive spectrum visualization |
