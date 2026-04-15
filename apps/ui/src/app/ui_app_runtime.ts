@@ -1,6 +1,7 @@
 import { fmt, fmtTs } from "../format";
 import {
   createAppFeatureBundle,
+  type AppFeatureBundle,
   type AppFeatureBundleRuntimePorts,
   type AppFeatureBundleSharedDeps,
 } from "./app_feature_bundle";
@@ -17,7 +18,6 @@ import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 import type { UiMountedPanels } from "./ui_panel_bootstrap";
-import type { UiShellFeaturePorts } from "./runtime/ui_shell_feature_ports";
 
 export interface UiAppRuntimeDeps {
   shellChrome: UiShellChromeView;
@@ -91,14 +91,16 @@ export class UiAppRuntime {
     const shellChromeActions =
       deps.shellChromeActions ?? createUiShellChromeActionBridge();
     let spectrum: UiSpectrumController | null = null;
-    let shellFeaturePorts: UiShellFeaturePorts | null = null;
+    let shellBindings: AppFeatureBundle["shell"] | null = null;
     const shell = new UiShellController({
+      bindFeatureHandlers: () =>
+        requireUiRuntimeDependency(shellBindings, "shell bindings").bindHandlers(),
       state,
       chrome: deps.shellChrome,
       chromeActions: shellChromeActions,
+      languageRefreshPorts: () =>
+        requireUiRuntimeDependency(shellBindings, "shell bindings").languageRefresh,
       liveOverview: deps.panels.dashboard.liveOverview,
-      featurePorts: () =>
-        requireUiRuntimeDependency(shellFeaturePorts, "shell feature ports"),
       renderSpectrum: () =>
         requireUiRuntimeDependency(spectrum, "spectrum controller").renderSpectrum(),
       updateSpectrumOverlay: () =>
@@ -123,7 +125,7 @@ export class UiAppRuntime {
         transport,
       }),
     });
-    shellFeaturePorts = featurePorts.shell;
+    shellBindings = featurePorts.shell;
     this.startup = new UiStartupCoordinator({
       shell,
       transport,

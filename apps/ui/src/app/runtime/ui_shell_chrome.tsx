@@ -84,12 +84,7 @@ export interface UiShellChromeRenderModel {
   wsLinkState: UiShellBadgeModel;
 }
 
-export interface UiShellChromeDom {
-  menuButtons: HTMLButtonElement[];
-}
-
 export interface UiShellChromeView {
-  readonly dom: UiShellChromeDom;
   setModel(model: UiShellChromeRenderModel): void;
 }
 
@@ -453,12 +448,6 @@ export function getUiShellChromeHost(): HTMLElement {
   return requiredById<HTMLElement>(SHELL_CHROME_HOST_ID, SHELL_OWNER);
 }
 
-function createUiShellChromeDom(host: HTMLElement): UiShellChromeDom {
-  return {
-    menuButtons: Array.from(host.querySelectorAll<HTMLButtonElement>(".menu-btn")),
-  };
-}
-
 export function mountUiShellChrome(
   host: HTMLElement,
   bridge: UiShellChromeActionBridge,
@@ -467,7 +456,6 @@ export function mountUiShellChrome(
   render(<UiShellChrome bridge={bridge} model={model} />, host);
 
   return {
-    dom: createUiShellChromeDom(host),
     setModel(nextModel) {
       model.value = nextModel;
     },

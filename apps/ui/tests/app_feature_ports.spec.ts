@@ -92,12 +92,7 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
 
   await recording.onRecordingStatusChanged();
 
-  bundle.shell.bindSettingsHandlers();
-  bundle.shell.bindCarWizardHandlers();
-  bundle.shell.bindRealtimeHandlers();
-  bundle.shell.bindHistoryHandlers();
-  bundle.shell.bindUpdateHandlers();
-  bundle.shell.bindEspFlashHandlers();
+  bundle.shell.bindHandlers();
   bundle.shell.languageRefresh.history.renderHistoryTable();
   bundle.shell.languageRefresh.history.reloadExpandedRunOnLanguageChange();
   bundle.shell.languageRefresh.settings.syncSettingsInputs();
