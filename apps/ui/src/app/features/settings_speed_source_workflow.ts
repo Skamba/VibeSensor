@@ -5,7 +5,7 @@ import type {
   SpeedSourceRequest,
 } from "../../transport/http_models";
 import {
-  deriveDisplayedSpeedSourceMode,
+  createSpeedSourceDerivedState,
   resolveEffectiveSpeedSource,
   type DisplayedSpeedSourceMode,
 } from "../speed_source_state";
@@ -127,9 +127,10 @@ export function createSettingsSpeedSourceWorkflow(
 ): SettingsSpeedSourceWorkflow {
   const transport = createSettingsSpeedSourceTransport(deps.transport);
   const createPolling = deps.createPollingController ?? createPollingController;
+  const speedSourceState = createSpeedSourceDerivedState(deps.settings);
 
   let speedSourceDraftDirty = false;
-  let selectedMode: DisplayedSpeedSourceMode = deriveDisplayedSpeedSourceMode(deps.settings);
+  let selectedMode: DisplayedSpeedSourceMode = speedSourceState.displayedMode.value;
   let manualSpeedInputValue = deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "";
   let staleTimeoutInputValue = "";
   let speedSourceContextVisible = false;
@@ -243,7 +244,7 @@ export function createSettingsSpeedSourceWorkflow(
 
   function syncInputsFromSettings(): void {
     speedSourceDraftDirty = false;
-    selectedMode = deriveDisplayedSpeedSourceMode(deps.settings);
+    selectedMode = speedSourceState.displayedMode.value;
     manualSpeedInputValue = deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "";
     clearAllFeedback();
     renderCurrentState();
@@ -251,7 +252,7 @@ export function createSettingsSpeedSourceWorkflow(
 
   function syncFromSettings(): void {
     if (!speedSourceDraftDirty) {
-      selectedMode = deriveDisplayedSpeedSourceMode(deps.settings);
+      selectedMode = speedSourceState.displayedMode.value;
       manualSpeedInputValue = deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "";
     }
     renderCurrentState();

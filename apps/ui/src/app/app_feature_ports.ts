@@ -27,7 +27,6 @@ export interface AppFeaturesForPorts {
   realtime: Pick<
     RealtimeFeature,
     | "bindHandlers"
-    | "buildLocationOptions"
     | "maybeRenderSensorsSettingsList"
     | "renderLoggingStatus"
     | "renderStatus"
@@ -79,7 +78,6 @@ export function createAppFeaturePorts(features: AppFeaturesForPorts): AppFeature
       bindEspFlashHandlers: () => features.espFlash.bindHandlers(),
       languageRefresh: {
         realtime: {
-          buildLocationOptions: (codes) => features.realtime.buildLocationOptions(codes),
           maybeRenderSensorsSettingsList: (force) => features.realtime.maybeRenderSensorsSettingsList(force),
           renderLoggingStatus: () => features.realtime.renderLoggingStatus(),
           renderStatus: () => features.realtime.renderStatus(),

@@ -1,5 +1,5 @@
 import { fmt } from "../../format";
-import { deriveSpeedReadoutLabelKey } from "../speed_source_state";
+import { createSpeedSourceDerivedState } from "../speed_source_state";
 import type {
   RealtimeState,
   SettingsState,
@@ -54,6 +54,15 @@ export function createUiShellStatusModule(
       : deps.t("speed.unit.kmh");
   }
 
+  const runtimeSpeedSource = computed(() => {
+    trackAppStateSlice(deps.realtime);
+    return deps.realtime.rotationalSpeeds?.basis_speed_source ?? null;
+  });
+  const speedSourceState = createSpeedSourceDerivedState(
+    deps.settings,
+    runtimeSpeedSource,
+  );
+
   const wsLinkState = computed<UiShellBadgeModel>(() => {
     trackAppStateSlice(deps.transport);
     if (deps.transport.payloadError) {
@@ -71,7 +80,6 @@ export function createUiShellStatusModule(
 
   const speedReadoutText = computed(() => {
     trackAppStateSlice(deps.realtime);
-    trackAppStateSlice(deps.settings);
     trackAppStateSlice(deps.shell);
     const unitLabel = selectedSpeedUnitLabel();
     if (
@@ -79,10 +87,7 @@ export function createUiShellStatusModule(
       Number.isFinite(deps.realtime.speedMps)
     ) {
       const value = speedValueInSelectedUnit(deps.realtime.speedMps);
-      const labelKey = deriveSpeedReadoutLabelKey(
-        deps.settings,
-        deps.realtime.rotationalSpeeds?.basis_speed_source ?? null,
-      );
+      const labelKey = speedSourceState.speedReadoutLabelKey.value;
       return deps.t(labelKey, {
         unit: unitLabel,
         value: fmt(value, 1),

@@ -10,7 +10,6 @@ import {
 import { defaultLocationCodes } from "../../constants";
 import type {
   ClientLocationsResponse,
-  LocationOption,
   LoggingStatusPayload,
 } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
@@ -39,7 +38,6 @@ export interface RealtimeFeatureWorkflowApi {
 }
 
 export interface RealtimeFeatureWorkflowViewPorts {
-  buildLocationOptions(codes: readonly string[]): LocationOption[];
   maybeRenderSensorsSettingsList(force?: boolean): void;
   renderStatus(clientRow?: AdaptedClient): void;
   renderLoggingStatus(state: RealtimeFeatureRenderState): void;
@@ -131,7 +129,6 @@ export function createRealtimeFeatureWorkflow(
 
   function applyLocationCodes(codes: string[]): void {
     realtime.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
-    realtime.locationOptions = view.buildLocationOptions(realtime.locationCodes);
   }
 
   function requestIdleCaptureReadinessRefresh(): void {

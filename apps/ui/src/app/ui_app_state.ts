@@ -11,7 +11,6 @@ import type {
   CarRecord,
   HistoryEntry,
   HistoryInsightsPayload,
-  LocationOption,
   LoggingStatusPayload,
   SpeedSourceKind,
   SpeedSourceStatusPayload,
@@ -281,7 +280,6 @@ export interface RealtimeState {
   speedMps: number | null;
   rotationalSpeeds: RotationalSpeeds | null;
   loggingStatus: LoggingStatusPayload;
-  locationOptions: LocationOption[];
   locationCodes: string[];
 }
 
@@ -356,7 +354,6 @@ export function createAppState(): AppState {
         last_completed_run_error: null,
         capture_readiness: null,
       },
-      locationOptions: [],
       locationCodes: defaultLocationCodes.slice(),
     }),
     history: createReactiveStateSlice({

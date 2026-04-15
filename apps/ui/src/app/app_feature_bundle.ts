@@ -78,7 +78,7 @@ export function createAppFeatureBundle(
     realtime: state.realtime,
     spectrum: state.spectrum,
     settings: state.settings,
-    getLanguage: () => state.shell.lang,
+    shell: state.shell,
     t,
     escapeHtml,
     showError,

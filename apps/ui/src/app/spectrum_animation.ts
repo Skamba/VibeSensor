@@ -1,3 +1,5 @@
+import { computed, type ReadonlySignal } from "./ui_signals";
+
 export interface SpectrumHeavyFrame {
   seriesIds: string[];
   freq: number[];
@@ -74,5 +76,37 @@ export function interpolateHeavyFrame(previous: SpectrumHeavyFrame, next: Spectr
     freq: next.freq,
     values: outValues,
     _freqFingerprint: next._freqFingerprint,
+  };
+}
+
+export interface SpectrumTweenDerivedState {
+  canTween: ReadonlySignal<boolean>;
+  frame: ReadonlySignal<SpectrumHeavyFrame | null>;
+}
+
+export function createSpectrumTweenDerivedState(
+  previousFrame: ReadonlySignal<SpectrumHeavyFrame | null>,
+  nextFrame: ReadonlySignal<SpectrumHeavyFrame | null>,
+  alpha: ReadonlySignal<number>,
+): SpectrumTweenDerivedState {
+  const canTween = computed(() => {
+    const next = nextFrame.value;
+    return next !== null && areHeavyFramesCompatible(previousFrame.value, next);
+  });
+  const frame = computed(() => {
+    const next = nextFrame.value;
+    if (!next) {
+      return null;
+    }
+    const previous = previousFrame.value;
+    if (!previous || !canTween.value) {
+      return next;
+    }
+    return interpolateHeavyFrame(previous, next, alpha.value);
+  });
+
+  return {
+    canTween,
+    frame,
   };
 }
