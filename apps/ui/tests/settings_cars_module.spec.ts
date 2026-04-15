@@ -21,7 +21,7 @@ test("settings cars module dismisses transient creation feedback through typed t
 
   const panel: CarsListPanelView = {
     bindActions() {},
-    render(model) {
+    setModel(model) {
       renders.push(model);
     },
   };

@@ -1,6 +1,5 @@
-import type { JSX } from "preact";
+import { render, type JSX } from "preact";
 
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
 import { effect, type ReadonlySignal, signal } from "../ui_signals";
 
@@ -169,7 +168,6 @@ function SettingsShell(props: SettingsShellProps) {
 }
 
 export function mountSettingsShell(host: HTMLElement): SettingsShellView {
-  const mount = createUiPreactMount(host);
   const activeTabId = signal<SettingsShellTabId>("carTab");
 
   function setActiveTab(tabId: SettingsShellTabId): void {
@@ -179,13 +177,14 @@ export function mountSettingsShell(host: HTMLElement): SettingsShellView {
     activeTabId.value = tabId;
   }
 
-  mount.render(
+  render(
     <SettingsShell
       activeTabId={activeTabId}
       onActivateTab={(tabId) => {
         setActiveTab(tabId);
       }}
     />,
+    host,
   );
 
   return {

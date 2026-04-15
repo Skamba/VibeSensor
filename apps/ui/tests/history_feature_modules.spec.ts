@@ -46,7 +46,7 @@ function createHistoryElements(): {
   let latestHandlers: HistoryPanelActionHandlers | null = null;
   let renderCount = 0;
   const panel: HistoryPanelView = {
-    render(model) {
+    setModel(model) {
       renderCount += 1;
       latestModel = model;
       historySummary.textContent = model.historySummaryText;

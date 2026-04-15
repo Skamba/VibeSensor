@@ -251,12 +251,12 @@ export function createRealtimeFeaturePresenter(
 
   function renderLoggingPanel(model: RealtimeLoggingPanelRenderModel): void {
     renderedLoggingPanelModel = model;
-    chrome.loggingPanel.render(model);
+    chrome.loggingPanel.setModel(model);
   }
 
   function renderLiveOverview(phaseText: string): void {
     const model = buildLiveOverviewModel(phaseText);
-    chrome.liveOverview.render(model);
+    chrome.liveOverview.setModel(model);
     chrome.setShellLiveStatus(model.runHealth.variant, model.runHealth.text);
   }
 

@@ -83,7 +83,7 @@ export function createSettingsCarsModule(
 
   function createPanelModel(
     carSelectionState: CarSelectionState,
-  ): Parameters<CarsListPanelView["render"]>[0] {
+  ): Parameters<CarsListPanelView["setModel"]>[0] {
     return {
       guidance: buildCarsGuidanceRenderModel({
         carSelectionState,
@@ -112,7 +112,7 @@ export function createSettingsCarsModule(
   function renderCarList(): void {
     const carSelectionState = getCarSelectionState();
     syncAnalysisControls(carSelectionState);
-    ctx.panel.render(createPanelModel(carSelectionState));
+    ctx.panel.setModel(createPanelModel(carSelectionState));
   }
 
   function clearHighlightedCarFeedback(): void {

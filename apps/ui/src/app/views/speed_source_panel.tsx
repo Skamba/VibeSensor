@@ -1,9 +1,9 @@
-import { h } from "preact";
+import { h, render } from "preact";
 
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import type { ChoiceCardState } from "../style_state";
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
@@ -106,8 +106,8 @@ export interface SpeedSourcePanelView {
   focusScanObdDevices(): void;
   focusStaleTimeoutInput(): void;
   isObdConfigVisible(): boolean;
-  render(model: SpeedSourcePanelRenderModel): void;
-  renderDiagnostics(model: SpeedSourceDiagnosticsRenderModel): void;
+  setModel(model: SpeedSourcePanelRenderModel): void;
+  setDiagnostics(model: SpeedSourceDiagnosticsRenderModel): void;
 }
 
 type SpeedSourcePanelBridgeState = {
@@ -489,7 +489,7 @@ function SpeedSourcePanel(props: {
   onDiagnosticsToggle: (event: Event) => void;
   scanButtonRef: (element: HTMLButtonElement | null) => void;
   staleTimeoutInputRef: (element: HTMLInputElement | null) => void;
-  state: SpeedSourcePanelBridgeState;
+  state: ReadonlySignal<SpeedSourcePanelBridgeState>;
 }) {
   const {
     manualInputRef,
@@ -497,8 +497,9 @@ function SpeedSourcePanel(props: {
     onDiagnosticsToggle,
     scanButtonRef,
     staleTimeoutInputRef,
-    state,
+    state: bridgeState,
   } = props;
+  const state = bridgeState.value;
   const t = useUiTranslation();
   return (
     <>
@@ -796,51 +797,45 @@ function SpeedSourcePanel(props: {
 }
 
 export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
-  const bridgeState: SpeedSourcePanelBridgeState = {
+  const bridgeState = signal<SpeedSourcePanelBridgeState>({
     actions: null,
     diagnostics: DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
     diagnosticsDisclosureOpen: false,
     model: DEFAULT_SPEED_SOURCE_PANEL_MODEL,
-  };
+  });
   let manualSpeedInput: HTMLInputElement | null = null;
   let obdConfig: HTMLElement | null = null;
   let scanObdDevicesBtn: HTMLButtonElement | null = null;
   let staleTimeoutInput: HTMLInputElement | null = null;
-  const mount = createUiPreactMount(host);
-
-  function render(): void {
-    if (bridgeState.model.diagnosticsShouldOpen) {
-      bridgeState.diagnosticsDisclosureOpen = true;
-    }
-    mount.render(
-      <SpeedSourcePanel
-        manualInputRef={(element) => {
-          manualSpeedInput = element;
-        }}
-        obdConfigRef={(element) => {
-          obdConfig = element;
-        }}
-        onDiagnosticsToggle={(event) => {
-          bridgeState.diagnosticsDisclosureOpen =
-            (event.currentTarget as HTMLDetailsElement | null)?.open ?? false;
-        }}
-        scanButtonRef={(element) => {
-          scanObdDevicesBtn = element;
-        }}
-        staleTimeoutInputRef={(element) => {
-          staleTimeoutInput = element;
-        }}
-        state={bridgeState}
-      />,
-    );
-  }
-
-  render();
+  render(
+    <SpeedSourcePanel
+      manualInputRef={(element) => {
+        manualSpeedInput = element;
+      }}
+      obdConfigRef={(element) => {
+        obdConfig = element;
+      }}
+      onDiagnosticsToggle={(event) => {
+        bridgeState.value = {
+          ...bridgeState.value,
+          diagnosticsDisclosureOpen:
+            (event.currentTarget as HTMLDetailsElement | null)?.open ?? false,
+        };
+      }}
+      scanButtonRef={(element) => {
+        scanObdDevicesBtn = element;
+      }}
+      staleTimeoutInputRef={(element) => {
+        staleTimeoutInput = element;
+      }}
+      state={bridgeState}
+    />,
+    host,
+  );
 
   return {
     bindActions(handlers): void {
-      bridgeState.actions = handlers;
-      render();
+      bridgeState.value = { ...bridgeState.value, actions: handlers };
     },
     focusManualSpeedInput(): void {
       manualSpeedInput?.focus();
@@ -862,13 +857,16 @@ export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
       const activeView = activePanel.closest<HTMLElement>(".view");
       return activeView == null || !activeView.hidden;
     },
-    render(model): void {
-      bridgeState.model = model;
-      render();
+    setModel(model): void {
+      bridgeState.value = {
+        ...bridgeState.value,
+        diagnosticsDisclosureOpen:
+          bridgeState.value.diagnosticsDisclosureOpen || model.diagnosticsShouldOpen,
+        model,
+      };
     },
-    renderDiagnostics(model): void {
-      bridgeState.diagnostics = model;
-      render();
+    setDiagnostics(model): void {
+      bridgeState.value = { ...bridgeState.value, diagnostics: model };
     },
   };
 }

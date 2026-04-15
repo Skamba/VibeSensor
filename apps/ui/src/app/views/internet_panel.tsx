@@ -1,9 +1,9 @@
-import { h, type ComponentChildren } from "preact";
+import { h, render, type ComponentChildren } from "preact";
 
 import type { UpdateStartRequestPayload } from "../../transport/http_models";
 import type { ChoiceCardState } from "../style_state";
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
   MaintenanceReadinessItem,
   MaintenanceReadinessPanelModel,
@@ -69,7 +69,7 @@ export interface InternetPanelActionHandlers {
 export interface InternetPanelView {
   readonly dom: InternetPanelDom;
   bindActions(handlers: InternetPanelActionHandlers): void;
-  render(model: InternetPanelRenderModel): void;
+  setModel(model: InternetPanelRenderModel): void;
 }
 
 type InternetPanelBridgeState = {
@@ -268,9 +268,9 @@ function UpdateTransportChoiceCard(props: {
 }
 
 function InternetPanel(props: {
-  state: InternetPanelBridgeState;
+  state: ReadonlySignal<InternetPanelBridgeState>;
 }) {
-  const { state } = props;
+  const state = props.state.value;
   const { model } = state;
   const t = useUiTranslation();
   return (
@@ -475,27 +475,19 @@ function createInternetPanelDom(host: HTMLElement): InternetPanelDom {
 }
 
 export function mountInternetPanel(host: HTMLElement): InternetPanelView {
-  let state: InternetPanelBridgeState = {
+  const state = signal<InternetPanelBridgeState>({
     actions: null,
     model: DEFAULT_INTERNET_PANEL_MODEL,
-  };
-  const mount = createUiPreactMount(host);
-
-  function render(): void {
-    mount.render(<InternetPanel state={state} />);
-  }
-
-  render();
+  });
+  render(<InternetPanel state={state} />, host);
 
   return {
     dom: createInternetPanelDom(host),
     bindActions(handlers) {
-      state = { ...state, actions: handlers };
-      render();
+      state.value = { ...state.value, actions: handlers };
     },
-    render(model) {
-      state = { ...state, model };
-      render();
+    setModel(model) {
+      state.value = { ...state.value, model };
     },
   };
 }

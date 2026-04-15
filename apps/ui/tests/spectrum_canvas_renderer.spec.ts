@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-import { SpectrumCanvasRenderer } from "../src/app/runtime/spectrum_canvas_renderer";
 import type { SpectrumPanelChartDom } from "../src/app/runtime/spectrum_panel_view";
 import { createAppState } from "../src/app/ui_app_state";
 import type { AdaptedClient } from "../src/transport/live_models";
@@ -28,9 +27,12 @@ test.describe("SpectrumCanvasRenderer", () => {
     installWindowGlobal();
   });
 
-  test("prepares aligned dB series without shell DOM bindings", () => {
+  test("prepares aligned dB series without shell DOM bindings", async () => {
     const restoreDocument = installDocumentStub();
     try {
+      const { SpectrumCanvasRenderer } = await import(
+        "../src/app/runtime/spectrum_canvas_renderer"
+      );
       const state = createAppState();
       state.realtime.clients = [
         makeClient("sensor-a", "Front Right Wheel"),

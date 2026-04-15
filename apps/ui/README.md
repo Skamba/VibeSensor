@@ -91,7 +91,6 @@ source-of-truth export commands remain the only writers for those files.
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
 | `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
-| `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, and app-level error banner plus the typed shell chrome bridge |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport coordinator that queues payloads through AppState, throttles live-session adaptation, and lets realtime, shell, and spectrum surfaces react from signal-backed state |
@@ -100,7 +99,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports |
 | `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, inspector, band-toggle, and chart-host refs |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
-| `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view binders |
+| `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view surfaces |
 | `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, and typed island action bridge together |
 | `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
 | `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
@@ -116,11 +115,11 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Signal-backed Preact owner for the analysis-settings shell; local refs/effects handle guidance and field focus while analysis and car-selection modules feed typed model and availability updates |
 | `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts, keep tab selection in signal-backed shell state, and expose typed settings navigation APIs |
-| `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell, typed flash actions, and log-autoscroll lifecycle alongside the render bridge for port selection, readiness, journey, history, and logs |
-| `app/views/internet_panel.tsx` | Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a typed bridge |
-| `app/views/update_panel.tsx` | Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a typed bridge |
+| `app/views/esp_flash_panel.tsx` | Signal-backed Preact owner for the ESP flash settings shell, typed flash actions, and log-autoscroll lifecycle while feature/presenter code updates a semantic panel bridge |
+| `app/views/internet_panel.tsx` | Signal-backed Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a semantic panel bridge |
+| `app/views/update_panel.tsx` | Signal-backed Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a semantic panel bridge |
 | `app/views/sensors_panel.tsx` | Signal-backed Preact owner for the sensors settings shell that keeps the sensor table reactive while exposing typed identify/remove/location callbacks to the realtime feature |
-| `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX, owns typed save/scan/select/input callbacks, and exposes the shared bridge consumed by the speed-source and GPS-status modules |
+| `app/views/speed_source_panel.tsx` | Signal-backed Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX, owns typed save/scan/select/input callbacks, and exposes semantic `setModel()` / `setDiagnostics()` bridge updates to the speed-source and GPS-status modules |
 | `app/views/cars_panel.tsx` | Signal-backed Preact owner for the full car-management surface; it renders saved-car guidance/list rows plus the full add-car wizard in JSX, owns wizard focus/return-focus/scroll lifecycle locally, and exposes typed list and wizard bridges |
 | `app/views/cars_feature_presenter.ts` | Thin car-wizard presenter that turns workflow state into typed wizard render models and delegates focus/manual-input access through the island bridge |
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
@@ -131,7 +130,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that derives typed panel models for the island-owned ESP flash bridge while leaving workflow state in the feature workflow |
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
 | `app/views/history_table_presenters.ts` | Presenter builders that turn runs plus loaded insights/preview detail into typed history row and details models |
-| `app/views/history_panel.tsx` | Preact owner for the history panel shell that renders summary/toolbar chrome and binds typed row actions through a bridge |
+| `app/views/history_panel.tsx` | Signal-backed Preact owner for the history panel shell that renders summary/toolbar chrome and binds typed row actions through a semantic bridge |
 | `app/views/history_table_content.tsx` | History island JSX renderer that turns typed row/detail models into empty state, table rows, expanded evidence cards, and action affordances |
 | `app/views/history_table_view.ts` | Thin history-panel bridge that defines the typed empty/table render contract consumed by the Preact history island |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
@@ -143,7 +142,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/internet_status_view.ts` | Pure USB-internet status model builder reused by the Preact internet panel |
 | `app/views/update_status_view_models.ts` | Typed update-status section builders for current status, journey, issues, attempt history, health, and log cards |
 | `app/views/maintenance_readiness_view.ts` | Shared maintenance-readiness model and Preact component contract reused by update and ESP flash readiness flows |
-| `app/views/` | Focused render-model builders, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and updater surfaces |
+| `app/views/` | Focused render-model builders, event-target decoding, and signal-backed Preact surfaces for settings, cars wizard, realtime, history, and updater flows |
 | `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived live/logging panel state, elapsed-timer sync, and cross-view navigation clicks |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
 | `api.ts` | REST API facade that returns local transport DTOs while `api/types.ts` stays the generated HTTP boundary |
@@ -190,10 +189,10 @@ panel islands own their local chrome plus typed bridges. The remaining
 imperative paths are deliberate runtime integrations rather than alternate UI
 renderers: the shell controller still owns app-level status/preference state,
 the spectrum controller still owns the uPlot/canvas lifecycle through
-island-owned chart refs, and a few follow-up migration issues still materialize
-typed wizard or status models behind island-owned hosts. Those transitional
-bridge patterns should not be copied into new work now that the signals
-contract below is available.
+island-owned chart refs, and a few focused bridges still move typed wizard or
+status models into island-owned hosts. Those seams should use semantic methods
+like `setModel()` / `setDiagnostics()` rather than generic `render(model)`
+loops.
 
 Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
 facade, `realtime_feature_workflow.ts` owns the controller-style polling and
@@ -202,8 +201,8 @@ state plus typed navigation actions, `app/views/realtime_live_overview.tsx`
 and `app/views/realtime_logging_panel.tsx` keep the dashboard cards in
 signal-backed island state, and `realtime_logging_view_models.ts` builds the
 logging/readiness models consumed by the recording card. `app/views/` now owns
-typed view-model builders, event-target decoding, and disposable delegated
-listener binders for reusable multi-action panels.
+typed view-model builders, event-target decoding, and signal-backed Preact
+surfaces for reusable multi-action panels.
 
 `src/transport/` owns the UI-local DTO and adapter layer between generated HTTP
 / WS contracts and `app/**`, so feature, runtime, and view modules no longer
@@ -246,11 +245,12 @@ instead of controller-side variant class interpolation.
   island needs imperative DOM work, keep it narrowly scoped to non-render
   integrations such as download anchors, canvas/uPlot lifecycles, observers, or
   external-library mount points instead of generic HTML/string builder helpers.
-- Expected feature shape is thin facade + focused workflow/transport/presenter or
-  binding modules. Workflow modules stay DOM-free, presenters own rendering, and
-  bindings decode DOM events into typed actions for the owning feature.
-- Preact owner surfaces mount through `app/runtime/ui_preact_mount.ts`; do not
-  scatter raw `preact.render(...)` calls across feature modules.
+- Expected feature shape is thin facade + focused workflow/transport/presenter
+  modules. Workflow modules stay DOM-free, presenters own render-state
+  derivation, and view surfaces decode local DOM events into typed actions for
+  the owning feature.
+- Mount Preact owner surfaces directly inside their owning runtime/view module.
+  Do not scatter `preact.render(...)` calls across feature or presenter code.
 
 ## WebSocket contract boundary
 

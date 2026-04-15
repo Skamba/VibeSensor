@@ -557,7 +557,7 @@ function createDeps() {
           handlers.onSelectPort(dom.espFlashPortSelect?.value || "__auto__");
         });
       },
-      render(model: EspFlashPanelRenderModel) {
+      setModel(model: EspFlashPanelRenderModel) {
         renderEspFlashPanelDom(dom, model);
       },
     },
@@ -729,7 +729,7 @@ function createUpdateDeps() {
           handlers.onCancel();
         });
       },
-      render(model: UpdatePanelRenderModel) {
+      setModel(model: UpdatePanelRenderModel) {
         renderUpdatePanelDom(dom, model);
       },
     },
@@ -752,7 +752,7 @@ function createUpdateDeps() {
           handlers.onSsidInput(internetDom.updateSsidInput?.value ?? "");
         });
       },
-      render(model: InternetPanelRenderModel) {
+      setModel(model: InternetPanelRenderModel) {
         renderInternetPanelDom(internetDom, model);
       },
     },

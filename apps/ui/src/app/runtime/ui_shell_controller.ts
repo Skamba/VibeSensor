@@ -236,7 +236,7 @@ export class UiShellController {
         if (this.appShellWrap) {
           this.appShellWrap.dataset.connectionState = connectionState;
         }
-        this.chrome.render(model);
+        this.chrome.setModel(model);
       });
     });
 
