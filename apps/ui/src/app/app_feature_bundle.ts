@@ -29,13 +29,8 @@ import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
 import type { SettingsShellView } from "./views/settings_shell";
 import type { UpdatePanelView } from "./views/update_panel";
-import type { UiShellChromeDom } from "./runtime/ui_shell_chrome";
 
 export type { AppFeatureBundle } from "./app_feature_ports";
-
-export interface AppFeatureBundleDom {
-  shell: Pick<UiShellChromeDom, "menuButtons">;
-}
 
 export interface AppFeatureBundleSharedDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
@@ -67,7 +62,6 @@ export interface AppFeatureBundleRuntimePorts {
 
 export interface AppFeatureBundleDeps {
   state: AppState;
-  dom: AppFeatureBundleDom;
   shared: AppFeatureBundleSharedDeps;
   runtime: AppFeatureBundleRuntimePorts;
 }
@@ -77,7 +71,6 @@ export function createAppFeatureBundle(
 ): AppFeatureBundle {
   const {
     state,
-    dom: { shell: shellDom },
     shared: { t, escapeHtml, showError, fmt, fmtTs, formatInt },
     runtime,
   } = deps;
@@ -125,7 +118,6 @@ export function createAppFeatureBundle(
     analysisPanel: runtime.analysisPanel,
     carsPanel: runtime.carsPanel.list,
     speedSourcePanel: runtime.speedSourcePanel,
-    shellDom,
     openCarWizard: () => {
       carsFeature?.openWizard();
     },
