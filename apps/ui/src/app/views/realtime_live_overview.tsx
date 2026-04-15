@@ -1,4 +1,5 @@
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { render } from "preact";
+
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
 
@@ -36,7 +37,7 @@ interface RealtimeLiveOverviewBridgeState extends RealtimeLiveOverviewRenderMode
 }
 
 export interface RealtimeLiveOverviewBridge {
-  render(model: RealtimeLiveOverviewRenderModel): void;
+  setModel(model: RealtimeLiveOverviewRenderModel): void;
   setSpeedText(text: string): void;
 }
 
@@ -191,12 +192,11 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
 }
 
 export function mountRealtimeLiveOverview(host: HTMLElement): RealtimeLiveOverviewBridge {
-  const mount = createUiPreactMount(host);
   const state = signal<RealtimeLiveOverviewBridgeState>({ ...DEFAULT_OVERVIEW_STATE });
-  mount.render(<RealtimeLiveOverview state={state} />);
+  render(<RealtimeLiveOverview state={state} />, host);
 
   return {
-    render(model: RealtimeLiveOverviewRenderModel): void {
+    setModel(model: RealtimeLiveOverviewRenderModel): void {
       state.value = { ...state.value, ...model };
     },
     setSpeedText(text: string): void {

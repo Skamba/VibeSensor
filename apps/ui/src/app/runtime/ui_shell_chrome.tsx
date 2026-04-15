@@ -1,4 +1,4 @@
-import { h, type JSX } from "preact";
+import { h, render, type JSX } from "preact";
 
 import { requiredById } from "../dom/dom_query";
 import { signal, type ReadonlySignal } from "../ui_signals";
@@ -7,8 +7,6 @@ import {
   type SettingsFeedbackMessage,
 } from "../views/settings_feedback";
 import type { VisualVariant } from "../style_state";
-import { createUiPreactMount } from "./ui_preact_mount";
-
 const SHELL_OWNER = "UI shell";
 const SHELL_CHROME_HOST_ID = "appShellChromeRoot";
 
@@ -92,7 +90,7 @@ export interface UiShellChromeDom {
 
 export interface UiShellChromeView {
   readonly dom: UiShellChromeDom;
-  render(model: UiShellChromeRenderModel): void;
+  setModel(model: UiShellChromeRenderModel): void;
 }
 
 type UiShellChromeProps = {
@@ -384,12 +382,11 @@ export function mountUiShellChrome(
   bridge: UiShellChromeActionBridge,
 ): UiShellChromeView {
   const model = signal<UiShellChromeRenderModel>(DEFAULT_SHELL_CHROME_MODEL);
-  const mount = createUiPreactMount(host);
-  mount.render(<UiShellChrome bridge={bridge} model={model} />);
+  render(<UiShellChrome bridge={bridge} model={model} />, host);
 
   return {
     dom: createUiShellChromeDom(host),
-    render(nextModel) {
+    setModel(nextModel) {
       model.value = nextModel;
     },
   };

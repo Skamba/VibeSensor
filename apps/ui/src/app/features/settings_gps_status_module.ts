@@ -44,7 +44,7 @@ export function createSettingsGpsStatusModule(
       settings.gpsFallbackActive = status.fallback_active;
       settings.gpsEffectiveSpeedKph = status.effective_speed_kmh;
       settings.resolvedSpeedSource = status.speed_source;
-      panel.renderDiagnostics(
+      panel.setDiagnostics(
         buildSpeedSourceDiagnosticsRenderModel(status, obdStatus, presenterDeps),
       );
       ctx.syncSpeedSourceSelectionUi();

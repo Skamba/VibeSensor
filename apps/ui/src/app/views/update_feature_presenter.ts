@@ -384,8 +384,8 @@ export function createUpdateFeaturePresenter(
       t,
     });
     lastPanelModels = panelModels;
-    internetPanel.render(panelModels.internetPanel);
-    panel.render(panelModels.updatePanel);
+    internetPanel.setModel(panelModels.internetPanel);
+    panel.setModel(panelModels.updatePanel);
   }
 
   function readStartIntent(

@@ -1,6 +1,6 @@
 import type { JSX } from "preact";
 
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { render } from "preact";
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
@@ -164,8 +164,7 @@ export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
     actions: null,
     model: { table: null },
   });
-  const mount = createUiPreactMount(host);
-  mount.render(<SensorsPanel state={state} />);
+  render(<SensorsPanel state={state} />, host);
   return {
     setModel(model) {
       state.value = { ...state.value, model };

@@ -10,7 +10,7 @@ test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () =
       bindActions(nextHandlers) {
         handlers = nextHandlers;
       },
-      render() {},
+      setModel() {},
     },
     t: (key) => key,
     escapeHtml: (value) => String(value ?? ""),

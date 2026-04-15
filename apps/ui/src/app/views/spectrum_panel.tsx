@@ -1,4 +1,4 @@
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { render } from "preact";
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
@@ -202,12 +202,11 @@ function SpectrumPanel(props: {
 
 export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
   const state = signal<SpectrumPanelBridgeState>(createDefaultPanelState());
-  const mount = createUiPreactMount(host);
   const chartDom: MutableSpectrumPanelChartDom = {
     specChartWrap: null,
     specChart: null,
   };
-  mount.render(<SpectrumPanel state={state} chartDom={chartDom} />);
+  render(<SpectrumPanel state={state} chartDom={chartDom} />, host);
 
   return {
     chartDom: {

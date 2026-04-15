@@ -599,7 +599,7 @@ export function createEspFlashFeaturePresenter(
   return {
     render(state) {
       const model = buildEspFlashPanelRenderModel(state, { t: ctx.t });
-      ctx.panel.render(model);
+      ctx.panel.setModel(model);
     },
   };
 }

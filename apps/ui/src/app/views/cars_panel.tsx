@@ -1,9 +1,10 @@
+import { render } from "preact";
+
 import { useEffect, useRef } from "preact/hooks";
 import type {
   CarsFeatureFocusTarget,
   CarsFeatureManualInputState,
 } from "../features/cars_feature_workflow";
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
 import {
@@ -29,7 +30,7 @@ export interface CarsListRenderModel {
 
 export interface CarsListPanelView {
   bindActions(handlers: { onAction(action: CarsListAction): void }): void;
-  render(model: CarsListRenderModel): void;
+  setModel(model: CarsListRenderModel): void;
 }
 
 export type CarsFeatureInteraction =
@@ -1019,12 +1020,12 @@ export function mountCarsPanel(host: HTMLElement): CarsPanelView {
   });
   const wizardFocusRequest = signal<CarsWizardFocusRequest | null>(null);
   let focusRequestToken = 0;
-  const mount = createUiPreactMount(host);
-  mount.render(
+  render(
     <CarsPanel
       state={bridgeState}
       wizardFocusRequest={wizardFocusRequest}
     />,
+    host,
   );
 
   return {
@@ -1032,7 +1033,7 @@ export function mountCarsPanel(host: HTMLElement): CarsPanelView {
       bindActions(handlers): void {
         bridgeState.value = { ...bridgeState.value, actions: handlers };
       },
-      render(model): void {
+      setModel(model): void {
         bridgeState.value = { ...bridgeState.value, model };
       },
     },

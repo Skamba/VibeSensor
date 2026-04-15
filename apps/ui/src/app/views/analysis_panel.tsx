@@ -1,7 +1,6 @@
-import type { JSX } from "preact";
+import { render, type JSX } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
@@ -526,13 +525,13 @@ export function mountAnalysisPanel(host: HTMLElement): AnalysisPanelView {
   const inputFocusRequest = signal<AnalysisFieldFocusRequest | null>(null);
   const guidanceOpenRequest = signal(0);
   let focusRequestToken = 0;
-  const mount = createUiPreactMount(host);
-  mount.render(
+  render(
     <AnalysisPanel
       guidanceOpenRequest={guidanceOpenRequest}
       inputFocusRequest={inputFocusRequest}
       state={bridgeState}
     />,
+    host,
   );
 
   return {

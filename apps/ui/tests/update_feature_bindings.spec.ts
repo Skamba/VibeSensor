@@ -39,7 +39,7 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
       bindActions(handlers: UpdatePanelActionHandlers) {
         updateHandlers = handlers;
       },
-      render(_model: UpdatePanelRenderModel) {},
+      setModel(_model: UpdatePanelRenderModel) {},
     },
     internetPanel: {
       dom: {
@@ -61,7 +61,7 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
       bindActions(handlers: InternetPanelActionHandlers) {
         internetHandlers = handlers;
       },
-      render(_model: InternetPanelRenderModel) {},
+      setModel(_model: InternetPanelRenderModel) {},
     },
   });
 
