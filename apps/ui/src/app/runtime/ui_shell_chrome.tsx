@@ -1,6 +1,7 @@
 import { h, type JSX } from "preact";
 
 import { requiredById } from "../dom/dom_query";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
@@ -96,11 +97,7 @@ export interface UiShellChromeView {
 
 type UiShellChromeProps = {
   bridge: UiShellChromeActionBridge;
-  model: UiShellChromeRenderModel;
-};
-
-type UiShellChromeBridgeState = {
-  model: UiShellChromeRenderModel;
+  model: ReadonlySignal<UiShellChromeRenderModel>;
 };
 
 const DEFAULT_SHELL_CHROME_MODEL: UiShellChromeRenderModel = {
@@ -183,7 +180,8 @@ function SettingsFeedbackSlot(props: {
 }
 
 function UiShellChrome(props: UiShellChromeProps) {
-  const { bridge, model } = props;
+  const { bridge } = props;
+  const model = props.model.value;
 
   function activateView(viewId: string): void {
     bridge.current.activateView(viewId);
@@ -385,22 +383,14 @@ export function mountUiShellChrome(
   host: HTMLElement,
   bridge: UiShellChromeActionBridge,
 ): UiShellChromeView {
-  const bridgeState: UiShellChromeBridgeState = {
-    model: DEFAULT_SHELL_CHROME_MODEL,
-  };
+  const model = signal<UiShellChromeRenderModel>(DEFAULT_SHELL_CHROME_MODEL);
   const mount = createUiPreactMount(host);
-
-  function render(): void {
-    mount.render(<UiShellChrome bridge={bridge} model={bridgeState.model} />);
-  }
-
-  render();
+  mount.render(<UiShellChrome bridge={bridge} model={model} />);
 
   return {
     dom: createUiShellChromeDom(host),
-    render(model) {
-      bridgeState.model = model;
-      render();
+    render(nextModel) {
+      model.value = nextModel;
     },
   };
 }
