@@ -496,6 +496,61 @@ test("assigning a sensor location preserves the original sensor name", async ({ 
   await expect(row.locator("strong")).toHaveText("Chassis Sensor A");
 });
 
+test("sensor identify and remove actions stay wired through the Sensors panel", async ({ page }) => {
+  let identifyCalls = 0;
+  let removeCalls = 0;
+
+  await installCommonRoutes(page, {
+    locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
+  });
+  await page.route("**/api/clients/**/identify", async (route) => {
+    identifyCalls += 1;
+    await fulfillJson(route, {});
+  });
+  await page.route("**/api/clients/sensor-1", async (route) => {
+    if (route.request().method() !== "DELETE") {
+      await route.fallback();
+      return;
+    }
+    removeCalls += 1;
+    await fulfillJson(route, {});
+  });
+  await installFakeWebSocket(page, {
+    confirmResult: true,
+    payload: {
+      server_time: new Date().toISOString(),
+      clients: [
+        {
+          id: "sensor-1",
+          name: "Chassis Sensor A",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "",
+          mac_address: "sensor-1",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: { clients: {} },
+    },
+  });
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="sensorsTab"]').click();
+
+  const row = page.locator('#sensorsSettingsBody tr[data-client-id="sensor-1"]');
+
+  await row.locator(".row-identify").click();
+  await expect.poll(() => identifyCalls).toBe(1);
+
+  await row.locator(".row-remove").click();
+  await expect.poll(() => removeCalls).toBe(1);
+  await expect(page.locator('#sensorsSettingsBody tr[data-client-id="sensor-1"]')).toHaveCount(0);
+});
+
 test("settings keep inferred sensor names unassigned until an explicit location is saved", async ({ page }) => {
   await installCommonRoutes(page, {
     locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { renderRealtimeSensorTable } from "../src/app/views/realtime_sensor_table_view";
+import { buildRealtimeSensorTableRenderModel } from "../src/app/views/realtime_sensor_table_view";
 import type { AdaptedClient } from "../src/transport/live_models";
 
 const labels: Record<string, string> = {
@@ -14,10 +14,6 @@ const labels: Record<string, string> = {
 
 function t(key: string): string {
   return labels[key] ?? key;
-}
-
-function escapeHtml(value: unknown): string {
-  return String(value ?? "");
 }
 
 function makeClient(overrides: Partial<AdaptedClient> = {}): AdaptedClient {
@@ -37,35 +33,44 @@ function makeClient(overrides: Partial<AdaptedClient> = {}): AdaptedClient {
   };
 }
 
-test("renderRealtimeSensorTable compacts sensor identity and actions into one row layout", () => {
-  const container = { innerHTML: "" } as HTMLElement;
-
-  renderRealtimeSensorTable(container, {
+test("buildRealtimeSensorTableRenderModel compacts sensor identity and actions into one row layout", () => {
+  const model = buildRealtimeSensorTableRenderModel({
     clients: [makeClient()],
-    escapeHtml,
     locationOptions: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
     t,
   });
 
-  expect(container.innerHTML).toContain('data-client-id="sensor-1"');
-  expect(container.innerHTML).toContain("settings-sensor-row__identity");
-  expect(container.innerHTML).toContain("status-pill settings-entity-status online");
-  expect(container.innerHTML).toContain("<code>001122334455</code>");
-  expect(container.innerHTML).toContain("settings-sensor-row__actions");
-  expect(container.innerHTML).toContain('class="btn row-identify"');
-  expect(container.innerHTML).toContain('class="btn btn--danger-quiet row-remove"');
+  expect(model.kind).toBe("rows");
+  if (model.kind !== "rows") {
+    throw new Error("Expected sensor rows");
+  }
+  expect(model.rows).toHaveLength(1);
+  expect(model.rows[0]).toMatchObject({
+    clientId: "sensor-1",
+    displayName: "Chassis Sensor A",
+    statusText: "Online",
+    statusClass: "online",
+    macAddress: "001122334455",
+    selectedLocationCode: "",
+    locationSelectLabel: "Select location",
+    identifyLabel: "Identify",
+    identifyDisabled: false,
+    removeLabel: "Remove",
+  });
+  expect(model.rows[0].locationOptions).toEqual([
+    { code: "front_left_wheel", label: "Front Left Wheel" },
+  ]);
 });
 
-test("renderRealtimeSensorTable uses the compact three-column empty row", () => {
-  const container = { innerHTML: "" } as HTMLElement;
-
-  renderRealtimeSensorTable(container, {
+test("buildRealtimeSensorTableRenderModel uses the compact three-column empty state", () => {
+  const model = buildRealtimeSensorTableRenderModel({
     clients: [],
-    escapeHtml,
     locationOptions: [],
     t,
   });
 
-  expect(container.innerHTML).toContain('colspan="3"');
-  expect(container.innerHTML).toContain("No sensors detected yet.");
+  expect(model).toEqual({
+    kind: "empty",
+    emptyText: "No sensors detected yet.",
+  });
 });
