@@ -1,21 +1,17 @@
-import type { UiCarsDom } from "../dom/cars_dom";
+import { useEffect, useRef } from "preact/hooks";
 import type {
   CarsFeatureFocusTarget,
   CarsFeatureManualInputState,
 } from "../features/cars_feature_workflow";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
-import {
-  bindCarsFeatureInteractions,
-  type CarsFeatureInteractionHandlers,
-} from "./cars_feature_bindings";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import {
   createClosedCarsWizardRenderModel,
   type CarsWizardOptionItem,
   type CarsWizardOptionsRenderModel,
   type CarsWizardRenderModel,
 } from "./car_wizard_view";
-import type { ViewDisposer } from "./dom_event_bindings";
 import {
   inlineStateActionClass,
 } from "./dom_helpers";
@@ -36,14 +32,30 @@ export interface CarsListPanelView {
   render(model: CarsListRenderModel): void;
 }
 
+export type CarsFeatureInteraction =
+  | { type: "back" }
+  | { type: "close" }
+  | { type: "finish" }
+  | { type: "manual-inputs-changed"; inputs: CarsFeatureManualInputState }
+  | { type: "open" }
+  | { type: "select-brand"; value: string }
+  | { type: "select-gearbox"; index: number }
+  | { type: "select-model"; index: number }
+  | { type: "select-tire"; index: number }
+  | { type: "select-type"; value: string }
+  | { type: "select-variant"; index: number }
+  | { type: "submit-custom-brand"; value: string }
+  | { type: "submit-custom-model"; value: string }
+  | { type: "submit-custom-type"; value: string };
+
+export interface CarsFeatureInteractionHandlers {
+  onAction(action: CarsFeatureInteraction): void;
+}
+
 export interface CarsWizardPanelBridge {
-  readonly dom: UiCarsDom;
   bindActions(handlers: CarsFeatureInteractionHandlers): void;
-  captureReturnFocusTarget(): HTMLElement | null;
   focus(target: CarsFeatureFocusTarget): void;
-  readManualInputs(): CarsFeatureManualInputState;
-  render(model: CarsWizardRenderModel): void;
-  restoreFocus(target: HTMLElement | null): void;
+  setModel(model: CarsWizardRenderModel): void;
 }
 
 export interface CarsPanelView {
@@ -67,7 +79,13 @@ type CarsWizardOptionRefs = {
 type CarsPanelBridgeState = {
   actions: CarsListPanelActionHandlers | null;
   model: CarsListRenderModel;
+  wizardActions: CarsFeatureInteractionHandlers | null;
   wizardModel: CarsWizardRenderModel;
+};
+
+type CarsWizardFocusRequest = {
+  target: CarsFeatureFocusTarget;
+  token: number;
 };
 
 const DEFAULT_CARS_PANEL_MODEL: CarsListRenderModel = {
@@ -92,6 +110,65 @@ function handleCarsListAction(
 
 function focusElement(target: HTMLElement | null | undefined): void {
   target?.focus();
+}
+
+function parseWizardOptionIndex(value: string): number | null {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+type CarsWizardFocusRefs = {
+  closeButton: HTMLButtonElement | null;
+  customBrandInput: HTMLInputElement | null;
+  customModelInput: HTMLInputElement | null;
+  customTypeInput: HTMLInputElement | null;
+  finalDriveInput: HTMLInputElement | null;
+  manualAddButton: HTMLButtonElement | null;
+  optionRefs: CarsWizardOptionRefs;
+  rimInput: HTMLInputElement | null;
+  tireAspectInput: HTMLInputElement | null;
+  tireWidthInput: HTMLInputElement | null;
+  topGearInput: HTMLInputElement | null;
+};
+
+function resolveWizardFocusTarget(
+  target: CarsFeatureFocusTarget,
+  refs: CarsWizardFocusRefs,
+): HTMLElement | null {
+  switch (target) {
+    case "brand-option":
+      return refs.optionRefs.brandOption ?? refs.customBrandInput;
+    case "close":
+      return refs.closeButton;
+    case "custom-brand":
+      return refs.customBrandInput;
+    case "custom-model":
+      return refs.customModelInput;
+    case "custom-type":
+      return refs.customTypeInput;
+    case "finish":
+      return refs.manualAddButton;
+    case "gearbox-option":
+      return refs.optionRefs.gearboxOption ?? refs.manualAddButton;
+    case "manual-final-drive":
+      return refs.finalDriveInput;
+    case "manual-rim":
+      return refs.rimInput;
+    case "manual-tire-aspect":
+      return refs.tireAspectInput;
+    case "manual-tire-width":
+      return refs.tireWidthInput;
+    case "manual-top-gear":
+      return refs.topGearInput;
+    case "model-option":
+      return refs.optionRefs.modelOption ?? refs.customModelInput;
+    case "spec-selection":
+      return refs.optionRefs.tireOption ?? refs.optionRefs.gearboxOption ?? refs.tireWidthInput;
+    case "type-option":
+      return refs.optionRefs.typeOption ?? refs.customTypeInput;
+    case "variant-option":
+      return refs.optionRefs.variantOption;
+  }
 }
 
 function CarsInlineStatePanel(props: {
@@ -278,15 +355,17 @@ function wizardOptionAttributeProps(
 function WizardOptionButton(props: {
   item: CarsWizardOptionItem;
   attribute: CarsWizardOptionsRenderModel["attribute"];
+  onSelect?: () => void;
   optionRef?: (element: HTMLButtonElement | null) => void;
 }) {
-  const { attribute, item, optionRef } = props;
+  const { attribute, item, onSelect, optionRef } = props;
   return (
     <button
       type="button"
       class="wiz-opt"
       data-selected={item.selected ? "true" : undefined}
       aria-pressed={item.selected ? "true" : "false"}
+      onClick={onSelect}
       ref={optionRef}
       {...wizardOptionAttributeProps(attribute, item.value)}
     >
@@ -299,9 +378,10 @@ function WizardOptionButton(props: {
 function WizardOptions(props: {
   firstOptionRef?: (element: HTMLButtonElement | null) => void;
   id: string;
+  onSelectOption?: (item: CarsWizardOptionItem) => void;
   section: CarsWizardOptionsRenderModel;
 }) {
-  const { firstOptionRef, id, section } = props;
+  const { firstOptionRef, id, onSelectOption, section } = props;
   const className = section.layout === "list"
     ? "wizard-options wizard-options--list"
     : "wizard-options";
@@ -313,6 +393,7 @@ function WizardOptions(props: {
           key={`${section.attribute}-${item.value}`}
           attribute={section.attribute}
           item={item}
+          onSelect={() => onSelectOption?.(item)}
           optionRef={index === 0 ? firstOptionRef : undefined}
         />
       ))}
@@ -341,19 +422,108 @@ function WizardSummaryPanel(props: { summary: CarsWizardRenderModel["summary"] }
 }
 
 function CarsPanel(props: {
-  optionRefs: {
-    setBrandOption(element: HTMLButtonElement | null): void;
-    setGearboxOption(element: HTMLButtonElement | null): void;
-    setModelOption(element: HTMLButtonElement | null): void;
-    setTireOption(element: HTMLButtonElement | null): void;
-    setTypeOption(element: HTMLButtonElement | null): void;
-    setVariantOption(element: HTMLButtonElement | null): void;
-  };
-  state: CarsPanelBridgeState;
+  state: ReadonlySignal<CarsPanelBridgeState>;
+  wizardFocusRequest: ReadonlySignal<CarsWizardFocusRequest | null>;
 }) {
-  const { optionRefs, state } = props;
+  const state = props.state.value;
+  const wizardFocusRequest = props.wizardFocusRequest.value;
   const t = useUiTranslation();
   const wizardModel = state.wizardModel;
+  const addCarBtnRef = useRef<HTMLButtonElement | null>(null);
+  const addCarWizardRef = useRef<HTMLDivElement | null>(null);
+  const wizardCloseBtnRef = useRef<HTMLButtonElement | null>(null);
+  const wizardCustomBrandInputRef = useRef<HTMLInputElement | null>(null);
+  const wizardCustomModelInputRef = useRef<HTMLInputElement | null>(null);
+  const wizardCustomTypeInputRef = useRef<HTMLInputElement | null>(null);
+  const wizardManualAddBtnRef = useRef<HTMLButtonElement | null>(null);
+  const wizFinalDriveInputRef = useRef<HTMLInputElement | null>(null);
+  const wizGearRatioInputRef = useRef<HTMLInputElement | null>(null);
+  const wizRimInputRef = useRef<HTMLInputElement | null>(null);
+  const wizTireAspectInputRef = useRef<HTMLInputElement | null>(null);
+  const wizTireWidthInputRef = useRef<HTMLInputElement | null>(null);
+  const optionRefs = useRef<CarsWizardOptionRefs>({
+    brandOption: null,
+    gearboxOption: null,
+    modelOption: null,
+    tireOption: null,
+    typeOption: null,
+    variantOption: null,
+  });
+  const lastReturnFocusTargetRef = useRef<HTMLElement | null>(null);
+  const lastWizardOpenStateRef = useRef(wizardModel.isOpen);
+
+  useEffect(() => {
+    const wasOpen = lastWizardOpenStateRef.current;
+    if (wizardModel.isOpen && !wasOpen) {
+      const activeElement = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+      lastReturnFocusTargetRef.current =
+        activeElement && activeElement !== document.body ? activeElement : addCarBtnRef.current;
+      if (addCarWizardRef.current) {
+        addCarWizardRef.current.scrollTop = 0;
+      }
+    }
+    if (!wizardModel.isOpen && wasOpen) {
+      const target = lastReturnFocusTargetRef.current;
+      const safeTarget = target && document.contains(target) ? target : addCarBtnRef.current;
+      focusElement(safeTarget);
+      lastReturnFocusTargetRef.current = null;
+    }
+    lastWizardOpenStateRef.current = wizardModel.isOpen;
+  }, [wizardModel.isOpen]);
+
+  useEffect(() => {
+    if (!wizardModel.isOpen) {
+      return;
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+      event.preventDefault();
+      state.wizardActions?.onAction({ type: "close" });
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [wizardModel.isOpen, state.wizardActions]);
+
+  useEffect(() => {
+    if (!wizardFocusRequest) {
+      return;
+    }
+    focusElement(
+      resolveWizardFocusTarget(wizardFocusRequest.target, {
+        closeButton: wizardCloseBtnRef.current,
+        customBrandInput: wizardCustomBrandInputRef.current,
+        customModelInput: wizardCustomModelInputRef.current,
+        customTypeInput: wizardCustomTypeInputRef.current,
+        finalDriveInput: wizFinalDriveInputRef.current,
+        manualAddButton: wizardManualAddBtnRef.current,
+        optionRefs: optionRefs.current,
+        rimInput: wizRimInputRef.current,
+        tireAspectInput: wizTireAspectInputRef.current,
+        tireWidthInput: wizTireWidthInputRef.current,
+        topGearInput: wizGearRatioInputRef.current,
+      }),
+    );
+  }, [wizardFocusRequest]);
+
+  function emitManualInputs(
+    field: keyof CarsFeatureManualInputState,
+    value: string,
+  ): void {
+    state.wizardActions?.onAction({
+      type: "manual-inputs-changed",
+      inputs: {
+        ...wizardModel.manualInputs,
+        [field]: value,
+      },
+    });
+  }
+
   return (
     <>
       <div class="panel card">
@@ -361,7 +531,13 @@ function CarsPanel(props: {
           <strong data-i18n="settings.car.manage">
             {t("settings.car.manage", "Manage Cars")}
           </strong>
-          <button id="addCarBtn" class="btn btn--success" data-i18n="settings.car.add_new">
+          <button
+            id="addCarBtn"
+            class="btn btn--success"
+            data-i18n="settings.car.add_new"
+            onClick={() => state.wizardActions?.onAction({ type: "open" })}
+            ref={addCarBtnRef}
+          >
             {t("settings.car.add_new", "+ Add Car")}
           </button>
         </div>
@@ -399,7 +575,12 @@ function CarsPanel(props: {
       </div>
 
       <div class="wizard-modal-layer" hidden={!wizardModel.isOpen}>
-        <div id="wizardBackdrop" class="wizard-backdrop" hidden={!wizardModel.isOpen} />
+        <div
+          id="wizardBackdrop"
+          class="wizard-backdrop"
+          hidden={!wizardModel.isOpen}
+          onClick={() => state.wizardActions?.onAction({ type: "close" })}
+        />
         <div
           id="addCarWizard"
           class="panel card add-car-wizard"
@@ -408,6 +589,7 @@ function CarsPanel(props: {
           aria-modal="true"
           aria-labelledby="wizardTitle"
           data-spec-branch={wizardModel.specBranch ?? undefined}
+          ref={addCarWizardRef}
         >
           <div class="wizard-header">
             <div class="wizard-header__text">
@@ -428,6 +610,8 @@ function CarsPanel(props: {
               id="wizardCloseBtn"
               class="btn btn--muted wizard-close"
               aria-label="Close wizard"
+              onClick={() => state.wizardActions?.onAction({ type: "close" })}
+              ref={wizardCloseBtnRef}
             >
               {"\u00d7"}
             </button>
@@ -458,8 +642,16 @@ function CarsPanel(props: {
                   </h3>
                   <WizardOptions
                     id="wizardBrandList"
+                    onSelectOption={(item) => {
+                      state.wizardActions?.onAction({
+                        type: "select-brand",
+                        value: item.value,
+                      });
+                    }}
                     section={wizardModel.brandOptions}
-                    firstOptionRef={optionRefs.setBrandOption}
+                    firstOptionRef={(element) => {
+                      optionRefs.current.brandOption = element;
+                    }}
                   />
                   <div class="wizard-custom">
                     <label data-i18n="settings.car.or_custom_brand">
@@ -470,11 +662,17 @@ function CarsPanel(props: {
                       type="text"
                       maxLength={32}
                       placeholder="e.g. Mercedes-Benz"
+                      ref={wizardCustomBrandInputRef}
                     />
                     <button
                       id="wizardCustomBrandBtn"
                       class="btn btn--primary"
                       data-i18n="settings.car.use_custom"
+                      onClick={() =>
+                        state.wizardActions?.onAction({
+                          type: "submit-custom-brand",
+                          value: wizardCustomBrandInputRef.current?.value?.trim() ?? "",
+                        })}
                     >
                       {t("settings.car.use_custom", "Use Custom")}
                     </button>
@@ -487,18 +685,37 @@ function CarsPanel(props: {
                   </h3>
                   <WizardOptions
                     id="wizardTypeList"
+                    onSelectOption={(item) => {
+                      state.wizardActions?.onAction({
+                        type: "select-type",
+                        value: item.value,
+                      });
+                    }}
                     section={wizardModel.typeOptions}
-                    firstOptionRef={optionRefs.setTypeOption}
+                    firstOptionRef={(element) => {
+                      optionRefs.current.typeOption = element;
+                    }}
                   />
                   <div class="wizard-custom">
                     <label data-i18n="settings.car.or_custom_type">
                       {t("settings.car.or_custom_type", "Or type a custom type:")}
                     </label>
-                    <input id="wizardCustomType" type="text" maxLength={32} placeholder="e.g. Van" />
+                    <input
+                      id="wizardCustomType"
+                      type="text"
+                      maxLength={32}
+                      placeholder="e.g. Van"
+                      ref={wizardCustomTypeInputRef}
+                    />
                     <button
                       id="wizardCustomTypeBtn"
                       class="btn btn--primary"
                       data-i18n="settings.car.use_custom"
+                      onClick={() =>
+                        state.wizardActions?.onAction({
+                          type: "submit-custom-type",
+                          value: wizardCustomTypeInputRef.current?.value?.trim() ?? "",
+                        })}
                     >
                       {t("settings.car.use_custom", "Use Custom")}
                     </button>
@@ -511,8 +728,20 @@ function CarsPanel(props: {
                   </h3>
                   <WizardOptions
                     id="wizardModelList"
+                    onSelectOption={(item) => {
+                      const index = parseWizardOptionIndex(item.value);
+                      if (index == null) {
+                        return;
+                      }
+                      state.wizardActions?.onAction({
+                        type: "select-model",
+                        index,
+                      });
+                    }}
                     section={wizardModel.modelOptions}
-                    firstOptionRef={optionRefs.setModelOption}
+                    firstOptionRef={(element) => {
+                      optionRefs.current.modelOption = element;
+                    }}
                   />
                   <div class="wizard-custom wizard-custom--branch">
                     <strong class="wizard-branch-label" data-i18n="settings.car.manual_branch_title">
@@ -532,11 +761,17 @@ function CarsPanel(props: {
                       type="text"
                       maxLength={64}
                       placeholder="e.g. C-Class W205"
+                      ref={wizardCustomModelInputRef}
                     />
                     <button
                       id="wizardCustomModelBtn"
                       class="btn btn--primary"
                       data-i18n="settings.car.use_custom"
+                      onClick={() =>
+                        state.wizardActions?.onAction({
+                          type: "submit-custom-model",
+                          value: wizardCustomModelInputRef.current?.value?.trim() ?? "",
+                        })}
                     >
                       {t("settings.car.use_custom", "Use Custom")}
                     </button>
@@ -549,8 +784,20 @@ function CarsPanel(props: {
                   </h3>
                   <WizardOptions
                     id="wizardVariantList"
+                    onSelectOption={(item) => {
+                      const index = parseWizardOptionIndex(item.value);
+                      if (index == null) {
+                        return;
+                      }
+                      state.wizardActions?.onAction({
+                        type: "select-variant",
+                        index,
+                      });
+                    }}
                     section={wizardModel.variantOptions}
-                    firstOptionRef={optionRefs.setVariantOption}
+                    firstOptionRef={(element) => {
+                      optionRefs.current.variantOption = element;
+                    }}
                   />
                 </div>
 
@@ -572,16 +819,40 @@ function CarsPanel(props: {
                     </h3>
                     <WizardOptions
                       id="wizardTireList"
+                      onSelectOption={(item) => {
+                        const index = parseWizardOptionIndex(item.value);
+                        if (index == null) {
+                          return;
+                        }
+                        state.wizardActions?.onAction({
+                          type: "select-tire",
+                          index,
+                        });
+                      }}
                       section={wizardModel.tireOptions}
-                      firstOptionRef={optionRefs.setTireOption}
+                      firstOptionRef={(element) => {
+                        optionRefs.current.tireOption = element;
+                      }}
                     />
                     <h3 data-i18n="settings.car.step_gearbox" class="wizard-section-title">
                       {t("settings.car.step_gearbox", "Select Gearbox")}
                     </h3>
                     <WizardOptions
                       id="wizardGearboxList"
+                      onSelectOption={(item) => {
+                        const index = parseWizardOptionIndex(item.value);
+                        if (index == null) {
+                          return;
+                        }
+                        state.wizardActions?.onAction({
+                          type: "select-gearbox",
+                          index,
+                        });
+                      }}
                       section={wizardModel.gearboxOptions}
-                      firstOptionRef={optionRefs.setGearboxOption}
+                      firstOptionRef={(element) => {
+                        optionRefs.current.gearboxOption = element;
+                      }}
                     />
                   </div>
                   <div class="wizard-branch-divider">
@@ -615,6 +886,8 @@ function CarsPanel(props: {
                           min="100"
                           step="1"
                           value={wizardModel.manualInputs.tireWidth}
+                          onInput={(event) => emitManualInputs("tireWidth", event.currentTarget.value)}
+                          ref={wizTireWidthInputRef}
                         />
                       </div>
                       <div class="field">
@@ -627,6 +900,8 @@ function CarsPanel(props: {
                           min="20"
                           step="1"
                           value={wizardModel.manualInputs.tireAspect}
+                          onInput={(event) => emitManualInputs("tireAspect", event.currentTarget.value)}
+                          ref={wizTireAspectInputRef}
                         />
                       </div>
                       <div class="field">
@@ -639,6 +914,8 @@ function CarsPanel(props: {
                           min="10"
                           step="0.5"
                           value={wizardModel.manualInputs.rim}
+                          onInput={(event) => emitManualInputs("rim", event.currentTarget.value)}
+                          ref={wizRimInputRef}
                         />
                       </div>
                       <div class="field">
@@ -651,6 +928,8 @@ function CarsPanel(props: {
                           step="0.01"
                           min="0.1"
                           value={wizardModel.manualInputs.finalDrive}
+                          onInput={(event) => emitManualInputs("finalDrive", event.currentTarget.value)}
+                          ref={wizFinalDriveInputRef}
                         />
                       </div>
                       <div class="field">
@@ -663,6 +942,8 @@ function CarsPanel(props: {
                           step="0.01"
                           min="0.1"
                           value={wizardModel.manualInputs.topGear}
+                          onInput={(event) => emitManualInputs("topGear", event.currentTarget.value)}
+                          ref={wizGearRatioInputRef}
                         />
                       </div>
                     </div>
@@ -680,6 +961,7 @@ function CarsPanel(props: {
                     class="btn btn--muted"
                     hidden={!wizardModel.backVisible}
                     data-i18n="settings.car.back"
+                    onClick={() => state.wizardActions?.onAction({ type: "back" })}
                   >
                     {t("settings.car.back", "Back")}
                   </button>
@@ -689,6 +971,8 @@ function CarsPanel(props: {
                     hidden={!wizardModel.finishVisible}
                     disabled={!wizardModel.finishEnabled}
                     data-i18n="settings.car.finish_add"
+                    onClick={() => state.wizardActions?.onAction({ type: "finish" })}
+                    ref={wizardManualAddBtnRef}
                   >
                     {t("settings.car.finish_add", "Add Car")}
                   </button>
@@ -726,186 +1010,42 @@ function CarsPanel(props: {
   );
 }
 
-function queryInHost<T extends HTMLElement>(host: HTMLElement, selector: string): T | null {
-  return host.querySelector<T>(selector);
-}
-
-function requireInHost<T extends HTMLElement>(host: HTMLElement, selector: string): T {
-  const element = queryInHost<T>(host, selector);
-  if (!element) {
-    throw new Error(`Cars feature requires ${selector}`);
-  }
-  return element;
-}
-
-function createCarsPanelDom(host: HTMLElement): UiCarsDom {
-  return {
-    addCarBtn: requireInHost<HTMLButtonElement>(host, "#addCarBtn"),
-    wizardBackdrop: queryInHost<HTMLElement>(host, "#wizardBackdrop"),
-    addCarWizard: requireInHost<HTMLElement>(host, "#addCarWizard"),
-    wizardCloseBtn: queryInHost<HTMLButtonElement>(host, "#wizardCloseBtn"),
-    wizardBackBtn: queryInHost<HTMLButtonElement>(host, "#wizardBackBtn"),
-    wizardBrandList: queryInHost<HTMLElement>(host, "#wizardBrandList"),
-    wizardTypeList: queryInHost<HTMLElement>(host, "#wizardTypeList"),
-    wizardModelList: queryInHost<HTMLElement>(host, "#wizardModelList"),
-    wizardVariantList: queryInHost<HTMLElement>(host, "#wizardVariantList"),
-    wizardTireList: queryInHost<HTMLElement>(host, "#wizardTireList"),
-    wizardGearboxList: queryInHost<HTMLElement>(host, "#wizardGearboxList"),
-    wizardCustomBrandInput: queryInHost<HTMLInputElement>(host, "#wizardCustomBrand"),
-    wizardCustomBrandBtn: queryInHost<HTMLButtonElement>(host, "#wizardCustomBrandBtn"),
-    wizardCustomTypeInput: queryInHost<HTMLInputElement>(host, "#wizardCustomType"),
-    wizardCustomTypeBtn: queryInHost<HTMLButtonElement>(host, "#wizardCustomTypeBtn"),
-    wizardCustomModelInput: queryInHost<HTMLInputElement>(host, "#wizardCustomModel"),
-    wizardCustomModelBtn: queryInHost<HTMLButtonElement>(host, "#wizardCustomModelBtn"),
-    wizardManualAddBtn: queryInHost<HTMLButtonElement>(host, "#wizardManualAddBtn"),
-    wizTireWidthInput: queryInHost<HTMLInputElement>(host, "#wizTireWidth"),
-    wizTireAspectInput: queryInHost<HTMLInputElement>(host, "#wizTireAspect"),
-    wizRimInput: queryInHost<HTMLInputElement>(host, "#wizRim"),
-    wizFinalDriveInput: queryInHost<HTMLInputElement>(host, "#wizFinalDrive"),
-    wizGearRatioInput: queryInHost<HTMLInputElement>(host, "#wizGearRatio"),
-  };
-}
-
 export function mountCarsPanel(host: HTMLElement): CarsPanelView {
-  const bridgeState: CarsPanelBridgeState = {
+  const bridgeState = signal<CarsPanelBridgeState>({
     actions: null,
     model: DEFAULT_CARS_PANEL_MODEL,
+    wizardActions: null,
     wizardModel: createClosedCarsWizardRenderModel(),
-  };
-  const optionRefs: CarsWizardOptionRefs = {
-    brandOption: null,
-    gearboxOption: null,
-    modelOption: null,
-    tireOption: null,
-    typeOption: null,
-    variantOption: null,
-  };
+  });
+  const wizardFocusRequest = signal<CarsWizardFocusRequest | null>(null);
+  let focusRequestToken = 0;
   const mount = createUiPreactMount(host);
-  const render = () => mount.render(
+  mount.render(
     <CarsPanel
-      optionRefs={{
-        setBrandOption: (element) => {
-          optionRefs.brandOption = element;
-        },
-        setGearboxOption: (element) => {
-          optionRefs.gearboxOption = element;
-        },
-        setModelOption: (element) => {
-          optionRefs.modelOption = element;
-        },
-        setTireOption: (element) => {
-          optionRefs.tireOption = element;
-        },
-        setTypeOption: (element) => {
-          optionRefs.typeOption = element;
-        },
-        setVariantOption: (element) => {
-          optionRefs.variantOption = element;
-        },
-      }}
       state={bridgeState}
+      wizardFocusRequest={wizardFocusRequest}
     />,
   );
-  render();
-
-  const dom = createCarsPanelDom(host);
-  let lastWizardOpenState = false;
-  let wizardDisposer: ViewDisposer | null = null;
-
-  function focus(target: CarsFeatureFocusTarget): void {
-    switch (target) {
-      case "brand-option":
-        focusElement(optionRefs.brandOption ?? dom.wizardCustomBrandInput);
-        return;
-      case "close":
-        focusElement(dom.wizardCloseBtn);
-        return;
-      case "custom-brand":
-        focusElement(dom.wizardCustomBrandInput);
-        return;
-      case "custom-model":
-        focusElement(dom.wizardCustomModelInput);
-        return;
-      case "custom-type":
-        focusElement(dom.wizardCustomTypeInput);
-        return;
-      case "finish":
-        focusElement(dom.wizardManualAddBtn);
-        return;
-      case "gearbox-option":
-        focusElement(optionRefs.gearboxOption ?? dom.wizardManualAddBtn);
-        return;
-      case "manual-final-drive":
-        focusElement(dom.wizFinalDriveInput);
-        return;
-      case "manual-rim":
-        focusElement(dom.wizRimInput);
-        return;
-      case "manual-tire-aspect":
-        focusElement(dom.wizTireAspectInput);
-        return;
-      case "manual-tire-width":
-        focusElement(dom.wizTireWidthInput);
-        return;
-      case "manual-top-gear":
-        focusElement(dom.wizGearRatioInput);
-        return;
-      case "model-option":
-        focusElement(optionRefs.modelOption ?? dom.wizardCustomModelInput);
-        return;
-      case "spec-selection":
-        focusElement(optionRefs.tireOption ?? optionRefs.gearboxOption ?? dom.wizTireWidthInput);
-        return;
-      case "type-option":
-        focusElement(optionRefs.typeOption ?? dom.wizardCustomTypeInput);
-        return;
-      case "variant-option":
-        focusElement(optionRefs.variantOption);
-        return;
-    }
-  }
 
   return {
     list: {
       bindActions(handlers): void {
-        bridgeState.actions = handlers;
-        render();
+        bridgeState.value = { ...bridgeState.value, actions: handlers };
       },
       render(model): void {
-        bridgeState.model = model;
-        render();
+        bridgeState.value = { ...bridgeState.value, model };
       },
     },
     wizard: {
-      dom,
       bindActions(handlers): void {
-        wizardDisposer?.();
-        wizardDisposer = bindCarsFeatureInteractions(dom, handlers);
+        bridgeState.value = { ...bridgeState.value, wizardActions: handlers };
       },
-      captureReturnFocusTarget(): HTMLElement | null {
-        return document.activeElement instanceof HTMLElement ? document.activeElement : dom.addCarBtn;
+      focus(target): void {
+        focusRequestToken += 1;
+        wizardFocusRequest.value = { target, token: focusRequestToken };
       },
-      focus,
-      readManualInputs(): CarsFeatureManualInputState {
-        return {
-          finalDrive: dom.wizFinalDriveInput?.value ?? "",
-          rim: dom.wizRimInput?.value ?? "",
-          tireAspect: dom.wizTireAspectInput?.value ?? "",
-          tireWidth: dom.wizTireWidthInput?.value ?? "",
-          topGear: dom.wizGearRatioInput?.value ?? "",
-        };
-      },
-      render(model): void {
-        bridgeState.wizardModel = model;
-        render();
-        if (model.isOpen && !lastWizardOpenState) {
-          dom.addCarWizard.scrollTop = 0;
-        }
-        lastWizardOpenState = model.isOpen;
-      },
-      restoreFocus(target): void {
-        const safeTarget = target && document.contains(target) ? target : dom.addCarBtn;
-        focusElement(safeTarget);
+      setModel(model): void {
+        bridgeState.value = { ...bridgeState.value, wizardModel: model };
       },
     },
   };

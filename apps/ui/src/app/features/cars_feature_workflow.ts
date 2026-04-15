@@ -9,6 +9,7 @@ import {
   buildWizardCarName,
   buildWizardSummaryData,
   canFinishWizard,
+  DEFAULT_CARS_WIZARD_MANUAL_INPUTS,
   createInitialWizardState,
   getResolvedWizardSpecBranch,
   getWizardActionHint,
@@ -102,7 +103,7 @@ export interface CarsFeatureWorkflow {
   getRenderState(): CarsFeatureRenderState;
   goBack(): Promise<void>;
   handleManualInputsChanged(inputs: CarsFeatureManualInputState): void;
-  openWizard(initialInputs: CarsFeatureManualInputState): Promise<void>;
+  openWizard(): Promise<void>;
   selectBrand(value: string): Promise<void>;
   selectGearbox(index: number): void;
   selectModel(index: number): Promise<void>;
@@ -196,11 +197,7 @@ export function createCarsFeatureWorkflow(
 
   let isOpen = false;
   let manualInputs: CarsFeatureManualInputState = {
-    finalDrive: "",
-    rim: "",
-    tireAspect: "",
-    tireWidth: "",
-    topGear: "",
+    ...DEFAULT_CARS_WIZARD_MANUAL_INPUTS,
   };
   let brandOptions = createIdleOptionsState<string>();
   let typeOptions = createIdleOptionsState<string>();
@@ -506,9 +503,9 @@ export function createCarsFeatureWorkflow(
       }
     },
 
-    async openWizard(initialInputs: CarsFeatureManualInputState): Promise<void> {
+    async openWizard(): Promise<void> {
       resetWizardState(wizardState);
-      manualInputs = cloneManualInputs(initialInputs);
+      manualInputs = cloneManualInputs(manualInputs);
       brandOptions = createIdleOptionsState<string>();
       typeOptions = createIdleOptionsState<string>();
       modelOptions = createIdleOptionsState<CarLibraryModel>();
