@@ -1,13 +1,19 @@
 import type {
-  AnalysisSettingsRequest,
   AnalysisSettingsPayload,
+  AnalysisSettingsRequest,
 } from "../../transport/http_models";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
-import type { SettingsAnalysisPanelDom } from "../views/analysis_panel";
-import { setSettingsAnalysisGuidance } from "../views/settings_analysis_guidance";
-import { setSettingsFeedback } from "../views/settings_feedback";
+import type {
+  AnalysisPanelFieldKey,
+  AnalysisPanelRenderModel,
+  AnalysisPanelView,
+} from "../views/analysis_panel";
+import {
+  buildSettingsAnalysisGuidanceRenderModel,
+} from "../views/settings_analysis_guidance";
+import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 
 export const ANALYSIS_SETTING_KEYS = [
   "tire_width_mm",
@@ -28,7 +34,7 @@ export const ANALYSIS_SETTING_KEYS = [
 ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
 
 export interface SettingsAnalysisModuleDeps extends FeatureDepsBase {
-  dom: SettingsAnalysisPanelDom;
+  panel: AnalysisPanelView;
   settings: SettingsState;
   renderSpectrum: () => void;
   hasValidActiveCar: () => boolean;
@@ -43,178 +49,170 @@ export interface SettingsAnalysisModule {
   saveAnalysisFromInputs(): void;
 }
 
+type EditableAnalysisDrafts = Record<AnalysisPanelFieldKey, string>;
+type UnitSuffix = "%" | " Hz";
+
+interface AnalysisFieldConfig {
+  key: AnalysisPanelFieldKey;
+  labelKey: string;
+  unit: UnitSuffix;
+  hardMin: number;
+  hardMax: number;
+  guidedMin: number;
+  guidedMax: number;
+  defaultValue: number;
+}
+
+interface AnalysisFieldState {
+  config: AnalysisFieldConfig;
+  rawValue: string;
+  numericValue: number;
+}
+
+const EDITABLE_ANALYSIS_KEYS = [
+  "wheel_bandwidth_pct",
+  "driveshaft_bandwidth_pct",
+  "engine_bandwidth_pct",
+  "speed_uncertainty_pct",
+  "tire_diameter_uncertainty_pct",
+  "final_drive_uncertainty_pct",
+  "gear_uncertainty_pct",
+  "min_abs_band_hz",
+  "max_band_half_width_pct",
+] as const satisfies readonly AnalysisPanelFieldKey[];
+
+const ANALYSIS_FIELD_CONFIGS: Record<AnalysisPanelFieldKey, AnalysisFieldConfig> = {
+  wheel_bandwidth_pct: {
+    key: "wheel_bandwidth_pct",
+    labelKey: "settings.wheel_bandwidth",
+    unit: "%",
+    hardMin: 0.1,
+    hardMax: 100,
+    guidedMin: 2,
+    guidedMax: 12,
+    defaultValue: defaultVehicleSettings.wheel_bandwidth_pct,
+  },
+  driveshaft_bandwidth_pct: {
+    key: "driveshaft_bandwidth_pct",
+    labelKey: "settings.driveshaft_bandwidth",
+    unit: "%",
+    hardMin: 0.1,
+    hardMax: 100,
+    guidedMin: 2,
+    guidedMax: 10,
+    defaultValue: defaultVehicleSettings.driveshaft_bandwidth_pct,
+  },
+  engine_bandwidth_pct: {
+    key: "engine_bandwidth_pct",
+    labelKey: "settings.engine_bandwidth",
+    unit: "%",
+    hardMin: 0.1,
+    hardMax: 100,
+    guidedMin: 2,
+    guidedMax: 12,
+    defaultValue: defaultVehicleSettings.engine_bandwidth_pct,
+  },
+  speed_uncertainty_pct: {
+    key: "speed_uncertainty_pct",
+    labelKey: "settings.speed_uncertainty",
+    unit: "%",
+    hardMin: 0,
+    hardMax: 100,
+    guidedMin: 0,
+    guidedMax: 5,
+    defaultValue: defaultVehicleSettings.speed_uncertainty_pct,
+  },
+  tire_diameter_uncertainty_pct: {
+    key: "tire_diameter_uncertainty_pct",
+    labelKey: "settings.tire_diameter_uncertainty",
+    unit: "%",
+    hardMin: 0,
+    hardMax: 100,
+    guidedMin: 0,
+    guidedMax: 5,
+    defaultValue: defaultVehicleSettings.tire_diameter_uncertainty_pct,
+  },
+  final_drive_uncertainty_pct: {
+    key: "final_drive_uncertainty_pct",
+    labelKey: "settings.final_drive_uncertainty",
+    unit: "%",
+    hardMin: 0,
+    hardMax: 100,
+    guidedMin: 0,
+    guidedMax: 2,
+    defaultValue: defaultVehicleSettings.final_drive_uncertainty_pct,
+  },
+  gear_uncertainty_pct: {
+    key: "gear_uncertainty_pct",
+    labelKey: "settings.gear_slip_uncertainty",
+    unit: "%",
+    hardMin: 0,
+    hardMax: 100,
+    guidedMin: 0,
+    guidedMax: 4,
+    defaultValue: defaultVehicleSettings.gear_uncertainty_pct,
+  },
+  min_abs_band_hz: {
+    key: "min_abs_band_hz",
+    labelKey: "settings.min_half_width",
+    unit: " Hz",
+    hardMin: 0,
+    hardMax: 500,
+    guidedMin: 0,
+    guidedMax: 2,
+    defaultValue: defaultVehicleSettings.min_abs_band_hz,
+  },
+  max_band_half_width_pct: {
+    key: "max_band_half_width_pct",
+    labelKey: "settings.max_half_width",
+    unit: "%",
+    hardMin: 0.1,
+    hardMax: 100,
+    guidedMin: 1,
+    guidedMax: 12,
+    defaultValue: defaultVehicleSettings.max_band_half_width_pct,
+  },
+};
+
+function analysisFieldConfig(key: AnalysisPanelFieldKey): AnalysisFieldConfig {
+  return ANALYSIS_FIELD_CONFIGS[key];
+}
+
+function buildDraftValues(settings: SettingsState): EditableAnalysisDrafts {
+  return {
+    wheel_bandwidth_pct: formatSettingValue(settings.vehicleSettings.wheel_bandwidth_pct),
+    driveshaft_bandwidth_pct: formatSettingValue(
+      settings.vehicleSettings.driveshaft_bandwidth_pct,
+    ),
+    engine_bandwidth_pct: formatSettingValue(settings.vehicleSettings.engine_bandwidth_pct),
+    speed_uncertainty_pct: formatSettingValue(settings.vehicleSettings.speed_uncertainty_pct),
+    tire_diameter_uncertainty_pct: formatSettingValue(
+      settings.vehicleSettings.tire_diameter_uncertainty_pct,
+    ),
+    final_drive_uncertainty_pct: formatSettingValue(
+      settings.vehicleSettings.final_drive_uncertainty_pct,
+    ),
+    gear_uncertainty_pct: formatSettingValue(settings.vehicleSettings.gear_uncertainty_pct),
+    min_abs_band_hz: formatSettingValue(settings.vehicleSettings.min_abs_band_hz),
+    max_band_half_width_pct: formatSettingValue(
+      settings.vehicleSettings.max_band_half_width_pct,
+    ),
+  };
+}
+
+function formatSettingValue(value: number): string {
+  return Number.isInteger(value)
+    ? String(value)
+    : String(Number(value.toFixed(1)));
+}
+
 export function createSettingsAnalysisModule(
   ctx: SettingsAnalysisModuleDeps,
 ): SettingsAnalysisModule {
-  const { settings, dom: els, t } = ctx;
-  type EditableAnalysisKey =
-    | "wheel_bandwidth_pct"
-    | "driveshaft_bandwidth_pct"
-    | "engine_bandwidth_pct"
-    | "speed_uncertainty_pct"
-    | "tire_diameter_uncertainty_pct"
-    | "final_drive_uncertainty_pct"
-    | "gear_uncertainty_pct"
-    | "min_abs_band_hz"
-    | "max_band_half_width_pct";
-  type UnitSuffix = "%" | " Hz";
-  interface AnalysisFieldConfig {
-    key: EditableAnalysisKey;
-    labelKey: string;
-    unit: UnitSuffix;
-    hardMin: number;
-    hardMax: number;
-    guidedMin: number;
-    guidedMax: number;
-    defaultValue: number;
-    guidanceId: string;
-    guidance: () => HTMLElement | null;
-    input: () => HTMLInputElement | null;
-  }
-  const analysisFields: readonly AnalysisFieldConfig[] = [
-    {
-      key: "wheel_bandwidth_pct",
-      labelKey: "settings.wheel_bandwidth",
-      unit: "%",
-      hardMin: 0.1,
-      hardMax: 100,
-      guidedMin: 2,
-      guidedMax: 12,
-      defaultValue: defaultVehicleSettings.wheel_bandwidth_pct,
-      guidanceId: "wheelBandwidthGuidance",
-      guidance: () => els.analysisFieldGuidance.wheelBandwidth,
-      input: () => els.wheelBandwidthInput,
-    },
-    {
-      key: "driveshaft_bandwidth_pct",
-      labelKey: "settings.driveshaft_bandwidth",
-      unit: "%",
-      hardMin: 0.1,
-      hardMax: 100,
-      guidedMin: 2,
-      guidedMax: 10,
-      defaultValue: defaultVehicleSettings.driveshaft_bandwidth_pct,
-      guidanceId: "driveshaftBandwidthGuidance",
-      guidance: () => els.analysisFieldGuidance.driveshaftBandwidth,
-      input: () => els.driveshaftBandwidthInput,
-    },
-    {
-      key: "engine_bandwidth_pct",
-      labelKey: "settings.engine_bandwidth",
-      unit: "%",
-      hardMin: 0.1,
-      hardMax: 100,
-      guidedMin: 2,
-      guidedMax: 12,
-      defaultValue: defaultVehicleSettings.engine_bandwidth_pct,
-      guidanceId: "engineBandwidthGuidance",
-      guidance: () => els.analysisFieldGuidance.engineBandwidth,
-      input: () => els.engineBandwidthInput,
-    },
-    {
-      key: "speed_uncertainty_pct",
-      labelKey: "settings.speed_uncertainty",
-      unit: "%",
-      hardMin: 0,
-      hardMax: 100,
-      guidedMin: 0,
-      guidedMax: 5,
-      defaultValue: defaultVehicleSettings.speed_uncertainty_pct,
-      guidanceId: "speedUncertaintyGuidance",
-      guidance: () => els.analysisFieldGuidance.speedUncertainty,
-      input: () => els.speedUncertaintyInput,
-    },
-    {
-      key: "tire_diameter_uncertainty_pct",
-      labelKey: "settings.tire_diameter_uncertainty",
-      unit: "%",
-      hardMin: 0,
-      hardMax: 100,
-      guidedMin: 0,
-      guidedMax: 5,
-      defaultValue: defaultVehicleSettings.tire_diameter_uncertainty_pct,
-      guidanceId: "tireDiameterUncertaintyGuidance",
-      guidance: () => els.analysisFieldGuidance.tireDiameterUncertainty,
-      input: () => els.tireDiameterUncertaintyInput,
-    },
-    {
-      key: "final_drive_uncertainty_pct",
-      labelKey: "settings.final_drive_uncertainty",
-      unit: "%",
-      hardMin: 0,
-      hardMax: 100,
-      guidedMin: 0,
-      guidedMax: 2,
-      defaultValue: defaultVehicleSettings.final_drive_uncertainty_pct,
-      guidanceId: "finalDriveUncertaintyGuidance",
-      guidance: () => els.analysisFieldGuidance.finalDriveUncertainty,
-      input: () => els.finalDriveUncertaintyInput,
-    },
-    {
-      key: "gear_uncertainty_pct",
-      labelKey: "settings.gear_slip_uncertainty",
-      unit: "%",
-      hardMin: 0,
-      hardMax: 100,
-      guidedMin: 0,
-      guidedMax: 4,
-      defaultValue: defaultVehicleSettings.gear_uncertainty_pct,
-      guidanceId: "gearUncertaintyGuidance",
-      guidance: () => els.analysisFieldGuidance.gearUncertainty,
-      input: () => els.gearUncertaintyInput,
-    },
-    {
-      key: "min_abs_band_hz",
-      labelKey: "settings.min_half_width",
-      unit: " Hz",
-      hardMin: 0,
-      hardMax: 500,
-      guidedMin: 0,
-      guidedMax: 2,
-      defaultValue: defaultVehicleSettings.min_abs_band_hz,
-      guidanceId: "minAbsBandHzGuidance",
-      guidance: () => els.analysisFieldGuidance.minAbsBandHz,
-      input: () => els.minAbsBandHzInput,
-    },
-    {
-      key: "max_band_half_width_pct",
-      labelKey: "settings.max_half_width",
-      unit: "%",
-      hardMin: 0.1,
-      hardMax: 100,
-      guidedMin: 1,
-      guidedMax: 12,
-      defaultValue: defaultVehicleSettings.max_band_half_width_pct,
-      guidanceId: "maxBandHalfWidthGuidance",
-      guidance: () => els.analysisFieldGuidance.maxBandHalfWidth,
-      input: () => els.maxBandHalfWidthInput,
-    },
-  ];
-
-  interface AnalysisFieldState {
-    config: AnalysisFieldConfig;
-    rawValue: string;
-    numericValue: number;
-  }
-  const fieldErrorMessages = new Map<EditableAnalysisKey, string>();
-
-  function formatSettingValue(value: number): string {
-    return Number.isInteger(value)
-      ? String(value)
-      : String(Number(value.toFixed(1)));
-  }
-
-  function clearFieldValidationState(): void {
-    fieldErrorMessages.clear();
-    for (const field of analysisFields) {
-      field.input()?.removeAttribute("aria-invalid");
-    }
-    renderFieldGuidance();
-  }
-
-  function openAnalysisGuidance(): void {
-    els.analysisGuidanceHelp?.setAttribute("open", "");
-  }
+  const { panel, settings, t } = ctx;
+  let draftValues = buildDraftValues(settings);
+  let saveFeedback: SettingsFeedbackMessage | null = null;
+  const fieldErrorMessages = new Map<AnalysisPanelFieldKey, string>();
 
   function formatRange(min: number, max: number, unit: UnitSuffix): string {
     return t("settings.analysis.range_value", {
@@ -224,22 +222,32 @@ export function createSettingsAnalysisModule(
     });
   }
 
-  function markFieldInvalid(field: AnalysisFieldConfig, message: string): void {
-    fieldErrorMessages.set(field.key, message);
-    renderFieldGuidance();
-    field.input()?.setAttribute("aria-invalid", "true");
-    field.input()?.focus();
-    openAnalysisGuidance();
+  function buildPanelModel(): AnalysisPanelRenderModel {
+    return {
+      fields: {
+        wheel_bandwidth_pct: buildFieldRenderModel("wheel_bandwidth_pct"),
+        driveshaft_bandwidth_pct: buildFieldRenderModel("driveshaft_bandwidth_pct"),
+        engine_bandwidth_pct: buildFieldRenderModel("engine_bandwidth_pct"),
+        speed_uncertainty_pct: buildFieldRenderModel("speed_uncertainty_pct"),
+        tire_diameter_uncertainty_pct: buildFieldRenderModel(
+          "tire_diameter_uncertainty_pct",
+        ),
+        final_drive_uncertainty_pct: buildFieldRenderModel(
+          "final_drive_uncertainty_pct",
+        ),
+        gear_uncertainty_pct: buildFieldRenderModel("gear_uncertainty_pct"),
+        min_abs_band_hz: buildFieldRenderModel("min_abs_band_hz"),
+        max_band_half_width_pct: buildFieldRenderModel("max_band_half_width_pct"),
+      },
+      saveFeedback,
+    };
   }
 
-  function renderFieldGuidance(): void {
-    for (const field of analysisFields) {
-      const help = field.guidance();
-      if (!help) {
-        continue;
-      }
-      const errorMessage = fieldErrorMessages.get(field.key);
-      setSettingsAnalysisGuidance(help, {
+  function buildFieldRenderModel(fieldKey: AnalysisPanelFieldKey) {
+    const field = analysisFieldConfig(fieldKey);
+    const errorMessage = fieldErrorMessages.get(field.key);
+    return {
+      guidance: buildSettingsAnalysisGuidanceRenderModel({
         lines: [
           {
             label: t("settings.analysis.recommended_range_label"),
@@ -251,27 +259,35 @@ export function createSettingsAnalysisModule(
           },
         ],
         errorMessage,
-        escapeHtml: ctx.escapeHtml,
-      });
-    }
+      }),
+      invalid: errorMessage !== undefined,
+      value: draftValues[field.key],
+    };
   }
 
-  function applyInputConstraints(): void {
-    for (const field of analysisFields) {
-      const input = field.input();
-      if (!input) {
-        continue;
-      }
-      input.min = String(field.hardMin);
-      input.max = String(field.hardMax);
-      input.step = "0.1";
-      input.setAttribute("aria-describedby", field.guidanceId);
-    }
+  function renderPanel(): void {
+    panel.render(buildPanelModel());
+  }
+
+  function clearFieldValidationState(): void {
+    fieldErrorMessages.clear();
+  }
+
+  function openAnalysisGuidance(): void {
+    panel.openGuidance();
+  }
+
+  function markFieldInvalid(field: AnalysisFieldConfig, message: string): void {
+    fieldErrorMessages.set(field.key, message);
+    renderPanel();
+    panel.focusField(field.key);
+    openAnalysisGuidance();
   }
 
   function collectFieldStates(): AnalysisFieldState[] {
-    return analysisFields.map((config) => {
-      const rawValue = config.input()?.value.trim() ?? "";
+    return EDITABLE_ANALYSIS_KEYS.map((fieldKey) => {
+      const config = analysisFieldConfig(fieldKey);
+      const rawValue = draftValues[fieldKey].trim();
       return {
         config,
         rawValue,
@@ -299,7 +315,8 @@ export function createSettingsAnalysisModule(
       return;
     }
     clearFieldValidationState();
-    setSettingsFeedback(els.analysisSaveFeedback, null);
+    saveFeedback = null;
+    renderPanel();
     void syncAnalysisSettingsToServer({
       wheel_bandwidth_pct: defaultVehicleSettings.wheel_bandwidth_pct,
       driveshaft_bandwidth_pct: defaultVehicleSettings.driveshaft_bandwidth_pct,
@@ -315,53 +332,11 @@ export function createSettingsAnalysisModule(
     });
   }
 
-  function syncNumericInputValue(
-    input: HTMLInputElement | null,
-    value: number,
-  ): void {
-    if (input) input.value = String(value);
-  }
-
   function syncSettingsInputs(): void {
-    applyInputConstraints();
+    draftValues = buildDraftValues(settings);
     clearFieldValidationState();
-    setSettingsFeedback(els.analysisSaveFeedback, null);
-    syncNumericInputValue(
-      els.wheelBandwidthInput,
-      settings.vehicleSettings.wheel_bandwidth_pct,
-    );
-    syncNumericInputValue(
-      els.driveshaftBandwidthInput,
-      settings.vehicleSettings.driveshaft_bandwidth_pct,
-    );
-    syncNumericInputValue(
-      els.engineBandwidthInput,
-      settings.vehicleSettings.engine_bandwidth_pct,
-    );
-    syncNumericInputValue(
-      els.speedUncertaintyInput,
-      settings.vehicleSettings.speed_uncertainty_pct,
-    );
-    syncNumericInputValue(
-      els.tireDiameterUncertaintyInput,
-      settings.vehicleSettings.tire_diameter_uncertainty_pct,
-    );
-    syncNumericInputValue(
-      els.finalDriveUncertaintyInput,
-      settings.vehicleSettings.final_drive_uncertainty_pct,
-    );
-    syncNumericInputValue(
-      els.gearUncertaintyInput,
-      settings.vehicleSettings.gear_uncertainty_pct,
-    );
-    syncNumericInputValue(
-      els.minAbsBandHzInput,
-      settings.vehicleSettings.min_abs_band_hz,
-    );
-    syncNumericInputValue(
-      els.maxBandHalfWidthInput,
-      settings.vehicleSettings.max_band_half_width_pct,
-    );
+    saveFeedback = null;
+    renderPanel();
   }
 
   function applyAnalysisSettingsPayload(
@@ -369,7 +344,9 @@ export function createSettingsAnalysisModule(
   ): void {
     for (const key of ANALYSIS_SETTING_KEYS) {
       const value = serverSettings[key];
-      if (typeof value === "number") settings.vehicleSettings[key] = value;
+      if (typeof value === "number") {
+        settings.vehicleSettings[key] = value;
+      }
     }
     syncSettingsInputs();
     ctx.renderSpectrum();
@@ -383,13 +360,15 @@ export function createSettingsAnalysisModule(
       applyAnalysisSettingsPayload(saved);
     } catch (error) {
       openAnalysisGuidance();
-      setSettingsFeedback(els.analysisSaveFeedback, {
+      saveFeedback = {
         tone: "error",
         title: t("settings.analysis.save_failed_title"),
         body:
           error instanceof Error ? error.message : t("settings.save_failed"),
         detail: t("settings.analysis.save_failed_detail"),
-      });
+      };
+      renderPanel();
+      ctx.onSaveError(error);
     }
   }
 
@@ -410,6 +389,7 @@ export function createSettingsAnalysisModule(
       return;
     }
     clearFieldValidationState();
+    saveFeedback = null;
     const fieldStates = collectFieldStates();
     const missingField = fieldStates.find(
       (field) =>
@@ -482,19 +462,29 @@ export function createSettingsAnalysisModule(
     void syncAnalysisSettingsToServer(payload);
   }
 
+  function handleFieldInput(
+    action: { field: AnalysisPanelFieldKey; value: string },
+  ): void {
+    draftValues = {
+      ...draftValues,
+      [action.field]: action.value,
+    };
+    fieldErrorMessages.delete(action.field);
+    saveFeedback = null;
+    renderPanel();
+  }
+
   function bindHandlers(): void {
-    applyInputConstraints();
-    renderFieldGuidance();
-    els.saveAnalysisBtn?.addEventListener("click", saveAnalysisFromInputs);
-    els.resetAnalysisBtn?.addEventListener("click", resetAnalysisToDefaults);
-    for (const field of analysisFields) {
-      field.input()?.addEventListener("input", () => {
-        field.input()?.removeAttribute("aria-invalid");
-        fieldErrorMessages.delete(field.key);
-        renderFieldGuidance();
-        setSettingsFeedback(els.analysisSaveFeedback, null);
-      });
-    }
+    panel.bindActions({
+      onFieldInput: handleFieldInput,
+      onReset: resetAnalysisToDefaults,
+      onSave: saveAnalysisFromInputs,
+    });
+    panel.setCarAvailability({
+      hasActiveCar: ctx.hasValidActiveCar(),
+      isLoading: false,
+    });
+    renderPanel();
   }
 
   return {

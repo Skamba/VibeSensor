@@ -1,46 +1,307 @@
-import { h } from "preact";
+import type { JSX } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import type {
+  SettingsAnalysisGuidanceRenderModel,
+} from "./settings_analysis_guidance";
+import type { SettingsFeedbackMessage } from "./settings_feedback";
 
-export interface SettingsAnalysisFieldGuidanceSlots {
-  wheelBandwidth: HTMLElement | null;
-  driveshaftBandwidth: HTMLElement | null;
-  engineBandwidth: HTMLElement | null;
-  speedUncertainty: HTMLElement | null;
-  tireDiameterUncertainty: HTMLElement | null;
-  finalDriveUncertainty: HTMLElement | null;
-  gearUncertainty: HTMLElement | null;
-  minAbsBandHz: HTMLElement | null;
-  maxBandHalfWidth: HTMLElement | null;
+export type AnalysisPanelFieldKey =
+  | "wheel_bandwidth_pct"
+  | "driveshaft_bandwidth_pct"
+  | "engine_bandwidth_pct"
+  | "speed_uncertainty_pct"
+  | "tire_diameter_uncertainty_pct"
+  | "final_drive_uncertainty_pct"
+  | "gear_uncertainty_pct"
+  | "min_abs_band_hz"
+  | "max_band_half_width_pct";
+
+export interface AnalysisPanelFieldRenderModel {
+  guidance: SettingsAnalysisGuidanceRenderModel;
+  invalid: boolean;
+  value: string;
 }
 
-export interface SettingsAnalysisPanelDom {
-  wheelBandwidthInput: HTMLInputElement | null;
-  driveshaftBandwidthInput: HTMLInputElement | null;
-  engineBandwidthInput: HTMLInputElement | null;
-  speedUncertaintyInput: HTMLInputElement | null;
-  tireDiameterUncertaintyInput: HTMLInputElement | null;
-  finalDriveUncertaintyInput: HTMLInputElement | null;
-  gearUncertaintyInput: HTMLInputElement | null;
-  minAbsBandHzInput: HTMLInputElement | null;
-  maxBandHalfWidthInput: HTMLInputElement | null;
-  saveAnalysisBtn: HTMLButtonElement | null;
-  resetAnalysisBtn: HTMLButtonElement | null;
-  analysisGuidanceHelp: HTMLDetailsElement | null;
-  analysisFieldGuidance: SettingsAnalysisFieldGuidanceSlots;
-  analysisSaveFeedback: HTMLElement | null;
-  analysisNoCarMessage: HTMLElement | null;
+export interface AnalysisPanelRenderModel {
+  fields: Record<AnalysisPanelFieldKey, AnalysisPanelFieldRenderModel>;
+  saveFeedback: SettingsFeedbackMessage | null;
+}
+
+export interface AnalysisPanelCarAvailability {
+  hasActiveCar: boolean;
+  isLoading: boolean;
+}
+
+export interface AnalysisPanelActionHandlers {
+  onFieldInput(action: { field: AnalysisPanelFieldKey; value: string }): void;
+  onReset(): void;
+  onSave(): void;
 }
 
 export interface AnalysisPanelView {
-  readonly dom: SettingsAnalysisPanelDom;
+  bindActions(handlers: AnalysisPanelActionHandlers): void;
+  focusField(field: AnalysisPanelFieldKey): void;
+  openGuidance(): void;
+  render(model: AnalysisPanelRenderModel): void;
+  setCarAvailability(state: AnalysisPanelCarAvailability): void;
 }
 
-function AnalysisPanel() {
+type AnalysisFieldSpec = {
+  fallbackLabel: string;
+  guidanceId: string;
+  inputId: string;
+  key: AnalysisPanelFieldKey;
+  labelKey: string;
+  step: string;
+};
+
+type AnalysisPanelBridgeState = {
+  actions: AnalysisPanelActionHandlers | null;
+  availability: AnalysisPanelCarAvailability;
+  model: AnalysisPanelRenderModel;
+};
+
+const EMPTY_GUIDANCE_MODEL: SettingsAnalysisGuidanceRenderModel = {
+  error: null,
+  lines: [],
+};
+
+const DEFAULT_ANALYSIS_PANEL_MODEL: AnalysisPanelRenderModel = {
+  fields: {
+    wheel_bandwidth_pct: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+    driveshaft_bandwidth_pct: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+    engine_bandwidth_pct: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+    speed_uncertainty_pct: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+    tire_diameter_uncertainty_pct: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+    final_drive_uncertainty_pct: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+    gear_uncertainty_pct: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+    min_abs_band_hz: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+    max_band_half_width_pct: {
+      guidance: EMPTY_GUIDANCE_MODEL,
+      invalid: false,
+      value: "",
+    },
+  },
+  saveFeedback: null,
+};
+
+const DEFAULT_ANALYSIS_CAR_AVAILABILITY: AnalysisPanelCarAvailability = {
+  hasActiveCar: true,
+  isLoading: false,
+};
+
+const ORDER_BAND_FIELDS: readonly AnalysisFieldSpec[] = [
+  {
+    fallbackLabel: "Wheel Bandwidth (%)",
+    guidanceId: "wheelBandwidthGuidance",
+    inputId: "wheelBandwidthInput",
+    key: "wheel_bandwidth_pct",
+    labelKey: "settings.wheel_bandwidth",
+    step: "0.1",
+  },
+  {
+    fallbackLabel: "Driveshaft Bandwidth (%)",
+    guidanceId: "driveshaftBandwidthGuidance",
+    inputId: "driveshaftBandwidthInput",
+    key: "driveshaft_bandwidth_pct",
+    labelKey: "settings.driveshaft_bandwidth",
+    step: "0.1",
+  },
+  {
+    fallbackLabel: "Engine Bandwidth (%)",
+    guidanceId: "engineBandwidthGuidance",
+    inputId: "engineBandwidthInput",
+    key: "engine_bandwidth_pct",
+    labelKey: "settings.engine_bandwidth",
+    step: "0.1",
+  },
+  {
+    fallbackLabel: "Min Half-width (Hz)",
+    guidanceId: "minAbsBandHzGuidance",
+    inputId: "minAbsBandHzInput",
+    key: "min_abs_band_hz",
+    labelKey: "settings.min_half_width",
+    step: "0.1",
+  },
+  {
+    fallbackLabel: "Max Half-width (%)",
+    guidanceId: "maxBandHalfWidthGuidance",
+    inputId: "maxBandHalfWidthInput",
+    key: "max_band_half_width_pct",
+    labelKey: "settings.max_half_width",
+    step: "0.1",
+  },
+] as const;
+
+const UNCERTAINTY_FIELDS: readonly AnalysisFieldSpec[] = [
+  {
+    fallbackLabel: "Speed Uncertainty (%)",
+    guidanceId: "speedUncertaintyGuidance",
+    inputId: "speedUncertaintyInput",
+    key: "speed_uncertainty_pct",
+    labelKey: "settings.speed_uncertainty",
+    step: "0.1",
+  },
+  {
+    fallbackLabel: "Tire Diameter Uncertainty (%)",
+    guidanceId: "tireDiameterUncertaintyGuidance",
+    inputId: "tireDiameterUncertaintyInput",
+    key: "tire_diameter_uncertainty_pct",
+    labelKey: "settings.tire_diameter_uncertainty",
+    step: "0.1",
+  },
+  {
+    fallbackLabel: "Final Drive Uncertainty (%)",
+    guidanceId: "finalDriveUncertaintyGuidance",
+    inputId: "finalDriveUncertaintyInput",
+    key: "final_drive_uncertainty_pct",
+    labelKey: "settings.final_drive_uncertainty",
+    step: "0.1",
+  },
+  {
+    fallbackLabel: "Gear/Slip Uncertainty (%)",
+    guidanceId: "gearUncertaintyGuidance",
+    inputId: "gearUncertaintyInput",
+    key: "gear_uncertainty_pct",
+    labelKey: "settings.gear_slip_uncertainty",
+    step: "0.1",
+  },
+] as const;
+
+function feedbackClassName(message: SettingsFeedbackMessage): string {
+  const tone = message.tone ?? "info";
+  const classNames = ["settings-feedback", `settings-feedback--${tone}`];
+  if (message.compact) {
+    classNames.push("settings-feedback--compact");
+  }
+  return classNames.join(" ");
+}
+
+function SettingsFeedbackBlock(props: {
+  message: SettingsFeedbackMessage;
+}) {
+  const { message } = props;
+  return (
+    <div
+      class={feedbackClassName(message)}
+      aria-live={message.tone === "error" ? "assertive" : "polite"}
+    >
+      {message.title ? (
+        <strong class="settings-feedback__title">{message.title}</strong>
+      ) : null}
+      <span class="settings-feedback__body">{message.body}</span>
+      {message.detail ? (
+        <span class="settings-feedback__detail">{message.detail}</span>
+      ) : null}
+    </div>
+  );
+}
+
+function handleFieldInput(
+  actions: AnalysisPanelActionHandlers | null,
+  field: AnalysisPanelFieldKey,
+  event: JSX.TargetedEvent<HTMLInputElement, Event>,
+): void {
+  actions?.onFieldInput({
+    field,
+    value: event.currentTarget.value,
+  });
+}
+
+function AnalysisFieldGuidance(props: {
+  guidanceId: string;
+  model: SettingsAnalysisGuidanceRenderModel;
+}) {
+  const { guidanceId, model } = props;
+  return (
+    <div id={guidanceId} class="subtle settings-field-guidance">
+      {model.lines.map((line) => (
+        <div key={`${guidanceId}-${line.label}`} class="settings-field-guidance__row">
+          <span class="settings-field-guidance__label">{line.label}</span>
+          {" "}
+          <span class="settings-field-guidance__value">{line.value}</span>
+        </div>
+      ))}
+      {model.error ? <SettingsFeedbackBlock message={model.error} /> : null}
+    </div>
+  );
+}
+
+function AnalysisField(props: {
+  actions: AnalysisPanelActionHandlers | null;
+  model: AnalysisPanelFieldRenderModel;
+  onInputRef: (element: HTMLInputElement | null) => void;
+  spec: AnalysisFieldSpec;
+}) {
+  const { actions, model, onInputRef, spec } = props;
+  return (
+    <div class="field">
+      <label htmlFor={spec.inputId} data-i18n={spec.labelKey}>
+        {spec.fallbackLabel}
+      </label>
+      <input
+        id={spec.inputId}
+        ref={onInputRef}
+        type="number"
+        step={spec.step}
+        inputMode="decimal"
+        value={model.value}
+        aria-invalid={model.invalid ? "true" : undefined}
+        onInput={(event) => handleFieldInput(actions, spec.key, event)}
+      />
+      <AnalysisFieldGuidance guidanceId={spec.guidanceId} model={model.guidance} />
+    </div>
+  );
+}
+
+function AnalysisPanel(props: {
+  guidanceHelpRef: (element: HTMLDetailsElement | null) => void;
+  inputRef: (
+    field: AnalysisPanelFieldKey,
+    element: HTMLInputElement | null,
+  ) => void;
+  state: AnalysisPanelBridgeState;
+}) {
+  const { guidanceHelpRef, inputRef, state } = props;
+  const noCarSelected = !state.availability.hasActiveCar && !state.availability.isLoading;
   return (
     <div class="panel card settings-layout">
       <details
         id="analysisGuidanceHelp"
+        ref={guidanceHelpRef}
         class="settings-help-disclosure settings-help-disclosure--banner"
       >
         <summary class="settings-help-disclosure__summary">
@@ -81,7 +342,7 @@ function AnalysisPanel() {
       <div
         id="analysisNoCarMessage"
         class="empty-state empty-state--inline"
-        hidden
+        hidden={!noCarSelected}
         data-i18n="settings.analysis.no_car_selected"
       >
         No car selected. Select or create a car in Settings → Car to save
@@ -114,71 +375,15 @@ function AnalysisPanel() {
             </div>
           </details>
           <div class="settings-subgrid">
-            <div class="field">
-              <label
-                htmlFor="wheelBandwidthInput"
-                data-i18n="settings.wheel_bandwidth"
-              >
-                Wheel Bandwidth (%)
-              </label>
-              <input id="wheelBandwidthInput" type="number" step="0.1" />
-              <div
-                id="wheelBandwidthGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
-            <div class="field">
-              <label
-                htmlFor="driveshaftBandwidthInput"
-                data-i18n="settings.driveshaft_bandwidth"
-              >
-                Driveshaft Bandwidth (%)
-              </label>
-              <input id="driveshaftBandwidthInput" type="number" step="0.1" />
-              <div
-                id="driveshaftBandwidthGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
-            <div class="field">
-              <label
-                htmlFor="engineBandwidthInput"
-                data-i18n="settings.engine_bandwidth"
-              >
-                Engine Bandwidth (%)
-              </label>
-              <input id="engineBandwidthInput" type="number" step="0.1" />
-              <div
-                id="engineBandwidthGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
-            <div class="field">
-              <label
-                htmlFor="minAbsBandHzInput"
-                data-i18n="settings.min_half_width"
-              >
-                Min Half-width (Hz)
-              </label>
-              <input id="minAbsBandHzInput" type="number" step="0.1" />
-              <div
-                id="minAbsBandHzGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
-            <div class="field">
-              <label
-                htmlFor="maxBandHalfWidthInput"
-                data-i18n="settings.max_half_width"
-              >
-                Max Half-width (%)
-              </label>
-              <input id="maxBandHalfWidthInput" type="number" step="0.1" />
-              <div
-                id="maxBandHalfWidthGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
+            {ORDER_BAND_FIELDS.map((field) => (
+              <AnalysisField
+                key={field.key}
+                actions={state.actions}
+                model={state.model.fields[field.key]}
+                onInputRef={(element) => inputRef(field.key, element)}
+                spec={field}
+              />
+            ))}
           </div>
         </section>
 
@@ -214,82 +419,45 @@ function AnalysisPanel() {
             </div>
           </details>
           <div class="settings-subgrid settings-subgrid--aligned-labels">
-            <div class="field">
-              <label
-                htmlFor="speedUncertaintyInput"
-                data-i18n="settings.speed_uncertainty"
-              >
-                Speed Uncertainty (%)
-              </label>
-              <input id="speedUncertaintyInput" type="number" step="0.1" />
-              <div
-                id="speedUncertaintyGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
-            <div class="field">
-              <label
-                htmlFor="tireDiameterUncertaintyInput"
-                data-i18n="settings.tire_diameter_uncertainty"
-              >
-                Tire Diameter Uncertainty (%)
-              </label>
-              <input
-                id="tireDiameterUncertaintyInput"
-                type="number"
-                step="0.1"
+            {UNCERTAINTY_FIELDS.map((field) => (
+              <AnalysisField
+                key={field.key}
+                actions={state.actions}
+                model={state.model.fields[field.key]}
+                onInputRef={(element) => inputRef(field.key, element)}
+                spec={field}
               />
-              <div
-                id="tireDiameterUncertaintyGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
-            <div class="field">
-              <label
-                htmlFor="finalDriveUncertaintyInput"
-                data-i18n="settings.final_drive_uncertainty"
-              >
-                Final Drive Uncertainty (%)
-              </label>
-              <input
-                id="finalDriveUncertaintyInput"
-                type="number"
-                step="0.1"
-              />
-              <div
-                id="finalDriveUncertaintyGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
-            <div class="field">
-              <label
-                htmlFor="gearUncertaintyInput"
-                data-i18n="settings.gear_slip_uncertainty"
-              >
-                Gear/Slip Uncertainty (%)
-              </label>
-              <input id="gearUncertaintyInput" type="number" step="0.1" />
-              <div
-                id="gearUncertaintyGuidance"
-                class="subtle settings-field-guidance"
-              ></div>
-            </div>
+            ))}
           </div>
         </section>
       </div>
-      <div id="analysisSaveFeedback" class="settings-feedback-slot" hidden></div>
+      <div
+        id="analysisSaveFeedback"
+        class="settings-feedback-slot"
+        hidden={state.model.saveFeedback === null}
+      >
+        {state.model.saveFeedback ? (
+          <SettingsFeedbackBlock message={state.model.saveFeedback} />
+        ) : null}
+      </div>
       <div class="settings-actions settings-actions--sticky">
         <button
           id="resetAnalysisBtn"
+          type="button"
           class="btn"
           data-i18n="settings.analysis.reset"
+          disabled={!state.availability.hasActiveCar}
+          onClick={() => state.actions?.onReset()}
         >
           Reset to defaults
         </button>
         <button
           id="saveAnalysisBtn"
+          type="button"
           class="btn btn--primary"
           data-i18n="settings.analysis.save"
+          disabled={!state.availability.hasActiveCar}
+          onClick={() => state.actions?.onSave()}
         >
           Save Analysis Settings
         </button>
@@ -298,52 +466,62 @@ function AnalysisPanel() {
   );
 }
 
-function createAnalysisPanelDom(host: HTMLElement): SettingsAnalysisPanelDom {
-  const queryById = <T extends HTMLElement>(id: string): T | null =>
-    host.querySelector<T>(`#${id}`);
-
+function createInputRefs(): Record<AnalysisPanelFieldKey, HTMLInputElement | null> {
   return {
-    wheelBandwidthInput: queryById<HTMLInputElement>("wheelBandwidthInput"),
-    driveshaftBandwidthInput: queryById<HTMLInputElement>(
-      "driveshaftBandwidthInput",
-    ),
-    engineBandwidthInput: queryById<HTMLInputElement>("engineBandwidthInput"),
-    speedUncertaintyInput: queryById<HTMLInputElement>("speedUncertaintyInput"),
-    tireDiameterUncertaintyInput: queryById<HTMLInputElement>(
-      "tireDiameterUncertaintyInput",
-    ),
-    finalDriveUncertaintyInput: queryById<HTMLInputElement>(
-      "finalDriveUncertaintyInput",
-    ),
-    gearUncertaintyInput: queryById<HTMLInputElement>("gearUncertaintyInput"),
-    minAbsBandHzInput: queryById<HTMLInputElement>("minAbsBandHzInput"),
-    maxBandHalfWidthInput: queryById<HTMLInputElement>("maxBandHalfWidthInput"),
-    saveAnalysisBtn: queryById<HTMLButtonElement>("saveAnalysisBtn"),
-    resetAnalysisBtn: queryById<HTMLButtonElement>("resetAnalysisBtn"),
-    analysisGuidanceHelp: queryById<HTMLDetailsElement>("analysisGuidanceHelp"),
-    analysisFieldGuidance: {
-      wheelBandwidth: queryById<HTMLElement>("wheelBandwidthGuidance"),
-      driveshaftBandwidth: queryById<HTMLElement>("driveshaftBandwidthGuidance"),
-      engineBandwidth: queryById<HTMLElement>("engineBandwidthGuidance"),
-      speedUncertainty: queryById<HTMLElement>("speedUncertaintyGuidance"),
-      tireDiameterUncertainty: queryById<HTMLElement>(
-        "tireDiameterUncertaintyGuidance",
-      ),
-      finalDriveUncertainty: queryById<HTMLElement>(
-        "finalDriveUncertaintyGuidance",
-      ),
-      gearUncertainty: queryById<HTMLElement>("gearUncertaintyGuidance"),
-      minAbsBandHz: queryById<HTMLElement>("minAbsBandHzGuidance"),
-      maxBandHalfWidth: queryById<HTMLElement>("maxBandHalfWidthGuidance"),
-    },
-    analysisSaveFeedback: queryById<HTMLElement>("analysisSaveFeedback"),
-    analysisNoCarMessage: queryById<HTMLElement>("analysisNoCarMessage"),
+    wheel_bandwidth_pct: null,
+    driveshaft_bandwidth_pct: null,
+    engine_bandwidth_pct: null,
+    speed_uncertainty_pct: null,
+    tire_diameter_uncertainty_pct: null,
+    final_drive_uncertainty_pct: null,
+    gear_uncertainty_pct: null,
+    min_abs_band_hz: null,
+    max_band_half_width_pct: null,
   };
 }
 
 export function mountAnalysisPanel(host: HTMLElement): AnalysisPanelView {
-  createUiPreactMount(host).render(<AnalysisPanel />);
+  const bridgeState: AnalysisPanelBridgeState = {
+    actions: null,
+    availability: DEFAULT_ANALYSIS_CAR_AVAILABILITY,
+    model: DEFAULT_ANALYSIS_PANEL_MODEL,
+  };
+  const inputRefs = createInputRefs();
+  let guidanceHelp: HTMLDetailsElement | null = null;
+  const mount = createUiPreactMount(host);
+  const render = () => mount.render(
+    <AnalysisPanel
+      guidanceHelpRef={(element) => {
+        guidanceHelp = element;
+      }}
+      inputRef={(field, element) => {
+        inputRefs[field] = element;
+      }}
+      state={bridgeState}
+    />,
+  );
+  render();
+
   return {
-    dom: createAnalysisPanelDom(host),
+    bindActions(handlers) {
+      bridgeState.actions = handlers;
+      render();
+    },
+    focusField(field) {
+      inputRefs[field]?.focus();
+    },
+    openGuidance() {
+      if (guidanceHelp) {
+        guidanceHelp.open = true;
+      }
+    },
+    render(model) {
+      bridgeState.model = model;
+      render();
+    },
+    setCarAvailability(state) {
+      bridgeState.availability = state;
+      render();
+    },
   };
 }
