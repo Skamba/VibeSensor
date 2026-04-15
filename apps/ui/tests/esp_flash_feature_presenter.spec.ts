@@ -2,8 +2,10 @@ import { expect, test } from "@playwright/test";
 
 import {
   buildEspFlashPanelRenderModel,
+  createEspFlashFeaturePresenter,
   type EspFlashFeatureRenderState,
 } from "../src/app/views/esp_flash_feature_presenter";
+import type { EspFlashPanelRenderModel } from "../src/app/views/esp_flash_panel";
 import type {
   EspFlashHistoryAttemptPayload,
   EspFlashStatusPayload,
@@ -220,5 +222,36 @@ test.describe("buildEspFlashPanelRenderModel", () => {
       errorText: "upload failed",
       portText: "/dev/ttyUSB1",
     });
+  });
+});
+
+test.describe("createEspFlashFeaturePresenter", () => {
+  test("renders log output without a DOM-backed panel view", () => {
+    let latestModel: EspFlashPanelRenderModel | null = null;
+    const presenter = createEspFlashFeaturePresenter({
+      panel: {
+        bindActions() {},
+        render(model) {
+          latestModel = model;
+        },
+      },
+      t: (key) => key,
+    });
+
+    presenter.render(
+      makeState({
+        availablePorts: [makePort()],
+        logText: "build ok\nflash ok\n",
+        status: makeStatus({
+          log_count: 2,
+          phase: "flashing",
+          state: "running",
+        }),
+      }),
+    );
+
+    expect(latestModel?.log.emptyState).toBeNull();
+    expect(latestModel?.log.text).toContain("flash ok");
+    expect(latestModel?.statusBanner.text).toBe("settings.esp_flash.state.running");
   });
 });
