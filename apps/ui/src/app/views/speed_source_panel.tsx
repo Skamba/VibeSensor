@@ -9,16 +9,6 @@ import {
   type SettingsFeedbackMessage,
 } from "./settings_feedback";
 
-export interface SettingsSpeedSourcePanelDom {
-  manualSpeedInput: HTMLInputElement | null;
-  obdDeviceList: HTMLElement | null;
-  obdSpeedConfig: HTMLElement | null;
-  saveSpeedSourceBtn: HTMLButtonElement | null;
-  scanObdDevicesBtn: HTMLButtonElement | null;
-  speedSourceRadios: HTMLInputElement[];
-  staleTimeoutInput: HTMLInputElement | null;
-}
-
 export interface SpeedSourceChoiceCardRenderModel {
   badgeText: string | null;
   selected: boolean;
@@ -101,8 +91,17 @@ export interface SpeedSourceDiagnosticsRenderModel {
   obd: SpeedSourceObdStatusRenderModel;
 }
 
+export interface SpeedSourcePanelActionHandlers {
+  onManualSpeedInput(value: string): void;
+  onPairObdDevice(macAddress: string): void;
+  onSave(): void;
+  onScanObdDevices(): void;
+  onSpeedSourceChanged(mode: DisplayedSpeedSourceMode): void;
+  onStaleTimeoutInput(value: string): void;
+}
+
 export interface SpeedSourcePanelView {
-  readonly dom: SettingsSpeedSourcePanelDom;
+  bindActions(handlers: SpeedSourcePanelActionHandlers): void;
   focusManualSpeedInput(): void;
   focusScanObdDevices(): void;
   focusStaleTimeoutInput(): void;
@@ -112,6 +111,7 @@ export interface SpeedSourcePanelView {
 }
 
 type SpeedSourcePanelBridgeState = {
+  actions: SpeedSourcePanelActionHandlers | null;
   diagnostics: SpeedSourceDiagnosticsRenderModel;
   diagnosticsDisclosureOpen: boolean;
   model: SpeedSourcePanelRenderModel;
@@ -408,8 +408,9 @@ function SettingsFeedbackSlot(props: {
 function SpeedSourceChoiceCard(props: {
   choice: (typeof SPEED_SOURCE_CHOICES)[number];
   model: SpeedSourcePanelRenderModel;
+  onSpeedSourceChanged: (mode: DisplayedSpeedSourceMode) => void;
 }) {
-  const { choice, model } = props;
+  const { choice, model, onSpeedSourceChanged } = props;
   const choiceState = model.choiceCards[choice.mode];
   return (
     <label
@@ -426,6 +427,7 @@ function SpeedSourceChoiceCard(props: {
         name="speedSourceRadio"
         value={choice.mode}
         checked={model.selectedMode === choice.mode}
+        onChange={() => onSpeedSourceChanged(choice.mode)}
         aria-invalid={
           choice.mode === "obd2" && model.obdSelectionInvalid ? "true" : undefined
         }
@@ -442,8 +444,9 @@ function SpeedSourceChoiceCard(props: {
 
 function SpeedSourceObdDeviceRow(props: {
   device: SpeedSourceObdDeviceRenderModel;
+  onPairObdDevice: (macAddress: string) => void;
 }) {
-  const { device } = props;
+  const { device, onPairObdDevice } = props;
   return (
     <div class="speed-source-device">
       <div class="speed-source-device__header">
@@ -471,6 +474,7 @@ function SpeedSourceObdDeviceRow(props: {
           type="button"
           disabled={device.actionDisabled}
           data-obd-pair-mac={device.macAddress}
+          onClick={() => onPairObdDevice(device.macAddress)}
         >
           {device.actionLabelText}
         </button>
@@ -569,6 +573,9 @@ function SpeedSourcePanel(props: {
               key={choice.mode}
               choice={choice}
               model={state.model}
+              onSpeedSourceChanged={(mode) => {
+                state.actions?.onSpeedSourceChanged(mode);
+              }}
             />
           ))}
         </div>
@@ -597,6 +604,9 @@ function SpeedSourcePanel(props: {
               step="0.1"
               min="0"
               value={state.model.manualSpeedInputValue}
+              onInput={(event) => {
+                state.actions?.onManualSpeedInput(event.currentTarget.value);
+              }}
               aria-invalid={
                 state.model.manualSpeedFeedback ? "true" : undefined
               }
@@ -642,6 +652,9 @@ function SpeedSourcePanel(props: {
               type="button"
               disabled={state.model.scanObdDevicesDisabled}
               data-i18n="settings.speed.obd_scan"
+              onClick={() => {
+                state.actions?.onScanObdDevices();
+              }}
             >
               {t("settings.speed.obd_scan", "Scan for adapters")}
             </button>
@@ -654,6 +667,9 @@ function SpeedSourcePanel(props: {
               <SpeedSourceObdDeviceRow
                 key={device.macAddress}
                 device={device}
+                onPairObdDevice={(macAddress) => {
+                  state.actions?.onPairObdDevice(macAddress);
+                }}
               />
             ))}
           </div>
@@ -684,6 +700,9 @@ function SpeedSourcePanel(props: {
               min="3"
               max="120"
               value={state.model.staleTimeoutInputValue}
+              onInput={(event) => {
+                state.actions?.onStaleTimeoutInput(event.currentTarget.value);
+              }}
               aria-invalid={
                 state.model.staleTimeoutFeedback ? "true" : undefined
               }
@@ -711,6 +730,9 @@ function SpeedSourcePanel(props: {
             class="btn btn--primary"
             type="button"
             data-i18n="settings.speed.save"
+            onClick={() => {
+              state.actions?.onSave();
+            }}
           >
             {t("settings.speed.save", "Save Speed Source")}
           </button>
@@ -773,25 +795,9 @@ function SpeedSourcePanel(props: {
   );
 }
 
-function createSpeedSourcePanelDom(host: HTMLElement): SettingsSpeedSourcePanelDom {
-  const queryById = <T extends HTMLElement>(id: string): T | null =>
-    host.querySelector<T>(`#${id}`);
-
-  return {
-    manualSpeedInput: queryById<HTMLInputElement>("manualSpeedInput"),
-    obdDeviceList: queryById<HTMLElement>("obdDeviceList"),
-    obdSpeedConfig: queryById<HTMLElement>("obdSpeedConfig"),
-    saveSpeedSourceBtn: queryById<HTMLButtonElement>("saveSpeedSourceBtn"),
-    scanObdDevicesBtn: queryById<HTMLButtonElement>("scanObdDevicesBtn"),
-    speedSourceRadios: Array.from(
-      host.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]'),
-    ),
-    staleTimeoutInput: queryById<HTMLInputElement>("staleTimeoutInput"),
-  };
-}
-
 export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
   const bridgeState: SpeedSourcePanelBridgeState = {
+    actions: null,
     diagnostics: DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
     diagnosticsDisclosureOpen: false,
     model: DEFAULT_SPEED_SOURCE_PANEL_MODEL,
@@ -830,10 +836,12 @@ export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
   }
 
   render();
-  const dom = createSpeedSourcePanelDom(host);
 
   return {
-    dom,
+    bindActions(handlers): void {
+      bridgeState.actions = handlers;
+      render();
+    },
     focusManualSpeedInput(): void {
       manualSpeedInput?.focus();
     },

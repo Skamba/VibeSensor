@@ -96,9 +96,6 @@ export class UiAppRuntime {
     });
     this.featurePorts = createAppFeatureBundle({
       state: this.state,
-      dom: {
-        shell: shellChrome.dom,
-      },
       shared: {
         t: (key, vars) => this.shell.t(key, vars),
         escapeHtml,
