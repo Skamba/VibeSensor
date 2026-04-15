@@ -1,4 +1,8 @@
-import type { ObdDevicePayload } from "../../transport/http_models";
+import type {
+  ObdDevicePayload,
+  ObdStatusPayload,
+  SpeedSourceStatusPayload,
+} from "../../transport/http_models";
 import {
   deriveDisplayedSpeedSourceMode,
   isManualLikeSpeedSource,
@@ -6,13 +10,14 @@ import {
   type DisplayedSpeedSourceMode,
   type SpeedSourceStateSource,
 } from "../speed_source_state";
-import { createElementNode, renderChildren } from "./dom_render";
-import type { SettingsSpeedSourcePanelDom } from "./speed_source_panel";
-import {
-  setSettingsFeedback,
-  type SettingsFeedbackMessage,
-} from "./settings_feedback";
-import { setChoiceCardState } from "../style_state";
+import type {
+  SpeedSourceChoiceCardRenderModel,
+  SpeedSourceDiagnosticsRenderModel,
+  SpeedSourceObdDeviceBadgeRenderModel,
+  SpeedSourceObdDeviceRenderModel,
+  SpeedSourcePanelRenderModel,
+} from "./speed_source_panel";
+import type { SettingsFeedbackMessage } from "./settings_feedback";
 
 export interface SettingsSpeedSourceSettingsSnapshot
   extends SpeedSourceStateSource {
@@ -40,42 +45,24 @@ export interface SettingsSpeedSourceRenderState {
 }
 
 export interface SettingsSpeedSourcePresenterDeps {
-  dom: Pick<
-    SettingsSpeedSourcePanelDom,
-    | "gpsFallbackPanel"
-    | "manualSpeedConfig"
-    | "manualSpeedFeedback"
-    | "manualSpeedInput"
-    | "obdConfiguredDevice"
-    | "obdDeviceList"
-    | "obdDeviceScanStatus"
-    | "obdSpeedConfig"
-    | "saveSpeedSourceBtn"
-    | "scanObdDevicesBtn"
-    | "speedSourceChoiceGps"
-    | "speedSourceChoiceManual"
-    | "speedSourceChoiceObd"
-    | "speedSourceCurrentSource"
-    | "speedSourceDiagnostics"
-    | "speedSourceEffectiveSpeed"
-    | "speedSourceFallbackActive"
-    | "speedSourceRadios"
-    | "speedSourceSaveFeedback"
-    | "staleTimeoutFeedback"
-    | "staleTimeoutInput"
-  >;
   fmt: (value: number, digits?: number) => string;
   getSpeedUnit: () => string;
   t: (key: string, vars?: Record<string, unknown>) => string;
 }
 
-export interface SettingsSpeedSourcePresenter {
-  focusManualSpeedInput(): void;
-  focusScanObdDevices(): void;
-  focusStaleTimeoutInput(): void;
-  isObdConfigVisible(): boolean;
-  render(state: SettingsSpeedSourceRenderState): void;
-}
+const CONNECTION_STATE_I18N: Record<string, string> = {
+  connected: "settings.speed.state_connected",
+  disabled: "settings.speed.state_disabled",
+  disconnected: "settings.speed.state_disconnected",
+  stale: "settings.speed.state_stale",
+};
+
+const OBD_POLL_MODE_I18N: Record<string, string> = {
+  rpm_only: "settings.speed.obd_mode_rpm_only",
+  rpm_only_backoff: "settings.speed.obd_mode_rpm_only_backoff",
+  rpm_priority: "settings.speed.obd_mode_rpm_priority",
+  rpm_priority_backoff: "settings.speed.obd_mode_rpm_priority_backoff",
+};
 
 function selectedSpeedUnitLabel(
   deps: Pick<SettingsSpeedSourcePresenterDeps, "getSpeedUnit" | "t">,
@@ -150,42 +137,23 @@ function activeEffectiveSpeedKph(
     : settings.gpsEffectiveSpeedKph;
 }
 
-function syncChoiceState(
-  element: HTMLElement | null,
+function buildChoiceState(
   t: SettingsSpeedSourcePresenterDeps["t"],
   {
     active,
     pending,
     error,
   }: { active: boolean; pending: boolean; error: boolean },
-): void {
-  setChoiceCardState(element, {
-    selected: active,
-    state: error ? "error" : pending ? "draft" : active ? "active" : null,
+): SpeedSourceChoiceCardRenderModel {
+  return {
     badgeText: pending
       ? t("settings.speed.choice_pending")
       : active
         ? t("settings.speed.choice_active")
         : null,
-  });
-}
-
-function applyInputFeedback(
-  input: HTMLInputElement | null,
-  feedback: HTMLElement | null,
-  message: SettingsFeedbackMessage | null,
-): void {
-  if (!message) {
-    input?.removeAttribute("aria-invalid");
-    input?.removeAttribute("aria-describedby");
-    setSettingsFeedback(feedback, null);
-    return;
-  }
-  if (feedback?.id) {
-    input?.setAttribute("aria-describedby", feedback.id);
-  }
-  input?.setAttribute("aria-invalid", "true");
-  setSettingsFeedback(feedback, message);
+    selected: active,
+    state: error ? "error" : pending ? "draft" : active ? "active" : null,
+  };
 }
 
 function looksLikeMacAlias(rawValue: string | null | undefined): boolean {
@@ -206,22 +174,22 @@ function obdDeviceSecondaryLabel(device: ObdDevicePayload): string | null {
   return hasHumanReadableDeviceName(device) ? device.mac_address : null;
 }
 
-function createBadge(label: string, active = false): HTMLSpanElement {
-  return createElementNode("span", {
-    className: "speed-source-device__badge",
-    data: {
-      active: active ? "true" : null,
-    },
-    text: label,
-  });
+function createBadge(
+  labelText: string,
+  active = false,
+): SpeedSourceObdDeviceBadgeRenderModel {
+  return {
+    active,
+    labelText,
+  };
 }
 
-function createObdDeviceRow(
+function buildObdDeviceModel(
   device: ObdDevicePayload,
   state: SettingsSpeedSourceRenderState,
   t: SettingsSpeedSourcePresenterDeps["t"],
-): HTMLDivElement {
-  const badges = [];
+): SpeedSourceObdDeviceRenderModel {
+  const badges: SpeedSourceObdDeviceBadgeRenderModel[] = [];
   if (device.mac_address === state.settings.obdDeviceMac) {
     badges.push(createBadge(t("settings.speed.obd_configured_badge"), true));
   }
@@ -243,205 +211,214 @@ function createObdDeviceRow(
         : t("settings.speed.obd_pair_and_use");
   const secondaryLabel = obdDeviceSecondaryLabel(device);
 
-  return createElementNode("div", {
-    className: "speed-source-device",
-    children: [
-      createElementNode("div", {
-        className: "speed-source-device__header",
-        children: [
-          createElementNode("div", {
-            className: "speed-source-device__identity",
-            children: [
-              createElementNode("div", {
-                className: "speed-source-device__name",
-                text: obdDevicePrimaryLabel(device),
-              }),
-              secondaryLabel
-                ? createElementNode("div", {
-                    className: "speed-source-device__mac",
-                    text: secondaryLabel,
-                  })
-                : null,
-            ],
-          }),
-          createElementNode("div", {
-            className: "speed-source-device__badges",
-            children: badges,
-          }),
-        ],
-      }),
-      createElementNode("div", {
-        className: "speed-source-device__actions",
-        children: [
-          createElementNode("button", {
-            className: "btn btn--secondary",
-            attrs: {
-              disabled: state.scanInFlight || state.pairInFlightMac !== null,
-              type: "button",
-            },
-            data: {
-              obdPairMac: device.mac_address,
-            },
-            text: actionLabel,
-          }),
-        ],
-      }),
-    ],
-  });
+  return {
+    actionDisabled: state.scanInFlight || state.pairInFlightMac !== null,
+    actionLabelText: actionLabel,
+    badges,
+    macAddress: device.mac_address,
+    primaryText: obdDevicePrimaryLabel(device),
+    secondaryText: secondaryLabel,
+  };
 }
 
-function renderObdDeviceList(
-  container: HTMLElement | null,
-  state: SettingsSpeedSourceRenderState,
+function connectionStateLabel(
+  connectionState: string,
   t: SettingsSpeedSourcePresenterDeps["t"],
-): void {
-  if (!container) {
-    return;
-  }
-  if (state.scannedDevices.length === 0) {
-    renderChildren(container);
-    return;
-  }
-  renderChildren(
-    container,
-    state.scannedDevices.map((device) => createObdDeviceRow(device, state, t)),
-  );
+): string {
+  const key = CONNECTION_STATE_I18N[connectionState];
+  return key ? t(key) : connectionState;
 }
 
-export function createSettingsSpeedSourcePresenter(
+function boolLabel(
+  value: boolean,
+  t: SettingsSpeedSourcePresenterDeps["t"],
+): string {
+  return value
+    ? t("settings.speed.fallback_yes")
+    : t("settings.speed.fallback_no");
+}
+
+function formatAgeSeconds(
+  ageSeconds: number | null,
+  t: SettingsSpeedSourcePresenterDeps["t"],
+): string | null {
+  return ageSeconds != null
+    ? t("settings.speed.last_update_value", {
+        value: {
+          number: ageSeconds,
+          options: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+        },
+      })
+    : null;
+}
+
+function formatCadenceFromTarget(
+  intervalMs: number | null,
   deps: SettingsSpeedSourcePresenterDeps,
-): SettingsSpeedSourcePresenter {
-  const { dom, t } = deps;
-
-  function render(state: SettingsSpeedSourceRenderState): void {
-    const displayedMode = deriveDisplayedSpeedSourceMode(state.settings);
-    const hasPendingSelection =
-      state.draftDirty && state.selectedMode !== displayedMode;
-
-    dom.speedSourceRadios.forEach((radio) => {
-      radio.checked = radio.value === state.selectedMode;
-    });
-
-    if (dom.manualSpeedInput) {
-      dom.manualSpeedInput.value = state.manualSpeedInputValue;
-    }
-    if (dom.staleTimeoutInput) {
-      dom.staleTimeoutInput.value = state.staleTimeoutInputValue;
-    }
-
-    syncChoiceState(dom.speedSourceChoiceGps, t, {
-      active: displayedMode === "gps",
-      pending: hasPendingSelection && state.selectedMode === "gps",
-      error: false,
-    });
-    syncChoiceState(dom.speedSourceChoiceObd, t, {
-      active: displayedMode === "obd2",
-      pending: hasPendingSelection && state.selectedMode === "obd2",
-      error: state.obdSelectionError,
-    });
-    syncChoiceState(dom.speedSourceChoiceManual, t, {
-      active: displayedMode === "manual",
-      pending: hasPendingSelection && state.selectedMode === "manual",
-      error: false,
-    });
-
-    if (dom.manualSpeedConfig) {
-      dom.manualSpeedConfig.hidden = state.selectedMode !== "manual";
-    }
-    if (dom.obdSpeedConfig) {
-      dom.obdSpeedConfig.hidden = state.selectedMode !== "obd2";
-    }
-    if (dom.gpsFallbackPanel) {
-      dom.gpsFallbackPanel.hidden = state.selectedMode === "manual";
-    }
-
-    if (dom.speedSourceCurrentSource) {
-      dom.speedSourceCurrentSource.textContent = activeSourceLabel(
-        state.settings,
-        t,
-      );
-    }
-    if (dom.speedSourceEffectiveSpeed) {
-      dom.speedSourceEffectiveSpeed.textContent = formatSpeedValue(
-        activeEffectiveSpeedKph(state.settings),
-        deps,
-      );
-    }
-    if (dom.speedSourceFallbackActive) {
-      dom.speedSourceFallbackActive.textContent = state.settings.gpsFallbackActive
-        ? t("settings.speed.fallback_yes")
-        : t("settings.speed.fallback_no");
-    }
-    if (dom.obdConfiguredDevice) {
-      dom.obdConfiguredDevice.textContent = formatConfiguredObdDevice(
-        state.settings,
-        t,
-      );
-    }
-    if (dom.scanObdDevicesBtn) {
-      dom.scanObdDevicesBtn.disabled =
-        state.scanInFlight || state.pairInFlightMac !== null;
-    }
-    if (dom.obdDeviceScanStatus) {
-      dom.obdDeviceScanStatus.textContent =
-        state.obdScanStatusMessage ?? t("settings.speed.obd_scan_idle");
-    }
-    renderObdDeviceList(dom.obdDeviceList, state, t);
-
-    applyInputFeedback(
-      dom.manualSpeedInput,
-      dom.manualSpeedFeedback,
-      state.manualSpeedFeedback,
-    );
-    applyInputFeedback(
-      dom.staleTimeoutInput,
-      dom.staleTimeoutFeedback,
-      state.staleTimeoutFeedback,
-    );
-    setSettingsFeedback(dom.speedSourceSaveFeedback, state.saveFeedback);
-
-    const obdRadio = dom.speedSourceRadios.find(
-      (radio) => radio.value === "obd2",
-    );
-    if (state.obdSelectionError) {
-      obdRadio?.setAttribute("aria-invalid", "true");
-    } else {
-      obdRadio?.removeAttribute("aria-invalid");
-    }
-
-    if (
-      state.diagnosticsOpen
-      || resolveEffectiveSpeedSource(state.settings) !== state.settings.speedSource
-    ) {
-      dom.speedSourceDiagnostics?.setAttribute("open", "");
-    }
+): string | null {
+  if (intervalMs == null || intervalMs <= 0) {
+    return null;
   }
+  return `${deps.fmt(1000 / intervalMs, 1)} Hz (${deps.fmt(intervalMs, 0)} ms)`;
+}
 
-  function isObdConfigVisible(): boolean {
-    if (!dom.obdSpeedConfig || dom.obdSpeedConfig.hidden) {
-      return false;
-    }
-    const activePanel = dom.obdSpeedConfig.closest<HTMLElement>(
-      ".settings-tab-panel",
-    );
-    if (!activePanel || activePanel.hidden) {
-      return false;
-    }
-    const activeView = activePanel.closest<HTMLElement>(".view");
-    return activeView == null || !activeView.hidden;
+function formatCadenceHz(
+  hz: number | null,
+  deps: SettingsSpeedSourcePresenterDeps,
+): string | null {
+  return hz != null ? `${deps.fmt(hz, 1)} Hz` : null;
+}
+
+function formatMilliseconds(
+  ms: number | null,
+  deps: SettingsSpeedSourcePresenterDeps,
+): string | null {
+  return ms != null ? `${deps.fmt(ms, 0)} ms` : null;
+}
+
+function obdPollModeLabel(
+  mode: string | null,
+  t: SettingsSpeedSourcePresenterDeps["t"],
+): string | null {
+  if (mode == null) {
+    return null;
   }
+  const key = OBD_POLL_MODE_I18N[mode];
+  return key ? t(key) : mode;
+}
+
+export function buildSettingsSpeedSourcePanelModel(
+  state: SettingsSpeedSourceRenderState,
+  deps: SettingsSpeedSourcePresenterDeps,
+): SpeedSourcePanelRenderModel {
+  const displayedMode = deriveDisplayedSpeedSourceMode(state.settings);
+  const hasPendingSelection =
+    state.draftDirty && state.selectedMode !== displayedMode;
 
   return {
-    focusManualSpeedInput(): void {
-      dom.manualSpeedInput?.focus();
+    choiceCards: {
+      gps: buildChoiceState(deps.t, {
+        active: displayedMode === "gps",
+        pending: hasPendingSelection && state.selectedMode === "gps",
+        error: false,
+      }),
+      manual: buildChoiceState(deps.t, {
+        active: displayedMode === "manual",
+        pending: hasPendingSelection && state.selectedMode === "manual",
+        error: false,
+      }),
+      obd2: buildChoiceState(deps.t, {
+        active: displayedMode === "obd2",
+        pending: hasPendingSelection && state.selectedMode === "obd2",
+        error: state.obdSelectionError,
+      }),
     },
-    focusScanObdDevices(): void {
-      dom.scanObdDevicesBtn?.focus();
+    diagnosticsShouldOpen:
+      state.diagnosticsOpen
+      || resolveEffectiveSpeedSource(state.settings) !== state.settings.speedSource,
+    manualConfigVisible: state.selectedMode === "manual",
+    manualSpeedFeedback: state.manualSpeedFeedback,
+    manualSpeedInputValue: state.manualSpeedInputValue,
+    obdConfigVisible: state.selectedMode === "obd2",
+    obdConfiguredDeviceText: formatConfiguredObdDevice(state.settings, deps.t),
+    obdDevices: state.scannedDevices.map((device) =>
+      buildObdDeviceModel(device, state, deps.t)
+    ),
+    obdScanStatusText:
+      state.obdScanStatusMessage ?? deps.t("settings.speed.obd_scan_idle"),
+    obdSelectionInvalid: state.obdSelectionError,
+    scanObdDevicesDisabled:
+      state.scanInFlight || state.pairInFlightMac !== null,
+    saveFeedback: state.saveFeedback,
+    selectedMode: state.selectedMode,
+    showGpsFallbackPanel: state.selectedMode !== "manual",
+    staleTimeoutFeedback: state.staleTimeoutFeedback,
+    staleTimeoutInputValue: state.staleTimeoutInputValue,
+    summary: {
+      currentSourceText: activeSourceLabel(state.settings, deps.t),
+      effectiveSpeedText: formatSpeedValue(
+        activeEffectiveSpeedKph(state.settings),
+        deps,
+      ),
+      fallbackActiveText: boolLabel(state.settings.gpsFallbackActive, deps.t),
     },
-    focusStaleTimeoutInput(): void {
-      dom.staleTimeoutInput?.focus();
+  };
+}
+
+export function buildSpeedSourceDiagnosticsRenderModel(
+  status: SpeedSourceStatusPayload,
+  obdStatus: ObdStatusPayload | null,
+  deps: SettingsSpeedSourcePresenterDeps,
+): SpeedSourceDiagnosticsRenderModel {
+  return {
+    gps: {
+      deviceText: status.device ?? "--",
+      effectiveSpeedText: formatSpeedValue(status.effective_speed_kmh, deps),
+      fallbackText: boolLabel(status.fallback_active, deps.t),
+      lastErrorText: status.last_error ?? "--",
+      lastUpdateText:
+        formatAgeSeconds(status.last_update_age_s, deps.t)
+        ?? deps.t("settings.speed.last_update_never"),
+      rawSpeedText: formatSpeedValue(status.raw_speed_kmh, deps),
+      reconnectText:
+        status.reconnect_delay_s != null
+          ? `${deps.fmt(status.reconnect_delay_s, 1)}s`
+          : "--",
+      stateText: connectionStateLabel(status.connection_state, deps.t),
     },
-    isObdConfigVisible,
-    render,
+    obd: obdStatus
+      ? {
+          backoffText: boolLabel(obdStatus.backoff_active, deps.t),
+          configuredDeviceText: formatConfiguredObdDevice(
+            {
+              obdDeviceMac: obdStatus.configured_device_mac ?? null,
+              obdDeviceName: obdStatus.configured_device_name ?? null,
+            },
+            deps.t,
+          ),
+          connectedText: boolLabel(obdStatus.connected, deps.t),
+          debugHintText: obdStatus.debug_hint ?? "--",
+          effectiveCadenceText:
+            formatCadenceHz(obdStatus.rpm_effective_hz, deps) ?? "--",
+          errorsText: String(obdStatus.error_count),
+          lastRpmText:
+            obdStatus.last_rpm != null ? deps.fmt(obdStatus.last_rpm, 0) : "--",
+          modeText: obdPollModeLabel(obdStatus.poll_mode, deps.t) ?? "--",
+          pairingText: boolLabel(obdStatus.paired, deps.t),
+          rawResponseText: obdStatus.last_raw_response ?? "--",
+          requestRttText:
+            formatMilliseconds(obdStatus.request_rtt_ms, deps) ?? "--",
+          rfcommChannelText:
+            obdStatus.rfcomm_channel != null
+              ? String(obdStatus.rfcomm_channel)
+              : "--",
+          rpmAgeText:
+            formatAgeSeconds(obdStatus.rpm_sample_age_s, deps.t) ?? "--",
+          targetCadenceText:
+            formatCadenceFromTarget(obdStatus.rpm_target_interval_ms, deps)
+            ?? "--",
+          timeoutsText: String(obdStatus.timeout_count),
+          trustedText: boolLabel(obdStatus.trusted, deps.t),
+          visible: true,
+        }
+      : {
+          backoffText: "--",
+          configuredDeviceText: "--",
+          connectedText: "--",
+          debugHintText: "--",
+          effectiveCadenceText: "--",
+          errorsText: "--",
+          lastRpmText: "--",
+          modeText: "--",
+          pairingText: "--",
+          rawResponseText: "--",
+          requestRttText: "--",
+          rfcommChannelText: "--",
+          rpmAgeText: "--",
+          targetCadenceText: "--",
+          timeoutsText: "--",
+          trustedText: "--",
+          visible: false,
+        },
   };
 }

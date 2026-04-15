@@ -74,6 +74,35 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
   await expect.poll(() => speedOverrideCalls).toBe(0);
 });
 
+test("manual speed validation marks the field invalid while keeping the active GPS card visible", async ({ page }) => {
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/language": { language: "en" },
+      "GET /api/settings/speed-unit": { speed_unit: "kmh" },
+      "GET /api/settings/speed-source": {
+        speed_source: "gps",
+        manual_speed_kph: null,
+        stale_timeout_s: 5,
+      },
+    }),
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await page.locator('[data-speed-source-choice="manual"]').click();
+  await page.locator("#manualSpeedInput").fill("0");
+  await page.locator("#saveSpeedSourceBtn").click();
+
+  await expect(page.locator("#manualSpeedInput")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator("#manualSpeedFeedback")).toContainText("Enter a manual speed between 0.1 and 500 km/h.");
+  await expect(page.locator("#speedSourceSaveFeedback")).toContainText("GPS remains active right now");
+  await expect(page.locator('[data-speed-source-choice="gps"]')).toHaveAttribute("data-selected", "true");
+  await expect(page.locator('[data-speed-source-choice="manual"]')).toHaveAttribute("data-choice-state", "draft");
+  await expect(page.locator("#speedSourceDiagnostics")).toHaveAttribute("open", "");
+});
+
 test("resolved fallback manual state stays coherent across header status, form, and GPS status", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
@@ -705,6 +734,7 @@ test("manual OBD scan sorts named devices first and background rescans progressi
   await expect(deviceNames.nth(0)).toHaveText("Audioengine HD6");
   await expect(deviceNames.nth(1)).toHaveText("53-40-AC-57-11-77");
   await expect(page.locator(".speed-source-device__mac").nth(0)).toHaveText("0022d9001bb1");
+  await expect(page.locator(".speed-source-device__actions .btn").nth(0)).toHaveText("Pair and use");
 
   await expect.poll(() => scanCalls, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
   await expect(deviceNames.nth(1)).toHaveText("Pim's iPhone");

@@ -100,6 +100,7 @@ export function createSettingsFeature(
   const speedSourceModule: SettingsSpeedSourceModule =
     createSettingsSpeedSourceModule({
       dom: speedSourceDom,
+      panel: ctx.speedSourcePanel,
       shellDom,
       t,
       escapeHtml,
@@ -108,11 +109,10 @@ export function createSettingsFeature(
       getSpeedUnit: ctx.getSpeedUnit,
       fmt,
       renderSpeedReadout: ctx.view.renderSpeedReadout,
-      onSaveError: showSettingsSaveError,
     });
   const gpsStatusModule: SettingsGpsStatusModule =
     createSettingsGpsStatusModule({
-      dom: ctx.speedSourcePanel.dom,
+      panel: ctx.speedSourcePanel,
       t,
       escapeHtml,
       showError: ctx.showError,
