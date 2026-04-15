@@ -96,13 +96,7 @@ export class UiAppRuntime {
       state,
       chrome: deps.shellChrome,
       chromeActions: shellChromeActions,
-      languageRefreshPorts: () =>
-        requireUiRuntimeDependency(shellBindings, "shell bindings").languageRefresh,
       liveOverview: deps.panels.dashboard.liveOverview,
-      renderSpectrum: () =>
-        requireUiRuntimeDependency(spectrum, "spectrum controller").renderSpectrum(),
-      updateSpectrumOverlay: () =>
-        requireUiRuntimeDependency(spectrum, "spectrum controller").updateSpectrumOverlay(),
     });
     spectrum = new UiSpectrumController({
       state,

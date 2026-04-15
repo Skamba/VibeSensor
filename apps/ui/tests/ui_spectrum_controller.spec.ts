@@ -11,8 +11,10 @@ async function importUiSpectrumController() {
 
 function createPanelStub(): {
   panel: SpectrumPanelView;
+  lastHeaderModel: { hintText: string; titleText: string } | null;
   lastOverlayMessage: string | null;
 } {
+  let lastHeaderModel: { hintText: string; titleText: string } | null = null;
   let lastOverlayMessage: string | null = null;
 
   return {
@@ -22,7 +24,9 @@ function createPanelStub(): {
         specChart: createElementStub("div"),
       },
       bindBandToggle() {},
-      renderHeader() {},
+      renderHeader(model) {
+        lastHeaderModel = model;
+      },
       renderOverlay(message: string | null) {
         lastOverlayMessage = message;
       },
@@ -30,6 +34,9 @@ function createPanelStub(): {
       renderSensorLegend() {},
       renderBandLegend() {},
       renderInspectorText() {},
+    },
+    get lastHeaderModel() {
+      return lastHeaderModel;
     },
     get lastOverlayMessage() {
       return lastOverlayMessage;
@@ -81,6 +88,38 @@ test.describe("UiSpectrumController", () => {
       state.transport.wsState = "stale";
 
       expect(panel.lastOverlayMessage).toBe("spectrum.stale");
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("updates spectrum header and overlay when the language changes", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      state.transport.wsState = "stale";
+      const panel = createPanelStub();
+
+      new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key) => `${state.shell.lang}:${key}`,
+      });
+
+      expect(panel.lastHeaderModel).toEqual({
+        titleText: "en:chart.spectrum_title",
+        hintText: "en:spectrum.controls_hint",
+      });
+      expect(panel.lastOverlayMessage).toBe("en:spectrum.stale");
+
+      state.shell.lang = "nl";
+
+      expect(panel.lastHeaderModel).toEqual({
+        titleText: "nl:chart.spectrum_title",
+        hintText: "nl:spectrum.controls_hint",
+      });
+      expect(panel.lastOverlayMessage).toBe("nl:spectrum.stale");
     } finally {
       restoreDocument();
     }

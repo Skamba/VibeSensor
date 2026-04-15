@@ -65,6 +65,7 @@ export function createUiShellStatusModule(
 
   const wsLinkState = computed<UiShellBadgeModel>(() => {
     trackAppStateSlice(deps.transport);
+    trackAppStateSlice(deps.shell);
     if (deps.transport.payloadError) {
       return {
         text: deps.t("ws.payload_error_pill"),

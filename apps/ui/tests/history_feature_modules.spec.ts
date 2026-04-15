@@ -186,7 +186,7 @@ function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string
 function latestRowModels(panel: { getLatestModel(): HistoryPanelRenderModel | null }) {
   const model = panel.getLatestModel();
   expect(model?.table?.kind).toBe("rows");
-  if (!model || !model.table || model.table.kind !== "rows") {
+  if (!model?.table || model.table.kind !== "rows") {
     throw new Error("Expected rendered history rows");
   }
   return buildHistoryTableRowsViewModel(model.table.params);
@@ -313,7 +313,7 @@ test("history feature binds panel actions through the shared owner", () => {
   expect(primaryViewActivations).toEqual(["dashboardView"]);
 });
 
-test("history feature loads preview and reloads expanded run on language change", async () => {
+test("history feature reloads the expanded run when the language changes", async () => {
   const state = createAppState();
   state.history.runs = [historyListRun("run-001")];
   const { feature, getRenderCount } = createFeatureHarness(state);
@@ -338,7 +338,6 @@ test("history feature loads preview and reloads expanded run on language change"
     expect(state.history.runDetailsById["run-001"]?.insights?.sensor_count_used).toBe(1);
 
     state.shell.lang = "nl";
-    feature.reloadExpandedRunOnLanguageChange();
     await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
     await expect.poll(() => state.history.runDetailsById["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
   } finally {
@@ -402,9 +401,7 @@ test("history feature rendering promotes loaded findings ahead of supporting sta
     pdfLoading: false,
     pdfError: "",
   };
-  const { feature, getLatestModel } = createFeatureHarness(state);
-
-  feature.renderHistoryTable();
+  const { getLatestModel } = createFeatureHarness(state);
 
   const row = latestRowModels({ getLatestModel })[0];
   expect(row.details?.titleEyebrow).toBe("history.details_title");

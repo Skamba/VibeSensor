@@ -1,7 +1,7 @@
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
-import type { SettingsState, ShellState } from "../ui_app_state";
-import type { ReadonlySignal } from "../ui_signals";
+import { trackAppStateSlice, type SettingsState, type ShellState } from "../ui_app_state";
+import { effect, untracked, type ReadonlySignal } from "../ui_signals";
 import type { CarsPayload } from "../../transport/http_models";
 import {
   createSettingsAnalysisModule,
@@ -26,7 +26,7 @@ import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 
 interface SettingsFeatureStateDeps {
   settings: SettingsState;
-  shell: Pick<ShellState, "speedUnit">;
+  shell: Pick<ShellState, "lang" | "speedUnit">;
 }
 
 interface SettingsFeaturePanelDeps {
@@ -146,6 +146,24 @@ export function createSettingsFeature(
     },
     services,
     formatting,
+  });
+
+  let initializedLanguage = false;
+  let previousLanguage = ctx.state.shell.lang;
+  effect(() => {
+    trackAppStateSlice(ctx.state.shell);
+    const currentLanguage = ctx.state.shell.lang;
+    if (!initializedLanguage) {
+      initializedLanguage = true;
+      previousLanguage = currentLanguage;
+    } else if (currentLanguage === previousLanguage) {
+      return;
+    } else {
+      previousLanguage = currentLanguage;
+    }
+    untracked(() => {
+      analysisModule.syncSettingsInputs();
+    });
   });
 
   function bindHandlers(): void {
