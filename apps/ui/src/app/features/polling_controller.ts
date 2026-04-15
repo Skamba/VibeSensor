@@ -1,3 +1,5 @@
+import { effect, type ReadonlySignal } from "../ui_signals";
+
 export interface PollingController {
   start(): void;
   stop(): void;
@@ -5,6 +7,7 @@ export interface PollingController {
 }
 
 export interface PollingControllerOptions {
+  enabled?: ReadonlySignal<boolean>;
   poll: () => Promise<number>;
   onErrorDelayMs: number;
 }
@@ -12,7 +15,7 @@ export interface PollingControllerOptions {
 export function createPollingController(
   options: PollingControllerOptions,
 ): PollingController {
-  const { poll, onErrorDelayMs } = options;
+  const { enabled, poll, onErrorDelayMs } = options;
 
   let pollTimer: ReturnType<typeof setTimeout> | null = null;
   let pollGeneration = 0;
@@ -57,6 +60,16 @@ export function createPollingController(
     pollingActive = false;
     pollGeneration += 1;
     clearPollTimer();
+  }
+
+  if (enabled) {
+    effect(() => {
+      if (enabled.value) {
+        start();
+        return;
+      }
+      stop();
+    });
   }
 
   return {

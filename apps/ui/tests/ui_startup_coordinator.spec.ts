@@ -70,19 +70,6 @@ function createCoordinatorHarness() {
           calls.push("settings.loadCarsFromServer");
           return loadCars.promise;
         },
-        startGpsStatusPolling(): void {
-          calls.push("settings.startGpsStatusPolling");
-        },
-      },
-      update: {
-        startPolling(): void {
-          calls.push("update.startPolling");
-        },
-      },
-      espFlash: {
-        startPolling(): void {
-          calls.push("espFlash.startPolling");
-        },
       },
     },
     transport: {
@@ -125,9 +112,6 @@ test.describe("UiStartupCoordinator", () => {
       "settings.loadCarsFromServer",
       "realtime.refreshLoggingStatus",
       "history.refreshHistory",
-      "update.startPolling",
-      "espFlash.startPolling",
-      "settings.startGpsStatusPolling",
       "transport.startTransportMode",
     ]);
   });

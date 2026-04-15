@@ -1,3 +1,4 @@
+import { computed, signal } from "../ui_signals";
 import type { FeatureServices } from "../feature_deps_base";
 import { createUpdateFeatureWorkflow } from "./update_feature_workflow";
 import { createUpdateFeaturePresenter } from "../views/update_feature_presenter";
@@ -9,8 +10,16 @@ interface UpdateFeaturePanels {
   internet: InternetPanelView;
 }
 
+interface UpdateFeaturePorts {
+  getActiveSettingsTabId: () => string;
+  getActiveViewId: () => string;
+  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
+}
+
 export interface UpdateFeatureDeps {
   panels: UpdateFeaturePanels;
+  ports: UpdateFeaturePorts;
   services: FeatureServices;
 }
 
@@ -20,8 +29,19 @@ export interface UpdateFeature {
   stopPolling(): void;
 }
 
+function isUpdatePollingContext(viewId: string, tabId: string): boolean {
+  return viewId === "settingsView" && (tabId === "internetTab" || tabId === "updateTab");
+}
+
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
-  const { panels, services } = ctx;
+  const { panels, ports, services } = ctx;
+  const handlersBound = signal(false);
+  const activeViewId = signal(ports.getActiveViewId());
+  const activeSettingsTabId = signal(ports.getActiveSettingsTabId());
+  const pollingEnabled = computed(() =>
+    handlersBound.value
+    && isUpdatePollingContext(activeViewId.value, activeSettingsTabId.value)
+  );
   const presenter = createUpdateFeaturePresenter({
     panel: panels.update,
     internetPanel: panels.internet,
@@ -31,14 +51,21 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     t: services.t,
     showError: services.showError,
     view: presenter,
+    pollingEnabled,
   });
-  let handlersBound = false;
+
+  ports.subscribePrimaryViewChanges((viewId) => {
+    activeViewId.value = viewId;
+  });
+  ports.subscribeSettingsTabChanges((tabId) => {
+    activeSettingsTabId.value = tabId;
+  });
 
   function bindUpdateHandlers(): void {
-    if (handlersBound) {
+    if (handlersBound.value) {
       return;
     }
-    handlersBound = true;
+    handlersBound.value = true;
     panels.update.bindActions({
       onStart: () => {
         workflow.renderCurrentState();
