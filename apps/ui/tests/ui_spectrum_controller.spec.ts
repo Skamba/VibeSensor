@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-import type { UiSpectrumDom } from "../src/app/dom/spectrum_dom";
 import type { SpectrumPanelView } from "../src/app/runtime/spectrum_panel_view";
 import { createAppState } from "../src/app/ui_app_state";
 import { installWindowGlobal } from "./async_test_helpers";
@@ -18,6 +17,10 @@ function createPanelStub(): {
 
   return {
     panel: {
+      chartDom: {
+        specChartWrap: createElementStub("div"),
+        specChart: createElementStub("div"),
+      },
       bindBandToggle() {},
       renderHeader() {},
       renderOverlay(message: string | null) {
@@ -50,10 +53,6 @@ test.describe("UiSpectrumController", () => {
 
       const controller = new UiSpectrumController({
         state,
-        dom: {
-          specChartWrap: createElementStub("div"),
-          specChart: createElementStub("div"),
-        } as unknown as UiSpectrumDom,
         panel: panel.panel,
         t: (key) => key,
       });

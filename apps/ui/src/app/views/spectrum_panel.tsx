@@ -2,6 +2,7 @@ import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
 import type {
   SpectrumBandLegendModel,
+  SpectrumPanelChartDom,
   SpectrumPanelHeaderModel,
   SpectrumPanelView,
   SpectrumSensorLegendModel,
@@ -10,6 +11,11 @@ import type {
 type SpectrumLegendHandlers = {
   onReset: () => void;
   onSelect: (entryId: string) => void;
+};
+
+type MutableSpectrumPanelChartDom = {
+  specChartWrap: HTMLElement | null;
+  specChart: HTMLElement | null;
 };
 
 type SpectrumPanelBridgeState = {
@@ -49,8 +55,21 @@ const DEFAULT_PANEL_STATE: SpectrumPanelBridgeState = {
   onBandToggle: null,
 };
 
-function SpectrumPanel(props: { state: SpectrumPanelBridgeState }) {
-  const { state } = props;
+function requireSpectrumElement<T extends HTMLElement>(
+  element: T | null,
+  target: string,
+): T {
+  if (element !== null) {
+    return element;
+  }
+  throw new Error(`Spectrum UI requires ${target}`);
+}
+
+function SpectrumPanel(props: {
+  state: SpectrumPanelBridgeState;
+  chartDom: MutableSpectrumPanelChartDom;
+}) {
+  const { state, chartDom } = props;
   const t = useUiTranslation();
 
   return (
@@ -60,8 +79,19 @@ function SpectrumPanel(props: { state: SpectrumPanelBridgeState }) {
           {t("chart.spectrum_title", state.header.titleText)}
         </div>
       </div>
-      <div id="specChartWrap" class="spectrum-wrap">
-        <div id="specChart" />
+      <div
+        id="specChartWrap"
+        class="spectrum-wrap"
+        ref={(element) => {
+          chartDom.specChartWrap = element;
+        }}
+      >
+        <div
+          id="specChart"
+          ref={(element) => {
+            chartDom.specChart = element;
+          }}
+        />
         <div id="spectrumOverlay" class="empty-state" hidden={state.overlayMessage === null}>
           {state.overlayMessage ?? "Waiting for sensor data..."}
         </div>
@@ -158,14 +188,26 @@ function SpectrumPanel(props: { state: SpectrumPanelBridgeState }) {
 export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
   const mount = createUiPreactMount(host);
   let state: SpectrumPanelBridgeState = { ...DEFAULT_PANEL_STATE };
+  const chartDom: MutableSpectrumPanelChartDom = {
+    specChartWrap: null,
+    specChart: null,
+  };
 
   function render(): void {
-    mount.render(<SpectrumPanel state={state} />);
+    mount.render(<SpectrumPanel state={state} chartDom={chartDom} />);
   }
 
   render();
 
   return {
+    chartDom: {
+      get specChartWrap(): HTMLElement {
+        return requireSpectrumElement(chartDom.specChartWrap, "#specChartWrap");
+      },
+      get specChart(): HTMLElement {
+        return requireSpectrumElement(chartDom.specChart, "#specChart");
+      },
+    } satisfies SpectrumPanelChartDom,
     bindBandToggle(onToggle: () => void): void {
       state = { ...state, onBandToggle: onToggle };
       render();
