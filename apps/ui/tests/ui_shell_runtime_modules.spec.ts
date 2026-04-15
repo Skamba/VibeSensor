@@ -16,15 +16,6 @@ import {
 import { createUiShellNotificationModule } from "../src/app/runtime/ui_shell_notification_module";
 import { createUiShellPreferencesModule } from "../src/app/runtime/ui_shell_preferences_module";
 import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_module";
-import { createUiShellViewVisibilityModule } from "../src/app/runtime/ui_shell_view_visibility_module";
-
-function createView(id: string): HTMLElement {
-  return {
-    dataset: {},
-    hidden: true,
-    id,
-  } as unknown as HTMLElement;
-}
 
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -95,31 +86,6 @@ test.describe("createUiShellNavigationModule", () => {
     expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(resizeCalls).toBe(1);
-  });
-});
-
-test.describe("createUiShellViewVisibilityModule", () => {
-  test("syncs section visibility from the active view signal", () => {
-    const state = createAppState();
-    const dashboardView = createView(DEFAULT_SHELL_VIEW_ID);
-    const historyView = createView("historyView");
-    const navigation = createUiShellNavigationModule({
-      shell: state.shell,
-      viewIds: [DEFAULT_SHELL_VIEW_ID, "historyView"],
-    });
-    const visibility = createUiShellViewVisibilityModule({
-      activeViewId: navigation.activeViewId,
-      views: [dashboardView, historyView],
-    });
-
-    expect(dashboardView.hidden).toBe(false);
-    expect(historyView.hidden).toBe(true);
-
-    navigation.setActiveView("historyView");
-    expect(dashboardView.hidden).toBe(true);
-    expect(historyView.hidden).toBe(false);
-
-    visibility.dispose();
   });
 });
 

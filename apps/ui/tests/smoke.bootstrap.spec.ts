@@ -309,6 +309,13 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   });
 
   await page.goto("/");
+  await expect(page.locator("#appShellChromeRoot > .wrap")).toHaveCount(1);
+  await expect(
+    page.locator("body > #dashboardView, body > #historyView, body > #settingsView"),
+  ).toHaveCount(0);
+  await expect(page.locator("#appShellChromeRoot #dashboardView")).toHaveCount(1);
+  await expect(page.locator("#appShellChromeRoot #historyView")).toHaveCount(1);
+  await expect(page.locator("#appShellChromeRoot #settingsView")).toHaveCount(1);
   await expect(page.getByRole("heading", { name: "VibeSensor" })).toBeVisible();
   await expect(page.locator(".site-header__status")).toBeHidden();
   await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText("1 / 1");

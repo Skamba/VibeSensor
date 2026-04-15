@@ -12,8 +12,8 @@ import {
 export function startUiApp(): void {
   const state = createAppState();
   const shellChromeActions = createUiShellChromeActionBridge();
-  const panels = mountUiPanels();
   const shellChrome = mountUiShellChrome(getUiShellChromeHost(), shellChromeActions);
+  const panels = mountUiPanels();
   new UiAppRuntime({
     shellChrome,
     panels,
