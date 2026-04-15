@@ -309,7 +309,7 @@ function CarsTableBody(props: {
   if (table === null) {
     return (
       <tr>
-        <td colSpan={3} data-i18n="settings.car.no_cars">
+        <td colSpan={3}>
           {t("settings.car.no_cars", "No cars added yet.")}
         </td>
       </tr>
@@ -528,20 +528,20 @@ function CarsPanel(props: {
     <>
       <div class="panel card">
         <div class="car-tab-header">
-          <strong data-i18n="settings.car.manage">
+          <strong>
             {t("settings.car.manage", "Manage Cars")}
           </strong>
           <button
             id="addCarBtn"
             class="btn btn--success"
-            data-i18n="settings.car.add_new"
+
             onClick={() => state.wizardActions?.onAction({ type: "open" })}
             ref={addCarBtnRef}
           >
             {t("settings.car.add_new", "+ Add Car")}
           </button>
         </div>
-        <div class="subtle" data-i18n="settings.car.hint">
+        <div class="subtle">
           {t(
             "settings.car.hint",
             "Add cars from the library or enter specs manually. Activate a car to use it for analysis.",
@@ -556,13 +556,13 @@ function CarsPanel(props: {
           <table class="car-list-table settings-entity-table settings-entity-table--cars">
             <thead>
               <tr>
-                <th data-i18n="settings.car.col_name">
+                <th>
                   {t("settings.car.col_name", "Name")}
                 </th>
-                <th data-i18n="settings.car.col_setup">
+                <th>
                   {t("settings.car.col_setup", "Setup")}
                 </th>
-                <th data-i18n="settings.car.col_actions">
+                <th>
                   {t("settings.car.col_actions", "Actions")}
                 </th>
               </tr>
@@ -593,10 +593,10 @@ function CarsPanel(props: {
         >
           <div class="wizard-header">
             <div class="wizard-header__text">
-              <strong id="wizardTitle" data-i18n="settings.car.add_title">
+              <strong id="wizardTitle">
                 {t("settings.car.add_title", "Add a Car")}
               </strong>
-              <div class="subtle" data-i18n="settings.car.wizard_intro">
+              <div class="subtle">
                 {t(
                   "settings.car.wizard_intro",
                   "Use the library when it fits, or branch into manual specs without losing your place.",
@@ -629,7 +629,7 @@ function CarsPanel(props: {
                       aria-current={index === wizardModel.step ? "step" : undefined}
                     >
                       <span class="wizard-step-dot__number">{index + 1}</span>
-                      <span class="wizard-step-dot__label" data-i18n={label.key}>
+                      <span class="wizard-step-dot__label">
                         {t(label.key, label.fallback)}
                       </span>
                     </span>
@@ -637,7 +637,7 @@ function CarsPanel(props: {
                 </div>
 
                 <div id="wizardStep0" class="wizard-step" hidden={wizardModel.step !== 0}>
-                  <h3 data-i18n="settings.car.step_brand">
+                  <h3>
                     {t("settings.car.step_brand", "Select Brand")}
                   </h3>
                   <WizardOptions
@@ -654,7 +654,7 @@ function CarsPanel(props: {
                     }}
                   />
                   <div class="wizard-custom">
-                    <label data-i18n="settings.car.or_custom_brand">
+                    <label>
                       {t("settings.car.or_custom_brand", "Or type a custom brand:")}
                     </label>
                     <input
@@ -667,7 +667,7 @@ function CarsPanel(props: {
                     <button
                       id="wizardCustomBrandBtn"
                       class="btn btn--primary"
-                      data-i18n="settings.car.use_custom"
+
                       onClick={() =>
                         state.wizardActions?.onAction({
                           type: "submit-custom-brand",
@@ -680,7 +680,7 @@ function CarsPanel(props: {
                 </div>
 
                 <div id="wizardStep1" class="wizard-step" hidden={wizardModel.step !== 1}>
-                  <h3 data-i18n="settings.car.step_type">
+                  <h3>
                     {t("settings.car.step_type", "Select Type")}
                   </h3>
                   <WizardOptions
@@ -697,7 +697,7 @@ function CarsPanel(props: {
                     }}
                   />
                   <div class="wizard-custom">
-                    <label data-i18n="settings.car.or_custom_type">
+                    <label>
                       {t("settings.car.or_custom_type", "Or type a custom type:")}
                     </label>
                     <input
@@ -710,7 +710,7 @@ function CarsPanel(props: {
                     <button
                       id="wizardCustomTypeBtn"
                       class="btn btn--primary"
-                      data-i18n="settings.car.use_custom"
+
                       onClick={() =>
                         state.wizardActions?.onAction({
                           type: "submit-custom-type",
@@ -723,7 +723,7 @@ function CarsPanel(props: {
                 </div>
 
                 <div id="wizardStep2" class="wizard-step" hidden={wizardModel.step !== 2}>
-                  <h3 data-i18n="settings.car.step_model">
+                  <h3>
                     {t("settings.car.step_model", "Select Model")}
                   </h3>
                   <WizardOptions
@@ -744,16 +744,16 @@ function CarsPanel(props: {
                     }}
                   />
                   <div class="wizard-custom wizard-custom--branch">
-                    <strong class="wizard-branch-label" data-i18n="settings.car.manual_branch_title">
+                    <strong class="wizard-branch-label">
                       {t("settings.car.manual_branch_title", "Manual specs branch")}
                     </strong>
-                    <div class="subtle wizard-branch-note" data-i18n="settings.car.manual_model_note">
+                    <div class="subtle wizard-branch-note">
                       {t(
                         "settings.car.manual_model_note",
                         "Skip library variants and finish with your own wheel and gearbox values.",
                       )}
                     </div>
-                    <label data-i18n="settings.car.or_custom_model">
+                    <label>
                       {t("settings.car.or_custom_model", "Or type a custom model:")}
                     </label>
                     <input
@@ -766,7 +766,7 @@ function CarsPanel(props: {
                     <button
                       id="wizardCustomModelBtn"
                       class="btn btn--primary"
-                      data-i18n="settings.car.use_custom"
+
                       onClick={() =>
                         state.wizardActions?.onAction({
                           type: "submit-custom-model",
@@ -779,7 +779,7 @@ function CarsPanel(props: {
                 </div>
 
                 <div id="wizardStep3" class="wizard-step" hidden={wizardModel.step !== 3}>
-                  <h3 data-i18n="settings.car.step_variant">
+                  <h3>
                     {t("settings.car.step_variant", "Select Variant")}
                   </h3>
                   <WizardOptions
@@ -804,17 +804,17 @@ function CarsPanel(props: {
                 <div id="wizardStep4" class="wizard-step" hidden={wizardModel.step !== 4}>
                   <div class="wizard-branch-card wizard-branch-card--library">
                     <div class="wizard-branch-card__header">
-                      <strong class="wizard-branch-label" data-i18n="settings.car.library_branch_title">
+                      <strong class="wizard-branch-label">
                         {t("settings.car.library_branch_title", "Library-matched specs")}
                       </strong>
-                      <div class="subtle wizard-branch-note" data-i18n="settings.car.library_branch_note">
+                      <div class="subtle wizard-branch-note">
                         {t(
                           "settings.car.library_branch_note",
                           "Choose the tire and gearbox that match this car. Finish stays pinned below.",
                         )}
                       </div>
                     </div>
-                    <h3 data-i18n="settings.car.step_wheels">
+                    <h3>
                       {t("settings.car.step_wheels", "Select Wheels")}
                     </h3>
                     <WizardOptions
@@ -834,7 +834,7 @@ function CarsPanel(props: {
                         optionRefs.current.tireOption = element;
                       }}
                     />
-                    <h3 data-i18n="settings.car.step_gearbox" class="wizard-section-title">
+                    <h3 class="wizard-section-title">
                       {t("settings.car.step_gearbox", "Select Gearbox")}
                     </h3>
                     <WizardOptions
@@ -856,18 +856,18 @@ function CarsPanel(props: {
                     />
                   </div>
                   <div class="wizard-branch-divider">
-                    <span data-i18n="settings.car.branch_divider">
+                    <span>
                       {t("settings.car.branch_divider", "Or switch to the manual branch")}
                     </span>
                   </div>
                   <div class="wizard-branch-card wizard-branch-card--manual wizard-custom-specs">
                     <div class="wizard-branch-card__header">
-                      <strong class="wizard-branch-label" data-i18n="settings.car.manual_branch_title">
+                      <strong class="wizard-branch-label">
                         {t("settings.car.manual_branch_title", "Manual specs branch")}
                       </strong>
                       <div
                         class="subtle wizard-custom-specs__note"
-                        data-i18n="settings.car.manual_specs_note"
+
                       >
                         {t(
                           "settings.car.manual_specs_note",
@@ -877,7 +877,7 @@ function CarsPanel(props: {
                     </div>
                     <div class="settings-subgrid">
                       <div class="field">
-                        <label htmlFor="wizTireWidth" data-i18n="settings.tire_width">
+                        <label htmlFor="wizTireWidth">
                           {t("settings.tire_width", "Tire Width (mm)")}
                         </label>
                         <input
@@ -891,7 +891,7 @@ function CarsPanel(props: {
                         />
                       </div>
                       <div class="field">
-                        <label htmlFor="wizTireAspect" data-i18n="settings.tire_aspect">
+                        <label htmlFor="wizTireAspect">
                           {t("settings.tire_aspect", "Tire Aspect (%)")}
                         </label>
                         <input
@@ -905,7 +905,7 @@ function CarsPanel(props: {
                         />
                       </div>
                       <div class="field">
-                        <label htmlFor="wizRim" data-i18n="settings.rim_size">
+                        <label htmlFor="wizRim">
                           {t("settings.rim_size", "Rim Size (in)")}
                         </label>
                         <input
@@ -919,7 +919,7 @@ function CarsPanel(props: {
                         />
                       </div>
                       <div class="field">
-                        <label htmlFor="wizFinalDrive" data-i18n="settings.final_drive_ratio">
+                        <label htmlFor="wizFinalDrive">
                           {t("settings.final_drive_ratio", "Final Drive Ratio")}
                         </label>
                         <input
@@ -933,7 +933,7 @@ function CarsPanel(props: {
                         />
                       </div>
                       <div class="field">
-                        <label htmlFor="wizGearRatio" data-i18n="settings.top_gear_ratio">
+                        <label htmlFor="wizGearRatio">
                           {t("settings.top_gear_ratio", "Top Gear Ratio")}
                         </label>
                         <input
@@ -960,7 +960,7 @@ function CarsPanel(props: {
                     id="wizardBackBtn"
                     class="btn btn--muted"
                     hidden={!wizardModel.backVisible}
-                    data-i18n="settings.car.back"
+
                     onClick={() => state.wizardActions?.onAction({ type: "back" })}
                   >
                     {t("settings.car.back", "Back")}
@@ -970,7 +970,7 @@ function CarsPanel(props: {
                     class="btn btn--success"
                     hidden={!wizardModel.finishVisible}
                     disabled={!wizardModel.finishEnabled}
-                    data-i18n="settings.car.finish_add"
+
                     onClick={() => state.wizardActions?.onAction({ type: "finish" })}
                     ref={wizardManualAddBtnRef}
                   >
@@ -982,20 +982,20 @@ function CarsPanel(props: {
 
             <aside class="wizard-summary-card" aria-live="polite">
               <div class="wizard-task-callout">
-                <strong data-i18n="settings.car.wizard_task_title">
+                <strong>
                   {t("settings.car.wizard_task_title", "Guided setup")}
                 </strong>
-                <div class="subtle" data-i18n="settings.car.wizard_task_intro">
+                <div class="subtle">
                   {t(
                     "settings.car.wizard_task_intro",
                     "This flow pauses the rest of Settings so you can build the next analysis profile step by step without losing your place.",
                   )}
                 </div>
               </div>
-              <div class="wizard-summary-card__title" data-i18n="settings.car.wizard_summary_title">
+              <div class="wizard-summary-card__title">
                 {t("settings.car.wizard_summary_title", "Current selection")}
               </div>
-              <div class="subtle" data-i18n="settings.car.wizard_summary_intro">
+              <div class="subtle">
                 {t(
                   "settings.car.wizard_summary_intro",
                   "Your choices stay visible here while the profile comes together.",

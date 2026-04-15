@@ -142,7 +142,7 @@ function SettingsShell(props: SettingsShellProps) {
               onClick={() => onActivateTab(tab.id)}
               onKeyDown={(event) => handleTabKeyDown(index, event)}
             >
-              <span data-i18n={tab.labelKey}>
+              <span>
                 {t(tab.labelKey, tab.fallbackLabel)}
               </span>
             </button>

@@ -149,7 +149,7 @@ function RealtimeLoggingPanel(props: {
     <div class="realtime-logging-shell" data-layout={state.setupMode ? "setup" : undefined}>
       <div class="card__header card__header--stack">
         <div>
-          <div class="card__title" data-i18n="dashboard.run_recording">
+          <div class="card__title">
             {t("dashboard.run_recording", "Run Recording")}
           </div>
           <RealtimeLoggingSummary
@@ -176,12 +176,12 @@ function RealtimeLoggingPanel(props: {
       {showProgressSection
         ? (
           <>
-            <div class="mini-label" data-i18n="dashboard.recording_progress">
+            <div class="mini-label">
               {t("dashboard.recording_progress", "Run progress")}
             </div>
             <div class="stat-grid stat-grid--compact">
               <div id="loggingPhase" class="stat stat--compact" hidden>
-                <div class="stat__label" data-i18n="dashboard.recording_phase">
+                <div class="stat__label">
                   {t("dashboard.recording_phase", "Run phase")}
                 </div>
                 <div class="stat__value" data-value>
@@ -189,7 +189,7 @@ function RealtimeLoggingPanel(props: {
                 </div>
               </div>
               <div id="loggingElapsed" class="stat stat--compact">
-                <div class="stat__label" data-i18n="dashboard.recording_elapsed">
+                <div class="stat__label">
                   {t("dashboard.recording_elapsed", "Elapsed")}
                 </div>
                 <div class="stat__value" data-value>
@@ -197,7 +197,7 @@ function RealtimeLoggingPanel(props: {
                 </div>
               </div>
               <div id="loggingSamples" class="stat stat--compact">
-                <div class="stat__label" data-i18n="dashboard.recording_samples">
+                <div class="stat__label">
                   {t("dashboard.recording_samples", "Samples recorded")}
                 </div>
                 <div class="stat__value" data-value>
@@ -214,7 +214,7 @@ function RealtimeLoggingPanel(props: {
           id="startLoggingBtn"
           class="btn btn--primary"
           type="button"
-          data-i18n="dashboard.start_recording"
+
           hidden={!state.showStart}
           disabled={state.startDisabled}
           onClick={() => state.actions?.onStartLogging()}
@@ -225,7 +225,7 @@ function RealtimeLoggingPanel(props: {
           id="stopLoggingBtn"
           class="btn btn--danger-quiet"
           type="button"
-          data-i18n="dashboard.stop_recording"
+
           hidden={!state.showStop}
           disabled={state.stopDisabled}
           onClick={() => state.actions?.onStopLogging()}

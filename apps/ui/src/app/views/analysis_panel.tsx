@@ -272,7 +272,7 @@ function AnalysisField(props: {
   const t = useUiTranslation();
   return (
     <div class="field">
-      <label htmlFor={spec.inputId} data-i18n={spec.labelKey}>
+      <label htmlFor={spec.inputId}>
         {t(spec.labelKey, spec.fallbackLabel)}
       </label>
       <input
@@ -340,13 +340,13 @@ function AnalysisPanel(props: {
           <span class="settings-help-disclosure__heading">
             <strong
               class="settings-help-disclosure__title"
-              data-i18n="settings.analysis.guidance_title"
+
             >
               {t("settings.analysis.guidance_title", "Safe starting point")}
             </strong>
             <span
               class="settings-help-disclosure__caption"
-              data-i18n="settings.analysis.guidance_summary"
+
             >
               {t(
                 "settings.analysis.guidance_summary",
@@ -358,7 +358,7 @@ function AnalysisPanel(props: {
         <div class="settings-help-disclosure__body">
           <div
             class="subtle"
-            data-i18n="settings.analysis.guidance_intro"
+
           >
             {t(
               "settings.analysis.guidance_intro",
@@ -367,7 +367,7 @@ function AnalysisPanel(props: {
           </div>
           <div
             class="subtle"
-            data-i18n="settings.analysis.guidance_guardrail"
+
           >
             {t(
               "settings.analysis.guidance_guardrail",
@@ -380,7 +380,7 @@ function AnalysisPanel(props: {
         id="analysisNoCarMessage"
         class="empty-state empty-state--inline"
         hidden={!noCarSelected}
-        data-i18n="settings.analysis.no_car_selected"
+
       >
         {t(
           "settings.analysis.no_car_selected",
@@ -389,7 +389,7 @@ function AnalysisPanel(props: {
       </div>
       <div class="settings-groups">
         <section class="settings-group">
-          <h3 data-i18n="settings.group.order_band_widths">
+          <h3>
             {t("settings.group.order_band_widths", "Order Band Widths")}
           </h3>
           <details
@@ -399,7 +399,7 @@ function AnalysisPanel(props: {
             <summary class="settings-help-disclosure__summary">
               <span
                 class="settings-help-disclosure__title"
-                data-i18n="settings.analysis.more_guidance"
+
               >
                 {t("settings.analysis.more_guidance", "Why this matters")}
               </span>
@@ -407,7 +407,7 @@ function AnalysisPanel(props: {
             <div class="settings-help-disclosure__body">
               <div
                 class="subtle"
-                data-i18n="settings.analysis.group.order_band_widths_help"
+
               >
                 {t(
                   "settings.analysis.group.order_band_widths_help",
@@ -432,7 +432,7 @@ function AnalysisPanel(props: {
         </section>
 
         <section class="settings-group">
-          <h3 data-i18n="settings.group.uncertainty_model">
+          <h3>
             {t("settings.group.uncertainty_model", "Uncertainty Model")}
           </h3>
           <details
@@ -442,14 +442,14 @@ function AnalysisPanel(props: {
             <summary class="settings-help-disclosure__summary">
               <span
                 class="settings-help-disclosure__title"
-                data-i18n="settings.analysis.more_guidance"
+
               >
                 {t("settings.analysis.more_guidance", "Why this matters")}
               </span>
             </summary>
             <div class="settings-help-disclosure__body">
               <div class="subtle">
-                <span data-i18n="settings.uncertainty_defaults">
+                <span>
                   {t(
                     "settings.uncertainty_defaults",
                     "Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.",
@@ -458,7 +458,7 @@ function AnalysisPanel(props: {
               </div>
               <div
                 class="subtle"
-                data-i18n="settings.analysis.group.uncertainty_model_help"
+
               >
                 {t(
                   "settings.analysis.group.uncertainty_model_help",
@@ -496,7 +496,7 @@ function AnalysisPanel(props: {
           id="resetAnalysisBtn"
           type="button"
           class="btn"
-          data-i18n="settings.analysis.reset"
+
           disabled={!state.availability.hasActiveCar}
           onClick={() => state.actions?.onReset()}
         >
@@ -506,7 +506,7 @@ function AnalysisPanel(props: {
           id="saveAnalysisBtn"
           type="button"
           class="btn btn--primary"
-          data-i18n="settings.analysis.save"
+
           disabled={!state.availability.hasActiveCar}
           onClick={() => state.actions?.onSave()}
         >
