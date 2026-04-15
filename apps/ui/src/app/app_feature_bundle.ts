@@ -4,11 +4,10 @@ import {
   createSettingsFeatureRealtimePorts,
 } from "./app_feature_bundle_ports";
 import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
-import { createEspFlashFeature, type EspFlashFeature } from "./features/esp_flash_feature";
-import { createHistoryFeature, type HistoryFeature } from "./features/history_feature";
+import { createEspFlashFeature } from "./features/esp_flash_feature";
+import { createHistoryFeature } from "./features/history_feature";
 import {
   createRealtimeFeature,
-  type RealtimeFeature,
   type RealtimeFeatureChromePorts,
   type RealtimeFeatureSelectionPorts,
 } from "./features/realtime_feature";
@@ -17,7 +16,7 @@ import {
   type SettingsFeature,
   type SettingsFeatureViewPorts,
 } from "./features/settings_feature";
-import { createUpdateFeature, type UpdateFeature } from "./features/update_feature";
+import { createUpdateFeature } from "./features/update_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
 import type { AppState } from "./ui_app_state";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";

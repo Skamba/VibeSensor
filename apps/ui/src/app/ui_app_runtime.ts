@@ -1,7 +1,8 @@
 import { fmt, fmtTs } from "../format";
 import {
   createAppFeatureBundle,
-  type AppFeatureBundle,
+  type AppFeatureBundleRuntimePorts,
+  type AppFeatureBundleSharedDeps,
 } from "./app_feature_bundle";
 import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
@@ -16,6 +17,7 @@ import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 import type { UiMountedPanels } from "./ui_panel_bootstrap";
+import type { UiShellFeaturePorts } from "./runtime/ui_shell_feature_ports";
 
 export interface UiAppRuntimeDeps {
   shellChrome: UiShellChromeView;
@@ -24,80 +26,107 @@ export interface UiAppRuntimeDeps {
   shellChromeActions?: UiShellChromeActionBridge;
 }
 
+function requireUiRuntimeDependency<T>(value: T | null, name: string): T {
+  if (value === null) {
+    throw new Error(`UiAppRuntime ${name} used before initialization`);
+  }
+  return value;
+}
+
+function createUiAppSharedDeps(
+  shell: UiShellController,
+): AppFeatureBundleSharedDeps {
+  return {
+    services: {
+      t: (key, vars) => shell.t(key, vars),
+      showError: (message) => shell.showError(message),
+    },
+    formatting: {
+      fmt,
+      fmtTs,
+      formatInt: (value) => shell.localFormatInt(value),
+    },
+  };
+}
+
+function createUiAppFeatureRuntimePorts(deps: {
+  panels: UiMountedPanels;
+  shell: UiShellController;
+  spectrum: UiSpectrumController;
+  transport: UiLiveTransportController;
+}): AppFeatureBundleRuntimePorts {
+  const {
+    panels,
+    shell,
+    spectrum,
+    transport,
+  } = deps;
+  return {
+    panels,
+    navigation: {
+      activatePrimaryView: (viewId) => shell.setActiveView(viewId),
+      subscribeActiveViewChanges: (listener) =>
+        shell.subscribeActiveViewChanges(listener),
+    },
+    realtimeChrome: {
+      setShellLiveStatus: (variant, text) =>
+        shell.setLiveStatus(variant, text),
+    },
+    view: {
+      renderSpectrum: () => spectrum.renderSpectrum(),
+      renderSpeedReadout: () => shell.renderSpeedReadout(),
+    },
+    transport: {
+      sendSelection: () => transport.sendSelection(),
+    },
+  };
+}
+
 export class UiAppRuntime {
-  private readonly state: AppState;
-
-  private readonly featurePorts: AppFeatureBundle;
-
-  private readonly shell: UiShellController;
-
-  private readonly spectrum: UiSpectrumController;
-
-  private readonly transport: UiLiveTransportController;
-
   private readonly startup: UiStartupCoordinator;
 
   constructor(deps: UiAppRuntimeDeps) {
-    this.state = deps.state ?? createAppState();
+    const state = deps.state ?? createAppState();
     const shellChromeActions =
       deps.shellChromeActions ?? createUiShellChromeActionBridge();
-    this.shell = new UiShellController({
-      state: this.state,
+    let spectrum: UiSpectrumController | null = null;
+    let shellFeaturePorts: UiShellFeaturePorts | null = null;
+    const shell = new UiShellController({
+      state,
       chrome: deps.shellChrome,
       chromeActions: shellChromeActions,
       liveOverview: deps.panels.dashboard.liveOverview,
+      featurePorts: () =>
+        requireUiRuntimeDependency(shellFeaturePorts, "shell feature ports"),
+      renderSpectrum: () =>
+        requireUiRuntimeDependency(spectrum, "spectrum controller").renderSpectrum(),
+      updateSpectrumOverlay: () =>
+        requireUiRuntimeDependency(spectrum, "spectrum controller").updateSpectrumOverlay(),
     });
-    this.spectrum = new UiSpectrumController({
-      state: this.state,
+    spectrum = new UiSpectrumController({
+      state,
       panel: deps.panels.dashboard.spectrum,
-      t: (key, vars) => this.shell.t(key, vars),
+      t: (key, vars) => shell.t(key, vars),
     });
-    this.shell.attachSpectrumHooks({
-      renderSpectrum: () => this.spectrum.renderSpectrum(),
-      updateSpectrumOverlay: () => this.spectrum.updateSpectrumOverlay(),
+    const transport = new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => shell.t("ws.payload_error"),
     });
-    this.transport = new UiLiveTransportController({
-      state: this.state,
-      payloadErrorMessage: () => this.shell.t("ws.payload_error"),
-    });
-    this.featurePorts = createAppFeatureBundle({
-      state: this.state,
-      shared: {
-        services: {
-          t: (key, vars) => this.shell.t(key, vars),
-          showError: (message) => this.shell.showError(message),
-        },
-        formatting: {
-          fmt,
-          fmtTs,
-          formatInt: (value) => this.shell.localFormatInt(value),
-        },
-      },
-      runtime: {
+    const featurePorts = createAppFeatureBundle({
+      state,
+      shared: createUiAppSharedDeps(shell),
+      runtime: createUiAppFeatureRuntimePorts({
         panels: deps.panels,
-        navigation: {
-          activatePrimaryView: (viewId) => this.shell.setActiveView(viewId),
-          subscribeActiveViewChanges: (listener) =>
-            this.shell.subscribeActiveViewChanges(listener),
-        },
-        realtimeChrome: {
-          setShellLiveStatus: (variant, text) =>
-            this.shell.setLiveStatus(variant, text),
-        },
-        view: {
-          renderSpectrum: () => this.spectrum.renderSpectrum(),
-          renderSpeedReadout: () => this.shell.renderSpeedReadout(),
-        },
-        transport: {
-          sendSelection: () => this.transport.sendSelection(),
-        },
-      },
+        shell,
+        spectrum,
+        transport,
+      }),
     });
-    this.shell.attachPorts(this.featurePorts.shell);
+    shellFeaturePorts = featurePorts.shell;
     this.startup = new UiStartupCoordinator({
-      shell: this.shell,
-      transport: this.transport,
-      features: this.featurePorts.startup,
+      shell,
+      transport,
+      features: featurePorts.startup,
       defaultViewId: DEFAULT_SHELL_VIEW_ID,
     });
   }
