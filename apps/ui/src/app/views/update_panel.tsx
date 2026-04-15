@@ -17,13 +17,6 @@ import type {
   UpdateStatusRowModel,
 } from "./update_status_view_models";
 
-export interface UpdatePanelDom {
-  updateOverviewPanel: HTMLElement | null;
-  updateStartBtn: HTMLButtonElement;
-  updateCancelBtn: HTMLButtonElement;
-  updateStatusPanel: HTMLElement;
-}
-
 export interface UpdatePanelRenderModel {
   cancelButtonDisabled: boolean;
   cancelButtonHidden: boolean;
@@ -39,7 +32,6 @@ export interface UpdatePanelActionHandlers {
 }
 
 export interface UpdatePanelView {
-  readonly dom: UpdatePanelDom;
   bindActions(handlers: UpdatePanelActionHandlers): void;
   setModel(model: UpdatePanelRenderModel): void;
 }
@@ -403,26 +395,6 @@ function UpdatePanel(props: {
   );
 }
 
-function requiredInHost<T extends Element>(
-  host: ParentNode,
-  selector: string,
-): T {
-  const element = host.querySelector<T>(selector);
-  if (!element) {
-    throw new Error(`Update feature requires ${selector}`);
-  }
-  return element;
-}
-
-function createUpdatePanelDom(host: HTMLElement): UpdatePanelDom {
-  return {
-    updateOverviewPanel: host.querySelector<HTMLElement>("#updateOverviewPanel"),
-    updateStartBtn: requiredInHost<HTMLButtonElement>(host, "#updateStartBtn"),
-    updateCancelBtn: requiredInHost<HTMLButtonElement>(host, "#updateCancelBtn"),
-    updateStatusPanel: requiredInHost<HTMLElement>(host, "#updateStatusPanel"),
-  };
-}
-
 export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
   const state = signal<UpdatePanelBridgeState>({
     actions: null,
@@ -431,7 +403,6 @@ export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
   render(<UpdatePanel state={state} />, host);
 
   return {
-    dom: createUpdatePanelDom(host),
     bindActions(handlers) {
       state.value = { ...state.value, actions: handlers };
     },

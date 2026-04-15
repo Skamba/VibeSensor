@@ -1,4 +1,5 @@
 import { h, render, type ComponentChildren } from "preact";
+import { useEffect, useRef } from "preact/hooks";
 
 import type { UpdateStartRequestPayload } from "../../transport/http_models";
 import type { ChoiceCardState } from "../view_style_types";
@@ -13,23 +14,6 @@ import type {
   UpdateStatusBadgeModel,
   UpdateStatusRowModel,
 } from "./update_status_view_models";
-
-export interface InternetPanelDom {
-  internetStatusPanel: HTMLElement | null;
-  updateTransportOptions: HTMLElement | null;
-  updateTransportChoiceWifi: HTMLElement | null;
-  updateTransportChoiceUsb: HTMLElement | null;
-  updateWifiFields: HTMLElement | null;
-  updateReadinessSummary: HTMLElement | null;
-  updateDetailsCaption: HTMLElement | null;
-  updateTransportNote: HTMLElement | null;
-  updateTransportWifiRadio: HTMLInputElement | null;
-  updateTransportUsbRadio: HTMLInputElement | null;
-  updateUsbTransportSummary: HTMLElement | null;
-  updateSsidInput: HTMLInputElement | null;
-  updatePasswordInput: HTMLInputElement | null;
-  updateTogglePasswordBtn: HTMLButtonElement | null;
-}
 
 export interface UpdateTransportChoiceCardRenderModel {
   badgeText: string | null;
@@ -67,14 +51,19 @@ export interface InternetPanelActionHandlers {
 }
 
 export interface InternetPanelView {
-  readonly dom: InternetPanelDom;
   bindActions(handlers: InternetPanelActionHandlers): void;
+  focusSsidInput(): void;
   setModel(model: InternetPanelRenderModel): void;
 }
 
 type InternetPanelBridgeState = {
   actions: InternetPanelActionHandlers | null;
   model: InternetPanelRenderModel;
+};
+
+type InternetPanelFocusRequest = {
+  field: "ssid";
+  token: number;
 };
 
 const DEFAULT_INTERNET_PANEL_MODEL: InternetPanelRenderModel = {
@@ -268,11 +257,22 @@ function UpdateTransportChoiceCard(props: {
 }
 
 function InternetPanel(props: {
+  focusRequest: ReadonlySignal<InternetPanelFocusRequest | null>;
   state: ReadonlySignal<InternetPanelBridgeState>;
 }) {
+  const focusRequest = props.focusRequest.value;
   const state = props.state.value;
   const { model } = state;
   const t = useUiTranslation();
+  const ssidInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!focusRequest) {
+      return;
+    }
+    ssidInputRef.current?.focus();
+  }, [focusRequest]);
+
   return (
     <div class="maintenance-stack">
       <div class="panel card">
@@ -361,6 +361,7 @@ function InternetPanel(props: {
               <input
                 type="text"
                 id="updateSsidInput"
+                ref={ssidInputRef}
                 autoComplete="off"
                 maxLength={64}
                 style="width:100%;max-width:20rem;"
@@ -437,54 +438,22 @@ function InternetPanel(props: {
   );
 }
 
-function createInternetPanelDom(host: HTMLElement): InternetPanelDom {
-  return {
-    internetStatusPanel: host.querySelector<HTMLElement>("#internetStatusPanel"),
-    updateTransportOptions: host.querySelector<HTMLElement>(
-      "#updateTransportOptions",
-    ),
-    updateTransportChoiceWifi: host.querySelector<HTMLElement>(
-      "#updateTransportChoiceWifi",
-    ),
-    updateTransportChoiceUsb: host.querySelector<HTMLElement>(
-      "#updateTransportChoiceUsb",
-    ),
-    updateWifiFields: host.querySelector<HTMLElement>("#updateWifiFields"),
-    updateReadinessSummary: host.querySelector<HTMLElement>(
-      "#updateReadinessSummary",
-    ),
-    updateDetailsCaption: host.querySelector<HTMLElement>("#updateDetailsCaption"),
-    updateTransportNote: host.querySelector<HTMLElement>("#updateTransportNote"),
-    updateTransportWifiRadio: host.querySelector<HTMLInputElement>(
-      "#updateTransportWifiRadio",
-    ),
-    updateTransportUsbRadio: host.querySelector<HTMLInputElement>(
-      "#updateTransportUsbRadio",
-    ),
-    updateUsbTransportSummary: host.querySelector<HTMLElement>(
-      "#updateUsbTransportSummary",
-    ),
-    updateSsidInput: host.querySelector<HTMLInputElement>("#updateSsidInput"),
-    updatePasswordInput: host.querySelector<HTMLInputElement>(
-      "#updatePasswordInput",
-    ),
-    updateTogglePasswordBtn: host.querySelector<HTMLButtonElement>(
-      "#updateTogglePasswordBtn",
-    ),
-  };
-}
-
 export function mountInternetPanel(host: HTMLElement): InternetPanelView {
+  const focusRequest = signal<InternetPanelFocusRequest | null>(null);
+  let focusRequestToken = 0;
   const state = signal<InternetPanelBridgeState>({
     actions: null,
     model: DEFAULT_INTERNET_PANEL_MODEL,
   });
-  render(<InternetPanel state={state} />, host);
+  render(<InternetPanel focusRequest={focusRequest} state={state} />, host);
 
   return {
-    dom: createInternetPanelDom(host),
     bindActions(handlers) {
       state.value = { ...state.value, actions: handlers };
+    },
+    focusSsidInput() {
+      focusRequestToken += 1;
+      focusRequest.value = { field: "ssid", token: focusRequestToken };
     },
     setModel(model) {
       state.value = { ...state.value, model };
