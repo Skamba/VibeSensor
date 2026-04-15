@@ -1,5 +1,7 @@
 import { h } from "preact";
 
+import type { VisualVariant } from "../view_style_types";
+
 export type MaintenanceReadinessItemState = "attention" | "blocked" | "ready";
 
 export interface MaintenanceReadinessItem {
@@ -12,7 +14,7 @@ export interface MaintenanceReadinessPanelModel {
   title: string;
   summary: string;
   stateLabel: string;
-  stateVariant: "bad" | "muted" | "ok" | "warn";
+  stateVariant: VisualVariant;
   items: readonly MaintenanceReadinessItem[];
 }
 

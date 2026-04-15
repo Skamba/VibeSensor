@@ -1,7 +1,7 @@
 import { h, render, type ComponentChildren } from "preact";
 
 import type { UpdateStartRequestPayload } from "../../transport/http_models";
-import type { ChoiceCardState } from "../style_state";
+import type { ChoiceCardState } from "../view_style_types";
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
