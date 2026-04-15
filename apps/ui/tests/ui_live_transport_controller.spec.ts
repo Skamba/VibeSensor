@@ -57,6 +57,23 @@ function installRafHarness() {
   };
 }
 
+function installLocation(search: string): () => void {
+  const target = window as Window & typeof globalThis & { location?: Location };
+  const previousLocation = target.location;
+  target.location = {
+    search,
+    protocol: "http:",
+    host: "localhost",
+  } as Location;
+  return () => {
+    if (previousLocation === undefined) {
+      delete target.location;
+      return;
+    }
+    target.location = previousLocation;
+  };
+}
+
 test.describe("UiLiveTransportController", () => {
   test.beforeEach(() => {
     installWindowGlobal();
@@ -133,5 +150,35 @@ test.describe("UiLiveTransportController", () => {
 
     expect(() => applyPayload(controller, makeLivePayload())).not.toThrow();
     expect(state.realtime.speedMps).toBe(10);
+  });
+
+  test("routes demo mode through the shared queued transport pipeline", async () => {
+    const state = createAppState();
+    const controller = new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => "payload error",
+    });
+    const restoreLocation = installLocation("?demo=1");
+    const raf = installRafHarness();
+    try {
+      controller.startTransportMode();
+      await flushAsyncWork();
+
+      expect(state.transport.wsState).toBe("connected");
+      expect(state.transport.hasReceivedPayload).toBe(true);
+      expect(state.transport.pendingPayload).not.toBeNull();
+
+      raf.flushNext();
+      await flushAsyncWork();
+
+      expect(state.transport.pendingPayload).toBeNull();
+      expect(state.realtime.clients).toHaveLength(5);
+      expect(state.realtime.selectedClientId).toBe("aabbcc001122");
+      expect(state.realtime.speedMps).toBe(22.2);
+      expect(state.spectrum.hasSpectrumData).toBe(true);
+    } finally {
+      restoreLocation();
+      raf.restore();
+    }
   });
 });

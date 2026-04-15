@@ -4,7 +4,6 @@ import type { AppState } from "./ui_app_state";
 
 type DemoDeps = {
   state: Pick<AppState, "transport" | "settings">;
-  applyPayload: (payload: unknown) => void;
 };
 
 declare global {
@@ -14,11 +13,7 @@ declare global {
 }
 
 export function runDemoMode(deps: DemoDeps): void {
-  const { state, applyPayload } = deps;
-
-  batchAppStateUpdates(() => {
-    state.transport.wsState = "connected";
-  });
+  const { state } = deps;
 
   const demoClients = [
     {
@@ -167,6 +162,7 @@ export function runDemoMode(deps: DemoDeps): void {
   };
 
   batchAppStateUpdates(() => {
+    state.transport.wsState = "connected";
     state.settings.carsLoaded = true;
     state.settings.cars = [
       {
@@ -179,8 +175,8 @@ export function runDemoMode(deps: DemoDeps): void {
     ];
     state.settings.activeCarId = "demo-car-1";
     state.transport.hasReceivedPayload = true;
+    state.transport.pendingPayload = demoPayload;
   });
-  applyPayload(demoPayload);
 
   window.__vibesensorDemoCleanup = undefined;
 }
