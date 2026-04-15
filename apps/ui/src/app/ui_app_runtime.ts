@@ -122,6 +122,8 @@ export class UiAppRuntime {
         espFlashPanel,
         navigation: {
           activatePrimaryView: (viewId) => this.shell.setActiveView(viewId),
+          subscribeActiveViewChanges: (listener) =>
+            this.shell.subscribeActiveViewChanges(listener),
         },
         realtimeChrome: {
           setShellLiveStatus: (variant, text) =>

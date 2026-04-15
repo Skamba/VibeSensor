@@ -57,6 +57,7 @@ export interface AppFeatureBundleRuntimePorts {
   espFlashPanel: EspFlashPanelView;
   navigation: {
     activatePrimaryView(viewId: string): void;
+    subscribeActiveViewChanges(listener: (viewId: string) => void): () => void;
   };
   realtimeChrome: RealtimeFeatureChromePorts;
   historyPanel: HistoryPanelView;
@@ -132,6 +133,7 @@ export function createAppFeatureBundle(
     escapeHtml,
     showError,
     fmt,
+    subscribePrimaryViewChanges: runtime.navigation.subscribeActiveViewChanges,
     view: runtime.view,
     realtime: createSettingsFeatureRealtimePorts(realtime),
   });

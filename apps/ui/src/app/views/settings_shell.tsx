@@ -1,6 +1,7 @@
 import type { JSX } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import type { ViewDisposer } from "./dom_event_bindings";
 
 const SETTINGS_TABS = [
   {
@@ -56,6 +57,7 @@ export interface SettingsShellDom {
 export interface SettingsShellView {
   readonly dom: SettingsShellDom;
   activateTab(tabId: string): void;
+  subscribeActiveTabChanges(listener: (tabId: string) => void): ViewDisposer;
 }
 
 type SettingsShellProps = {
@@ -184,14 +186,29 @@ function createSettingsShellDom(host: HTMLElement): SettingsShellDom {
 export function mountSettingsShell(host: HTMLElement): SettingsShellView {
   const mount = createUiPreactMount(host);
   let activeTabId: SettingsShellTabId = "carTab";
+  const activeTabListeners = new Set<(tabId: string) => void>();
+
+  function notifyActiveTabListeners(): void {
+    for (const listener of activeTabListeners) {
+      listener(activeTabId);
+    }
+  }
+
+  function setActiveTab(tabId: SettingsShellTabId): void {
+    if (tabId === activeTabId) {
+      return;
+    }
+    activeTabId = tabId;
+    render();
+    notifyActiveTabListeners();
+  }
 
   function render(): void {
     mount.render(
       <SettingsShell
         activeTabId={activeTabId}
         onActivateTab={(tabId) => {
-          activeTabId = tabId;
-          render();
+          setActiveTab(tabId);
         }}
       />,
     );
@@ -206,11 +223,13 @@ export function mountSettingsShell(host: HTMLElement): SettingsShellView {
       if (!isSettingsShellTabId(tabId)) {
         return;
       }
-      if (tabId === activeTabId) {
-        return;
-      }
-      activeTabId = tabId;
-      render();
+      setActiveTab(tabId);
+    },
+    subscribeActiveTabChanges(listener: (tabId: string) => void): ViewDisposer {
+      activeTabListeners.add(listener);
+      return () => {
+        activeTabListeners.delete(listener);
+      };
     },
   };
 }
