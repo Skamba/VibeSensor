@@ -20,12 +20,12 @@ import type {
   RealtimeLoggingPanelBridge,
   RealtimeLoggingPanelRenderModel,
 } from "./realtime_logging_panel";
-import { renderRealtimeSensorTable } from "./realtime_sensor_table_view";
+import { buildRealtimeSensorTableRenderModel } from "./realtime_sensor_table_view";
 import type {
   RealtimeLiveOverviewBridge,
   RealtimeLiveOverviewRenderModel,
 } from "./realtime_live_overview";
-import type { SensorsPanelDom } from "./sensors_panel";
+import type { SensorsPanelView } from "./sensors_panel";
 
 export type RealtimeFeaturePendingLoggingAction = RealtimeLoggingPendingAction;
 
@@ -35,13 +35,12 @@ export interface RealtimeFeatureRenderState {
 }
 
 export interface RealtimeFeaturePresenterDeps {
-  sensorsDom: SensorsPanelDom;
+  sensorsPanel: SensorsPanelView;
   realtime: RealtimeState;
   spectrum: SpectrumState;
   settings: SettingsState;
   getLanguage: () => string;
   t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
   formatInt: (value: number) => string;
   chrome: {
     setShellLiveStatus: (variant: string, text: string) => void;
@@ -70,12 +69,11 @@ export function createRealtimeFeaturePresenter(
   ctx: RealtimeFeaturePresenterDeps,
 ): RealtimeFeaturePresenter {
   const {
-    sensorsDom,
+    sensorsPanel,
     realtime,
     settings,
     spectrum,
     t,
-    escapeHtml,
     formatInt,
     chrome,
     navigation,
@@ -283,12 +281,12 @@ export function createRealtimeFeaturePresenter(
   }
 
   function renderSensorsSettingsList(): void {
-    if (!sensorsDom.sensorsSettingsBody) return;
-    renderRealtimeSensorTable(sensorsDom.sensorsSettingsBody, {
-      clients: realtime.clients,
-      locationOptions: realtime.locationOptions,
-      t,
-      escapeHtml,
+    sensorsPanel.render({
+      table: buildRealtimeSensorTableRenderModel({
+        clients: realtime.clients,
+        locationOptions: realtime.locationOptions,
+        t,
+      }),
     });
   }
 

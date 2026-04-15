@@ -114,7 +114,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell that mounts the controls, readiness, status, history, and log surface while exposing the bridge consumed by the ESP flash feature |
 | `app/views/internet_panel.tsx` | Preact owner for the internet settings shell that mounts the USB-status plus transport/readiness surface and exposes the bridge consumed by the update feature |
 | `app/views/update_panel.tsx` | Preact owner for the update settings shell that mounts the update controls and status host while exposing the bridge consumed by the update feature |
-| `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that mounts the full table/card chrome and exposes the table-body bridge consumed by the realtime feature |
+| `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that renders the full sensor table and exposes typed identify/remove/location callbacks to the realtime feature |
 | `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that mounts the full tab surface and exposes the shared typed bridge consumed by the speed-source and GPS-status modules |
 | `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that mounts the list shell and wizard chrome, then exposes typed list and wizard bridges |
 | `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
